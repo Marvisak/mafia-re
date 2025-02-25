@@ -1,5 +1,6 @@
-#include "dta_read.h"
 #include "dta.h"
+
+#include "dta_ops.h"
 
 // Opens the dta file and saves it
 C_rw_data_inter::C_rw_data_inter(char const *file_name, bool &is_valid)
@@ -59,12 +60,12 @@ C_rw_data_inter::~C_rw_data_inter()
         {
             if (file_handle.tmp_file_name)
             {
-                delete file_handle.tmp_file_name;
+                delete[] file_handle.tmp_file_name;
             }
 
             if (file_handle.block_content)
             {
-                delete file_handle.block_content;
+                delete[] file_handle.block_content;
             }
 
             if (file_handle.wav_header)

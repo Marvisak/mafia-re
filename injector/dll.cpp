@@ -1,4 +1,5 @@
 #include <windows.h>
+
 #include <subhook.h>
 
 #include "../engine/hooks.h"

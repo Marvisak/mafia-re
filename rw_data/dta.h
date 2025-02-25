@@ -1,7 +1,6 @@
 #pragma once
 
 #include "main.h"
-#include "dta_read.h"
 
 #define DTA_FROM_FILESYSTEM 0x1
 #define DTA_WRITE 0x2
@@ -13,8 +12,29 @@
 #define DTA_CREATE_FILE 0x10000
 #define DTA_CHANGE_ATTRIBUTES 0x100000
 
-extern std::vector<S_FILEHANDLE> v_file_h;
-extern std::vector<S_HANDLE> v_handle;
+class C_rw_data
+{
+protected:
+    virtual ~C_rw_data() {};
+};
+
+class C_rw_data_inter : public C_rw_data
+{
+    virtual ~C_rw_data_inter();
+
+public:
+    C_rw_data_inter(char const* file_name, bool& is_valid);
+
+    // In H&D there are smart pointers, but I cannot be really sure at this point if they are used even here
+    virtual int AddRef();
+    virtual int Release();
+    virtual bool UnlockPack(uint key1, uint key2);
+
+private:
+    int ref_count;
+    HANDLE file;
+};
+typedef class C_rw_data_inter* LPC_rw_data_inter;
 
 // There is also dtaBin2Text, but that function isn't even imported by the main executable so it's utterly useless
 extern "C"
@@ -30,9 +50,3 @@ extern "C"
     bool EXPORT dtaDelete(const char *file_name);
     bool EXPORT dtaGetTime(int handle, ulong *time, bool force_check_from_file);
 }
-
-int OpenFromDTA(char const *file_name);
-int OpenFromFileSystem(char const *file_name);
-void DeCrypt(uchar *buffer, uint len, uint key1, uint key2);
-int Decompression(uchar *buffer, uchar *dest, uint len);
-int WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header);
