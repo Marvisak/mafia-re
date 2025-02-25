@@ -2,7 +2,6 @@
 
 C_multithread_protection::C_multithread_protection()
 {
-    Sleep(3000);
     InitializeCriticalSection(&section);
 }
 
