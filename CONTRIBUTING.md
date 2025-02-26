@@ -17,22 +17,3 @@ Most of the function names are written in English and those are fairly descripti
 ## Coding Style
 
 Ideally the goal is to mirror the coding style of the original source code, which is a bit of a problem because the game doesn't respect any. You can find basically every single naming convention in here, but it seems like most of the game sticks to some weird mixture of snake case and hungarian notion, but you can find plenty of exceptions.
-
-But there are some rules we can pin point that seem to be sometimes followed (or I came up with them), but most of the time you can just rely on the names in debug symbols.
-
-```cpp
-class C_very_important_class {
-public:
-    void ImportantMethod();
-private:
-    int important_field;
-}
-
-struct S_cool_struct {
-    int cool_field;
-}
-
-void IncredibleFunction(int incredible_argument) {
-    int incredible_variable = 100;
-}
-```

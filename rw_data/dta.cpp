@@ -8,7 +8,7 @@ std::vector<struct S_HANDLE> v_handle;
 C_multithread_protection C_m_p;
 C_ref_counter C_r_f;
 
-static int OpenFromDTA(char const* file_name)
+static int OpenFromDTA(char const *file_name)
 {
     char file_name_upper[260];
     strcpy(file_name_upper, file_name);
@@ -30,7 +30,7 @@ static int OpenFromDTA(char const* file_name)
         S_HANDLE handle = v_handle[i];
         for (int j = 0; j < handle.file_table.size(); j++)
         {
-            S_FILES_IN& field = v_handle[i].file_table[j];
+            S_FILES_IN &field = v_handle[i].file_table[j];
             if (checksum != field.file_name_check_sum)
             {
                 continue;
@@ -58,20 +58,20 @@ static int OpenFromDTA(char const* file_name)
             {
                 return -1;
             }
-            DeCrypt(reinterpret_cast<uchar*>(&file_header), sizeof(S_FILEHEADER), handle.key1, handle.key2);
+            DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), handle.key1, handle.key2);
 
             char full_file_name[260];
             if (!ReadFile(handle.file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
             {
                 return -1;
             }
-            DeCrypt(reinterpret_cast<uchar*>(full_file_name), file_header.name_length_flags & 0x7FFF, handle.key1, handle.key2);
+            DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, handle.key1, handle.key2);
 
             full_file_name[bytes_read] = '\0';
             _strupr(full_file_name);
             if (strcmp(full_file_name, file_name_upper) == 0)
             {
-                S_FILEHANDLE file_handle = { 0 };
+                S_FILEHANDLE file_handle = {0};
 
                 file_handle.tmp_file_name = NULL;
                 file_handle.wav_header = NULL;
@@ -137,9 +137,9 @@ static int OpenFromDTA(char const* file_name)
     return -1;
 }
 
-static int OpenFromFileSystem(const char* file_name)
+static int OpenFromFileSystem(const char *file_name)
 {
-    S_FILEHANDLE file_handle = { 0 };
+    S_FILEHANDLE file_handle = {0};
 
     HANDLE file = CreateFileA(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     file_handle.file = file;
@@ -472,7 +472,7 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 
         if (fp_block < current_block)
         {
-            if (fp_block >= current_block >> 1)
+            if (fp_block >= current_block / 2)
             {
                 if (current_block == fp_block)
                 {
@@ -869,7 +869,7 @@ bool EXPORT dtaClose(int handle)
         return false;
     }
 
-    S_FILEHANDLE& file_handle = v_file_h[handle];
+    S_FILEHANDLE &file_handle = v_file_h[handle];
     if (file_handle.file != INVALID_HANDLE_VALUE)
     {
         if (file_handle.flags & DTA_FROM_FILESYSTEM)
