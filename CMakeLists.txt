@@ -4,5 +4,6 @@ project(mafia)
 
 include_directories(common)
 
-add_subdirectory(injector)
+add_subdirectory(setup)
 add_subdirectory(rw_data)
+add_subdirectory(injector)
