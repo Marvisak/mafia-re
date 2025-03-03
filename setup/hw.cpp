@@ -2,7 +2,7 @@
 #include "res/resource.h"
 
 #include <ddraw.h>
-#include <stdio.h>
+#include <cstdio>
 
 IDirect3D8 *d3d8;
 
