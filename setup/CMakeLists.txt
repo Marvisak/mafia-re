@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.25)
 project(rw_data)
 
 add_executable(setup WIN32 res/setup.rc main.cpp settings.cpp hw.cpp)
-set_source_files_properties(res/setup.rc PROPERTIES COMPILE_FLAGS "/dNOT_WS_VISIBLE")
 
 if (MSVC_VERSION GREATER_EQUAL 1300)
 	target_include_directories(setup PRIVATE
