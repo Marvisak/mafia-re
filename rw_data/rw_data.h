@@ -202,7 +202,7 @@ public:
     virtual bool UnlockPack(__int64 key);
 
 private:
-    int ref_count;
+    uint ref_count; // Release compares it unsigned (cmp 1, jae)
     HANDLE file;
 };
 typedef class C_rw_data_inter *LPC_rw_data_inter;

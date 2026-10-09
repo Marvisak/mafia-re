@@ -353,7 +353,7 @@ int C_rw_data_inter::Release()
 {
     C_m_p.Lock();
     C_r_f.Release();
-    int refs = --ref_count;
+    uint refs = --ref_count;
     if (refs < 1)
     {
         delete this;
@@ -623,7 +623,7 @@ bool EXPORT dtaClose(int handle)
 // FUNCTION: RWDATA 0x100025a0
 bool EXPORT dtaDelete(const char *file_name)
 {
-    return DeleteFileA(file_name) != 0;
+    return DeleteFileA(file_name);
 }
 
 // FUNCTION: RWDATA 0x100025c0
