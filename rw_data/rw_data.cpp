@@ -252,7 +252,13 @@ bool C_rw_data_inter::UnlockPack(__int64 key)
 
     S_DTAHEADER header;
     DWORD bytes_read;
-    if (!ReadFile(file, &header, sizeof(S_DTAHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_DTAHEADER))
+    if (!ReadFile(file, &header, sizeof(S_DTAHEADER), &bytes_read, NULL))
+    {
+        C_m_p.Unlock();
+        return false;
+    }
+
+    if (bytes_read != sizeof(S_DTAHEADER))
     {
         C_m_p.Unlock();
         return false;
@@ -275,13 +281,12 @@ bool C_rw_data_inter::UnlockPack(__int64 key)
         return false;
     }
 
-    S_HANDLE &handle = v_handle[i];
-    handle.key = key;
-    handle.file_table.resize(header.file_table_size / sizeof(S_FILES_IN));
+    v_handle[i].key = key;
+    v_handle[i].file_table.resize(header.file_table_size / sizeof(S_FILES_IN));
 
     SetFilePointer(file, header.file_table_offset, NULL, FILE_BEGIN);
-    ReadFile(file, &handle.file_table[0], header.file_table_size, &bytes_read, NULL);
-    DeCrypt(reinterpret_cast<uchar *>(&handle.file_table[0]), header.file_table_size, key);
+    ReadFile(file, &v_handle[i].file_table[0], header.file_table_size, &bytes_read, NULL);
+    DeCrypt(reinterpret_cast<uchar *>(&v_handle[i].file_table[0]), header.file_table_size, key);
 
     C_m_p.Unlock();
     return true;
@@ -552,29 +557,32 @@ bool EXPORT dtaClose(int handle)
 {
     C_m_p.Lock();
 
-    if (handle >= v_file_h.size())
+    if (v_file_h.size() <= handle)
     {
         C_m_p.Unlock();
         return false;
     }
 
-    S_FILEHANDLE &file_handle = v_file_h[handle];
-    if (file_handle.file != INVALID_HANDLE_VALUE)
+    if (v_file_h[handle].file != INVALID_HANDLE_VALUE)
     {
-        if (file_handle.flags & DTA_FROM_FILESYSTEM)
+        if (v_file_h[handle].flags & DTA_FROM_FILESYSTEM)
         {
-            if (!CloseHandle(file_handle.file))
+            if (!CloseHandle(v_file_h[handle].file))
             {
                 C_m_p.Unlock();
                 return false;
             }
 
-            if (file_handle.flags & DTA_BUFFER)
+            if (v_file_h[handle].flags & DTA_BUFFER)
             {
-                if ((file_handle.flags & DTA_FAILED_WRITING_TO_BUFFER) == 0)
+                if (v_file_h[handle].flags & DTA_FAILED_WRITING_TO_BUFFER)
+                {
+                    DeleteFileA(v_file_h[handle].tmp_file_name);
+                }
+                else
                 {
                     char file_name[512];
-                    strcpy(file_name, file_handle.tmp_file_name);
+                    strcpy(file_name, v_file_h[handle].tmp_file_name);
                     file_name[strlen(file_name) - 4] = '\0';
                     if (!DeleteFileA(file_name))
                     {
@@ -586,34 +594,30 @@ bool EXPORT dtaClose(int handle)
                             DeleteFileA(file_name);
                         }
                     }
-                    MoveFileA(file_handle.tmp_file_name, file_name);
-                }
-                else
-                {
-                    DeleteFileA(file_handle.tmp_file_name);
+                    MoveFileA(v_file_h[handle].tmp_file_name, file_name);
                 }
             }
         }
 
-        if (file_handle.tmp_file_name)
+        if (v_file_h[handle].tmp_file_name)
         {
-            delete[] file_handle.tmp_file_name;
+            delete[] v_file_h[handle].tmp_file_name;
         }
 
-        if (file_handle.block_content)
+        if (v_file_h[handle].block_content)
         {
-            delete[] file_handle.block_content;
+            delete[] v_file_h[handle].block_content;
         }
 
-        if (file_handle.wav_header)
+        if (v_file_h[handle].wav_header)
         {
-            delete file_handle.wav_header;
+            delete v_file_h[handle].wav_header;
         }
 
-        file_handle.wav_header = NULL;
-        file_handle.block_content = NULL;
-        file_handle.is_block_in_memory = false;
-        file_handle.file = INVALID_HANDLE_VALUE;
+        v_file_h[handle].wav_header = NULL;
+        v_file_h[handle].block_content = NULL;
+        v_file_h[handle].is_block_in_memory = false;
+        v_file_h[handle].file = INVALID_HANDLE_VALUE;
     }
 
     C_m_p.Unlock();
@@ -1041,61 +1045,36 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
         return -1;
     }
 
-    S_FILEHANDLE &file_handle = v_file_h[handle];
-    if (file_handle.file == INVALID_HANDLE_VALUE)
+    if (v_file_h[handle].file == INVALID_HANDLE_VALUE)
     {
         C_m_p.Unlock();
         return -1;
     }
 
-    if (file_handle.flags & DTA_WRITE)
-    {
-        // Falls through to the next method when SetFilePointer fails, this is what the original does
-        switch (move_method)
-        {
-        case 0:
-            if ((file_handle.file_pointer = SetFilePointer(file_handle.file, distance_to_move, NULL, FILE_BEGIN)) != INVALID_SET_FILE_POINTER)
-            {
-                break;
-            }
-        case 1:
-            if ((file_handle.file_pointer = SetFilePointer(file_handle.file, distance_to_move, NULL, FILE_CURRENT)) != INVALID_SET_FILE_POINTER)
-            {
-                break;
-            }
-        case 2:
-            if ((file_handle.file_pointer = SetFilePointer(file_handle.file, distance_to_move, NULL, FILE_END)) != INVALID_SET_FILE_POINTER)
-            {
-                break;
-            }
-        default:
-            C_m_p.Unlock();
-            return -1;
-        }
-    }
-    else
+    if (!(v_file_h[handle].flags & DTA_WRITE))
     {
         switch (move_method)
         {
         case 0:
-            if (distance_to_move < 0 || static_cast<uint>(distance_to_move) > file_handle.size)
+            if (distance_to_move < 0 || static_cast<uint>(distance_to_move) > v_file_h[handle].size)
             {
                 C_m_p.Unlock();
                 return -1;
             }
-            file_handle.file_pointer = distance_to_move;
-            file_handle.block_file_pointer = distance_to_move % 0x8000;
+            v_file_h[handle].file_pointer = distance_to_move;
+            // Spelled out: % 0x8000 compiles to a different instruction sequence
+            v_file_h[handle].block_file_pointer = distance_to_move - distance_to_move / 0x8000 * 0x8000;
             C_m_p.Unlock();
             return distance_to_move;
         case 1:
         {
-            int new_file_pointer = file_handle.file_pointer + distance_to_move;
-            if (static_cast<uint>(new_file_pointer) > file_handle.size || new_file_pointer < 0)
+            int new_file_pointer = v_file_h[handle].file_pointer + distance_to_move;
+            if (static_cast<uint>(new_file_pointer) > v_file_h[handle].size || new_file_pointer < 0)
             {
                 C_m_p.Unlock();
                 return -1;
             }
-            file_handle.file_pointer += distance_to_move;
+            v_file_h[handle].file_pointer += distance_to_move;
             break;
         }
         case 2:
@@ -1105,13 +1084,12 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
                 C_m_p.Unlock();
                 return -1;
             }
-            int new_file_pointer = file_handle.size + distance_to_move;
-            if (new_file_pointer < 0)
+            if (static_cast<int>(distance_to_move + v_file_h[handle].size) < 0)
             {
                 C_m_p.Unlock();
                 return -1;
             }
-            file_handle.file_pointer = new_file_pointer;
+            v_file_h[handle].file_pointer = distance_to_move + v_file_h[handle].size;
             break;
         }
         default:
@@ -1119,10 +1097,38 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
             return -1;
         }
     }
+    else
+    {
+        // Falls through to the next method when SetFilePointer fails, this is what the original does
+        switch (move_method)
+        {
+        case 0:
+            v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_BEGIN);
+            if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
+            {
+                break;
+            }
+        case 1:
+            v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_CURRENT);
+            if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
+            {
+                break;
+            }
+        case 2:
+            v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_END);
+            if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
+            {
+                break;
+            }
+        default:
+            C_m_p.Unlock();
+            return -1;
+        }
+    }
 
-    file_handle.block_file_pointer = file_handle.file_pointer % 0x8000;
+    v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
     C_m_p.Unlock();
-    return file_handle.file_pointer;
+    return v_file_h[handle].file_pointer;
 }
 
 // Removes every carriage return from the buffer (except from the very last byte), returns the new length
@@ -1282,29 +1288,42 @@ int EXPORT dtaWrite(int handle, const uchar *buffer, uint len)
         return -1;
     }
 
-    S_FILEHANDLE &file_handle = v_file_h[handle];
-    if (file_handle.file == INVALID_HANDLE_VALUE || (file_handle.flags & (DTA_WRITE | DTA_FROM_FILESYSTEM)) == 0)
+    if (v_file_h[handle].file == INVALID_HANDLE_VALUE || (v_file_h[handle].flags & (DTA_WRITE | DTA_FROM_FILESYSTEM)) == 0)
     {
         C_m_p.Unlock();
         return -1;
     }
 
+    // The original has a separate exit when the flag is set; one shared exit compiles differently
     if (!buffer)
     {
-        if (file_handle.flags & DTA_BUFFER)
+        if (v_file_h[handle].flags & DTA_BUFFER)
         {
-            file_handle.flags |= DTA_FAILED_WRITING_TO_BUFFER;
+            v_file_h[handle].flags |= DTA_FAILED_WRITING_TO_BUFFER;
+            C_m_p.Unlock();
+            return -1;
         }
         C_m_p.Unlock();
         return -1;
     }
 
+    // Two separate checks, like the PS2 build
     DWORD bytes_written;
-    if (!WriteFile(file_handle.file, buffer, len, &bytes_written, NULL) || bytes_written != len)
+    if (!WriteFile(v_file_h[handle].file, buffer, len, &bytes_written, NULL))
     {
-        if (file_handle.flags & DTA_BUFFER)
+        if (v_file_h[handle].flags & DTA_BUFFER)
         {
-            file_handle.flags |= DTA_FAILED_WRITING_TO_BUFFER;
+            v_file_h[handle].flags |= DTA_FAILED_WRITING_TO_BUFFER;
+        }
+        C_m_p.Unlock();
+        return -1;
+    }
+
+    if (bytes_written != len)
+    {
+        if (v_file_h[handle].flags & DTA_BUFFER)
+        {
+            v_file_h[handle].flags |= DTA_FAILED_WRITING_TO_BUFFER;
         }
         C_m_p.Unlock();
         return -1;
@@ -1319,29 +1338,28 @@ bool EXPORT dtaGetTime(int handle, ulong *time, bool force_check_from_file)
 {
     C_m_p.Lock();
 
-    if (handle >= v_file_h.size())
+    if (v_file_h.size() <= handle)
     {
         C_m_p.Unlock();
         return false;
     }
 
-    S_FILEHANDLE &file_handle = v_file_h[handle];
-    if (file_handle.file == INVALID_HANDLE_VALUE)
+    if (v_file_h[handle].file == INVALID_HANDLE_VALUE)
     {
         C_m_p.Unlock();
         return false;
     }
 
-    if (file_handle.flags & DTA_FROM_FILESYSTEM || force_check_from_file)
+    if (v_file_h[handle].flags & DTA_FROM_FILESYSTEM || force_check_from_file)
     {
-        FILETIME creation_time;
-        FILETIME last_access_time;
-        bool success = GetFileTime(file_handle.file, &creation_time, &last_access_time, reinterpret_cast<LPFILETIME>(time)) != 0;
+        // Creation and last access time, unused. An array: two separate locals get the opposite stack slots
+        FILETIME file_times[2];
+        bool success = GetFileTime(v_file_h[handle].file, &file_times[0], &file_times[1], reinterpret_cast<LPFILETIME>(time)) != 0;
         C_m_p.Unlock();
         return success;
     }
 
-    *time = file_handle.timestamp;
+    *time = v_file_h[handle].timestamp;
     C_m_p.Unlock();
     return true;
 }
@@ -1607,8 +1625,9 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
 // FUNCTION: RWDATA 0x10004690
 void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
 {
+    // chunks * 8, not chunks << 3: VC6 keeps the product in a register across the loop, the shift it doesn't
     uint chunks = len >> 3;
-    uint rest = len - (chunks << 3);
+    uint rest = len - chunks * 8;
 
     __int64 *p = reinterpret_cast<__int64 *>(buffer);
     uint i = chunks;
@@ -1619,7 +1638,7 @@ void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
         p[i] = ~p[i];
     }
 
-    uchar *q = buffer + (chunks << 3);
+    uchar *q = buffer + chunks * 8;
     const uchar *key_bytes = reinterpret_cast<const uchar *>(&key);
     i = rest;
     while (i--)

@@ -272,7 +272,8 @@ extern "C"
 // TEMPLATE: RWDATA 0x10004970
 // ?insert@?$vector@US_FILES_IN@@V?$allocator@US_FILES_IN@@@std@@@std@@QAEXPAUS_FILES_IN@@IABU3@@Z
 
-// Out-of-line in the original (with std::copy inlined), inlined in the rebuild
+// Out of line (with std::copy inlined), called from the resize inlined into UnlockPack and ~C_rw_data_inter.
+// Our build only emits it out of line since UnlockPack indexes v_handle directly.
 // TEMPLATE: RWDATA 0x10004c90
 // ?erase@?$vector@US_FILES_IN@@V?$allocator@US_FILES_IN@@@std@@@std@@QAEPAUS_FILES_IN@@PAU3@0@Z
 
