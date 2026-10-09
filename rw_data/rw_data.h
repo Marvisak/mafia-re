@@ -108,7 +108,7 @@ struct S_FILEHEADER
 struct S_HANDLE
 {
     HANDLE file; // 4 bytes of padding follow, key is 8 byte aligned
-    ulong key;
+    __int64 key;
     char file_name[MAX_PATH];
     std::vector<S_FILES_IN> file_table;
 }; // sizeof = 0x128
@@ -154,7 +154,7 @@ struct S_FILEHANDLE
     uint previous_compressed_block_size;
     S_WAVHEADER *wav_header;
     uint block_size; // 4 bytes of padding follow, key is 8 byte aligned
-    ulong key;
+    __int64 key;
     bool is_block_in_memory;
     bool encrypted;
     char *tmp_file_name;
@@ -181,7 +181,7 @@ public:
 
     virtual int AddRef() = 0;
     virtual int Release() = 0;
-    virtual bool UnlockPack(ulong key) = 0;
+    virtual bool UnlockPack(__int64 key) = 0;
 };
 
 // SYNTHETIC: RWDATA 0x10001340
@@ -197,8 +197,9 @@ public:
 
     virtual int AddRef();
     virtual int Release();
-    // The key is a single 64 bit value (PS2: UnlockPack__15C_rw_data_interFl), Game.exe pushes it as two dwords
-    virtual bool UnlockPack(ulong key);
+    // The key is a single signed 64 bit value (PS2: UnlockPack__15C_rw_data_interFl, long is 64 bit on the EE),
+    // Game.exe pushes it as two dwords
+    virtual bool UnlockPack(__int64 key);
 
 private:
     int ref_count;

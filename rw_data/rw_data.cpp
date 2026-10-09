@@ -18,8 +18,9 @@ C_multithrerad_protection C_m_p;
 C_ref_counter C_r_f;
 
 static int __stdcall OpenFromDTA(const char *file_name);
-static int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header);
-static void __stdcall DeCrypt(uchar *buffer, uint len, ulong key);
+// Not static: both are global symbols in the PS2 build, unlike OpenFromDTA
+int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header);
+void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key);
 
 // Stores the new file handle in the first free slot, only grows the vector if there is none
 static inline int AddFileHandle(const S_FILEHANDLE &file_handle)
@@ -238,7 +239,7 @@ C_rw_data_inter::C_rw_data_inter(const char *file_name, bool &is_valid)
 
 // Decrypts and reads the file table of the archive, the key is hardcoded in Game.exe
 // FUNCTION: RWDATA 0x100013b0
-bool C_rw_data_inter::UnlockPack(ulong key)
+bool C_rw_data_inter::UnlockPack(__int64 key)
 {
     C_m_p.Lock();
 
@@ -1396,8 +1397,9 @@ C_ref_counter::~C_ref_counter()
     }
 }
 
+// Not static, a global symbol in the PS2 build
 // GLOBAL: RWDATA 0x1000c040
-static ushort wav_table[] =
+ushort wav_table[] =
     {
         0x0000, 0x0001, 0x0002, 0x0004, 0x0008, 0x000c, 0x0012, 0x0018, 0x0020, 0x0029, 0x0032, 0x003d,
         0x0049, 0x0055, 0x0063, 0x0072, 0x0082, 0x0092, 0x00a4, 0x00b7, 0x00cb, 0x00df, 0x00f5, 0x010c,
@@ -1477,7 +1479,7 @@ static ushort wav_table[] =
 
 // DPCM decoder for the sound blocks, 128 table entries per block type
 // FUNCTION: RWDATA 0x10004250
-static int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header)
+int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header)
 {
     int decompressed_size = 0;
     uint position = 1;
@@ -1601,14 +1603,14 @@ static int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WA
 }
 
 // Processes 8 bytes at a time from the end, the remaining bytes are xored with the first bytes of the key
-// (PS2: DeCrypt__FPUcUil, the key is a single 64 bit value)
+// (PS2: DeCrypt__FPUcUil, the key is a single signed 64 bit value)
 // FUNCTION: RWDATA 0x10004690
-static void __stdcall DeCrypt(uchar *buffer, uint len, ulong key)
+void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
 {
     uint chunks = len >> 3;
     uint rest = len - (chunks << 3);
 
-    ulong *p = reinterpret_cast<ulong *>(buffer);
+    __int64 *p = reinterpret_cast<__int64 *>(buffer);
     uint i = chunks;
     while (i--)
     {
