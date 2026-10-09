@@ -1628,9 +1628,10 @@ static void __stdcall DeCrypt(uchar *buffer, uint len, ulong key)
     }
 }
 
-// The binary was patched to remove this function, the original bytes were "mov byte ptr [dta_first_force], 1; retn"
-// and the first byte was overwritten with retn
+// The Steam release overwrites the first byte of this function with retn, so there the game always prefers loose
+// files over .dta archives. The retail DLL (the target) is unpatched.
 // FUNCTION: RWDATA 0x10004720
 void EXPORT dtaSetDtaFirstForce()
 {
+    dta_first_force = true;
 }

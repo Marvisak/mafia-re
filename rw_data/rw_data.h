@@ -245,9 +245,9 @@ extern "C"
 // TEMPLATE: RWDATA 0x10004ce0
 // ?insert@?$vector@US_FILEHANDLE@@V?$allocator@US_FILEHANDLE@@@std@@@std@@QAEPAUS_FILEHANDLE@@PAU3@ABU3@@Z
 
-// Folded with vector<S_FILEHANDLE>::_Destroy
+// Folded with vector<S_FILES_IN>::_Destroy
 // TEMPLATE: RWDATA 0x10004ef0
-// ?_Destroy@?$vector@US_FILES_IN@@V?$allocator@US_FILES_IN@@@std@@@std@@IAEXPAUS_FILES_IN@@0@Z
+// ?_Destroy@?$vector@US_FILEHANDLE@@V?$allocator@US_FILEHANDLE@@@std@@@std@@IAEXPAUS_FILEHANDLE@@0@Z
 
 // Out-of-line in the original, inlined in the rebuild
 // TEMPLATE: RWDATA 0x10004f00
