@@ -1,14 +1,31 @@
-// reccmp annotations for the static CRT (LIBC.LIB) functions rw_data calls.
+// reccmp annotations for the static CRT (LIBC.LIB) functions and data rw_data uses, including the CRT's own
+// internal callees: without an annotation reccmp can't name a call target in the original, so it scores the
+// call as a mismatch even though the code is identical.
 // This file is never compiled, it only tells reccmp where these functions are in the original.
 
 // LIBRARY: RWDATA 0x10005cc0
 // ??3@YAXPAX@Z
 
+// LIBRARY: RWDATA 0x10005ccb SYMBOL
+// __onexit
+
 // LIBRARY: RWDATA 0x10005d38 SYMBOL
 // _atexit
 
+// LIBRARY: RWDATA 0x10005d4a SYMBOL
+// ___onexitinit
+
 // LIBRARY: RWDATA 0x10005d79
 // ??2@YAPAXI@Z
+
+// LIBRARY: RWDATA 0x1000606c SYMBOL
+// __global_unwind2
+
+// LIBRARY: RWDATA 0x100060ae SYMBOL
+// __local_unwind2
+
+// LIBRARY: RWDATA 0x10006142 SYMBOL
+// __NLG_Notify
 
 // LIBRARY: RWDATA 0x1000615a SYMBOL
 // __purecall
@@ -22,5 +39,349 @@
 // LIBRARY: RWDATA 0x100061e0 SYMBOL
 // _memmove
 
+// LIBRARY: RWDATA 0x10006515 SYMBOL
+// __CRT_INIT@12
+
+// LIBRARY: RWDATA 0x1000666a SYMBOL
+// __amsg_exit
+
+// LIBRARY: RWDATA 0x1000669d SYMBOL
+// _free
+
+// LIBRARY: RWDATA 0x10006706 SYMBOL
+// _realloc
+
+// LIBRARY: RWDATA 0x100069a6 SYMBOL
+// __cinit
+
+// LIBRARY: RWDATA 0x100069d3 SYMBOL
+// __exit
+
+// LIBRARY: RWDATA 0x100069e4 SYMBOL
+// __cexit
+
+// LIBRARY: RWDATA 0x10006aa6 SYMBOL
+// __msize
+
+// LIBRARY: RWDATA 0x10006b07 SYMBOL
+// _malloc
+
+// LIBRARY: RWDATA 0x10006b19 SYMBOL
+// __nh_malloc
+
+// LIBRARY: RWDATA 0x10006b45 SYMBOL
+// __heap_alloc
+
+// LIBRARY: RWDATA 0x1000740c
+// ?terminate@@YAXXZ
+
+// LIBRARY: RWDATA 0x100074b8 SYMBOL
+// __GetLinkerVersion
+
+// LIBRARY: RWDATA 0x100074e5 SYMBOL
+// ___heap_select
+
+// LIBRARY: RWDATA 0x1000762d SYMBOL
+// __heap_init
+
+// LIBRARY: RWDATA 0x1000768a SYMBOL
+// __heap_term
+
+// LIBRARY: RWDATA 0x10007732 SYMBOL
+// __ioinit
+
+// LIBRARY: RWDATA 0x100078dd SYMBOL
+// __ioterm
+
+// LIBRARY: RWDATA 0x10007900 SYMBOL
+// __setenvp
+
+// LIBRARY: RWDATA 0x100079b9 SYMBOL
+// __setargv
+
+// LIBRARY: RWDATA 0x10007c06 SYMBOL
+// ___crtGetEnvironmentStringsA
+
+// LIBRARY: RWDATA 0x10007d38 SYMBOL
+// _DllMain@12
+
+// LIBRARY: RWDATA 0x10007d58 SYMBOL
+// __FF_MSGBANNER
+
+// LIBRARY: RWDATA 0x10007d91 SYMBOL
+// __NMSG_WRITE
+
+// LIBRARY: RWDATA 0x10007ee4 SYMBOL
+// ___sbh_heap_init
+
+// LIBRARY: RWDATA 0x10007f2c SYMBOL
+// ___sbh_find_block
+
+// LIBRARY: RWDATA 0x10007f57 SYMBOL
+// ___sbh_free_block
+
+// LIBRARY: RWDATA 0x10008280 SYMBOL
+// ___sbh_alloc_block
+
+// LIBRARY: RWDATA 0x10008589 SYMBOL
+// ___sbh_alloc_new_region
+
+// LIBRARY: RWDATA 0x1000863a SYMBOL
+// ___sbh_alloc_new_group
+
+// LIBRARY: RWDATA 0x10008735 SYMBOL
+// ___sbh_resize_block
+
+// LIBRARY: RWDATA 0x10008a2b SYMBOL
+// ___old_sbh_new_region
+
+// LIBRARY: RWDATA 0x10008b6f SYMBOL
+// ___old_sbh_release_region
+
+// LIBRARY: RWDATA 0x10008bc5 SYMBOL
+// ___old_sbh_decommit_pages
+
+// LIBRARY: RWDATA 0x10008c87 SYMBOL
+// ___old_sbh_find_block
+
+// LIBRARY: RWDATA 0x10008cde SYMBOL
+// ___old_sbh_free_block
+
+// LIBRARY: RWDATA 0x10008d23 SYMBOL
+// ___old_sbh_alloc_block
+
+// LIBRARY: RWDATA 0x10008f2b SYMBOL
+// ___old_sbh_alloc_block_from_page
+
+// LIBRARY: RWDATA 0x1000904f SYMBOL
+// ___old_sbh_resize_block
+
+// LIBRARY: RWDATA 0x100090f8 SYMBOL
+// __callnewh
+
+// LIBRARY: RWDATA 0x10009120 SYMBOL
+// _memcpy
+
+// LIBRARY: RWDATA 0x10009455
+// ?__CxxUnhandledExceptionFilter@@YGJPAU_EXCEPTION_POINTERS@@@Z
+
+// In the .CRT$XIY initializer table
+// LIBRARY: RWDATA 0x1000949b
+// ?__CxxSetUnhandledExceptionFilter@@YAXXZ
+
+// LIBRARY: RWDATA 0x100094f1
+// ?_ValidateExecute@@YAHP6GHXZ@Z
+
+// LIBRARY: RWDATA 0x1000959c SYMBOL
+// __except_handler3
+
+// LIBRARY: RWDATA 0x10009674 SYMBOL
+// _abort
+
+// LIBRARY: RWDATA 0x1000968b SYMBOL
+// _strtol
+
+// LIBRARY: RWDATA 0x100098c0 SYMBOL
+// _strchr
+
+// A label inside _strchr that _strstr jumps to
+// LIBRARY: RWDATA 0x100098c6 SYMBOL
+// ___from_strstr_to_strchr
+
+// LIBRARY: RWDATA 0x10009980 SYMBOL
+// _strstr
+
+// LIBRARY: RWDATA 0x10009a00 SYMBOL
+// _strcpy
+
+// LIBRARY: RWDATA 0x10009a10 SYMBOL
+// _strcat
+
+// LIBRARY: RWDATA 0x10009af0 SYMBOL
+// _strlen
+
+// LIBRARY: RWDATA 0x10009b6b SYMBOL
+// __setmbcp
+
+// LIBRARY: RWDATA 0x10009f2f SYMBOL
+// ___initmbctable
+
+// LIBRARY: RWDATA 0x10009f4b SYMBOL
+// ___crtMessageBoxA
+
+// LIBRARY: RWDATA 0x10009fe0 SYMBOL
+// _strncpy
+
+// LIBRARY: RWDATA 0x1000a0e0 SYMBOL
+// _memset
+
+// LIBRARY: RWDATA 0x1000a138 SYMBOL
+// _raise
+
+// LIBRARY: RWDATA 0x1000a3eb SYMBOL
+// ___crtLCMapStringA
+
 // LIBRARY: RWDATA 0x1000a796 SYMBOL
 // _strupr
+
+// GLOBAL: RWDATA 0x1000c000
+// ___xc_a
+
+// GLOBAL: RWDATA 0x1000c014
+// ___xc_z
+
+// GLOBAL: RWDATA 0x1000c018
+// ___xi_a
+
+// GLOBAL: RWDATA 0x1000c028
+// ___xi_z
+
+// GLOBAL: RWDATA 0x1000c7b4
+// __NLG_Destination
+
+// GLOBAL: RWDATA 0x1000c888
+// ___old_small_block_heap
+
+// GLOBAL: RWDATA 0x1000e8ac
+// ___old_sbh_threshold
+
+// GLOBAL: RWDATA 0x1000ec40
+// __First_FPE_Indx
+
+// GLOBAL: RWDATA 0x1000ec44
+// __Num_FPE
+
+// GLOBAL: RWDATA 0x1000ec4c
+// __fpecode
+
+// GLOBAL: RWDATA 0x10012ca0
+// __aenvptr
+
+// GLOBAL: RWDATA 0x10012ca8
+// ___error_mode
+
+// GLOBAL: RWDATA 0x10012cac
+// ___app_type
+
+// GLOBAL: RWDATA 0x10012cbc
+// __osver
+
+// GLOBAL: RWDATA 0x10012cc0
+// __winver
+
+// GLOBAL: RWDATA 0x10012cc4
+// __winmajor
+
+// GLOBAL: RWDATA 0x10012cc8
+// __winminor
+
+// GLOBAL: RWDATA 0x10012ccc
+// ___argc
+
+// GLOBAL: RWDATA 0x10012cd0
+// ___argv
+
+// GLOBAL: RWDATA 0x10012cd8
+// __environ
+
+// GLOBAL: RWDATA 0x10012ce8
+// __pgmptr
+
+// GLOBAL: RWDATA 0x10012cf4
+// __C_Termination_Done
+
+// GLOBAL: RWDATA 0x10012d08
+// ?__pTerminate@@3P6AXXZA
+
+// GLOBAL: RWDATA 0x10012e14
+// __adbgmsg
+
+// GLOBAL: RWDATA 0x10012e1c
+// ?_pnhHeap@@3P6AHI@ZA
+
+// GLOBAL: RWDATA 0x10012e20
+// __newmode
+
+// GLOBAL: RWDATA 0x10012e64
+// ___lc_codepage
+
+// GLOBAL: RWDATA 0x10012e74
+// __pxcptinfoptrs
+
+// GLOBAL: RWDATA 0x10012e78
+// ___mbcodepage
+
+// GLOBAL: RWDATA 0x10012e80
+// ___mbulinfo
+
+// GLOBAL: RWDATA 0x10012e8c
+// ___ismbcodepage
+
+// GLOBAL: RWDATA 0x10012fa0
+// __mbctype
+
+// GLOBAL: RWDATA 0x100130a4
+// ___mblcid
+
+// GLOBAL: RWDATA 0x100130a8
+// ___sbh_sizeHeaderList
+
+// GLOBAL: RWDATA 0x100130ac
+// ___sbh_indGroupDefer
+
+// GLOBAL: RWDATA 0x100130b0
+// ___sbh_pHeaderScan
+
+// GLOBAL: RWDATA 0x100130b4
+// ___sbh_pHeaderDefer
+
+// GLOBAL: RWDATA 0x100130b8
+// ___sbh_cntHeaderList
+
+// GLOBAL: RWDATA 0x100130bc
+// ___sbh_pHeaderList
+
+// GLOBAL: RWDATA 0x100130c0
+// ___sbh_threshold
+
+// GLOBAL: RWDATA 0x100130e0
+// ___pioinfo
+
+// GLOBAL: RWDATA 0x100131e0
+// __nhandle
+
+// GLOBAL: RWDATA 0x100131e4
+// __crtheap
+
+// GLOBAL: RWDATA 0x100131e8
+// ___active_heap
+
+// GLOBAL: RWDATA 0x100131ec
+// ___env_initialized
+
+// GLOBAL: RWDATA 0x100131f0
+// ___mbctype_initialized
+
+// GLOBAL: RWDATA 0x100131f4
+// ___onexitend
+
+// GLOBAL: RWDATA 0x100131f8
+// ___onexitbegin
+
+// GLOBAL: RWDATA 0x100131fc
+// __FPinit
+
+// GLOBAL: RWDATA 0x10013200
+// __acmdln
+
+// GLOBAL: RWDATA 0x10013204
+// __pRawDllMain
+
+// The empty literals ("" and L"") in __crtLCMapStringA. reccmp names our copies "\x00" and L"\x00", and
+// strings only match by name, so the annotations have to spell them the same way.
+
+// STRING: RWDATA 0x1000b4ec
+// "\x00"
+
+// STRING: RWDATA 0x1000b4f0
+// L"\x00"

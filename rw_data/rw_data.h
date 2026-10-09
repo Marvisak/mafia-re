@@ -226,6 +226,39 @@ extern "C"
     void EXPORT dtaDumpMemoryLeaks(bool dump);
 }
 
+// Dynamic initializers of the globals in rw_data.cpp, one group of four per global, in source order:
+// a thunk in the .CRT$XCU table (call constructor, jmp to the atexit registration), the constructor, the
+// atexit registration and the destructor. reccmp matches the thunks and constructors itself through the
+// table (as $CRT_CPP_Initializer(n)), so only the other two are annotated.
+
+// v_file_h
+// SYNTHETIC: RWDATA 0x10001030
+// $E4
+
+// SYNTHETIC: RWDATA 0x10001040
+// $E3
+
+// v_handle
+// SYNTHETIC: RWDATA 0x10001090
+// $E9
+
+// SYNTHETIC: RWDATA 0x100010a0
+// $E8
+
+// C_m_p
+// SYNTHETIC: RWDATA 0x10001110
+// $E14
+
+// SYNTHETIC: RWDATA 0x10001120
+// $E13
+
+// C_r_f
+// SYNTHETIC: RWDATA 0x10001150
+// $E19
+
+// SYNTHETIC: RWDATA 0x10001160
+// $E18
+
 // The STL code the compiler emitted into rw_data.cpp. The original orders it differently from
 // the rebuild, the order follows the first use of each instantiation in the source.
 
