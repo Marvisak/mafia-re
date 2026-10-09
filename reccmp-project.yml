@@ -1,0 +1,6 @@
+targets:
+  RWDATA:
+    filename: rw_data.dll
+    source_root: rw_data
+    hash:
+      sha256: 30783f20cdd5175dc106970492b39f6509d9b5a176d0f0fa171f0e7534eb1b5d

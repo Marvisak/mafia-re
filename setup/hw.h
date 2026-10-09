@@ -11,12 +11,10 @@ struct S_adapter_mode
     uint flags;
 };
 
+int GetTotalVRAM();
+bool LoadAdapterRefreshRates();
+bool LoadAdapterModes();
+bool LoadAdapterData(int adapter);
 bool LoadD3D8();
 void FreeD3D8();
-
-bool LoadAdapterModes();
-bool LoadAdapterRefreshRates();
-bool LoadAdapterData(int adapter);
-
 void AutodetectSettings();
-uint GetTotalVRAM();

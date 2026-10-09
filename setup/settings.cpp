@@ -12,10 +12,12 @@ void InitSettings(S_settings &settings)
     settings.fullscreen = false;
     settings.vsync = false;
     settings.texture_low_detail = false;
+    settings.triple_buffering = false;
+    settings.texture_true_color = false;
     settings.disable_sound = false;
     settings.software_mixing_only = false;
     settings.language = 0;
-    settings.magic = 0x14;
+    settings.magic = SETTINGS_MAGIC;
     settings.width = 800;
     settings.height = 600;
     settings.bit_depth = 32;
@@ -44,14 +46,15 @@ bool LoadSettings(S_settings &settings)
 
     DWORD type;
     DWORD size = sizeof(S_settings);
-    InitSettings(settings);
+    InitSettings(buffer);
     if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, reinterpret_cast<LPBYTE>(&buffer), &size))
     {
         size = 0;
     }
     RegCloseKey(key);
 
-    if (size != sizeof(S_settings) || buffer.magic != SETTINGS_MAGIC)
+    // The magic of the passed settings is checked, not the one read from the registry, this is what the original does
+    if (size != sizeof(S_settings) || settings.magic != SETTINGS_MAGIC)
     {
         return false;
     }
@@ -64,8 +67,7 @@ bool SaveSettings(S_settings &settings)
 {
     HKEY key;
     DWORD deposition;
-    // The KEY_WOW64_32KEY value which we know today is not present in VS 6.0, I have no idea how they came up with this value
-    if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Illusion Softworks\\Mafia", NULL, NULL, NULL, KEY_WRITE | 0x200, NULL, &key, &deposition) != ERROR_SUCCESS)
+    if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Illusion Softworks\\Mafia", NULL, NULL, NULL, KEY_WRITE | KEY_WOW64_32KEY, NULL, &key, &deposition) != ERROR_SUCCESS)
     {
         return false;
     }

@@ -1,0 +1,56 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "vc6",
+            "displayName": "VC6 SP5 + Processor Pack (original toolchain)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/vc6",
+            "toolchainFile": "${sourceDir}/cmake/vc6.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "PATH": "${sourceDir}/msvc600_sp5_vcpp/VC98/Bin;${sourceDir}/msvc600_sp5_vcpp/Common/MSDev98/Bin;${sourceDir}/.venv/Scripts;$penv{PATH}",
+                "INCLUDE": "${sourceDir}/msvc600_sp5_vcpp/VC98/Include",
+                "LIB": "${sourceDir}/msvc600_sp5_vcpp/VC98/Lib"
+            }
+        },
+        {
+            "name": "vc6-pdb",
+            "inherits": "vc6",
+            "displayName": "VC6 SP5 + Processor Pack with PDBs (for reccmp)",
+            "binaryDir": "${sourceDir}/build/vc6-pdb",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "msvc",
+            "displayName": "Installed Visual Studio, x86 (setup, functional builds; not matching)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/msvc",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "vc6",
+            "configurePreset": "vc6"
+        },
+        {
+            "name": "vc6-pdb",
+            "configurePreset": "vc6-pdb"
+        },
+        {
+            "name": "msvc",
+            "configurePreset": "msvc"
+        }
+    ]
+}

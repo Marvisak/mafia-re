@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <cstring>
 #include <types.h>
 #include <settings.h>
 
@@ -12,9 +13,10 @@
 #define MULTISAMPLE_4X_WINDOWED 0x8
 #define MULTISAMPLE_2X_FULLSCREEN 0x10
 #define MULTISAMPLE_4X_FULLSCREEN 0x20
+#define MULTISAMPLE_WINDOWED (MULTISAMPLE_2X_WINDOWED | MULTISAMPLE_4X_WINDOWED)
+#define MULTISAMPLE_FULLSCREEN (MULTISAMPLE_2X_FULLSCREEN | MULTISAMPLE_4X_FULLSCREEN)
+#define MULTISAMPLE_MASK (MULTISAMPLE_WINDOWED | MULTISAMPLE_FULLSCREEN)
 
-// I am not entirely sure if the rest of the values after windows were in the struct
-// but it makes the whole thing much more simple so let's just keep it that way
 struct S_state
 {
 	HINSTANCE hinst;
@@ -29,10 +31,9 @@ struct S_state
 		HWND vram_size;
 		HWND refresh_rate;
 	} windows;
-	S_settings settings;
-	bool settings_loaded;
-	uint vram_size;
-	bool supports_w_buffer;
 };
 
 extern S_state app_state;
+extern S_settings settings;
+extern int vram_size;
+extern bool supports_w_buffer;

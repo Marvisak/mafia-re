@@ -5,42 +5,23 @@
 
 #include "commctrl.h"
 
-S_state app_state;
+// .data order in the binary: supports_w_buffer, settings_loaded, settings, expert_settings_enabled
+bool supports_w_buffer = true;
+// Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
+bool settings_loaded = true;
+S_settings settings = {
+    SETTINGS_MAGIC, 0, 800, 600, 32,
+    0, 0, false, false, false,
+    true, false, false, false, true,
+    true, false, false, true, true,
+    false, 1, 0, true, 1,
+    1, 2, 2, 3, 2};
 bool expert_settings_enabled = true;
 
-bool SetText(uint uid, HWND window)
-{
-    char buffer[1024];
-    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
-    {
-        return false;
-    }
-    SetWindowTextA(window, buffer);
-    return true;
-}
+S_state app_state;
+int vram_size = 0;
 
-bool SetDialogText(HWND main_window, uint uid, int dlg)
-{
-    char buffer[1024];
-    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
-    {
-        return false;
-    }
-    HWND window = GetDlgItem(main_window, dlg);
-    SetWindowTextA(window, buffer);
-    return true;
-}
-
-void Error(const char *msg)
-{
-    char buffer[128];
-    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)))
-    {
-        strcpy(buffer, "Setup error");
-    }
-    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
-    EndDialog(app_state.windows.main, 0);
-}
+INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 void GetWindowHandles(S_state &state, HWND main_window)
 {
@@ -54,9 +35,82 @@ void GetWindowHandles(S_state &state, HWND main_window)
     state.windows.refresh_rate = GetDlgItem(main_window, IDC_COMBO_REFRESHRATE);
 }
 
+void Error(const char *msg)
+{
+    char buffer[128];
+    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
+    {
+        strcpy(buffer, "Setup error");
+    }
+    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
+    EndDialog(app_state.windows.main, 0);
+}
+
+bool SetText(uint uid, HWND window)
+{
+    char buffer[1024];
+    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
+    {
+        return false;
+    }
+    SetWindowTextA(window, buffer);
+    return true;
+}
+
+// Inlined into DialogFunc in the binary
+bool SetDialogText(HWND main_window, uint uid, int dlg)
+{
+    char buffer[1024];
+    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
+    {
+        return false;
+    }
+    SetWindowTextA(GetDlgItem(main_window, dlg), buffer);
+    return true;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+    app_state.hinst = hInstance;
+    InitCommonControls();
+    settings_loaded = LoadSettings(settings);
+    DialogBoxParamA(hInstance, MAKEINTRESOURCEA(IDD_MAIN), NULL, DialogFunc, NULL);
+    FreeD3D8();
+    return 0;
+}
+
 void HandleComboField(uint uid, bool &value)
 {
-    value = SendDlgItemMessage(app_state.windows.main, uid, BM_GETCHECK, NULL, NULL) == 1;
+    value = SendDlgItemMessageA(app_state.windows.main, uid, BM_GETCHECK, NULL, NULL) == 1;
+}
+
+void ToggleFields()
+{
+    if (!settings.fullscreen)
+    {
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC), FALSE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE), FALSE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH), FALSE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC), TRUE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE), TRUE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH), TRUE);
+    }
+
+    if (settings.disable_sound)
+    {
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND), FALSE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY), FALSE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX), FALSE);
+    }
+    else
+    {
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND), TRUE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY), TRUE);
+        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX), TRUE);
+    }
 }
 
 void ToggleExpertSettings()
@@ -65,64 +119,21 @@ void ToggleExpertSettings()
     GetWindowRect(app_state.windows.main, &window_rect);
 
     LONG height = window_rect.bottom - window_rect.top;
-    if (expert_settings_enabled)
-    {
-        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, height - 75, SWP_SHOWWINDOW);
-        expert_settings_enabled = false;
-        HWND dlg = GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
-        SetText(IDS_OPENEXPERTSETTINGS, dlg);
-    }
-    else
+    if (!expert_settings_enabled)
     {
         SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, height + 75, SWP_SHOWWINDOW);
         expert_settings_enabled = true;
-        HWND dlg = GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
-        SetText(IDS_CLOSEEXPERTSETTINGS, dlg);
-    }
-}
-
-void ToggleFields()
-{
-    if (app_state.settings.fullscreen)
-    {
-        HWND vsync = GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC);
-        EnableWindow(vsync, true);
-        HWND refresh_rate = GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE);
-        EnableWindow(refresh_rate, true);
-        HWND bit_depth = GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH);
-        EnableWindow(bit_depth, true);
+        SetText(IDS_CLOSEEXPERTSETTINGS, GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS));
     }
     else
     {
-        HWND vsync = GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC);
-        EnableWindow(vsync, false);
-        HWND refresh_rate = GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE);
-        EnableWindow(refresh_rate, false);
-        HWND bit_depth = GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH);
-        EnableWindow(bit_depth, false);
-    }
-
-    if (app_state.settings.disable_sound)
-    {
-        HWND sound = GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND);
-        EnableWindow(sound, false);
-        HWND software_mixing_only = GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
-        EnableWindow(software_mixing_only, false);
-        HWND disable_eax = GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX);
-        EnableWindow(disable_eax, false);
-    }
-    else
-    {
-        HWND sound = GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND);
-        EnableWindow(sound, true);
-        HWND software_mixing_only = GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
-        EnableWindow(software_mixing_only, true);
-        HWND disable_eax = GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX);
-        EnableWindow(disable_eax, true);
+        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, height - 75, SWP_SHOWWINDOW);
+        expert_settings_enabled = false;
+        SetText(IDS_OPENEXPERTSETTINGS, GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS));
     }
 }
 
-INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
+INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     if (Msg == WM_INITDIALOG)
     {
@@ -157,9 +168,9 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
         GetWindowHandles(app_state, hWnd);
         ToggleExpertSettings();
 
-        if (!app_state.settings_loaded)
+        if (!settings_loaded)
         {
-            app_state.vram_size = GetTotalVRAM();
+            vram_size = GetTotalVRAM();
             AutodetectSettings();
         }
 
@@ -176,34 +187,35 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
     }
     else if (Msg == WM_COMMAND)
     {
-        switch (Param1 & 0xFFFF)
+        WORD id = LOWORD(wParam);
+        switch (id)
         {
         case IDC_COMBO_SOUND:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                app_state.settings.sound_type = SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_GETCURSEL, NULL, NULL);
+                settings.sound_type = SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_GETCURSEL, NULL, NULL);
                 ToggleFields();
             }
             return 0;
         case IDC_COMBO_RESOLUTION:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 int pos = SendMessageA(app_state.windows.resolution, CB_GETCURSEL, NULL, NULL);
                 S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(app_state.windows.resolution, CB_GETITEMDATA, pos, NULL));
-                if (adapter_data)
+                if (adapter_data && adapter_data != reinterpret_cast<S_adapter_mode *>(CB_ERR))
                 {
-                    app_state.settings.width = adapter_data->width;
-                    app_state.settings.height = adapter_data->height;
+                    settings.width = adapter_data->width;
+                    settings.height = adapter_data->height;
                     LoadAdapterRefreshRates();
                     LoadAdapterData(pos);
                 }
             }
             return 0;
         case IDC_COMBO_REFRESHRATE:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = SendMessageA(app_state.windows.refresh_rate, CB_GETCURSEL, NULL, NULL);
-                app_state.settings.refresh_rate = SendMessageA(app_state.windows.refresh_rate, CB_GETITEMDATA, pos, NULL);
+                uchar pos = static_cast<uchar>(SendMessageA(app_state.windows.refresh_rate, CB_GETCURSEL, NULL, NULL));
+                settings.refresh_rate = SendMessageA(app_state.windows.refresh_rate, CB_GETITEMDATA, pos, NULL);
             }
             return 0;
         case IDC_CHECK_FULLSCREEN:
@@ -221,24 +233,24 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
         case IDC_CHECK_CLIPALWAYS:
         case IDC_CHECK_MULTIPASSRENDERING:
         case IDC_CHECK_WBUFFER:
-            HandleComboField(IDC_CHECK_FULLSCREEN, app_state.settings.fullscreen);
-            HandleComboField(IDC_CHECK_TRIPLEBUFFERING, app_state.settings.triple_buffering);
-            HandleComboField(IDC_CHECK_HARDWARETRANSFORM, app_state.settings.hardware_transform);
-            HandleComboField(IDC_CHECK_TEXTURETRUECOLOR, app_state.settings.texture_true_color);
-            HandleComboField(IDC_CHECK_TEXTURELOWDETAIL, app_state.settings.texture_low_detail);
-            HandleComboField(IDC_CHECK_VSYNC, app_state.settings.vsync);
-            HandleComboField(IDC_CHECK_LIGHTMAPTRUECOLOR, app_state.settings.lightmap_true_color);
-            HandleComboField(IDC_CHECK_TEXTURECOMPRESSED, app_state.settings.texture_compressed);
-            HandleComboField(IDC_CHECK_SOUND, app_state.settings.disable_sound);
-            app_state.settings.disable_sound = !app_state.settings.disable_sound;
-            HandleComboField(IDC_CHECK_SOFTWAREMIXINGONLY, app_state.settings.software_mixing_only);
-            HandleComboField(IDC_CHECK_DISABLEEAX, app_state.settings.disable_eax);
-            HandleComboField(IDC_CHECK_SUSPENDWHENINACTIVE, app_state.settings.suspend_when_inactive);
-            HandleComboField(IDC_CHECK_CLIPALWAYS, app_state.settings.clip_always);
-            HandleComboField(IDC_CHECK_MULTIPASSRENDERING, app_state.settings.multipass_rendering);
-            HandleComboField(IDC_CHECK_WBUFFER, app_state.settings.w_buffer);
+            HandleComboField(IDC_CHECK_FULLSCREEN, settings.fullscreen);
+            HandleComboField(IDC_CHECK_TRIPLEBUFFERING, settings.triple_buffering);
+            HandleComboField(IDC_CHECK_HARDWARETRANSFORM, settings.hardware_transform);
+            HandleComboField(IDC_CHECK_TEXTURETRUECOLOR, settings.texture_true_color);
+            HandleComboField(IDC_CHECK_TEXTURELOWDETAIL, settings.texture_low_detail);
+            HandleComboField(IDC_CHECK_VSYNC, settings.vsync);
+            HandleComboField(IDC_CHECK_LIGHTMAPTRUECOLOR, settings.lightmap_true_color);
+            HandleComboField(IDC_CHECK_TEXTURECOMPRESSED, settings.texture_compressed);
+            HandleComboField(IDC_CHECK_SOUND, settings.disable_sound);
+            settings.disable_sound = !settings.disable_sound;
+            HandleComboField(IDC_CHECK_SOFTWAREMIXINGONLY, settings.software_mixing_only);
+            HandleComboField(IDC_CHECK_DISABLEEAX, settings.disable_eax);
+            HandleComboField(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
+            HandleComboField(IDC_CHECK_CLIPALWAYS, settings.clip_always);
+            HandleComboField(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
+            HandleComboField(IDC_CHECK_WBUFFER, settings.w_buffer);
             ToggleFields();
-            if (app_state.settings.texture_true_color && Param1 == 1010 && app_state.vram_size < 64)
+            if (settings.texture_true_color && id == IDC_CHECK_TEXTURETRUECOLOR && vram_size < 64)
             {
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_LOWVRAMWARNING, buffer, sizeof(buffer)) == 0)
@@ -254,70 +266,81 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
 
                 if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
                 {
-                    app_state.settings.texture_true_color = false;
+                    settings.texture_true_color = false;
+                    break;
                 }
             }
-            else if (app_state.settings.hardware_transform && Param1 != IDC_CHECK_MULTIPASSRENDERING)
+
+            // The controls are only refreshed when one of these two fires
+            if (settings.hardware_transform && id != IDC_CHECK_MULTIPASSRENDERING)
             {
-                app_state.settings.multipass_rendering = false;
+                settings.multipass_rendering = false;
+                break;
             }
-            else if (app_state.settings.multipass_rendering)
+            if (settings.multipass_rendering)
             {
-                app_state.settings.hardware_transform = false;
+                settings.hardware_transform = false;
+                break;
             }
-            else
-            {
-                return 0;
-            }
-            break;
+            return 0;
         case IDC_COMBO_BITDEPTH:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = SendMessageA(app_state.windows.bit_depth, CB_GETCURSEL, NULL, NULL);
-                app_state.settings.bit_depth = SendMessageA(app_state.windows.bit_depth, CB_GETITEMDATA, pos, NULL);
+                uchar pos = static_cast<uchar>(SendMessageA(app_state.windows.bit_depth, CB_GETCURSEL, NULL, NULL));
+                settings.bit_depth = SendMessageA(app_state.windows.bit_depth, CB_GETITEMDATA, pos, NULL);
             }
             return 0;
         case IDC_COMBO_DISPLAY:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = SendMessageA(app_state.windows.display, CB_GETCURSEL, NULL, NULL);
-                app_state.settings.adapter = SendMessageA(app_state.windows.display, CB_GETITEMDATA, pos, NULL);
+                uchar pos = static_cast<uchar>(SendMessageA(app_state.windows.display, CB_GETCURSEL, NULL, NULL));
+                settings.adapter = SendMessageA(app_state.windows.display, CB_GETITEMDATA, pos, NULL);
                 LoadAdapterModes();
             }
             return 0;
         case IDC_BUTTON_AUTODETECT:
             AutodetectSettings();
+            // The D3D8 object is created again without releasing the old one, this is what the original does
+            if (!LoadD3D8())
+            {
+                char buffer[256];
+                if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
+                {
+                    strcpy(buffer, "DirectX : Display devices could not be enumerated.");
+                }
+                Error(buffer);
+            }
             break;
         case IDC_BUTTON_EXPERTSETTINGS:
             ToggleExpertSettings();
             return 0;
         case IDC_COMBO_ANTIALIASING:
-            if ((Param1 >> 16) == 1)
+            if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = SendMessageA(app_state.windows.antialiasing, CB_GETCURSEL, NULL, NULL);
-                app_state.settings.antialiasing = SendMessageA(app_state.windows.antialiasing, CB_GETITEMDATA, pos, NULL);
+                uchar pos = static_cast<uchar>(SendMessageA(app_state.windows.antialiasing, CB_GETCURSEL, NULL, NULL));
+                settings.antialiasing = SendMessageA(app_state.windows.antialiasing, CB_GETITEMDATA, pos, NULL);
             }
             return 0;
         case IDC_COMBO_LANGUAGE:
         {
-            HWND language = GetDlgItem(hWnd, IDC_COMBO_LANGUAGE);
-            int pos = SendMessageA(language, CB_GETCURSEL, NULL, NULL);
-            if (pos != -1)
+            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCURSEL, NULL, NULL);
+            if (pos != CB_ERR)
             {
-                app_state.settings.language = SendMessageA(language, CB_GETITEMDATA, pos, NULL);
+                settings.language = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, pos, NULL);
             }
-            break;
+            return 0;
         }
         case IDC_BUTTON_SAVE:
-            SaveSettings(app_state.settings);
+            SaveSettings(settings);
             EndDialog(hWnd, 0);
             return 0;
         case IDC_BUTTON_EXIT:
-            S_settings empty_settings;
-            InitSettings(empty_settings);
-            LoadSettings(empty_settings);
+        {
+            S_settings saved_settings;
+            InitSettings(saved_settings);
+            LoadSettings(saved_settings);
 
-            if (memcmp(&empty_settings, &app_state.settings, sizeof(S_settings)) != 0)
+            if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
             {
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
@@ -328,7 +351,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
                 char caption[128];
                 if (LoadStringA(NULL, IDS_WARNING, caption, sizeof(caption)) == 0)
                 {
-                    strcpy(buffer, "Warning");
+                    strcpy(caption, "Warning");
                 }
                 if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
                 {
@@ -336,8 +359,9 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
                 }
             }
 
-            EndDialog(hWnd, 0);
+            EndDialog(hWnd, -1);
             return 0;
+        }
         default:
             return 0;
         }
@@ -347,32 +371,30 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
         return 0;
     }
 
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_FULLSCREEN, BM_SETCHECK, app_state.settings.fullscreen, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TRIPLEBUFFERING, BM_SETCHECK, app_state.settings.triple_buffering, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_HARDWARETRANSFORM, BM_SETCHECK, app_state.settings.hardware_transform, NULL);
-    if (app_state.settings.hardware_transform)
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_FULLSCREEN, BM_SETCHECK, settings.fullscreen, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TRIPLEBUFFERING, BM_SETCHECK, settings.triple_buffering, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_HARDWARETRANSFORM, BM_SETCHECK, settings.hardware_transform, NULL);
+    if (settings.hardware_transform)
     {
-        app_state.settings.multipass_rendering = false;
+        settings.multipass_rendering = false;
     }
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURETRUECOLOR, BM_SETCHECK, app_state.settings.texture_true_color, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURELOWDETAIL, BM_SETCHECK, app_state.settings.texture_low_detail, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_VSYNC, BM_SETCHECK, app_state.settings.vsync, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_LIGHTMAPTRUECOLOR, BM_SETCHECK, app_state.settings.lightmap_true_color, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURECOMPRESSED, BM_SETCHECK, app_state.settings.texture_compressed, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SOUND, BM_SETCHECK, !app_state.settings.disable_sound, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY, BM_SETCHECK, app_state.settings.software_mixing_only, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_DISABLEEAX, BM_SETCHECK, app_state.settings.disable_eax, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SUSPENDWHENINACTIVE, BM_SETCHECK, app_state.settings.suspend_when_inactive, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_CLIPALWAYS, BM_SETCHECK, app_state.settings.clip_always, NULL);
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_MULTIPASSRENDERING, BM_SETCHECK, app_state.settings.multipass_rendering, NULL);
-    if (!app_state.supports_w_buffer)
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURETRUECOLOR, BM_SETCHECK, settings.texture_true_color, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURELOWDETAIL, BM_SETCHECK, settings.texture_low_detail, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_VSYNC, BM_SETCHECK, settings.vsync, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_LIGHTMAPTRUECOLOR, BM_SETCHECK, settings.lightmap_true_color, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_TEXTURECOMPRESSED, BM_SETCHECK, settings.texture_compressed, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SOUND, BM_SETCHECK, !settings.disable_sound, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY, BM_SETCHECK, settings.software_mixing_only, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_DISABLEEAX, BM_SETCHECK, settings.disable_eax, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_SUSPENDWHENINACTIVE, BM_SETCHECK, settings.suspend_when_inactive, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_CLIPALWAYS, BM_SETCHECK, settings.clip_always, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_MULTIPASSRENDERING, BM_SETCHECK, settings.multipass_rendering, NULL);
+    if (!supports_w_buffer)
     {
-        app_state.settings.w_buffer = false;
+        settings.w_buffer = false;
     }
-    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_WBUFFER, BM_SETCHECK, app_state.settings.w_buffer, NULL);
-
-    HWND w_buffer_window = GetDlgItem(app_state.windows.main, IDC_CHECK_WBUFFER);
-    EnableWindow(w_buffer_window, app_state.supports_w_buffer);
+    SendDlgItemMessageA(app_state.windows.main, IDC_CHECK_WBUFFER, BM_SETCHECK, settings.w_buffer, NULL);
+    EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
 
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
 
@@ -400,46 +422,29 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM Param1, LPARAM Param2)
         strcpy(buffer, "5.1 surround sound speakers");
     }
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
-    SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, app_state.settings.sound_type, NULL);
+    SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
     LoadAdapterData(-1);
     ToggleFields();
 
-    HWND language = GetDlgItem(app_state.windows.main, IDC_COMBO_LANGUAGE);
+    HWND language = GetDlgItem(hWnd, IDC_COMBO_LANGUAGE);
     SendMessageA(language, CB_RESETCONTENT, NULL, NULL);
     int pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("English"));
     SendMessageA(language, CB_SETITEMDATA, pos, 0);
-    pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Deutsch"));
+    // The typo is in the binary
+    pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Deutch"));
     SendMessageA(language, CB_SETITEMDATA, pos, 2);
     pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Cesky"));
     SendMessageA(language, CB_SETITEMDATA, pos, 1);
 
     int language_count = SendMessageA(language, CB_GETCOUNT, NULL, NULL);
-    if (language_count > 0)
+    for (int i = 0; i < language_count; i++)
     {
-        int i = 0;
-        while (true)
+        if (SendMessageA(language, CB_GETITEMDATA, i, NULL) == settings.language)
         {
-            if (SendMessageA(language, CB_GETITEMDATA, i, NULL) == app_state.settings.language)
-            {
-                break;
-            }
-            if (++i >= language_count)
-            {
-                return 0;
-            }
+            SendMessageA(language, CB_SETCURSEL, i, NULL);
+            break;
         }
-        SendMessageA(language, CB_SETCURSEL, i, NULL);
     }
 
-    return 0;
-}
-
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
-{
-    app_state.hinst = hInstance;
-    InitCommonControls();
-    app_state.settings_loaded = LoadSettings(app_state.settings);
-    DialogBoxParamA(hInstance, MAKEINTRESOURCEA(IDD_MAIN), NULL, DialogFunc, NULL);
-    FreeD3D8();
     return 0;
 }

@@ -1,4 +1,10 @@
 build/
+target/
 .vs/
 out/
 CMakeSettings.json
+msvc600_sp5_vcpp/
+msvc600/
+.venv/
+reccmp-user.yml
+reccmp-build.yml
