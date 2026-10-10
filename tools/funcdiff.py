@@ -247,9 +247,14 @@ def run_match(compare: Compare, match) -> Result:
     orig_size = match.size(ImageId.ORIG)
     recomp_size = match.size(ImageId.RECOMP)
     if orig_size is None:
+        # reccmp has no size for the original's functions and disassembles min(our size, distance to the
+        # next known entity), which cuts off the end of an original that is longer than ours. Take the
+        # whole distance instead; the padding after the function only adds a few unmatched lines.
         orig_max = match.max_size(ImageId.ORIG)
-        orig_size = min(orig_max, recomp_size) if orig_max is not None else recomp_size
+        orig_size = orig_max if orig_max is not None else recomp_size
     orig = disassemble(fc.orig_sanitize, compare.orig_bin.read(match.orig_addr, orig_size), match.orig_addr)
+    while orig and orig[-1].text.strip() in ("nop", "int3"):  # the linker's padding up to the next function
+        orig.pop()
     ours = disassemble(fc.recomp_sanitize, compare.recomp_bin.read(match.recomp_addr, recomp_size), match.recomp_addr)
     return compare_insns(match.best_name() or hex(match.orig_addr), match.orig_addr, match.recomp_addr, orig, ours)
 
