@@ -129,52 +129,58 @@ static inline int GetFirstIndex(int handle_index, uint hash)
 // Separate function in the PS2 build (Decompression__FPUcPUcUi), inlined 3 times into dtaRead and once into WavDecompression on PC
 static inline int Decompression(uchar *buffer, uchar *dest, uint len)
 {
+    // The stored length goes through out: the original computes it in out's register (also on PS2)
+    uint out;
     if (!buffer[0])
     {
-        memcpy(dest, buffer + 1, len - 1);
-        return len - 1;
+        out = len - 1;
+        memcpy(dest, buffer + 1, out);
+        return out;
     }
 
-    uint out = 0;
+    out = 0;
+    ushort flags = (buffer[1] << 8) + buffer[2];
     uint position = 3;
     uchar bits = 16;
-    ushort flags = (buffer[1] << 8) + buffer[2];
     while (position < len)
     {
         if (!bits)
         {
-            bits = 16;
             flags = (buffer[position] << 8) + buffer[position + 1];
+            bits = 16;
             position += 2;
         }
 
-        if (flags & 0x8000)
+        if (!(flags & 0x8000))
         {
-            uint offset = (buffer[position] << 4) + (buffer[position + 1] >> 4);
-            if (offset)
-            {
-                uint count = (buffer[position + 1] & 0xF) + 3;
-                for (ushort i = 0; i < count; i++)
-                {
-                    dest[out + i] = dest[out - offset + i];
-                }
-                out += count;
-                position += 2;
-            }
-            else
-            {
-                uint count = (buffer[position + 1] << 8) + buffer[position + 2] + 16;
-                for (ushort i = 0; i < count; i++)
-                {
-                    dest[out + i] = buffer[position + 3];
-                }
-                out += count;
-                position += 4;
-            }
+            dest[out] = buffer[position];
+            position++;
+            out++;
         }
         else
         {
-            dest[out++] = buffer[position++];
+            uint offset = (buffer[position] << 4) + (buffer[position + 1] >> 4);
+            if (!offset)
+            {
+                // count + 1 bytes: the signed compares and the +1 after the ushort truncation are in the binary
+                ushort count = (buffer[position + 1] << 8) + buffer[position + 2] + 15;
+                for (ushort i = 0; i < count + 1; i++)
+                {
+                    dest[out + i] = buffer[position + 3];
+                }
+                position += 4;
+                out += count + 1;
+            }
+            else
+            {
+                ushort count = (buffer[position + 1] & 0xF) + 2;
+                for (ushort i = 0; i < count + 1; i++)
+                {
+                    dest[out + i] = dest[out - offset + i];
+                }
+                position += 2;
+                out += count + 1;
+            }
         }
 
         flags <<= 1;
@@ -1417,9 +1423,9 @@ C_ref_counter::~C_ref_counter()
     }
 }
 
-// Not static, a global symbol in the PS2 build
+// Not static, a global symbol in the PS2 build. 7 x 128 entries; signed, the PS2 build loads them with lh.
 // GLOBAL: RWDATA 0x1000c040
-ushort wav_table[] =
+short wav_table[] =
     {
         0x0000, 0x0001, 0x0002, 0x0004, 0x0008, 0x000c, 0x0012, 0x0018, 0x0020, 0x0029, 0x0032, 0x003d,
         0x0049, 0x0055, 0x0063, 0x0072, 0x0082, 0x0092, 0x00a4, 0x00b7, 0x00cb, 0x00df, 0x00f5, 0x010c,
@@ -1501,122 +1507,138 @@ ushort wav_table[] =
 // FUNCTION: RWDATA 0x10004250
 int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header)
 {
-    int decompressed_size = 0;
-    uint position = 1;
-
     int dpcm_type = 0;
-    switch (buffer[0])
+    uint position = 1;
+    // Shared by the stereo and the mono decoder: separate locals get different stack slots
+    short value;
+    short value2;
+
+    // An if chain, not a switch: VC6 turns the switch into a jump table
+    if (buffer[0] == 12)
     {
-    case 12:
         dpcm_type = 1;
-        break;
-    case 16:
+    }
+    else if (buffer[0] == 16)
+    {
         dpcm_type = 2;
-        break;
-    case 20:
+    }
+    else if (buffer[0] == 20)
+    {
         dpcm_type = 3;
-        break;
-    case 24:
+    }
+    else if (buffer[0] == 24)
+    {
         dpcm_type = 4;
-        break;
-    case 28:
+    }
+    else if (buffer[0] == 28)
+    {
         dpcm_type = 5;
-        break;
-    case 32:
+    }
+    else if (buffer[0] == 32)
+    {
         dpcm_type = 6;
-        break;
     }
 
+    int decompressed_size = 0;
     S_WAVHEADER *block_header = reinterpret_cast<S_WAVHEADER *>(buffer + 1);
     if (block_header->riff_chunk_id == wav_header->riff_chunk_id && block_header->format_chunk_id == wav_header->format_chunk_id && block_header->data_chunk_id == wav_header->data_chunk_id)
     {
-        memcpy(dest, buffer + 1, sizeof(S_WAVHEADER));
+        memcpy(dest, block_header, sizeof(S_WAVHEADER));
         position = sizeof(S_WAVHEADER) + 1;
         decompressed_size = sizeof(S_WAVHEADER);
     }
 
-    if (position >= len)
+    if (position < len)
     {
-        return decompressed_size;
-    }
-
-    if (wav_header->block_align / wav_header->channel_count != 2)
-    {
-        // Sound files which aren't 16 bit are compressed like everything else
-        return decompressed_size + Decompression(&buffer[position], &dest[decompressed_size], len - position);
-    }
-
-    int wav_table_index = dpcm_type * 128;
-    if (wav_header->channel_count == 2)
-    {
-        for (int i = 4; i != 0; --i)
+        if (wav_header->block_align / wav_header->channel_count == 2)
         {
-            dest[decompressed_size++] = buffer[position++];
-        }
-        if (position >= len)
-        {
-            return decompressed_size;
-        }
-
-        short value = *reinterpret_cast<short *>(&dest[decompressed_size - 4]);
-        short value2 = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
-        for (; position < len; position += 2)
-        {
-            char buffer_value = buffer[position];
-            ushort wav_value = wav_table[wav_table_index + (buffer_value & 0x7F)];
-            if (buffer_value >= 0)
+            if (wav_header->channel_count == 2)
             {
-                value += wav_value;
+                for (int i = 4; i != 0; --i)
+                {
+                    dest[decompressed_size++] = buffer[position++];
+                }
+
+                if (position < len)
+                {
+                    value = *reinterpret_cast<short *>(&dest[decompressed_size - 4]);
+                    value2 = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
+                    // Scaled in place: the original keeps dpcm_type * 128 in dpcm_type's stack slot
+                    dpcm_type *= 128;
+                    do
+                    {
+                        // Both sample addresses are taken (and decompressed_size advanced) before decoding, in both
+                        // the PC and the PS2 build
+                        short *left = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        decompressed_size += 2;
+                        short *right = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        decompressed_size += 2;
+
+                        uchar c = buffer[position];
+                        uchar idx = c & 0x7F;
+                        if (c & 0x80)
+                        {
+                            value -= wav_table[dpcm_type + idx];
+                        }
+                        else
+                        {
+                            value += wav_table[dpcm_type + idx];
+                        }
+                        *left = value;
+                        position++;
+
+                        c = buffer[position];
+                        idx = c & 0x7F;
+                        if (c & 0x80)
+                        {
+                            value2 -= wav_table[dpcm_type + idx];
+                        }
+                        else
+                        {
+                            value2 += wav_table[dpcm_type + idx];
+                        }
+                        *right = value2;
+                        position++;
+                    } while (position < len);
+                }
             }
             else
             {
-                value -= wav_value;
+                for (int i = 2; i != 0; --i)
+                {
+                    dest[decompressed_size++] = buffer[position++];
+                }
+
+                if (position < len)
+                {
+                    value = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
+                    dpcm_type *= 128;
+                    do
+                    {
+                        short *sample = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        decompressed_size += 2;
+
+                        uchar c = buffer[position];
+                        uchar idx = c & 0x7F;
+                        if (c & 0x80)
+                        {
+                            value -= wav_table[dpcm_type + idx];
+                        }
+                        else
+                        {
+                            value += wav_table[dpcm_type + idx];
+                        }
+                        *sample = value;
+                        position++;
+                    } while (position < len);
+                }
             }
-            *reinterpret_cast<short *>(&dest[decompressed_size]) = value;
-
-            char buffer_value2 = buffer[position + 1];
-            ushort wav_value2 = wav_table[wav_table_index + (buffer_value2 & 0x7F)];
-            if (buffer_value2 >= 0)
-            {
-                value2 += wav_value2;
-            }
-            else
-            {
-                value2 -= wav_value2;
-            }
-            *reinterpret_cast<short *>(&dest[decompressed_size + 2]) = value2;
-
-            decompressed_size += 4;
-        }
-
-        return decompressed_size;
-    }
-
-    for (int i = 2; i != 0; --i)
-    {
-        dest[decompressed_size++] = buffer[position++];
-    }
-    if (position >= len)
-    {
-        return decompressed_size;
-    }
-
-    short value = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
-    for (; position < len; ++position)
-    {
-        char buffer_value = buffer[position];
-        ushort wav_value = wav_table[wav_table_index + (buffer_value & 0x7F)];
-        if (buffer_value >= 0)
-        {
-            value += wav_value;
         }
         else
         {
-            value -= wav_value;
+            // Sound files which aren't 16 bit are compressed like everything else
+            decompressed_size += Decompression(&buffer[position], &dest[decompressed_size], len - position);
         }
-        *reinterpret_cast<short *>(&dest[decompressed_size]) = value;
-
-        decompressed_size += 2;
     }
 
     return decompressed_size;
