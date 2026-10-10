@@ -284,7 +284,8 @@ extern "C"
 // TEMPLATE: RWDATA 0x10004ef0
 // ?_Destroy@?$vector@US_FILEHANDLE@@V?$allocator@US_FILEHANDLE@@@std@@@std@@IAEXPAUS_FILEHANDLE@@0@Z
 
-// Out-of-line in the original, inlined in the rebuild
+// Out of line, called from the v_handle.erase inlined into ~C_rw_data_inter. Our build only emits it out of
+// line since ~C_rw_data_inter indexes v_file_h directly.
 // TEMPLATE: RWDATA 0x10004f00
 // ?_Destroy@?$vector@US_HANDLE@@V?$allocator@US_HANDLE@@@std@@@std@@IAEXPAUS_HANDLE@@0@Z
 

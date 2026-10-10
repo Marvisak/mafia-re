@@ -316,28 +316,27 @@ C_rw_data_inter::~C_rw_data_inter()
     count = v_file_h.size();
     for (i = 0; i < count; i++)
     {
-        S_FILEHANDLE &file_handle = v_file_h[i];
-        if (file_handle.file == file)
+        if (v_file_h[i].file == file)
         {
-            if (file_handle.tmp_file_name)
+            if (v_file_h[i].tmp_file_name)
             {
-                delete[] file_handle.tmp_file_name;
+                delete[] v_file_h[i].tmp_file_name;
             }
 
-            if (file_handle.block_content)
+            if (v_file_h[i].block_content)
             {
-                delete[] file_handle.block_content;
+                delete[] v_file_h[i].block_content;
             }
 
-            if (file_handle.wav_header)
+            if (v_file_h[i].wav_header)
             {
-                delete file_handle.wav_header;
+                delete v_file_h[i].wav_header;
             }
 
-            file_handle.wav_header = NULL;
-            file_handle.block_content = NULL;
-            file_handle.is_block_in_memory = false;
-            file_handle.file = INVALID_HANDLE_VALUE;
+            v_file_h[i].wav_header = NULL;
+            v_file_h[i].block_content = NULL;
+            v_file_h[i].is_block_in_memory = false;
+            v_file_h[i].file = INVALID_HANDLE_VALUE;
         }
     }
 
@@ -1152,13 +1151,16 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
         }
     }
 
+    // i is reused: the original keeps both counters in the same stack slot (i has to live in memory for push_back)
     uint count = positions.size();
-    for (uint j = 0; j < count; j++)
+    for (i = 0; i < count; i++)
     {
-        memmove(buffer + positions[j], buffer + positions[j] + 1, len - (positions[j] + 1));
+        uint next = positions[i] + 1;
+        memmove(buffer + positions[i], buffer + next, len - next);
         len--;
     }
 
+    positions.clear();
     C_m_p.Unlock();
     return len;
 }
