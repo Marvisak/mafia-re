@@ -22,22 +22,6 @@ static int __stdcall OpenFromDTA(const char *file_name);
 int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header);
 void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key);
 
-// Stores the new file handle in the first free slot, only grows the vector if there is none
-static inline int AddFileHandle(const S_FILEHANDLE &file_handle)
-{
-    for (uint i = 0; i < v_file_h.size(); i++)
-    {
-        if (v_file_h[i].file == INVALID_HANDLE_VALUE)
-        {
-            v_file_h[i] = file_handle;
-            return i;
-        }
-    }
-
-    v_file_h.push_back(file_handle);
-    return v_file_h.size() - 1;
-}
-
 // Separate function in the PS2 build (OpenFromFileSystem__FPCc), inlined into dtaOpen on PC.
 // A failed CreateFileA falls through to the single return: with an early "return result" VC6 propagates the -1 and
 // no longer keeps result in the caller's handle register. The other two failures return -1 directly.
@@ -1225,7 +1209,8 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {
     C_m_p.Lock();
-    int file_flags = flags & DTA_TEMPORARY ? FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_HIDDEN : FILE_ATTRIBUTE_NORMAL;
+    // Only FILE_ATTRIBUTE_HIDDEN: the binary selects between 2 and 0x80 (and al, 0x82; add eax, 0x80)
+    int file_flags = flags & DTA_TEMPORARY ? FILE_ATTRIBUTE_HIDDEN : FILE_ATTRIBUTE_NORMAL;
     int disposition = flags & DTA_CREATE_FILE ? CREATE_ALWAYS : OPEN_ALWAYS;
 
     HANDLE file;
@@ -1235,7 +1220,8 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         strcpy(tmp_file_name, file_name);
         strcat(tmp_file_name, ".tmp");
 
-        if (disposition == OPEN_ALWAYS)
+        // A bit test in the binary (test bl, 4), not a compare
+        if (disposition & OPEN_ALWAYS)
         {
             CopyFileA(file_name, tmp_file_name, false);
         }
@@ -1247,22 +1233,24 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         file = CreateFileA(tmp_file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
         if (file == INVALID_HANDLE_VALUE)
         {
-            if ((flags & DTA_CHANGE_ATTRIBUTES) == 0)
+            if (flags & DTA_CHANGE_ATTRIBUTES)
             {
-                C_m_p.Unlock();
-                return -1;
+                DWORD attributes = GetFileAttributesA(tmp_file_name);
+                if (attributes == -1)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                attributes &= ~FILE_ATTRIBUTE_READONLY;
+                SetFileAttributesA(tmp_file_name, attributes);
+                file = CreateFileA(tmp_file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
+                if (file == INVALID_HANDLE_VALUE)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
             }
-
-            DWORD attributes = GetFileAttributesA(tmp_file_name);
-            if (attributes == -1)
-            {
-                C_m_p.Unlock();
-                return -1;
-            }
-            attributes &= ~FILE_ATTRIBUTE_READONLY;
-            SetFileAttributesA(tmp_file_name, attributes);
-            file = CreateFileA(tmp_file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
-            if (file == INVALID_HANDLE_VALUE)
+            else
             {
                 C_m_p.Unlock();
                 return -1;
@@ -1274,22 +1262,24 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         file = CreateFileA(file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
         if (file == INVALID_HANDLE_VALUE)
         {
-            if ((flags & DTA_CHANGE_ATTRIBUTES) == 0)
+            if (flags & DTA_CHANGE_ATTRIBUTES)
             {
-                C_m_p.Unlock();
-                return -1;
+                DWORD attributes = GetFileAttributesA(file_name);
+                if (attributes == -1)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                attributes &= ~FILE_ATTRIBUTE_READONLY;
+                SetFileAttributesA(file_name, attributes);
+                file = CreateFileA(file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
+                if (file == INVALID_HANDLE_VALUE)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
             }
-
-            DWORD attributes = GetFileAttributesA(file_name);
-            if (attributes == -1)
-            {
-                C_m_p.Unlock();
-                return -1;
-            }
-            attributes &= ~FILE_ATTRIBUTE_READONLY;
-            SetFileAttributesA(file_name, attributes);
-            file = CreateFileA(file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
-            if (file == INVALID_HANDLE_VALUE)
+            else
             {
                 C_m_p.Unlock();
                 return -1;
@@ -1331,7 +1321,29 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
     file_handle.compressed_block_size = 0;
     file_handle.previous_compressed_block_size = 0;
 
-    int handle = AddFileHandle(file_handle);
+    // Reuse the first free slot, only grow the vector if there is none
+    int handle;
+    uint count = v_file_h.size();
+    uint i;
+    for (i = 0; i < count; i++)
+    {
+        if (v_file_h[i].file == INVALID_HANDLE_VALUE)
+        {
+            v_file_h[i] = file_handle;
+            handle = i;
+            break;
+        }
+    }
+
+    if (i >= count)
+    {
+        // Not matching yet. The original inlines insert() but calls _Ucopy/_Ufill/_Destroy, VC6 decides that from an
+        // inline budget that grows with the size of the function. push_back() (as in OpenFromDTA) leaves insert()
+        // out of line here, this form inlines all of it.
+        v_file_h.insert(v_file_h.end(), 1, file_handle);
+        handle = v_file_h.size() - 1;
+    }
+
     C_m_p.Unlock();
     return handle;
 }
