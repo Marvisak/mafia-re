@@ -2,6 +2,10 @@
 // The binary was compiled with /Gz, so every free function is __stdcall.
 #include "rw_data.h"
 
+// VC6 lays out the uninitialized globals by the hash bucket of their names (tools/bsshash.py, see CLAUDE.md):
+// v_file_h 144, C_l_d 231, C_m_p 259, v_handle 373, unreferenced_buffer 727. dta_first_force is zero-initialized,
+// so it isn't hashed and comes after all of them.
+
 // GLOBAL: RWDATA 0x10012c98
 bool dta_first_force = false;
 
@@ -14,194 +18,23 @@ std::vector<S_HANDLE> v_handle;
 // GLOBAL: RWDATA 0x1000ec6c
 C_multithrerad_protection C_m_p;
 
+// Not in the PS2 build, so the name is a guess: the initials of the class like C_m_p, with a bucket between v_file_h
+// and C_m_p
 // GLOBAL: RWDATA 0x1000ec60
-C_ref_counter C_r_f;
+C_leak_detector C_l_d;
+
+// No code references it and the PS2 build doesn't have it, so name and type are unknown. Its name needs a bucket
+// above v_handle's. 0x40 bytes and more are 8-aligned, hence the 4 bytes of padding after v_handle.
+// GLOBAL: RWDATA 0x1000ec98
+uchar unreferenced_buffer[0x4000];
 
 static int __stdcall OpenFromDTA(const char *file_name);
 // Not static: both are global symbols in the PS2 build, unlike OpenFromDTA
 int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER *wav_header);
 void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key);
-
-// Separate function in the PS2 build (OpenFromFileSystem__FPCc), inlined into dtaOpen on PC.
-// A failed CreateFileA falls through to the single return: with an early "return result" VC6 propagates the -1 and
-// no longer keeps result in the caller's handle register. The other two failures return -1 directly.
-static inline int OpenFromFileSystem(const char *file_name)
-{
-    int result = -1;
-    S_FILEHANDLE file_handle;
-
-    file_handle.file = CreateFileA(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (file_handle.file != INVALID_HANDLE_VALUE)
-    {
-        file_handle.size = SetFilePointer(file_handle.file, 0, NULL, FILE_END);
-        if (file_handle.size == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-        {
-            return -1;
-        }
-
-        file_handle.is_block_in_memory = false;
-        file_handle.data_offset = 0;
-        file_handle.block_start_file_pointer = 0;
-        file_handle.file_pointer = 0;
-        file_handle.block_file_pointer = 0;
-        file_handle.block_count = 1;
-        file_handle.current_block = 0;
-        file_handle.flags = DTA_FROM_FILESYSTEM;
-        file_handle.wav_header = NULL;
-        file_handle.block_size = 0x8000;
-        if (file_handle.size < 0x8000)
-        {
-            file_handle.block_size = file_handle.size;
-        }
-        file_handle.block_content = new uchar[0x8000];
-        if (!file_handle.block_content)
-        {
-            return -1;
-        }
-        file_handle.compressed_block_size = 0;
-        file_handle.previous_compressed_block_size = 0;
-        file_handle.tmp_file_name = NULL;
-
-        // Reuse the first free slot, only grow the vector if there is none
-        uint count = v_file_h.size();
-        uint i;
-        for (i = 0; i < count; i++)
-        {
-            if (v_file_h[i].file == INVALID_HANDLE_VALUE)
-            {
-                v_file_h[i] = file_handle;
-                result = i;
-                break;
-            }
-        }
-
-        if (i >= count)
-        {
-            v_file_h.push_back(file_handle);
-            result = v_file_h.size() - 1;
-        }
-    }
-
-    return result;
-}
-
-// Separate function in the PS2 build (GetFirstIndex__FiUi), inlined into OpenFromDTA on PC
-// Binary search over the sorted file table, returns the first entry with the given hash or -1
-static inline int GetFirstIndex(int handle_index, uint hash)
-{
-    int count = v_handle[handle_index].file_table.size();
-    if (count <= 0)
-    {
-        return -1;
-    }
-
-    int lo = 0;
-    int hi = count - 1;
-    int mid = count / 2;
-    while (true)
-    {
-        int diff = hash - v_handle[handle_index].file_table[mid].hash;
-        if (diff > 0)
-        {
-            // Advances mid itself: the original increments mid's register and copies it to lo (PS2 too)
-            lo = ++mid;
-            if (lo > hi)
-            {
-                return -1;
-            }
-            mid += (hi - lo) / 2;
-        }
-        else if (diff < 0)
-        {
-            hi = mid - 1;
-            if (hi < lo)
-            {
-                return -1;
-            }
-            mid = lo + (hi - lo) / 2;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    // Back to the first entry with this hash. Decrements before comparing and adds the 1 back afterwards, the same in
-    // the PS2 build
-    while (mid-- > 0)
-    {
-        if (v_handle[handle_index].file_table[mid].hash != hash)
-        {
-            break;
-        }
-    }
-
-    return mid + 1;
-}
-
-// Separate function in the PS2 build (Decompression__FPUcPUcUi), inlined 3 times into dtaRead and once into WavDecompression on PC
-static inline int Decompression(uchar *buffer, uchar *dest, uint len)
-{
-    // The stored length goes through out: the original computes it in out's register (also on PS2)
-    uint out;
-    if (!buffer[0])
-    {
-        out = len - 1;
-        memcpy(dest, buffer + 1, out);
-        return out;
-    }
-
-    out = 0;
-    ushort flags = (buffer[1] << 8) + buffer[2];
-    uint position = 3;
-    uchar bits = 16;
-    while (position < len)
-    {
-        if (!bits)
-        {
-            flags = (buffer[position] << 8) + buffer[position + 1];
-            bits = 16;
-            position += 2;
-        }
-
-        if (!(flags & 0x8000))
-        {
-            dest[out] = buffer[position];
-            position++;
-            out++;
-        }
-        else
-        {
-            uint offset = (buffer[position] << 4) + (buffer[position + 1] >> 4);
-            if (!offset)
-            {
-                // count + 1 bytes: the signed compares and the +1 after the ushort truncation are in the binary
-                ushort count = (buffer[position + 1] << 8) + buffer[position + 2] + 15;
-                for (ushort i = 0; i < count + 1; i++)
-                {
-                    dest[out + i] = buffer[position + 3];
-                }
-                position += 4;
-                out += count + 1;
-            }
-            else
-            {
-                ushort count = (buffer[position + 1] & 0xF) + 2;
-                for (ushort i = 0; i < count + 1; i++)
-                {
-                    dest[out + i] = dest[out - offset + i];
-                }
-                position += 2;
-                out += count + 1;
-            }
-        }
-
-        flags <<= 1;
-        bits--;
-    }
-
-    return out;
-}
+static inline int OpenFromFileSystem(const char *file_name);
+static inline int GetFirstIndex(int handle_index, uint hash);
+static inline int Decompression(uchar *buffer, uchar *dest, uint len);
 
 // FUNCTION: RWDATA 0x10001170
 LPC_rw_data_inter EXPORT dtaCreate(const char *file_name)
@@ -251,7 +84,7 @@ C_rw_data_inter::C_rw_data_inter(const char *file_name, bool &is_valid)
 
         v_handle.push_back(handle);
         AddRef();
-        C_r_f.AddObject();
+        C_l_d.AddObject();
         is_valid = true;
     }
 }
@@ -359,14 +192,14 @@ C_rw_data_inter::~C_rw_data_inter()
         }
     }
 
-    C_r_f.ReleaseObject();
+    C_l_d.ReleaseObject();
 }
 
 // FUNCTION: RWDATA 0x10001820
 int C_rw_data_inter::AddRef()
 {
     C_m_p.Lock();
-    C_r_f.AddRef();
+    C_l_d.AddRef();
     C_m_p.Unlock();
     return ++ref_count;
 }
@@ -375,7 +208,7 @@ int C_rw_data_inter::AddRef()
 int C_rw_data_inter::Release()
 {
     C_m_p.Lock();
-    C_r_f.Release();
+    C_l_d.Release();
     uint refs = --ref_count;
     if (refs < 1)
     {
@@ -436,159 +269,279 @@ static int __stdcall OpenFromDTA(const char *file_name)
         uint entry_count = v_handle[h].file_table.size();
 
         int j = GetFirstIndex(h, hash);
-        if (j == -1)
+        // A block, not `if (j == -1) continue;`: the PS2 build has the same if/else, and with the continue VC6 keeps
+        // a zero in ebx through GetFirstIndex
+        if (j != -1)
         {
-            continue;
-        }
-
-        for (; static_cast<uint>(j) < entry_count; j++)
-        {
-            if (v_handle[h].file_table[j].hash != hash)
+            for (; static_cast<uint>(j) < entry_count; j++)
             {
-                break;
-            }
-
-            int str_index = 0;
-            if (v_handle[h].file_table[j].file_name_length > 16)
-            {
-                str_index = v_handle[h].file_table[j].file_name_length - 16;
-            }
-
-            if (strncmp(v_handle[h].file_table[j].file_name, &file_name_upper[str_index], 16) != 0)
-            {
-                continue;
-            }
-
-            if (SetFilePointer(v_handle[h].file, v_handle[h].file_table[j].header_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-            {
-                return result;
-            }
-
-            DWORD bytes_read;
-            S_FILEHEADER file_header;
-            if (!ReadFile(v_handle[h].file, &file_header, sizeof(S_FILEHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_FILEHEADER))
-            {
-                return result;
-            }
-            DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), v_handle[h].key);
-
-            char full_file_name[MAX_PATH];
-            if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
-            {
-                return result;
-            }
-            DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, v_handle[h].key);
-
-            full_file_name[bytes_read] = '\0';
-            strupr(full_file_name);
-            if (strcmp(file_name_upper, full_file_name) != 0)
-            {
-                continue;
-            }
-
-            S_FILEHANDLE file_handle;
-            file_handle.tmp_file_name = NULL;
-            file_handle.wav_header = NULL;
-            file_handle.block_content = NULL;
-            file_handle.is_block_in_memory = false;
-            file_handle.file = v_handle[h].file;
-            file_handle.size = file_header.size;
-            file_handle.data_offset = v_handle[h].file_table[j].data_offset;
-            file_handle.block_count = file_header.block_count;
-            file_handle.block_start_file_pointer = 0;
-            file_handle.file_pointer = 0;
-            file_handle.block_file_pointer = 0;
-            file_handle.current_block = 0;
-            file_handle.flags = 0;
-            file_handle.timestamp = file_header.timestamp;
-            file_handle.block_size = 0x8000;
-            if (file_handle.size < 0x8000)
-            {
-                file_handle.block_size = file_handle.size;
-            }
-            file_handle.key = v_handle[h].key;
-            file_handle.encrypted = (file_header.name_length_flags & 0x8000) != 0;
-
-            if (!ReadFile(file_handle.file, &file_handle.compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
-            {
-                return result;
-            }
-
-            file_handle.compressed_block_size &= 0xFFFF;
-            file_handle.previous_compressed_block_size = 0;
-
-            uchar buffer[1 + sizeof(S_WAVHEADER)];
-            if (!ReadFile(file_handle.file, buffer, 1, &bytes_read, NULL) || bytes_read != 1)
-            {
-                return result;
-            }
-            if (file_handle.encrypted)
-            {
-                DeCrypt(buffer, 1, file_handle.key);
-            }
-
-            if (buffer[0] >= 8)
-            {
-                file_handle.wav_header = new S_WAVHEADER;
-                if (!file_handle.wav_header)
+                if (v_handle[h].file_table[j].hash != hash)
                 {
-                    return result;
-                }
-
-                if (!ReadFile(file_handle.file, buffer + 1, sizeof(S_WAVHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_WAVHEADER))
-                {
-                    return result;
-                }
-
-                if (file_handle.encrypted)
-                {
-                    // Decrypts the already decrypted block type again, this is what the original does
-                    DeCrypt(buffer, 1 + sizeof(S_WAVHEADER), file_handle.key);
-                }
-                else
-                {
-                    // The wav header is always encrypted no matter if the rest of the archive is
-                    DeCrypt(buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
-                }
-                memcpy(file_handle.wav_header, buffer + 1, sizeof(S_WAVHEADER));
-            }
-
-            file_handle.block_content = new uchar[0x8000];
-            if (!file_handle.block_content)
-            {
-                if (file_handle.wav_header)
-                {
-                    delete file_handle.wav_header;
-                }
-                return result;
-            }
-
-            // Reuse the first free slot, only grow the vector if there is none
-            uint count = v_file_h.size();
-            uint k;
-            for (k = 0; k < count; k++)
-            {
-                if (v_file_h[k].file == INVALID_HANDLE_VALUE)
-                {
-                    v_file_h[k] = file_handle;
-                    result = k;
                     break;
                 }
-            }
 
-            if (k >= count)
-            {
-                v_file_h.push_back(file_handle);
-                result = v_file_h.size() - 1;
-            }
+                int str_index = 0;
+                if (v_handle[h].file_table[j].file_name_length > 16)
+                {
+                    str_index = v_handle[h].file_table[j].file_name_length - 16;
+                }
 
-            // Leaves the archive loop as well
-            h = handle_count;
-            break;
+                if (strncmp(v_handle[h].file_table[j].file_name, &file_name_upper[str_index], 16) != 0)
+                {
+                    continue;
+                }
+
+                if (SetFilePointer(v_handle[h].file, v_handle[h].file_table[j].header_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                {
+                    return result;
+                }
+
+                DWORD bytes_read;
+                S_FILEHEADER file_header;
+                if (!ReadFile(v_handle[h].file, &file_header, sizeof(S_FILEHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_FILEHEADER))
+                {
+                    return result;
+                }
+                DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), v_handle[h].key);
+
+                char full_file_name[MAX_PATH];
+                if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
+                {
+                    return result;
+                }
+                DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, v_handle[h].key);
+
+                full_file_name[bytes_read] = '\0';
+                strupr(full_file_name);
+                if (strcmp(file_name_upper, full_file_name) != 0)
+                {
+                    continue;
+                }
+
+                S_FILEHANDLE file_handle;
+                file_handle.tmp_file_name = NULL;
+                file_handle.wav_header = NULL;
+                file_handle.block_content = NULL;
+                file_handle.is_block_in_memory = false;
+                file_handle.file = v_handle[h].file;
+                file_handle.size = file_header.size;
+                file_handle.data_offset = v_handle[h].file_table[j].data_offset;
+                file_handle.block_count = file_header.block_count;
+                file_handle.block_start_file_pointer = 0;
+                file_handle.file_pointer = 0;
+                file_handle.block_file_pointer = 0;
+                file_handle.current_block = 0;
+                file_handle.flags = 0;
+                file_handle.timestamp = file_header.timestamp;
+                file_handle.block_size = 0x8000;
+                if (file_handle.size < 0x8000)
+                {
+                    file_handle.block_size = file_handle.size;
+                }
+                file_handle.key = v_handle[h].key;
+                file_handle.encrypted = (file_header.name_length_flags & 0x8000) != 0;
+
+                if (!ReadFile(file_handle.file, &file_handle.compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+                {
+                    return result;
+                }
+
+                file_handle.compressed_block_size &= 0xFFFF;
+                file_handle.previous_compressed_block_size = 0;
+
+                uchar buffer[1 + sizeof(S_WAVHEADER)];
+                if (!ReadFile(file_handle.file, buffer, 1, &bytes_read, NULL) || bytes_read != 1)
+                {
+                    return result;
+                }
+                if (file_handle.encrypted)
+                {
+                    DeCrypt(buffer, 1, file_handle.key);
+                }
+
+                if (buffer[0] >= 8)
+                {
+                    file_handle.wav_header = new S_WAVHEADER;
+                    if (!file_handle.wav_header)
+                    {
+                        return result;
+                    }
+
+                    if (!ReadFile(file_handle.file, buffer + 1, sizeof(S_WAVHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_WAVHEADER))
+                    {
+                        return result;
+                    }
+
+                    if (file_handle.encrypted)
+                    {
+                        // Decrypts the already decrypted block type again, this is what the original does
+                        DeCrypt(buffer, 1 + sizeof(S_WAVHEADER), file_handle.key);
+                    }
+                    else
+                    {
+                        // The wav header is always encrypted no matter if the rest of the archive is
+                        DeCrypt(buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
+                    }
+                    memcpy(file_handle.wav_header, buffer + 1, sizeof(S_WAVHEADER));
+                }
+
+                file_handle.block_content = new uchar[0x8000];
+                if (!file_handle.block_content)
+                {
+                    if (file_handle.wav_header)
+                    {
+                        delete file_handle.wav_header;
+                    }
+                    return result;
+                }
+
+                // Reuse the first free slot, only grow the vector if there is none
+                uint count = v_file_h.size();
+                uint k;
+                for (k = 0; k < count; k++)
+                {
+                    if (v_file_h[k].file == INVALID_HANDLE_VALUE)
+                    {
+                        v_file_h[k] = file_handle;
+                        result = k;
+                        break;
+                    }
+                }
+
+                if (k >= count)
+                {
+                    v_file_h.push_back(file_handle);
+                    result = v_file_h.size() - 1;
+                }
+
+                // Leaves the archive loop as well
+                h = handle_count;
+                break;
+            }
         }
     }
 
     return result;
+}
+
+// Separate function in the PS2 build (OpenFromFileSystem__FPCc), inlined into dtaOpen on PC.
+// A failed CreateFileA falls through to the single return: with an early "return result" VC6 propagates the -1 and
+// no longer keeps result in the caller's handle register. The other two failures return -1 directly.
+static inline int OpenFromFileSystem(const char *file_name)
+{
+    int result = -1;
+    S_FILEHANDLE file_handle;
+
+    file_handle.file = CreateFileA(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file_handle.file != INVALID_HANDLE_VALUE)
+    {
+        file_handle.size = SetFilePointer(file_handle.file, 0, NULL, FILE_END);
+        if (file_handle.size == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        {
+            return -1;
+        }
+
+        file_handle.is_block_in_memory = false;
+        file_handle.data_offset = 0;
+        file_handle.block_start_file_pointer = 0;
+        file_handle.file_pointer = 0;
+        file_handle.block_file_pointer = 0;
+        file_handle.block_count = 1;
+        file_handle.current_block = 0;
+        file_handle.flags = DTA_FROM_FILESYSTEM;
+        file_handle.wav_header = NULL;
+        file_handle.block_size = 0x8000;
+        if (file_handle.size < 0x8000)
+        {
+            file_handle.block_size = file_handle.size;
+        }
+        file_handle.block_content = new uchar[0x8000];
+        if (!file_handle.block_content)
+        {
+            return -1;
+        }
+        file_handle.compressed_block_size = 0;
+        file_handle.previous_compressed_block_size = 0;
+        file_handle.tmp_file_name = NULL;
+
+        // Reuse the first free slot, only grow the vector if there is none
+        uint count = v_file_h.size();
+        uint i;
+        for (i = 0; i < count; i++)
+        {
+            if (v_file_h[i].file == INVALID_HANDLE_VALUE)
+            {
+                v_file_h[i] = file_handle;
+                result = i;
+                break;
+            }
+        }
+
+        if (i >= count)
+        {
+            v_file_h.push_back(file_handle);
+            result = v_file_h.size() - 1;
+        }
+    }
+
+    return result;
+}
+
+// Separate function in the PS2 build (GetFirstIndex__FiUi), inlined into OpenFromDTA on PC
+// Binary search over the sorted file table, returns the first entry with the given hash or -1
+static inline int GetFirstIndex(int handle_index, uint hash)
+{
+    int count = v_handle[handle_index].file_table.size();
+    if (count <= 0)
+    {
+        return -1;
+    }
+
+    int lo = 0;
+    int hi = count - 1;
+    int mid = count / 2;
+    while (true)
+    {
+        int diff = hash - v_handle[handle_index].file_table[mid].hash;
+        if (diff > 0)
+        {
+            // Advances mid itself: the original increments mid's register and copies it to lo (PS2 too)
+            lo = ++mid;
+            if (lo > hi)
+            {
+                return -1;
+            }
+            mid += (hi - lo) / 2;
+        }
+        else if (diff < 0)
+        {
+            hi = mid - 1;
+            if (hi < lo)
+            {
+                return -1;
+            }
+            mid = lo + (hi - lo) / 2;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Back to the first entry with this hash. Decrements before comparing and adds the 1 back afterwards, the same in
+    // the PS2 build
+    // Not matching yet: the original doesn't rotate this loop (test at the top, `je` back to it), VC6 rotates ours.
+    // Tried: for(;;)/while(true) with breaks, &&, do-while, continue, goto, a copy of mid, a result local, the loop
+    // inside the found branch; none keeps the post-decrement split into both exits without rotating.
+    while (mid-- > 0)
+    {
+        if (v_handle[handle_index].file_table[mid].hash != hash)
+        {
+            break;
+        }
+    }
+
+    return mid + 1;
 }
 
 // FUNCTION: RWDATA 0x100023e0
@@ -673,14 +626,26 @@ bool EXPORT dtaDelete(const char *file_name)
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
     C_m_p.Lock();
-    if (!buffer || handle >= v_file_h.size())
+    // Four separate checks, as in the PS2 build. Written as `a || b`, the failure block becomes a jump target and VC6
+    // sends every identical "Unlock(); return -1;" in the function to it; the original keeps most of them apart.
+    if (!buffer)
+    {
+        C_m_p.Unlock();
+        return -1;
+    }
+    if (handle >= v_file_h.size())
     {
         C_m_p.Unlock();
         return -1;
     }
 
     HANDLE file = v_file_h[handle].file;
-    if (file == INVALID_HANDLE_VALUE || v_file_h[handle].flags & DTA_WRITE)
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        C_m_p.Unlock();
+        return -1;
+    }
+    if (v_file_h[handle].flags & DTA_WRITE)
     {
         C_m_p.Unlock();
         return -1;
@@ -1295,10 +1260,14 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
     return len;
 }
 
+// The original inlines all of push_back at the end, which needs more inline budget than this function gets with
+// C_m_p.Lock()/Unlock(): every wrapper spends budget. Calling the critical section functions directly gets within a few
+// statements of the original (dtaOpen needs the wrappers, it inlines too much without them). A guess: the PS2 build only
+// has a stub of dtaOpenWrite, so this PC code may have been written separately.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {
-    C_m_p.Lock();
+    EnterCriticalSection(&C_m_p.section);
     // Only FILE_ATTRIBUTE_HIDDEN: the binary selects between 2 and 0x80 (and al, 0x82; add eax, 0x80)
     int file_flags = flags & DTA_TEMPORARY ? FILE_ATTRIBUTE_HIDDEN : FILE_ATTRIBUTE_NORMAL;
     int disposition = flags & DTA_CREATE_FILE ? CREATE_ALWAYS : OPEN_ALWAYS;
@@ -1328,7 +1297,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 DWORD attributes = GetFileAttributesA(tmp_file_name);
                 if (attributes == -1)
                 {
-                    C_m_p.Unlock();
+                    LeaveCriticalSection(&C_m_p.section);
                     return -1;
                 }
                 attributes &= ~FILE_ATTRIBUTE_READONLY;
@@ -1336,13 +1305,13 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 file = CreateFileA(tmp_file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
                 if (file == INVALID_HANDLE_VALUE)
                 {
-                    C_m_p.Unlock();
+                    LeaveCriticalSection(&C_m_p.section);
                     return -1;
                 }
             }
             else
             {
-                C_m_p.Unlock();
+                LeaveCriticalSection(&C_m_p.section);
                 return -1;
             }
         }
@@ -1357,7 +1326,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 DWORD attributes = GetFileAttributesA(file_name);
                 if (attributes == -1)
                 {
-                    C_m_p.Unlock();
+                    LeaveCriticalSection(&C_m_p.section);
                     return -1;
                 }
                 attributes &= ~FILE_ATTRIBUTE_READONLY;
@@ -1365,13 +1334,13 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 file = CreateFileA(file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
                 if (file == INVALID_HANDLE_VALUE)
                 {
-                    C_m_p.Unlock();
+                    LeaveCriticalSection(&C_m_p.section);
                     return -1;
                 }
             }
             else
             {
-                C_m_p.Unlock();
+                LeaveCriticalSection(&C_m_p.section);
                 return -1;
             }
         }
@@ -1395,7 +1364,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         file_handle.tmp_file_name = new char[strlen(tmp_file_name) + 1];
         if (!file_handle.tmp_file_name)
         {
-            C_m_p.Unlock();
+            LeaveCriticalSection(&C_m_p.section);
             return -1;
         }
         strcpy(file_handle.tmp_file_name, tmp_file_name);
@@ -1405,7 +1374,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
     file_handle.block_content = new uchar[0x8000];
     if (!file_handle.block_content)
     {
-        C_m_p.Unlock();
+        LeaveCriticalSection(&C_m_p.section);
         return -1;
     }
     file_handle.compressed_block_size = 0;
@@ -1427,14 +1396,14 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 
     if (i >= count)
     {
-        // Not matching yet. The original inlines insert() but calls _Ucopy/_Ufill/_Destroy, VC6 decides that from an
-        // inline budget that grows with the size of the function. push_back() (as in OpenFromDTA) leaves insert()
-        // out of line here, this form inlines all of it.
-        v_file_h.insert(v_file_h.end(), 1, file_handle);
+        // push_back like OpenFromDTA: the order of the STL functions in .text shows that no function calls
+        // insert(P, n, x) directly (an explicit insert() makes VC6 instantiate it in an earlier round).
+        // Not matching yet: ours still runs out of inline budget for one of insert()'s size() calls.
+        v_file_h.push_back(file_handle);
         handle = v_file_h.size() - 1;
     }
 
-    C_m_p.Unlock();
+    LeaveCriticalSection(&C_m_p.section);
     return handle;
 }
 
@@ -1539,16 +1508,16 @@ C_multithrerad_protection::~C_multithrerad_protection()
 // FUNCTION: RWDATA 0x10004140
 void EXPORT dtaDumpMemoryLeaks(bool dump)
 {
-    C_r_f.SetDumpMemoryLeaks(dump);
+    C_l_d.SetDumpMemoryLeaks(dump);
 }
 
 // FUNCTION: RWDATA 0x10004150
-C_ref_counter::C_ref_counter() : ref_count(0), obj_count(0), dump_memory_leaks(false)
+C_leak_detector::C_leak_detector() : ref_count(0), obj_count(0), dump_memory_leaks(false)
 {
 }
 
 // FUNCTION: RWDATA 0x10004160
-C_ref_counter::~C_ref_counter()
+C_leak_detector::~C_leak_detector()
 {
     if (dump_memory_leaks)
     {
@@ -1726,9 +1695,10 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
                         short *right = reinterpret_cast<short *>(&dest[decompressed_size]);
                         decompressed_size += 2;
 
-                        uchar c = buffer[position];
-                        uchar idx = c & 0x7F;
-                        if (c & 0x80)
+                        // No local for the byte: VC6 loads buffer[position] once anyway, and an extra variable
+                        // changes the order of the stack slots (VC6 orders them by use count)
+                        uchar idx = buffer[position] & 0x7F;
+                        if (buffer[position] & 0x80)
                         {
                             value -= wav_table[dpcm_type + idx];
                         }
@@ -1739,9 +1709,8 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
                         *left = value;
                         position++;
 
-                        c = buffer[position];
-                        idx = c & 0x7F;
-                        if (c & 0x80)
+                        idx = buffer[position] & 0x7F;
+                        if (buffer[position] & 0x80)
                         {
                             value2 -= wav_table[dpcm_type + idx];
                         }
@@ -1770,9 +1739,8 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
                         short *sample = reinterpret_cast<short *>(&dest[decompressed_size]);
                         decompressed_size += 2;
 
-                        uchar c = buffer[position];
-                        uchar idx = c & 0x7F;
-                        if (c & 0x80)
+                        uchar idx = buffer[position] & 0x7F;
+                        if (buffer[position] & 0x80)
                         {
                             value -= wav_table[dpcm_type + idx];
                         }
@@ -1798,6 +1766,74 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
 
 // Processes 8 bytes at a time from the end, the remaining bytes are xored with the first bytes of the key
 // (PS2: DeCrypt__FPUcUil, the key is a single signed 64 bit value)
+// Separate function in the PS2 build (Decompression__FPUcPUcUi), inlined 3 times into dtaRead and once into WavDecompression on PC
+static inline int Decompression(uchar *buffer, uchar *dest, uint len)
+{
+    // The stored length goes through out: the original computes it in out's register (also on PS2)
+    uint out;
+    if (!buffer[0])
+    {
+        out = len - 1;
+        memcpy(dest, buffer + 1, out);
+        return out;
+    }
+
+    out = 0;
+    ushort flags = (buffer[1] << 8) + buffer[2];
+    uint position = 3;
+    uchar bits = 16;
+    while (position < len)
+    {
+        if (!bits)
+        {
+            flags = (buffer[position] << 8) + buffer[position + 1];
+            bits = 16;
+            position += 2;
+        }
+
+        if (!(flags & 0x8000))
+        {
+            dest[out] = buffer[position];
+            position++;
+            out++;
+        }
+        else
+        {
+            // One count and one loop counter for both copy loops: the original keeps both lengths in one stack slot,
+            // and separate variables change dtaRead's and WavDecompression's register and slot assignment
+            ushort count;
+            ushort i;
+            uint offset = (buffer[position] << 4) + (buffer[position + 1] >> 4);
+            if (!offset)
+            {
+                // count + 1 bytes: the signed compares and the +1 after the ushort truncation are in the binary
+                count = (buffer[position + 1] << 8) + buffer[position + 2] + 15;
+                for (i = 0; i < count + 1; i++)
+                {
+                    dest[out + i] = buffer[position + 3];
+                }
+                position += 4;
+                out += count + 1;
+            }
+            else
+            {
+                count = (buffer[position + 1] & 0xF) + 2;
+                for (i = 0; i < count + 1; i++)
+                {
+                    dest[out + i] = dest[out - offset + i];
+                }
+                position += 2;
+                out += count + 1;
+            }
+        }
+
+        flags <<= 1;
+        bits--;
+    }
+
+    return out;
+}
+
 // FUNCTION: RWDATA 0x10004690
 void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
 {

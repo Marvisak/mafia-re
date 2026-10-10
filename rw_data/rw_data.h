@@ -32,11 +32,11 @@ public:
 };
 
 // This class doesn't exist in the PS2 build, so the class and member names are guesses
-class C_ref_counter
+class C_leak_detector
 {
 public:
-    C_ref_counter();
-    ~C_ref_counter();
+    C_leak_detector();
+    ~C_leak_detector();
 
     void AddRef()
     {
@@ -253,15 +253,16 @@ extern "C"
 // SYNTHETIC: RWDATA 0x10001120
 // $E13
 
-// C_r_f
+// C_l_d
 // SYNTHETIC: RWDATA 0x10001150
 // $E19
 
 // SYNTHETIC: RWDATA 0x10001160
 // $E18
 
-// The STL code the compiler emitted into rw_data.cpp. The original orders it differently from
-// the rebuild, the order follows the first use of each instantiation in the source.
+// The STL code the compiler emitted into rw_data.cpp, in the order VC6 instantiates it (see CLAUDE.md): in rounds,
+// first what the source calls directly, then what those functions call, and so on; within a round by class and
+// member declaration order.
 
 // TEMPLATE: RWDATA 0x10004730
 // ?size@?$vector@US_FILEHANDLE@@V?$allocator@US_FILEHANDLE@@@std@@@std@@QBEIXZ
