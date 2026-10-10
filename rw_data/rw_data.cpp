@@ -679,106 +679,36 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         return -1;
     }
 
-    uchar file_buffer[0x8001];
-
-    S_FILEHANDLE &file_handle = v_file_h[handle];
-    if (file_handle.file == INVALID_HANDLE_VALUE || (file_handle.flags & DTA_WRITE) != 0)
+    HANDLE file = v_file_h[handle].file;
+    if (file == INVALID_HANDLE_VALUE || v_file_h[handle].flags & DTA_WRITE)
     {
         C_m_p.Unlock();
         return -1;
     }
 
-    uint block_start_file_pointer = file_handle.block_start_file_pointer;
-    uint file_pointer = file_handle.file_pointer;
-    uint block_file_pointer = file_handle.block_file_pointer;
-    uint current_block = file_handle.current_block;
-    uint compressed_block_size = file_handle.compressed_block_size;
-    uint previous_compressed_block_size = file_handle.previous_compressed_block_size;
-    uint block_size = file_handle.block_size;
+    // The file handle's state is read into locals and written back at the end, like in the PS2 build
+    uint size = v_file_h[handle].size;
+    uint data_offset = v_file_h[handle].data_offset;
+    uint block_start_file_pointer = v_file_h[handle].block_start_file_pointer;
+    uint file_pointer = v_file_h[handle].file_pointer;
+    uint block_file_pointer = v_file_h[handle].block_file_pointer;
+    uint block_count = v_file_h[handle].block_count;
+    uint current_block = v_file_h[handle].current_block;
+    uint compressed_block_size = v_file_h[handle].compressed_block_size;
+    uint previous_compressed_block_size = v_file_h[handle].previous_compressed_block_size;
+    uint block_size = v_file_h[handle].block_size;
+    uchar *block_content = v_file_h[handle].block_content;
+    bool encrypted = v_file_h[handle].encrypted;
 
-    if (len > file_handle.size - file_pointer)
+    if (len > size - file_pointer)
     {
-        len = file_handle.size - file_pointer;
+        len = size - file_pointer;
     }
 
+    uint result;
     DWORD bytes_read;
-    if (file_handle.flags & DTA_FROM_FILESYSTEM)
-    {
-        if (!file_handle.is_block_in_memory || block_start_file_pointer > file_pointer || block_start_file_pointer + block_size < file_pointer)
-        {
-            block_start_file_pointer = file_pointer >> 15 << 15;
-            if (SetFilePointer(file_handle.file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-            {
-                C_m_p.Unlock();
-                return -1;
-            }
-
-            block_size = min(0x8000, file_handle.size - block_start_file_pointer);
-            if (!ReadFile(file_handle.file, file_handle.block_content, block_size, &bytes_read, NULL) || bytes_read != block_size)
-            {
-                C_m_p.Unlock();
-                return -1;
-            }
-
-            file_handle.is_block_in_memory = true;
-            block_file_pointer = file_pointer - block_start_file_pointer;
-        }
-
-        uint remaining_block_size = block_size - block_file_pointer;
-        if (remaining_block_size >= len)
-        {
-            memcpy(buffer, file_handle.block_content + block_file_pointer, len);
-            block_file_pointer += len;
-            file_pointer += len;
-            if (block_file_pointer == block_size && file_pointer < file_handle.size)
-            {
-                block_start_file_pointer += block_size;
-                file_handle.is_block_in_memory = false;
-            }
-        }
-        else
-        {
-            memcpy(buffer, file_handle.block_content + block_file_pointer, remaining_block_size);
-
-            uint remaining_bytes = len - remaining_block_size;
-            file_handle.is_block_in_memory = false;
-            file_pointer += remaining_block_size;
-            block_file_pointer = 0;
-            block_start_file_pointer += block_size;
-            if (SetFilePointer(file_handle.file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-            {
-                C_m_p.Unlock();
-                return -1;
-            }
-            block_size = min(0x8000, file_handle.size - block_start_file_pointer);
-
-            // More than one block left: read straight into the caller's buffer, otherwise go through the block cache
-            if (remaining_bytes >= block_size)
-            {
-                if (!ReadFile(file_handle.file, buffer + remaining_block_size, remaining_bytes, &bytes_read, NULL) || bytes_read != remaining_bytes)
-                {
-                    C_m_p.Unlock();
-                    return -1;
-                }
-
-                file_pointer += remaining_bytes;
-            }
-            else if (remaining_bytes)
-            {
-                if (!ReadFile(file_handle.file, file_handle.block_content, block_size, &bytes_read, NULL) || bytes_read != block_size)
-                {
-                    C_m_p.Unlock();
-                    return -1;
-                }
-
-                memcpy(buffer + remaining_block_size, file_handle.block_content, remaining_bytes);
-                block_file_pointer = remaining_bytes;
-                file_pointer += remaining_bytes;
-                file_handle.is_block_in_memory = true;
-            }
-        }
-    }
-    else
+    uchar file_buffer[0x8001];
+    if (!(v_file_h[handle].flags & DTA_FROM_FILESYSTEM))
     {
         uint fp_block = file_pointer >> 15;
         if (fp_block > current_block)
@@ -786,14 +716,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             while (current_block != fp_block)
             {
                 block_start_file_pointer += compressed_block_size + 4;
-                ++current_block;
-                if (SetFilePointer(file_handle.file, block_start_file_pointer + file_handle.data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                current_block++;
+                if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                 {
                     C_m_p.Unlock();
                     return -1;
                 }
-
-                if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+                if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != 4)
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -802,38 +736,16 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 previous_compressed_block_size = compressed_block_size >> 16;
                 compressed_block_size &= 0xFFFF;
             }
+
             block_file_pointer = file_pointer - (current_block << 15);
-            file_handle.is_block_in_memory = false;
+            v_file_h[handle].is_block_in_memory = false;
         }
         else if (fp_block < current_block)
         {
-            if (fp_block >= current_block >> 1)
+            if (fp_block < current_block >> 1)
             {
-                // Closer to the current block than to the start, walk backwards
-                while (current_block != fp_block)
-                {
-                    block_start_file_pointer -= previous_compressed_block_size + 4;
-                    --current_block;
-                    if (SetFilePointer(file_handle.file, block_start_file_pointer + file_handle.data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-                    {
-                        C_m_p.Unlock();
-                        return -1;
-                    }
-
-                    if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
-                    {
-                        C_m_p.Unlock();
-                        return -1;
-                    }
-
-                    previous_compressed_block_size = compressed_block_size >> 16;
-                    compressed_block_size &= 0xFFFF;
-                }
-            }
-            else
-            {
-                // Start over from the first block
-                if (SetFilePointer(file_handle.file, file_handle.data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                // Closer to the start than to the current block, start over from the first block
+                if (SetFilePointer(file, data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -841,7 +753,12 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 
                 block_start_file_pointer = 0;
                 current_block = 0;
-                if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+                if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != 4)
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -852,14 +769,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 while (current_block != fp_block)
                 {
                     block_start_file_pointer += compressed_block_size + 4;
-                    ++current_block;
-                    if (SetFilePointer(file_handle.file, block_start_file_pointer + file_handle.data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                    current_block++;
+                    if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                     {
                         C_m_p.Unlock();
                         return -1;
                     }
-
-                    if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+                    if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
+                    {
+                        C_m_p.Unlock();
+                        return -1;
+                    }
+                    if (bytes_read != 4)
                     {
                         C_m_p.Unlock();
                         return -1;
@@ -869,209 +790,371 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     compressed_block_size &= 0xFFFF;
                 }
             }
+            else
+            {
+                // Walk backwards
+                while (current_block != fp_block)
+                {
+                    block_start_file_pointer -= previous_compressed_block_size + 4;
+                    current_block--;
+                    if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                    {
+                        C_m_p.Unlock();
+                        return -1;
+                    }
+                    if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
+                    {
+                        C_m_p.Unlock();
+                        return -1;
+                    }
+                    if (bytes_read != 4)
+                    {
+                        C_m_p.Unlock();
+                        return -1;
+                    }
+
+                    previous_compressed_block_size = compressed_block_size >> 16;
+                    compressed_block_size &= 0xFFFF;
+                }
+            }
+
             block_file_pointer = file_pointer - (current_block << 15);
-            file_handle.is_block_in_memory = false;
+            v_file_h[handle].is_block_in_memory = false;
         }
 
-        if (!file_handle.is_block_in_memory)
+        if (!v_file_h[handle].is_block_in_memory)
         {
-            if (SetFilePointer(file_handle.file, block_start_file_pointer + file_handle.data_offset + 4, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            if (SetFilePointer(file, block_start_file_pointer + data_offset + 4, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+            if (!ReadFile(file, file_buffer, compressed_block_size, &bytes_read, NULL))
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+            if (bytes_read != compressed_block_size)
             {
                 C_m_p.Unlock();
                 return -1;
             }
 
-            if (!ReadFile(file_handle.file, file_buffer, compressed_block_size, &bytes_read, NULL) || bytes_read != compressed_block_size)
+            if (encrypted)
             {
-                C_m_p.Unlock();
-                return -1;
-            }
-
-            if (file_handle.encrypted)
-            {
-                DeCrypt(file_buffer, compressed_block_size, file_handle.key);
+                DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
             }
 
             if (file_buffer[0] == 1)
             {
-                block_size = Decompression(file_buffer, file_handle.block_content, compressed_block_size);
+                block_size = Decompression(file_buffer, block_content, compressed_block_size);
             }
             else if (file_buffer[0] < 8)
             {
+                memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
                 block_size = compressed_block_size - 1;
-                memcpy(file_handle.block_content, file_buffer + 1, block_size);
             }
             else
             {
-                if (current_block == 0 && !file_handle.encrypted)
+                if (!current_block && !encrypted)
                 {
-                    DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
+                    DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                 }
-                block_size = WavDecompression(file_buffer, file_handle.block_content, compressed_block_size, file_handle.wav_header);
+                block_size = WavDecompression(file_buffer, block_content, compressed_block_size, v_file_h[handle].wav_header);
             }
 
-            file_handle.is_block_in_memory = true;
+            v_file_h[handle].is_block_in_memory = true;
         }
 
         uint remaining_block_size = block_size - block_file_pointer;
         if (remaining_block_size >= len)
         {
-            memcpy(buffer, file_handle.block_content + block_file_pointer, len);
+            memcpy(buffer, block_content + block_file_pointer, len);
             block_file_pointer += len;
             file_pointer += len;
-
-            if (block_file_pointer == block_size && current_block + 1 < file_handle.block_count)
+            result = len;
+            if (block_file_pointer == block_size && current_block + 1 < block_count)
             {
                 current_block++;
                 block_start_file_pointer += compressed_block_size + 4;
-                if (SetFilePointer(file_handle.file, block_start_file_pointer + file_handle.data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != 4)
                 {
                     C_m_p.Unlock();
                     return -1;
                 }
 
-                if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
-                {
-                    C_m_p.Unlock();
-                    return -1;
-                }
                 block_file_pointer = 0;
                 previous_compressed_block_size = compressed_block_size >> 16;
                 compressed_block_size &= 0xFFFF;
-                file_handle.is_block_in_memory = false;
+                v_file_h[handle].is_block_in_memory = false;
             }
         }
         else
         {
-            memcpy(buffer, file_handle.block_content + block_file_pointer, remaining_block_size);
-
-            uint remaining_bytes = len - remaining_block_size;
-            len = remaining_block_size;
-            block_start_file_pointer += compressed_block_size + 4;
+            memcpy(buffer, block_content + block_file_pointer, remaining_block_size);
+            len -= remaining_block_size;
             file_pointer += remaining_block_size;
+            block_start_file_pointer += compressed_block_size + 4;
             block_file_pointer = 0;
-            if (SetFilePointer(file_handle.file, file_handle.data_offset + block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            result = remaining_block_size;
+            if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
                 return -1;
             }
 
-            uint remaining_blocks = remaining_bytes >> 15;
-            uint relative_fp = remaining_bytes & 0x7FFF;
+            uint remaining_blocks = len / 0x8000;
+            uint remaining_bytes = len - len / 0x8000 * 0x8000;
 
             // Whole blocks are decoded straight into the caller's buffer
-            for (uint i = 0; i < remaining_blocks; ++i)
+            for (uint i = 0; i < remaining_blocks; i++)
             {
-                if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+                if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
                 {
-                    file_handle.is_block_in_memory = false;
+                    v_file_h[handle].is_block_in_memory = false;
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != 4)
+                {
+                    v_file_h[handle].is_block_in_memory = false;
                     C_m_p.Unlock();
                     return -1;
                 }
 
                 compressed_block_size &= 0xFFFF;
-                if (!ReadFile(file_handle.file, file_buffer, compressed_block_size, &bytes_read, NULL) || bytes_read != compressed_block_size)
+                if (!ReadFile(file, file_buffer, compressed_block_size, &bytes_read, NULL))
                 {
-                    file_handle.is_block_in_memory = false;
+                    v_file_h[handle].is_block_in_memory = false;
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != compressed_block_size)
+                {
+                    v_file_h[handle].is_block_in_memory = false;
                     C_m_p.Unlock();
                     return -1;
                 }
 
                 current_block++;
-                if (file_handle.encrypted)
+                if (encrypted)
                 {
-                    DeCrypt(file_buffer, compressed_block_size, file_handle.key);
+                    DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
                 }
 
                 if (file_buffer[0] == 1)
                 {
-                    block_size = Decompression(file_buffer, buffer + len, compressed_block_size);
+                    block_size = Decompression(file_buffer, buffer + result, compressed_block_size);
                 }
                 else if (file_buffer[0] < 8)
                 {
+                    memcpy(buffer + result, file_buffer + 1, compressed_block_size - 1);
                     block_size = compressed_block_size - 1;
-                    memcpy(buffer + len, file_buffer + 1, block_size);
                 }
                 else
                 {
-                    if (current_block == 0 && !file_handle.encrypted)
+                    if (!current_block && !encrypted)
                     {
-                        DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
+                        DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                     }
-                    block_size = WavDecompression(file_buffer, buffer + len, compressed_block_size, file_handle.wav_header);
+                    block_size = WavDecompression(file_buffer, buffer + result, compressed_block_size, v_file_h[handle].wav_header);
                 }
 
-                len += block_size;
+                result += block_size;
                 file_pointer += block_size;
                 block_start_file_pointer += compressed_block_size + 4;
             }
 
-            if (!ReadFile(file_handle.file, &compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+            if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
             {
-                file_handle.is_block_in_memory = false;
+                v_file_h[handle].is_block_in_memory = false;
+                C_m_p.Unlock();
+                return -1;
+            }
+            if (bytes_read != 4)
+            {
+                v_file_h[handle].is_block_in_memory = false;
                 C_m_p.Unlock();
                 return -1;
             }
 
             previous_compressed_block_size = compressed_block_size >> 16;
             compressed_block_size &= 0xFFFF;
-
-            ++current_block;
-            if (relative_fp != 0)
+            current_block++;
+            if (remaining_bytes)
             {
                 // The last, partially used block goes through the block cache
-                if (!ReadFile(file_handle.file, file_buffer, compressed_block_size, &bytes_read, NULL) || bytes_read != compressed_block_size)
+                if (!ReadFile(file, file_buffer, compressed_block_size, &bytes_read, NULL))
                 {
-                    file_handle.is_block_in_memory = false;
+                    v_file_h[handle].is_block_in_memory = false;
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != compressed_block_size)
+                {
+                    v_file_h[handle].is_block_in_memory = false;
                     C_m_p.Unlock();
                     return -1;
                 }
 
-                if (file_handle.encrypted)
+                if (encrypted)
                 {
-                    DeCrypt(file_buffer, compressed_block_size, file_handle.key);
+                    DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
                 }
 
                 if (file_buffer[0] == 1)
                 {
-                    block_size = Decompression(file_buffer, file_handle.block_content, compressed_block_size);
+                    block_size = Decompression(file_buffer, block_content, compressed_block_size);
                 }
                 else if (file_buffer[0] < 8)
                 {
+                    memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
                     block_size = compressed_block_size - 1;
-                    memcpy(file_handle.block_content, file_buffer + 1, block_size);
                 }
                 else
                 {
-                    if (current_block == 0 && !file_handle.encrypted)
+                    if (!current_block && !encrypted)
                     {
-                        DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
+                        DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                     }
-                    block_size = WavDecompression(file_buffer, file_handle.block_content, compressed_block_size, file_handle.wav_header);
+                    block_size = WavDecompression(file_buffer, block_content, compressed_block_size, v_file_h[handle].wav_header);
                 }
 
-                memcpy(buffer + len, file_handle.block_content, relative_fp);
-
-                block_file_pointer = relative_fp;
-                file_pointer += relative_fp;
-                len += relative_fp;
+                memcpy(buffer + result, block_content, remaining_bytes);
+                file_pointer += remaining_bytes;
+                block_file_pointer = remaining_bytes;
+                result += remaining_bytes;
             }
             else
             {
-                file_handle.is_block_in_memory = false;
+                v_file_h[handle].is_block_in_memory = false;
+            }
+        }
+    }
+    else
+    {
+        if (!v_file_h[handle].is_block_in_memory || block_start_file_pointer > file_pointer || block_size + block_start_file_pointer < file_pointer)
+        {
+            block_start_file_pointer = file_pointer / 0x8000 * 0x8000;
+            if (SetFilePointer(file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+
+            block_size = size - block_start_file_pointer;
+            if (block_size >= 0x8000)
+            {
+                block_size = 0x8000;
+            }
+
+            if (!ReadFile(file, block_content, block_size, &bytes_read, NULL))
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+            if (bytes_read != block_size)
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+
+            v_file_h[handle].is_block_in_memory = true;
+            block_file_pointer = file_pointer - block_start_file_pointer;
+        }
+
+        uint remaining_block_size = block_size - block_file_pointer;
+        if (remaining_block_size >= len)
+        {
+            memcpy(buffer, block_content + block_file_pointer, len);
+            block_file_pointer += len;
+            result = len;
+            file_pointer += len;
+            if (block_file_pointer == block_size && file_pointer < size)
+            {
+                block_start_file_pointer += block_size;
+                v_file_h[handle].is_block_in_memory = false;
+            }
+        }
+        else
+        {
+            memcpy(buffer, block_content + block_file_pointer, remaining_block_size);
+            v_file_h[handle].is_block_in_memory = false;
+            block_start_file_pointer += block_size;
+            len -= remaining_block_size;
+            file_pointer += remaining_block_size;
+            block_file_pointer = 0;
+            result = remaining_block_size;
+            if (SetFilePointer(file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            {
+                C_m_p.Unlock();
+                return -1;
+            }
+
+            block_size = size - block_start_file_pointer;
+            if (block_size >= 0x8000)
+            {
+                block_size = 0x8000;
+            }
+
+            // More than one block left: read straight into the caller's buffer, otherwise go through the block cache
+            if (len >= block_size)
+            {
+                if (!ReadFile(file, buffer + result, len, &bytes_read, NULL))
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != len)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+
+                file_pointer += len;
+                result += len;
+            }
+            else if (len)
+            {
+                if (!ReadFile(file, block_content, block_size, &bytes_read, NULL))
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+                if (bytes_read != block_size)
+                {
+                    C_m_p.Unlock();
+                    return -1;
+                }
+
+                memcpy(buffer + result, block_content, len);
+                block_file_pointer = len;
+                file_pointer += len;
+                v_file_h[handle].is_block_in_memory = true;
+                result += len;
             }
         }
     }
 
-    file_handle.block_start_file_pointer = block_start_file_pointer;
-    file_handle.file_pointer = file_pointer;
-    file_handle.block_file_pointer = block_file_pointer;
-    file_handle.current_block = current_block;
-    file_handle.compressed_block_size = compressed_block_size;
-    file_handle.previous_compressed_block_size = previous_compressed_block_size;
-    file_handle.block_size = block_size;
+    v_file_h[handle].block_start_file_pointer = block_start_file_pointer;
+    v_file_h[handle].file_pointer = file_pointer;
+    v_file_h[handle].block_file_pointer = block_file_pointer;
+    v_file_h[handle].current_block = current_block;
+    v_file_h[handle].compressed_block_size = compressed_block_size;
+    v_file_h[handle].previous_compressed_block_size = previous_compressed_block_size;
+    v_file_h[handle].block_size = block_size;
     C_m_p.Unlock();
-    return len;
+    return result;
 }
 
 // The write cases each end in their own copy of the final three statements, the read cases break to the one at the end.
