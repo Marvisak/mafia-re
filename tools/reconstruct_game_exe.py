@@ -22,7 +22,7 @@ only bytes that remain unverified are padding gaps inside the CRT code that CD 2
 listed at the end.
 
 Usage (7-Zip must be installed):
-    python tools/reconstruct_game_exe.py [--steam target/Game.exe] [--cd2 target/MAFIA_CD_2.iso]
+    python tools/reconstruct_game_exe.py [--steam target/Game.exe] [--cd2 target/Game.cd2.exe]
         [--patch target/mafia_patch_1.2_eng.exe] [--out target/Game.orig.exe]
 """
 
@@ -127,7 +127,7 @@ def library_hints(lib_dir):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--steam', default='target/Game.exe')
-    ap.add_argument('--cd2', default='target/MAFIA_CD_2.iso', help='CD 2 image or its extracted Game.exe')
+    ap.add_argument('--cd2', default='target/Game.cd2.exe', help="CD 2's MafiaGame\\Game.exe, or the CD 2 image")
     ap.add_argument('--patch', default='target/mafia_patch_1.2_eng.exe', help='1.2 patch SFX or its extracted Game.exe')
     ap.add_argument('--libs', default='msvc600_sp5_vcpp/VC98/Lib')
     ap.add_argument('--out', default='target/Game.orig.exe')
