@@ -38,43 +38,67 @@ static inline int AddFileHandle(const S_FILEHANDLE &file_handle)
     return v_file_h.size() - 1;
 }
 
-// Separate function in the PS2 build (OpenFromFileSystem__FPCc), inlined into dtaOpen on PC
+// Separate function in the PS2 build (OpenFromFileSystem__FPCc), inlined into dtaOpen on PC.
+// A failed CreateFileA falls through to the single return: with an early "return result" VC6 propagates the -1 and
+// no longer keeps result in the caller's handle register. The other two failures return -1 directly.
 static inline int OpenFromFileSystem(const char *file_name)
 {
+    int result = -1;
     S_FILEHANDLE file_handle;
 
     file_handle.file = CreateFileA(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (file_handle.file == INVALID_HANDLE_VALUE)
+    if (file_handle.file != INVALID_HANDLE_VALUE)
     {
-        return -1;
+        file_handle.size = SetFilePointer(file_handle.file, 0, NULL, FILE_END);
+        if (file_handle.size == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+        {
+            return -1;
+        }
+
+        file_handle.is_block_in_memory = false;
+        file_handle.data_offset = 0;
+        file_handle.block_start_file_pointer = 0;
+        file_handle.file_pointer = 0;
+        file_handle.block_file_pointer = 0;
+        file_handle.block_count = 1;
+        file_handle.current_block = 0;
+        file_handle.flags = DTA_FROM_FILESYSTEM;
+        file_handle.wav_header = NULL;
+        file_handle.block_size = 0x8000;
+        if (file_handle.size < 0x8000)
+        {
+            file_handle.block_size = file_handle.size;
+        }
+        file_handle.block_content = new uchar[0x8000];
+        if (!file_handle.block_content)
+        {
+            return -1;
+        }
+        file_handle.compressed_block_size = 0;
+        file_handle.previous_compressed_block_size = 0;
+        file_handle.tmp_file_name = NULL;
+
+        // Reuse the first free slot, only grow the vector if there is none
+        uint count = v_file_h.size();
+        uint i;
+        for (i = 0; i < count; i++)
+        {
+            if (v_file_h[i].file == INVALID_HANDLE_VALUE)
+            {
+                v_file_h[i] = file_handle;
+                result = i;
+                break;
+            }
+        }
+
+        if (i >= count)
+        {
+            v_file_h.push_back(file_handle);
+            result = v_file_h.size() - 1;
+        }
     }
 
-    file_handle.size = SetFilePointer(file_handle.file, 0, NULL, FILE_END);
-    if (file_handle.size == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-    {
-        return -1;
-    }
-
-    file_handle.is_block_in_memory = false;
-    file_handle.data_offset = 0;
-    file_handle.block_start_file_pointer = 0;
-    file_handle.file_pointer = 0;
-    file_handle.block_file_pointer = 0;
-    file_handle.block_count = 1;
-    file_handle.current_block = 0;
-    file_handle.flags = DTA_FROM_FILESYSTEM;
-    file_handle.wav_header = NULL;
-    file_handle.block_size = min(0x8000, file_handle.size);
-    file_handle.block_content = new uchar[0x8000];
-    if (!file_handle.block_content)
-    {
-        return -1;
-    }
-    file_handle.compressed_block_size = 0;
-    file_handle.previous_compressed_block_size = 0;
-    file_handle.tmp_file_name = NULL;
-
-    return AddFileHandle(file_handle);
+    return result;
 }
 
 // Separate function in the PS2 build (GetFirstIndex__FiUi), inlined into OpenFromDTA on PC
