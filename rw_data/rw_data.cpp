@@ -105,8 +105,7 @@ static inline int OpenFromFileSystem(const char *file_name)
 // Binary search over the sorted file table, returns the first entry with the given hash or -1
 static inline int GetFirstIndex(int handle_index, uint hash)
 {
-    S_HANDLE &handle = v_handle[handle_index];
-    int count = handle.file_table.size();
+    int count = v_handle[handle_index].file_table.size();
     if (count <= 0)
     {
         return -1;
@@ -117,15 +116,16 @@ static inline int GetFirstIndex(int handle_index, uint hash)
     int mid = count / 2;
     while (true)
     {
-        int diff = hash - handle.file_table[mid].hash;
+        int diff = hash - v_handle[handle_index].file_table[mid].hash;
         if (diff > 0)
         {
-            lo = mid + 1;
+            // Advances mid itself: the original increments mid's register and copies it to lo (PS2 too)
+            lo = ++mid;
             if (lo > hi)
             {
                 return -1;
             }
-            mid = lo + (hi - lo) / 2;
+            mid += (hi - lo) / 2;
         }
         else if (diff < 0)
         {
@@ -142,12 +142,17 @@ static inline int GetFirstIndex(int handle_index, uint hash)
         }
     }
 
-    while (mid > 0 && handle.file_table[mid - 1].hash == hash)
+    // Back to the first entry with this hash. Decrements before comparing and adds the 1 back afterwards, the same in
+    // the PS2 build
+    while (mid-- > 0)
     {
-        mid--;
+        if (v_handle[handle_index].file_table[mid].hash != hash)
+        {
+            break;
+        }
     }
 
-    return mid;
+    return mid + 1;
 }
 
 // Separate function in the PS2 build (Decompression__FPUcPUcUi), inlined 3 times into dtaRead and once into WavDecompression on PC
@@ -425,6 +430,7 @@ int EXPORT dtaOpen(const char *file_name, bool force_dta)
 // FUNCTION: RWDATA 0x10001b90
 static int __stdcall OpenFromDTA(const char *file_name)
 {
+    ushort checksum = 0;
     int result = -1;
 
     int len = strlen(file_name);
@@ -432,7 +438,6 @@ static int __stdcall OpenFromDTA(const char *file_name)
     strcpy(file_name_upper, file_name);
     strupr(file_name_upper);
 
-    ushort checksum = 0;
     int i = len;
     while (i--)
     {
@@ -440,11 +445,11 @@ static int __stdcall OpenFromDTA(const char *file_name)
     }
     uint hash = (len << 16) | checksum;
 
+    // h is an int like GetFirstIndex's parameter (PS2: GetFirstIndex__FiUi); an unsigned h compiles differently
     uint handle_count = v_handle.size();
-    for (uint h = 0; h < handle_count; h++)
+    for (int h = 0; h < handle_count; h++)
     {
-        S_HANDLE &handle = v_handle[h];
-        uint entry_count = handle.file_table.size();
+        uint entry_count = v_handle[h].file_table.size();
 
         int j = GetFirstIndex(h, hash);
         if (j == -1)
@@ -454,127 +459,148 @@ static int __stdcall OpenFromDTA(const char *file_name)
 
         for (; static_cast<uint>(j) < entry_count; j++)
         {
-            S_FILES_IN &field = handle.file_table[j];
-            if (field.hash != hash)
+            if (v_handle[h].file_table[j].hash != hash)
             {
                 break;
             }
 
             int str_index = 0;
-            if (field.file_name_length > 16)
+            if (v_handle[h].file_table[j].file_name_length > 16)
             {
-                str_index = field.file_name_length - 16;
+                str_index = v_handle[h].file_table[j].file_name_length - 16;
             }
 
-            if (strncmp(field.file_name, &file_name_upper[str_index], 16) != 0)
+            if (strncmp(v_handle[h].file_table[j].file_name, &file_name_upper[str_index], 16) != 0)
             {
                 continue;
             }
 
-            if (SetFilePointer(handle.file, field.header_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            if (SetFilePointer(v_handle[h].file, v_handle[h].file_table[j].header_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
-                return -1;
+                return result;
             }
 
             DWORD bytes_read;
             S_FILEHEADER file_header;
-            if (!ReadFile(handle.file, &file_header, sizeof(S_FILEHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_FILEHEADER))
+            if (!ReadFile(v_handle[h].file, &file_header, sizeof(S_FILEHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_FILEHEADER))
             {
-                return -1;
+                return result;
             }
-            DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), handle.key);
+            DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), v_handle[h].key);
 
             char full_file_name[MAX_PATH];
-            if (!ReadFile(handle.file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
+            if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
             {
-                return -1;
+                return result;
             }
-            DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, handle.key);
+            DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, v_handle[h].key);
 
             full_file_name[bytes_read] = '\0';
             strupr(full_file_name);
-            if (strcmp(file_name_upper, full_file_name) == 0)
+            if (strcmp(file_name_upper, full_file_name) != 0)
             {
-                S_FILEHANDLE file_handle;
+                continue;
+            }
 
-                file_handle.tmp_file_name = NULL;
-                file_handle.wav_header = NULL;
-                file_handle.block_content = NULL;
-                file_handle.is_block_in_memory = false;
-                file_handle.file = handle.file;
-                file_handle.data_offset = field.data_offset;
-                file_handle.block_count = file_header.block_count;
-                file_handle.timestamp = file_header.timestamp;
-                file_handle.size = file_header.size;
-                file_handle.block_start_file_pointer = 0;
-                file_handle.file_pointer = 0;
-                file_handle.block_file_pointer = 0;
-                file_handle.current_block = 0;
-                file_handle.flags = 0;
-                file_handle.block_size = min(0x8000, file_header.size);
-                file_handle.key = handle.key;
-                file_handle.encrypted = (file_header.name_length_flags & 0x8000) != 0;
+            S_FILEHANDLE file_handle;
+            file_handle.tmp_file_name = NULL;
+            file_handle.wav_header = NULL;
+            file_handle.block_content = NULL;
+            file_handle.is_block_in_memory = false;
+            file_handle.file = v_handle[h].file;
+            file_handle.size = file_header.size;
+            file_handle.data_offset = v_handle[h].file_table[j].data_offset;
+            file_handle.block_count = file_header.block_count;
+            file_handle.block_start_file_pointer = 0;
+            file_handle.file_pointer = 0;
+            file_handle.block_file_pointer = 0;
+            file_handle.current_block = 0;
+            file_handle.flags = 0;
+            file_handle.timestamp = file_header.timestamp;
+            file_handle.block_size = 0x8000;
+            if (file_handle.size < 0x8000)
+            {
+                file_handle.block_size = file_handle.size;
+            }
+            file_handle.key = v_handle[h].key;
+            file_handle.encrypted = (file_header.name_length_flags & 0x8000) != 0;
 
-                if (!ReadFile(handle.file, &file_handle.compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+            if (!ReadFile(file_handle.file, &file_handle.compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
+            {
+                return result;
+            }
+
+            file_handle.compressed_block_size &= 0xFFFF;
+            file_handle.previous_compressed_block_size = 0;
+
+            uchar buffer[1 + sizeof(S_WAVHEADER)];
+            if (!ReadFile(file_handle.file, buffer, 1, &bytes_read, NULL) || bytes_read != 1)
+            {
+                return result;
+            }
+            if (file_handle.encrypted)
+            {
+                DeCrypt(buffer, 1, file_handle.key);
+            }
+
+            if (buffer[0] >= 8)
+            {
+                file_handle.wav_header = new S_WAVHEADER;
+                if (!file_handle.wav_header)
                 {
-                    return -1;
+                    return result;
                 }
 
-                file_handle.compressed_block_size &= 0xFFFF;
-                file_handle.previous_compressed_block_size = 0;
-
-                uchar buffer[1 + sizeof(S_WAVHEADER)];
-                if (!ReadFile(handle.file, buffer, 1, &bytes_read, NULL) || bytes_read != 1)
+                if (!ReadFile(file_handle.file, buffer + 1, sizeof(S_WAVHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_WAVHEADER))
                 {
-                    return -1;
+                    return result;
                 }
+
                 if (file_handle.encrypted)
                 {
-                    DeCrypt(buffer, 1, file_handle.key);
+                    // Decrypts the already decrypted block type again, this is what the original does
+                    DeCrypt(buffer, 1 + sizeof(S_WAVHEADER), file_handle.key);
                 }
-
-                if (buffer[0] >= 8)
+                else
                 {
-                    file_handle.wav_header = new S_WAVHEADER();
-                    if (!file_handle.wav_header)
-                    {
-                        return -1;
-                    }
-
-                    if (!ReadFile(handle.file, buffer + 1, sizeof(S_WAVHEADER), &bytes_read, NULL) || bytes_read != sizeof(S_WAVHEADER))
-                    {
-                        return -1;
-                    }
-
-                    if (file_handle.encrypted)
-                    {
-                        // Decrypts the already decrypted block type again, this is what the original does
-                        DeCrypt(buffer, 1 + sizeof(S_WAVHEADER), file_handle.key);
-                    }
-                    else
-                    {
-                        // The wav header is always encrypted no matter if the rest of the archive is
-                        DeCrypt(buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
-                    }
-                    memcpy(file_handle.wav_header, buffer + 1, sizeof(S_WAVHEADER));
+                    // The wav header is always encrypted no matter if the rest of the archive is
+                    DeCrypt(buffer + 1, sizeof(S_WAVHEADER), file_handle.key);
                 }
-
-                file_handle.block_content = new uchar[0x8000];
-                if (!file_handle.block_content)
-                {
-                    if (file_handle.wav_header)
-                    {
-                        delete file_handle.wav_header;
-                    }
-                    return -1;
-                }
-
-                result = AddFileHandle(file_handle);
-
-                // Leaves the archive loop as well
-                h = handle_count;
-                break;
+                memcpy(file_handle.wav_header, buffer + 1, sizeof(S_WAVHEADER));
             }
+
+            file_handle.block_content = new uchar[0x8000];
+            if (!file_handle.block_content)
+            {
+                if (file_handle.wav_header)
+                {
+                    delete file_handle.wav_header;
+                }
+                return result;
+            }
+
+            // Reuse the first free slot, only grow the vector if there is none
+            uint count = v_file_h.size();
+            uint k;
+            for (k = 0; k < count; k++)
+            {
+                if (v_file_h[k].file == INVALID_HANDLE_VALUE)
+                {
+                    v_file_h[k] = file_handle;
+                    result = k;
+                    break;
+                }
+            }
+
+            if (k >= count)
+            {
+                v_file_h.push_back(file_handle);
+                result = v_file_h.size() - 1;
+            }
+
+            // Leaves the archive loop as well
+            h = handle_count;
+            break;
         }
     }
 
