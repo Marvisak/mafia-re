@@ -1074,6 +1074,9 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
     return len;
 }
 
+// The write cases each end in their own copy of the final three statements, the read cases break to the one at the end.
+// VC6 merges the identical copies, which is why the read cases jump into the write cases' tail with file_pointer
+// already loaded.
 // FUNCTION: RWDATA 0x10003730
 int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
 {
@@ -1117,7 +1120,6 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
             break;
         }
         case 2:
-        {
             if (distance_to_move > 1)
             {
                 C_m_p.Unlock();
@@ -1130,7 +1132,6 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
             }
             v_file_h[handle].file_pointer = distance_to_move + v_file_h[handle].size;
             break;
-        }
         default:
             C_m_p.Unlock();
             return -1;
@@ -1145,19 +1146,25 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_BEGIN);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                break;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                C_m_p.Unlock();
+                return v_file_h[handle].file_pointer;
             }
         case 1:
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_CURRENT);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                break;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                C_m_p.Unlock();
+                return v_file_h[handle].file_pointer;
             }
         case 2:
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_END);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                break;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                C_m_p.Unlock();
+                return v_file_h[handle].file_pointer;
             }
         default:
             C_m_p.Unlock();
