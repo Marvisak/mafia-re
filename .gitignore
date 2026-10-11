@@ -8,3 +8,4 @@ msvc600/
 .venv/
 reccmp-user.yml
 reccmp-build.yml
+__pycache__/
