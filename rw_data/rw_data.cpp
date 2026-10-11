@@ -268,12 +268,15 @@ static int __stdcall OpenFromDTA(const char *file_name)
     {
         uint entry_count = v_handle[h].file_table.size();
 
-        int j = GetFirstIndex(h, hash);
-        // A block, not `if (j == -1) continue;`: the PS2 build has the same if/else, and with the continue VC6 keeps
-        // a zero in ebx through GetFirstIndex
-        if (j != -1)
+        // The result gets its own local: the original computes it into a fresh register (lea eax, [ecx+1]) and stores j
+        // only after the -1 check. Assigning GetFirstIndex to j itself keeps both in mid's register, and the local is
+        // also the bit of inline budget that the push_back at the end needs.
+        int first = GetFirstIndex(h, hash);
+        // A block, not `if (first == -1) continue;`: the PS2 build has the same if/else, and with the continue VC6
+        // keeps a zero in ebx through GetFirstIndex
+        if (first != -1)
         {
-            for (; static_cast<uint>(j) < entry_count; j++)
+            for (int j = first; static_cast<uint>(j) < entry_count; j++)
             {
                 if (v_handle[h].file_table[j].hash != hash)
                 {
@@ -503,23 +506,26 @@ static inline int GetFirstIndex(int handle_index, uint hash)
     while (true)
     {
         int diff = hash - v_handle[handle_index].file_table[mid].hash;
+        // Both branches move mid in place, check it, and only then copy it to lo/hi: the original has inc/dec on mid's
+        // register, compares mid, and copies afterwards. Computing lo/hi first swaps their registers.
         if (diff > 0)
         {
-            // Advances mid itself: the original increments mid's register and copies it to lo (PS2 too)
-            lo = ++mid;
-            if (lo > hi)
+            mid++;
+            if (mid > hi)
             {
                 return -1;
             }
+            lo = mid;
             mid += (hi - lo) / 2;
         }
         else if (diff < 0)
         {
-            hi = mid - 1;
-            if (hi < lo)
+            mid--;
+            if (mid < lo)
             {
                 return -1;
             }
+            hi = mid;
             mid = lo + (hi - lo) / 2;
         }
         else
@@ -528,18 +534,25 @@ static inline int GetFirstIndex(int handle_index, uint hash)
         }
     }
 
-    // Back to the first entry with this hash. Decrements before comparing and adds the 1 back afterwards, the same in
-    // the PS2 build
-    // Not matching yet: the original doesn't rotate this loop (test at the top, `je` back to it), VC6 rotates ours.
-    // Tried: for(;;)/while(true) with breaks, &&, do-while, continue, goto, a copy of mid, a result local, the loop
-    // inside the found branch; none keeps the post-decrement split into both exits without rotating.
-    while (mid-- > 0)
+    // Back to the first entry with this hash: decrements before comparing and adds the 1 back afterwards.
+    // A do-while with the decrement written out in both branches. The original tests mid at the top, decrements on both
+    // paths and jumps back with `je`. VC6 only moves a post-decrement onto both paths when it rotates a loop, so
+    // `while (mid-- > 0)` comes out rotated, and every unrotated form of it keeps a copy of mid instead. The PS2 build has
+    // this block order exactly (test, `mid--` and on to the compare, `mid--` and out, compare back to the test), with
+    // each decrement in the delay slot of its own branch rather than the test's. The Xbox build (out of line) has the
+    // same shape, while it rotates UnlockPack's `while (i--)` like VC6.
+    do
     {
-        if (v_handle[handle_index].file_table[mid].hash != hash)
+        if (mid > 0)
         {
+            mid--;
+        }
+        else
+        {
+            mid--;
             break;
         }
-    }
+    } while (v_handle[handle_index].file_table[mid].hash == hash);
 
     return mid + 1;
 }
@@ -622,6 +635,9 @@ bool EXPORT dtaDelete(const char *file_name)
     return DeleteFileA(file_name);
 }
 
+// Not matching yet: the code is complete (99% with stack slots and registers masked), the stack slots and some
+// register choices differ. VC6's slot rules and what is known about dtaRead's are under "Stack frame layout" in
+// CLAUDE.md; tools/framelayout.py shows the predicted and the actual slots from a /FAs listing.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -716,8 +732,10 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     return -1;
                 }
 
-                block_start_file_pointer = 0;
+                // In the PS2 build's order: the original zeroes block_start_file_pointer's register first and pushes it as
+                // ReadFile's NULL
                 current_block = 0;
+                block_start_file_pointer = 0;
                 if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
                 {
                     C_m_p.Unlock();
@@ -814,18 +832,20 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             {
                 block_size = Decompression(file_buffer, block_content, compressed_block_size);
             }
-            else if (file_buffer[0] < 8)
-            {
-                memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
-                block_size = compressed_block_size - 1;
-            }
-            else
+            // In all three copies the WAV case comes first: the original has it inline after `cmp 8; jb`, the plain copy
+            // out of line (the PS2 build tests `< 8` first)
+            else if (file_buffer[0] >= 8)
             {
                 if (!current_block && !encrypted)
                 {
                     DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                 }
                 block_size = WavDecompression(file_buffer, block_content, compressed_block_size, v_file_h[handle].wav_header);
+            }
+            else
+            {
+                memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
+                block_size = compressed_block_size - 1;
             }
 
             v_file_h[handle].is_block_in_memory = true;
@@ -879,7 +899,8 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             }
 
             uint remaining_blocks = len / 0x8000;
-            uint remaining_bytes = len - len / 0x8000 * 0x8000;
+            // Not len % 0x8000, which gives an `and`; the original has shr/shl/sub like this (PS2 and Xbox agree)
+            uint remaining_bytes = len - remaining_blocks * 0x8000;
 
             // Whole blocks are decoded straight into the caller's buffer
             for (uint i = 0; i < remaining_blocks; i++)
@@ -921,18 +942,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 {
                     block_size = Decompression(file_buffer, buffer + result, compressed_block_size);
                 }
-                else if (file_buffer[0] < 8)
-                {
-                    memcpy(buffer + result, file_buffer + 1, compressed_block_size - 1);
-                    block_size = compressed_block_size - 1;
-                }
-                else
+                else if (file_buffer[0] >= 8)
                 {
                     if (!current_block && !encrypted)
                     {
                         DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                     }
                     block_size = WavDecompression(file_buffer, buffer + result, compressed_block_size, v_file_h[handle].wav_header);
+                }
+                else
+                {
+                    memcpy(buffer + result, file_buffer + 1, compressed_block_size - 1);
+                    block_size = compressed_block_size - 1;
                 }
 
                 result += block_size;
@@ -956,7 +977,8 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             previous_compressed_block_size = compressed_block_size >> 16;
             compressed_block_size &= 0xFFFF;
             current_block++;
-            if (remaining_bytes)
+            // `> 0`, here and for len below: the original tests with jbe, a plain `if (x)` gives je
+            if (remaining_bytes > 0)
             {
                 // The last, partially used block goes through the block cache
                 if (!ReadFile(file, file_buffer, compressed_block_size, &bytes_read, NULL))
@@ -981,18 +1003,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 {
                     block_size = Decompression(file_buffer, block_content, compressed_block_size);
                 }
-                else if (file_buffer[0] < 8)
-                {
-                    memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
-                    block_size = compressed_block_size - 1;
-                }
-                else
+                else if (file_buffer[0] >= 8)
                 {
                     if (!current_block && !encrypted)
                     {
                         DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                     }
                     block_size = WavDecompression(file_buffer, block_content, compressed_block_size, v_file_h[handle].wav_header);
+                }
+                else
+                {
+                    memcpy(block_content, file_buffer + 1, compressed_block_size - 1);
+                    block_size = compressed_block_size - 1;
                 }
 
                 memcpy(buffer + result, block_content, remaining_bytes);
@@ -1017,11 +1039,11 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 return -1;
             }
 
-            block_size = size - block_start_file_pointer;
-            if (block_size >= 0x8000)
-            {
-                block_size = 0x8000;
-            }
+            // A local plus a ternary, here and below: the original computes the difference in one register and copies it
+            // into block_size's before the clamp (the Xbox build has the same shape). Assigning block_size and clamping it
+            // with an `if` stores it twice, and a ternary without the local moves registers all over the function.
+            uint to_read = size - block_start_file_pointer;
+            block_size = to_read < 0x8000 ? to_read : 0x8000;
 
             if (!ReadFile(file, block_content, block_size, &bytes_read, NULL))
             {
@@ -1055,22 +1077,20 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         {
             memcpy(buffer, block_content + block_file_pointer, remaining_block_size);
             v_file_h[handle].is_block_in_memory = false;
-            block_start_file_pointer += block_size;
-            len -= remaining_block_size;
+            // The original stores the locals in this order; the PS2 and Xbox builds have other orders
             file_pointer += remaining_block_size;
             block_file_pointer = 0;
             result = remaining_block_size;
+            len -= remaining_block_size;
+            block_start_file_pointer += block_size;
             if (SetFilePointer(file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
                 return -1;
             }
 
-            block_size = size - block_start_file_pointer;
-            if (block_size >= 0x8000)
-            {
-                block_size = 0x8000;
-            }
+            uint to_read = size - block_start_file_pointer;
+            block_size = to_read < 0x8000 ? to_read : 0x8000;
 
             // More than one block left: read straight into the caller's buffer, otherwise go through the block cache
             if (len >= block_size)
@@ -1086,10 +1106,10 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     return -1;
                 }
 
-                file_pointer += len;
                 result += len;
+                file_pointer += len;
             }
-            else if (len)
+            else if (len > 0)
             {
                 if (!ReadFile(file, block_content, block_size, &bytes_read, NULL))
                 {
@@ -1103,10 +1123,10 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                 }
 
                 memcpy(buffer + result, block_content, len);
-                block_file_pointer = len;
-                file_pointer += len;
-                v_file_h[handle].is_block_in_memory = true;
                 result += len;
+                file_pointer += len;
+                block_file_pointer = len;
+                v_file_h[handle].is_block_in_memory = true;
             }
         }
     }
@@ -1260,10 +1280,11 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
     return len;
 }
 
-// The original inlines all of push_back at the end, which needs more inline budget than this function gets with
-// C_m_p.Lock()/Unlock(): every wrapper spends budget. Calling the critical section functions directly gets within a few
-// statements of the original (dtaOpen needs the wrappers, it inlines too much without them). A guess: the PS2 build only
-// has a stub of dtaOpenWrite, so this PC code may have been written separately.
+// PC-only code (the PS2 build has a stub) and, like dtaWrite's flag-set exit, without the lock wrappers.
+// Not matching yet: the original inlines all of push_back at the end, ours keeps one of insert()'s size() calls out of
+// line. The original probably had a little more source before the push_back that compiles to nothing, most likely a
+// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough (see
+// the inline budget in CLAUDE.md). Wrappers before the push_back and a direct unlock after it would also do it.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {
@@ -1398,7 +1419,6 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
     {
         // push_back like OpenFromDTA: the order of the STL functions in .text shows that no function calls
         // insert(P, n, x) directly (an explicit insert() makes VC6 instantiate it in an earlier round).
-        // Not matching yet: ours still runs out of inline budget for one of insert()'s size() calls.
         v_file_h.push_back(file_handle);
         handle = v_file_h.size() - 1;
     }
@@ -1423,13 +1443,14 @@ int EXPORT dtaWrite(int handle, const uchar *buffer, uint len)
         return -1;
     }
 
-    // The original has a separate exit when the flag is set; one shared exit compiles differently
+    // The original has a separate exit when the flag is set; one shared exit compiles differently. That exit leaves the
+    // critical section directly: with C_m_p.Unlock() in both paths, VC6 hoists the common push C_m_p above the branch.
     if (!buffer)
     {
         if (v_file_h[handle].flags & DTA_BUFFER)
         {
             v_file_h[handle].flags |= DTA_FAILED_WRITING_TO_BUFFER;
-            C_m_p.Unlock();
+            LeaveCriticalSection(&C_m_p.section);
             return -1;
         }
         C_m_p.Unlock();
