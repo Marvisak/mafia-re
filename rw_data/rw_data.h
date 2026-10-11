@@ -260,7 +260,7 @@ extern "C"
 // SYNTHETIC: RWDATA 0x10001160
 // $E18
 
-// The STL code the compiler emitted into rw_data.cpp, in the order VC6 instantiates it (see CLAUDE.md): in rounds,
+// The STL code the compiler emitted into rw_data.cpp, in the order VC6 instantiates it: in rounds,
 // first what the source calls directly, then what those functions call, and so on; within a round by class and
 // member declaration order.
 

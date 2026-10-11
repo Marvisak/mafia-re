@@ -2,7 +2,7 @@
 
 usage: framelayout.py <listing.asm> <function> [--infl name=+n ...] [--no-force name ...]
 
-The model (CLAUDE.md, "Stack frame layout"): each spilled local's weight is its number of memory references in the
+The model: each spilled local's weight is its number of memory references in the
 code before tail merging; variables are processed heaviest first (ties: earliest last reference first) and each
 takes the free slot with the smallest creator weight >= its own (ties: the most recently created), else a new slot;
 freeness is precise liveness on the final code. Frames over 128 bytes are sorted: the slots (key = sum of the

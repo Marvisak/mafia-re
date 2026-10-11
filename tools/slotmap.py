@@ -5,7 +5,7 @@ The listing is the only place VC6 names its frame slots: every local, inlined-fu
 function, and unnamed temporaries show up as `-N+[esp+M]` operands. This tool lists each slot with
 its occupants, the number of memory references to it (loads, stores, lea; a read-modify-write
 counts as both) and the first and last listing line that touches it. Those are the quantities
-VC6's frame layout works from (see "Stack frame layout" in CLAUDE.md).
+VC6's frame layout works from (tools/framelayout.py models it).
 
 Make the listing with the project's compile flags plus /FAs, e.g. for rw_data:
 

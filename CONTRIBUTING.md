@@ -32,7 +32,11 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    ```bash
    .venv/Scripts/reccmp-project detect --search-path target
    ```
-   `target/` is ignored by git. The targets are the retail 1.2 files; [CLAUDE.md](CLAUDE.md) explains where each one comes from. Steam's `Game.exe` is not a valid target, `tools/reconstruct_game_exe.py` rebuilds the original from the retail copies.
+   `target/` is ignored by git. The targets are the retail 1.2 files:
+   - `LS3DF.dll` and `IJoy.dll`: Steam's copies are identical to retail.
+   - `rw_data.dll`: the retail copy from CD 2. Steam's has a one-byte patch at file offset `0x4720`.
+   - `setup.exe`: `Patch\setup.exe` from the official 1.2 patch, `mafia_patch_1.2_eng.exe`.
+   - `Game.exe`: no unprotected copy survives, and Steam's is a SafeDisc unwrap. `tools/reconstruct_game_exe.py` rebuilds the original as `target/Game.orig.exe` from Steam's `Game.exe`, CD 2's `MafiaGame\Game.exe` (saved as `target/Game.cd2.exe`) and the patch exe.
 4. Build:
    ```bash
    cmake --preset vc6 && cmake --build --preset vc6              # the byte-exact build, in build/vc6
@@ -48,8 +52,6 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    .venv/Scripts/python tools/filediff.py                                     # the whole file: headers, layout, data
    .venv/Scripts/python tools/progress.py                                     # redraw the README's progress cards
    ```
-
-[CLAUDE.md](CLAUDE.md) has the details: the presets, the annotations reccmp needs, and what has been learned about getting Visual C++ 6.0 to produce the original code.
 
 ## Debug Symbols
 

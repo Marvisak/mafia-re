@@ -2,7 +2,7 @@
 // The binary was compiled with /Gz, so every free function is __stdcall.
 #include "rw_data.h"
 
-// VC6 lays out the uninitialized globals by the hash bucket of their names (tools/bsshash.py, see CLAUDE.md):
+// VC6 lays out the uninitialized globals by the hash bucket of their names (tools/bsshash.py):
 // v_file_h 144, C_l_d 231, C_m_p 259, v_handle 373, unreferenced_buffer 727. dta_first_force is zero-initialized,
 // so it isn't hashed and comes after all of them.
 
@@ -636,8 +636,8 @@ bool EXPORT dtaDelete(const char *file_name)
 }
 
 // Not matching yet: the code is complete (99% with stack slots and registers masked), the stack slots and some
-// register choices differ. VC6's slot rules and what is known about dtaRead's are under "Stack frame layout" in
-// CLAUDE.md; tools/framelayout.py shows the predicted and the actual slots from a /FAs listing.
+// register choices differ. tools/framelayout.py models VC6's slot rules and shows the predicted and the actual
+// slots from a /FAs listing.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -1283,8 +1283,8 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
 // PC-only code (the PS2 build has a stub) and, like dtaWrite's flag-set exit, without the lock wrappers.
 // Not matching yet: the original inlines all of push_back at the end, ours keeps one of insert()'s size() calls out of
 // line. The original probably had a little more source before the push_back that compiles to nothing, most likely a
-// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough (see
-// the inline budget in CLAUDE.md). Wrappers before the push_back and a direct unlock after it would also do it.
+// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough (VC6's
+// inline budget grows with the source, dead code included). Wrappers before the push_back and a direct unlock after it would also do it.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {

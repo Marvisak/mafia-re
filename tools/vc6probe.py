@@ -2,7 +2,7 @@
 
 The quick way to test a VC6 rule: write a small function, compile it with the same compiler and
 switches as rw_data (/O2 /ML /GX /Gz), and read the frame layout off the /FAs listing. The
-probes behind "Stack frame layout" in CLAUDE.md were made this way; the snippet below is the
+frame layout rules in framelayout.py were found this way; the snippet below is the
 template they used, with four register hogs (h1..h4 own ebx/ebp/esi/edi across every call) so
 every other local is spilled, and calls to an external function between uses so each use is a
 separate memory reference.
