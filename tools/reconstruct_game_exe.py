@@ -17,7 +17,7 @@ No unprotected copy of Game.exe survives. Three copies of the same build (PE tim
   encrypted, but the header and section table are intact. It is used only for cross-checks.
 
 Every output byte comes from one of the copies by an explicit rule, or from a VC6 LINK convention
-checked against LS3DF/rw_data/IJoy/INet. Any difference that no rule explains aborts the script. The
+checked against LS3DF/rw_data/IJoy. Any difference that no rule explains aborts the script. The
 only bytes that remain unverified are padding gaps inside the CRT code that CD 2 encrypted; they are
 listed at the end.
 
@@ -151,7 +151,7 @@ def main():
     nsec = u16(out, PE + 6)
     secs = [struct.unpack_from('<8sIIIIIIHHI', out, SECTIONS + 40 * k) for k in range(nsec)]
     assert out[SECTIONS:SECTIONS + 40 * nsec] == patch[SECTIONS:SECTIONS + 40 * nsec], 'section table differs from the patch exe'
-    # VC6 LINK conventions, checked against LS3DF, rw_data, IJoy and INet
+    # VC6 LINK conventions, checked against LS3DF, rw_data and IJoy
     struct.pack_into('<I', out, OPT + 4, sum(align(s[1]) for s in secs if s[9] & 0x20))   # SizeOfCode
     struct.pack_into('<I', out, OPT + 8, sum(align(s[1]) for s in secs if s[9] & 0x40))   # SizeOfInitializedData
     struct.pack_into('<I', out, OPT + 56, align(secs[-1][2] + secs[-1][1]))              # SizeOfImage

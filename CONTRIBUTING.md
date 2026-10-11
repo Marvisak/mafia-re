@@ -13,7 +13,7 @@ The goal of the project is byte-exact decompilation: every binary has to rebuild
 Each binary is built with its original toolchain:
 
 - `rw_data.dll`, `LS3DF.dll`, `Game.exe` and `setup.exe`: Visual C++ 6.0 Service Pack 5 with the Processor Pack. Not Service Pack 6, its compiler and runtime library produce different code.
-- `IJoy.dll` and `INet.dll`: compiled with the same compiler, but linked with the linker and runtime library of the original Visual C++ 6.0 release.
+- `IJoy.dll`: compiled with the same compiler, but linked with the linker and runtime library of the original Visual C++ 6.0 release.
 
 So most of C++ features everybody is used to and comfortable with are off the table (like range-based for loops, `auto` or `nullptr`).
 
@@ -46,6 +46,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cd ../..
    .venv/Scripts/python tools/funcdiff.py dtaRead                             # what kind of differences are left
    .venv/Scripts/python tools/filediff.py                                     # the whole file: headers, layout, data
+   .venv/Scripts/python tools/progress.py                                     # redraw the README's progress cards
    ```
 
 [CLAUDE.md](CLAUDE.md) has the details: the presets, the annotations reccmp needs, and what has been learned about getting Visual C++ 6.0 to produce the original code.

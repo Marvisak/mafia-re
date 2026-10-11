@@ -8,12 +8,20 @@ built with, produces files identical to the originals.
 
 ## Progress
 
+<img src="docs/progress/rw_data.svg" width="50%"><img src="docs/progress/setup.svg" width="50%">
+<img src="docs/progress/LS3DF.svg" width="50%"><img src="docs/progress/Game.svg" width="50%">
+<img src="docs/progress/IJoy.svg" width="50%">
+
+The cards count each binary's own functions, without the C runtime linked into it. *Implemented* is how many of them
+have source, *accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those, and the bar is the
+score summed over all of them. The function counts of binaries that haven't been started are estimates.
+
 | Binary | Status |
 | --- | --- |
 | `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
 | `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. The existing decompilation was made from Steam's 2010 rebuild (Visual Studio 2008) and still has to be redone against it. |
 | `LS3DF.dll` (engine), `Game.exe` | Not started. These are the two big tasks ahead, and both will take a long time. |
-| `IJoy.dll`, `INet.dll` | Not started. |
+| `IJoy.dll` | Not started. |
 
 ## Building
 
