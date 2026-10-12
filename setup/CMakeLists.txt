@@ -57,9 +57,14 @@ elseif (MSVC_VERSION EQUAL 1500)
 	# CMake's link step runs the toolchain's mt.exe like that.
 	target_compile_options(setup PRIVATE /O2 /Oi /GL /GS /EHsc /Gy /W3 /Zi /MD)
 	target_compile_definitions(setup PRIVATE WIN32 NDEBUG _WINDOWS)
-	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86)
+	# /PDBALTPATH (undocumented in VS2008) records the original's PDB path in the CodeView record, which VS2008 puts in
+	# .rdata: a path of another length moves everything after it. The PDB is still written to the build tree.
+	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86
+		"/PDBALTPATH:D:\\zdrojaky\\setup\\Release\\setup.pdb")
+	# The system libraries first, as a VS2008 project's inherited defaults come: the import descriptors are in the
+	# order the libraries are first used, and each DLL's imports in the order they are resolved.
 	# d3d8.lib comes from hw.cpp's #pragma comment(lib), after MSVCRT, as the thunk order shows
-	target_link_libraries(setup PRIVATE comctl32 ddraw dxguid kernel32 user32 advapi32)
+	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 comctl32 dxguid ddraw)
 else()
 	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid)
 endif()
