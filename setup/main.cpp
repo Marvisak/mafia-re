@@ -9,8 +9,13 @@
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
 bool settings_loaded = true;
-// GLOBAL: SETUP 0x40e044
+// 1.2 reads and writes it as a dword, Steam's rebuild as a byte
+#ifdef SETUP_STEAM
 bool expert_settings_enabled = true;
+#else
+// GLOBAL: SETUP 0x40e044
+BOOL expert_settings_enabled = TRUE;
+#endif
 
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void Error(const char *msg);
@@ -32,28 +37,28 @@ inline void GetWindowHandles(S_state &state, HWND main_window)
 
 // FUNCTION: SETUP 0x401000
 // FUNCTION: SETUPSTEAM 0x401270
-bool SetText(uint uid, HWND window)
+bool SetText(HWND window, uint uid)
 {
     char buffer[1024];
-    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
+    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)))
     {
-        return false;
+        SetWindowTextA(window, buffer);
+        return true;
     }
-    SetWindowTextA(window, buffer);
-    return true;
+    return false;
 }
 
 // Inlined into DialogFunc in Steam's rebuild
 // FUNCTION: SETUP 0x401050
-bool SetDialogText(HWND main_window, uint uid, int dlg)
+bool SetDialogText(HWND main_window, int dlg, uint uid)
 {
     char buffer[1024];
-    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)) == 0)
+    if (LoadStringA(NULL, uid, buffer, sizeof(buffer)))
     {
-        return false;
+        SetWindowTextA(GetDlgItem(main_window, dlg), buffer);
+        return true;
     }
-    SetWindowTextA(GetDlgItem(main_window, dlg), buffer);
-    return true;
+    return false;
 }
 
 // FUNCTION: SETUP 0x4010b0
@@ -112,18 +117,21 @@ void ToggleExpertSettings()
     RECT window_rect;
     GetWindowRect(app_state.windows.main, &window_rect);
 
-    LONG height = window_rect.bottom - window_rect.top;
-    if (!expert_settings_enabled)
+    // The button's handle goes through a local: 1.2 calls GetDlgItem before pushing the string id, which keeps
+    // the two branches from sharing their tails
+    if (expert_settings_enabled)
     {
-        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, height + 75, SWP_SHOWWINDOW);
-        expert_settings_enabled = true;
-        SetText(IDS_CLOSEEXPERTSETTINGS, GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS));
+        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top - 75, SWP_SHOWWINDOW);
+        expert_settings_enabled = false;
+        HWND button = GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
+        SetText(button, IDS_OPENEXPERTSETTINGS);
     }
     else
     {
-        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, height - 75, SWP_SHOWWINDOW);
-        expert_settings_enabled = false;
-        SetText(IDS_OPENEXPERTSETTINGS, GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS));
+        SetWindowPos(app_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top + 75, SWP_SHOWWINDOW);
+        expert_settings_enabled = true;
+        HWND button = GetDlgItem(app_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
+        SetText(button, IDS_CLOSEEXPERTSETTINGS);
     }
 }
 
@@ -133,33 +141,33 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     if (Msg == WM_INITDIALOG)
     {
-        SetText(IDS_SETUP, hWnd);
-        SetDialogText(hWnd, IDS_AUTODETECT, IDC_BUTTON_AUTODETECT);
-        SetDialogText(hWnd, IDS_EXIT, IDC_BUTTON_EXIT);
-        SetDialogText(hWnd, IDS_SAVE, IDC_BUTTON_SAVE);
-        SetDialogText(hWnd, IDS_HARDWARETRANSFORM, IDC_CHECK_HARDWARETRANSFORM);
-        SetDialogText(hWnd, IDS_SUSPENDWHENINACTIVE, IDC_CHECK_SUSPENDWHENINACTIVE);
-        SetDialogText(hWnd, IDS_TRIPLEBUFFERING, IDC_CHECK_TRIPLEBUFFERING);
-        SetDialogText(hWnd, IDS_VSYNC, IDC_CHECK_VSYNC);
-        SetDialogText(hWnd, IDS_MULTIPASSRENDERING, IDC_CHECK_MULTIPASSRENDERING);
-        SetDialogText(hWnd, IDS_CLIPALWAYS, IDC_CHECK_CLIPALWAYS);
-        SetDialogText(hWnd, IDS_WBUFFER, IDC_CHECK_WBUFFER);
-        SetDialogText(hWnd, IDS_TRUECOLOR, IDC_CHECK_TEXTURETRUECOLOR);
-        SetDialogText(hWnd, IDS_LOWDETAIL, IDC_CHECK_TEXTURELOWDETAIL);
-        SetDialogText(hWnd, IDS_COMPRESSED, IDC_CHECK_TEXTURECOMPRESSED);
-        SetDialogText(hWnd, IDS_TRUECOLOR, IDC_CHECK_LIGHTMAPTRUECOLOR);
-        SetDialogText(hWnd, IDS_SOFTWAREMIXINGONLY, IDC_CHECK_SOFTWAREMIXINGONLY);
-        SetDialogText(hWnd, IDS_DISABLEEAX, IDC_CHECK_DISABLEEAX);
-        SetDialogText(hWnd, IDS_DISPLAY, IDC_DISPLAY);
-        SetDialogText(hWnd, IDS_RESOLUTION, IDC_RESOLUTION);
-        SetDialogText(hWnd, IDS_ANTIALIASING, IDC_ANTIALIASING);
-        SetDialogText(hWnd, IDS_EXPERTSETTINGS, IDC_EXPERTSETTINGS);
-        SetDialogText(hWnd, IDS_FULLSCREEN, IDC_FULLSCREEN);
-        SetDialogText(hWnd, IDS_REFRESHRATE, IDC_REFRESHRATE);
-        SetDialogText(hWnd, IDS_BITDEPTH, IDC_BITDEPTH);
-        SetDialogText(hWnd, IDS_TEXTUREQUALITY, IDC_TEXTUREQUALITY);
-        SetDialogText(hWnd, IDS_LIGHTMAPQUALITY, IDC_LIGHTMAPQUALITY);
-        SetDialogText(hWnd, IDS_SOUND, IDC_SOUND);
+        SetText(hWnd, IDS_SETUP);
+        SetDialogText(hWnd, IDC_BUTTON_AUTODETECT, IDS_AUTODETECT);
+        SetDialogText(hWnd, IDC_BUTTON_EXIT, IDS_EXIT);
+        SetDialogText(hWnd, IDC_BUTTON_SAVE, IDS_SAVE);
+        SetDialogText(hWnd, IDC_CHECK_HARDWARETRANSFORM, IDS_HARDWARETRANSFORM);
+        SetDialogText(hWnd, IDC_CHECK_SUSPENDWHENINACTIVE, IDS_SUSPENDWHENINACTIVE);
+        SetDialogText(hWnd, IDC_CHECK_TRIPLEBUFFERING, IDS_TRIPLEBUFFERING);
+        SetDialogText(hWnd, IDC_CHECK_VSYNC, IDS_VSYNC);
+        SetDialogText(hWnd, IDC_CHECK_MULTIPASSRENDERING, IDS_MULTIPASSRENDERING);
+        SetDialogText(hWnd, IDC_CHECK_CLIPALWAYS, IDS_CLIPALWAYS);
+        SetDialogText(hWnd, IDC_CHECK_WBUFFER, IDS_WBUFFER);
+        SetDialogText(hWnd, IDC_CHECK_TEXTURETRUECOLOR, IDS_TRUECOLOR);
+        SetDialogText(hWnd, IDC_CHECK_TEXTURELOWDETAIL, IDS_LOWDETAIL);
+        SetDialogText(hWnd, IDC_CHECK_TEXTURECOMPRESSED, IDS_COMPRESSED);
+        SetDialogText(hWnd, IDC_CHECK_LIGHTMAPTRUECOLOR, IDS_TRUECOLOR);
+        SetDialogText(hWnd, IDC_CHECK_SOFTWAREMIXINGONLY, IDS_SOFTWAREMIXINGONLY);
+        SetDialogText(hWnd, IDC_CHECK_DISABLEEAX, IDS_DISABLEEAX);
+        SetDialogText(hWnd, IDC_DISPLAY, IDS_DISPLAY);
+        SetDialogText(hWnd, IDC_RESOLUTION, IDS_RESOLUTION);
+        SetDialogText(hWnd, IDC_ANTIALIASING, IDS_ANTIALIASING);
+        SetDialogText(hWnd, IDC_EXPERTSETTINGS, IDS_EXPERTSETTINGS);
+        SetDialogText(hWnd, IDC_FULLSCREEN, IDS_FULLSCREEN);
+        SetDialogText(hWnd, IDC_REFRESHRATE, IDS_REFRESHRATE);
+        SetDialogText(hWnd, IDC_BITDEPTH, IDS_BITDEPTH);
+        SetDialogText(hWnd, IDC_TEXTUREQUALITY, IDS_TEXTUREQUALITY);
+        SetDialogText(hWnd, IDC_LIGHTMAPQUALITY, IDS_LIGHTMAPQUALITY);
+        SetDialogText(hWnd, IDC_SOUND, IDS_SOUND);
 
         GetWindowHandles(app_state, hWnd);
         ToggleExpertSettings();

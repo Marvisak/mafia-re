@@ -37,7 +37,8 @@ if (MSVC_VERSION EQUAL 1200)
 	# Original compile flags (/O2 comes from cmake/vc6-flags.cmake)
 	# /ML - static single-threaded CRT (LIBC.LIB)
 	# /Gz - every function in the binary is __stdcall
-	target_compile_options(setup PRIVATE /ML /Gz)
+	# /G6 - Pentium Pro scheduling: SetText's push 0x400 comes before the lea of its buffer
+	target_compile_options(setup PRIVATE /ML /Gz /G6)
 
 	# The original was linked with /DEBUG: it ends with a CodeView record naming its PDB, and /DEBUG's
 	# default /OPT:NOREF kept every import thunk and all of dxguid.lib's GUIDs. /OPT:NOREF also overrides
