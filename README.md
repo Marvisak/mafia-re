@@ -8,18 +8,19 @@ built with, produces files identical to the originals.
 
 ## Progress
 
-<img src="docs/progress/rw_data.svg" width="50%"><img src="docs/progress/setup.svg" width="50%">
-<img src="docs/progress/LS3DF.svg" width="50%"><img src="docs/progress/Game.svg" width="50%">
-<img src="docs/progress/IJoy.svg" width="50%">
+<img src="docs/progress/Game.svg" width="50%"><img src="docs/progress/LS3DF.svg" width="50%">
+<img src="docs/progress/rw_data.svg" width="50%"><img src="docs/progress/IJoy.svg" width="50%">
+<img src="docs/progress/setup.svg" width="50%"><img src="docs/progress/setup.steam.svg" width="50%">
 
 The cards count each binary's own functions, without the C runtime linked into it. *Implemented* is how many of them
 have source, *accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those, and the bar is the
 score summed over all of them. The function counts of binaries that haven't been started are estimates.
+*setup.exe (Steam 2010)* is Steam's rebuild of the setup, built from the same source with Visual C++ 2008.
 
 | Binary | Status |
 | --- | --- |
 | `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
-| `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. The existing decompilation was made from Steam's 2010 rebuild (Visual Studio 2008) and still has to be redone against it. |
+| `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. It builds with Visual C++ 6.0 and reccmp compares it, but the source was decompiled from Steam's 2010 rebuild (Visual Studio 2008) and is being redone against 1.2. The rebuild's differences stay in the source behind `SETUP_STEAM`, and it is compared too, built with its own toolchain (Visual C++ 2008 SP1). |
 | `LS3DF.dll` (engine), `Game.exe` | Not started. These are the two big tasks ahead, and both will take a long time. |
 | `IJoy.dll` | Not started. |
 
@@ -52,11 +53,16 @@ the original binaries does: bring your own copy of version 1.2.
    ```bash
    cmake --preset vc6 && cmake --build --preset vc6
    ```
-4. `setup.exe` doesn't build with Visual C++ 6.0 yet: its source still follows Steam's 2010 rebuild. Build it with an
-   installed Visual Studio from an x86 developer prompt, with the DirectX 8.1 SDK installed (`DXSDK_DIR` set). The
-   output goes to `build/msvc`, and it works but doesn't match the original:
+4. Optionally, build with an installed Visual Studio from an x86 developer prompt. The output goes to `build/msvc`, and
+   it works but doesn't match the original:
    ```bash
    cmake --preset msvc && cmake --build --preset msvc
+   ```
+   Add `-DSETUP_STEAM=ON` to the first command to build Steam's 2010 `setup.exe` instead of the 1.2 one.
+5. Optionally, build Steam's 2010 `setup.exe` with Visual C++ 2008 SP1, the toolchain it was built with. The output
+   goes to `build/vs2008`:
+   ```bash
+   cmake --preset vs2008 && cmake --build --preset vs2008
    ```
 
 [CONTRIBUTING.md](CONTRIBUTING.md) describes how to compare a build with the original binaries.

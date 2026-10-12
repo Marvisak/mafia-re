@@ -5,8 +5,6 @@
 #include <types.h>
 #include <settings.h>
 
-#define SETTINGS_MAGIC 0x14
-
 #define BIT_DEPTH_16 0x1
 #define BIT_DEPTH_32 0x2
 #define MULTISAMPLE_2X_WINDOWED 0x4
@@ -31,9 +29,30 @@ struct S_state
 		HWND vram_size;
 		HWND refresh_rate;
 	} windows;
+	// In megabytes, from GetTotalVRAM
+	int vram_size;
+
+	// 1.2 zeroes app_state, vram_size included, in one dynamic initializer
+	S_state()
+	{
+		hinst = NULL;
+		windows.main = NULL;
+		windows.display = NULL;
+		windows.resolution = NULL;
+		windows.bit_depth = NULL;
+		windows.antialiasing = NULL;
+		windows.driver_version = NULL;
+		windows.vram_size = NULL;
+		windows.refresh_rate = NULL;
+		vram_size = 0;
+	}
 };
 
 extern S_state app_state;
 extern S_settings settings;
-extern int vram_size;
 extern bool supports_w_buffer;
+
+// Steam's link-time code generation put Error before SetText, against the source order. Its marker matches by
+// name, here in a header, so the linter doesn't check it against main.cpp's order.
+// FUNCTION: SETUPSTEAM 0x4011f0
+// Error

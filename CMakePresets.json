@@ -26,6 +26,22 @@
             }
         },
         {
+            "name": "vs2008",
+            "displayName": "Visual C++ 2008 SP1 (Steam's 2010 setup.exe, with PDB for reccmp)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/vs2008",
+            "toolchainFile": "${sourceDir}/cmake/vs2008.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "SETUP_STEAM": "ON"
+            },
+            "environment": {
+                "PATH": "${sourceDir}/3rdparty/msvc900_sp1/VC/bin;${sourceDir}/3rdparty/msvc900_sp1/Microsoft SDKs/Windows/v6.0A/Bin;${sourceDir}/.venv/Scripts;$penv{PATH}",
+                "INCLUDE": "${sourceDir}/3rdparty/msvc900_sp1/VC/include;${sourceDir}/3rdparty/msvc900_sp1/Microsoft SDKs/Windows/v6.0A/Include;${sourceDir}/3rdparty/dx81sdk/include",
+                "LIB": "${sourceDir}/3rdparty/msvc900_sp1/VC/lib;${sourceDir}/3rdparty/msvc900_sp1/Microsoft SDKs/Windows/v6.0A/Lib"
+            }
+        },
+        {
             "name": "msvc",
             "displayName": "Installed Visual Studio, x86 (setup, functional builds; not matching)",
             "generator": "Ninja",
@@ -47,6 +63,10 @@
         {
             "name": "vc6-pdb",
             "configurePreset": "vc6-pdb"
+        },
+        {
+            "name": "vs2008",
+            "configurePreset": "vs2008"
         },
         {
             "name": "msvc",

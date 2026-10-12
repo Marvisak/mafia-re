@@ -7,7 +7,8 @@ The numbers count each binary's own functions and leave the CRT out, as reccmp's
 - Progress (the bar, and the number next to the binary's name): the scores summed over every function
   of the original, so a function without source counts as 0.
 
-It builds the vc6-pdb preset first, because reccmp reads the PDB and a stale one gives wrong numbers.
+It builds each card's preset first (vc6-pdb, and vs2008 for Steam's setup.exe), because reccmp reads the
+PDB and a stale one gives wrong numbers.
 Run it from the repository root and commit the cards with the change that moved them:
 
     .venv/Scripts/python tools/progress.py
@@ -25,27 +26,33 @@ from reccmp.project.detect import RecCmpProject
 from reccmp.types import EntityType
 
 REPO = Path(__file__).resolve().parent.parent
-BUILD = REPO / "build" / "vc6-pdb"
 OUT = REPO / "docs" / "progress"
 
 
 @dataclass
 class Target:
-    binary: str
+    binary: str  # the card's title
     reccmp_id: str | None  # None until the binary has a reccmp target
     functions: int  # functions in the original's own code
+    preset: str = "vc6-pdb"  # the build reccmp reads, in build/<preset>
+    svg: str | None = None  # the card's file name in docs/progress, if not the binary's
+
+    @property
+    def path(self) -> Path:
+        return OUT / f"{self.svg or Path(self.binary).stem}.svg"
 
 
 # The function counts come from Binary Ninja: its functions from the start of .text up to the first import
-# thunk or CRT function (the address in the comment). rw_data's and setup's are exact. The others still
+# thunk or CRT function (the address in the comment). rw_data's and both setups' are exact. The others still
 # include Binary Ninja's mistakes (padding and pieces of functions taken for functions); correct them as
 # those binaries are worked on. Once reccmp knows more functions than the count here, its number is used.
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
-    Target("setup.exe", None, 15),  # 0x403110
+    Target("setup.exe", "SETUP", 15),  # 0x403110
     Target("LS3DF.dll", None, 1660),  # 0x1008d3e0
     Target("Game.exe", None, 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", None, 99),  # 0x100060f0
+    Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158
 ]
 
 BAR_WIDTH = 352
@@ -112,19 +119,23 @@ def card(name: str, implemented: int, matched: float, total: int) -> str:
 
 
 def main() -> None:
-    subprocess.run(["cmake", "--build", "--preset", "vc6-pdb"], cwd=REPO, check=True)
+    presets = dict.fromkeys(t.preset for t in TARGETS if t.reccmp_id)
+    for preset in presets:
+        if not (REPO / "build" / preset).exists():
+            subprocess.run(["cmake", "--preset", preset], cwd=REPO, check=True)
+        subprocess.run(["cmake", "--build", "--preset", preset], cwd=REPO, check=True)
 
     logging.basicConfig(level=logging.ERROR)
-    project = RecCmpProject.from_directory(BUILD)
+    projects = {preset: RecCmpProject.from_directory(REPO / "build" / preset) for preset in presets}
     OUT.mkdir(parents=True, exist_ok=True)
     for target in TARGETS:
         implemented, matched, total = 0, 0.0, target.functions
         if target.reccmp_id:
-            implemented, matched, known = score(project, target.reccmp_id)
+            implemented, matched, known = score(projects[target.preset], target.reccmp_id)
             total = max(total, known)
-        path = OUT / f"{Path(target.binary).stem}.svg"
-        path.write_text(card(target.binary, implemented, matched, total), encoding="utf-8", newline="\n")
-        print(f"{target.binary:12} {implemented:5} / {total:5} implemented, progress {matched / total:7.2%}  -> {path.relative_to(REPO).as_posix()}")
+        target.path.write_text(card(target.binary, implemented, matched, total), encoding="utf-8", newline="\n")
+        print(f"{target.binary:22} {implemented:5} / {total:5} implemented, progress {matched / total:7.2%}"
+              f"  -> {target.path.relative_to(REPO).as_posix()}")
 
 
 if __name__ == "__main__":

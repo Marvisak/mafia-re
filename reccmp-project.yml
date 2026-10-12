@@ -4,3 +4,19 @@ targets:
     source_root: rw_data
     hash:
       sha256: 67f72c30cc7fe941f5526b8602a0bd2785baa0f22617bbcfd4a71bacd79b8d49
+  SETUP:
+    filename: setup.exe
+    source_root:
+      - setup
+      - common
+    hash:
+      sha256: c0c1601220821393a56477d400601e282ff49bbf8d21a0297f90f46a27afc8e0
+    data_sources:
+      - setup/library_msvc.csv
+  SETUPSTEAM:
+    filename: setup.steam.exe
+    source_root:
+      - setup
+      - common
+    hash:
+      sha256: 3e9baf1fb7201d3ae21fbef3f573c539b74a70754d7f2fb03f38171983929b2b

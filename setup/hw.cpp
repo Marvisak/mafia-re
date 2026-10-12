@@ -4,13 +4,28 @@
 #include <ddraw.h>
 #include <cstdio>
 
-IDirect3D8 *d3d8;
+// The first initialized data of this file in 1.2
+// GLOBAL: SETUP 0x40e144
+bool supports_w_buffer = true;
 
-S_adapter_mode adapter_modes[256];
+// 1.2 has this file's uninitialized globals in this order, which VC6's hash order of these names doesn't give,
+// so the original names differ
+// GLOBAL: SETUP 0x410d48
 char global_buffer[256];
+// app_state and settings are constructed at startup: their dynamic initializers start this file's code
+// GLOBAL: SETUP 0x410e48
+S_state app_state;
+// GLOBAL: SETUP 0x410e70
+IDirect3D8 *d3d8;
+// GLOBAL: SETUP 0x410e74
+S_settings settings;
+// GLOBAL: SETUP 0x410eb8
+S_adapter_mode adapter_modes[256];
 
 // The numbers are in megabytes, the result is rounded up to a power of two
 // Requires DirectDraw7 which was already deprecated at the time
+// FUNCTION: SETUP 0x4026f0
+// FUNCTION: SETUPSTEAM 0x4026d0
 int GetTotalVRAM()
 {
     IDirectDraw7 *dd;
@@ -38,6 +53,8 @@ int GetTotalVRAM()
     return vram_mb;
 }
 
+// FUNCTION: SETUP 0x402780
+// FUNCTION: SETUPSTEAM 0x402750
 bool LoadAdapterRefreshRates()
 {
     char buffer[128];
@@ -108,6 +125,8 @@ bool LoadAdapterRefreshRates()
     return true;
 }
 
+// FUNCTION: SETUP 0x402940
+// FUNCTION: SETUPSTEAM 0x402930
 bool LoadAdapterModes()
 {
     if (app_state.windows.resolution)
@@ -123,7 +142,7 @@ bool LoadAdapterModes()
     char buffer[256];
     D3DADAPTER_IDENTIFIER8 identifier;
     HRESULT result = d3d8->GetAdapterIdentifier(settings.adapter, 0, &identifier);
-    vram_size = GetTotalVRAM();
+    app_state.vram_size = GetTotalVRAM();
     if (app_state.windows.driver_version)
     {
         if (result != D3D_OK)
@@ -148,7 +167,7 @@ bool LoadAdapterModes()
     }
     if (app_state.windows.vram_size)
     {
-        sprintf(global_buffer, "VRAM: %iMB", vram_size);
+        sprintf(global_buffer, "VRAM: %iMB", app_state.vram_size);
         SetWindowTextA(app_state.windows.vram_size, global_buffer);
     }
 
@@ -252,6 +271,8 @@ bool LoadAdapterModes()
     return true;
 }
 
+// FUNCTION: SETUP 0x402c80
+// FUNCTION: SETUPSTEAM 0x402ca0
 bool LoadAdapterData(int adapter)
 {
     char buffer[128];
@@ -376,6 +397,8 @@ bool LoadAdapterData(int adapter)
     return true;
 }
 
+// FUNCTION: SETUP 0x402f90
+// FUNCTION: SETUPSTEAM 0x402fe0
 bool LoadD3D8()
 {
     if (app_state.windows.display)
@@ -428,77 +451,13 @@ bool LoadD3D8()
     return d3d8 != NULL;
 }
 
-// Inlined into WinMain in the binary
+// Inlined into WinMain in Steam's rebuild
+// FUNCTION: SETUP 0x4030f0
 void FreeD3D8()
 {
     if (d3d8)
     {
         d3d8->Release();
         d3d8 = NULL;
-    }
-}
-
-// Inlined into DialogFunc in the binary
-// Only the best of the best, true beasts can run Mafia with true color textures
-void AutodetectSettings()
-{
-    settings.multipass_rendering = false;
-    settings.suspend_when_inactive = true;
-    settings.clip_always = false;
-    settings.antialiasing = 0;
-    settings.fullscreen = true;
-    settings.hardware_transform = true;
-    settings.vsync = false;
-    settings.refresh_rate = 0;
-    settings.disable_sound = false;
-    settings.software_mixing_only = false;
-    if (vram_size > 8)
-    {
-        if (vram_size > 16)
-        {
-            if (vram_size <= 32)
-            {
-                settings.width = 800;
-                settings.height = 600;
-                settings.texture_true_color = false;
-                settings.texture_compressed = true;
-            }
-            else if (vram_size > 64)
-            {
-                settings.width = 1280;
-                settings.height = 1024;
-                settings.texture_true_color = true;
-                settings.texture_compressed = false;
-            }
-            else
-            {
-                settings.width = 1024;
-                settings.height = 768;
-                settings.texture_true_color = false;
-                settings.texture_compressed = true;
-            }
-            settings.bit_depth = 32;
-            settings.texture_low_detail = false;
-        }
-        else
-        {
-            settings.width = 800;
-            settings.height = 600;
-            settings.bit_depth = 16;
-            settings.texture_true_color = false;
-            settings.texture_low_detail = true;
-            settings.texture_compressed = true;
-        }
-        settings.lightmap_true_color = true;
-    }
-    else
-    {
-        settings.width = 640;
-        settings.height = 480;
-        settings.bit_depth = 16;
-        settings.lightmap_true_color = false;
-        settings.texture_true_color = false;
-        settings.texture_low_detail = true;
-        settings.texture_compressed = true;
     }
 }

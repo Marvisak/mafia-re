@@ -5,25 +5,20 @@
 
 #include "commctrl.h"
 
-// .data order in the binary: supports_w_buffer, settings_loaded, settings, expert_settings_enabled
-bool supports_w_buffer = true;
+// This file's only globals in 1.2, the start of its .data. The rest are in hw.cpp.
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
+// GLOBAL: SETUP 0x40e040
 bool settings_loaded = true;
-S_settings settings = {
-    SETTINGS_MAGIC, 0, 800, 600, 32,
-    0, 0, false, false, false,
-    true, false, false, false, true,
-    true, false, false, true, true,
-    false, 1, 0, true, 1,
-    1, 2, 2, 3, 2};
+// GLOBAL: SETUP 0x40e044
 bool expert_settings_enabled = true;
 
-S_state app_state;
-int vram_size = 0;
-
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+void Error(const char *msg);
 
-void GetWindowHandles(S_state &state, HWND main_window)
+// GetWindowHandles and HandleComboField have no out-of-line copy in 1.2, which /OPT:NOREF would have kept:
+// they are inlined into DialogFunc
+// FUNCTION: SETUPSTEAM 0x401190
+inline void GetWindowHandles(S_state &state, HWND main_window)
 {
     state.windows.main = main_window;
     state.windows.display = GetDlgItem(main_window, IDC_COMBO_DISPLAY);
@@ -35,17 +30,8 @@ void GetWindowHandles(S_state &state, HWND main_window)
     state.windows.refresh_rate = GetDlgItem(main_window, IDC_COMBO_REFRESHRATE);
 }
 
-void Error(const char *msg)
-{
-    char buffer[128];
-    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
-    {
-        strcpy(buffer, "Setup error");
-    }
-    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
-    EndDialog(app_state.windows.main, 0);
-}
-
+// FUNCTION: SETUP 0x401000
+// FUNCTION: SETUPSTEAM 0x401270
 bool SetText(uint uid, HWND window)
 {
     char buffer[1024];
@@ -57,7 +43,8 @@ bool SetText(uint uid, HWND window)
     return true;
 }
 
-// Inlined into DialogFunc in the binary
+// Inlined into DialogFunc in Steam's rebuild
+// FUNCTION: SETUP 0x401050
 bool SetDialogText(HWND main_window, uint uid, int dlg)
 {
     char buffer[1024];
@@ -69,6 +56,8 @@ bool SetDialogText(HWND main_window, uint uid, int dlg)
     return true;
 }
 
+// FUNCTION: SETUP 0x4010b0
+// FUNCTION: SETUPSTEAM 0x4012e0
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     app_state.hinst = hInstance;
@@ -79,11 +68,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return 0;
 }
 
-void HandleComboField(uint uid, bool &value)
+// FUNCTION: SETUPSTEAM 0x401340
+inline void HandleComboField(uint uid, bool &value)
 {
     value = SendDlgItemMessageA(app_state.windows.main, uid, BM_GETCHECK, NULL, NULL) == 1;
 }
 
+// FUNCTION: SETUP 0x401220
+// FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
 {
     if (!settings.fullscreen)
@@ -113,6 +105,8 @@ void ToggleFields()
     }
 }
 
+// FUNCTION: SETUP 0x401320
+// FUNCTION: SETUPSTEAM 0x401470
 void ToggleExpertSettings()
 {
     RECT window_rect;
@@ -133,6 +127,8 @@ void ToggleExpertSettings()
     }
 }
 
+// FUNCTION: SETUP 0x4013e0
+// FUNCTION: SETUPSTEAM 0x401550
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     if (Msg == WM_INITDIALOG)
@@ -170,7 +166,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
         if (!settings_loaded)
         {
-            vram_size = GetTotalVRAM();
+            app_state.vram_size = GetTotalVRAM();
             AutodetectSettings();
         }
 
@@ -250,7 +246,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             HandleComboField(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
             HandleComboField(IDC_CHECK_WBUFFER, settings.w_buffer);
             ToggleFields();
-            if (settings.texture_true_color && id == IDC_CHECK_TEXTURETRUECOLOR && vram_size < 64)
+            if (settings.texture_true_color && id == IDC_CHECK_TEXTURETRUECOLOR && app_state.vram_size < 64)
             {
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_LOWVRAMWARNING, buffer, sizeof(buffer)) == 0)
@@ -337,7 +333,6 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         case IDC_BUTTON_EXIT:
         {
             S_settings saved_settings;
-            InitSettings(saved_settings);
             LoadSettings(saved_settings);
 
             if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
@@ -447,4 +442,16 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
+}
+
+// FUNCTION: SETUP 0x402550
+void Error(const char *msg)
+{
+    char buffer[128];
+    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
+    {
+        strcpy(buffer, "Setup error");
+    }
+    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
+    EndDialog(app_state.windows.main, 0);
 }

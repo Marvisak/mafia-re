@@ -43,8 +43,9 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    ```bash
    cmake --preset vc6 && cmake --build --preset vc6              # the byte-exact build, in build/vc6
    cmake --preset vc6-pdb && cmake --build --preset vc6-pdb      # the same code with PDBs, for reccmp
+   cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
-5. Compare with the original:
+5. Compare with the original. The reccmp targets are `RWDATA` and `SETUP` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take `--target SETUP` too:
    ```bash
    cd build/vc6-pdb
    ../../.venv/Scripts/reccmp-reccmp --target RWDATA --nolib                  # score of every function
