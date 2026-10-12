@@ -32,7 +32,7 @@ struct S_state
 	// In megabytes, from GetTotalVRAM
 	int vram_size;
 
-	// 1.2 zeroes app_state, vram_size included, in one dynamic initializer
+	// 1.2 zeroes dialog_state, vram_size included, in one dynamic initializer
 	S_state()
 	{
 		hinst = NULL;
@@ -48,7 +48,7 @@ struct S_state
 	}
 };
 
-extern S_state app_state;
+extern S_state dialog_state;
 extern S_settings settings;
 extern bool supports_w_buffer;
 

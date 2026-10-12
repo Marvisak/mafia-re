@@ -45,8 +45,10 @@ if (MSVC_VERSION EQUAL 1200)
 	# the PDB build's /OPT:REF.
 	# d3d8.lib isn't listed: hw.cpp names it with #pragma comment(lib), so LINK searches it after LIBC, as the
 	# thunk order shows.
+	# dxguid before comctl32: the Rich header lists the tools in reverse order of first use, and the original has
+	# COMCTL32.LIB's objects (no tool id) ahead of dxguid's.
 	target_link_options(setup PRIVATE /DEBUG /OPT:NOREF /INCREMENTAL:NO)
-	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 ddraw comctl32 dxguid)
+	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 ddraw dxguid comctl32)
 elseif (MSVC_VERSION EQUAL 1500)
 	# Steam's setup.exe: Visual C++ 2008 SP1, its default Release settings (/O2 /Oi /GL /Gy /EHsc /W3 /Zi, MSVCR90.dll)
 	# and what its header shows: /LTCG, /DEBUG (an RSDS record), /RELEASE (a checksum), /DYNAMICBASE /NXCOMPAT.

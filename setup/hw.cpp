@@ -13,18 +13,19 @@
 // GLOBAL: SETUPSTEAM 0x405018
 bool supports_w_buffer = true;
 
-// 1.2 has this file's uninitialized globals in this order, which VC6's hash order of these names doesn't give,
-// so the original names differ
+// The original names are unknown. Both compilers order uninitialized globals by a hash of their names (VS2008 puts
+// constructed ones after the others), and these names give both builds' .bss order: global_buffer, app_state and
+// d3d8 didn't give 1.2's
 // GLOBAL: SETUP 0x410d48
 // GLOBAL: SETUPSTEAM 0x405fc0
-char global_buffer[256];
-// app_state and settings are constructed at startup: their dynamic initializers start this file's code
+char message_buffer[256];
+// dialog_state and settings are constructed at startup: their dynamic initializers start this file's code
 // GLOBAL: SETUP 0x410e48
 // GLOBAL: SETUPSTEAM 0x4060c0
-S_state app_state;
+S_state dialog_state;
 // GLOBAL: SETUP 0x410e70
 // GLOBAL: SETUPSTEAM 0x4053b8
-IDirect3D8 *d3d8;
+IDirect3D8 *direct3d8;
 // GLOBAL: SETUP 0x410e74
 // GLOBAL: SETUPSTEAM 0x40501c
 S_settings settings;
@@ -70,31 +71,31 @@ int GetTotalVRAM(GUID *guid)
 bool LoadAdapterRefreshRates()
 {
     char buffer[128];
-    if (app_state.windows.refresh_rate)
+    if (dialog_state.windows.refresh_rate)
     {
         if (LoadStringA(NULL, IDS_DEFAULT, buffer, sizeof(buffer)) == 0)
         {
             // STRING: SETUP 0x40e150
             strcpy(buffer, "Default");
         }
-        SendMessageA(app_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
-        int pos = SendMessageA(app_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
-        SendMessageA(app_state.windows.refresh_rate, CB_SETITEMDATA, pos, NULL);
+        SendMessageA(dialog_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
+        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, NULL);
     }
 
-    if (!d3d8)
+    if (!direct3d8)
     {
         return false;
     }
 
-    if (app_state.windows.refresh_rate)
+    if (dialog_state.windows.refresh_rate)
     {
         int selected = 0;
-        int adapter_mode_count = d3d8->GetAdapterModeCount(settings.adapter);
+        int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
         for (int i = 0; i < adapter_mode_count; ++i)
         {
             D3DDISPLAYMODE mode;
-            if (d3d8->EnumAdapterModes(settings.adapter, i, &mode) == D3D_OK)
+            if (direct3d8->EnumAdapterModes(settings.adapter, i, &mode) == D3D_OK)
             {
                 switch (mode.Format)
                 {
@@ -119,9 +120,9 @@ bool LoadAdapterRefreshRates()
                 if (mode.Width == settings.width && mode.Height == settings.height && mode.RefreshRate != 0)
                 {
                     // STRING: SETUP 0x40e148
-                    sprintf(global_buffer, "%d Hz", mode.RefreshRate);
-                    int pos = SendMessageA(app_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(global_buffer));
-                    SendMessageA(app_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
+                    sprintf(message_buffer, "%d Hz", mode.RefreshRate);
+                    int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(message_buffer));
+                    SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
                     if (settings.refresh_rate == mode.RefreshRate)
                     {
                         selected = pos;
@@ -130,7 +131,7 @@ bool LoadAdapterRefreshRates()
             }
         }
 
-        SendMessageA(app_state.windows.refresh_rate, CB_SETCURSEL, selected, NULL);
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETCURSEL, selected, NULL);
         if (selected == 0)
         {
             settings.refresh_rate = 0;
@@ -143,21 +144,21 @@ bool LoadAdapterRefreshRates()
 // FUNCTION: SETUPSTEAM 0x402930
 bool LoadAdapterModes()
 {
-    if (app_state.windows.resolution)
+    if (dialog_state.windows.resolution)
     {
-        SendMessageA(app_state.windows.resolution, CB_RESETCONTENT, NULL, NULL);
+        SendMessageA(dialog_state.windows.resolution, CB_RESETCONTENT, NULL, NULL);
     }
 
-    if (!d3d8)
+    if (!direct3d8)
     {
         return false;
     }
 
     char buffer[256];
     D3DADAPTER_IDENTIFIER8 identifier;
-    HRESULT result = d3d8->GetAdapterIdentifier(settings.adapter, 0, &identifier);
-    app_state.vram_size = GetTotalVRAM(NULL);
-    if (app_state.windows.driver_version)
+    HRESULT result = direct3d8->GetAdapterIdentifier(settings.adapter, 0, &identifier);
+    dialog_state.vram_size = GetTotalVRAM(NULL);
+    if (dialog_state.windows.driver_version)
     {
         if (result == D3D_OK)
         {
@@ -167,7 +168,7 @@ bool LoadAdapterModes()
                 strcpy(buffer, "Driver version: %d.%02d.%02d.%04d");
             }
             sprintf(
-                global_buffer,
+                message_buffer,
                 buffer,
                 HIWORD(identifier.DriverVersion.HighPart),
                 LOWORD(identifier.DriverVersion.HighPart),
@@ -176,29 +177,29 @@ bool LoadAdapterModes()
         }
         else
         {
-            global_buffer[0] = '\0';
+            message_buffer[0] = '\0';
         }
-        SetWindowTextA(app_state.windows.driver_version, global_buffer);
+        SetWindowTextA(dialog_state.windows.driver_version, message_buffer);
     }
-    if (app_state.windows.vram_size)
+    if (dialog_state.windows.vram_size)
     {
         // STRING: SETUP 0x40e164
-        sprintf(global_buffer, "VRAM: %iMB", app_state.vram_size);
-        SetWindowTextA(app_state.windows.vram_size, global_buffer);
+        sprintf(message_buffer, "VRAM: %iMB", dialog_state.vram_size);
+        SetWindowTextA(dialog_state.windows.vram_size, message_buffer);
     }
 
-    if (!app_state.windows.resolution)
+    if (!dialog_state.windows.resolution)
     {
         return true;
     }
 
-    int adapter_mode_count = d3d8->GetAdapterModeCount(settings.adapter);
+    int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
     int total_modes = 0;
     S_adapter_mode *new_mode = adapter_modes;
     for (int i = 0; i < adapter_mode_count; ++i)
     {
         D3DDISPLAYMODE mode;
-        if (d3d8->EnumAdapterModes(settings.adapter, i, &mode) != D3D_OK)
+        if (direct3d8->EnumAdapterModes(settings.adapter, i, &mode) != D3D_OK)
         {
             continue;
         }
@@ -219,22 +220,22 @@ bool LoadAdapterModes()
         }
 
         // The multisample flags are collected directly in the next free slot, even when the mode turns out to be a duplicate
-        if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
             new_mode->flags |= MULTISAMPLE_2X_WINDOWED;
         }
 
-        if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
             new_mode->flags |= MULTISAMPLE_4X_WINDOWED;
         }
 
-        if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
             new_mode->flags |= MULTISAMPLE_2X_FULLSCREEN;
         }
 
-        if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
             new_mode->flags |= MULTISAMPLE_4X_FULLSCREEN;
         }
@@ -273,12 +274,12 @@ bool LoadAdapterModes()
     for (int j = 0; j < total_modes; ++j, ++cached_mode)
     {
         // STRING: SETUP 0x40e158
-        sprintf(global_buffer, "%4d x %4d", cached_mode->width, cached_mode->height);
-        int pos = SendMessageA(app_state.windows.resolution, CB_ADDSTRING, -1, reinterpret_cast<LPARAM>(global_buffer));
-        SendMessageA(app_state.windows.resolution, CB_SETITEMDATA, pos, reinterpret_cast<LPARAM>(cached_mode));
+        sprintf(message_buffer, "%4d x %4d", cached_mode->width, cached_mode->height);
+        int pos = SendMessageA(dialog_state.windows.resolution, CB_ADDSTRING, -1, reinterpret_cast<LPARAM>(message_buffer));
+        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, reinterpret_cast<LPARAM>(cached_mode));
         if (cached_mode->width == settings.width && cached_mode->height == settings.height)
         {
-            SendMessageA(app_state.windows.resolution, CB_SETCURSEL, pos, NULL);
+            SendMessageA(dialog_state.windows.resolution, CB_SETCURSEL, pos, NULL);
         }
     }
     LoadAdapterRefreshRates();
@@ -297,14 +298,14 @@ bool LoadAdapterData(int adapter)
         strcpy(buffer, " OFF");
     }
 
-    SendMessageA(app_state.windows.bit_depth, CB_RESETCONTENT, NULL, NULL);
-    SendMessageA(app_state.windows.antialiasing, CB_RESETCONTENT, NULL, NULL);
-    int pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
-    SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, NULL);
+    SendMessageA(dialog_state.windows.bit_depth, CB_RESETCONTENT, NULL, NULL);
+    SendMessageA(dialog_state.windows.antialiasing, CB_RESETCONTENT, NULL, NULL);
+    int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
+    SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, NULL);
     if (adapter == -1)
     {
         // Uses the adapter mode count as the bound, not the number of cached modes, this is what the original does
-        int adapter_mode_count = d3d8->GetAdapterModeCount(settings.adapter);
+        int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
         int i;
         for (i = 0; i < adapter_mode_count; ++i)
         {
@@ -321,19 +322,19 @@ bool LoadAdapterData(int adapter)
         adapter = i;
     }
 
-    S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(app_state.windows.resolution, CB_GETITEMDATA, adapter, NULL));
+    S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, adapter, NULL));
     if (!settings.antialiasing
         || settings.fullscreen && (adapter_data->flags & MULTISAMPLE_FULLSCREEN) != MULTISAMPLE_FULLSCREEN
         || !settings.fullscreen && (adapter_data->flags & MULTISAMPLE_WINDOWED) != MULTISAMPLE_WINDOWED)
     {
-        SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, NULL, NULL);
+        SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, NULL, NULL);
     }
 
     if (adapter_data->flags & BIT_DEPTH_16)
     {
         // STRING: SETUP 0x40e1a0
-        pos = SendMessageA(app_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("16"));
-        SendMessageA(app_state.windows.bit_depth, CB_SETITEMDATA, pos, 16);
+        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("16"));
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 16);
         if ((adapter_data->flags & BIT_DEPTH_32) == 0 && settings.bit_depth == 32)
         {
             settings.bit_depth = 16;
@@ -343,8 +344,8 @@ bool LoadAdapterData(int adapter)
     if (adapter_data->flags & BIT_DEPTH_32)
     {
         // STRING: SETUP 0x40e19c
-        pos = SendMessageA(app_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("32"));
-        SendMessageA(app_state.windows.bit_depth, CB_SETITEMDATA, pos, 32);
+        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("32"));
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 32);
         if ((adapter_data->flags & BIT_DEPTH_16) == 0 && settings.bit_depth == 16)
         {
             settings.bit_depth = 32;
@@ -353,31 +354,31 @@ bool LoadAdapterData(int adapter)
 
     if (settings.bit_depth != 16 && (adapter_data->flags & (BIT_DEPTH_16 | BIT_DEPTH_32)) == (BIT_DEPTH_16 | BIT_DEPTH_32))
     {
-        SendMessageA(app_state.windows.bit_depth, CB_SETCURSEL, 1, NULL);
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 1, NULL);
     }
     else
     {
-        SendMessageA(app_state.windows.bit_depth, CB_SETCURSEL, 0, NULL);
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 0, NULL);
     }
 
     if (settings.fullscreen)
     {
         if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
         {
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+                SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
         }
         if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
         {
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+                SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
         }
     }
@@ -386,21 +387,21 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_2X_WINDOWED)
         {
             // STRING: SETUP 0x40e198
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+                SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
         }
         if (adapter_data->flags & MULTISAMPLE_4X_WINDOWED)
         {
             // STRING: SETUP 0x40e194
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+                SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
         }
     }
@@ -412,20 +413,20 @@ bool LoadAdapterData(int adapter)
 // FUNCTION: SETUPSTEAM 0x402fe0
 bool LoadD3D8()
 {
-    if (!app_state.windows.display)
+    if (!dialog_state.windows.display)
     {
-        d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
-        return d3d8 ? true : false;
+        direct3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+        return direct3d8 ? true : false;
     }
 
-    SendMessageA(app_state.windows.display, CB_RESETCONTENT, NULL, NULL);
-    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
-    if (!d3d8)
+    SendMessageA(dialog_state.windows.display, CB_RESETCONTENT, NULL, NULL);
+    direct3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+    if (!direct3d8)
     {
         return false;
     }
 
-    int adapter_count = d3d8->GetAdapterCount();
+    int adapter_count = direct3d8->GetAdapterCount();
     // Two checks, which VC6 merges into one store: an || gives the same code but other registers
     if (settings.adapter >= adapter_count)
     {
@@ -440,22 +441,22 @@ bool LoadD3D8()
     D3DADAPTER_IDENTIFIER8 identifier;
     for (int i = 0; i < adapter_count; ++i)
     {
-        if (d3d8->GetAdapterIdentifier(i, 0, &identifier) == D3D_OK)
+        if (direct3d8->GetAdapterIdentifier(i, 0, &identifier) == D3D_OK)
         {
-            int index = SendMessageA(app_state.windows.display, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(identifier.Description));
-            SendMessageA(app_state.windows.display, CB_SETITEMDATA, index, i);
+            int index = SendMessageA(dialog_state.windows.display, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(identifier.Description));
+            SendMessageA(dialog_state.windows.display, CB_SETITEMDATA, index, i);
             if (settings.adapter == i)
             {
-                current_adapter = SendMessageA(app_state.windows.display, CB_GETCOUNT, NULL, NULL) - 1;
+                current_adapter = SendMessageA(dialog_state.windows.display, CB_GETCOUNT, NULL, NULL) - 1;
             }
         }
     }
-    SendMessageA(app_state.windows.display, CB_SETCURSEL, current_adapter, NULL);
+    SendMessageA(dialog_state.windows.display, CB_SETCURSEL, current_adapter, NULL);
     LoadAdapterModes();
 
     D3DCAPS8 caps;
     memset(&caps, 0, sizeof(caps));
-    if (d3d8->GetDeviceCaps(settings.adapter, D3DDEVTYPE_HAL, &caps) == D3D_OK)
+    if (direct3d8->GetDeviceCaps(settings.adapter, D3DDEVTYPE_HAL, &caps) == D3D_OK)
     {
         supports_w_buffer = (caps.RasterCaps & D3DPRASTERCAPS_WBUFFER) != 0;
     }
@@ -471,9 +472,9 @@ bool LoadD3D8()
 // FUNCTION: SETUP 0x4030f0
 void FreeD3D8()
 {
-    if (d3d8)
+    if (direct3d8)
     {
-        d3d8->Release();
-        d3d8 = NULL;
+        direct3d8->Release();
+        direct3d8 = NULL;
     }
 }
