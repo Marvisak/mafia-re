@@ -9,7 +9,7 @@ VC6's frame layout works from (tools/framelayout.py models it).
 
 Make the listing with the project's compile flags plus /FAs, e.g. for rw_data:
 
-    msvc600_sp5_vcpp/VC98/Bin/CL.EXE /nologo /O2 /ML /GX /Gz /c /FAs /Fa%TEMP%/rw_data.asm \
+    3rdparty/msvc600_sp5_vcpp/VC98/Bin/CL.EXE /nologo /O2 /ML /GX /Gz /c /FAs /Fa%TEMP%/rw_data.asm \
         /Fo%TEMP%/rw_data.obj /I common rw_data/rw_data.cpp
 
 usage: slotmap.py <listing.asm> <decorated function name>      e.g. _dtaRead@12

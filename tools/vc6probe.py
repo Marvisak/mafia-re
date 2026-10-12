@@ -27,7 +27,7 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VC6 = os.path.join(ROOT, "msvc600_sp5_vcpp")
+VC6 = os.path.join(ROOT, "3rdparty", "msvc600_sp5_vcpp")
 HEADER = '''extern "C" int __stdcall ext(int);
 extern "C" int __stdcall ext2(int *);
 extern int g[1024];

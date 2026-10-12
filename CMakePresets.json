@@ -11,9 +11,9 @@
                 "CMAKE_BUILD_TYPE": "Release"
             },
             "environment": {
-                "PATH": "${sourceDir}/msvc600_sp5_vcpp/VC98/Bin;${sourceDir}/msvc600_sp5_vcpp/Common/MSDev98/Bin;${sourceDir}/.venv/Scripts;$penv{PATH}",
-                "INCLUDE": "${sourceDir}/msvc600_sp5_vcpp/VC98/Include",
-                "LIB": "${sourceDir}/msvc600_sp5_vcpp/VC98/Lib"
+                "PATH": "${sourceDir}/3rdparty/msvc600_sp5_vcpp/VC98/Bin;${sourceDir}/3rdparty/msvc600_sp5_vcpp/Common/MSDev98/Bin;${sourceDir}/.venv/Scripts;$penv{PATH}",
+                "INCLUDE": "${sourceDir}/3rdparty/msvc600_sp5_vcpp/VC98/Include",
+                "LIB": "${sourceDir}/3rdparty/msvc600_sp5_vcpp/VC98/Lib"
             }
         },
         {

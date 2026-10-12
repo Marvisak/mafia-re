@@ -1,0 +1,12 @@
+[submodule "3rdparty/msvc600_sp5_vcpp"]
+	path = 3rdparty/msvc600_sp5_vcpp
+	url = https://github.com/archaic-msvc/msvc600_sp5_vcpp.git
+	shallow = true
+[submodule "3rdparty/msvc600"]
+	path = 3rdparty/msvc600
+	url = https://github.com/archaic-msvc/msvc600.git
+	shallow = true
+[submodule "3rdparty/dx8sdk"]
+	path = 3rdparty/dx8sdk
+	url = https://github.com/anominy/dx8sdk.git
+	shallow = true

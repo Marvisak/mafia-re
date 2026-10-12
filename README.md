@@ -28,11 +28,18 @@ score summed over all of them. The function counts of binaries that haven't been
 You need Windows, Git, Python 3 and CMake 3.25 or newer. Building doesn't need the game, but comparing a build with
 the original binaries does: bring your own copy of version 1.2.
 
-1. Clone the two Visual C++ 6.0 toolchains into the repository root (git ignores them):
+1. Clone the repository with its submodules, keeping git from changing their line endings:
    ```bash
-   git -c core.autocrlf=false clone --depth 1 https://github.com/archaic-msvc/msvc600_sp5_vcpp.git
-   git -c core.autocrlf=false clone --depth 1 https://github.com/archaic-msvc/msvc600.git
+   git -c core.autocrlf=false clone --recurse-submodules https://github.com/Marvisak/mafia-re.git
    ```
+   In a clone made without them, run `git -c core.autocrlf=false submodule update --init`. The submodules in
+   `3rdparty/` are the build tools the original binaries were made with:
+   - `msvc600_sp5_vcpp`: Visual C++ 6.0 with Service Pack 5 and the Processor Pack, from
+     [archaic-msvc](https://github.com/archaic-msvc/msvc600_sp5_vcpp).
+   - `msvc600`: the original Visual C++ 6.0 release, whose linker builds `IJoy.dll`, also from
+     [archaic-msvc](https://github.com/archaic-msvc/msvc600).
+   - `dx8sdk`: the headers and libraries of the DirectX 8.0 SDK, which `setup.exe` was built with, from
+     [anominy/dx8sdk](https://github.com/anominy/dx8sdk).
 2. Install the Python tools (they include Ninja):
    ```bash
    python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt

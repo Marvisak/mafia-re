@@ -129,7 +129,7 @@ def main():
     ap.add_argument('--steam', default='target/Game.exe')
     ap.add_argument('--cd2', default='target/Game.cd2.exe', help="CD 2's MafiaGame\\Game.exe, or the CD 2 image")
     ap.add_argument('--patch', default='target/mafia_patch_1.2_eng.exe', help='1.2 patch SFX or its extracted Game.exe')
-    ap.add_argument('--libs', default='msvc600_sp5_vcpp/VC98/Lib')
+    ap.add_argument('--libs', default='3rdparty/msvc600_sp5_vcpp/VC98/Lib')
     ap.add_argument('--out', default='target/Game.orig.exe')
     args = ap.parse_args()
 

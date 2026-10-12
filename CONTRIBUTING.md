@@ -14,15 +14,17 @@ Each binary is built with its original toolchain:
 
 - `rw_data.dll`, `LS3DF.dll`, `Game.exe` and `setup.exe`: Visual C++ 6.0 Service Pack 5 with the Processor Pack. Not Service Pack 6, its compiler and runtime library produce different code.
 - `IJoy.dll`: compiled with the same compiler, but linked with the linker and runtime library of the original Visual C++ 6.0 release.
+- `setup.exe` also needs the headers and libraries of the DirectX 8.0 SDK.
+
+All of them are git submodules in `3rdparty/`.
 
 So most of C++ features everybody is used to and comfortable with are off the table (like range-based for loops, `auto` or `nullptr`).
 
 ## Building and comparing
 
-1. Clone the two Visual C++ 6.0 toolchains into the repository root (git ignores them):
+1. Clone the repository with its submodules, keeping git from changing their line endings (in an existing clone: `git -c core.autocrlf=false submodule update --init`):
    ```bash
-   git -c core.autocrlf=false clone --depth 1 https://github.com/archaic-msvc/msvc600_sp5_vcpp.git
-   git -c core.autocrlf=false clone --depth 1 https://github.com/archaic-msvc/msvc600.git
+   git -c core.autocrlf=false clone --recurse-submodules https://github.com/Marvisak/mafia-re.git
    ```
 2. Install the Python tools (Ninja and [reccmp](https://github.com/isledecomp/reccmp)):
    ```bash
