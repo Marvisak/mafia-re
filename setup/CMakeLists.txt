@@ -49,6 +49,9 @@ if (MSVC_VERSION EQUAL 1200)
 	# COMCTL32.LIB's objects (no tool id) ahead of dxguid's.
 	target_link_options(setup PRIVATE /DEBUG /OPT:NOREF /INCREMENTAL:NO)
 	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 ddraw dxguid comctl32)
+	# The original's link time (2002-11-07) and CodeView record: its PDB, linked into twice (age 2)
+	postlink(setup --timestamp 0x3dca7e48 --codeview-signature 0x3dca7530 --codeview-age 2
+		"--codeview-path=C:\\Mafia\\_src\\setup\\Release\\setup.pdb")
 elseif (MSVC_VERSION EQUAL 1500)
 	# Steam's setup.exe: Visual C++ 2008 SP1, its default Release settings (/O2 /Oi /GL /Gy /EHsc /W3 /Zi, MSVCR90.dll)
 	# and what its header shows: /LTCG, /DEBUG (an RSDS record), /RELEASE (a checksum), /DYNAMICBASE /NXCOMPAT.
@@ -65,8 +68,14 @@ elseif (MSVC_VERSION EQUAL 1500)
 	# order the libraries are first used, and each DLL's imports in the order they are resolved.
 	# d3d8.lib comes from hw.cpp's #pragma comment(lib), after MSVCRT, as the thunk order shows
 	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 comctl32 dxguid ddraw)
+	# The original's link time (2010-04-07) and its PDB's GUID and age; /RELEASE's checksum is computed again after
+	postlink(setup --timestamp 0x4bbc50b1 --codeview-guid 30b9c62b279e3745966e7ab4e7290a90 --codeview-age 1 --checksum)
 else()
 	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid)
 endif()
 
 vc6_header_dependencies(setup)
+# RC's dependency output lists only included headers, not the files the script loads, so a splash or icon extracted
+# over the placeholders (README) wouldn't rebuild the resources
+set_property(SOURCE res/setup.rc APPEND PROPERTY OBJECT_DEPENDS
+	"${CMAKE_CURRENT_SOURCE_DIR}/res/splash.bmp" "${CMAKE_CURRENT_SOURCE_DIR}/res/mafia.ico")

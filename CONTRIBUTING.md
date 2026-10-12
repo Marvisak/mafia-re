@@ -45,6 +45,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cmake --preset vc6-pdb && cmake --build --preset vc6-pdb      # the same code with PDBs, for reccmp
    cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
+   The linker stamps its output with the time of the link and the path of the PDB. The `vc6` and `vs2008` builds then write the originals' values into it (`tools/postlink.py`), so a finished binary can come out identical to the original; their PDBs no longer pair with them in a debugger. The `vc6-pdb` build keeps the linker's.
 5. Compare with the original. The reccmp targets are `RWDATA` and `SETUP` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take `--target SETUP` too:
    ```bash
    cd build/vc6-pdb

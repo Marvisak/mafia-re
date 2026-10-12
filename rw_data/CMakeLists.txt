@@ -11,6 +11,8 @@ add_library(rw_data SHARED rw_data.cpp)
 if (MSVC_VERSION EQUAL 1200)
     target_compile_options(rw_data PRIVATE /ML /GX /Gz)
     target_link_libraries(rw_data PRIVATE kernel32 user32)
+    # The original's link time (2002-07-12), in the PE header and the export directory
+    postlink(rw_data --timestamp 0x3d2e1e08)
 endif()
 
 vc6_header_dependencies(rw_data)

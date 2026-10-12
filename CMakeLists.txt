@@ -15,6 +15,18 @@ function(vc6_header_dependencies target)
     endif()
 endfunction()
 
+# The byte-exact builds (vc6, vs2008) get the original's link-time metadata after the link: the timestamps and the
+# CodeView record, which the linker takes from the clock and the build tree (tools/postlink.py). The vc6-pdb build
+# keeps the linker's, which match its PDB.
+find_program(MAFIA_PYTHON NAMES python python3 HINTS "${CMAKE_SOURCE_DIR}/.venv/Scripts" REQUIRED)
+function(postlink target)
+    if ((MSVC_VERSION EQUAL 1200 OR MSVC_VERSION EQUAL 1500) AND CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${MAFIA_PYTHON}" "${CMAKE_SOURCE_DIR}/tools/postlink.py" "$<TARGET_FILE:${target}>" ${ARGN}
+            VERBATIM)
+    endif()
+endfunction()
+
 # VC6 has no /FS: /Zi compiles of one target share its vc60.pdb, and parallel ones fail with C1033.
 # Only the PDB build compiles with /Zi, so only it runs one compile at a time.
 if (MSVC_VERSION EQUAL 1200 AND CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
