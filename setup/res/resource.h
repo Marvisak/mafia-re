@@ -1,4 +1,4 @@
-#define IDI_SETUP 108
+#define IDI_SETUP 1
 
 #define IDB_SPLASH 108
 

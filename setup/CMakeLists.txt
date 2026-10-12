@@ -48,11 +48,12 @@ if (MSVC_VERSION EQUAL 1200)
 elseif (MSVC_VERSION EQUAL 1500)
 	# Steam's setup.exe: Visual C++ 2008 SP1, its default Release settings (/O2 /Oi /GL /Gy /EHsc /W3 /Zi, MSVCR90.dll)
 	# and what its header shows: /LTCG, /DEBUG (an RSDS record), /RELEASE (a checksum), /DYNAMICBASE /NXCOMPAT.
-	# The manifest is a resource in setup.rc, so the linker doesn't make one.
+	# The manifest is the linker's default one, which mt.exe embeds after the link (as resource 1, language 1033), as
+	# a Release build in the IDE does: mt.exe rewrites the resource section sorted by type, as the original's is.
+	# CMake's link step runs the toolchain's mt.exe like that.
 	target_compile_options(setup PRIVATE /O2 /Oi /GL /GS /EHsc /Gy /W3 /Zi /MD)
 	target_compile_definitions(setup PRIVATE WIN32 NDEBUG _WINDOWS)
-	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86
-		/MANIFEST:NO)
+	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86)
 	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid kernel32 user32 advapi32)
 else()
 	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid)
