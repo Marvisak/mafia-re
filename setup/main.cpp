@@ -8,9 +8,11 @@
 // This file's only globals in 1.2, the start of its .data. The rest are in hw.cpp.
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
+// GLOBAL: SETUPSTEAM 0x405019
 bool settings_loaded = true;
 // 1.2 reads and writes it as a dword, Steam's rebuild as a byte
 #ifdef SETUP_STEAM
+// GLOBAL: SETUPSTEAM 0x40505b
 bool expert_settings_enabled = true;
 #else
 // GLOBAL: SETUP 0x40e044
@@ -83,30 +85,44 @@ inline void HandleComboField(uint uid, bool &value)
 // FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
 {
-    if (!settings.fullscreen)
+    // The handles go through a local: 1.2 calls GetDlgItem before pushing TRUE or FALSE
+    HWND window;
+    if (settings.fullscreen)
     {
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC), FALSE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE), FALSE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH), FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC);
+        EnableWindow(window, TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE);
+        EnableWindow(window, TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH);
+        EnableWindow(window, TRUE);
     }
     else
     {
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC), TRUE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE), TRUE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH), TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_VSYNC);
+        EnableWindow(window, FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_REFRESHRATE);
+        EnableWindow(window, FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_BITDEPTH);
+        EnableWindow(window, FALSE);
     }
 
-    if (settings.disable_sound)
+    if (!settings.disable_sound)
     {
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND), FALSE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY), FALSE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX), FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND);
+        EnableWindow(window, TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
+        EnableWindow(window, TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX);
+        EnableWindow(window, TRUE);
     }
     else
     {
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND), TRUE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY), TRUE);
-        EnableWindow(GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX), TRUE);
+        window = GetDlgItem(app_state.windows.main, IDC_COMBO_SOUND);
+        EnableWindow(window, FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
+        EnableWindow(window, FALSE);
+        window = GetDlgItem(app_state.windows.main, IDC_CHECK_DISABLEEAX);
+        EnableWindow(window, FALSE);
     }
 }
 
@@ -174,7 +190,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
         if (!settings_loaded)
         {
-            app_state.vram_size = GetTotalVRAM();
+            app_state.vram_size = GetTotalVRAM(NULL);
             AutodetectSettings();
         }
 
@@ -184,6 +200,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
             {
                 // This loads in different error message than it reads from resources
+                // STRING: SETUP 0x40e0e8
                 strcpy(buffer, "DirectX : Display devices could not be enumerated.");
             }
             Error(buffer);
@@ -265,6 +282,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 char caption[128];
                 if (LoadStringA(NULL, IDS_WARNING, caption, sizeof(caption)) == 0)
                 {
+                    // STRING: SETUP 0x40e11c
                     strcpy(caption, "Warning");
                 }
 
@@ -348,6 +366,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
                 {
+                    // STRING: SETUP 0x40e124
                     strcpy(buffer, "Discard changes ?!");
                 }
 
@@ -404,24 +423,28 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     char buffer[256];
     if (LoadStringA(NULL, IDS_STEREOHEADPHONES, buffer, sizeof(buffer)) == 0)
     {
+        // STRING: SETUP 0x40e0d4
         strcpy(buffer, "Stereo headphones");
     }
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
 
     if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
     {
+        // STRING: SETUP 0x40e0c4
         strcpy(buffer, "Stereo speakers");
     }
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
 
     if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
     {
+        // STRING: SETUP 0x40e0ac
         strcpy(buffer, "Quadraphonic speakers");
     }
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
 
     if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
     {
+        // STRING: SETUP 0x40e090
         strcpy(buffer, "5.1 surround sound speakers");
     }
     SendDlgItemMessageA(app_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
@@ -431,11 +454,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
     HWND language = GetDlgItem(hWnd, IDC_COMBO_LANGUAGE);
     SendMessageA(language, CB_RESETCONTENT, NULL, NULL);
+    // STRING: SETUP 0x40e088
     int pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("English"));
     SendMessageA(language, CB_SETITEMDATA, pos, 0);
     // The typo is in the binary
+    // STRING: SETUP 0x40e080
     pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Deutch"));
     SendMessageA(language, CB_SETITEMDATA, pos, 2);
+    // STRING: SETUP 0x40e078
     pos = SendMessageA(language, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Cesky"));
     SendMessageA(language, CB_SETITEMDATA, pos, 1);
 
@@ -458,6 +484,7 @@ void Error(const char *msg)
     char buffer[128];
     if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
     {
+        // STRING: SETUP 0x40e138
         strcpy(buffer, "Setup error");
     }
     MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);

@@ -18,6 +18,7 @@
 inline bool LoadSettings(S_settings &settings)
 {
     HKEY key;
+    // STRING: SETUP 0x40e054
     if (RegOpenKeyA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", &key) != ERROR_SUCCESS)
     {
         return false;
@@ -26,14 +27,21 @@ inline bool LoadSettings(S_settings &settings)
     DWORD type;
     DWORD size = sizeof(S_settings);
     S_settings buffer;
+    // STRING: SETUP 0x40e048
     if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, reinterpret_cast<LPBYTE>(&buffer), &size))
     {
         size = 0;
     }
     RegCloseKey(key);
 
+    // Two checks, not one with ||: 1.2 keeps each failure return inline after its check, which an || would
+    // merge into one shared exit.
     // The magic of the passed settings is checked, not the one read from the registry, this is what the original does
-    if (size != sizeof(S_settings) || settings.magic != SETTINGS_MAGIC)
+    if (size != sizeof(S_settings))
+    {
+        return false;
+    }
+    if (settings.magic != SETTINGS_MAGIC)
     {
         return false;
     }

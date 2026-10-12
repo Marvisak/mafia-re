@@ -43,7 +43,8 @@ if (MSVC_VERSION EQUAL 1200)
 	# The original was linked with /DEBUG: it ends with a CodeView record naming its PDB, and /DEBUG's
 	# default /OPT:NOREF kept every import thunk and all of dxguid.lib's GUIDs. /OPT:NOREF also overrides
 	# the PDB build's /OPT:REF.
-	# d3d8.lib isn't listed: hw.cpp names it with #pragma comment(lib), so LINK searches it after LIBC.
+	# d3d8.lib isn't listed: hw.cpp names it with #pragma comment(lib), so LINK searches it after LIBC, as the
+	# thunk order shows.
 	target_link_options(setup PRIVATE /DEBUG /OPT:NOREF /INCREMENTAL:NO)
 	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 ddraw comctl32 dxguid)
 elseif (MSVC_VERSION EQUAL 1500)
@@ -55,7 +56,8 @@ elseif (MSVC_VERSION EQUAL 1500)
 	target_compile_options(setup PRIVATE /O2 /Oi /GL /GS /EHsc /Gy /W3 /Zi /MD)
 	target_compile_definitions(setup PRIVATE WIN32 NDEBUG _WINDOWS)
 	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86)
-	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid kernel32 user32 advapi32)
+	# d3d8.lib comes from hw.cpp's #pragma comment(lib), after MSVCRT, as the thunk order shows
+	target_link_libraries(setup PRIVATE comctl32 ddraw dxguid kernel32 user32 advapi32)
 else()
 	target_link_libraries(setup PRIVATE comctl32 d3d8 ddraw dxguid)
 endif()

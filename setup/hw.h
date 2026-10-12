@@ -4,6 +4,11 @@
 
 #include <d3d8.h>
 
+// From the DirectX SDK's dxguid.lib, the only one of its GUIDs setup uses
+// GLOBAL: SETUP 0x40d37c
+// GLOBAL: SETUPSTEAM 0x40414c
+// IID_IDirectDraw7
+
 struct S_adapter_mode
 {
     uint width;
@@ -11,7 +16,7 @@ struct S_adapter_mode
     uint flags;
 };
 
-int GetTotalVRAM();
+int GetTotalVRAM(GUID *guid);
 bool LoadAdapterRefreshRates();
 bool LoadAdapterModes();
 bool LoadAdapterData(int adapter);
