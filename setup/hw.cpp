@@ -4,6 +4,10 @@
 #include <ddraw.h>
 #include <cstdio>
 
+// A default library, which LINK searches after LIBC: 1.2 has the Direct3DCreate8 thunk after the CRT, with
+// KERNEL32's, not after COMCTL32's like the import libraries on the command line
+#pragma comment(lib, "d3d8.lib")
+
 // The first initialized data of this file in 1.2
 // GLOBAL: SETUP 0x40e144
 bool supports_w_buffer = true;
