@@ -239,45 +239,44 @@ bool LoadAdapterModes()
             new_mode->flags |= MULTISAMPLE_4X_FULLSCREEN;
         }
 
-        bool found = false;
-        for (int j = 0; j < total_modes; ++j)
+        // Both loops walk a pointer assigned before them: the builds load adapter_modes ahead of the loop's guard test
+        S_adapter_mode *cached_mode = adapter_modes;
+        for (int j = 0; j < total_modes; ++j, ++cached_mode)
         {
-            S_adapter_mode &cached_mode = adapter_modes[j];
-            if (cached_mode.width == mode.Width && cached_mode.height == mode.Height)
+            if (cached_mode->width == mode.Width && cached_mode->height == mode.Height)
             {
-                cached_mode.flags |= new_mode->flags & MULTISAMPLE_MASK;
-                if ((cached_mode.flags & bit_depth_flags) == 0)
+                cached_mode->flags |= new_mode->flags & MULTISAMPLE_MASK;
+                if ((cached_mode->flags & bit_depth_flags) == 0)
                 {
-                    cached_mode.flags |= bit_depth_flags;
+                    cached_mode->flags |= bit_depth_flags;
                 }
-                found = true;
-                break;
+                // A found flag tested after the loop is threaded away into the same jump, but moves the outer loop's
+                // counter and bound into other registers and hoists the SendMessageA load out of the listing loop
+                goto next_mode;
             }
         }
 
-        if (!found)
+        // The multisample flags collected above are lost for a new mode, this is what the original does
+        new_mode->width = mode.Width;
+        new_mode->height = mode.Height;
+        new_mode->flags = bit_depth_flags;
+
+        new_mode++;
+        if (++total_modes >= 256)
         {
-            // The multisample flags collected above are lost for a new mode, this is what the original does
-            new_mode->width = mode.Width;
-            new_mode->height = mode.Height;
-            new_mode->flags = bit_depth_flags;
-
-            new_mode++;
-            if (++total_modes >= 256)
-            {
-                break;
-            }
+            break;
         }
+    next_mode:;
     }
 
-    for (int j = 0; j < total_modes; ++j)
+    S_adapter_mode *cached_mode = adapter_modes;
+    for (int j = 0; j < total_modes; ++j, ++cached_mode)
     {
-        S_adapter_mode &cached_mode = adapter_modes[j];
         // STRING: SETUP 0x40e158
-        sprintf(global_buffer, "%4d x %4d", cached_mode.width, cached_mode.height);
+        sprintf(global_buffer, "%4d x %4d", cached_mode->width, cached_mode->height);
         int pos = SendMessageA(app_state.windows.resolution, CB_ADDSTRING, -1, reinterpret_cast<LPARAM>(global_buffer));
-        SendMessageA(app_state.windows.resolution, CB_SETITEMDATA, pos, reinterpret_cast<LPARAM>(&cached_mode));
-        if (cached_mode.width == settings.width && cached_mode.height == settings.height)
+        SendMessageA(app_state.windows.resolution, CB_SETITEMDATA, pos, reinterpret_cast<LPARAM>(cached_mode));
+        if (cached_mode->width == settings.width && cached_mode->height == settings.height)
         {
             SendMessageA(app_state.windows.resolution, CB_SETCURSEL, pos, NULL);
         }
