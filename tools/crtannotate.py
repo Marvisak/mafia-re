@@ -10,10 +10,12 @@ not from our map plus an offset.
 
 What it writes:
 - LIBRARY for every function found, GLOBAL for the globals the CRT code references (including the
-  communal ones the map lists as <common>), and STRING for the string literals it references, under
-  the name reccmp gives our copy. Where several public names share an address (__chkstk,
-  __alloca_probe), it uses the one reccmp kept from our PDB. Static CRT functions get a LIBRARY
-  annotation by name where our PDB names them (VS2008's CRT objects carry debug info, VC6's don't).
+  communal ones the map lists as <common>), and STRING for the string literals it references, each
+  under the name reccmp gives our copy. Where several public names share an address (__chkstk,
+  __alloca_probe), it uses the one reccmp kept from our PDB. Where the CRT objects carry debug info
+  (VS2008's, not VC6's), our PDB also names static functions, which get a LIBRARY annotation by that
+  name, and static data (GS_ContextRecord), and it gives globals their C names (__security_cookie for
+  ___security_cookie, __xc_a for ___xc_a), which are what reccmp matches.
 - LIBRARY for the import thunks (jmp [IAT slot]), found in the original through its import table:
   reccmp only recognizes thunks at relocated operands.
 - library_msvc.csv with the CRT's float constants, when there are any. reccmp only finds floats at
@@ -25,9 +27,9 @@ neither thunks nor the csv are written. In an EXE without relocations an unannot
 than its own line: reccmp numbers its <OFFSETn> placeholders by how many operands it has replaced so
 far, named or not, so a literal named on our side only renumbers every placeholder after it.
 
-It can't annotate the CRT's static data and labels (no public symbol on either side). In an EXE reccmp
-then compares their raw addresses, which differ wherever the layout before them does, so those
-functions match only once the layout does (_pgmname in __setargv, _unwind_handler in
+Without debug info (VC6's CRT) it can't annotate the CRT's static data and labels: there is no name on
+either side. In an EXE reccmp then compares their raw addresses, which differ wherever the layout before
+them does, so those functions match only once the layout does (_pgmname in __setargv, _unwind_handler in
 __abnormal_termination).
 
 Run it from the repository root after building the target's PDB preset:
@@ -62,6 +64,9 @@ MAP_LINE = re.compile(r"^\s*([0-9a-f]{4}):([0-9a-f]{8})\s+(\S+)\s+([0-9a-f]{8})\
 
 # The empty literals, which reccmp's string search never finds, relocated or not
 EMPTY_STRINGS = {"??_C@_01A@?$AA?$AA@", "??_C@_13A@?$AA?$AA?$AA?$AA@"}
+
+# The object of static data known only from our PDB
+STATIC_DATA = "<static>"
 
 
 class PE:
@@ -210,6 +215,13 @@ def main() -> None:
     for node in reccmp.cvdump_analysis.nodes:
         if node.addr is not None and node.addr not in kept and (node.decorated_name or node.name()):
             kept[node.addr] = node.decorated_name or node.name()
+    # A global matches by the name reccmp gives ours, the first PDB name at its address. Where the CRT carries
+    # debug info (VS2008's) that is the C name, ___security_cookie's is __security_cookie; VC6's PDB has only
+    # the public names, the same as the map's.
+    var_names = {}
+    for node in reccmp.cvdump_analysis.nodes:
+        if node.addr is not None and node.addr not in var_names and node.name():
+            var_names[node.addr] = node.name()
     # A string matches by its name, which reccmp makes from our copy's text (escaped, in quotes). An
     # annotation's literal goes through literal_eval and gets the same escaping, so that name is the literal.
     string_names = {e.recomp_addr: e.name for e in reccmp.get_all()
@@ -218,6 +230,11 @@ def main() -> None:
     # CRT objects carry debug info (VS2008's, not VC6's). Those are annotated by that name.
     by_name = {kept[s[0]] for s in statics if kept.get(s[0])}
     code_symbols = sorted(symbols + [(addr, kept[addr], obj) for addr, _, obj in statics if kept.get(addr)])
+    # Static data (GS_ContextRecord, startinfo) is only in the PDB: VS2008's map lists static functions alone.
+    # A static is visible only in its own object, so one the CRT code below refers to is the CRT's.
+    data_symbols = sorted(symbols + [(n.addr, n.name(), STATIC_DATA) for n in reccmp.cvdump_analysis.nodes
+                                     if n.addr is not None and n.decorated_name is None and n.name()
+                                     and n.node_type == EntityType.DATA and not text_start <= n.addr < text_end])
 
     delta = orig.entry - ours.entry
     found = {}  # original address -> (our address, names)
@@ -226,7 +243,9 @@ def main() -> None:
     exact = defaultdict(lambda: defaultdict(int))
     inside = defaultdict(lambda: defaultdict(int))
     for k, (addr, name, obj) in enumerate(code_symbols):
-        if not (text_start <= addr < text_end) or not is_crt(obj):
+        # Import thunks (MSVCRT:MSVCR90.dll) are left to the thunk search below, or to reccmp itself in a
+        # relocated original: they differ only in their pointer, so any of them would pass for any other here
+        if not (text_start <= addr < text_end) or not is_crt(obj) or obj.lower().endswith(".dll"):
             continue
         end = min(next((s[0] for s in code_symbols[k + 1:] if s[0] > addr), text_end), text_end)
         code = ours.read(addr, end - addr)
@@ -241,7 +260,7 @@ def main() -> None:
             continue
         found.setdefault(addr + delta, (addr, []))[1].append(name)
         for vx, vy in pointer_operands(ours, orig, addr, addr + delta, size):
-            sym = max((s for s in symbols if s[0] <= vx), default=None)  # the operand may point into it
+            sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
             if sym:
                 (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
 
@@ -279,7 +298,7 @@ def main() -> None:
     globals_, strings, floats, conflicts = [], [], [], []
     for sym in set(exact) | set(inside):
         addr, name, obj = sym
-        if not is_crt(obj) or text_start <= addr < text_end:
+        if not (is_crt(obj) or obj == STATIC_DATA) or text_start <= addr < text_end:
             continue
         cand = exact.get(sym) or inside[sym]
         if len(cand) > 1:
@@ -291,7 +310,7 @@ def main() -> None:
             if (not orig.relocated or name in EMPTY_STRINGS) and addr in string_names:
                 strings.append((next(iter(cand)), string_names[addr]))
         else:
-            globals_.append((next(iter(cand)), name))
+            globals_.append((next(iter(cand)), var_names.get(addr, name)))
 
     out = Path(target.source_paths[0]) / args.out
     csv = out.with_suffix(".csv")

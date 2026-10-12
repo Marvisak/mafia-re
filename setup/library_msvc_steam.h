@@ -28,9 +28,6 @@
 // LIBRARY: SETUPSTEAM 0x4035ca SYMBOL
 // ___CxxSetUnhandledExceptionFilter
 
-// LIBRARY: SETUPSTEAM 0x4035d8 SYMBOL
-// __amsg_exit
-
 // LIBRARY: SETUPSTEAM 0x4035de SYMBOL
 // __onexit
 
@@ -43,9 +40,6 @@
 // LIBRARY: SETUPSTEAM 0x4036c0 SYMBOL
 // __RTC_Terminate
 
-// LIBRARY: SETUPSTEAM 0x4036e6 SYMBOL
-// __XcptFilter
-
 // LIBRARY: SETUPSTEAM 0x4036f0 SYMBOL
 // __ValidateImageBase
 
@@ -54,12 +48,6 @@
 
 // LIBRARY: SETUPSTEAM 0x403780 SYMBOL
 // __IsNonwritableInCurrentImage
-
-// LIBRARY: SETUPSTEAM 0x40383e SYMBOL
-// __initterm
-
-// LIBRARY: SETUPSTEAM 0x403844 SYMBOL
-// __initterm_e
 
 // LIBRARY: SETUPSTEAM 0x40384c SYMBOL
 // __SEH_prolog4
@@ -79,33 +67,6 @@
 // LIBRARY: SETUPSTEAM 0x4038f8 SYMBOL
 // ___security_init_cookie
 
-// LIBRARY: SETUPSTEAM 0x40398e SYMBOL
-// __crt_debugger_hook
-
-// LIBRARY: SETUPSTEAM 0x403994
-// ?terminate@@YAXXZ
-
-// LIBRARY: SETUPSTEAM 0x40399a SYMBOL
-// __unlock
-
-// LIBRARY: SETUPSTEAM 0x4039a0 SYMBOL
-// ___dllonexit
-
-// LIBRARY: SETUPSTEAM 0x4039a6 SYMBOL
-// __lock
-
-// LIBRARY: SETUPSTEAM 0x4039ac SYMBOL
-// __except_handler4_common
-
-// LIBRARY: SETUPSTEAM 0x4039b2 SYMBOL
-// __invoke_watson
-
-// LIBRARY: SETUPSTEAM 0x4039b8 SYMBOL
-// __controlfp_s
-
-// LIBRARY: SETUPSTEAM 0x4039be SYMBOL
-// _memset
-
 // GLOBAL: SETUPSTEAM 0x404064
 // __imp___cexit
 
@@ -122,13 +83,13 @@
 // __imp__exit
 
 // GLOBAL: SETUPSTEAM 0x404078
-// __imp___acmdln
+// _imp___acmdln
 
 // GLOBAL: SETUPSTEAM 0x404084
 // __imp___configthreadlocale
 
 // GLOBAL: SETUPSTEAM 0x40408c
-// __imp___adjust_fdiv
+// _imp___adjust_fdiv
 
 // GLOBAL: SETUPSTEAM 0x404090
 // __imp____p__commode
@@ -143,7 +104,7 @@
 // __imp____set_app_type
 
 // GLOBAL: SETUPSTEAM 0x4040b4
-// __imp___onexit
+// _imp___onexit
 
 // GLOBAL: SETUPSTEAM 0x4040b8
 // __imp___decode_pointer
@@ -152,61 +113,97 @@
 // __imp____setusermatherr
 
 // GLOBAL: SETUPSTEAM 0x404114
-// ___xc_a
+// __xc_a
 
 // GLOBAL: SETUPSTEAM 0x40411c
-// ___xc_z
+// __xc_z
 
 // GLOBAL: SETUPSTEAM 0x404120
-// ___xi_a
+// __xi_a
 
 // GLOBAL: SETUPSTEAM 0x40412c
-// ___xi_z
+// __xi_z
+
+// GLOBAL: SETUPSTEAM 0x40415c
+// GS_ExceptionPointers
 
 // GLOBAL: SETUPSTEAM 0x404358
-// ___rtc_izz
+// __rtc_izz
 
 // GLOBAL: SETUPSTEAM 0x404360
-// ___rtc_tzz
+// __rtc_tzz
 
 // GLOBAL: SETUPSTEAM 0x405000
-// ___security_cookie
+// __security_cookie
 
 // GLOBAL: SETUPSTEAM 0x405004
-// ___security_cookie_complement
+// __security_cookie_complement
 
 // GLOBAL: SETUPSTEAM 0x405010
-// ___globallocalestatus
+// __globallocalestatus
 
 // GLOBAL: SETUPSTEAM 0x405014
-// ___defaultmatherr
+// __defaultmatherr
+
+// GLOBAL: SETUPSTEAM 0x405060
+// argc
+
+// GLOBAL: SETUPSTEAM 0x405064
+// envp
+
+// GLOBAL: SETUPSTEAM 0x405068
+// argv
+
+// GLOBAL: SETUPSTEAM 0x40506c
+// managedapp
+
+// GLOBAL: SETUPSTEAM 0x405070
+// argret
+
+// GLOBAL: SETUPSTEAM 0x405074
+// startinfo
+
+// GLOBAL: SETUPSTEAM 0x405078
+// mainret
+
+// GLOBAL: SETUPSTEAM 0x40507c
+// has_cctor
+
+// GLOBAL: SETUPSTEAM 0x405080
+// GS_ExceptionRecord
+
+// GLOBAL: SETUPSTEAM 0x4050d0
+// DebuggerWasPresent
+
+// GLOBAL: SETUPSTEAM 0x4050d8
+// GS_ContextRecord
 
 // GLOBAL: SETUPSTEAM 0x4053a8
-// __dowildcard
+// _dowildcard
 
 // GLOBAL: SETUPSTEAM 0x4053ac
-// __newmode
+// _newmode
 
 // GLOBAL: SETUPSTEAM 0x4053b0
-// __commode
+// _commode
 
 // GLOBAL: SETUPSTEAM 0x4053b4
-// __fmode
+// _fmode
 
 // GLOBAL: SETUPSTEAM 0x4060e8
-// __adjust_fdiv
+// _adjust_fdiv
 
 // GLOBAL: SETUPSTEAM 0x4060ec
-// ___native_startup_state
+// __native_startup_state
 
 // GLOBAL: SETUPSTEAM 0x4060f0
-// ___native_startup_lock
+// __native_startup_lock
 
 // GLOBAL: SETUPSTEAM 0x4060f4
-// ___onexitend
+// __onexitend
 
 // GLOBAL: SETUPSTEAM 0x4060f8
-// ___onexitbegin
+// __onexitbegin
 
 // GLOBAL: SETUPSTEAM 0x4060fc
-// ___dyn_tls_init_callback
+// __dyn_tls_init_callback
