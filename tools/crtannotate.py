@@ -10,21 +10,25 @@ not from our map plus an offset.
 
 What it writes:
 - LIBRARY for every function found, GLOBAL for the globals the CRT code references (including the
-  communal ones the map lists as <common>), and STRING for the two empty literals, which reccmp names
-  "\\x00" and L"\\x00". Other strings reccmp matches by content. Where several public names share an
-  address (__chkstk, __alloca_probe), it uses the one reccmp kept from our PDB. Static CRT functions get
-  a LIBRARY annotation by name where our PDB names them (VS2008's CRT objects carry debug info, VC6's
-  don't).
+  communal ones the map lists as <common>), and STRING for the string literals it references, under
+  the name reccmp gives our copy. Where several public names share an address (__chkstk,
+  __alloca_probe), it uses the one reccmp kept from our PDB. Static CRT functions get a LIBRARY
+  annotation by name where our PDB names them (VS2008's CRT objects carry debug info, VC6's don't).
 - LIBRARY for the import thunks (jmp [IAT slot]), found in the original through its import table:
   reccmp only recognizes thunks at relocated operands.
 - library_msvc.csv with the CRT's float constants, when there are any. reccmp only finds floats at
   relocated operands and an EXE has none, so add the csv to the target's data_sources.
 
-The thunks and the csv are only written for an original without base relocations; with them, reccmp
-finds both itself.
+reccmp finds the original's strings, floats and thunks itself at relocated operands, so for an original
+with base relocations only the two empty literals get a STRING (its string search skips them), and
+neither thunks nor the csv are written. In an EXE without relocations an unannotated literal costs more
+than its own line: reccmp numbers its <OFFSETn> placeholders by how many operands it has replaced so
+far, named or not, so a literal named on our side only renumbers every placeholder after it.
 
-It can't annotate the CRT's static data (no public symbol); in an EXE, where reccmp can't pair
-pointers through relocations either, functions that use static tables stay just below 100%.
+It can't annotate the CRT's static data and labels (no public symbol on either side). In an EXE reccmp
+then compares their raw addresses, which differ wherever the layout before them does, so those
+functions match only once the layout does (_pgmname in __setargv, _unwind_handler in
+__abnormal_termination).
 
 Run it from the repository root after building the target's PDB preset:
 
@@ -42,7 +46,7 @@ from pathlib import Path
 import capstone
 from reccmp.compare import Compare
 from reccmp.project.detect import RecCmpProject
-from reccmp.types import ImageId
+from reccmp.types import EntityType, ImageId
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -56,8 +60,8 @@ HEADER = """\
 
 MAP_LINE = re.compile(r"^\s*([0-9a-f]{4}):([0-9a-f]{8})\s+(\S+)\s+([0-9a-f]{8})\s+(?:f\s+)?(?:i\s+)?(\S*)\s*$")
 
-# reccmp names the empty literals "\x00" and L"\x00", and strings only match by name
-EMPTY_STRINGS = {"??_C@_01A@?$AA?$AA@": r'"\x00"', "??_C@_13A@?$AA?$AA?$AA?$AA@": r'L"\x00"'}
+# The empty literals, which reccmp's string search never finds, relocated or not
+EMPTY_STRINGS = {"??_C@_01A@?$AA?$AA@", "??_C@_13A@?$AA?$AA?$AA?$AA@"}
 
 
 class PE:
@@ -197,10 +201,19 @@ def main() -> None:
     _, text_start, text_size, _, _ = ours.section(".text")
     text_end = text_start + text_size
 
-    # Several public names can share an address (__chkstk and __alloca_probe). reccmp keeps one of them
-    # from our PDB, and only that one can match.
-    kept = {e.recomp_addr: e.get("symbol") or e.get("name")
-            for e in Compare.from_target(target).get_all() if e.recomp_addr is not None}
+    # Several public names can share an address (__chkstk and __alloca_probe). reccmp keeps the first of
+    # them from our PDB, and only that one can match. Read from the PDB, not from reccmp's matched
+    # entities: once annotated, an initializer is renamed from the tables (pre_cpp_init becomes
+    # $CRT_CPP_Initializer), and a second run would annotate that name.
+    reccmp = Compare.from_target(target)
+    kept = {}
+    for node in reccmp.cvdump_analysis.nodes:
+        if node.addr is not None and node.addr not in kept and (node.decorated_name or node.name()):
+            kept[node.addr] = node.decorated_name or node.name()
+    # A string matches by its name, which reccmp makes from our copy's text (escaped, in quotes). An
+    # annotation's literal goes through literal_eval and gets the same escaping, so that name is the literal.
+    string_names = {e.recomp_addr: e.name for e in reccmp.get_all()
+                    if e.recomp_addr is not None and e.get("type") in (EntityType.STRING, EntityType.WIDECHAR)}
     # Static functions only have the name reccmp gives them from our PDB, which knows them only where the
     # CRT objects carry debug info (VS2008's, not VC6's). Those are annotated by that name.
     by_name = {kept[s[0]] for s in statics if kept.get(s[0])}
@@ -238,19 +251,30 @@ def main() -> None:
     # Import thunks, jmp [IAT slot]: the original's is the one jumping through its slot for the same import
     our_imports = {} if orig.relocated else {slot: key for key, slot in ours.imports().items()}
     orig_imports = {} if orig.relocated else orig.imports()
+    orig_slots = set(orig_imports.values())
     _, orig_text_start, orig_text_size, _, _ = orig.section(".text")
     orig_text = orig.read(orig_text_start, orig_text_size)
+
+    def in_thunk_run(pos: int) -> bool:
+        """Whether the jmp at pos has another jmp [IAT slot] right before or after it."""
+        return any(orig_text[p:p + 2] == b"\xff\x25" and struct.unpack_from("<I", orig_text, p + 2)[0] in orig_slots
+                   for p in (pos - 6, pos + 6) if 0 <= p <= len(orig_text) - 6)
+
     thunks, no_thunk = [], []
     for addr, name, obj in [] if orig.relocated else symbols:
         code = ours.read(addr, 6)
         if not (text_start <= addr < text_end) or not obj.lower().endswith(".dll") or code[:2] != b"\xff\x25":
             continue
         slot = orig_imports.get(our_imports.get(struct.unpack_from("<I", code, 2)[0]))
-        pos = orig_text.find(b"\xff\x25" + struct.pack("<I", slot)) if slot else -1
-        if pos < 0:
+        jmp = b"\xff\x25" + struct.pack("<I", slot) if slot else None
+        hits = [m.start() for m in re.finditer(re.escape(jmp), orig_text)] if jmp else []
+        if not hits:
             no_thunk.append(name)
-        else:
-            thunks.append((orig_text_start + pos, name))
+            continue
+        # A CRT function can end in a tail call through the same slot (getSystemCP's jmp [GetOEMCP]). The
+        # linker puts the thunks one after another, so take a jump among other thunks, the nearest to ours.
+        pos = min(hits, key=lambda p: (not in_thunk_run(p), abs(orig_text_start + p - (addr + delta))))
+        thunks.append((orig_text_start + pos, name))
 
     globals_, strings, floats, conflicts = [], [], [], []
     for sym in set(exact) | set(inside):
@@ -263,9 +287,10 @@ def main() -> None:
         elif name.startswith("__real@"):
             if not orig.relocated:
                 floats.append((next(iter(cand)), int(name[7])))  # __real@8@... is a double
-        elif name in EMPTY_STRINGS:
-            strings.append((next(iter(cand)), EMPTY_STRINGS[name]))
-        elif not name.startswith("??_C@"):
+        elif name.startswith("??_C@"):
+            if (not orig.relocated or name in EMPTY_STRINGS) and addr in string_names:
+                strings.append((next(iter(cand)), string_names[addr]))
+        else:
             globals_.append((next(iter(cand)), name))
 
     out = Path(target.source_paths[0]) / args.out

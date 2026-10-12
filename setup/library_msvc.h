@@ -359,12 +359,6 @@
 // LIBRARY: SETUP 0x4064a3 SYMBOL
 // __setmbcp
 
-// LIBRARY: SETUP 0x406656 SYMBOL
-// _GetOEMCP@0
-
-// LIBRARY: SETUP 0x40666b SYMBOL
-// _GetACP@0
-
 // LIBRARY: SETUP 0x406867 SYMBOL
 // __getmbcp
 
@@ -665,6 +659,12 @@
 // LIBRARY: SETUP 0x40a25e SYMBOL
 // _GetCPInfo@8
 
+// LIBRARY: SETUP 0x40a264 SYMBOL
+// _GetACP@0
+
+// LIBRARY: SETUP 0x40a26a SYMBOL
+// _GetOEMCP@0
+
 // LIBRARY: SETUP 0x40a270 SYMBOL
 // _HeapAlloc@12
 
@@ -941,8 +941,62 @@
 // GLOBAL: SETUP 0x413054
 // __acmdln
 
+// STRING: SETUP 0x40d418
+// "IsProcessorFeaturePresent"
+
+// STRING: SETUP 0x40d434
+// "KERNEL32"
+
+// STRING: SETUP 0x40d448
+// "e+000"
+
+// STRING: SETUP 0x40d4c4
+// "__GLOBAL_HEAP_SELECTED"
+
+// STRING: SETUP 0x40d4dc
+// "__MSVCRT_HEAP_SELECT"
+
+// STRING: SETUP 0x40d780
+// "Microsoft Visual C++ Runtime Library"
+
+// STRING: SETUP 0x40d7a8
+// "\n\n"
+
+// STRING: SETUP 0x40d7ac
+// "Runtime Error!\n\nProgram: "
+
+// STRING: SETUP 0x40d7c8
+// "..."
+
+// STRING: SETUP 0x40d7cc
+// "<program name unknown>"
+
+// STRING: SETUP 0x40d7e4
+// "GetLastActivePopup"
+
+// STRING: SETUP 0x40d7f8
+// "GetActiveWindow"
+
+// STRING: SETUP 0x40d808
+// "MessageBoxA"
+
+// STRING: SETUP 0x40d814
+// "user32.dll"
+
 // STRING: SETUP 0x40d820
 // "\x00"
 
 // STRING: SETUP 0x40d824
 // L"\x00"
+
+// STRING: SETUP 0x40d850
+// "1#QNAN"
+
+// STRING: SETUP 0x40d858
+// "1#INF"
+
+// STRING: SETUP 0x40d860
+// "1#IND"
+
+// STRING: SETUP 0x40d868
+// "1#SNAN"
