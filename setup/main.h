@@ -52,7 +52,7 @@ extern S_state app_state;
 extern S_settings settings;
 extern bool supports_w_buffer;
 
-// Steam's link-time code generation put Error before SetText, against the source order. Its marker matches by
-// name, here in a header, so the linter doesn't check it against main.cpp's order.
-// FUNCTION: SETUPSTEAM 0x4011f0
+// Error is defined before SetText, but 1.2 has it after DialogFunc. Its marker matches by name, here in a header, so
+// the linter doesn't check it against main.cpp's order.
+// FUNCTION: SETUP 0x402550
 // Error

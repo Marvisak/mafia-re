@@ -20,7 +20,6 @@ BOOL expert_settings_enabled = TRUE;
 #endif
 
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-void Error(const char *msg);
 
 // GetWindowHandles and HandleComboField have no out-of-line copy in 1.2, which /OPT:NOREF would have kept:
 // they are inlined into DialogFunc
@@ -35,6 +34,21 @@ inline void GetWindowHandles(S_state &state, HWND main_window)
     state.windows.driver_version = GetDlgItem(main_window, IDC_DRIVERVERSION);
     state.windows.vram_size = GetDlgItem(main_window, IDC_VRAMSIZE);
     state.windows.refresh_rate = GetDlgItem(main_window, IDC_COMBO_REFRESHRATE);
+}
+
+// static, which explains both builds' order: VC6 emits a static function after its first caller (1.2 has it after
+// DialogFunc), VS2008's link-time code generation where it is defined
+// FUNCTION: SETUPSTEAM 0x4011f0
+static void Error(const char *msg)
+{
+    char buffer[128];
+    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
+    {
+        // STRING: SETUP 0x40e138
+        strcpy(buffer, "Setup error");
+    }
+    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
+    EndDialog(app_state.windows.main, 0);
 }
 
 // FUNCTION: SETUP 0x401000
@@ -549,17 +563,4 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
-}
-
-// FUNCTION: SETUP 0x402550
-void Error(const char *msg)
-{
-    char buffer[128];
-    if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
-    {
-        // STRING: SETUP 0x40e138
-        strcpy(buffer, "Setup error");
-    }
-    MessageBoxA(app_state.windows.main, msg, buffer, MB_OK);
-    EndDialog(app_state.windows.main, 0);
 }
