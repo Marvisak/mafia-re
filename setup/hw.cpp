@@ -159,11 +159,7 @@ bool LoadAdapterModes()
     app_state.vram_size = GetTotalVRAM(NULL);
     if (app_state.windows.driver_version)
     {
-        if (result != D3D_OK)
-        {
-            global_buffer[0] = '\0';
-        }
-        else
+        if (result == D3D_OK)
         {
             if (LoadStringA(NULL, IDS_DRIVERVERSION, buffer, sizeof(buffer)) == 0)
             {
@@ -177,6 +173,10 @@ bool LoadAdapterModes()
                 LOWORD(identifier.DriverVersion.HighPart),
                 HIWORD(identifier.DriverVersion.LowPart),
                 LOWORD(identifier.DriverVersion.LowPart));
+        }
+        else
+        {
+            global_buffer[0] = '\0';
         }
         SetWindowTextA(app_state.windows.driver_version, global_buffer);
     }
@@ -194,6 +194,7 @@ bool LoadAdapterModes()
 
     int adapter_mode_count = d3d8->GetAdapterModeCount(settings.adapter);
     int total_modes = 0;
+    S_adapter_mode *new_mode = adapter_modes;
     for (int i = 0; i < adapter_mode_count; ++i)
     {
         D3DDISPLAYMODE mode;
@@ -205,65 +206,63 @@ bool LoadAdapterModes()
         int bit_depth_flags;
         switch (mode.Format)
         {
-        case D3DFMT_A8R8G8B8:
-        case D3DFMT_X8R8G8B8:
-            bit_depth_flags = BIT_DEPTH_32;
-            break;
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
             bit_depth_flags = BIT_DEPTH_16;
+            break;
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+            bit_depth_flags = BIT_DEPTH_32;
             break;
         default:
             continue;
         }
 
         // The multisample flags are collected directly in the next free slot, even when the mode turns out to be a duplicate
-        S_adapter_mode &new_mode = adapter_modes[total_modes];
         if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode.flags |= MULTISAMPLE_2X_WINDOWED;
+            new_mode->flags |= MULTISAMPLE_2X_WINDOWED;
         }
 
         if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode.flags |= MULTISAMPLE_4X_WINDOWED;
+            new_mode->flags |= MULTISAMPLE_4X_WINDOWED;
         }
 
         if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode.flags |= MULTISAMPLE_2X_FULLSCREEN;
+            new_mode->flags |= MULTISAMPLE_2X_FULLSCREEN;
         }
 
         if (d3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode.flags |= MULTISAMPLE_4X_FULLSCREEN;
+            new_mode->flags |= MULTISAMPLE_4X_FULLSCREEN;
         }
 
-        int j;
-        for (j = 0; j < total_modes; ++j)
+        bool found = false;
+        for (int j = 0; j < total_modes; ++j)
         {
-            if (adapter_modes[j].width == mode.Width && adapter_modes[j].height == mode.Height)
+            S_adapter_mode &cached_mode = adapter_modes[j];
+            if (cached_mode.width == mode.Width && cached_mode.height == mode.Height)
             {
+                cached_mode.flags |= new_mode->flags & MULTISAMPLE_MASK;
+                if ((cached_mode.flags & bit_depth_flags) == 0)
+                {
+                    cached_mode.flags |= bit_depth_flags;
+                }
+                found = true;
                 break;
             }
         }
 
-        if (j < total_modes)
-        {
-            S_adapter_mode &cached_mode = adapter_modes[j];
-            cached_mode.flags |= new_mode.flags & MULTISAMPLE_MASK;
-            if ((cached_mode.flags & bit_depth_flags) == 0)
-            {
-                cached_mode.flags |= bit_depth_flags;
-            }
-        }
-        else
+        if (!found)
         {
             // The multisample flags collected above are lost for a new mode, this is what the original does
-            new_mode.width = mode.Width;
-            new_mode.height = mode.Height;
-            new_mode.flags = bit_depth_flags;
+            new_mode->width = mode.Width;
+            new_mode->height = mode.Height;
+            new_mode->flags = bit_depth_flags;
 
+            new_mode++;
             if (++total_modes >= 256)
             {
                 break;
@@ -324,18 +323,9 @@ bool LoadAdapterData(int adapter)
     }
 
     S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(app_state.windows.resolution, CB_GETITEMDATA, adapter, NULL));
-    if (!settings.antialiasing)
-    {
-        SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, NULL, NULL);
-    }
-    else if (!settings.fullscreen)
-    {
-        if ((adapter_data->flags & MULTISAMPLE_WINDOWED) != MULTISAMPLE_WINDOWED)
-        {
-            SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, NULL, NULL);
-        }
-    }
-    else if ((adapter_data->flags & MULTISAMPLE_FULLSCREEN) != MULTISAMPLE_FULLSCREEN)
+    if (!settings.antialiasing
+        || settings.fullscreen && (adapter_data->flags & MULTISAMPLE_FULLSCREEN) != MULTISAMPLE_FULLSCREEN
+        || !settings.fullscreen && (adapter_data->flags & MULTISAMPLE_WINDOWED) != MULTISAMPLE_WINDOWED)
     {
         SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, NULL, NULL);
     }
@@ -362,7 +352,7 @@ bool LoadAdapterData(int adapter)
         }
     }
 
-    if ((adapter_data->flags & (BIT_DEPTH_16 | BIT_DEPTH_32)) == (BIT_DEPTH_16 | BIT_DEPTH_32) && settings.bit_depth != 16)
+    if (settings.bit_depth != 16 && (adapter_data->flags & (BIT_DEPTH_16 | BIT_DEPTH_32)) == (BIT_DEPTH_16 | BIT_DEPTH_32))
     {
         SendMessageA(app_state.windows.bit_depth, CB_SETCURSEL, 1, NULL);
     }
@@ -371,7 +361,28 @@ bool LoadAdapterData(int adapter)
         SendMessageA(app_state.windows.bit_depth, CB_SETCURSEL, 0, NULL);
     }
 
-    if (!settings.fullscreen)
+    if (settings.fullscreen)
+    {
+        if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
+        {
+            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
+            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
+            if (settings.antialiasing == 2)
+            {
+                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+            }
+        }
+        if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
+        {
+            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
+            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
+            if (settings.antialiasing == 4)
+            {
+                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
+            }
+        }
+    }
+    else
     {
         if (adapter_data->flags & MULTISAMPLE_2X_WINDOWED)
         {
@@ -386,27 +397,6 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_4X_WINDOWED)
         {
             // STRING: SETUP 0x40e194
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
-            if (settings.antialiasing == 4)
-            {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
-            }
-        }
-    }
-    else
-    {
-        if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
-        {
-            pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
-            SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
-            if (settings.antialiasing == 2)
-            {
-                SendMessageA(app_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
-            }
-        }
-        if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
-        {
             pos = SendMessageA(app_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
             SendMessageA(app_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
