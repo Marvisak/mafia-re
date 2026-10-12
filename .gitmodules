@@ -10,3 +10,11 @@
 	path = 3rdparty/dx8sdk
 	url = https://github.com/anominy/dx8sdk.git
 	shallow = true
+[submodule "3rdparty/dx81sdk"]
+	path = 3rdparty/dx81sdk
+	url = https://github.com/Marvisak/dx81sdk.git
+	shallow = true
+[submodule "3rdparty/msvc900_sp1"]
+	path = 3rdparty/msvc900_sp1
+	url = https://github.com/Marvisak/msvc900_sp1.git
+	shallow = true
