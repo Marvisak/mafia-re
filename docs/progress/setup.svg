@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="124" viewBox="0 0 400 124" role="img" aria-label="setup.exe: 95.76% decompiled">
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="124" viewBox="0 0 400 124" role="img" aria-label="setup.exe: 100.00% decompiled">
 <style>
   .card { fill: #ffffff; stroke: #d0d7de; }
   .track { fill: #eaeef2; }
@@ -15,11 +15,11 @@
 </style>
 <rect class="card" x="4.5" y="4.5" width="391" height="115" rx="6"/>
 <text x="24" y="38" font-size="18" font-weight="600">setup.exe</text>
-<text x="376" y="38" font-size="18" font-weight="600" text-anchor="end">95.76%</text>
+<text x="376" y="38" font-size="18" font-weight="600" text-anchor="end">100.00%</text>
 <rect class="track" x="24" y="50" width="352" height="8" rx="4"/>
-<rect class="bar" x="24" y="50" width="337.08" height="8" rx="4"/>
+<rect class="bar" x="24" y="50" width="352.00" height="8" rx="4"/>
 <text class="muted" x="24" y="86" font-size="13">Implemented</text>
 <text x="376" y="86" font-size="13" text-anchor="end">100.00% (17 / 17)</text>
 <text class="muted" x="24" y="106" font-size="13">Accuracy</text>
-<text x="376" y="106" font-size="13" text-anchor="end">95.76%</text>
+<text x="376" y="106" font-size="13" text-anchor="end">100.00%</text>
 </svg>

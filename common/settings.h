@@ -26,7 +26,8 @@ struct S_settings
     bool disable_eax;
     bool suspend_when_inactive;
     bool software_mixing_only;
-    uchar sound_type;
+    // Signed: both setups sign-extend it
+    char sound_type;
     int language;
     bool w_buffer;
 
