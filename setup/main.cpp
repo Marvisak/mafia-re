@@ -5,19 +5,11 @@
 
 #include "commctrl.h"
 
-// This file's only globals in 1.2, the start of its .data. The rest are in hw.cpp.
+// This file's only global in 1.2, the start of its .data. The rest are in hw.cpp.
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
 // GLOBAL: SETUPSTEAM 0x405019
 bool settings_loaded = true;
-// 1.2 reads and writes it as a dword, Steam's rebuild as a byte
-#ifdef SETUP_STEAM
-// GLOBAL: SETUPSTEAM 0x40505b
-bool expert_settings_enabled = true;
-#else
-// GLOBAL: SETUP 0x40e044
-BOOL expert_settings_enabled = TRUE;
-#endif
 
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
@@ -152,6 +144,16 @@ void ToggleFields()
 // FUNCTION: SETUPSTEAM 0x401470
 void ToggleExpertSettings()
 {
+    // A static of the only function that uses it: Steam's build places it after the settings, whose constructor
+    // the compiler turned into initialized data, which a global's initializer would be placed before.
+    // 1.2 reads and writes it as a dword, Steam's rebuild as a byte.
+#ifdef SETUP_STEAM
+    // GLOBAL: SETUPSTEAM 0x40505b
+    static bool expert_settings_enabled = true;
+#else
+    // GLOBAL: SETUP 0x40e044
+    static BOOL expert_settings_enabled = TRUE;
+#endif
     RECT window_rect;
     GetWindowRect(dialog_state.windows.main, &window_rect);
 
