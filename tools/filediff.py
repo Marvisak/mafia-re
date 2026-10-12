@@ -3,7 +3,8 @@ of every known object. This covers what reccmp can't: bytes outside functions, t
 functions and data, and header fields.
 
 Pointers that differ only because their target moved count as equal. Base relocations say which
-fields are pointers, and reccmp's matches say where each target ended up. reccmp works on the
+fields are pointers (in an EXE without them, any differing dword whose target translates counts),
+and reccmp's matches say where each target ended up. reccmp works on the
 vc6-pdb build, so its addresses are carried over to the byte-exact vc6 build by symbol name
 through the two map files.
 
@@ -369,6 +370,15 @@ def compare_content(o: Obj, orig: PE, ours: PE, translate) -> None:
                 o.notes.append("export timestamp (link time)")
             i += 4
             continue
+        if a[i] != b[i] and not orig.relocs and not ours.relocs:
+            # An EXE has no base relocations to say where the pointers are. Take a differing dword
+            # whose original value translates to ours as one, anything else stays a byte difference.
+            w = next((w for w in range(max(i - 3, 0), i + 1) if w + 4 <= n
+                      and translate(struct.unpack_from("<I", a, w)[0]) == struct.unpack_from("<I", b, w)[0]), None)
+            if w is not None:
+                moved += 1
+                i = w + 4
+                continue
         is_rva = o.orig + i in orig_rvas and o.ours + i in ours_rvas
         if (is_rva or (o.orig + i in orig.relocs and o.ours + i in ours.relocs)) and i + 4 <= n:
             va = struct.unpack_from("<I", a, i)[0]
