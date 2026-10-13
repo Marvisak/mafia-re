@@ -176,6 +176,17 @@ def compare(ours: PE, orig: PE, a: int, b: int, n: int, limit: int) -> list[tupl
     return pairs
 
 
+def candidate_sizes(ours: PE, a: int, n: int) -> list[int]:
+    """The sizes to compare a function at our a by: n, the range up to the next symbol, then the shorter
+    prefixes that end after a ret or jmp, longest first. The range can end with bytes that aren't the
+    function's, which the original needn't have after it: the next object's leading data (exsup3's
+    "VC20XC00" marker), padding inside it, or static functions the original links elsewhere."""
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    ends = {insn.address + insn.size - a for insn in md.disasm(ours.read(a, n), a)
+            if insn.mnemonic in ("ret", "jmp")}
+    return [n] + sorted((e for e in ends if e < n), reverse=True)
+
+
 def pointer_operands(ours: PE, orig: PE, a: int, b: int, n: int) -> list[tuple[int, int]]:
     """(our value, original value) for every displacement or immediate in our n bytes at a that is an
     address in our image, read at the same offset of the original's copy at b. Unlike compare(), this
@@ -255,18 +266,35 @@ def main() -> None:
             continue
         end = min(next((s[0] for s in code_symbols[k + 1:] if s[0] > addr), text_end), text_end)
         code = ours.read(addr, end - addr)
-        size = len(code.rstrip(b"\x00\xcc\x90")) or len(code)  # without the padding after it
-        for shift in sorted(range(-15, 16), key=abs):
-            pairs = compare(ours, orig, addr, addr + delta + shift, size, len(code))
-            if pairs is not None:
-                delta += shift
-                break
+        sizes = candidate_sizes(ours, addr, len(code.rstrip(b"\x00\xcc\x90")) or len(code))  # without padding
+        match = next(((size, shift) for size in sizes for shift in sorted(range(-15, 16), key=abs)
+                      if compare(ours, orig, addr, addr + delta + shift, size, len(code)) is not None), None)
+        if match:
+            size, shift = match
+            delta += shift
         else:
             # The objects before this one differ from the original's (an incomplete source links fewer): look
             # in the whole of the original's .text. A function's first byte is an opcode, never part of a
             # pointer, so it has to agree.
-            hits = [orig_text_start + p for p in range(orig_text_size - size) if orig_text[p] == code[0]
-                    and compare(ours, orig, addr, orig_text_start + p, size, len(code)) is not None]
+            def search(sizes: list[int], limit: int) -> tuple[list[int], int]:
+                for size in sizes:
+                    hits = [orig_text_start + p for p in range(orig_text_size - size) if orig_text[p] == code[0]
+                            and compare(ours, orig, addr, orig_text_start + p, size, limit) is not None]
+                    if hits:
+                        return hits, size
+                return [], 0
+
+            hits, size = search(sizes, len(code))
+            # Several hits: the function is short (strchr up to the entry point inside it) or has twins that
+            # differ only in a call (_lseek and _write call their _lk versions). The rest of its object, from
+            # the original too, tells them apart.
+            obj_end = min(next((s[0] for s in code_symbols[k + 1:] if s[0] > addr and s[2] != obj), text_end),
+                          text_end)
+            if len(hits) > 1 and obj_end > end:
+                whole = ours.read(addr, obj_end - addr)
+                hits, size = search(candidate_sizes(ours, addr, len(whole.rstrip(b"\x00\xcc\x90")) or len(whole)),
+                                    len(whole))
+                size = min(size, len(code))
             if len(hits) != 1:
                 failed.append((addr, name))
                 continue
@@ -306,12 +334,20 @@ def main() -> None:
         pos = min(hits, key=lambda p: (not in_thunk_run(p), abs(orig_text_start + p - (addr + delta))))
         thunks.append((orig_text_start + pos, name))
 
-    globals_, strings, floats, conflicts = [], [], [], []
+    globals_, strings, floats, conflicts, outvoted = [], [], [], [], []
     for sym in set(exact) | set(inside):
         addr, name, obj = sym
         if not (is_crt(obj) or obj == STATIC_DATA) or text_start <= addr < text_end:
             continue
         cand = exact.get(sym) or inside[sym]
+        if len(cand) > 1 and sym in exact:
+            # A loop's end pointer, one past an array, is exact too where the next variable starts at it in our
+            # build (__NMSG_WRITE's message table before _iob, ___initstdio's _iob before _pctype). The real
+            # references outnumber those.
+            best = max(cand, key=cand.get)
+            if 2 * cand[best] > sum(cand.values()):
+                outvoted.append((name, best, dict(cand)))
+                cand = {best: cand[best]}
         if len(cand) > 1:
             conflicts.append((name, dict(cand)))
         elif name.startswith("__real@"):
@@ -346,6 +382,8 @@ def main() -> None:
         print(f"  not found: {name} (ours 0x{addr:x})")
     for name in no_thunk:
         print(f"  no thunk in the original: {name}")
+    for name, best, cand in outvoted:
+        print(f"  {name} at 0x{best:x}, outvoting " + ", ".join(f"0x{a:x} ({v}x)" for a, v in cand.items() if a != best))
     for name, cand in conflicts:
         print(f"  conflicting addresses for {name}: " + ", ".join(f"0x{a:x} ({v}x)" for a, v in cand.items()))
 
