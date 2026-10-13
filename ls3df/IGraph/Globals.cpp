@@ -1,9 +1,10 @@
-// The engine's globals and its plain C exports, at 0x1006b430-0x1006bd11 in the original. The PS2 build names the
+// The engine's globals and its plain C exports, at 0x1006b430-0x1006bd3e in the original. The PS2 build names the
 // file (__sinit_Globals.cpp): its functions TEV to ErrorHandler come right before IGraph.cpp's there, as they do here.
-// Which folder of C:\MyProjects\engine8 it was in is unknown.
+// Both builds list it in one group with IGraph.cpp, IShow.cpp and ITexture.cpp, hence the IGraph folder.
 // Not complete yet. Still missing, in the original's order: the $E pair of the BreBre object StaticInstance and its
-// constructor, which opens log.txt (0x1006b430-0x1006b6c6), I3DGetResultMessage, dbgPrintf, dbgPrintf1,
-// dbgPrintGuid, the $E of a global bounding box, BBoxVertices and ErrorHandler (0x1006b770-0x1006bd11).
+// constructor, which opens log.txt and creates the drivers (0x1006b430-0x1006b6c6), I3DGetResultMessage, dbgPrintf,
+// dbgPrintf1, dbgPrintGuid, the $E of a global bounding box, BBoxVertices, the $Es of a (1, 1, 1) and a zero vector,
+// ErrorHandler and the header's zero vector (0x1006b770-0x1006bd3e).
 #include "ls3df.h"
 
 #include <stdio.h>
@@ -56,4 +57,10 @@ ISND_driver *__cdecl ISndGetDriver()
 I3D_driver *__cdecl I3DGetDriver()
 {
     return pI3DDriver;
+}
+
+// STUB: LS3DF 0x1006b890
+int __cdecl dbgPrintf(const char *format, ...)
+{
+    return 0;
 }
