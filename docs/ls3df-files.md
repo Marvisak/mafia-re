@@ -56,8 +56,8 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100201d0–10021570` | `10021550` | | `I3d_light.cpp`? | no strings |
 | `10021570–10026920` | `10026900` | | `I3d_lit_object.cpp` | `I3D_lit_object::Construct()` |
 | `10026920–1002c8c0` | `1002c8a0` | | `I3d_lit_object.cpp` (second file) | `I3D_lit_object::Load()`, lightmaps |
-| `1002c8c0–1002eab0` | `1002ea90` | | `I3d_math.cpp` | exported math up to `S_vector::RotateByMatrix` (`1002ea10`) |
-| `1002eab0–10031820` | `10031800` | | more math, then `I3d_mesh.cpp` | `S_vector::RotateByNormMatrix`, `S_quat`, `S_plane`, `LineLineIntersect` (to `10030440`) without a marker of their own, then `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object` |
+| `1002c8c0–10030560` | `1002ea90` | | `I3d_math.cpp` | written. The math from `RandFloat` (`1002cda0`) to `LineLineIntersect`, one file as on PS2; its marker sits between `S_vector::RotateByMatrix` and `RotateByNormMatrix`, not at the end |
+| `10030560–10031820` | `10031800` | | `I3d_mesh.cpp` | `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object` |
 | `10031820–100333d0` | `100333b0` | `100324b0` | `I3d_mirror.cpp`? | no strings |
 | `100333d0–10034350` | `10034330` | `10033b50`, `10033ba0` | `I3d_model.cpp`? | two lists; PS2's `__sinit_I3d_model.cpp` constructs more than the header's objects too |
 | `10034350–10036540` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph` |
@@ -119,6 +119,10 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
   - PS2 constructs two header objects per file, a zero vector and an identity quaternion. PC constructs only the
     vector.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera, portal/pose and
-  singlemesh/singlemorph pairs, the second math file, and the ranges marked `none`.
+  singlemesh/singlemorph pairs and the ranges marked `none`.
 - **The marker's name.** It decides where the vector sits in each file's `.bss` (`tools/bsshash.py`). The layouts of
-  `IS_sound.cpp`, `IS_3Dlistener.cpp` and `Globals.cpp` put its bucket between 229 and about 920.
+  `IS_sound.cpp`, `IS_3Dlistener.cpp` and `Globals.cpp` put its bucket between 229 and about 920. PS2 names the
+  per-file vector `ZeroSVector` (a local symbol in each file, next to `ZeroSQuat`), which hashes to bucket 275.
+- **The marker's place.** `I3d_math.cpp` is the only file whose marker isn't at the end of its code: PS2 has the
+  functions after it (`RotateByNormMatrix` to `LineLineIntersect`) in the same file, so what moves the `$E` there is
+  in the source.

@@ -8,6 +8,7 @@ project(ls3df)
 # the sound files' folder is named here.
 add_library(ls3df SHARED
     I3D/I3d_driver.cpp
+    I3D/I3d_math.cpp
     IGraph/Globals.cpp
     IGraph/IGraph.cpp
     ISound/IS_3Dlistener.cpp

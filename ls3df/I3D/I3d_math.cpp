@@ -1,0 +1,758 @@
+// The math types' functions, at 0x1002cda0-0x1003055f in the original. The PS2 build names the file and has these
+// functions from RandFloat to LineLineIntersect. The PC adds RotateXMatrix, S_vector2::AngleTo, Mult4X4, SetRot,
+// GetScale2, CosAngleTo and S_quat::GetDir, has S_matrix::RotateByMatrix earlier, and other SetDir and SetDir3
+// algorithms. Make4X4 comes right after Mult4X4, which inlines it.
+// The header's zero vector (PS2 ZeroSVector) has its dynamic initializer between S_vector::RotateByMatrix and
+// RotateByNormMatrix (0x1002ea90), not at the end of the file as in the other engine files; it isn't here yet (see
+// ISound/IS_driver.cpp).
+// Not reproduced yet: S_matrix::RotateByMatrix, S_vector::operator*(S_matrix) and S_vector::RotateByMatrix write their
+// result through a pointer register set by a lea with a 32-bit displacement, a form found nowhere else in the engine,
+// and S_matrix's operator*=, operator* and Make4X4 keep the result's address in a stack slot. Every spelling tried
+// (pointers, references, arrays, inline and later-defined helpers, loops) lets VC6 address the local directly.
+#include "I3D/i3d_math.h"
+
+#include <stdlib.h>
+
+// The angle comparisons that need a constant other than MRG_ZERO
+#define QUAT_ONE_LIMIT (1.0 - MRG_ZERO)
+#define SLERP_DELTA 0.0001
+
+// Min and max through references (the clamp in S_vector::AngleTo takes the address of its constants)
+template<class T>
+inline const T &Min(const T &a, const T &b)
+{
+    return a < b ? a : b;
+}
+
+template<class T>
+inline const T &Max(const T &a, const T &b)
+{
+    return a > b ? a : b;
+}
+
+// FUNCTION: LS3DF 0x1002cda0
+float __cdecl RandFloat()
+{
+    return rand() * (1.0f / RAND_MAX);
+}
+
+// FUNCTION: LS3DF 0x1002cdc0
+S_matrix __stdcall RotateXMatrix(float angle)
+{
+    S_matrix m;
+    m.Identity();
+    float c = (float)cos(angle);
+    float s = (float)sin(angle);
+    m.m[1][1] = c;
+    m.m[1][2] = s;
+    m.m[2][1] = -s;
+    m.m[2][2] = c;
+    return m;
+}
+
+// FUNCTION: LS3DF 0x1002ce10
+S_matrix __stdcall RotateYMatrix(float angle)
+{
+    S_matrix m;
+    m.Identity();
+    float c = (float)cos(angle);
+    float s = (float)sin(angle);
+    m.m[0][0] = c;
+    m.m[0][2] = s;
+    m.m[2][0] = -s;
+    m.m[2][2] = c;
+    return m;
+}
+
+// FUNCTION: LS3DF 0x1002ce60
+S_matrix __stdcall RotateZMatrix(float angle)
+{
+    S_matrix m;
+    m.Identity();
+    float c = (float)cos(angle);
+    float s = (float)sin(angle);
+    m.m[0][0] = c;
+    m.m[0][1] = s;
+    m.m[1][0] = -s;
+    m.m[1][1] = c;
+    return m;
+}
+
+// FUNCTION: LS3DF 0x1002ceb0
+float S_vector2::AngleTo(const S_vector2 &v) const
+{
+    float f = (float)sqrt(v.Square() * Square());
+    if (f < MRG_ZERO)
+        return 0.0f;
+    return (float)acos(Dot(v) / f);
+}
+
+// FUNCTION: LS3DF 0x1002cf20
+void S_matrix::Identity()
+{
+    *this = IdentityMatrix;
+}
+
+// The rotation part only: the position is rotated too, not moved
+// FUNCTION: LS3DF 0x1002cf40
+S_matrix S_matrix::RotateByMatrix(const S_matrix &mat) const
+{
+    S_matrix r;
+    r.m[0][0] = m[0][0] * mat.m[0][0] + m[0][1] * mat.m[1][0] + m[0][2] * mat.m[2][0];
+    r.m[0][1] = m[0][0] * mat.m[0][1] + m[0][1] * mat.m[1][1] + m[0][2] * mat.m[2][1];
+    r.m[0][2] = m[0][0] * mat.m[0][2] + m[0][1] * mat.m[1][2] + m[0][2] * mat.m[2][2];
+    r.m[0][3] = 0.0f;
+    r.m[1][0] = m[1][0] * mat.m[0][0] + m[1][1] * mat.m[1][0] + m[1][2] * mat.m[2][0];
+    r.m[1][1] = m[1][0] * mat.m[0][1] + m[1][1] * mat.m[1][1] + m[1][2] * mat.m[2][1];
+    r.m[1][2] = m[1][0] * mat.m[0][2] + m[1][1] * mat.m[1][2] + m[1][2] * mat.m[2][2];
+    r.m[1][3] = 0.0f;
+    r.m[2][0] = m[2][0] * mat.m[0][0] + m[2][1] * mat.m[1][0] + m[2][2] * mat.m[2][0];
+    r.m[2][1] = m[2][0] * mat.m[0][1] + m[2][1] * mat.m[1][1] + m[2][2] * mat.m[2][1];
+    r.m[2][2] = m[2][0] * mat.m[0][2] + m[2][1] * mat.m[1][2] + m[2][2] * mat.m[2][2];
+    r.m[2][3] = 0.0f;
+    r.m[3][0] = m[3][0] * mat.m[0][0] + m[3][1] * mat.m[1][0] + m[3][2] * mat.m[2][0];
+    r.m[3][1] = m[3][0] * mat.m[0][1] + m[3][1] * mat.m[1][1] + m[3][2] * mat.m[2][1];
+    r.m[3][2] = m[3][0] * mat.m[0][2] + m[3][1] * mat.m[1][2] + m[3][2] * mat.m[2][2];
+    r.m[3][3] = 1.0f;
+    return r;
+}
+
+// Sets the matrix to the inverse of mat, an affine matrix; a singular one gives the identity
+// FUNCTION: LS3DF 0x1002d0b0
+bool S_matrix::Inverse(const S_matrix &mat)
+{
+    m[0][0] = mat.m[1][1] * mat.m[2][2] - mat.m[2][1] * mat.m[1][2];
+    m[1][0] = mat.m[2][2] * mat.m[1][0] - mat.m[2][0] * mat.m[1][2];
+    m[2][0] = mat.m[2][1] * mat.m[1][0] - mat.m[1][1] * mat.m[2][0];
+    float det = mat.m[0][0] * m[0][0] - m[1][0] * mat.m[0][1] + m[2][0] * mat.m[0][2];
+    if (fabs(det) < MRG_ZERO) {
+        Identity();
+        return false;
+    }
+    det = 1.0f / det;
+    m[0][0] = det * m[0][0];
+    m[0][1] = -((mat.m[2][2] * mat.m[0][1] - mat.m[2][1] * mat.m[0][2]) * det);
+    m[0][2] = (mat.m[1][2] * mat.m[0][1] - mat.m[0][2] * mat.m[1][1]) * det;
+    m[0][3] = 0.0f;
+    m[1][0] = -(det * m[1][0]);
+    m[1][1] = (mat.m[0][0] * mat.m[2][2] - mat.m[0][2] * mat.m[2][0]) * det;
+    m[1][2] = -((mat.m[0][0] * mat.m[1][2] - mat.m[0][2] * mat.m[1][0]) * det);
+    m[1][3] = 0.0f;
+    m[2][0] = det * m[2][0];
+    m[2][1] = -((mat.m[2][1] * mat.m[0][0] - mat.m[2][0] * mat.m[0][1]) * det);
+    m[2][2] = (mat.m[1][1] * mat.m[0][0] - mat.m[1][0] * mat.m[0][1]) * det;
+    m[2][3] = 0.0f;
+    m[3][0] = -(mat.m[3][0] * m[0][0] + mat.m[3][1] * m[1][0] + mat.m[3][2] * m[2][0]);
+    m[3][1] = -(mat.m[3][0] * m[0][1] + mat.m[3][1] * m[1][1] + mat.m[3][2] * m[2][1]);
+    m[3][2] = -(mat.m[3][0] * m[0][2] + mat.m[3][1] * m[1][2] + mat.m[3][2] * m[2][2]);
+    m[3][3] = 1.0f;
+    return true;
+}
+
+// FUNCTION: LS3DF 0x1002d220
+S_matrix &S_matrix::operator*=(const S_matrix &mat)
+{
+    *this = *this * mat;
+    return *this;
+}
+
+// FUNCTION: LS3DF 0x1002d3a0
+S_matrix S_matrix::operator*(const S_matrix &mat) const
+{
+    S_matrix r;
+    r.m[0][0] = m[0][0] * mat.m[0][0] + m[0][1] * mat.m[1][0] + m[0][2] * mat.m[2][0];
+    r.m[0][1] = m[0][0] * mat.m[0][1] + m[0][1] * mat.m[1][1] + m[0][2] * mat.m[2][1];
+    r.m[0][2] = m[0][0] * mat.m[0][2] + m[0][1] * mat.m[1][2] + m[0][2] * mat.m[2][2];
+    r.m[0][3] = 0.0f;
+    r.m[1][0] = m[1][0] * mat.m[0][0] + m[1][1] * mat.m[1][0] + m[1][2] * mat.m[2][0];
+    r.m[1][1] = m[1][0] * mat.m[0][1] + m[1][1] * mat.m[1][1] + m[1][2] * mat.m[2][1];
+    r.m[1][2] = m[1][0] * mat.m[0][2] + m[1][1] * mat.m[1][2] + m[1][2] * mat.m[2][2];
+    r.m[1][3] = 0.0f;
+    r.m[2][0] = m[2][0] * mat.m[0][0] + m[2][1] * mat.m[1][0] + m[2][2] * mat.m[2][0];
+    r.m[2][1] = m[2][0] * mat.m[0][1] + m[2][1] * mat.m[1][1] + m[2][2] * mat.m[2][1];
+    r.m[2][2] = m[2][0] * mat.m[0][2] + m[2][1] * mat.m[1][2] + m[2][2] * mat.m[2][2];
+    r.m[2][3] = 0.0f;
+    r.m[3][0] = m[3][0] * mat.m[0][0] + mat.m[3][0] + m[3][1] * mat.m[1][0] + m[3][2] * mat.m[2][0];
+    r.m[3][1] = m[3][0] * mat.m[0][1] + mat.m[3][1] + m[3][1] * mat.m[1][1] + m[3][2] * mat.m[2][1];
+    r.m[3][2] = m[3][0] * mat.m[0][2] + mat.m[3][2] + m[3][1] * mat.m[1][2] + m[3][2] * mat.m[2][2];
+    r.m[3][3] = 1.0f;
+    return r;
+}
+
+// FUNCTION: LS3DF 0x1002d520
+S_matrix S_matrix::Mult4X4(const S_matrix &mat) const
+{
+    S_matrix r;
+    r.Make4X4(*this, mat);
+    return r;
+}
+
+// The full 4x4 product a * b
+// FUNCTION: LS3DF 0x1002d780
+S_matrix &S_matrix::Make4X4(const S_matrix &a, const S_matrix &b)
+{
+    m[0][0] = a.m[0][0] * b.m[0][0] + a.m[0][1] * b.m[1][0] + a.m[0][2] * b.m[2][0] + a.m[0][3] * b.m[3][0];
+    m[0][1] = a.m[0][0] * b.m[0][1] + a.m[0][1] * b.m[1][1] + a.m[0][2] * b.m[2][1] + a.m[0][3] * b.m[3][1];
+    m[0][2] = a.m[0][0] * b.m[0][2] + a.m[0][1] * b.m[1][2] + a.m[0][2] * b.m[2][2] + a.m[0][3] * b.m[3][2];
+    m[0][3] = a.m[0][0] * b.m[0][3] + a.m[0][1] * b.m[1][3] + a.m[0][2] * b.m[2][3] + a.m[0][3] * b.m[3][3];
+    m[1][0] = a.m[1][0] * b.m[0][0] + a.m[1][1] * b.m[1][0] + a.m[1][2] * b.m[2][0] + a.m[1][3] * b.m[3][0];
+    m[1][1] = a.m[1][0] * b.m[0][1] + a.m[1][1] * b.m[1][1] + a.m[1][2] * b.m[2][1] + a.m[1][3] * b.m[3][1];
+    m[1][2] = a.m[1][0] * b.m[0][2] + a.m[1][1] * b.m[1][2] + a.m[1][2] * b.m[2][2] + a.m[1][3] * b.m[3][2];
+    m[1][3] = a.m[1][0] * b.m[0][3] + a.m[1][1] * b.m[1][3] + a.m[1][2] * b.m[2][3] + a.m[1][3] * b.m[3][3];
+    m[2][0] = a.m[2][0] * b.m[0][0] + a.m[2][1] * b.m[1][0] + a.m[2][2] * b.m[2][0] + a.m[2][3] * b.m[3][0];
+    m[2][1] = a.m[2][0] * b.m[0][1] + a.m[2][1] * b.m[1][1] + a.m[2][2] * b.m[2][1] + a.m[2][3] * b.m[3][1];
+    m[2][2] = a.m[2][0] * b.m[0][2] + a.m[2][1] * b.m[1][2] + a.m[2][2] * b.m[2][2] + a.m[2][3] * b.m[3][2];
+    m[2][3] = a.m[2][0] * b.m[0][3] + a.m[2][1] * b.m[1][3] + a.m[2][2] * b.m[2][3] + a.m[2][3] * b.m[3][3];
+    m[3][0] = a.m[3][0] * b.m[0][0] + a.m[3][1] * b.m[1][0] + a.m[3][2] * b.m[2][0] + a.m[3][3] * b.m[3][0];
+    m[3][1] = a.m[3][0] * b.m[0][1] + a.m[3][1] * b.m[1][1] + a.m[3][2] * b.m[2][1] + a.m[3][3] * b.m[3][1];
+    m[3][2] = a.m[3][0] * b.m[0][2] + a.m[3][1] * b.m[1][2] + a.m[3][2] * b.m[2][2] + a.m[3][3] * b.m[3][2];
+    m[3][3] = a.m[3][0] * b.m[0][3] + a.m[3][1] * b.m[1][3] + a.m[3][2] * b.m[2][3] + a.m[3][3] * b.m[3][3];
+    return *this;
+}
+
+// A rotation that turns the z axis into dir
+// FUNCTION: LS3DF 0x1002d9d0
+void S_matrix::SetDir(const S_vector &dir)
+{
+    Identity();
+    (*this)(2).SetNormalized(dir);
+    float sq = dir.z * dir.z + dir.x * dir.x;
+    if (sq > MRG_ZERO) {
+        if (fabs(sq - 1.0f) < MRG_ZERO) {
+            m[0][0] = dir.z;
+            m[0][2] = -dir.x;
+        } else {
+            float f = 1.0f / (float)sqrt(sq);
+            m[0][0] = dir.z * f;
+            m[0][2] = -(dir.x * f);
+        }
+    }
+    if (fabs(dir.z) + fabs(dir.x) > MRG_ZERO)
+        (*this)(0).SetNormalized(S_vector(dir.z, 0.0f, -dir.x));
+    (*this)(1) = -(*this)(0).Cross(dir);
+}
+
+// The rotation part only: the z axis along dir, the y axis towards up
+// FUNCTION: LS3DF 0x1002dcf0
+void S_matrix::SetDir3(const S_vector &dir, const S_vector &up)
+{
+    (*this)(2).SetNormalized(dir);
+    S_vector u = up - (*this)(2) * up.Dot((*this)(2));
+    if (u.Dot(u) < MRG_ZERO) {
+        u = S_vector(0.0f, 0.0f, 1.0f) - (*this)(2) * (*this)(2).z;
+        if (u.Dot(u) < MRG_ZERO) {
+            u = S_vector(0.0f, 1.0f, 0.0f) - (*this)(2) * (*this)(2).y;
+            if (u.Dot(u) < MRG_ZERO)
+                u = S_vector(0.0f, 1.0f, 0.0f);
+        }
+    }
+    (*this)(1).SetNormalized(u);
+    (*this)(0).SetNormalized(u.Cross(dir));
+}
+
+// FUNCTION: LS3DF 0x1002e030
+void S_matrix::SetDir(const S_vector &dir, const S_vector &up)
+{
+    SetDir3(dir, up);
+    m[0][3] = 0.0f;
+    m[1][3] = 0.0f;
+    m[2][3] = 0.0f;
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 0.0f;
+    m[3][3] = 1.0f;
+}
+
+// FUNCTION: LS3DF 0x1002e070
+void S_matrix::SetRot3(const S_quat &q)
+{
+    if (fabs(q.s) >= QUAT_ONE_LIMIT) {
+        (*this)(0) = IdentityMatrix(0);
+        (*this)(1) = IdentityMatrix(1);
+        (*this)(2) = IdentityMatrix(2);
+        return;
+    }
+    float x2 = q.v.x + q.v.x;
+    float y2 = q.v.y + q.v.y;
+    float z2 = q.v.z + q.v.z;
+    float xx = q.v.x * x2;
+    float xy = q.v.x * y2;
+    float xz = q.v.x * z2;
+    float yy = q.v.y * y2;
+    float yz = q.v.y * z2;
+    float zz = q.v.z * z2;
+    float wx = q.s * x2;
+    float wy = q.s * y2;
+    float wz = q.s * z2;
+    m[0][0] = 1.0f - (yy + zz);
+    m[0][1] = xy - wz;
+    m[0][2] = xz + wy;
+    m[1][0] = xy + wz;
+    m[1][1] = 1.0f - (xx + zz);
+    m[1][2] = yz - wx;
+    m[2][0] = xz - wy;
+    m[2][1] = yz + wx;
+    m[2][2] = 1.0f - (xx + yy);
+}
+
+// FUNCTION: LS3DF 0x1002e1c0
+void S_matrix::SetRot(const S_quat &q)
+{
+    SetRot3(q);
+    m[0][3] = 0.0f;
+    m[1][3] = 0.0f;
+    m[2][3] = 0.0f;
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 0.0f;
+    m[3][3] = 1.0f;
+}
+
+// The rotation of mat without its scale
+// FUNCTION: LS3DF 0x1002e1f0
+void S_matrix::SetRot(const S_matrix &mat)
+{
+    (*this)(0) = mat(0);
+    (*this)(1) = mat(1);
+    (*this)(2) = mat(2);
+    float sq = m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0];
+    if (fabs(sq - 1.0f) > MRG_ZERO) {
+        float f = 1.0f / (float)sqrt(sq);
+        m[0][0] *= f;
+        m[1][0] *= f;
+        m[2][0] *= f;
+    }
+    sq = m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1];
+    if (fabs(sq - 1.0f) > MRG_ZERO) {
+        float f = 1.0f / (float)sqrt(sq);
+        m[0][1] *= f;
+        m[1][1] *= f;
+        m[2][1] *= f;
+    }
+    sq = m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2];
+    if (fabs(sq - 1.0f) > MRG_ZERO) {
+        float f = 1.0f / (float)sqrt(sq);
+        m[0][2] *= f;
+        m[1][2] *= f;
+        m[2][2] *= f;
+    }
+    m[0][3] = 0.0f;
+    m[1][3] = 0.0f;
+    m[2][3] = 0.0f;
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 0.0f;
+    m[3][3] = 1.0f;
+}
+
+// FUNCTION: LS3DF 0x1002e3a0
+S_vector S_matrix::GetScale() const
+{
+    return S_vector((*this)(0).Magnitude(), (*this)(1).Magnitude(), (*this)(2).Magnitude());
+}
+
+// FUNCTION: LS3DF 0x1002e510
+S_vector S_matrix::GetScale2() const
+{
+    return S_vector((*this)(0).Square(), (*this)(1).Square(), (*this)(2).Square());
+}
+
+// The mean scale
+// FUNCTION: LS3DF 0x1002e580
+float S_matrix::GetUScale() const
+{
+    return ((*this)(0).Magnitude() + (*this)(1).Magnitude() + (*this)(2).Magnitude()) * (1.0f / 3.0f);
+}
+
+// The cosine of half the angle
+// FUNCTION: LS3DF 0x1002e710
+float S_vector::CosAngleTo(const S_vector &v) const
+{
+    float c = Dot(v) / sqrt(Square() * v.Square());
+    return (float)sqrt((c + 1.0f) * 0.5f);
+}
+
+// FUNCTION: LS3DF 0x1002e7a0
+float S_vector::AngleTo(const S_vector &v) const
+{
+    float f = Magnitude() * v.Magnitude();
+    if (f < MRG_ZERO)
+        return 0.0f;
+    float c = Dot(v) / f;
+    return (float)acos(Min(Max(c, -1.0f), 1.0f));
+}
+
+// FUNCTION: LS3DF 0x1002e920
+S_vector &S_vector::operator*=(const S_matrix &m)
+{
+    float fx = x * m.m[0][0] + y * m.m[1][0] + z * m.m[2][0] + m.m[3][0];
+    float fy = x * m.m[0][1] + y * m.m[1][1] + z * m.m[2][1] + m.m[3][1];
+    float fz = x * m.m[0][2] + y * m.m[1][2] + z * m.m[2][2] + m.m[3][2];
+    // The original stores z first
+    z = fz;
+    x = fx;
+    y = fy;
+    return *this;
+}
+
+// FUNCTION: LS3DF 0x1002e980
+S_vector S_vector::operator*(const S_matrix &m) const
+{
+    S_vector r;
+    r.x = x * m.m[0][0] + m.m[3][0] + y * m.m[1][0] + z * m.m[2][0];
+    r.y = x * m.m[0][1] + m.m[3][1] + y * m.m[1][1] + z * m.m[2][1];
+    r.z = x * m.m[0][2] + m.m[3][2] + y * m.m[1][2] + z * m.m[2][2];
+    return r;
+}
+
+// FUNCTION: LS3DF 0x1002ea10
+S_vector S_vector::RotateByMatrix(const S_matrix &m) const
+{
+    S_vector r;
+    r.x = x * m.m[0][0] + y * m.m[1][0] + z * m.m[2][0];
+    r.y = x * m.m[0][1] + y * m.m[1][1] + z * m.m[2][1];
+    r.z = x * m.m[0][2] + y * m.m[1][2] + z * m.m[2][2];
+    return r;
+}
+
+// RotateByMatrix with each axis of m normalized
+// FUNCTION: LS3DF 0x1002eab0
+S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
+{
+    S_vector r = RotateByMatrix(m);
+    float sq = m.m[0][0] * m.m[0][0] + m.m[1][0] * m.m[1][0] + m.m[2][0] * m.m[2][0];
+    if (fabs(sq - 1.0f) > MRG_ZERO)
+        r.x /= (float)sqrt(sq);
+    sq = m.m[0][1] * m.m[0][1] + m.m[1][1] * m.m[1][1] + m.m[2][1] * m.m[2][1];
+    if (fabs(sq - 1.0f) > MRG_ZERO)
+        r.y /= (float)sqrt(sq);
+    sq = m.m[0][2] * m.m[0][2] + m.m[1][2] * m.m[1][2] + m.m[2][2] * m.m[2][2];
+    if (fabs(sq - 1.0f) > MRG_ZERO)
+        r.z /= (float)sqrt(sq);
+    return r;
+}
+
+// FUNCTION: LS3DF 0x1002ec00
+S_matrix S_quat::RotationMatrix() const
+{
+    S_matrix m;
+    if (fabs(s) >= 1.0) {
+        m.Identity();
+    } else {
+        m.m[0][3] = 0.0f;
+        m.m[1][3] = 0.0f;
+        m.m[2][3] = 0.0f;
+        m.m[3][0] = 0.0f;
+        m.m[3][1] = 0.0f;
+        m.m[3][2] = 0.0f;
+        m.m[3][3] = 1.0f;
+        float x2 = v.x + v.x;
+        float y2 = v.y + v.y;
+        float z2 = v.z + v.z;
+        float xx = v.x * x2;
+        float xy = v.x * y2;
+        float xz = v.x * z2;
+        float yy = v.y * y2;
+        float yz = v.y * z2;
+        float zz = v.z * z2;
+        float wx = s * x2;
+        float wy = s * y2;
+        float wz = s * z2;
+        m.m[0][0] = 1.0f - (yy + zz);
+        m.m[0][1] = xy - wz;
+        m.m[0][2] = xz + wy;
+        m.m[1][0] = xy + wz;
+        m.m[1][1] = 1.0f - (xx + zz);
+        m.m[1][2] = yz - wx;
+        m.m[2][0] = xz - wy;
+        m.m[2][1] = yz + wx;
+        m.m[2][2] = 1.0f - (xx + yy);
+    }
+    return m;
+}
+
+// The rotated z axis, the third row of RotationMatrix
+// FUNCTION: LS3DF 0x1002ed60
+S_vector S_quat::GetDir() const
+{
+    if (fabs(s) >= 1.0)
+        return S_vector(0.0f, 0.0f, 1.0f);
+    float x2 = v.x + v.x;
+    float y2 = v.y + v.y;
+    float z2 = v.z + v.z;
+    float xx = v.x * x2;
+    float xz = v.x * z2;
+    float yy = v.y * y2;
+    float yz = v.y * z2;
+    float wx = s * x2;
+    float wy = s * y2;
+    return S_vector(xz - wy, yz + wx, 1.0f - (xx + yy));
+}
+
+// FUNCTION: LS3DF 0x1002ee00
+void S_quat::Make(const S_vector &axis, float angle)
+{
+    s = (float)cos(angle * 0.5f);
+    v = axis * (float)sin(angle * 0.5f);
+    float sq = v.x * v.x + v.y * v.y + v.z * v.z + s * s;
+    if (fabs(sq - 1.0f) < MRG_ZERO)
+        return;
+    if (sq < MRG_ZERO) {
+        v.x = 0.0f;
+        v.y = 0.0f;
+        v.z = 0.0f;
+        s = 1.0f;
+        return;
+    }
+    float f = 1.0f / (float)sqrt(sq);
+    v.x *= f;
+    v.y *= f;
+    v.z *= f;
+    s *= f;
+}
+
+// FUNCTION: LS3DF 0x1002eef0
+void S_quat::Make(const S_matrix &m)
+{
+    S_vector scale = m.GetScale();
+    if (scale.x + scale.y + scale.z >= MRG_ZERO) {
+        if (scale.x * scale.y * scale.z < MRG_ZERO) {
+            // An axis is missing: rebuild it from the other two and try again
+            S_matrix mm = m;
+            if (scale.x < MRG_ZERO) {
+                mm(0) = m(1).Cross(m(2));
+                scale.x = mm(0).Magnitude();
+                if (scale.x < MRG_ZERO) {
+                    mm(0) = S_vector(1.0f, 0.0f, 0.0f);
+                    scale.x = 1.0f;
+                }
+            }
+            if (scale.y < MRG_ZERO) {
+                mm(1) = m(0).Cross(m(2));
+                scale.y = mm(1).Magnitude();
+                if (scale.y < MRG_ZERO) {
+                    mm(1) = S_vector(0.0f, 1.0f, 0.0f);
+                    scale.y = 1.0f;
+                }
+            }
+            if (scale.z < MRG_ZERO) {
+                mm(2) = m(0).Cross(m(1));
+                scale.z = mm(2).Magnitude();
+                if (scale.z < MRG_ZERO) {
+                    mm(2) = S_vector(0.0f, 0.0f, 1.0f);
+                    scale.z = 1.0f;
+                }
+            }
+            scale = mm.GetScale();
+            if (scale.x * scale.y * scale.z >= MRG_ZERO) {
+                S_quat q;
+                q.Make(mm);
+                *this = q;
+                return;
+            }
+        } else {
+            // Turn the z axis into the y row, then rotate around it to the x row
+            float ix = 1.0f / scale.x;
+            float iy = 1.0f / scale.y;
+            S_vector y_axis = m(1) * iy;
+            S_vector x_axis = m(0) * ix;
+            S_vector xy = y_axis + x_axis;
+            S_quat q1;
+            if (fabs(y_axis.y) < QUAT_ONE_LIMIT) {
+                S_vector axis;
+                axis.SetNormalized(S_vector(y_axis.z, 0.0f, -y_axis.x));
+                q1.Make(-axis, (float)acos(y_axis.y));
+            } else if (y_axis.y > 0.0f)
+                q1 = S_quat(1.0f, S_vector(0.0f, 0.0f, 0.0f));
+            else
+                q1 = S_quat(0.0f, S_vector(0.0f, 0.0f, 1.0f));
+            // (1, 1, 0) rotated by q1
+            S_vector rot;
+            if (fabs(q1.s) < 1.0) {
+                float x2 = q1.v.x + q1.v.x;
+                float y2 = q1.v.y + q1.v.y;
+                float z2 = q1.v.z + q1.v.z;
+                float xx = q1.v.x * x2;
+                float xy = q1.v.x * y2;
+                float xz = q1.v.x * z2;
+                float yy = q1.v.y * y2;
+                float yz = q1.v.y * z2;
+                float zz = q1.v.z * z2;
+                float wx = q1.s * x2;
+                float wy = q1.s * y2;
+                float wz = q1.s * z2;
+                rot.x = 1.0f - (yy + zz) + (xy + wz);
+                rot.y = xy - wz + (1.0f - (xx + zz));
+                rot.z = xz + wy + (yz - wx);
+            } else
+                rot = S_vector(1.0f, 1.0f, 0.0f);
+            S_vector d1 = rot - y_axis;
+            S_vector d2 = xy - y_axis;
+            float d = d1.Dot(d2);
+            S_quat q2;
+            if (fabs(d) < QUAT_ONE_LIMIT) {
+                S_vector axis;
+                axis.SetNormalized(d1.Cross(d2));
+                q2.Make(-axis, (float)acos(d));
+            } else if (y_axis.Cross(d1).Dot(xy) > 0.0f)
+                q2.Make(-y_axis, d > 0.0f ? 0.0f : PI);
+            else
+                q2.Make(y_axis, d > 0.0f ? 0.0f : PI);
+            *this = q1 * q2;
+            return;
+        }
+    }
+    s = 1.0f;
+    v.z = 0.0f;
+    v.y = 0.0f;
+    v.x = 0.0f;
+}
+
+// FUNCTION: LS3DF 0x1002fa70
+S_quat S_quat::operator*(const S_quat &q) const
+{
+    return S_quat(s * q.s - v.Dot(q.v), q.v * s + v * q.s + v.Cross(q.v));
+}
+
+// A rotation that turns the z axis into dir, then rolls around it
+// FUNCTION: LS3DF 0x1002fb50
+void S_quat::SetDir(const S_vector &dir, float roll)
+{
+    S_matrix m;
+    m.SetDir(dir);
+    if (fabs(roll) > MRG_ZERO)
+        m = RotateZMatrix(roll) * m;
+    Make(m);
+}
+
+// FUNCTION: LS3DF 0x1002fd70
+void S_quat::Inverse(S_vector &axis, float &angle) const
+{
+    axis = v;
+    axis.Normalize();
+    if (s >= 1.0f)
+        angle = 0.0f;
+    else if (s <= -1.0f)
+        angle = PI * 2.0f;
+    else
+        angle = (float)acos(s) * 2.0f;
+}
+
+// FUNCTION: LS3DF 0x1002fee0
+S_quat S_quat::Slerp(const S_quat &q, float t, bool shortest) const
+{
+    float to1[4];
+    float cosom = v.x * q.v.x + v.y * q.v.y + v.z * q.v.z + s * q.s;
+    if (cosom < 0.0f) {
+        cosom = -cosom;
+        to1[0] = -q.v.x;
+        to1[1] = -q.v.y;
+        to1[2] = -q.v.z;
+        to1[3] = -q.s;
+    } else {
+        to1[0] = q.v.x;
+        to1[1] = q.v.y;
+        to1[2] = q.v.z;
+        to1[3] = q.s;
+    }
+    float scale0, scale1;
+    if ((1.0f - cosom) > SLERP_DELTA) {
+        float omega = (float)acos(cosom);
+        float sinom = 1.0f / (float)sin(omega);
+        scale0 = (float)sin((1.0f - t) * omega) * sinom;
+        scale1 = (float)sin(t * omega) * sinom;
+    } else {
+        scale0 = 1.0f - t;
+        scale1 = t;
+    }
+    S_quat r;
+    r.v.x = scale0 * v.x + scale1 * to1[0];
+    r.v.y = scale0 * v.y + scale1 * to1[1];
+    r.v.z = scale0 * v.z + scale1 * to1[2];
+    r.s = scale0 * s + scale1 * to1[3];
+    return r;
+}
+
+// FUNCTION: LS3DF 0x10030040
+S_quat S_quat::RotateByMatrix(const S_matrix &m) const
+{
+    S_quat q;
+    q.Make(m);
+    return q * *this;
+}
+
+// FUNCTION: LS3DF 0x10030140
+void S_quat::Normalize()
+{
+    float sq = s * s + v.x * v.x + v.y * v.y + v.z * v.z;
+    if (sq > MRG_ZERO) {
+        if (fabs(sq - 1.0f) < MRG_ZERO)
+            return;
+        float f = 1.0f / (float)sqrt(sq);
+        v.x *= f;
+        v.y *= f;
+        v.z *= f;
+        s *= f;
+        return;
+    }
+    if (v.x != 0.0f)
+        v.x = v.x < 0.0f ? -1.0f : 1.0f;
+    else if (v.z != 0.0f)
+        v.z = v.z < 0.0f ? -1.0f : 1.0f;
+    else
+        v.y = v.y < 0.0f ? -1.0f : 1.0f;
+    s = 0.0f;
+}
+
+// The line where the two planes meet: a point on it and its direction
+// FUNCTION: LS3DF 0x10030290
+bool S_plane::IntersectionLine(const S_plane &p, S_vector &pos, S_vector &dir) const
+{
+    dir = normal.Cross(p.normal);
+    float xx = dir.x * dir.x;
+    float yy = dir.y * dir.y;
+    float zz = dir.z * dir.z;
+    float f;
+    if (zz > yy && zz > xx && zz > MRG_ZERO) {
+        f = 1.0f / dir.z;
+        pos.x = normal.y * p.d - p.normal.y * d;
+        pos.y = p.normal.x * d - normal.x * p.d;
+        pos.z = 0.0f;
+    } else if (yy > xx && yy > MRG_ZERO) {
+        f = 1.0f / dir.y;
+        pos.x = p.normal.z * d - normal.z * p.d;
+        pos.y = 0.0f;
+        pos.z = normal.x * p.d - p.normal.x * d;
+    } else if (xx > MRG_ZERO) {
+        f = 1.0f / dir.x;
+        pos.x = 0.0f;
+        pos.y = normal.z * p.d - p.normal.z * d;
+        pos.z = p.normal.y * d - normal.y * p.d;
+    } else
+        return false;
+    pos.x *= f;
+    pos.y *= f;
+    pos.z *= f;
+    f = 1.0f / (float)sqrt(xx + yy + zz);
+    dir.x *= f;
+    dir.y *= f;
+    dir.z *= f;
+    return true;
+}
+
+// The closest points of two lines (p1 + t1 * dir1, p2 + t2 * dir2)
+// FUNCTION: LS3DF 0x10030440
+bool __stdcall LineLineIntersect(const S_vector &p1, const S_vector &dir1, const S_vector &p2, const S_vector &dir2,
+    float &t1, float &t2)
+{
+    S_vector w = p1 - p2;
+    float dd = dir2.Square();
+    float bd = dir1.Dot(dir2);
+    float det = dir1.Square() * dd - bd * bd;
+    if (IsAbsMrgZero(det))
+        return false;
+    float wd = w.Dot(dir2);
+    t1 = (bd * wd - w.Dot(dir1) * dd) / det;
+    t2 = (t1 * bd + wd) / dd;
+    return true;
+}

@@ -58,6 +58,16 @@ inline bool IsAbsMrgZero(float f)
         setl al
     }
 }
+
+// Whether f is below MRG_ZERO, the same way without fabs
+inline bool IsMrgZeroLess(float f)
+{
+    __asm {
+        xor eax, eax
+        cmp f, 0x322bcc77
+        setl al
+    }
+}
 #pragma warning(pop)
 
 // The engine's array (PS2 C_list<T>): it grows by grow_size elements at a time and removes an element by moving the

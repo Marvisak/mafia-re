@@ -67,6 +67,12 @@
 // LIBRARY: LS3DF 0x1008d919 SYMBOL
 // __NLG_Dispatch
 
+// LIBRARY: LS3DF 0x1008d920 SYMBOL
+// __CIacos
+
+// LIBRARY: LS3DF 0x1008d934 SYMBOL
+// _acos
+
 // LIBRARY: LS3DF 0x1008da22 SYMBOL
 // __onexit
 
@@ -84,6 +90,9 @@
 
 // LIBRARY: LS3DF 0x1008dc7a SYMBOL
 // __toupper_lk
+
+// LIBRARY: LS3DF 0x1008debc SYMBOL
+// _rand
 
 // LIBRARY: LS3DF 0x1008df40 SYMBOL
 // _strncpy
@@ -153,9 +162,6 @@
 
 // LIBRARY: LS3DF 0x1008f036 SYMBOL
 // ___from_strstr_to_strchr
-
-// LIBRARY: LS3DF 0x1008f0f0 SYMBOL
-// __alldiv
 
 // LIBRARY: LS3DF 0x1008f2c3 SYMBOL
 // __CRT_INIT@12
@@ -255,6 +261,96 @@
 
 // LIBRARY: LS3DF 0x10090739
 // ?_inconsistency@@YAXXZ
+
+// LIBRARY: LS3DF 0x10090790 SYMBOL
+// __trandisp1
+
+// LIBRARY: LS3DF 0x100907f7 SYMBOL
+// __trandisp2
+
+// LIBRARY: LS3DF 0x10090883 SYMBOL
+// __rttospopde
+
+// LIBRARY: LS3DF 0x10090888 SYMBOL
+// __rttospop
+
+// LIBRARY: LS3DF 0x1009088a SYMBOL
+// __rtnospop
+
+// LIBRARY: LS3DF 0x1009088c SYMBOL
+// __rttosnpop
+
+// LIBRARY: LS3DF 0x1009088d SYMBOL
+// __rtnospopde
+
+// LIBRARY: LS3DF 0x10090894 SYMBOL
+// __rtzeropop
+
+// LIBRARY: LS3DF 0x10090896 SYMBOL
+// __rtzeronpop
+
+// LIBRARY: LS3DF 0x1009089b SYMBOL
+// __rtonepop
+
+// LIBRARY: LS3DF 0x1009089d SYMBOL
+// __rtonenpop
+
+// LIBRARY: LS3DF 0x100908a2 SYMBOL
+// __tosnan1
+
+// LIBRARY: LS3DF 0x100908cd SYMBOL
+// __nosnan2
+
+// LIBRARY: LS3DF 0x100908cf SYMBOL
+// __tosnan2
+
+// LIBRARY: LS3DF 0x100908f7 SYMBOL
+// __nan2
+
+// LIBRARY: LS3DF 0x10090936 SYMBOL
+// __rtindfpop
+
+// LIBRARY: LS3DF 0x10090938 SYMBOL
+// __rtindfnpop
+
+// LIBRARY: LS3DF 0x10090949 SYMBOL
+// __rttosnpopde
+
+// LIBRARY: LS3DF 0x10090953 SYMBOL
+// __rtchsifneg
+
+// LIBRARY: LS3DF 0x10090960 SYMBOL
+// __startTwoArgErrorHandling
+
+// LIBRARY: LS3DF 0x10090977 SYMBOL
+// __startOneArgErrorHandling
+
+// LIBRARY: LS3DF 0x100909c0 SYMBOL
+// __twoToTOS
+
+// LIBRARY: LS3DF 0x100909d5 SYMBOL
+// __load_CW
+
+// LIBRARY: LS3DF 0x100909ec SYMBOL
+// __convertTOStoQNaN
+
+// LIBRARY: LS3DF 0x10090a05 SYMBOL
+// __fload_withFB
+
+// LIBRARY: LS3DF 0x10090a48 SYMBOL
+// __checkTOS_withFB
+
+// LIBRARY: LS3DF 0x10090a5e SYMBOL
+// __fast_exit
+
+// LIBRARY: LS3DF 0x10090a6b SYMBOL
+// __math_exit
+
+// LIBRARY: LS3DF 0x10090a95 SYMBOL
+// __check_overflow_exit
+
+// LIBRARY: LS3DF 0x10090aa9 SYMBOL
+// __check_range_exit
 
 // LIBRARY: LS3DF 0x10091b4b SYMBOL
 // _realloc
@@ -403,6 +499,33 @@
 // LIBRARY: LS3DF 0x10094784 SYMBOL
 // __NMSG_WRITE
 
+// LIBRARY: LS3DF 0x100949c3 SYMBOL
+// __raise_exc
+
+// LIBRARY: LS3DF 0x10094c76 SYMBOL
+// __handle_exc
+
+// LIBRARY: LS3DF 0x10094f15 SYMBOL
+// __set_errno
+
+// LIBRARY: LS3DF 0x10094fa1 SYMBOL
+// __set_exp
+
+// LIBRARY: LS3DF 0x10095024 SYMBOL
+// __decomp
+
+// LIBRARY: LS3DF 0x100950e5 SYMBOL
+// __statfp
+
+// LIBRARY: LS3DF 0x100950f3 SYMBOL
+// __clrfp
+
+// LIBRARY: LS3DF 0x10095102 SYMBOL
+// __ctrlfp
+
+// LIBRARY: LS3DF 0x10095125 SYMBOL
+// __set_statfp
+
 // LIBRARY: LS3DF 0x1009517b SYMBOL
 // ___sbh_heap_init
 
@@ -547,6 +670,9 @@
 // LIBRARY: LS3DF 0x10096f91 SYMBOL
 // _abort
 
+// LIBRARY: LS3DF 0x10096fa8 SYMBOL
+// __87except
+
 // LIBRARY: LS3DF 0x10097078 SYMBOL
 // __getbuf
 
@@ -679,6 +805,9 @@
 // GLOBAL: LS3DF 0x100abc48
 // __NLG_Destination
 
+// GLOBAL: LS3DF 0x100abc5c
+// __FPmtterm
+
 // GLOBAL: LS3DF 0x100abcd0
 // __aexit_rtn
 
@@ -690,6 +819,12 @@
 
 // GLOBAL: LS3DF 0x100abd14
 // ?__pInconsistency@@3P6AXXZA
+
+// GLOBAL: LS3DF 0x100abd20
+// __indefinite
+
+// GLOBAL: LS3DF 0x100abd2a
+// __piby2
 
 // GLOBAL: LS3DF 0x100abeb0
 // ___nullstring
@@ -712,14 +847,20 @@
 // GLOBAL: LS3DF 0x100ac410
 // __iob
 
+// GLOBAL: LS3DF 0x100ac790
+// ___badioinfo
+
 // GLOBAL: LS3DF 0x100ac7b4
 // __amblksiz
 
+// GLOBAL: LS3DF 0x100ac920
+// __d_inf
+
+// GLOBAL: LS3DF 0x100ac930
+// __d_max
+
 // GLOBAL: LS3DF 0x100ac960
 // ___old_small_block_heap
-
-// GLOBAL: LS3DF 0x100ae980
-// ___decimal_point_length
 
 // GLOBAL: LS3DF 0x100ae984
 // ___old_sbh_threshold
@@ -736,11 +877,17 @@
 // GLOBAL: LS3DF 0x100aea44
 // __XcptActTabCount
 
+// GLOBAL: LS3DF 0x100aea50
+// __matherr_flag
+
 // GLOBAL: LS3DF 0x100aec08
 // __pow10pos
 
 // GLOBAL: LS3DF 0x100aed68
 // __pow10neg
+
+// GLOBAL: LS3DF 0x101ca9ac
+// ___fastflag
 
 // GLOBAL: LS3DF 0x101ca9b0
 // __adjust_fdiv
