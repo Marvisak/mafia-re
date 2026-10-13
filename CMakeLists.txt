@@ -38,6 +38,7 @@ endif()
 if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(rw_data)
     add_subdirectory(ijoy)
+    add_subdirectory(ls3df)
 endif()
 add_subdirectory(setup)
 
@@ -55,6 +56,9 @@ targets:
   IJOY:
     path: $<TARGET_FILE:ijoy>
     pdb: $<TARGET_PDB_FILE:ijoy>
+  LS3DF:
+    path: $<TARGET_FILE:ls3df>
+    pdb: $<TARGET_PDB_FILE:ls3df>
 ")
 elseif (MSVC_VERSION EQUAL 1500)
     file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/reccmp-build.yml" CONTENT

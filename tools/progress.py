@@ -49,7 +49,7 @@ class Target:
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
-    Target("LS3DF.dll", None, 1660),  # 0x1008d3e0
+    Target("LS3DF.dll", "LS3DF", 1660),  # 0x1008d3e0
     Target("Game.exe", None, 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
     Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158

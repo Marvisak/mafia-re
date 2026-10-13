@@ -18,6 +18,11 @@ targets:
     source_root: ijoy
     hash:
       sha256: 4e7441a927ccc7e7609c11ff6f829bf236c98360e392201611b348300a31fc2d
+  LS3DF:
+    filename: LS3DF.dll
+    source_root: ls3df
+    hash:
+      sha256: e211c85009440d6c032f2074d79184f074a9a046574648745c2594b4cef178a6
   SETUPSTEAM:
     filename: setup.steam.exe
     source_root:
