@@ -116,7 +116,7 @@ bool C_rw_data_inter::UnlockPack(__int64 key)
         return false;
     }
 
-    DeCrypt(reinterpret_cast<uchar *>(&header), sizeof(S_DTAHEADER), key);
+    DeCrypt((uchar *)&header, sizeof(S_DTAHEADER), key);
 
     int i = v_handle.size();
     while (i--)
@@ -138,7 +138,7 @@ bool C_rw_data_inter::UnlockPack(__int64 key)
 
     SetFilePointer(file, header.file_table_offset, NULL, FILE_BEGIN);
     ReadFile(file, &v_handle[i].file_table[0], header.file_table_size, &bytes_read, NULL);
-    DeCrypt(reinterpret_cast<uchar *>(&v_handle[i].file_table[0]), header.file_table_size, key);
+    DeCrypt((uchar *)&v_handle[i].file_table[0], header.file_table_size, key);
 
     C_m_p.Unlock();
     return true;
@@ -258,7 +258,7 @@ static int __stdcall OpenFromDTA(const char *file_name)
     int i = len;
     while (i--)
     {
-        checksum += static_cast<uchar>(file_name_upper[i]);
+        checksum += (uchar)file_name_upper[i];
     }
     uint hash = (len << 16) | checksum;
 
@@ -276,7 +276,7 @@ static int __stdcall OpenFromDTA(const char *file_name)
         // keeps a zero in ebx through GetFirstIndex
         if (first != -1)
         {
-            for (int j = first; static_cast<uint>(j) < entry_count; j++)
+            for (int j = first; (uint)j < entry_count; j++)
             {
                 if (v_handle[h].file_table[j].hash != hash)
                 {
@@ -305,14 +305,14 @@ static int __stdcall OpenFromDTA(const char *file_name)
                 {
                     return result;
                 }
-                DeCrypt(reinterpret_cast<uchar *>(&file_header), sizeof(S_FILEHEADER), v_handle[h].key);
+                DeCrypt((uchar *)&file_header, sizeof(S_FILEHEADER), v_handle[h].key);
 
                 char full_file_name[MAX_PATH];
                 if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
                 {
                     return result;
                 }
-                DeCrypt(reinterpret_cast<uchar *>(full_file_name), file_header.name_length_flags & 0x7FFF, v_handle[h].key);
+                DeCrypt((uchar *)full_file_name, file_header.name_length_flags & 0x7FFF, v_handle[h].key);
 
                 full_file_name[bytes_read] = '\0';
                 strupr(full_file_name);
@@ -1166,7 +1166,7 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
         switch (move_method)
         {
         case 0:
-            if (distance_to_move < 0 || static_cast<uint>(distance_to_move) > v_file_h[handle].size)
+            if (distance_to_move < 0 || (uint)distance_to_move > v_file_h[handle].size)
             {
                 C_m_p.Unlock();
                 return -1;
@@ -1179,7 +1179,7 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
         case 1:
         {
             int new_file_pointer = v_file_h[handle].file_pointer + distance_to_move;
-            if (static_cast<uint>(new_file_pointer) > v_file_h[handle].size || new_file_pointer < 0)
+            if ((uint)new_file_pointer > v_file_h[handle].size || new_file_pointer < 0)
             {
                 C_m_p.Unlock();
                 return -1;
@@ -1193,7 +1193,7 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
                 C_m_p.Unlock();
                 return -1;
             }
-            if (static_cast<int>(distance_to_move + v_file_h[handle].size) < 0)
+            if ((int)(distance_to_move + v_file_h[handle].size) < 0)
             {
                 C_m_p.Unlock();
                 return -1;
@@ -1504,7 +1504,7 @@ bool EXPORT dtaGetTime(int handle, ulong *time, bool force_check_from_file)
     {
         // Creation and last access time, unused. An array: two separate locals get the opposite stack slots
         FILETIME file_times[2];
-        bool success = GetFileTime(v_file_h[handle].file, &file_times[0], &file_times[1], reinterpret_cast<LPFILETIME>(time)) != 0;
+        bool success = GetFileTime(v_file_h[handle].file, &file_times[0], &file_times[1], (LPFILETIME)time) != 0;
         C_m_p.Unlock();
         return success;
     }
@@ -1682,7 +1682,7 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
     }
 
     int decompressed_size = 0;
-    S_WAVHEADER *block_header = reinterpret_cast<S_WAVHEADER *>(buffer + 1);
+    S_WAVHEADER *block_header = (S_WAVHEADER *)(buffer + 1);
     if (block_header->riff_chunk_id == wav_header->riff_chunk_id && block_header->format_chunk_id == wav_header->format_chunk_id && block_header->data_chunk_id == wav_header->data_chunk_id)
     {
         memcpy(dest, block_header, sizeof(S_WAVHEADER));
@@ -1703,17 +1703,17 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
 
                 if (position < len)
                 {
-                    value = *reinterpret_cast<short *>(&dest[decompressed_size - 4]);
-                    value2 = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
+                    value = *(short *)&dest[decompressed_size - 4];
+                    value2 = *(short *)&dest[decompressed_size - 2];
                     // Scaled in place: the original keeps dpcm_type * 128 in dpcm_type's stack slot
                     dpcm_type *= 128;
                     do
                     {
                         // Both sample addresses are taken (and decompressed_size advanced) before decoding, in both
                         // the PC and the PS2 build
-                        short *left = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        short *left = (short *)&dest[decompressed_size];
                         decompressed_size += 2;
-                        short *right = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        short *right = (short *)&dest[decompressed_size];
                         decompressed_size += 2;
 
                         // No local for the byte: VC6 loads buffer[position] once anyway, and an extra variable
@@ -1753,11 +1753,11 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
 
                 if (position < len)
                 {
-                    value = *reinterpret_cast<short *>(&dest[decompressed_size - 2]);
+                    value = *(short *)&dest[decompressed_size - 2];
                     dpcm_type *= 128;
                     do
                     {
-                        short *sample = reinterpret_cast<short *>(&dest[decompressed_size]);
+                        short *sample = (short *)&dest[decompressed_size];
                         decompressed_size += 2;
 
                         uchar idx = buffer[position] & 0x7F;
@@ -1862,7 +1862,7 @@ void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
     uint chunks = len >> 3;
     uint rest = len - chunks * 8;
 
-    __int64 *p = reinterpret_cast<__int64 *>(buffer);
+    __int64 *p = (__int64 *)buffer;
     uint i = chunks;
     while (i--)
     {
@@ -1872,7 +1872,7 @@ void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
     }
 
     uchar *q = buffer + chunks * 8;
-    const uchar *key_bytes = reinterpret_cast<const uchar *>(&key);
+    const uchar *key_bytes = (const uchar *)&key;
     i = rest;
     while (i--)
     {

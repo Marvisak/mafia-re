@@ -40,7 +40,7 @@ S_adapter_mode adapter_modes[256];
 int GetTotalVRAM(GUID *guid)
 {
     IDirectDraw7 *dd;
-    if (FAILED(DirectDrawCreateEx(guid, reinterpret_cast<LPVOID *>(&dd), IID_IDirectDraw7, NULL)))
+    if (FAILED(DirectDrawCreateEx(guid, (LPVOID *)&dd, IID_IDirectDraw7, NULL)))
     {
         return 0;
     }
@@ -59,7 +59,7 @@ int GetTotalVRAM(GUID *guid)
 
     uint total_mb = vram / 0x100000;
     int vram_mb = 1;
-    while (total_mb > static_cast<uint>(vram_mb))
+    while (total_mb > (uint)vram_mb)
     {
         vram_mb <<= 1;
     }
@@ -79,7 +79,7 @@ bool LoadAdapterRefreshRates()
             strcpy(buffer, "Default");
         }
         SendMessageA(dialog_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
-        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
+        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)buffer);
         SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, NULL);
     }
 
@@ -121,7 +121,7 @@ bool LoadAdapterRefreshRates()
                 {
                     // STRING: SETUP 0x40e148
                     sprintf(message_buffer, "%d Hz", mode.RefreshRate);
-                    int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(message_buffer));
+                    int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)message_buffer);
                     SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
                     if (settings.refresh_rate == mode.RefreshRate)
                     {
@@ -275,8 +275,8 @@ bool LoadAdapterModes()
     {
         // STRING: SETUP 0x40e158
         sprintf(message_buffer, "%4d x %4d", cached_mode->width, cached_mode->height);
-        int pos = SendMessageA(dialog_state.windows.resolution, CB_ADDSTRING, -1, reinterpret_cast<LPARAM>(message_buffer));
-        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, reinterpret_cast<LPARAM>(cached_mode));
+        int pos = SendMessageA(dialog_state.windows.resolution, CB_ADDSTRING, -1, (LPARAM)message_buffer);
+        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, (LPARAM)cached_mode);
         if (cached_mode->width == settings.width && cached_mode->height == settings.height)
         {
             SendMessageA(dialog_state.windows.resolution, CB_SETCURSEL, pos, NULL);
@@ -300,7 +300,7 @@ bool LoadAdapterData(int adapter)
 
     SendMessageA(dialog_state.windows.bit_depth, CB_RESETCONTENT, NULL, NULL);
     SendMessageA(dialog_state.windows.antialiasing, CB_RESETCONTENT, NULL, NULL);
-    int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(buffer));
+    int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)buffer);
     SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, NULL);
     if (adapter == -1)
     {
@@ -322,7 +322,7 @@ bool LoadAdapterData(int adapter)
         adapter = i;
     }
 
-    S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, adapter, NULL));
+    S_adapter_mode *adapter_data = (S_adapter_mode *)SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, adapter, NULL);
     if (!settings.antialiasing
         || settings.fullscreen && (adapter_data->flags & MULTISAMPLE_FULLSCREEN) != MULTISAMPLE_FULLSCREEN
         || !settings.fullscreen && (adapter_data->flags & MULTISAMPLE_WINDOWED) != MULTISAMPLE_WINDOWED)
@@ -333,7 +333,7 @@ bool LoadAdapterData(int adapter)
     if (adapter_data->flags & BIT_DEPTH_16)
     {
         // STRING: SETUP 0x40e1a0
-        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("16"));
+        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"16");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 16);
         if ((adapter_data->flags & BIT_DEPTH_32) == 0 && settings.bit_depth == 32)
         {
@@ -344,7 +344,7 @@ bool LoadAdapterData(int adapter)
     if (adapter_data->flags & BIT_DEPTH_32)
     {
         // STRING: SETUP 0x40e19c
-        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>("32"));
+        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"32");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 32);
         if ((adapter_data->flags & BIT_DEPTH_16) == 0 && settings.bit_depth == 16)
         {
@@ -365,7 +365,7 @@ bool LoadAdapterData(int adapter)
     {
         if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
         {
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
@@ -374,7 +374,7 @@ bool LoadAdapterData(int adapter)
         }
         if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
         {
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
@@ -387,7 +387,7 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_2X_WINDOWED)
         {
             // STRING: SETUP 0x40e198
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 2x"));
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
@@ -397,7 +397,7 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_4X_WINDOWED)
         {
             // STRING: SETUP 0x40e194
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(" 4x"));
+            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
@@ -443,7 +443,7 @@ bool LoadD3D8()
     {
         if (direct3d8->GetAdapterIdentifier(i, 0, &identifier) == D3D_OK)
         {
-            int index = SendMessageA(dialog_state.windows.display, CB_INSERTSTRING, -1, reinterpret_cast<LPARAM>(identifier.Description));
+            int index = SendMessageA(dialog_state.windows.display, CB_INSERTSTRING, -1, (LPARAM)identifier.Description);
             SendMessageA(dialog_state.windows.display, CB_SETITEMDATA, index, i);
             if (settings.adapter == i)
             {

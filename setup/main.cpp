@@ -338,14 +338,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     // STRING: SETUP 0x40e0d4
                     strcpy(buffer, "Stereo headphones");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
+                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
 
                 if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e0c4
                     strcpy(buffer, "Stereo speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
+                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
 
                 if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
@@ -353,14 +353,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     // STRING: SETUPSTEAM 0x4041f8
                     strcpy(buffer, "Quadraphonic speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
+                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
 
                 if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e090
                     strcpy(buffer, "5.1 surround sound speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(buffer));
+                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
                 SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
             }
             LoadAdapterData(-1);
@@ -369,14 +369,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             // GetDlgItem for every message, as both builds call it
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_RESETCONTENT, NULL, NULL);
             // STRING: SETUP 0x40e088
-            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("English"));
+            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 0);
             // The typo is in the binary
             // STRING: SETUP 0x40e080
-            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Deutch"));
+            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 2);
             // STRING: SETUP 0x40e078
-            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, reinterpret_cast<LPARAM>("Cesky"));
+            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 1);
 
             int language_count = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCOUNT, NULL, NULL);
@@ -474,7 +474,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 // The selection is cut to a byte into an int: both builds extend it once, a uchar local at its use
-                int pos = static_cast<uchar>(SendMessageA(dialog_state.windows.display, CB_GETCURSEL, NULL, NULL));
+                int pos = (uchar)SendMessageA(dialog_state.windows.display, CB_GETCURSEL, NULL, NULL);
                 settings.adapter = SendMessageA(dialog_state.windows.display, CB_GETITEMDATA, pos, NULL);
                 LoadAdapterModes();
             }
@@ -483,8 +483,8 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 int pos = SendMessageA(dialog_state.windows.resolution, CB_GETCURSEL, NULL, NULL);
-                S_adapter_mode *adapter_data = reinterpret_cast<S_adapter_mode *>(SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, pos, NULL));
-                if (adapter_data && adapter_data != reinterpret_cast<S_adapter_mode *>(CB_ERR))
+                S_adapter_mode *adapter_data = (S_adapter_mode *)SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, pos, NULL);
+                if (adapter_data && adapter_data != (S_adapter_mode *)CB_ERR)
                 {
                     settings.width = adapter_data->width;
                     settings.height = adapter_data->height;
@@ -496,22 +496,22 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         case IDC_COMBO_ANTIALIASING:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = static_cast<uchar>(SendMessageA(dialog_state.windows.antialiasing, CB_GETCURSEL, NULL, NULL));
+                int pos = (uchar)SendMessageA(dialog_state.windows.antialiasing, CB_GETCURSEL, NULL, NULL);
                 settings.antialiasing = SendMessageA(dialog_state.windows.antialiasing, CB_GETITEMDATA, pos, NULL);
             }
             return 0;
         case IDC_COMBO_REFRESHRATE:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = static_cast<uchar>(SendMessageA(dialog_state.windows.refresh_rate, CB_GETCURSEL, NULL, NULL));
+                int pos = (uchar)SendMessageA(dialog_state.windows.refresh_rate, CB_GETCURSEL, NULL, NULL);
                 // Cut to a byte as well, this is what the original does
-                settings.refresh_rate = static_cast<uchar>(SendMessageA(dialog_state.windows.refresh_rate, CB_GETITEMDATA, pos, NULL));
+                settings.refresh_rate = (uchar)SendMessageA(dialog_state.windows.refresh_rate, CB_GETITEMDATA, pos, NULL);
             }
             return 0;
         case IDC_COMBO_BITDEPTH:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                int pos = static_cast<uchar>(SendMessageA(dialog_state.windows.bit_depth, CB_GETCURSEL, NULL, NULL));
+                int pos = (uchar)SendMessageA(dialog_state.windows.bit_depth, CB_GETCURSEL, NULL, NULL);
                 settings.bit_depth = SendMessageA(dialog_state.windows.bit_depth, CB_GETITEMDATA, pos, NULL);
             }
             return 0;

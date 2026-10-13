@@ -66,3 +66,5 @@ Most of the function names are written in English and those are fairly descripti
 ## Coding Style
 
 Ideally the goal is to mirror the coding style of the original source code, which is a bit of a problem because the game doesn't respect any. You can find basically every single naming convention in here, but it seems like most of the game sticks to some weird mixture of snake case and Hungarian notation, but you can find plenty of exceptions.
+
+Use C-style casts (`(uint)x`, `(LPARAM)buffer`), not `static_cast` and friends: the later engine of the same lineage, [Insanity3D](https://github.com/mice777/Insanity3D), uses them almost everywhere. Name an engine header after its module, in the casing of the original's source files (`I3D/I3d_math.h` next to `I3d_math.cpp`, `IGraph/IGraph.h` next to `IGraph.cpp`), and include it by its folder (`#include "I3D/I3D.h"`).

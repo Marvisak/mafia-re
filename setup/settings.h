@@ -28,7 +28,7 @@ inline bool LoadSettings(S_settings &settings)
     DWORD size = sizeof(S_settings);
     S_settings buffer;
     // STRING: SETUP 0x40e048
-    if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, reinterpret_cast<LPBYTE>(&buffer), &size))
+    if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, (LPBYTE)&buffer, &size))
     {
         size = 0;
     }
@@ -60,7 +60,7 @@ inline bool SaveSettings(S_settings &settings)
         return false;
     }
 
-    if (RegSetValueExA(key, "LS3D_setup", NULL, REG_BINARY, reinterpret_cast<BYTE *>(&settings), sizeof(S_settings)) != ERROR_SUCCESS)
+    if (RegSetValueExA(key, "LS3D_setup", NULL, REG_BINARY, (BYTE *)&settings, sizeof(S_settings)) != ERROR_SUCCESS)
     {
         RegCloseKey(key);
         return false;
