@@ -9,9 +9,9 @@
 // a function /OPT:REF dropped. VC6's hash (tools/bsshash.py) orders by name: log_name and timer_frequency (PC only)
 // and that function are still to be named, and v's decorated name depends on BBoxVertices' return type.
 #include "ls3df.h"
-#include "I3D/i3d.h"
-#include "IGraph/igraph.h"
-#include "ISound/isound.h"
+#include "I3D/I3D.h"
+#include "IGraph/IGraph.h"
+#include "ISound/ISound.h"
 
 #include <stdio.h>
 #include <stdlib.h>

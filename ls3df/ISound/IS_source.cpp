@@ -1,7 +1,7 @@
 // Sound sources, at 0x1007d430-0x1007d9ce in the original (PS2 IS_source.cpp, same order): a WAV file read into a
 // DirectSound buffer, which the sounds playing it duplicate. After the last function comes the header's zero vector
 // (see IS_driver.cpp).
-#include "isound.h"
+#include "ISound/ISound.h"
 #include "dta.h"
 
 // The chunks of a WAV file

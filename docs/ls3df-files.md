@@ -89,10 +89,11 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100619b0–100658f0` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()` |
 | `100658f0–10067d20` | `10067d00` | `10065a10`, `10065a30` | `T&l.cpp` | PS2 order |
 | `10067d20–10069e00` | `10069de0` | `10068880` | `VBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\VBManager.cpp` |
-| `10069e00–1006b430` | none | none | CPU identification (PC only) | `AuthenticAMD`, `GenuineIntel`; perhaps the C object |
+| `10069e00–1006ad40` | none | none | `VBManager.cpp`? | `__thiscall` code after `VBManager.cpp`'s marker, probably its out-of-line inline and template functions |
+| `1006ad40–1006b430` | none | none | `cpuid.c` (C) | the C object: Microsoft's CPUID sample (`IsCPUID`, `map_mname`, `_cpuid`) and `GetCPUSpeed`; written |
 | `1006b430–1006bd40` | `1006bd20` | `1006b430`, `1006bb80`, `1006bca0`, `1006bcc0` | `Globals.cpp` | written |
-| `1006bd40–1006ded0` | `1006deb0` | `1006bd40`–`1006bf70` (8) | `IGraph.cpp` | `IGraph was initialised, but not closed` |
-| `1006ded0–10075820` | `10075800` | | IGraph (second file) | `D3DFMT_*` names; PS2 has `IGraph::GetFormatName` in `IGraph.cpp` |
+| `1006bd40–100733a0` | `1006deb0` | `1006bd40`–`1006bf70` (8) | `IGraph.cpp` | one file with its marker in the middle, as `I3d_math.cpp`: the `C_str` functions after `Init` are COMDATs linked into it, and the first object's copy is the one kept; written |
+| `100733a0–10075820` | `10075800` | | ? | `IShow`'s constructor (`0x100733a0`) and methods, Bink calls |
 | `10075820–10075c10` | `10075bf0` | `10075890` | `IShow.cpp` | PS2 order |
 | `10075c10–10078190` | `10078170` | | `ITexture.cpp` | `ITexture::Create()` |
 | `10078190–1007b053` | none | `1007a570`, `1007a5c0` | image files (PC only) | `ITexture::SaveToTGA()`, TGA loading |

@@ -14,7 +14,7 @@ A spec is a Python file that defines
     FUNCTION = "0x1002eef0"                # original address, or (part of) the name, as funcdiff takes it
     VARIANTS = [                           # (name, edits): each edit replaces the first occurrence of a text
         ("ge", [("< MRG_ZERO) {", ">= MRG_ZERO) {")]),                           # ... in SOURCE
-        ("pleq", [("ls3df/I3D/i3d_math.h", "    S_vector operator-(", "...")]),  # ... or in another file
+        ("pleq", [("ls3df/I3D/I3d_math.h", "    S_vector operator-(", "...")]),  # ... or in another file
     ]
 
 and optionally ORIG_RANGE = (start, end), to compare only that part of the original, and OURS_RETS = (a, b), to

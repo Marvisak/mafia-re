@@ -9,8 +9,13 @@ project(ls3df)
 add_library(ls3df SHARED
     I3D/I3d_driver.cpp
     I3D/I3d_math.cpp
+    I3D/IBManager.cpp
+    I3D/VBManager.cpp
+    IGraph/cpuid.c
     IGraph/Globals.cpp
     IGraph/IGraph.cpp
+    IGraph/IShow.cpp
+    IGraph/ITexture.cpp
     ISound/IS_3Dlistener.cpp
     ISound/IS_3Dsound.cpp
     ISound/IS_driver.cpp
@@ -19,7 +24,7 @@ add_library(ls3df SHARED
 )
 # The export directory names the DLL
 set_target_properties(ls3df PROPERTIES OUTPUT_NAME LS3DF)
-# Every file includes ls3df.h, and a header from another folder by its folder (I3D/i3d.h)
+# Every file includes ls3df.h, and a header from another folder by its folder (I3D/I3D.h)
 target_include_directories(ls3df PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The DirectX 8.1 SDK: its d3d8.lib, dinput8.lib and dsound.lib import objects (Implib700 9210) and its dxguid.lib
@@ -44,7 +49,7 @@ if (MSVC_VERSION EQUAL 1200)
 
     # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
     # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma.
-    target_link_libraries(ls3df PRIVATE kernel32 user32 winmm ole32 dsound dxguid)
+    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these

@@ -4,11 +4,11 @@
 // with one, from a header: PS2's files construct a zero vector and an identity quaternion at the start of each
 // __sinit. How the PC build gets them to the end of each file is unknown (at its definition, a header static's $E
 // comes first), so it isn't here yet.
-#include "isound.h"
-#include "I3D/i3d.h"
+#include "ISound/ISound.h"
+#include "I3D/I3D.h"
 
 #include <initguid.h>
-#include "eax.h"
+#include "ISound/eax.h"
 
 // Zero-initialized globals follow the ones VC6's hash places (the zero vector), in declaration order
 

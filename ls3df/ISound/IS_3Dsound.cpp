@@ -1,6 +1,6 @@
 // 3D sounds, at 0x1007b370-0x1007b687 in the original (PS2 IS_3Dsound.cpp, same order). After the last function come
 // the header's zero vector (see IS_driver.cpp) and the out-of-line ISND_sound::GetSource.
-#include "isound.h"
+#include "ISound/ISound.h"
 
 // FUNCTION: LS3DF 0x1007b370
 ISND_3Dsound::ISND_3Dsound() : is3d_init(false), lpDSB3D8(NULL)

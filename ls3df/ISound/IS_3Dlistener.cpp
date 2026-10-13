@@ -1,7 +1,7 @@
 // The 3D listener, at 0x1007b060-0x1007b36e in the original (PS2 IS_3Dlistener.cpp, same order). Its settings live in
 // a DS3DLISTENER that Update hands to DirectSound; the EAX properties go to the driver's IKsPropertySet.
-#include "isound.h"
-#include "eax.h"
+#include "ISound/ISound.h"
+#include "ISound/eax.h"
 
 // FUNCTION: LS3DF 0x1007b060
 ISND_3Dlistener::ISND_3Dlistener()

@@ -74,6 +74,16 @@ inline bool IsMrgZeroLess(float f)
 }
 #pragma warning(pop)
 
+// Rounds f to an int with the FPU's rounding, without __ftol (Insanity3D's FloatToInt, the same assembly)
+inline int FloatToInt(float f)
+{
+    __asm {
+        fld f
+        fistp f
+    }
+    return *(int *)&f;
+}
+
 // The engine's array (PS2 C_list<T>): it grows by grow_size elements at a time and removes an element by moving the
 // last one into its place. The PS2 build has reserve, push_back and operator= out of line for some element types;
 // the member names are guesses.
@@ -100,6 +110,15 @@ public:
         return count;
     }
 
+    // Frees the array
+    void clear()
+    {
+        delete[] array;
+        array = NULL;
+        count = 0;
+        res_size = 0;
+    }
+
     T &operator[](int i)
     {
         return array[i];
@@ -108,6 +127,21 @@ public:
     const T &operator[](int i) const
     {
         return array[i];
+    }
+
+    // Makes room for n elements (PS2 has it out of line for some element types)
+    void reserve(int n)
+    {
+        if (n < count)
+            n = count;
+        if (res_size >= n)
+            return;
+        res_size = n;
+        T *a = new T[n];
+        for (int i = 0; i < count; i++)
+            a[i] = array[i];
+        delete[] array;
+        array = a;
     }
 
     // Appends an element and returns it, for the caller to fill in
@@ -124,6 +158,20 @@ public:
         return array[count++];
     }
 
+    void push_back(const T &v)
+    {
+        if (count >= res_size) {
+            res_size += grow_size;
+            T *a = new T[res_size];
+            for (int i = 0; i < count; i++)
+                a[i] = array[i];
+            delete[] array;
+            array = a;
+        }
+        array[count] = v;
+        count++;
+    }
+
     // Removes element i, moving the last one into its place
     void erase(int i)
     {
@@ -131,25 +179,28 @@ public:
             array[i] = array[count];
     }
 
-    // Removes the first element equal to v the same way
-    void remove(const T &v)
+    // Removes the first element equal to v the same way, and tells whether there was one
+    bool remove(const T &v)
     {
         if (count <= 0)
-            return;
+            return false;
         if (count == 1) {
-            if (array[0] == v)
-                count = 0;
-            return;
+            if (array[0] != v)
+                return false;
+            count = 0;
+            return true;
         }
         T *p = array;
         for (int i = count - 1; i--; p++) {
             if (*p == v) {
                 *p = array[--count];
-                return;
+                return true;
             }
         }
-        if (*p == v)
-            --count;
+        if (*p != v)
+            return false;
+        --count;
+        return true;
     }
 };
 
@@ -157,22 +208,46 @@ public:
 // its null pointer, which reads as "". Insanity3D's C_str (a later, wider version) has the same design; the names of
 // the buffer and its members are its.
 class C_str {
+    // The out-of-line copies the linker kept are in IGraph.cpp
     struct C_rep {
         int ref;
         int size;
         char data[1];
 
+        // FUNCTION: LS3DF 0x1006fe20
         C_rep(const char *s, int len) : ref(1), size(len)
         {
             memcpy(data, s, len);
             data[len] = 0;
         }
 
+        // FUNCTION: LS3DF 0x1006fe60
+        C_rep(const char *s1, const char *s2, int len1, int len2) : ref(1), size(len1 + len2)
+        {
+            memcpy(data, s1, len1);
+            memcpy(data + len1, s2, len2);
+            data[size] = 0;
+        }
+
         // The buffer was allocated as a char array (PS2 frees it with delete[])
+        // FUNCTION: LS3DF 0x1006fec0
         void Release()
         {
             if (!--ref)
                 delete[] (char *)this;
+        }
+
+        // The buffer holds the string after the counts. The unwinding after a constructor that throws calls the
+        // delete out of line, with the length in edx (/Gr).
+        static void *operator new(size_t, int len)
+        {
+            return new char[len + 9];
+        }
+
+        // FUNCTION: LS3DF 0x1006fed0
+        static void operator delete(void *p, int)
+        {
+            delete[] (char *)p;
         }
     } *rep;
 
@@ -181,17 +256,37 @@ public:
 
     C_str(const char *cp)
     {
-        int len = strlen(cp);
-        rep = new (new char[len + 9]) C_rep(cp, len);
+        if (!cp)
+            rep = NULL;
+        else {
+            int len = strlen(cp);
+            rep = new (len) C_rep(cp, len);
+        }
     }
 
+    C_str(const C_str &s) : rep(s.rep)
+    {
+        if (rep)
+            ++rep->ref;
+    }
+
+    // FUNCTION: LS3DF 0x1006fee0
     ~C_str()
     {
         if (rep)
             rep->Release();
     }
 
-    // The out-of-line copy the linker kept is in IGraph code
+    C_str &operator=(const C_str &s)
+    {
+        if (s.rep)
+            ++s.rep->ref;
+        if (rep)
+            rep->Release();
+        rep = s.rep;
+        return *this;
+    }
+
     // FUNCTION: LS3DF 0x1006ff00
     C_str &operator=(const char *cp)
     {
@@ -201,12 +296,52 @@ public:
             new_rep = NULL;
         else {
             int len = strlen(cp);
-            new_rep = new (new char[len + 9]) C_rep(cp, len);
+            new_rep = new (len) C_rep(cp, len);
         }
         if (rep)
             rep->Release();
         rep = new_rep;
         return *this;
+    }
+
+    C_str &operator+=(const char *cp)
+    {
+        if (!rep)
+            return operator=(cp);
+        int len = rep->size, len1 = strlen(cp);
+        C_rep *new_rep = new (len + len1) C_rep(rep->data, cp, len, len1);
+        rep->Release();
+        rep = new_rep;
+        return *this;
+    }
+
+    // FUNCTION: LS3DF 0x1006ff80
+    C_str operator+(const char *cp) const
+    {
+        if (!rep)
+            return cp;
+        int len = rep->size, len1 = strlen(cp);
+        C_rep *new_rep = new (len + len1) C_rep(rep->data, cp, len, len1);
+        C_str ret;
+        ret.rep = new_rep;
+        return ret;
+    }
+
+    // A character to change: the buffer is made the string's own first
+    // FUNCTION: LS3DF 0x10070100
+    char &operator[](int pos)
+    {
+        if (rep->ref != 1) {
+            C_rep *new_rep = new (rep->size) C_rep(rep->data, rep->size);
+            rep->Release();
+            rep = new_rep;
+        }
+        return rep->data[pos];
+    }
+
+    int Size() const
+    {
+        return rep ? rep->size : 0;
     }
 
     operator const char *() const

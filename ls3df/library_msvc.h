@@ -26,7 +26,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -154,8 +154,38 @@
 // LIBRARY: LS3DF 0x1008e98f SYMBOL
 // __unlockexit
 
+// LIBRARY: LS3DF 0x1008e9b2 SYMBOL
+// _vsprintf
+
+// LIBRARY: LS3DF 0x1008ea03 SYMBOL
+// _qsort
+
+// LIBRARY: LS3DF 0x1008ebe0 SYMBOL
+// _strrchr
+
+// LIBRARY: LS3DF 0x1008ec07 SYMBOL
+// _fseek
+
+// LIBRARY: LS3DF 0x1008ec33 SYMBOL
+// __fseek_lk
+
+// LIBRARY: LS3DF 0x1008ecc0 SYMBOL
+// _ftell
+
+// LIBRARY: LS3DF 0x1008ece2 SYMBOL
+// __ftell_lk
+
+// LIBRARY: LS3DF 0x1008ee43 SYMBOL
+// _fwrite
+
+// LIBRARY: LS3DF 0x1008ee72 SYMBOL
+// __fwrite_lk
+
 // LIBRARY: LS3DF 0x1008ef80 SYMBOL
 // _strstr
+
+// LIBRARY: LS3DF 0x1008f000 SYMBOL
+// __allshl
 
 // LIBRARY: LS3DF 0x1008f030 SYMBOL
 // _strchr
@@ -805,7 +835,7 @@
 // GLOBAL: LS3DF 0x100abc48
 // __NLG_Destination
 
-// GLOBAL: LS3DF 0x100abc5c
+// GLOBAL: LS3DF 0x100abc54
 // __FPmtterm
 
 // GLOBAL: LS3DF 0x100abcd0
@@ -847,10 +877,7 @@
 // GLOBAL: LS3DF 0x100ac410
 // __iob
 
-// GLOBAL: LS3DF 0x100ac790
-// ___badioinfo
-
-// GLOBAL: LS3DF 0x100ac7b4
+// GLOBAL: LS3DF 0x100ac7b0
 // __amblksiz
 
 // GLOBAL: LS3DF 0x100ac920
@@ -861,6 +888,9 @@
 
 // GLOBAL: LS3DF 0x100ac960
 // ___old_small_block_heap
+
+// GLOBAL: LS3DF 0x100ae784
+// __ctype
 
 // GLOBAL: LS3DF 0x100ae984
 // ___old_sbh_threshold
@@ -957,6 +987,9 @@
 
 // GLOBAL: LS3DF 0x101cabc4
 // ?_pnhHeap@@3P6AHI@ZA
+
+// GLOBAL: LS3DF 0x101cabf0
+// ___lc_id
 
 // GLOBAL: LS3DF 0x101cac34
 // __commode

@@ -9,7 +9,7 @@
 // products. The Xbox build has the same instructions, out of line where VC6 inlines them. Their tells: the inline
 // assembler encodes a local's address with a 32-bit displacement (lea esi, r), and a block that reads this or a
 // parameter by name keeps it in memory (this spilled to a stack slot).
-#include "I3D/i3d_math.h"
+#include "I3D/I3d_math.h"
 
 #include <stdlib.h>
 

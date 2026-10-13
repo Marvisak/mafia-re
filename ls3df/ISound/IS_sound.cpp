@@ -3,7 +3,7 @@
 // most MaxHWChannels of them. A sound that finds no free channel takes the one of the lowest priority, and the sound
 // it stops waits in TerminatedChannelList until UpdateAllTerminatedBuffs gives it a channel again. After the last
 // function comes the header's zero vector (see IS_driver.cpp).
-#include "isound.h"
+#include "ISound/ISound.h"
 
 // PS2's __sinit_IS_sound.cpp constructs the lists in this order
 

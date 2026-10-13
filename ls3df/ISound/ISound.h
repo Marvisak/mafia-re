@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ls3df.h"
-#include "I3D/i3d_math.h"
+#include "I3D/I3d_math.h"
 
 #include <mmsystem.h>
 #include <dsound.h>
