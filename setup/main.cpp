@@ -69,36 +69,10 @@ bool SetDialogText(HWND main_window, int dlg, uint uid)
     return false;
 }
 
-#ifdef SETUP_STEAM
-// A placeholder, not recovered source. Steam's .reloc is declared 18 bytes larger than ours, with the same contents.
-// VS2008's link-time code generation still compiles a separate copy of each function it inlines, and the linker
-// reserves 2 bytes of .reloc for each absolute address in that copy before it discards it. So the 2010 source inlined
-// code with nine more absolute addresses than ours does, perhaps a helper that our source writes out in place; which
-// code left no other trace. This function, inlined by a call that is never made, has nine.
-inline void SteamRelocPlaceholder()
-{
-    settings_loaded = false;
-    supports_w_buffer = false;
-    dialog_state.hinst = NULL;
-    dialog_state.windows.main = NULL;
-    dialog_state.vram_size = 0;
-    settings.width = 0;
-    settings.height = 0;
-    settings.refresh_rate = 0;
-    settings.language = 0;
-}
-#endif
-
 // FUNCTION: SETUP 0x4010b0
 // FUNCTION: SETUPSTEAM 0x4012e0
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-#ifdef SETUP_STEAM
-    if (false)
-    {
-        SteamRelocPlaceholder();
-    }
-#endif
     dialog_state.hinst = hInstance;
     InitCommonControls();
     settings_loaded = LoadSettings(settings);
