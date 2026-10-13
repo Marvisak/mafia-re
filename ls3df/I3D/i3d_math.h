@@ -84,11 +84,12 @@ struct S_vector {
         return x * x + y * y + z * z;
     }
 
-    // PS2 Magnitude__8S_vectorCFv
+    // PS2 Magnitude__8S_vectorCFv. The sum is written out: a nested Square() call would take inline budget of its
+    // own, which S_quat::Make(const S_matrix &) doesn't have where the original inlines the whole computation.
     // FUNCTION: LS3DF 0x1002f9f0
     float Magnitude() const
     {
-        float sq = Square();
+        float sq = x * x + y * y + z * z;
         if (IsMrgZeroLess(sq))
             return 0.0f;
         if (fabs(sq - 1.0f) < MRG_ZERO)
@@ -96,10 +97,11 @@ struct S_vector {
         return (float)sqrt(sq);
     }
 
-    // PS2 Normalize__8S_vectorFv. A null vector becomes the unit vector along its first non-zero axis.
+    // PS2 Normalize__8S_vectorFv. A null vector becomes the unit vector along its first non-zero axis. The sum is
+    // written out, as in Magnitude.
     void Normalize()
     {
-        float sq = Square();
+        float sq = x * x + y * y + z * z;
         if (fabs(sq - 1.0f) < MRG_ZERO)
             return;
         if (sq < MRG_ZERO) {
@@ -121,6 +123,15 @@ struct S_vector {
     S_vector operator+(const S_vector &v) const
     {
         return S_vector(x + v.x, y + v.y, z + v.z);
+    }
+
+    // PS2 __apl__8S_vectorFRC8S_vector
+    S_vector &operator+=(const S_vector &v)
+    {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return *this;
     }
 
     S_vector operator-(const S_vector &v) const
@@ -162,6 +173,18 @@ struct S_matrix {
         return *(const S_vector *)m[i];
     }
 
+    // An element (Insanity3D's S_matrix has the same pair). Its address is computed from the matrix, where a row's
+    // member goes through the row's address: m(1, 1) is [m + 0x14], m(1).y is [row + 4].
+    float &operator()(int r, int c)
+    {
+        return m[r][c];
+    }
+
+    const float &operator()(int r, int c) const
+    {
+        return m[r][c];
+    }
+
     I3D_MATH_API void __stdcall Identity();
     I3D_MATH_API S_matrix __stdcall RotateByMatrix(const S_matrix &mat) const;
     I3D_MATH_API bool __stdcall Inverse(const S_matrix &mat);
@@ -200,6 +223,14 @@ struct S_quat {
     S_quat() {}
 
     S_quat(float s, const S_vector &v) : s(s), v(v) {}
+
+    // PS2 __ct__6S_quatFffff
+    S_quat(float s, float x, float y, float z) : s(s)
+    {
+        v.x = x;
+        v.y = y;
+        v.z = z;
+    }
 
     S_quat operator*(const S_quat &q) const;
 

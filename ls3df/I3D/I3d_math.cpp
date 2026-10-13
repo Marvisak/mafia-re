@@ -1020,97 +1020,110 @@ void S_quat::Make(const S_vector &axis, float angle)
 void S_quat::Make(const S_matrix &m)
 {
     S_vector scale = m.GetScale();
-    if (scale.x + scale.y + scale.z >= MRG_ZERO) {
-        if (scale.x * scale.y * scale.z < MRG_ZERO) {
-            // An axis is missing: rebuild it from the other two and try again
-            S_matrix mm = m;
+    if (scale.x + scale.y + scale.z < MRG_ZERO) {
+        s = 1.0f;
+        v.z = 0.0f;
+        v.y = 0.0f;
+        v.x = 0.0f;
+        return;
+    }
+    if (scale.x * scale.y * scale.z < MRG_ZERO) {
+        // An axis is missing: rebuild it from the other two and try again
+        S_matrix mm = m;
+        if (scale.x < MRG_ZERO) {
+            mm(0) = m(1).Cross(m(2));
+            scale.x = mm(0).Magnitude();
             if (scale.x < MRG_ZERO) {
-                mm(0) = m(1).Cross(m(2));
-                scale.x = mm(0).Magnitude();
-                if (scale.x < MRG_ZERO) {
-                    mm(0) = S_vector(1.0f, 0.0f, 0.0f);
-                    scale.x = 1.0f;
-                }
+                mm(0) = S_vector(1.0f, 0.0f, 0.0f);
+                scale.x = 1.0f;
             }
+        }
+        if (scale.y < MRG_ZERO) {
+            mm(1) = m(0).Cross(m(2));
+            scale.y = mm(1).Magnitude();
             if (scale.y < MRG_ZERO) {
-                mm(1) = m(0).Cross(m(2));
-                scale.y = mm(1).Magnitude();
-                if (scale.y < MRG_ZERO) {
-                    mm(1) = S_vector(0.0f, 1.0f, 0.0f);
-                    scale.y = 1.0f;
-                }
+                mm(1) = S_vector(0.0f, 1.0f, 0.0f);
+                scale.y = 1.0f;
             }
+        }
+        if (scale.z < MRG_ZERO) {
+            mm(2) = m(0).Cross(m(1));
+            scale.z = mm(2).Magnitude();
             if (scale.z < MRG_ZERO) {
-                mm(2) = m(0).Cross(m(1));
-                scale.z = mm(2).Magnitude();
-                if (scale.z < MRG_ZERO) {
-                    mm(2) = S_vector(0.0f, 0.0f, 1.0f);
-                    scale.z = 1.0f;
-                }
+                mm(2) = S_vector(0.0f, 0.0f, 1.0f);
+                scale.z = 1.0f;
             }
-            scale = mm.GetScale();
-            if (scale.x * scale.y * scale.z >= MRG_ZERO) {
-                S_quat q;
-                q.Make(mm);
-                *this = q;
-                return;
-            }
-        } else {
-            // Turn the z axis into the y row, then rotate around it to the x row
-            float ix = 1.0f / scale.x;
-            float iy = 1.0f / scale.y;
-            S_vector y_axis = m(1) * iy;
-            S_vector x_axis = m(0) * ix;
-            S_vector xy = y_axis + x_axis;
-            S_quat q1;
-            if (fabs(y_axis.y) < QUAT_ONE_LIMIT) {
-                S_vector axis;
-                axis.SetNormalized(S_vector(y_axis.z, 0.0f, -y_axis.x));
-                q1.Make(-axis, (float)acos(y_axis.y));
-            } else if (y_axis.y > 0.0f)
-                q1 = S_quat(1.0f, S_vector(0.0f, 0.0f, 0.0f));
-            else
-                q1 = S_quat(0.0f, S_vector(0.0f, 0.0f, 1.0f));
-            // (1, 1, 0) rotated by q1
-            S_vector rot;
-            if (fabs(q1.s) < 1.0) {
-                float x2 = q1.v.x + q1.v.x;
-                float y2 = q1.v.y + q1.v.y;
-                float z2 = q1.v.z + q1.v.z;
-                float xx = q1.v.x * x2;
-                float xy = q1.v.x * y2;
-                float xz = q1.v.x * z2;
-                float yy = q1.v.y * y2;
-                float yz = q1.v.y * z2;
-                float zz = q1.v.z * z2;
-                float wx = q1.s * x2;
-                float wy = q1.s * y2;
-                float wz = q1.s * z2;
-                rot.x = 1.0f - (yy + zz) + (xy + wz);
-                rot.y = xy - wz + (1.0f - (xx + zz));
-                rot.z = xz + wy + (yz - wx);
-            } else
-                rot = S_vector(1.0f, 1.0f, 0.0f);
-            S_vector d1 = rot - y_axis;
-            S_vector d2 = xy - y_axis;
-            float d = d1.Dot(d2);
-            S_quat q2;
-            if (fabs(d) < QUAT_ONE_LIMIT) {
-                S_vector axis;
-                axis.SetNormalized(d1.Cross(d2));
-                q2.Make(-axis, (float)acos(d));
-            } else if (y_axis.Cross(d1).Dot(xy) > 0.0f)
-                q2.Make(-y_axis, d > 0.0f ? 0.0f : PI);
-            else
-                q2.Make(y_axis, d > 0.0f ? 0.0f : PI);
-            *this = q1 * q2;
+        }
+        // VC6 merges the first exit into this one, so the first test jumps here
+        S_vector scale2 = mm.GetScale();
+        if (scale2.x * scale2.y * scale2.z < MRG_ZERO) {
+            s = 1.0f;
+            v.z = 0.0f;
+            v.y = 0.0f;
+            v.x = 0.0f;
             return;
         }
+        S_quat q;
+        q.Make(mm);
+        v = q.v;
+        s = q.s;
+        return;
     }
-    s = 1.0f;
-    v.z = 0.0f;
-    v.y = 0.0f;
-    v.x = 0.0f;
+    // Turn the z axis into the y row, then rotate around it to the x row. The rows are read element by element, which
+    // addresses them from m (m(1).y would go through the address GetScale already took).
+    float ix = 1.0f / scale.x;
+    float iy = 1.0f / scale.y;
+    S_vector y_axis, diag;
+    y_axis = S_vector(m(1, 0) * iy, m(1, 1) * iy, m(1, 2) * iy);
+    diag = y_axis;
+    diag += S_vector(m(0, 0) * ix, m(0, 1) * ix, m(0, 2) * ix);
+    S_quat q1;
+    if (fabs(y_axis.y) >= QUAT_ONE_LIMIT) {
+        if (y_axis.y > 0.0f)
+            q1 = S_quat(1.0f, 0.0f, 0.0f, 0.0f);
+        else
+            q1 = S_quat(0.0f, 0.0f, 0.0f, 1.0f);
+    } else {
+        S_vector axis;
+        axis = S_vector(y_axis.z, 0.0f, -y_axis.x);
+        axis.Normalize();
+        q1.Make(-axis, (float)acos(y_axis.y));
+    }
+    // (1, 1, 0) rotated by q1: the sum of the first two rows of its matrix
+    S_vector rot;
+    if (fabs(q1.s) >= 1.0)
+        rot = S_vector(1.0f, 1.0f, 0.0f);
+    else {
+        float x2 = q1.v.x + q1.v.x;
+        float y2 = q1.v.y + q1.v.y;
+        float z2 = q1.v.z + q1.v.z;
+        float xx = q1.v.x * x2;
+        float xy = q1.v.x * y2;
+        float xz = q1.v.x * z2;
+        float yy = q1.v.y * y2;
+        float yz = q1.v.y * z2;
+        float zz = q1.v.z * z2;
+        float wx = q1.s * x2;
+        float wy = q1.s * y2;
+        float wz = q1.s * z2;
+        rot = S_vector(1.0f - (yy + zz) + xy + wz, xy - wz + 1.0f - (xx + zz), xz + wy + yz - wx);
+    }
+    S_vector d1 = rot - y_axis;
+    S_vector d2 = diag - y_axis;
+    float d = d1.Dot(d2);
+    S_quat q2;
+    if (fabs(d) >= QUAT_ONE_LIMIT) {
+        if (y_axis.Cross(d1).Dot(diag) > 0.0f)
+            q2.Make(-y_axis, d > 0.0f ? 0.0f : PI);
+        else
+            q2.Make(y_axis, d > 0.0f ? 0.0f : PI);
+    } else {
+        S_vector axis;
+        axis = d1.Cross(d2);
+        axis.Normalize();
+        q2.Make(-axis, (float)acos(d));
+    }
+    *this = q1 * q2;
 }
 
 // FUNCTION: LS3DF 0x1002fa70
