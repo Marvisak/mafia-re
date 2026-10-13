@@ -22,11 +22,11 @@ score summed over all of them. The function counts of binaries that haven't been
 | `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
 | `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. It builds with Visual C++ 6.0 and reccmp compares it, but the source was decompiled from Steam's 2010 rebuild (Visual Studio 2008) and is being redone against 1.2. The rebuild's differences stay in the source behind `SETUP_STEAM`, and it is compared too, built with its own toolchain (Visual C++ 2008 SP1). |
 | `LS3DF.dll` (engine), `Game.exe` | Not started. These are the two big tasks ahead, and both will take a long time. |
-| `IJoy.dll` | Not started. |
+| `IJoy.dll` | Fully decompiled. All but three functions compile to the original instructions, and the rebuilt file matches the original apart from those three and the order of its import table. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
 
 ## Building
 
-You need Windows, Git, Python 3 and CMake 3.25 or newer. Building doesn't need the game, but comparing a build with
+You need Windows, Git, Python 3 and CMake 3.29 or newer. Building doesn't need the game, but comparing a build with
 the original binaries does: bring your own copy of version 1.2.
 
 1. Clone the repository with its submodules, keeping git from changing their line endings:
@@ -37,7 +37,8 @@ the original binaries does: bring your own copy of version 1.2.
    `3rdparty/` are the build tools the original binaries were made with:
    - `msvc600_sp5_vcpp`: Visual C++ 6.0 with Service Pack 5 and the Processor Pack, from
      [archaic-msvc](https://github.com/archaic-msvc/msvc600_sp5_vcpp).
-   - `msvc600`: the original Visual C++ 6.0 release, whose linker builds `IJoy.dll`, also from
+   - `msvc600`: the original Visual C++ 6.0 release, which builds `IJoy.dll` (with the Processor Pack's code
+     generator from `msvc600_sp5_vcpp`), also from
      [archaic-msvc](https://github.com/archaic-msvc/msvc600).
    - `msvc900_sp1`: Visual C++ 2008 SP1 with the Windows SDK 6.0A, which Steam's 2010 `setup.exe` was built with, from
      [Marvisak/msvc900_sp1](https://github.com/Marvisak/msvc900_sp1).

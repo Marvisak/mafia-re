@@ -43,15 +43,15 @@ class Target:
 
 
 # The function counts come from Binary Ninja: its functions from the start of .text up to the first import
-# thunk or CRT function (the address in the comment). rw_data's and both setups' are exact. The others still
-# include Binary Ninja's mistakes (padding and pieces of functions taken for functions); correct them as
+# thunk or CRT function (the address in the comment). rw_data's, IJoy's and both setups' are exact. The others
+# still include Binary Ninja's mistakes (padding and pieces of functions taken for functions); correct them as
 # those binaries are worked on. Once reccmp knows more functions than the count here, its number is used.
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
     Target("LS3DF.dll", None, 1660),  # 0x1008d3e0
     Target("Game.exe", None, 5037),  # 0x60fc30, in Game.orig.exe
-    Target("IJoy.dll", None, 99),  # 0x100060f0
+    Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
     Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158
 ]
 

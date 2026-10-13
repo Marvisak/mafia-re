@@ -13,6 +13,11 @@ targets:
       sha256: c0c1601220821393a56477d400601e282ff49bbf8d21a0297f90f46a27afc8e0
     data_sources:
       - setup/library_msvc.csv
+  IJOY:
+    filename: IJoy.dll
+    source_root: ijoy
+    hash:
+      sha256: 4e7441a927ccc7e7609c11ff6f829bf236c98360e392201611b348300a31fc2d
   SETUPSTEAM:
     filename: setup.steam.exe
     source_root:

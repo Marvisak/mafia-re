@@ -13,8 +13,8 @@ The goal of the project is byte-exact decompilation: every binary has to rebuild
 Each binary is built with its original toolchain:
 
 - `rw_data.dll`, `LS3DF.dll`, `Game.exe` and `setup.exe`: Visual C++ 6.0 Service Pack 5 with the Processor Pack. Not Service Pack 6, its compiler and runtime library produce different code.
-- `IJoy.dll`: compiled with the same compiler, but linked with the linker and runtime library of the original Visual C++ 6.0 release.
-- `setup.exe` also needs the headers and libraries of the DirectX 8.0 SDK.
+- `IJoy.dll`: the original Visual C++ 6.0 release (compiler front end, linker and runtime library) with the Processor Pack's code generator. The build copies that mix of compiler files into the build tree and runs it through `tools/clswap.py`.
+- `setup.exe` also needs the headers and libraries of the DirectX 8.0 SDK, `IJoy.dll` those of the DirectX 8.1 SDK.
 
 All of them are git submodules in `3rdparty/`.
 
@@ -46,7 +46,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
    The linker stamps its output with the time of the link and the path of the PDB. The `vc6` and `vs2008` builds then write the originals' values into it (`tools/postlink.py`), so a finished binary can come out identical to the original; their PDBs no longer pair with them in a debugger. The `vc6-pdb` build keeps the linker's.
-5. Compare with the original. The reccmp targets are `RWDATA` and `SETUP` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take `--target SETUP` too:
+5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP` and `IJOY` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take `--target SETUP` too:
    ```bash
    cd build/vc6-pdb
    ../../.venv/Scripts/reccmp-reccmp --target RWDATA --nolib                  # score of every function

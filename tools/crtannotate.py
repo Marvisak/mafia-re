@@ -6,7 +6,10 @@ objects can differ while the code before the CRT has another size. Starting from
 (the CRT's startup code), each public CRT function of our map file is looked up within 15 bytes of the
 previous offset and accepted when its bytes agree apart from pointer operands. Those operands then
 say where the CRT's globals are in the original, so data addresses come from the original's own code,
-not from our map plus an offset.
+not from our map plus an offset. A source that isn't complete yet links only some of the original's
+CRT objects, so after a missing one the next function is further away: a function not found near the
+previous offset is looked for in the whole of the original's .text, and taken if it fits at exactly
+one place.
 
 What it writes:
 - LIBRARY for every function found, GLOBAL for the globals the CRT code references (including the
@@ -236,6 +239,9 @@ def main() -> None:
                                      if n.addr is not None and n.decorated_name is None and n.name()
                                      and n.node_type == EntityType.DATA and not text_start <= n.addr < text_end])
 
+    _, orig_text_start, orig_text_size, _, _ = orig.section(".text")
+    orig_text = orig.read(orig_text_start, orig_text_size)
+
     delta = orig.entry - ours.entry
     found = {}  # original address -> (our address, names)
     failed = []
@@ -256,8 +262,15 @@ def main() -> None:
                 delta += shift
                 break
         else:
-            failed.append((addr, name))
-            continue
+            # The objects before this one differ from the original's (an incomplete source links fewer): look
+            # in the whole of the original's .text. A function's first byte is an opcode, never part of a
+            # pointer, so it has to agree.
+            hits = [orig_text_start + p for p in range(orig_text_size - size) if orig_text[p] == code[0]
+                    and compare(ours, orig, addr, orig_text_start + p, size, len(code)) is not None]
+            if len(hits) != 1:
+                failed.append((addr, name))
+                continue
+            delta = hits[0] - addr
         found.setdefault(addr + delta, (addr, []))[1].append(name)
         for vx, vy in pointer_operands(ours, orig, addr, addr + delta, size):
             sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
@@ -271,8 +284,6 @@ def main() -> None:
     our_imports = {} if orig.relocated else {slot: key for key, slot in ours.imports().items()}
     orig_imports = {} if orig.relocated else orig.imports()
     orig_slots = set(orig_imports.values())
-    _, orig_text_start, orig_text_size, _, _ = orig.section(".text")
-    orig_text = orig.read(orig_text_start, orig_text_size)
 
     def in_thunk_run(pos: int) -> bool:
         """Whether the jmp at pos has another jmp [IAT slot] right before or after it."""

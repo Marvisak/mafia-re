@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.29)
 
 project(mafia)
 
@@ -37,6 +37,7 @@ endif()
 # Visual C++ 2008 builds only Steam's 2010 setup.exe
 if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(rw_data)
+    add_subdirectory(ijoy)
 endif()
 add_subdirectory(setup)
 
@@ -51,6 +52,9 @@ targets:
   SETUP:
     path: $<TARGET_FILE:setup>
     pdb: $<TARGET_PDB_FILE:setup>
+  IJOY:
+    path: $<TARGET_FILE:ijoy>
+    pdb: $<TARGET_PDB_FILE:ijoy>
 ")
 elseif (MSVC_VERSION EQUAL 1500)
     file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/reccmp-build.yml" CONTENT
