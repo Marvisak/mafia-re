@@ -1200,40 +1200,42 @@ bool C_joy::Update(uint flags)
 
     // Buttons
     int i;
-    buttons_changed[0] &= ~state.buttons[0];
+    // Through a pointer: with state.buttons[0] VC6 loads the first group's two words in the other order
+    uint *buttons = state.buttons;
+    buttons_changed[0] &= ~buttons[0];
     if (!ok)
         memset(device_state.rgbButtons, 0, sizeof(device_state.rgbButtons));
-    state.buttons[0] = 0;
+    buttons[0] = 0;
     for (i = 0; i < 32; i++) {
         if (device_state.rgbButtons[i])
-            state.buttons[0] |= 1 << i;
+            buttons[0] |= 1 << i;
     }
-    buttons_changed[0] = ~(state.buttons[0] & buttons_changed[0]);
-    buttons_changed[0] = state.buttons[0] ^ buttons_changed[0];
-    buttons_changed[1] &= ~state.buttons[1];
-    state.buttons[1] = 0;
+    buttons_changed[0] = ~(buttons[0] & buttons_changed[0]);
+    buttons_changed[0] = buttons[0] ^ buttons_changed[0];
+    buttons_changed[1] &= ~buttons[1];
+    buttons[1] = 0;
     for (i = 0; i < 32; i++) {
         if (device_state.rgbButtons[32 + i])
-            state.buttons[1] |= 1 << i;
+            buttons[1] |= 1 << i;
     }
-    buttons_changed[1] = ~(state.buttons[1] & buttons_changed[1]);
-    buttons_changed[1] = state.buttons[1] ^ buttons_changed[1];
-    buttons_changed[2] &= ~state.buttons[2];
-    state.buttons[2] = 0;
+    buttons_changed[1] = ~(buttons[1] & buttons_changed[1]);
+    buttons_changed[1] = buttons[1] ^ buttons_changed[1];
+    buttons_changed[2] &= ~buttons[2];
+    buttons[2] = 0;
     for (i = 0; i < 32; i++) {
         if (device_state.rgbButtons[64 + i])
-            state.buttons[2] |= 1 << i;
+            buttons[2] |= 1 << i;
     }
-    buttons_changed[2] = ~(state.buttons[2] & buttons_changed[2]);
-    buttons_changed[2] = state.buttons[2] ^ buttons_changed[2];
-    buttons_changed[3] &= ~state.buttons[3];
-    state.buttons[3] = 0;
+    buttons_changed[2] = ~(buttons[2] & buttons_changed[2]);
+    buttons_changed[2] = buttons[2] ^ buttons_changed[2];
+    buttons_changed[3] &= ~buttons[3];
+    buttons[3] = 0;
     for (i = 0; i < 32; i++) {
         if (device_state.rgbButtons[96 + i])
-            state.buttons[3] |= 1 << i;
+            buttons[3] |= 1 << i;
     }
-    buttons_changed[3] = ~(state.buttons[3] & buttons_changed[3]);
-    buttons_changed[3] = state.buttons[3] ^ buttons_changed[3];
+    buttons_changed[3] = ~(buttons[3] & buttons_changed[3]);
+    buttons_changed[3] = buttons[3] ^ buttons_changed[3];
     return true;
 }
 
@@ -1775,7 +1777,7 @@ bool C_joy_effect::SetType(int type, float direction, uint duration, float gain,
         return true;
     }
 
-    if (type < num_effect_info && effect_info[type].supported) {
+    if (type < num_effect_info && IsSupported(type)) {
         for (uint i = 0; i < num_axes; i++)
             effect_axes[i] = axes[i];
         num_effect_axes = num_axes;

@@ -269,6 +269,8 @@ public:
     bool SetCondition(const S_joy_condition *condition_0, const S_joy_condition *condition_1, bool update);
     bool ApplyTypeSpecific();
     bool GetEffectCaps(S_joy_effect_caps *caps, int type);
+    // Inline: SetType's [offset + pointer] address shows it, written out it gives [pointer + offset]
+    bool IsSupported(int type) { return effect_info[type].supported; }
     int GetType();
     bool GetStatus(uint *status);
 };
