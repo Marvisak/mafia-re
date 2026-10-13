@@ -19,6 +19,9 @@
 // LIBRARY: LS3DF 0x1008d510
 // ??2@YAPAXI@Z
 
+// LIBRARY: LS3DF 0x1008d520 SYMBOL
+// __ftol
+
 // LIBRARY: LS3DF 0x1008d547
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
@@ -64,6 +67,15 @@
 // LIBRARY: LS3DF 0x1008d919 SYMBOL
 // __NLG_Dispatch
 
+// LIBRARY: LS3DF 0x1008da22 SYMBOL
+// __onexit
+
+// LIBRARY: LS3DF 0x1008daa0 SYMBOL
+// _atexit
+
+// LIBRARY: LS3DF 0x1008dab2 SYMBOL
+// ___onexitinit
+
 // LIBRARY: LS3DF 0x1008dae1 SYMBOL
 // _sprintf
 
@@ -91,11 +103,35 @@
 // LIBRARY: LS3DF 0x1008e4c9 SYMBOL
 // __fclose_lk
 
+// LIBRARY: LS3DF 0x1008e515 SYMBOL
+// _fprintf
+
+// LIBRARY: LS3DF 0x1008e551 SYMBOL
+// __strtime
+
+// LIBRARY: LS3DF 0x1008e5ca SYMBOL
+// __strdate
+
+// LIBRARY: LS3DF 0x1008e64e SYMBOL
+// __fsopen
+
+// LIBRARY: LS3DF 0x1008e67f SYMBOL
+// _fopen
+
+// LIBRARY: LS3DF 0x1008e692 SYMBOL
+// __splitpath
+
 // LIBRARY: LS3DF 0x1008e7e0 SYMBOL
 // __aulldiv
 
+// LIBRARY: LS3DF 0x1008e848 SYMBOL
+// _vfprintf
+
 // LIBRARY: LS3DF 0x1008e883 SYMBOL
 // __cinit
+
+// LIBRARY: LS3DF 0x1008e8b0 SYMBOL
+// _exit
 
 // LIBRARY: LS3DF 0x1008e8c1 SYMBOL
 // __exit
@@ -117,6 +153,9 @@
 
 // LIBRARY: LS3DF 0x1008f036 SYMBOL
 // ___from_strstr_to_strchr
+
+// LIBRARY: LS3DF 0x1008f0f0 SYMBOL
+// __alldiv
 
 // LIBRARY: LS3DF 0x1008f2c3 SYMBOL
 // __CRT_INIT@12
@@ -217,6 +256,12 @@
 // LIBRARY: LS3DF 0x10090739
 // ?_inconsistency@@YAXXZ
 
+// LIBRARY: LS3DF 0x10091b4b SYMBOL
+// _realloc
+
+// LIBRARY: LS3DF 0x10091e7a SYMBOL
+// __msize
+
 // LIBRARY: LS3DF 0x10091f68 SYMBOL
 // __flsbuf
 
@@ -286,11 +331,26 @@
 // LIBRARY: LS3DF 0x1009330a SYMBOL
 // __flushall
 
+// LIBRARY: LS3DF 0x100933b7 SYMBOL
+// __stbuf
+
+// LIBRARY: LS3DF 0x10093444 SYMBOL
+// __ftbuf
+
+// LIBRARY: LS3DF 0x1009346e SYMBOL
+// __openfile
+
+// LIBRARY: LS3DF 0x100935de SYMBOL
+// __getstream
+
 // LIBRARY: LS3DF 0x100936a6 SYMBOL
 // __setmbcp
 
 // LIBRARY: LS3DF 0x10093a7e SYMBOL
 // ___initmbctable
+
+// LIBRARY: LS3DF 0x10093a9a SYMBOL
+// __mbsnbcpy
 
 // LIBRARY: LS3DF 0x10093b40 SYMBOL
 // _strlen
@@ -361,6 +421,9 @@
 // LIBRARY: LS3DF 0x100958d1 SYMBOL
 // ___sbh_alloc_new_group
 
+// LIBRARY: LS3DF 0x100959cc SYMBOL
+// ___sbh_resize_block
+
 // LIBRARY: LS3DF 0x10095cc2 SYMBOL
 // ___old_sbh_new_region
 
@@ -381,6 +444,9 @@
 
 // LIBRARY: LS3DF 0x100961c2 SYMBOL
 // ___old_sbh_alloc_block_from_page
+
+// LIBRARY: LS3DF 0x100962e6 SYMBOL
+// ___old_sbh_resize_block
 
 // LIBRARY: LS3DF 0x1009638f SYMBOL
 // __control87
@@ -505,6 +571,12 @@
 // LIBRARY: LS3DF 0x10097373 SYMBOL
 // __fcloseall
 
+// LIBRARY: LS3DF 0x100973f4 SYMBOL
+// __alloc_osfhnd
+
+// LIBRARY: LS3DF 0x10097517 SYMBOL
+// __set_osfhnd
+
 // LIBRARY: LS3DF 0x10097593 SYMBOL
 // __free_osfhnd
 
@@ -519,6 +591,9 @@
 
 // LIBRARY: LS3DF 0x100976d5 SYMBOL
 // __commit
+
+// LIBRARY: LS3DF 0x10097768 SYMBOL
+// __sopen
 
 // LIBRARY: LS3DF 0x10097a37 SYMBOL
 // _strtol
@@ -556,11 +631,20 @@
 // LIBRARY: LS3DF 0x10098900 SYMBOL
 // __strnicmp
 
+// LIBRARY: LS3DF 0x10098a01 SYMBOL
+// __chsize_lk
+
+// LIBRARY: LS3DF 0x10098b26 SYMBOL
+// __read_lk
+
 // LIBRARY: LS3DF 0x10098cff SYMBOL
 // ___ld12mul
 
 // LIBRARY: LS3DF 0x10098f1f SYMBOL
 // ___multtenpow12
+
+// LIBRARY: LS3DF 0x10098f9b SYMBOL
+// __setmode_lk
 
 // GLOBAL: LS3DF 0x100a2300
 // ___lookuptable
@@ -628,9 +712,6 @@
 // GLOBAL: LS3DF 0x100ac410
 // __iob
 
-// GLOBAL: LS3DF 0x100ac790
-// ___badioinfo
-
 // GLOBAL: LS3DF 0x100ac7b4
 // __amblksiz
 
@@ -663,6 +744,9 @@
 
 // GLOBAL: LS3DF 0x101ca9b0
 // __adjust_fdiv
+
+// GLOBAL: LS3DF 0x101ca9b4
+// __umaskval
 
 // GLOBAL: LS3DF 0x101ca9b8
 // __osver
@@ -715,6 +799,9 @@
 // GLOBAL: LS3DF 0x101caaa0
 // __cflush
 
+// GLOBAL: LS3DF 0x101caaa4
+// __stdbuf
+
 // GLOBAL: LS3DF 0x101cabb8
 // __adbgmsg
 
@@ -723,6 +810,12 @@
 
 // GLOBAL: LS3DF 0x101cabc4
 // ?_pnhHeap@@3P6AHI@ZA
+
+// GLOBAL: LS3DF 0x101cac34
+// __commode
+
+// GLOBAL: LS3DF 0x101cac68
+// __fmode
 
 // GLOBAL: LS3DF 0x101cad38
 // ___sbh_sizeHeaderList

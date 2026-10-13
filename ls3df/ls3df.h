@@ -37,9 +37,12 @@ enum LS3D_RESULT {
     I3DERR_LIMITEXCEEDED = 0x80000015,      // "Some limit of engine is exceeded"
 };
 
-// Whether |f| is below 1e-8, compared as integers (the name is a guess). The engine's float helpers are inline
-// assembly: every use stores the argument for the fld, takes the bits through a pushed temporary and tests the result
-// in al, which no C++ spelling reproduces. The result is returned in al (warning C4035).
+// The engine's threshold for zero (the names are guesses)
+#define MRG_ZERO 1e-8f
+
+// Whether |f| is below MRG_ZERO, compared as integers. The engine's float helpers are inline assembly: every use
+// stores the argument for the fld, takes the bits through a pushed temporary and tests the result in al, which no C++
+// spelling reproduces. The result is returned in al (warning C4035).
 #pragma warning(push)
 #pragma warning(disable: 4035)
 inline bool IsAbsMrgZero(float f)
@@ -92,6 +95,48 @@ public:
     {
         return array[i];
     }
+
+    // Appends an element and returns it, for the caller to fill in
+    T &push_back()
+    {
+        if (count >= res_size) {
+            res_size += grow_size;
+            T *a = new T[res_size];
+            for (int i = 0; i < count; i++)
+                a[i] = array[i];
+            delete[] array;
+            array = a;
+        }
+        return array[count++];
+    }
+
+    // Removes element i, moving the last one into its place
+    void erase(int i)
+    {
+        if (--count)
+            array[i] = array[count];
+    }
+
+    // Removes the first element equal to v the same way
+    void remove(const T &v)
+    {
+        if (count <= 0)
+            return;
+        if (count == 1) {
+            if (array[0] == v)
+                count = 0;
+            return;
+        }
+        T *p = array;
+        for (int i = count - 1; i--; p++) {
+            if (*p == v) {
+                *p = array[--count];
+                return;
+            }
+        }
+        if (*p == v)
+            --count;
+    }
 };
 
 // The engine's reference-counted string (PS2 C_str). An empty string has no buffer and converts to the address of
@@ -107,6 +152,12 @@ class C_str {
             memcpy(str, s, l);
             str[l] = 0;
         }
+
+        void Release()
+        {
+            if (!--ref)
+                delete this;
+        }
     } *buf;
 
 public:
@@ -120,8 +171,25 @@ public:
 
     ~C_str()
     {
-        if (buf && !--buf->ref)
-            delete buf;
+        if (buf)
+            buf->Release();
+    }
+
+    // The out-of-line copy the linker kept is in IGraph code
+    // FUNCTION: LS3DF 0x1006ff00
+    C_str &operator=(const char *s)
+    {
+        // b starts as s, NULL when there is no string: the original keeps both in one register and never sets b to
+        // NULL, which neither NULL first nor an else branch reproduces
+        S_buffer *b = (S_buffer *)s;
+        if (s) {
+            int len = strlen(s);
+            b = new (new char[len + 9]) S_buffer(s, len);
+        }
+        if (buf)
+            buf->Release();
+        buf = b;
+        return *this;
     }
 
     operator const char *() const
@@ -149,5 +217,8 @@ LS3D_EXPORT bool __cdecl TEV(const char *title, int engine_version);
 LS3D_EXPORT IGraph *__cdecl GetIGraph();
 LS3D_EXPORT ISND_driver *__cdecl ISndGetDriver();
 LS3D_EXPORT I3D_driver *__cdecl I3DGetDriver();
-// Appends to log.txt next to the executable, unless disableLog is set
+LS3D_EXPORT const char *__cdecl I3DGetResultMessage(LS3D_RESULT result);
+// Append a line to log.txt next to the executable, unless disableLog is set
 LS3D_EXPORT int __cdecl dbgPrintf(const char *format, ...);
+LS3D_EXPORT int __cdecl dbgPrintf1(const char *format, ...);
+void dbgPrintGuid(const void *guid);

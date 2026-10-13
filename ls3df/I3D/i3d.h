@@ -41,9 +41,16 @@ public:
     uint sound_flags;                       // 0x140
 };
 
+// 0x5c bytes, created by Globals.cpp's BreBre
 class I3D_driver {
     uchar unknown_00[0x38];
 
 public:
+    I3D_driver();
+    ~I3D_driver();
+
     C_list<I3D_sound *> sounds;             // 0x38
+
+private:
+    uchar unknown_48[0x14];
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ls3df.h"
+#include "I3D/i3d_math.h"
 
 #include <mmsystem.h>
 #include <dsound.h>
@@ -9,6 +10,8 @@
 // The virtual functions the game calls are __stdcall. Member names are guesses unless noted.
 
 // From the DirectX 8.1 SDK: dxguid.lib's GUIDs
+// GLOBAL: LS3DF 0x100a182c
+// DS3DALG_NO_VIRTUALIZATION
 // GLOBAL: LS3DF 0x100a183c
 // IID_IKsPropertySet
 // GLOBAL: LS3DF 0x100a185c
@@ -41,15 +44,45 @@ enum {
     ISNDINIT_EAX30 = 0x200000,          // it supports EAX 3.0's listener and buffer properties
 };
 
-// The other sound classes: only their size, constructor and what IS_driver.cpp uses so far. The rest of their
-// layout isn't recovered yet.
-class ISND_source {
-    uchar unknown_00[0xc];
-    C_str file_name;
-    uchar unknown_10[0x3c];
+// The flags of ISND_source::Open and ISND_sound::Open and Play (names are guesses)
+enum {
+    ISND_NOVOLUME = 0x2,                // sound: SetVolume fails
+    ISND_NOPANNING = 0x4,               // sound: SetPanning fails
+    ISND_FREQUENCY = 0x10,              // sound: SetFrequency works
+    ISND_NOHWCHANNEL = 0x40,            // no hardware 3D channel management (Play, Stop)
+    ISND_LOOP = 0x100,                  // Play
+    ISND_3D = 0x200,                    // a 3D buffer (mono sources only)
+    ISND_NOREWIND = 0x400,              // Play from the current position
+};
 
+// What ISND_source::GetFormat returns (PS2 name)
+struct S_wave_format {
+    uint num_channels;
+    uint bytes_per_sample;
+    uint samples_per_sec;
+    uint size;                          // of the sound data
+};
+
+// A sound loaded from a WAV file into a DirectSound buffer (PS2 IS_source.cpp). It isn't polymorphic on PS2.
+// VTABLE: LS3DF 0x1009db90
+class ISND_source {
 public:
     ISND_source();
+    ~ISND_source();
+
+    virtual int __stdcall Release();
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags);
+    virtual void __stdcall Close();
+    virtual bool __stdcall IsLoaded() const;
+    virtual uint __stdcall GetPlayTime() const;
+    virtual LS3D_RESULT __stdcall GetFormat(S_wave_format *wf);
+    virtual LS3D_RESULT __stdcall Lock(void **data);
+    virtual LS3D_RESULT __stdcall Unlock();
+
+    int AddRef()
+    {
+        return ++ref;
+    }
 
     // The out-of-line copy the linker kept is in I3D code. Its "" is the engine's at 0x100af7fc, which reccmp can't
     // pair: it names strings by their text, and the CRT's "" in .rdata already has that name.
@@ -58,37 +91,133 @@ public:
     {
         return file_name ? file_name : C_str("");
     }
+
+    int ref;                            // 0x04
+    uint flags;                         // 0x08, ISND_*
+    C_str file_name;                    // 0x0c
+    S_wave_format format;               // 0x10
+    IDirectSoundBuffer8 *buffer;        // 0x20
+    float bytes_per_ms;                 // 0x24
+    void *lock_data;                    // 0x28, Lock's
+    int unknown_2c;                     // 0x2c
+    DWORD lock_size;                    // 0x30, Lock's
+    int unknown_34;                     // 0x34
+    WAVEFORMATEX wave_format;           // 0x38
 };
 
+// A sound playing a source (PS2 IS_sound.cpp)
+// VTABLE: LS3DF 0x1009db08
 class ISND_sound {
-    uchar unknown_00[0x8];
-
-protected:
-    int unknown_08;
-    int unknown_0c;
-    int unknown_10;
-    float unknown_14;
-    float unknown_18;
-
 public:
     ISND_sound();
+
+    virtual int __stdcall Release();
+    virtual LS3D_RESULT __stdcall Open(ISND_source *source, uint flags);
+    virtual LS3D_RESULT __stdcall Close();
+    virtual LS3D_RESULT __stdcall Play(ISND_source *source, uint flags);
+    virtual LS3D_RESULT __stdcall Play(uint flags, uint priority);
+    virtual LS3D_RESULT __stdcall Stop();
+    virtual uint __stdcall GetCurrTime() const;
+    virtual LS3D_RESULT __stdcall SetCurrTime(uint time);
+    virtual LS3D_RESULT __stdcall SetVolume(float volume);
+    virtual LS3D_RESULT __stdcall SetVolumeLOG(float volume);
+    virtual LS3D_RESULT __stdcall SetVolumeLOG(int volume);
+    virtual LS3D_RESULT __stdcall SetFrequency(float frequency);
+    virtual LS3D_RESULT __stdcall SetPanning(float panning);
+    virtual bool __stdcall IsPlaying() const;
+
+    // The out-of-line copy the linker kept is in IS_3Dsound.cpp, after its last function
+    // FUNCTION: LS3DF 0x1007b680
+    virtual ISND_source *__stdcall GetSource()
+    {
+        return source;
+    }
+
+    virtual ~ISND_sound();
+
+    // The frequency factor SetFrequency set. IS_sound.cpp reads it through an inline function: as an argument of the
+    // division it is loaded before the call that gives the dividend, which a plain member read isn't.
+    float GetFrequency() const
+    {
+        return frequency;
+    }
+
+    int ref;                            // 0x04
+    IDirectSoundBuffer *buffer;         // 0x08, a duplicate of the source's
+    ISND_source *source;                // 0x0c
+    uint flags;                         // 0x10, ISND_*
+    float frequency;                    // 0x14, of the source's
+    float volume;                       // 0x18
 };
 
-class ISND_3Dsound : public ISND_sound {
-    bool unknown_1c;
-    int unknown_20;
+// SYNTHETIC: LS3DF 0x1007c910
+// ISND_sound::`scalar deleting destructor'
 
+// A sound with a 3D buffer (PS2 IS_3Dsound.cpp)
+// VTABLE: LS3DF 0x1009d9e0
+class ISND_3Dsound : public ISND_sound {
 public:
     ISND_3Dsound();
+
+    virtual LS3D_RESULT __stdcall Open(ISND_source *source, uint flags);
+    virtual LS3D_RESULT __stdcall Close();
+    virtual ~ISND_3Dsound();
+    virtual bool __stdcall Is3DInit() const;
+    virtual LS3D_RESULT __stdcall SetPos(const S_vector &pos);
+    virtual LS3D_RESULT __stdcall SetDir(const S_vector &dir);
+    virtual LS3D_RESULT __stdcall SetVelocity(const S_vector &velocity);
+    virtual LS3D_RESULT __stdcall SetDistances(float min, float max);
+    virtual LS3D_RESULT __stdcall SetCone(float inside, float outside);
+    virtual LS3D_RESULT __stdcall SetOutVolume(float volume);
+
+    bool is3d_init;                     // 0x1c
+    IDirectSound3DBuffer *lpDS3DBuffer; // 0x20
 };
 
+// SYNTHETIC: LS3DF 0x1007b390
+// ISND_3Dsound::`scalar deleting destructor'
+
+// The listener (PS2 IS_3Dlistener.cpp). Its destructor isn't virtual: I3D code calls it directly.
+// VTABLE: LS3DF 0x1009d968
 class ISND_3Dlistener {
-    uchar unknown_00[0x8];
-
 public:
-    DS3DLISTENER params;
-
     ISND_3Dlistener();
+    ~ISND_3Dlistener();
+
+    virtual int __stdcall AddRef();
+    virtual int __stdcall Release();
+    virtual LS3D_RESULT __stdcall SetPos(const S_vector &pos);
+    virtual LS3D_RESULT __stdcall SetDir(const S_vector &dir, const S_vector &up);
+    virtual LS3D_RESULT __stdcall SetVelocity(const S_vector &velocity);
+    virtual LS3D_RESULT __stdcall SetDistanceFactor(float factor);
+    virtual LS3D_RESULT __stdcall SetDopplerFactor(float factor);
+    virtual LS3D_RESULT __stdcall SetRolloffFactor(float factor);
+    virtual LS3D_RESULT __stdcall SetEAXProperty(int property, uint value);
+    virtual LS3D_RESULT __stdcall SetEAX3Property(uint property, void *data, uint size);
+    virtual LS3D_RESULT __stdcall GetEAX3Property(uint property, void *data, uint size, uint *returned);
+    virtual LS3D_RESULT __stdcall Update();
+    virtual LS3D_RESULT __stdcall CommitDeferredSettings();
+
+    int ref;                            // 0x04
+    DS3DLISTENER params;                // 0x08
+};
+
+// The hardware 3D channel lists (IS_sound.cpp; PS2 names)
+struct CHANNEL_STRUCT {
+    ISND_sound *sound;
+    IDirectSoundBuffer *buffer;
+    uint priority;
+    uint loop;                          // ISND_LOOP
+    uint start_time;                    // timeGetTime
+};
+
+struct TERMINATED_CHANNEL_STRUCT {
+    ISND_sound *sound;
+    IDirectSoundBuffer *buffer;
+    uint priority;
+    DWORD position;
+    uint stop_time;                     // timeGetTime
+    uint loop;                          // ISND_LOOP
 };
 
 // The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
@@ -119,6 +248,7 @@ private:
     int InitEAX();
     bool InitDSound(void *hwnd, int freq, int channels, int bits, uint flags);
 
+public:
     void *hwnd;                             // 0x04
     int ref;                                // 0x08
     IDirectSound8 *lpDS8;                   // 0x0c
@@ -142,3 +272,6 @@ private:
 // PS2 names
 extern bool ISndIsInit;
 extern int MaxHWChannels;
+
+// Restarts the terminated sounds that have a hardware channel again (IS_sound.cpp; I3D code calls it)
+void UpdateAllTerminatedBuffs();

@@ -7,7 +7,9 @@ project(ls3df)
 # The folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph are in its __FILE__ strings,
 # the sound files' folder is named here.
 add_library(ls3df SHARED
+    I3D/I3d_driver.cpp
     IGraph/Globals.cpp
+    IGraph/IGraph.cpp
     ISound/IS_3Dlistener.cpp
     ISound/IS_3Dsound.cpp
     ISound/IS_driver.cpp
@@ -35,19 +37,26 @@ if (MSVC_VERSION EQUAL 1200)
     # /Gr - __fastcall: free functions take their first two arguments in ecx and edx (LoadAnimation5ds, dbgPrintGuid,
     #       ErrorHandler); the API is declared __stdcall (the exported math) or __cdecl (the undecorated exports)
     # /G6 - Pentium Pro scheduling: npad alignment inside functions and imul by constants
-    target_compile_options(ls3df PRIVATE /MT /GX /Gr /G6)
+    # /Ob2 - inline any suitable function, not only inline ones: ISND_3Dlistener::Release inlines the destructor, a
+    #        plain function of the same file (I3D code calls it out of line)
+    target_compile_options(ls3df PRIVATE /MT /GX /Gr /G6 /Ob2)
 
-    # The original also imports GDI32, WINMM, d3d8, DINPUT8, binkw32, vorbisfile and rw_data. Each library is added
-    # with the first function that needs it: their order is still to be worked out.
-    target_link_libraries(ls3df PRIVATE kernel32 user32 ole32 dsound dxguid)
+    # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
+    # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma.
+    target_link_libraries(ls3df PRIVATE kernel32 user32 winmm ole32 dsound dxguid)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
+    # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
+    # (the names are /Gr's)
+    target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
+        "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
+        "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z")
 else()
-    target_link_libraries(ls3df PRIVATE user32 ole32 dsound dxguid)
+    target_link_libraries(ls3df PRIVATE user32 winmm ole32 dsound dxguid)
 endif()
 
-# Temporary, until Globals.cpp's BreBre constructor, which creates the drivers, is written: without a reference to
-# ISND_driver's constructor and destructor, /OPT:REF drops IS_driver.cpp's functions
-target_link_options(ls3df PRIVATE "/INCLUDE:??0ISND_driver@@QAE@XZ" "/INCLUDE:??1ISND_driver@@QAE@XZ")
+# rw_data.lib, which dta.h names, is our rw_data target's import library
+add_dependencies(ls3df rw_data)
+target_link_directories(ls3df PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data>)
 
 vc6_header_dependencies(ls3df)

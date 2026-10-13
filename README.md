@@ -21,7 +21,7 @@ score summed over all of them. The function counts of binaries that haven't been
 | --- | --- |
 | `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
 | `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. It builds with Visual C++ 6.0 and reccmp compares it, but the source was decompiled from Steam's 2010 rebuild (Visual Studio 2008) and is being redone against 1.2. The rebuild's differences stay in the source behind `SETUP_STEAM`, and it is compared too, built with its own toolchain (Visual C++ 2008 SP1). |
-| `LS3DF.dll` (engine) | Just started. It builds with Visual C++ 6.0 and reccmp compares it; the DirectSound driver and a few exported functions compile to the original instructions. With about 1,600 functions, this and `Game.exe` are the two big tasks ahead. |
+| `LS3DF.dll` (engine) | Started. It builds with Visual C++ 6.0 and reccmp compares it. The sound code and the engine's globals and C exports are written, and nearly all of their functions compile to the original instructions. With about 1,600 functions, this and `Game.exe` are the two big tasks ahead. |
 | `Game.exe` | Not started. |
 | `IJoy.dll` | Fully decompiled. All but one function compiles to the original instructions, and the rebuilt file matches the original apart from that function and the order of its import table. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
 
