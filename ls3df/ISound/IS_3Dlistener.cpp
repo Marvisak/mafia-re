@@ -96,7 +96,10 @@ LS3D_RESULT ISND_3Dlistener::Update()
     return SUCCEEDED(pISndDriver->lpListener->SetAllParameters(&params, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
 }
 
-// The vectors are passed by address in value
+// Set takes the property's address: a scalar value is copied into a static for it, a vector is passed by address in
+// value. The integer and float cases are separate groups, whose identical calls VC6 merges into one body before it
+// builds the jump table (one group gives the same code with other registers: fewer references to property). Any split
+// into two or more groups before the vectors gives the original; vectors before a scalar group put their body first.
 // FUNCTION: LS3DF 0x1007b1e0
 LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
 {
@@ -107,17 +110,21 @@ LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
     data = value;
     switch (property) {
     case DSPROPERTY_EAXLISTENER_ENVIRONMENT:
-    case DSPROPERTY_EAXLISTENER_ENVIRONMENTSIZE:
-    case DSPROPERTY_EAXLISTENER_ENVIRONMENTDIFFUSION:
     case DSPROPERTY_EAXLISTENER_ROOM:
     case DSPROPERTY_EAXLISTENER_ROOMHF:
     case DSPROPERTY_EAXLISTENER_ROOMLF:
+    case DSPROPERTY_EAXLISTENER_REFLECTIONS:
+    case DSPROPERTY_EAXLISTENER_REVERB:
+    case DSPROPERTY_EAXLISTENER_FLAGS:
+        pISndDriver->eax_property_set->Set(DSPROPSETID_EAX30_ListenerProperties, property, NULL, 0, &data,
+            sizeof(long));
+        break;
+    case DSPROPERTY_EAXLISTENER_ENVIRONMENTSIZE:
+    case DSPROPERTY_EAXLISTENER_ENVIRONMENTDIFFUSION:
     case DSPROPERTY_EAXLISTENER_DECAYTIME:
     case DSPROPERTY_EAXLISTENER_DECAYHFRATIO:
     case DSPROPERTY_EAXLISTENER_DECAYLFRATIO:
-    case DSPROPERTY_EAXLISTENER_REFLECTIONS:
     case DSPROPERTY_EAXLISTENER_REFLECTIONSDELAY:
-    case DSPROPERTY_EAXLISTENER_REVERB:
     case DSPROPERTY_EAXLISTENER_REVERBDELAY:
     case DSPROPERTY_EAXLISTENER_ECHOTIME:
     case DSPROPERTY_EAXLISTENER_ECHODEPTH:
@@ -127,9 +134,8 @@ LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
     case DSPROPERTY_EAXLISTENER_HFREFERENCE:
     case DSPROPERTY_EAXLISTENER_LFREFERENCE:
     case DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR:
-    case DSPROPERTY_EAXLISTENER_FLAGS:
         pISndDriver->eax_property_set->Set(DSPROPSETID_EAX30_ListenerProperties, property, NULL, 0, &data,
-            sizeof(data));
+            sizeof(float));
         break;
     case DSPROPERTY_EAXLISTENER_REFLECTIONSPAN:
     case DSPROPERTY_EAXLISTENER_REVERBPAN:

@@ -135,8 +135,15 @@ public:
 
     virtual ~ISND_sound();
 
-    // The frequency factor SetFrequency set. IS_sound.cpp reads it through an inline function: as an argument of the
-    // division it is loaded before the call that gives the dividend, which a plain member read isn't.
+    // IS_sound.cpp reads the volume and the frequency factor (SetFrequency's) through inline functions. The operand
+    // of a float compare or division is then loaded before the other one where a plain member read isn't: the volume
+    // compares load both onto the FPU stack (fld, fld, fcompp), and the frequency is loaded before the call that
+    // gives the dividend.
+    float GetVolume() const
+    {
+        return volume;
+    }
+
     float GetFrequency() const
     {
         return frequency;

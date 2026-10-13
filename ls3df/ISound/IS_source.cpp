@@ -79,8 +79,8 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         dtaSeek(h, chunk.size, FILE_CURRENT);
         dtaRead(h, &chunk, sizeof(chunk));
     }
-    format.num_channels = fmt.format.wf.nChannels;
     format.bytes_per_sample = fmt.format.wBitsPerSample / 8;
+    format.num_channels = fmt.format.wf.nChannels;
     format.samples_per_sec = fmt.format.wf.nSamplesPerSec;
     format.size = chunk.size;
     bytes_per_ms = wave_format.nAvgBytesPerSec * 0.001f;

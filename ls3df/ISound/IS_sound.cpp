@@ -54,7 +54,7 @@ void UpdateAllTerminatedBuffs()
         while (i--) {
             if (TerminatedChannelList[i].priority > TerminatedChannelList[best].priority
                 || TerminatedChannelList[i].priority == TerminatedChannelList[best].priority
-                    && TerminatedChannelList[best].sound->volume < TerminatedChannelList[i].sound->volume)
+                    && TerminatedChannelList[i].sound->GetVolume() > TerminatedChannelList[best].sound->GetVolume())
                 best = i;
         }
         CHANNEL_STRUCT &c = ChannelList.push_back();
@@ -256,7 +256,7 @@ LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
                     }
                     if (ChannelList[i].priority < lowest
                         || ChannelList[i].priority == lowest && best
-                            && best->sound->volume < ChannelList[i].sound->volume) {
+                            && ChannelList[i].sound->GetVolume() > best->sound->GetVolume()) {
                         lowest = ChannelList[i].priority;
                         best = &ChannelList[i];
                     }
