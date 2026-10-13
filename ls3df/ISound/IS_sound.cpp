@@ -16,7 +16,7 @@ C_list<TERMINATED_CHANNEL_STRUCT> TerminatedChannelList(512);
 // FUNCTION: LS3DF 0x1007c340
 void UpdateAllTerminatedBuffs()
 {
-    if (!MaxHWChannels || !(pISndDriver->init_flags & ISNDINIT_EAX))
+    if (!MaxHWChannels || !(pISndDriver->create_flags & ISNDINIT_EAX))
         return;
     uint time = timeGetTime();
 
@@ -216,8 +216,8 @@ LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
     if (!(flags & ISND_NOREWIND))
         buffer->SetCurrentPosition(0);
     DWORD play_flags, play_priority;
-    if (!(pISndDriver->init_flags & ISNDINIT_NOHWCHANNELS) && !(this->flags & ISND_NOHWCHANNEL)) {
-        if (pISndDriver->init_flags & ISNDINIT_EAX) {
+    if (!(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(this->flags & ISND_SYSMEM)) {
+        if (pISndDriver->create_flags & ISNDINIT_EAX) {
             play_flags = 0;
             play_priority = 0;
         } else {
@@ -318,8 +318,8 @@ LS3D_RESULT ISND_sound::Stop()
     if (!buffer)
         return I3DERR_GENERIC;
     buffer->Stop();
-    if (MaxHWChannels > 0 && (pISndDriver->init_flags & ISNDINIT_EAX)
-        && !(pISndDriver->init_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_NOHWCHANNEL)) {
+    if (MaxHWChannels > 0 && (pISndDriver->create_flags & ISNDINIT_EAX)
+        && !(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM)) {
         int i = ChannelList.size();
         while (i--) {
             if (ChannelList[i].sound == this) {
@@ -360,8 +360,8 @@ LS3D_RESULT ISND_sound::SetCurrTime(uint time)
     if (position < 0)
         position = 0;
     buffer->SetCurrentPosition(position);
-    if (MaxHWChannels > 0 && (pISndDriver->init_flags & ISNDINIT_EAX)
-        && !(pISndDriver->init_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_NOHWCHANNEL)) {
+    if (MaxHWChannels > 0 && (pISndDriver->create_flags & ISNDINIT_EAX)
+        && !(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM)) {
         int i = ChannelList.size();
         while (i--) {
             if (ChannelList[i].sound == this) {

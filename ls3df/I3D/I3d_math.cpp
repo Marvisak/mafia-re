@@ -250,8 +250,9 @@ bool S_matrix::Inverse(const S_matrix &mat)
     return true;
 }
 
-// this = a * b for affine matrices (the name is a guess). The PC inlines it into operator*= and operator*, so
-// /OPT:REF drops it; the Xbox build keeps it out of line (0x20f590), as its compiler doesn't inline assembly.
+// this = a * b for affine matrices (Insanity3D's name, next to Make4X4). The PC inlines it into operator*= and
+// operator*, so /OPT:REF drops it; the Xbox build keeps it out of line (0x20f590), as its compiler doesn't inline
+// assembly.
 S_matrix &S_matrix::Make(const S_matrix &a, const S_matrix &b)
 {
     __asm {
@@ -1222,39 +1223,41 @@ void S_quat::Normalize()
     s = 0.0f;
 }
 
-// The line where the two planes meet: a point on it and its direction
+// The line where the two planes meet: a point on it and its direction. Graphics Gems' method, which Insanity3D has
+// with these names and the squares of the direction in a vector: three float locals compile differently.
 // FUNCTION: LS3DF 0x10030290
-bool S_plane::IntersectionLine(const S_plane &p, S_vector &pos, S_vector &dir) const
+bool S_plane::IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const
 {
-    dir = normal.Cross(p.normal);
-    float xx = dir.x * dir.x;
-    float yy = dir.y * dir.y;
-    float zz = dir.z * dir.z;
-    float f;
-    if (zz > yy && zz > xx && zz > MRG_ZERO) {
-        f = 1.0f / dir.z;
-        pos.x = normal.y * p.d - p.normal.y * d;
-        pos.y = p.normal.x * d - normal.x * p.d;
-        pos.z = 0.0f;
-    } else if (yy > xx && yy > MRG_ZERO) {
-        f = 1.0f / dir.y;
-        pos.x = p.normal.z * d - normal.z * p.d;
-        pos.y = 0.0f;
-        pos.z = normal.x * p.d - p.normal.x * d;
-    } else if (xx > MRG_ZERO) {
-        f = 1.0f / dir.x;
-        pos.x = 0.0f;
-        pos.y = normal.z * p.d - p.normal.z * d;
-        pos.z = p.normal.y * d - normal.y * p.d;
+    xdir = normal.Cross(pl.normal);
+    S_vector dir2(xdir.x * xdir.x, xdir.y * xdir.y, xdir.z * xdir.z);
+    float invdet;
+    if (dir2.z > dir2.y && dir2.z > dir2.x && dir2.z > MRG_ZERO) {
+        // a point on the xy plane
+        invdet = 1.0f / xdir.z;
+        xpt.x = normal.y * pl.d - pl.normal.y * d;
+        xpt.y = pl.normal.x * d - normal.x * pl.d;
+        xpt.z = 0.0f;
+    } else if (dir2.y > dir2.x && dir2.y > MRG_ZERO) {
+        // on the xz plane
+        invdet = 1.0f / xdir.y;
+        xpt.x = pl.normal.z * d - normal.z * pl.d;
+        xpt.y = 0.0f;
+        xpt.z = normal.x * pl.d - pl.normal.x * d;
+    } else if (dir2.x > MRG_ZERO) {
+        // on the yz plane
+        invdet = 1.0f / xdir.x;
+        xpt.x = 0.0f;
+        xpt.y = normal.z * pl.d - pl.normal.z * d;
+        xpt.z = pl.normal.y * d - normal.y * pl.d;
     } else
         return false;
-    pos.x *= f;
-    pos.y *= f;
-    pos.z *= f;
-    f = 1.0f / (float)sqrt(xx + yy + zz);
-    dir.x *= f;
-    dir.y *= f;
-    dir.z *= f;
+    xpt.x *= invdet;
+    xpt.y *= invdet;
+    xpt.z *= invdet;
+    float f = 1.0f / (float)sqrt(dir2.x + dir2.y + dir2.z);
+    xdir.x *= f;
+    xdir.y *= f;
+    xdir.z *= f;
     return true;
 }
 

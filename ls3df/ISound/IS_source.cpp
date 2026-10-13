@@ -55,7 +55,7 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
     Close();
     if (!pISndDriver->IsInit())
         return I3DERR_NOTINITIALIZED;
-    this->flags = flags;
+    open_flags = flags;
     int h = dtaOpen(name, false);
     if (h == -1) {
         dbgPrintf("ERROR!! IS_source::Open() - File not found ! %s", name);
@@ -86,13 +86,13 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
     bytes_per_ms = wave_format.nAvgBytesPerSec * 0.001f;
     // DirectSound positions only mono sounds in 3D
     if (wave_format.nChannels > 1)
-        this->flags &= ~ISND_3D;
+        open_flags &= ~ISND_3DBUFFER;
 
     DSBUFFERDESC desc;
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
-    desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | (this->flags & ISND_3D ? DSBCAPS_CTRL3D : 0);
-    if (!(pISndDriver->init_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_NOHWCHANNEL))
+    desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | (open_flags & ISND_3DBUFFER ? DSBCAPS_CTRL3D : 0);
+    if (!(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM))
         desc.dwFlags |= DSBCAPS_LOCDEFER;
     else
         desc.dwFlags |= DSBCAPS_LOCSOFTWARE;
@@ -126,7 +126,7 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         return I3DERR_GENERIC;
     }
     dtaClose(h);
-    file_name = name;
+    filename = name;
     return I3D_OK;
 }
 
@@ -142,7 +142,7 @@ void ISND_source::Close()
 }
 
 // FUNCTION: LS3DF 0x1007d8c0
-bool ISND_source::IsLoaded() const
+bool ISND_source::IsOpen() const
 {
     return format.size > 0 ? true : false;
 }
@@ -166,14 +166,14 @@ LS3D_RESULT ISND_source::GetFormat(S_wave_format *wf)
 // FUNCTION: LS3DF 0x1007d940
 LS3D_RESULT ISND_source::Lock(void **data)
 {
-    if (FAILED(buffer->Lock(0, 0, &lock_data, &lock_size, NULL, NULL, DSBLOCK_ENTIREBUFFER)))
+    if (FAILED(buffer->Lock(0, 0, &save_lock_ptr1, &save_lick_size1, NULL, NULL, DSBLOCK_ENTIREBUFFER)))
         return I3DERR_GENERIC;
-    *data = lock_data;
+    *data = save_lock_ptr1;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007d980
 LS3D_RESULT ISND_source::Unlock()
 {
-    return SUCCEEDED(buffer->Unlock(lock_data, lock_size, NULL, 0)) ? I3D_OK : I3DERR_GENERIC;
+    return SUCCEEDED(buffer->Unlock(save_lock_ptr1, save_lick_size1, NULL, 0)) ? I3D_OK : I3DERR_GENERIC;
 }

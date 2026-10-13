@@ -24,7 +24,7 @@ enum LS3D_RESULT {
     I3DERR_NOTLOADED = 0x80000008,          // "Not loaded"
     I3DERR_NOTINITIALIZED = 0x80000009,     // "Not initialized"
     I3DERR_FILECORRUPTED = 0x8000000a,      // "File corrupted"
-    I3DERR_NOADDITIONALFILE = 0x8000000b,   // "No additional file (opacity map)"
+    I3DERR_NOFILE1 = 0x8000000b,   // "No additional file (opacity map)"
     I3DERR_CYCLICLINK = 0x8000000c,         // "Cyclic link of hierarchy"
     I3DERR_CANCELED = 0x8000000d,           // "Enumeration canceled"
     I3DERR_UNSUPPORTED = 0x8000000e,        // "Unsupported"
@@ -37,8 +37,11 @@ enum LS3D_RESULT {
     I3DERR_LIMITEXCEEDED = 0x80000015,      // "Some limit of engine is exceeded"
 };
 
-// The engine's threshold for zero (the names are guesses)
+// The engine's threshold for zero ("marginal zero") and its bits. The names are those of Insanity3D's I3d_math.h
+// (Lonely Cat Games' later engine of the same lineage, published with source), which has both helpers below as
+// inline assembly too.
 #define MRG_ZERO 1e-8f
+#define MRG_ZERO_BITMASK 0x322bcc77
 
 // Whether |f| is below MRG_ZERO, compared as integers. The engine's float helpers are inline assembly: every use
 // stores the argument for the fld, takes the bits through a pushed temporary and tests the result in al, which no C++
@@ -55,7 +58,7 @@ inline bool IsAbsMrgZero(float f)
         fstp dword ptr [esp]
         pop edx
         xor eax, eax
-        cmp edx, 0x322bcc77
+        cmp edx, MRG_ZERO_BITMASK
         setl al
     }
 }
@@ -65,7 +68,7 @@ inline bool IsMrgZeroLess(float f)
 {
     __asm {
         xor eax, eax
-        cmp f, 0x322bcc77
+        cmp f, MRG_ZERO_BITMASK
         setl al
     }
 }
@@ -151,61 +154,64 @@ public:
 };
 
 // The engine's reference-counted string (PS2 C_str). An empty string has no buffer and converts to the address of
-// its null pointer, which reads as "".
+// its null pointer, which reads as "". Insanity3D's C_str (a later, wider version) has the same design; the names of
+// the buffer and its members are its.
 class C_str {
-    struct S_buffer {
+    struct C_rep {
         int ref;
-        int len;
-        char str[1];
+        int size;
+        char data[1];
 
-        S_buffer(const char *s, int l) : ref(1), len(l)
+        C_rep(const char *s, int len) : ref(1), size(len)
         {
-            memcpy(str, s, l);
-            str[l] = 0;
+            memcpy(data, s, len);
+            data[len] = 0;
         }
 
+        // The buffer was allocated as a char array (PS2 frees it with delete[])
         void Release()
         {
             if (!--ref)
-                delete this;
+                delete[] (char *)this;
         }
-    } *buf;
+    } *rep;
 
 public:
-    C_str() : buf(NULL) {}
+    C_str() : rep(NULL) {}
 
-    C_str(const char *s)
+    C_str(const char *cp)
     {
-        int len = strlen(s);
-        buf = new (new char[len + 9]) S_buffer(s, len);
+        int len = strlen(cp);
+        rep = new (new char[len + 9]) C_rep(cp, len);
     }
 
     ~C_str()
     {
-        if (buf)
-            buf->Release();
+        if (rep)
+            rep->Release();
     }
 
     // The out-of-line copy the linker kept is in IGraph code
     // FUNCTION: LS3DF 0x1006ff00
-    C_str &operator=(const char *s)
+    C_str &operator=(const char *cp)
     {
-        // b starts as s, NULL when there is no string: the original keeps both in one register and never sets b to
-        // NULL, which neither NULL first nor an else branch reproduces
-        S_buffer *b = (S_buffer *)s;
-        if (s) {
-            int len = strlen(s);
-            b = new (new char[len + 9]) S_buffer(s, len);
+        // NULL first, as in Insanity3D: PS2's order (the string's case first, NULL in an else) gives other code
+        C_rep *new_rep;
+        if (!cp)
+            new_rep = NULL;
+        else {
+            int len = strlen(cp);
+            new_rep = new (new char[len + 9]) C_rep(cp, len);
         }
-        if (buf)
-            buf->Release();
-        buf = b;
+        if (rep)
+            rep->Release();
+        rep = new_rep;
         return *this;
     }
 
     operator const char *() const
     {
-        return buf ? buf->str : (const char *)&buf;
+        return rep ? rep->data : (const char *)&rep;
     }
 };
 

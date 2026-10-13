@@ -7,7 +7,8 @@
 #include <dsound.h>
 
 // The sound interfaces (PS2 files IS_3Dlistener.cpp, IS_3Dsound.cpp, IS_driver.cpp, IS_sound.cpp, IS_source.cpp).
-// The virtual functions the game calls are __stdcall. Member names are guesses unless noted.
+// The virtual functions the game calls are __stdcall. Member names are guesses unless noted; Insanity3D's ISound2
+// (the same lineage's later sound library, published with source) gives the ones noted as its own.
 
 // From the DirectX 8.1 SDK: dxguid.lib's GUIDs
 // GLOBAL: LS3DF 0x100a182c
@@ -25,14 +26,14 @@
 
 // What ISND_driver::Init(ISND_INIT *) takes (PS2 name)
 struct ISND_INIT {
-    int freq;
-    int channels;
-    int bits;
+    int mix_frequency;                  // the member names are Insanity3D's
+    int num_channels;
+    int bits_per_second;
     uint flags;                 // ISNDINIT_*
     void *hwnd;
 };
 
-// ISND_driver::Init's flags; the last two are the driver's own, in init_flags
+// ISND_driver::Init's flags; the last two are the driver's own, in create_flags
 enum {
     ISNDINIT_NOEAX = 0x10,              // DirectSoundCreate8 instead of EAX Unified's COM object
     ISNDINIT_NOHWCHANNELS = 0x20,       // neither count the free hardware 3D channels nor look for EAX 3.0
@@ -44,14 +45,15 @@ enum {
     ISNDINIT_EAX30 = 0x200000,          // it supports EAX 3.0's listener and buffer properties
 };
 
-// The flags of ISND_source::Open and ISND_sound::Open and Play (names are guesses)
+// The flags of ISND_source::Open and ISND_sound::Open and Play. Insanity3D's ISound2 has these names for the same
+// values (and ISND_STREAMING 1, ISND_PRELOAD 8, ISND_CARDMEM 0x20, which the code written so far doesn't use).
 enum {
     ISND_NOVOLUME = 0x2,                // sound: SetVolume fails
     ISND_NOPANNING = 0x4,               // sound: SetPanning fails
     ISND_FREQUENCY = 0x10,              // sound: SetFrequency works
-    ISND_NOHWCHANNEL = 0x40,            // no hardware 3D channel management (Play, Stop)
+    ISND_SYSMEM = 0x40,                 // a software buffer: no hardware 3D channel management (Play, Stop)
     ISND_LOOP = 0x100,                  // Play
-    ISND_3D = 0x200,                    // a 3D buffer (mono sources only)
+    ISND_3DBUFFER = 0x200,              // a 3D buffer (mono sources only)
     ISND_NOREWIND = 0x400,              // Play from the current position
 };
 
@@ -73,7 +75,7 @@ public:
     virtual int __stdcall Release();
     virtual LS3D_RESULT __stdcall Open(const char *name, uint flags);
     virtual void __stdcall Close();
-    virtual bool __stdcall IsLoaded() const;
+    virtual bool __stdcall IsOpen() const;          // Insanity3D's name for this slot
     virtual uint __stdcall GetPlayTime() const;
     virtual LS3D_RESULT __stdcall GetFormat(S_wave_format *wf);
     virtual LS3D_RESULT __stdcall Lock(void **data);
@@ -89,19 +91,21 @@ public:
     // FUNCTION: LS3DF 0x10059370
     const char *GetFileName() const
     {
-        return file_name ? file_name : C_str("");
+        return filename ? filename : C_str("");
     }
 
+    // open_flags, filename and the lock members are Insanity3D's names
     int ref;                            // 0x04
-    uint flags;                         // 0x08, ISND_*
-    C_str file_name;                    // 0x0c
+    uint open_flags;                    // 0x08, ISND_*
+    C_str filename;                     // 0x0c
     S_wave_format format;               // 0x10
     IDirectSoundBuffer8 *buffer;        // 0x20
     float bytes_per_ms;                 // 0x24
-    void *lock_data;                    // 0x28, Lock's
-    int unknown_2c;                     // 0x2c
-    DWORD lock_size;                    // 0x30, Lock's
-    int unknown_34;                     // 0x34
+    // Lock's two areas, in Insanity3D's order (and its typo); the PC's Lock asks only for the first
+    void *save_lock_ptr1;               // 0x28
+    void *save_lock_ptr2;               // 0x2c
+    DWORD save_lick_size1;              // 0x30
+    DWORD save_lick_size2;              // 0x34
     WAVEFORMATEX wave_format;           // 0x38
 };
 
@@ -174,11 +178,11 @@ public:
     virtual LS3D_RESULT __stdcall SetDir(const S_vector &dir);
     virtual LS3D_RESULT __stdcall SetVelocity(const S_vector &velocity);
     virtual LS3D_RESULT __stdcall SetDistances(float min, float max);
-    virtual LS3D_RESULT __stdcall SetCone(float inside, float outside);
-    virtual LS3D_RESULT __stdcall SetOutVolume(float volume);
+    virtual LS3D_RESULT __stdcall SetCone(float in_angle, float out_angle);
+    virtual LS3D_RESULT __stdcall SetOutVolume(float out_vol);
 
     bool is3d_init;                     // 0x1c
-    IDirectSound3DBuffer *lpDS3DBuffer; // 0x20
+    IDirectSound3DBuffer *lpDSB3D8;     // 0x20, Insanity3D's name
 };
 
 // SYNTHETIC: LS3DF 0x1007b390
@@ -206,7 +210,7 @@ public:
     virtual LS3D_RESULT __stdcall CommitDeferredSettings();
 
     int ref;                            // 0x04
-    DS3DLISTENER params;                // 0x08
+    DS3DLISTENER ds_data;               // 0x08, Insanity3D's name
 };
 
 // The hardware 3D channel lists (IS_sound.cpp; PS2 names)
@@ -235,11 +239,11 @@ public:
     ISND_driver();
     ~ISND_driver();
 
-    virtual LS3D_RESULT __stdcall Init(void *hwnd, int freq, int channels, int bits, uint flags);
+    virtual LS3D_RESULT __stdcall Init(void *hwnd, int mix_freq, int num_chan, int bps, uint flags);
     virtual LS3D_RESULT __stdcall Init(ISND_INIT *init);
     virtual void __stdcall Close();
     virtual bool __stdcall IsInit() const;
-    virtual LS3D_RESULT __stdcall InitBuffer(int freq, int channels, int bits);
+    virtual LS3D_RESULT __stdcall InitBuffer(int mix_freq, int num_chan, int bps);
     virtual LS3D_RESULT __stdcall SetVolume(float volume);
     virtual LS3D_RESULT __stdcall GetCaps(uint *caps) const;
     virtual ISND_source *__stdcall CreateSource();
@@ -253,21 +257,22 @@ public:
 
 private:
     int InitEAX();
-    bool InitDSound(void *hwnd, int freq, int channels, int bits, uint flags);
+    bool InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, uint flags);
 
 public:
+    // lpDS8, eax_property_set, ds_property, lpDSP, create_flags and volume are Insanity3D's names
     void *hwnd;                             // 0x04
     int ref;                                // 0x08
     IDirectSound8 *lpDS8;                   // 0x0c
-    IKsPropertySet *eax_property_set;       // 0x10, of eax_buffer
-    IDirectSound3DBuffer *eax_buffer;       // 0x14, of a small static 3D buffer, for EAX
+    IKsPropertySet *eax_property_set;       // 0x10, of ds_property
+    IDirectSound3DBuffer *ds_property;      // 0x14, of a small static 3D buffer, for EAX
     HMODULE module;                         // 0x18
     int unknown_1c;                         // 0x1c
     void *unknown_20;                       // 0x20
     int unknown_24;                         // 0x24
-    IDirectSoundBuffer *lpDSBPrimary;       // 0x28
+    IDirectSoundBuffer *lpDSP;              // 0x28, the primary buffer
     IDirectSound3DListener *lpListener;     // 0x2c
-    uint init_flags;                        // 0x30, ISNDINIT_*
+    uint create_flags;                      // 0x30, ISNDINIT_*
     float volume;                           // 0x34
     uint max_freq;                          // 0x38
     uint min_freq;                          // 0x3c

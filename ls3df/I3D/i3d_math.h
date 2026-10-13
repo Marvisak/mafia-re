@@ -249,7 +249,7 @@ struct S_plane {
     S_vector normal;
     float d;
 
-    I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &p, S_vector &pos, S_vector &dir) const;
+    I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
 };
 
 LS3D_EXPORT float __cdecl RandFloat();

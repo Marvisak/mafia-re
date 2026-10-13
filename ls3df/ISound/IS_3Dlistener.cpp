@@ -7,11 +7,11 @@
 ISND_3Dlistener::ISND_3Dlistener()
 {
     ref = 1;
-    memset(&params, 0, sizeof(params));
-    params.flDistanceFactor = 1.0f;
-    params.flDopplerFactor = 1.0f;
-    params.flRolloffFactor = 1.0f;
-    params.dwSize = sizeof(params);
+    memset(&ds_data, 0, sizeof(ds_data));
+    ds_data.flDistanceFactor = 1.0f;
+    ds_data.flDopplerFactor = 1.0f;
+    ds_data.flRolloffFactor = 1.0f;
+    ds_data.dwSize = sizeof(ds_data);
 }
 
 // FUNCTION: LS3DF 0x1007b0a0
@@ -42,58 +42,58 @@ int ISND_3Dlistener::Release()
 // FUNCTION: LS3DF 0x1007b100
 LS3D_RESULT ISND_3Dlistener::SetPos(const S_vector &pos)
 {
-    params.vPosition.x = pos.x;
-    params.vPosition.y = pos.y;
-    params.vPosition.z = pos.z;
+    ds_data.vPosition.x = pos.x;
+    ds_data.vPosition.y = pos.y;
+    ds_data.vPosition.z = pos.z;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b120
 LS3D_RESULT ISND_3Dlistener::SetDir(const S_vector &dir, const S_vector &up)
 {
-    params.vOrientFront.x = dir.x;
-    params.vOrientFront.y = dir.y;
-    params.vOrientFront.z = dir.z;
-    params.vOrientTop.x = up.x;
-    params.vOrientTop.y = up.y;
-    params.vOrientTop.z = up.z;
+    ds_data.vOrientFront.x = dir.x;
+    ds_data.vOrientFront.y = dir.y;
+    ds_data.vOrientFront.z = dir.z;
+    ds_data.vOrientTop.x = up.x;
+    ds_data.vOrientTop.y = up.y;
+    ds_data.vOrientTop.z = up.z;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b160
 LS3D_RESULT ISND_3Dlistener::SetVelocity(const S_vector &velocity)
 {
-    params.vVelocity.x = velocity.x;
-    params.vVelocity.y = velocity.y;
-    params.vVelocity.z = velocity.z;
+    ds_data.vVelocity.x = velocity.x;
+    ds_data.vVelocity.y = velocity.y;
+    ds_data.vVelocity.z = velocity.z;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b180
 LS3D_RESULT ISND_3Dlistener::SetDistanceFactor(float factor)
 {
-    params.flDistanceFactor = factor;
+    ds_data.flDistanceFactor = factor;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b190
 LS3D_RESULT ISND_3Dlistener::SetDopplerFactor(float factor)
 {
-    params.flDopplerFactor = factor;
+    ds_data.flDopplerFactor = factor;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b1a0
 LS3D_RESULT ISND_3Dlistener::SetRolloffFactor(float factor)
 {
-    params.flRolloffFactor = factor;
+    ds_data.flRolloffFactor = factor;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007b1b0
 LS3D_RESULT ISND_3Dlistener::Update()
 {
-    return SUCCEEDED(pISndDriver->lpListener->SetAllParameters(&params, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
+    return SUCCEEDED(pISndDriver->lpListener->SetAllParameters(&ds_data, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
 }
 
 // Set takes the property's address: a scalar value is copied into a static for it, a vector is passed by address in
@@ -103,7 +103,7 @@ LS3D_RESULT ISND_3Dlistener::Update()
 // FUNCTION: LS3DF 0x1007b1e0
 LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
 {
-    if (!pISndDriver->eax_property_set || !(pISndDriver->init_flags & ISNDINIT_EAX30))
+    if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
         return I3DERR_UNSUPPORTED;
     // GLOBAL: LS3DF 0x101c62c0
     static uint data;
@@ -149,7 +149,7 @@ LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
 // FUNCTION: LS3DF 0x1007b280
 LS3D_RESULT ISND_3Dlistener::SetEAX3Property(uint property, void *data, uint size)
 {
-    if (!pISndDriver->eax_property_set || !(pISndDriver->init_flags & ISNDINIT_EAX30))
+    if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
         return I3DERR_UNSUPPORTED;
     pISndDriver->eax_property_set->Set(DSPROPSETID_EAX30_ListenerProperties, property, NULL, 0, data, size);
     return I3D_OK;
@@ -158,7 +158,7 @@ LS3D_RESULT ISND_3Dlistener::SetEAX3Property(uint property, void *data, uint siz
 // FUNCTION: LS3DF 0x1007b2d0
 LS3D_RESULT ISND_3Dlistener::GetEAX3Property(uint property, void *data, uint size, uint *returned)
 {
-    if (!pISndDriver->eax_property_set || !(pISndDriver->init_flags & ISNDINIT_EAX30))
+    if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
         return I3DERR_UNSUPPORTED;
     pISndDriver->eax_property_set->Get(DSPROPSETID_EAX30_ListenerProperties, property, NULL, 0, data, size,
         (ULONG *)returned);

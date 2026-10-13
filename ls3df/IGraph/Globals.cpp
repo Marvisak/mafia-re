@@ -135,7 +135,7 @@ const char *__cdecl I3DGetResultMessage(LS3D_RESULT result)
         return "Not initialized";
     case I3DERR_FILECORRUPTED:
         return "File corrupted";
-    case I3DERR_NOADDITIONALFILE:
+    case I3DERR_NOFILE1:
         return "No additional file (opacity map)";
     case I3DERR_CYCLICLINK:
         return "Cyclic link of hierarchy";
