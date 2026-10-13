@@ -42,7 +42,8 @@ enum LS3D_RESULT {
 
 // Whether |f| is below MRG_ZERO, compared as integers. The engine's float helpers are inline assembly: every use
 // stores the argument for the fld, takes the bits through a pushed temporary and tests the result in al, which no C++
-// spelling reproduces. The result is returned in al (warning C4035).
+// spelling reproduces. The result is returned in al (warning C4035). The Xbox build has both helpers out of line with
+// these instructions (0x20e830, 0x20e840): its compiler doesn't inline functions that contain assembly.
 #pragma warning(push)
 #pragma warning(disable: 4035)
 inline bool IsAbsMrgZero(float f)

@@ -5,10 +5,10 @@
 // The header's zero vector (PS2 ZeroSVector) has its dynamic initializer between S_vector::RotateByMatrix and
 // RotateByNormMatrix (0x1002ea90), not at the end of the file as in the other engine files; it isn't here yet (see
 // ISound/IS_driver.cpp).
-// Not reproduced yet: S_matrix::RotateByMatrix, S_vector::operator*(S_matrix) and S_vector::RotateByMatrix write their
-// result through a pointer register set by a lea with a 32-bit displacement, a form found nowhere else in the engine,
-// and S_matrix's operator*=, operator* and Make4X4 keep the result's address in a stack slot. Every spelling tried
-// (pointers, references, arrays, inline and later-defined helpers, loops) lets VC6 address the local directly.
+// The matrix products are hand-written assembly: Make, Make4X4, S_matrix::RotateByMatrix and the vector-by-matrix
+// products. The Xbox build has the same instructions, out of line where VC6 inlines them. Their tells: the inline
+// assembler encodes a local's address with a 32-bit displacement (lea esi, r), and a block that reads this or a
+// parameter by name keeps it in memory (this spilled to a stack slot).
 #include "I3D/i3d_math.h"
 
 #include <stdlib.h>
@@ -98,22 +98,123 @@ void S_matrix::Identity()
 S_matrix S_matrix::RotateByMatrix(const S_matrix &mat) const
 {
     S_matrix r;
-    r.m[0][0] = m[0][0] * mat.m[0][0] + m[0][1] * mat.m[1][0] + m[0][2] * mat.m[2][0];
-    r.m[0][1] = m[0][0] * mat.m[0][1] + m[0][1] * mat.m[1][1] + m[0][2] * mat.m[2][1];
-    r.m[0][2] = m[0][0] * mat.m[0][2] + m[0][1] * mat.m[1][2] + m[0][2] * mat.m[2][2];
-    r.m[0][3] = 0.0f;
-    r.m[1][0] = m[1][0] * mat.m[0][0] + m[1][1] * mat.m[1][0] + m[1][2] * mat.m[2][0];
-    r.m[1][1] = m[1][0] * mat.m[0][1] + m[1][1] * mat.m[1][1] + m[1][2] * mat.m[2][1];
-    r.m[1][2] = m[1][0] * mat.m[0][2] + m[1][1] * mat.m[1][2] + m[1][2] * mat.m[2][2];
-    r.m[1][3] = 0.0f;
-    r.m[2][0] = m[2][0] * mat.m[0][0] + m[2][1] * mat.m[1][0] + m[2][2] * mat.m[2][0];
-    r.m[2][1] = m[2][0] * mat.m[0][1] + m[2][1] * mat.m[1][1] + m[2][2] * mat.m[2][1];
-    r.m[2][2] = m[2][0] * mat.m[0][2] + m[2][1] * mat.m[1][2] + m[2][2] * mat.m[2][2];
-    r.m[2][3] = 0.0f;
-    r.m[3][0] = m[3][0] * mat.m[0][0] + m[3][1] * mat.m[1][0] + m[3][2] * mat.m[2][0];
-    r.m[3][1] = m[3][0] * mat.m[0][1] + m[3][1] * mat.m[1][1] + m[3][2] * mat.m[2][1];
-    r.m[3][2] = m[3][0] * mat.m[0][2] + m[3][1] * mat.m[1][2] + m[3][2] * mat.m[2][2];
-    r.m[3][3] = 1.0f;
+    __asm {
+        mov eax, this
+        mov ebx, mat
+        lea edi, r
+        fld dword ptr [eax]
+        mov dword ptr [edi + 0xc], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi]
+        fld dword ptr [eax]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x4]
+        fld dword ptr [eax]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x8]
+        fld dword ptr [eax + 0x10]
+        mov dword ptr [edi + 0x1c], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x10]
+        fld dword ptr [eax + 0x10]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x14]
+        fld dword ptr [eax + 0x10]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x18]
+        fld dword ptr [eax + 0x20]
+        mov dword ptr [edi + 0x2c], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x20]
+        fld dword ptr [eax + 0x20]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x24]
+        fld dword ptr [eax + 0x20]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x28]
+        fld dword ptr [eax + 0x30]
+        mov dword ptr [edi + 0x3c], 0x3f800000
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x30]
+        fld dword ptr [eax + 0x30]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x34]
+        fld dword ptr [eax + 0x30]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x38]
+    }
     return r;
 }
 
@@ -149,10 +250,139 @@ bool S_matrix::Inverse(const S_matrix &mat)
     return true;
 }
 
+// this = a * b for affine matrices (the name is a guess). The PC inlines it into operator*= and operator*, so
+// /OPT:REF drops it; the Xbox build keeps it out of line (0x20f590), as its compiler doesn't inline assembly.
+S_matrix &S_matrix::Make(const S_matrix &a, const S_matrix &b)
+{
+    __asm {
+        mov eax, a
+        mov ebx, b
+        mov edi, this
+        fld dword ptr [eax]
+        mov dword ptr [edi + 0xc], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi]
+        fld dword ptr [eax]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x4]
+        fld dword ptr [eax]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x8]
+        fld dword ptr [eax + 0x10]
+        mov dword ptr [edi + 0x1c], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x10]
+        fld dword ptr [eax + 0x10]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x14]
+        fld dword ptr [eax + 0x10]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x14]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x18]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x18]
+        fld dword ptr [eax + 0x20]
+        mov dword ptr [edi + 0x2c], 0
+        fmul dword ptr [ebx]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x20]
+        fld dword ptr [eax + 0x20]
+        fmul dword ptr [ebx + 0x4]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x24]
+        fld dword ptr [eax + 0x20]
+        fmul dword ptr [ebx + 0x8]
+        fld dword ptr [eax + 0x24]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x28]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x28]
+        fld dword ptr [eax + 0x30]
+        mov dword ptr [edi + 0x3c], 0x3f800000
+        fmul dword ptr [ebx]
+        fadd dword ptr [ebx + 0x30]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x30]
+        fld dword ptr [eax + 0x30]
+        fmul dword ptr [ebx + 0x4]
+        fadd dword ptr [ebx + 0x34]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x34]
+        fld dword ptr [eax + 0x30]
+        fmul dword ptr [ebx + 0x8]
+        fadd dword ptr [ebx + 0x38]
+        fld dword ptr [eax + 0x34]
+        fmul dword ptr [ebx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x38]
+        fmul dword ptr [ebx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [edi + 0x38]
+    }
+    return *this;
+}
+
 // FUNCTION: LS3DF 0x1002d220
 S_matrix &S_matrix::operator*=(const S_matrix &mat)
 {
-    *this = *this * mat;
+    S_matrix r;
+    r.Make(*this, mat);
+    *this = r;
     return *this;
 }
 
@@ -160,22 +390,7 @@ S_matrix &S_matrix::operator*=(const S_matrix &mat)
 S_matrix S_matrix::operator*(const S_matrix &mat) const
 {
     S_matrix r;
-    r.m[0][0] = m[0][0] * mat.m[0][0] + m[0][1] * mat.m[1][0] + m[0][2] * mat.m[2][0];
-    r.m[0][1] = m[0][0] * mat.m[0][1] + m[0][1] * mat.m[1][1] + m[0][2] * mat.m[2][1];
-    r.m[0][2] = m[0][0] * mat.m[0][2] + m[0][1] * mat.m[1][2] + m[0][2] * mat.m[2][2];
-    r.m[0][3] = 0.0f;
-    r.m[1][0] = m[1][0] * mat.m[0][0] + m[1][1] * mat.m[1][0] + m[1][2] * mat.m[2][0];
-    r.m[1][1] = m[1][0] * mat.m[0][1] + m[1][1] * mat.m[1][1] + m[1][2] * mat.m[2][1];
-    r.m[1][2] = m[1][0] * mat.m[0][2] + m[1][1] * mat.m[1][2] + m[1][2] * mat.m[2][2];
-    r.m[1][3] = 0.0f;
-    r.m[2][0] = m[2][0] * mat.m[0][0] + m[2][1] * mat.m[1][0] + m[2][2] * mat.m[2][0];
-    r.m[2][1] = m[2][0] * mat.m[0][1] + m[2][1] * mat.m[1][1] + m[2][2] * mat.m[2][1];
-    r.m[2][2] = m[2][0] * mat.m[0][2] + m[2][1] * mat.m[1][2] + m[2][2] * mat.m[2][2];
-    r.m[2][3] = 0.0f;
-    r.m[3][0] = m[3][0] * mat.m[0][0] + mat.m[3][0] + m[3][1] * mat.m[1][0] + m[3][2] * mat.m[2][0];
-    r.m[3][1] = m[3][0] * mat.m[0][1] + mat.m[3][1] + m[3][1] * mat.m[1][1] + m[3][2] * mat.m[2][1];
-    r.m[3][2] = m[3][0] * mat.m[0][2] + mat.m[3][2] + m[3][1] * mat.m[1][2] + m[3][2] * mat.m[2][2];
-    r.m[3][3] = 1.0f;
+    r.Make(*this, mat);
     return r;
 }
 
@@ -191,22 +406,219 @@ S_matrix S_matrix::Mult4X4(const S_matrix &mat) const
 // FUNCTION: LS3DF 0x1002d780
 S_matrix &S_matrix::Make4X4(const S_matrix &a, const S_matrix &b)
 {
-    m[0][0] = a.m[0][0] * b.m[0][0] + a.m[0][1] * b.m[1][0] + a.m[0][2] * b.m[2][0] + a.m[0][3] * b.m[3][0];
-    m[0][1] = a.m[0][0] * b.m[0][1] + a.m[0][1] * b.m[1][1] + a.m[0][2] * b.m[2][1] + a.m[0][3] * b.m[3][1];
-    m[0][2] = a.m[0][0] * b.m[0][2] + a.m[0][1] * b.m[1][2] + a.m[0][2] * b.m[2][2] + a.m[0][3] * b.m[3][2];
-    m[0][3] = a.m[0][0] * b.m[0][3] + a.m[0][1] * b.m[1][3] + a.m[0][2] * b.m[2][3] + a.m[0][3] * b.m[3][3];
-    m[1][0] = a.m[1][0] * b.m[0][0] + a.m[1][1] * b.m[1][0] + a.m[1][2] * b.m[2][0] + a.m[1][3] * b.m[3][0];
-    m[1][1] = a.m[1][0] * b.m[0][1] + a.m[1][1] * b.m[1][1] + a.m[1][2] * b.m[2][1] + a.m[1][3] * b.m[3][1];
-    m[1][2] = a.m[1][0] * b.m[0][2] + a.m[1][1] * b.m[1][2] + a.m[1][2] * b.m[2][2] + a.m[1][3] * b.m[3][2];
-    m[1][3] = a.m[1][0] * b.m[0][3] + a.m[1][1] * b.m[1][3] + a.m[1][2] * b.m[2][3] + a.m[1][3] * b.m[3][3];
-    m[2][0] = a.m[2][0] * b.m[0][0] + a.m[2][1] * b.m[1][0] + a.m[2][2] * b.m[2][0] + a.m[2][3] * b.m[3][0];
-    m[2][1] = a.m[2][0] * b.m[0][1] + a.m[2][1] * b.m[1][1] + a.m[2][2] * b.m[2][1] + a.m[2][3] * b.m[3][1];
-    m[2][2] = a.m[2][0] * b.m[0][2] + a.m[2][1] * b.m[1][2] + a.m[2][2] * b.m[2][2] + a.m[2][3] * b.m[3][2];
-    m[2][3] = a.m[2][0] * b.m[0][3] + a.m[2][1] * b.m[1][3] + a.m[2][2] * b.m[2][3] + a.m[2][3] * b.m[3][3];
-    m[3][0] = a.m[3][0] * b.m[0][0] + a.m[3][1] * b.m[1][0] + a.m[3][2] * b.m[2][0] + a.m[3][3] * b.m[3][0];
-    m[3][1] = a.m[3][0] * b.m[0][1] + a.m[3][1] * b.m[1][1] + a.m[3][2] * b.m[2][1] + a.m[3][3] * b.m[3][1];
-    m[3][2] = a.m[3][0] * b.m[0][2] + a.m[3][1] * b.m[1][2] + a.m[3][2] * b.m[2][2] + a.m[3][3] * b.m[3][2];
-    m[3][3] = a.m[3][0] * b.m[0][3] + a.m[3][1] * b.m[1][3] + a.m[3][2] * b.m[2][3] + a.m[3][3] * b.m[3][3];
+    __asm {
+        mov esi, a
+        mov edi, b
+        mov eax, this
+        fld dword ptr [esi]
+        fmul dword ptr [edi]
+        fld dword ptr [esi + 0x4]
+        fmul dword ptr [edi + 0x10]
+        fld dword ptr [esi + 0x8]
+        fmul dword ptr [edi + 0x20]
+        fld dword ptr [esi + 0xc]
+        fmul dword ptr [edi + 0x30]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax]
+        fld dword ptr [esi]
+        fmul dword ptr [edi + 0x4]
+        fld dword ptr [esi + 0x4]
+        fmul dword ptr [edi + 0x14]
+        fld dword ptr [esi + 0x8]
+        fmul dword ptr [edi + 0x24]
+        fld dword ptr [esi + 0xc]
+        fmul dword ptr [edi + 0x34]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x4]
+        fld dword ptr [esi]
+        fmul dword ptr [edi + 0x8]
+        fld dword ptr [esi + 0x4]
+        fmul dword ptr [edi + 0x18]
+        fld dword ptr [esi + 0x8]
+        fmul dword ptr [edi + 0x28]
+        fld dword ptr [esi + 0xc]
+        fmul dword ptr [edi + 0x38]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x8]
+        fld dword ptr [esi]
+        fmul dword ptr [edi + 0xc]
+        fld dword ptr [esi + 0x4]
+        fmul dword ptr [edi + 0x1c]
+        fld dword ptr [esi + 0x8]
+        fmul dword ptr [edi + 0x2c]
+        fld dword ptr [esi + 0xc]
+        fmul dword ptr [edi + 0x3c]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0xc]
+        fld dword ptr [esi + 0x10]
+        fmul dword ptr [edi]
+        fld dword ptr [esi + 0x14]
+        fmul dword ptr [edi + 0x10]
+        fld dword ptr [esi + 0x18]
+        fmul dword ptr [edi + 0x20]
+        fld dword ptr [esi + 0x1c]
+        fmul dword ptr [edi + 0x30]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x10]
+        fld dword ptr [esi + 0x10]
+        fmul dword ptr [edi + 0x4]
+        fld dword ptr [esi + 0x14]
+        fmul dword ptr [edi + 0x14]
+        fld dword ptr [esi + 0x18]
+        fmul dword ptr [edi + 0x24]
+        fld dword ptr [esi + 0x1c]
+        fmul dword ptr [edi + 0x34]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x14]
+        fld dword ptr [esi + 0x10]
+        fmul dword ptr [edi + 0x8]
+        fld dword ptr [esi + 0x14]
+        fmul dword ptr [edi + 0x18]
+        fld dword ptr [esi + 0x18]
+        fmul dword ptr [edi + 0x28]
+        fld dword ptr [esi + 0x1c]
+        fmul dword ptr [edi + 0x38]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x18]
+        fld dword ptr [esi + 0x10]
+        fmul dword ptr [edi + 0xc]
+        fld dword ptr [esi + 0x14]
+        fmul dword ptr [edi + 0x1c]
+        fld dword ptr [esi + 0x18]
+        fmul dword ptr [edi + 0x2c]
+        fld dword ptr [esi + 0x1c]
+        fmul dword ptr [edi + 0x3c]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x1c]
+        fld dword ptr [esi + 0x20]
+        fmul dword ptr [edi]
+        fld dword ptr [esi + 0x24]
+        fmul dword ptr [edi + 0x10]
+        fld dword ptr [esi + 0x28]
+        fmul dword ptr [edi + 0x20]
+        fld dword ptr [esi + 0x2c]
+        fmul dword ptr [edi + 0x30]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x20]
+        fld dword ptr [esi + 0x20]
+        fmul dword ptr [edi + 0x4]
+        fld dword ptr [esi + 0x24]
+        fmul dword ptr [edi + 0x14]
+        fld dword ptr [esi + 0x28]
+        fmul dword ptr [edi + 0x24]
+        fld dword ptr [esi + 0x2c]
+        fmul dword ptr [edi + 0x34]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x24]
+        fld dword ptr [esi + 0x20]
+        fmul dword ptr [edi + 0x8]
+        fld dword ptr [esi + 0x24]
+        fmul dword ptr [edi + 0x18]
+        fld dword ptr [esi + 0x28]
+        fmul dword ptr [edi + 0x28]
+        fld dword ptr [esi + 0x2c]
+        fmul dword ptr [edi + 0x38]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x28]
+        fld dword ptr [esi + 0x20]
+        fmul dword ptr [edi + 0xc]
+        fld dword ptr [esi + 0x24]
+        fmul dword ptr [edi + 0x1c]
+        fld dword ptr [esi + 0x28]
+        fmul dword ptr [edi + 0x2c]
+        fld dword ptr [esi + 0x2c]
+        fmul dword ptr [edi + 0x3c]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x2c]
+        fld dword ptr [esi + 0x30]
+        fmul dword ptr [edi]
+        fld dword ptr [esi + 0x34]
+        fmul dword ptr [edi + 0x10]
+        fld dword ptr [esi + 0x38]
+        fmul dword ptr [edi + 0x20]
+        fld dword ptr [esi + 0x3c]
+        fmul dword ptr [edi + 0x30]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x30]
+        fld dword ptr [esi + 0x30]
+        fmul dword ptr [edi + 0x4]
+        fld dword ptr [esi + 0x34]
+        fmul dword ptr [edi + 0x14]
+        fld dword ptr [esi + 0x38]
+        fmul dword ptr [edi + 0x24]
+        fld dword ptr [esi + 0x3c]
+        fmul dword ptr [edi + 0x34]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x34]
+        fld dword ptr [esi + 0x30]
+        fmul dword ptr [edi + 0x8]
+        fld dword ptr [esi + 0x34]
+        fmul dword ptr [edi + 0x18]
+        fld dword ptr [esi + 0x38]
+        fmul dword ptr [edi + 0x28]
+        fld dword ptr [esi + 0x3c]
+        fmul dword ptr [edi + 0x38]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x38]
+        fld dword ptr [esi + 0x30]
+        fmul dword ptr [edi + 0xc]
+        fld dword ptr [esi + 0x34]
+        fmul dword ptr [edi + 0x1c]
+        fld dword ptr [esi + 0x38]
+        fmul dword ptr [edi + 0x2c]
+        fld dword ptr [esi + 0x3c]
+        fmul dword ptr [edi + 0x3c]
+        faddp st(1), st
+        fxch st(2)
+        faddp st(1), st
+        faddp st(1), st
+        fstp dword ptr [eax + 0x3c]
+    }
     return *this;
 }
 
@@ -399,9 +811,41 @@ S_vector &S_vector::operator*=(const S_matrix &m)
 S_vector S_vector::operator*(const S_matrix &m) const
 {
     S_vector r;
-    r.x = x * m.m[0][0] + m.m[3][0] + y * m.m[1][0] + z * m.m[2][0];
-    r.y = x * m.m[0][1] + m.m[3][1] + y * m.m[1][1] + z * m.m[2][1];
-    r.z = x * m.m[0][2] + m.m[3][2] + y * m.m[1][2] + z * m.m[2][2];
+    __asm {
+        mov eax, this
+        mov edx, m
+        lea esi, r
+        fld dword ptr [eax]
+        fmul dword ptr [edx]
+        fadd dword ptr [edx + 0x30]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [esi]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x4]
+        fadd dword ptr [edx + 0x34]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x4]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x8]
+        fadd dword ptr [edx + 0x38]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x8]
+    }
     return r;
 }
 
@@ -409,9 +853,38 @@ S_vector S_vector::operator*(const S_matrix &m) const
 S_vector S_vector::RotateByMatrix(const S_matrix &m) const
 {
     S_vector r;
-    r.x = x * m.m[0][0] + y * m.m[1][0] + z * m.m[2][0];
-    r.y = x * m.m[0][1] + y * m.m[1][1] + z * m.m[2][1];
-    r.z = x * m.m[0][2] + y * m.m[1][2] + z * m.m[2][2];
+    __asm {
+        mov eax, this
+        mov edx, m
+        lea esi, r
+        fld dword ptr [eax]
+        fmul dword ptr [edx]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [esi]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x4]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x4]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x8]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x8]
+    }
     return r;
 }
 
@@ -419,7 +892,39 @@ S_vector S_vector::RotateByMatrix(const S_matrix &m) const
 // FUNCTION: LS3DF 0x1002eab0
 S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
 {
-    S_vector r = RotateByMatrix(m);
+    S_vector r;
+    __asm {
+        mov eax, this
+        mov edx, m
+        lea esi, r
+        fld dword ptr [eax]
+        fmul dword ptr [edx]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x10]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x20]
+        faddp st(1), st
+        fstp dword ptr [esi]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x4]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x14]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x24]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x4]
+        fld dword ptr [eax]
+        fmul dword ptr [edx + 0x8]
+        fld dword ptr [eax + 0x4]
+        fmul dword ptr [edx + 0x18]
+        faddp st(1), st
+        fld dword ptr [eax + 0x8]
+        fmul dword ptr [edx + 0x28]
+        faddp st(1), st
+        fstp dword ptr [esi + 0x8]
+    }
     float sq = m.m[0][0] * m.m[0][0] + m.m[1][0] * m.m[1][0] + m.m[2][0] * m.m[2][0];
     if (fabs(sq - 1.0f) > MRG_ZERO)
         r.x /= (float)sqrt(sq);

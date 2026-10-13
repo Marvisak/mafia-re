@@ -165,6 +165,8 @@ struct S_matrix {
     I3D_MATH_API void __stdcall Identity();
     I3D_MATH_API S_matrix __stdcall RotateByMatrix(const S_matrix &mat) const;
     I3D_MATH_API bool __stdcall Inverse(const S_matrix &mat);
+    // this = a * b without the last column (affine matrices)
+    S_matrix &Make(const S_matrix &a, const S_matrix &b);
     I3D_MATH_API S_matrix &__stdcall operator*=(const S_matrix &mat);
     I3D_MATH_API S_matrix __stdcall operator*(const S_matrix &mat) const;
     I3D_MATH_API S_matrix __stdcall Mult4X4(const S_matrix &mat) const;
