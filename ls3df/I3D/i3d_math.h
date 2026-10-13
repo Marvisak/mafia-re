@@ -45,13 +45,14 @@ struct S_vector {
     }
 
     // Sets the vector to v normalized (the name is a guess). The out-of-line copy the linker kept is in collision code.
+    // The sum is written out, as in Magnitude: through Dot, the math's callers leave that call out of line.
     // FUNCTION: LS3DF 0x10014970
     void SetNormalized(const S_vector &v)
     {
         x = v.x;
         y = v.y;
         z = v.z;
-        float sq = v.Dot(v);
+        float sq = v.x * v.x + v.y * v.y + v.z * v.z;
         if (fabs(sq - 1.0f) < MRG_ZERO) {
             x = v.x;
             y = v.y;

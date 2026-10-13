@@ -1176,10 +1176,11 @@ S_quat S_quat::Slerp(const S_quat &q, float t, bool shortest) const
     }
     float scale0, scale1;
     if ((1.0f - cosom) > SLERP_DELTA) {
+        // Two divisions by sinom, which VC6 turns into one reciprocal and two multiplications
         float omega = (float)acos(cosom);
-        float sinom = 1.0f / (float)sin(omega);
-        scale0 = (float)sin((1.0f - t) * omega) * sinom;
-        scale1 = (float)sin(t * omega) * sinom;
+        float sinom = (float)sin(omega);
+        scale0 = (float)sin((1.0f - t) * omega) / sinom;
+        scale1 = (float)sin(t * omega) / sinom;
     } else {
         scale0 = 1.0f - t;
         scale1 = t;
@@ -1197,7 +1198,7 @@ S_quat S_quat::RotateByMatrix(const S_matrix &m) const
 {
     S_quat q;
     q.Make(m);
-    return q * *this;
+    return *this * q;
 }
 
 // FUNCTION: LS3DF 0x10030140
