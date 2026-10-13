@@ -334,7 +334,8 @@ def main() -> None:
         pos = min(hits, key=lambda p: (not in_thunk_run(p), abs(orig_text_start + p - (addr + delta))))
         thunks.append((orig_text_start + pos, name))
 
-    globals_, strings, floats, conflicts, outvoted = [], [], [], [], []
+    globals_, strings, floats, conflicts, outvoted, displaced = [], [], [], [], [], []
+    rank = {}  # global name -> (pointers exactly at it, votes), to settle two globals given one address
     for sym in set(exact) | set(inside):
         addr, name, obj = sym
         if not (is_crt(obj) or obj == STATIC_DATA) or text_start <= addr < text_end:
@@ -357,7 +358,21 @@ def main() -> None:
             if (not orig.relocated or name in EMPTY_STRINGS) and addr in string_names:
                 strings.append((next(iter(cand)), string_names[addr]))
         else:
-            globals_.append((next(iter(cand)), var_names.get(addr, name)))
+            global_name = var_names.get(addr, name)
+            globals_.append((next(iter(cand)), global_name))
+            rank[global_name] = (sym in exact, sum(cand.values()))
+
+    # Two globals given one address: a pointer into a global resolves to whatever is at that address in the
+    # original (LS3DF's ___lc_collate_cp got __cflush's, which _stbuf, _openfile and _getbuf increment). Pointers
+    # exactly at a global outrank pointers into one, then more of them win; the other is left out.
+    by_addr = defaultdict(list)
+    for addr, name in globals_:
+        by_addr[addr].append(name)
+    for addr, names in by_addr.items():
+        if len(names) > 1:
+            keep = max(names, key=lambda n: rank[n])
+            displaced += [(n, keep, addr) for n in names if n != keep]
+    globals_ = [(addr, name) for addr, name in globals_ if name not in {n for n, _, _ in displaced}]
 
     out = Path(target.source_paths[0]) / args.out
     csv = out.with_suffix(".csv")
@@ -386,6 +401,8 @@ def main() -> None:
         print(f"  {name} at 0x{best:x}, outvoting " + ", ".join(f"0x{a:x} ({v}x)" for a, v in cand.items() if a != best))
     for name, cand in conflicts:
         print(f"  conflicting addresses for {name}: " + ", ".join(f"0x{a:x} ({v}x)" for a, v in cand.items()))
+    for name, keep, addr in displaced:
+        print(f"  {name} left out: 0x{addr:x} is {keep}'s")
 
 
 if __name__ == "__main__":
