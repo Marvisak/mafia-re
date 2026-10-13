@@ -22,10 +22,13 @@ enum E_SEVERITY {
     ERR_FATAL,
 };
 
+// The game's error callback. The engine's own functions are __fastcall (/Gr), the game's callback __cdecl.
+typedef void __cdecl t_error_handler(LS3D_RESULT result, E_SEVERITY severity, const char *message);
+
 // What IGraph::Init takes (PS2 name, 0x38 bytes)
 struct IGRAPH_INIT_DESC {
     uchar unknown_00[0x34];
-    void (__cdecl *error_handler)(LS3D_RESULT result, E_SEVERITY severity, const char *message);   // 0x34
+    t_error_handler *error_handler;     // 0x34
 };
 
 // PS2 name
