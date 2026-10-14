@@ -17,7 +17,10 @@ A spec is a Python file that defines
         ("pleq", [("ls3df/I3D/I3d_math.h", "    S_vector operator-(", "...")]),  # ... or in another file
     ]
 
-and optionally ORIG_RANGE = (start, end), to compare only that part of the original, and OURS_RETS = (a, b), to
+A variant can carry a third element, a dict of options: "cl" names another CL.EXE to compile it with (relative to
+the repository, e.g. "build/vc6/ijoy/cl/CL.EXE", which loads the C1XX.DLL and c2.dll next to it), "flags" adds
+switches after the build's own (the last /O, /G or /Ob wins). They test a front end or a switch the way an edit tests
+a spelling. Optionally the spec also defines ORIG_RANGE = (start, end), to compare only that part of the original, and OURS_RETS = (a, b), to
 take our instructions from after the a-th `ret` through the b-th (a = 0: from the start). The two together isolate
 one exit path of a function. The spec runs as Python, with REPO (the repository path) defined, so it can build its
 variants in loops. The unchanged source is always scored as "base".
@@ -209,7 +212,7 @@ def apply_edits(source: Path, edits):
     return texts, None
 
 
-def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str):
+def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, options: dict):
     work = Path(tempfile.mkdtemp(prefix="variant"))
     inc = work / "inc"
     src = work / source.name
@@ -235,7 +238,9 @@ def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str):
     c = re.sub(re.escape(str(source)) + r"\s*$", "", c, flags=re.I)
     first_i = re.search(r"\s[-/]I", c)
     at = first_i.start() if first_i else len(c)
-    c = c[:at] + f' -I"{inc}"' + c[at:] + f' -I"{source.parent}" "{src}"'
+    c = c[:at] + f' -I"{inc}"' + c[at:] + f' -I"{source.parent}" {options.get("flags", "")} "{src}"'
+    if "cl" in options:
+        c = re.sub(r"^\S*CL\.EXE", lambda _: str(REPO / options["cl"]), c, flags=re.I)
     r = subprocess.run(c, env=env, cwd=BUILD, capture_output=True, text=True)
     if r.returncode or not obj.exists():
         return None, None, (r.stdout + r.stderr)[-1500:]
@@ -285,11 +290,11 @@ def main():
             sys.exit(f"no variant {args.show!r}")
 
     def run(variant):
-        name, edits = variant
+        name, edits, options = (*variant, {})[:3]
         texts, err = apply_edits(source, edits)
         if err:
             return name, None, None, err
-        code, calls, err = build_variant(cmd, env, source, texts, symbol)
+        code, calls, err = build_variant(cmd, env, source, texts, symbol, options)
         if err:
             return name, None, None, err
         ours, names = disasm(code, 0, calls)
