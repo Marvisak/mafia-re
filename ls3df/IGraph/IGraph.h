@@ -482,5 +482,10 @@ DWORD WINAPI RenderThreadProc(void *param);
 // TEMPLATE: LS3DF 0x1007b040
 // C_list<S_texture_slot>::C_list<S_texture_slot>
 
+// And its destructor, which the linker folds with the other lists' identical ones: the original's copy is in I3D code
+// (another list's, not known yet), ours keeps the name of IShow.cpp's region list
+// TEMPLATE: LS3DF 0x10034350
+// C_list<S_show_region>::~C_list<S_show_region>
+
 // Globals.cpp
 void ErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message);

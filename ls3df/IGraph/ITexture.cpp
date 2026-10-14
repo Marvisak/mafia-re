@@ -88,7 +88,15 @@ bool RemoveTextureFromTextureManager(ITexture *texture);
         float scale = min(scale_x, scale_y);                                                                         \
         sx = (ushort)(sx * scale);                                                                                   \
         sy = (ushort)(sy * scale);                                                                                   \
-        ushort x = m_HardwareCaps & 8 ? 4 : 1, y = m_HardwareCaps & 8 ? 4 : 1;                                       \
+        ushort x, y;                                                                                                 \
+        if (m_HardwareCaps & 8)                                                                                      \
+            x = 4;                                                                                                   \
+        else                                                                                                         \
+            x = 1;                                                                                                   \
+        if (m_HardwareCaps & 8)                                                                                      \
+            y = 4;                                                                                                   \
+        else                                                                                                         \
+            y = 1;                                                                                                   \
         while (sx > x)                                                                                               \
             x <<= 1;                                                                                                 \
         while (sy > y)                                                                                               \
@@ -188,7 +196,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
 {
     // PS2 names: the PS2 build has these as globals
     void *pSrcBMPPtr = NULL;
-    void *pSrcBMPPal = NULL;
+    uchar *pSrcBMPPal = NULL;
     int SrcBMPPitchAdder = 0;
     void *pSrcOptBMPPtr = NULL;
     void *pSrcOptBMPPal = NULL;
@@ -238,7 +246,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             h >>= 1;
         }
         TEXTURE_SIZE(w, h);
-        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, &pSrcBMPPal, &SrcBMPInfo, true, NULL, -1))
+        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, true, NULL, -1))
             return I3DERR_FILECORRUPTED;
         SrcBMPPitchAdder = SrcBMPInfo.biBitCount / 8 * SrcBMPInfo.biWidth + SrcBMPInfo.biXPelsPerMeter;
     } else if (name) {
@@ -273,8 +281,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             }
             TEXTURE_SIZE(w, h);
         }
-        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, &pSrcBMPPal, &SrcBMPInfo, false, &SrcBMPLastWriteTime,
-                handle))
+        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, false,
+                &SrcBMPLastWriteTime, handle))
             return I3DERR_FILECORRUPTED;
         SrcBMPPitchAdder = SrcBMPInfo.biBitCount / 8 * SrcBMPInfo.biWidth + SrcBMPInfo.biXPelsPerMeter;
     } else {
@@ -336,7 +344,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 break;
             }
             case 1: {
-                uchar *src = (uchar *)pSrcOptBMPPtr, *dst = pOptBMPPtr;
+                uchar *dst = pOptBMPPtr, *src = (uchar *)pSrcOptBMPPtr;
                 for (int i = SrcOptBMPInfo.biHeight - 1; i >= 0; i--) {
                     for (int j = 0; j < SrcOptBMPInfo.biWidth; j++) {
                         uchar *c = (uchar *)pSrcOptBMPPal + *src++ * 4;
@@ -347,8 +355,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             }
             default:
                 dbgPrintf("IImage::Create() - Unsuppoted ALPHA source file %i bit [ %i(%i), %i ] format. Only 8,24 bit "
-                    "are supported ! : %s", SrcOptBMPInfo.biBitCount, SrcOptBMPInfo.biWidth,
-                    SrcOptBMPInfo.biWidth * SrcOptBMPInfo.biBitCount / 8, SrcOptBMPInfo.biHeight, alpha_name);
+                    "are supported ! : %s", SrcBMPInfo.biBitCount, SrcBMPInfo.biWidth,
+                    SrcBMPInfo.biWidth * SrcBMPInfo.biBitCount / 8, SrcBMPInfo.biHeight, alpha_name);
                 delete[] pSrcBMPPtr;
                 delete[] pSrcOptBMPPtr;
                 delete[] pSrcBMPPal;
@@ -372,52 +380,38 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     D3DFORMAT format;
     D3DFORMAT dxt_format = (D3DFORMAT)0;
     ushort dxt = 0;
-    if (this->flags & ITC_TRUECOLOR)
-        format = m_TrueColorTexturePixelFormat;
-    if (!(this->flags & ITC_TRUECOLOR) || !format) {
+    if (!(this->flags & ITC_TRUECOLOR) || (format = m_TrueColorTexturePixelFormat) == 0) {
         this->flags &= ~ITC_TRUECOLOR;
         if ((this->flags & (ITC_ALPHA | ITC_USE_ALPHA)) && !(this->flags & ITC_COLORKEY)) {
-            if (this->flags & ITC_DXT)
-                format = m_DXTAlphaTexturePixelFormat;
-            if (!(this->flags & ITC_DXT) || !format)
-                format = m_AlphaTexturePixelFormat;
-            else {
+            if (this->flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
                 dxt = 3;
                 dxt_format = m_AlphaTexturePixelFormat;
-            }
+            } else
+                format = m_AlphaTexturePixelFormat;
         } else if (this->flags & ITC_COLORKEY) {
-            if (this->flags & ITC_MIPMAP) {
-                if (this->flags & ITC_DXT)
-                    format = m_DXTAlphaTexturePixelFormat;
-                if (!(this->flags & ITC_DXT) || !format)
-                    format = m_AlphaTexturePixelFormat;
-                else {
-                    dxt = 3;
-                    dxt_format = m_AlphaTexturePixelFormat;
-                }
-            } else {
-                if (this->flags & ITC_DXT)
-                    format = m_DXTTexturePixelFormat;
-                if (!(this->flags & ITC_DXT) || !format)
-                    format = m_Alpha1TexturePixelFormat;
-                else {
+            if (!(this->flags & ITC_MIPMAP)) {
+                if (this->flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
                     dxt = 2;
                     dxt_format = m_Alpha1TexturePixelFormat;
-                }
+                } else
+                    format = m_Alpha1TexturePixelFormat;
+            } else {
+                if (this->flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
+                    dxt = 3;
+                    dxt_format = m_AlphaTexturePixelFormat;
+                } else
+                    format = m_AlphaTexturePixelFormat;
             }
         } else {
-            if (this->flags & ITC_DXT)
-                format = m_DXTTexturePixelFormat;
-            if (!(this->flags & ITC_DXT) || !format)
-                format = m_TexturePixelFormat;
-            else {
+            if (this->flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
                 dxt = 1;
                 dxt_format = m_Alpha1TexturePixelFormat;
-            }
+            } else
+                format = m_TexturePixelFormat;
         }
     }
     this->format = format;
-    uint num_levels = this->flags & ITC_MIPMAP ? levels : 1;
+    ushort num_levels = !(this->flags & ITC_MIPMAP) ? 1 : levels;
     m_pD3DDevice8->CreateTexture(width, height, num_levels, 0, format, D3DPOOL_MANAGED, &texture);
     this->levels = (ushort)texture->GetLevelCount();
 
@@ -452,64 +446,66 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         }
         // To ARGB bytes, the rows from the top: the image's start bottom-up
         color_key = 0;
-        uchar *dst = pixels;
         switch (SrcBMPInfo.biBitCount) {
         case 8: {
             // The color key is palette entry 0's color in the texture's format
-            uchar *pal = (uchar *)pSrcBMPPal;
             switch (format) {
+            case D3DFMT_R5G6B5:
+                color_key = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 11 | pSrcBMPPal[1] >> 2 << 5;
+                break;
             case D3DFMT_A8R8G8B8:
-                color_key = pal[0] | pal[2] << 16 | pal[1] << 8;
+                color_key = pSrcBMPPal[0] | pSrcBMPPal[2] << 16 | pSrcBMPPal[1] << 8;
                 break;
             case D3DFMT_A4R4G4B4:
             case D3DFMT_DXT3:
-                color_key = pal[0] >> 4 | pal[2] >> 4 << 8 | pal[1] & 0xf0;
+                color_key = pSrcBMPPal[0] >> 4 | pSrcBMPPal[2] >> 4 << 8 | pSrcBMPPal[1] >> 4 << 4;
                 break;
             case D3DFMT_X1R5G5B5:
             case D3DFMT_A1R5G5B5:
             case D3DFMT_DXT1:
-                color_key = pal[0] >> 3 | pal[2] >> 3 << 10 | pal[1] >> 3 << 5;
-                break;
-            case D3DFMT_R5G6B5:
-                color_key = pal[0] >> 3 | pal[2] >> 3 << 11 | pal[1] >> 2 << 5;
+                color_key = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 10 | pSrcBMPPal[1] >> 3 << 5;
                 break;
             }
             uchar *opt = NULL;
             if (pOptBMPPtr)
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biWidth;
-            uchar *src = (uchar *)pSrcBMPPtr + (SrcBMPInfo.biHeight - 1) * SrcBMPInfo.biXPelsPerMeter;
-            for (int i = SrcBMPInfo.biHeight - 1; i >= 0; i--) {
+            int i = SrcBMPInfo.biHeight - 1;
+            uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
+            uchar *dst = pixels;
+            for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     uchar c = *src;
                     if (opt)
                         *dst = *opt++;
                     else if (this->flags & ITC_COLORKEY) {
                         uint color;
-                        uchar *p = pal + c * 4;
                         switch (format) {
+                        case D3DFMT_R5G6B5:
+                            color = pSrcBMPPal[c * 4] >> 3 | pSrcBMPPal[c * 4 + 2] >> 3 << 11 |
+                                pSrcBMPPal[c * 4 + 1] >> 2 << 5;
+                            break;
                         case D3DFMT_A8R8G8B8:
-                            color = p[0] | p[2] << 16 | p[1] << 8;
+                            color = pSrcBMPPal[c * 4] | pSrcBMPPal[c * 4 + 2] << 16 | pSrcBMPPal[c * 4 + 1] << 8;
                             break;
                         case D3DFMT_A4R4G4B4:
                         case D3DFMT_DXT3:
-                            color = p[0] >> 4 | p[2] >> 4 << 8 | p[1] & 0xf0;
+                            color = pSrcBMPPal[c * 4] >> 4 | pSrcBMPPal[c * 4 + 2] >> 4 << 8 |
+                                pSrcBMPPal[c * 4 + 1] >> 4 << 4;
                             break;
                         case D3DFMT_X1R5G5B5:
                         case D3DFMT_A1R5G5B5:
                         case D3DFMT_DXT1:
-                            color = p[0] >> 3 | p[2] >> 3 << 10 | p[1] >> 3 << 5;
-                            break;
-                        case D3DFMT_R5G6B5:
-                            color = p[0] >> 3 | p[2] >> 3 << 11 | p[1] >> 2 << 5;
+                            color = pSrcBMPPal[c * 4] >> 3 | pSrcBMPPal[c * 4 + 2] >> 3 << 10 |
+                                pSrcBMPPal[c * 4 + 1] >> 3 << 5;
                             break;
                         }
                         *dst = color == color_key ? 0 : 0xff;
                     } else
                         *dst = 0xff;
-                    dst[1] = pal[c * 4 + 2];
-                    dst[2] = pal[c * 4 + 1];
-                    dst[3] = pal[c * 4];
-                    dst += 4;
+                    dst++;
+                    *dst++ = pSrcBMPPal[c * 4 + 2];
+                    *dst++ = pSrcBMPPal[c * 4 + 1];
+                    *dst++ = pSrcBMPPal[c * 4];
                     src++;
                 }
                 src -= SrcBMPPitchAdder;
@@ -523,10 +519,13 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             if (pOptBMPPtr)
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
             SrcBMPPitchAdder = (uint)SrcBMPPitchAdder >> 1;
-            ushort *src = (ushort *)((uchar *)pSrcBMPPtr + (SrcBMPInfo.biHeight - 1) * SrcBMPInfo.biXPelsPerMeter);
-            for (int i = SrcBMPInfo.biHeight - 1; i >= 0; i--) {
+            int i = SrcBMPInfo.biHeight - 1;
+            ushort *src = (ushort *)((uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter);
+            uchar *dst = pixels;
+            for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     ushort c = *src;
+                    uchar r = (c & 0x7c00) >> 7, g = (c & 0x3e0) >> 2, b = *src << 3;
                     if (this->flags & ITC_ALPHA)
                         *dst = c & 0x8000 ? 0xff : 0;
                     else if (opt)
@@ -535,10 +534,10 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                         *dst = 0;
                     else
                         *dst = 0xff;
-                    dst[1] = (c & 0x7c00) >> 7;
-                    dst[2] = (c & 0x3e0) >> 2;
-                    dst[3] = (c & 0x1f) << 3;
-                    dst += 4;
+                    dst++;
+                    *dst++ = r;
+                    *dst++ = g;
+                    *dst++ = b;
                     src++;
                 }
                 src -= SrcBMPPitchAdder;
@@ -550,20 +549,22 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             uchar *opt = NULL;
             if (pOptBMPPtr)
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
-            uchar *src = (uchar *)pSrcBMPPtr + (SrcBMPInfo.biHeight - 1) * SrcBMPInfo.biXPelsPerMeter;
-            for (int i = SrcBMPInfo.biHeight - 1; i >= 0; i--) {
+            int i = SrcBMPInfo.biHeight - 1;
+            uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
+            uchar *dst = pixels;
+            for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
-                    uchar g = src[1], b = src[0], r = src[2];
+                    uchar r = src[2], g = src[1], b = src[0];
                     if (opt)
                         *dst = *opt++;
                     else if ((this->flags & ITC_COLORKEY) && b == color_key)
                         *dst = 0;
                     else
                         *dst = 0xff;
-                    dst[1] = r;
-                    dst[2] = g;
-                    dst[3] = b;
-                    dst += 4;
+                    dst++;
+                    *dst++ = r;
+                    *dst++ = g;
+                    *dst++ = b;
                     src += 3;
                 }
                 src -= SrcBMPPitchAdder;
@@ -575,10 +576,12 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             uchar *opt = NULL;
             if (pOptBMPPtr)
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
-            uchar *src = (uchar *)pSrcBMPPtr + (SrcBMPInfo.biHeight - 1) * SrcBMPInfo.biXPelsPerMeter;
-            for (int i = SrcBMPInfo.biHeight - 1; i >= 0; i--) {
+            int i = SrcBMPInfo.biHeight - 1;
+            uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
+            uchar *dst = pixels;
+            for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
-                    uchar g = src[1], b = src[0], r = src[2];
+                    uchar r = src[2], b = src[0], g = src[1];
                     if (this->flags & ITC_ALPHA)
                         *dst = src[3];
                     else if (opt)
@@ -587,10 +590,10 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                         *dst = 0;
                     else
                         *dst = 0xff;
-                    dst[1] = r;
-                    dst[2] = g;
-                    dst[3] = b;
-                    dst += 4;
+                    dst++;
+                    *dst++ = r;
+                    *dst++ = g;
+                    *dst++ = b;
                     src += 4;
                 }
                 src -= SrcBMPPitchAdder;
@@ -613,8 +616,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     }
 
     if (!(this->flags & ITC_EMPTY)) {
+        uchar *resized = NULL;
         if (width != SrcBMPInfo.biWidth || height != SrcBMPInfo.biHeight) {
-            uchar *resized = NULL;
             pGlobalIGraph->ResizeImage(SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, SrcBMPInfo.biWidth * 4, pixels,
                 width, height, width * 4, &resized, 4, 1);
             delete[] pixels;
@@ -650,7 +653,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         }
     }
     IDirect3DTexture8 *dxt_texture = NULL;
-    if (!(this->flags & ITC_EMPTY) && dxt_format) {
+    if (!(this->flags & ITC_EMPTY) && dxt_format != D3DFMT_UNKNOWN) {
         if (FAILED(m_pD3DDevice8->CreateTexture(width, height, num_levels, 0, dxt_format, D3DPOOL_MANAGED,
                 &dxt_texture))) {
             delete[] level_src;
@@ -658,7 +661,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             return I3DERR_GENERIC;
         }
     }
-    for (uint level = 0; level < this->levels; level++) {
+    for (int level = 0; level < this->levels; level++) {
         IDirect3DSurface8 *surface;
         if (FAILED(texture->GetSurfaceLevel(level, &surface))) {
             if (dxt_texture)
@@ -696,18 +699,31 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                     ok = m_Convert(pixels, surface, width, height, dxt);
             } else {
                 // Each pixel of the smaller level from four: 3/8 of the two on one diagonal, 1/8 of the others
+                // (dx and dy count the smaller level's pixels and rows)
                 uint half_pitch = pitch >> 1;
-                for (uint y = 0; y < level_sy - 1; y += 2) {
-                    for (uint x = 0; x < level_sx - 1; x += 2) {
-                        uchar *p00 = level_src + y * pitch + x * 4, *p01 = level_src + y * pitch + (x + 1) * 4;
-                        uchar *p10 = level_src + (y + 1) * pitch + x * 4;
-                        uchar *p11 = level_src + (y + 1) * pitch + (x + 1) * 4;
-                        uchar *d = level_dst + y / 2 * half_pitch + x / 2 * 4;
-                        d[0] = (p11[0] >> 3) + (p00[0] >> 3) + (p10[0] * 3 >> 3) + (p01[0] * 3 >> 3);
-                        d[1] = (p11[1] >> 3) + (p00[1] >> 3) + (p10[1] * 3 >> 3) + (p01[1] * 3 >> 3);
-                        d[2] = (p11[2] >> 3) + (p00[2] >> 3) + (p10[2] * 3 >> 3) + (p01[2] * 3 >> 3);
-                        d[3] = (p11[3] >> 3) + (p00[3] >> 3) + (p10[3] * 3 >> 3) + (p01[3] * 3 >> 3);
+                int dx = 0, dy = 0;
+                for (int y = 0; y < (int)level_sy - 1; y += 2) {
+                    for (int x = 0; x < (int)level_sx - 1; x += 2) {
+                        int i00 = y * pitch + x * 4, i01 = y * pitch + (x + 1) * 4;
+                        int i10 = (y + 1) * pitch + x * 4, i11 = (y + 1) * pitch + (x + 1) * 4;
+                        int d = dy * half_pitch + dx * 4;
+                        // All sixteen bytes are read before the stores, as 16-bit values
+                        ushort c11_0 = level_src[i11], c11_1 = level_src[i11 + 1], c11_2 = level_src[i11 + 2],
+                            c11_3 = level_src[i11 + 3];
+                        ushort c01_0 = level_src[i01], c01_1 = level_src[i01 + 1], c01_2 = level_src[i01 + 2],
+                            c01_3 = level_src[i01 + 3];
+                        ushort c10_0 = level_src[i10], c10_1 = level_src[i10 + 1], c10_2 = level_src[i10 + 2],
+                            c10_3 = level_src[i10 + 3];
+                        ushort c00_0 = level_src[i00], c00_1 = level_src[i00 + 1], c00_2 = level_src[i00 + 2],
+                            c00_3 = level_src[i00 + 3];
+                        level_dst[d] = (c11_0 >> 3) + (c00_0 >> 3) + (c10_0 * 3 >> 3) + (c01_0 * 3 >> 3);
+                        level_dst[d + 1] = (c11_1 >> 3) + (c00_1 >> 3) + (c10_1 * 3 >> 3) + (c01_1 * 3 >> 3);
+                        level_dst[d + 2] = (c11_2 >> 3) + (c00_2 >> 3) + (c10_2 * 3 >> 3) + (c01_2 * 3 >> 3);
+                        level_dst[d + 3] = (c11_3 >> 3) + (c00_3 >> 3) + (c10_3 * 3 >> 3) + (c01_3 * 3 >> 3);
+                        dx++;
                     }
+                    dy++;
+                    dx = 0;
                 }
                 level_sx >>= 1;
                 level_sy >>= 1;
@@ -807,7 +823,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         dtaWrite(handle, &SrcBMPLastWriteTime, 8);
         if (format == D3DFMT_DXT3)
             dtaWrite(handle, &SrcOptBMPLastWriteTime, 8);
-        for (uint i = 0; i < this->levels; i++) {
+        for (int i = 0; i < this->levels; i++) {
             IDirect3DSurface8 *surface;
             if (FAILED(texture->GetSurfaceLevel(i, &surface))) {
                 dtaClose(handle);
@@ -867,7 +883,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         size.sy = height;
         dtaWrite(handle, &size, 8);
         dtaWrite(handle, &SrcBMPLastWriteTime, 8);
-        for (uint i = 0; i < this->levels; i++) {
+        for (int i = 0; i < this->levels; i++) {
             IDirect3DSurface8 *surface;
             if (FAILED(texture->GetSurfaceLevel(i, &surface))) {
                 dtaClose(handle);
@@ -1132,14 +1148,8 @@ bool ITexture::Fill(RECT *rect, uint color, ushort level)
     uchar *p = (uchar *)Lock(rect, pitch, level);
     if (!p)
         return false;
-    uint sx, sy;
-    if (!rect) {
-        sx = desc.Width;
-        sy = desc.Height;
-    } else {
-        sx = rect->right - rect->left;
-        sy = rect->bottom - rect->top;
-    }
+    uint sx = !rect ? desc.Width : rect->right - rect->left;
+    uint sy = !rect ? desc.Height : rect->bottom - rect->top;
     switch (format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8: {
@@ -1181,9 +1191,9 @@ bool ITexture::Fill(RECT *rect, uint color, ushort level)
         break;
     }
     case D3DFMT_R8G8B8: {
-        uint add = pitch - sx * 3;
-        uchar r = (uchar)(color >> 16), g = (uchar)(color >> 8);
         uchar *d = p;
+        uchar r = (uchar)(color >> 16), g = (uchar)(color >> 8);
+        uint add = pitch - sx * 3;
         for (uint y = sy; y; y--) {
             for (uint x = sx; x; x--) {
                 d[0] = r;
@@ -1413,15 +1423,15 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
             if (header.descriptor & 0x20)
                 flip = true;
             info.biSize = sizeof(info);
+            info.biBitCount = header.bpp;
             info.biClrImportant = 0;
             info.biClrUsed = 0;
             info.biCompression = 0;
             info.biHeight = header.height;
-            info.biBitCount = header.bpp;
             info.biWidth = header.width;
+            info.biXPelsPerMeter = header.bpp / 8 * header.width;
             info.biYPelsPerMeter = 0;
             info.biPlanes = 1;
-            info.biXPelsPerMeter = header.bpp / 8 * header.width;
             info.biSizeImage = header.bpp / 8 * header.width * header.height;
             break;
         }
@@ -1435,14 +1445,12 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
     uchar bpp = (uchar)(info.biBitCount / 8);
     if (!type) {
         // BMP rows are padded to 4 bytes
-        int row = bpp * info.biWidth;
-        info.biXPelsPerMeter = flags & ITC_NOALIGN || row / 4 * 4 == row ? row : (row / 4 + 1) * 4;
+        int row = bpp * info.biWidth, dwords = row / 4;
+        info.biXPelsPerMeter = flags & ITC_NOALIGN || dwords * 4 == row ? row : (dwords + 1) * 4;
     }
     if (!info.biClrUsed && info.biBitCount <= 8)
         info.biClrUsed = 1 << info.biBitCount;
-    if (!info.biClrUsed)
-        *palette = NULL;
-    else {
+    if (info.biClrUsed > 0) {
         pal = new uchar[0x400];
         if (!pal) {
             dtaClose(handle);
@@ -1452,7 +1460,6 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
         if (from_memory) {
             memcpy(pal, mem, info.biClrUsed * 4);
             mem += info.biClrUsed * 4;
-            *palette = pal;
         } else {
             switch (type) {
             case 0:
@@ -1474,9 +1481,10 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
                 }
                 break;
             }
-            *palette = pal;
         }
-    }
+        *palette = pal;
+    } else
+        *palette = NULL;
     uint size = info.biXPelsPerMeter * info.biHeight;
     uchar *data = new uchar[size];
     if (!data) {
@@ -1527,11 +1535,12 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
         delete[] pal;
         return false;
     }
+    int pitch = info.biXPelsPerMeter;
     float scale_x = (float)info.biWidth / sx, scale_y = (float)info.biHeight / sy;
     uchar *dst = scaled;
     for (int y = 0; y < (int)sy; y++) {
         for (int x = 0; x < (int)sx; x++) {
-            memcpy(dst, data + (int)(x * scale_x) * bpp + (int)(y * scale_y) * info.biXPelsPerMeter, bpp);
+            memcpy(dst, data + (int)(x * scale_x) * bpp + (int)(y * scale_y) * pitch, bpp);
             dst += bpp;
         }
     }
@@ -1539,9 +1548,9 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
     *bits = scaled;
     if (bmi) {
         info.biWidth = sx;
-        info.biXPelsPerMeter = row;
-        info.biSizeImage = new_size;
         info.biHeight = sy;
+        info.biSizeImage = new_size;
+        info.biXPelsPerMeter = row;
         memcpy(bmi, &info, sizeof(info));
     }
     return true;
@@ -1560,9 +1569,10 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     S_vector4 *err = NULL;
     if (!no_dither && (flags & ITC_DITHER)) {
         int n = (sx + 2) * (sy + 1);
-        err = new S_vector4[n];
+        // Bytes, by a shift: new S_vector4[n] shares n * 16 with the clearing below, which takes sy's register
+        err = (S_vector4 *)new uchar[n << 4];
         if (sx <= 0x400 && sy <= 0x400)
-            memset(err, 0, n * sizeof(S_vector4));
+            memset(err, 0, (sx + 2) * sizeof(S_vector4) * (sy + 1));
         else {
             while (n--) {
                 err[n].x = 0.0f;
@@ -1617,12 +1627,11 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                 jnz row_4444
             }
         } else {
+            int step = lr.Pitch >> 1;
             for (int y = 0; y < (int)sy; y++) {
-                ushort *d = (ushort *)lr.pBits + y * (lr.Pitch >> 1);
-                for (int x = 0; x < (int)sx; x++) {
+                for (int x = 0; x < (int)sx; x++, src++) {
                     S_vector4 &e = err[y * (sx + 2) + x + 1];
-                    float a = src[0] + e.w, r = src[1] + e.x, g = src[2] + e.y, b = src[3] + e.z;
-                    src += 4;
+                    float a = *src + e.w, r = *++src + e.x, g = *++src + e.y, b = *++src + e.z;
                     float ea = (float)fmod(a, 8.0) * 0.0625f, er = (float)fmod(r, 8.0) * 0.0625f,
                         eg = (float)fmod(g, 8.0) * 0.0625f, eb = (float)fmod(b, 8.0) * 0.0625f;
                     S_vector4 &e1 = err[y * (sx + 2) + x + 2], &e2 = err[(y + 1) * (sx + 2) + x];
@@ -1652,7 +1661,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                     if (b > 255.0f)
                         b = 255.0f;
                     int ia = FloatToInt(a), ir = FloatToInt(r), ig = FloatToInt(g), ib = FloatToInt(b);
-                    *d++ = (ushort)((ia >> 4) << 12 | ((uchar)ir >> 4) << 8 | ((uchar)ig >> 4) << 4 | (ib >> 4) & 0xf);
+                    ((ushort *)dst + y * step)[x] = (ushort)((ia >> 4) << 12 | (ir & 0xf0) << 4 | ig & 0xf0 | (ib >> 4) & 0xf);
                 }
             }
         }
@@ -1695,12 +1704,11 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                 jnz row_565
             }
         } else {
+            int step = lr.Pitch >> 1;
             for (int y = 0; y < (int)sy; y++) {
-                ushort *d = (ushort *)lr.pBits + y * (lr.Pitch >> 1);
-                for (int x = 0; x < (int)sx; x++) {
+                for (int x = 0; x < (int)sx; x++, src++) {
                     S_vector4 &e = err[y * (sx + 2) + x + 1];
-                    float r = src[1] + e.x, g = src[2] + e.y, b = src[3] + e.z;
-                    src += 4;
+                    float r = *++src + e.x, g = *++src + e.y, b = *++src + e.z;
                     float er = (float)fmod(r, 8.0) * 0.0625f, eg = (float)fmod(g, 4.0) * 0.0625f,
                         eb = (float)fmod(b, 8.0) * 0.0625f;
                     S_vector4 &e1 = err[y * (sx + 2) + x + 2], &e2 = err[(y + 1) * (sx + 2) + x];
@@ -1724,7 +1732,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                     if (b > 255.0f)
                         b = 255.0f;
                     int ir = FloatToInt(r), ig = FloatToInt(g), ib = FloatToInt(b);
-                    *d++ = (ushort)((ir >> 3) << 11 | ((uchar)ig >> 2) << 5 | (ib >> 3) & 0x1f);
+                    ((ushort *)dst + y * step)[x] = (ushort)((ir >> 3) << 11 | (ig & 0xfc) << 3 | (ib >> 3) & 0x1f);
                 }
             }
         }
@@ -1772,12 +1780,11 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                 jnz row_1555
             }
         } else {
+            int step = lr.Pitch >> 1;
             for (int y = 0; y < (int)sy; y++) {
-                ushort *d = (ushort *)lr.pBits + y * (lr.Pitch >> 1);
-                for (int x = 0; x < (int)sx; x++) {
+                for (int x = 0; x < (int)sx; x++, src++) {
                     S_vector4 &e = err[y * (sx + 2) + x + 1];
-                    float a = src[0] + e.w, r = src[1] + e.x, g = src[2] + e.y, b = src[3] + e.z;
-                    src += 4;
+                    float a = *src + e.w, r = *++src + e.x, g = *++src + e.y, b = *++src + e.z;
                     float ea = (float)fmod(a, 128.0) * 0.0625f, er = (float)fmod(r, 8.0) * 0.0625f,
                         eg = (float)fmod(g, 8.0) * 0.0625f, eb = (float)fmod(b, 8.0) * 0.0625f;
                     S_vector4 &e1 = err[y * (sx + 2) + x + 2], &e2 = err[(y + 1) * (sx + 2) + x];
@@ -1807,7 +1814,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
                     if (b > 255.0f)
                         b = 255.0f;
                     int ia = FloatToInt(a), ir = FloatToInt(r), ig = FloatToInt(g), ib = FloatToInt(b);
-                    *d++ = (ushort)((ia >> 7) << 15 | ((uchar)ir >> 3) << 10 | ((uchar)ig >> 3) << 5 | (ib >> 3) & 0x1f);
+                    ((ushort *)dst + y * step)[x] = (ushort)((ia >> 7) << 15 | (ir & 0xf8) << 7 | (ig & 0xf8) << 2 | (ib >> 3) & 0x1f);
                 }
             }
         }
@@ -1854,9 +1861,12 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
         uchar *p0 = (uchar *)lr.pBits, *p1 = p0 + sx * sy, *p2 = p0 + sx * sy * 2;
         while (sy--) {
             for (uint x = sx; x; x--) {
-                *p0++ = src[1];
-                *p1++ = src[2];
-                *p2++ = src[3];
+                *p0 = src[1];
+                *p1 = src[2];
+                *p2 = src[3];
+                p0++;
+                p1++;
+                p2++;
                 src += 4;
             }
         }

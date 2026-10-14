@@ -63,24 +63,8 @@ D3DFORMAT m_DXTTexturePixelFormat;
 // GLOBAL: LS3DF 0x101c5410
 int m_IBPos;
 
-// The window's title, and the title from before the engine fell asleep (PC only), constructed by one $E
-// GLOBAL: LS3DF 0x101c5420
-// m_AppName
-// GLOBAL: LS3DF 0x101c5484
-// m_SleepAppName
-C_str m_AppName, m_SleepAppName;
-
-// GLOBAL: LS3DF 0x101c5424
-C_list<void *> m_DlgHWndList;
-
 // GLOBAL: LS3DF 0x101c5434
 IDirectInputDevice8A *m_pDIKeyboard8;
-
-// GLOBAL: LS3DF 0x101c5438
-C_list<ITexture *> m_UncachedTextureList(0x400);
-
-// GLOBAL: LS3DF 0x101c5448
-C_list<ITexture *> m_CachedTextureList(0x400);
 
 // GLOBAL: LS3DF 0x101c5458
 HWND m_MainHWnd;
@@ -167,9 +151,6 @@ D3DFORMAT m_DXTAlphaTexturePixelFormat;
 // GLOBAL: LS3DF 0x101c5704
 uint m_CurrAlphaState;
 
-// GLOBAL: LS3DF 0x101c5708
-C_list<char *> m_MapsList;
-
 // The name of a key, from GetKeyName (PC only)
 // GLOBAL: LS3DF 0x101c5718
 DIPROPSTRING m_KeyName;
@@ -194,9 +175,6 @@ static uint m_KBLastChar1;
 // GLOBAL: LS3DF 0x101c5944
 uint m_CullMode;
 
-// GLOBAL: LS3DF 0x101c594c
-C_list<D3DFORMAT> m_AdapterFormatList;
-
 // GLOBAL: LS3DF 0x101c595c
 IDirectInputDevice8A *m_pDIMouse8;
 
@@ -212,10 +190,6 @@ float m_CurrFogStart;
 // What Init found the hardware lacks (the bits aren't known yet)
 // GLOBAL: LS3DF 0x101c5970
 uint m_ProblemFlags;
-
-// Declared after m_ProblemFlags, in the same .bss bucket
-// GLOBAL: LS3DF 0x101c596c
-static uint m_FPSTimer = timeGetTime();
 
 // GLOBAL: LS3DF 0x101c5974
 uint m_CurrAlphaOp;
@@ -240,8 +214,36 @@ POINT m_MousePos;
 // GLOBAL: LS3DF 0x101c5990
 COMPLETE_IB_STRUCT m_IB;
 
+// The globals with dynamic initializers, in the order the original constructs them (.CRT$XCU)
+
+// GLOBAL: LS3DF 0x101c5424
+C_list<void *> m_DlgHWndList;
+
+// The window's title, and the title from before the engine fell asleep (PC only), constructed by one $E
+// GLOBAL: LS3DF 0x101c5420
+// m_AppName
+// GLOBAL: LS3DF 0x101c5484
+// m_SleepAppName
+C_str m_AppName, m_SleepAppName;
+
 // GLOBAL: LS3DF 0x101c599c
 C_list<D3DDISPLAYMODE> m_AdapterModeList(8);
+
+// GLOBAL: LS3DF 0x101c594c
+C_list<D3DFORMAT> m_AdapterFormatList;
+
+// GLOBAL: LS3DF 0x101c5448
+C_list<ITexture *> m_CachedTextureList(0x400);
+
+// GLOBAL: LS3DF 0x101c5438
+C_list<ITexture *> m_UncachedTextureList(0x400);
+
+// GLOBAL: LS3DF 0x101c5708
+C_list<char *> m_MapsList;
+
+// Declared after m_ProblemFlags, in the same .bss bucket
+// GLOBAL: LS3DF 0x101c596c
+static uint m_FPSTimer = timeGetTime();
 
 // Initialized to zero, so in declaration order
 
@@ -1291,9 +1293,10 @@ inline DWORD F2DW(float f)
     return *(DWORD *)&f;
 }
 
-// Logs a failed DirectX call. The original gives __LINE__, which our file can't reproduce, so the line is passed in.
-#define DX_ERROR(hr, line) dbgPrintf("!! Error detected: %s, File: %s, Line: %i !!", DXGetErrorString8(hr), __FILE__, \
-    line)
+// Logs a failed DirectX call. The original gives __FILE__ and __LINE__, which our build can't reproduce, so the file
+// is the original's path and the line is passed in.
+#define DX_ERROR(hr, line) dbgPrintf("!! Error detected: %s, File: %s, Line: %i !!", DXGetErrorString8(hr), \
+    "C:\\MyProjects\\engine8\\IGraph\\IGraph.cpp", line)
 
 // Frees what a lost device has to give up, resets the device (unless only the shaders and states are wanted again)
 // and creates IGraph's vertex shaders and the default render states again
@@ -1473,14 +1476,16 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         int caption = GetSystemMetrics(SM_CYCAPTION);
         int menu = 0;
         if (m_InitDesc.flags & IGRAPH_MENU) {
-            if (!m_InitDesc.menu)
-                m_InitDesc.menu = LoadMenuA(GetModuleHandleA("LS3D.DLL"), MAKEINTRESOURCE(123));
+            if (!m_InitDesc.menu) {
+                HMODULE module = GetModuleHandleA("LS3D.DLL");
+                m_InitDesc.menu = LoadMenuA(module, MAKEINTRESOURCE(123));
+            }
             menu = GetSystemMetrics(SM_CYMENU);
         }
         // The window around the client area
-        int sx = m_InitDesc.width + frame_x * 2;
         int x = m_InitDesc.x - frame_x;
         int y = m_InitDesc.y - menu - caption - frame_y;
+        int sx = m_InitDesc.width + frame_x * 2;
         int sy = m_InitDesc.height + frame_y * 2 + menu + caption;
         m_MainHWnd = CreateWindowExA(0, "LS3D", "LS3D engine", WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
             WS_MINIMIZEBOX, x, y, sx, sy, GetDesktopWindow(), m_InitDesc.menu, wc.hInstance, NULL);
@@ -2833,8 +2838,9 @@ void IGraph::MouseClose()
         m_pDIMouse8->Release();
         m_pDIMouse8 = NULL;
     }
-    memset(&m_MouseData, 0, sizeof(m_MouseData));
+    // Before the memset: VC6 schedules the mode's store among the memset's
     m_MouseMode = -1;
+    memset(&m_MouseData, 0, sizeof(m_MouseData));
     m_MouseInitIsOK = false;
 }
 
@@ -3183,7 +3189,8 @@ bool IGraph::ResizeImage(int sx, int sy, uint pitch, uchar *src, int dst_sx, int
                     wx1 = fx1 - ix1;
                 }
                 int cols = max(0, ix1 - ix0);
-                int pos, i, j;
+                uint pos;
+                int i, j;
                 // the row above the whole rows
                 if (wy0 > MRG_ZERO) {
                     pos = (iy0 - 1) * pitch + (ix0 - 1) * bpp;
@@ -3223,20 +3230,19 @@ bool IGraph::ResizeImage(int sx, int sy, uint pitch, uchar *src, int dst_sx, int
                             g += src[pos + 1] * wx0;
                             b += src[pos + 2] * wx0;
                             if (bpp == 4)
-                                a += src[(iy0 + j) * pitch + (ix0 - 1) * bpp + 3] * wx0;
+                                a += src[pos + 3] * wx0;
                         }
                         weight += rows * wx0;
                     }
                     if (cols > 0) {
                         for (j = 0; j < rows; j++) {
-                            pos = (iy0 + j) * pitch + ix0 * bpp;
                             for (i = 0; i < cols; i++) {
+                                pos = (iy0 + j) * pitch + (ix0 + i) * bpp;
                                 r += src[pos + i * bpp];
                                 g += src[pos + i * bpp + 1];
                                 b += src[pos + i * bpp + 2];
                                 if (bpp == 4)
                                     a += src[pos + i * bpp + 3];
-                                pos += bpp;
                             }
                         }
                         weight += cols * rows;

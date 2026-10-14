@@ -238,6 +238,11 @@ class C_str {
             data[size] = 0;
         }
 
+        int Size() const
+        {
+            return size;
+        }
+
         // The buffer was allocated as a char array (PS2 frees it with delete[])
         // FUNCTION: LS3DF 0x1006fec0
         void Release()
@@ -335,12 +340,13 @@ public:
         return ret;
     }
 
-    // A character to change: the buffer is made the string's own first
+    // A character to change: the buffer is made the string's own first. The length for new is an accessor's value,
+    // which the unwinding keeps for the delete (IGraph::CreateITexture); rep->size would be read again there.
     // FUNCTION: LS3DF 0x10070100
     char &operator[](int pos)
     {
         if (rep->ref != 1) {
-            C_rep *new_rep = new (rep->size) C_rep(rep->data, rep->size);
+            C_rep *new_rep = new (rep->Size()) C_rep(rep->data, rep->size);
             rep->Release();
             rep = new_rep;
         }
@@ -383,3 +389,16 @@ LS3D_EXPORT const char *__cdecl I3DGetResultMessage(LS3D_RESULT result);
 LS3D_EXPORT int __cdecl dbgPrintf(const char *format, ...);
 LS3D_EXPORT int __cdecl dbgPrintf1(const char *format, ...);
 void dbgPrintGuid(const void *guid);
+
+// The destructors IGraph.cpp's thunks in .CRT$XCU register with atexit for m_AdapterFormatList, m_CachedTextureList,
+// m_UncachedTextureList and m_MapsList, by name. VC6 numbers these functions per file, and only these names are in
+// no other file; reccmp pairs a name several files have ($E2, $E7, $E12) only with a warning for each, so the other
+// destructors stay unmatched, and their thunks below 100% though identical.
+// SYNTHETIC: LS3DF 0x1006be60
+// $E17
+// SYNTHETIC: LS3DF 0x1006beb0
+// $E22
+// SYNTHETIC: LS3DF 0x1006bf00
+// $E27
+// SYNTHETIC: LS3DF 0x1006bf50
+// $E32
