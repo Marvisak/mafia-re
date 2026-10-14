@@ -15,6 +15,8 @@
 // DS3DALG_NO_VIRTUALIZATION
 // GLOBAL: LS3DF 0x100a183c
 // IID_IKsPropertySet
+// GLOBAL: LS3DF 0x100a184c
+// IID_IDirectSoundNotify
 // GLOBAL: LS3DF 0x100a185c
 // IID_IDirectSound3DBuffer
 // GLOBAL: LS3DF 0x100a186c
@@ -234,6 +236,26 @@ struct TERMINATED_CHANNEL_STRUCT {
 // The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
 // each name's overloads at the first one's slot in reverse order, which gives the original's vtable.
 // VTABLE: LS3DF 0x1009da88
+// The stream functions the driver keeps (PC only), through which IShow plays music. Nothing in LS3DF fills the table in:
+// the driver only deletes it when it closes, and frees a library it never loads (module), presumably the one that
+// provided it. The functions are __fastcall, the engine's default; the names are guesses.
+struct ISND_STREAM_FUNCS {
+    void *unknown_00[4];
+    HRESULT(__fastcall *Init)(int unknown);                                 // 0x10
+    HRESULT(__fastcall *Close)(int unknown);                                // 0x14
+    void *unknown_18;
+    HRESULT(__fastcall *SetPan)(int stream, int unknown, int pan);          // 0x1c
+    HRESULT(__fastcall *SetVolume)(int stream, int unknown, int volume);    // 0x20
+    HRESULT(__fastcall *Open)(int unknown, int *stream, void(__stdcall *callback)(int stream, int event),
+        const char *name, int unknown1);                                    // 0x24
+    HRESULT(__fastcall *CloseStream)(int stream);                           // 0x28
+    void *unknown_2c;
+    HRESULT(__fastcall *Play)(int stream, int loop);                        // 0x30
+    HRESULT(__fastcall *Stop)(int stream);                                  // 0x34
+    HRESULT(__fastcall *Pause)(int stream);                                 // 0x38
+    HRESULT(__fastcall *Resume)(int stream);                                // 0x3c
+};
+
 class ISND_driver {
 public:
     ISND_driver();
@@ -268,7 +290,7 @@ public:
     IDirectSound3DBuffer *ds_property;      // 0x14, of a small static 3D buffer, for EAX
     HMODULE module;                         // 0x18
     int unknown_1c;                         // 0x1c
-    void *unknown_20;                       // 0x20
+    ISND_STREAM_FUNCS *streams;             // 0x20
     int unknown_24;                         // 0x24
     IDirectSoundBuffer *lpDSP;              // 0x28, the primary buffer
     IDirectSound3DListener *lpListener;     // 0x2c

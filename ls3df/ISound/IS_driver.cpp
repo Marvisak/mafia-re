@@ -27,7 +27,7 @@ ISND_driver::ISND_driver()
     ds_property = NULL;
     module = NULL;
     unknown_1c = 0;
-    unknown_20 = NULL;
+    streams = NULL;
     lpDSP = NULL;
     lpListener = NULL;
     volume = 0.0f;
@@ -59,9 +59,9 @@ void ISND_driver::Close()
             dbgPrintf("\t\t%s", sources[i]->GetFileName());
     }
     if (lpDS8) {
-        if (unknown_20) {
-            delete unknown_20;
-            unknown_20 = NULL;
+        if (streams) {
+            delete streams;
+            streams = NULL;
         }
         if (module) {
             FreeLibrary(module);

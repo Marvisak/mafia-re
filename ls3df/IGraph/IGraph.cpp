@@ -113,7 +113,7 @@ uint m_CurrVertexFormat;
 uchar m_OldKeyboardData[256];
 
 // GLOBAL: LS3DF 0x101c5588
-int m_MaxTextureHeight;
+uint m_MaxTextureHeight;
 
 // GLOBAL: LS3DF 0x101c558c
 uint m_CurrCullState;
@@ -178,7 +178,7 @@ uint m_CurrFogState;
 uint m_CurrClipState;
 
 // GLOBAL: LS3DF 0x101c593c
-int m_MaxTextureWidth;
+uint m_MaxTextureWidth;
 
 // The render thread's id (PC only)
 // GLOBAL: LS3DF 0x101c5938
@@ -394,9 +394,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 static int __cdecl SortModesCallback(const void *a, const void *b);
 LS3D_RESULT ResetDevice(bool reset);
 C_str FindMapFile(C_list<char *> *list, const char *name);
-// The image files'
-void ReleaseRenderTargets();
-void RestoreRenderTargets(uint flags);
 
 // FUNCTION: LS3DF 0x1006bf80
 IGraph::IGraph()
@@ -481,7 +478,7 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
             return I3DERR_INVALIDPARAMS;
         for (int i = m_CachedTextureList.size(); i; ) {
             ITexture *t = m_CachedTextureList[--i];
-            if (t->flags == flags && !_strcmpi(t->name, name) && (!(flags & 4) || !_strcmpi(t->alpha_name,
+            if (t->create_flags == flags && !_strcmpi(t->name, name) && (!(flags & 4) || !_strcmpi(t->alpha_name,
                     alpha_name))) {
                 t->ref++;
                 *texture = t;
@@ -953,7 +950,7 @@ void IGraph::Present()
         if (ResetDevice(true) < 0)
             hr = D3DERR_DEVICELOST;
         else if (m_InitDesc.flags & IGRAPH_RENDER_THREAD)
-            RestoreRenderTargets(m_InitDesc.flags);
+            RestoreManagedTextures(m_InitDesc.flags);
         dbgPrintf("DEVICE LOST - 2");
     }
 }
@@ -1300,7 +1297,7 @@ LS3D_RESULT ResetDevice(bool reset)
     cVBMan.m_FreeAllVRAMVBuffers();
     cIBMan.m_FreeAllVRAMIBuffers();
     if (m_InitDesc.flags & IGRAPH_RENDER_THREAD)
-        ReleaseRenderTargets();
+        ReleaseManagedTextures();
     HRESULT hr;
     if (reset) {
         hr = m_pD3DDevice8->Reset(&m_D3DPresentParams);
@@ -1917,7 +1914,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         }
     }
     if (m_InitDesc.flags & IGRAPH_RENDER_THREAD) {
-        RestoreRenderTargets(m_InitDesc.flags);
+        RestoreManagedTextures(m_InitDesc.flags);
         m_RenderThreadRunning = true;
         m_RenderThread = CreateThread(NULL, 0, RenderThreadProc, NULL, 0, &m_RenderThreadID);
         SetThreadPriority(m_RenderThread, THREAD_PRIORITY_NORMAL);
@@ -2029,7 +2026,7 @@ void IGraph::Close()
         m_StateBlock = 0;
         if (m_InitDesc.flags & IGRAPH_RENDER_THREAD) {
             TerminateThread(m_RenderThread, 0);
-            ReleaseRenderTargets();
+            ReleaseManagedTextures();
         }
         m_RenderThread = NULL;
         m_pD3DDevice8->Release();

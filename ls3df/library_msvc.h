@@ -73,6 +73,12 @@
 // LIBRARY: LS3DF 0x1008d934 SYMBOL
 // _acos
 
+// LIBRARY: LS3DF 0x1008d9f0 SYMBOL
+// _fmod
+
+// LIBRARY: LS3DF 0x1008d9fa SYMBOL
+// __CIfmod
+
 // LIBRARY: LS3DF 0x1008da22 SYMBOL
 // __onexit
 
@@ -90,6 +96,15 @@
 
 // LIBRARY: LS3DF 0x1008dc7a SYMBOL
 // __toupper_lk
+
+// LIBRARY: LS3DF 0x1008dd46
+// ??_M@YGXPAXIHP6EX0@Z@Z
+
+// LIBRARY: LS3DF 0x1008ddc6
+// ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z
+
+// LIBRARY: LS3DF 0x1008de3a
+// ??_L@YGXPAXIHP6EX0@Z1@Z
 
 // LIBRARY: LS3DF 0x1008debc SYMBOL
 // _rand
@@ -192,6 +207,12 @@
 
 // LIBRARY: LS3DF 0x1008f036 SYMBOL
 // ___from_strstr_to_strchr
+
+// LIBRARY: LS3DF 0x1008f0f0 SYMBOL
+// __alldiv
+
+// LIBRARY: LS3DF 0x1008f1a0 SYMBOL
+// _strncat
 
 // LIBRARY: LS3DF 0x1008f2c3 SYMBOL
 // __CRT_INIT@12
@@ -381,6 +402,87 @@
 
 // LIBRARY: LS3DF 0x10090aa9 SYMBOL
 // __check_range_exit
+
+// LIBRARY: LS3DF 0x10090b50 SYMBOL
+// __cintrindisp2
+
+// LIBRARY: LS3DF 0x10090b8e SYMBOL
+// __cintrindisp1
+
+// LIBRARY: LS3DF 0x10090bcb SYMBOL
+// __ctrandisp2
+
+// LIBRARY: LS3DF 0x10090d4b SYMBOL
+// __ctrandisp1
+
+// LIBRARY: LS3DF 0x10090d7e SYMBOL
+// __fload
+
+// LIBRARY: LS3DF 0x10090dc0 SYMBOL
+// _fdiv_main_routine
+
+// LIBRARY: LS3DF 0x10090ed7 SYMBOL
+// __adj_fdiv_r
+
+// LIBRARY: LS3DF 0x10091376 SYMBOL
+// __fdivp_sti_st
+
+// LIBRARY: LS3DF 0x10091389 SYMBOL
+// __fdivrp_sti_st
+
+// LIBRARY: LS3DF 0x1009139c SYMBOL
+// __adj_fdiv_m32
+
+// LIBRARY: LS3DF 0x100913e8 SYMBOL
+// __adj_fdiv_m64
+
+// LIBRARY: LS3DF 0x10091434 SYMBOL
+// __adj_fdiv_m16i
+
+// LIBRARY: LS3DF 0x10091468 SYMBOL
+// __adj_fdiv_m32i
+
+// LIBRARY: LS3DF 0x1009149c SYMBOL
+// __adj_fdivr_m32
+
+// LIBRARY: LS3DF 0x100914e8 SYMBOL
+// __adj_fdivr_m64
+
+// LIBRARY: LS3DF 0x10091534 SYMBOL
+// __adj_fdivr_m16i
+
+// LIBRARY: LS3DF 0x10091568 SYMBOL
+// __adj_fdivr_m32i
+
+// LIBRARY: LS3DF 0x1009159c SYMBOL
+// __safe_fdiv
+
+// LIBRARY: LS3DF 0x100915b1 SYMBOL
+// __safe_fdivr
+
+// LIBRARY: LS3DF 0x100915c6 SYMBOL
+// __fprem_common
+
+// LIBRARY: LS3DF 0x100917cc SYMBOL
+// __adj_fprem
+
+// LIBRARY: LS3DF 0x1009187e SYMBOL
+// __fprem1_common
+
+// LIBRARY: LS3DF 0x10091a84 SYMBOL
+// __adj_fprem1
+
+// LIBRARY: LS3DF 0x10091b39 SYMBOL
+// __safe_fprem
+
+// LIBRARY: LS3DF 0x10091b3f SYMBOL
+// __safe_fprem1
+
+// LIBRARY: LS3DF 0x10091b45 SYMBOL
+// __adj_fpatan
+
+// LIBRARY: LS3DF 0x10091b48 SYMBOL
+// __adj_fptan
 
 // LIBRARY: LS3DF 0x10091b4b SYMBOL
 // _realloc
@@ -781,6 +883,9 @@
 // LIBRARY: LS3DF 0x10098510 SYMBOL
 // _$I10_OUTPUT
 
+// LIBRARY: LS3DF 0x100987a3 SYMBOL
+// __itoa
+
 // LIBRARY: LS3DF 0x10098830 SYMBOL
 // __strcmpi
 
@@ -835,8 +940,11 @@
 // GLOBAL: LS3DF 0x100abc48
 // __NLG_Destination
 
-// GLOBAL: LS3DF 0x100abc54
+// GLOBAL: LS3DF 0x100abc5c
 // __FPmtterm
+
+// GLOBAL: LS3DF 0x100abc70
+// __OP_FMODjmptab
 
 // GLOBAL: LS3DF 0x100abcd0
 // __aexit_rtn

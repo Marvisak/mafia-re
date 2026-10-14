@@ -93,10 +93,9 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1006ad40–1006b430` | none | none | `cpuid.c` (C) | the C object: Microsoft's CPUID sample (`IsCPUID`, `map_mname`, `_cpuid`) and `GetCPUSpeed`; written |
 | `1006b430–1006bd40` | `1006bd20` | `1006b430`, `1006bb80`, `1006bca0`, `1006bcc0` | `Globals.cpp` | written |
 | `1006bd40–100733a0` | `1006deb0` | `1006bd40`–`1006bf70` (8) | `IGraph.cpp` | one file with its marker in the middle, as `I3d_math.cpp`: the `C_str` functions after `Init` are COMDATs linked into it, and the first object's copy is the one kept; written |
-| `100733a0–10075820` | `10075800` | | ? | `IShow`'s constructor (`0x100733a0`) and methods, Bink calls |
-| `10075820–10075c10` | `10075bf0` | `10075890` | `IShow.cpp` | PS2 order |
-| `10075c10–10078190` | `10078170` | | `ITexture.cpp` | `ITexture::Create()` |
-| `10078190–1007b053` | none | `1007a570`, `1007a5c0` | image files (PC only) | `ITexture::SaveToTGA()`, TGA loading |
+| `100733a0–10075890` | `10075800` | | `IShow.cpp` | `IShow` in PS2's order, the DirectX SDK's texture renderer (`0x10074f40–0x10075760`) and, after the marker, the class's inline functions; compiled without `/Gr`; written apart from the renderer |
+| `10075890–10075c10` | `10075bf0` | `10075890` | `IShowStream.cpp`? | PC only: `IShow`'s music streams through the sound driver's table of functions; the name, which sorts between its neighbours', is a guess; written |
+| `10075c10–1007b053` | `10078170` | `1007a570`, `1007a5c0` | `ITexture.cpp` | one file with its marker after `Create`, as `IGraph.cpp`: `ITexture` in PS2's order, then the PC's texture manager, whose lists are the two `$E`s; its strings run straight into `IS_3Dlistener.cpp`'s; written |
 | `1007b060–1007b370` | `1007b350` | | `IS_3Dlistener.cpp` | written |
 | `1007b370–1007b680` | `1007b660` | | `IS_3Dsound.cpp` | written |
 | `1007b690–1007c2a0` | `1007c280` | | `IS_driver.cpp` | written |
@@ -106,7 +105,8 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 - `DXGetErrorString8` from the DirectX SDK's `dxerr8.lib`, from `0x1007d9d0`.
 - The `DirectInput8Create` thunk at `0x10080364`.
-- Floating-point code at `0x100813e0–0x10086a09`, not identified.
+- S3's S3TC library at `0x100813e0–0x10086a09`, which `ITexture.cpp`'s `CompressTexture` calls (`S3TCencode` at
+  `0x100813e0`; its arguments are two `DDSURFACEDESC`s, the encode type and S3's color weights 0.3086, 0.6094, 0.082).
 - The `DirectSoundCreate8` thunk (`DSOUND` ordinal 11) at `0x10086a10`.
 - The DirectShow base classes (`AMUnblock`, `OleAut32.dll`), from `0x10086a20`.
 

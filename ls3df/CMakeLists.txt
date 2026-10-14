@@ -15,12 +15,14 @@ add_library(ls3df SHARED
     IGraph/Globals.cpp
     IGraph/IGraph.cpp
     IGraph/IShow.cpp
+    IGraph/IShowStream.cpp
     IGraph/ITexture.cpp
     ISound/IS_3Dlistener.cpp
     ISound/IS_3Dsound.cpp
     ISound/IS_driver.cpp
     ISound/IS_sound.cpp
     ISound/IS_source.cpp
+    S3TC/s3tc.c
 )
 # The export directory names the DLL
 set_target_properties(ls3df PROPERTIES OUTPUT_NAME LS3DF)
@@ -45,21 +47,37 @@ if (MSVC_VERSION EQUAL 1200)
     # /G6 - Pentium Pro scheduling: npad alignment inside functions and imul by constants
     # /Ob2 - inline any suitable function, not only inline ones: ISND_3Dlistener::Release inlines the destructor, a
     #        plain function of the same file (I3D code calls it out of line)
-    target_compile_options(ls3df PRIVATE /MT /GX /Gr /G6 /Ob2)
+    target_compile_options(ls3df PRIVATE /MT /GX /G6 /Ob2)
+    # /Gr is a per-file option: IShow.cpp is __cdecl by default (/Gd), as its helpers take their arguments on the stack,
+    # and so do vorbisfile's callbacks, which libvorbis' header declares without a calling convention
+    get_target_property(ls3df_sources ls3df SOURCES)
+    list(REMOVE_ITEM ls3df_sources IGraph/IShow.cpp)
+    set_source_files_properties(${ls3df_sources} PROPERTIES COMPILE_OPTIONS /Gr)
+    set_source_files_properties(IGraph/IShow.cpp PROPERTIES COMPILE_OPTIONS /Gd)
 
     # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
     # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma.
-    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8)
+    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids
+        binkw32 vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
     # (the names are /Gr's; Make4X4's other callers are in camera code)
     target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
         "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
-        "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z")
+        "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
+        "/INCLUDE:?UnloadManagedTextures@@YIXXZ")
 else()
-    target_link_libraries(ls3df PRIVATE user32 winmm ole32 dsound dxguid)
+    # dxerr8.lib uses the CRT's old swprintf
+    target_link_libraries(ls3df PRIVATE user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32 vorbisfile
+        legacy_stdio_definitions)
 endif()
+
+# The import libraries of binkw32.dll and vorbisfile.dll, which nobody has, from DLLs of stubs with their exports
+foreach(dll binkw32 vorbisfile)
+    add_library(${dll} SHARED imports/${dll}.c)
+    target_link_options(${dll} PRIVATE /NOENTRY /NODEFAULTLIB)
+endforeach()
 
 # rw_data.lib, which dta.h names, is our rw_data target's import library
 add_dependencies(ls3df rw_data)

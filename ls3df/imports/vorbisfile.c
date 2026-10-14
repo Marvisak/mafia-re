@@ -1,0 +1,30 @@
+// The import library of vorbisfile.dll (libvorbis 1.0), made by LINK from these stubs, one for each of the DLL's 25
+// exports: an import's hint is the position of its name among the DLL's sorted exports. The functions are __cdecl.
+
+#define STUB(name) __declspec(dllexport) void __cdecl name(void) {}
+
+STUB(ov_bitrate)
+STUB(ov_bitrate_instant)
+STUB(ov_clear)
+STUB(ov_comment)
+STUB(ov_info)
+STUB(ov_open)
+STUB(ov_open_callbacks)
+STUB(ov_pcm_seek)
+STUB(ov_pcm_seek_page)
+STUB(ov_pcm_tell)
+STUB(ov_pcm_total)
+STUB(ov_raw_seek)
+STUB(ov_raw_tell)
+STUB(ov_raw_total)
+STUB(ov_read)
+STUB(ov_seekable)
+STUB(ov_serialnumber)
+STUB(ov_streams)
+STUB(ov_test)
+STUB(ov_test_callbacks)
+STUB(ov_test_open)
+STUB(ov_time_seek)
+STUB(ov_time_seek_page)
+STUB(ov_time_tell)
+STUB(ov_time_total)

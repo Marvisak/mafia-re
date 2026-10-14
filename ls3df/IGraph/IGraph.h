@@ -24,6 +24,20 @@
 // LIBRARY: LS3DF 0x1007d9d6 SYMBOL
 // _DXGetErrorString8A@4
 
+// strmiids.lib's DirectShow GUIDs, which IShow.cpp uses
+// GLOBAL: LS3DF 0x100a1a30
+// IID_IGraphBuilder
+// GLOBAL: LS3DF 0x100a1a70
+// IID_IMediaSeeking
+// GLOBAL: LS3DF 0x100a1b10
+// IID_IBasicAudio
+// GLOBAL: LS3DF 0x100a1b30
+// IID_IMediaEvent
+// GLOBAL: LS3DF 0x100a1b40
+// IID_IMediaControl
+// GLOBAL: LS3DF 0x100a1bb0
+// CLSID_FilterGraph
+
 class IShow;
 class ITexture;
 
@@ -227,82 +241,215 @@ public:
         uint dst_pitch, uchar **dst, uint bpp, int filter);
 };
 
-// A movie playing into a texture or onto the screen (PS2 IShow.cpp, 0x8c bytes). Not written yet: only what IGraph
-// needs.
+// A transformed and lit vertex, as IGraph::DrawPrimitiveList takes them (LS3D_STREAM_TLVERTEX; the name is a guess)
+struct LS3D_TLVERTEX {
+    float x, y, z, rhw;
+    uint diffuse, specular;
+    float u, v;
+};
+
+// IShow::Open's flags and the state IShow keeps in the same word (names guessed)
+enum {
+    ISHOW_TRUECOLOR = 0x400,            // the movie's textures are 32-bit (ITC_TRUECOLOR)
+    ISHOW_FILLED = 0x8000000,           // the Ogg sound buffer holds decoded sound
+    ISHOW_PAUSED = 0x10000000,
+    ISHOW_PLAYING = 0x20000000,
+    ISHOW_EOF = 0x40000000,             // the Ogg file is decoded to its end
+    ISHOW_OGG = 0x80000000,             // an Ogg Vorbis file, played through DirectSound
+};
+
+// A part of the movie in a texture of its own: the movie is split into textures no larger than the card allows. The
+// vertices are a triangle strip in screen coordinates (name guessed).
+struct S_show_region {
+    ITexture *texture;                  // 0x00
+    LS3D_TLVERTEX verts[4];             // 0x04
+    int x, y;                           // 0x84, in the movie
+    int sx, sy;                         // 0x8c
+};
+
+struct IGraphBuilder;
+struct IMediaControl;
+struct IMediaSeeking;
+struct IBasicAudio;
+struct IMediaEvent;
+struct IDirectSoundNotify;
+struct IDirectSoundBuffer8;
+struct BINK;
+struct OggVorbis_File;
+class CTextureRenderer;
+
+// A movie playing into textures (PS2 IShow.cpp, 0x8c bytes): a Bink video, an AVI file through DirectShow (rendered
+// by CTextureRenderer, the DirectX SDK's texture renderer sample) or any other file DirectShow plays, or an Ogg
+// Vorbis file, which plays through DirectSound (PC only). PS2 names; the PC-only functions and the members have
+// guessed names.
 // VTABLE: LS3DF 0x1009d670
 class IShow {
 public:
     IShow();
+    ~IShow();
 
-    virtual void __stdcall vfunc_00();
-    virtual void __stdcall vfunc_01();
-    virtual void __stdcall vfunc_02();
-    virtual void __stdcall vfunc_03(int a, int b);
-    virtual void __stdcall vfunc_04();
-    virtual void __stdcall vfunc_05();
-    virtual void __stdcall vfunc_06();
-    virtual void __stdcall vfunc_07();
-    virtual void __stdcall vfunc_08(int a);
-    virtual void __stdcall vfunc_09(int a);
-    virtual void __stdcall vfunc_10(int a);
-    virtual void __stdcall vfunc_11();
-    virtual void __stdcall vfunc_12(int a);
-    virtual void __stdcall vfunc_13(int a);
-    virtual void __stdcall vfunc_14(int a);
-    virtual void __stdcall vfunc_15();
-    virtual void __stdcall vfunc_16();
-    virtual void __stdcall vfunc_17();
-    virtual void __stdcall vfunc_18();
-    virtual void __stdcall vfunc_19();
-    virtual void __stdcall vfunc_20();
-    virtual void __stdcall vfunc_21();
-    virtual void __stdcall vfunc_22(int a, int b);
-    virtual void __stdcall vfunc_23();
-    virtual void __stdcall vfunc_24(int a);
-    virtual void __stdcall vfunc_25();
-    virtual void __stdcall vfunc_26();
-    virtual void __stdcall vfunc_27();
-    virtual void __stdcall vfunc_28(int a);
-    virtual void __stdcall vfunc_29(int a);
+    virtual int __stdcall AddRef();
+    virtual int __stdcall Release();
+    virtual bool __stdcall IsInit();
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags);
+    virtual void __stdcall Close();
+    virtual LS3D_RESULT __stdcall Play();
+    virtual LS3D_RESULT __stdcall Stop();
+    virtual LS3D_RESULT __stdcall Pause();
+    virtual LS3D_RESULT __stdcall SetRect(const RECT *rc);
+    virtual LS3D_RESULT __stdcall GetRect(RECT *rc);
+    virtual LS3D_RESULT __stdcall GetVideoRect(RECT *rc);
+    virtual int __stdcall GetEvent();
+    virtual LS3D_RESULT __stdcall SetCurrentPos(uint pos);
+    virtual LS3D_RESULT __stdcall GetCurrentPos(uint *pos);
+    virtual LS3D_RESULT __stdcall SetVolume(float vol);
 
-private:
-    uchar unknown_04[0x88];
+    // FUNCTION: LS3DF 0x10075820
+    virtual float __stdcall GetVolume()
+    {
+        return volume;
+    }
+
+    virtual int __stdcall GetRegionCnt();
+    virtual S_show_region *__stdcall GetRegions();
+    virtual LS3D_RESULT __stdcall ProcessBinkFrame();
+    virtual LS3D_RESULT __stdcall RenderCurrentFrame();
+    virtual LS3D_RESULT __stdcall RenderVideoUntilKeyPressOrEnd();
+
+    // FUNCTION: LS3DF 0x10075830
+    virtual int __stdcall GetDecodedFrameNum()
+    {
+        return decoded_frame;
+    }
+
+    // PC only: music through the sound driver's stream functions (IShowStream.cpp)
+    virtual LS3D_RESULT __stdcall OpenStream(const char *name, int unused);
+    virtual void __stdcall CloseStream();
+    virtual LS3D_RESULT __stdcall PlayStream(bool loop);
+
+    // FUNCTION: LS3DF 0x10075840
+    virtual int __stdcall IsStreamPlaying()
+    {
+        return !stream_done;
+    }
+
+    virtual LS3D_RESULT __stdcall StopStream();
+    virtual LS3D_RESULT __stdcall PauseStream();
+    // Two settings of the stream (guessed: the volume and the pan)
+    virtual LS3D_RESULT __stdcall SetStreamVolume(int volume);
+    virtual LS3D_RESULT __stdcall SetStreamPan(int pan);
+
+    void m_FillBuffer(bool first);
+    void m_PrepareVerts();
+    HRESULT m_CreateCTextureRenderer(const WCHAR *name);
+
+    IGraphBuilder *graph;               // 0x04, DirectShow
+    IMediaControl *control;             // 0x08
+    IMediaSeeking *seeking;             // 0x0c
+    int unknown_10;                     // 0x10
+    IBasicAudio *audio;                 // 0x14
+    IMediaEvent *media_event;           // 0x18
+    BINK *bink;                         // 0x1c
+    bool init;                          // 0x20
+    int ref;                            // 0x24
+    uint flags;                         // 0x28, ISHOW_*
+    RECT rect;                          // 0x2c, where on the screen
+    float volume;                       // 0x3c
+    C_list<S_show_region> regions;      // 0x40
+    CTextureRenderer *renderer;         // 0x50, DirectShow's AVI files
+    int decoded_frame;                  // 0x54, counted by the renderer
+    int stream;                         // 0x58, the sound driver's stream, -1 if none
+    bool stream_init;                   // 0x5c
+    bool stream_paused;                 // 0x5d
+    bool stream_done;                   // 0x5e, the stream callback's end
+    DWORD thread_id;                    // 0x60, Ogg: the thread that decodes into the sound buffer
+    HANDLE thread;                      // 0x64
+    HANDLE event;                       // 0x68, signalled at each of the buffer's notification positions
+    IDirectSoundNotify *notify;         // 0x6c
+    IDirectSoundBuffer8 *sound_buffer;  // 0x70
+    int notify_count;                   // 0x74, notifications since the buffer was filled from its start
+    int write_pos;                      // 0x78, how far the buffer is filled
+    int buffer_size;                    // 0x7c
+    bool filling;                       // 0x80, m_FillBuffer runs
+    OggVorbis_File *vf;                 // 0x84
+    int dta_handle;                     // 0x88, the Ogg file
 };
 
-// A texture (PS2 ITexture.cpp, 0x4c bytes). Not written yet: only what IGraph needs.
+// ITexture::Create's flags. The Xbox build's messages name ITC_USE_ALPHA and ITC_EMPTY; the other names are guesses.
+enum {
+    ITC_FROM_MEMORY = 0x1,              // the name points to a bitmap in memory (a BITMAPINFOHEADER, the bits after it)
+    ITC_ALPHA = 0x2,                    // the image's own alpha: a 32-bit image's, a 16-bit image's top bit
+    ITC_USE_ALPHA = 0x4,                // the alpha comes from a second image, alpha_name
+    ITC_COLORKEY = 0x8,                 // the color of palette entry 0 (or blue 0 of a true color image) is transparent
+    ITC_MANAGED = 0x40,                 // loaded from the presaved file by the texture manager's thread when used
+    ITC_DITHER = 0x80,                  // dither when converting to a 16-bit format
+    ITC_MIPMAP = 0x100,
+    ITC_DXT = 0x200,                    // compress, if the card has a DXT format
+    ITC_TRUECOLOR = 0x400,
+    ITC_KEEP_PIXELS = 0x1000,           // keep the 32-bit copy of the image after creating the texture
+    ITC_HALF = 0x2000,                  // half the image's size (the presaved files' names get an "L")
+    ITC_FILL = 0x4000,                  // ITC_EMPTY: clear the texture
+    ITC_EMPTY = 0x8000,                 // no image, only the texture
+    ITC_NOALIGN = 0x40000,              // LoadImage: a BMP's rows aren't padded to 4 bytes
+    ITC_MANAGED_DXT = 0x80000,          // the texture manager's textures are DXT1
+    ITC_UNCACHED = 0x200000,            // not in the cache that IGraph::CreateITexture searches
+    ITC_ANYSIZE = 0x400000,             // keep the image's size, not a power of two within the card's limits
+    ITC_QUEUED = 0x40000000,            // the texture manager: waiting for the loading thread
+    ITC_LOADED = 0x80000000,            // the texture manager: in one of its texture slots
+};
+
+struct S_managed_texture;
+
+// A texture (PS2 ITexture.cpp, 0x4c bytes). PS2's ITexture isn't virtual; the PC's virtual functions are __stdcall.
+// Names are the PS2 build's where it has the function, the rest guessed.
 // VTABLE: LS3DF 0x1009d8d4
 class ITexture {
 public:
     ITexture();
+    ~ITexture();
 
     virtual int __stdcall Release();
-    virtual void __stdcall vfunc_01(int a);
+    virtual LS3D_RESULT __stdcall Duplicate(ITexture *texture);
     virtual LS3D_RESULT __stdcall Create(const char *name, const char *alpha_name, uint flags, ushort sx, ushort sy,
-        ushort unknown);
-    virtual void __stdcall vfunc_03();
-    virtual void __stdcall vfunc_04();
-    virtual void __stdcall vfunc_05();
-    virtual void __stdcall vfunc_06(int a, int b, int c);
-    virtual void __stdcall vfunc_07();
-    virtual void __stdcall vfunc_08();
-    virtual void __stdcall vfunc_09();
-    virtual void __stdcall vfunc_10(int a, int b, int c);
-    virtual void __stdcall vfunc_11(int a, int b, int c, int d, int e, int f, int g, int h);
-    virtual void __stdcall vfunc_12(int a, int b);
-    virtual void __stdcall vfunc_13(int a);
-    virtual void __stdcall vfunc_14();
+        ushort levels);
+    virtual bool __stdcall IsInit();
+    virtual void __stdcall Close();
+    virtual LS3D_RESULT __stdcall Reload();
+    virtual void *__stdcall Lock(RECT *rect, uint &pitch, ushort level);
+    virtual void __stdcall Unlock();
+    virtual HRESULT __stdcall AddDirtyRect(const RECT *rect);
+    virtual LS3D_RESULT __stdcall Preload();
+    virtual bool __stdcall Fill(RECT *rect, uint color, ushort level);
+    // Overloads share the slot of the first one, in reverse order: this one is slot 12
+    virtual bool __stdcall Draw(int x, int y);
+    virtual bool __stdcall Draw(RECT rect, uint color0, uint color1, uint color2, uint color3);
+    virtual bool __stdcall SaveToTGA(const char *name);
+    virtual bool __stdcall Request();
 
+private:
+    bool m_TryPresavedDXT(const char *name, const char *alpha_name, int dxt, FILETIME *time, FILETIME *alpha_time);
+    bool m_TryPresaved_555_565(const char *name, FILETIME *time);
+    bool m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint sy, int no_dither);
+
+public:
     ushort uid;                         // 0x04, from IGraph::CreateITexture
     IDirect3DTexture8 *texture;         // 0x08
-    uchar unknown_0c[8];
+    IDirect3DSurface8 *lock_surface;    // 0x0c, while locked
+    bool init;                          // 0x10
     int ref;                            // 0x14
     C_str file_name;                    // 0x18
-    const char *name;                   // 0x1c, as created, which the cache compares
+    const char *name;                   // 0x1c, file_name without its directory, which the cache compares
     C_str alpha_file_name;              // 0x20
     const char *alpha_name;             // 0x24
-    uchar unknown_28[0xc];
-    uint flags;                         // 0x34
-    uchar unknown_38[0x14];
+    ushort width, height;               // 0x28
+    D3DFORMAT format;                   // 0x2c
+    uint flags;                         // 0x30, ITC_*, as adjusted by Create
+    uint create_flags;                  // 0x34, as Create got them, which the cache compares
+    uint color_key;                     // 0x38, in the texture's format
+    uchar *pixels;                      // 0x3c, the image as 32 bits (ARGB bytes)
+    ushort levels;                      // 0x40
+    uint mem_size;                      // 0x44, of all levels
+    S_managed_texture *managed;         // 0x48, ITC_MANAGED
 };
 
 // PS2 name
@@ -324,8 +471,16 @@ int _cpuid(_p_info *pinfo);
 int GetCPUSpeed();
 }
 
-// The image files': the game's render thread
+// ITexture.cpp: the texture manager (PC only, names guessed). Its thread loads the managed textures (ITC_MANAGED)
+// into default pool textures, which a device reset loses: IGraph releases them before and creates them after.
+void ReleaseManagedTextures();
+void RestoreManagedTextures(uint flags);
 DWORD WINAPI RenderThreadProc(void *param);
+
+// The pool array's constructor, out of line for the vector constructor iterator (its default grow size is two of the
+// 0x2c-byte texture slots)
+// TEMPLATE: LS3DF 0x1007b040
+// C_list<S_texture_slot>::C_list<S_texture_slot>
 
 // Globals.cpp
 void ErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message);

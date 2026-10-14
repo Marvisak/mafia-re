@@ -86,7 +86,9 @@ inline int FloatToInt(float f)
 
 // The engine's array (PS2 C_list<T>): it grows by grow_size elements at a time and removes an element by moving the
 // last one into its place. The PS2 build has reserve, push_back and operator= out of line for some element types;
-// the member names are guesses.
+// the member names are guesses. By default it grows by 128 bytes' worth: 32 pointers, but 2 of ITexture.cpp's
+// 0x2c-byte texture slots. That default constructor takes no arguments: an array of lists calls it out of line
+// (ITexture.cpp's pool array), where a default argument would call a closure that doesn't return this.
 template<class T>
 class C_list {
     T *array;
@@ -95,7 +97,14 @@ class C_list {
     int grow_size;
 
 public:
-    C_list(int grow = 32) : array(NULL), res_size(0), count(0), grow_size(grow) {}
+    C_list() : array(NULL), res_size(0), count(0), grow_size(128 / sizeof(T)) {}
+
+    C_list(int grow) : array(NULL), res_size(0), count(0), grow_size(grow) {}
+
+    void SetGrowSize(int grow)
+    {
+        grow_size = grow;
+    }
 
     ~C_list()
     {
