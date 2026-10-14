@@ -144,8 +144,10 @@ def parse_map(path: Path, statics: bool = False) -> list[tuple[int, str, str]]:
 
 def is_crt(obj: str) -> bool:
     # The CRT's uninitialized C globals are communal, VC6's C++ globals never are. MSVCRT: the static part
-    # of the DLL CRT's import library (startup code, security cookie).
-    return obj == "<common>" or obj.upper().startswith(("LIBC:", "LIBCMT:", "MSVCRT:", "OLDNAMES:"))
+    # of the DLL CRT's import library (startup code, security cookie). LIBCP/LIBCPMT: the C++ library
+    # (std::_Lockit, which the STL's trees lock with).
+    return obj == "<common>" or obj.upper().startswith(
+        ("LIBC:", "LIBCMT:", "LIBCP:", "LIBCPMT:", "MSVCRT:", "OLDNAMES:"))
 
 
 def compare(ours: PE, orig: PE, a: int, b: int, n: int, limit: int) -> list[tuple[int, int]] | None:
