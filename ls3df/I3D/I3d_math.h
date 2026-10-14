@@ -151,6 +151,23 @@ struct S_vector {
         return S_vector(x * f, y * f, z * f);
     }
 
+    // Insanity3D's. Through these the members are addressed from the vector, not from the struct that holds it
+    // (S_quat::Make(const S_vector &, float)).
+    S_vector &operator*=(float f)
+    {
+        x *= f;
+        y *= f;
+        z *= f;
+        return *this;
+    }
+
+    void Zero()
+    {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+    }
+
     I3D_MATH_API float __stdcall CosAngleTo(const S_vector &v) const;
     I3D_MATH_API float __stdcall AngleTo(const S_vector &v) const;
     I3D_MATH_API S_vector &__stdcall operator*=(const S_matrix &m);

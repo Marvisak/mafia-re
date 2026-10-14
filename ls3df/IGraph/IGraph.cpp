@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+// <new> (or any STL header, which includes it) declares operator delete throw(), so VC6 doesn't set the EH state
+// before a C_str's destructor (CreateITexture, WindowProc, C_str::operator+). The other files' destructors set it:
+// they didn't include it.
+#include <new>
 
 // Guards the frame counter of the game's render thread (PC only)
 // GLOBAL: LS3DF 0x101c52a0
@@ -505,10 +509,12 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
             full_alpha_name += alpha_name;
         }
     }
-    const char *alpha = NULL;
-    if ((flags & 4) && full_alpha_name.Size())
+    const char *alpha;
+    if ((flags & 4) && full_alpha_name.Size() > 0)
         alpha = &full_alpha_name[0];
-    LS3D_RESULT result = tex->Create(flags & 1 ? name : &full_name[0], alpha, flags, 0, 0, 0);
+    else
+        alpha = NULL;
+    LS3D_RESULT result = tex->Create(!(flags & 1) ? &full_name[0] : name, alpha, flags, 0, 0, 0);
     if (result < 0) {
         tex->Release();
         *texture = NULL;
@@ -1118,7 +1124,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_CLOSE:
         pGlobalIGraph->Close();
         exit(0);
-    case WM_ACTIVATE:
+    case WM_ACTIVATE: {
         if (m_DisableSleeping) {
             if (m_Sleeping) {
                 pGlobalIGraph->SetAppName(m_SleepAppName);
@@ -1130,11 +1136,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
             break;
         }
+        // A local: the original shifts wparam before it tests the flag. LOWORD is tested as a word where it is used.
+        BOOL minimized = HIWORD(wparam);
         if (m_InitDesc.flags & IGRAPH_SLEEP) {
-            if (HIWORD(wparam)) {
+            if (minimized) {
                 if (!m_Sleeping) {
                     m_SleepAppName = m_AppName;
-                    pGlobalIGraph->SetAppName(m_AppName + " ..zzZZ");
+                    C_str name = m_AppName + " ..zzZZ";
+                    pGlobalIGraph->SetAppName(name);
                     m_Sleeping = true;
                     if (m_RenderThread)
                         SuspendThread(m_RenderThread);
@@ -1152,7 +1161,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 HWND foreground = GetForegroundWindow();
                 if (!IsChild(m_MainHWnd, foreground) && m_MainHWnd != foreground) {
                     m_SleepAppName = m_AppName;
-                    pGlobalIGraph->SetAppName(m_AppName + " ..zzZZ");
+                    C_str name = m_AppName + " ..zzZZ";
+                    pGlobalIGraph->SetAppName(name);
                     m_Sleeping = true;
                     if (m_RenderThread)
                         SuspendThread(m_RenderThread);
@@ -1168,6 +1178,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         } else if (m_pD3DDevice8 && i3d_driver_init)
             RestoreRenderStates();
         break;
+    }
     case WM_ERASEBKGND:
         return 0;
     case WM_SYSKEYDOWN:
@@ -1176,11 +1187,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             return 1;
         break;
     case WM_SYSCOMMAND:
-        switch (wparam & 0xfff0) {
-        case SC_SCREENSAVE:
-        case SC_MONITORPOWER:
+        if ((wparam & 0xfff0) == SC_SCREENSAVE || (wparam & 0xfff0) == SC_MONITORPOWER)
             return 1;
-        }
         break;
     }
     return DefWindowProcA(hwnd, msg, wparam, lparam);

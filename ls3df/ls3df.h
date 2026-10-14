@@ -330,9 +330,8 @@ public:
         if (!rep)
             return cp;
         int len = rep->size, len1 = strlen(cp);
-        C_rep *new_rep = new (len + len1) C_rep(rep->data, cp, len, len1);
         C_str ret;
-        ret.rep = new_rep;
+        ret.rep = new (len + len1) C_rep(rep->data, cp, len, len1);
         return ret;
     }
 
@@ -348,7 +347,8 @@ public:
         return rep->data[pos];
     }
 
-    int Size() const
+    // Unsigned, as Insanity3D's size_t: IGraph::CreateITexture's Size() > 0 is an unsigned compare
+    uint Size() const
     {
         return rep ? rep->size : 0;
     }

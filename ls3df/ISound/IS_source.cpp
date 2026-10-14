@@ -79,8 +79,8 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         dtaSeek(h, chunk.size, FILE_CURRENT);
         dtaRead(h, &chunk, sizeof(chunk));
     }
-    format.bytes_per_sample = fmt.format.wBitsPerSample / 8;
     format.num_channels = fmt.format.wf.nChannels;
+    format.bytes_per_sample = fmt.format.wBitsPerSample / 8;
     format.samples_per_sec = fmt.format.wf.nSamplesPerSec;
     format.size = chunk.size;
     bytes_per_ms = wave_format.nAvgBytesPerSec * 0.001f;
@@ -92,9 +92,14 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
     desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | (open_flags & ISND_3DBUFFER ? DSBCAPS_CTRL3D : 0);
-    if (!(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM))
-        desc.dwFlags |= DSBCAPS_LOCDEFER;
-    else
+    // Both EAX cases defer the placement, and VC6 merges them. The test is still in the original's registers:
+    // create_flags is loaded once for two tests, as in ISND_sound::Play, which keeps the driver in edi.
+    if (!(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM)) {
+        if (pISndDriver->create_flags & ISNDINIT_EAX)
+            desc.dwFlags |= DSBCAPS_LOCDEFER;
+        else
+            desc.dwFlags |= DSBCAPS_LOCDEFER;
+    } else
         desc.dwFlags |= DSBCAPS_LOCSOFTWARE;
     desc.dwBufferBytes = chunk.size;
     desc.lpwfxFormat = &wave_format;

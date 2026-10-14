@@ -233,9 +233,6 @@ struct TERMINATED_CHANNEL_STRUCT {
     uint loop;                          // ISND_LOOP
 };
 
-// The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
-// each name's overloads at the first one's slot in reverse order, which gives the original's vtable.
-// VTABLE: LS3DF 0x1009da88
 // The stream functions the driver keeps (PC only), through which IShow plays music. Nothing in LS3DF fills the table in:
 // the driver only deletes it when it closes, and frees a library it never loads (module), presumably the one that
 // provided it. The functions are __fastcall, the engine's default; the names are guesses.
@@ -256,6 +253,9 @@ struct ISND_STREAM_FUNCS {
     HRESULT(__fastcall *Resume)(int stream);                                // 0x3c
 };
 
+// The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
+// each name's overloads at the first one's slot in reverse order, which gives the original's vtable.
+// VTABLE: LS3DF 0x1009da88
 class ISND_driver {
 public:
     ISND_driver();

@@ -944,36 +944,37 @@ S_matrix S_quat::RotationMatrix() const
     S_matrix m;
     if (fabs(s) >= 1.0) {
         m.Identity();
-    } else {
-        m.m[0][3] = 0.0f;
-        m.m[1][3] = 0.0f;
-        m.m[2][3] = 0.0f;
-        m.m[3][0] = 0.0f;
-        m.m[3][1] = 0.0f;
-        m.m[3][2] = 0.0f;
-        m.m[3][3] = 1.0f;
-        float x2 = v.x + v.x;
-        float y2 = v.y + v.y;
-        float z2 = v.z + v.z;
-        float xx = v.x * x2;
-        float xy = v.x * y2;
-        float xz = v.x * z2;
-        float yy = v.y * y2;
-        float yz = v.y * z2;
-        float zz = v.z * z2;
-        float wx = s * x2;
-        float wy = s * y2;
-        float wz = s * z2;
-        m.m[0][0] = 1.0f - (yy + zz);
-        m.m[0][1] = xy - wz;
-        m.m[0][2] = xz + wy;
-        m.m[1][0] = xy + wz;
-        m.m[1][1] = 1.0f - (xx + zz);
-        m.m[1][2] = yz - wx;
-        m.m[2][0] = xz - wy;
-        m.m[2][1] = yz + wx;
-        m.m[2][2] = 1.0f - (xx + yy);
+        // A copy into the result of its own, as PS2 has: one return after both branches schedules the copy otherwise
+        return m;
     }
+    m.m[0][3] = 0.0f;
+    m.m[1][3] = 0.0f;
+    m.m[2][3] = 0.0f;
+    m.m[3][0] = 0.0f;
+    m.m[3][1] = 0.0f;
+    m.m[3][2] = 0.0f;
+    m.m[3][3] = 1.0f;
+    float x2 = v.x + v.x;
+    float y2 = v.y + v.y;
+    float z2 = v.z + v.z;
+    float xx = v.x * x2;
+    float xy = v.x * y2;
+    float xz = v.x * z2;
+    float yy = v.y * y2;
+    float yz = v.y * z2;
+    float zz = v.z * z2;
+    float wx = s * x2;
+    float wy = s * y2;
+    float wz = s * z2;
+    m.m[0][0] = 1.0f - (yy + zz);
+    m.m[0][1] = xy - wz;
+    m.m[0][2] = xz + wy;
+    m.m[1][0] = xy + wz;
+    m.m[1][1] = 1.0f - (xx + zz);
+    m.m[1][2] = yz - wx;
+    m.m[2][0] = xz - wy;
+    m.m[2][1] = yz + wx;
+    m.m[2][2] = 1.0f - (xx + yy);
     return m;
 }
 
@@ -1004,16 +1005,12 @@ void S_quat::Make(const S_vector &axis, float angle)
     if (fabs(sq - 1.0f) < MRG_ZERO)
         return;
     if (sq < MRG_ZERO) {
-        v.x = 0.0f;
-        v.y = 0.0f;
-        v.z = 0.0f;
+        v.Zero();
         s = 1.0f;
         return;
     }
     float f = 1.0f / (float)sqrt(sq);
-    v.x *= f;
-    v.y *= f;
-    v.z *= f;
+    v *= f;
     s *= f;
 }
 
