@@ -26,7 +26,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -111,6 +111,9 @@
 
 // LIBRARY: LS3DF 0x1008df40 SYMBOL
 // _strncpy
+
+// LIBRARY: LS3DF 0x1008e040 SYMBOL
+// _memmove
 
 // LIBRARY: LS3DF 0x1008e380 SYMBOL
 // __except_handler3
@@ -523,6 +526,9 @@
 // LIBRARY: LS3DF 0x10092cd5 SYMBOL
 // ___doserrno
 
+// LIBRARY: LS3DF 0x10092ce0 SYMBOL
+// _memcpy
+
 // LIBRARY: LS3DF 0x10093015 SYMBOL
 // ___initstdio
 
@@ -858,6 +864,9 @@
 
 // LIBRARY: LS3DF 0x10097c53 SYMBOL
 // ___crtMessageBoxA
+
+// LIBRARY: LS3DF 0x10097cdc SYMBOL
+// __matherr
 
 // LIBRARY: LS3DF 0x10097cdf SYMBOL
 // _raise

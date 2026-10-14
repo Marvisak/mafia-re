@@ -9,7 +9,9 @@ say where the CRT's globals are in the original, so data addresses come from the
 not from our map plus an offset. A source that isn't complete yet links only some of the original's
 CRT objects, so after a missing one the next function is further away: a function not found near the
 previous offset is looked for in the whole of the original's .text, and taken if it fits at exactly
-one place.
+one place. Identical functions (_memcpy and _memmove, each in its own object) fit at several; the
+functions reccmp already matches tell them apart, by which of those places the original calls where ours
+calls the twin, and the place left over is the last twin's.
 
 What it writes:
 - LIBRARY for every function found, GLOBAL for the globals the CRT code references (including the
@@ -187,6 +189,13 @@ def candidate_sizes(ours: PE, a: int, n: int) -> list[int]:
     return [n] + sorted((e for e in ends if e < n), reverse=True)
 
 
+def call_targets(pe: PE, a: int, n: int) -> set[int]:
+    """The targets of the direct calls and jumps in n bytes at a."""
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    return {int(insn.op_str, 16) for insn in md.disasm(pe.read(a, n) or b"", a)
+            if insn.mnemonic in ("call", "jmp") and insn.op_str.startswith("0x")}
+
+
 def pointer_operands(ours: PE, orig: PE, a: int, b: int, n: int) -> list[tuple[int, int]]:
     """(our value, original value) for every displacement or immediate in our n bytes at a that is an
     address in our image, read at the same offset of the original's copy at b. Unlike compare(), this
@@ -256,9 +265,18 @@ def main() -> None:
     delta = orig.entry - ours.entry
     found = {}  # original address -> (our address, names)
     failed = []
+    ambiguous = []  # (our address, name, the places it fits in the original, size)
     # our symbol -> original address -> votes, kept apart for operands pointing exactly at the symbol
     exact = defaultdict(lambda: defaultdict(int))
     inside = defaultdict(lambda: defaultdict(int))
+
+    def accept(addr: int, orig_addr: int, name: str, size: int) -> None:
+        found.setdefault(orig_addr, (addr, []))[1].append(name)
+        for vx, vy in pointer_operands(ours, orig, addr, orig_addr, size):
+            sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
+            if sym:
+                (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
+
     for k, (addr, name, obj) in enumerate(code_symbols):
         # Import thunks (MSVCRT:MSVCR90.dll) are left to the thunk search below, or to reccmp itself in a
         # relocated original: they differ only in their pointer, so any of them would pass for any other here
@@ -295,17 +313,44 @@ def main() -> None:
                 hits, size = search(candidate_sizes(ours, addr, len(whole.rstrip(b"\x00\xcc\x90")) or len(whole)),
                                     len(whole))
                 size = min(size, len(code))
-            if len(hits) != 1:
+            if len(hits) > 1:
+                ambiguous.append((addr, name, hits, size))
+                continue
+            if not hits:
                 failed.append((addr, name))
                 continue
             delta = hits[0] - addr
-        found.setdefault(addr + delta, (addr, []))[1].append(name)
-        for vx, vy in pointer_operands(ours, orig, addr, addr + delta, size):
-            sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
-            if sym:
-                (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
+        accept(addr, addr + delta, name, size)
 
-    functions = [(a, kept[ours_addr] if kept.get(ours_addr) in names else names[0])
+    # Twins, identical functions in their own objects (_memcpy and _memmove): the functions reccmp matched tell
+    # them apart, by which of the places the original calls where ours calls the twin (LS3DF's ReadCharBuffer
+    # calls _memmove). Once the others have their place, the one left is a twin's too.
+    if ambiguous:
+        matched = sorted((e.orig_addr, e.recomp_addr, e.size(ImageId.RECOMP)) for e in reccmp.get_all()
+                         if e.get("type") == EntityType.FUNCTION and e.orig_addr is not None
+                         and e.recomp_addr is not None and e.size(ImageId.RECOMP))
+        calls = []  # (our callees, the original's callees) of each matched function
+        for i, (orig_addr, recomp_addr, size) in enumerate(matched):
+            end = matched[i + 1][0] if i + 1 < len(matched) else orig_addr + size
+            calls.append((call_targets(ours, recomp_addr, size),
+                          call_targets(orig, orig_addr, min(size, end - orig_addr))))
+        while ambiguous:
+            resolved = []
+            for twin in ambiguous:
+                addr, name, hits, size = twin
+                left = [h for h in hits if h not in found]
+                votes = {h: sum(addr in ours_calls and h in orig_calls for ours_calls, orig_calls in calls)
+                         for h in left}
+                best = sorted(left, key=votes.get, reverse=True)
+                if len(left) == 1 or (best and votes[best[0]] > votes[best[1]]):
+                    accept(addr, best[0], name, size)
+                    resolved.append(twin)
+            if not resolved:
+                break
+            ambiguous = [twin for twin in ambiguous if twin not in resolved]
+        failed += [(addr, name) for addr, name, _, _ in ambiguous]
+
+    functions =[(a, kept[ours_addr] if kept.get(ours_addr) in names else names[0])
                  for a, (ours_addr, names) in found.items()]
 
     # Import thunks, jmp [IAT slot]: the original's is the one jumping through its slot for the same import

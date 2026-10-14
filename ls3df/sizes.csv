@@ -1,0 +1,5 @@
+# The size of original functions reccmp gets wrong. It takes every jmp through an import slot for an import thunk,
+# so a function that ends in a tail call to an imported function would end at that jump.
+address|size
+# IGraph::SetAppName: jmp [SetWindowTextA] at 0x1006c89f, then its other exit
+0x1006c820|139

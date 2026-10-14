@@ -23,6 +23,8 @@ targets:
     source_root: ls3df
     hash:
       sha256: e211c85009440d6c032f2074d79184f074a9a046574648745c2594b4cef178a6
+    data_sources:
+      - ls3df/sizes.csv
   SETUPSTEAM:
     filename: setup.steam.exe
     source_root:

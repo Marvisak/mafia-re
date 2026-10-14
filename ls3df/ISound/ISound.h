@@ -88,11 +88,12 @@ public:
         return ++ref;
     }
 
-    // The out-of-line copy the linker kept is in I3D code. Its "" is the engine's at 0x100af7fc, which reccmp can't
-    // pair: it names strings by their text, and the CRT's "" in .rdata already has that name.
+    // The out-of-line copy the linker kept is in I3D code. Its "" is the engine's, in .data like VC6's other literals.
+    // reccmp's string search skips empty strings, so the original's needs a marker; the CRT's in .rdata is "\x00".
     // FUNCTION: LS3DF 0x10059370
     const char *GetFileName() const
     {
+        // STRING: LS3DF 0x100af7fc
         return filename ? filename : C_str("");
     }
 

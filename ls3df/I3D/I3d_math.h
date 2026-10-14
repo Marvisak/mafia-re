@@ -299,3 +299,10 @@ extern S_vector ZeroVector;
 
 // The box's eight corners, in a buffer of its own
 const S_vector *BBoxVertices(const I3D_bbox &bbox);
+
+// The guard of BBoxVertices' static buffer, and the function its first call registers with atexit (it has nothing
+// to destroy). VC6 numbers both per file, so the names hold only while no other file has them.
+// GLOBAL: LS3DF 0x101c5290
+// $S9
+// SYNTHETIC: LS3DF 0x1006bc90
+// $E10
