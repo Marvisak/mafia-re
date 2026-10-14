@@ -7,6 +7,8 @@
 // declaration order (from m_Sleeping at 0x101c59ac).
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
+#include "I3D/IBManager.h"
+#include "I3D/VBManager.h"
 #include "ISound/ISound.h"
 #include "dta.h"
 
@@ -17,9 +19,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// <new> (or any STL header, which includes it) declares operator delete throw(), so VC6 doesn't set the EH state
-// before a C_str's destructor (CreateITexture, WindowProc, C_str::operator+). The other files' destructors set it:
-// they didn't include it.
+// <new> (or any STL header, which includes it: the buffer managers' headers include <set>) declares operator delete
+// throw(), so VC6 doesn't set the EH state before a C_str's destructor (CreateITexture, WindowProc,
+// C_str::operator+). The other files' destructors set it: they didn't include it.
 #include <new>
 
 // Guards the frame counter of the game's render thread (PC only)
@@ -1318,7 +1320,7 @@ LS3D_RESULT ResetDevice(bool reset)
         }
         if ((m_HardwareCaps & 1) && !m_VB.vb) {
             if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                    15000, m_VB, 0, 0))
+                    15000, m_VB, VF_UNKNOWN_0, false))
                 dbgPrintf("Error creating Global Vertex Buffer !");
             if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
                 dbgPrintf("Error creating Global Index Buffer !");
@@ -1910,7 +1912,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     ResetRenderProps();
     if (m_HardwareCaps & 1) {
         if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                15000, m_VB, 0, 0))
+                15000, m_VB, VF_UNKNOWN_0, false))
             dbgPrintf("Error creating Global Vertex Buffer !");
         if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
             dbgPrintf("Error creating Global Index Buffer !");

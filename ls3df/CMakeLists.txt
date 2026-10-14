@@ -62,11 +62,13 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
-    # (the names are /Gr's; Make4X4's other callers are in camera code)
+    # (the names are /Gr's; Make4X4's other callers are in camera code, the buffer managers' m_UnlockAll*Buffers
+    # caller is the driver's Render, render.cpp)
     target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
         "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
         "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
-        "/INCLUDE:?UnloadManagedTextures@@YIXXZ")
+        "/INCLUDE:?UnloadManagedTextures@@YIXXZ" "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
+        "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32 vorbisfile

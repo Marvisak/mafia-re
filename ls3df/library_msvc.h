@@ -7,6 +7,12 @@
 // LIBRARY: LS3DF 0x1008d404
 // ??3@YAXPAX@Z
 
+// LIBRARY: LS3DF 0x1008d40f
+// ??0_Lockit@std@@QAE@XZ
+
+// LIBRARY: LS3DF 0x1008d4ab
+// ??1_Lockit@std@@QAE@XZ
+
 // LIBRARY: LS3DF 0x1008d4c0 SYMBOL
 // __fpmath
 
@@ -949,7 +955,7 @@
 // GLOBAL: LS3DF 0x100abc48
 // __NLG_Destination
 
-// GLOBAL: LS3DF 0x100abc5c
+// GLOBAL: LS3DF 0x100abc54
 // __FPmtterm
 
 // GLOBAL: LS3DF 0x100abc70
@@ -1032,6 +1038,9 @@
 
 // GLOBAL: LS3DF 0x100aed68
 // __pow10neg
+
+// GLOBAL: LS3DF 0x101ca8bc
+// ___lconv_static_null
 
 // GLOBAL: LS3DF 0x101ca9ac
 // ___fastflag

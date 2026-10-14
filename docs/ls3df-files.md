@@ -78,8 +78,8 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | PS2 order |
 | `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc` |
 | `1005a7a0–1005aad0` | `1005aab0` | | `I3d_volume.cpp` | PS2 order |
-| `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp` |
-| `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings |
+| `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
+| `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings; up to `1005d010` the rest of `IBManager.cpp`'s multiset functions |
 | `1005e3a0–10060c20` | `10060c00` | | `Load.cpp` | `LightMap::m_CreateLM()`, `load.cpp` messages, `.4ds`, `.5ds`, `.6ds` |
 | `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker |
 | `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker |
@@ -88,8 +88,9 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10061990–100619b0` | `10061990` | | ? | no code, only the marker |
 | `100619b0–100658f0` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()` |
 | `100658f0–10067d20` | `10067d00` | `10065a10`, `10065a30` | `T&l.cpp` | PS2 order |
-| `10067d20–10069e00` | `10069de0` | `10068880` | `VBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\VBManager.cpp` |
-| `10069e00–1006ad40` | none | none | `VBManager.cpp`? | `__thiscall` code after `VBManager.cpp`'s marker, probably its out-of-line inline and template functions |
+| `10067d20–10068880` | none | none | ? | six `__fastcall` engine helpers taking an `S_matrix` and an `I3D_frame`, called from all over I3D: the end of `T&l.cpp` or a file of their own |
+| `10068880–10069e00` | `10069de0` | `10068880` | `VBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\VBManager.cpp`; written: `C_VBuffer`, `C_VBManager`, the same code as `IBManager.cpp`'s |
+| `10069e00–1006ad40` | none | none | `VBManager.cpp` | the rest of its multisets' out-of-line functions, after the marker; written |
 | `1006ad40–1006b430` | none | none | `cpuid.c` (C) | the C object: Microsoft's CPUID sample (`IsCPUID`, `map_mname`, `_cpuid`) and `GetCPUSpeed`; written |
 | `1006b430–1006bd40` | `1006bd20` | `1006b430`, `1006bb80`, `1006bca0`, `1006bcc0` | `Globals.cpp` | written |
 | `1006bd40–100733a0` | `1006deb0` | `1006bd40`–`1006bf70` (8) | `IGraph.cpp` | one file with its marker in the middle, as `I3d_math.cpp`: the `C_str` functions after `Init` are COMDATs linked into it, and the first object's copy is the one kept; written |

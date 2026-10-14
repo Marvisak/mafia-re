@@ -101,9 +101,12 @@ public:
 
     C_list(int grow) : array(NULL), res_size(0), count(0), grow_size(grow) {}
 
-    void SetGrowSize(int grow)
+    // Returns the list: where C_IBuffer's constructor is inlined, VC6 then stores the size through the register that
+    // holds the list for the reserve after it, as the original does
+    C_list &SetGrowSize(int grow)
     {
         grow_size = grow;
+        return *this;
     }
 
     ~C_list()
@@ -117,6 +120,12 @@ public:
     int size() const
     {
         return count;
+    }
+
+    // Empties the list, keeping the array
+    void reset()
+    {
+        count = 0;
     }
 
     // Frees the array
@@ -392,13 +401,13 @@ void dbgPrintGuid(const void *guid);
 
 // The destructors IGraph.cpp's thunks in .CRT$XCU register with atexit for m_AdapterFormatList, m_CachedTextureList,
 // m_UncachedTextureList and m_MapsList, by name. VC6 numbers these functions per file, and only these names are in
-// no other file; reccmp pairs a name several files have ($E2, $E7, $E12) only with a warning for each, so the other
+// no other file; reccmp pairs a name several files have ($E10, $E15, $E20) only with a warning for each, so the other
 // destructors stay unmatched, and their thunks below 100% though identical.
 // SYNTHETIC: LS3DF 0x1006be60
-// $E17
+// $E25
 // SYNTHETIC: LS3DF 0x1006beb0
-// $E22
+// $E30
 // SYNTHETIC: LS3DF 0x1006bf00
-// $E27
+// $E35
 // SYNTHETIC: LS3DF 0x1006bf50
-// $E32
+// $E40

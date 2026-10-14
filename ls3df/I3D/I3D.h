@@ -48,8 +48,8 @@ enum I3D_RENDERSTATE {
     RS_UNKNOWN_0,
 };
 
-// 0x5c bytes, created by Globals.cpp's BreBre. Its first 16 virtual functions (of at least 41), in PS2's order where
-// the names are known.
+// 0x5c bytes, created by Globals.cpp's BreBre. Its 41 virtual functions (vtable 0x1009b830), in PS2's order where the
+// names are known.
 class I3D_driver {
 public:
     I3D_driver();
@@ -71,6 +71,33 @@ public:
     virtual void __stdcall vfunc_13(int a, int b, int c, int d, int e);
     virtual void __stdcall vfunc_14(int a, int b, int c, int d);
     virtual void __stdcall DrawText2D(int x, int y, const char *text, uchar unknown, float size);
+    virtual void __stdcall vfunc_16();
+    virtual void __stdcall vfunc_17();
+    virtual void __stdcall vfunc_18();
+    virtual void __stdcall vfunc_19();
+    virtual void __stdcall vfunc_20();
+    virtual void __stdcall vfunc_21();
+    virtual void __stdcall vfunc_22();
+    virtual void __stdcall vfunc_23();
+    virtual void __stdcall vfunc_24();
+    virtual void __stdcall vfunc_25();
+    virtual void __stdcall vfunc_26();
+    virtual void __stdcall vfunc_27();
+    virtual void __stdcall vfunc_28();
+    virtual void __stdcall vfunc_29();
+    virtual void __stdcall vfunc_30();
+    virtual void __stdcall vfunc_31();
+    virtual void __stdcall vfunc_32();
+    virtual void __stdcall vfunc_33();
+    virtual void __stdcall vfunc_34();
+    virtual void __stdcall vfunc_35();
+    virtual void __stdcall vfunc_36();
+    virtual void __stdcall vfunc_37();
+    virtual void __stdcall vfunc_38();
+    virtual void __stdcall vfunc_39();
+    // PS2 name. Empty on PS2 and PC: the original's copy is folded with an empty function of the DirectShow base
+    // classes (0x10087ec0). The buffer managers call it whenever they create or release a buffer.
+    virtual void __stdcall m_RecomputeUsedVRAM();
 
 private:
     uchar unknown_04[0x34];
@@ -93,45 +120,3 @@ extern uint i3d_stats[8];
 
 // A scale the I3D code applies to lighting, 128 or 255 without MODULATE2X (the name is a guess)
 extern float i3d_light_scale;
-
-// A part of one of the vertex buffers C_VBManager shares out (PS2 names; the members are guesses)
-struct COMPLETE_VB_STRUCT {
-    uint unknown_00;
-    IDirect3DVertexBuffer8 *vb;
-    int base;                           // the part's first vertex
-};
-
-// The same for index buffers (PS2 names)
-struct COMPLETE_IB_STRUCT {
-    uint unknown_00;
-    IDirect3DIndexBuffer8 *ib;
-    int base;                           // the part's first index
-};
-
-// The vertex buffers (PS2 VBManager.cpp). Not written yet: only what other files need.
-class C_VBManager {
-    uchar unknown_00[0x18];
-
-public:
-    bool m_Alloc(uint fvf, uint usage, uint stride, uint count, COMPLETE_VB_STRUCT &vb, int unknown6, bool unknown7);
-    void m_Free(COMPLETE_VB_STRUCT &vb);
-    void m_FreeAllUnusedVBuffers(void *unknown);
-    void m_FreeAllVBuffers();
-    void m_FreeAllVRAMVBuffers();
-};
-
-// The index buffers (PS2 IBManager.cpp)
-class C_IBManager {
-    uchar unknown_00[0x18];
-
-public:
-    bool m_Alloc(uint usage, uint count, COMPLETE_IB_STRUCT &ib);
-    void m_Free(COMPLETE_IB_STRUCT &ib);
-    void m_FreeAllUnusedIBuffers();
-    void m_FreeAllIBuffers();
-    void m_FreeAllVRAMIBuffers();
-};
-
-// PS2 names
-extern C_VBManager cVBMan;
-extern C_IBManager cIBMan;
