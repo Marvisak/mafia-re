@@ -301,7 +301,9 @@ extern S_vector ZeroVector;
 const S_vector *BBoxVertices(const I3D_bbox &bbox);
 
 // The guard of BBoxVertices' static buffer, and the function its first call registers with atexit (it has nothing
-// to destroy). VC6 numbers both per file, so the names hold only while no other file has them.
+// to destroy). VC6 numbers both per file, so the names hold only while no other file has them. IGraph.cpp has a
+// $E10 too (the buffer managers' multisets move its numbering), so reccmp warns of an ambiguous match; it takes the
+// first $E10 in link order, which is Globals.cpp's.
 // GLOBAL: LS3DF 0x101c5290
 // $S9
 // SYNTHETIC: LS3DF 0x1006bc90

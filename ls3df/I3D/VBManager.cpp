@@ -13,10 +13,10 @@ extern IDirect3DDevice8 *m_pD3DDevice8;
 // GLOBAL: LS3DF 0x101c5014
 C_VBManager cVBMan;
 
-// Out of line in the original, where C_VBManager::m_Alloc calls it; ours is inlined there, which costs m_Alloc most of
-// its score. A little more source tips it over VC6's /Ob2 limit for functions not declared inline (two more
-// assignments VC6 merges away are enough), so the original's had something these statements don't show.
-// FUNCTION: LS3DF 0x100688b0
+// Out of line in the original (0x100688b0), where C_VBManager::m_Alloc calls it; ours is inlined there, which costs
+// m_Alloc most of its score, and without an out-of-line copy it has no marker. A little more source tips it over
+// VC6's /Ob2 limit for functions not declared inline (two more assignments VC6 merges away are enough), so the
+// original's had something these statements don't show.
 C_VBuffer::C_VBuffer()
 {
     data = NULL;
