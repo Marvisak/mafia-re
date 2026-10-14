@@ -2195,35 +2195,39 @@ struct S_rla_header {
 // FUNCTION: LS3DF 0x100706d0
 short EncodeRLAChannel(const uint *src, uchar *dst, int count, uint mask, int shift)
 {
-    int left = count;
+    // The pointers are walked through copies, declared after len and left: with the parameters themselves, or in
+    // another order, VC6 allocates other registers
     int len = 0;
+    int left = count;
+    const uint *in = src;
+    uchar *out = dst;
     while (left > 0) {
         int n;
-        if (left > 2 && ((src[0] & mask) >> shift) == ((src[1] & mask) >> shift) &&
-                ((src[1] & mask) >> shift) == ((src[2] & mask) >> shift)) {
+        if (left > 2 && ((in[0] & mask) >> shift) == ((in[1] & mask) >> shift) &&
+                ((in[1] & mask) >> shift) == ((in[2] & mask) >> shift)) {
             for (n = 2; n < left; n++) {
-                if (((src[n] & mask) >> shift) != ((src[n - 1] & mask) >> shift))
+                if (((in[n] & mask) >> shift) != ((in[n - 1] & mask) >> shift))
                     break;
                 if (n >= 127)
                     break;
             }
-            *dst++ = n - 1;
-            *dst++ = (uchar)((src[0] & mask) >> shift);
-            src += n;
+            *out++ = n - 1;
+            *out++ = (uchar)((in[0] & mask) >> shift);
+            in += n;
             len += 2;
             left -= n;
         } else {
             for (n = 1; n < left; n++) {
-                if (left - n > 2 && ((src[n] & mask) >> shift) == ((src[n + 1] & mask) >> shift) &&
-                        ((src[n + 1] & mask) >> shift) == ((src[n + 2] & mask) >> shift))
+                if (left - n > 2 && ((in[n] & mask) >> shift) == ((in[n + 1] & mask) >> shift) &&
+                        ((in[n + 1] & mask) >> shift) == ((in[n + 2] & mask) >> shift))
                     break;
                 if (n >= 127)
                     break;
             }
-            *dst++ = -n;
+            *out++ = -n;
             len++;
             for (int i = 0; i < n; i++) {
-                *dst++ = (uchar)((*src++ & mask) >> shift);
+                *out++ = (uchar)((*in++ & mask) >> shift);
                 len++;
                 left--;
             }
