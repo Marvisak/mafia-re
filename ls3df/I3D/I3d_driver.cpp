@@ -1840,12 +1840,6 @@ I3D_camera::I3D_camera()
     renderState[11]++;
 }
 
-// STUB: LS3DF 0x1001a1e0
-I3D_dummy::I3D_dummy()
-{
-    renderState[14]++;
-}
-
 // STUB: LS3DF 0x1001ed30
 I3D_joint::I3D_joint()
 {

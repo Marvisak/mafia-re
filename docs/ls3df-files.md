@@ -46,7 +46,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1000de70–1000dec0` | `1000dea0` | `1000de70`, `1000de80`, `1000de90` (empty) | ? | no functions, three globals with empty constructors |
 | `1000dec0–` about `10015530` | none | `10011d20`–`10011d50` (empty) | `i3d_collision.cpp` | collision tests; PS2 has it between the camera and the driver |
 | `10015530–1001a1e0` | `10016fd0` | `10015530`, `10015580`, `100155d0`, `100188a0` | `I3d_driver.cpp` | one file with its marker after `DrawLines`, as `I3d_math.cpp`: `I3D_driver` in PS2's order with the PC's icons and shadow rasterizer after `GetState`, `VolumeBall`'s `$E` before `DrawSphere`, then two `C_list` reserves; written |
-| `1001a1e0–1001a6e0` | `1001a6c0` | | `I3d_dummy.cpp` | `I3D_dummy`: the constructor `CreateFrame` calls, `Duplicate`, the load of its box |
+| `1001a1e0–1001a6e0` | `1001a6c0` | | `I3d_dummy.cpp` | `I3D_dummy` in PS2's order (the constructor `CreateFrame` calls, `Duplicate`, `Normalize`, the load of its box), with the PC's `UpdateV` after `Duplicate`; written |
 | `1001a6e0–1001d2f0` | `1001c280` | `1001c780` | `I3d_frame.cpp` | one file with its marker after `EnumSubtree`, as `I3d_math.cpp`: `I3D_frame` from the constructor (`1001a7f0`, after the dummy file's copy of `UpdateMatrix`) to `LoadImage`, in PS2's order; `UpdateTargetList`'s `$E` after `SetProperty`; written |
 | `1001d2f0–1001e860` | `1001e840` | | ? | `I3d_interpolator.cpp` and `I3d_joint.cpp` are due here |
 | `1001e860–1001ef60` | `1001ef40` | | ? | no strings |

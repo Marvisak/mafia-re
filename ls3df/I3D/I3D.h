@@ -5,11 +5,11 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver is written (I3d_driver.cpp); the frames, visuals, materials and meshes
-// aren't recovered yet. Their placeholders keep the members and virtual functions the written files use at their
-// offsets and vtable slots, the sizes the driver allocates, and declare the constructors it calls (stubs, see
-// I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the virtual functions, none of which is
-// written yet; the real classes will drop it.
+// The 3D engine (PS2 I3d_*.cpp). The driver, the frame and the dummy are written (I3d_driver.cpp, I3d_frame.cpp,
+// I3d_dummy.cpp); the other frames, the visuals, materials and meshes aren't recovered yet. Their placeholders keep
+// the members and virtual functions the written files use at their offsets and vtable slots, the sizes the driver
+// allocates, and declare the constructors it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that
+// the stubs don't need the virtual functions, none of which is written yet; the real classes will drop it.
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
@@ -17,6 +17,7 @@
 
 class I3D_driver;
 class I3D_scene;
+class I3D_dummy;
 class I3D_material;
 class ITexture;
 class ISND_3Dlistener;
@@ -167,6 +168,7 @@ inline int I3DFloatAsInt(float f)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
 #define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
 #define FRMFLAGS_UPDATE 0x40000000      // to update
+#define FRMFLAGS_WEATHER 0x80000000     // a dummy in a scene's weather system (I3D_scene::WeatherSystemAddDummy)
 
 // What a frame's callback is told (PS2 type; the values aren't known yet)
 enum LS3D_CALLBACK_MESSAGE {
@@ -267,6 +269,23 @@ public:
             return;
         f_matrix(3) = pos;
         frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
+    }
+
+    // The scale, by reference (the game's out-of-line copy is at 0x47aec0 in Game.exe)
+    const S_vector &GetScale() const
+    {
+        return scale;
+    }
+
+    // Sets the scale; the matrix is made again from it and the rotation, which is taken from the matrix first if it
+    // isn't up to date (the game inlines it too)
+    void SetScale(const S_vector &s)
+    {
+        scale = s;
+        if (!(frm_flags & FRMFLAGS_QUAT_VALID))
+            rot.Make(f_matrix);
+        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+            FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
 
     // PS2 name
@@ -406,8 +425,10 @@ public:
     virtual void __stdcall vfunc_52(); virtual void __stdcall vfunc_53(); virtual void __stdcall vfunc_54();
     virtual void __stdcall vfunc_55(); virtual void __stdcall vfunc_56(); virtual void __stdcall vfunc_57();
     virtual void __stdcall vfunc_58(); virtual void __stdcall vfunc_59(); virtual void __stdcall vfunc_60();
-    virtual void __stdcall vfunc_61(); virtual void __stdcall vfunc_62(); virtual void __stdcall vfunc_63();
-    virtual void __stdcall vfunc_64();
+    virtual void __stdcall vfunc_61();
+    // PS2 name: takes the dummy out of the scene's weather system
+    virtual void __stdcall WeatherSystemDelDummy(I3D_dummy *dummy);
+    virtual void __stdcall vfunc_63(); virtual void __stdcall vfunc_64();
     // PS2 name
     virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
 
@@ -415,6 +436,34 @@ public:
     ISND_3Dlistener *listener;          // 0x284
     uchar unknown_288[0xb4];
 };
+
+// I3D_dummy::dummy_flags (names guessed)
+#define DUMMYF_NORMALIZED 0x1           // Normalize made the box (0, 0, 0) to (1, 1, 1)
+#define DUMMYF_NORMALIZED_CENTER 0x2    // Normalize made the box (-1, -1, -1) to (1, 1, 1)
+#define DUMMYF_UNKNOWN_10 0x10          // PC only: cleared whenever the frame moves (UpdateV) or is normalized
+
+// A frame with a box (PS2 I3D_dummy, 0x19c bytes on PC; I3d_dummy.cpp). The game marks places and regions with them,
+// and the scenes' weather system takes its regions from them.
+// VTABLE: LS3DF 0x1009b920
+class I3D_dummy : public I3D_frame {
+public:
+    I3D_dummy();
+    ~I3D_dummy();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    // Moves the box into the frame's position and scale, which leaves a unit box: (-1, -1, -1) to (1, 1, 1) around the
+    // box's center for mode 2, (0, 0, 0) to (1, 1, 1) from its min for the others
+    virtual void __stdcall Normalize(uint mode);
+
+    I3D_bbox bbox;                      // 0x140, in local space
+    uchar unknown_158[0x40];            // PC only, nothing in LS3DF reads it
+    uint dummy_flags;                   // 0x198, DUMMYF_*
+};
+
+// SYNTHETIC: LS3DF 0x1001a240
+// I3D_dummy::`scalar deleting destructor'
 
 // The other frames, by the sizes the driver allocates (the landscape's name is a guess)
 #define I3D_PLACEHOLDER_FRAME(name, size) \
@@ -426,7 +475,6 @@ public:
 
 I3D_PLACEHOLDER_FRAME(I3D_light, 0x1f0)
 I3D_PLACEHOLDER_FRAME(I3D_camera, 0x4f4)
-I3D_PLACEHOLDER_FRAME(I3D_dummy, 0x19c)
 I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
