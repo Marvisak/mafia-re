@@ -1,122 +1,601 @@
 #pragma once
 
 #include "ls3df.h"
+#include "I3D/I3d_math.h"
 
 #include <d3d8.h>
 
-// The 3D engine's classes, as far as the files written so far use them. Their layouts and virtual functions aren't
-// recovered yet: placeholders keep the known members at their offsets and the known virtual functions in their
-// vtable slots, and will make way for the real declarations.
+// The 3D engine (PS2 I3d_*.cpp). The driver is written (I3d_driver.cpp); the frames, visuals, materials and meshes
+// aren't recovered yet. Their placeholders keep the members and virtual functions the written files use at their
+// offsets and vtable slots, the sizes the driver allocates, and declare the constructors it calls (stubs, see
+// I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the virtual functions, none of which is
+// written yet; the real classes will drop it.
 
-// 15 virtual functions on PC, at 0x1009cf58 in I3D_sound's vtable
-class I3D_frame {
-public:
-    virtual void __stdcall vfunc_00() = 0;
-    virtual void __stdcall vfunc_01() = 0;
-    virtual void __stdcall vfunc_02() = 0;
-    virtual void __stdcall vfunc_03() = 0;
-    virtual void __stdcall vfunc_04() = 0;
-    virtual void __stdcall vfunc_05() = 0;
-    virtual void __stdcall vfunc_06() = 0;
-    virtual void __stdcall vfunc_07() = 0;
-    virtual void __stdcall vfunc_08() = 0;
-    virtual void __stdcall vfunc_09() = 0;
-    virtual void __stdcall vfunc_10() = 0;
-    virtual void __stdcall vfunc_11() = 0;
-    virtual void __stdcall vfunc_12() = 0;
-    virtual void __stdcall vfunc_13() = 0;
-    virtual void __stdcall vfunc_14() = 0;
+// windows.h's DrawText macro would rename the driver's DrawText
+#undef DrawText
+
+class I3D_driver;
+class I3D_scene;
+class I3D_material;
+class ITexture;
+class ISND_3Dlistener;
+class I3D_frame;
+
+// The frame types (the names are FrameType2String's)
+enum I3D_FRAME_TYPE {
+    FRAME_NULL,
+    FRAME_VISUAL,
+    FRAME_LIGHT,
+    FRAME_CAMERA,
+    FRAME_SOUND,
+    FRAME_SECTOR,
+    FRAME_DUMMY,
+    FRAME_TARGET,
+    FRAME_USER,
+    FRAME_MODEL,
+    FRAME_JOINT,
+    FRAME_VOLUME,
+    FRAME_OCCLUDER,
+    FRAME_SCENE,
+    FRAME_AREA,
+    FRAME_SHADOW,
+    FRAME_LANDSCAPE,                    // PC only
+    FRAME_EMITOR,
 };
 
-class I3D_sound : public I3D_frame {
-public:
-    virtual void __stdcall vfunc_15() = 0;
-    virtual void __stdcall vfunc_16() = 0;
-    virtual void __stdcall vfunc_17() = 0;
-    virtual void __stdcall vfunc_18() = 0;
-    virtual void __stdcall vfunc_19() = 0;
-    virtual void __stdcall vfunc_20() = 0;
-    // PS2 name, 0x100597f0
-    virtual bool __stdcall IsPlaying(bool unknown) const = 0;
-
-    uchar unknown_04[0x13c];
-    uint sound_flags;                       // 0x140
+// The visual types, four-character codes (the names are VisualType2String's, LNDP has none). PS2's are 0 to 9.
+enum I3D_VISUAL_TYPE {
+    I3D_VISUAL_OBJECT = 0x5f4a424f,     // OBJ_
+    I3D_VISUAL_LIT_OBJECT = 0x50414d4c, // LMAP
+    I3D_VISUAL_BILLBOARD = 0x44524242,  // BBRD
+    I3D_VISUAL_SINGLEMESH = 0x4d474e53, // SNGM
+    I3D_VISUAL_LENSF = 0x534e454c,      // LENS
+    I3D_VISUAL_MORPH = 0x4850524d,      // MRPH
+    I3D_VISUAL_SINGLEMORPH = 0x524d4d53, // SMMR
+    I3D_VISUAL_PROJECTOR = 0x4a4f5250,  // PROJ
+    I3D_VISUAL_PART_BASE = 0x42545250,  // PRTB
+    I3D_VISUAL_PART_ELEMENT = 0x45545250, // PRTE
+    I3D_VISUAL_LANDPATCH = 0x50444e4c,  // LNDP, a landscape's patch (PC only, the name is a guess)
+    I3D_VISUAL_MIRROR = 0x5252494d,     // MIRR
+    I3D_VISUAL_SHADOW = 0x00444853,     // SHD
 };
 
-// The driver's render states (PS2 type; the value names aren't known yet)
+// The driver's render states (PS2 type, 63 on PC). The names of most aren't known; the ones here are guesses, after
+// Insanity3D's where the meaning agrees.
 enum I3D_RENDERSTATE {
-    RS_UNKNOWN_0,
+    RS_LINEARFILTER = 0,                // the textures' minification and magnification filter
+    RS_MIPMAP = 2,                      // the mip filter: 0 none, 1 point, 2 linear
+    RS_USEZB = 3,                       // the z-buffer
+    RS_WBUFFER = 4,                     // a w-buffer where there is a z-buffer (ZBufferEnable)
+    RS_DITHER = 7,
+    RS_MIPMAP_BIAS = 8,                 // the textures' mipmap LOD bias
+    RS_WIREFRAME = 9,
+    RS_RECOMPUTE_GEOMETRY = 18,         // sets RecomputeAllGeometry
+    RS_HWVERTEXPROC = 19,               // refused where the hardware lacks it (m_ProblemFlags 0x80)
+    RS_FLOAT_LOD = 20,                  // a float, 1.0 by default
+    RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
+    RS_LOD_SCALE = 50,                  // in percent
+    RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
+    RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
+    RS_ZBIAS_SHADOW = 55,               // RsZBiasShadow
+    RS_FREE_VRAM_VB = 62,               // 666 frees the vertex buffers in video memory
+    RS_LAST = 63,
 };
 
-// 0x5c bytes, created by Globals.cpp's BreBre. Its 41 virtual functions (vtable 0x1009b830), in PS2's order where the
-// names are known.
-class I3D_driver {
-public:
-    I3D_driver();
-    ~I3D_driver();
+// GetStats' index (PS2 type; the names are Insanity3D's, only the volume statistics exist)
+enum I3DSTATSINDEX {
+    I3DSTATS_VOLUME,
+    I3DSTATS_RENDER,
+    I3DSTATS_SCENE,
+    I3DSTATS_VIDEO,
+    I3DSTATS_MEMORY,
+    I3DSTATS_SOUND,
+    I3DSTATS_BSP,
+};
 
-    virtual void __stdcall vfunc_00(int a);
+// What an enumeration callback returns (PS2 type, Insanity3D's names)
+enum I3DENUMRET {
+    I3DENUMRET_OK,
+    I3DENUMRET_SKIPCHILDREN,
+    I3DENUMRET_CANCEL,
+};
+
+typedef void __stdcall I3D_ENUMVISUALPROC(I3D_VISUAL_TYPE type, const char *name);
+typedef I3DENUMRET __stdcall I3D_ENUMPROC(I3D_frame *frame, uint context);
+
+// A bounding sphere (PS2 I3D_bsphere)
+struct I3D_bsphere {
+    S_vector pos;
+    float radius;
+};
+
+// A triangle's vertex indices (PS2 I3D_triface)
+struct I3D_triface {
+    ushort vi[3];
+};
+
+// A vertex's texture coordinates (PS2 I3D_text_coor)
+struct I3D_text_coor {
+    float u, v;
+};
+
+// A float's bits as an int, for the render states that hold floats (Insanity3D's I3DFloatAsInt): the parameter is
+// stored and read back, as the original's constants go through a stack slot
+inline int I3DFloatAsInt(float f)
+{
+    return *(int *)&f;
+}
+
+// I3D_frame::frm_flags: the world matrix is up to date
+#define FRMFLAGS_WMAT_VALID 0x20
+
+// The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC). 15 virtual functions, at 0x1009cf58 in
+// I3D_sound's vtable.
+class __declspec(novtable) I3D_frame {
+public:
+    virtual void __stdcall vfunc_00();
     virtual void __stdcall vfunc_01();
-    virtual void __stdcall vfunc_02(int a);
+    virtual void __stdcall vfunc_02();
     virtual void __stdcall vfunc_03();
-    virtual void __stdcall vfunc_04(int a, int b);
-    virtual LS3D_RESULT __stdcall SetState(I3D_RENDERSTATE state, int value);
-    virtual void __stdcall vfunc_06(int a);
-    virtual void __stdcall vfunc_07(int a);
-    virtual void __stdcall vfunc_08(int a, int b, int c);
-    virtual void __stdcall vfunc_09(int a, int b, int c, int d);
-    virtual void __stdcall vfunc_10(int a, int b, int c, int d);
-    virtual void __stdcall vfunc_11(int a, int b, int c, int d, int e, int f, int g);
-    virtual void __stdcall vfunc_12(int a, int b, int c, int d, int e, int f, int g, int h);
-    virtual void __stdcall vfunc_13(int a, int b, int c, int d, int e);
-    virtual void __stdcall vfunc_14(int a, int b, int c, int d);
-    virtual void __stdcall DrawText2D(int x, int y, const char *text, uchar unknown, float size);
+    virtual void __stdcall vfunc_04();
+    virtual void __stdcall vfunc_05();
+    virtual void __stdcall vfunc_06();
+    virtual void __stdcall vfunc_07();
+    virtual void __stdcall vfunc_08();
+    virtual void __stdcall vfunc_09();
+    virtual void __stdcall vfunc_10();
+    virtual void __stdcall vfunc_11();
+    virtual void __stdcall vfunc_12();
+    virtual void __stdcall vfunc_13();
+    virtual void __stdcall vfunc_14();
+
+private:
+    // Exported (the decorated name says private, __thiscall)
+    __declspec(dllexport) void UpdateWMatrixProc();
+
+public:
+    // PS2 name
+    void UpdateWMatrix()
+    {
+        if (!(frm_flags & FRMFLAGS_WMAT_VALID))
+            UpdateWMatrixProc();
+    }
+
+    const S_matrix &GetMatrix()
+    {
+        UpdateWMatrix();
+        return matrix;
+    }
+
+    const char *GetName() const
+    {
+        return name ? name : "";
+    }
+
+    I3D_FRAME_TYPE GetType() const
+    {
+        return type;
+    }
+
+    // The fast find tree (PS2 OFFD_*): the number of frames below this one, and the list of them in name order
+    int OFFD_CountFrames();
+    void AlphabeticalListOfFrames_();
+
+    uchar unknown_04[0xc];
+    S_matrix matrix;                    // 0x10, the world matrix
+    uchar unknown_50[0x5c];
+    uint frm_flags;                     // 0xac, FRMFLAGS_*
+    uchar unknown_b0[0x50];
+    char *name;                         // 0x100
+    uchar unknown_104[0xc];
+    I3D_FRAME_TYPE type;                // 0x110
+    uchar unknown_114[0xc];
+    I3D_frame *parent;                  // 0x120
+    uchar unknown_124[0x10];
+    I3D_frame *ff_left, *ff_right;      // 0x134, the fast find tree (PS2 0x114, 0x118)
+    uchar unknown_13c[4];
+};
+
+class __declspec(novtable) I3D_sound : public I3D_frame {
+public:
+    I3D_sound();
+
+    virtual void __stdcall vfunc_15();
     virtual void __stdcall vfunc_16();
     virtual void __stdcall vfunc_17();
     virtual void __stdcall vfunc_18();
     virtual void __stdcall vfunc_19();
     virtual void __stdcall vfunc_20();
-    virtual void __stdcall vfunc_21();
-    virtual void __stdcall vfunc_22();
-    virtual void __stdcall vfunc_23();
-    virtual void __stdcall vfunc_24();
-    virtual void __stdcall vfunc_25();
-    virtual void __stdcall vfunc_26();
-    virtual void __stdcall vfunc_27();
-    virtual void __stdcall vfunc_28();
-    virtual void __stdcall vfunc_29();
-    virtual void __stdcall vfunc_30();
-    virtual void __stdcall vfunc_31();
-    virtual void __stdcall vfunc_32();
-    virtual void __stdcall vfunc_33();
-    virtual void __stdcall vfunc_34();
-    virtual void __stdcall vfunc_35();
-    virtual void __stdcall vfunc_36();
-    virtual void __stdcall vfunc_37();
-    virtual void __stdcall vfunc_38();
-    virtual void __stdcall vfunc_39();
+    // PS2 name, 0x100597f0
+    virtual bool __stdcall IsPlaying(bool unknown) const;
+
+    uint sound_flags;                   // 0x140
+    uchar unknown_144[0xa8];
+};
+
+class __declspec(novtable) I3D_sector : public I3D_frame {
+public:
+    I3D_sector();
+
+    uchar unknown_140[0xd4];
+    I3D_scene *scene;                   // 0x214
+    uchar unknown_218[0x1c];
+};
+
+// The scene (PS2 I3D_scene, 0x33c bytes on PC). The virtual functions after I3D_frame's are placeholders up to the
+// two the driver calls.
+class __declspec(novtable) I3D_scene : public I3D_frame {
+public:
+    I3D_scene();
+
+    virtual void __stdcall vfunc_15(); virtual void __stdcall vfunc_16(); virtual void __stdcall vfunc_17();
+    virtual void __stdcall vfunc_18(); virtual void __stdcall vfunc_19(); virtual void __stdcall vfunc_20();
+    virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22(); virtual void __stdcall vfunc_23();
+    virtual void __stdcall vfunc_24(); virtual void __stdcall vfunc_25(); virtual void __stdcall vfunc_26();
+    virtual void __stdcall vfunc_27(); virtual void __stdcall vfunc_28(); virtual void __stdcall vfunc_29();
+    virtual void __stdcall vfunc_30(); virtual void __stdcall vfunc_31(); virtual void __stdcall vfunc_32();
+    virtual void __stdcall vfunc_33(); virtual void __stdcall vfunc_34(); virtual void __stdcall vfunc_35();
+    virtual void __stdcall vfunc_36(); virtual void __stdcall vfunc_37(); virtual void __stdcall vfunc_38();
+    virtual void __stdcall vfunc_39(); virtual void __stdcall vfunc_40(); virtual void __stdcall vfunc_41();
+    // PS2 name: removes the frame from the frames the scene ticks, and tells whether to look further
+    virtual int __stdcall DeleteTickFrame(I3D_frame *frame);
+    virtual void __stdcall vfunc_43(); virtual void __stdcall vfunc_44(); virtual void __stdcall vfunc_45();
+    virtual void __stdcall vfunc_46(); virtual void __stdcall vfunc_47(); virtual void __stdcall vfunc_48();
+    virtual void __stdcall vfunc_49(); virtual void __stdcall vfunc_50(); virtual void __stdcall vfunc_51();
+    virtual void __stdcall vfunc_52(); virtual void __stdcall vfunc_53(); virtual void __stdcall vfunc_54();
+    virtual void __stdcall vfunc_55(); virtual void __stdcall vfunc_56(); virtual void __stdcall vfunc_57();
+    virtual void __stdcall vfunc_58(); virtual void __stdcall vfunc_59(); virtual void __stdcall vfunc_60();
+    virtual void __stdcall vfunc_61(); virtual void __stdcall vfunc_62(); virtual void __stdcall vfunc_63();
+    virtual void __stdcall vfunc_64();
+    // PS2 name
+    virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
+
+    uchar unknown_140[0x144];
+    ISND_3Dlistener *listener;          // 0x284
+    uchar unknown_288[0xb4];
+};
+
+// The other frames, by the sizes the driver allocates (the landscape's name is a guess)
+#define I3D_PLACEHOLDER_FRAME(name, size) \
+    class __declspec(novtable) name : public I3D_frame { \
+    public: \
+        name(); \
+        uchar unknown_140[size - 0x140]; \
+    };
+
+I3D_PLACEHOLDER_FRAME(I3D_light, 0x1f0)
+I3D_PLACEHOLDER_FRAME(I3D_camera, 0x4f4)
+I3D_PLACEHOLDER_FRAME(I3D_dummy, 0x19c)
+I3D_PLACEHOLDER_FRAME(I3D_target, 0x154)
+I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
+I3D_PLACEHOLDER_FRAME(I3D_model, 0x158)
+I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
+I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
+I3D_PLACEHOLDER_FRAME(I3D_occluder, 0x5ec)
+I3D_PLACEHOLDER_FRAME(I3D_area, 0x17c)
+I3D_PLACEHOLDER_FRAME(I3D_shadow, 0x214)
+I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
+I3D_PLACEHOLDER_FRAME(I3D_emitor, 0x1f8)
+
+// The visuals, a kind of frame (PS2 I3D_visual), by the sizes the driver allocates. The particles' and the landscape
+// patch's names are guesses.
+class __declspec(novtable) I3D_visual : public I3D_frame {
+};
+
+#define I3D_PLACEHOLDER_VISUAL(name, size) \
+    class __declspec(novtable) name : public I3D_visual { \
+    public: \
+        name(); \
+        uchar unknown_140[size - 0x140]; \
+    };
+
+I3D_PLACEHOLDER_VISUAL(I3D_object, 0x21c)
+I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
+I3D_PLACEHOLDER_VISUAL(I3D_billboard, 0x268)
+I3D_PLACEHOLDER_VISUAL(I3D_singlemesh, 0x22c)
+I3D_PLACEHOLDER_VISUAL(I3D_lensflare, 0x27c)
+I3D_PLACEHOLDER_VISUAL(I3D_morph, 0x238)
+I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
+I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
+I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
+I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
+I3D_PLACEHOLDER_VISUAL(I3D_landpatch, 0x620)
+I3D_PLACEHOLDER_VISUAL(I3D_mirror, 0x2ec)
+
+// I3D_material::flags
+#define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
+#define MATF_ICON 0x40000000            // made by I3D_driver::GetIcon
+
+// A material (PS2 I3D_material, 0x40 bytes on PC), reference counted
+class __declspec(novtable) I3D_material {
+public:
+    I3D_material();
+
+    virtual int __stdcall Release();
+    virtual void __stdcall vfunc_01();
+    virtual void __stdcall vfunc_02();
+    virtual void __stdcall vfunc_03();
+    virtual void __stdcall vfunc_04();
+    virtual void __stdcall SetTexture(ITexture *texture);
+    virtual void __stdcall vfunc_06();
+    virtual void __stdcall vfunc_07();
+    // PS2 name: an animated material's frame
+    virtual void __stdcall UpdateTexture();
+
+    int ref;                            // 0x04
+    uint flags;                         // 0x08, MATF_*
+    ITexture *texture;                  // 0x0c
+    ITexture *env_texture;              // 0x10
+    S_vector ambient;                   // 0x14
+    S_vector diffuse;                   // 0x20
+    S_vector emissive;                  // 0x2c
+    uchar unknown_38[8];
+
+    ITexture *GetTexture()
+    {
+        if (flags & MATF_ANIMATED)
+            UpdateTexture();
+        return texture;
+    }
+};
+
+// An animated material (PS2 I3D_anim_material)
+class __declspec(novtable) I3D_anim_material : public I3D_material {
+public:
+    I3D_anim_material();
+
+    uchar unknown_40[0x48];
+};
+
+// The mesh parts the driver makes (PS2 names)
+#define I3D_PLACEHOLDER(name, size) \
+    class name { \
+    public: \
+        name(); \
+        uchar unknown_00[size]; \
+    };
+
+I3D_PLACEHOLDER(I3D_face_group, 0x1c)
+I3D_PLACEHOLDER(I3D_mesh_level, 0x44)
+I3D_PLACEHOLDER(I3D_mesh_object, 0x6c)
+I3D_PLACEHOLDER(I3D_animation_set, 0x14)
+I3D_PLACEHOLDER(I3D_pose, 0x38)
+I3D_PLACEHOLDER(I3D_pose_set, 0x18)
+
+// The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
+// with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
+// buffer comes first, VisualType2String's second.
+
+// DrawSphere's matrix
+// GLOBAL: LS3DF 0x100afc28
+// m
+
+// GLOBAL: LS3DF 0x100af8e8
+// str
+
+// GLOBAL: LS3DF 0x100bffa8
+// si
+
+// GLOBAL: LS3DF 0x100bffc8
+// str
+
+// Stubs in I3d_driver.cpp, after the driver's functions though their addresses come before them, so their markers
+// are here, by name
+
+// STUB: LS3DF 0x10001370
+// FreeClipArrays
+
+// STUB: LS3DF 0x10004890
+// I3D_animation_set::I3D_animation_set
+
+// STUB: LS3DF 0x100051a0
+// I3D_area::I3D_area
+
+// STUB: LS3DF 0x10005db0
+// I3D_billboard::I3D_billboard
+
+// STUB: LS3DF 0x10009520
+// I3D_lensflare::I3D_lensflare
+
+// STUB: LS3DF 0x1000b0c0
+// I3D_camera::I3D_camera
+
+// An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
+// D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1 without the specular color)
+struct LVERTEX {
+    float x, y, z;
+    uint color;
+    float u, v;
+};
+
+// A transformed vertex (PS2 TLVERTEX)
+struct TLVERTEX {
+    float x, y, z, rhw;
+    uint color, specular;
+    float u, v;
+};
+
+// The draws' lists' reserve, out of line where VC6 didn't inline it, after I3d_driver.cpp's functions
+// TEMPLATE: LS3DF 0x1001a100
+// C_list<TLVERTEX>::reserve
+// TEMPLATE: LS3DF 0x1001a170
+// C_list<LVERTEX>::reserve
+
+// The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
+// PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
+// and its Render takes the scene only.
+// VTABLE: LS3DF 0x1009b830
+class I3D_driver {
+public:
+    I3D_driver();
+    ~I3D_driver();
+
+    virtual LS3D_RESULT __stdcall Init(uint flags);
+    virtual LS3D_RESULT __stdcall Close();
+    virtual void __stdcall Tick(int time);
+    virtual int __stdcall GetTickTime() const;
+    virtual LS3D_RESULT __stdcall GetStats(I3DSTATSINDEX index, void *data);
+    virtual LS3D_RESULT __stdcall SetState(I3D_RENDERSTATE state, int value);
+    virtual int __stdcall GetState(I3D_RENDERSTATE state) const;
+    virtual LS3D_RESULT __stdcall Render(I3D_scene *scene);
+    // The debugging draws: the alphas are transparencies (0 opaque), DrawBox's has the lines' in its high byte
+    virtual void __stdcall DrawPoint(const S_vector &pos, const S_vector &color, uint alpha);
+    virtual void __stdcall DrawPoint2D(int x, int y, const S_vector &color, uint alpha);
+    virtual void __stdcall DrawLine(const S_vector &from, const S_vector &to, const S_vector &color, uint alpha);
+    virtual void __stdcall DrawLines(const S_vector *verts, uint num_verts, const ushort *indx, uint num_indx,
+        const S_vector &color, uint vstride, uint alpha);
+    virtual LS3D_RESULT __stdcall DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
+        const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx);
+    virtual void __stdcall DrawCircle2D(const S_vector2 &pos, float radius, const S_vector &color, int num_segments,
+        uint alpha);
+    virtual void __stdcall DrawText(const S_vector &pos, const char *text, uchar alpha, float size);
+    virtual void __stdcall DrawText2D(int x, int y, const char *text, uchar alpha, float size);
+    virtual void __stdcall DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size);
+    virtual void __stdcall DrawBox(const I3D_bbox &bbox, const S_vector *line_color, const S_vector *fill_color,
+        ushort alpha);
+    virtual void __stdcall DrawSphere(const S_matrix &m, const I3D_bsphere &bsphere, const S_vector &color,
+        ushort alpha);
+    virtual I3D_visual *__stdcall CreateVisual(I3D_VISUAL_TYPE type);
+    virtual I3D_frame *__stdcall CreateFrame(I3D_FRAME_TYPE type);
+    virtual I3D_material *__stdcall CreateMaterial();
+    virtual I3D_anim_material *__stdcall CreateAnimMaterial();
+    virtual I3D_triface *__stdcall CreateTrifaceArray(int num);
+    virtual I3D_face_group *__stdcall CreateFaceGroup();
+    virtual I3D_mesh_level *__stdcall CreateMeshLevel();
+    virtual I3D_mesh_object *__stdcall CreateMesh();
+    virtual I3D_animation_set *__stdcall CreateAnimationSet();
+    virtual I3D_pose *__stdcall CreatePose();
+    virtual I3D_pose_set *__stdcall CreatePoseSet();
+    virtual const char *__stdcall FrameType2String(I3D_FRAME_TYPE type) const;
+    virtual const char *__stdcall VisualType2String(I3D_VISUAL_TYPE type) const;
+    virtual LS3D_RESULT __stdcall EnumVisualTypes(I3D_ENUMVISUALPROC *proc, bool all) const;
+    virtual I3D_frame *__stdcall FindFrameFast(I3D_scene *scene, const char *name) const;
+    virtual void __stdcall OptimalizeFastFindData();
+    virtual LS3D_RESULT __stdcall EnumFFTree(I3D_ENUMPROC *proc, uint context) const;
+    virtual void __stdcall DeleteFromSceneTickList(I3D_frame *frame);
+    virtual void __stdcall DeleteFromAllShadows(I3D_frame *frame);
+    virtual void __stdcall DeleteFromAllTargets(I3D_frame *frame);
+    virtual void __stdcall BuildAllVBuffers(I3D_scene *scene);
     // PS2 name. Empty on PS2 and PC: the original's copy is folded with an empty function of the DirectShow base
     // classes (0x10087ec0). The buffer managers call it whenever they create or release a buffer.
     virtual void __stdcall m_RecomputeUsedVRAM();
 
+    // PC only (names guessed): a material whose texture is one of LS3DF's bitmaps, and the shadow textures'
+    // rasterizer, which fills a texture with the shadow's triangles, projected onto the box (x, y, -, x2, y2)
+    I3D_material *GetIcon(uint res_id);
+    void DrawShadowTriangles(const int *verts, const ushort *indx, uint num_faces, void *dst, int pitch);
+    void DrawShadowTrianglesSW(const int *verts, const ushort *indx, uint num_faces);
+    LS3D_RESULT RenderShadowTexture(const float *verts, uint num_verts, const ushort *indx, uint num_faces,
+        ITexture *texture, const float *box);
+
+    // The fast find tree's search for a frame, which remembers the parent it came from in pFFLastUp_ (PS2 name, with
+    // its underscore). The frames' code calls it.
+    I3D_frame *FindFrameFast_(const char *name, I3D_frame *frame);
+
 private:
-    uchar unknown_04[0x34];
+    // render.cpp (PS2 names)
+    void initRender();
+    void closeRender();
+
+    // The fast find tree's rebuild (PS2 name)
+    void OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int num);
 
 public:
-    C_list<I3D_sound *> sounds;             // 0x38
-
-private:
-    uchar unknown_48[0x14];
+    uint init_flags;                    // 0x04, Init's
+    C_list<ITexture *> textures;        // 0x08, the loader's
+    C_list<void *> list_18;             // 0x18, the landscape's
+    C_list<I3D_sector *> sectors;       // 0x28
+    C_list<I3D_sound *> sounds;         // 0x38, CreateFrame's
+    C_list<I3D_scene *> scenes;         // 0x48, CreateFrame's
+    ushort unknown_58;                  // the particles'
 };
 
-// The values the driver set last, by I3D_RENDERSTATE (PS2 name; PS2 has 70)
-extern int renderState[];
+// IGraph.cpp's render states, which the I3D code sets through the helpers below
+extern IDirect3DDevice8 *m_pD3DDevice8;
+extern uint m_CurrColorOp;
+extern uint m_CurrAlphaOp;
+extern uint m_CurrAlphaState;
+extern uint m_CurrBlendState;
+extern uint m_CurrCullState;
+extern uint m_CurrVertexFormat;
+extern DWORD m_VertexVS;
+extern DWORD m_LVertexVS;
+extern DWORD m_LVertex2VS;
 
-// Whether the driver is initialised (set by its Init, cleared by its Close; the name is a guess)
-extern bool i3d_driver_init;
+extern uint m_AlphaRef;
 
-// The driver's statistics, which its GetStats copies out and IGraph::Init clears (the name is a guess)
-extern uint i3d_stats[8];
+// Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC the three below
+// are inline: VC6 inlines them where the inline budget allows it, and the copies the linker kept are in the billboard
+// file's code. SetBlendState and SetVertexFormat are that file's functions: the draws call them, or have their code
+// written out. They are written in I3d_driver.cpp, after the driver's functions, so their markers are here, by name.
+// FUNCTION: LS3DF 0x1000ab40
+// SetBlendState
+void SetBlendState(uint state);
 
-// A scale the I3D code applies to lighting, 128 or 255 without MODULATE2X (the name is a guess)
+// FUNCTION: LS3DF 0x1000ae50
+// SetVertexFormat
+void SetVertexFormat(uint format);
+
+// FUNCTION: LS3DF 0x1000aa30
+inline void SetAlphaState(uint state)
+{
+    if (m_CurrAlphaState != state) {
+        m_CurrAlphaState = state;
+        switch (state) {
+        case 0:
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+            break;
+        case 1:
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
+            break;
+        case 3:
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
+            break;
+        case 2:
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
+            break;
+        }
+    }
+}
+
+// FUNCTION: LS3DF 0x1000ac30
+inline void SetColorOp(uint op)
+{
+    if (m_CurrColorOp != op) {
+        m_CurrColorOp = op;
+        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLOROP, op);
+    }
+}
+
+// FUNCTION: LS3DF 0x1000ac60
+inline void SetAlphaOp(uint op)
+{
+    if (m_CurrAlphaOp != op) {
+        m_CurrAlphaOp = op;
+        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ALPHAOP, op);
+    }
+}
+
+// I3d_driver.cpp's globals (PS2 names)
+
+// The values the driver set last, by I3D_RENDERSTATE
+extern int renderState[RS_LAST];
+
+// Whether the driver is initialised (set by its Init, cleared by its Close)
+extern bool I3DIsInit;
+
+// The driver's volume statistics, which its GetStats copies out and IGraph::Init clears
+extern uint volumeStats[8];
+
+// The z-buffer type of RS_USEZB, D3DZB_TRUE or with RS_WBUFFER D3DZB_USEW
+extern uint ZBufferEnable;
+
+// A scale the I3D code applies to lighting, 128 or 255 without MODULATE2X (another I3D file's; the name is a guess)
 extern float i3d_light_scale;

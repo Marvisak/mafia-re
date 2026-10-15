@@ -27,7 +27,7 @@ extern uint m_CurrAlphaOp;
 extern IDirect3DDevice8 *m_pD3DDevice8;
 
 // I3d_driver.cpp
-extern uint i3d_zbuffer_type;
+extern uint ZBufferEnable;
 
 // The DirectX SDK's texture renderer sample (DShowTextures' CTextureRenderer, a CBaseVideoRenderer), which renders an
 // AVI file's frames into the regions' textures. The DirectShow base classes it derives from aren't in the repository
@@ -819,7 +819,7 @@ LS3D_RESULT IShow::RenderCurrentFrame()
     }
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
-    m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, i3d_zbuffer_type);
+    m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
     return I3D_OK;
 }
 

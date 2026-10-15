@@ -1,275 +1,1471 @@
-// The 3D driver (PS2 I3d_driver.cpp). Not written yet: only what other files need to link. The stubs of the virtual
-// functions after slot 6 are in other files of the original.
+// The 3D driver (PS2 I3d_driver.cpp), at 0x10015530-0x1001a1e0 in the original: I3D_driver in PS2's order, with the
+// PC's resource icon and shadow texture rasterizer after GetState, and the C_list templates' out-of-line functions at
+// the end. The file includes the header that defines the zero vector (its $E at 0x10016fd0, after DrawLines, as
+// mid-file as I3d_math.cpp's), which isn't here yet; neither is the order of its .bss (0x100af8e8-0x100c0010, VC6's
+// hash). The functions of other files the driver calls are at the end: the billboard file's render state functions
+// written, the rest stubs. Names are the PS2 build's unless noted.
+//
+// The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
+// the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
+// call to the billboard file's functions in the short draws and written out in the long ones. The long ones also
+// leave calls out of line that our build inlines (C_list::reserve in DrawText, S_vector's constructor in
+// DrawCircle2D), as if all of it were inline helpers and VC6's inline budget ran out earlier than in our build; with
+// everything as helpers, our build inlines the short draws' blend code too. Open.
 #include "I3D/I3D.h"
+#include "IGraph/IGraph.h"
+#include "I3D/VBManager.h"
+#include "ISound/ISound.h"
+
+#include <stdio.h>
+
+// IGraph.cpp
+extern uint m_ProblemFlags;
+extern uint m_CurrFogState;
+extern uint m_CurrClipState;
+extern uint m_CullMode;
+
+// VBManager.cpp
+extern C_VBManager cVBMan;
+
+// render.cpp's camera, which the 3D texts and sprites face
+extern I3D_frame *pCurrentCamera;
+
+// Set when the geometry has to be recomputed (another I3D file's)
+extern bool RecomputeAllGeometry;
+
+// The clipping file's (the name is a guess)
+void FreeClipArrays();
+
+// The shadows' and targets' files: they forget a frame being deleted (names guessed)
+void DeleteFrameFromShadows(I3D_frame *frame);
+void DeleteFrameFromTargets(I3D_frame *frame);
+
+// .data
+
+// GLOBAL: LS3DF 0x100a69d8
+uint ZBufferEnable = D3DZB_TRUE;
+
+// The shadow texture rasterizer's buffer (PC only, names guessed)
+static uchar shadow_mem[0x10000];
+
+// GLOBAL: LS3DF 0x100a69dc
+uchar *shadow_buffer = shadow_mem;
+
+// Nothing references it (PC only)
+// GLOBAL: LS3DF 0x100a69e0
+int unknown_100a69e0[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+
+// DrawSphere's lines: the three circles of VolumeBall
+// GLOBAL: LS3DF 0x100a6a00
+ushort VolumeBallIndx[96] = {
+    0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,
+    8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 0,
+    16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23, 24,
+    24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31, 16,
+    32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40,
+    40, 41, 41, 42, 42, 43, 43, 44, 44, 45, 45, 46, 46, 47, 47, 32,
+};
+
+// .bss
 
 // GLOBAL: LS3DF 0x100bfca0
-int renderState[70];
+int renderState[RS_LAST];
 
 // GLOBAL: LS3DF 0x100c0009
-bool i3d_driver_init;
-
-// The z-buffer type of IGraph's DXS_ZENABLE (a D3DZBUFFERTYPE; the name is a guess). It is in .data from an I3D
-// file before this one.
-// GLOBAL: LS3DF 0x100a69d8
-uint i3d_zbuffer_type = 1;
-
-// In .data from another I3D file
-// GLOBAL: LS3DF 0x100a9470
-float i3d_light_scale = 128.0f;
+bool I3DIsInit;
 
 // GLOBAL: LS3DF 0x100afb84
-uint i3d_stats[8];
+uint volumeStats[8];
 
-// STUB: LS3DF 0x10015620
+// GLOBAL: LS3DF 0x100bffc4
+int driverTickTime;
+
+// GLOBAL: LS3DF 0x100af928
+float RsNonOrthoTessellation;
+
+// GLOBAL: LS3DF 0x100afba8
+int RsZBiasShadow;
+
+// GLOBAL: LS3DF 0x100bfc70
+int RsZBiasProjector;
+
+// RS_LOD_SCALE / 100 (PC only, the name is a guess)
+// GLOBAL: LS3DF 0x100afb70
+float LODScale;
+
+// The fast find tree's root and the parent FindFrameFast_ came from
+// GLOBAL: LS3DF 0x100bfc68
+I3D_frame *pFFRoot;
+
+// GLOBAL: LS3DF 0x100afba4
+I3D_frame *pFFLastUp_;
+
+// OptimalizeFastFindData's list of the frames in name order
+// GLOBAL: LS3DF 0x100bfc6c
+I3D_frame **OFFD_pFrameList;
+
+// GLOBAL: LS3DF 0x100bfc9c
+int OFFD_ListSize;
+
+// GLOBAL: LS3DF 0x100bfd9c
+int OFFD_ListUsed;
+
+// The frame counter, which render.cpp counts and the frames compare
+// GLOBAL: LS3DF 0x100afc24
+uint RenderNumber;
+
+// GLOBAL: LS3DF 0x100bfda0
+uint RenderNumberMinus1;
+
+// The texts' font, LS3DF's bitmap 125
+// GLOBAL: LS3DF 0x100c000c
+static I3D_material *pFontMat;
+
+// The shadow rasterizer's spans: the leftmost and rightmost pixel of each row (PC only, the name is a guess)
+// GLOBAL: LS3DF 0x100bfda8
+static uchar shadow_spans[256][2];
+
+// The globals with dynamic initializers, in the order the original constructs them (.CRT$XCU)
+
+// GLOBAL: LS3DF 0x100bffb0
+C_list<I3D_material *> IconMaterialList;
+
+// GLOBAL: LS3DF 0x100bfc78
+C_list<TLVERTEX> TLVertList;
+
+// GLOBAL: LS3DF 0x100afb74
+C_list<LVERTEX> LVertList;
+
+// FUNCTION: LS3DF 0x10015620
 I3D_driver::I3D_driver()
 {
-    unknown_04[0] = 0x7d;
+    unknown_58 = 0;
 }
 
-// STUB: LS3DF 0x10015670
+// FUNCTION: LS3DF 0x10015670
 I3D_driver::~I3D_driver()
 {
-    unknown_04[1] = 0x7d;
+    if (I3DIsInit)
+        dbgPrintf("!! I3D_driver was initialised, but not closed");
+    FreeClipArrays();
 }
 
-// STUB: LS3DF 0x10015730
-void I3D_driver::vfunc_02(int a)
+// FUNCTION: LS3DF 0x10015730
+void I3D_driver::Tick(int time)
 {
-    unknown_04[2] = 0x7d;
+    driverTickTime += time;
 }
 
-// STUB: LS3DF 0x10015750
-void I3D_driver::vfunc_03()
+// FUNCTION: LS3DF 0x10015750
+int I3D_driver::GetTickTime() const
 {
-    unknown_04[3] = 0x7d;
+    return driverTickTime;
 }
 
-// STUB: LS3DF 0x10015760
-void I3D_driver::vfunc_00(int a)
+// FUNCTION: LS3DF 0x10015760
+LS3D_RESULT I3D_driver::Init(uint flags)
 {
-    unknown_04[4] = 0x7d;
+    init_flags = flags;
+    driverTickTime = 0;
+    memset(renderState, 0, sizeof(renderState));
+    renderState[5] = 1;
+    renderState[6] = 1;
+    renderState[RS_USEZB] = 1;
+    renderState[13] = 1;
+    renderState[18] = 1;
+    renderState[32] = 1;
+    renderState[26] = 1;
+    renderState[RS_MIPMAP] = 2;
+    renderState[RS_LINEARFILTER] = 1;
+    renderState[1] = 1;
+    renderState[RS_DITHER] = 1;
+    renderState[34] = 1;
+    renderState[35] = 1;
+    renderState[40] = 1;
+    renderState[16] = 1;
+    renderState[38] = -1;
+    renderState[RS_FLOAT_LOD] = I3DFloatAsInt(1.0f);
+    renderState[39] = 1;
+    if (!(m_ProblemFlags & 0x80))
+        renderState[RS_HWVERTEXPROC] = 1;
+    renderState[62] = I3DFloatAsInt(1.0f);
+    RsZBiasProjector = m_ProblemFlags & 0x100 ? 2 : 8;
+    renderState[60] = I3DFloatAsInt(0.001f);
+    renderState[25] = 1;
+    renderState[43] = 1;
+    renderState[45] = 1;
+    renderState[RS_SHADOW_SW] = 1;
+    renderState[49] = 1;
+    renderState[RS_LOD_SCALE] = 100;
+    LODScale = 1.0f;
+    renderState[51] = 1;
+    renderState[RS_NONORTHO_TESSELLATION] = 50;
+    RsNonOrthoTessellation = 0.02f;
+    renderState[RS_ZBIAS_PROJECTOR] = 8;
+    renderState[59] = 1;
+    renderState[RS_ZBIAS_SHADOW] = 3;
+    renderState[61] = I3DFloatAsInt(0.001f);
+    if (m_ProblemFlags & 0x100)
+        RsZBiasShadow = 1;
+    else
+        RsZBiasShadow = 3;
+    Close();
+    I3DIsInit = true;
+    initRender();
+    pFFRoot = NULL;
+    pFFLastUp_ = NULL;
+    pFontMat = GetIcon(125);
+    if (!(m_InitDesc.flags & 0x40))
+        disableLog = true;
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x10015930
-void I3D_driver::vfunc_01()
+// FUNCTION: LS3DF 0x10015930
+LS3D_RESULT I3D_driver::Close()
 {
-    unknown_04[5] = 0x7d;
+    closeRender();
+    I3D_material **p = &IconMaterialList[0];
+    for (int i = IconMaterialList.size(); i--; p++) {
+        if (*p) {
+            (*p)->Release();
+            *p = NULL;
+        }
+    }
+    IconMaterialList.clear();
+    if (pFontMat) {
+        pFontMat->Release();
+        pFontMat = NULL;
+    }
+    I3DIsInit = false;
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x100159b0
-void I3D_driver::vfunc_04(int a, int b)
+// FUNCTION: LS3DF 0x100159b0
+LS3D_RESULT I3D_driver::GetStats(I3DSTATSINDEX index, void *data)
 {
-    unknown_04[6] = 0x7d;
+    if (!data)
+        return I3DERR_INVALIDPARAMS;
+    switch (index) {
+    case I3DSTATS_VOLUME:
+        memcpy(data, volumeStats, sizeof(volumeStats));
+        return I3D_OK;
+    case I3DSTATS_RENDER:
+        return I3DERR_UNSUPPORTED;
+    case I3DSTATS_SCENE:
+        return I3DERR_UNSUPPORTED;
+    case I3DSTATS_VIDEO:
+        return I3DERR_UNSUPPORTED;
+    case I3DSTATS_MEMORY:
+        return I3DERR_UNSUPPORTED;
+    case I3DSTATS_SOUND:
+        return I3DERR_UNSUPPORTED;
+    case I3DSTATS_BSP:
+        return I3DERR_UNSUPPORTED;
+    }
+    dbgPrintf("!! Invalid index:%d  I3D_driver::GetStats()", index);
+    return I3DERR_INVALIDPARAMS;
 }
 
-// STUB: LS3DF 0x10015a20
+// FUNCTION: LS3DF 0x10015a20
 LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
 {
-    return (LS3D_RESULT)7;
+    if (state >= RS_LAST) {
+        dbgPrintf("!! Invalid parameter  state:%u  I3D_driver::SetState()", state);
+        return I3DERR_INVALIDPARAMS;
+    }
+    switch (state) {
+    case RS_LINEARFILTER:
+        if (!value) {
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_POINT);
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MINFILTER, D3DTEXF_POINT);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MAGFILTER, D3DTEXF_POINT);
+        } else {
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+        }
+        break;
+    case RS_MIPMAP:
+        switch (value) {
+        case 2:
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_LINEAR);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_LINEAR);
+            break;
+        case 1:
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_POINT);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_POINT);
+            break;
+        case 0:
+            m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_NONE);
+            m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_NONE);
+            break;
+        }
+        break;
+    case RS_USEZB:
+        m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, value ? ZBufferEnable : D3DZB_FALSE);
+        break;
+    case RS_WBUFFER:
+        ZBufferEnable = value ? D3DZB_USEW : D3DZB_TRUE;
+        if (renderState[RS_USEZB])
+            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
+        break;
+    case RS_FLOAT_LOD:
+        // A case of its own in the jump table, so its body did something VC6 then optimized away
+        value = value;
+        break;
+    case RS_DITHER:
+        m_pD3DDevice8->SetRenderState(D3DRS_DITHERENABLE, value);
+        break;
+    case RS_MIPMAP_BIAS:
+        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPMAPLODBIAS, value);
+        m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPMAPLODBIAS, value);
+        break;
+    case RS_WIREFRAME:
+        if (!value)
+            m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+        else
+            m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+        break;
+    case RS_RECOMPUTE_GEOMETRY:
+        if (value)
+            RecomputeAllGeometry = true;
+        break;
+    case RS_HWVERTEXPROC:
+        if (value && m_ProblemFlags & 0x80)
+            return I3D_OK;
+        break;
+    case RS_LOD_SCALE:
+        LODScale = value * .01f;
+        break;
+    case RS_NONORTHO_TESSELLATION:
+        RsNonOrthoTessellation = 1.0f / value;
+        break;
+    case RS_ZBIAS_SHADOW:
+        if (m_ProblemFlags & 0x100)
+            RsZBiasShadow = (value + 3) / 4;
+        else
+            RsZBiasShadow = value;
+        break;
+    case RS_ZBIAS_PROJECTOR:
+        if (m_ProblemFlags & 0x100)
+            RsZBiasProjector = (value + 3) / 4;
+        else
+            RsZBiasProjector = value;
+        break;
+    case RS_FREE_VRAM_VB:
+        if (value == 666) {
+            cVBMan.m_FreeAllVRAMVBuffers();
+            return I3D_OK;
+        }
+        break;
+    }
+    renderState[state] = value;
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x10015e50
-void I3D_driver::vfunc_06(int a)
+// FUNCTION: LS3DF 0x10015e50
+int I3D_driver::GetState(I3D_RENDERSTATE state) const
 {
-    unknown_04[8] = 0x7d;
+    if (state >= RS_LAST) {
+        dbgPrintf("!! Invalid parameter state:%u  I3D_driver::GetState()", state);
+        return 0;
+    }
+    return renderState[state];
 }
 
-// STUB: LS3DF 0x100166c0
-void I3D_driver::vfunc_08(int a, int b, int c)
+// STUB: LS3DF 0x10015e80
+void I3D_driver::DrawShadowTriangles(const int *verts, const ushort *indx, uint num_faces, void *dst, int pitch)
 {
-    unknown_04[9] = 0x7d;
+    shadow_spans[0][0] = (uchar)num_faces;
 }
 
-// STUB: LS3DF 0x100168f0
-void I3D_driver::vfunc_09(int a, int b, int c, int d)
+// STUB: LS3DF 0x100160d0
+void I3D_driver::DrawShadowTrianglesSW(const int *verts, const ushort *indx, uint num_faces)
 {
-    unknown_04[10] = 0x7d;
+    shadow_spans[0][1] = (uchar)num_faces;
 }
 
-// STUB: LS3DF 0x10016b20
-void I3D_driver::vfunc_10(int a, int b, int c, int d)
+// STUB: LS3DF 0x10016310
+LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, const ushort *indx, uint num_faces,
+    ITexture *texture, const float *box)
 {
-    unknown_04[11] = 0x7d;
+    static C_list<int> points;
+    points.reserve(num_verts * 2);
+    if (!renderState[RS_SHADOW_SW])
+        DrawShadowTriangles(&points[0], indx, num_faces, shadow_buffer, 0);
+    else
+        DrawShadowTrianglesSW(&points[0], indx, num_faces);
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x10016d70
-void I3D_driver::vfunc_11(int a, int b, int c, int d, int e, int f, int g)
+// FUNCTION: LS3DF 0x10016600
+I3D_material *I3D_driver::GetIcon(uint res_id)
 {
-    unknown_04[12] = 0x7d;
+    HMODULE module = GetModuleHandleA("LS3DF.dll");
+    HGLOBAL res = LoadResource(module, FindResourceA(module, (LPCSTR)res_id, RT_BITMAP));
+    if (!res) {
+        dbgPrintf("ERROR LOADING RESOURCES !!!!");
+        return NULL;
+    }
+    void *data = LockResource(res);
+    I3D_material *mat = CreateMaterial();
+    if (!mat) {
+        FreeResource(res);
+        return NULL;
+    }
+    ITexture *texture = pGlobalIGraph->CreateITexture();
+    texture->Create((const char *)data, NULL, 0x209, 0, 0, 0);
+    mat->SetTexture(texture);
+    texture->Release();
+    mat->flags |= MATF_ICON;
+    FreeResource(res);
+    return mat;
 }
 
-// STUB: LS3DF 0x10016ff0
-void I3D_driver::vfunc_12(int a, int b, int c, int d, int e, int f, int g, int h)
+// The draws' color: the alpha byte is a transparency
+static inline uint MakeColor(float a, const S_vector &color)
 {
-    unknown_04[13] = 0x7d;
+    return FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 | FloatToInt(color.y * 255.0f) << 8 |
+        FloatToInt(color.z * 255.0f);
 }
 
-// STUB: LS3DF 0x10017580
-void I3D_driver::vfunc_13(int a, int b, int c, int d, int e)
+// FUNCTION: LS3DF 0x100166c0
+void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alpha)
 {
-    unknown_04[14] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (alpha & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    LVERTEX v;
+    v.x = pos.x;
+    v.y = pos.y;
+    v.z = pos.z;
+    v.color = c;
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    SetBlendState(0);
+    m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(0);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &v, sizeof(v));
 }
 
-// STUB: LS3DF 0x10017890
-void I3D_driver::vfunc_14(int a, int b, int c, int d)
+// FUNCTION: LS3DF 0x100168f0
+void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
 {
-    unknown_04[15] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (alpha & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    TLVERTEX v;
+    v.x = (float)x;
+    v.y = (float)y;
+    v.z = 0.0f;
+    v.rhw = 1.0f;
+    v.color = c;
+    v.specular = 0;
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    SetBlendState(0);
+    m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(4);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &v, sizeof(v));
 }
 
-// STUB: LS3DF 0x10017d40
-void I3D_driver::DrawText2D(int x, int y, const char *text, uchar unknown, float size)
+// FUNCTION: LS3DF 0x10016b20
+void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vector &color, uint alpha)
 {
-    unknown_04[16] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (alpha & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    LVERTEX v[2];
+    v[0].x = from.x;
+    v[0].y = from.y;
+    v[0].z = from.z;
+    v[0].color = c;
+    v[1].x = to.x;
+    v[1].y = to.y;
+    v[1].z = to.z;
+    v[1].color = c;
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    SetBlendState(0);
+    m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(0);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_LINELIST, 1, v, sizeof(LVERTEX));
 }
 
-// STUB: LS3DF 0x100182f0
-void I3D_driver::vfunc_16()
+// FUNCTION: LS3DF 0x10016d70
+void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *indx, uint num_indx,
+    const S_vector &color, uint vstride, uint alpha)
 {
-    unknown_04[18] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (alpha & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    SetBlendState(0);
+    m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(0);
+    LVertList.resize(num_verts);
+    LVERTEX *lv = &LVertList[0];
+    for (uint i = 0; i < num_verts; i++) {
+        const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
+        lv->x = v->x;
+        lv->y = v->y;
+        lv->z = v->z;
+        lv->color = c;
+        lv++;
+    }
+    m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_LINELIST, 0, num_verts, num_indx / 2, indx, D3DFMT_INDEX16,
+        &LVertList[0], sizeof(LVERTEX));
 }
 
-// STUB: LS3DF 0x100186a0
-void I3D_driver::vfunc_17()
+// DrawTriangles' flags (names guessed): the alpha is the low byte
+#define I3DDRAW_TRANSFORMED 0x100       // the vertices are transformed (TLVERTEX)
+#define I3DDRAW_NOCULL 0x200
+#define I3DDRAW_CULL_CW 0x400
+
+// FUNCTION: LS3DF 0x10016ff0
+LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
+    const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx)
 {
-    unknown_04[19] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (flags & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    if (m_CurrBlendState) {
+        m_CurrBlendState = 0;
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    }
+    uint no_cull = flags & I3DDRAW_NOCULL;
+    if (no_cull) {
+        if (m_CurrCullState != D3DCULL_NONE) {
+            m_CurrCullState = D3DCULL_NONE;
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+        }
+    } else if (flags & I3DDRAW_CULL_CW) {
+        if (m_CurrCullState != D3DCULL_CW) {
+            m_CurrCullState = D3DCULL_CW;
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+        }
+    } else {
+        if (m_CurrCullState != D3DCULL_CCW) {
+            m_CurrCullState = D3DCULL_CCW;
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
+        }
+    }
+    if (!(flags & I3DDRAW_TRANSFORMED)) {
+        LVertList.resize(num_verts);
+        LVERTEX *lv = &LVertList[0];
+        if (tx) {
+            for (uint i = 0; i < num_verts; i++) {
+                const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
+                const I3D_text_coor *t = (const I3D_text_coor *)((const uchar *)tx + i * vstride);
+                lv->x = v->x;
+                lv->y = v->y;
+                lv->z = v->z;
+                lv->color = c;
+                lv->u = t->u;
+                lv->v = t->v;
+                lv++;
+            }
+        } else {
+            for (uint i = 0; i < num_verts; i++) {
+                const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
+                lv->x = v->x;
+                lv->y = v->y;
+                lv->z = v->z;
+                lv->color = c;
+                lv++;
+            }
+            m_pD3DDevice8->SetTexture(0, NULL);
+        }
+        if (m_CurrVertexFormat) {
+            m_CurrVertexFormat = 0;
+            m_pD3DDevice8->SetVertexShader(m_LVertexVS);
+        }
+        m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
+            &LVertList[0], sizeof(LVERTEX));
+    } else {
+        TLVertList.resize(num_verts);
+        TLVERTEX *tlv = &TLVertList[0];
+        if (tx) {
+            for (uint i = 0; i < num_verts; i++) {
+                const float *v = (const float *)((const uchar *)verts + i * vstride);
+                const I3D_text_coor *t = (const I3D_text_coor *)((const uchar *)tx + i * vstride);
+                tlv->x = v[0];
+                tlv->y = v[1];
+                tlv->z = v[2];
+                tlv->rhw = v[3];
+                tlv->color = c;
+                tlv->specular = 0;
+                tlv->u = t->u;
+                tlv->v = t->v;
+                tlv++;
+            }
+        } else {
+            for (uint i = 0; i < num_verts; i++) {
+                const float *v = (const float *)((const uchar *)verts + i * vstride);
+                tlv->x = v[0];
+                tlv->y = v[1];
+                tlv->z = v[2];
+                tlv->rhw = v[3];
+                tlv->color = c;
+                tlv->specular = 0;
+                tlv++;
+            }
+            m_pD3DDevice8->SetTexture(0, NULL);
+        }
+        SetVertexFormat(4);
+        m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
+            &TLVertList[0], sizeof(TLVERTEX));
+    }
+    if (no_cull || flags & I3DDRAW_CULL_CW) {
+        if (m_CurrCullState != D3DCULL_CCW) {
+            m_CurrCullState = D3DCULL_CCW;
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
+        }
+    }
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x10018cc0
-void I3D_driver::vfunc_18()
+// FUNCTION: LS3DF 0x10017580
+void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector &color, int num_segments,
+    uint alpha)
 {
-    unknown_04[20] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    float a = (255 - (alpha & 0xff)) * (1.0f / 255.0f);
+    uint c = MakeColor(a, color);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    SetBlendState(0);
+    S_matrix m = RotateZMatrix(PI * 2.0f / num_segments);
+    num_segments++;
+    TLVertList.resize(num_segments);
+    TLVERTEX *v = &TLVertList[0];
+    S_vector dir(0.0f, -radius, 0.0f);
+    for (int i = num_segments; i--; v++) {
+        v->x = dir.x + pos.x;
+        v->y = dir.y + pos.y;
+        v->z = 0.0f;
+        v->rhw = 1.0f;
+        v->color = c;
+        v->specular = 0;
+        dir = dir.RotateByMatrix(m);
+    }
+    TLVertList[--num_segments] = TLVertList[0];
+    m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(4);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_LINESTRIP, num_segments, &TLVertList[0], sizeof(TLVERTEX));
 }
 
-// STUB: LS3DF 0x10018d80
-void I3D_driver::vfunc_19()
+// FUNCTION: LS3DF 0x10017890
+void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, float size)
 {
-    unknown_04[21] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    if (m_CurrCullState != D3DCULL_NONE) {
+        m_CurrCullState = D3DCULL_NONE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+    }
+    I3D_frame *cam = pCurrentCamera;
+    if (!cam)
+        return;
+    S_matrix m = cam->GetMatrix();
+    m(3) = pos;
+    pGlobalIGraph->SetWorldMatrix(m);
+    I3D_material *mat = pFontMat;
+    float a = (255 - alpha) * (1.0f / 255.0f);
+    uint c = MakeColor(a, mat->diffuse);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    if (m_CurrBlendState) {
+        m_CurrBlendState = 0;
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    }
+    ITexture *texture = mat->texture;
+    m_pD3DDevice8->SetTexture(0, texture ? texture->texture : NULL);
+    if (m_CurrVertexFormat) {
+        m_CurrVertexFormat = 0;
+        m_pD3DDevice8->SetVertexShader(m_LVertexVS);
+    }
+    size *= 16.0f;
+    float du = 16.0f / pFontMat->GetTexture()->width;
+    float dv = 16.0f / pFontMat->GetTexture()->height;
+    int len = strlen(text);
+    LVertList.resize(len * 6);
+    LVERTEX *v = &LVertList[0];
+    for (int i = 0; i < len; i++) {
+        uchar ch = text[i];
+        float u = ch % 16 * du;
+        float t = (ch >> 4) * dv;
+        v[0].x = i * size;
+        v[0].y = 0.0f;
+        v[0].z = 0.0f;
+        v[0].color = c;
+        v[0].u = u;
+        v[0].v = t + dv;
+        v[1].x = (i + 1.0f) * size;
+        v[1].y = size;
+        v[1].z = 0.0f;
+        v[1].color = c;
+        v[1].u = u + du;
+        v[1].v = t;
+        v[2].x = i * size;
+        v[2].y = size;
+        v[2].z = 0.0f;
+        v[2].color = c;
+        v[2].u = u;
+        v[2].v = t;
+        v[3].x = (i + 1.0f) * size;
+        v[3].y = 0.0f;
+        v[3].z = 0.0f;
+        v[3].color = c;
+        v[3].u = u + du;
+        v[3].v = t + dv;
+        v[4] = v[1];
+        v[5] = v[0];
+        v += 6;
+    }
+    m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLELIST, len * 2, &LVertList[0], sizeof(LVERTEX));
+    if (renderState[RS_WIREFRAME])
+        m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 }
 
-// STUB: LS3DF 0x10019090
-void I3D_driver::vfunc_21()
+// FUNCTION: LS3DF 0x10017d40
+void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float size)
 {
-    unknown_04[22] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    if (m_CurrCullState != D3DCULL_NONE) {
+        m_CurrCullState = D3DCULL_NONE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+    }
+    I3D_material *mat = pFontMat;
+    if (!mat)
+        return;
+    float a = (255 - alpha) * (1.0f / 255.0f);
+    uint c = MakeColor(a, mat->diffuse);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    if (IsAbsMrgZero(a - 1.0))
+        SetAlphaState(0);
+    else
+        SetAlphaState(1);
+    if (m_CurrBlendState) {
+        m_CurrBlendState = 0;
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    }
+    if (mat->texture)
+        m_pD3DDevice8->SetTexture(0, mat->texture->texture);
+    else
+        m_pD3DDevice8->SetTexture(0, NULL);
+    if (m_CurrVertexFormat != 4) {
+        m_CurrVertexFormat = 4;
+        m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
+    }
+    size *= 16.0f;
+    float du = 16.0f / pFontMat->GetTexture()->width;
+    float dv = 16.0f / pFontMat->GetTexture()->height;
+    int len = strlen(text);
+    TLVertList.resize(len * 6);
+    TLVERTEX *v = &TLVertList[0];
+    for (int i = 0; i < len; i++) {
+        uchar ch = text[i];
+        float u = ch % 16 * du;
+        float t = (ch >> 4) * dv;
+        v[0].x = i * size + x;
+        v[0].y = (float)y;
+        v[0].z = 1.0f;
+        v[0].rhw = 1.0f;
+        v[0].color = c;
+        v[0].specular = 0;
+        v[0].u = u;
+        v[0].v = t;
+        v[1].x = (i + 1.0f) * size + x;
+        v[1].y = y + size;
+        v[1].z = 1.0f;
+        v[1].rhw = 1.0f;
+        v[1].color = c;
+        v[1].specular = 0;
+        v[1].u = u + du;
+        v[1].v = t + dv;
+        v[2].x = i * size + x;
+        v[2].y = y + size;
+        v[2].z = 1.0f;
+        v[2].rhw = 1.0f;
+        v[2].color = c;
+        v[2].specular = 0;
+        v[2].u = u;
+        v[2].v = t + dv;
+        v[3].x = (i + 1.0f) * size + x;
+        v[3].y = (float)y;
+        v[3].z = 1.0f;
+        v[3].rhw = 1.0f;
+        v[3].color = c;
+        v[3].specular = 0;
+        v[3].u = u + du;
+        v[3].v = t;
+        v[4] = v[2];
+        v[5] = v[0];
+        v += 6;
+    }
+    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+    m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLELIST, len * 2, &TLVertList[0], sizeof(TLVERTEX));
+    if (!renderState[RS_LINEARFILTER]) {
+        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_POINT);
+        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT);
+    }
+    if (renderState[RS_WIREFRAME])
+        m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+    m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
 }
 
-// STUB: LS3DF 0x10019100
-void I3D_driver::vfunc_22()
+// The materials' flags that pick the sprite's blending (names guessed)
+#define MATF_ADD 0x80000000             // additive
+#define MATF_DECAL 0x20000000
+
+// FUNCTION: LS3DF 0x100182f0
+void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size)
 {
-    unknown_04[23] = 0x7d;
+    if (m_CurrFogState) {
+        m_CurrFogState = FALSE;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    }
+    if (m_CurrClipState != TRUE) {
+        m_CurrClipState = TRUE;
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    }
+    I3D_frame *cam = pCurrentCamera;
+    if (!cam)
+        return;
+    S_matrix m = cam->GetMatrix();
+    m(3) = pos;
+    pGlobalIGraph->SetWorldMatrix(m);
+    uint c = MakeColor((255 - alpha) * (1.0f / 255.0f), mat->diffuse);
+    SetColorOp(D3DTOP_MODULATE);
+    SetAlphaOp(D3DTOP_MODULATE);
+    float lo = size * -.5f, hi = size * .5f;
+    LVERTEX v[4];
+    v[0].x = lo;
+    v[0].y = lo;
+    v[0].z = 0.0f;
+    v[0].color = c;
+    v[0].u = .001f;
+    v[0].v = .999f;
+    v[1].x = lo;
+    v[1].y = hi;
+    v[1].z = 0.0f;
+    v[1].color = c;
+    v[1].u = .001f;
+    v[1].v = .001f;
+    v[2].x = hi;
+    v[2].y = lo;
+    v[2].z = 0.0f;
+    v[2].color = c;
+    v[2].u = .999f;
+    v[2].v = .999f;
+    v[3].x = hi;
+    v[3].y = hi;
+    v[3].z = 0.0f;
+    v[3].color = c;
+    v[3].u = .999f;
+    v[3].v = .001f;
+    if (mat->flags & MATF_ADD) {
+        SetAlphaState(1);
+        if (m_CurrBlendState != 1) {
+            m_CurrBlendState = 1;
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+        }
+    } else if (mat->flags & MATF_ICON) {
+        SetAlphaState(1);
+        if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
+            SetBlendState(1);
+        else
+            SetBlendState(0);
+    } else if (mat->flags & MATF_DECAL) {
+        SetAlphaState(3);
+        SetBlendState(0);
+    } else
+        SetAlphaState(0);
+    ITexture *texture = mat->texture;
+    m_pD3DDevice8->SetTexture(0, texture ? texture->texture : NULL);
+    SetVertexFormat(0);
+    m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(LVERTEX));
 }
 
-// STUB: LS3DF 0x10019180
-void I3D_driver::vfunc_23()
+// FUNCTION: LS3DF 0x100186a0
+void I3D_driver::DrawBox(const I3D_bbox &bbox, const S_vector *line_color, const S_vector *fill_color, ushort alpha)
 {
-    unknown_04[24] = 0x7d;
+    ushort line_indx[24] = {0, 1, 0, 2, 0, 4, 1, 3, 1, 5, 2, 3, 2, 6, 3, 7, 4, 5, 4, 6, 5, 7, 6, 7};
+    ushort fill_indx[36] = {
+        0, 1, 2, 2, 1, 3, 4, 6, 5, 5, 6, 7, 0, 2, 4, 2, 6, 4,
+        1, 5, 3, 5, 7, 3, 0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6,
+    };
+    if (bbox.min.x <= bbox.max.x) {
+        m_pD3DDevice8->SetTexture(0, NULL);
+        const S_vector *verts = BBoxVertices(bbox);
+        if (fill_color)
+            DrawTriangles(verts, 8, fill_indx, 36, *fill_color, sizeof(S_vector), alpha, NULL);
+        if (line_color)
+            DrawLines(verts, 8, line_indx, 24, *line_color, sizeof(S_vector), alpha >> 8);
+    }
 }
 
-// STUB: LS3DF 0x100191a0
-void I3D_driver::vfunc_24()
+// A unit sphere's three circles, DrawSphere's lines
+// GLOBAL: LS3DF 0x100af930
+static S_vector VolumeBall[48] = {
+    S_vector(1.0f, 0.0f, 0.0f), S_vector(.92f, .39f, 0.0f), S_vector(.71f, .71f, 0.0f), S_vector(.39f, .92f, 0.0f),
+    S_vector(0.0f, 1.0f, 0.0f), S_vector(-.39f, .92f, 0.0f), S_vector(-.71f, .71f, 0.0f), S_vector(-.92f, .39f, 0.0f),
+    S_vector(-1.0f, 0.0f, 0.0f), S_vector(-.92f, -.39f, 0.0f), S_vector(-.71f, -.71f, 0.0f),
+    S_vector(-.39f, -.92f, 0.0f), S_vector(0.0f, -1.0f, 0.0f), S_vector(.39f, -.92f, 0.0f), S_vector(.71f, -.71f, 0.0f),
+    S_vector(.92f, -.39f, 0.0f),
+    S_vector(1.0f, 0.0f, 0.0f), S_vector(.92f, 0.0f, .39f), S_vector(.71f, 0.0f, .71f), S_vector(.39f, 0.0f, .92f),
+    S_vector(0.0f, 0.0f, 1.0f), S_vector(-.39f, 0.0f, .92f), S_vector(-.71f, 0.0f, .71f), S_vector(-.92f, 0.0f, .39f),
+    S_vector(-1.0f, 0.0f, 0.0f), S_vector(-.92f, 0.0f, -.39f), S_vector(-.71f, 0.0f, -.71f),
+    S_vector(-.39f, 0.0f, -.92f), S_vector(0.0f, 0.0f, -1.0f), S_vector(.39f, 0.0f, -.92f), S_vector(.71f, 0.0f, -.71f),
+    S_vector(.92f, 0.0f, -.39f),
+    S_vector(0.0f, 0.0f, 1.0f), S_vector(0.0f, .39f, .92f), S_vector(0.0f, .71f, .71f), S_vector(0.0f, .92f, .39f),
+    S_vector(0.0f, 1.0f, 0.0f), S_vector(0.0f, .92f, -.39f), S_vector(0.0f, .71f, -.71f), S_vector(0.0f, .39f, -.92f),
+    S_vector(0.0f, 0.0f, -1.0f), S_vector(0.0f, -.39f, -.92f), S_vector(0.0f, -.71f, -.71f),
+    S_vector(0.0f, -.92f, -.39f), S_vector(0.0f, -1.0f, 0.0f), S_vector(0.0f, -.92f, .39f), S_vector(0.0f, -.71f, .71f),
+    S_vector(0.0f, -.39f, .92f),
+};
+
+// FUNCTION: LS3DF 0x10018cc0
+void I3D_driver::DrawSphere(const S_matrix &matrix, const I3D_bsphere &bsphere, const S_vector &color, ushort alpha)
 {
-    unknown_04[25] = 0x7d;
+    if (bsphere.radius <= 0.0f)
+        return;
+    static S_matrix m;
+    m.Identity();
+    m(3) = bsphere.pos;
+    m(0, 0) = m(1, 1) = m(2, 2) = bsphere.radius;
+    m = m * matrix;
+    pGlobalIGraph->SetWorldMatrix(m);
+    DrawLines(VolumeBall, 48, VolumeBallIndx, 96, color, sizeof(S_vector), alpha >> 8);
 }
 
-// STUB: LS3DF 0x10019200
-void I3D_driver::vfunc_25()
+// FUNCTION: LS3DF 0x10018d80
+I3D_visual *I3D_driver::CreateVisual(I3D_VISUAL_TYPE type)
 {
-    unknown_04[26] = 0x7d;
+    I3D_visual *visual;
+    switch (type) {
+    case I3D_VISUAL_OBJECT:
+        visual = new I3D_object;
+        break;
+    case I3D_VISUAL_LIT_OBJECT:
+        visual = new I3D_lit_object;
+        break;
+    case I3D_VISUAL_BILLBOARD:
+        visual = new I3D_billboard;
+        break;
+    case I3D_VISUAL_SINGLEMESH:
+        visual = new I3D_singlemesh;
+        break;
+    case I3D_VISUAL_LENSF:
+        visual = new I3D_lensflare;
+        break;
+    case I3D_VISUAL_MORPH:
+        visual = new I3D_morph;
+        break;
+    case I3D_VISUAL_SINGLEMORPH:
+        visual = new I3D_singlemorph;
+        break;
+    case I3D_VISUAL_PROJECTOR:
+        visual = new I3D_projector;
+        break;
+    case I3D_VISUAL_PART_BASE:
+        visual = new I3D_part_base;
+        break;
+    case I3D_VISUAL_PART_ELEMENT:
+        visual = new I3D_part_element;
+        break;
+    case I3D_VISUAL_LANDPATCH:
+        visual = new I3D_landpatch;
+        break;
+    case I3D_VISUAL_MIRROR:
+        visual = new I3D_mirror;
+        break;
+    default:
+        dbgPrintf("!! invalid visual type: %d  %s  I3D_driver::CreateVisual()", type, VisualType2String(type));
+        return NULL;
+    }
+    if (!visual)
+        ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+    return visual;
 }
 
-// STUB: LS3DF 0x10019260
-void I3D_driver::vfunc_26()
+// FUNCTION: LS3DF 0x10019090
+I3D_material *I3D_driver::CreateMaterial()
 {
-    unknown_04[27] = 0x7d;
+    I3D_material *mat = new I3D_material;
+    if (!mat)
+        ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+    return mat;
 }
 
-// STUB: LS3DF 0x100192c0
-void I3D_driver::vfunc_27()
+// FUNCTION: LS3DF 0x10019100
+I3D_anim_material *I3D_driver::CreateAnimMaterial()
 {
-    unknown_04[28] = 0x7d;
+    I3D_anim_material *mat = new I3D_anim_material;
+    if (!mat)
+        ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+    return mat;
 }
 
-// STUB: LS3DF 0x10019320
-void I3D_driver::vfunc_28()
+// FUNCTION: LS3DF 0x10019180
+I3D_triface *I3D_driver::CreateTrifaceArray(int num)
 {
-    unknown_04[29] = 0x7d;
+    return new I3D_triface[num];
 }
 
-// STUB: LS3DF 0x10019380
-void I3D_driver::vfunc_29()
+// FUNCTION: LS3DF 0x100191a0
+I3D_face_group *I3D_driver::CreateFaceGroup()
 {
-    unknown_04[30] = 0x7d;
+    return new I3D_face_group;
 }
 
-// STUB: LS3DF 0x100193e0
-void I3D_driver::vfunc_20()
+// FUNCTION: LS3DF 0x10019200
+I3D_mesh_level *I3D_driver::CreateMeshLevel()
 {
-    unknown_04[31] = 0x7d;
+    return new I3D_mesh_level;
 }
 
-// STUB: LS3DF 0x10019880
-void I3D_driver::vfunc_32()
+// FUNCTION: LS3DF 0x10019260
+I3D_mesh_object *I3D_driver::CreateMesh()
 {
-    unknown_04[32] = 0x7d;
+    return new I3D_mesh_object;
 }
 
-// STUB: LS3DF 0x10019a10
-void I3D_driver::vfunc_30()
+// FUNCTION: LS3DF 0x100192c0
+I3D_animation_set *I3D_driver::CreateAnimationSet()
 {
-    unknown_04[33] = 0x7d;
+    return new I3D_animation_set;
 }
 
-// STUB: LS3DF 0x10019a20
-void I3D_driver::vfunc_31()
+// FUNCTION: LS3DF 0x10019320
+I3D_pose *I3D_driver::CreatePose()
 {
-    unknown_04[34] = 0x7d;
+    return new I3D_pose;
 }
 
-// STUB: LS3DF 0x10019b10
-void I3D_driver::vfunc_33()
+// FUNCTION: LS3DF 0x10019380
+I3D_pose_set *I3D_driver::CreatePoseSet()
 {
-    unknown_04[35] = 0x7d;
+    return new I3D_pose_set;
 }
 
-// STUB: LS3DF 0x10019d30
-void I3D_driver::vfunc_34()
+// FUNCTION: LS3DF 0x100193e0
+I3D_frame *I3D_driver::CreateFrame(I3D_FRAME_TYPE type)
 {
-    unknown_04[36] = 0x7d;
+    I3D_frame *frame;
+    switch (type) {
+    case FRAME_LIGHT:
+        frame = new I3D_light;
+        break;
+    case FRAME_CAMERA:
+        frame = new I3D_camera;
+        break;
+    case FRAME_SOUND:
+        frame = new I3D_sound;
+        if (frame)
+            sounds.push_back((I3D_sound *)frame);
+        break;
+    case FRAME_SECTOR:
+        frame = new I3D_sector;
+        break;
+    case FRAME_DUMMY:
+        frame = new I3D_dummy;
+        break;
+    case FRAME_USER:
+        frame = new I3D_user;
+        break;
+    case FRAME_MODEL:
+        frame = new I3D_model;
+        break;
+    case FRAME_JOINT:
+        frame = new I3D_joint;
+        break;
+    case FRAME_VOLUME:
+        frame = new I3D_volume;
+        break;
+    case FRAME_OCCLUDER:
+        frame = new I3D_occluder;
+        break;
+    case FRAME_SCENE: {
+        I3D_scene *scene = new I3D_scene;
+        LS3D_VIEWPORT *vp = pGlobalIGraph->GetViewPort();
+        scene->SetViewport(vp->x, vp->y, vp->width - vp->x, vp->height - vp->y);
+        if (pISndDriver && pISndDriver->IsInit())
+            pISndDriver->CreateListener(&scene->listener);
+        scenes.push_back(scene);
+        frame = scene;
+    } break;
+    case FRAME_AREA:
+        frame = new I3D_area;
+        break;
+    case FRAME_TARGET:
+        frame = new I3D_target;
+        break;
+    case FRAME_SHADOW:
+        frame = new I3D_shadow;
+        break;
+    case FRAME_LANDSCAPE:
+        frame = new I3D_landscape;
+        break;
+    case FRAME_EMITOR:
+        frame = new I3D_emitor;
+        break;
+    default:
+        dbgPrintf("!! invalid frame type %d   I3D_driver::CreateFrame()", type);
+        return NULL;
+    }
+    if (!frame)
+        ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+    return frame;
 }
 
-// STUB: LS3DF 0x10019fd0
-void I3D_driver::vfunc_35()
+// FUNCTION: LS3DF 0x10019880
+LS3D_RESULT I3D_driver::EnumVisualTypes(I3D_ENUMVISUALPROC *proc, bool all) const
 {
-    unknown_04[37] = 0x7d;
+    if (!proc)
+        return I3DERR_INVALIDPARAMS;
+    proc(I3D_VISUAL_BILLBOARD, "Billboard");
+    proc(I3D_VISUAL_LIT_OBJECT, "Lit-object");
+    proc(I3D_VISUAL_MORPH, "Morph");
+    proc(I3D_VISUAL_OBJECT, "Object");
+    proc(I3D_VISUAL_SINGLEMESH, "Single-mesh");
+    proc(I3D_VISUAL_SINGLEMORPH, "Single-morph");
+    proc(I3D_VISUAL_LENSF, "Lensflare/Glow");
+    proc(I3D_VISUAL_PROJECTOR, "Projector");
+    proc(I3D_VISUAL_MIRROR, "Mirror");
+    if (all) {
+        proc(I3D_VISUAL_PART_ELEMENT, "Particle element");
+        proc(I3D_VISUAL_SHADOW, "Shadow");
+        proc(I3D_VISUAL_PART_BASE, "Part. element base");
+    }
+    return I3D_OK;
 }
 
-// STUB: LS3DF 0x1001a0a0
-void I3D_driver::vfunc_36()
+#define CASE_NAME(x) \
+    case x: \
+        return #x;
+
+// FUNCTION: LS3DF 0x10019930
+const char *FrameType2StringFunc(I3D_FRAME_TYPE type)
 {
-    unknown_04[38] = 0x7d;
+    switch (type) {
+    CASE_NAME(FRAME_VISUAL)
+    CASE_NAME(FRAME_LIGHT)
+    CASE_NAME(FRAME_CAMERA)
+    CASE_NAME(FRAME_SOUND)
+    CASE_NAME(FRAME_SECTOR)
+    CASE_NAME(FRAME_DUMMY)
+    CASE_NAME(FRAME_TARGET)
+    CASE_NAME(FRAME_USER)
+    CASE_NAME(FRAME_MODEL)
+    CASE_NAME(FRAME_JOINT)
+    CASE_NAME(FRAME_VOLUME)
+    CASE_NAME(FRAME_OCCLUDER)
+    CASE_NAME(FRAME_SCENE)
+    CASE_NAME(FRAME_AREA)
+    CASE_NAME(FRAME_SHADOW)
+    CASE_NAME(FRAME_EMITOR)
+    CASE_NAME(FRAME_LANDSCAPE)
+    }
+    static char str[64];
+    sprintf(str, "Unknown type:0x%x", type);
+    return str;
 }
 
-// STUB: LS3DF 0x1001a0e0
-void I3D_driver::vfunc_37()
+// FUNCTION: LS3DF 0x10019a10
+const char *I3D_driver::FrameType2String(I3D_FRAME_TYPE type) const
 {
-    unknown_04[39] = 0x7d;
+    return FrameType2StringFunc(type);
 }
 
-// STUB: LS3DF 0x1001a0f0
-void I3D_driver::vfunc_38()
+// FUNCTION: LS3DF 0x10019a20
+const char *I3D_driver::VisualType2String(I3D_VISUAL_TYPE type) const
 {
-    unknown_04[40] = 0x7d;
+    switch (type) {
+    CASE_NAME(I3D_VISUAL_OBJECT)
+    CASE_NAME(I3D_VISUAL_LIT_OBJECT)
+    CASE_NAME(I3D_VISUAL_BILLBOARD)
+    CASE_NAME(I3D_VISUAL_SINGLEMESH)
+    CASE_NAME(I3D_VISUAL_LENSF)
+    CASE_NAME(I3D_VISUAL_MORPH)
+    CASE_NAME(I3D_VISUAL_SINGLEMORPH)
+    CASE_NAME(I3D_VISUAL_PROJECTOR)
+    CASE_NAME(I3D_VISUAL_PART_BASE)
+    CASE_NAME(I3D_VISUAL_PART_ELEMENT)
+    CASE_NAME(I3D_VISUAL_SHADOW)
+    CASE_NAME(I3D_VISUAL_MIRROR)
+    }
+    static char si[5];
+    static char str[64];
+    *(uint *)si = type;
+    si[4] = 0;
+    sprintf(str, "Unknown type:0x%x  %s", type, si);
+    return str;
 }
 
-// STUB: LS3DF 0x10062030
-void I3D_driver::vfunc_07(int a)
+// The fast find tree: the frames by name, those of one name a list to the right. Both searches test a link before
+// they follow it (VC6 loads it once, into eax), and test the compare's result a third time (the original's dead test
+// that loops back to the compare). Unlike PS2's, this one goes on past a sector of another scene.
+// FUNCTION: LS3DF 0x10019b10
+I3D_frame *I3D_driver::FindFrameFast(I3D_scene *scene, const char *name) const
 {
-    unknown_04[17] = 0x7d;
+    if (!pFFRoot)
+        return NULL;
+    I3D_frame *frm = pFFRoot;
+    for (;;) {
+        int cmp = strcmp(name, frm->GetName());
+        if (cmp < 0) {
+            if (!frm->ff_left)
+                return NULL;
+            frm = frm->ff_left;
+        } else if (cmp > 0) {
+            if (!frm->ff_right)
+                return NULL;
+            frm = frm->ff_right;
+        } else if (!cmp) {
+            do {
+                for (I3D_frame *f = frm; f; f = f->parent) {
+                    if (f->GetType() == FRAME_SECTOR && ((I3D_sector *)f)->scene == scene)
+                        return frm;
+                }
+                if (!frm->ff_right)
+                    return NULL;
+                frm = frm->ff_right;
+            } while (!strcmp(name, frm->GetName()));
+            return NULL;
+        }
+    }
 }
 
-// STUB: LS3DF 0x100658f0
-void I3D_driver::vfunc_39()
+// FUNCTION: LS3DF 0x10019c10
+I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
 {
-    unknown_04[41] = 0x7d;
+    pFFLastUp_ = NULL;
+    if (!pFFRoot)
+        return NULL;
+    I3D_frame *frm = pFFRoot;
+    for (;;) {
+        int cmp = strcmp(name, frm->GetName());
+        if (cmp < 0) {
+            if (!frm->ff_left)
+                return NULL;
+            pFFLastUp_ = frm;
+            frm = frm->ff_left;
+        } else if (cmp > 0) {
+            if (!frm->ff_right)
+                return NULL;
+            pFFLastUp_ = frm;
+            frm = frm->ff_right;
+        } else if (!cmp) {
+            // A while (true): its first test returns, so VC6 keeps it at the top
+            while (true) {
+                if (frm == frame)
+                    return frm;
+                if (!frm->ff_right) {
+                    pFFLastUp_ = NULL;
+                    return NULL;
+                }
+                pFFLastUp_ = frm;
+                frm = frm->ff_right;
+                if (strcmp(name, frm->GetName()))
+                    return NULL;
+            }
+        }
+    }
+}
+
+// FUNCTION: LS3DF 0x10019d30
+void I3D_driver::OptimalizeFastFindData()
+{
+    OFFD_ListSize = pFFRoot->OFFD_CountFrames();
+    OFFD_ListUsed = 0;
+    OFFD_pFrameList = new I3D_frame *[OFFD_ListSize];
+    if (!OFFD_pFrameList) {
+        dbgPrintf("!! Out of memory !!  OptimalizeFastFindData() [1]");
+        ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+        return;
+    }
+    pFFRoot->AlphabeticalListOfFrames_();
+    OFFD_RebuildBranchOfFFTree_(&pFFRoot, 0, OFFD_ListUsed);
+    delete[] OFFD_pFrameList;
+}
+
+// FUNCTION: LS3DF 0x10019dc0
+void I3D_driver::OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int num)
+{
+    if (!num)
+        return;
+    // The middle, moved back to the first of the frames of its name
+    int half = num / 2;
+    for (; half > 0; half--) {
+        if (strcmp(OFFD_pFrameList[first + half - 1]->GetName(), OFFD_pFrameList[first + half]->GetName()))
+            break;
+    }
+    // The frames of the same name are a list to the right
+    I3D_frame **last = branch;
+    *branch = OFFD_pFrameList[first + half];
+    int n = 1;
+    for (; half + n < num; n++) {
+        if (strcmp(OFFD_pFrameList[first + half]->GetName(), OFFD_pFrameList[first + half + n]->GetName()))
+            break;
+        (*last)->ff_left = NULL;
+        last = &(*last)->ff_right;
+        *last = OFFD_pFrameList[first + half + n];
+    }
+    if (half > 0)
+        OFFD_RebuildBranchOfFFTree_(&(*branch)->ff_left, first, half);
+    else
+        (*branch)->ff_left = NULL;
+    if (half + n < num)
+        OFFD_RebuildBranchOfFFTree_(&(*last)->ff_right, first + half + n, num - half - n);
+    else
+        (*last)->ff_right = NULL;
+}
+
+// FUNCTION: LS3DF 0x10019fd0
+LS3D_RESULT I3D_driver::EnumFFTree(I3D_ENUMPROC *proc, uint context) const
+{
+    struct _hlp {
+        // FUNCTION: LS3DF 0x1001a050
+        I3DENUMRET enumSubtree(I3D_ENUMPROC *proc, uint context, I3D_frame *frm)
+        {
+            I3DENUMRET er;
+            if (frm->ff_left) {
+                er = enumSubtree(proc, context, frm->ff_left);
+                if (er)
+                    return er;
+            }
+            er = proc(frm, context);
+            if (er)
+                return er;
+            if (frm->ff_right)
+                return enumSubtree(proc, context, frm->ff_right);
+            return er;
+        }
+    } hlp;
+    if (!pFFRoot)
+        return I3D_OK;
+    I3DENUMRET er = hlp.enumSubtree(proc, context, pFFRoot);
+    return er ? I3DERR_CANCELED : I3D_OK;
+}
+
+// FUNCTION: LS3DF 0x1001a0a0
+void I3D_driver::DeleteFromSceneTickList(I3D_frame *frame)
+{
+    for (int i = scenes.size(); i--; ) {
+        if (!scenes[i]->DeleteTickFrame(frame))
+            break;
+    }
+}
+
+// FUNCTION: LS3DF 0x1001a0e0
+void I3D_driver::DeleteFromAllShadows(I3D_frame *frame)
+{
+    DeleteFrameFromShadows(frame);
+}
+
+// FUNCTION: LS3DF 0x1001a0f0
+void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
+{
+    DeleteFrameFromTargets(frame);
 }
 
 // Empty, as on PS2. The original's copy is folded with an empty function of the DirectShow base classes
@@ -277,3 +1473,356 @@ void I3D_driver::vfunc_39()
 void I3D_driver::m_RecomputeUsedVRAM()
 {
 }
+
+// The other files' globals
+
+// render.cpp's
+// GLOBAL: LS3DF 0x101c4cf8
+I3D_frame *pCurrentCamera;
+
+// GLOBAL: LS3DF 0x100a93f0
+bool RecomputeAllGeometry;
+
+// In .data from another I3D file
+// GLOBAL: LS3DF 0x100a9470
+float i3d_light_scale = 128.0f;
+
+// The functions of other files the driver calls, until those are written. They come after the driver's functions:
+// VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
+// ~I3D_driver and the Create functions. Their bodies differ, or the linker would fold them; auto_inline(off) keeps
+// VC6 from inlining them here. The markers of the ones below the driver's addresses are in I3D.h, by name, as the
+// linter checks the order of a file's markers.
+#pragma auto_inline(off)
+
+void FreeClipArrays()
+{
+    renderState[4]++;
+}
+
+I3D_animation_set::I3D_animation_set()
+{
+    renderState[43]++;
+}
+
+I3D_area::I3D_area()
+{
+    renderState[21]++;
+}
+
+I3D_billboard::I3D_billboard()
+{
+    renderState[28]++;
+}
+
+I3D_lensflare::I3D_lensflare()
+{
+    renderState[30]++;
+}
+
+// The billboard file's render state functions, which the draws call in places (that file isn't written yet)
+void SetBlendState(uint state)
+{
+    if (m_CurrBlendState != state) {
+        m_CurrBlendState = state;
+        switch (state) {
+        case 0:
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+            break;
+        case 1:
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+            break;
+        case 2:
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+            break;
+        case 3:
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+            break;
+        case 4:
+            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+            break;
+        }
+    }
+}
+
+void SetVertexFormat(uint format)
+{
+    if (m_CurrVertexFormat != format) {
+        m_CurrVertexFormat = format;
+        switch (format) {
+        case 0:
+            m_pD3DDevice8->SetVertexShader(m_LVertexVS);
+            break;
+        case 1:
+            m_pD3DDevice8->SetVertexShader(m_LVertex2VS);
+            break;
+        case 2:
+            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE);
+            break;
+        case 3:
+            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE | D3DFVF_TEX1);
+            break;
+        case 4:
+            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
+            break;
+        case 5:
+            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2);
+            break;
+        case 6:
+            m_pD3DDevice8->SetVertexShader(m_VertexVS);
+            break;
+        }
+    }
+}
+
+I3D_camera::I3D_camera()
+{
+    renderState[11]++;
+}
+
+// STUB: LS3DF 0x1001a1e0
+I3D_dummy::I3D_dummy()
+{
+    renderState[14]++;
+}
+
+// STUB: LS3DF 0x1001b600
+int I3D_frame::OFFD_CountFrames()
+{
+    return renderState[8]++;
+}
+
+// STUB: LS3DF 0x1001b6b0
+void I3D_frame::AlphabeticalListOfFrames_()
+{
+    renderState[9]++;
+}
+
+// STUB: LS3DF 0x1001c7d0
+void I3D_frame::UpdateWMatrixProc()
+{
+    renderState[7]++;
+}
+
+// STUB: LS3DF 0x1001ed30
+I3D_joint::I3D_joint()
+{
+    renderState[17]++;
+}
+
+// STUB: LS3DF 0x1001ef70
+I3D_landpatch::I3D_landpatch()
+{
+    renderState[36]++;
+}
+
+// STUB: LS3DF 0x1001fbb0
+I3D_landscape::I3D_landscape()
+{
+    renderState[24]++;
+}
+
+// STUB: LS3DF 0x100201f0
+I3D_light::I3D_light()
+{
+    renderState[10]++;
+}
+
+// STUB: LS3DF 0x10021570
+I3D_lit_object::I3D_lit_object()
+{
+    renderState[27]++;
+}
+
+// STUB: LS3DF 0x1002ade0
+I3D_material::I3D_material()
+{
+    renderState[38]++;
+}
+
+// STUB: LS3DF 0x1002b190
+I3D_anim_material::I3D_anim_material()
+{
+    renderState[39]++;
+}
+
+// STUB: LS3DF 0x10030560
+I3D_face_group::I3D_face_group()
+{
+    renderState[40]++;
+}
+
+// STUB: LS3DF 0x10030900
+I3D_mesh_level::I3D_mesh_level()
+{
+    renderState[41]++;
+}
+
+// STUB: LS3DF 0x10031320
+I3D_mesh_object::I3D_mesh_object()
+{
+    renderState[42]++;
+}
+
+// STUB: LS3DF 0x10031820
+I3D_mirror::I3D_mirror()
+{
+    renderState[37]++;
+}
+
+// STUB: LS3DF 0x10033410
+I3D_model::I3D_model()
+{
+    renderState[16]++;
+}
+
+// STUB: LS3DF 0x10034e30
+I3D_morph::I3D_morph()
+{
+    renderState[31]++;
+}
+
+// STUB: LS3DF 0x100367b0
+I3D_object::I3D_object()
+{
+    renderState[26]++;
+}
+
+// STUB: LS3DF 0x1003a430
+I3D_occluder::I3D_occluder()
+{
+    renderState[19]++;
+}
+
+// STUB: LS3DF 0x1003de50
+I3D_emitor::I3D_emitor()
+{
+    renderState[25]++;
+}
+
+// STUB: LS3DF 0x1003fa20
+I3D_part_element::I3D_part_element()
+{
+    renderState[35]++;
+}
+
+// STUB: LS3DF 0x100406c0
+I3D_part_base::I3D_part_base()
+{
+    renderState[34]++;
+}
+
+// STUB: LS3DF 0x10045930
+I3D_pose::I3D_pose()
+{
+    renderState[44]++;
+}
+
+// STUB: LS3DF 0x10045b90
+I3D_pose_set::I3D_pose_set()
+{
+    renderState[45]++;
+}
+
+// STUB: LS3DF 0x10045e30
+I3D_projector::I3D_projector()
+{
+    renderState[33]++;
+}
+
+// STUB: LS3DF 0x10048ab0
+I3D_scene::I3D_scene()
+{
+    renderState[20]++;
+}
+
+// STUB: LS3DF 0x1004ed30
+I3D_sector::I3D_sector()
+{
+    renderState[13]++;
+}
+
+// STUB: LS3DF 0x10050950
+I3D_shadow::I3D_shadow()
+{
+    renderState[23]++;
+}
+
+// STUB: LS3DF 0x10051480
+void DeleteFrameFromShadows(I3D_frame *frame)
+{
+    renderState[5]++;
+}
+
+// STUB: LS3DF 0x10054240
+I3D_singlemesh::I3D_singlemesh()
+{
+    renderState[29]++;
+}
+
+// STUB: LS3DF 0x10056e80
+I3D_singlemorph::I3D_singlemorph()
+{
+    renderState[32]++;
+}
+
+// STUB: LS3DF 0x10057650
+I3D_sound::I3D_sound()
+{
+    renderState[12]++;
+}
+
+// STUB: LS3DF 0x10059490
+I3D_target::I3D_target()
+{
+    renderState[22]++;
+}
+
+// STUB: LS3DF 0x100598d0
+void DeleteFrameFromTargets(I3D_frame *frame)
+{
+    renderState[6]++;
+}
+
+// STUB: LS3DF 0x1005a140
+I3D_user::I3D_user()
+{
+    renderState[15]++;
+}
+
+// STUB: LS3DF 0x1005a7a0
+I3D_volume::I3D_volume()
+{
+    renderState[18]++;
+}
+
+// STUB: LS3DF 0x10062010
+void I3D_driver::initRender()
+{
+    renderState[0]++;
+}
+
+// STUB: LS3DF 0x10062020
+void I3D_driver::closeRender()
+{
+    renderState[1]++;
+}
+
+// STUB: LS3DF 0x10062030
+LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
+{
+    renderState[2]++;
+    return I3D_OK;
+}
+
+// STUB: LS3DF 0x100658f0
+void I3D_driver::BuildAllVBuffers(I3D_scene *scene)
+{
+    renderState[3]++;
+}
+
+#pragma auto_inline(on)

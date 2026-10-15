@@ -180,6 +180,14 @@ struct S_vector {
 struct S_matrix {
     float m[4][4];
 
+    // User-declared, so the matrix is no POD: VC6 then constructs a returned matrix in the local it initializes
+    // (DrawCircle2D's), where it copies a POD twice, and a static matrix still needs no guard (DrawSphere's)
+    S_matrix &operator=(const S_matrix &mat)
+    {
+        memcpy(this, &mat, sizeof(S_matrix));
+        return *this;
+    }
+
     // A row as a vector (PS2 __cl__8S_matrixFi)
     S_vector &operator()(int i)
     {
@@ -224,14 +232,21 @@ struct S_matrix {
     I3D_MATH_API float __stdcall GetUScale() const;
 };
 
-// PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data
+// PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data, which an
+// S_matrix can't be (VC6 initializes a class with a user-declared assignment at run time), so a POD of the same
+// layout. Only I3d_math.cpp uses it.
+struct S_matrix_data {
+    float m[4][4];
+};
+
 // GLOBAL: LS3DF 0x1009bf48
-static const S_matrix IdentityMatrix = {
+static const S_matrix_data IdentityMatrixData = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f,
 };
+#define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
 
 // A rotation: s is the cosine of half the angle, v the axis scaled by its sine (PS2 __ct__6S_quatFfRC8S_vector)
 struct S_quat {

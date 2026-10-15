@@ -395,9 +395,6 @@ S_key_char key_table[] = {
     {0, 0, 0},
 };
 
-// The I3D driver's z-buffer type for DXS_ZENABLE (I3D code)
-extern uint i3d_zbuffer_type;
-
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 static int __cdecl SortModesCallback(const void *a, const void *b);
 LS3D_RESULT ResetDevice(bool reset);
@@ -836,7 +833,7 @@ void IGraph::SetState(DX_STATE state, uint value)
         m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, value != 0);
         break;
     case DXS_ZENABLE:
-        m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, value ? i3d_zbuffer_type : D3DZB_FALSE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, value ? ZBufferEnable : D3DZB_FALSE);
         break;
     case DXS_CLAMP:
         if (!value) {
@@ -1175,11 +1172,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         } else if (m_Sleeping) {
             pGlobalIGraph->SetAppName(m_SleepAppName);
             m_Sleeping = false;
-            if (m_pD3DDevice8 && i3d_driver_init)
+            if (m_pD3DDevice8 && I3DIsInit)
                 RestoreRenderStates();
             if (m_RenderThread)
                 ResumeThread(m_RenderThread);
-        } else if (m_pD3DDevice8 && i3d_driver_init)
+        } else if (m_pD3DDevice8 && I3DIsInit)
             RestoreRenderStates();
         break;
     }
@@ -1442,7 +1439,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         return I3DERR_INVALIDPARAMS;
     m_InitDesc = *desc;
     Close();
-    memset(&i3d_stats, 0, sizeof(i3d_stats));
+    memset(&volumeStats, 0, sizeof(volumeStats));
     WNDCLASSEXA wc;
     wc.cbSize = sizeof(wc);
     wc.style = CS_CLASSDC;

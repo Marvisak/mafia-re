@@ -162,6 +162,13 @@ public:
         array = a;
     }
 
+    // Makes the list n elements long, keeping the first ones
+    void resize(int n)
+    {
+        reserve(n);
+        count = n;
+    }
+
     // Appends an element and returns it, for the caller to fill in
     T &push_back()
     {
