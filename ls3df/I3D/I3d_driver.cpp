@@ -3,7 +3,7 @@
 // the end. The file includes the header that defines the zero vector (its $E at 0x10016fd0, after DrawLines, as
 // mid-file as I3d_math.cpp's), which isn't here yet; neither is the order of its .bss (0x100af8e8-0x100c0010, VC6's
 // hash). The functions of other files the driver calls are at the end: the billboard file's render state functions
-// written, the rest stubs. Names are the PS2 build's unless noted.
+// and the frame file's part of the fast find tree written, the rest stubs. Names are the PS2 build's unless noted.
 //
 // The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
 // the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
@@ -375,28 +375,287 @@ int I3D_driver::GetState(I3D_RENDERSTATE state) const
     return renderState[state];
 }
 
-// STUB: LS3DF 0x10015e80
+// Walks a triangle's edge from top to bottom, widening each row's span to the edge's pixel
+static inline void ScanEdge(int xs, int ys, int xe, int ye)
+{
+    if (ye == ys)
+        return;
+    if (ye < ys) {
+        int t = ye;
+        ye = ys;
+        ys = t;
+        t = xe;
+        xe = xs;
+        xs = t;
+    }
+    int dx = ((xe - xs) << 7) / (ye - ys);
+    int x = xs << 7;
+    for (int y = ys; y <= ye; y++) {
+        if (x >> 7 < shadow_spans[y][0])
+            shadow_spans[y][0] = x >> 7;
+        if (x >> 7 > shadow_spans[y][1])
+            shadow_spans[y][1] = x >> 7;
+        x += dx;
+    }
+}
+
+// The shadow texture rasterizer (PC only, names guessed). A shadow's silhouette comes in texture coordinates, pairs of
+// ints; each triangle's rows go into shadow_spans (its leftmost and rightmost pixel per row, in 7-bit fixed point
+// while walking an edge), which an __asm block then fills: alpha 15 in a 16-bit texture, or 255 in SW's 8-bit buffer
+// of 256 bytes a row.
+// FUNCTION: LS3DF 0x10015e80
 void I3D_driver::DrawShadowTriangles(const int *verts, const ushort *indx, uint num_faces, void *dst, int pitch)
 {
-    shadow_spans[0][0] = (uchar)num_faces;
+    for (uint i = num_faces; i; i--, indx += 3) {
+        const int *v0 = &verts[indx[0] * 2];
+        int x0 = v0[0], y0 = v0[1];
+        const int *v1 = &verts[indx[1] * 2];
+        int x1 = v1[0], y1 = v1[1];
+        const int *v2 = &verts[indx[2] * 2];
+        int x2 = v2[0], y2 = v2[1];
+        __asm {
+            lea edi, shadow_spans
+            mov ecx, 0x80
+            mov eax, 0x00ff00ff
+            rep stosd
+        }
+        int y_min = y0, y_max = y0;
+        if (y1 < y_min)
+            y_min = y1;
+        if (y2 < y_min)
+            y_min = y2;
+        if (y1 > y_max)
+            y_max = y1;
+        if (y2 > y_max)
+            y_max = y2;
+        ScanEdge(x0, y0, x1, y1);
+        ScanEdge(x1, y1, x2, y2);
+        ScanEdge(x2, y2, x0, y0);
+        __asm {
+            lea esi, shadow_spans
+            mov eax, y_min
+            mov ebx, y_max
+            sub ebx, eax
+            jz done
+            mov edi, eax
+            imul edi, pitch
+            add edi, dst
+            shl eax, 1
+            add esi, eax
+            align 16
+        row:
+            push edi
+            xor ecx, ecx
+            xor edx, edx
+            mov dl, [esi]
+            mov cl, [esi + 1]
+            sub cl, dl
+            jz next
+            shl edx, 1
+            add edi, edx
+            mov eax, 0xf000f000
+            shr ecx, 1
+            jc odd
+            rep stosd
+            jmp next
+        odd:
+            stosw
+            jz next
+            rep stosd
+        next:
+            pop edi
+            add edi, pitch
+            add esi, 2
+            dec ebx
+            jnz row
+        done:
+        }
+    }
 }
 
-// STUB: LS3DF 0x100160d0
+// FUNCTION: LS3DF 0x100160d0
 void I3D_driver::DrawShadowTrianglesSW(const int *verts, const ushort *indx, uint num_faces)
 {
-    shadow_spans[0][1] = (uchar)num_faces;
+    for (uint i = num_faces; i; i--, indx += 3) {
+        const int *v0 = &verts[indx[0] * 2];
+        int x0 = v0[0], y0 = v0[1];
+        const int *v1 = &verts[indx[1] * 2];
+        int x1 = v1[0], y1 = v1[1];
+        const int *v2 = &verts[indx[2] * 2];
+        int x2 = v2[0], y2 = v2[1];
+        __asm {
+            lea edi, shadow_spans
+            mov ecx, 0x80
+            mov eax, 0x00ff00ff
+            rep stosd
+        }
+        int y_min = y0, y_max = y0;
+        if (y1 < y_min)
+            y_min = y1;
+        if (y2 < y_min)
+            y_min = y2;
+        if (y1 > y_max)
+            y_max = y1;
+        if (y2 > y_max)
+            y_max = y2;
+        ScanEdge(x0, y0, x1, y1);
+        ScanEdge(x1, y1, x2, y2);
+        ScanEdge(x2, y2, x0, y0);
+        __asm {
+            lea esi, shadow_spans
+            mov eax, y_min
+            mov ebx, y_max
+            sub ebx, eax
+            jz done
+            mov edi, eax
+            imul edi, 0x100
+            add edi, shadow_buffer
+            shl eax, 1
+            add esi, eax
+            xor ecx, ecx
+            xor edx, edx
+            mov al, 0xff
+            align 16
+        row:
+            push edi
+            mov dl, [esi]
+            mov cl, [esi + 1]
+            sub cl, dl
+            jz next
+            add edi, edx
+            rep stosb
+            align 16
+        next:
+            pop edi
+            add edi, 0x100
+            add esi, 2
+            dec ebx
+            jnz row
+        done:
+        }
+    }
 }
 
-// STUB: LS3DF 0x10016310
+// Renders a shadow's triangles (verts: x, y pairs, inside box) into its texture's alpha: through the 16-bit
+// rasterizer, or with RS_SHADOW_SW at twice the size into shadow_buffer, then averaged down 2x2 into 4-bit alpha
+// FUNCTION: LS3DF 0x10016310
 LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, const ushort *indx, uint num_faces,
     ITexture *texture, const float *box)
 {
     static C_list<int> points;
     points.reserve(num_verts * 2);
-    if (!renderState[RS_SHADOW_SW])
-        DrawShadowTriangles(&points[0], indx, num_faces, shadow_buffer, 0);
-    else
+    uint pitch;
+    if (renderState[RS_SHADOW_SW]) {
+        // Twice the texture's size, less one: the last pixel's coordinate
+        ushort sx = texture->width, sy = texture->height;
+        sy = sy * 2 - 1;
+        __asm {
+            mov edi, shadow_buffer
+            xor ecx, ecx
+            mov cx, sy
+            inc ecx
+            imul ecx, 0x40
+            xor eax, eax
+            rep stosd
+        }
+        sx = sx * 2 - 1;
+        float scale_x = sx / (box[3] - box[0]);
+        float scale_y = sy / (box[4] - box[1]);
+        __asm {
+            mov ecx, num_verts
+            mov edi, dword ptr points
+            mov ebx, box
+            mov esi, verts
+            fld dword ptr [ebx]
+            fld dword ptr [ebx + 4]
+            fld scale_x
+            fld scale_y
+            align 16
+        convert_sw:
+            fld dword ptr [esi]
+            fsub st, st(4)
+            fmul st, st(2)
+            fistp dword ptr [edi]
+            fld dword ptr [esi + 4]
+            fsub st, st(3)
+            fmul st, st(1)
+            fistp dword ptr [edi + 4]
+            add esi, 8
+            add edi, 8
+            dec ecx
+            jnz convert_sw
+            fcompp
+            fcompp
+        }
         DrawShadowTrianglesSW(&points[0], indx, num_faces);
+        uchar *dst = (uchar *)texture->Lock(NULL, pitch, 0);
+        int side = texture->width;
+        int skip = 0x200 - (side << 1);
+        __asm {
+            mov edi, dst
+            mov esi, shadow_buffer
+            mov ecx, side
+            align 16
+        row:
+            mov edx, edi
+            mov ebx, side
+            align 16
+        column:
+            xor eax, eax
+            mov al, [esi]
+            add al, [esi + 1]
+            adc ah, 0
+            add al, [esi + 0x100]
+            adc ah, 0
+            add al, [esi + 0x101]
+            adc ah, 0
+            shr eax, 6
+            shl eax, 12
+            mov [edx], ax
+            add edx, 2
+            add esi, 2
+            dec ebx
+            jnz column
+            add edi, pitch
+            add esi, skip
+            dec ecx
+            jnz row
+        }
+    } else {
+        texture->Fill(NULL, 0, 0);
+        float scale_x = (texture->width - 1) / (box[3] - box[0]);
+        float scale_y = (texture->height - 1) / (box[4] - box[1]);
+        __asm {
+            mov ecx, num_verts
+            mov edi, dword ptr points
+            mov ebx, box
+            mov esi, verts
+            fld dword ptr [ebx]
+            fld dword ptr [ebx + 4]
+            fld scale_x
+            fld scale_y
+            align 16
+        convert:
+            fld dword ptr [esi]
+            fsub st, st(4)
+            fmul st, st(2)
+            fistp dword ptr [edi]
+            fld dword ptr [esi + 4]
+            fsub st, st(3)
+            fmul st, st(1)
+            fistp dword ptr [edi + 4]
+            add esi, 8
+            add edi, 8
+            dec ecx
+            jnz convert
+            fcompp
+            fcompp
+        }
+        void *dst = texture->Lock(NULL, pitch, 0);
+        DrawShadowTriangles(&points[0], indx, num_faces, dst, pitch);
+    }
+    texture->Unlock();
+    texture->AddDirtyRect(NULL);
     return I3D_OK;
 }
 
@@ -1487,6 +1746,10 @@ bool RecomputeAllGeometry;
 // GLOBAL: LS3DF 0x100a9470
 float i3d_light_scale = 128.0f;
 
+// The frame file's: OFFD_CountFrames' count
+// GLOBAL: LS3DF 0x100c002c
+int OFFD_NumFrames;
+
 // The functions of other files the driver calls, until those are written. They come after the driver's functions:
 // VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
 // ~I3D_driver and the Create functions. Their bodies differ, or the linker would fold them; auto_inline(off) keeps
@@ -1590,16 +1853,41 @@ I3D_dummy::I3D_dummy()
     renderState[14]++;
 }
 
-// STUB: LS3DF 0x1001b600
+// The frame file's part of the fast find tree, written (that file isn't yet). VC6 inlines OFFD_CountFrames_ one level
+// into OFFD_CountFrames (so auto_inline is on for it), and turns the recursions into the right branch into loops.
+// FUNCTION: LS3DF 0x1001b600
 int I3D_frame::OFFD_CountFrames()
 {
-    return renderState[8]++;
+    OFFD_NumFrames = 1;
+    if (ff_left)
+        ff_left->OFFD_CountFrames_();
+    if (ff_right)
+        ff_right->OFFD_CountFrames_();
+    return OFFD_NumFrames;
 }
 
-// STUB: LS3DF 0x1001b6b0
+#pragma auto_inline(on)
+
+// FUNCTION: LS3DF 0x1001b680
+void I3D_frame::OFFD_CountFrames_()
+{
+    if (ff_left)
+        ff_left->OFFD_CountFrames_();
+    OFFD_NumFrames++;
+    if (ff_right)
+        ff_right->OFFD_CountFrames_();
+}
+
+#pragma auto_inline(off)
+
+// FUNCTION: LS3DF 0x1001b6b0
 void I3D_frame::AlphabeticalListOfFrames_()
 {
-    renderState[9]++;
+    if (ff_left)
+        ff_left->AlphabeticalListOfFrames_();
+    OFFD_pFrameList[OFFD_ListUsed++] = this;
+    if (ff_right)
+        ff_right->AlphabeticalListOfFrames_();
 }
 
 // STUB: LS3DF 0x1001c7d0

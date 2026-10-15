@@ -177,9 +177,15 @@ public:
         return type;
     }
 
-    // The fast find tree (PS2 OFFD_*): the number of frames below this one, and the list of them in name order
+    // The fast find tree (PS2 OFFD_*): the number of frames in the branch from this one, and the list of them in name
+    // order
     int OFFD_CountFrames();
     void AlphabeticalListOfFrames_();
+
+private:
+    void OFFD_CountFrames_();
+
+public:
 
     uchar unknown_04[0xc];
     S_matrix matrix;                    // 0x10, the world matrix
@@ -369,6 +375,17 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // DrawSphere's matrix
 // GLOBAL: LS3DF 0x100afc28
 // m
+
+// RenderShadowTexture's list of the points in texture coordinates, its guard and the destructor its first call
+// registers with atexit. VC6 numbers the last two per file, so the names hold only while no other file has them.
+// GLOBAL: LS3DF 0x100bfc88
+// points
+
+// GLOBAL: LS3DF 0x100bffc0
+// $S20
+
+// SYNTHETIC: LS3DF 0x100165e0
+// $E21
 
 // GLOBAL: LS3DF 0x100af8e8
 // str
