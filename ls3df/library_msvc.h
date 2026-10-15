@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -96,6 +96,12 @@
 
 // LIBRARY: LS3DF 0x1008dae1 SYMBOL
 // _sprintf
+
+// LIBRARY: LS3DF 0x1008db40 SYMBOL
+// __CIasin
+
+// LIBRARY: LS3DF 0x1008db54 SYMBOL
+// _asin
 
 // LIBRARY: LS3DF 0x1008dc0b SYMBOL
 // _toupper
@@ -922,6 +928,9 @@
 // LIBRARY: LS3DF 0x10098f9b SYMBOL
 // __setmode_lk
 
+// GLOBAL: LS3DF 0x100a225a
+// __pi_by_2_to_61
+
 // GLOBAL: LS3DF 0x100a2300
 // ___lookuptable
 
@@ -1099,6 +1108,9 @@
 // GLOBAL: LS3DF 0x101caa94
 // ___lc_codepage
 
+// GLOBAL: LS3DF 0x101caa98
+// ___lc_collate_cp
+
 // GLOBAL: LS3DF 0x101caaa0
 // __cflush
 
@@ -1114,7 +1126,7 @@
 // GLOBAL: LS3DF 0x101cabc4
 // ?_pnhHeap@@3P6AHI@ZA
 
-// GLOBAL: LS3DF 0x101cabf0
+// GLOBAL: LS3DF 0x101cabe8
 // ___lc_id
 
 // GLOBAL: LS3DF 0x101cac34

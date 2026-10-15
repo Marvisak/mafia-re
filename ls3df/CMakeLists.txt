@@ -8,6 +8,7 @@ project(ls3df)
 # the sound files' folder is named here.
 add_library(ls3df SHARED
     I3D/I3d_driver.cpp
+    I3D/I3d_frame.cpp
     I3D/I3d_math.cpp
     I3D/IBManager.cpp
     I3D/VBManager.cpp
@@ -63,13 +64,19 @@ if (MSVC_VERSION EQUAL 1200)
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
     # (the names are /Gr's; Make4X4's other callers are in camera code, the buffer managers' m_UnlockAll*Buffers
-    # caller is the driver's Render, render.cpp, FindFrameFast_'s are the frames', RenderShadowTexture's the shadows')
+    # caller is the driver's Render, render.cpp, FindFrameFast_'s are the frames', RenderShadowTexture's the shadows', the
+    # frames' are the scenes', models' and visuals')
     target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
         "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
         "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
         "/INCLUDE:?UnloadManagedTextures@@YIXXZ" "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ" "/INCLUDE:?FindFrameFast_@I3D_driver@@QAEPAVI3D_frame@@PBDPAV2@@Z"
-        "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z")
+        "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
+        "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DeleteFromOwner@I3D_frame@@QAEXXZ"
+        "/INCLUDE:?DiscardHRBoundVol@I3D_frame@@QAEXXZ" "/INCLUDE:?GetChildFrame@I3D_frame@@QAEPAV1@PBDI@Z"
+        "/INCLUDE:?ResetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@XZ"
+        "/INCLUDE:?SetBoundVolume@I3D_frame@@QAEXABUI3D_bbox@@@Z"
+        "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32 vorbisfile

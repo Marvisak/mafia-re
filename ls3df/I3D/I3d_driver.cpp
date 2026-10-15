@@ -3,7 +3,7 @@
 // the end. The file includes the header that defines the zero vector (its $E at 0x10016fd0, after DrawLines, as
 // mid-file as I3d_math.cpp's), which isn't here yet; neither is the order of its .bss (0x100af8e8-0x100c0010, VC6's
 // hash). The functions of other files the driver calls are at the end: the billboard file's render state functions
-// and the frame file's part of the fast find tree written, the rest stubs. Names are the PS2 build's unless noted.
+// written, the rest stubs. Names are the PS2 build's unless noted.
 //
 // The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
 // the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
@@ -35,10 +35,6 @@ extern bool RecomputeAllGeometry;
 
 // The clipping file's (the name is a guess)
 void FreeClipArrays();
-
-// The shadows' and targets' files: they forget a frame being deleted (names guessed)
-void DeleteFrameFromShadows(I3D_frame *frame);
-void DeleteFrameFromTargets(I3D_frame *frame);
 
 // .data
 
@@ -1718,13 +1714,13 @@ void I3D_driver::DeleteFromSceneTickList(I3D_frame *frame)
 // FUNCTION: LS3DF 0x1001a0e0
 void I3D_driver::DeleteFromAllShadows(I3D_frame *frame)
 {
-    DeleteFrameFromShadows(frame);
+    I3D_shadow::DeleteFromAnyShadow(frame);
 }
 
 // FUNCTION: LS3DF 0x1001a0f0
 void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
 {
-    DeleteFrameFromTargets(frame);
+    I3D_target::DeleteFromAnyTarget(frame);
 }
 
 // Empty, as on PS2. The original's copy is folded with an empty function of the DirectShow base classes
@@ -1746,9 +1742,6 @@ bool RecomputeAllGeometry;
 // GLOBAL: LS3DF 0x100a9470
 float i3d_light_scale = 128.0f;
 
-// The frame file's: OFFD_CountFrames' count
-// GLOBAL: LS3DF 0x100c002c
-int OFFD_NumFrames;
 
 // The functions of other files the driver calls, until those are written. They come after the driver's functions:
 // VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
@@ -1851,49 +1844,6 @@ I3D_camera::I3D_camera()
 I3D_dummy::I3D_dummy()
 {
     renderState[14]++;
-}
-
-// The frame file's part of the fast find tree, written (that file isn't yet). VC6 inlines OFFD_CountFrames_ one level
-// into OFFD_CountFrames (so auto_inline is on for it), and turns the recursions into the right branch into loops.
-// FUNCTION: LS3DF 0x1001b600
-int I3D_frame::OFFD_CountFrames()
-{
-    OFFD_NumFrames = 1;
-    if (ff_left)
-        ff_left->OFFD_CountFrames_();
-    if (ff_right)
-        ff_right->OFFD_CountFrames_();
-    return OFFD_NumFrames;
-}
-
-#pragma auto_inline(on)
-
-// FUNCTION: LS3DF 0x1001b680
-void I3D_frame::OFFD_CountFrames_()
-{
-    if (ff_left)
-        ff_left->OFFD_CountFrames_();
-    OFFD_NumFrames++;
-    if (ff_right)
-        ff_right->OFFD_CountFrames_();
-}
-
-#pragma auto_inline(off)
-
-// FUNCTION: LS3DF 0x1001b6b0
-void I3D_frame::AlphabeticalListOfFrames_()
-{
-    if (ff_left)
-        ff_left->AlphabeticalListOfFrames_();
-    OFFD_pFrameList[OFFD_ListUsed++] = this;
-    if (ff_right)
-        ff_right->AlphabeticalListOfFrames_();
-}
-
-// STUB: LS3DF 0x1001c7d0
-void I3D_frame::UpdateWMatrixProc()
-{
-    renderState[7]++;
 }
 
 // STUB: LS3DF 0x1001ed30
@@ -2041,7 +1991,7 @@ I3D_shadow::I3D_shadow()
 }
 
 // STUB: LS3DF 0x10051480
-void DeleteFrameFromShadows(I3D_frame *frame)
+void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
 {
     renderState[5]++;
 }
@@ -2071,7 +2021,7 @@ I3D_target::I3D_target()
 }
 
 // STUB: LS3DF 0x100598d0
-void DeleteFrameFromTargets(I3D_frame *frame)
+void I3D_target::DeleteFromAnyTarget(I3D_frame *frame)
 {
     renderState[6]++;
 }

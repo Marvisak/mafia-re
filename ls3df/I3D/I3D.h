@@ -13,6 +13,7 @@
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
+#undef LoadImage
 
 class I3D_driver;
 class I3D_scene;
@@ -74,6 +75,7 @@ enum I3D_RENDERSTATE {
     RS_HWVERTEXPROC = 19,               // refused where the hardware lacks it (m_ProblemFlags 0x80)
     RS_FLOAT_LOD = 20,                  // a float, 1.0 by default
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
+    RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
     RS_LOD_SCALE = 50,                  // in percent
     RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
     RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
@@ -99,6 +101,26 @@ enum I3DENUMRET {
     I3DENUMRET_SKIPCHILDREN,
     I3DENUMRET_CANCEL,
 };
+
+// EnumFrames' flags: the frame types to take, and how to match the names (Insanity3D's names; TARGET, AREA and SHADOW
+// are guesses)
+#define ENUMF_VISUAL 0x1
+#define ENUMF_LIGHT 0x2
+#define ENUMF_CAMERA 0x4
+#define ENUMF_SOUND 0x8
+#define ENUMF_SECTOR 0x10
+#define ENUMF_DUMMY 0x20
+#define ENUMF_TARGET 0x40
+#define ENUMF_MODEL 0x80
+#define ENUMF_USER 0x100
+#define ENUMF_VOLUME 0x200
+#define ENUMF_JOINT 0x400
+#define ENUMF_OCCLUDER 0x800
+#define ENUMF_AREA 0x1000
+#define ENUMF_SHADOW 0x2000
+#define ENUMF_ALL 0xffff
+#define ENUMF_WILDMASK 0x10000 // '*' ends the name, '?' is any character
+#define ENUMF_CASESENS 0x20000
 
 typedef void __stdcall I3D_ENUMVISUALPROC(I3D_VISUAL_TYPE type, const char *name);
 typedef I3DENUMRET __stdcall I3D_ENUMPROC(I3D_frame *frame, uint context);
@@ -126,34 +148,127 @@ inline int I3DFloatAsInt(float f)
     return *(int *)&f;
 }
 
-// I3D_frame::frm_flags: the world matrix is up to date
-#define FRMFLAGS_WMAT_VALID 0x20
+// I3D_frame::frm_flags (names mostly guessed)
+#define FRMFLAGS_ON 0x1                 // visible (SetOn)
+#define FRMFLAGS_ROT_VALID 0x4          // rot holds the local matrix's rotation
+#define FRMFLAGS_QUAT_VALID 0x8         // rot holds the rotation the local matrix was made from
+#define FRMFLAGS_MAT_VALID 0x10         // the local matrix is up to date
+#define FRMFLAGS_WMAT_VALID 0x20        // the world matrix is up to date
+#define FRMFLAGS_HR_BOUND_VALID 0x40    // bound (the hierarchy's bound volume) is up to date
+#define FRMFLAGS_LOCKED 0x80            // the position doesn't change (SetPos)
+#define FRMFLAGS_HR_BOUND_W_VALID 0x100 // bound_w is up to date
+#define FRMFLAGS_CALLBACK_MASK 0x1e00   // the messages the callback gets
+#define FRMFLAGS_CHANGED 0x2000         // moved since the last Update
+#define FRMFLAGS_TARGET 0x4000          // a target's frame (I3D_target::DeleteFromAnyTarget)
+#define FRMFLAGS_SHADOW 0x8000          // a shadow's frame (I3D_shadow::DeleteFromAnyShadow)
+#define FRMFLAGS_HR_SECTORS 0x40000     // the hierarchy has sectors
+#define FRMFLAGS_HR_OCCLUDERS 0x80000   // occluders
+#define FRMFLAGS_HR_AREAS 0x100000      // areas
+#define FRMFLAGS_TICK 0x400000          // in its scene's tick list
+#define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
+#define FRMFLAGS_UPDATE 0x40000000      // to update
 
-// The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC). 15 virtual functions, at 0x1009cf58 in
-// I3D_sound's vtable.
-class __declspec(novtable) I3D_frame {
+// What a frame's callback is told (PS2 type; the values aren't known yet)
+enum LS3D_CALLBACK_MESSAGE {
+    LS3D_CALLBACK_MESSAGE_0,
+};
+
+// A frame's callback (PS2's parameters; the calling convention isn't confirmed)
+typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
+
+// A bounding box and the sphere around it (PS2 I3D_bvolume)
+struct I3D_bvolume {
+    I3D_bbox bbox;
+    I3D_bsphere bsphere;
+};
+
+// The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC, vtable 0x1009b9b8). The game reaches its
+// members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, frm_flags,
+// matrix, f_matrix, name, parent, type), the others are guesses.
+// VTABLE: LS3DF 0x1009b9b8
+class I3D_frame {
 public:
-    virtual void __stdcall vfunc_00();
-    virtual void __stdcall vfunc_01();
-    virtual void __stdcall vfunc_02();
-    virtual void __stdcall vfunc_03();
-    virtual void __stdcall vfunc_04();
-    virtual void __stdcall vfunc_05();
-    virtual void __stdcall vfunc_06();
-    virtual void __stdcall vfunc_07();
-    virtual void __stdcall vfunc_08();
-    virtual void __stdcall vfunc_09();
-    virtual void __stdcall vfunc_10();
-    virtual void __stdcall vfunc_11();
-    virtual void __stdcall vfunc_12();
-    virtual void __stdcall vfunc_13();
-    virtual void __stdcall vfunc_14();
+    I3D_frame();
+
+    virtual uint __stdcall Release();
+    virtual void __stdcall SetWorldPos(const S_vector &pos);
+    virtual void __stdcall SetWorldPosDir(const S_vector &pos, const S_vector &dir, float roll);
+    virtual void __stdcall SetDir(const S_vector &dir, float roll);
+    virtual void __stdcall SetWorldDir(const S_vector &dir, float roll);
+    virtual void __stdcall Tick(int time) {}
+    virtual void __stdcall Update();
+    virtual void __stdcall SetCallback(I3D_CALLBACK *cb, uint flags);
+    virtual LS3D_RESULT __stdcall SetProperty(const char *prop);
+    virtual void __stdcall SetOn(bool on);
+    virtual LS3D_RESULT __stdcall SetName(const char *new_name);
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags);
+    virtual I3D_frame *__stdcall GetChild(int index) const;
+    virtual LS3D_RESULT __stdcall EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const;
+    virtual I3D_frame *__stdcall FindChildFrame(const char *frame_name, uint flags) const;
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual ~I3D_frame();
+    virtual void UpdateV() {}
+    virtual void SaveImage() {}
+    virtual void LoadImage();
 
 private:
-    // Exported (the decorated name says private, __thiscall)
+    // Exported (the decorated names say private; UpdateWMatrixProc __thiscall, the others __stdcall)
     __declspec(dllexport) void UpdateWMatrixProc();
+    __declspec(dllexport) void __stdcall UpdateHRBoundVol();
+    __declspec(dllexport) void __stdcall UpdateHRBoundVolW();
 
 public:
+    // Makes the local matrix from the scale and rotation, or the rotation from the matrix (PS2 name). The dummy file's
+    // copy is the one linked.
+    // FUNCTION: LS3DF 0x1001a6e0
+    void UpdateMatrix()
+    {
+        if (!(frm_flags & FRMFLAGS_MAT_VALID)) {
+            frm_flags |= FRMFLAGS_MAT_VALID | FRMFLAGS_ROT_VALID;
+            f_matrix.SetRot3(rot);
+            f_matrix(0) *= scale.x;
+            f_matrix(1) *= scale.y;
+            f_matrix(2) *= scale.z;
+        } else if (!(frm_flags & FRMFLAGS_ROT_VALID)) {
+            if (!(frm_flags & FRMFLAGS_QUAT_VALID))
+                rot.Make(f_matrix);
+            frm_flags |= FRMFLAGS_ROT_VALID | FRMFLAGS_QUAT_VALID;
+            f_matrix(0, 0) *= scale.x;
+            f_matrix(0, 1) *= scale.x;
+            f_matrix(0, 2) *= scale.x;
+            f_matrix(1, 0) *= scale.y;
+            f_matrix(1, 1) *= scale.y;
+            f_matrix(1, 2) *= scale.y;
+            f_matrix(2, 0) *= scale.z;
+            f_matrix(2, 1) *= scale.z;
+            f_matrix(2, 2) *= scale.z;
+        }
+    }
+
+    // Insanity3D's name
+    const S_matrix &GetLocalMatrix()
+    {
+        UpdateMatrix();
+        return f_matrix;
+    }
+
+    // Insanity3D's name
+    void SetRot(const S_quat &q)
+    {
+        rot = q;
+        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+            FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
+    }
+
+    // Insanity3D's name
+    void SetPos(const S_vector &pos)
+    {
+        if (frm_flags & FRMFLAGS_LOCKED)
+            return;
+        f_matrix(3) = pos;
+        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
+    }
+
     // PS2 name
     void UpdateWMatrix()
     {
@@ -177,40 +292,76 @@ public:
         return type;
     }
 
+    int NumChildren() const
+    {
+        return num_children;
+    }
+
+    void DeleteFromOwner();
+    void RemoveFromFFTree();
+    void AddToFFTree();
+
     // The fast find tree (PS2 OFFD_*): the number of frames in the branch from this one, and the list of them in name
     // order
     int OFFD_CountFrames();
     void AlphabeticalListOfFrames_();
 
+    LS3D_RESULT SetModelName(const char *model_name);
+    LS3D_RESULT ResetModelName();
+    I3D_frame *AddChild(I3D_frame *frame);
+    I3D_frame *RemoveChild(I3D_frame *frame);
+    LS3D_RESULT EnumSubtree(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const;
+    I3D_frame *GetChildFrame(const char *frame_name, uint flags);
+    void UpdateChildren();
+    void DiscardHRBoundVol();
+    void SetBoundVolume(const I3D_bbox &bbox);
+
 private:
     void OFFD_CountFrames_();
 
 public:
-
-    uchar unknown_04[0xc];
+    int ref;                            // 0x04
+    uint user_data;                     // 0x08
+    char *property;                     // 0x0c, SetProperty's
     S_matrix matrix;                    // 0x10, the world matrix
-    uchar unknown_50[0x5c];
+    S_matrix f_matrix;                  // 0x50, the local one
+    S_vector scale;                     // 0x90
+    S_quat rot;                         // 0x9c
     uint frm_flags;                     // 0xac, FRMFLAGS_*
-    uchar unknown_b0[0x50];
-    char *name;                         // 0x100
-    uchar unknown_104[0xc];
+    I3D_bvolume bound;                  // 0xb0, the hierarchy's, in local space
+    I3D_bvolume bound_w;                // 0xd8, in world space
+    char *name;                         // 0x100, "model.frame" in a model
+    const char *orig_name;              // 0x104, the frame's own name, inside name
+    I3D_CALLBACK *callback;             // 0x108
+    I3D_frame *owner;                   // 0x10c, the model or scene the frame is in
     I3D_FRAME_TYPE type;                // 0x110
-    uchar unknown_114[0xc];
+    float world_scale;                  // 0x114
+    uint update_count;                  // 0x118, counts the updates that moved it
+    int num_children;                   // 0x11c
     I3D_frame *parent;                  // 0x120
-    uchar unknown_124[0x10];
+    I3D_frame *child;                   // 0x124, the first child
+    I3D_frame *prev, *next;             // 0x128, the siblings
+    uint unknown_130;                   // 0x130
     I3D_frame *ff_left, *ff_right;      // 0x134, the fast find tree (PS2 0x114, 0x118)
-    uchar unknown_13c[4];
+    int unknown_13c;                    // 0x13c
 };
+
+// SYNTHETIC: LS3DF 0x1001a980
+// I3D_frame::`scalar deleting destructor'
+
+// The function-local statics of I3d_frame.cpp (PS2 names): AddToFFTree's count of the frames added, Update's guard
+// against updating the targets twice. VC6 puts a function's static into the PDB with its plain name, so they have
+// by-name markers.
+// GLOBAL: LS3DF 0x100c0044
+// addcounter
+
+// GLOBAL: LS3DF 0x100c0048
+// updating
 
 class __declspec(novtable) I3D_sound : public I3D_frame {
 public:
     I3D_sound();
 
-    virtual void __stdcall vfunc_15();
-    virtual void __stdcall vfunc_16();
-    virtual void __stdcall vfunc_17();
-    virtual void __stdcall vfunc_18();
-    virtual void __stdcall vfunc_19();
     virtual void __stdcall vfunc_20();
     // PS2 name, 0x100597f0
     virtual bool __stdcall IsPlaying(bool unknown) const;
@@ -223,21 +374,25 @@ class __declspec(novtable) I3D_sector : public I3D_frame {
 public:
     I3D_sector();
 
+    // PS2 name
+    void AddToRemoveFromSceneRing(I3D_scene *scene);
+
     uchar unknown_140[0xd4];
     I3D_scene *scene;                   // 0x214
     uchar unknown_218[0x1c];
 };
 
 // The scene (PS2 I3D_scene, 0x33c bytes on PC). The virtual functions after I3D_frame's are placeholders up to the
-// two the driver calls.
+// ones the driver and the frames call.
 class __declspec(novtable) I3D_scene : public I3D_frame {
 public:
     I3D_scene();
 
-    virtual void __stdcall vfunc_15(); virtual void __stdcall vfunc_16(); virtual void __stdcall vfunc_17();
-    virtual void __stdcall vfunc_18(); virtual void __stdcall vfunc_19(); virtual void __stdcall vfunc_20();
-    virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22(); virtual void __stdcall vfunc_23();
-    virtual void __stdcall vfunc_24(); virtual void __stdcall vfunc_25(); virtual void __stdcall vfunc_26();
+    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
+    virtual void __stdcall vfunc_23();
+    // PS2 name
+    virtual void __stdcall DeleteFrame(I3D_frame *frame);
+    virtual void __stdcall vfunc_25(); virtual void __stdcall vfunc_26();
     virtual void __stdcall vfunc_27(); virtual void __stdcall vfunc_28(); virtual void __stdcall vfunc_29();
     virtual void __stdcall vfunc_30(); virtual void __stdcall vfunc_31(); virtual void __stdcall vfunc_32();
     virtual void __stdcall vfunc_33(); virtual void __stdcall vfunc_34(); virtual void __stdcall vfunc_35();
@@ -272,27 +427,81 @@ public:
 I3D_PLACEHOLDER_FRAME(I3D_light, 0x1f0)
 I3D_PLACEHOLDER_FRAME(I3D_camera, 0x4f4)
 I3D_PLACEHOLDER_FRAME(I3D_dummy, 0x19c)
-I3D_PLACEHOLDER_FRAME(I3D_target, 0x154)
 I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
-I3D_PLACEHOLDER_FRAME(I3D_model, 0x158)
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
-I3D_PLACEHOLDER_FRAME(I3D_occluder, 0x5ec)
-I3D_PLACEHOLDER_FRAME(I3D_area, 0x17c)
-I3D_PLACEHOLDER_FRAME(I3D_shadow, 0x214)
 I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
 I3D_PLACEHOLDER_FRAME(I3D_emitor, 0x1f8)
+
+// The frames whose members the frames call (PS2 names)
+class __declspec(novtable) I3D_target : public I3D_frame {
+public:
+    I3D_target();
+
+    void UpdateFrames();
+    static void DeleteFromAnyTarget(I3D_frame *frame);
+
+    uchar unknown_140[0x14];
+};
+
+class __declspec(novtable) I3D_model : public I3D_frame {
+public:
+    I3D_model();
+
+    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
+    virtual void __stdcall DeleteFrame(I3D_frame *frame);
+
+    uchar unknown_140[0x18];
+};
+
+class __declspec(novtable) I3D_occluder : public I3D_frame {
+public:
+    I3D_occluder();
+
+    void AddToRemoveFromSceneRing(I3D_scene *scene);
+
+    uchar unknown_140[0x4ac];
+};
+
+class __declspec(novtable) I3D_area : public I3D_frame {
+public:
+    I3D_area();
+
+    void AddToRemoveFromSceneRing(I3D_scene *scene);
+
+    uchar unknown_140[0x3c];
+};
+
+class __declspec(novtable) I3D_shadow : public I3D_frame {
+public:
+    I3D_shadow();
+
+    void SetTo(I3D_frame *frame);
+    static void DeleteFromAnyShadow(I3D_frame *frame);
+
+    uchar unknown_140[0xd4];
+};
 
 // The visuals, a kind of frame (PS2 I3D_visual), by the sizes the driver allocates. The particles' and the landscape
 // patch's names are guesses.
 class __declspec(novtable) I3D_visual : public I3D_frame {
+public:
+    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
+    virtual void __stdcall vfunc_23(); virtual void __stdcall vfunc_24();
+    // PS2 name: computes bbox
+    virtual void __stdcall UpdateBoundProc();
+
+    uchar unknown_140[0x6c];
+    I3D_bbox bbox;                      // 0x1ac, in local space
+    uchar unknown_1c4[0x14];
+    uint vis_flags;                     // 0x1d8
 };
 
 #define I3D_PLACEHOLDER_VISUAL(name, size) \
     class __declspec(novtable) name : public I3D_visual { \
     public: \
         name(); \
-        uchar unknown_140[size - 0x140]; \
+        uchar unknown_1dc[size - 0x1dc]; \
     };
 
 I3D_PLACEHOLDER_VISUAL(I3D_object, 0x21c)
@@ -372,10 +581,6 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
 // buffer comes first, VisualType2String's second.
 
-// DrawSphere's matrix
-// GLOBAL: LS3DF 0x100afc28
-// m
-
 // RenderShadowTexture's list of the points in texture coordinates, its guard and the destructor its first call
 // registers with atexit. VC6 numbers the last two per file, so the names hold only while no other file has them.
 // GLOBAL: LS3DF 0x100bfc88
@@ -387,6 +592,10 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // SYNTHETIC: LS3DF 0x100165e0
 // $E21
 
+// DrawSphere's matrix
+// GLOBAL: LS3DF 0x100afc28
+// m
+
 // GLOBAL: LS3DF 0x100af8e8
 // str
 
@@ -396,8 +605,8 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, after the driver's functions though their addresses come before them, so their markers
-// are here, by name
+// Stubs in I3d_driver.cpp and I3d_frame.cpp, after their files' functions though their addresses come before them, so
+// their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
@@ -407,6 +616,9 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
 // STUB: LS3DF 0x100051a0
 // I3D_area::I3D_area
+
+// STUB: LS3DF 0x10005440
+// I3D_area::AddToRemoveFromSceneRing
 
 // STUB: LS3DF 0x10005db0
 // I3D_billboard::I3D_billboard

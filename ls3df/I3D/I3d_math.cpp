@@ -1124,12 +1124,6 @@ void S_quat::Make(const S_matrix &m)
     *this = q1 * q2;
 }
 
-// FUNCTION: LS3DF 0x1002fa70
-S_quat S_quat::operator*(const S_quat &q) const
-{
-    return S_quat(s * q.s - v.Dot(q.v), q.v * s + v * q.s + v.Cross(q.v));
-}
-
 // A rotation that turns the z axis into dir, then rolls around it
 // FUNCTION: LS3DF 0x1002fb50
 void S_quat::SetDir(const S_vector &dir, float roll)

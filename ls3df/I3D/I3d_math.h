@@ -2,6 +2,8 @@
 
 #include "ls3df.h"
 
+#include <d3d8types.h>
+
 // The engine's math types (PS2 file I3d_math.cpp). LS3DF exports their out-of-line members one by one, __stdcall
 // (QAG/QBG in the decorated names): a dllexport on the struct would export the inline members too.
 #define I3D_MATH_API __declspec(dllexport)
@@ -121,6 +123,7 @@ struct S_vector {
     }
 
     // PS2 __pl__8S_vectorCFRC8S_vector
+    // FUNCTION: LS3DF 0x100112d0
     S_vector operator+(const S_vector &v) const
     {
         return S_vector(x + v.x, y + v.y, z + v.z);
@@ -146,6 +149,7 @@ struct S_vector {
     }
 
     // PS2 __ml__8S_vectorCFRCf: the factor by reference, so it is read again for each component
+    // FUNCTION: LS3DF 0x100112a0
     S_vector operator*(const float &f) const
     {
         return S_vector(x * f, y * f, z * f);
@@ -153,7 +157,7 @@ struct S_vector {
 
     // Insanity3D's. Through these the members are addressed from the vector, not from the struct that holds it
     // (S_quat::Make(const S_vector &, float)).
-    S_vector &operator*=(float f)
+    S_vector &operator*=(const float &f)
     {
         x *= f;
         y *= f;
@@ -177,16 +181,11 @@ struct S_vector {
 };
 
 // A 4x4 matrix whose rows are the axes and the position (row vectors: v * m)
-struct S_matrix {
-    float m[4][4];
-
-    // User-declared, so the matrix is no POD: VC6 then constructs a returned matrix in the local it initializes
-    // (DrawCircle2D's), where it copies a POD twice, and a static matrix still needs no guard (DrawSphere's)
-    S_matrix &operator=(const S_matrix &mat)
-    {
-        memcpy(this, &mat, sizeof(S_matrix));
-        return *this;
-    }
+// On D3DMATRIX (m[4][4] is its), as D3DX's D3DXMATRIX: with a base class the matrix is no POD, so VC6 constructs a
+// returned matrix where it goes (DrawCircle2D, SetWorldDir use it in place, where it copies a POD first), while
+// assignment stays its own block copy, which it schedules with the code around (UpdateWMatrixProc), and a static
+// matrix needs no guard (DrawSphere). A constructor would give both of the latter.
+struct S_matrix : D3DMATRIX {
 
     // A row as a vector (PS2 __cl__8S_matrixFi)
     S_vector &operator()(int i)
@@ -233,14 +232,9 @@ struct S_matrix {
 };
 
 // PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data, which an
-// S_matrix can't be (VC6 initializes a class with a user-declared assignment at run time), so a POD of the same
-// layout. Only I3d_math.cpp uses it.
-struct S_matrix_data {
-    float m[4][4];
-};
-
+// S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. Only I3d_math.cpp uses it.
 // GLOBAL: LS3DF 0x1009bf48
-static const S_matrix_data IdentityMatrixData = {
+static const D3DMATRIX IdentityMatrixData = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
@@ -265,7 +259,19 @@ struct S_quat {
         v.z = z;
     }
 
-    S_quat operator*(const S_quat &q) const;
+    // The axis as a chain (the frame's constructor stores z, y, x); Zero() is three statements
+    void Identity()
+    {
+        v.x = v.y = v.z = 0.0f;
+        s = 1.0f;
+    }
+
+    // Out of line after S_quat::Make(const S_matrix &), its only caller that doesn't inline it
+    // FUNCTION: LS3DF 0x1002fa70
+    S_quat operator*(const S_quat &q) const
+    {
+        return S_quat(s * q.s - v.Dot(q.v), q.v * s + v * q.s + v.Cross(q.v));
+    }
 
     I3D_MATH_API S_matrix __stdcall RotationMatrix() const;
     I3D_MATH_API S_vector __stdcall GetDir() const;
@@ -304,6 +310,33 @@ struct I3D_bbox {
     {
         min = a;
         max = b;
+    }
+
+    // Insanity3D's name
+    bool IsValid() const { return min.x <= max.x; }
+
+    // An empty box (PS2 name)
+    void Invalidate()
+    {
+        min.x = min.y = min.z = 1e16f;
+        max.x = max.y = max.z = -1e16f;
+    }
+
+    // Grows the box to hold the point (PS2 Absorb__8I3D_bboxFRC8S_vector)
+    void Absorb(const S_vector &v)
+    {
+        if (min.x > v.x)
+            min.x = v.x;
+        if (max.x < v.x)
+            max.x = v.x;
+        if (min.y > v.y)
+            min.y = v.y;
+        if (max.y < v.y)
+            max.y = v.y;
+        if (min.z > v.z)
+            min.z = v.z;
+        if (max.z < v.z)
+            max.z = v.z;
     }
 };
 
