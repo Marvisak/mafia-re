@@ -1,8 +1,8 @@
 // The engine's globals and its plain C exports, at 0x1006b430-0x1006bd3e in the original. The PS2 build names the
 // file (__sinit_Globals.cpp): its functions TEV to ErrorHandler come right before IGraph.cpp's there, as they do here.
 // Both builds list it in one group with IGraph.cpp, IShow.cpp and ITexture.cpp, hence the IGraph folder. The PC adds
-// GetEngineVersion, dbgPrintf1 and the log file. The file ends with the header's zero vector (see
-// ISound/IS_driver.cpp), which isn't here yet.
+// GetEngineVersion, dbgPrintf1 and the log file. The file ends with the header's zero vector's $E (see
+// tools/autopch.py).
 // The original's .bss (0x101c5048-0x101c529f): log_name, str, UnitVector, ZeroVector, timer_frequency, UnitBBox, the
 // header's zero vector, 0x60 bytes nothing references, v, v's guard, 1 byte nothing references, StaticInstance, then
 // the zero-initialized globals. The unreferenced bytes look like another function's static S_vector[8] and its guard,

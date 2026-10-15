@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="124" viewBox="0 0 400 124" role="img" aria-label="LS3DF.dll: 29.67% decompiled">
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="124" viewBox="0 0 400 124" role="img" aria-label="LS3DF.dll: 29.73% decompiled">
 <style>
   .card { fill: #ffffff; stroke: #d0d7de; }
   .track { fill: #eaeef2; }
@@ -15,11 +15,11 @@
 </style>
 <rect class="card" x="4.5" y="4.5" width="391" height="115" rx="6"/>
 <text x="24" y="38" font-size="18" font-weight="600">LS3DF.dll</text>
-<text x="376" y="38" font-size="18" font-weight="600" text-anchor="end">29.67%</text>
+<text x="376" y="38" font-size="18" font-weight="600" text-anchor="end">29.73%</text>
 <rect class="track" x="24" y="50" width="352" height="8" rx="4"/>
-<rect class="bar" x="24" y="50" width="104.43" height="8" rx="4"/>
+<rect class="bar" x="24" y="50" width="104.64" height="8" rx="4"/>
 <text class="muted" x="24" y="86" font-size="13">Implemented</text>
-<text x="376" y="86" font-size="13" text-anchor="end">30.00% (498 / 1,660)</text>
+<text x="376" y="86" font-size="13" text-anchor="end">30.06% (499 / 1,660)</text>
 <text class="muted" x="24" y="106" font-size="13">Accuracy</text>
-<text x="376" y="106" font-size="13" text-anchor="end">98.89%</text>
+<text x="376" y="106" font-size="13" text-anchor="end">98.90%</text>
 </svg>

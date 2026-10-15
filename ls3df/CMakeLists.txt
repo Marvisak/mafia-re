@@ -56,6 +56,9 @@ if (MSVC_VERSION EQUAL 1200)
     list(REMOVE_ITEM ls3df_sources IGraph/IShow.cpp)
     set_source_files_properties(${ls3df_sources} PROPERTIES COMPILE_OPTIONS /Gr)
     set_source_files_properties(IGraph/IShow.cpp PROPERTIES COMPILE_OPTIONS /Gd)
+    # /YX - automatic precompiled headers, the default of a VC6 DLL project. They decide where the engine header's zero
+    #       vector's $E and the out-of-line copies of the headers' inline functions go (see tools/autopch.py).
+    set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
 
     # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
     # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma.

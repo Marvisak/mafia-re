@@ -1,7 +1,6 @@
 // The scene graph's node (PS2 I3d_frame.cpp), at 0x1001a7f0-0x1001d2e3 in the original: I3D_frame in PS2's order,
-// with the PC's hierarchy bound volumes. The file includes the header that defines the zero vector (its $E at
-// 0x1001c280, between EnumSubtree and EnumFrames, mid-file as in I3d_math.cpp), which isn't here yet. Names are the
-// PS2 build's unless noted.
+// with the PC's hierarchy bound volumes. The header's zero vector has its $E at 0x1001c280, between EnumSubtree and
+// EnumFrames (ours comes after RemoveChild: see tools/autopch.py). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"

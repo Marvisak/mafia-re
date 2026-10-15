@@ -13,8 +13,8 @@ a name is uncertain, the table says so.
   - In the table it comes first in its file's group, because the header is included before the file defines its own
     globals.
   - Its code comes last in the file's code, after all the functions, followed only by out-of-line inline and
-    template functions. Why VC6 places it there is not known. A plain `static`, a `const`, a constructor defined
-    later, a template type and an unreferenced vector all give the `$E` at the definition.
+    template functions, or in the middle of a long file. That is VC6's automatic precompiled headers (`/YX`), see
+    `tools/autopch.py`.
 - **Reading the table.** Each such `$E` closes a file's code. A zero-vector entry whose code lies past the current
   file's marker starts the next file, and so does any other entry past it (a file without the header).
   - Files that define no globals and don't include the header don't appear in the table. They have to be found from

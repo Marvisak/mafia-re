@@ -1,7 +1,8 @@
 // The index buffers (PS2 IBManager.cpp, __FILE__ C:\MyProjects\engine8\I3D\IBManager.cpp), at 0x1005aad0-0x1005c760
 // in the original, then the multisets' out-of-line functions up to 0x1005d010. PS2 has C_IBuffer's constructor,
 // destructor and m_Init and C_IBManager's functions; the PC's C_IBuffer also shares its buffer out (m_Alloc, m_Free).
-// The header's zero vector (0x101b50ec) has its $E at 0x1005c740 and isn't here yet.
+// The header's zero vector (0x101b50ec) has its $E at 0x1005c740, among the multisets' functions (ours comes earlier
+// among them: see tools/autopch.py).
 #include "I3D/IBManager.h"
 #include "IGraph/IGraph.h"
 

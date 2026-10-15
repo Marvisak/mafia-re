@@ -4,7 +4,10 @@
 // allows (the regions), which RenderCurrentFrame draws.
 // Unlike the engine's other files, this one is compiled without /Gr: its helpers are __cdecl, and so are vorbisfile's
 // functions and callbacks, which libvorbis' header declares without a calling convention.
-// The header's zero vector has its $E at the end (0x10075800), before the out-of-line inline functions.
+// The header's zero vector has its $E at the end (0x10075800), before the out-of-line inline functions. Ours comes
+// after m_PrepareVerts: with /YX its place follows the inline code that comes before it in the precompiled headers
+// (see tools/autopch.py), and the original probably included DirectShow's base classes first, whose many inline
+// functions put it after the whole file (with <dshow.h> first, ours comes a function before the end).
 #include "IGraph/IGraph.h"
 #include "IGraph/bink.h"
 #include "IGraph/vorbisfile.h"

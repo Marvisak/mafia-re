@@ -340,6 +340,10 @@ struct I3D_bbox {
     }
 };
 
+// Every file that includes the header gets its own (PS2 name). Its $E isn't where it is defined: the files are
+// compiled with /YX (see tools/autopch.py).
+static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
+
 // Globals.cpp (PS2 names)
 extern I3D_bbox UnitBBox;
 extern S_vector UnitVector;
@@ -349,10 +353,10 @@ extern S_vector ZeroVector;
 const S_vector *BBoxVertices(const I3D_bbox &bbox);
 
 // The guard of BBoxVertices' static buffer, and the function its first call registers with atexit (it has nothing
-// to destroy). VC6 numbers both per file, so the names hold only while no other file has them. IGraph.cpp has a
-// $E10 too (the buffer managers' multisets move its numbering), so reccmp warns of an ambiguous match; it takes the
-// first $E10 in link order, which is Globals.cpp's.
+// to destroy). VC6 numbers both per file, after the zero vector's three numbers, so the names hold only while no
+// other file has them. IGraph.cpp has a $E13 too (the buffer managers' multisets move its numbering), so reccmp warns
+// of an ambiguous match; it takes the first $E13 in link order, which is Globals.cpp's.
 // GLOBAL: LS3DF 0x101c5290
-// $S9
+// $S12
 // SYNTHETIC: LS3DF 0x1006bc90
-// $E10
+// $E13

@@ -630,15 +630,16 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // buffer comes first, VisualType2String's second.
 
 // RenderShadowTexture's list of the points in texture coordinates, its guard and the destructor its first call
-// registers with atexit. VC6 numbers the last two per file, so the names hold only while no other file has them.
+// registers with atexit. VC6 numbers the last two per file (after the zero vector's three numbers), so the names
+// hold only while no other file has them.
 // GLOBAL: LS3DF 0x100bfc88
 // points
 
 // GLOBAL: LS3DF 0x100bffc0
-// $S20
+// $S23
 
 // SYNTHETIC: LS3DF 0x100165e0
-// $E21
+// $E24
 
 // DrawSphere's matrix
 // GLOBAL: LS3DF 0x100afc28

@@ -3,7 +3,7 @@
 // S3TC library where asked, and saves the result next to the image to load it faster the next time. PC only: the
 // texture manager at the end of the file, which loads ITC_MANAGED textures from those saved files on a thread of
 // its own into a few pools of default pool textures. The header's zero vector has its $E after Create
-// (0x10078170), as in IGraph.cpp.
+// (0x10078170), as in IGraph.cpp (see tools/autopch.py).
 #include "IGraph/IGraph.h"
 #include "S3TC/s3_intrf.h"
 #include "dta.h"

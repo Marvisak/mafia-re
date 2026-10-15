@@ -1,9 +1,8 @@
 // The DirectSound driver, at 0x1007b690-0x1007c29e in the original. The PS2 build names the file and its functions;
 // InitEAX and the EAX and DirectSound 8 code are PC only.
-// The file ends with the dynamic initializer of a zero S_vector at 0x101c62d0 (0x1007c280). Every engine file ends
-// with one, from a header: PS2's files construct a zero vector and an identity quaternion at the start of each
-// __sinit. How the PC build gets them to the end of each file is unknown (at its definition, a header static's $E
-// comes first), so it isn't here yet.
+// The file ends with the dynamic initializer of a zero S_vector at 0x101c62d0 (0x1007c280). Every engine file has
+// one, from a header (I3d_math.h's ZeroSVector; PS2's files construct a zero vector and an identity quaternion at the
+// start of each __sinit). /YX puts it at the file's end, or mid-file in the long files (see tools/autopch.py).
 #include "ISound/ISound.h"
 #include "I3D/I3D.h"
 

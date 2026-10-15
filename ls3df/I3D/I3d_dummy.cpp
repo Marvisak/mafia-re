@@ -1,8 +1,7 @@
 // The dummy frame (PS2 I3d_dummy.cpp), at 0x1001a1e0-0x1001a6e0 in the original: I3D_dummy in PS2's order, with the
-// PC's UpdateV after the destructor and Duplicate. The file includes the header that defines the zero vector (its $E
-// at 0x1001a6c0, the last function), which isn't here yet; after it comes the copy of the frame's inline UpdateMatrix
-// the linker kept. Ours comes right after Normalize, its caller (open, like the $E's place). Names are the PS2 build's
-// unless noted.
+// PC's UpdateV after the destructor and Duplicate. The header's zero vector has its $E at the end (0x1001a6c0), and
+// after it comes the copy of the frame's inline UpdateMatrix the linker kept (see tools/autopch.py). Names are the PS2
+// build's unless noted.
 #include "I3D/I3D.h"
 #include "dta.h"
 

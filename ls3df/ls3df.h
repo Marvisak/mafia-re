@@ -408,13 +408,13 @@ void dbgPrintGuid(const void *guid);
 
 // The destructors IGraph.cpp's thunks in .CRT$XCU register with atexit for m_AdapterFormatList, m_CachedTextureList,
 // m_UncachedTextureList and m_MapsList, by name. VC6 numbers these functions per file, and only these names are in
-// no other file; reccmp pairs a name several files have ($E10, $E15, $E20) only with a warning for each, so the other
+// no other file; reccmp pairs a name several files have ($E13, $E18, $E23) only with a warning for each, so the other
 // destructors stay unmatched, and their thunks below 100% though identical.
 // SYNTHETIC: LS3DF 0x1006be60
-// $E25
+// $E28
 // SYNTHETIC: LS3DF 0x1006beb0
-// $E30
+// $E33
 // SYNTHETIC: LS3DF 0x1006bf00
-// $E35
+// $E38
 // SYNTHETIC: LS3DF 0x1006bf50
-// $E40
+// $E43

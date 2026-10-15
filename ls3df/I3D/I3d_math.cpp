@@ -3,8 +3,8 @@
 // GetScale2, CosAngleTo and S_quat::GetDir, has S_matrix::RotateByMatrix earlier, and other SetDir and SetDir3
 // algorithms. Make4X4 comes right after Mult4X4, which inlines it.
 // The header's zero vector (PS2 ZeroSVector) has its dynamic initializer between S_vector::RotateByMatrix and
-// RotateByNormMatrix (0x1002ea90), not at the end of the file as in the other engine files; it isn't here yet (see
-// ISound/IS_driver.cpp).
+// RotateByNormMatrix (0x1002ea90), and the copy of S_vector::Cross comes after the last SetRot. Ours come after
+// AngleTo and after SetDir3: see tools/autopch.py.
 // The matrix products are hand-written assembly: Make, Make4X4, S_matrix::RotateByMatrix and the vector-by-matrix
 // products. The Xbox build has the same instructions, out of line where VC6 inlines them. Their tells: the inline
 // assembler encodes a local's address with a 32-bit displacement (lea esi, r), and a block that reads this or a
