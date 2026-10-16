@@ -20,7 +20,7 @@ score summed over all of them. The function counts of binaries that haven't been
 | Binary | Status |
 | --- | --- |
 | `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
-| `setup.exe` | The target is the 1.2 setup, built with Visual C++ 6.0 like the game. It builds with Visual C++ 6.0 and reccmp compares it, but the source was decompiled from Steam's 2010 rebuild (Visual Studio 2008) and is being redone against 1.2. The rebuild's differences stay in the source behind `SETUP_STEAM`, and it is compared too, built with its own toolchain (Visual C++ 2008 SP1). |
+| `setup.exe` | Fully decompiled. With the original splash and icon ([below](#setupexe-splash-and-icon)), the Visual C++ 6.0 build is identical to the 1.2 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1: every function matches, and the file differs only in one size field of its relocation section, and so in its checksum. That size depends on code in the 2010 source that the linker discarded, which hasn't been recovered. |
 | `LS3DF.dll` (engine) | Started. It builds with Visual C++ 6.0 and reccmp compares it. The sound code and the engine's globals and C exports are written, and nearly all of their functions compile to the original instructions. With about 1,600 functions, this and `Game.exe` are the two big tasks ahead. |
 | `Game.exe` | Not started. |
 | `IJoy.dll` | Fully decompiled. All but one function compiles to the original instructions, and the rebuilt file matches the original apart from that function and the order of its import table. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
@@ -75,8 +75,9 @@ the original binaries does: bring your own copy of version 1.2.
 
 `setup/res/splash.bmp` and `setup/res/mafia.ico` are placeholders. The originals are the game's artwork and aren't
 distributed with this repository. The setup builds and works with the placeholders, but shows a grey box instead of the
-splash, and a byte-exact build needs the originals. Extract them from your own `setup.exe` (version 1.2, which is
-`Patch\setup.exe` in the official 1.2 patch) over the placeholders:
+splash, and a byte-exact build needs the originals. Extract them over the placeholders from your own `setup.exe`:
+version 1.2's (`Patch\setup.exe` in the official 1.2 patch), or Steam's (the one at the top of the game's folder),
+which has the same artwork:
 
 - The splash, with [7-Zip](https://www.7-zip.org/):
   ```bash
