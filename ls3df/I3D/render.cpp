@@ -16,6 +16,9 @@ ADD_FG_HELP_STRUCT AddFGHlpStruct;
 // GLOBAL: LS3DF 0x101c4ce0
 bool renderCameraChanged;
 
+// GLOBAL: LS3DF 0x101c4cd0
+S_matrix *pViewProjMatrix;
+
 // RS_FLOAT_LOD scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)
 // GLOBAL: LS3DF 0x101c4ca4

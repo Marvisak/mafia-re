@@ -197,6 +197,18 @@ public:
         count++;
     }
 
+    // A copy of l's elements (PS2 has it out of line for some element types)
+    C_list &operator=(const C_list &l)
+    {
+        clear();
+        int n = l.count;
+        reserve(n);
+        count = n;
+        while (n--)
+            array[n] = l.array[n];
+        return *this;
+    }
+
     // Removes element i, moving the last one into its place
     void erase(int i)
     {

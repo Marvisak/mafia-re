@@ -7,6 +7,7 @@ project(ls3df)
 # The folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph are in its __FILE__ strings,
 # the sound files' folder is named here.
 add_library(ls3df SHARED
+    I3D/I3d_billboard.cpp
     I3D/I3d_driver.cpp
     I3D/I3d_dummy.cpp
     I3D/I3d_frame.cpp

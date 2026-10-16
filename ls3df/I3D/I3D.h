@@ -448,7 +448,12 @@ public:
     virtual int __stdcall DeleteTickFrame(I3D_frame *frame);
     virtual void __stdcall vfunc_43(); virtual void __stdcall vfunc_44(); virtual void __stdcall vfunc_45();
     virtual void __stdcall vfunc_46(); virtual void __stdcall vfunc_47(); virtual void __stdcall vfunc_48();
-    virtual void __stdcall vfunc_49(); virtual void __stdcall vfunc_50(); virtual void __stdcall vfunc_51();
+    virtual void __stdcall vfunc_49(); virtual void __stdcall vfunc_50();
+    // PS2 name: a ray from from along dir against the geometry; texel_cb is asked about the texels it passes through
+    // (TexelCallback), with cb_context (the PC's parameter types are guesses, the callbacks' after TexelCallback's)
+    virtual int __stdcall TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist, S_vector *normal,
+        void *cb, void *cb_context, int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *),
+        I3D_frame *frm, int x) const;
     virtual void __stdcall vfunc_52(); virtual void __stdcall vfunc_53(); virtual void __stdcall vfunc_54();
     virtual void __stdcall vfunc_55(); virtual void __stdcall vfunc_56(); virtual void __stdcall vfunc_57();
     virtual void __stdcall vfunc_58(); virtual void __stdcall vfunc_59(); virtual void __stdcall vfunc_60();
@@ -567,7 +572,10 @@ public:
 
     float fov_a;                        // 0x140, the field of view
     float ncp, fcp;                     // 0x144, the clipping planes
-    uchar unknown_14c[0x4f4 - 0x14c];
+    uchar unknown_14c[0x224 - 0x14c];
+    S_matrix view_inv;                  // 0x224, the inverse of 0x264 (the view matrix, it seems): the billboards
+                                        // align to it
+    uchar unknown_264[0x4f4 - 0x264];
 };
 
 I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
@@ -824,10 +832,82 @@ public:
 // SYNTHETIC: LS3DF 0x10036820
 // I3D_object::`scalar deleting destructor'
 
+// A visual that turns to the camera (PS2 I3D_billboard, 0x268 bytes on PC; I3d_billboard.cpp): its mesh is rendered
+// with g_matrix, which ProductBillMatrix computes for the camera. Names are Insanity3D's (rot_axis, g_matrix) or guesses.
+// VTABLE: LS3DF 0x1009b520 I3D_frame
+// VTABLE: LS3DF 0x1009b510 I3D_void_interface
+class I3D_billboard : public I3D_object {
+public:
+    I3D_billboard();
+    ~I3D_billboard();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    // The vertices stay in local space
+    virtual void __stdcall SetSpace(bool world);
+    virtual void __stdcall UpdateBoundProc();
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+    virtual void __stdcall SetMesh(I3D_mesh_object *m, bool keep_lods);
+
+    // The matrix the billboard is rendered with, turned to the camera at cam_pos (PS2 name)
+    void ProductBillMatrix(S_vector &cam_pos, S_matrix *m);
+
+    uint rot_axis;                      // 0x21c, 0 x, 1 y, 2 z
+    int axis_mode;                      // 0x220, 0 to 3, see ProductBillMatrix (0 faces the camera)
+    S_matrix g_matrix;                  // 0x224, the matrix rendered with
+    I3D_frame *env_dummy;               // 0x264, the parent's first dummy child, EnvProcess' mode 5 maps into its box
+};
+
+// SYNTHETIC: LS3DF 0x10005df0
+// I3D_billboard::`scalar deleting destructor'
+
+// A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
+struct GLOW_STRUCT {
+    float pos;                          // where on the line from the light through the screen's center
+    I3D_material *mat;
+};
+
+// A light's flare on the screen (PS2 I3D_lensflare, 0x27c bytes on PC; I3d_billboard.cpp): its glows, drawn by Draw
+// (PS2 name), which the scene calls for each lens flare after the rendering
+// VTABLE: LS3DF 0x1009b5c8 I3D_frame
+// VTABLE: LS3DF 0x1009b5b8 I3D_void_interface
+class I3D_lensflare : public I3D_object {
+public:
+    I3D_lensflare();
+    ~I3D_lensflare();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    virtual void __stdcall Draw(bool test);
+
+    // Names guessed from Draw's use
+    float intensity;                    // 0x21c, scales the glows' alpha
+    float size;                         // 0x220, scales the glows' textures' size in pixels
+    uint unknown_224;                   // 0x224
+    uint test_interval;                 // 0x228, ms between the occlusion tests, 150
+    uint last_test;                     // 0x22c, timeGetTime() of the last one
+    uint last_update;                   // 0x230, of the last fade step
+    float visibility;                   // 0x234, fades to target_visibility
+    float target_visibility;            // 0x238, 0 if occluded
+    S_vector color;                     // 0x23c, fades to target_color
+    S_vector target_color;              // 0x248, what the occlusion test saw (TexelCallback)
+    float fade_in, fade_out;            // 0x254, per second, 15 and 8
+    C_list<GLOW_STRUCT> glows;          // 0x25c
+    float near_dist;                    // 0x26c, within it a single glow grows (by near_scale)
+    float far_dist;                     // 0x270, beyond it a single glow shrinks to nothing at range
+    float range;                        // 0x274, 300
+    float near_scale;                   // 0x278
+};
+
+// SYNTHETIC: LS3DF 0x10009610
+// I3D_lensflare::`scalar deleting destructor'
+
+// TEMPLATE: LS3DF 0x1000af20
+// C_list<GLOW_STRUCT>::reserve
+
 I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
-I3D_PLACEHOLDER_VISUAL(I3D_billboard, 0x268)
 I3D_PLACEHOLDER_VISUAL(I3D_singlemesh, 0x22c)
-I3D_PLACEHOLDER_VISUAL(I3D_lensflare, 0x27c)
 I3D_PLACEHOLDER_VISUAL(I3D_morph, 0x238)
 I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
 I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
@@ -1001,6 +1081,12 @@ public:
     float lod_dist;                     // 0x38, the squared distance up to which the level is rendered (GetObjectLOD)
     uint mesh_flags;                    // 0x3c, MESHF_*
     float env_scale;                    // 0x40, the environment map's (EnvProcess), 2 * sqrt(2) by default
+
+    // The flags (the name is a guess; the visuals' m_AddFGroups read them through it, which their inlining shows)
+    uint GetFlags() const
+    {
+        return mesh_flags;
+    }
 };
 
 // A mesh: up to 10 levels of detail and their bound volume (0x6c bytes on PC), reference counted. Its destructor is
@@ -1092,12 +1178,6 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // STUB: LS3DF 0x10005440
 // I3D_area::AddToRemoveFromSceneRing
 
-// STUB: LS3DF 0x10005db0
-// I3D_billboard::I3D_billboard
-
-// STUB: LS3DF 0x10009520
-// I3D_lensflare::I3D_lensflare
-
 // STUB: LS3DF 0x1000b0c0
 // I3D_camera::I3D_camera
 
@@ -1136,6 +1216,16 @@ struct TLVERTEX2 {
 // C_list<TLVERTEX>::reserve
 // TEMPLATE: LS3DF 0x1001a170
 // C_list<LVERTEX>::reserve
+
+// The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
+// I3D files written later (0x10041700)
+// TEMPLATE: LS3DF 0x10041700
+// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
+
+// The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots); the original
+// keeps the area file's copy
+// FUNCTION: LS3DF 0x10005240
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -1250,6 +1340,7 @@ extern uint m_ProblemFlags;
 extern uint m_HardwareCaps;
 
 extern uint m_AlphaRef;
+extern D3DVIEWPORT8 m_D3DViewPort8;
 
 // Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC they are inline:
 // VC6 inlines them where the inline budget allows it, and the copies the linker kept are in the billboard file's code.
@@ -1332,9 +1423,12 @@ void TransformVerticesBlend(void *dst, const void *src, uint count, const S_matr
     const float *weights, const S_matrix &m2, const S_matrix &mn2);
 void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode);
 void SwapVertexBytes(uchar *a, uchar *b, uint stride, const I3D_triface *faces, uint num_faces, int restore);
+int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context);
 
 // render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
 extern I3D_camera *pCurrentCamera;
+// render.cpp's: the camera's view and projection
+extern S_matrix *pViewProjMatrix;
 
 // A face group to render, as the visuals' m_AddFGroups queue them for their m_RenderFGroup (PS2 name, 0x20 bytes on PC)
 struct RENDER_FG_HELP_STRUCT {
@@ -1354,7 +1448,7 @@ struct RENDER_FG_HELP_STRUCT {
 struct ADD_FG_HELP_STRUCT {
     S_vector cam_pos;                   // 0x00, the camera's position
     uint unknown_0c;
-    uint unknown_10;                    // 0x10, the scene's 0x17c
+    I3D_camera *camera;                 // 0x10, pCurrentCamera
     I3D_sector *sector;                 // 0x14, the visual's
     I3D_scene *scene;                   // 0x18
     C_list<RENDER_FG_HELP_STRUCT> fgroups; // 0x1c, the face groups to render

@@ -608,7 +608,7 @@ void I3D_object::m_AddFGroups()
                 return;
             }
         }
-        if (!l->Create((level->mesh_flags & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
                 sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
             dbgPrintf("!! Out of memory    renderObject()");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
@@ -656,7 +656,7 @@ void I3D_object::m_AddFGroups()
             uv_stride = sizeof(I3D_vertex);
         }
         if (m_HardwareCaps & 1) {
-            if (level->mesh_flags & MESHF_ENVMAP) {
+            if (level->GetFlags() & MESHF_ENVMAP) {
                 LVERTEX2 *v = (LVERTEX2 *)lv;
                 for (int n = num_verts; n; n--) {
                     v->u = uv->u;
@@ -674,7 +674,7 @@ void I3D_object::m_AddFGroups()
                 }
             }
         } else {
-            if (level->mesh_flags & MESHF_ENVMAP) {
+            if (level->GetFlags() & MESHF_ENVMAP) {
                 TLVERTEX2 *v = (TLVERTEX2 *)lv;
                 for (int n = num_verts; n; n--) {
                     v->u = uv->u;
@@ -694,7 +694,7 @@ void I3D_object::m_AddFGroups()
         }
     }
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-        l->SetUV(level->mesh_flags & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
+        l->SetUV(level->GetFlags() & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
             mesh->u_ofs, mesh->v_ofs);
 
     if (moved || l->lights_changed != AddFGHlpStruct.sector->lights_changed) {
@@ -703,14 +703,14 @@ void I3D_object::m_AddFGroups()
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
         if (m_HardwareCaps & 1) {
-            if (level->mesh_flags & MESHF_ENVMAP)
+            if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)verts,
                     sizeof(I3D_vertex), this, GetInvMatrix(), I3DLIGHTMODE_VERTEX, moved, l);
             else
                 PrepareLights((uchar *)&((LVERTEX *)lv)->color, sizeof(LVERTEX), level, (const uchar *)verts,
                     sizeof(I3D_vertex), this, GetInvMatrix(), I3DLIGHTMODE_VERTEX, moved, l);
         } else {
-            if (level->mesh_flags & MESHF_ENVMAP)
+            if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((TLVERTEX2 *)lv)->color, sizeof(TLVERTEX2), level, (const uchar *)verts,
                     sizeof(I3D_vertex), this, GetInvMatrix(), I3DLIGHTMODE_VERTEX, moved, l);
             else
@@ -722,19 +722,19 @@ void I3D_object::m_AddFGroups()
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
         if (m_HardwareCaps & 1) {
-            if (level->mesh_flags & MESHF_ENVMAP)
+            if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
             else
                 SetVertexAlpha((uchar *)&((LVERTEX *)lv)->color, sizeof(LVERTEX), level, this, l);
         } else {
-            if (level->mesh_flags & MESHF_ENVMAP)
+            if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((TLVERTEX2 *)lv)->color, sizeof(TLVERTEX2), level, this, l);
             else
                 SetVertexAlpha((uchar *)&((TLVERTEX *)lv)->color, sizeof(TLVERTEX), level, this, l);
         }
     }
 
-    if (level->mesh_flags & MESHF_ENVMAP && ((level->mesh_flags & MESHF_ENVMAP_MODE) < 2 || created)) {
+    if (level->GetFlags() & MESHF_ENVMAP && ((level->GetFlags() & MESHF_ENVMAP_MODE) < 2 || created)) {
         if (render_number != RenderNumberMinus1 || moved || renderCameraChanged ||
                 !IsAbsMrgZero(mesh->env_u_ofs - l->env_u_ofs) || !IsAbsMrgZero(mesh->env_v_ofs - l->env_v_ofs)) {
             l->env_u_ofs = mesh->env_u_ofs;
@@ -744,11 +744,11 @@ void I3D_object::m_AddFGroups()
             if (m_HardwareCaps & 1)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
-                    level->mesh_flags & MESHF_ENVMAP_MODE, NULL);
+                    level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
             else
                 EnvProcess(&((TLVERTEX2 *)lv)->u2, sizeof(TLVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
-                    level->mesh_flags & MESHF_ENVMAP_MODE, NULL);
+                    level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
         }
     }
 
@@ -771,7 +771,7 @@ void I3D_object::m_AddFGroups()
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
             FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
-                level->mesh_flags & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
+                level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
                 AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & 0x80));
         }
     }

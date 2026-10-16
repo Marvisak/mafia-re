@@ -93,6 +93,7 @@ inline bool S_VBuffer_less::operator()(C_VBuffer *const &b1, C_VBuffer *const &b
 extern C_VBManager cVBMan;
 
 // A buffer locked read-only is locked again for writing
+// FUNCTION: LS3DF 0x1000af80
 inline uchar *C_VBuffer::Lock(int index, uint lock_flags)
 {
     if (data) {
@@ -109,6 +110,7 @@ inline uchar *C_VBuffer::Lock(int index, uint lock_flags)
     return data + stride * index;
 }
 
+// FUNCTION: LS3DF 0x1000b060
 inline void C_VBuffer::Unlock()
 {
     if (data) {

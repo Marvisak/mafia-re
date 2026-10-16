@@ -76,6 +76,19 @@ inline void SetColorOp1(uint op)
     }
 }
 
+// D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; always inlined, so the name is a
+// guess)
+inline void SetCullState(uint cull)
+{
+    if (m_CurrCullState != cull) {
+        m_CurrCullState = cull;
+        if (cull == D3DCULL_CCW)
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
+        else
+            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, cull);
+    }
+}
+
 // D3DRS_CLIPPING (always inlined, so the name is a guess)
 inline void SetClipState(uint clip)
 {

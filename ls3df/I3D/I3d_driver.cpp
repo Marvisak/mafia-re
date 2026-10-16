@@ -1749,16 +1749,6 @@ I3D_area::I3D_area()
     renderState[21]++;
 }
 
-I3D_billboard::I3D_billboard()
-{
-    renderState[28]++;
-}
-
-I3D_lensflare::I3D_lensflare()
-{
-    renderState[30]++;
-}
-
 I3D_camera::I3D_camera()
 {
     renderState[11]++;
