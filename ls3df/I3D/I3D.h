@@ -5,9 +5,9 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy and the visual's base are written (I3d_driver.cpp,
-// I3d_frame.cpp, I3d_dummy.cpp, I3d_visual.cpp); the other frames, the visuals, materials and meshes aren't recovered
-// yet. Their placeholders keep the members and virtual functions the written files use at their offsets and vtable
+// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the visual's base and the meshes are written
+// (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_visual.cpp, I3d_mesh.cpp); the other frames, the visuals and the
+// materials aren't recovered yet. Their placeholders keep the members and virtual functions the written files use at their offsets and vtable
 // slots, the sizes the driver allocates, and declare the constructors it calls (stubs, see I3d_driver.cpp). They are
 // __declspec(novtable) so that the stubs don't need the virtual functions, none of which is written yet; the real
 // classes will drop it.
@@ -23,6 +23,22 @@ class I3D_material;
 class ITexture;
 class ISND_3Dlistener;
 class I3D_frame;
+class C_IBuffer;
+class C_VBuffer;
+
+// A block of one of the index buffers, as the engine uses it (PS2 name; IBManager.h has the buffers)
+struct COMPLETE_IB_STRUCT {
+    C_IBuffer *buffer;                  // NULL if none
+    IDirect3DIndexBuffer8 *ib;
+    int base;                           // the block's first index
+};
+
+// A block of one of the vertex buffers, as the engine uses it (PS2 name; VBManager.h has the buffers)
+struct COMPLETE_VB_STRUCT {
+    C_VBuffer *buffer;                  // NULL if none
+    IDirect3DVertexBuffer8 *vb;
+    int base;                           // the block's first vertex
+};
 
 // The frame types (the names are FrameType2String's)
 enum I3D_FRAME_TYPE {
@@ -626,8 +642,12 @@ I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
 I3D_PLACEHOLDER_VISUAL(I3D_landpatch, 0x620)
 I3D_PLACEHOLDER_VISUAL(I3D_mirror, 0x2ec)
 
-// I3D_material::flags
+// I3D_material::flags (the UNKNOWN ones are set by code not written yet; I3D_mesh_level::AddFGroup reads them)
+#define MATF_UNKNOWN_7000 0x7000        // with MATF_UNKNOWN_80000, a level's MESHF_UNKNOWN_7 value
+#define MATF_UNKNOWN_40000 0x40000      // gives its level MESHF_UNKNOWN_10
+#define MATF_UNKNOWN_80000 0x80000      // gives its level MESHF_UNKNOWN_8; the low byte divides the level's spacing
 #define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
+#define MATF_UNKNOWN_8000000 0x8000000  // gives its level MESHF_UNKNOWN_20
 #define MATF_ICON 0x40000000            // made by I3D_driver::GetIcon
 
 // A material (PS2 I3D_material, 0x40 bytes on PC), reference counted
@@ -641,7 +661,8 @@ public:
     virtual void __stdcall vfunc_03();
     virtual void __stdcall vfunc_04();
     virtual void __stdcall SetTexture(ITexture *texture);
-    virtual void __stdcall vfunc_06();
+    // PS2 name: makes this material a copy of mat
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_material *mat);
     virtual void __stdcall vfunc_07();
     // PS2 name: an animated material's frame
     virtual void __stdcall UpdateTexture();
@@ -653,7 +674,13 @@ public:
     S_vector ambient;                   // 0x14
     S_vector diffuse;                   // 0x20
     S_vector emissive;                  // 0x2c
-    uchar unknown_38[8];
+    float alpha;                        // 0x38, 1.0 opaque
+    uchar unknown_3c[4];
+
+    void AddRef()
+    {
+        ref++;
+    }
 
     ITexture *GetTexture()
     {
@@ -671,7 +698,131 @@ public:
     uchar unknown_40[0x48];
 };
 
-// The mesh parts the driver makes (PS2 names)
+// The meshes (PS2 I3d_mesh.cpp; I3d_mesh.cpp): an object's mesh has up to 10 levels of detail, each a vertex buffer and
+// a chain of face groups, one per material, each an index buffer. The buffers are blocks of the vertex and index buffer
+// managers' (VBManager.h, IBManager.h). Class and function names are PS2's unless noted.
+
+class I3D_face_group;
+
+// A mesh's vertex (PS2 name): D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1
+struct I3D_vertex {
+    S_vector pos;
+    S_vector normal;
+    I3D_text_coor tex;
+};
+
+#define I3D_VERTEX_FVF (D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1)
+
+// What the meshes' GetStats fill in (PC only, names guessed)
+struct I3D_mesh_stats {
+    uint size;                          // of the mesh's object
+    uint num_vertices;
+    uint vertex_bytes;
+    uint num_faces;
+    uint face_bytes;
+};
+
+// A face group: a material's triangles of a mesh level (0x1c bytes on PC). Its destructor is I3d_mesh.cpp's.
+// VTABLE: LS3DF 0x1009bfe0
+class I3D_face_group {
+public:
+    I3D_face_group();
+    ~I3D_face_group();
+
+    virtual void __stdcall SetMaterial(I3D_material *mat);
+    // A copy of the faces, NULL to free them (PC only, the name is a guess)
+    virtual void __stdcall SetFaces(const I3D_triface *faces, int num);
+    // Returns the new faces, locked
+    virtual I3D_triface *__stdcall CreateFaces(int num);
+    // Locks the faces (PS2 GetFaces takes a lock flag)
+    virtual I3D_triface *__stdcall GetFaces();
+    // PC only, the name is a guess
+    virtual void __stdcall UnlockFaces();
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_face_group *fg);
+    // Gives the face group a material of its own if the material is shared (PC only)
+    virtual LS3D_RESULT __stdcall DetachMaterial();
+
+    I3D_material *material;             // 0x04
+    int num_faces;                      // 0x08
+    I3D_face_group *next;               // 0x0c, the level's next one
+    COMPLETE_IB_STRUCT ib;              // 0x10
+};
+
+// SYNTHETIC: LS3DF 0x10030960
+// I3D_face_group::`scalar deleting destructor'
+
+// I3D_mesh_level::mesh_flags (names guessed; the bits come from the face groups' materials, see AddFGroup)
+#define MESHF_UNKNOWN_7 0x7             // a material's MATF_UNKNOWN_7000 value
+#define MESHF_UNKNOWN_8 0x8
+#define MESHF_UNKNOWN_10 0x10
+#define MESHF_UNKNOWN_20 0x20
+
+// A mesh level: a level of detail's vertices and face groups (0x44 bytes on PC), reference counted. Its destructor is
+// I3d_mesh.cpp's.
+// VTABLE: LS3DF 0x1009bffc
+class I3D_mesh_level {
+public:
+    I3D_mesh_level();
+    ~I3D_mesh_level();
+
+    virtual int __stdcall Release();
+    // Bit 0 of flags locks for reading only
+    virtual I3D_vertex *__stdcall LockVertices(uint flags);
+    virtual void __stdcall UnlockVertices();
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_mesh_level *level);
+    virtual int __stdcall NumFaces() const;
+    virtual I3D_face_group *__stdcall GetFGroup(int index);
+    // PC only, the name is a guess
+    virtual LS3D_RESULT __stdcall GetStats(I3D_mesh_stats &stats);
+    // At the chain's end if last, or if the material is transparent, else at its start
+    virtual void __stdcall AddFGroup(I3D_face_group *fg, bool last);
+    virtual LS3D_RESULT __stdcall SetVertexMesh(const I3D_vertex *verts, int num);
+    // Returns the new vertices, locked
+    virtual I3D_vertex *__stdcall CreateVertexMesh(int num);
+    virtual void __stdcall UpdateBBox();
+
+    int ref;                            // 0x04
+    int num_vertices;                   // 0x08
+    COMPLETE_VB_STRUCT vb;              // 0x0c
+    uint num_fgroups;                   // 0x18
+    I3D_face_group *fgroups;            // 0x1c
+    I3D_bbox bbox;                      // 0x20
+    uint unknown_38;                    // 0x38
+    uint mesh_flags;                    // 0x3c, MESHF_*
+    float spacing;                      // 0x40, 2 * sqrt(2) by default (the name is a guess)
+};
+
+// A mesh: up to 10 levels of detail and their bound volume (0x6c bytes on PC), reference counted. Its destructor is
+// I3d_mesh.cpp's.
+// VTABLE: LS3DF 0x1009c030
+class I3D_mesh_object {
+public:
+    I3D_mesh_object();
+    ~I3D_mesh_object();
+
+    virtual int __stdcall Release();
+    virtual I3D_mesh_level *__stdcall GetLOD(int index) const;
+    virtual LS3D_RESULT __stdcall SetLOD(I3D_mesh_level *level, int index);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_mesh_object *mesh);
+    // PC only, the name is a guess
+    virtual LS3D_RESULT __stdcall GetStats(I3D_mesh_stats &stats);
+    virtual void __stdcall UpdateBoundVolume();
+    // Every face group's DetachMaterial (PC only, the name is a guess)
+    virtual LS3D_RESULT __stdcall DetachMaterials();
+    // Whether the meshes have as many levels with as many vertices (PC only, the name is a guess)
+    virtual bool __stdcall IsCompatible(I3D_mesh_object *mesh);
+
+    int ref;                            // 0x04
+    uint num_lods;                      // 0x08
+    I3D_mesh_level *levels[10];         // 0x0c
+    I3D_bvolume bvol;                   // 0x34
+    uint unknown_5c;                    // 0x5c
+    uint unknown_60;                    // 0x60
+    uint unknown_64;                    // 0x64
+    uint unknown_68;                    // 0x68
+};
+
+// The other parts the driver makes (PS2 names)
 #define I3D_PLACEHOLDER(name, size) \
     class name { \
     public: \
@@ -679,9 +830,6 @@ public:
         uchar unknown_00[size]; \
     };
 
-I3D_PLACEHOLDER(I3D_face_group, 0x1c)
-I3D_PLACEHOLDER(I3D_mesh_level, 0x44)
-I3D_PLACEHOLDER(I3D_mesh_object, 0x6c)
 I3D_PLACEHOLDER(I3D_animation_set, 0x14)
 I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)

@@ -7,15 +7,6 @@
 // The vertex buffers (PS2 VBManager.cpp), the same design as IBManager.h's index buffers, with buffers per vertex
 // format and usage. PS2 names the classes, COMPLETE_VB_STRUCT, VERTEX_FORMAT and C_VBManager's functions.
 
-class C_VBuffer;
-
-// A block of one of the vertex buffers, as the engine uses it (PS2 name)
-struct COMPLETE_VB_STRUCT {
-    C_VBuffer *buffer;                  // NULL if none
-    IDirect3DVertexBuffer8 *vb;
-    int base;                           // the block's first vertex
-};
-
 // A vertex buffer's format (PS2 type; the values aren't known yet)
 enum VERTEX_FORMAT {
     VF_UNKNOWN_0,
@@ -65,7 +56,7 @@ public:
 class C_VBuffer {
 public:
     uchar *data;                        // the locked buffer, NULL if unlocked
-    uint flags;                         // as C_IBuffer's (nothing reads it here)
+    uint flags;                         // the D3DLOCK_* flags it is locked with
     uint fvf;                           // D3DFVF_*
     VERTEX_FORMAT vertex_format;
     D3DPOOL pool;
@@ -83,6 +74,10 @@ public:
     bool m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FORMAT format);
     int m_Alloc(uint count, COMPLETE_VB_STRUCT *owner);
     bool m_Free(uint index);
+
+    // Locks the buffer if it isn't, and returns the vertex's address (names guessed)
+    uchar *Lock(int index, uint lock_flags);
+    void Unlock();
 };
 
 inline bool S_VBuffer_less::operator()(C_VBuffer *const &b1, C_VBuffer *const &b2) const
@@ -92,6 +87,34 @@ inline bool S_VBuffer_less::operator()(C_VBuffer *const &b1, C_VBuffer *const &b
 
 // PS2 name
 extern C_VBManager cVBMan;
+
+// A buffer locked read-only is locked again for writing
+inline uchar *C_VBuffer::Lock(int index, uint lock_flags)
+{
+    if (data) {
+        if (!(flags & D3DLOCK_READONLY) || lock_flags & D3DLOCK_READONLY)
+            return data + stride * index;
+        vb->Unlock();
+    }
+    flags = lock_flags;
+    vb->Lock(0, 0, &data, lock_flags);
+    if (lock_index < 0) {
+        lock_index = cVBMan.locked_buffers.size();
+        cVBMan.locked_buffers.push_back(this);
+    }
+    return data + stride * index;
+}
+
+inline void C_VBuffer::Unlock()
+{
+    if (data) {
+        vb->Unlock();
+        data = NULL;
+        cVBMan.locked_buffers[cVBMan.locked_buffers.size() - 1]->lock_index = lock_index;
+        cVBMan.locked_buffers.erase(lock_index);
+        lock_index = -1;
+    }
+}
 
 // The multisets' out-of-line functions (VC6's <xtree>), in the original's order. The destructors follow the
 // constructors whose unwinding needs them; the rest comes after VBManager.cpp's functions, the buffer tree's before

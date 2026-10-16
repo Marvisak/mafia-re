@@ -11,6 +11,7 @@ add_library(ls3df SHARED
     I3D/I3d_dummy.cpp
     I3D/I3d_frame.cpp
     I3D/I3d_math.cpp
+    I3D/I3d_mesh.cpp
     I3D/I3d_visual.cpp
     I3D/IBManager.cpp
     I3D/VBManager.cpp

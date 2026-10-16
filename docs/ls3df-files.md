@@ -55,7 +55,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10021570–10026920` | `10026900` | | `I3d_lit_object.cpp` | `I3D_lit_object::Construct()` |
 | `10026920–1002c8c0` | `1002c8a0` | | `I3d_lit_object.cpp` (second file) | `I3D_lit_object::Load()`, lightmaps |
 | `1002c8c0–10030560` | `1002ea90` | | `I3d_math.cpp` | written. The math from `RandFloat` (`1002cda0`) to `LineLineIntersect`, one file as on PS2; its marker sits between `S_vector::RotateByMatrix` and `RotateByNormMatrix`, not at the end |
-| `10030560–10031820` | `10031800` | | `I3d_mesh.cpp` | `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object` |
+| `10030560–10031820` | `10031800` | | `I3d_mesh.cpp` | `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object`, each in PS2's order with the PC's additions; written |
 | `10031820–100333d0` | `100333b0` | `100324b0` | `I3d_mirror.cpp`? | no strings |
 | `100333d0–10034350` | `10034330` | `10033b50`, `10033ba0` | `I3d_model.cpp`? | two lists; PS2's `__sinit_I3d_model.cpp` constructs more than the header's objects too |
 | `10034350–10036540` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph` |

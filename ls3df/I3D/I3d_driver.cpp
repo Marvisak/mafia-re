@@ -1884,24 +1884,6 @@ I3D_anim_material::I3D_anim_material()
     renderState[39]++;
 }
 
-// STUB: LS3DF 0x10030560
-I3D_face_group::I3D_face_group()
-{
-    renderState[40]++;
-}
-
-// STUB: LS3DF 0x10030900
-I3D_mesh_level::I3D_mesh_level()
-{
-    renderState[41]++;
-}
-
-// STUB: LS3DF 0x10031320
-I3D_mesh_object::I3D_mesh_object()
-{
-    renderState[42]++;
-}
-
 // STUB: LS3DF 0x10031820
 I3D_mirror::I3D_mirror()
 {

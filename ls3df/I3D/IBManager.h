@@ -10,15 +10,6 @@
 // functions; the rest is named here. Insanity3D (the same lineage's later engine) has a manager of the same design
 // (Vb_mgr.h: blocks in a multiset ordered by size), written anew.
 
-class C_IBuffer;
-
-// A block of one of the index buffers, as the engine uses it (PS2 name)
-struct COMPLETE_IB_STRUCT {
-    C_IBuffer *buffer;                  // NULL if none
-    IDirect3DIndexBuffer8 *ib;
-    int base;                           // the block's first index
-};
-
 // A block of a C_IBuffer, free or given out
 struct S_IB_block {
     COMPLETE_IB_STRUCT *owner;          // whom it is given out to (cleared when the buffer goes)
@@ -63,7 +54,7 @@ public:
 class C_IBuffer {
 public:
     uchar *data;                        // the locked buffer, NULL if unlocked
-    uint flags;                         // 0x10: unlocking skips a second Lock/Unlock (set by none of the code so far)
+    uint flags;                         // the D3DLOCK_* flags it is locked with
     uint usage;                         // D3DUSAGE_*
     D3DPOOL pool;
     IDirect3DIndexBuffer8 *ib;
@@ -78,6 +69,10 @@ public:
     bool m_Init(uint usage, uint count);
     int m_Alloc(uint count, COMPLETE_IB_STRUCT *owner);
     bool m_Free(uint index);
+
+    // Locks the buffer if it isn't, and returns the index's address (names guessed)
+    uchar *Lock(int index, uint lock_flags);
+    void Unlock();
 };
 
 inline bool S_IBuffer_less::operator()(C_IBuffer *const &b1, C_IBuffer *const &b2) const
@@ -87,6 +82,39 @@ inline bool S_IBuffer_less::operator()(C_IBuffer *const &b1, C_IBuffer *const &b
 
 // PS2 name
 extern C_IBManager cIBMan;
+
+// A buffer locked read-only is locked again for writing
+inline uchar *C_IBuffer::Lock(int index, uint lock_flags)
+{
+    if (data) {
+        if (!(flags & D3DLOCK_READONLY) || lock_flags & D3DLOCK_READONLY)
+            return data + index * sizeof(ushort);
+        ib->Unlock();
+    }
+    flags = lock_flags;
+    ib->Lock(0, 0, &data, lock_flags);
+    if (lock_index < 0) {
+        lock_index = cIBMan.locked_buffers.size();
+        cIBMan.locked_buffers.push_back(this);
+    }
+    return data + index * sizeof(ushort);
+}
+
+// A buffer that wasn't locked read-only is locked and unlocked once more
+inline void C_IBuffer::Unlock()
+{
+    if (data) {
+        ib->Unlock();
+        if (!(flags & D3DLOCK_READONLY)) {
+            ib->Lock(0, 0, &data, 0);
+            ib->Unlock();
+        }
+        data = NULL;
+        cIBMan.locked_buffers[cIBMan.locked_buffers.size() - 1]->lock_index = lock_index;
+        cIBMan.locked_buffers.erase(lock_index);
+        lock_index = -1;
+    }
+}
 
 // The multisets' out-of-line functions (VC6's <xtree>), in the original's order. The destructors follow the
 // constructors whose unwinding needs them; the rest comes after IBManager.cpp's functions, the buffer tree's before
@@ -100,10 +128,10 @@ extern C_IBManager cIBMan;
 // ??1?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x1005bb20
-// ?reserve@?$C_list@PAUS_VB_block@@@@QAEXH@Z
+// ?reserve@?$C_list@PAUS_IB_block@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF 0x1005bb80
-// ?begin@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AViterator@12@XZ
+// ?begin@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAE?AViterator@12@XZ
 
 // TEMPLATE: LS3DF 0x1005bb90
 // ?erase@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAE?AViterator@12@V312@@Z
@@ -157,10 +185,10 @@ extern C_IBManager cIBMan;
 // ??Eiterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AV012@H@Z
 
 // TEMPLATE: LS3DF 0x1005cf00
-// ??0?$pair@Viterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$m9d95d36c
+// ??0?$pair@Viterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$ma0ee93cf
 
 // TEMPLATE: LS3DF 0x1005cf20
-// ?_Buynode@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
+// ?_Buynode@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
 
 // TEMPLATE: LS3DF 0x1005cf40
 // ?_Dec@const_iterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAEXXZ
@@ -169,7 +197,7 @@ extern C_IBManager cIBMan;
 // ?_Dec@const_iterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x1005d000
-// ?_Construct@std@@YIXPAPAVC_VBuffer@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAUS_VB_block@@ABQAU2@@Z
 
 // The trees' empty node and its reference count, after cIBMan in .bss
 // GLOBAL: LS3DF 0x101b5118

@@ -118,7 +118,7 @@ LS3D_RESULT ISND_driver::SetVolume(float vol)
     return I3D_OK;
 }
 
-// FUNCTION: LS3DF 0x1007b950
+// Its marker is in ISound.h, by name: the linker folds it
 LS3D_RESULT ISND_driver::GetCaps(uint *caps) const
 {
     return I3D_OK;
