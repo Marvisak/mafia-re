@@ -18,3 +18,7 @@
 	path = 3rdparty/msvc900_sp1
 	url = https://github.com/Marvisak/msvc900_sp1.git
 	shallow = true
+[submodule "3rdparty/msvc600_sp5"]
+	path = 3rdparty/msvc600_sp5
+	url = https://github.com/archaic-msvc/msvc600_sp5.git
+	shallow = true

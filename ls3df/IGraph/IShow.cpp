@@ -33,10 +33,10 @@ extern IDirect3DDevice8 *m_pD3DDevice8;
 extern uint ZBufferEnable;
 
 // The DirectX SDK's texture renderer sample (DShowTextures' CTextureRenderer, a CBaseVideoRenderer), which renders an
-// AVI file's frames into the regions' textures. The DirectShow base classes it derives from aren't in the repository
-// yet, so this declares only the members IShow reads, after the base classes' 0x160 bytes. Not written: its methods
-// (0x100753e0-0x100757ff, and the IUnknown thunks after the marker) and m_CreateCTextureRenderer, with their .bss
-// (0x101c5c4c-0x101c5dab).
+// AVI file's frames into the regions' textures. It isn't written yet (the DirectShow base classes it derives from are
+// in BaseClasses), so this declares only the members IShow reads, after the base classes' 0x160 bytes. Not written: its
+// methods (0x100753e0-0x100757ff, and the IUnknown thunks after the marker) and m_CreateCTextureRenderer, with their
+// .bss (0x101c5c4c-0x101c5dab).
 class CTextureRenderer {
     uchar base[0x160];
 

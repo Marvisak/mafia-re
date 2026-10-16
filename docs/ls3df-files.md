@@ -107,7 +107,10 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 - S3's S3TC library at `0x100813e0–0x10086a09`, which `ITexture.cpp`'s `CompressTexture` calls (`S3TCencode` at
   `0x100813e0`; its arguments are two `DDSURFACEDESC`s, the encode type and S3's color weights 0.3086, 0.6094, 0.082).
 - The `DirectSoundCreate8` thunk (`DSOUND` ordinal 11) at `0x10086a10`.
-- The DirectShow base classes (`AMUnblock`, `OleAut32.dll`), from `0x10086a20`.
+- The DirectShow base classes, `0x10086a20–0x1008d3e0`: seven objects of the DirectX 8.1 SDK's `BaseClasses`
+  (`renbase`, `amfilter`, `ctlutil`, `mtype`, `combase`, `wxutil`, `wxlist`), compiled with VC6 SP5 without the
+  Processor Pack (the Rich header's `Utc12_CPP` 8966 ×7). Every function in the range compiles to the same bytes from
+  `ls3df/BaseClasses/`.
 
 ## Open questions
 
@@ -120,9 +123,6 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
     vector.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera, portal/pose and
   singlemesh/singlemorph pairs and the ranges marked `none`.
-- **The marker's name.** It decides where the vector sits in each file's `.bss` (`tools/bsshash.py`). The layouts of
-  `IS_sound.cpp`, `IS_3Dlistener.cpp` and `Globals.cpp` put its bucket between 229 and about 920. PS2 names the
-  per-file vector `ZeroSVector` (a local symbol in each file, next to `ZeroSQuat`), which hashes to bucket 275.
-- **The marker's place.** `I3d_math.cpp` is the only file whose marker isn't at the end of its code: PS2 has the
-  functions after it (`RotateByNormMatrix` to `LineLineIntersect`) in the same file, so what moves the `$E` there is
-  in the source.
+- **The marker's place in the long files.** `/YX` puts it where a file's own source outweighs the inline code before
+  the vector in the precompiled headers (`tools/autopch.py`). In our long files it comes a few functions earlier than
+  in the original, so the original's headers had more inline functions before the vector than ours.

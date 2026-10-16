@@ -15,6 +15,7 @@ Each binary is built with its original toolchain:
 - `rw_data.dll`, `LS3DF.dll`, `Game.exe` and `setup.exe`: Visual C++ 6.0 Service Pack 5 with the Processor Pack. Not Service Pack 6, its compiler and runtime library produce different code.
 - `IJoy.dll`: the original Visual C++ 6.0 release (compiler front end, linker and runtime library) with the Processor Pack's code generator. The build copies that mix of compiler files into the build tree and runs it through `tools/clswap.py`.
 - `LS3DF.dll` was compiled with the compiler's automatic precompiled headers (`/YX`), which decide where some functions end up in each object. The build runs the compiler through `tools/autopch.py`, which gives every source file a precompiled header of its own.
+- `LS3DF.dll` also contains DirectShow's base classes, the DirectX 8.1 SDK's sample code in `ls3df/BaseClasses/`, unchanged. They were built as a library of their own, by their own project's settings, with Service Pack 5's code generator without the Processor Pack.
 - `setup.exe` also needs the headers and libraries of the DirectX 8.0 SDK, `IJoy.dll` and `LS3DF.dll` those of the DirectX 8.1 SDK.
 
 All of them are git submodules in `3rdparty/`.

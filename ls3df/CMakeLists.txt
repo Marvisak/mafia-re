@@ -98,3 +98,43 @@ add_dependencies(ls3df rw_data)
 target_link_directories(ls3df PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data>)
 
 vc6_header_dependencies(ls3df)
+
+# DirectShow's base classes, which IShow.cpp's texture renderer derives from: the DirectX 8.1 SDK's
+# samples\Multimedia\DirectShow\BaseClasses, unchanged, built as its own project builds its release STRMBASE.lib. The
+# original links seven of its objects (renbase, amfilter, ctlutil, mtype, combase, wxutil and wxlist, from 0x10086a20 on),
+# compiled with VC6 SP5 without the Processor Pack: the Rich header's Utc12_CPP 8966 x7, and every one of their
+# functions in the original compiles to the same bytes with that code generator (C2.DLL 12.00.8966), where the
+# Processor Pack's schedules half of them differently.
+if (MSVC_VERSION EQUAL 1200)
+    set(strmbase_sources amextra amfilter amvideo combase cprop ctlutil ddmm dllentry dllsetup mtype outputq pstream
+        pullpin refclock renbase schedule seekpt source strmctl sysclock transfrm transip videoctl vtrans winctrl winutil
+        wxdebug wxlist wxutil)
+    list(TRANSFORM strmbase_sources PREPEND BaseClasses/)
+    list(TRANSFORM strmbase_sources APPEND .cpp)
+    add_library(strmbase STATIC ${strmbase_sources})
+    set_target_properties(strmbase PROPERTIES OUTPUT_NAME STRMBASE)
+    target_include_directories(strmbase PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses
+        ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
+    # The project's release settings (/O2 comes from cmake/vc6-flags.cmake; /Gi and /FD change nothing in the code)
+    target_compile_options(strmbase PRIVATE /MT /W3 /GX)
+    target_compile_definitions(strmbase PRIVATE NDEBUG WIN32 _MBCS _LIB _WIN32_DCOM WINVER=0x400)
+    # And its precompiled header: dllentry.cpp creates it, the others use it
+    set(strmbase_pch "${CMAKE_CURRENT_BINARY_DIR}/strmbase.pch")
+    file(GLOB strmbase_headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses/*.h")
+    set(strmbase_users ${strmbase_sources})
+    list(REMOVE_ITEM strmbase_users BaseClasses/dllentry.cpp)
+    set_source_files_properties(BaseClasses/dllentry.cpp PROPERTIES COMPILE_OPTIONS "/Ycstreams.h;/Fp${strmbase_pch}"
+        OBJECT_OUTPUTS "${strmbase_pch}" OBJECT_DEPENDS "${strmbase_headers}")
+    set_source_files_properties(${strmbase_users} PROPERTIES COMPILE_OPTIONS "/Yustreams.h;/Fp${strmbase_pch}"
+        OBJECT_DEPENDS "${strmbase_pch};${strmbase_headers}")
+    # SP5's driver and front end with SP5's own back end, run from a directory of their own (see ijoy/CMakeLists.txt)
+    set(strmbase_cl "${CMAKE_CURRENT_BINARY_DIR}/strmbase_cl")
+    file(COPY "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/CL.EXE"
+        "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/C1.DLL"
+        "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/C1XX.DLL"
+        "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/Common/MSDev98/Bin/MSPDB60.DLL"
+        "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5/VC98/Bin/C2.DLL" DESTINATION "${strmbase_cl}")
+    set_target_properties(strmbase PROPERTIES
+        CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/clswap.py;${strmbase_cl}")
+    target_link_libraries(ls3df PRIVATE strmbase)
+endif()

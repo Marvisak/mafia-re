@@ -41,6 +41,8 @@ the original binaries does: bring your own copy of version 1.2.
    - `msvc600`: the original Visual C++ 6.0 release, which builds `IJoy.dll` (with the Processor Pack's code
      generator from `msvc600_sp5_vcpp`), also from
      [archaic-msvc](https://github.com/archaic-msvc/msvc600).
+   - `msvc600_sp5`: Visual C++ 6.0 with Service Pack 5 but without the Processor Pack, whose code generator builds the
+     DirectShow base classes in `LS3DF.dll`, also from [archaic-msvc](https://github.com/archaic-msvc/msvc600_sp5).
    - `msvc900_sp1`: Visual C++ 2008 SP1 with the Windows SDK 6.0A, which Steam's 2010 `setup.exe` was built with, from
      [Marvisak/msvc900_sp1](https://github.com/Marvisak/msvc900_sp1).
    - `dx8sdk`: the headers and libraries of the DirectX 8.0 SDK, which `setup.exe` was built with, from
