@@ -1728,10 +1728,6 @@ void I3D_driver::m_RecomputeUsedVRAM()
 
 // The other files' globals
 
-// render.cpp's
-// GLOBAL: LS3DF 0x101c4cf8
-I3D_camera *pCurrentCamera;
-
 // GLOBAL: LS3DF 0x100a93f0
 bool RecomputeAllGeometry;
 

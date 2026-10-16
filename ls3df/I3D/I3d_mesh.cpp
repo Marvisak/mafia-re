@@ -124,7 +124,7 @@ I3D_mesh_level::I3D_mesh_level()
     num_fgroups = 0;
     fgroups = NULL;
     bbox.Invalidate();
-    unknown_38 = 0;
+    lod_dist = 0.0f;
     mesh_flags = 0;
     spacing = sqrt(2.0) * 2;
 }
@@ -246,12 +246,12 @@ LS3D_RESULT I3D_mesh_level::Duplicate(I3D_mesh_level *level)
         num_vertices = 0;
         num_fgroups = 0;
         bbox.Invalidate();
-        unknown_38 = 0;
+        lod_dist = 0.0f;
         return I3D_OK;
     }
     mesh_flags = level->mesh_flags;
     spacing = level->spacing;
-    unknown_38 = level->unknown_38;
+    lod_dist = level->lod_dist;
     LS3D_RESULT r = SetVertexMesh(level->LockVertices(0), level->num_vertices);
     if (r < 0)
         return r;

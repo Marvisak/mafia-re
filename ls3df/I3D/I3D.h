@@ -93,7 +93,8 @@ enum I3D_RENDERSTATE {
     RS_WIREFRAME = 9,
     RS_RECOMPUTE_GEOMETRY = 18,         // sets RecomputeAllGeometry
     RS_HWVERTEXPROC = 19,               // refused where the hardware lacks it (m_ProblemFlags 0x80)
-    RS_FLOAT_LOD = 20,                  // a float, 1.0 by default
+    RS_FLOAT_LOD = 20,                  // a float, 1.0 by default: the levels of detail's distance scale
+    RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
     RS_LOD_SCALE = 50,                  // in percent
@@ -190,9 +191,10 @@ inline int I3DFloatAsInt(float f)
 #define FRMFLAGS_UPDATE 0x40000000      // to update
 #define FRMFLAGS_WEATHER 0x80000000     // a dummy in a scene's weather system (I3D_scene::WeatherSystemAddDummy)
 
-// What a frame's callback is told (PS2 type; the values aren't known yet)
+// What a frame's callback is told (PS2 type; the names are guesses). SetCallback's flags are the messages to send.
 enum LS3D_CALLBACK_MESSAGE {
     LS3D_CALLBACK_MESSAGE_0,
+    LS3D_CALLBACK_LOD = 0x400,          // a visual's level of detail changed: the old one, the new one (GetObjectLOD)
 };
 
 // A frame's callback (PS2's parameters; the calling convention isn't confirmed)
@@ -640,7 +642,8 @@ enum SHADOW_MODE {
 
 // I3D_visual::vis_flags (names guessed; BOUND_VALID and INV_MAT_VALID after Insanity3D's VISF_BOUNDS_VALID and
 // FRMFLAGS_INV_MAT_VALID)
-#define VISF_UNKNOWN_10 0x10            // the lighting takes the first lod's cache, not the current one's
+#define VISF_UNKNOWN_10 0x10            // the level of detail follows the textures loaded, and the lighting takes
+                                        // the first lod's cache, not the current one's
 #define VISF_WORLD_SPACE 0x40           // the vertices are in world space (SetSpace): a move invalidates nothing
 #define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
@@ -651,6 +654,7 @@ enum SHADOW_MODE {
 #define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
 #define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
 #define VISF_INV_MAT_VALID 0x100000     // inv_matrix is up to date
+#define VISF_LOD_CHANGED 0x2000000      // GetObjectLOD changed a VISF_UNKNOWN_10 visual's level
 
 struct RENDER_FG_HELP_STRUCT;
 
@@ -899,7 +903,7 @@ public:
     uint num_fgroups;                   // 0x18
     I3D_face_group *fgroups;            // 0x1c
     I3D_bbox bbox;                      // 0x20
-    uint unknown_38;                    // 0x38
+    float lod_dist;                     // 0x38, the squared distance up to which the level is rendered (GetObjectLOD)
     uint mesh_flags;                    // 0x3c, MESHF_*
     float spacing;                      // 0x40, 2 * sqrt(2) by default (the name is a guess)
 };
@@ -923,6 +927,11 @@ public:
     virtual LS3D_RESULT __stdcall DetachMaterials();
     // Whether the meshes have as many levels with as many vertices (PC only, the name is a guess)
     virtual bool __stdcall IsCompatible(I3D_mesh_object *mesh);
+
+    void AddRef()
+    {
+        ref++;
+    }
 
     int ref;                            // 0x04
     uint num_lods;                      // 0x08
@@ -1201,3 +1210,16 @@ extern float i3d_light_scale;
 
 // render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
 extern I3D_camera *pCurrentCamera;
+
+// render.cpp
+extern float RSLodQuality;
+int GetObjectLOD(I3D_object *obj, const float &dist_2);
+
+// The loader's (load4ds.cpp defines them): the frames and materials loaded so far, the file and the error
+extern I3D_frame *LoadFramy[10000];
+extern I3D_material *LoadMaterialy[5000];
+extern int LoadMaterialu;
+extern LS3D_RESULT ImageErrFlg;
+extern int LoadImageHandle;
+extern const char *ImageFileName;
+I3D_mesh_object *LoadMeshImage();

@@ -14,6 +14,8 @@ add_library(ls3df SHARED
     I3D/I3d_mesh.cpp
     I3D/I3d_visual.cpp
     I3D/IBManager.cpp
+    I3D/load4ds.cpp
+    I3D/render.cpp
     I3D/T_l.cpp
     I3D/VBManager.cpp
     IGraph/cpuid.c
@@ -88,6 +90,8 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?SetBoundVolume@I3D_frame@@QAEXABUI3D_bbox@@@Z"
         "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z"
         "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
+        "/INCLUDE:?LoadMeshImage@@YIPAVI3D_mesh_object@@XZ"
+        "/INCLUDE:?GetObjectLOD@@YIHPAVI3D_object@@ABM@Z"
         "/INCLUDE:?LightingSetSector@@YIXPAVI3D_sector@@@Z"
         "/INCLUDE:?PrepareLights@@YI_NPAEIPAVI3D_mesh_level@@PBEIPAVI3D_object@@ABUS_matrix@@I_NPAVlod@@@Z"
         "/INCLUDE:?SetVertexAlpha@@YIXPAEIPAVI3D_mesh_level@@PAVI3D_object@@PAVlod@@@Z"

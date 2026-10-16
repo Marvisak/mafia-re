@@ -184,7 +184,7 @@
 // ?AddRef@CBaseFilter@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882a0
-// ?Release@CBaseFilter@@UAGKXZ
+// ?Release@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882b0
 // ?QueryId@CRendererInputPin@@UAGJPAPAG@Z
@@ -250,7 +250,7 @@
 // ?SendQuality@CBaseVideoRenderer@@UAEJ_J0@Z
 
 // LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088980
 // ?ShouldDrawSampleNow@CBaseVideoRenderer@@UAEJPAUIMediaSample@@PA_J1@Z

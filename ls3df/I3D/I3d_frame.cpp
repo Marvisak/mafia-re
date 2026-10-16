@@ -15,10 +15,6 @@ extern I3D_frame *pFFLastUp_;
 extern I3D_frame **OFFD_pFrameList;
 extern int OFFD_ListUsed;
 
-// The loader's file and error, which LoadImage reads from and sets (another I3D file's)
-extern int LoadImageHandle;
-extern LS3D_RESULT ImageErrFlg;
-
 // The frame the last destructor ran for, so that an enumeration doesn't go on into a frame its callback deleted
 // GLOBAL: LS3DF 0x100c0028
 I3D_frame *lastDestroyedFrame;
@@ -1012,13 +1008,6 @@ fail:
     ImageErrFlg = I3DERR_OUTOFMEM;
     ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
 }
-
-// The loader's (another I3D file's), until that file is written
-// GLOBAL: LS3DF 0x101c3bfc
-int LoadImageHandle;
-
-// GLOBAL: LS3DF 0x101c3be4
-LS3D_RESULT ImageErrFlg;
 
 // The functions of other files the frames call, until those are written. Their bodies differ, or the linker would
 // fold them; auto_inline(off) keeps VC6 from inlining them here.

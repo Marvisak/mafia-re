@@ -5,9 +5,6 @@
 #include "I3D/I3D.h"
 #include "dta.h"
 
-// I3d_frame.cpp
-extern int LoadImageHandle;
-
 // FUNCTION: LS3DF 0x1001a1e0
 I3D_dummy::I3D_dummy()
 {
