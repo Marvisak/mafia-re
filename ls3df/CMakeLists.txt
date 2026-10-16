@@ -75,16 +75,14 @@ if (MSVC_VERSION EQUAL 1200)
         strmiids binkw32 vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
-    # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
-    # (the names are /Gr's; Make4X4's other callers are in camera code, the buffer managers' m_UnlockAll*Buffers
-    # caller is the driver's Render, render.cpp, FindFrameFast_'s are the frames', RenderShadowTexture's the shadows', the
-    # frames' are the scenes', models' and visuals', the visual's SetBoundVolume's the mirrors', the lighting's the
-    # objects' and billboards')
-    target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
-        "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
-        "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
-        "/INCLUDE:?UnloadManagedTextures@@YIXXZ" "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
-        "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ" "/INCLUDE:?FindFrameFast_@I3D_driver@@QAEPAVI3D_frame@@PBDPAV2@@Z"
+    # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
+    # /Gr's). The listener's destructor and UnloadManagedTextures are called by the scene, Make4X4 by the camera, the
+    # buffer managers' m_UnlockAll*Buffers by the driver's Render (render.cpp), RenderShadowTexture by the shadows, the
+    # frame's functions by the scenes, models and visuals, the visual's SetBoundVolume by the mirrors, the lod's
+    # destructor by the lit objects and single meshes, the vertex transforms by the shadows' range (0x10054f60).
+    target_link_options(ls3df PRIVATE "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ" "/INCLUDE:?UnloadManagedTextures@@YIXXZ"
+        "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
+        "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ" "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
         "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DeleteFromOwner@I3D_frame@@QAEXXZ"
         "/INCLUDE:?DiscardHRBoundVol@I3D_frame@@QAEXXZ" "/INCLUDE:?GetChildFrame@I3D_frame@@QAEPAV1@PBDI@Z"
@@ -92,22 +90,9 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?SetBoundVolume@I3D_frame@@QAEXABUI3D_bbox@@@Z"
         "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z"
         "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
-        "/INCLUDE:??0lod@@QAE@XZ"
         "/INCLUDE:??1lod@@UAE@XZ"
-        "/INCLUDE:?SetUV@lod@@QAEXIHPBUI3D_text_coor@@IMM@Z"
-        "/INCLUDE:?Create@lod@@QAE_NIIPBUS_vector@@IPBUI3D_text_coor@@I1IMM@Z"
-        "/INCLUDE:?SetFade@I3D_object@@QAEXM@Z"
-        "/INCLUDE:?LoadMeshImage@@YIPAVI3D_mesh_object@@XZ"
-        "/INCLUDE:?GetObjectLOD@@YIHPAVI3D_object@@ABM@Z"
-        "/INCLUDE:?LightingSetSector@@YIXPAVI3D_sector@@@Z"
-        "/INCLUDE:?PrepareLights@@YI_NPAEIPAVI3D_mesh_level@@PBEIPAVI3D_object@@ABUS_matrix@@I_NPAVlod@@@Z"
-        "/INCLUDE:?SetVertexAlpha@@YIXPAEIPAVI3D_mesh_level@@PAVI3D_object@@PAVlod@@@Z"
-        "/INCLUDE:?TexelCallback@@YGHABUS_vector@@MPAVI3D_frame@@PAX2@Z"
-        "/INCLUDE:?EnvProcess@@YIXPAXIPBXIIABUS_vector@@ABUS_matrix@@MMMHPAVI3D_frame@@@Z"
         "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
-        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
-        "/INCLUDE:?FogProcess@@YIXPAEPBMIIPAVI3D_light@@H@Z"
-        "/INCLUDE:?SwapVertexBytes@@YIXPAE0IPBUI3D_triface@@IH@Z")
+        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32
