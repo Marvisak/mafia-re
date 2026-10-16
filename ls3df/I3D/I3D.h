@@ -23,6 +23,8 @@ class I3D_material;
 class ITexture;
 class ISND_3Dlistener;
 class I3D_frame;
+class I3D_light;
+class I3D_mesh_object;
 class C_IBuffer;
 class C_VBuffer;
 
@@ -98,7 +100,8 @@ enum I3D_RENDERSTATE {
     RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
     RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
     RS_ZBIAS_SHADOW = 55,               // RsZBiasShadow
-    RS_FREE_VRAM_VB = 62,               // 666 frees the vertex buffers in video memory
+    RS_ENVMAP_SCALE = 62,               // a float, 1.0 by default: the planar environment maps' scale (EnvProcess);
+                                        // 666 frees the vertex buffers in video memory instead
     RS_LAST = 63,
 };
 
@@ -413,7 +416,9 @@ public:
     // PS2 name
     void AddToRemoveFromSceneRing(I3D_scene *scene);
 
-    uchar unknown_140[0xd4];
+    uchar unknown_140[4];
+    C_list<I3D_light *> lights;         // 0x144, the lights that reach into it
+    uchar unknown_154[0xc0];
     I3D_scene *scene;                   // 0x214
     uchar unknown_218[0x1c];
 };
@@ -457,7 +462,8 @@ public:
 // I3D_dummy::dummy_flags (names guessed)
 #define DUMMYF_NORMALIZED 0x1           // Normalize made the box (0, 0, 0) to (1, 1, 1)
 #define DUMMYF_NORMALIZED_CENTER 0x2    // Normalize made the box (-1, -1, -1) to (1, 1, 1)
-#define DUMMYF_UNKNOWN_10 0x10          // PC only: cleared whenever the frame moves (UpdateV) or is normalized
+#define DUMMYF_INV_MAT_VALID 0x10       // PC only: inv_matrix is up to date (cleared when the frame moves or is
+                                        // normalized; the name is a guess)
 
 // A frame with a box (PS2 I3D_dummy, 0x19c bytes on PC; I3d_dummy.cpp). The game marks places and regions with them,
 // and the scenes' weather system takes its regions from them.
@@ -474,8 +480,19 @@ public:
     // box's center for mode 2, (0, 0, 0) to (1, 1, 1) from its min for the others
     virtual void __stdcall Normalize(uint mode);
 
+    // The inverse of the world matrix (PC only, the name is a guess; T&l.cpp's copy is the one linked)
+    // FUNCTION: LS3DF 0x10068840
+    const S_matrix &GetInvMatrix()
+    {
+        if (!(dummy_flags & DUMMYF_INV_MAT_VALID)) {
+            dummy_flags |= DUMMYF_INV_MAT_VALID;
+            inv_matrix.Inverse(GetMatrix());
+        }
+        return inv_matrix;
+    }
+
     I3D_bbox bbox;                      // 0x140, in local space
-    uchar unknown_158[0x40];            // PC only, nothing in LS3DF reads it
+    S_matrix inv_matrix;                // 0x158, PC only
     uint dummy_flags;                   // 0x198, DUMMYF_*
 };
 
@@ -490,8 +507,62 @@ public:
         uchar unknown_140[size - 0x140]; \
     };
 
-I3D_PLACEHOLDER_FRAME(I3D_light, 0x1f0)
-I3D_PLACEHOLDER_FRAME(I3D_camera, 0x4f4)
+// A light's type (PS2 type; the values are Insanity3D's I3DLIGHT_*, whose order the PC's lighting code agrees with)
+enum I3D_LIGHTTYPE {
+    I3DLIGHT_NULL,
+    I3DLIGHT_POINT,
+    I3DLIGHT_SPOT,
+    I3DLIGHT_DIRECTIONAL,
+    I3DLIGHT_AMBIENT,
+    I3DLIGHT_FOG,
+    I3DLIGHT_POINTAMBIENT,
+    I3DLIGHT_POINTFOG,
+};
+
+// I3D_light::mode: what the light lights (Insanity3D's names; PrepareLights is given the first, the lightmaps' code
+// tests the second)
+#define I3DLIGHTMODE_VERTEX 0x1
+#define I3DLIGHTMODE_LIGHTMAP 0x2
+
+// A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp isn't written yet). The members are the ones T&l.cpp reads,
+// named after Insanity3D's where the roles agree; the light's UpdateV computes the world values from the others.
+class __declspec(novtable) I3D_light : public I3D_frame {
+public:
+    I3D_light();
+
+    uchar unknown_140[0x10];
+    uint mode;                          // 0x150, I3DLIGHTMODE_*
+    I3D_LIGHTTYPE ltype;                // 0x154
+    float power;                        // 0x158
+    uchar unknown_15c[0x1c];
+    S_vector w_pos;                     // 0x178, in world space
+    S_vector w_dir;                     // 0x184, in world space
+    S_vector color;                     // 0x190, the power applied
+    float range_n;                      // 0x19c
+    float outer_cos;                    // 0x1a0, of the spot's cone
+    uchar unknown_1a4[0xc];
+    float inner_cos;                    // 0x1b0
+    uchar unknown_1b4[0xc];
+    float cone_scale;                   // 0x1c0, 1 / (inner_cos - outer_cos)
+    uchar unknown_1c4[0xc];
+    float range_f;                      // 0x1d0
+    float range_delta;                  // 0x1d4, range_f - range_n
+    float range_f_2;                    // 0x1d8, its square
+    uint unknown_1dc;                   // 0x1dc
+    I3D_bsphere bsphere;                // 0x1e0, what a spot lights
+};
+
+// A camera (PS2 I3D_camera, 0x4f4 bytes on PC). The constructor sets a second field of view and range after the first
+// pair (PS2 SetNearFOV, SetNearRange). The names are Insanity3D's.
+class __declspec(novtable) I3D_camera : public I3D_frame {
+public:
+    I3D_camera();
+
+    float fov_a;                        // 0x140, the field of view
+    float ncp, fcp;                     // 0x144, the clipping planes
+    uchar unknown_14c[0x4f4 - 0x14c];
+};
+
 I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
@@ -569,7 +640,9 @@ enum SHADOW_MODE {
 
 // I3D_visual::vis_flags (names guessed; BOUND_VALID and INV_MAT_VALID after Insanity3D's VISF_BOUNDS_VALID and
 // FRMFLAGS_INV_MAT_VALID)
+#define VISF_UNKNOWN_10 0x10            // the lighting takes the first lod's cache, not the current one's
 #define VISF_WORLD_SPACE 0x40           // the vertices are in world space (SetSpace): a move invalidates nothing
+#define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
@@ -612,6 +685,15 @@ private:
 public:
     void SetBoundVolume(const I3D_bvolume &bvol);
 
+    // The visual's bound volume in world space, updated first if it isn't (the name is a guess; the lighting and the
+    // visuals' rendering inline it)
+    const I3D_bvolume &GetWBoundVolume()
+    {
+        if (!(vis_flags & VISF_WBOUND_VALID))
+            UpdateWBoundProc();
+        return vis_bound_w;
+    }
+
     S_matrix inv_matrix;                // 0x144, the inverse of the world matrix (identity in world space)
     I3D_bvolume vis_bound_w;            // 0x184, the visual's own, in world space
     I3D_bvolume vis_bound;              // 0x1ac, in local space
@@ -629,7 +711,37 @@ public:
         uchar unknown_1dc[size - 0x1dc]; \
     };
 
-I3D_PLACEHOLDER_VISUAL(I3D_object, 0x21c)
+// An object's lighting state for one of its mesh's levels (PC only; the object file's "lod::Create()" names the
+// class). Its functions are the object file's (not written yet).
+class lod {
+public:
+    lod();
+    virtual ~lod();
+
+    int unknown_04;                     // 0x04, -1
+    int unknown_08;                     // 0x08, -1
+    uint light_key;                     // 0x0c, PrepareLights' key of the lights it was lit by, -1
+    COMPLETE_VB_STRUCT vb;              // 0x10
+    uint unknown_1c[4];                 // 0x1c
+    bool dirty;                         // 0x2c, to update (I3D_object::UpdateVertices)
+    bool alpha_dirty;                   // 0x2d, cleared with alpha (the name is a guess)
+    uchar alpha;                        // 0x2e, of the colors PrepareLights wrote, 0xff
+};
+
+// A visual made of a mesh (PS2 I3D_object, 0x21c bytes on PC; the object file isn't written yet)
+class __declspec(novtable) I3D_object : public I3D_visual {
+public:
+    I3D_object();
+
+    uint unknown_1dc;                   // 0x1dc
+    I3D_mesh_object *mesh;              // 0x1e0
+    lod *lods[10];                      // 0x1e4, one per level of the mesh
+    int cur_lod;                        // 0x20c
+    float lightness;                    // 0x210, scales the lights (PS2 SetLightness)
+    float transparency;                 // 0x214, 1.0 opaque
+    float unknown_218;                  // 0x218, scales the transparency
+};
+
 I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
 I3D_PLACEHOLDER_VISUAL(I3D_billboard, 0x268)
 I3D_PLACEHOLDER_VISUAL(I3D_singlemesh, 0x22c)
@@ -1084,5 +1196,8 @@ extern uint volumeStats[8];
 // The z-buffer type of RS_USEZB, D3DZB_TRUE or with RS_WBUFFER D3DZB_USEW
 extern uint ZBufferEnable;
 
-// A scale the I3D code applies to lighting, 128 or 255 without MODULATE2X (another I3D file's; the name is a guess)
+// T&l.cpp: the lights' scale of the vertex colors, 128 or 255 without MODULATE2X (the name is a guess)
 extern float i3d_light_scale;
+
+// render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
+extern I3D_camera *pCurrentCamera;

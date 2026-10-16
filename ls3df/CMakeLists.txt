@@ -14,6 +14,7 @@ add_library(ls3df SHARED
     I3D/I3d_mesh.cpp
     I3D/I3d_visual.cpp
     I3D/IBManager.cpp
+    I3D/T_l.cpp
     I3D/VBManager.cpp
     IGraph/cpuid.c
     IGraph/Globals.cpp
@@ -73,7 +74,8 @@ if (MSVC_VERSION EQUAL 1200)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
     # (the names are /Gr's; Make4X4's other callers are in camera code, the buffer managers' m_UnlockAll*Buffers
     # caller is the driver's Render, render.cpp, FindFrameFast_'s are the frames', RenderShadowTexture's the shadows', the
-    # frames' are the scenes', models' and visuals', the visual's SetBoundVolume's the mirrors')
+    # frames' are the scenes', models' and visuals', the visual's SetBoundVolume's the mirrors', the lighting's the
+    # objects' and billboards')
     target_link_options(ls3df PRIVATE "/INCLUDE:?UpdateAllTerminatedBuffs@@YIXXZ" "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ"
         "/INCLUDE:?dbgPrintGuid@@YIXPBX@Z" "/INCLUDE:?BBoxVertices@@YIPBUS_vector@@ABUI3D_bbox@@@Z"
         "/INCLUDE:?ErrorHandler@@YIXW4LS3D_RESULT@@W4E_SEVERITY@@PBD@Z" "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
@@ -85,7 +87,16 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?ResetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@XZ"
         "/INCLUDE:?SetBoundVolume@I3D_frame@@QAEXABUI3D_bbox@@@Z"
         "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z"
-        "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z")
+        "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
+        "/INCLUDE:?LightingSetSector@@YIXPAVI3D_sector@@@Z"
+        "/INCLUDE:?PrepareLights@@YI_NPAEIPAVI3D_mesh_level@@PBEIPAVI3D_object@@ABUS_matrix@@I_NPAVlod@@@Z"
+        "/INCLUDE:?SetVertexAlpha@@YIXPAEIPAVI3D_mesh_level@@PAVI3D_object@@PAVlod@@@Z"
+        "/INCLUDE:?TexelCallback@@YGHABUS_vector@@MPAVI3D_frame@@PAX2@Z"
+        "/INCLUDE:?EnvProcess@@YIXPAXIPBXIIABUS_vector@@ABUS_matrix@@MMMHPAVI3D_frame@@@Z"
+        "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
+        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
+        "/INCLUDE:?FogProcess@@YIXPAEPBMIIPAVI3D_light@@H@Z"
+        "/INCLUDE:?SwapVertexBytes@@YIXPAE0IPBUI3D_triface@@IH@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32

@@ -307,7 +307,7 @@ public:
 // GetCaps (return I3D_OK) is folded with other functions that return 0 the same way. The original kept its copy, our
 // build one of DirectShow's base classes', so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x1007b950
-// ?Run@CBasePin@@UAEJ_J@Z
+// ?GetCaps@ISND_driver@@UBG?AW4LS3D_RESULT@@PAI@Z
 
 // PS2 names
 extern bool ISndIsInit;

@@ -27,9 +27,6 @@ extern uint m_CullMode;
 // VBManager.cpp
 extern C_VBManager cVBMan;
 
-// render.cpp's camera, which the 3D texts and sprites face
-extern I3D_frame *pCurrentCamera;
-
 // Set when the geometry has to be recomputed (another I3D file's)
 extern bool RecomputeAllGeometry;
 
@@ -184,7 +181,7 @@ LS3D_RESULT I3D_driver::Init(uint flags)
     renderState[39] = 1;
     if (!(m_ProblemFlags & 0x80))
         renderState[RS_HWVERTEXPROC] = 1;
-    renderState[62] = I3DFloatAsInt(1.0f);
+    renderState[RS_ENVMAP_SCALE] = I3DFloatAsInt(1.0f);
     RsZBiasProjector = m_ProblemFlags & 0x100 ? 2 : 8;
     renderState[60] = I3DFloatAsInt(0.001f);
     renderState[25] = 1;
@@ -350,7 +347,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         else
             RsZBiasProjector = value;
         break;
-    case RS_FREE_VRAM_VB:
+    case RS_ENVMAP_SCALE:
         if (value == 666) {
             cVBMan.m_FreeAllVRAMVBuffers();
             return I3D_OK;
@@ -1724,9 +1721,7 @@ void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
 }
 
 // Empty, as on PS2. The linker folds it with the DirectShow base classes' empty CBaseRenderer::OnRenderEnd, whose
-// copy the original kept (0x10087ec0). Ours keeps this one, so the marker is here; by name it would depend on which of
-// the folded names our PDB keeps.
-// FUNCTION: LS3DF 0x10087ec0 FOLDED
+// copy the original kept (0x10087ec0, annotated in library_strmbase.h).
 void I3D_driver::m_RecomputeUsedVRAM()
 {
 }
@@ -1735,14 +1730,10 @@ void I3D_driver::m_RecomputeUsedVRAM()
 
 // render.cpp's
 // GLOBAL: LS3DF 0x101c4cf8
-I3D_frame *pCurrentCamera;
+I3D_camera *pCurrentCamera;
 
 // GLOBAL: LS3DF 0x100a93f0
 bool RecomputeAllGeometry;
-
-// In .data from another I3D file
-// GLOBAL: LS3DF 0x100a9470
-float i3d_light_scale = 128.0f;
 
 
 // The functions of other files the driver calls, until those are written. They come after the driver's functions:

@@ -39,7 +39,7 @@ LS3D_RESULT I3D_dummy::Duplicate(I3D_frame *frame)
 void I3D_dummy::UpdateV()
 {
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
-        dummy_flags &= ~DUMMYF_UNKNOWN_10;
+        dummy_flags &= ~DUMMYF_INV_MAT_VALID;
 }
 
 // Which of S_vector's constructors VC6 leaves out of line here is the inline budget's choice: the GetScale() calls
@@ -55,7 +55,7 @@ void I3D_dummy::Normalize(uint mode)
         SetScale(S_vector(size.x * s.x, size.y * s.y, size.z * s.z));
         bbox.min = S_vector(-1.0f, -1.0f, -1.0f);
         bbox.max = S_vector(1.0f, 1.0f, 1.0f);
-        dummy_flags = (dummy_flags & ~(DUMMYF_UNKNOWN_10 | DUMMYF_NORMALIZED)) | DUMMYF_NORMALIZED_CENTER;
+        dummy_flags = (dummy_flags & ~(DUMMYF_INV_MAT_VALID | DUMMYF_NORMALIZED)) | DUMMYF_NORMALIZED_CENTER;
     } else {
         S_vector pos = bbox.min;
         SetPos(pos * GetLocalMatrix());
@@ -64,7 +64,7 @@ void I3D_dummy::Normalize(uint mode)
         SetScale(S_vector(size.x * s.x, size.y * s.y, size.z * s.z));
         bbox.min.Zero();
         bbox.max = S_vector(1.0f, 1.0f, 1.0f);
-        dummy_flags = (dummy_flags & ~(DUMMYF_UNKNOWN_10 | DUMMYF_NORMALIZED_CENTER)) | DUMMYF_NORMALIZED;
+        dummy_flags = (dummy_flags & ~(DUMMYF_INV_MAT_VALID | DUMMYF_NORMALIZED_CENTER)) | DUMMYF_NORMALIZED;
     }
 }
 
