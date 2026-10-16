@@ -61,9 +61,11 @@ if (MSVC_VERSION EQUAL 1200)
     set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
 
     # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
-    # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma.
-    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids
-        binkw32 vorbisfile)
+    # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma. oleaut32 is
+    # for the base classes' wxutil object, whose BSTR helpers nothing calls: /OPT:REF drops them and the import
+    # (LNK4089), as in the original, which doesn't import OLEAUT32.
+    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8
+        strmiids binkw32 vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D and IGraph code are written: without a reference, /OPT:REF drops these
@@ -83,8 +85,8 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
-    target_link_libraries(ls3df PRIVATE user32 winmm ole32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32 vorbisfile
-        legacy_stdio_definitions)
+    target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32
+        vorbisfile legacy_stdio_definitions)
 endif()
 
 # The import libraries of binkw32.dll and vorbisfile.dll, which nobody has, from DLLs of stubs with their exports
@@ -105,16 +107,22 @@ vc6_header_dependencies(ls3df)
 # compiled with VC6 SP5 without the Processor Pack: the Rich header's Utc12_CPP 8966 x7, and every one of their
 # functions in the original compiles to the same bytes with that code generator (C2.DLL 12.00.8966), where the
 # Processor Pack's schedules half of them differently.
+set(strmbase_sources amextra amfilter amvideo combase cprop ctlutil ddmm dllentry dllsetup mtype outputq pstream
+    pullpin refclock renbase schedule seekpt source strmctl sysclock transfrm transip videoctl vtrans winctrl winutil
+    wxdebug wxlist wxutil)
+list(TRANSFORM strmbase_sources PREPEND BaseClasses/)
+list(TRANSFORM strmbase_sources APPEND .cpp)
+add_library(strmbase STATIC ${strmbase_sources})
+set_target_properties(strmbase PROPERTIES OUTPUT_NAME STRMBASE)
+target_include_directories(strmbase PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
+if (MSVC_VERSION GREATER 1500)
+    target_include_directories(strmbase PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
+endif()
+target_include_directories(strmbase PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
+target_link_libraries(ls3df PRIVATE strmbase)
+# IShow.cpp includes its streams.h
+set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
 if (MSVC_VERSION EQUAL 1200)
-    set(strmbase_sources amextra amfilter amvideo combase cprop ctlutil ddmm dllentry dllsetup mtype outputq pstream
-        pullpin refclock renbase schedule seekpt source strmctl sysclock transfrm transip videoctl vtrans winctrl winutil
-        wxdebug wxlist wxutil)
-    list(TRANSFORM strmbase_sources PREPEND BaseClasses/)
-    list(TRANSFORM strmbase_sources APPEND .cpp)
-    add_library(strmbase STATIC ${strmbase_sources})
-    set_target_properties(strmbase PROPERTIES OUTPUT_NAME STRMBASE)
-    target_include_directories(strmbase PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses
-        ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
     # The project's release settings (/O2 comes from cmake/vc6-flags.cmake; /Gi and /FD change nothing in the code)
     target_compile_options(strmbase PRIVATE /MT /W3 /GX)
     target_compile_definitions(strmbase PRIVATE NDEBUG WIN32 _MBCS _LIB _WIN32_DCOM WINVER=0x400)
@@ -136,5 +144,10 @@ if (MSVC_VERSION EQUAL 1200)
         "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5/VC98/Bin/C2.DLL" DESTINATION "${strmbase_cl}")
     set_target_properties(strmbase PROPERTIES
         CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/clswap.py;${strmbase_cl}")
-    target_link_libraries(ls3df PRIVATE strmbase)
+else()
+    target_compile_definitions(strmbase PRIVATE NDEBUG WIN32 _LIB)
+    # The 2001 code: VC6's for scope (outputq.cpp) and a declaration without a type (ctlutil.h's operator=, which
+    # IShow.cpp gets through streams.h too)
+    target_compile_options(strmbase PRIVATE /Zc:forScope- /wd4430)
+    set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY COMPILE_OPTIONS /wd4430)
 endif()

@@ -92,7 +92,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1006ad40–1006b430` | none | none | `cpuid.c` (C) | the C object: Microsoft's CPUID sample (`IsCPUID`, `map_mname`, `_cpuid`) and `GetCPUSpeed`; written |
 | `1006b430–1006bd40` | `1006bd20` | `1006b430`, `1006bb80`, `1006bca0`, `1006bcc0` | `Globals.cpp` | written |
 | `1006bd40–100733a0` | `1006deb0` | `1006bd40`–`1006bf70` (8) | `IGraph.cpp` | one file with its marker in the middle, as `I3d_math.cpp`: the `C_str` functions after `Init` are COMDATs linked into it, and the first object's copy is the one kept; written |
-| `100733a0–10075890` | `10075800` | | `IShow.cpp` | `IShow` in PS2's order, the DirectX SDK's texture renderer (`0x10074f40–0x10075760`) and, after the marker, the class's inline functions; compiled without `/Gr`; written apart from the renderer |
+| `100733a0–10075890` | `10075800` | | `IShow.cpp` | `IShow` in PS2's order, the DirectX SDK's texture renderer (`0x10074f40–0x10075770`) and its adjustor thunks, and, after the marker, the class's inline functions and the base classes' `IUnknown` members; compiled without `/Gr`; written |
 | `10075890–10075c10` | `10075bf0` | `10075890` | `IShowStream.cpp`? | PC only: `IShow`'s music streams through the sound driver's table of functions; the name, which sorts between its neighbours', is a guess; written |
 | `10075c10–1007b053` | `10078170` | `1007a570`, `1007a5c0` | `ITexture.cpp` | one file with its marker after `Create`, as `IGraph.cpp`: `ITexture` in PS2's order, then the PC's texture manager, whose lists are the two `$E`s; its strings run straight into `IS_3Dlistener.cpp`'s; written |
 | `1007b060–1007b370` | `1007b350` | | `IS_3Dlistener.cpp` | written |
@@ -110,7 +110,9 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 - The DirectShow base classes, `0x10086a20–0x1008d3e0`: seven objects of the DirectX 8.1 SDK's `BaseClasses`
   (`renbase`, `amfilter`, `ctlutil`, `mtype`, `combase`, `wxutil`, `wxlist`), compiled with VC6 SP5 without the
   Processor Pack (the Rich header's `Utc12_CPP` 8966 ×7). Every function in the range compiles to the same bytes from
-  `ls3df/BaseClasses/`.
+  `ls3df/BaseClasses/`, and linked through `IShow.cpp`'s texture renderer they come in the original's order. Only
+  where the linker folded identical functions (empty ones, `E_NOTIMPL`s, `CBaseInputPin`'s `IUnknown` members) the copy
+  it kept is elsewhere, which depends on the engine files not written yet.
 
 ## Open questions
 
@@ -123,6 +125,10 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
     vector.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera, portal/pose and
   singlemesh/singlemorph pairs and the ranges marked `none`.
+- **`.bss` between `IGraph.cpp` and `IShow.cpp`.** `IGraph.cpp`'s ends at `0x101c5ad9`, the first of
+  `IShow.cpp`'s (`m_CreateCTextureRenderer`'s statics) is at `0x101c5be8`. Nothing references the 0x108 bytes in
+  between, so they are either zero-initialized globals at the end of `IGraph.cpp` or `IShow.cpp` globals whose
+  names hash to the lowest buckets.
 - **The marker's place in the long files.** `/YX` puts it where a file's own source outweighs the inline code before
   the vector in the precompiled headers (`tools/autopch.py`). In our long files it comes a few functions earlier than
   in the original, so the original's headers had more inline functions before the vector than ours.

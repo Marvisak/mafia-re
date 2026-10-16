@@ -241,6 +241,9 @@
 // LIBRARY: LS3DF 0x1008f470 SYMBOL
 // __chkstk
 
+// LIBRARY: LS3DF 0x1008f56e SYMBOL
+// __purecall
+
 // LIBRARY: LS3DF 0x1008f580 SYMBOL
 // __aullrem
 

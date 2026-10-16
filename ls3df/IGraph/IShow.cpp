@@ -4,17 +4,21 @@
 // allows (the regions), which RenderCurrentFrame draws.
 // Unlike the engine's other files, this one is compiled without /Gr: its helpers are __cdecl, and so are vorbisfile's
 // functions and callbacks, which libvorbis' header declares without a calling convention.
-// The header's zero vector has its $E at the end (0x10075800), before the out-of-line inline functions. Ours comes
-// after m_PrepareVerts: with /YX its place follows the inline code that comes before it in the precompiled headers
-// (see tools/autopch.py), and the original probably included DirectShow's base classes first, whose many inline
-// functions put it after the whole file (with <dshow.h> first, ours comes a function before the end).
+// The file ends with the texture renderer's adjustor thunks, the header's zero vector's $E (0x10075800), IShow's inline
+// functions and the base classes' IUnknown members. Under /YX (see tools/autopch.py) that takes the precompiled headers
+// in this order: D3DX's inline math before the zero vector, which puts its $E after the whole file (the texture
+// sample's Textures.h includes d3dx8.h; nothing here uses it), and the base classes after IGraph.h, which puts their
+// members after IShow's. Without d3dx8.h the $E comes after m_PrepareVerts; with <streams.h> first the base classes'
+// members come before the thunks.
+#include <d3dx8.h>
+
 #include "IGraph/IGraph.h"
 #include "IGraph/bink.h"
 #include "IGraph/vorbisfile.h"
 #include "ISound/ISound.h"
 #include "dta.h"
 
-#include <dshow.h>
+#include <streams.h>
 
 // IGraph.cpp
 extern HWND m_ChildHWnd;
@@ -28,21 +32,39 @@ extern uint m_MaxTextureWidth;
 extern uint m_CurrColorOp1;
 extern uint m_CurrAlphaOp;
 extern IDirect3DDevice8 *m_pD3DDevice8;
+extern D3DFORMAT m_TrueColorTexturePixelFormat;
+extern D3DFORMAT m_TexturePixelFormat;
 
 // I3d_driver.cpp
 extern uint ZBufferEnable;
 
-// The DirectX SDK's texture renderer sample (DShowTextures' CTextureRenderer, a CBaseVideoRenderer), which renders an
-// AVI file's frames into the regions' textures. It isn't written yet (the DirectShow base classes it derives from are
-// in BaseClasses), so this declares only the members IShow reads, after the base classes' 0x160 bytes. Not written: its
-// methods (0x100753e0-0x100757ff, and the IUnknown thunks after the marker) and m_CreateCTextureRenderer, with their
-// .bss (0x101c5c4c-0x101c5dab).
-class CTextureRenderer {
-    uchar base[0x160];
+// The DirectX 8.1 SDK's texture renderer sample (samples\Multimedia\DirectShow\Players\Texture3D, DShowTextures.h),
+// which renders an AVI file's frames into the regions' textures instead of the sample's one texture. The size is
+// unsigned, unlike the sample's (IShow divides by it as unsigned); the members after it are PC additions with guessed
+// names.
+struct __declspec(uuid("{71771540-2017-11cf-ae26-0020afd79767}")) CLSID_TextureRenderer;
+
+// VTABLE: LS3DF 0x1009d788 CUnknown
+// VTABLE: LS3DF 0x1009d748 IBaseFilter
+// VTABLE: LS3DF 0x1009d734 IAMovieSetup
+// VTABLE: LS3DF 0x1009d710 IQualProp
+// VTABLE: LS3DF 0x1009d6fc IQualityControl
+class CTextureRenderer : public CBaseVideoRenderer {
+public:
+    CTextureRenderer(LPUNKNOWN pUnk, HRESULT *phr);
+    ~CTextureRenderer();
 
 public:
-    uint width;                         // 0x160, m_lVidWidth
-    uint height;                        // 0x164, m_lVidHeight
+    HRESULT CheckMediaType(const CMediaType *pmt);      // Format acceptable?
+    HRESULT SetMediaType(const CMediaType *pmt);        // Video format notification
+    HRESULT DoRenderSample(IMediaSample *pMediaSample); // New video sample
+
+    uint m_lVidWidth;                   // 0x160, Video width
+    uint m_lVidHeight;                  // 0x164, Video Height
+    uint m_lVidPitch;                   // 0x168, Video Pitch
+    IBaseFilter *sound_renderer;        // 0x16c, DirectShow's, for the file's sound
+    IShow *show;                        // 0x170
+    D3DFORMAT format;                   // 0x174, the regions' textures', from CreateRegions
 };
 
 // The Ogg Vorbis sound buffer: 11 notifications, one every 0xc000 bytes
@@ -559,8 +581,8 @@ void IShow::m_PrepareVerts()
         scale_x = (float)rect.right / bink->Width;
         scale_y = (float)rect.bottom / bink->Height;
     } else if (renderer) {
-        scale_x = (float)rect.right / renderer->width;
-        scale_y = (float)rect.bottom / renderer->height;
+        scale_x = (float)rect.right / renderer->m_lVidWidth;
+        scale_y = (float)rect.bottom / renderer->m_lVidHeight;
     } else
         return;
     for (int i = regions.size(); i--;) {
@@ -635,8 +657,8 @@ LS3D_RESULT IShow::GetVideoRect(RECT *rc)
     }
     if (!renderer)
         return I3DERR_NOTINITIALIZED;
-    rc->right = renderer->width;
-    rc->bottom = renderer->height;
+    rc->right = renderer->m_lVidWidth;
+    rc->bottom = renderer->m_lVidHeight;
     return I3D_OK;
 }
 
@@ -880,13 +902,262 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
     return I3D_OK;
 }
 
-// Builds the DirectShow graph for an AVI file with the texture renderer (the DirectX SDK sample's
-// InitDShowTextureRenderer)
-// Not inlined into Open as a stub (/Ob2)
-#pragma auto_inline(off)
-// STUB: LS3DF 0x10074f40
+// Builds the DirectShow graph for an AVI file: its source filter connected to the texture renderer (the DirectX SDK
+// sample's InitDShowTextureRenderer, which also ran the graph), then, if the AVI Splitter that brings in has a pin with
+// an audio type, DirectShow's sound renderer connected to it
+// FUNCTION: LS3DF 0x10074f40
 HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
 {
-    return E_NOTIMPL;
+    // Statics, not locals: the original's .bss has them around the header's zero vector. The names are guesses, which
+    // their place in .bss rules out (tools/bsshash.py). The splitter is never reset, so a later file without one
+    // still sees the last file's.
+    static int pins_found;
+    static AM_MEDIA_TYPE *media_types_array[20];
+    static int types_found;
+    static char name_buf[256];
+    static IPin *pins_list[20];
+    static IBaseFilter *splitter;
+    static IEnumMediaTypes *enum_mt;
+    static IEnumPins *pin_enum;
+
+    HRESULT hr = -1;                    // what a failed new leaves
+    IBaseFilter *pFTR;                  // Texture Renderer Filter
+    IPin *pFTRPinIn = NULL;             // Texture Renderer Input Pin
+    IBaseFilter *pFSrc = NULL;          // Source Filter
+    IPin *pFSrcPinOut = NULL;           // Source Filter Output Pin
+
+    // Create the Texture Renderer object
+    renderer = new CTextureRenderer(NULL, &hr);
+    if (FAILED(hr)) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not create texture renderer object!  hr=0x%x", hr);
+        return E_FAIL;
+    }
+    renderer->show = this;
+
+    // Get a pointer to the IBaseFilter on the TextureRenderer, add it to graph
+    pFTR = renderer;
+    if (FAILED(hr = graph->AddFilter(pFTR, L"TEXTURERENDERER"))) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not add renderer filter to graph!  hr=0x%x", hr);
+        return hr;
+    }
+
+    // Add the source filter
+    if (FAILED(hr = graph->AddSourceFilter(name, L"SOURCE", &pFSrc))) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not create source filter to graph!  hr=0x%x", hr);
+        return hr;
+    }
+
+    // Find the source's output pin and the renderer's input pin
+    if (FAILED(hr = pFTR->FindPin(L"In", &pFTRPinIn))) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find input pin!  hr=0x%x", hr);
+        return hr;
+    }
+    if (FAILED(hr = pFSrc->FindPin(L"Output", &pFSrcPinOut))) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find output pin!  hr=0x%x", hr);
+        return hr;
+    }
+
+    // Connect these two filters
+    if (FAILED(hr = graph->Connect(pFSrcPinOut, pFTRPinIn))) {
+        dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not connect pins!  hr=0x%x", hr);
+        return hr;
+    }
+    pFTRPinIn->Release();
+    pFSrcPinOut->Release();
+    pFSrc->Release();
+
+    // The connection brings in the AVI Splitter between the two. A block of its own: the original gives its locals'
+    // slots to the pin loop's afterwards.
+    {
+        IEnumFilters *pEnum = NULL;
+        graph->EnumFilters(&pEnum);
+        IBaseFilter *pFilter;
+        ULONG fetched;
+        while (pEnum->Next(1, &pFilter, &fetched) == S_OK) {
+            FILTER_INFO info;
+            pFilter->QueryFilterInfo(&info);
+            WideCharToMultiByte(CP_ACP, 0, info.achName, -1, name_buf, sizeof(name_buf), NULL, NULL);
+            if (!strcmp(name_buf, "AVI Splitter")) {
+                splitter = pFilter;
+                splitter->AddRef();
+            }
+            info.pGraph->Release();
+            pFilter->Release();
+        }
+        pEnum->Release();
+    }
+
+    if (splitter) {
+        // Its first pin with an audio type goes to the sound renderer
+        splitter->EnumPins(&pin_enum);
+        pin_enum->Next(20, pins_list, (ULONG *)&pins_found);
+        IPin *audio_pin = NULL;
+        for (int i = 0; i < pins_found; i++) {
+            pins_list[i]->EnumMediaTypes(&enum_mt);
+            enum_mt->Next(20, media_types_array, (ULONG *)&types_found);
+            for (int j = 0; j < types_found; j++) {
+                if (!audio_pin && media_types_array[j]->majortype == MEDIATYPE_Audio) {
+                    audio_pin = pins_list[i];
+                    audio_pin->AddRef();
+                }
+                DeleteMediaType(media_types_array[j]);
+            }
+            enum_mt->Release();
+            pins_list[i]->Release();
+        }
+        pin_enum->Release();
+        if (audio_pin) {
+            CoCreateInstance(CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter,
+                (void **)&renderer->sound_renderer);
+            if (renderer->sound_renderer) {
+                hr = graph->AddFilter(renderer->sound_renderer, L"SOUNDRENDERER");
+                IPin *pSndPinIn;
+                if (FAILED(hr = renderer->sound_renderer->FindPin(L"Audio Input pin (rendered)", &pSndPinIn))) {
+                    dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find audio input pin!  hr=0x%x",
+                        hr);
+                    return hr;
+                }
+                if (FAILED(hr = graph->Connect(audio_pin, pSndPinIn))) {
+                    dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not connect pins!  hr=0x%x", hr);
+                    return hr;
+                }
+                pSndPinIn->Release();
+                audio_pin->Release();
+            }
+        }
+        splitter->Release();
+    }
+    m_PrepareVerts();
+    return S_OK;
 }
-#pragma auto_inline(on)
+
+// The sample's constructor, inlined into m_CreateCTextureRenderer (/OPT:REF drops its copy)
+CTextureRenderer::CTextureRenderer(LPUNKNOWN pUnk, HRESULT *phr)
+    : CBaseVideoRenderer(__uuidof(CLSID_TextureRenderer), NAME("Texture Renderer"), pUnk, phr)
+{
+    *phr = S_OK;
+    format = D3DFMT_UNKNOWN;
+    sound_renderer = NULL;
+}
+
+// FUNCTION: LS3DF 0x10075400
+CTextureRenderer::~CTextureRenderer()
+{
+    if (sound_renderer)
+        sound_renderer->Release();
+}
+
+// Accepts only RGB video in the textures' format: 32 bits for a true color movie if the card has a true color texture
+// format, else the 16-bit format of the card's textures (the sample accepts RGB24)
+// FUNCTION: LS3DF 0x10075480
+HRESULT CTextureRenderer::CheckMediaType(const CMediaType *pmt)
+{
+    HRESULT hr = E_FAIL;
+    VIDEOINFO *pvi;
+
+    // Reject the connection if this is not a video type
+    if (*pmt->FormatType() != FORMAT_VideoInfo)
+        return E_INVALIDARG;
+
+    pvi = (VIDEOINFO *)pmt->Format();
+    if (show->flags & ISHOW_TRUECOLOR && m_TrueColorTexturePixelFormat) {
+        if (IsEqualGUID(*pmt->Type(), MEDIATYPE_Video) && IsEqualGUID(*pmt->Subtype(), MEDIASUBTYPE_RGB32))
+            hr = S_OK;
+    } else if (m_TexturePixelFormat == D3DFMT_R5G6B5) {
+        if (IsEqualGUID(*pmt->Type(), MEDIATYPE_Video) && IsEqualGUID(*pmt->Subtype(), MEDIASUBTYPE_RGB565))
+            hr = S_OK;
+    } else {
+        if (IsEqualGUID(*pmt->Type(), MEDIATYPE_Video) && IsEqualGUID(*pmt->Subtype(), MEDIASUBTYPE_RGB555))
+            hr = S_OK;
+    }
+    return hr;
+}
+
+// The connection is made: the movie's regions are created for the video's size
+// FUNCTION: LS3DF 0x10075530
+HRESULT CTextureRenderer::SetMediaType(const CMediaType *pmt)
+{
+    // Retrive the size of this media type
+    VIDEOINFO *pviBmp = (VIDEOINFO *)pmt->Format();
+    m_lVidWidth = pviBmp->bmiHeader.biWidth;
+    m_lVidHeight = abs(pviBmp->bmiHeader.biHeight);
+    // 16-bit rows are padded to 4 bytes. The odd width test is the original's (w - 1 ^ w) & ~1, not w & 1's test al, 1
+    if (pviBmp->bmiHeader.biBitCount == 32)
+        m_lVidPitch = m_lVidWidth * 4;
+    else if ((m_lVidWidth - 1) / 2 == m_lVidWidth / 2)
+        m_lVidPitch = m_lVidWidth * 2 + 2;
+    else
+        m_lVidPitch = m_lVidWidth * 2;
+    format = CreateRegions(m_lVidWidth, m_lVidHeight, show);
+    return format ? S_OK : -1;
+}
+
+// Copies the sample's frame into the regions' textures, the video's rows bottom up, and counts it. One src for both
+// formats, as the original's frame has. Open: the original gives pitch the dead pSample's slot and pBmpBuffer one of
+// its own, ours the reverse.
+// FUNCTION: LS3DF 0x100755c0
+HRESULT CTextureRenderer::DoRenderSample(IMediaSample *pSample)
+{
+    BYTE *pBmpBuffer;
+    BYTE *src;
+
+    // Get the video bitmap buffer
+    pSample->GetPointer(&pBmpBuffer);
+    for (int i = show->regions.size(); i--;) {
+        S_show_region &region = show->regions[i];
+        uint pitch;
+        void *bits = region.texture->Lock(NULL, pitch, 0);
+        switch (format) {
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8: {
+            src = pBmpBuffer + (m_lVidHeight - region.y - 1) * m_lVidPitch + region.x * 4;
+            int sx = region.sx;
+            int sy = region.sy;
+            int dst_add = pitch - sx * 4;
+            int src_sub = sx * 4 + m_lVidPitch;
+            __asm {
+                mov esi, src
+                mov edi, bits
+                mov edx, sy
+            row32:
+                mov ecx, sx
+                rep movsd
+                add edi, dst_add
+                sub esi, src_sub
+                dec edx
+                jnz row32
+            }
+            break;
+        }
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A1R5G5B5: {
+            src = pBmpBuffer + (m_lVidHeight - region.y - 1) * m_lVidPitch + region.x * 2;
+            int sx = region.sx;
+            int sy = region.sy;
+            int dst_add = pitch - sx * 2;
+            int src_sub = sx * 2 + m_lVidPitch;
+            __asm {
+                mov esi, src
+                mov edi, bits
+                mov edx, sy
+            row16:
+                mov ecx, sx
+                rep movsw
+                add edi, dst_add
+                sub esi, src_sub
+                dec edx
+                jnz row16
+            }
+            break;
+        }
+        default:
+            dbgPrintf("IShow::DoRenderSample() - ERROR! Unsuppoted destination texture format: %s !",
+                pGlobalIGraph->GetFormatName(format));
+        }
+        region.texture->Unlock();
+        region.texture->AddDirtyRect(NULL);
+    }
+    show->decoded_frame++;
+    return S_OK;
+}

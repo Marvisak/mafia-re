@@ -24,19 +24,70 @@
 // LIBRARY: LS3DF 0x1007d9d6 SYMBOL
 // _DXGetErrorString8A@4
 
-// strmiids.lib's DirectShow GUIDs, which IShow.cpp uses
+// strmiids.lib's DirectShow GUIDs, which IShow.cpp and the base classes use: one object, laid out as in the
+// original
 // GLOBAL: LS3DF 0x100a1a30
 // IID_IGraphBuilder
+// GLOBAL: LS3DF 0x100a1a40
+// IID_IMediaEventSink
+// GLOBAL: LS3DF 0x100a1a50
+// IID_IQualityControl
+// GLOBAL: LS3DF 0x100a1a60
+// IID_IFilterMapper
 // GLOBAL: LS3DF 0x100a1a70
 // IID_IMediaSeeking
+// GLOBAL: LS3DF 0x100a1a80
+// IID_IAMovieSetup
+// GLOBAL: LS3DF 0x100a1a90
+// IID_IMemInputPin
+// GLOBAL: LS3DF 0x100a1aa0
+// IID_IMemAllocator
+// GLOBAL: LS3DF 0x100a1ab0
+// IID_IMediaSample2
+// GLOBAL: LS3DF 0x100a1ac0
+// IID_IBaseFilter
+// GLOBAL: LS3DF 0x100a1ad0
+// IID_IMediaFilter
+// GLOBAL: LS3DF 0x100a1ae0
+// IID_IEnumMediaTypes
+// GLOBAL: LS3DF 0x100a1af0
+// IID_IEnumPins
+// GLOBAL: LS3DF 0x100a1b00
+// IID_IPin
 // GLOBAL: LS3DF 0x100a1b10
 // IID_IBasicAudio
+// GLOBAL: LS3DF 0x100a1b20
+// IID_IMediaPosition
 // GLOBAL: LS3DF 0x100a1b30
 // IID_IMediaEvent
 // GLOBAL: LS3DF 0x100a1b40
 // IID_IMediaControl
+// GLOBAL: LS3DF 0x100a1b50
+// LIBID_QuartzTypeLib
+// GLOBAL: LS3DF 0x100a1b60
+// TIME_FORMAT_MEDIA_TIME
+// GLOBAL: LS3DF 0x100a1b70
+// IID_IQualProp
+// GLOBAL: LS3DF 0x100a1b80
+// FORMAT_VideoInfo
+// GLOBAL: LS3DF 0x100a1b90
+// CLSID_MemoryAllocator
+// GLOBAL: LS3DF 0x100a1ba0
+// CLSID_DSoundRender
 // GLOBAL: LS3DF 0x100a1bb0
 // CLSID_FilterGraph
+// GLOBAL: LS3DF 0x100a1bc0
+// CLSID_FilterMapper
+// GLOBAL: LS3DF 0x100a1bd0
+// MEDIASUBTYPE_RGB32
+// GLOBAL: LS3DF 0x100a1be0
+// MEDIASUBTYPE_RGB555
+// GLOBAL: LS3DF 0x100a1bf0
+// MEDIASUBTYPE_RGB565
+// GLOBAL: LS3DF 0x100a1c00
+// MEDIATYPE_Audio
+// GLOBAL: LS3DF 0x100a1c10
+// MEDIATYPE_Video
 
 class IShow;
 class ITexture;
@@ -374,6 +425,62 @@ public:
     OggVorbis_File *vf;                 // 0x84
     int dta_handle;                     // 0x88, the Ogg file
 };
+
+// IShow.cpp's texture renderer (CTextureRenderer, the DirectX SDK sample's, declared there): what the compiler
+// generates for it and what it emits of the base classes' inline functions, at the end of IShow.cpp
+// SYNTHETIC: LS3DF 0x100753e0
+// CTextureRenderer::`scalar deleting destructor'
+
+// The adjustor thunks of its IAMovieSetup, IQualProp and IQualityControl vtables to DECLARE_IUNKNOWN's members
+// LIBRARY: LS3DF 0x10075770
+// ?QueryInterface@CBaseVideoRenderer@@W3AGJABU_GUID@@PAPAX@Z
+// LIBRARY: LS3DF 0x10075780
+// ?AddRef@CBaseVideoRenderer@@W3AGKXZ
+// LIBRARY: LS3DF 0x10075790
+// ?Release@CBaseVideoRenderer@@W3AGKXZ
+// LIBRARY: LS3DF 0x100757a0
+// ?QueryInterface@CBaseVideoRenderer@@WNE@AGJABU_GUID@@PAPAX@Z
+// LIBRARY: LS3DF 0x100757b0
+// ?AddRef@CBaseVideoRenderer@@WNE@AGKXZ
+// LIBRARY: LS3DF 0x100757c0
+// ?Release@CBaseVideoRenderer@@WNE@AGKXZ
+// LIBRARY: LS3DF 0x100757d0
+// ?QueryInterface@CBaseVideoRenderer@@WNI@AGJABU_GUID@@PAPAX@Z
+// LIBRARY: LS3DF 0x100757e0
+// ?AddRef@CBaseVideoRenderer@@WNI@AGKXZ
+// LIBRARY: LS3DF 0x100757f0
+// ?Release@CBaseVideoRenderer@@WNI@AGKXZ
+
+// DECLARE_IUNKNOWN's members themselves (renbase.h)
+// LIBRARY: LS3DF 0x10075860
+// ?QueryInterface@CBaseVideoRenderer@@UAGJABU_GUID@@PAPAX@Z
+// LIBRARY: LS3DF 0x10075870
+// ?AddRef@CBaseVideoRenderer@@UAGKXZ
+// LIBRARY: LS3DF 0x10075880
+// ?Release@CBaseVideoRenderer@@UAGKXZ
+
+// Its class id, __uuidof(CLSID_TextureRenderer)
+// GLOBAL: LS3DF 0x100aacd8
+// _GUID_71771540_2017_11cf_ae26_0020afd79767
+
+// m_CreateCTextureRenderer's statics. This compiler puts a function's static into the PDB as a module-level symbol
+// with its plain name, where reccmp doesn't look for one, so a by-name marker matches it.
+// GLOBAL: LS3DF 0x101c5be8
+// pins_found
+// GLOBAL: LS3DF 0x101c5bf0
+// media_types_array
+// GLOBAL: LS3DF 0x101c5c4c
+// types_found
+// GLOBAL: LS3DF 0x101c5c50
+// name_buf
+// GLOBAL: LS3DF 0x101c5d50
+// pins_list
+// GLOBAL: LS3DF 0x101c5da0
+// splitter
+// GLOBAL: LS3DF 0x101c5da4
+// enum_mt
+// GLOBAL: LS3DF 0x101c5da8
+// pin_enum
 
 // ITexture::Create's flags. The Xbox build's messages name ITC_USE_ALPHA and ITC_EMPTY; the other names are guesses.
 enum {
