@@ -1317,7 +1317,7 @@ LS3D_RESULT ResetDevice(bool reset)
         }
         if ((m_HardwareCaps & 1) && !m_VB.vb) {
             if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                    15000, m_VB, VF_UNKNOWN_0, false))
+                    15000, m_VB, VF_LVERTEX, false))
                 dbgPrintf("Error creating Global Vertex Buffer !");
             if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
                 dbgPrintf("Error creating Global Index Buffer !");
@@ -1909,7 +1909,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     ResetRenderProps();
     if (m_HardwareCaps & 1) {
         if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                15000, m_VB, VF_UNKNOWN_0, false))
+                15000, m_VB, VF_LVERTEX, false))
             dbgPrintf("Error creating Global Vertex Buffer !");
         if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
             dbgPrintf("Error creating Global Index Buffer !");

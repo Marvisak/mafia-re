@@ -80,7 +80,7 @@
 // ?Inactive@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10087520
-// ?SetMediaType@CBaseRenderer@@UAEJPBVCMediaType@@@Z
+// ?EndOfStream@CBasePin@@UAGJXZ
 
 // LIBRARY: LS3DF 0x10087530
 // ?BreakConnect@CBaseRenderer@@UAEJXZ
@@ -148,13 +148,13 @@
 // The linker folds this empty function with others, I3D_driver::m_RecomputeUsedVRAM among them; the name is the
 // one our PDB keeps (tools/foldfix.py)
 // LIBRARY: LS3DF 0x10087ec0
-// ?OnRenderEnd@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
 // LIBRARY: LS3DF 0x10087f20
-// ?QueryInterface@CBaseInputPin@@UAGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseFilter@@UAGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10087f40
 // ??_GCRendererInputPin@@UAEPAXI@Z
@@ -220,7 +220,7 @@
 // ?OnStopStreaming@CBaseVideoRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088540
-// ?OnWaitStart@CBaseVideoRenderer@@UAEXXZ
+// ?OnWaitEnd@CBaseVideoRenderer@@UAEXXZ
 
 // LIBRARY: LS3DF 0x10088550
 // ?PreparePerformanceData@CBaseVideoRenderer@@QAEXHH@Z
@@ -538,7 +538,7 @@
 // ?Notify@CBaseInputPin@@UAGJPAUIBaseFilter@@UtagQuality@@@Z
 
 // LIBRARY: LS3DF 0x1008b440
-// ?QueryVendorInfo@CBaseFilter@@UAGJPAPAG@Z
+// ?GetAllocatorRequirements@CBaseInputPin@@UAGJPAU_AllocatorProperties@@@Z
 
 // LIBRARY: LS3DF 0x1008b450
 // ?CheckStreaming@CBaseInputPin@@UAEJXZ

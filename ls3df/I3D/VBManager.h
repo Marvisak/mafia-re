@@ -7,9 +7,13 @@
 // The vertex buffers (PS2 VBManager.cpp), the same design as IBManager.h's index buffers, with buffers per vertex
 // format and usage. PS2 names the classes, COMPLETE_VB_STRUCT, VERTEX_FORMAT and C_VBManager's functions.
 
-// A vertex buffer's format (PS2 type; the values aren't known yet)
+// A vertex buffer's format (PS2 type; the names are guesses, 2 and 3 aren't known)
 enum VERTEX_FORMAT {
-    VF_UNKNOWN_0,
+    VF_LVERTEX,                         // LVERTEX: IGraph's, the objects' lods with hardware T&L
+    VF_LVERTEX2,                        // LVERTEX2
+    VF_TLVERTEX = 4,                    // TLVERTEX: the objects' lods without hardware T&L
+    VF_TLVERTEX2,                       // TLVERTEX2
+    VF_VERTEX,                          // I3D_vertex: the meshes'
 };
 
 // A block of a C_VBuffer, free or given out

@@ -131,7 +131,7 @@ inline void C_IBuffer::Unlock()
 // ?reserve@?$C_list@PAUS_IB_block@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF 0x1005bb80
-// ?begin@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AViterator@12@XZ
+// ?begin@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAE?AViterator@12@XZ
 
 // TEMPLATE: LS3DF 0x1005bb90
 // ?erase@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAE?AViterator@12@V312@@Z
@@ -185,7 +185,7 @@ inline void C_IBuffer::Unlock()
 // ??Eiterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AV012@H@Z
 
 // TEMPLATE: LS3DF 0x1005cf00
-// ??0?$pair@Viterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$ma0ee93cf
+// ??0?$pair@Viterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$m9d95d36c
 
 // TEMPLATE: LS3DF 0x1005cf20
 // ?_Buynode@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
@@ -197,7 +197,7 @@ inline void C_IBuffer::Unlock()
 // ?_Dec@const_iterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x1005d000
-// ?_Construct@std@@YIXPAPAVC_IBuffer@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAUS_VB_block@@ABQAU2@@Z
 
 // The trees' empty node and its reference count, after cIBMan in .bss
 // GLOBAL: LS3DF 0x101b5118

@@ -3,9 +3,18 @@
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 
+// GLOBAL: LS3DF 0x101c4cf4
+I3D_scene *pCurrentScene;
+
 // The camera rendered with
 // GLOBAL: LS3DF 0x101c4cf8
 I3D_camera *pCurrentCamera;
+
+// GLOBAL: LS3DF 0x101c4c60
+ADD_FG_HELP_STRUCT AddFGHlpStruct;
+
+// GLOBAL: LS3DF 0x101c4ce0
+bool renderCameraChanged;
 
 // RS_FLOAT_LOD scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)

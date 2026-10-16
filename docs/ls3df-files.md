@@ -58,9 +58,9 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10030560–10031820` | `10031800` | | `I3d_mesh.cpp` | `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object`, each in PS2's order with the PC's additions; written |
 | `10031820–100333d0` | `100333b0` | `100324b0` | `I3d_mirror.cpp`? | no strings |
 | `100333d0–10034350` | `10034330` | `10033b50`, `10033ba0` | `I3d_model.cpp`? | two lists; PS2's `__sinit_I3d_model.cpp` constructs more than the header's objects too |
-| `10034350–10036540` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph` |
-| `10036540–10039280` | `10039260` | | `I3d_object.cpp` | `I3D_object::DetachMesh()`, `lod::Create()` |
-| `10039280–1003c070` | `1003c050` | | `I3d_occluder.cpp` | `i3d_occluder::Build`, `UpdateShadow` |
+| `10034350–100367b0` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph`; after its marker the morph's `LoadImage` (`10036750`) and `MorphDef` (`10036580`, a reference-counted grid) |
+| `100367b0–1003a430` | `10039260` | | `I3d_object.cpp` | `I3D_object` close to PS2's order (`I3D_object::DetachMesh()`) with the PC's `lod` class (`lod::Create()`) after `Duplicate`; the marker before `m_RenderFGroup` (`renderObject()`) and `LoadImage`; written |
+| `1003a430–1003c070` | `1003c050` | | `I3d_occluder.cpp` | `i3d_occluder::Build`, `UpdateShadow` |
 | `1003c070–1003eac0` | `1003eaa0` | | `I3d_particle.cpp` | `I3D_emitor` |
 | `1003eac0–100437f0` | `100437d0` | `10041de0` (empty) | ? | `renderObject()` |
 | `100437f0–10045e30` | `10045e10` | | `I3d_portal.cpp`, `I3d_pose.cpp` | portal parsing, `I3D_pose`, `I3D_pose_set`; one of the two has no marker |

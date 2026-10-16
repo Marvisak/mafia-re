@@ -126,7 +126,7 @@ I3D_mesh_level::I3D_mesh_level()
     bbox.Invalidate();
     lod_dist = 0.0f;
     mesh_flags = 0;
-    spacing = sqrt(2.0) * 2;
+    env_scale = sqrt(2.0) * 2;
 }
 
 // Release inlines it, and /OPT:REF drops its copy. A level without vertices frees vb.buffer as a plain block.
@@ -174,7 +174,7 @@ LS3D_RESULT I3D_mesh_level::SetVertexMesh(const I3D_vertex *verts, int num)
         bbox.Invalidate();
         return I3D_OK;
     }
-    if (!cVBMan.m_Alloc(I3D_VERTEX_FVF, D3DUSAGE_SOFTWAREPROCESSING, sizeof(I3D_vertex), num, vb, (VERTEX_FORMAT)6,
+    if (!cVBMan.m_Alloc(I3D_VERTEX_FVF, D3DUSAGE_SOFTWAREPROCESSING, sizeof(I3D_vertex), num, vb, VF_VERTEX,
             false)) {
         num_vertices = 0;
         bbox.Invalidate();
@@ -198,7 +198,7 @@ I3D_vertex *I3D_mesh_level::CreateVertexMesh(int num)
         bbox.Invalidate();
         return NULL;
     }
-    if (!cVBMan.m_Alloc(I3D_VERTEX_FVF, D3DUSAGE_SOFTWAREPROCESSING, sizeof(I3D_vertex), num, vb, (VERTEX_FORMAT)6,
+    if (!cVBMan.m_Alloc(I3D_VERTEX_FVF, D3DUSAGE_SOFTWAREPROCESSING, sizeof(I3D_vertex), num, vb, VF_VERTEX,
             false)) {
         num_vertices = 0;
         bbox.Invalidate();
@@ -250,7 +250,7 @@ LS3D_RESULT I3D_mesh_level::Duplicate(I3D_mesh_level *level)
         return I3D_OK;
     }
     mesh_flags = level->mesh_flags;
-    spacing = level->spacing;
+    env_scale = level->env_scale;
     lod_dist = level->lod_dist;
     LS3D_RESULT r = SetVertexMesh(level->LockVertices(0), level->num_vertices);
     if (r < 0)
@@ -308,14 +308,14 @@ void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
     if (!fg)
         return;
     if (fg->material) {
-        if (fg->material->flags & MATF_UNKNOWN_40000)
-            mesh_flags |= MESHF_UNKNOWN_10;
+        if (fg->material->flags & MATF_TEXTURE)
+            mesh_flags |= MESHF_TEXTURE;
         if (fg->material->flags & MATF_UNKNOWN_8000000)
             mesh_flags |= MESHF_UNKNOWN_20;
-        if (fg->material->flags & MATF_UNKNOWN_80000) {
-            mesh_flags |= MESHF_UNKNOWN_8;
-            mesh_flags = (mesh_flags & ~MESHF_UNKNOWN_7) | ((fg->material->flags >> 12) & MESHF_UNKNOWN_7);
-            spacing = (float)(sqrt(2.0) * 2) / (fg->material->flags & 0xff);
+        if (fg->material->flags & MATF_ENVMAP) {
+            mesh_flags |= MESHF_ENVMAP;
+            mesh_flags = (mesh_flags & ~MESHF_ENVMAP_MODE) | ((fg->material->flags >> 12) & MESHF_ENVMAP_MODE);
+            env_scale = (float)(sqrt(2.0) * 2) / (fg->material->flags & 0xff);
         }
     }
     if (!fgroups) {
@@ -346,8 +346,8 @@ I3D_mesh_object::I3D_mesh_object()
     bvol.bbox.Invalidate();
     bvol.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
     bvol.bsphere.radius = 0.0f;
-    unknown_5c = unknown_60 = 0;
-    unknown_64 = unknown_68 = 0;
+    u_ofs = v_ofs = 0;
+    env_u_ofs = env_v_ofs = 0;
 }
 
 // Release inlines it, and /OPT:REF drops its copy
@@ -438,7 +438,7 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
         bvol.bbox.Invalidate();
         bvol.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
         bvol.bsphere.radius = 0.0f;
-        unknown_5c = unknown_60 = 0;
+        u_ofs = v_ofs = 0;
         return I3D_OK;
     }
     for (i = 0; i < 10; i++) {

@@ -27,7 +27,7 @@ C_VBuffer::C_VBuffer()
     num_vertices = 0;
     num_free = 0;
     pool = D3DPOOL_MANAGED;
-    vertex_format = VF_UNKNOWN_0;
+    vertex_format = VF_LVERTEX;
     lock_index = -1;
     used_blocks.SetGrowSize(256);
     used_blocks.reserve(256);

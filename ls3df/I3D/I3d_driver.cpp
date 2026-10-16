@@ -2,12 +2,13 @@
 // PC's resource icon and shadow texture rasterizer after GetState, and the C_list templates' out-of-line functions at
 // the end. The header's zero vector has its $E at 0x10016fd0, after DrawLines (ours comes after DrawLine: see
 // tools/autopch.py; the shadow rasterizer's stubs are much smaller than the original's assembly). The order of the
-// file's .bss (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. The functions of other files the driver calls are at the end: the billboard file's render state functions
-// written, the rest stubs. Names are the PS2 build's unless noted.
+// file's .bss (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. The functions of other files the driver calls are
+// stubs at the end. Names are the PS2 build's unless noted.
 //
 // The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
 // the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
-// call to the billboard file's functions in the short draws and written out in the long ones. The long ones also
+// call in the short draws (render.h's inline helpers, which this file doesn't see) and written out in the long ones,
+// which may be other helpers of the same kind. The long ones also
 // leave calls out of line that our build inlines (C_list::reserve in DrawText, S_vector's constructor in
 // DrawCircle2D), as if all of it were inline helpers and VC6's inline budget ran out earlier than in our build; with
 // everything as helpers, our build inlines the short draws' blend code too. Open.
@@ -17,12 +18,6 @@
 #include "ISound/ISound.h"
 
 #include <stdio.h>
-
-// IGraph.cpp
-extern uint m_ProblemFlags;
-extern uint m_CurrFogState;
-extern uint m_CurrClipState;
-extern uint m_CullMode;
 
 // VBManager.cpp
 extern C_VBManager cVBMan;
@@ -1764,66 +1759,6 @@ I3D_lensflare::I3D_lensflare()
     renderState[30]++;
 }
 
-// The billboard file's render state functions, which the draws call in places (that file isn't written yet)
-void SetBlendState(uint state)
-{
-    if (m_CurrBlendState != state) {
-        m_CurrBlendState = state;
-        switch (state) {
-        case 0:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-            break;
-        case 1:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-            break;
-        case 2:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-            break;
-        case 3:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
-            break;
-        case 4:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
-            break;
-        }
-    }
-}
-
-void SetVertexFormat(uint format)
-{
-    if (m_CurrVertexFormat != format) {
-        m_CurrVertexFormat = format;
-        switch (format) {
-        case 0:
-            m_pD3DDevice8->SetVertexShader(m_LVertexVS);
-            break;
-        case 1:
-            m_pD3DDevice8->SetVertexShader(m_LVertex2VS);
-            break;
-        case 2:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE);
-            break;
-        case 3:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE | D3DFVF_TEX1);
-            break;
-        case 4:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
-            break;
-        case 5:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2);
-            break;
-        case 6:
-            m_pD3DDevice8->SetVertexShader(m_VertexVS);
-            break;
-        }
-    }
-}
-
 I3D_camera::I3D_camera()
 {
     renderState[11]++;
@@ -1887,12 +1822,6 @@ I3D_model::I3D_model()
 I3D_morph::I3D_morph()
 {
     renderState[31]++;
-}
-
-// STUB: LS3DF 0x100367b0
-I3D_object::I3D_object()
-{
-    renderState[26]++;
 }
 
 // STUB: LS3DF 0x1003a430

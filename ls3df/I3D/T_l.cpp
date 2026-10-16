@@ -376,14 +376,14 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     TempColor.Set(obj->lightness);
     I3D_material *mat = level->fgroups->material;
     if (mat) {
-        TempAlpha = FloatToInt(obj->unknown_218 * obj->transparency * mat->alpha * 255.0f) << 24;
-        if (!(level->mesh_flags & MESHF_UNKNOWN_10) || level->mesh_flags & MESHF_UNKNOWN_20) {
+        TempAlpha = FloatToInt(obj->fade * obj->transparency * mat->alpha * 255.0f) << 24;
+        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_UNKNOWN_20) {
             TempColor.x *= mat->diffuse.x;
             TempColor.y *= mat->diffuse.y;
             TempColor.z *= mat->diffuse.z;
         }
     } else
-        TempAlpha = FloatToInt(obj->unknown_218 * obj->transparency * 255.0f) << 24;
+        TempAlpha = FloatToInt(obj->fade * obj->transparency * 255.0f) << 24;
     const I3D_bvolume &bvol = obj->GetWBoundVolume();
     S_vector bpos = bvol.bsphere.pos;
     float bradius = bvol.bsphere.radius;
@@ -486,7 +486,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     }
     *cached = key;
     if (mat) {
-        if (!(level->mesh_flags & MESHF_UNKNOWN_10) || level->mesh_flags & MESHF_UNKNOWN_20) {
+        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_UNKNOWN_20) {
             TempAmbient.x *= mat->ambient.x;
             TempAmbient.y *= mat->ambient.y;
             TempAmbient.z *= mat->ambient.z;
@@ -543,9 +543,9 @@ void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_obje
     I3D_material *mat = level->fgroups->material;
     uchar alpha;
     if (mat)
-        alpha = FloatToInt(obj->unknown_218 * obj->transparency * mat->alpha * 255.0f);
+        alpha = FloatToInt(obj->fade * obj->transparency * mat->alpha * 255.0f);
     else
-        alpha = FloatToInt(obj->unknown_218 * obj->transparency * 255.0f);
+        alpha = FloatToInt(obj->fade * obj->transparency * 255.0f);
     rec->alpha_dirty = false;
     if (alpha != rec->alpha) {
         rec->alpha = alpha;

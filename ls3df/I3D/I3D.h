@@ -186,6 +186,7 @@ inline int I3DFloatAsInt(float f)
 #define FRMFLAGS_HR_SECTORS 0x40000     // the hierarchy has sectors
 #define FRMFLAGS_HR_OCCLUDERS 0x80000   // occluders
 #define FRMFLAGS_HR_AREAS 0x100000      // areas
+#define FRMFLAGS_CLIP 0x200000          // has to be clipped (the name is a guess)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
 #define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
 #define FRMFLAGS_UPDATE 0x40000000      // to update
@@ -384,7 +385,7 @@ public:
     I3D_frame *prev, *next;             // 0x128, the siblings
     uint unknown_130;                   // 0x130
     I3D_frame *ff_left, *ff_right;      // 0x134, the fast find tree (PS2 0x114, 0x118)
-    int unknown_13c;                    // 0x13c
+    int render_number;                  // 0x13c, the driver's RenderNumber when the frame was last rendered, -1
 };
 
 // SYNTHETIC: LS3DF 0x1001a980
@@ -418,9 +419,11 @@ public:
     // PS2 name
     void AddToRemoveFromSceneRing(I3D_scene *scene);
 
-    uchar unknown_140[4];
+    uint lights_changed;                // 0x140, counts the changes to its lights (the name is a guess)
     C_list<I3D_light *> lights;         // 0x144, the lights that reach into it
-    uchar unknown_154[0xc0];
+    uchar unknown_154[0x9c];
+    I3D_light *fog_light;               // 0x1f0
+    uchar unknown_1f4[0x20];
     I3D_scene *scene;                   // 0x214
     uchar unknown_218[0x1c];
 };
@@ -456,7 +459,9 @@ public:
     // PS2 name
     virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
 
-    uchar unknown_140[0x144];
+    uchar unknown_140[0xd0];
+    I3D_sector *primary_sector;         // 0x210, the sector outside all others (the name is a guess)
+    uchar unknown_214[0x70];
     ISND_3Dlistener *listener;          // 0x284
     uchar unknown_288[0xb4];
 };
@@ -569,7 +574,15 @@ I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
 I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
-I3D_PLACEHOLDER_FRAME(I3D_emitor, 0x1f8)
+// A particle emitter (PS2 I3D_emitor, 0x1f8 bytes on PC; the file isn't written yet)
+class __declspec(novtable) I3D_emitor : public I3D_frame {
+public:
+    I3D_emitor();
+
+    uchar unknown_140[8];
+    I3D_mesh_object *mesh;              // 0x148, its particles' (I3D_object::Duplicate)
+    uchar unknown_14c[0x1f8 - 0x14c];
+};
 
 // The frames whose members the frames call (PS2 names)
 class __declspec(novtable) I3D_target : public I3D_frame {
@@ -648,8 +661,10 @@ enum SHADOW_MODE {
 #define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
+#define VISF_UNKNOWN_800 0x800          // set by the objects' constructor, SetMesh and Duplicate
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
 #define VISF_PROJECTOR_2 0x4000         // projector mode 2
+#define VISF_PROXY 0x10000              // renders the face groups of the visual in user_data (the name is a guess)
 #define VISF_BOUND_VALID 0x20000        // vis_bound is up to date (UpdateBoundProc)
 #define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
 #define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
@@ -698,6 +713,26 @@ public:
         return vis_bound_w;
     }
 
+    // The inverse of the world matrix, identity in world space (Insanity3D's name; other files inline it)
+    const S_matrix &GetInvMatrix()
+    {
+        if (vis_flags & VISF_WORLD_SPACE)
+            return IdentityMatrix;
+        if (!(vis_flags & VISF_INV_MAT_VALID)) {
+            vis_flags |= VISF_INV_MAT_VALID;
+            inv_matrix.Inverse(GetMatrix());
+        }
+        return inv_matrix;
+    }
+
+    // The matrix the vertices are rendered with: the world matrix, identity in world space (the name is a guess)
+    const S_matrix &GetRenderMatrix()
+    {
+        if (vis_flags & VISF_WORLD_SPACE)
+            return IdentityMatrix;
+        return GetMatrix();
+    }
+
     S_matrix inv_matrix;                // 0x144, the inverse of the world matrix (identity in world space)
     I3D_bvolume vis_bound_w;            // 0x184, the visual's own, in world space
     I3D_bvolume vis_bound;              // 0x1ac, in local space
@@ -716,35 +751,78 @@ public:
     };
 
 // An object's lighting state for one of its mesh's levels (PC only; the object file's "lod::Create()" names the
-// class). Its functions are the object file's (not written yet).
+// class): its own vertex buffer, which the object renders from
+// VTABLE: LS3DF 0x1009c3d8
 class lod {
 public:
     lod();
     virtual ~lod();
 
-    int unknown_04;                     // 0x04, -1
-    int unknown_08;                     // 0x08, -1
+    // Copies the texture coordinates at uv (stride bytes apart, offset by u_ofs and v_ofs) into the vertices of format
+    // 1 or 2 (one or two coordinate pairs), as m_HardwareCaps' T&L bit lays them out (the name is a guess)
+    void SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, float u_ofs, float v_ofs);
+
+    // Gives the lod a vertex buffer of the format (flags' low bits; 4 needs hardware T&L) if it has none, and fills in
+    // the positions (with flag 0x100, hardware T&L only) and texture coordinates given; false if out of memory
+    bool Create(uint flags, uint num, const S_vector *pos, uint pos_stride, const I3D_text_coor *uv, uint uv_stride,
+        const I3D_text_coor *uv2, uint uv2_stride, float u_ofs, float v_ofs);
+
+    uint lights_changed;                // 0x04, the sector's lights_changed when it was lit, -1
+    uint update_count;                  // 0x08, the object's update_count then, -1
     uint light_key;                     // 0x0c, PrepareLights' key of the lights it was lit by, -1
     COMPLETE_VB_STRUCT vb;              // 0x10
-    uint unknown_1c[4];                 // 0x1c
+    float u_ofs, v_ofs;                 // 0x1c, SetUV's
+    float env_u_ofs, env_v_ofs;         // 0x24, the mesh's when its environment map was computed
     bool dirty;                         // 0x2c, to update (I3D_object::UpdateVertices)
-    bool alpha_dirty;                   // 0x2d, cleared with alpha (the name is a guess)
+    bool alpha_dirty;                   // 0x2d, the alpha changed (SetTransparency; the name is a guess)
     uchar alpha;                        // 0x2e, of the colors PrepareLights wrote, 0xff
 };
 
-// A visual made of a mesh (PS2 I3D_object, 0x21c bytes on PC; the object file isn't written yet)
-class __declspec(novtable) I3D_object : public I3D_visual {
+// SYNTHETIC: LS3DF 0x10036cb0
+// lod::`scalar deleting destructor'
+
+// A visual made of a mesh (PS2 I3D_object, 0x21c bytes on PC; I3d_object.cpp): a level of the mesh is rendered from a
+// lod of the object's own. Its billboards, lens flares, single meshes, morphs, particles and lit objects derive from it.
+// VTABLE: LS3DF 0x1009c348 I3D_frame
+// VTABLE: LS3DF 0x1009c338 I3D_void_interface
+class I3D_object : public I3D_visual {
 public:
     I3D_object();
+    ~I3D_object();
 
-    uint unknown_1dc;                   // 0x1dc
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    virtual void __stdcall SetSpace(bool world);
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+    // keep_lods keeps the lods if the meshes are compatible
+    virtual void __stdcall SetMesh(I3D_mesh_object *m, bool keep_lods);
+    // Gives the object a copy of its mesh if the mesh is shared
+    virtual LS3D_RESULT __stdcall DetachMesh();
+    // Marks the lods to update (PS2 names; VC6 puts the second at the first's slot)
+    virtual void __stdcall UpdateVertices();
+    virtual void __stdcall UpdateVertices(int index);
+    virtual void __stdcall SetLightness(float l);
+    virtual void __stdcall SetTransparency(float t);
+    // Has the lods lit again (PC only, the name is a guess)
+    virtual void __stdcall ResetLighting();
+    // A lod's vertices, locked (PC only, the name is a guess; the flags aren't used)
+    virtual uchar *__stdcall LockVertices(int index, uint flags);
+
+    // Like SetTransparency, for fade (PC only, the name is a guess)
+    void SetFade(float f);
+
+    float sort_dist;                    // 0x1dc, orders the transparent face groups (set by the rendering)
     I3D_mesh_object *mesh;              // 0x1e0
     lod *lods[10];                      // 0x1e4, one per level of the mesh
-    int cur_lod;                        // 0x20c
+    uint cur_lod;                       // 0x20c
     float lightness;                    // 0x210, scales the lights (PS2 SetLightness)
     float transparency;                 // 0x214, 1.0 opaque
-    float unknown_218;                  // 0x218, scales the transparency
+    float fade;                         // 0x218, scales the transparency (the name is a guess)
 };
+
+// SYNTHETIC: LS3DF 0x10036820
+// I3D_object::`scalar deleting destructor'
 
 I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
 I3D_PLACEHOLDER_VISUAL(I3D_billboard, 0x268)
@@ -758,13 +836,21 @@ I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
 I3D_PLACEHOLDER_VISUAL(I3D_landpatch, 0x620)
 I3D_PLACEHOLDER_VISUAL(I3D_mirror, 0x2ec)
 
-// I3D_material::flags (the UNKNOWN ones are set by code not written yet; I3D_mesh_level::AddFGroup reads them)
-#define MATF_UNKNOWN_7000 0x7000        // with MATF_UNKNOWN_80000, a level's MESHF_UNKNOWN_7 value
-#define MATF_UNKNOWN_40000 0x40000      // gives its level MESHF_UNKNOWN_10
-#define MATF_UNKNOWN_80000 0x80000      // gives its level MESHF_UNKNOWN_8; the low byte divides the level's spacing
+// I3D_material::flags (names guessed; the UNKNOWN ones are set by code not written yet)
+#define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (1 to 5, I3D_object::m_RenderFGroup)
+#define MATF_LOD0 0x800                 // the objects render the face group from their first lod
+#define MATF_ENVMAP_MODE 0x7000         // with MATF_ENVMAP, a level's MESHF_ENVMAP_MODE value
+#define MATF_TEXTURE 0x40000            // texture is used; gives its level MESHF_TEXTURE
+#define MATF_ENVMAP 0x80000             // env_texture is used; gives its level MESHF_ENVMAP, and the low byte divides
+                                        // the level's env_scale
+#define MATF_ADDRESS_U_CLAMP 0x10000    // the texture is clamped, not wrapped
+#define MATF_ADDRESS_V_CLAMP 0x20000
 #define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
 #define MATF_UNKNOWN_8000000 0x8000000  // gives its level MESHF_UNKNOWN_20
-#define MATF_ICON 0x40000000            // made by I3D_driver::GetIcon
+#define MATF_TWO_SIDED 0x10000000       // not culled
+#define MATF_UNKNOWN_20000000 0x20000000 // alpha tested against m_AlphaRef
+#define MATF_ICON 0x40000000            // made by I3D_driver::GetIcon; blended
+#define MATF_UNKNOWN_80000000 0x80000000 // blended additively
 
 // A material (PS2 I3D_material, 0x40 bytes on PC), reference counted
 class __declspec(novtable) I3D_material {
@@ -782,6 +868,8 @@ public:
     virtual void __stdcall vfunc_07();
     // PS2 name: an animated material's frame
     virtual void __stdcall UpdateTexture();
+    // The same for the environment map (the name is a guess)
+    virtual void __stdcall UpdateEnvTexture();
 
     int ref;                            // 0x04
     uint flags;                         // 0x08, MATF_*
@@ -791,7 +879,7 @@ public:
     S_vector diffuse;                   // 0x20
     S_vector emissive;                  // 0x2c
     float alpha;                        // 0x38, 1.0 opaque
-    uchar unknown_3c[4];
+    float env_power;                    // 0x3c, the environment map's blend factor (MATF_ENVMAP_BLEND 1)
 
     void AddRef()
     {
@@ -803,6 +891,13 @@ public:
         if (flags & MATF_ANIMATED)
             UpdateTexture();
         return texture;
+    }
+
+    ITexture *GetEnvTexture()
+    {
+        if (flags & MATF_ANIMATED)
+            UpdateEnvTexture();
+        return env_texture;
     }
 };
 
@@ -868,9 +963,9 @@ public:
 // I3D_face_group::`scalar deleting destructor'
 
 // I3D_mesh_level::mesh_flags (names guessed; the bits come from the face groups' materials, see AddFGroup)
-#define MESHF_UNKNOWN_7 0x7             // a material's MATF_UNKNOWN_7000 value
-#define MESHF_UNKNOWN_8 0x8
-#define MESHF_UNKNOWN_10 0x10
+#define MESHF_ENVMAP_MODE 0x7           // a material's MATF_ENVMAP_MODE value: EnvProcess's mode
+#define MESHF_ENVMAP 0x8                // a material has an environment map: the lods have a second pair of coordinates
+#define MESHF_TEXTURE 0x10              // a material has a texture
 #define MESHF_UNKNOWN_20 0x20
 
 // A mesh level: a level of detail's vertices and face groups (0x44 bytes on PC), reference counted. Its destructor is
@@ -905,7 +1000,7 @@ public:
     I3D_bbox bbox;                      // 0x20
     float lod_dist;                     // 0x38, the squared distance up to which the level is rendered (GetObjectLOD)
     uint mesh_flags;                    // 0x3c, MESHF_*
-    float spacing;                      // 0x40, 2 * sqrt(2) by default (the name is a guess)
+    float env_scale;                    // 0x40, the environment map's (EnvProcess), 2 * sqrt(2) by default
 };
 
 // A mesh: up to 10 levels of detail and their bound volume (0x6c bytes on PC), reference counted. Its destructor is
@@ -937,10 +1032,8 @@ public:
     uint num_lods;                      // 0x08
     I3D_mesh_level *levels[10];         // 0x0c
     I3D_bvolume bvol;                   // 0x34
-    uint unknown_5c;                    // 0x5c
-    uint unknown_60;                    // 0x60
-    uint unknown_64;                    // 0x64
-    uint unknown_68;                    // 0x68
+    float u_ofs, v_ofs;                 // 0x5c, added to the texture coordinates (lod::Create)
+    float env_u_ofs, env_v_ofs;         // 0x64, to the environment map's (EnvProcess)
 };
 
 // The other parts the driver makes (PS2 names)
@@ -1021,6 +1114,21 @@ struct TLVERTEX {
     float x, y, z, rhw;
     uint color, specular;
     float u, v;
+};
+
+// The same with a second pair of texture coordinates, as the objects' lods have them (the names are guesses)
+struct LVERTEX2 {
+    float x, y, z;
+    uint color;
+    float u, v;
+    float u2, v2;
+};
+
+struct TLVERTEX2 {
+    float x, y, z, rhw;
+    uint color, specular;
+    float u, v;
+    float u2, v2;
 };
 
 // The draws' lists' reserve, out of line where VC6 didn't inline it, after I3d_driver.cpp's functions
@@ -1129,19 +1237,25 @@ extern uint m_CurrVertexFormat;
 extern DWORD m_VertexVS;
 extern DWORD m_LVertexVS;
 extern DWORD m_LVertex2VS;
+extern uint m_CurrClipState;
+extern uint m_CurrColorOp1;
+extern uint m_CurrFogState;
+extern uint m_CurrFogColor;
+extern uint m_CullMode;
+// The color op that modulates by the texture: D3DTOP_MODULATE2X, or D3DTOP_MODULATE without it
+extern uint m_Modulate2X;
+// What Init found the hardware lacks (bit 0x10, 0x20, 0x40: the environment blends 1, 2 and 5 in one pass)
+extern uint m_ProblemFlags;
+// What the device can do: 1 hardware T&L, 4 table fog, 0x80 single pass (bits named in IGraph::Init's messages)
+extern uint m_HardwareCaps;
 
 extern uint m_AlphaRef;
 
-// Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC the three below
-// are inline: VC6 inlines them where the inline budget allows it, and the copies the linker kept are in the billboard
-// file's code. SetBlendState and SetVertexFormat are that file's functions: the draws call them, or have their code
-// written out. They are written in I3d_driver.cpp, after the driver's functions, so their markers are here, by name.
-// FUNCTION: LS3DF 0x1000ab40
-// SetBlendState
+// Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC they are inline:
+// VC6 inlines them where the inline budget allows it, and the copies the linker kept are in the billboard file's code.
+// SetBlendState and SetVertexFormat are defined in render.h, which I3d_driver.cpp doesn't include, so its draws call
+// them.
 void SetBlendState(uint state);
-
-// FUNCTION: LS3DF 0x1000ae50
-// SetVertexFormat
 void SetVertexFormat(uint format);
 
 // FUNCTION: LS3DF 0x1000aa30
@@ -1207,13 +1321,65 @@ extern uint ZBufferEnable;
 
 // T&l.cpp: the lights' scale of the vertex colors, 128 or 255 without MODULATE2X (the name is a guess)
 extern float i3d_light_scale;
+void LightingSetSector(I3D_sector *sector);
+bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uchar *src, uint src_stride,
+    I3D_object *obj, const S_matrix &m, uint mode, bool force, lod *rec);
+void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_object *obj, lod *rec);
+void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, uint count, const S_vector &cam_pos,
+    const S_matrix &m, float scale, float u_ofs, float v_ofs, int mode, I3D_frame *frm);
+void TransformVertices(void *dst, const void *src, uint count, const S_matrix &m, const S_matrix &mn);
+void TransformVerticesBlend(void *dst, const void *src, uint count, const S_matrix &m1, const S_matrix &mn1,
+    const float *weights, const S_matrix &m2, const S_matrix &mn2);
+void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode);
+void SwapVertexBytes(uchar *a, uchar *b, uint stride, const I3D_triface *faces, uint num_faces, int restore);
 
 // render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
 extern I3D_camera *pCurrentCamera;
 
+// A face group to render, as the visuals' m_AddFGroups queue them for their m_RenderFGroup (PS2 name, 0x20 bytes on PC)
+struct RENDER_FG_HELP_STRUCT {
+    I3D_visual *vis;
+    uint sort_key;                      // 0x04, the transparent ones' 0x80000000 | the distance, else the texture's uid
+                                        // (0x40000000 | it for MATF_UNKNOWN_20000000), 0 untextured
+    uint clip;                          // 0x08, the frame's FRMFLAGS_CLIP
+    uint unknown_0c;
+    I3D_face_group *fg;                 // 0x10
+    I3D_sector *sector;                 // 0x14, lit by
+    ITexture *texture;                  // 0x18
+    ITexture *env_texture;              // 0x1c
+};
+
+// What the rendering gives the visuals' m_AddFGroups (PS2 name; the PC's members differ). Its constructor is out of line
+// in render.cpp.
+struct ADD_FG_HELP_STRUCT {
+    S_vector cam_pos;                   // 0x00, the camera's position
+    uint unknown_0c;
+    uint unknown_10;                    // 0x10, the scene's 0x17c
+    I3D_sector *sector;                 // 0x14, the visual's
+    I3D_scene *scene;                   // 0x18
+    C_list<RENDER_FG_HELP_STRUCT> fgroups; // 0x1c, the face groups to render
+    uint unknown_2c[3];                 // 0x2c
+    uint num_opaque;                    // 0x38, counts the face groups queued
+    uint num_transparent;               // 0x3c
+
+    ADD_FG_HELP_STRUCT() : fgroups(0x400)
+    {
+        unknown_2c[0] = 0;
+        unknown_2c[1] = 0;
+        unknown_2c[2] = 0;
+        unknown_0c = 0;
+    }
+};
+
 // render.cpp
+extern I3D_scene *pCurrentScene;
+extern ADD_FG_HELP_STRUCT AddFGHlpStruct;
+extern bool renderCameraChanged;
 extern float RSLodQuality;
 int GetObjectLOD(I3D_object *obj, const float &dist_2);
+
+// I3d_driver.cpp: RenderNumber's previous value
+extern uint RenderNumberMinus1;
 
 // The loader's (load4ds.cpp defines them): the frames and materials loaded so far, the file and the error
 extern I3D_frame *LoadFramy[10000];

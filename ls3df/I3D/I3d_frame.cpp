@@ -56,7 +56,7 @@ I3D_frame::I3D_frame()
     unknown_130 = 0;
     ff_left = NULL;
     ff_right = NULL;
-    unknown_13c = -1;
+    render_number = -1;
 }
 
 // FUNCTION: LS3DF 0x1001a9a0
@@ -1027,7 +1027,7 @@ void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
 // STUB: LS3DF 0x1004f260
 void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *scene)
 {
-    unknown_140[0] = 3;
+    unknown_154[0] = 3;
 }
 
 // STUB: LS3DF 0x10050d80
