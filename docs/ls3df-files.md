@@ -74,7 +74,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound::Open()` |
 | `10059250–1005a140` | `1005a120` | `10059440` | `I3d_target.cpp` | PS2 order |
 | `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | PS2 order |
-| `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc` |
+| `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc`; `I3D_visual` in PS2's order, then its second base `I3D_void_interface`'s functions; written |
 | `1005a7a0–1005aad0` | `1005aab0` | | `I3d_volume.cpp` | PS2 order |
 | `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
 | `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings; up to `1005d010` the rest of `IBManager.cpp`'s multiset functions |

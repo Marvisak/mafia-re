@@ -1723,8 +1723,10 @@ void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
     I3D_target::DeleteFromAnyTarget(frame);
 }
 
-// Empty, as on PS2. The original's copy is folded with an empty function of the DirectShow base classes
-// (0x10087ec0), so it has no marker.
+// Empty, as on PS2. The linker folds it with the DirectShow base classes' empty CBaseRenderer::OnRenderEnd, whose
+// copy the original kept (0x10087ec0). Ours keeps this one, so the marker is here; by name it would depend on which of
+// the folded names our PDB keeps.
+// FUNCTION: LS3DF 0x10087ec0 FOLDED
 void I3D_driver::m_RecomputeUsedVRAM()
 {
 }

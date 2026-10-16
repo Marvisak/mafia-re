@@ -5,11 +5,12 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver, the frame and the dummy are written (I3d_driver.cpp, I3d_frame.cpp,
-// I3d_dummy.cpp); the other frames, the visuals, materials and meshes aren't recovered yet. Their placeholders keep
-// the members and virtual functions the written files use at their offsets and vtable slots, the sizes the driver
-// allocates, and declare the constructors it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that
-// the stubs don't need the virtual functions, none of which is written yet; the real classes will drop it.
+// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy and the visual's base are written (I3d_driver.cpp,
+// I3d_frame.cpp, I3d_dummy.cpp, I3d_visual.cpp); the other frames, the visuals, materials and meshes aren't recovered
+// yet. Their placeholders keep the members and virtual functions the written files use at their offsets and vtable
+// slots, the sizes the driver allocates, and declare the constructors it calls (stubs, see I3d_driver.cpp). They are
+// __declspec(novtable) so that the stubs don't need the virtual functions, none of which is written yet; the real
+// classes will drop it.
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
@@ -530,20 +531,80 @@ public:
     uchar unknown_140[0xd4];
 };
 
-// The visuals, a kind of frame (PS2 I3D_visual), by the sizes the driver allocates. The particles' and the landscape
-// patch's names are guesses.
-class __declspec(novtable) I3D_visual : public I3D_frame {
+// The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are guesses). The
+// visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and NumRegions'
+// (return 0) are folded with a DirectShow base class function (0x10087520), so they have no markers.
+// VTABLE: LS3DF 0x1009d108
+class I3D_void_interface {
 public:
-    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
-    virtual void __stdcall vfunc_23(); virtual void __stdcall vfunc_24();
-    // PS2 name: computes bbox
-    virtual void __stdcall UpdateBoundProc();
-
-    uchar unknown_140[0x6c];
-    I3D_bbox bbox;                      // 0x1ac, in local space
-    uchar unknown_1c4[0x14];
-    uint vis_flags;                     // 0x1d8
+    virtual int __stdcall NumLevels() const;
+    virtual int __stdcall NumRegions() const;
+    virtual LS3D_RESULT __stdcall SetWeight(int level, int region, float weight);
+    virtual float __stdcall GetWeight(int level, int region) const;
 };
+
+// What SetShadowMode and SetProjectorMode take (PS2 type; the values' names aren't known). The shadows and projectors
+// fall on the visuals with mode 1 or 2; nothing in LS3DF tells 2 from 1.
+enum SHADOW_MODE {
+    SHADOW_MODE_0,
+    SHADOW_MODE_1,                      // the visuals' default
+    SHADOW_MODE_2,
+};
+
+// I3D_visual::vis_flags (names guessed; BOUND_VALID and INV_MAT_VALID after Insanity3D's VISF_BOUNDS_VALID and
+// FRMFLAGS_INV_MAT_VALID)
+#define VISF_WORLD_SPACE 0x40           // the vertices are in world space (SetSpace): a move invalidates nothing
+#define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
+#define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
+#define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
+#define VISF_PROJECTOR_2 0x4000         // projector mode 2
+#define VISF_BOUND_VALID 0x20000        // vis_bound is up to date (UpdateBoundProc)
+#define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
+#define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
+#define VISF_INV_MAT_VALID 0x100000     // inv_matrix is up to date
+
+struct RENDER_FG_HELP_STRUCT;
+
+// A frame with something to render (PS2 I3D_visual, 0x1dc bytes on PC; I3d_visual.cpp), the base of the visuals the
+// driver creates. Its own bound volume is in vis_bound, which the derived classes' UpdateBoundProc computes; the
+// frame's bound volume takes its box from there (I3D_frame::UpdateHRBoundVol). PS2's virtual GetVisualType and
+// SetBoundBox aren't in LS3DF, and SetBoundVolume isn't virtual on PC.
+// VTABLE: LS3DF 0x1009d098 I3D_frame
+// VTABLE: LS3DF 0x1009d088 I3D_void_interface
+class I3D_visual : public I3D_frame, public I3D_void_interface {
+public:
+    I3D_visual();
+    ~I3D_visual();
+
+    virtual void UpdateV();
+    // Only the derived classes that can move their vertices support a change of space; the others print an error
+    virtual void __stdcall SetSpace(bool world);
+    virtual void __stdcall SetShadowMode(SHADOW_MODE mode);
+    virtual SHADOW_MODE __stdcall GetShadowMode() const;
+    virtual void __stdcall SetProjectorMode(SHADOW_MODE mode);
+    virtual SHADOW_MODE __stdcall GetProjectorMode() const;
+    // Computes vis_bound (PS2 name); the base only marks it valid
+    virtual void __stdcall UpdateBoundProc();
+    // Empty (PS2 inlines both; the linker folded the copies with other files' empty functions)
+    virtual void m_AddFGroups() {}
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help) {}
+
+private:
+    // Exported (the decorated name says private)
+    __declspec(dllexport) void __stdcall UpdateWBoundProc();
+
+public:
+    void SetBoundVolume(const I3D_bvolume &bvol);
+
+    S_matrix inv_matrix;                // 0x144, the inverse of the world matrix (identity in world space)
+    I3D_bvolume vis_bound_w;            // 0x184, the visual's own, in world space
+    I3D_bvolume vis_bound;              // 0x1ac, in local space
+    I3D_VISUAL_TYPE visual_type;        // 0x1d4, set by the derived classes
+    uint vis_flags;                     // 0x1d8, VISF_*
+};
+
+// SYNTHETIC: LS3DF 0x1005a350
+// I3D_visual::`scalar deleting destructor'
 
 #define I3D_PLACEHOLDER_VISUAL(name, size) \
     class __declspec(novtable) name : public I3D_visual { \

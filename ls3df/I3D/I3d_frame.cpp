@@ -849,8 +849,8 @@ inline void I3D_frame::UpdateChildren()
     uint changed = frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
     if (changed) {
         update_count++;
-        if (type == FRAME_VISUAL && !(((I3D_visual *)this)->vis_flags & 0x40))
-            ((I3D_visual *)this)->vis_flags &= ~0x40000;
+        if (type == FRAME_VISUAL && !(((I3D_visual *)this)->vis_flags & VISF_WORLD_SPACE))
+            ((I3D_visual *)this)->vis_flags &= ~VISF_WBOUND_VALID;
     }
     for (I3D_frame *frm = child; frm; frm = frm->next) {
         if (changed)
@@ -871,8 +871,8 @@ void I3D_frame::Update()
     UpdateV();
     DiscardHRBoundVol();
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED) && type == FRAME_VISUAL &&
-        !(((I3D_visual *)this)->vis_flags & 0x40))
-        ((I3D_visual *)this)->vis_flags &= ~0x40000;
+        !(((I3D_visual *)this)->vis_flags & VISF_WORLD_SPACE))
+        ((I3D_visual *)this)->vis_flags &= ~VISF_WBOUND_VALID;
     frm_flags &= ~(FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
     if (UpdateTargetList.size()) {
         static bool updating;
@@ -911,9 +911,9 @@ void I3D_frame::UpdateHRBoundVol()
     }
     if (type == FRAME_VISUAL) {
         I3D_visual *vis = (I3D_visual *)this;
-        if (!(vis->vis_flags & 0x20000))
+        if (!(vis->vis_flags & VISF_BOUND_VALID))
             vis->UpdateBoundProc();
-        bound.bbox = vis->bbox;
+        bound.bbox = vis->vis_bound.bbox;
     } else
         bound.bbox.Invalidate();
     for (I3D_frame *frm = child; frm; frm = frm->next) {
