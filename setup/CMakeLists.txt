@@ -37,7 +37,7 @@ if (MSVC_VERSION EQUAL 1200)
 	# Original compile flags (/O2 comes from cmake/vc6-flags.cmake)
 	# /ML - static single-threaded CRT (LIBC.LIB)
 	# /Gz - every function in the binary is __stdcall
-	# /G6 - Pentium Pro scheduling: SetText's push 0x400 comes before the lea of its buffer
+	# /G6 - Pentium Pro scheduling, the only switch that puts SetText's push 0x400 before the lea of its buffer
 	target_compile_options(setup PRIVATE /ML /Gz /G6)
 
 	# The original was linked with /DEBUG: it ends with a CodeView record naming its PDB, and /DEBUG's
@@ -56,18 +56,27 @@ elseif (MSVC_VERSION EQUAL 1500)
 	# Steam's setup.exe: Visual C++ 2008 SP1, its default Release settings (/O2 /Oi /GL /Gy /EHsc /W3 /Zi, MSVCR90.dll)
 	# and what its header shows: /LTCG, /DEBUG (an RSDS record), /RELEASE (a checksum), /DYNAMICBASE /NXCOMPAT.
 	# The manifest is the linker's default one, which mt.exe embeds after the link (as resource 1, language 1033), as
-	# a Release build in the IDE does: mt.exe rewrites the resource section sorted by type, as the original's is.
-	# CMake's link step runs the toolchain's mt.exe like that.
+	# a Release build in the IDE does: mt.exe rewrites the resource section sorted by type and id, 4-byte aligned, as
+	# the original's is. CMake's link step runs the toolchain's mt.exe like that. Compiled in through setup.rc, the
+	# manifest would keep the .res order, 8-byte aligned, under the script's language.
 	target_compile_options(setup PRIVATE /O2 /Oi /GL /GS /EHsc /Gy /W3 /Zi /MD)
 	target_compile_definitions(setup PRIVATE WIN32 NDEBUG _WINDOWS)
 	# /PDBALTPATH (undocumented in VS2008) records the original's PDB path in the CodeView record, which VS2008 puts in
 	# .rdata: a path of another length moves everything after it. The PDB is still written to the build tree.
 	target_link_options(setup PRIVATE /LTCG /DEBUG /RELEASE /OPT:REF /OPT:ICF /DYNAMICBASE /NXCOMPAT /MACHINE:X86
 		"/PDBALTPATH:D:\\zdrojaky\\setup\\Release\\setup.pdb")
-	# The system libraries first, as a VS2008 project's inherited defaults come: the import descriptors are in the
-	# order the libraries are first used, and each DLL's imports in the order they are resolved.
+	# The system libraries first, as a VS2008 project's inherited defaults come (the whole default list gives the same
+	# file): the import descriptors are in the order the libraries are first used, and each DLL's imports in the order
+	# they are resolved. dxguid before ddraw for the Rich header.
 	# d3d8.lib comes from hw.cpp's #pragma comment(lib), after MSVCRT, as the thunk order shows
 	target_link_libraries(setup PRIVATE kernel32 user32 advapi32 comctl32 dxguid ddraw)
+	# Ours is 18 bytes short of the original's .reloc VirtualSize (0x5a8 against 0x5ba), so the checksum differs too.
+	# VS2008's linker reserves 2 bytes for every absolute address in its input, also in code it then discards: /LTCG
+	# compiles a separate copy of each function it inlines (even one called only from dead code, `if (0) f();`) and
+	# the linker drops it unreferenced. Unreferenced functions don't count, /LTCG drops them first; unreferenced data
+	# does, VS2008 keeps it. So the 2010 source inlined code with nine more absolute addresses than ours, which code
+	# isn't known. An inline function storing to nine globals, called from a dead branch in WinMain, makes the file
+	# identical, but it isn't the original's source.
 	# The original's link time (2010-04-07) and its PDB's GUID and age; /RELEASE's checksum is computed again after
 	postlink(setup --timestamp 0x4bbc50b1 --codeview-guid 30b9c62b279e3745966e7ab4e7290a90 --codeview-age 1 --checksum)
 else()

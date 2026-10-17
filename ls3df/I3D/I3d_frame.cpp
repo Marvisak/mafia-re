@@ -206,7 +206,7 @@ void I3D_frame::SetWorldPosDir(const S_vector &pos, const S_vector &dir, float r
     f_matrix.SetDir3(m(2), m(1));
     frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
         FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
-    // pos isn't used: row 3 is SetDir's, moved by the parent's inverse
+    // pos isn't used (the original's bug): row 3 is SetDir's, moved by the parent's inverse
     SetPos(m(3));
 }
 

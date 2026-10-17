@@ -911,7 +911,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     return I3D_OK;
 }
 
-// Loads the levels Create saved (<name>[_<alpha name>]_<levels>[L].DX<type>), if the file is there and fits
+// Loads the levels Create saved (<name>[_<alpha name>]_<levels>[L].DX<type>), if the file is there and fits. The alpha
+// time is read in a block of its own and the level loop has its locked rect: the original's frame overlaps the two.
 // FUNCTION: LS3DF 0x10078190
 bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dxt, FILETIME *time,
     FILETIME *alpha_time)
@@ -1936,7 +1937,8 @@ bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect
 // The texture manager (PC only, names guessed). A managed texture's levels are in the file Create would have saved,
 // <name>_1.DX1 or <name>_1.565 for a <name> ending in its pool's number (0 to 2). Request queues it for the thread,
 // which reads the file into the pool's system memory texture and copies it to a default pool texture of the pool,
-// adding one or evicting the least recently used one.
+// adding one or evicting the least recently used one. The globals' guessed names hash into the original's .bss order
+// around the header's zero vector (tools/bsshash.py); sysmem_textures lands on 0x101c6208 by its 8-byte alignment.
 
 // The record of a managed texture
 struct S_managed_texture {

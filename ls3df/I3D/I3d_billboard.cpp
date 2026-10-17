@@ -1,6 +1,10 @@
 // The billboards and lens flares (PS2 I3d_billboard.cpp), at 0x10005db0-0x1000b0c0 in the original: I3D_billboard and
 // I3D_lensflare in PS2's order. The marker $E (0x10008390) comes before the billboard's m_RenderFGroup, and the copies
 // of the render state helpers the linker kept follow the lens flare's Draw. Names are the PS2 build's unless noted.
+// The three big functions' frames are 4 bytes larger in the original. The kept copies come in the original's order
+// only with SetBlendState between SetAlphaState and SetColorOp in the header the driver sees, and the driver then
+// inlines it into its draws whatever its size (16 dead statements didn't stop it); ours also come due earlier (after
+// the billboard's m_RenderFGroup, in the original after Draw), the headers' inline content again (see autopch.py).
 #include "I3D/I3D.h"
 #include "I3D/render.h"
 #include "I3D/VBManager.h"
@@ -17,6 +21,8 @@ I3D_billboard::I3D_billboard()
     env_dummy = NULL;
 }
 
+// Empty, but defined here: the original's comes right after the constructor's scalar deleting destructor, where an
+// inline one, in the precompiled header, would be deferred (/YX)
 // FUNCTION: LS3DF 0x10005e10
 I3D_billboard::~I3D_billboard()
 {
@@ -94,7 +100,12 @@ LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
 // The world matrix turned to the camera at cam_pos into m: modes 0 and 1 turn the billboard's local axes to the
 // camera's direction in local space, around the rot_axis (mode 1) or also tilted to it (0); mode 2 takes the camera's
 // axes scaled by the billboard's, mode 3 the local matrix times the camera's. The rows a rotation keeps are copied with
-// assembly.
+// assembly. Modes 0 and 1 write the rotation times GetRenderMatrix() out element by element, where PS2 builds the
+// rotation with Identity() and multiplies; the normalized vectors are PS2's (a = v; a.y = 0.0f; a.Normalize(), VC6
+// folding the zero).
+// Not matching yet: the original has an ebp frame (and this spilled to it), though its assembly has no labels, jumps
+// or pushes VC6 can't follow; labels, a goto, this in a block, inlined assembly helpers, /Oy- and #pragma optimize
+// don't give it one.
 // FUNCTION: LS3DF 0x10006090
 void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 {
@@ -517,7 +528,10 @@ void I3D_billboard::m_AddFGroups()
 }
 
 // Like I3D_object's, rendered with g_matrix: the cull mode set once (none for a proxy, else by the material), and no
-// z writes for rot_axis 4
+// z writes for rot_axis 4. The material's cull mode goes through render.h's SetCullState: written out, the inline
+// budget comes out otherwise.
+// Not matching yet: the original keeps base in a stack slot, zeroes esi in the branch without hardware T&L and calls
+// two of that switch's SetColorOps out of line (ours four; a helper for the switch made it worse).
 // FUNCTION: LS3DF 0x100083b0
 void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
@@ -862,7 +876,12 @@ LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)
 
 // Draws the glows, faded by the occlusion test (made with test, every test_interval ms): a single glow on the light,
 // sized by the distance, or several along the light's direction from a point in front of the camera, the last one
-// enlarged and the others faded by the angle to the view direction
+// enlarged and the others faded by the angle to the view direction. Spellings the original's code shows: windows.h's
+// min and max, the constant first where the original loads it first (max(1.0f, ...)); the viewport's half sizes in
+// parentheses; the time step multiplied in each arm of the ternary; if (time - last_update);
+// target_color.Dot(target_color); each vertex's color assigned first and the four specular colors last.
+// Not matching yet: the original keeps the position in ebp and ebx across the camera's matrix update and zeroes ebx
+// only after timeGetTime, where ours spends ebx on the zero first.
 // FUNCTION: LS3DF 0x10009890
 void I3D_lensflare::Draw(bool test)
 {

@@ -228,6 +228,8 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
     }
 }
 
+// The copy loops walk their pointers, the parameters included, in place and count a copy of num down: VC6 then keeps
+// the vertex pointer on a member (lea eax, [edx + 8]), as in SetUV
 // FUNCTION: LS3DF 0x10037030
 bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, const I3D_text_coor *uv, uint uv_stride,
     const I3D_text_coor *uv2, uint uv2_stride, float uo, float vo)
@@ -562,6 +564,8 @@ uchar *I3D_object::LockVertices(int index, uint flags)
 // Queues the face groups of the level of detail the distance picks, after bringing its lod up to date: created with
 // the level's vertices, the texture coordinates of the level shown (VISF_UNKNOWN_10), lit, its alpha, the environment
 // map and, without hardware T&L, transformed and fogged
+// Not matching yet: the register allocation (the original keeps this in ebx, ours in ebp) and one more stack slot in
+// the original.
 // FUNCTION: LS3DF 0x10038020
 void I3D_object::m_AddFGroups()
 {
@@ -817,6 +821,9 @@ void I3D_object::m_AddFGroups()
 // Renders a face group m_AddFGroups queued: the material's states, its texture and environment map (in one pass, or
 // in two where the hardware can't blend them, see m_HardwareCaps' single pass bit), and a fog pass that renders the
 // fog color over the face group with the vertices' fog in their alpha (SwapVertexBytes)
+// Not matching yet: the multipass branch without a material keeps its own SetTexture(0, NULL), which the original
+// shares with the untextured branch, and SetColorOp, SetAlphaState and SetAlphaOp stay inline later than in the
+// original. Insanity3D's shape of the cull code (SetCullState, or EnableNoCull's ternary) scored worse.
 // FUNCTION: LS3DF 0x10039280
 void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {

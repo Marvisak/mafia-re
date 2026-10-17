@@ -7,8 +7,8 @@
 
 // The graphics interface (PS2 file IGraph.cpp), video playback (PS2 IShow.cpp) and textures (PS2 ITexture.cpp). The
 // virtual functions the game calls are __stdcall. IGraph's state is in globals (PS2 m_MainHWnd, m_pD3DDevice8, ...):
-// the object itself is only its vtable pointer. Names are the PS2 build's unless noted; the PC-only parts have
-// guessed names.
+// the object itself is only its vtable pointer (new IGraph allocates 4 bytes), and as members the globals give other
+// code in most of IGraph.cpp. Names are the PS2 build's unless noted; the PC-only parts have guessed names.
 
 // From the DirectX 8.1 SDK: dinput8.lib's data formats, dxguid.lib's GUIDs and dxerr8.lib's error strings
 // GLOBAL: LS3DF 0x100a160c

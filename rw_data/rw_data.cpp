@@ -240,6 +240,9 @@ int EXPORT dtaOpen(const char *file_name, bool force_dta)
         }
     }
 
+    // An inline call after the second OpenFromFileSystem copy: the original calls size() out of line in that copy,
+    // which only an inline call after it gives (this one, or OpenFromDTA declared inline, which VC6 then doesn't
+    // inline). Wrappers before the copies, dead stores, or the API called directly here don't.
     C_m_p.Unlock();
     return handle;
 }
@@ -636,7 +639,16 @@ bool EXPORT dtaDelete(const char *file_name)
 }
 
 // Not matching yet: the code is complete, the stack slots and some register choices differ. tools/framelayout.py
-// models VC6's slot rules and shows the predicted and the actual slots from a /FAs listing.
+// models VC6's slot rules and shows the predicted and the actual slots from a /FAs listing. It gives every slot group
+// of ours but one (the third Decompression copy's len temporary, alone in both builds though free slots exist), and
+// the original's groups only with more references before tail merging than our source makes: size about 2 more,
+// remaining_blocks about 4, the second copy's count about 4, and the first copy's count heavier than size, where ours
+// has the first copy's count and flags heavier. No merge visible in the final code accounts for them. Tried without
+// effect: `out += count; out++`, `dest[out++] = buffer[position++]`, the locals' declaration order and scope, the call
+// result through a named local, the loop bound in a local, `(short)flags >= 0`, `int i`, result reused for the
+// block size, `remaining_block_size >= len`'s branches swapped. The register differences don't follow the slots (they
+// stayed when the slots moved halfway to the original's), and a one-token change in Decompression (`bits -= 1`,
+// `flags = flags << 1`, a memcpy length written twice) reshuffles them all while the instructions stay.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -1281,8 +1293,10 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
 // PC-only code (the PS2 build has a stub) and, like dtaWrite's flag-set exit, without the lock wrappers.
 // Not matching yet: the original inlines all of push_back at the end, ours keeps one of insert()'s size() calls out of
 // line. The original probably had a little more source before the push_back that compiles to nothing, most likely a
-// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough (VC6's
-// inline budget grows with the source, dead code included). Wrappers before the push_back and a direct unlock after it would also do it.
+// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough
+// (VC6's inline budget grows with the source, dead code included); eight `if (0)` lines inline more than the original.
+// Wrappers before the push_back and a direct unlock after it would also do it; a wrapper after it would need about 80
+// dead statements.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {
@@ -1442,7 +1456,10 @@ int EXPORT dtaWrite(int handle, const uchar *buffer, uint len)
     }
 
     // The original has a separate exit when the flag is set; one shared exit compiles differently. That exit leaves the
-    // critical section directly: with C_m_p.Unlock() in both paths, VC6 hoists the common push C_m_p above the branch.
+    // critical section directly: with C_m_p.Unlock() in both paths, VC6 hoists the common push C_m_p above the branch,
+    // and nothing else stops it (structure, return spellings, declarations of C_m_p, RAII guards, try, dead code,
+    // switches, #pragma optimize). The five other failure exits share one form, as VC6 merges them into one exit; which
+    // form the original used for them, or for the lock and the final unlock, the binary doesn't say.
     if (!buffer)
     {
         if (v_file_h[handle].flags & DTA_BUFFER)

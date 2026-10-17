@@ -1,6 +1,7 @@
 // The 4ds loader (PS2 load4ds.cpp), in the original from 0x10060c60 to its marker 0x10061970: a C_list's $E, then
-// LoadImage (0x10060cb0), LoadMeshImage, two more functions and LoadAnimation5ds (PS2 Load5ds.cpp's). Only
-// LoadMeshImage is written yet. Names are the PS2 build's unless noted.
+// LoadImage (0x10060cb0), LoadMeshImage, two more functions and LoadAnimation5ds (PS2 Load5ds.cpp's,
+// LoadAnimation5ds__FPCcPPvPC9_FILETIME: const char *, void **, const FILETIME *, here in ecx, edx and on the stack,
+// retn 4). Only LoadMeshImage is written yet. Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
 #include "dta.h"
 

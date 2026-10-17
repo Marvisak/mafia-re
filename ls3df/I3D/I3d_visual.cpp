@@ -30,6 +30,8 @@ void I3D_visual::UpdateV()
         vis_flags &= ~(VISF_WBOUND_VALID | VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
 }
 
+// Two early returns before one print: an if/else with a print in each branch gives the same code with this and world
+// in each other's registers
 // FUNCTION: LS3DF 0x1005a3c0
 void I3D_visual::SetSpace(bool world)
 {

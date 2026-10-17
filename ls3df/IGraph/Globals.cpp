@@ -7,7 +7,8 @@
 // header's zero vector, 0x60 bytes nothing references, v, v's guard, 1 byte nothing references, StaticInstance, then
 // the zero-initialized globals. The unreferenced bytes look like another function's static S_vector[8] and its guard,
 // a function /OPT:REF dropped. VC6's hash (tools/bsshash.py) orders by name: log_name and timer_frequency (PC only)
-// and that function are still to be named, and v's decorated name depends on BBoxVertices' return type.
+// and that function are still to be named, and v's decorated name depends on BBoxVertices' return type. The other
+// names are PS2's, the two function statics' included (str$674, v$795 next to UnitBBox in PS2's .bss).
 #include "ls3df.h"
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
@@ -43,7 +44,8 @@ ISND_driver *pISndDriver = NULL;
 void dbgClear();
 
 // The engine's start and end: the constructor clears the log and creates the three drivers, the destructor deletes
-// them (PS2 names)
+// them (PS2 names). The constructor is defined in the class, so its out-of-line copy comes right after the $E that
+// constructs StaticInstance, as the original's does.
 class BreBre {
 public:
     // FUNCTION: LS3DF 0x1006b450
@@ -178,7 +180,8 @@ static void InitLogName()
     strcat(log_name, "log.txt");
 }
 
-// Starts a new log with the date. BreBre's constructor inlines it, so /OPT:REF drops the out-of-line copy.
+// Starts a new log with the date. BreBre's constructor inlines it though it is defined further down (/Ob2), so
+// /OPT:REF drops the out-of-line copy; PS2 has it out of line (dbgClear__Fv).
 void dbgClear()
 {
     InitLogName();

@@ -9,6 +9,7 @@
 // products. The Xbox build has the same instructions, out of line where VC6 inlines them. Their tells: the inline
 // assembler encodes a local's address with a 32-bit displacement (lea esi, r), and a block that reads this or a
 // parameter by name keeps it in memory (this spilled to a stack slot).
+// Parameter and local names are Insanity3D's where its code is the same (m1, m2, rtn, acos_val).
 #include "I3D/I3d_math.h"
 
 #include <stdlib.h>
@@ -1014,6 +1015,18 @@ void S_quat::Make(const S_vector &axis, float angle)
     s *= f;
 }
 
+// PS2's algorithm, each block spelled as the PC's code shows: the three fabs tests are >=, the rare case first; the
+// second GetScale goes into a new local, and the recursion's result is copied member by member; y_axis and the
+// diagonal are assigned from temporaries, the diagonal a copy of y_axis plus += (PS2's operator+=); the constant
+// quaternions use the four-float constructor, and both acos paths assign the axis and Normalize it in place; the
+// rotated (1, 1, 0) is assigned an S_vector(...) in both branches (stores into its fields get merged with the other
+// branch's and spill its products), each component a flat sum of two matrix elements (VC6 reorders a flat chain, a
+// pair in parentheses would stay a group). The element accessors are inline calls too, which keep GetScale's and row
+// 0's constructors out of line, as in the original.
+// Not matching yet: the Cross path's -axis keeps its constructor out of line (a little inline budget short; more dead
+// source brings an earlier constructor in first), the rows' inlined Cross multiply their operands in the other order
+// (no spelling of Cross or of the row accessor changes it), the term order of d1.Dot(d2) and of the Cross and Dot
+// test, and two swapped stack slots (Magnitude's sq and the assembly helper's argument).
 // FUNCTION: LS3DF 0x1002eef0
 void S_quat::Make(const S_matrix &m)
 {

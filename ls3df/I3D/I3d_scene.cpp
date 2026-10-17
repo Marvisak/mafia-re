@@ -965,11 +965,13 @@ void I3D_scene::WeatherSystemReset()
     ws_elements.reset();
 }
 
-// The dummy's box in world space: its center and radius, three of its faces as planes and its edges' lengths. Each face
+// The dummy's box in world space: its center and radius, three of its faces as planes and its edges' lengths. A free
+// function despite its name, as PS2's signature has it (m_PrepareDummyStruct__FP12DUMMY_STRUCTP9I3D_dummy). Each face
 // is made in one plane local and copied, as in the original (Insanity3D's S_plane::ComputePlane has the same three
 // steps). Open: the original inlines Normalize all three times but calls GetNormal and Dot, which no amount of source
 // gives with them inline (VC6 takes GetNormal before Normalize, and Dot whenever Normalize fits); a forced inline
-// Normalize does, but costs S_quat::Make and the camera.
+// Normalize does, but costs S_quat::Make and the camera. The original has no out-of-line copy of Normalize anywhere;
+// ours comes from camera code that doesn't inline it.
 // FUNCTION: LS3DF 0x1004b510
 void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 {
@@ -1045,6 +1047,7 @@ DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 
 // The floats come as their bits. A new color is written into the particles' vertices (doubled where the color op can't
 // modulate by 2), a new size, speed or kind gives every particle its shape again.
+// Not matching yet: this sits in another register (the original's esi is our edi, its edi our esi).
 // FUNCTION: LS3DF 0x1004bce0
 void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
 {

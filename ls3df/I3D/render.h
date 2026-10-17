@@ -4,6 +4,9 @@
 // Render state helpers of the rendering code (the file's name is a guess). I3d_driver.cpp doesn't include it: its
 // draws call the copies the linker kept (in the billboard file's code), where the visuals' rendering inlines them as far
 // as the inline budget allows. I3D.h declares the two with copies for the driver.
+// They are inline functions because the original's I3D_object::m_RenderFGroup inlines SetBlendState and
+// SetVertexFormat in its first calls and calls them in later ones. Written out instead, our build inlined the
+// multipass helpers the original calls.
 #include "I3D/I3D.h"
 
 // FUNCTION: LS3DF 0x1000ab40

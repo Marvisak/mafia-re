@@ -274,7 +274,7 @@ class C_str {
             return size;
         }
 
-        // The buffer was allocated as a char array (PS2 frees it with delete[])
+        // The buffer was allocated as a char array (PS2 frees it with delete[]; delete this gives the same code)
         // FUNCTION: LS3DF 0x1006fec0
         void Release()
         {
@@ -283,7 +283,8 @@ class C_str {
         }
 
         // The buffer holds the string after the counts. The unwinding after a constructor that throws calls the
-        // delete out of line, with the length in edx (/Gr).
+        // delete out of line, with the length in edx (/Gr). The buffer is constructed by a new-expression: the
+        // original's null path has a new-expression's own xor eax, eax.
         static void *operator new(size_t, int len)
         {
             return new char[len + 9];
@@ -406,8 +407,9 @@ extern IGraph *pGlobalIGraph;
 extern I3D_driver *pI3DDriver;
 extern ISND_driver *pISndDriver;
 
-// The undecorated exports are __cdecl, where the engine's default is __fastcall (/Gr). __declspec(dllexport) has to
-// come before the return type: VC6 ignores it after a '*' (C4518).
+// The undecorated exports are __cdecl, where the engine's default is __fastcall (/Gr): the original's calls of
+// I3DGetResultMessage clean up the stack. __declspec(dllexport) has to come before the return type: VC6 ignores it
+// after a '*' (C4518).
 #define LS3D_EXPORT extern "C" __declspec(dllexport)
 
 LS3D_EXPORT int __cdecl GetEngineVersion();

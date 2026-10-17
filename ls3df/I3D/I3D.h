@@ -247,6 +247,8 @@ public:
     virtual I3D_frame *__stdcall FindChildFrame(const char *frame_name, uint flags) const;
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
     virtual ~I3D_frame();
+    // Empty: the linker folds them with other empty functions, and the original's slots point at the base classes'
+    // copy (CBaseVideoRenderer::OnWaitEnd, 0x10088540)
     virtual void UpdateV() {}
     virtual void SaveImage() {}
     virtual void LoadImage();
@@ -1134,7 +1136,8 @@ public:
     virtual SHADOW_MODE __stdcall GetProjectorMode() const;
     // Computes vis_bound (PS2 name); the base only marks it valid
     virtual void __stdcall UpdateBoundProc();
-    // Empty (PS2 inlines both; the linker folded the copies with other files' empty functions)
+    // Empty (PS2 inlines both; the linker folded the copies with other files' empty functions). The original's slots
+    // point at a copy among the base classes' functions (0x10088970) and at the scene file's Update (0x1004e970).
     virtual void m_AddFGroups() {}
     virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help) {}
 

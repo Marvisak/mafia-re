@@ -258,7 +258,8 @@ static const D3DMATRIX IdentityMatrixData = {
 };
 #define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
 
-// A rotation: s is the cosine of half the angle, v the axis scaled by its sine (PS2 __ct__6S_quatFfRC8S_vector)
+// A rotation: s is the cosine of half the angle, v the axis scaled by its sine (PS2 __ct__6S_quatFfRC8S_vector). PS2's
+// layout has the axis first, the PC's s.
 struct S_quat {
     float s;
     S_vector v;
@@ -275,7 +276,7 @@ struct S_quat {
         v.z = z;
     }
 
-    // The axis as a chain (the frame's constructor stores z, y, x); Zero() is three statements
+    // Insanity3D's name. The axis as a chain (the frame's constructor stores z, y, x); Zero() is three statements
     void Identity()
     {
         v.x = v.y = v.z = 0.0f;
@@ -362,7 +363,8 @@ struct I3D_bbox {
 };
 
 // Every file that includes the header gets its own (PS2 name). Its $E isn't where it is defined: the files are
-// compiled with /YX (see tools/autopch.py).
+// compiled with /YX (see tools/autopch.py). Nothing but its $E references it. PS2's files also construct a ZeroSQuat;
+// the PC's construct only the vector.
 static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
 
 // Globals.cpp (PS2 names)

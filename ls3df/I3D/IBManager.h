@@ -120,7 +120,8 @@ inline void C_IBuffer::Unlock()
 // constructors whose unwinding needs them; the rest comes after IBManager.cpp's functions, the buffer tree's before
 // the blocks', interrupted by the header's zero vector's $E (0x1005c740). The copies that don't depend on the tree
 // (begin, _Construct, the pair's constructor, _Buynode, C_list::reserve) are folded with VBManager.cpp's, and which of
-// the names our PDB keeps changes from one build to the next: annotate the one it has.
+// the names our PDB keeps changes from one build to the next: annotate the one it has. In both files operator++(int)
+// and the buffer tree's _Inc don't come where the original's do yet.
 // TEMPLATE: LS3DF 0x1005ab00
 // ??1?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@QAE@XZ
 

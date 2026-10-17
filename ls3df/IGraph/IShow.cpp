@@ -41,7 +41,10 @@ extern uint ZBufferEnable;
 // The DirectX 8.1 SDK's texture renderer sample (samples\Multimedia\DirectShow\Players\Texture3D, DShowTextures.h),
 // which renders an AVI file's frames into the regions' textures instead of the sample's one texture. The size is
 // unsigned, unlike the sample's (IShow divides by it as unsigned); the members after it are PC additions with guessed
-// names.
+// names. It derives from the base classes in ls3df/BaseClasses/: VC6's own STRMBASE.LIB (1997) is another build of
+// them, with other vtables and no EH frame. The base classes' empty OnReceiveFirstSample and PrepareRender are folded
+// with other empty functions: the original's slots point at the scene file's Update (0x1004e970) and at a copy among
+// the base classes' functions (0x10088970).
 struct __declspec(uuid("{71771540-2017-11cf-ae26-0020afd79767}")) CLSID_TextureRenderer;
 
 // VTABLE: LS3DF 0x1009d788 CUnknown
@@ -151,6 +154,8 @@ int IShow::Release()
 
 // Decodes the Ogg file into the sound buffer: all of it at the start, else from where it was filled up to the play
 // position, wrapping around at the end. Past the file's end the buffer is filled with silence.
+// play is declared at the top with the other address-taken locals: declared in its block, it takes the dead
+// parameter's slot, where the original gives it one of its own and a spilled copy the parameter's.
 // FUNCTION: LS3DF 0x100735d0
 void IShow::m_FillBuffer(bool first)
 {
@@ -909,9 +914,10 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
 // FUNCTION: LS3DF 0x10074f40
 HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
 {
-    // Statics, not locals: the original's .bss has them around the header's zero vector. The names are guesses, which
-    // their place in .bss rules out (tools/bsshash.py). The splitter is never reset, so a later file without one
-    // still sees the last file's.
+    // Statics, not locals: the original's .bss has them around the header's zero vector (0x101c5be8-0x101c5dab). And
+    // the function's, not file-level globals: no consistent set of file-level names hashes into their order, natural
+    // names of local statics do. The names are guesses, which their place in .bss rules out (tools/bsshash.py). The
+    // splitter is never reset, so a later file without one still sees the last file's.
     static int pins_found;
     static AM_MEDIA_TYPE *media_types_array[20];
     static int types_found;
@@ -963,7 +969,8 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
     pFSrc->Release();
 
     // The connection brings in the AVI Splitter between the two. A block of its own: the original gives its locals'
-    // slots to the pin loop's afterwards.
+    // slots to the pin loop's afterwards. Not matching yet: the original stores pEnum = NULL after the call's pushes,
+    // ours after the first push (pEnum declared before the Releases puts the call right but the store too early).
     {
         IEnumFilters *pEnum = NULL;
         graph->EnumFilters(&pEnum);

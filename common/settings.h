@@ -40,7 +40,8 @@ struct S_settings
     int unk6;
 
     // The defaults, in declaration order. setup.exe 1.2 constructs its global S_settings and every local
-    // copy with them: the global has a dynamic initializer, and no InitSettings function exists.
+    // copy with them: the global has a dynamic initializer, and no InitSettings function exists (each local
+    // gets one set of default stores, never a second).
     // FUNCTION: SETUPSTEAM 0x401000
     S_settings()
     {

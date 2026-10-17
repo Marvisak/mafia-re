@@ -35,6 +35,8 @@ C_IBuffer::C_IBuffer()
 }
 
 // Clears the COMPLETE_IB_STRUCT of every block still given out
+// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short,
+// no source found).
 // FUNCTION: LS3DF 0x1005abf0
 C_IBuffer::~C_IBuffer()
 {

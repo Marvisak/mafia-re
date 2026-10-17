@@ -14,11 +14,14 @@
 bool supports_w_buffer = true;
 
 // The original names are unknown. Both compilers order uninitialized globals by a hash of their names (VS2008 puts
-// constructed ones after the others), and these names give both builds' .bss order
+// constructed ones after the others), and these names give both builds' .bss order. So do many other sets of names:
+// the layout only rules names out.
 // GLOBAL: SETUP 0x410d48
 // GLOBAL: SETUPSTEAM 0x405fc0
 char message_buffer[256];
-// dialog_state and settings are constructed at startup: their dynamic initializers start this file's code
+// dialog_state and settings are constructed at startup: their dynamic initializers start this file's code. VC6 emits
+// them where the globals are defined, so defined at the end of main.cpp they would end that file's code instead, in
+// the same place: the layout doesn't tell which file had them.
 // GLOBAL: SETUP 0x410e48
 // GLOBAL: SETUPSTEAM 0x4060c0
 S_state dialog_state;
@@ -426,7 +429,8 @@ bool LoadD3D8()
     }
 
     int adapter_count = direct3d8->GetAdapterCount();
-    // Two checks, which VC6 merges into one store: an || gives the same code but other registers
+    // Two checks, which VC6 merges into one store: an || gives the same code but other registers, in both builds (the
+    // locals' declaration order and place change nothing)
     if (settings.adapter >= adapter_count)
     {
         settings.adapter = 0;

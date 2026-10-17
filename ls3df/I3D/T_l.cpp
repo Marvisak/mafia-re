@@ -45,6 +45,9 @@ struct S_temp_light {
     uint unknown_48[2];
 };
 
+// The file's .bss isn't laid out yet: the original has TempLightList (PS2 name, bucket 286) after pTempLight (704),
+// and two 12-byte objects nothing references at 0x101c4d24 and 0x101c4d64. The $E at 0x10065a10 is identical but
+// unmatched: its only reference points inside TempLightList, and $E5 is in several files.
 // GLOBAL: LS3DF 0x101c4d20
 int TempLightIndex;
 
@@ -621,6 +624,12 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
 // plane (x and z, y and z, x and y), scaled by RS_ENVMAP_SCALE and scale; 5 maps it into the dummy's box, clamped.
 // The sphere maps are assembly; mode 1's center case jumps back into mode 0's loop. PS2 EnvProcess has no camera
 // position, offsets or dummy.
+// VC6 compiles the C here as without optimization (count-- through memory, every local in memory, no inlining:
+// S_vector's empty constructor and GetInvMatrix are calls), unlike FogProcess's, which has __asm too; `#pragma
+// optimize("", off)` around it changes nothing. The pointer local per vertex gives the original's copy of the vertex
+// into a slot of its own, a cast in the call doesn't. Not matching yet: the slot order (each sphere mode's vector
+// and float are swapped, and the dummy pointer sits above the matrix where the original has it below; casts,
+// references and the declaration order didn't move them).
 // FUNCTION: LS3DF 0x10067d20
 void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, uint count, const S_vector &cam_pos,
     const S_matrix &m, float scale, float u_ofs, float v_ofs, int mode, I3D_frame *frm)

@@ -39,6 +39,8 @@ float RSLodQuality;
 // RSLodQuality and the object's scale) is as far or farther, or one past the last. The frame's callback is told of a
 // change. With VISF_UNKNOWN_10 (PC only) a level whose first texture isn't loaded yet gives way to one whose is, the
 // level is only stored, and the result is 0.
+// The count is decremented in place (num--, then num + 1 for one past the last), and the texture search assigns lod
+// inside its loop (then if (i >= last) lod = last;), which lets the exhausted loop jump straight to that assignment.
 // FUNCTION: LS3DF 0x10061e30
 int GetObjectLOD(I3D_object *obj, const float &dist_2)
 {

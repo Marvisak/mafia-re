@@ -363,7 +363,9 @@ int I3D_driver::GetState(I3D_RENDERSTATE state) const
     return renderState[state];
 }
 
-// Walks a triangle's edge from top to bottom, widening each row's span to the edge's pixel
+// Walks a triangle's edge from top to bottom, widening each row's span to the edge's pixel. An inline function: the
+// original stores the copies of its parameters (ye, xe, ys) before the ye == ys test, which a macro or the code written
+// out doesn't give. The loop takes its own x and y (not the parameters walked in place) and x >> 7 at each use.
 static inline void ScanEdge(int xs, int ys, int xe, int ye)
 {
     if (ye == ys)

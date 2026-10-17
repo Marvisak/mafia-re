@@ -11,8 +11,9 @@ precompiled headers have before that item's definition, and at the end of the fi
 - What counts in the headers: inline function bodies (class members included) before the item, by size; not
   declarations, macros, or anything after the item.
 
-So where a file's $E comes measures the header code before the zero vector: where ours comes earlier than the
-original's, the original's headers had more inline code before it.
+Probes and the real files agree: padding the header with small inline functions moves every file's $E and the copy of
+S_vector::Cross together. So where a file's $E comes measures the header code before the zero vector: where ours comes
+earlier than the original's, the original's headers had more inline code before it.
 
 A source that creates the precompiled header gets a little more room than one that uses an existing one. In the VC6
 IDE a file used the previous file's when its include lines and switches matched, which isn't known for each file.

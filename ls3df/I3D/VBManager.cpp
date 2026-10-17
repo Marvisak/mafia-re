@@ -34,6 +34,8 @@ C_VBuffer::C_VBuffer()
 }
 
 // Clears the COMPLETE_VB_STRUCT of every block still given out
+// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short,
+// no source found).
 // FUNCTION: LS3DF 0x10068af0
 C_VBuffer::~C_VBuffer()
 {

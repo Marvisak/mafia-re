@@ -2,7 +2,8 @@
 
 #include "ijoy.h"
 
-// The implementation of the interfaces in ijoy.h. Like those, every name here is a guess.
+// The implementation of the interfaces in ijoy.h. Like those, every name here is a guess. Only the names of
+// uninitialized data show in the bytes, through VC6's .bss order (SetCondition's conditions).
 
 // From the DirectX 8.1 SDK: dinput.lib's data format and dxguid.lib's GUIDs. The axis GUIDs are only referenced by
 // the data format's objects.

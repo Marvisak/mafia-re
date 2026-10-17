@@ -20,6 +20,8 @@ public:
     C_multithrerad_protection();
     ~C_multithrerad_protection();
 
+    // Guessed names: the PS2 build inlines both, the Xbox build has no names. H&D Deluxe's dta source (the Insanity
+    // engine's) calls the critical-section functions directly everywhere, as dtaOpenWrite does here.
     void Lock()
     {
         EnterCriticalSection(&section);

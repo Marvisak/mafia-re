@@ -1,3 +1,5 @@
+// setup.exe has two source files (the Rich header has two objects from the compiler), whose names are unknown. 1.2
+// has this one's code at 0x401000-0x4025b0, in the order of this file apart from Error, and hw.cpp's after it.
 #include "main.h"
 #include "hw.h"
 #include "settings.h"
@@ -29,7 +31,7 @@ inline void GetWindowHandles(S_state &state, HWND main_window)
 }
 
 // static, which explains both builds' order: VC6 emits a static function after its first caller (1.2 has it after
-// DialogFunc), VS2008's link-time code generation where it is defined
+// DialogFunc), VS2008's link-time code generation where it is defined. Not inline: VC6 inlines that into DialogFunc.
 // FUNCTION: SETUPSTEAM 0x4011f0
 static void Error(const char *msg)
 {
@@ -517,7 +519,10 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             ToggleExpertSettings();
             return 0;
         case IDC_BUTTON_AUTODETECT:
-            // Both builds have the autodetection once, in WM_INITDIALOG, entered from there and from this button
+            // Both builds have the autodetection once, in WM_INITDIALOG, entered from there and from this button. The
+            // register allocation's edge code shows a join, not two merged copies: WM_INITDIALOG sets the constant
+            // register (mov edx, 0x20) and jumps past this case's load of vram_size. Two copies don't merge in VC6
+            // (their registers differ), and written as a function, VS2008 doesn't inline it into DialogFunc.
             goto autodetect;
         case IDC_BUTTON_EXIT:
         {

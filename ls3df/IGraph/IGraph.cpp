@@ -2200,7 +2200,9 @@ struct S_rla_header {
 short EncodeRLAChannel(const uint *src, uchar *dst, int count, uint mask, int shift)
 {
     // The pointers are walked through copies, declared after len and left: with the parameters themselves, or in
-    // another order, VC6 allocates other registers
+    // another order, VC6 allocates other registers (walking src and dst themselves puts left and dst in memory and
+    // mask in edx, where the original keeps those three in ebx, eax and ebp). About a thousand other spellings
+    // (statement order, loop forms, helpers or macros, operand order, types) didn't change the allocation.
     int len = 0;
     int left = count;
     const uint *in = src;

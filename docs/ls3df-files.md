@@ -22,7 +22,10 @@ a name is uncertain, the table says so.
   - `Globals.cpp`'s own `ZeroVector` has the same shape, but its code sits before the file's marker.
 - **Names.** Strings in each range name the classes (`!! Out of memory  I3D_frame::SetName()`), and two files name
   themselves through `__FILE__`. The PS2 build (`SLUS_206.71`) names its files through `__sinit_<file>.cpp`. Its
-  engine files are linked in folder groups (I3D, IGraph, ISound), alphabetically within each, and so are the PC's.
+  engine files are linked in folder groups (I3D, IGraph, ISound), alphabetically within each and case-insensitively, as
+  a VC6 project lists its files, and so are the PC's: its exports run `I3D_frame` (`0x1001c7d0`), `I3d_math`
+  (`0x1002cda0`), `I3D_visual` (`0x1005a510`), `Globals` (`0x1006b6d0`), and the source names in its `.data` strings
+  `clipper.cpp`, `IBManager.cpp`, `load.cpp`, `load5ds.cpp`, `VBManager.cpp`, then `Globals.cpp`'s and `IGraph.cpp`'s.
 
 PS2 has 51 engine files: the 49 from `I3d_animation.cpp` to `IS_source.cpp`, and `VBManager_PS2.cpp` and
 `IBManager_PS2.cpp`, the PS2's counterparts of `VBManager.cpp` and `IBManager.cpp`. The PC's Rich header lists 61 C++

@@ -96,6 +96,14 @@ C_joy_base::~C_joy_base()
     leak_detector.objects[LEAK_JOY_BASE]--;
 }
 
+// Not matching yet: the original has device and object in each other's registers (esi and edi), every instruction
+// otherwise the same, a near-tie in VC6's register priority. One more reference to device that stays in the code
+// gives the original's registers (`device->device = NULL` after the Release, a store the original doesn't have), and
+// so does the device cleanup written twice for VC6 to merge (`if (device->device) { Release; delete; } else delete`),
+// but then three instructions load into other scratch registers. References the optimizer removes early (CSE,
+// threading, dead code) don't count. A copy of Close on its own keeps our registers through 256 combinations of loop
+// forms, declaration places and orders, references or pointers to the lists, inline helpers, statements without
+// effect, redundant tests and every /O, /G and /Gz-type switch; front ends other than RTM's and SP5's are untested.
 // FUNCTION: IJOY 0x10001150
 void C_joy_base::Close()
 {
@@ -130,6 +138,9 @@ C_joy_base::C_joy_base(HINSTANCE hinstance, HWND hwnd, IDirectInput7A *direct_in
     leak_detector.objects[LEAK_JOY_BASE]++;
     ref = 0;
     *ok = false;
+    // Assigned first: the original stores it after hinstance and hwnd, through a register (its address is passed on
+    // below), and VC6 stores such a member after the direct stores around it. This order also makes VC6 load hinstance
+    // as early as the original
     this->direct_input = NULL;
     this->hinstance = hinstance;
     this->hwnd = hwnd;
@@ -923,6 +934,8 @@ uint C_joy::GetAxisMode(int axis)
 // FUNCTION: IJOY 0x10002c90
 bool C_joy::Update(uint flags)
 {
+    // A flag set in the failure path and tested after it: the original zeroes ebx once for both branches of the if
+    // (ok) below, where an if/else on the failure gives each branch a zero register of its own
     bool ok = true;
     if (FAILED(device->Poll()) && (!acquired || !Acquire(true))) {
         if (flags & JOY_UPDATE_RESET)
@@ -935,6 +948,8 @@ bool C_joy::Update(uint flags)
         if (FAILED(device->GetDeviceState(sizeof(device_state), &device_state)) && (!acquired || !Acquire(true)))
             return false;
 
+        // axis_mode[i] & JOY_AXIS_RAW is tested again wherever it is needed, without a local per axis: locals would
+        // take ebx, which the original gives to the repeated axis_mode[7]
         if (axis_mode[0] & JOY_AXIS_RAW)
             state.x = (float)device_state.lX;
         else if (half_range[0] != 0.0f) {
