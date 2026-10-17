@@ -440,7 +440,7 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
     if (frame == parent)
         return I3D_OK;
     I3D_frame *old_parent = parent;
-    uint keep_world = flags & 1;
+    uint keep_world = flags & I3DLINK_UPDMATRIX;
     if (keep_world)
         UpdateWMatrix();
     if (parent) {

@@ -9,8 +9,8 @@
 
 #include <math.h>
 
-// A vector with a fourth float, which the constructors clear (the assembly steps through vectors by 16 bytes; the name
-// is a guess)
+// A vector with a fourth float, which the constructors clear (the assembly steps through vectors by 16 bytes; PS2 has
+// the name, __ct__9S_vector4Fv)
 struct S_vector4 : public S_vector {
     float w;
 
@@ -48,9 +48,10 @@ struct S_temp_light {
 // GLOBAL: LS3DF 0x101c4d20
 int TempLightIndex;
 
-// The lights' scale of the vertex colors: 128, or 255 without MODULATE2X (IGraph::Init; the name is a guess)
+// The lights' scale of the vertex colors: 128, or 255 without MODULATE2X (IGraph::Init). Insanity3D's driver has the
+// same choice in a member of this name (0.5 or 1.0).
 // GLOBAL: LS3DF 0x100a9470
-float i3d_light_scale = 128.0f;
+float vertex_light_mult = 128.0f;
 
 // The assembly's constants (names guessed)
 // GLOBAL: LS3DF 0x100a9474
@@ -121,7 +122,7 @@ static inline int GetTempLightIndex()
 }
 
 // The color of the vertex at pVertices (its position, then its normal) from TempAmbient and TempLightList, with
-// TempAlpha's alpha, scaled by i3d_light_scale. Assembly; the color is left in eax.
+// TempAlpha's alpha, scaled by vertex_light_mult. Assembly; the color is left in eax.
 #pragma warning(push)
 #pragma warning(disable: 4035)
 static inline uint LightVertex()
@@ -325,7 +326,7 @@ next_light:
         jmp light_loop
 light_end:
         mov eax, TempAlpha
-        fmul i3d_light_scale
+        fmul vertex_light_mult
         xor edx, edx
         fistp t
         mov ecx, t
@@ -334,7 +335,7 @@ light_end:
         mov ecx, 0xff
 blue_ok:
         or eax, ecx
-        fmul i3d_light_scale
+        fmul vertex_light_mult
         xor edx, edx
         fistp t
         mov ecx, t
@@ -344,7 +345,7 @@ blue_ok:
 green_ok:
         shl ecx, 8
         or eax, ecx
-        fmul i3d_light_scale
+        fmul vertex_light_mult
         xor edx, edx
         fistp t
         mov ecx, t
@@ -377,7 +378,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     I3D_material *mat = level->fgroups->material;
     if (mat) {
         TempAlpha = FloatToInt(obj->fade * obj->transparency * mat->alpha * 255.0f) << 24;
-        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_UNKNOWN_20) {
+        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_KEEP_DIFFUSE) {
             TempColor.x *= mat->diffuse.x;
             TempColor.y *= mat->diffuse.y;
             TempColor.z *= mat->diffuse.z;
@@ -486,7 +487,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     }
     *cached = key;
     if (mat) {
-        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_UNKNOWN_20) {
+        if (!(level->mesh_flags & MESHF_TEXTURE) || level->mesh_flags & MESHF_KEEP_DIFFUSE) {
             TempAmbient.x *= mat->ambient.x;
             TempAmbient.y *= mat->ambient.y;
             TempAmbient.z *= mat->ambient.z;
@@ -588,7 +589,7 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
         c.x = texel[1] * (1.0f / 255.0f);
         c.y = texel[2] * (1.0f / 255.0f);
         c.z = texel[3] * (1.0f / 255.0f);
-        if (mat->flags & 0x80000000)
+        if (mat->flags & MATF_ADD_MODE)
             a = c.x * 0.3f + c.y * 0.6f + c.z * 0.1f;
         else
             a = texel[0] * (1.0f / 255.0f);

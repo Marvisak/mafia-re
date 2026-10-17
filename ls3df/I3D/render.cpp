@@ -19,7 +19,7 @@ bool renderCameraChanged;
 // GLOBAL: LS3DF 0x101c4cd0
 S_matrix *pViewProjMatrix;
 
-// RS_FLOAT_LOD scaled by the current camera's field of view, which the levels' distances are compared with (Render
+// RS_LOD_QUALITY scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)
 // GLOBAL: LS3DF 0x101c4ca4
 float RSLodQuality;

@@ -93,7 +93,8 @@ enum I3D_RENDERSTATE {
     RS_WIREFRAME = 9,
     RS_RECOMPUTE_GEOMETRY = 18,         // sets RecomputeAllGeometry
     RS_HWVERTEXPROC = 19,               // refused where the hardware lacks it (m_ProblemFlags 0x80)
-    RS_FLOAT_LOD = 20,                  // a float, 1.0 by default: the levels of detail's distance scale
+    RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
+                                        // name, the same number)
     RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
@@ -198,6 +199,9 @@ enum LS3D_CALLBACK_MESSAGE {
     LS3D_CALLBACK_LOD = 0x400,          // a visual's level of detail changed: the old one, the new one (GetObjectLOD)
 };
 
+// LinkTo's flags: the first is Insanity3D's I3DLINK_UPDMATRIX, the same value and role
+#define I3DLINK_UPDMATRIX 0x1           // keep the world matrix: the local one is made again against the new parent
+
 // A frame's callback (PS2's parameters; the calling convention isn't confirmed)
 typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
 
@@ -208,8 +212,8 @@ struct I3D_bvolume {
 };
 
 // The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC, vtable 0x1009b9b8). The game reaches its
-// members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, frm_flags,
-// matrix, f_matrix, name, parent, type), the others are guesses.
+// members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, user_data,
+// frm_flags, matrix, f_matrix, name, parent, type), the others are guesses.
 // VTABLE: LS3DF 0x1009b9b8
 class I3D_frame {
 public:
@@ -404,7 +408,8 @@ class __declspec(novtable) I3D_sound : public I3D_frame {
 public:
     I3D_sound();
 
-    virtual void __stdcall vfunc_20();
+    // PS2 name (its PS2 parameters; the result type is a guess)
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags);
     // PS2 name, 0x100597f0
     virtual bool __stdcall IsPlaying(bool unknown) const;
 
@@ -465,7 +470,8 @@ public:
     virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
 
     uchar unknown_140[0xd0];
-    I3D_sector *primary_sector;         // 0x210, the sector outside all others (the name is a guess)
+    I3D_sector *primary_sector;         // 0x210, the sector outside all others (Insanity3D's name; LS3DF names it
+                                        // "Primary sector" too)
     uchar unknown_214[0x70];
     ISND_3Dlistener *listener;          // 0x284
     uchar unknown_288[0xb4];
@@ -475,7 +481,7 @@ public:
 #define DUMMYF_NORMALIZED 0x1           // Normalize made the box (0, 0, 0) to (1, 1, 1)
 #define DUMMYF_NORMALIZED_CENTER 0x2    // Normalize made the box (-1, -1, -1) to (1, 1, 1)
 #define DUMMYF_INV_MAT_VALID 0x10       // PC only: inv_matrix is up to date (cleared when the frame moves or is
-                                        // normalized; the name is a guess)
+                                        // normalized; after Insanity3D's FRMFLAGS_INV_MAT_VALID)
 
 // A frame with a box (PS2 I3D_dummy, 0x19c bytes on PC; I3d_dummy.cpp). The game marks places and regions with them,
 // and the scenes' weather system takes its regions from them.
@@ -492,7 +498,8 @@ public:
     // box's center for mode 2, (0, 0, 0) to (1, 1, 1) from its min for the others
     virtual void __stdcall Normalize(uint mode);
 
-    // The inverse of the world matrix (PC only, the name is a guess; T&l.cpp's copy is the one linked)
+    // The inverse of the world matrix (PC only; Insanity3D's frames have it under this name. T&l.cpp's copy is the one
+    // linked)
     // FUNCTION: LS3DF 0x10068840
     const S_matrix &GetInvMatrix()
     {
@@ -578,7 +585,13 @@ public:
     uchar unknown_264[0x4f4 - 0x264];
 };
 
-I3D_PLACEHOLDER_FRAME(I3D_user, 0x144)
+// A frame that carries the game's data (PS2 I3D_user, 0x144 bytes on PC). Insanity3D's has the one member.
+class __declspec(novtable) I3D_user : public I3D_frame {
+public:
+    I3D_user();
+
+    uint add_data;                      // 0x140
+};
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
 I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
@@ -812,8 +825,8 @@ public:
     virtual void __stdcall UpdateVertices(int index);
     virtual void __stdcall SetLightness(float l);
     virtual void __stdcall SetTransparency(float t);
-    // Has the lods lit again (PC only, the name is a guess)
-    virtual void __stdcall ResetLighting();
+    // Has the lods lit again (PC only; Insanity3D's name for the same, which returns early without a mesh too)
+    virtual void __stdcall ResetLightInfo();
     // A lod's vertices, locked (PC only, the name is a guess; the flags aren't used)
     virtual uchar *__stdcall LockVertices(int index, uint flags);
 
@@ -886,7 +899,7 @@ public:
     float size;                         // 0x220, scales the glows' textures' size in pixels
     uint unknown_224;                   // 0x224
     uint test_interval;                 // 0x228, ms between the occlusion tests, 150
-    uint last_test;                     // 0x22c, timeGetTime() of the last one
+    uint last_check_col_time;           // 0x22c, timeGetTime() of the last one (Insanity3D's name)
     uint last_update;                   // 0x230, of the last fade step
     float visibility;                   // 0x234, fades to target_visibility
     float target_visibility;            // 0x238, 0 if occluded
@@ -926,11 +939,13 @@ I3D_PLACEHOLDER_VISUAL(I3D_mirror, 0x2ec)
 #define MATF_ADDRESS_U_CLAMP 0x10000    // the texture is clamped, not wrapped
 #define MATF_ADDRESS_V_CLAMP 0x20000
 #define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
-#define MATF_UNKNOWN_8000000 0x8000000  // gives its level MESHF_UNKNOWN_20
+#define MATF_KEEP_DIFFUSE 0x8000000     // textured, the lights still take the diffuse color: gives its level
+                                        // MESHF_KEEP_DIFFUSE (after Insanity3D's loader's keep_diffuse)
 #define MATF_TWO_SIDED 0x10000000       // not culled
-#define MATF_UNKNOWN_20000000 0x20000000 // alpha tested against m_AlphaRef
-#define MATF_ICON 0x40000000            // made by I3D_driver::GetIcon; blended
-#define MATF_UNKNOWN_80000000 0x80000000 // blended additively
+// The last three are Insanity3D's names for the same roles (its values differ)
+#define MATF_CKEY_ALPHA 0x20000000      // alpha tested against m_AlphaRef
+#define MATF_TXT_ALPHA 0x40000000       // the texture has alpha: blended (I3D_driver::GetIcon sets it)
+#define MATF_ADD_MODE 0x80000000        // blended additively
 
 // A material (PS2 I3D_material, 0x40 bytes on PC), reference counted
 class __declspec(novtable) I3D_material {
@@ -938,18 +953,23 @@ public:
     I3D_material();
 
     virtual int __stdcall Release();
-    virtual void __stdcall vfunc_01();
-    virtual void __stdcall vfunc_02();
-    virtual void __stdcall vfunc_03();
-    virtual void __stdcall vfunc_04();
+    // PS2 names (0x1002af20 to 0x1002af80); each returns I3D_OK
+    virtual LS3D_RESULT __stdcall SetAmbient(const S_vector &color);
+    virtual LS3D_RESULT __stdcall SetDiffuse(const S_vector &color);
+    virtual LS3D_RESULT __stdcall SetEmissive(const S_vector &color);
+    virtual LS3D_RESULT __stdcall SetAlpha(float a);
     virtual void __stdcall SetTexture(ITexture *texture);
     // PS2 name: makes this material a copy of mat
     virtual LS3D_RESULT __stdcall Duplicate(I3D_material *mat);
-    virtual void __stdcall vfunc_07();
+    // Sets MATF_TWO_SIDED (0x1002b120; Insanity3D's name, whose version takes a bool)
+    virtual LS3D_RESULT __stdcall Set2Sided();
     // PS2 name: an animated material's frame
     virtual void __stdcall UpdateTexture();
-    // The same for the environment map (the name is a guess)
+    // PS2 name: the same for the environment map
     virtual void __stdcall UpdateEnvTexture();
+    // PS2 name (0x1002b040): the environment map, with its MATF_ENVMAP_BLEND and MATF_ENVMAP_MODE values and env_alpha;
+    // a NULL texture clears MATF_ENVMAP
+    virtual LS3D_RESULT __stdcall SetEnvTexture(ITexture *texture, uint blend, uint mode, float a);
 
     int ref;                            // 0x04
     uint flags;                         // 0x08, MATF_*
@@ -959,7 +979,8 @@ public:
     S_vector diffuse;                   // 0x20
     S_vector emissive;                  // 0x2c
     float alpha;                        // 0x38, 1.0 opaque
-    float env_power;                    // 0x3c, the environment map's blend factor (MATF_ENVMAP_BLEND 1)
+    float env_alpha;                    // 0x3c, the environment map's blend factor (MATF_ENVMAP_BLEND 1; PS2's
+                                        // SetEnvAlpha)
 
     void AddRef()
     {
@@ -1046,7 +1067,7 @@ public:
 #define MESHF_ENVMAP_MODE 0x7           // a material's MATF_ENVMAP_MODE value: EnvProcess's mode
 #define MESHF_ENVMAP 0x8                // a material has an environment map: the lods have a second pair of coordinates
 #define MESHF_TEXTURE 0x10              // a material has a texture
-#define MESHF_UNKNOWN_20 0x20
+#define MESHF_KEEP_DIFFUSE 0x20         // a material has MATF_KEEP_DIFFUSE
 
 // A mesh level: a level of detail's vertices and face groups (0x44 bytes on PC), reference counted. Its destructor is
 // I3d_mesh.cpp's.
@@ -1286,8 +1307,9 @@ public:
     // classes (0x10087ec0). The buffer managers call it whenever they create or release a buffer.
     virtual void __stdcall m_RecomputeUsedVRAM();
 
-    // PC only (names guessed): a material whose texture is one of LS3DF's bitmaps, and the shadow textures'
-    // rasterizer, which fills a texture with the shadow's triangles, projected onto the box (x, y, -, x2, y2)
+    // PC only: a material whose texture is one of LS3DF's bitmaps (Insanity3D's GetIcon), and the shadow textures'
+    // rasterizer (names guessed), which fills a texture with the shadow's triangles, projected onto the box (x, y, -,
+    // x2, y2)
     I3D_material *GetIcon(uint res_id);
     void DrawShadowTriangles(const int *verts, const ushort *indx, uint num_faces, void *dst, int pitch);
     void DrawShadowTrianglesSW(const int *verts, const ushort *indx, uint num_faces);
@@ -1410,8 +1432,9 @@ extern uint volumeStats[8];
 // The z-buffer type of RS_USEZB, D3DZB_TRUE or with RS_WBUFFER D3DZB_USEW
 extern uint ZBufferEnable;
 
-// T&l.cpp: the lights' scale of the vertex colors, 128 or 255 without MODULATE2X (the name is a guess)
-extern float i3d_light_scale;
+// T&l.cpp: the lights' scale of the vertex colors, 128 or 255 without MODULATE2X (Insanity3D's driver member for the
+// same, 0.5 or 1.0 there)
+extern float vertex_light_mult;
 void LightingSetSector(I3D_sector *sector);
 bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uchar *src, uint src_stride,
     I3D_object *obj, const S_matrix &m, uint mode, bool force, lod *rec);
@@ -1433,8 +1456,8 @@ extern S_matrix *pViewProjMatrix;
 // A face group to render, as the visuals' m_AddFGroups queue them for their m_RenderFGroup (PS2 name, 0x20 bytes on PC)
 struct RENDER_FG_HELP_STRUCT {
     I3D_visual *vis;
-    uint sort_key;                      // 0x04, the transparent ones' 0x80000000 | the distance, else the texture's uid
-                                        // (0x40000000 | it for MATF_UNKNOWN_20000000), 0 untextured
+    uint sort_value;                    // 0x04, the transparent ones' 0x80000000 | the distance, else the texture's
+                                        // uid (0x40000000 | it for MATF_CKEY_ALPHA), 0 untextured (Insanity3D's name)
     uint clip;                          // 0x08, the frame's FRMFLAGS_CLIP
     uint unknown_0c;
     I3D_face_group *fg;                 // 0x10

@@ -72,10 +72,10 @@ public:
 #define OGG_NOTIFY_COUNT 11
 
 DWORD WINAPI OggThreadProc(void *param);
-static size_t OggRead(void *ptr, size_t size, size_t nmemb, void *datasource);
-static int OggSeek(void *datasource, ogg_int64_t offset, int whence);
-static int OggClose(void *datasource);
-static long OggTell(void *datasource);
+static size_t read_func(void *ptr, size_t size, size_t nmemb, void *datasource);
+static int seek_func(void *datasource, ogg_int64_t offset, int whence);
+static int close_func(void *datasource);
+static long tell_func(void *datasource);
 
 // FUNCTION: LS3DF 0x100733a0
 IShow::IShow() : regions(1)
@@ -357,7 +357,7 @@ LS3D_RESULT IShow::Open(const char *name, uint open_flags)
         // The failure is an else: it then shares the other failures' return
         if (dta_handle >= 0) {
             vf = new OggVorbis_File;
-            ov_callbacks callbacks = {OggRead, OggSeek, OggClose, OggTell};
+            ov_callbacks callbacks = {read_func, seek_func, close_func, tell_func};
             if (ov_open_callbacks(&dta_handle, vf, NULL, 0, callbacks) < 0)
                 return I3DERR_FILECORRUPTED;
             vorbis_info *info = ov_info(vf, -1);
@@ -433,27 +433,28 @@ DWORD WINAPI OggThreadProc(void *param)
     }
 }
 
-// vorbisfile reads the Ogg file through rw_data; the data source is the handle
+// vorbisfile reads the Ogg file through rw_data; the data source is the handle. The names are those of Insanity3D's
+// Ogg loader, ov_callbacks' fields.
 // FUNCTION: LS3DF 0x10074060
-static size_t OggRead(void *ptr, size_t size, size_t nmemb, void *datasource)
+static size_t read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
     return dtaRead(*(int *)datasource, ptr, size * nmemb);
 }
 
 // FUNCTION: LS3DF 0x10074080
-static int OggSeek(void *datasource, ogg_int64_t offset, int whence)
+static int seek_func(void *datasource, ogg_int64_t offset, int whence)
 {
     return dtaSeek(*(int *)datasource, (int)offset, whence) == -1 ? -1 : 0;
 }
 
 // FUNCTION: LS3DF 0x100740b0
-static int OggClose(void *datasource)
+static int close_func(void *datasource)
 {
     return dtaClose(*(int *)datasource);
 }
 
 // FUNCTION: LS3DF 0x100740c0
-static long OggTell(void *datasource)
+static long tell_func(void *datasource)
 {
     return dtaSeek(*(int *)datasource, 0, SEEK_CUR);
 }

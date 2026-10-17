@@ -89,8 +89,8 @@ inline void SetCullState(uint cull)
     }
 }
 
-// D3DRS_CLIPPING (always inlined, so the name is a guess)
-inline void SetClipState(uint clip)
+// D3DRS_CLIPPING (always inlined; Insanity3D has the same helper, commented out, under this name)
+inline void SetClipping(uint clip)
 {
     if (m_CurrClipState != clip) {
         m_CurrClipState = clip;

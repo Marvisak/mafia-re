@@ -82,7 +82,7 @@ LS3D_RESULT ISND_3Dsound::Open(ISND_source *source, uint flags)
     LS3D_RESULT result = ISND_sound::Open(source, flags);
     if (result != I3D_OK)
         return result;
-    if ((flags & ISND_3DBUFFER) && FAILED(buffer->QueryInterface(IID_IDirectSound3DBuffer, (void **)&lpDSB3D8)))
+    if ((flags & ISND_3DBUFFER) && FAILED(lpDSB8->QueryInterface(IID_IDirectSound3DBuffer, (void **)&lpDSB3D8)))
         return I3DERR_GENERIC;
     is3d_init = true;
     return I3D_OK;

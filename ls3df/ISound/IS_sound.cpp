@@ -140,10 +140,10 @@ void TraceDSErrors(HRESULT hr)
 }
 
 // FUNCTION: LS3DF 0x1007c8e0
-ISND_sound::ISND_sound() : buffer(NULL), source(NULL)
+ISND_sound::ISND_sound() : lpDSB8(NULL), source(NULL)
 {
     ref = 1;
-    frequency = 1.0f;
+    freq_mult = 1.0f;
     volume = 1.0f;
 }
 
@@ -171,9 +171,9 @@ int ISND_sound::Release()
 LS3D_RESULT ISND_sound::Open(ISND_source *source, uint flags)
 {
     Close();
-    if (!source->buffer)
+    if (!source->lpDSB8)
         return I3DERR_GENERIC;
-    HRESULT hr = pISndDriver->lpDS8->DuplicateSoundBuffer(source->buffer, &buffer);
+    HRESULT hr = pISndDriver->lpDS8->DuplicateSoundBuffer(source->lpDSB8, &lpDSB8);
     if (FAILED(hr)) {
         TraceDSErrors(hr);
         return I3DERR_GENERIC;
@@ -188,9 +188,9 @@ LS3D_RESULT ISND_sound::Open(ISND_source *source, uint flags)
 LS3D_RESULT ISND_sound::Close()
 {
     Stop();
-    if (buffer) {
-        buffer->Release();
-        buffer = NULL;
+    if (lpDSB8) {
+        lpDSB8->Release();
+        lpDSB8 = NULL;
     }
     if (source) {
         source->Release();
@@ -211,10 +211,10 @@ LS3D_RESULT ISND_sound::Play(ISND_source *source, uint flags)
 // FUNCTION: LS3DF 0x1007caa0
 LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
 {
-    if (!buffer)
+    if (!lpDSB8)
         return I3DERR_GENERIC;
     if (!(flags & ISND_NOREWIND))
-        buffer->SetCurrentPosition(0);
+        lpDSB8->SetCurrentPosition(0);
     DWORD play_flags, play_priority;
     if (!(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(this->flags & ISND_SYSMEM)) {
         if (pISndDriver->create_flags & ISNDINIT_EAX) {
@@ -265,10 +265,10 @@ LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
                     // No channel: the sound waits for one
                     TERMINATED_CHANNEL_STRUCT &t = TerminatedChannelList.push_back();
                     t.loop = flags & ISND_LOOP;
-                    t.buffer = buffer;
+                    t.buffer = lpDSB8;
                     t.sound = this;
                     t.priority = priority;
-                    buffer->GetCurrentPosition(&t.position, NULL);
+                    lpDSB8->GetCurrentPosition(&t.position, NULL);
                     t.stop_time = timeGetTime();
                     return I3D_OK;
                 }
@@ -278,18 +278,18 @@ LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
                 t.sound = best->sound;
                 t.priority = best->priority;
                 // The new sound's position, not the stopped one's
-                buffer->GetCurrentPosition(&t.position, NULL);
+                lpDSB8->GetCurrentPosition(&t.position, NULL);
                 t.stop_time = timeGetTime();
                 best->buffer->Stop();
                 best->sound = this;
-                best->buffer = buffer;
+                best->buffer = lpDSB8;
                 best->priority = priority;
                 best->loop = flags & ISND_LOOP;
                 best->start_time = t.stop_time;
             } else {
                 CHANNEL_STRUCT &c = ChannelList.push_back();
                 c.sound = this;
-                c.buffer = buffer;
+                c.buffer = lpDSB8;
                 c.priority = priority;
                 c.loop = flags & ISND_LOOP;
                 c.start_time = timeGetTime();
@@ -302,11 +302,11 @@ LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
 play:
     // In software when the hardware can't
     if (flags & ISND_LOOP) {
-        if (FAILED(buffer->Play(0, play_priority, play_flags | DSBPLAY_LOOPING))
-            && FAILED(buffer->Play(0, 0, DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE)))
+        if (FAILED(lpDSB8->Play(0, play_priority, play_flags | DSBPLAY_LOOPING))
+            && FAILED(lpDSB8->Play(0, 0, DSBPLAY_LOOPING | DSBPLAY_LOCSOFTWARE)))
             return I3DERR_GENERIC;
     } else {
-        if (FAILED(buffer->Play(0, play_priority, play_flags)) && FAILED(buffer->Play(0, 0, DSBPLAY_LOCSOFTWARE)))
+        if (FAILED(lpDSB8->Play(0, play_priority, play_flags)) && FAILED(lpDSB8->Play(0, 0, DSBPLAY_LOCSOFTWARE)))
             return I3DERR_GENERIC;
     }
     return I3D_OK;
@@ -315,9 +315,9 @@ play:
 // FUNCTION: LS3DF 0x1007cf50
 LS3D_RESULT ISND_sound::Stop()
 {
-    if (!buffer)
+    if (!lpDSB8)
         return I3DERR_GENERIC;
-    buffer->Stop();
+    lpDSB8->Stop();
     if (MaxHWChannels > 0 && (pISndDriver->create_flags & ISNDINIT_EAX)
         && !(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM)) {
         int i = ChannelList.size();
@@ -342,24 +342,24 @@ LS3D_RESULT ISND_sound::Stop()
 // FUNCTION: LS3DF 0x1007d040
 uint ISND_sound::GetCurrTime() const
 {
-    if (!buffer)
+    if (!lpDSB8)
         return 0;
     DWORD position;
-    buffer->GetCurrentPosition(&position, NULL);
+    lpDSB8->GetCurrentPosition(&position, NULL);
     return (uint)(position / source->bytes_per_ms);
 }
 
 // FUNCTION: LS3DF 0x1007d090
 LS3D_RESULT ISND_sound::SetCurrTime(uint time)
 {
-    if (!buffer)
+    if (!lpDSB8)
         return I3DERR_GENERIC;
     // The start of the block before
     int position = ((int)(time * source->bytes_per_ms) / source->wave_format.nBlockAlign - 1)
         * source->wave_format.nBlockAlign;
     if (position < 0)
         position = 0;
-    buffer->SetCurrentPosition(position);
+    lpDSB8->SetCurrentPosition(position);
     if (MaxHWChannels > 0 && (pISndDriver->create_flags & ISNDINIT_EAX)
         && !(pISndDriver->create_flags & ISNDINIT_NOHWCHANNELS) && !(flags & ISND_SYSMEM)) {
         int i = ChannelList.size();
@@ -377,7 +377,7 @@ LS3D_RESULT ISND_sound::SetCurrTime(uint time)
 // FUNCTION: LS3DF 0x1007d160
 LS3D_RESULT ISND_sound::SetVolume(float volume)
 {
-    if ((flags & ISND_NOVOLUME) || !buffer)
+    if ((flags & ISND_NOVOLUME) || !lpDSB8)
         return I3DERR_GENERIC;
     this->volume = volume;
     volume *= pISndDriver->volume;
@@ -391,7 +391,7 @@ LS3D_RESULT ISND_sound::SetVolume(float volume)
         if (db < DSBVOLUME_MIN)
             db = DSBVOLUME_MIN;
     }
-    buffer->SetVolume(db);
+    lpDSB8->SetVolume(db);
     return I3D_OK;
 }
 
@@ -399,9 +399,9 @@ LS3D_RESULT ISND_sound::SetVolume(float volume)
 LS3D_RESULT ISND_sound::SetVolumeLOG(float volume)
 {
     this->volume = volume;
-    if ((flags & ISND_NOVOLUME) || !buffer)
+    if ((flags & ISND_NOVOLUME) || !lpDSB8)
         return I3DERR_GENERIC;
-    buffer->SetVolume((LONG)((1.0f - volume * pISndDriver->volume) * -10000.0f));
+    lpDSB8->SetVolume((LONG)((1.0f - volume * pISndDriver->volume) * -10000.0f));
     return I3D_OK;
 }
 
@@ -409,7 +409,7 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(float volume)
 // FUNCTION: LS3DF 0x1007d240
 LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
 {
-    if ((flags & ISND_NOVOLUME) || !buffer)
+    if ((flags & ISND_NOVOLUME) || !lpDSB8)
         return I3DERR_GENERIC;
     // The driver's attenuation. Without the cast to float, VC6 folds the two minus signs into an add.
     float attenuation = (float)(log(pISndDriver->volume) * -866.0);
@@ -418,7 +418,7 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
         volume = DSBVOLUME_MIN;
     else if (volume > DSBVOLUME_MAX)
         volume = DSBVOLUME_MAX;
-    buffer->SetVolume(volume);
+    lpDSB8->SetVolume(volume);
     return I3D_OK;
 }
 
@@ -426,22 +426,22 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
 // FUNCTION: LS3DF 0x1007d2b0
 LS3D_RESULT ISND_sound::SetFrequency(float frequency)
 {
-    if (!(flags & ISND_FREQUENCY) || !buffer)
+    if (!(flags & ISND_FREQUENCY) || !lpDSB8)
         return I3DERR_GENERIC;
-    uint freq = (uint)(frequency * source->format.samples_per_sec);
+    uint freq = (uint)(frequency * source->wf.samples_per_sec);
     if (freq > pISndDriver->max_freq)
         freq = pISndDriver->max_freq;
     if (freq < pISndDriver->min_freq)
         freq = pISndDriver->min_freq;
-    this->frequency = (float)freq / source->format.samples_per_sec;
-    buffer->SetFrequency(freq);
+    freq_mult = (float)freq / source->wf.samples_per_sec;
+    lpDSB8->SetFrequency(freq);
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007d340
 LS3D_RESULT ISND_sound::SetPanning(float panning)
 {
-    if ((flags & ISND_NOPANNING) || !buffer)
+    if ((flags & ISND_NOPANNING) || !lpDSB8)
         return I3DERR_GENERIC;
     int pan;
     if (IsAbsMrgZero(panning))
@@ -453,16 +453,16 @@ LS3D_RESULT ISND_sound::SetPanning(float panning)
         else if (pan < DSBPAN_LEFT)
             pan = DSBPAN_LEFT;
     }
-    buffer->SetPan(pan);
+    lpDSB8->SetPan(pan);
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007d3e0
 bool ISND_sound::IsPlaying() const
 {
-    if (!buffer)
+    if (!lpDSB8)
         return false;
     DWORD status;
-    buffer->GetStatus(&status);
+    lpDSB8->GetStatus(&status);
     return status & DSBSTATUS_PLAYING ? true : false;
 }

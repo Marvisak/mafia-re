@@ -103,6 +103,16 @@ enum E_SEVERITY {
 // The game's error callback. The engine's own functions are __fastcall (/Gr), the game's callback __cdecl.
 typedef void __cdecl t_error_handler(LS3D_RESULT result, E_SEVERITY severity, const char *message);
 
+// What GetMouseButtons returns (Insanity3D's names and values)
+#define MBUT_LEFT 1
+#define MBUT_RIGHT 2
+#define MBUT_MIDDLE 4
+
+// What GetShiftKeys returns, besides the left and right keys' bits (Insanity3D's names and values)
+#define SKEY_SHIFT 1
+#define SKEY_CTRL 4
+#define SKEY_ALT 8
+
 // IGRAPH_INIT_DESC::flags (names guessed)
 enum {
     IGRAPH_FULLSCREEN = 0x2,            // the main window is a topmost popup the size of the mode
@@ -187,21 +197,27 @@ struct LS3DGAMMARAMP {
     ushort blue[256];
 };
 
-// A TGA file's header (names guessed)
+// A TGA file's header (the names are Insanity3D's TGA loader's)
 #pragma pack(push, 1)
 struct S_tga_header {
     char id_length;
     char color_map_type;
-    char image_type;
-    short color_map_first;
-    short color_map_length;
-    char color_map_bpp;
-    short x, y;
+    char type;
+    short cm_index;
+    short cm_length;
+    char cm_entry_size;
+    short x_org, y_org;
     short width, height;                // signed: SaveShot sign-extends them
-    char bpp;
-    char descriptor;
+    char bits_per_pixel;
+    char desc;                          // UL_TGA_*
 };
 #pragma pack(pop)
+
+// S_tga_header::desc (Insanity3D's names)
+enum {
+    UL_TGA_LR = 0x10,                   // the rows run right to left
+    UL_TGA_BT = 0x20,                   // the first row is the top one
+};
 
 // VTABLE: LS3DF 0x1009d500
 class IGraph {
@@ -263,8 +279,8 @@ public:
     virtual bool __stdcall KeyShift();
     virtual bool __stdcall KeyCtrl();
     virtual bool __stdcall KeyAlt();
-    virtual uint __stdcall GetShiftKeys(bool unknown);
-    virtual uchar __stdcall TranslateKey(uchar key, uint flags);
+    virtual uint __stdcall GetShiftKeys(bool update);
+    virtual uchar __stdcall TranslateKey(uchar key, uint shift_keys);
     virtual const char *__stdcall GetKeyName(int key);
     virtual LS3D_RESULT __stdcall MouseInit(int mode);
     virtual bool __stdcall IsMouseInit();
@@ -279,7 +295,7 @@ public:
     virtual uint __stdcall GetMouseButtons();
     virtual void __stdcall NullTimer();
     virtual uint __stdcall GetTimer(uint min_time, uint max_time);
-    virtual LS3D_RESULT __stdcall AddMapsDir(const char *dir, bool unknown);
+    virtual LS3D_RESULT __stdcall AddMapsDir(const char *dir, bool recursive);
     virtual LS3D_RESULT __stdcall DeleteMapsDir(const char *dir);
     virtual void __stdcall ClearMapDirs();
     virtual ITexture **__stdcall GetCachedTextures();

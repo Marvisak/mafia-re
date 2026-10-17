@@ -310,8 +310,8 @@ void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
     if (fg->material) {
         if (fg->material->flags & MATF_TEXTURE)
             mesh_flags |= MESHF_TEXTURE;
-        if (fg->material->flags & MATF_UNKNOWN_8000000)
-            mesh_flags |= MESHF_UNKNOWN_20;
+        if (fg->material->flags & MATF_KEEP_DIFFUSE)
+            mesh_flags |= MESHF_KEEP_DIFFUSE;
         if (fg->material->flags & MATF_ENVMAP) {
             mesh_flags |= MESHF_ENVMAP;
             mesh_flags = (mesh_flags & ~MESHF_ENVMAP_MODE) | ((fg->material->flags >> 12) & MESHF_ENVMAP_MODE);

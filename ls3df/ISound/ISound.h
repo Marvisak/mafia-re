@@ -79,7 +79,7 @@ public:
     virtual void __stdcall Close();
     virtual bool __stdcall IsOpen() const;          // Insanity3D's name for this slot
     virtual uint __stdcall GetPlayTime() const;
-    virtual LS3D_RESULT __stdcall GetFormat(S_wave_format *wf);
+    virtual LS3D_RESULT __stdcall GetFormat(S_wave_format *wf1);
     virtual LS3D_RESULT __stdcall Lock(void **data);
     virtual LS3D_RESULT __stdcall Unlock();
 
@@ -97,12 +97,12 @@ public:
         return filename ? filename : C_str("");
     }
 
-    // open_flags, filename and the lock members are Insanity3D's names
+    // open_flags, filename, wf, lpDSB8 and the lock members are Insanity3D's names, in its order
     int ref;                            // 0x04
     uint open_flags;                    // 0x08, ISND_*
     C_str filename;                     // 0x0c
-    S_wave_format format;               // 0x10
-    IDirectSoundBuffer8 *buffer;        // 0x20
+    S_wave_format wf;                   // 0x10
+    IDirectSoundBuffer8 *lpDSB8;        // 0x20
     float bytes_per_ms;                 // 0x24
     // Lock's two areas, in Insanity3D's order (and its typo); the PC's Lock asks only for the first
     void *save_lock_ptr1;               // 0x28
@@ -153,14 +153,15 @@ public:
 
     float GetFrequency() const
     {
-        return frequency;
+        return freq_mult;
     }
 
+    // lpDSB8 and freq_mult are Insanity3D's names
     int ref;                            // 0x04
-    IDirectSoundBuffer *buffer;         // 0x08, a duplicate of the source's
+    IDirectSoundBuffer *lpDSB8;         // 0x08, a duplicate of the source's
     ISND_source *source;                // 0x0c
     uint flags;                         // 0x10, ISND_*
-    float frequency;                    // 0x14, of the source's
+    float freq_mult;                    // 0x14, of the source's frequency
     float volume;                       // 0x18
 };
 
@@ -283,7 +284,8 @@ private:
     bool InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, uint flags);
 
 public:
-    // lpDS8, eax_property_set, ds_property, lpDSP, create_flags and volume are Insanity3D's names
+    // lpDS8, eax_property_set, ds_property, lpDSP, ds_listener8 (its listener's), create_flags and volume are
+    // Insanity3D's names
     void *hwnd;                             // 0x04
     int ref;                                // 0x08
     IDirectSound8 *lpDS8;                   // 0x0c
@@ -294,7 +296,7 @@ public:
     ISND_STREAM_FUNCS *streams;             // 0x20
     int unknown_24;                         // 0x24
     IDirectSoundBuffer *lpDSP;              // 0x28, the primary buffer
-    IDirectSound3DListener *lpListener;     // 0x2c
+    IDirectSound3DListener *ds_listener8;   // 0x2c
     uint create_flags;                      // 0x30, ISNDINIT_*
     float volume;                           // 0x34
     uint max_freq;                          // 0x38

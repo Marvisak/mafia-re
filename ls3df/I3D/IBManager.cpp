@@ -50,7 +50,7 @@ C_IBuffer::~C_IBuffer()
     }
     if (data) {
         ib->Unlock();
-        if (!(flags & 0x10)) {
+        if (!(flags & D3DLOCK_READONLY)) {
             ib->Lock(0, 0, &data, 0);
             ib->Unlock();
         }

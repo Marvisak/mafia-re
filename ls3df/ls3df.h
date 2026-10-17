@@ -11,7 +11,9 @@
 // What GetEngineVersion returns and TEV checks the game's version against
 #define ENGINE_VERSION 395
 
-// The result of most engine functions (PS2 name). The values' names are guesses from I3DGetResultMessage's texts.
+// The result of most engine functions (PS2 name). The values' names are guesses from I3DGetResultMessage's texts, and
+// Insanity3D's I3D2.h has the same names for NOFILE and OUTOFMEM (the same values) and for GENERIC to UNSUPPORTED
+// (renumbered there).
 enum LS3D_RESULT {
     I3D_OK = 0,
     I3DERR_NOFILE = 0x80000001,             // "File not found"
@@ -86,20 +88,20 @@ inline int FloatToInt(float f)
 
 // The engine's array (PS2 C_list<T>): it grows by grow_size elements at a time and removes an element by moving the
 // last one into its place. The PS2 build has reserve, push_back and operator= out of line for some element types;
-// the member names are guesses. By default it grows by 128 bytes' worth: 32 pointers, but 2 of ITexture.cpp's
-// 0x2c-byte texture slots. That default constructor takes no arguments: an array of lists calls it out of line
-// (ITexture.cpp's pool array), where a default argument would call a closure that doesn't return this.
+// the member names are those of Insanity3D's C_vector. By default it grows by 128 bytes' worth: 32 pointers, but 2
+// of ITexture.cpp's 0x2c-byte texture slots. That default constructor takes no arguments: an array of lists calls it
+// out of line (ITexture.cpp's pool array), where a default argument would call a closure that doesn't return this.
 template<class T>
 class C_list {
     T *array;
     int res_size;
-    int count;
+    int used_size;
     int grow_size;
 
 public:
-    C_list() : array(NULL), res_size(0), count(0), grow_size(128 / sizeof(T)) {}
+    C_list() : array(NULL), res_size(0), used_size(0), grow_size(128 / sizeof(T)) {}
 
-    C_list(int grow) : array(NULL), res_size(0), count(0), grow_size(grow) {}
+    C_list(int grow) : array(NULL), res_size(0), used_size(0), grow_size(grow) {}
 
     // Returns the list: where C_IBuffer's constructor is inlined, VC6 then stores the size through the register that
     // holds the list for the reserve after it, as the original does
@@ -113,19 +115,19 @@ public:
     {
         delete[] array;
         array = NULL;
-        count = 0;
+        used_size = 0;
         res_size = 0;
     }
 
     int size() const
     {
-        return count;
+        return used_size;
     }
 
     // Empties the list, keeping the array
     void reset()
     {
-        count = 0;
+        used_size = 0;
     }
 
     // Frees the array
@@ -133,7 +135,7 @@ public:
     {
         delete[] array;
         array = NULL;
-        count = 0;
+        used_size = 0;
         res_size = 0;
     }
 
@@ -150,13 +152,13 @@ public:
     // Makes room for n elements (PS2 has it out of line for some element types)
     void reserve(int n)
     {
-        if (n < count)
-            n = count;
+        if (n < used_size)
+            n = used_size;
         if (res_size >= n)
             return;
         res_size = n;
         T *a = new T[n];
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < used_size; i++)
             a[i] = array[i];
         delete[] array;
         array = a;
@@ -166,44 +168,44 @@ public:
     void resize(int n)
     {
         reserve(n);
-        count = n;
+        used_size = n;
     }
 
     // Appends an element and returns it, for the caller to fill in
     T &push_back()
     {
-        if (count >= res_size) {
+        if (used_size >= res_size) {
             res_size += grow_size;
             T *a = new T[res_size];
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < used_size; i++)
                 a[i] = array[i];
             delete[] array;
             array = a;
         }
-        return array[count++];
+        return array[used_size++];
     }
 
     void push_back(const T &v)
     {
-        if (count >= res_size) {
+        if (used_size >= res_size) {
             res_size += grow_size;
             T *a = new T[res_size];
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < used_size; i++)
                 a[i] = array[i];
             delete[] array;
             array = a;
         }
-        array[count] = v;
-        count++;
+        array[used_size] = v;
+        used_size++;
     }
 
     // A copy of l's elements (PS2 has it out of line for some element types)
     C_list &operator=(const C_list &l)
     {
         clear();
-        int n = l.count;
+        int n = l.used_size;
         reserve(n);
-        count = n;
+        used_size = n;
         while (n--)
             array[n] = l.array[n];
         return *this;
@@ -212,31 +214,31 @@ public:
     // Removes element i, moving the last one into its place
     void erase(int i)
     {
-        if (--count)
-            array[i] = array[count];
+        if (--used_size)
+            array[i] = array[used_size];
     }
 
     // Removes the first element equal to v the same way, and tells whether there was one
     bool remove(const T &v)
     {
-        if (count <= 0)
+        if (used_size <= 0)
             return false;
-        if (count == 1) {
+        if (used_size == 1) {
             if (array[0] != v)
                 return false;
-            count = 0;
+            used_size = 0;
             return true;
         }
         T *p = array;
-        for (int i = count - 1; i--; p++) {
+        for (int i = used_size - 1; i--; p++) {
             if (*p == v) {
-                *p = array[--count];
+                *p = array[--used_size];
                 return true;
             }
         }
         if (*p != v)
             return false;
-        --count;
+        --used_size;
         return true;
     }
 };

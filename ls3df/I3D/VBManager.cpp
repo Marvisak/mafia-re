@@ -70,7 +70,7 @@ bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FOR
     vertex_format = format;
     this->usage = usage;
     this->stride = stride;
-    uint num = max(0x20000 / stride, count);
+    uint num = max(RB_MANAGER_MEM_SIZE / stride, count);
     num_vertices = num;
     num_free = num;
     if (!(usage & D3DUSAGE_DYNAMIC) && (usage & D3DUSAGE_SOFTWAREPROCESSING))

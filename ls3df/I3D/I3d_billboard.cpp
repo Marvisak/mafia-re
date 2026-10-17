@@ -466,13 +466,13 @@ void I3D_billboard::m_AddFGroups()
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
-            SetClipState(TRUE);
+            SetClipping(TRUE);
         } else {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
-            SetClipState(FALSE);
+            SetClipping(FALSE);
         }
         m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         if (!(m_HardwareCaps & 4)) {
@@ -500,16 +500,16 @@ void I3D_billboard::m_AddFGroups()
         else
             h.env_texture = NULL;
         if (!mat || !h.texture && !(mat->alpha * fade * transparency < 1.0f)) {
-            h.sort_key = 0;
+            h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
-        } else if (mat->flags & 0xc0000000 || mat->alpha * fade * transparency < 1.0f) {
-            h.sort_key = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+        } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
+            h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
             AddFGHlpStruct.num_transparent++;
         } else {
-            if (mat->flags & 0x20000000)
-                h.sort_key = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
+            if (mat->flags & MATF_CKEY_ALPHA)
+                h.sort_value = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
             else
-                h.sort_key = (h.texture ? h.texture->uid : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->uid : 0) & 0x7fff;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -553,7 +553,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                     switch ((mat->flags >> 8) & 7) {
                     case 1:
                         SetColorOp1(D3DTOP_BLENDFACTORALPHA);
-                        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_power * 255.0f) << 24);
+                        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                         break;
                     case 2:
                         SetColorOp1(D3DTOP_BLENDCURRENTALPHA);
@@ -575,7 +575,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                     switch ((mat->flags >> 8) & 7) {
                     case 1:
                         SetColorOp(D3DTOP_BLENDFACTORALPHA);
-                        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_power * 255.0f) << 24);
+                        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                         break;
                     case 2:
                         SetColorOp(D3DTOP_BLENDCURRENTALPHA);
@@ -607,17 +607,17 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
                 reset |= 4;
             }
-            if (mat->flags & MATF_UNKNOWN_80000000) {
+            if (mat->flags & MATF_ADD_MODE) {
                 SetAlphaState(1);
                 SetBlendState(1);
-            } else if (mat->flags & MATF_ICON || fade * transparency * mat->alpha < 1.0f) {
+            } else if (mat->flags & MATF_TXT_ALPHA || fade * transparency * mat->alpha < 1.0f) {
                 SetAlphaState(1);
                 if ((*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z) &&
                         *(int *)&mat->diffuse.x && *(int *)&mat->diffuse.y && *(int *)&mat->diffuse.z)
                     SetBlendState(1);
                 else
                     SetBlendState(0);
-            } else if (mat->flags & MATF_UNKNOWN_20000000) {
+            } else if (mat->flags & MATF_CKEY_ALPHA) {
                 SetAlphaState(3);
                 SetBlendState(0);
             } else
@@ -657,17 +657,17 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
                 reset |= 4;
             }
-            if (mat->flags & MATF_UNKNOWN_80000000) {
+            if (mat->flags & MATF_ADD_MODE) {
                 SetAlphaState(1);
                 SetBlendState(1);
-            } else if (mat->flags & MATF_ICON || fade * transparency * mat->alpha < 1.0f) {
+            } else if (mat->flags & MATF_TXT_ALPHA || fade * transparency * mat->alpha < 1.0f) {
                 SetAlphaState(1);
                 if ((*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z) &&
                         *(int *)&mat->diffuse.x && *(int *)&mat->diffuse.y && *(int *)&mat->diffuse.z)
                     SetBlendState(1);
                 else
                     SetBlendState(0);
-            } else if (mat->flags & MATF_UNKNOWN_20000000) {
+            } else if (mat->flags & MATF_CKEY_ALPHA) {
                 SetAlphaState(3);
                 SetBlendState(0);
             } else
@@ -681,7 +681,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 switch ((mat->flags >> 8) & 7) {
                 case 1:
                     SetColorOp(D3DTOP_BLENDFACTORALPHA);
-                    m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_power * 255.0f) << 24);
+                    m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                     break;
                 case 2:
                     SetColorOp(D3DTOP_BLENDCURRENTALPHA);
@@ -790,7 +790,7 @@ I3D_lensflare::I3D_lensflare()
     visual_type = I3D_VISUAL_LENSF;
     unknown_224 = 0;
     test_interval = 150;
-    last_test = 0;
+    last_check_col_time = 0;
     last_update = 0;
     visibility = 0.0f;
     target_visibility = 1.0f;
@@ -886,9 +886,9 @@ void I3D_lensflare::Draw(bool test)
     }
     uint time = timeGetTime();
     if (test) {
-        if (time - last_test >= test_interval) {
+        if (time - last_check_col_time >= test_interval) {
             target_color = S_vector(1.0f, 1.0f, 1.0f);
-            last_test = time;
+            last_check_col_time = time;
             target_visibility = 1.0f;
             if (pCurrentScene->TestColGeo(cam_pos, dir, 0x61030000, NULL, NULL, NULL, &target_color, TexelCallback,
                     parent, 0) && IsMrgZeroLess(target_color.Dot(target_color)))

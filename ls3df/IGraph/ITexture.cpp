@@ -1291,21 +1291,21 @@ bool ITexture::SaveToTGA(const char *name)
     }
     S_tga_header header;
     memset(&header, 0, sizeof(header));
-    header.image_type = 2;
+    header.type = 2;
     switch (format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8:
     case D3DFMT_A4R4G4B4:
-        header.bpp = 32;
+        header.bits_per_pixel = 32;
         break;
     case D3DFMT_R5G6B5:
     case D3DFMT_X1R5G5B5:
     case D3DFMT_A1R5G5B5:
-        header.bpp = 16;
+        header.bits_per_pixel = 16;
         break;
     case D3DFMT_R8G8B8:
     case D3DFMT_L8:
-        header.bpp = 24;
+        header.bits_per_pixel = 24;
         break;
     }
     header.width = width;
@@ -1332,7 +1332,7 @@ bool ITexture::SaveToTGA(const char *name)
                 ushort c = ((ushort *)p)[--x];
                 row[x] = c >> 1 & 0x7fe0 | c & 0x1f;
             }
-            dtaWrite(handle, row, header.bpp / 8 * header.width);
+            dtaWrite(handle, row, header.bits_per_pixel / 8 * header.width);
             p -= pitch;
         }
         delete[] row;
@@ -1345,7 +1345,7 @@ bool ITexture::SaveToTGA(const char *name)
                 ushort c = ((ushort *)p)[--x];
                 row[x] = (c & 0xf000) << 16 | (c & 0xf00) << 12 | (c & 0xf0) << 8 | (c & 0xf) << 4;
             }
-            dtaWrite(handle, row, header.bpp / 8 * header.width);
+            dtaWrite(handle, row, header.bits_per_pixel / 8 * header.width);
             p -= pitch;
         }
         delete[] row;
@@ -1353,7 +1353,7 @@ bool ITexture::SaveToTGA(const char *name)
     }
     default:
         for (int y = header.height; y; y--) {
-            dtaWrite(handle, p, header.bpp / 8 * header.width);
+            dtaWrite(handle, p, header.bits_per_pixel / 8 * header.width);
             p -= pitch;
         }
     }
@@ -1418,21 +1418,21 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
             }
             if (header.id_length > 0)
                 dtaSeek(handle, header.id_length, 1);
-            if (header.descriptor & 0x10)
+            if (header.desc & UL_TGA_LR)
                 dbgPrintf("!! Error. Right-to-left TGA detected, but not reversed !");
-            if (header.descriptor & 0x20)
+            if (header.desc & UL_TGA_BT)
                 flip = true;
             info.biSize = sizeof(info);
-            info.biBitCount = header.bpp;
+            info.biBitCount = header.bits_per_pixel;
             info.biClrImportant = 0;
             info.biClrUsed = 0;
             info.biCompression = 0;
             info.biHeight = header.height;
             info.biWidth = header.width;
-            info.biXPelsPerMeter = header.bpp / 8 * header.width;
+            info.biXPelsPerMeter = header.bits_per_pixel / 8 * header.width;
             info.biYPelsPerMeter = 0;
             info.biPlanes = 1;
-            info.biSizeImage = header.bpp / 8 * header.width * header.height;
+            info.biSizeImage = header.bits_per_pixel / 8 * header.width * header.height;
             break;
         }
         }

@@ -77,7 +77,7 @@ int RsZBiasShadow;
 // GLOBAL: LS3DF 0x100bfc70
 int RsZBiasProjector;
 
-// RS_LOD_SCALE / 100 (PC only, the name is a guess)
+// RS_LOD_SCALE / 100 (PC only, the name is a guess; Insanity3D's driver keeps it as lod_scale)
 // GLOBAL: LS3DF 0x100afb70
 float LODScale;
 
@@ -115,6 +115,7 @@ static uchar shadow_spans[256][2];
 
 // The globals with dynamic initializers, in the order the original constructs them (.CRT$XCU)
 
+// GetIcon's materials (the name is a guess; Insanity3D's driver keeps them as icon_materials)
 // GLOBAL: LS3DF 0x100bffb0
 C_list<I3D_material *> IconMaterialList;
 
@@ -172,7 +173,7 @@ LS3D_RESULT I3D_driver::Init(uint flags)
     renderState[40] = 1;
     renderState[16] = 1;
     renderState[38] = -1;
-    renderState[RS_FLOAT_LOD] = I3DFloatAsInt(1.0f);
+    renderState[RS_LOD_QUALITY] = I3DFloatAsInt(1.0f);
     renderState[39] = 1;
     if (!(m_ProblemFlags & 0x80))
         renderState[RS_HWVERTEXPROC] = 1;
@@ -299,7 +300,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         if (renderState[RS_USEZB])
             m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
         break;
-    case RS_FLOAT_LOD:
+    case RS_LOD_QUALITY:
         // A case of its own in the jump table, so its body did something VC6 then optimized away
         value = value;
         break;
@@ -666,7 +667,7 @@ I3D_material *I3D_driver::GetIcon(uint res_id)
     texture->Create((const char *)data, NULL, 0x209, 0, 0, 0);
     mat->SetTexture(texture);
     texture->Release();
-    mat->flags |= MATF_ICON;
+    mat->flags |= MATF_TXT_ALPHA;
     FreeResource(res);
     return mat;
 }
@@ -811,7 +812,9 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
         &LVertList[0], sizeof(LVERTEX));
 }
 
-// DrawTriangles' flags (names guessed): the alpha is the low byte
+// DrawTriangles' flags: the transparency is the low byte (Insanity3D's name for its mask, spelling included; the
+// other names are guesses)
+#define I3DDRAW_TRANPARENCY_MASK 0xff
 #define I3DDRAW_TRANSFORMED 0x100       // the vertices are transformed (TLVERTEX)
 #define I3DDRAW_NOCULL 0x200
 #define I3DDRAW_CULL_CW 0x400
@@ -828,7 +831,7 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
     }
-    float a = (255 - (flags & 0xff)) * (1.0f / 255.0f);
+    float a = (255 - (flags & I3DDRAW_TRANPARENCY_MASK)) * (1.0f / 255.0f);
     uint c = MakeColor(a, color);
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
@@ -1158,10 +1161,6 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
     m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
 }
 
-// The materials' flags that pick the sprite's blending (names guessed)
-#define MATF_ADD 0x80000000             // additive
-#define MATF_DECAL 0x20000000
-
 // FUNCTION: LS3DF 0x100182f0
 void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size)
 {
@@ -1208,20 +1207,20 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
     v[3].color = c;
     v[3].u = .999f;
     v[3].v = .001f;
-    if (mat->flags & MATF_ADD) {
+    if (mat->flags & MATF_ADD_MODE) {
         SetAlphaState(1);
         if (m_CurrBlendState != 1) {
             m_CurrBlendState = 1;
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
         }
-    } else if (mat->flags & MATF_ICON) {
+    } else if (mat->flags & MATF_TXT_ALPHA) {
         SetAlphaState(1);
         if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
             SetBlendState(1);
         else
             SetBlendState(0);
-    } else if (mat->flags & MATF_DECAL) {
+    } else if (mat->flags & MATF_CKEY_ALPHA) {
         SetAlphaState(3);
         SetBlendState(0);
     } else

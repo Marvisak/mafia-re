@@ -28,7 +28,7 @@ ISND_driver::ISND_driver()
     unknown_1c = 0;
     streams = NULL;
     lpDSP = NULL;
-    lpListener = NULL;
+    ds_listener8 = NULL;
     volume = 0.0f;
     create_flags = 0;
     hwnd = NULL;
@@ -66,9 +66,9 @@ void ISND_driver::Close()
             FreeLibrary(module);
             module = NULL;
         }
-        if (lpListener) {
-            lpListener->Release();
-            lpListener = NULL;
+        if (ds_listener8) {
+            ds_listener8->Release();
+            ds_listener8 = NULL;
         }
         if (eax_property_set) {
             eax_property_set->Release();
@@ -175,8 +175,8 @@ ISND_3Dlistener *ISND_driver::CreateListener()
     ISND_3Dlistener *listener = new ISND_3Dlistener;
     if (!listener)
         return NULL;
-    if (lpListener)
-        lpListener->GetAllParameters(&listener->ds_data);
+    if (ds_listener8)
+        ds_listener8->GetAllParameters(&listener->ds_data);
     return listener;
 }
 
@@ -308,7 +308,7 @@ bool ISND_driver::InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, ui
         return false;
     if (InitBuffer(mix_freq, num_chan, bps) != I3D_OK)
         return false;
-    if (FAILED(lpDSP->QueryInterface(IID_IDirectSound3DListener, (void **)&lpListener)))
+    if (FAILED(lpDSP->QueryInterface(IID_IDirectSound3DListener, (void **)&ds_listener8)))
         return false;
 
     if (eax_property_set && (create_flags & ISNDINIT_EAX30)) {

@@ -1676,7 +1676,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         m_Modulate2X = D3DTOP_MODULATE2X;
     else {
         m_Modulate2X = D3DTOP_MODULATE;
-        i3d_light_scale = 255.0f;
+        vertex_light_mult = 255.0f;
     }
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_BLENDCURRENTALPHA))
         m_ProblemFlags |= 0x20;
@@ -2127,7 +2127,7 @@ LS3D_RESULT IGraph::GetImageInfo(const char *name, ushort &sx, ushort &sy, uchar
         }
         sx = header.width;
         sy = header.height;
-        bpp = header.bpp;
+        bpp = header.bits_per_pixel;
         break;
     }
     default:
@@ -2405,7 +2405,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
             fwrite(rle, len, 1, f);
             for (x = 0; x < sx; x++) {
                 float d = 1.0f - ((ushort *)depth_locked.pBits)[x] * (1.0f / 65535.0f);
-                if (renderState[4])
+                if (renderState[RS_WBUFFER])
                     d = 1.0f / d;
                 z[x] = d * 10000.0f;
             }
@@ -2440,19 +2440,19 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
     } else {
         S_tga_header header;
         memset(&header, 0, sizeof(header));
-        header.image_type = 2;
+        header.type = 2;
         switch (desc.Format) {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
         case D3DFMT_A1R5G5B5:
-            header.bpp = 16;
+            header.bits_per_pixel = 16;
             break;
         case D3DFMT_R8G8B8:
-            header.bpp = 24;
+            header.bits_per_pixel = 24;
             break;
         case D3DFMT_A8R8G8B8:
         case D3DFMT_X8R8G8B8:
-            header.bpp = 32;
+            header.bits_per_pixel = 32;
             break;
         }
         header.width = (short)desc.Width;
@@ -2509,8 +2509,8 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
                 }
             } else {
                 for (int y = header.height; y; y--) {
-                    memcpy((void *)name, locked.pBits, header.bpp / 8 * header.width);
-                    name += header.bpp / 8 * header.width;
+                    memcpy((void *)name, locked.pBits, header.bits_per_pixel / 8 * header.width);
+                    name += header.bits_per_pixel / 8 * header.width;
                     locked.pBits = (BYTE *)locked.pBits - locked.Pitch;
                 }
             }
@@ -2530,12 +2530,12 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
                         ushort p = ((ushort *)locked.pBits)[x];
                         ((ushort *)locked.pBits)[x] = ((p >> 1) & 0x7fe0) | (p & 0x1f);
                     }
-                    fwrite(locked.pBits, 1, header.bpp / 8 * header.width, f);
+                    fwrite(locked.pBits, 1, header.bits_per_pixel / 8 * header.width, f);
                     locked.pBits = (BYTE *)locked.pBits - locked.Pitch;
                 }
             } else {
                 for (int y = header.height; y; y--) {
-                    fwrite(locked.pBits, 1, header.bpp / 8 * header.width, f);
+                    fwrite(locked.pBits, 1, header.bits_per_pixel / 8 * header.width, f);
                     locked.pBits = (BYTE *)locked.pBits - locked.Pitch;
                 }
             }
@@ -2659,7 +2659,7 @@ uint IGraph::ReadKey()
         if (i == DIK_LCONTROL || i == DIK_RCONTROL || i == DIK_LSHIFT || i == DIK_RSHIFT || i == DIK_LMENU ||
                 i == DIK_RMENU)
             continue;
-        m_KBLastChar = TranslateKey(i, GetShiftKeys(false) & 0xd);
+        m_KBLastChar = TranslateKey(i, GetShiftKeys(false) & (SKEY_SHIFT | SKEY_CTRL | SKEY_ALT));
         return i;
     }
     return 0;
@@ -2726,7 +2726,7 @@ bool IGraph::KeyAlt()
     return false;
 }
 
-// Shift 1, control 4, alt 8; left and right shift 0x20 and 0x40, control 0x80 and 0x100, alt 0x200 and 0x400
+// SKEY_*; left and right shift 0x20 and 0x40, control 0x80 and 0x100, alt 0x200 and 0x400
 // FUNCTION: LS3DF 0x10071b50
 uint IGraph::GetShiftKeys(bool update)
 {
@@ -2734,21 +2734,21 @@ uint IGraph::GetShiftKeys(bool update)
         UpdateKeyboardData();
     uint keys = 0;
     if (KeyShift()) {
-        keys = 1;
+        keys = SKEY_SHIFT;
         if (m_KeyboardData[DIK_LSHIFT] & 0x80)
             keys |= 0x20;
         if (m_KeyboardData[DIK_RSHIFT] & 0x80)
             keys |= 0x40;
     }
     if (KeyCtrl()) {
-        keys |= 4;
+        keys |= SKEY_CTRL;
         if (m_KeyboardData[DIK_LCONTROL] & 0x80)
             keys |= 0x80;
         if (m_KeyboardData[DIK_RCONTROL] & 0x80)
             keys |= 0x100;
     }
     if (KeyAlt()) {
-        keys |= 8;
+        keys |= SKEY_ALT;
         if (m_KeyboardData[DIK_LMENU] & 0x80)
             keys |= 0x200;
         if (m_KeyboardData[DIK_RMENU] & 0x80)
@@ -2757,13 +2757,13 @@ uint IGraph::GetShiftKeys(bool update)
     return keys;
 }
 
-// A key's character, shifted with flags 1
+// A key's character, shifted with SKEY_SHIFT
 // FUNCTION: LS3DF 0x10071c00
-uchar IGraph::TranslateKey(uchar key, uint flags)
+uchar IGraph::TranslateKey(uchar key, uint shift_keys)
 {
     for (S_key_char *p = key_table; p->key; p++) {
         if (p->key == key)
-            return flags & 1 ? p->shift_c : p->c;
+            return shift_keys & SKEY_SHIFT ? p->shift_c : p->c;
     }
     return 0;
 }
@@ -2941,17 +2941,17 @@ int IGraph::Mouse_y()
     return m_MousePos.y;
 }
 
-// Left 1, right 2, middle 4
+// MBUT_*
 // FUNCTION: LS3DF 0x100720c0
 uint IGraph::GetMouseButtons()
 {
     uint buttons = 0;
     if (m_MouseData.rgbButtons[0] & 0x80)
-        buttons = 1;
+        buttons = MBUT_LEFT;
     if (m_MouseData.rgbButtons[2] & 0x80)
-        buttons |= 4;
+        buttons |= MBUT_MIDDLE;
     if (m_MouseData.rgbButtons[1] & 0x80)
-        buttons |= 2;
+        buttons |= MBUT_RIGHT;
     return buttons;
 }
 
@@ -3064,9 +3064,9 @@ LS3D_RESULT m_AddNameToList(C_list<char *> *list, const char *name, bool recursi
 }
 
 // FUNCTION: LS3DF 0x100725f0
-LS3D_RESULT IGraph::AddMapsDir(const char *dir, bool unknown)
+LS3D_RESULT IGraph::AddMapsDir(const char *dir, bool recursive)
 {
-    return m_AddNameToList(&m_MapsList, dir, unknown);
+    return m_AddNameToList(&m_MapsList, dir, recursive);
 }
 
 // Removes every directory whose name contains dir

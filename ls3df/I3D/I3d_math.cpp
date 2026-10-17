@@ -253,11 +253,11 @@ bool S_matrix::Inverse(const S_matrix &mat)
 // this = a * b for affine matrices (Insanity3D's name, next to Make4X4). The PC inlines it into operator*= and
 // operator*, so /OPT:REF drops it; the Xbox build keeps it out of line (0x20f590), as its compiler doesn't inline
 // assembly.
-S_matrix &S_matrix::Make(const S_matrix &a, const S_matrix &b)
+S_matrix &S_matrix::Make(const S_matrix &m1, const S_matrix &m2)
 {
     __asm {
-        mov eax, a
-        mov ebx, b
+        mov eax, m1
+        mov ebx, m2
         mov edi, this
         fld dword ptr [eax]
         mov dword ptr [edi + 0xc], 0
@@ -381,35 +381,35 @@ S_matrix &S_matrix::Make(const S_matrix &a, const S_matrix &b)
 // FUNCTION: LS3DF 0x1002d220
 S_matrix &S_matrix::operator*=(const S_matrix &mat)
 {
-    S_matrix r;
-    r.Make(*this, mat);
-    *this = r;
+    S_matrix tmp;
+    tmp.Make(*this, mat);
+    *this = tmp;
     return *this;
 }
 
 // FUNCTION: LS3DF 0x1002d3a0
 S_matrix S_matrix::operator*(const S_matrix &mat) const
 {
-    S_matrix r;
-    r.Make(*this, mat);
-    return r;
+    S_matrix rtn;
+    rtn.Make(*this, mat);
+    return rtn;
 }
 
 // FUNCTION: LS3DF 0x1002d520
 S_matrix S_matrix::Mult4X4(const S_matrix &mat) const
 {
-    S_matrix r;
-    r.Make4X4(*this, mat);
-    return r;
+    S_matrix ret;
+    ret.Make4X4(*this, mat);
+    return ret;
 }
 
 // The full 4x4 product a * b
 // FUNCTION: LS3DF 0x1002d780
-S_matrix &S_matrix::Make4X4(const S_matrix &a, const S_matrix &b)
+S_matrix &S_matrix::Make4X4(const S_matrix &m1, const S_matrix &m2)
 {
     __asm {
-        mov esi, a
-        mov edi, b
+        mov esi, m1
+        mov edi, m2
         mov eax, this
         fld dword ptr [esi]
         fmul dword ptr [edi]
@@ -791,8 +791,8 @@ float S_vector::AngleTo(const S_vector &v) const
     float f = Magnitude() * v.Magnitude();
     if (f < MRG_ZERO)
         return 0.0f;
-    float c = Dot(v) / f;
-    return (float)acos(Min(Max(c, -1.0f), 1.0f));
+    float acos_val = Dot(v) / f;
+    return (float)acos(Min(Max(acos_val, -1.0f), 1.0f));
 }
 
 // FUNCTION: LS3DF 0x1002e920
@@ -811,11 +811,11 @@ S_vector &S_vector::operator*=(const S_matrix &m)
 // FUNCTION: LS3DF 0x1002e980
 S_vector S_vector::operator*(const S_matrix &m) const
 {
-    S_vector r;
+    S_vector rtn;
     __asm {
         mov eax, this
         mov edx, m
-        lea esi, r
+        lea esi, rtn
         fld dword ptr [eax]
         fmul dword ptr [edx]
         fadd dword ptr [edx + 0x30]
@@ -847,17 +847,17 @@ S_vector S_vector::operator*(const S_matrix &m) const
         faddp st(1), st
         fstp dword ptr [esi + 0x8]
     }
-    return r;
+    return rtn;
 }
 
 // FUNCTION: LS3DF 0x1002ea10
 S_vector S_vector::RotateByMatrix(const S_matrix &m) const
 {
-    S_vector r;
+    S_vector rtn;
     __asm {
         mov eax, this
         mov edx, m
-        lea esi, r
+        lea esi, rtn
         fld dword ptr [eax]
         fmul dword ptr [edx]
         fld dword ptr [eax + 0x4]
@@ -886,18 +886,18 @@ S_vector S_vector::RotateByMatrix(const S_matrix &m) const
         faddp st(1), st
         fstp dword ptr [esi + 0x8]
     }
-    return r;
+    return rtn;
 }
 
 // RotateByMatrix with each axis of m normalized
 // FUNCTION: LS3DF 0x1002eab0
 S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
 {
-    S_vector r;
+    S_vector rtn;
     __asm {
         mov eax, this
         mov edx, m
-        lea esi, r
+        lea esi, rtn
         fld dword ptr [eax]
         fmul dword ptr [edx]
         fld dword ptr [eax + 0x4]
@@ -928,14 +928,14 @@ S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
     }
     float sq = m.m[0][0] * m.m[0][0] + m.m[1][0] * m.m[1][0] + m.m[2][0] * m.m[2][0];
     if (fabs(sq - 1.0f) > MRG_ZERO)
-        r.x /= (float)sqrt(sq);
+        rtn.x /= (float)sqrt(sq);
     sq = m.m[0][1] * m.m[0][1] + m.m[1][1] * m.m[1][1] + m.m[2][1] * m.m[2][1];
     if (fabs(sq - 1.0f) > MRG_ZERO)
-        r.y /= (float)sqrt(sq);
+        rtn.y /= (float)sqrt(sq);
     sq = m.m[0][2] * m.m[0][2] + m.m[1][2] * m.m[1][2] + m.m[2][2] * m.m[2][2];
     if (fabs(sq - 1.0f) > MRG_ZERO)
-        r.z /= (float)sqrt(sq);
-    return r;
+        rtn.z /= (float)sqrt(sq);
+    return rtn;
 }
 
 // FUNCTION: LS3DF 0x1002ec00
@@ -1149,7 +1149,7 @@ void S_quat::Inverse(S_vector &axis, float &angle) const
 }
 
 // FUNCTION: LS3DF 0x1002fee0
-S_quat S_quat::Slerp(const S_quat &q, float t, bool shortest) const
+S_quat S_quat::Slerp(const S_quat &q, float t, bool shorten) const
 {
     float to1[4];
     float cosom = v.x * q.v.x + v.y * q.v.y + v.z * q.v.z + s * q.s;
@@ -1253,19 +1253,19 @@ bool S_plane::IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir)
     return true;
 }
 
-// The closest points of two lines (p1 + t1 * dir1, p2 + t2 * dir2)
+// The closest points of two lines (p1 + u1 * dir1, p2 + u2 * dir2; Insanity3D has the same algorithm and names)
 // FUNCTION: LS3DF 0x10030440
 bool __stdcall LineLineIntersect(const S_vector &p1, const S_vector &dir1, const S_vector &p2, const S_vector &dir2,
-    float &t1, float &t2)
+    float &u1, float &u2)
 {
-    S_vector w = p1 - p2;
-    float dd = dir2.Square();
-    float bd = dir1.Dot(dir2);
-    float det = dir1.Square() * dd - bd * bd;
-    if (IsAbsMrgZero(det))
+    S_vector dir3 = p1 - p2;
+    float d_2_2 = dir2.Square();
+    float d_1_2 = dir1.Dot(dir2);
+    float denom = dir1.Square() * d_2_2 - d_1_2 * d_1_2;
+    if (IsAbsMrgZero(denom))
         return false;
-    float wd = w.Dot(dir2);
-    t1 = (bd * wd - w.Dot(dir1) * dd) / det;
-    t2 = (t1 * bd + wd) / dd;
+    float d_2_3 = dir3.Dot(dir2);
+    u1 = (d_1_2 * d_2_3 - dir3.Dot(dir1) * d_2_2) / denom;
+    u2 = (u1 * d_1_2 + d_2_3) / d_2_2;
     return true;
 }

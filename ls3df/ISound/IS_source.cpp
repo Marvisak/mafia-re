@@ -22,7 +22,7 @@ struct S_fmt_chunk {
 };
 
 // FUNCTION: LS3DF 0x1007d430
-ISND_source::ISND_source() : buffer(NULL)
+ISND_source::ISND_source() : lpDSB8(NULL)
 {
     ref = 1;
     Close();
@@ -79,10 +79,10 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         dtaSeek(h, chunk.size, FILE_CURRENT);
         dtaRead(h, &chunk, sizeof(chunk));
     }
-    format.num_channels = fmt.format.wf.nChannels;
-    format.bytes_per_sample = fmt.format.wBitsPerSample / 8;
-    format.samples_per_sec = fmt.format.wf.nSamplesPerSec;
-    format.size = chunk.size;
+    wf.num_channels = fmt.format.wf.nChannels;
+    wf.bytes_per_sample = fmt.format.wBitsPerSample / 8;
+    wf.samples_per_sec = fmt.format.wf.nSamplesPerSec;
+    wf.size = chunk.size;
     bytes_per_ms = wave_format.nAvgBytesPerSec * 0.001f;
     // DirectSound positions only mono sounds in 3D
     if (wave_format.nChannels > 1)
@@ -110,7 +110,7 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         dtaClose(h);
         return I3DERR_GENERIC;
     }
-    if (FAILED(dsb->QueryInterface(IID_IDirectSoundBuffer8, (void **)&buffer))) {
+    if (FAILED(dsb->QueryInterface(IID_IDirectSoundBuffer8, (void **)&lpDSB8))) {
         dtaClose(h);
         return I3DERR_GENERIC;
     }
@@ -118,15 +118,15 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
 
     void *data;
     DWORD size;
-    if (FAILED(buffer->Lock(0, 0, &data, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER))) {
+    if (FAILED(lpDSB8->Lock(0, 0, &data, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER))) {
         dtaClose(h);
         return I3DERR_GENERIC;
     }
-    if (dtaRead(h, data, format.size) != format.size) {
+    if (dtaRead(h, data, wf.size) != wf.size) {
         dtaClose(h);
         return I3DERR_GENERIC;
     }
-    if (FAILED(buffer->Unlock(data, size, NULL, 0))) {
+    if (FAILED(lpDSB8->Unlock(data, size, NULL, 0))) {
         dtaClose(h);
         return I3DERR_GENERIC;
     }
@@ -138,40 +138,40 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
 // FUNCTION: LS3DF 0x1007d890
 void ISND_source::Close()
 {
-    if (buffer) {
-        buffer->Release();
-        buffer = NULL;
+    if (lpDSB8) {
+        lpDSB8->Release();
+        lpDSB8 = NULL;
     }
-    memset(&format, 0, sizeof(format));
+    memset(&wf, 0, sizeof(wf));
     bytes_per_ms = 0.0f;
 }
 
 // FUNCTION: LS3DF 0x1007d8c0
 bool ISND_source::IsOpen() const
 {
-    return format.size > 0 ? true : false;
+    return wf.size > 0 ? true : false;
 }
 
 // In milliseconds
 // FUNCTION: LS3DF 0x1007d8d0
 uint ISND_source::GetPlayTime() const
 {
-    if (!format.size)
+    if (!wf.size)
         return 0;
-    return (uint)(format.size / bytes_per_ms);
+    return (uint)(wf.size / bytes_per_ms);
 }
 
 // FUNCTION: LS3DF 0x1007d910
-LS3D_RESULT ISND_source::GetFormat(S_wave_format *wf)
+LS3D_RESULT ISND_source::GetFormat(S_wave_format *wf1)
 {
-    *wf = format;
+    *wf1 = wf;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x1007d940
 LS3D_RESULT ISND_source::Lock(void **data)
 {
-    if (FAILED(buffer->Lock(0, 0, &save_lock_ptr1, &save_lick_size1, NULL, NULL, DSBLOCK_ENTIREBUFFER)))
+    if (FAILED(lpDSB8->Lock(0, 0, &save_lock_ptr1, &save_lick_size1, NULL, NULL, DSBLOCK_ENTIREBUFFER)))
         return I3DERR_GENERIC;
     *data = save_lock_ptr1;
     return I3D_OK;
@@ -180,5 +180,5 @@ LS3D_RESULT ISND_source::Lock(void **data)
 // FUNCTION: LS3DF 0x1007d980
 LS3D_RESULT ISND_source::Unlock()
 {
-    return SUCCEEDED(buffer->Unlock(save_lock_ptr1, save_lick_size1, NULL, 0)) ? I3D_OK : I3DERR_GENERIC;
+    return SUCCEEDED(lpDSB8->Unlock(save_lock_ptr1, save_lick_size1, NULL, 0)) ? I3D_OK : I3DERR_GENERIC;
 }

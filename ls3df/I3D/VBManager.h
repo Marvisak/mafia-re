@@ -7,6 +7,10 @@
 // The vertex buffers (PS2 VBManager.cpp), the same design as IBManager.h's index buffers, with buffers per vertex
 // format and usage. PS2 names the classes, COMPLETE_VB_STRUCT, VERTEX_FORMAT and C_VBManager's functions.
 
+// The bytes a buffer holds at least (Insanity3D's name for the same constant of its buffer manager, which computes
+// the size the same way)
+#define RB_MANAGER_MEM_SIZE 0x20000
+
 // A vertex buffer's format (PS2 type; the names are guesses, 2 and 3 aren't known)
 enum VERTEX_FORMAT {
     VF_LVERTEX,                         // LVERTEX: IGraph's, the objects' lods with hardware T&L

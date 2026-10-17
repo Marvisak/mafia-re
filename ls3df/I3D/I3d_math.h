@@ -214,12 +214,12 @@ struct S_matrix : D3DMATRIX {
     I3D_MATH_API S_matrix __stdcall RotateByMatrix(const S_matrix &mat) const;
     I3D_MATH_API bool __stdcall Inverse(const S_matrix &mat);
     // this = a * b without the last column (affine matrices)
-    S_matrix &Make(const S_matrix &a, const S_matrix &b);
+    S_matrix &Make(const S_matrix &m1, const S_matrix &m2);
     I3D_MATH_API S_matrix &__stdcall operator*=(const S_matrix &mat);
     I3D_MATH_API S_matrix __stdcall operator*(const S_matrix &mat) const;
     I3D_MATH_API S_matrix __stdcall Mult4X4(const S_matrix &mat) const;
     // PS2 has it in S_matrix4 (Make4X4__9S_matrix4FRC9S_matrix4RC9S_matrix4)
-    S_matrix &Make4X4(const S_matrix &a, const S_matrix &b);
+    S_matrix &Make4X4(const S_matrix &m1, const S_matrix &m2);
     I3D_MATH_API void __stdcall SetDir(const S_vector &dir);
     I3D_MATH_API void __stdcall SetDir3(const S_vector &dir, const S_vector &up);
     I3D_MATH_API void __stdcall SetDir(const S_vector &dir, const S_vector &up);
@@ -279,7 +279,7 @@ struct S_quat {
     I3D_MATH_API void __stdcall Make(const S_matrix &m);
     I3D_MATH_API void __stdcall SetDir(const S_vector &dir, float roll);
     I3D_MATH_API void __stdcall Inverse(S_vector &axis, float &angle) const;
-    I3D_MATH_API S_quat __stdcall Slerp(const S_quat &q, float t, bool shortest) const;
+    I3D_MATH_API S_quat __stdcall Slerp(const S_quat &q, float t, bool shorten) const;
     I3D_MATH_API S_quat __stdcall RotateByMatrix(const S_matrix &m) const;
     I3D_MATH_API void __stdcall Normalize();
 };

@@ -93,7 +93,7 @@ LS3D_RESULT ISND_3Dlistener::SetRolloffFactor(float factor)
 // FUNCTION: LS3DF 0x1007b1b0
 LS3D_RESULT ISND_3Dlistener::Update()
 {
-    return SUCCEEDED(pISndDriver->lpListener->SetAllParameters(&ds_data, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
+    return SUCCEEDED(pISndDriver->ds_listener8->SetAllParameters(&ds_data, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
 }
 
 // Set takes the property's address: a scalar value is copied into a static for it, a vector is passed by address in
@@ -168,5 +168,5 @@ LS3D_RESULT ISND_3Dlistener::GetEAX3Property(uint property, void *data, uint siz
 // FUNCTION: LS3DF 0x1007b320
 LS3D_RESULT ISND_3Dlistener::CommitDeferredSettings()
 {
-    return SUCCEEDED(pISndDriver->lpListener->CommitDeferredSettings()) ? I3D_OK : I3DERR_GENERIC;
+    return SUCCEEDED(pISndDriver->ds_listener8->CommitDeferredSettings()) ? I3D_OK : I3DERR_GENERIC;
 }
