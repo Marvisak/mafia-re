@@ -8,6 +8,7 @@ project(ls3df)
 # the sound files' folder is named here.
 add_library(ls3df SHARED
     I3D/I3d_billboard.cpp
+    I3D/I3d_camera.cpp
     I3D/I3d_driver.cpp
     I3D/I3d_dummy.cpp
     I3D/I3d_frame.cpp
@@ -76,12 +77,12 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
-    # /Gr's). The listener's destructor and UnloadManagedTextures are called by the scene, Make4X4 by the camera, the
-    # buffer managers' m_UnlockAll*Buffers by the driver's Render (render.cpp), RenderShadowTexture by the shadows, the
-    # frame's functions by the scenes, models and visuals, the visual's SetBoundVolume by the mirrors, the lod's
-    # destructor by the lit objects and single meshes, the vertex transforms by the shadows' range (0x10054f60).
+    # /Gr's). The listener's destructor and UnloadManagedTextures are called by the scene, the buffer managers'
+    # m_UnlockAll*Buffers by the driver's Render (render.cpp), RenderShadowTexture by the shadows, the frame's functions
+    # by the scenes, models and visuals, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit
+    # objects and single meshes, the vertex transforms by the shadows' range (0x10054f60), the camera's UpdateSector by
+    # render.cpp.
     target_link_options(ls3df PRIVATE "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ" "/INCLUDE:?UnloadManagedTextures@@YIXXZ"
-        "/INCLUDE:?Make4X4@S_matrix@@QAEAAU1@ABU1@0@Z"
         "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ" "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
         "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DeleteFromOwner@I3D_frame@@QAEXXZ"
@@ -92,7 +93,8 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
         "/INCLUDE:??1lod@@UAE@XZ"
         "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
-        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z")
+        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
+        "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32

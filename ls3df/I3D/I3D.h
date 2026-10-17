@@ -5,12 +5,12 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the visual's base and the meshes are written
-// (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_visual.cpp, I3d_mesh.cpp); the other frames, the visuals and the
-// materials aren't recovered yet. Their placeholders keep the members and virtual functions the written files use at their offsets and vtable
-// slots, the sizes the driver allocates, and declare the constructors it calls (stubs, see I3d_driver.cpp). They are
-// __declspec(novtable) so that the stubs don't need the virtual functions, none of which is written yet; the real
-// classes will drop it.
+// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the camera, the visual's base and the meshes are
+// written (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_camera.cpp, I3d_visual.cpp, I3d_mesh.cpp); the other
+// frames, the visuals and the materials aren't recovered yet. Their placeholders keep the members and virtual functions
+// the written files use at their offsets and vtable slots, the sizes the driver allocates, and declare the constructors
+// it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the virtual
+// functions, none of which is written yet; the real classes will drop it.
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
@@ -23,6 +23,8 @@ class I3D_material;
 class ITexture;
 class ISND_3Dlistener;
 class I3D_frame;
+class I3D_camera;
+class I3D_sector;
 class I3D_light;
 class I3D_mesh_object;
 class C_IBuffer;
@@ -189,6 +191,7 @@ inline int I3DFloatAsInt(float f)
 #define FRMFLAGS_HR_AREAS 0x100000      // areas
 #define FRMFLAGS_CLIP 0x200000          // has to be clipped (the name is a guess)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
+#define FRMFLAGS_UNKNOWN_8000000 0x8000000 // set by the camera's constructor and Duplicate
 #define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
 #define FRMFLAGS_UPDATE 0x40000000      // to update
 #define FRMFLAGS_WEATHER 0x80000000     // a dummy in a scene's weather system (I3D_scene::WeatherSystemAddDummy)
@@ -451,7 +454,9 @@ public:
     virtual void __stdcall vfunc_39(); virtual void __stdcall vfunc_40(); virtual void __stdcall vfunc_41();
     // PS2 name: removes the frame from the frames the scene ticks, and tells whether to look further
     virtual int __stdcall DeleteTickFrame(I3D_frame *frame);
-    virtual void __stdcall vfunc_43(); virtual void __stdcall vfunc_44(); virtual void __stdcall vfunc_45();
+    virtual void __stdcall vfunc_43(); virtual void __stdcall vfunc_44();
+    // PS2 name (one of four overloads, the one the camera calls): the sector at pos, looked for from hint first
+    virtual I3D_sector *__stdcall GetSector(const S_vector &pos, I3D_sector *hint) const;
     virtual void __stdcall vfunc_46(); virtual void __stdcall vfunc_47(); virtual void __stdcall vfunc_48();
     virtual void __stdcall vfunc_49(); virtual void __stdcall vfunc_50();
     // PS2 name: a ray from from along dir against the geometry; texel_cb is asked about the texels it passes through
@@ -469,10 +474,14 @@ public:
     // PS2 name
     virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
 
-    uchar unknown_140[0xd0];
+    uchar unknown_140[0x3c];
+    I3D_camera *current_camera;         // 0x17c, SetActiveCamera's (Insanity3D's name)
+    uchar unknown_180[0x90];
     I3D_sector *primary_sector;         // 0x210, the sector outside all others (Insanity3D's name; LS3DF names it
                                         // "Primary sector" too)
-    uchar unknown_214[0x70];
+    uchar unknown_214[0x38];
+    float backdrop_ncp, backdrop_fcp;   // 0x24c, PS2's SetBackdropRange (the names are guesses)
+    uchar unknown_254[0x30];
     ISND_3Dlistener *listener;          // 0x284
     uchar unknown_288[0xb4];
 };
@@ -571,19 +580,67 @@ public:
     I3D_bsphere bsphere;                // 0x1e0, what a spot lights
 };
 
-// A camera (PS2 I3D_camera, 0x4f4 bytes on PC). The constructor sets a second field of view and range after the first
-// pair (PS2 SetNearFOV, SetNearRange). The names are Insanity3D's.
-class __declspec(novtable) I3D_camera : public I3D_frame {
+// Planes that bound what a camera sees (PC 0x50 bytes; the name is a guess): unit normals pointing inside and their
+// distances (normal.Dot(p) + d = 0 on the plane). The first is the view direction's, the others are the sides'. The
+// normals have no constructor: the camera's constructor constructs nothing for them, as an S_vector array would need.
+struct S_frustum {
+    D3DVECTOR normal[5];
+    float d[5];
+};
+
+// A camera (PS2 I3D_camera, 0x4f4 bytes on PC; I3d_camera.cpp). Besides the view it projects the scene's backdrop (with
+// the scene's backdrop range) and things near the viewer (the near field of view and range, PS2's SetNearFOV and
+// SetNearRange). Names are Insanity3D's where it has the member (fov_a, ncp, fcp, ortho_scale, m_view, m_proj; the
+// scene's aspect_ratio, the orthogonal flag, curr_sector's role), the others are guesses.
+// VTABLE: LS3DF 0x1009b6d0
+class I3D_camera : public I3D_frame {
 public:
     I3D_camera();
+    ~I3D_camera();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    // PS2 names
+    virtual void __stdcall SetFOV(float fov);
+    virtual void __stdcall SetNearFOV(float fov);
+    virtual void __stdcall SetRange(float near1, float far1);
+    virtual void __stdcall SetNearRange(float near1, float far1);
+    virtual void __stdcall SetOrthoScale(float scale);
+    virtual void __stdcall SetOrthogonal(bool b);
+    virtual void __stdcall SetAspectRatio(float aspect);
+
+    // PS2 names
+    void UpdateProjMatrix();
+    void UpdateSector();
 
     float fov_a;                        // 0x140, the field of view
     float ncp, fcp;                     // 0x144, the clipping planes
-    uchar unknown_14c[0x224 - 0x14c];
-    S_matrix view_inv;                  // 0x224, the inverse of 0x264 (the view matrix, it seems): the billboards
-                                        // align to it
-    uchar unknown_264[0x4f4 - 0x264];
+    float near_fov_a;                   // 0x14c, the near projection's
+    float near_ncp, near_fcp;           // 0x150
+    float aspect_ratio;                 // 0x158, the screen's width / height
+    bool orthogonal;                    // 0x15c
+    float ortho_scale;                  // 0x160
+    S_matrix m_view;                    // 0x164, the inverse of the world matrix
+    S_matrix m_proj;                    // 0x1a4
+    S_matrix m_view_proj;               // 0x1e4
+    S_matrix view_inv;                  // 0x224, the inverse of m_view: the billboards align to it
+    S_matrix m_bd_view;                 // 0x264, the backdrop's: m_view without the translation
+    S_matrix m_bd_view_inv;             // 0x2a4, view_inv without the translation
+    S_matrix m_bd_proj;                 // 0x2e4
+    S_matrix m_bd_view_proj;            // 0x324
+    S_matrix m_near_proj;               // 0x364, the near projection, with m_view
+    S_matrix m_near_view_proj;          // 0x3a4
+    float ncp_x, ncp_y;                 // 0x3e4, half the near clipping plane's width and height
+    float near_ncp_x, near_ncp_y;       // 0x3ec, the same for the near projection
+    I3D_scene *scene;                   // 0x3f4, the scene the camera is active in (I3D_scene::current_camera)
+    I3D_sector *sector;                 // 0x3f8, the sector it is in
+    uint unknown_3fc;                   // 0x3fc
+    uint unknown_400;                   // 0x400
+    S_frustum frustums[3];              // 0x404, of the view, the backdrop and the near projection
 };
+
+// SYNTHETIC: LS3DF 0x1000b250
+// I3D_camera::`scalar deleting destructor'
 
 // A frame that carries the game's data (PS2 I3D_user, 0x144 bytes on PC). Insanity3D's has the one member.
 class __declspec(novtable) I3D_user : public I3D_frame {
@@ -592,6 +649,7 @@ public:
 
     uint add_data;                      // 0x140
 };
+
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
 I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
 I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
@@ -1198,9 +1256,6 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
 // STUB: LS3DF 0x10005440
 // I3D_area::AddToRemoveFromSceneRing
-
-// STUB: LS3DF 0x1000b0c0
-// I3D_camera::I3D_camera
 
 // An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
 // D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1 without the specular color)

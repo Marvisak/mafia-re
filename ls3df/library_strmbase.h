@@ -80,7 +80,7 @@
 // ?Inactive@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10087520
-// ?NumLevels@I3D_void_interface@@UBGHXZ
+// ?NumRegions@I3D_void_interface@@UBGHXZ
 
 // LIBRARY: LS3DF 0x10087530
 // ?BreakConnect@CBaseRenderer@@UAEJXZ
@@ -154,7 +154,7 @@
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
 // LIBRARY: LS3DF 0x10087f20
-// ?QueryInterface@CBaseFilter@@UAGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseInputPin@@UAGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10087f40
 // ??_GCRendererInputPin@@UAEPAXI@Z
@@ -181,10 +181,10 @@
 // ?CompleteConnect@CRendererInputPin@@UAEJPAUIPin@@@Z
 
 // LIBRARY: LS3DF 0x10088290
-// ?AddRef@CBaseFilter@@UAGKXZ
+// ?AddRef@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882a0
-// ?Release@CBaseFilter@@UAGKXZ
+// ?Release@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882b0
 // ?QueryId@CRendererInputPin@@UAGJPAPAG@Z
@@ -295,7 +295,7 @@
 // ?AddRef@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089230
-// ?Release@CBaseFilter@@W3AGKXZ
+// ?Release@CBaseInputPin@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089240
 // ?QueryInterface@CBaseInputPin@@WIM@AGJABU_GUID@@PAPAX@Z

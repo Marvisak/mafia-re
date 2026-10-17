@@ -138,6 +138,8 @@ struct S_vector {
         return *this;
     }
 
+    // The out-of-line copy the linker kept is in camera code
+    // FUNCTION: LS3DF 0x1000dd80
     S_vector operator-(const S_vector &v) const
     {
         return S_vector(x - v.x, y - v.y, z - v.z);
@@ -170,6 +172,19 @@ struct S_vector {
         x = 0.0f;
         y = 0.0f;
         z = 0.0f;
+    }
+
+    // The normal of the triangle u1, v1, w1: (w1 - v1) x (u1 - v1), not normalized (PS2
+    // GetNormal__8S_vectorFRC8S_vectorRC8S_vectorRC8S_vector; Insanity3D has the same arithmetic with six floats). The
+    // differences are vectors: the copy the linker kept in camera code keeps one in a frame of its own, and where the
+    // camera inlines it late, the two operator- calls stay out of line.
+    // FUNCTION: LS3DF 0x1000ddd0
+    void GetNormal(const S_vector &u1, const S_vector &v1, const S_vector &w1)
+    {
+        S_vector u = w1 - v1, v = u1 - v1;
+        x = u.y * v.z - u.z * v.y;
+        y = u.z * v.x - u.x * v.z;
+        z = u.x * v.y - u.y * v.x;
     }
 
     I3D_MATH_API float __stdcall CosAngleTo(const S_vector &v) const;

@@ -1748,11 +1748,6 @@ I3D_area::I3D_area()
     renderState[21]++;
 }
 
-I3D_camera::I3D_camera()
-{
-    renderState[11]++;
-}
-
 // STUB: LS3DF 0x1001ed30
 I3D_joint::I3D_joint()
 {

@@ -43,7 +43,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10005180–100051a0` | `10005180` | | ? | no code, only the marker |
 | `100051a0–10005db0` | none | | `I3d_area.cpp` | `I3D_area::Build()`; no zero vector of its own |
 | `10005db0–1000b0c0` | `10008390` | | `I3d_billboard.cpp` | `I3D_billboard` and `I3D_lensflare` in PS2's order (`renderBillboard()`, `I3D_lensflare::LoadImage()`); the marker before the billboard's `m_RenderFGroup`, then the copies of the render state helpers and of `C_VBuffer`'s `Lock` and `Unlock` the linker kept; written |
-| `1000b0c0–1000de70` | `1000de50` | | `I3d_camera.cpp` | `I3D_camera`, from its constructor (`1000b0c0`) |
+| `1000b0c0–1000de70` | `1000de50` | | `I3d_camera.cpp` | `I3D_camera` in PS2's order, from its constructor (`1000b0c0`) to `UpdateV`; after it the copies of `S_vector`'s constructor, `operator-`, `Dot` and `GetNormal` the linker kept, then the marker; written |
 | `1000de70–1000dec0` | `1000dea0` | `1000de70`, `1000de80`, `1000de90` (empty) | ? | no functions, three globals with empty constructors |
 | `1000dec0–` about `10015530` | none | `10011d20`–`10011d50` (empty) | `i3d_collision.cpp` | collision tests; PS2 has it between the camera and the driver |
 | `10015530–1001a1e0` | `10016fd0` | `10015530`, `10015580`, `100155d0`, `100188a0` | `I3d_driver.cpp` | one file with its marker after `DrawLines`, as `I3d_math.cpp`: `I3D_driver` in PS2's order with the PC's icons and shadow rasterizer after `GetState`, `VolumeBall`'s `$E` before `DrawSphere`, then two `C_list` reserves; written |
