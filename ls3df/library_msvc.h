@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -240,6 +240,9 @@
 
 // LIBRARY: LS3DF 0x1008f470 SYMBOL
 // __chkstk
+
+// LIBRARY: LS3DF 0x1008f49f SYMBOL
+// _floor
 
 // LIBRARY: LS3DF 0x1008f56e SYMBOL
 // __purecall
@@ -652,17 +655,35 @@
 // LIBRARY: LS3DF 0x10094784 SYMBOL
 // __NMSG_WRITE
 
+// LIBRARY: LS3DF 0x100948d7 SYMBOL
+// __handle_qnan1
+
+// LIBRARY: LS3DF 0x1009492b SYMBOL
+// __except1
+
 // LIBRARY: LS3DF 0x100949c3 SYMBOL
 // __raise_exc
 
 // LIBRARY: LS3DF 0x10094c76 SYMBOL
 // __handle_exc
 
+// LIBRARY: LS3DF 0x10094e8d SYMBOL
+// __umatherr
+
 // LIBRARY: LS3DF 0x10094f15 SYMBOL
 // __set_errno
 
+// LIBRARY: LS3DF 0x10094f62 SYMBOL
+// __errcode
+
+// LIBRARY: LS3DF 0x10094f8f SYMBOL
+// __frnd
+
 // LIBRARY: LS3DF 0x10094fa1 SYMBOL
 // __set_exp
+
+// LIBRARY: LS3DF 0x10094fca SYMBOL
+// __sptype
 
 // LIBRARY: LS3DF 0x10095024 SYMBOL
 // __decomp
@@ -1017,6 +1038,9 @@
 
 // GLOBAL: LS3DF 0x100ac930
 // __d_max
+
+// GLOBAL: LS3DF 0x100ac940
+// __d_mzero
 
 // GLOBAL: LS3DF 0x100ac960
 // ___old_small_block_heap

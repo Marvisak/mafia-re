@@ -186,10 +186,10 @@ inline void C_IBuffer::Unlock()
 // ??Eiterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AV012@H@Z
 
 // TEMPLATE: LS3DF 0x1005cf00
-// ??0?$pair@Viterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$ma0ee93cf
+// ??0?$pair@Viterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@_N@std@@QAE@ABViterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$m9d95d36c
 
 // TEMPLATE: LS3DF 0x1005cf20
-// ?_Buynode@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
+// ?_Buynode@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
 
 // TEMPLATE: LS3DF 0x1005cf40
 // ?_Dec@const_iterator@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAEXXZ

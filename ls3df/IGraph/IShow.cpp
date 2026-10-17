@@ -14,6 +14,9 @@
 
 #include "IGraph/IGraph.h"
 #include "IGraph/bink.h"
+// binkw32.lib is a default library: the original's import directory lists it after rw_data, which dta.h asks for, and
+// RAD's bink.h asks for nothing
+#pragma comment(lib, "binkw32.lib")
 #include "IGraph/vorbisfile.h"
 #include "ISound/ISound.h"
 #include "dta.h"

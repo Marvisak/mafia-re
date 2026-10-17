@@ -108,6 +108,8 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 - The `DirectInput8Create` thunk at `0x10080364`.
 - S3's S3TC library at `0x100813e0–0x10086a09`, which `ITexture.cpp`'s `CompressTexture` calls (`S3TCencode` at
   `0x100813e0`; its arguments are two `DDSURFACEDESC`s, the encode type and S3's color weights 0.3086, 0.6094, 0.082).
+  Two C objects, `s3tc.obj` (the API) and `S3_quant.obj` (the quantizer), compiled by S3 with VC6 SP3 (the Rich
+  header's `Utc12_C` 8447 ×2) and linked prebuilt; the build links the original's, `ls3df/S3TC/s3tc.lib`.
 - The `DirectSoundCreate8` thunk (`DSOUND` ordinal 11) at `0x10086a10`.
 - The DirectShow base classes, `0x10086a20–0x1008d3e0`: seven objects of the DirectX 8.1 SDK's `BaseClasses`
   (`renbase`, `amfilter`, `ctlutil`, `mtype`, `combase`, `wxutil`, `wxlist`), compiled with VC6 SP5 without the

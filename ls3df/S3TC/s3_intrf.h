@@ -1,8 +1,8 @@
 #pragma once
 
-// S3's S3TC library, which ITexture's CompressTexture compresses DXT textures with. Its code is linked into the
-// original (0x100813e0-0x10086a09, before the DSOUND thunk); its SDK isn't public, so this declares what the engine
-// uses, with the SDK's header name.
+// S3's S3TC library, which ITexture's CompressTexture compresses DXT textures with. The original links it prebuilt
+// (0x100813e0-0x10086a09, before the DSOUND thunk), and so does the build: s3tc.lib holds the original's two objects,
+// s3tc.obj and S3_quant.obj. This declares what the engine uses, as S3's s3_intrf.h does.
 
 #include <ddraw.h>
 
@@ -15,9 +15,9 @@
 extern "C" {
 #endif
 
-// Encodes a surface described by lpDescIn into lpCodeBufferOut, weighting the color channels for the error
-int __cdecl S3TCencode(DDSURFACEDESC *lpDescIn, PALETTEENTRY *lpDescInPal, DDSURFACEDESC *lpDescOut,
-    void *lpCodeBufferOut, unsigned int dwEncodeType, float *weight);
+// Encodes the surface lpSrc describes into lpDestBuf, weighting the color channels for the error
+void __cdecl S3TCencode(DDSURFACEDESC *lpSrc, PALETTEENTRY *lpPal, DDSURFACEDESC *lpDest, void *lpDestBuf,
+    unsigned int dwEncodeType, float *weight);
 
 #ifdef __cplusplus
 }

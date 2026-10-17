@@ -33,7 +33,6 @@ add_library(ls3df SHARED
     ISound/IS_driver.cpp
     ISound/IS_sound.cpp
     ISound/IS_source.cpp
-    S3TC/s3tc.c
 )
 # The export directory names the DLL
 set_target_properties(ls3df PROPERTIES OUTPUT_NAME LS3DF)
@@ -48,6 +47,14 @@ if (MSVC_VERSION GREATER 1500)
 endif()
 target_include_directories(ls3df PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
 target_link_directories(ls3df PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/lib)
+
+# S3's S3TC library, which ITexture.cpp's CompressTexture calls. The original links it prebuilt, compiled by S3 with VC6
+# SP3 (the Rich header's Utc12_C 8447 x2), so the build links the same objects, cut out of the original; newer linkers
+# take them too.
+set(s3tc ${CMAKE_CURRENT_SOURCE_DIR}/S3TC/s3tc.lib)
+# Creative's eaxguid.lib, which the EAX GUIDs come from (the Rich header's Utc12_CPP 8799, VC6 SP4): its one object,
+# the original's GUIDs laid out as Creative's (eax.h)
+set(eaxguid ${CMAKE_CURRENT_SOURCE_DIR}/ISound/eaxguid.lib)
 
 if (MSVC_VERSION EQUAL 1200)
     # Original compile flags (/O2 comes from cmake/vc6-flags.cmake)
@@ -69,11 +76,15 @@ if (MSVC_VERSION EQUAL 1200)
     #       vector's $E and the out-of-line copies of the headers' inline functions go (see tools/autopch.py).
     set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
 
-    # Each library is added with the first function that needs it: their order is still to be worked out. rw_data
-    # comes from dta.h's #pragma. oleaut32 is for the base classes' wxutil object, whose BSTR helpers nothing calls:
-    # /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't import OLEAUT32.
-    target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8
-        strmiids binkw32 vorbisfile)
+    # The original's order. Its import directory lists the libraries in the order they were searched: KERNEL32, USER32,
+    # GDI32, ole32, d3d8, DINPUT8, DSOUND, WINMM and vorbisfile from the command line, then rw_data and binkw32, which
+    # dta.h and IShow.cpp ask for. Its code after the engine has d3d8's thunk, dxerr8, dinput8's thunk and data formats,
+    # S3TC, dsound's thunk, the base classes, then vorbisfile's thunks; its constant data dinput8's data formats,
+    # dxguid's GUIDs, S3TC's literals, eaxguid's GUIDs, then strmiids'. oleaut32 is for the base classes' wxutil object,
+    # whose BSTR helpers nothing calls: /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't
+    # import OLEAUT32.
+    target_link_libraries(ls3df PRIVATE kernel32 user32 gdi32 ole32 oleaut32 d3d8 dxerr8 dinput8 dxguid ${s3tc}
+        ${eaxguid} dsound winmm strmiids strmbase vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
@@ -102,8 +113,8 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
-    target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32
-        vorbisfile legacy_stdio_definitions)
+    target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8
+        strmiids strmbase vorbisfile legacy_stdio_definitions)
 endif()
 
 # The import libraries of binkw32.dll and vorbisfile.dll, which nobody has, from DLLs of stubs with their exports
@@ -112,9 +123,10 @@ foreach(dll binkw32 vorbisfile)
     target_link_options(${dll} PRIVATE /NOENTRY /NODEFAULTLIB)
 endforeach()
 
-# rw_data.lib, which dta.h names, is our rw_data target's import library
-add_dependencies(ls3df rw_data)
-target_link_directories(ls3df PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data>)
+# rw_data.lib, which dta.h names, is our rw_data target's import library, and binkw32.lib, which IShow.cpp names, the
+# binkw32 target's
+add_dependencies(ls3df rw_data binkw32)
+target_link_directories(ls3df PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data> $<TARGET_LINKER_FILE_DIR:binkw32>)
 
 vc6_header_dependencies(ls3df)
 
@@ -136,7 +148,6 @@ if (MSVC_VERSION GREATER 1500)
     target_include_directories(strmbase PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
 endif()
 target_include_directories(strmbase PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
-target_link_libraries(ls3df PRIVATE strmbase)
 # IShow.cpp includes its streams.h
 set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
 if (MSVC_VERSION EQUAL 1200)

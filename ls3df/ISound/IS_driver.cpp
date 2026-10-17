@@ -5,8 +5,6 @@
 // start of each __sinit). /YX puts it at the file's end, or mid-file in the long files (see tools/autopch.py).
 #include "ISound/ISound.h"
 #include "I3D/I3D.h"
-
-#include <initguid.h>
 #include "ISound/eax.h"
 
 // Zero-initialized globals follow the ones VC6's hash places (the zero vector), in declaration order
