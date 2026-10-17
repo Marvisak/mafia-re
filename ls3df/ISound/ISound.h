@@ -315,5 +315,5 @@ public:
 extern bool ISndIsInit;
 extern int MaxHWChannels;
 
-// Restarts the terminated sounds that have a hardware channel again (IS_sound.cpp; I3D code calls it)
+// Restarts the terminated sounds that have a hardware channel again (IS_sound.cpp)
 void UpdateAllTerminatedBuffs();

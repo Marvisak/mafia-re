@@ -5,12 +5,10 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the camera, the scene, the visual's base and the
-// meshes are written (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_camera.cpp, I3d_scene.cpp, I3d_visual.cpp,
-// I3d_mesh.cpp); the other frames, the visuals and the materials aren't recovered yet. Their placeholders keep the members and virtual functions
-// the written files use at their offsets and vtable slots, the sizes the driver allocates, and declare the constructors
-// it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the virtual
-// functions, none of which is written yet; the real classes will drop it.
+// The 3D engine (PS2 I3d_*.cpp). The placeholders of the classes not recovered yet keep the members and virtual
+// functions the written files use at their offsets and vtable slots, the sizes the driver allocates, and declare the
+// constructors it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the
+// virtual functions, none of which is written yet; the real classes will drop it.
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
@@ -666,7 +664,6 @@ public:
     virtual int __stdcall NumInterpolators() const;
     virtual I3D_interpolator **__stdcall GetInterpolators() const;
     virtual void __stdcall AddTickFrame(I3D_frame *frame);
-    // Removes the frame from the frames the scene ticks
     virtual LS3D_RESULT __stdcall DeleteTickFrame(I3D_frame *frame);
     virtual I3D_sector *__stdcall CreateSector();
     // The sector at pos, looked for from hint first (the camera's)
@@ -696,7 +693,6 @@ public:
     virtual uint __stdcall GetWeatherSystemParam(WS_PARAM param);
     virtual void __stdcall WeatherSystemReset();
     virtual void __stdcall WeatherSystemAddDummy(I3D_dummy *dummy);
-    // Takes the dummy out of the scene's weather system
     virtual void __stdcall WeatherSystemDelDummy(I3D_dummy *dummy);
     virtual int __stdcall WeatherSystemGetDummyCnt();
     virtual DUMMY_STRUCT *__stdcall WeatherSystemGetDumies();
@@ -1361,7 +1357,7 @@ public:
     uchar unknown_1e4[0x2ec - 0x1e4];
 };
 
-// I3D_material::flags (names guessed; the UNKNOWN ones are set by code not written yet)
+// I3D_material::flags (names guessed)
 #define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (1 to 5, I3D_object::m_RenderFGroup)
 #define MATF_LOD0 0x800                 // the objects render the face group from their first lod
 #define MATF_ENVMAP_MODE 0x7000         // with MATF_ENVMAP, a level's MESHF_ENVMAP_MODE value

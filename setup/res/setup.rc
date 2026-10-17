@@ -4,7 +4,6 @@
 // 1.2 has the bitmap and the strings in Czech and everything else in English (U.S.), one block per language as in
 // a VC6 resource script. RC writes the string tables after all other resources, which gives 1.2's order.
 
-// Czech
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 IDB_SPLASH BITMAP "splash.bmp"
@@ -62,7 +61,6 @@ STRINGTABLE
     IDS_SETUP, "Setup"
 }
 
-// English (U.S.)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDI_SETUP ICON "mafia.ico"

@@ -1,9 +1,8 @@
 // The 3D driver (PS2 I3d_driver.cpp), at 0x10015530-0x1001a1e0 in the original: I3D_driver in PS2's order, with the
 // PC's resource icon and shadow texture rasterizer after GetState, and the C_list templates' out-of-line functions at
-// the end. The header's zero vector has its $E at 0x10016fd0, after DrawLines (ours comes after DrawLine: see
-// tools/autopch.py; the shadow rasterizer's stubs are much smaller than the original's assembly). The order of the
-// file's .bss (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. The functions of other files the driver calls are
-// stubs at the end. Names are the PS2 build's unless noted.
+// the end. The header's zero vector has its $E at 0x10016fd0, after DrawLines. The order of the file's .bss
+// (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. The functions of other files the driver calls are stubs at the
+// end. Names are the PS2 build's unless noted.
 //
 // The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
 // the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a

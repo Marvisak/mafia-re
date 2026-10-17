@@ -136,11 +136,11 @@ D3DFORMAT m_TexturePixelFormat;
 // GLOBAL: LS3DF 0x101c563c
 uint m_HardwareCaps;
 
-// The characters of WM_CHAR, from index 1
 // The mouse's capabilities (PC only)
 // GLOBAL: LS3DF 0x101c5640
 DIDEVCAPS m_MouseCaps;
 
+// The characters of WM_CHAR, from index 1
 // GLOBAL: LS3DF 0x101c5670
 static uint m_KeyBuffer[32];
 

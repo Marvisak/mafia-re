@@ -217,7 +217,6 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         {
             dialog_state.vram_size = GetTotalVRAM(NULL);
         autodetect:
-            // Only the best of the best, true beasts can run Mafia with true color textures
             settings.multipass_rendering = false;
             settings.suspend_when_inactive = true;
             settings.clip_always = false;
@@ -451,7 +450,6 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            // The controls are only refreshed when one of these two fires
             if (settings.hardware_transform && LOWORD(wParam) != IDC_CHECK_MULTIPASSRENDERING)
             {
                 settings.multipass_rendering = false;

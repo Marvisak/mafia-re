@@ -435,7 +435,6 @@ def main() -> None:
     print(f"file size 0x{len(orig.data):x} vs 0x{len(ours.data):x}; "
           f"{same} of {len(orig.data)} bytes identical at the same offset ({100 * same / len(orig.data):.1f}%)\n")
 
-    # headers
     print("== Headers")
     stub = orig.data[:orig.pe] == ours.data[:ours.pe]
     print(f"  DOS header, stub and Rich header (0x0-0x{orig.pe:x}): {'identical' if stub else 'DIFFER'}")

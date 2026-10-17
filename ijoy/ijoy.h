@@ -129,7 +129,7 @@ struct S_joy_effect_caps {
     bool dynamic_type_specific;
 };
 
-// IJoyEffect::SetCondition, the fields of DICONDITION scaled to -1..1 (the saturations to 0..1)
+// IJoyEffect::SetCondition, the fields of DICONDITION scaled to -1..1 (the saturations and the dead band to 0..1)
 struct S_joy_condition {
     float offset;
     float positive_coefficient;

@@ -56,7 +56,6 @@
 // An object (axis, button, POV...) of a device, from EnumObjects
 struct S_object {
     DIDEVICEOBJECTINSTANCEA *instance;
-    // Never used
     uint unused_1;
     uint unused_2;
     S_object *next;

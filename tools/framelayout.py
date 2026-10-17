@@ -1,6 +1,6 @@
 """Predict a function's VC6 /O2 stack-frame layout from its /FAs listing and compare it with the actual one.
 
-usage: framelayout.py <listing.asm> <function> [--infl name=+n ...] [--no-force name ...]
+usage: framelayout.py <listing.asm> <function> [--infl name=+n ...] [--force-alone name ...]
 
 The model: each spilled local's weight is its number of memory references in the
 code before tail merging; variables are processed heaviest first (ties: earliest last reference first) and each
@@ -8,7 +8,7 @@ takes the free slot with the smallest creator weight >= its own (ties: the most 
 freeness is precise liveness on the final code. Frames over 128 bytes are sorted: the slots (key = sum of the
 members' weights; byte cells key = references * 4) ordered by (key desc, creator weight asc, creation) go through
 VC6's quicksort; arrays sit above everything. Since tail merging hides references, `--infl` adds the pre-merge
-extras you know of (e.g. `--infl current_block=+8`). The tool prints the actual slot table from the listing, the
+extras you know of (e.g. `--infl _current_block$=+8`). The tool prints the actual slot table from the listing, the
 predicted one, and the differences, which point at the variable whose count or lifetime is off.
 """
 import re, sys, argparse

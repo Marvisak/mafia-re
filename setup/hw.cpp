@@ -14,8 +14,7 @@
 bool supports_w_buffer = true;
 
 // The original names are unknown. Both compilers order uninitialized globals by a hash of their names (VS2008 puts
-// constructed ones after the others), and these names give both builds' .bss order: global_buffer, app_state and
-// d3d8 didn't give 1.2's
+// constructed ones after the others), and these names give both builds' .bss order
 // GLOBAL: SETUP 0x410d48
 // GLOBAL: SETUPSTEAM 0x405fc0
 char message_buffer[256];

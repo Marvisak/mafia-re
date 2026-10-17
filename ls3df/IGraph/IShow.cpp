@@ -55,13 +55,13 @@ public:
     ~CTextureRenderer();
 
 public:
-    HRESULT CheckMediaType(const CMediaType *pmt);      // Format acceptable?
-    HRESULT SetMediaType(const CMediaType *pmt);        // Video format notification
-    HRESULT DoRenderSample(IMediaSample *pMediaSample); // New video sample
+    HRESULT CheckMediaType(const CMediaType *pmt);
+    HRESULT SetMediaType(const CMediaType *pmt);
+    HRESULT DoRenderSample(IMediaSample *pMediaSample);
 
-    uint m_lVidWidth;                   // 0x160, Video width
-    uint m_lVidHeight;                  // 0x164, Video Height
-    uint m_lVidPitch;                   // 0x168, Video Pitch
+    uint m_lVidWidth;                   // 0x160
+    uint m_lVidHeight;                  // 0x164
+    uint m_lVidPitch;                   // 0x168
     IBaseFilter *sound_renderer;        // 0x16c, DirectShow's, for the file's sound
     IShow *show;                        // 0x170
     D3DFORMAT format;                   // 0x174, the regions' textures', from CreateRegions
@@ -927,7 +927,6 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
     IBaseFilter *pFSrc = NULL;          // Source Filter
     IPin *pFSrcPinOut = NULL;           // Source Filter Output Pin
 
-    // Create the Texture Renderer object
     renderer = new CTextureRenderer(NULL, &hr);
     if (FAILED(hr)) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not create texture renderer object!  hr=0x%x", hr);
@@ -935,20 +934,17 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
     }
     renderer->show = this;
 
-    // Get a pointer to the IBaseFilter on the TextureRenderer, add it to graph
     pFTR = renderer;
     if (FAILED(hr = graph->AddFilter(pFTR, L"TEXTURERENDERER"))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not add renderer filter to graph!  hr=0x%x", hr);
         return hr;
     }
 
-    // Add the source filter
     if (FAILED(hr = graph->AddSourceFilter(name, L"SOURCE", &pFSrc))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not create source filter to graph!  hr=0x%x", hr);
         return hr;
     }
 
-    // Find the source's output pin and the renderer's input pin
     if (FAILED(hr = pFTR->FindPin(L"In", &pFTRPinIn))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find input pin!  hr=0x%x", hr);
         return hr;
@@ -958,7 +954,6 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
         return hr;
     }
 
-    // Connect these two filters
     if (FAILED(hr = graph->Connect(pFSrcPinOut, pFTRPinIn))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not connect pins!  hr=0x%x", hr);
         return hr;
@@ -1056,7 +1051,6 @@ HRESULT CTextureRenderer::CheckMediaType(const CMediaType *pmt)
     HRESULT hr = E_FAIL;
     VIDEOINFO *pvi;
 
-    // Reject the connection if this is not a video type
     if (*pmt->FormatType() != FORMAT_VideoInfo)
         return E_INVALIDARG;
 
@@ -1078,7 +1072,6 @@ HRESULT CTextureRenderer::CheckMediaType(const CMediaType *pmt)
 // FUNCTION: LS3DF 0x10075530
 HRESULT CTextureRenderer::SetMediaType(const CMediaType *pmt)
 {
-    // Retrive the size of this media type
     VIDEOINFO *pviBmp = (VIDEOINFO *)pmt->Format();
     m_lVidWidth = pviBmp->bmiHeader.biWidth;
     m_lVidHeight = abs(pviBmp->bmiHeader.biHeight);
@@ -1102,7 +1095,6 @@ HRESULT CTextureRenderer::DoRenderSample(IMediaSample *pSample)
     BYTE *pBmpBuffer;
     BYTE *src;
 
-    // Get the video bitmap buffer
     pSample->GetPointer(&pBmpBuffer);
     for (int i = show->regions.size(); i--;) {
         S_show_region &region = show->regions[i];

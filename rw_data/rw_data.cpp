@@ -635,9 +635,8 @@ bool EXPORT dtaDelete(const char *file_name)
     return DeleteFileA(file_name);
 }
 
-// Not matching yet: the code is complete (99% with stack slots and registers masked), the stack slots and some
-// register choices differ. tools/framelayout.py models VC6's slot rules and shows the predicted and the actual
-// slots from a /FAs listing.
+// Not matching yet: the code is complete, the stack slots and some register choices differ. tools/framelayout.py
+// models VC6's slot rules and shows the predicted and the actual slots from a /FAs listing.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -775,7 +774,6 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             }
             else
             {
-                // Walk backwards
                 while (current_block != fp_block)
                 {
                     block_start_file_pointer -= previous_compressed_block_size + 4;
@@ -1785,8 +1783,6 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
     return decompressed_size;
 }
 
-// Processes 8 bytes at a time from the end, the remaining bytes are xored with the first bytes of the key
-// (PS2: DeCrypt__FPUcUil, the key is a single signed 64 bit value)
 // Separate function in the PS2 build (Decompression__FPUcPUcUi), inlined 3 times into dtaRead and once into WavDecompression on PC
 static inline int Decompression(uchar *buffer, uchar *dest, uint len)
 {
@@ -1855,6 +1851,8 @@ static inline int Decompression(uchar *buffer, uchar *dest, uint len)
     return out;
 }
 
+// Processes 8 bytes at a time from the end, the remaining bytes are xored with the first bytes of the key
+// (PS2: DeCrypt__FPUcUil, the key is a single signed 64 bit value)
 // FUNCTION: RWDATA 0x10004690
 void __stdcall DeCrypt(uchar *buffer, uint len, __int64 key)
 {

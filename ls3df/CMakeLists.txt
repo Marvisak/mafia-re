@@ -69,10 +69,9 @@ if (MSVC_VERSION EQUAL 1200)
     #       vector's $E and the out-of-line copies of the headers' inline functions go (see tools/autopch.py).
     set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
 
-    # The original also imports GDI32, d3d8, DINPUT8, binkw32 and vorbisfile. Each library is added with the first
-    # function that needs it: their order is still to be worked out. rw_data comes from dta.h's #pragma. oleaut32 is
-    # for the base classes' wxutil object, whose BSTR helpers nothing calls: /OPT:REF drops them and the import
-    # (LNK4089), as in the original, which doesn't import OLEAUT32.
+    # Each library is added with the first function that needs it: their order is still to be worked out. rw_data
+    # comes from dta.h's #pragma. oleaut32 is for the base classes' wxutil object, whose BSTR helpers nothing calls:
+    # /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't import OLEAUT32.
     target_link_libraries(ls3df PRIVATE gdi32 kernel32 user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8
         strmiids binkw32 vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
