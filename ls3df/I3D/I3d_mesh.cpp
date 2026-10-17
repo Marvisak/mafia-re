@@ -428,7 +428,8 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
 {
     if (mesh == this)
         return I3D_OK;
-    for (int i = 0; i < 10; i++) {
+    int i;
+    for (i = 0; i < 10; i++) {
         if (levels[i])
             levels[i]->Release();
     }
