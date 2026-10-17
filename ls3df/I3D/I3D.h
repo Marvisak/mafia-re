@@ -1583,6 +1583,12 @@ I3D_PLACEHOLDER(I3D_animation_set, 0x14)
 I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
+// The base classes' empty CBaseRenderer::OnRenderEnd, which the linker folds with I3D_driver::m_RecomputeUsedVRAM:
+// the original kept the base classes' copy. Our map lists our copy under the driver's object, so crtannotate leaves
+// it out of library_strmbase.h; the name is the one our PDB keeps (tools/foldfix.py)
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
 // buffer comes first, VisualType2String's second.

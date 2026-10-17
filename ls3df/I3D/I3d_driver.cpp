@@ -1714,7 +1714,7 @@ void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
 }
 
 // Empty, as on PS2. The linker folds it with the DirectShow base classes' empty CBaseRenderer::OnRenderEnd, whose
-// copy the original kept (0x10087ec0, annotated in library_strmbase.h).
+// copy the original kept (0x10087ec0, annotated in I3D.h).
 void I3D_driver::m_RecomputeUsedVRAM()
 {
 }

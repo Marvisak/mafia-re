@@ -967,9 +967,6 @@
 // GLOBAL: LS3DF 0x100abc48
 // __NLG_Destination
 
-// GLOBAL: LS3DF 0x100abc54
-// __FPmtterm
-
 // GLOBAL: LS3DF 0x100abc70
 // __OP_FMODjmptab
 
@@ -1024,9 +1021,6 @@
 // GLOBAL: LS3DF 0x100ac960
 // ___old_small_block_heap
 
-// GLOBAL: LS3DF 0x100ae784
-// __ctype
-
 // GLOBAL: LS3DF 0x100ae984
 // ___old_sbh_threshold
 
@@ -1050,9 +1044,6 @@
 
 // GLOBAL: LS3DF 0x100aed68
 // __pow10neg
-
-// GLOBAL: LS3DF 0x101ca8bc
-// ___lconv_static_null
 
 // GLOBAL: LS3DF 0x101ca9ac
 // ___fastflag

@@ -4,12 +4,14 @@ Both builds link the same CRT objects in the same order, so each CRT function of
 original at nearly the same offset as the one before it; only the padding in front of 16-byte aligned
 objects can differ while the code before the CRT has another size. Starting from the entry points
 (the CRT's startup code), each public CRT function of our map file is looked up within 15 bytes of the
-previous offset and accepted when its bytes agree apart from pointer operands. Those operands then
-say where the CRT's globals are in the original, so data addresses come from the original's own code,
-not from our map plus an offset. A source that isn't complete yet links only some of the original's
-CRT objects, so after a missing one the next function is further away: a function not found near the
-previous offset is looked for in the whole of the original's .text, and taken if it fits at exactly
-one place. Identical functions (_memcpy and _memmove, each in its own object) fit at several; the
+previous offset and accepted when its bytes agree apart from pointer operands, and its calls and jumps to
+functions already found go to their original addresses. Those operands then say where the CRT's globals
+are in the original, so data addresses come from the original's own code, not from our map plus an offset:
+a pointer places the whole contribution of the object it points into (our PDB's section contributions),
+which both builds lay out the same, statics included. A source that isn't complete yet links only some
+of the original's CRT objects, so after a missing one the next function is further away: a function not
+found near the previous offset is looked for in the whole of the original's .text, and taken if it fits
+at exactly one place. Identical functions (_memcpy and _memmove, each in its own object) fit at several; the
 functions reccmp already matches tell them apart, by which of those places the original calls where ours
 calls the twin, and the place left over is the last twin's.
 
@@ -49,6 +51,7 @@ Run it from the repository root after building the target's PDB preset:
 """
 
 import argparse
+import bisect
 import logging
 import re
 import struct
@@ -57,6 +60,7 @@ from pathlib import Path
 
 import capstone
 from reccmp.compare import Compare
+from reccmp.cvdump import Cvdump
 from reccmp.project.detect import RecCmpProject
 from reccmp.types import EntityType, ImageId
 
@@ -285,6 +289,27 @@ def main() -> None:
     data_symbols = sorted(symbols + [(n.addr, n.name(), STATIC_DATA) for n in reccmp.cvdump_analysis.nodes
                                      if n.addr is not None and n.decorated_name is None and n.name()
                                      and n.node_type == EntityType.DATA and not text_start <= n.addr < text_end])
+    # Each object's data contributions, from our PDB. An object's data is laid out the same in both builds, so
+    # a pointer anywhere into a contribution places all of it, its statics included, which VC6's CRT has no
+    # names for. Credited to the public global before it instead, a pointer past that global's own object gave it
+    # another object's address (LS3DF's __ctype got one in sbheap's data, which cost two __old_sbh functions).
+    cv = Cvdump(str(target.recompiled_pdb)).modules().section_contributions().run()
+    modules = {m.id: m for m in cv.modules}
+    contribs = []
+    for c in cv.sizerefs:
+        m = modules.get(c.module)
+        if m is None or not m.obj or not 1 <= c.section <= len(ours.sections):
+            continue
+        start = ours.sections[c.section - 1][1] + c.offset
+        if not text_start <= start < text_end:
+            obj = f"{Path(m.lib).stem.upper()}:{Path(m.obj).name}" if m.lib else Path(m.obj).name
+            contribs.append((start, start + c.size, obj))
+    contribs.sort()
+    contrib_starts = [c[0] for c in contribs]
+
+    def contribution(addr: int) -> tuple[int, int, str] | None:
+        k = bisect.bisect_right(contrib_starts, addr) - 1
+        return contribs[k] if k >= 0 and addr < contribs[k][1] else None
 
     _, orig_text_start, orig_text_size, _, _ = orig.section(".text")
     orig_text = orig.read(orig_text_start, orig_text_size)
@@ -296,13 +321,26 @@ def main() -> None:
     # our symbol -> original address -> votes, kept apart for operands pointing exactly at the symbol
     exact = defaultdict(lambda: defaultdict(int))
     inside = defaultdict(lambda: defaultdict(int))
+    placed = defaultdict(lambda: defaultdict(int))  # contribution -> its original address -> votes
+
+    in_orig = {}  # our address of a function found -> its original address
+
+    def fits(a: int, b: int, size: int, limit: int) -> bool:
+        # The bytes agree apart from pointers, and a call or jump to a function already found goes to its original
+        # address: adjustor thunks differ only in the function they jump to (CBaseInputPin's AddRef and Release)
+        pairs = compare(ours, orig, a, b, size, limit)
+        return pairs is not None and all(in_orig.get(vx, vy) == vy for vx, vy in pairs)
 
     def accept(addr: int, orig_addr: int, name: str, size: int) -> None:
         found.setdefault(orig_addr, (addr, []))[1].append(name)
+        in_orig[addr] = orig_addr
         for vx, vy in pointer_operands(ours, orig, addr, orig_addr, size):
             sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
             if sym:
                 (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
+            c = contribution(vx)
+            if c and in_library(c[2]):
+                placed[c][vy - (vx - c[0])] += 1
 
     for k, (addr, name, obj) in enumerate(code_symbols):
         # Import thunks (MSVCRT:MSVCR90.dll) are left to the thunk search below, or to reccmp itself in a
@@ -313,7 +351,7 @@ def main() -> None:
         code = ours.read(addr, end - addr)
         sizes = candidate_sizes(ours, addr, len(code.rstrip(b"\x00\xcc\x90")) or len(code))  # without padding
         match = next(((size, shift) for size in sizes for shift in sorted(range(-15, 16), key=abs)
-                      if compare(ours, orig, addr, addr + delta + shift, size, len(code)) is not None), None)
+                      if fits(addr, addr + delta + shift, size, len(code))), None)
         if match:
             size, shift = match
             delta += shift
@@ -324,7 +362,7 @@ def main() -> None:
             def search(sizes: list[int], limit: int) -> tuple[list[int], int]:
                 for size in sizes:
                     hits = [orig_text_start + p for p in range(orig_text_size - size) if orig_text[p] == code[0]
-                            and compare(ours, orig, addr, orig_text_start + p, size, limit) is not None]
+                            and fits(addr, orig_text_start + p, size, limit)]
                     if hits:
                         return hits, size
                 return [], 0
@@ -413,9 +451,11 @@ def main() -> None:
         addr, name, obj = sym
         if not (in_library(obj) or obj == STATIC_DATA and not args.library) or text_start <= addr < text_end:
             continue
-        cand = exact.get(sym) or inside[sym]
-        if len(cand) > 1 and sym in exact:
-            # A loop's end pointer, one past an array, is exact too where the next variable starts at it in our
+        c = contribution(addr)
+        cand = ({a + addr - c[0]: v for a, v in placed[c].items()} if c in placed
+                else exact.get(sym) or inside[sym])
+        if len(cand) > 1 and (c in placed or sym in exact):
+            # A loop's end pointer, one past an array, points where the next object or variable starts in our
             # build (__NMSG_WRITE's message table before _iob, ___initstdio's _iob before _pctype). The real
             # references outnumber those.
             best = max(cand, key=cand.get)

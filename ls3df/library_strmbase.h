@@ -145,11 +145,6 @@
 // LIBRARY: LS3DF 0x10087e90
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
 
-// The linker folds this empty function with others, I3D_driver::m_RecomputeUsedVRAM among them; the name is the
-// one our PDB keeps (tools/foldfix.py)
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
-
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
