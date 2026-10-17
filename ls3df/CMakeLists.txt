@@ -14,6 +14,7 @@ add_library(ls3df SHARED
     I3D/I3d_frame.cpp
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp
+    I3D/I3d_model.cpp
     I3D/I3d_object.cpp
     I3D/I3d_scene.cpp
     I3D/I3d_visual.cpp
@@ -89,16 +90,13 @@ if (MSVC_VERSION EQUAL 1200)
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
     # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp), RenderShadowTexture
-    # by the shadows, the frame's functions by the models and visuals, the visual's SetBoundVolume by the mirrors, the
-    # lod's destructor by the lit objects and single meshes, the vertex transforms by the shadows' range (0x10054f60),
-    # the camera's UpdateSector by render.cpp; the scene's view, sound and weather functions by render.cpp, its shadow
-    # and mirror lists by the shadows and mirrors, MakeReadySectors by I3D code at 0x10045724.
+    # by the shadows, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit objects and single
+    # meshes, the vertex transforms by the shadows' range (0x10054f60), the camera's UpdateSector by render.cpp; the
+    # scene's view, sound and weather functions by render.cpp, its shadow and mirror lists by the shadows and mirrors,
+    # MakeReadySectors by I3D code at 0x10045724.
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
-        "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DiscardHRBoundVol@I3D_frame@@QAEXXZ"
-        "/INCLUDE:?ResetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@XZ"
-        "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z"
         "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
         "/INCLUDE:??1lod@@UAE@XZ"
         "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"

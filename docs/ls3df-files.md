@@ -61,7 +61,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1002c8c0–10030560` | `1002ea90` | | `I3d_math.cpp` | written. The math from `RandFloat` (`1002cda0`) to `LineLineIntersect`, one file as on PS2; its marker sits between `S_vector::RotateByMatrix` and `RotateByNormMatrix`, not at the end |
 | `10030560–10031820` | `10031800` | | `I3d_mesh.cpp` | `I3D_face_group`, `I3D_mesh_level`, `I3D_mesh_object`, each in PS2's order with the PC's additions; written |
 | `10031820–100333d0` | `100333b0` | `100324b0` | `I3d_mirror.cpp`? | no strings |
-| `100333d0–10034350` | `10034330` | `10033b50`, `10033ba0` | `I3d_model.cpp`? | two lists; PS2's `__sinit_I3d_model.cpp` constructs more than the header's objects too |
+| `100333d0–10034350` | `10034330` | `10033b50`, `10033ba0` | `I3d_model.cpp` | `I3D_model` in PS2's order from its constructor (`10033410`; before it a render state helper the mirrors' file inlines); the two `$E`s are PS2's `DuplTargetList` and `DuplShadowList`, defined before `duplicateChildren`; written |
 | `10034350–100367b0` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph`; after its marker the morph's `LoadImage` (`10036750`) and `MorphDef` (`10036580`, a reference-counted grid) |
 | `100367b0–1003a430` | `10039260` | | `I3d_object.cpp` | `I3D_object` close to PS2's order (`I3D_object::DetachMesh()`) with the PC's `lod` class (`lod::Create()`) after `Duplicate`; the marker before `m_RenderFGroup` (`renderObject()`) and `LoadImage`; written |
 | `1003a430–1003c070` | `1003c050` | | `I3d_occluder.cpp` | `i3d_occluder::Build`, `UpdateShadow` |

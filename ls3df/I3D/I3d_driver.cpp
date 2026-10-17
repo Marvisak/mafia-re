@@ -1797,12 +1797,6 @@ I3D_mirror::I3D_mirror()
     renderState[37]++;
 }
 
-// STUB: LS3DF 0x10033410
-I3D_model::I3D_model()
-{
-    renderState[16]++;
-}
-
 // STUB: LS3DF 0x10034e30
 I3D_morph::I3D_morph()
 {

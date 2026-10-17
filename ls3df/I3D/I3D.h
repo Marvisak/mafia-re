@@ -349,6 +349,12 @@ public:
         return name ? name : "";
     }
 
+    // The name without the model's (Insanity3D's name)
+    const char *GetOrigName() const
+    {
+        return orig_name ? orig_name : "";
+    }
+
     I3D_FRAME_TYPE GetType() const
     {
         return type;
@@ -410,6 +416,12 @@ public:
 
 // SYNTHETIC: LS3DF 0x1001a980
 // I3D_frame::`scalar deleting destructor'
+
+// The destructor I3d_frame.cpp's thunk registers for UpdateTargetList: the first $E5 in link order. reccmp pairs the
+// annotations of one name with our functions of that name in address order, so the model file's is annotated too, the
+// later files' aren't.
+// SYNTHETIC: LS3DF 0x1001c7b0
+// $E5
 
 // The function-local statics of I3d_frame.cpp (PS2 names): AddToFFTree's count of the frames added, Update's guard
 // against updating the targets twice. VC6 puts a function's static into the PDB with its plain name, so they have
@@ -523,14 +535,16 @@ public:
 struct S_ipol_anim {
     I3D_animation_set *set;
     bool on;                            // 0x04
-    uint unknown_08;
+    uint options;                       // 0x08, the model's SetAnimOptions
     int time;                           // 0x0c
     int time_1;                         // 0x10, set with time
-    uint options;                       // 0x14
+    uint unknown_14;
     float blend;                        // 0x18
 };
 
 class I3D_interpolator;
+class I3D_pose;
+class I3D_pose_set;
 
 // The animations a scene or a model plays (PS2 I3D_IPolSet, 0xf8 bytes on PC; I3d_interpolator.cpp isn't written yet)
 class I3D_IPolSet {
@@ -543,9 +557,17 @@ public:
 
     ~I3D_IPolSet();
 
-    // PS2 names
+    // PS2 names, in PS2's order
+    void Tick(const int *times);
     void Tick(int time);
     LS3D_RESULT SetAnimation(I3D_animation_set *set, uint index, float blend, uint options);
+    LS3D_RESULT SetPose(I3D_frame *frame, I3D_pose *pose);
+    LS3D_RESULT SetPose(const char *frame_name, I3D_pose *pose);
+    LS3D_RESULT SetPose(I3D_pose_set *set);
+    void SetPoseBlend(float blend);
+    LS3D_RESULT SetPoseBlend(float blend, I3D_pose_set *set);
+    float GetPoseBlend() const;
+    void ResetAllPoses();
 
     I3D_frame *frame;
     bool changed;                       // 0x04, an animation's blend or time was set
@@ -786,8 +808,8 @@ public:
 // SYNTHETIC: LS3DF 0x1004ddc0
 // $E29
 
-// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the first $E10 in link order (Globals.cpp,
-// ITexture.cpp and IS_sound.cpp have one too)
+// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the second $E10 in link order, after the model
+// file's (Globals.cpp, ITexture.cpp and IS_sound.cpp have one too)
 // SYNTHETIC: LS3DF 0x10061d00
 // $E10
 
@@ -799,10 +821,10 @@ public:
 // ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1025,26 +1047,86 @@ public:
     uchar unknown_14c[0x1f8 - 0x14c];
 };
 
-// The frames whose members the frames call (PS2 names)
+// The frames whose members the frames call (PS2 names). Its first virtual function is AddToTarget; DeleteFromTarget
+// and SetTargetFlags follow it in the vtable.
 class __declspec(novtable) I3D_target : public I3D_frame {
 public:
     I3D_target();
 
+    virtual void __stdcall AddToTarget(I3D_frame *frame);
+
+    static I3D_target *GetTarget(I3D_frame *frame);
     void UpdateFrames();
     static void DeleteFromAnyTarget(I3D_frame *frame);
 
     uchar unknown_140[0x14];
 };
 
-class __declspec(novtable) I3D_model : public I3D_frame {
+// A frame and a target (PS2 type; the names are guesses): a model's duplication keeps the copies of the frames that had
+// a target with their targets, to give the copies the copied targets
+struct TARGET_ITEM {
+    I3D_frame *frame;
+    I3D_target *target;
+};
+
+// A hierarchy of frames loaded from a file, which it owns, and its animations (PS2 I3D_model, 0x158 bytes on PC)
+// VTABLE: LS3DF 0x1009c160
+class I3D_model : public I3D_frame {
 public:
     I3D_model();
 
-    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
-    virtual void __stdcall DeleteFrame(I3D_frame *frame);
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, void *cb, void *context);
+    virtual void __stdcall Close();
+    virtual void __stdcall AddFrame(I3D_frame *frame);
+    virtual LS3D_RESULT __stdcall DeleteFrame(I3D_frame *frame);
+    virtual LS3D_RESULT __stdcall SetAnimation(I3D_animation_set *set, uint index, float blend, uint options);
+    virtual I3D_animation_set *__stdcall GetAnimationSet(uint index) const;
+    virtual void __stdcall StopAnimation(uint index);
+    virtual void __stdcall StartAnimation(uint index);
+    virtual LS3D_RESULT __stdcall SetAnimBlend(uint index, float blend);
+    virtual float __stdcall GetAnimBlend(uint index) const;
+    virtual LS3D_RESULT __stdcall SetAnimTime(uint index, int time);
+    virtual int __stdcall GetAnimTime(uint index) const;
+    virtual LS3D_RESULT __stdcall SetAnimOptions(uint index, uint options);
+    virtual uint __stdcall GetAnimOptions(uint index) const;
+    virtual bool __stdcall AnimIsOn(uint index) const;
+    virtual void __stdcall Tick(int time);
+    virtual void __stdcall Tick(const int *times);
+    // A name's new overloads take its first one's slot in reverse declaration order: the vtable has SetPose(I3D_pose_set
+    // *) and SetPoseBlend(float, I3D_pose_set *) first
+    virtual LS3D_RESULT __stdcall SetPose(I3D_frame *frame, I3D_pose *pose);
+    virtual LS3D_RESULT __stdcall SetPose(const char *frame_name, I3D_pose *pose);
+    virtual LS3D_RESULT __stdcall SetPose(I3D_pose_set *set);
+    virtual LS3D_RESULT __stdcall SetPoseBlend(float blend);
+    virtual LS3D_RESULT __stdcall SetPoseBlend(float blend, I3D_pose_set *set);
+    virtual float __stdcall GetPoseBlend() const;
+    virtual void __stdcall ResetAllPoses();
+    virtual int __stdcall NumInterpolators() const;
+    virtual I3D_interpolator **__stdcall GetInterpolators() const;
+    virtual LS3D_RESULT __stdcall DuplicateHierarchy(I3D_model *model);
+    virtual LS3D_RESULT __stdcall SetName(const char *new_name);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual ~I3D_model();
 
-    uchar unknown_140[0x18];
+    // Gives the frames the model's name, or their own if it has none
+    LS3D_RESULT SetName();
+
+    C_list<I3D_frame *> frames;         // 0x140, the frames it owns
+    I3D_IPolSet *ipol_set;              // 0x150
+    char *file_name;                    // 0x154, Open's, with a reference count in the int before it: the copies share
+                                        // it
 };
+
+// SYNTHETIC: LS3DF 0x10033460
+// I3D_model::`scalar deleting destructor'
+
+// The destructors the model file's thunks register for DuplTargetList and DuplShadowList: the second $E5 in link order,
+// after I3d_frame.cpp's, and the first $E10, before render.cpp's
+// SYNTHETIC: LS3DF 0x10033b80
+// $E5
+
+// SYNTHETIC: LS3DF 0x10033bd0
+// $E10
 
 class __declspec(novtable) I3D_occluder : public I3D_frame {
 public:
@@ -1343,7 +1425,17 @@ public:
 // C_list<GLOW_STRUCT>::reserve
 
 I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
-I3D_PLACEHOLDER_VISUAL(I3D_singlemesh, 0x22c)
+// A mesh deformed by joints (PS2 I3D_singlemesh; the file isn't written yet). The single morph is one too: the model's
+// duplication builds both.
+class __declspec(novtable) I3D_singlemesh : public I3D_visual {
+public:
+    I3D_singlemesh();
+
+    // PS2 name
+    void DBuild();
+
+    uchar unknown_1dc[0x22c - 0x1dc];
+};
 I3D_PLACEHOLDER_VISUAL(I3D_morph, 0x238)
 I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
 I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
@@ -1587,10 +1679,11 @@ I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
 // The base classes' empty CBaseRenderer::OnRenderEnd, which the linker folds with I3D_driver::m_RecomputeUsedVRAM:
-// the original kept the base classes' copy. Our map lists our copy under the driver's object, so crtannotate leaves
-// it out of library_strmbase.h; the name is the one our PDB keeps (tools/foldfix.py)
+// the original kept the base classes' copy. Our map listed our copy under the driver's object, so crtannotate left it
+// out of library_strmbase.h (since I3d_model.cpp it lists it under renbase.cpp's); the name is the one our PDB keeps
+// (tools/foldfix.py)
 // LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -1660,11 +1753,35 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // STUB: LS3DF 0x1001e280
 // I3D_IPolSet::~I3D_IPolSet
 
+// STUB: LS3DF 0x1001e360
+// ?Tick@I3D_IPolSet@@QAEXPBH@Z
+
 // STUB: LS3DF 0x1001e470
-// I3D_IPolSet::Tick
+// ?Tick@I3D_IPolSet@@QAEXH@Z
 
 // STUB: LS3DF 0x1001e580
 // I3D_IPolSet::SetAnimation
+
+// STUB: LS3DF 0x1001e7e0
+// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PAVI3D_frame@@PAVI3D_pose@@@Z
+
+// STUB: LS3DF 0x1001e810
+// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PBDPAVI3D_pose@@@Z
+
+// STUB: LS3DF 0x1001e860
+// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PAVI3D_pose_set@@@Z
+
+// STUB: LS3DF 0x1001e8c0
+// ?SetPoseBlend@I3D_IPolSet@@QAEXM@Z
+
+// STUB: LS3DF 0x1001e900
+// ?SetPoseBlend@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@MPAVI3D_pose_set@@@Z
+
+// STUB: LS3DF 0x1001e960
+// I3D_IPolSet::GetPoseBlend
+
+// STUB: LS3DF 0x1001e9a0
+// I3D_IPolSet::ResetAllPoses
 
 // STUB: LS3DF 0x100419e0
 // I3D_portal::UpdatePortal
