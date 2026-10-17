@@ -170,6 +170,14 @@ def is_crt(obj: str) -> bool:
         ("LIBC:", "LIBCMT:", "LIBCP:", "LIBCPMT:", "MSVCRT:", "OLDNAMES:"))
 
 
+def rel32_operand(code: bytes, w: int) -> bool:
+    """Whether the dword at w follows the opcode of a call, jmp or conditional jump with a rel32 operand. Without
+    this test any small dword passes for one, its target landing inside both images: CPosPassThru's AddRef and
+    Release differ only in a vtable displacement (call [ecx+4], call [ecx+8]), which with the ret after it read as
+    a rel32, so each fit at the other's place."""
+    return w >= 1 and code[w - 1] in (0xE8, 0xE9) or w >= 2 and code[w - 2] == 0x0F and 0x80 <= code[w - 1] <= 0x8F
+
+
 def compare(ours: PE, orig: PE, a: int, b: int, n: int, limit: int) -> list[tuple[int, int]] | None:
     """Compare n bytes at our a and the original's b, with pointer operands reaching up to limit
     (padding trimmed from n can include an operand's last zero byte). Returns the differing dwords as
@@ -191,7 +199,7 @@ def compare(ours: PE, orig: PE, a: int, b: int, n: int, limit: int) -> list[tupl
                 pairs.append((vx, vy))
                 break
             tx, ty = (a + w + 4 + vx) & 0xFFFFFFFF, (b + w + 4 + vy) & 0xFFFFFFFF
-            if ours.contains(tx) and orig.contains(ty):
+            if rel32_operand(x, w) and ours.contains(tx) and orig.contains(ty):
                 pairs.append((tx, ty))
                 break
         else:

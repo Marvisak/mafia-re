@@ -1678,12 +1678,17 @@ I3D_PLACEHOLDER(I3D_animation_set, 0x14)
 I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
-// The base classes' empty CBaseRenderer::OnRenderEnd, which the linker folds with I3D_driver::m_RecomputeUsedVRAM:
-// the original kept the base classes' copy. Our map listed our copy under the driver's object, so crtannotate left it
-// out of library_strmbase.h (since I3d_model.cpp it lists it under renbase.cpp's); the name is the one our PDB keeps
-// (tools/foldfix.py)
-// LIBRARY: LS3DF 0x10087ec0
-// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// Two of the base classes' functions the linker folds with engine functions: CBasePin::EndOfStream with
+// I3D_void_interface::NumLevels (I3d_visual.cpp) and CBaseRenderer::OnStopStreaming with CBaseFilter::GetSetupData
+// (IShow.cpp's copy). The original kept the base classes' copies, our map lists ours under the engine's objects, so
+// crtannotate leaves them out of library_strmbase.h. Which object our map lists a folded copy under changes with the
+// link (CBaseRenderer::OnRenderEnd's was the driver's until I3d_model.cpp), and the names are the ones our PDB keeps
+// (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087520
+// ?NumLevels@I3D_void_interface@@UBGHXZ
+
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's

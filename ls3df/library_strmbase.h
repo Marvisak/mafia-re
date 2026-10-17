@@ -79,9 +79,6 @@
 // LIBRARY: LS3DF 0x10087500
 // ?Inactive@CBaseRenderer@@UAEJXZ
 
-// LIBRARY: LS3DF 0x10087520
-// ?NumLevels@I3D_void_interface@@UBGHXZ
-
 // LIBRARY: LS3DF 0x10087530
 // ?BreakConnect@CBaseRenderer@@UAEJXZ
 
@@ -144,6 +141,9 @@
 
 // LIBRARY: LS3DF 0x10087e90
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
+
+// LIBRARY: LS3DF 0x10087ec0
+// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
@@ -243,9 +243,6 @@
 
 // LIBRARY: LS3DF 0x100887e0
 // ?SendQuality@CBaseVideoRenderer@@UAEJ_J0@Z
-
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // LIBRARY: LS3DF 0x10088980
 // ?ShouldDrawSampleNow@CBaseVideoRenderer@@UAEJPAUIMediaSample@@PA_J1@Z
