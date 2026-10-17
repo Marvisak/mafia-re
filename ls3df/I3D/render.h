@@ -76,8 +76,9 @@ inline void SetColorOp1(uint op)
     }
 }
 
-// D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; always inlined, so the name is a
-// guess)
+// D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; the name is a guess). The
+// weather renderer calls it out of line; the copy the linker keeps is in an I3D file not written yet.
+// FUNCTION: LS3DF 0x10029ef0
 inline void SetCullState(uint cull)
 {
     if (m_CurrCullState != cull) {

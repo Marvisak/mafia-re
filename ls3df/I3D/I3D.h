@@ -5,9 +5,9 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the camera, the visual's base and the meshes are
-// written (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_camera.cpp, I3d_visual.cpp, I3d_mesh.cpp); the other
-// frames, the visuals and the materials aren't recovered yet. Their placeholders keep the members and virtual functions
+// The 3D engine (PS2 I3d_*.cpp). The driver, the frame, the dummy, the camera, the scene, the visual's base and the
+// meshes are written (I3d_driver.cpp, I3d_frame.cpp, I3d_dummy.cpp, I3d_camera.cpp, I3d_scene.cpp, I3d_visual.cpp,
+// I3d_mesh.cpp); the other frames, the visuals and the materials aren't recovered yet. Their placeholders keep the members and virtual functions
 // the written files use at their offsets and vtable slots, the sizes the driver allocates, and declare the constructors
 // it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the virtual
 // functions, none of which is written yet; the real classes will drop it.
@@ -26,7 +26,10 @@ class I3D_frame;
 class I3D_camera;
 class I3D_sector;
 class I3D_light;
+class I3D_sound;
+class I3D_animation_set;
 class I3D_mesh_object;
+struct S_vector4;
 class C_IBuffer;
 class C_VBuffer;
 
@@ -94,7 +97,8 @@ enum I3D_RENDERSTATE {
     RS_MIPMAP_BIAS = 8,                 // the textures' mipmap LOD bias
     RS_WIREFRAME = 9,
     RS_RECOMPUTE_GEOMETRY = 18,         // sets RecomputeAllGeometry
-    RS_HWVERTEXPROC = 19,               // refused where the hardware lacks it (m_ProblemFlags 0x80)
+    RS_FOG = 19,                        // fog (Insanity3D's name, the same number); refused where the hardware
+                                        // lacks it (m_ProblemFlags 0x80)
     RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
                                         // name, the same number)
     RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
@@ -173,6 +177,12 @@ inline int I3DFloatAsInt(float f)
     return *(int *)&f;
 }
 
+// The other way (Insanity3D's I3DIntAsFloat), for the parameters that pass floats as their bits
+inline float I3DIntAsFloat(int i)
+{
+    return *(float *)&i;
+}
+
 // I3D_frame::frm_flags (names mostly guessed)
 #define FRMFLAGS_ON 0x1                 // visible (SetOn)
 #define FRMFLAGS_ROT_VALID 0x4          // rot holds the local matrix's rotation
@@ -244,6 +254,9 @@ public:
     virtual void LoadImage();
 
 private:
+    // The scene calls UpdateHRBoundVolW (Insanity3D's frame has the same friend, "for rendering and fast access")
+    friend class I3D_scene;
+
     // Exported (the decorated names say private; UpdateWMatrixProc __thiscall, the others __stdcall)
     __declspec(dllexport) void UpdateWMatrixProc();
     __declspec(dllexport) void __stdcall UpdateHRBoundVol();
@@ -420,71 +433,413 @@ public:
     uchar unknown_144[0xa8];
 };
 
+// A sector's sound environment (PS2 S_sector_sound_properties, 0x68 bytes): the EAX 3.0 listener properties, scaled to
+// 0..1 or in milliseconds, which the scene converts (I3D_scene::m_UpdateSoundProperties). The members are named after
+// the EAX properties they give; the sector file has SetupDefaults and MakeBlend (PS2 names).
+struct S_sector_sound_properties {
+    float room_lf;                      // 0x00
+    float room_hf;                      // 0x04
+    int decay_time;                     // 0x08, in ms
+    float decay_hf_ratio;               // 0x0c
+    float reflections;                  // 0x10
+    int reflections_delay;              // 0x14, in ms
+    float reverb;                       // 0x18
+    int reverb_delay;                   // 0x1c, in ms
+    float environment_diffusion;        // 0x20
+    float unknown_24;                   // 0x24
+    float decay_lf_ratio;               // 0x28
+    float room;                         // 0x2c
+    int echo_time;                      // 0x30, in ms
+    float echo_depth;                   // 0x34
+    int modulation_time;                // 0x38, in ms
+    float modulation_depth;             // 0x3c
+    float room_rolloff_factor;          // 0x40
+    float air_absorption_hf;            // 0x44
+    float hf_reference;                 // 0x48
+    float lf_reference;                 // 0x4c
+    float reflections_pan[3];           // 0x50
+    float reverb_pan[3];                // 0x5c
+
+    S_sector_sound_properties() {}
+
+    void SetupDefaults();
+    // The blend of a and b at t (b's at 1)
+    void MakeBlend(const S_sector_sound_properties &a, const S_sector_sound_properties &b, float t, bool unknown);
+};
+
+// I3D_sector::sct_flags (names guessed; PRIMARY to NEAR are the scene's four sectors)
+#define SCTF_PRIMARY 0x200
+#define SCTF_SOUND_CHANGED 0x800        // the sound properties are to be given to the listener
+#define SCTF_BACKDROP 0x1000
+#define SCTF_OMNI 0x2000
+#define SCTF_NEAR 0x4000
+
 class __declspec(novtable) I3D_sector : public I3D_frame {
 public:
     I3D_sector();
 
-    // PS2 name
+    // PS2 names, in PS2's order
+    virtual void __stdcall AddLight(I3D_light *light);
+    virtual void __stdcall DeleteLight(I3D_light *light);
+    virtual void __stdcall AddSound(I3D_sound *sound);
+    virtual void __stdcall DeleteSound(I3D_sound *sound);
+    virtual void __stdcall SetSoundData(uint index, uint data);
+    virtual uint __stdcall GetSoundData(uint index) const;
+    // Whether the point is inside the sector
+    virtual bool __stdcall CheckPoint(const S_vector &pos);
+
+    // PS2 names
     void AddToRemoveFromSceneRing(I3D_scene *scene);
+    void MakeReady();
 
     uint lights_changed;                // 0x140, counts the changes to its lights (the name is a guess)
     C_list<I3D_light *> lights;         // 0x144, the lights that reach into it
-    uchar unknown_154[0x9c];
+    uint unknown_154;
+    C_list<I3D_sound *> sounds;         // 0x158
+    S_sector_sound_properties sound_props; // 0x168
+    uint sct_flags;                     // 0x1d0, SCTF_*
+    uchar unknown_1d4[0x14];
+    uint unknown_1e8;                   // 0x1e8
+    uint unknown_1ec;                   // 0x1ec
     I3D_light *fog_light;               // 0x1f0
     uchar unknown_1f4[0x20];
     I3D_scene *scene;                   // 0x214
-    uchar unknown_218[0x1c];
+    uchar unknown_218[8];
+    I3D_sector *next_in_scene;          // 0x220, the scene's ring of sectors
+    uchar unknown_224[0x10];
 };
 
-// The scene (PS2 I3D_scene, 0x33c bytes on PC). The virtual functions after I3D_frame's are placeholders up to the
-// ones the driver and the frames call.
-class __declspec(novtable) I3D_scene : public I3D_frame {
+// A portal between sectors (PS2 I3D_portal; not a frame). The scene keeps a ring of them.
+class I3D_portal {
+public:
+    // PS2 name
+    void UpdatePortal();
+
+    uchar unknown_00[0x104];
+    I3D_portal *next_in_scene;          // 0x104
+};
+
+// One of the interpolator set's animations (0x1c bytes; the names are guesses)
+struct S_ipol_anim {
+    I3D_animation_set *set;
+    bool on;                            // 0x04
+    uint unknown_08;
+    int time;                           // 0x0c
+    int time_1;                         // 0x10, set with time
+    uint options;                       // 0x14
+    float blend;                        // 0x18
+};
+
+class I3D_interpolator;
+
+// The animations a scene or a model plays (PS2 I3D_IPolSet, 0xf8 bytes on PC; I3d_interpolator.cpp isn't written yet)
+class I3D_IPolSet {
+public:
+    // Out of line on PS2, inlined on PC
+    I3D_IPolSet(I3D_frame *f) : frame(f)
+    {
+        memset(anims, 0, sizeof(anims));
+    }
+
+    ~I3D_IPolSet();
+
+    // PS2 names
+    void Tick(int time);
+    LS3D_RESULT SetAnimation(I3D_animation_set *set, uint index, float blend, uint options);
+
+    I3D_frame *frame;
+    bool changed;                       // 0x04, an animation's blend or time was set
+    S_ipol_anim anims[8];               // 0x08
+    C_list<I3D_interpolator *> interpolators; // 0xe8
+};
+
+// What a scene's callback is told (PS2 type; the PC's messages aren't known)
+enum SCN_CALLBACK_MESSAGE {
+    SCN_CALLBACK_MESSAGE_0,
+};
+
+typedef uint __stdcall SCN_CALLBACK(SCN_CALLBACK_MESSAGE message, uint param1, uint param2);
+
+// GetLightness' flags (the name is a guess): only what reaches the point unoccluded
+#define I3D_LIGHTNESS_TESTCOL 0x1
+
+// EnumFrames' and FindFrame's flags: the scene's other sectors to take besides the primary one (names guessed)
+#define ENUMF_BACKDROP 0x40000
+#define ENUMF_OMNI 0x80000
+#define ENUMF_NEAR 0x100000
+
+// The weather system's parameters (PS2 type; the names are guesses after their roles): its switches, the particles'
+// colors, the density, size and speed, the area around the camera they fill, their count and the wind
+enum WS_PARAM {
+    WS_PARAM_ON,                        // the weather system works
+    WS_PARAM_FLAG_2,
+    WS_PARAM_FLAG_4,
+    WS_PARAM_COLOR,                     // ARGB
+    WS_PARAM_COLOR_2,
+    WS_PARAM_DENSITY,                   // per 1000
+    WS_PARAM_SIZE,
+    WS_PARAM_SPEED,                     // half of it is stored
+    WS_PARAM_RANGE_X,
+    WS_PARAM_RANGE_Y,
+    WS_PARAM_COUNT,                     // of the particles
+    WS_PARAM_WIND_X,
+    WS_PARAM_WIND_Y,
+    WS_PARAM_WIND_Z,
+    WS_PARAM_SNOW,                      // snow instead of rain
+    WS_PARAM_MODE,                      // 1 or 2
+    WS_PARAM_LAST,
+};
+
+// The scene's weather flags (names guessed)
+#define WSF_ON 0x1
+#define WSF_FLAG_2 0x2
+#define WSF_FLAG_4 0x4
+#define WSF_SNOW 0x40
+#define WSF_MODE_1 0x200
+#define WSF_MODE_2 0x400
+
+// A weather region the scene keeps for a dummy (PS2 DUMMY_STRUCT, 0x54 bytes on PC): the dummy's box in world space,
+// three of its faces as planes, its center and radius (names guessed)
+struct DUMMY_STRUCT {
+    I3D_dummy *dummy;
+    uint update_count;                  // 0x04, the dummy's, when this was made
+    S_plane planes[3];                  // 0x08
+    S_vector center;                    // 0x38
+    float radius_2;                     // 0x44, squared
+    float size[3];                      // 0x48, the box's edges' lengths
+};
+
+// A weather particle (PS2 WE_STRUCT, 0x48 bytes on PC; names guessed)
+struct WE_STRUCT {
+    S_vector v[4];                      // 0x00, the shape's corners around the position
+    S_vector pos;                       // 0x30
+    float min_y;                        // 0x3c, it comes back when it falls below
+    float angle;                        // 0x40, of the shape around z
+    uint phase;                         // 0x44, of a snow flake's sway, random
+};
+
+class I3D_shadow;
+class I3D_mirror;
+
+// The scene (PS2 I3D_scene, 0x33c bytes on PC; I3d_scene.cpp). Its virtual functions are in PS2's order; the PC lacks
+// PS2's UpdatePortals, the watched frames, two of four GetSector overloads and one of two SetFrameSectorPos, and its
+// Render takes nothing. Besides the primary sector it has three of its own (backdrop, omni, near; LS3DF names all four),
+// and a weather system of rain or snow particles around the camera.
+// VTABLE: LS3DF 0x1009c8f8
+class I3D_scene : public I3D_frame {
 public:
     I3D_scene();
+    ~I3D_scene();
 
-    virtual void __stdcall vfunc_20(); virtual void __stdcall vfunc_21(); virtual void __stdcall vfunc_22();
-    virtual void __stdcall vfunc_23();
-    // PS2 name
-    virtual void __stdcall DeleteFrame(I3D_frame *frame);
-    virtual void __stdcall vfunc_25(); virtual void __stdcall vfunc_26();
-    virtual void __stdcall vfunc_27(); virtual void __stdcall vfunc_28(); virtual void __stdcall vfunc_29();
-    virtual void __stdcall vfunc_30(); virtual void __stdcall vfunc_31(); virtual void __stdcall vfunc_32();
-    virtual void __stdcall vfunc_33(); virtual void __stdcall vfunc_34(); virtual void __stdcall vfunc_35();
-    virtual void __stdcall vfunc_36(); virtual void __stdcall vfunc_37(); virtual void __stdcall vfunc_38();
-    virtual void __stdcall vfunc_39(); virtual void __stdcall vfunc_40(); virtual void __stdcall vfunc_41();
-    // PS2 name: removes the frame from the frames the scene ticks, and tells whether to look further
-    virtual int __stdcall DeleteTickFrame(I3D_frame *frame);
-    virtual void __stdcall vfunc_43(); virtual void __stdcall vfunc_44();
-    // PS2 name (one of four overloads, the one the camera calls): the sector at pos, looked for from hint first
+    virtual void __stdcall SetDir(const S_vector &dir, float roll) {}
+    virtual void __stdcall Tick(int time);
+    virtual void __stdcall Update() {}
+    virtual void __stdcall SetCallback(I3D_CALLBACK *cb, uint flags) {}
+    virtual void __stdcall SetOn(bool on) {}
+    virtual LS3D_RESULT __stdcall SetName(const char *new_name) { return I3D_OK; }
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags) { return I3DERR_UNSUPPORTED; }
+    virtual LS3D_RESULT __stdcall EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const;
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame) { return I3D_OK; }
+
+    // PS2 names
+    virtual SCN_CALLBACK *__stdcall SetCallback(SCN_CALLBACK *cb, uint context);
+    virtual LS3D_RESULT __stdcall Render();
+    virtual I3D_frame *__stdcall FindFrame(const char *name, uint flags) const;
+    virtual void __stdcall AddFrame(I3D_frame *frame);
+    virtual LS3D_RESULT __stdcall DeleteFrame(I3D_frame *frame);
+    // Every light of the primary sector's SetDiffuse
+    virtual void __stdcall SetGlobalColor(const S_vector &color);
+    // The lights' brightness at the point, 0 to 1
+    virtual float __stdcall GetLightness(const S_vector &pos, I3D_sector *sector, uint flags, I3D_frame *frame);
+    virtual void __stdcall SetActiveCamera(I3D_camera *cam);
+    virtual LS3D_RESULT __stdcall UnmapScreenPoint(int x, int y, S_vector &pos, S_vector &dir) const;
+    virtual LS3D_RESULT __stdcall TransformPoints(const S_vector *in, S_vector4 *out, uint num) const;
+    virtual bool __stdcall TestVisibility(I3D_frame *frame, I3D_camera *cam);
+    virtual LS3D_RESULT __stdcall SetAnimation(I3D_animation_set *set, uint index, float blend, uint options);
+    virtual I3D_animation_set *__stdcall GetAnimationSet(uint index) const;
+    virtual void __stdcall StopAnimation(uint index);
+    virtual LS3D_RESULT __stdcall SetAnimBlend(uint index, float blend);
+    virtual float __stdcall GetAnimBlend(uint index) const;
+    virtual LS3D_RESULT __stdcall SetAnimTime(uint index, int time);
+    virtual int __stdcall GetAnimTime(uint index) const;
+    virtual bool __stdcall AnimIsOn(uint index) const;
+    virtual int __stdcall NumInterpolators() const;
+    virtual I3D_interpolator **__stdcall GetInterpolators() const;
+    virtual void __stdcall AddTickFrame(I3D_frame *frame);
+    // Removes the frame from the frames the scene ticks
+    virtual LS3D_RESULT __stdcall DeleteTickFrame(I3D_frame *frame);
+    virtual I3D_sector *__stdcall CreateSector();
+    // The sector at pos, looked for from hint first (the camera's)
     virtual I3D_sector *__stdcall GetSector(const S_vector &pos, I3D_sector *hint) const;
-    virtual void __stdcall vfunc_46(); virtual void __stdcall vfunc_47(); virtual void __stdcall vfunc_48();
-    virtual void __stdcall vfunc_49(); virtual void __stdcall vfunc_50();
-    // PS2 name: a ray from from along dir against the geometry; texel_cb is asked about the texels it passes through
-    // (TexelCallback), with cb_context (the PC's parameter types are guesses, the callbacks' after TexelCallback's)
+    // The last of the sectors that holds pos
+    virtual I3D_sector *__stdcall GetSector(const S_vector &pos, I3D_sector **list, int num) const;
+    virtual void __stdcall SetBackdropRange(float near1, float far1);
+    virtual LS3D_RESULT __stdcall SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) const;
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    virtual void __stdcall Close();
+    // i3d_collision.cpp (not written yet): a ray from from along dir against the geometry; texel_cb is asked about the
+    // texels it passes through (TexelCallback), with cb_context (the parameter types are guesses, the callbacks' after
+    // TexelCallback's). TestColGeo1 and the others are PS2's names, but their parameters aren't checked.
+    virtual int __stdcall TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos,
+        S_vector *normal, void *cb, void *cb_context, void *texel_cb, int x) const;
     virtual int __stdcall TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist, S_vector *normal,
         void *cb, void *cb_context, int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *),
         I3D_frame *frm, int x) const;
-    virtual void __stdcall vfunc_52(); virtual void __stdcall vfunc_53(); virtual void __stdcall vfunc_54();
-    virtual void __stdcall vfunc_55(); virtual void __stdcall vfunc_56(); virtual void __stdcall vfunc_57();
-    virtual void __stdcall vfunc_58(); virtual void __stdcall vfunc_59(); virtual void __stdcall vfunc_60();
-    virtual void __stdcall vfunc_61();
-    // PS2 name: takes the dummy out of the scene's weather system
+    virtual int __stdcall TestColHierarchy() const;
+    virtual int __stdcall TestColSphere() const;
+    virtual int __stdcall TestColSphereHierarchy() const;
+    virtual int __stdcall TestColSphereVisual() const;
+    virtual int __stdcall SphereToSphereD() const;
+    // Every object's and lightmapped object's SetSpace
+    virtual void __stdcall SetSpace(bool world);
+    virtual void __stdcall SetWeatherSystemParam(WS_PARAM param, uint value);
+    virtual uint __stdcall GetWeatherSystemParam(WS_PARAM param);
+    virtual void __stdcall WeatherSystemReset();
+    virtual void __stdcall WeatherSystemAddDummy(I3D_dummy *dummy);
+    // Takes the dummy out of the scene's weather system
     virtual void __stdcall WeatherSystemDelDummy(I3D_dummy *dummy);
-    virtual void __stdcall vfunc_63(); virtual void __stdcall vfunc_64();
-    // PS2 name
-    virtual void __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
+    virtual int __stdcall WeatherSystemGetDummyCnt();
+    virtual DUMMY_STRUCT *__stdcall WeatherSystemGetDumies();
+    virtual LS3D_RESULT __stdcall SetViewport(uint x, uint y, uint sx, uint sy);
+    // PC only, empty (the name is a guess)
+    virtual void __stdcall vfunc_66(uint a, uint b) {}
 
-    uchar unknown_140[0x3c];
+    // PS2 names
+    void MakeReadySectors();
+    void SetViewProjMatrix(const S_matrix &m);
+    void m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sector, float blend);
+    void m_UpdateWeatherSystem();
+    void m_RenderWeatherSystem();
+
+    // PC only: the shadows and mirrors in the scene (the names are guesses after DeleteShadow's and DeleteMirror's
+    // messages)
+    void AddShadow(I3D_shadow *shadow);
+    LS3D_RESULT DeleteShadow(I3D_shadow *shadow);
+    void AddMirror(I3D_mirror *mirror);
+    LS3D_RESULT DeleteMirror(I3D_mirror *mirror);
+
+    SCN_CALLBACK *callback;             // 0x140
+    uint cb_context;                    // 0x144
+    C_list<I3D_frame *> tick_frames;    // 0x148, the frames the scene ticks (FRMFLAGS_TICK)
+    C_list<I3D_shadow *> shadows;       // 0x158
+    C_list<I3D_mirror *> mirrors;       // 0x168
+    I3D_IPolSet *ipol_set;              // 0x178, made by the first SetAnimation
     I3D_camera *current_camera;         // 0x17c, SetActiveCamera's (Insanity3D's name)
-    uchar unknown_180[0x90];
+    float viewport_center[2];           // 0x180, Insanity3D's names
+    S_matrix m_view_proj_screen;        // 0x188, the camera's view and projection scaled to the viewport
+    uchar unknown_1c8[0x40];
+    float viewport_size_half[2];        // 0x208, its height's negative
     I3D_sector *primary_sector;         // 0x210, the sector outside all others (Insanity3D's name; LS3DF names it
                                         // "Primary sector" too)
-    uchar unknown_214[0x38];
-    float backdrop_ncp, backdrop_fcp;   // 0x24c, PS2's SetBackdropRange (the names are guesses)
-    uchar unknown_254[0x30];
+    I3D_sector *backdrop_sector;        // 0x214 (Insanity3D's name)
+    I3D_sector *omni_sector;            // 0x218
+    I3D_sector *near_sector;            // 0x21c
+    S_vector unknown_220;               // 0x220
+    C_list<I3D_frame *> owned_frames;   // 0x22c, the frames AddFrame took
+    RECT viewport;                      // 0x23c, x, y and the size (Insanity3D's name)
+    float backdrop_ncp, backdrop_fcp;   // 0x24c, SetBackdropRange's (the names are guesses)
+    int num_portals;                    // 0x254, the ring of portals
+    I3D_portal *portals;                // 0x258
+    uint unknown_25c;
+    int num_sectors;                    // 0x260, the ring of sectors
+    I3D_sector *sectors;                // 0x264
+    uint unknown_268;
+    uint unknown_26c;
+    uint unknown_270;
+    bool unknown_274;
+    bool unknown_275;
+    uint unknown_278;
+    uint unknown_27c;
+    bool unknown_280;
     ISND_3Dlistener *listener;          // 0x284
-    uchar unknown_288[0xb4];
+    C_list<I3D_frame *> list_288;       // 0x288, released by Close
+    uint ws_flags;                      // 0x298, WSF_*
+    C_list<WE_STRUCT> ws_elements;      // 0x29c, the particles
+    float ws_density;                   // 0x2ac
+    float ws_size;                      // 0x2b0
+    float ws_speed;                     // 0x2b4
+    float ws_range_x;                   // 0x2b8
+    float ws_range_y;                   // 0x2bc
+    int ws_count;                       // 0x2c0
+    uint ws_unknown_2c4;                // 0x2c4
+    S_vector ws_wind;                   // 0x2c8
+    S_vector ws_dir;                    // 0x2d4, the wind when it was reset
+    S_matrix ws_matrix;                 // 0x2e0, along ws_dir
+    uint ws_color;                      // 0x320
+    uint ws_color_2;                    // 0x324
+    float ws_range;                     // 0x328, of ws_range_x and ws_range_y
+    C_list<DUMMY_STRUCT> ws_dummies;    // 0x32c
 };
+
+// SYNTHETIC: LS3DF 0x10048eb0
+// I3D_scene::`scalar deleting destructor'
+
+// The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
+// m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file: Globals.cpp has
+// a $E13 and a $E18 too, IGraph.cpp both. reccmp pairs the annotations of one name with our functions of that name in
+// address order, so the scene's (the first in link order) and Globals.cpp's $E13 (I3d_math.h) are annotated, while
+// IGraph.cpp's stay unmatched. The constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
+// SYNTHETIC: LS3DF 0x10048a30
+// $E13
+
+// SYNTHETIC: LS3DF 0x10048a80
+// $E18
+
+// SYNTHETIC: LS3DF 0x1004ddc0
+// $E29
+
+// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the first $E10 in link order (Globals.cpp,
+// ITexture.cpp and IS_sound.cpp have one too)
+// SYNTHETIC: LS3DF 0x10061d00
+// $E10
+
+// The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
+// file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
+// LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
+// the copies (Update's is the visual's m_RenderFGroup, which our linker keeps).
+// FUNCTION: LS3DF 0x1004e970
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+
+// FUNCTION: LS3DF 0x1004e980
+// ?vfunc_66@I3D_scene@@UAGXII@Z
+
+// FUNCTION: LS3DF 0x1004e990
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+
+// FUNCTION: LS3DF 0x1004e9a0
+// ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
+
+// The weather system's lists, out of line after the scene's functions
+// TEMPLATE: LS3DF 0x1004e6e0
+// C_list<WE_STRUCT>::reserve
+
+// TEMPLATE: LS3DF 0x1004e7a0
+// C_list<WE_STRUCT>::push_back
+
+// TEMPLATE: LS3DF 0x1004e880
+// C_list<DUMMY_STRUCT>::push_back
+
+// The helper these lists' new[] construct their elements' vector arrays with; the original's copy is in the first I3D
+// file, ours in the scene's
+// SYNTHETIC: LS3DF 0x10001340
+// `vector constructor iterator'
+
+// The scene's function-local statics (VC6 writes them into the PDB under their plain names, but not
+// m_UpdateSoundProperties' last_time at 0x101b4e70, which is in a block). The names are guesses, and their order in .bss
+// isn't the original's yet: CamOldPos and LastUpdateTime come before the header's zero vector and WSNearSectorList
+// there, the constructor's guard after the weather system's, bigBox after InitialSoundProp.
+// GLOBAL: LS3DF 0x101b4ee0
+// bigBox
+
+// GLOBAL: LS3DF 0x101b4e48
+// LastUpdateTime
+
+// GLOBAL: LS3DF 0x101b4e30
+// CamOldPos
+
+// The scene file's copy of I3d_math.h's identity matrix (m_RenderWeatherSystem's world matrix)
+// GLOBAL: LS3DF 0x1009c8b8
+// IdentityMatrixData
 
 // I3D_dummy::dummy_flags (names guessed)
 #define DUMMYF_NORMALIZED 0x1           // Normalize made the box (0, 0, 0) to (1, 1, 1)
@@ -551,18 +906,27 @@ enum I3D_LIGHTTYPE {
 // tests the second)
 #define I3DLIGHTMODE_VERTEX 0x1
 #define I3DLIGHTMODE_LIGHTMAP 0x2
+#define I3DLIGHTMODE_LIGHTNESS 0x40     // taken by I3D_scene::GetLightness (the name is a guess)
 
-// A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp isn't written yet). The members are the ones T&l.cpp reads,
-// named after Insanity3D's where the roles agree; the light's UpdateV computes the world values from the others.
+// A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp isn't written yet). The members are the ones T&l.cpp and the
+// scene read, named after Insanity3D's where the roles agree; the light's UpdateV computes the world values from the
+// others. Its virtual functions are PS2's, in PS2's order (SetDiffuse's overloads in reverse, as MSVC orders them).
 class __declspec(novtable) I3D_light : public I3D_frame {
 public:
     I3D_light();
+
+    virtual void __stdcall SetLightType(I3D_LIGHTTYPE type);
+    virtual void __stdcall SetDiffuse(const S_vector &color);
+    virtual void __stdcall SetDiffuse(float r, float g, float b);
 
     uchar unknown_140[0x10];
     uint mode;                          // 0x150, I3DLIGHTMODE_*
     I3D_LIGHTTYPE ltype;                // 0x154
     float power;                        // 0x158
-    uchar unknown_15c[0x1c];
+    S_vector diffuse;                   // 0x15c, SetDiffuse's
+    float near_range, far_range;        // 0x168, a point light fades out between them (GetLightness); a fog's
+                                        // density is near_range
+    uchar unknown_170[8];
     S_vector w_pos;                     // 0x178, in world space
     S_vector w_dir;                     // 0x184, in world space
     S_vector color;                     // 0x190, the power applied
@@ -709,7 +1073,9 @@ public:
     void SetTo(I3D_frame *frame);
     static void DeleteFromAnyShadow(I3D_frame *frame);
 
-    uchar unknown_140[0xd4];
+    uchar unknown_140[0x48];
+    I3D_scene *scene;                   // 0x188, the scene's AddShadow
+    uchar unknown_18c[0x88];
 };
 
 // The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are guesses). The
@@ -985,7 +1351,15 @@ I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
 I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
 I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
 I3D_PLACEHOLDER_VISUAL(I3D_landpatch, 0x620)
-I3D_PLACEHOLDER_VISUAL(I3D_mirror, 0x2ec)
+// A mirror (PS2 I3D_mirror, 0x2ec bytes on PC; the file isn't written yet)
+class __declspec(novtable) I3D_mirror : public I3D_visual {
+public:
+    I3D_mirror();
+
+    uchar unknown_1dc[4];
+    I3D_scene *scene;                   // 0x1e0, the scene's AddMirror
+    uchar unknown_1e4[0x2ec - 0x1e4];
+};
 
 // I3D_material::flags (names guessed; the UNKNOWN ones are set by code not written yet)
 #define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (1 to 5, I3D_object::m_RenderFGroup)
@@ -1242,8 +1616,8 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp and I3d_frame.cpp, after their files' functions though their addresses come before them, so
-// their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_frame.cpp and I3d_scene.cpp, after their files' functions though their addresses come
+// before them, so their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
@@ -1256,6 +1630,39 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
 // STUB: LS3DF 0x10005440
 // I3D_area::AddToRemoveFromSceneRing
+
+// STUB: LS3DF 0x1000dec0
+// I3D_scene::TestColGeo
+
+// STUB: LS3DF 0x10011430
+// I3D_scene::TestColGeo1
+
+// STUB: LS3DF 0x100118e0
+// I3D_scene::TestColHierarchy
+
+// STUB: LS3DF 0x10011d60
+// I3D_scene::TestColSphere
+
+// STUB: LS3DF 0x10014aa0
+// I3D_scene::TestColSphereHierarchy
+
+// STUB: LS3DF 0x10014e50
+// I3D_scene::TestColSphereVisual
+
+// STUB: LS3DF 0x100153b0
+// I3D_scene::SphereToSphereD
+
+// STUB: LS3DF 0x1001e280
+// I3D_IPolSet::~I3D_IPolSet
+
+// STUB: LS3DF 0x1001e470
+// I3D_IPolSet::Tick
+
+// STUB: LS3DF 0x1001e580
+// I3D_IPolSet::SetAnimation
+
+// STUB: LS3DF 0x100419e0
+// I3D_portal::UpdatePortal
 
 // An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
 // D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1 without the specular color)
@@ -1298,10 +1705,10 @@ struct TLVERTEX2 {
 // TEMPLATE: LS3DF 0x10041700
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
-// The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots); the original
-// keeps the area file's copy
+// The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
+// copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,

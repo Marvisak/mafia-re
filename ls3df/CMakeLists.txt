@@ -15,6 +15,7 @@ add_library(ls3df SHARED
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp
     I3D/I3d_object.cpp
+    I3D/I3d_scene.cpp
     I3D/I3d_visual.cpp
     I3D/IBManager.cpp
     I3D/load4ds.cpp
@@ -77,24 +78,29 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
-    # /Gr's). The listener's destructor and UnloadManagedTextures are called by the scene, the buffer managers'
-    # m_UnlockAll*Buffers by the driver's Render (render.cpp), RenderShadowTexture by the shadows, the frame's functions
-    # by the scenes, models and visuals, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit
-    # objects and single meshes, the vertex transforms by the shadows' range (0x10054f60), the camera's UpdateSector by
-    # render.cpp.
-    target_link_options(ls3df PRIVATE "/INCLUDE:??1ISND_3Dlistener@@QAE@XZ" "/INCLUDE:?UnloadManagedTextures@@YIXXZ"
-        "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ" "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
+    # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp), RenderShadowTexture
+    # by the shadows, the frame's functions by the models and visuals, the visual's SetBoundVolume by the mirrors, the
+    # lod's destructor by the lit objects and single meshes, the vertex transforms by the shadows' range (0x10054f60),
+    # the camera's UpdateSector by render.cpp; the scene's view, sound and weather functions by render.cpp, its shadow
+    # and mirror lists by the shadows and mirrors, MakeReadySectors by I3D code at 0x10045724.
+    target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
+        "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
-        "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DeleteFromOwner@I3D_frame@@QAEXXZ"
-        "/INCLUDE:?DiscardHRBoundVol@I3D_frame@@QAEXXZ" "/INCLUDE:?GetChildFrame@I3D_frame@@QAEPAV1@PBDI@Z"
+        "/INCLUDE:?AddChild@I3D_frame@@QAEPAV1@PAV1@@Z" "/INCLUDE:?DiscardHRBoundVol@I3D_frame@@QAEXXZ"
         "/INCLUDE:?ResetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@XZ"
-        "/INCLUDE:?SetBoundVolume@I3D_frame@@QAEXABUI3D_bbox@@@Z"
         "/INCLUDE:?SetModelName@I3D_frame@@QAE?AW4LS3D_RESULT@@PBD@Z"
         "/INCLUDE:?SetBoundVolume@I3D_visual@@QAEXABUI3D_bvolume@@@Z"
         "/INCLUDE:??1lod@@UAE@XZ"
         "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
         "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
-        "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ")
+        "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ"
+        "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?SetViewProjMatrix@I3D_scene@@QAEXABUS_matrix@@@Z"
+        "/INCLUDE:?m_UpdateSoundProperties@I3D_scene@@QAEXPAVI3D_sector@@0M@Z"
+        "/INCLUDE:?AddShadow@I3D_scene@@QAEXPAVI3D_shadow@@@Z"
+        "/INCLUDE:?DeleteShadow@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_shadow@@@Z"
+        "/INCLUDE:?AddMirror@I3D_scene@@QAEXPAVI3D_mirror@@@Z"
+        "/INCLUDE:?DeleteMirror@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_mirror@@@Z"
+        "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 dxguid dxerr8 strmiids binkw32

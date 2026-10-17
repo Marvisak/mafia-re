@@ -247,7 +247,8 @@ struct S_matrix : D3DMATRIX {
 };
 
 // PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data, which an
-// S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. Only I3d_math.cpp uses it.
+// S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. I3d_math.cpp's copy; the scene file's
+// is annotated in I3D.h.
 // GLOBAL: LS3DF 0x1009bf48
 static const D3DMATRIX IdentityMatrixData = {
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -305,6 +306,11 @@ struct S_plane {
 
     I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
 };
+
+// The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
+// regions): the scene file's copy, folded with S_plane's implicit constructor, whose name our PDB keeps
+// FUNCTION: LS3DF 0x1004e960
+// ??0S_plane@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);
@@ -369,8 +375,8 @@ const S_vector *BBoxVertices(const I3D_bbox &bbox);
 
 // The guard of BBoxVertices' static buffer, and the function its first call registers with atexit (it has nothing
 // to destroy). VC6 numbers both per file, after the zero vector's three numbers, so the names hold only while no
-// other file has them. IGraph.cpp has a $E13 too (the buffer managers' multisets move its numbering), so reccmp warns
-// of an ambiguous match; it takes the first $E13 in link order, which is Globals.cpp's.
+// other file has them. The scene's file and IGraph.cpp have a $E13 too: reccmp pairs the annotations of a name with our
+// functions of that name in address order, so this one holds with the scene's annotated (I3D.h) and IGraph.cpp's not.
 // GLOBAL: LS3DF 0x101c5290
 // $S12
 // SYNTHETIC: LS3DF 0x1006bc90

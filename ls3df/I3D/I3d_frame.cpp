@@ -1027,7 +1027,7 @@ void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
 // STUB: LS3DF 0x1004f260
 void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *scene)
 {
-    unknown_154[0] = 3;
+    unknown_154 = 3;
 }
 
 // STUB: LS3DF 0x10050d80

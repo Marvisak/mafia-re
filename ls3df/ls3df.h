@@ -91,14 +91,15 @@ inline int FloatToInt(float f)
 // the member names are those of Insanity3D's C_vector. By default it grows by 128 bytes' worth: 32 pointers, but 2
 // of ITexture.cpp's 0x2c-byte texture slots. That default constructor takes no arguments: an array of lists calls it
 // out of line (ITexture.cpp's pool array), where a default argument would call a closure that doesn't return this.
+// The members are public: the scene's SetWeatherSystemParam shortens a list by setting used_size, as PS2's does.
 template<class T>
 class C_list {
+public:
     T *array;
     int res_size;
     int used_size;
     int grow_size;
 
-public:
     C_list() : array(NULL), res_size(0), used_size(0), grow_size(128 / sizeof(T)) {}
 
     C_list(int grow) : array(NULL), res_size(0), used_size(0), grow_size(grow) {}

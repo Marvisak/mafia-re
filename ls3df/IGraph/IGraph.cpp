@@ -125,7 +125,7 @@ COMPLETE_VB_STRUCT m_VB;
 IGRAPH_INIT_DESC m_InitDesc;
 
 // GLOBAL: LS3DF 0x101c55f4
-uint m_CurrFogType;
+int m_CurrFogType;
 
 // GLOBAL: LS3DF 0x101c55f8
 uchar m_ReadKeysBuffer[64];

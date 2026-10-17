@@ -19,6 +19,17 @@ bool renderCameraChanged;
 // GLOBAL: LS3DF 0x101c4cd0
 S_matrix *pViewProjMatrix;
 
+// The areas the camera is in (the scene's Close empties it)
+// GLOBAL: LS3DF 0x101c4ce4
+C_list<I3D_area *> CurrentActiveAreaList;
+
+// The sector the camera was in at the last rendering, and the one before it
+// GLOBAL: LS3DF 0x101c4d00
+I3D_sector *pLastCameraSector;
+
+// GLOBAL: LS3DF 0x101c4cfc
+I3D_sector *pPrevLastCameraSector;
+
 // RS_LOD_QUALITY scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)
 // GLOBAL: LS3DF 0x101c4ca4

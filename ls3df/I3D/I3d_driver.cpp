@@ -176,7 +176,7 @@ LS3D_RESULT I3D_driver::Init(uint flags)
     renderState[RS_LOD_QUALITY] = I3DFloatAsInt(1.0f);
     renderState[39] = 1;
     if (!(m_ProblemFlags & 0x80))
-        renderState[RS_HWVERTEXPROC] = 1;
+        renderState[RS_FOG] = 1;
     renderState[RS_ENVMAP_SCALE] = I3DFloatAsInt(1.0f);
     RsZBiasProjector = m_ProblemFlags & 0x100 ? 2 : 8;
     renderState[60] = I3DFloatAsInt(0.001f);
@@ -321,7 +321,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         if (value)
             RecomputeAllGeometry = true;
         break;
-    case RS_HWVERTEXPROC:
+    case RS_FOG:
         if (value && m_ProblemFlags & 0x80)
             return I3D_OK;
         break;
@@ -1848,12 +1848,6 @@ I3D_pose_set::I3D_pose_set()
 I3D_projector::I3D_projector()
 {
     renderState[33]++;
-}
-
-// STUB: LS3DF 0x10048ab0
-I3D_scene::I3D_scene()
-{
-    renderState[20]++;
 }
 
 // STUB: LS3DF 0x1004ed30
