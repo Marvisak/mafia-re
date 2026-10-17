@@ -310,8 +310,9 @@ extern "C"
 // TEMPLATE: RWDATA 0x10005650
 // ?_Construct@std@@YGXPAUS_HANDLE@@ABU2@@Z
 
-// Placement delete from <new>
-// LIBRARY: RWDATA 0x10005740
+// Placement delete, <new>'s inline one: the unwinding of the STL's placement news calls it (the funclet at 0x1000a880),
+// so rw_data.cpp emits it out of line among the templates. No library has an object of it, so it is this file's code.
+// FUNCTION: RWDATA 0x10005740
 // ??3@YAXPAX0@Z
 
 // TEMPLATE: RWDATA 0x100059f0
