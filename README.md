@@ -19,11 +19,11 @@ score summed over all of them. The function counts of binaries that haven't been
 
 | Binary | Status |
 | --- | --- |
-| `rw_data.dll` | Fully decompiled. Most functions already compile to the original instructions; the rest, and the data layout, are still being matched. |
+| `rw_data.dll` | Done. The Visual C++ 6.0 build is identical to the original, byte for byte. |
 | `setup.exe` | Fully decompiled. With the original splash and icon ([below](#setupexe-splash-and-icon)), the Visual C++ 6.0 build is identical to the 1.2 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1: every function matches, and the file differs only in one size field of its relocation section, and so in its checksum. That size depends on code in the 2010 source that the linker discarded, which hasn't been recovered. |
-| `LS3DF.dll` (engine) | Started. It builds with Visual C++ 6.0 and reccmp compares it. The sound code and the engine's globals and C exports are written, and nearly all of their functions compile to the original instructions. With about 1,600 functions, this and `Game.exe` are the two big tasks ahead. |
-| `Game.exe` | Not started. |
-| `IJoy.dll` | Fully decompiled. All but one function compiles to the original instructions, and the rebuilt file matches the original apart from that function and the order of its import table. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
+| `LS3DF.dll` (engine) | In progress, with about 45% of its 1,660 functions written: the sound driver, the graphics layer (the Direct3D device, textures, and video through Bink and DirectShow) and the core of the 3D engine (frames, visuals, meshes, models, objects, cameras, scenes, the driver with its vertex and index buffers, and the math). About nine in ten of the written functions compile to the original instructions. The libraries it links are in place too: S3's texture compressor comes from the original's own objects, and the DirectX 8.1 SDK's DirectShow base classes build from the SDK's source to the original's bytes. Still to write are the other half of the 3D engine's files (animation, collision, lights and lightmaps, particles, portals and sectors, shadows, the scene loaders) and most of the renderer. |
+| `Game.exe` | Not started. With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it will be compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
+| `IJoy.dll` | Done. Every function compiles to the original instructions, and linked on Windows 2000 the build is identical to the original. On current Windows the order of the imports within each DLL differs, because the linker sorts them with the system's `msvcrt.dll`, whose sort has changed since. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
 
 ## Building
 
