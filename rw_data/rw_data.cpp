@@ -1301,17 +1301,20 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
     return len;
 }
 
-// PC-only code (the PS2 build has a stub) and, like dtaWrite's flag-set exit, without the lock wrappers.
-// Not matching yet: the original inlines all of push_back at the end, ours keeps one of insert()'s size() calls out of
-// line. The original probably had a little more source before the push_back that compiles to nothing, most likely a
-// debug trace macro disabled in release: one `do { if (0) ...; } while (0)` or two `if (0) ...;` are exactly enough
-// (VC6's inline budget grows with the source, dead code included); eight `if (0)` lines inline more than the original.
-// Wrappers before the push_back and a direct unlock after it would also do it; a wrapper after it would need about 80
-// dead statements.
+// PC-only code (the PS2 build has a stub). The lock calls set how much of push_back at the end is inlined, through the
+// inline budget: Lock() and the failure exits' Unlock() are inline calls before it, which add to the budget once
+// inlined (a body of one call costs nothing), and an inline call after it would cut the share of the calls nested in
+// it. So insert() inlines the size() calls the original does, all but the one after the reallocation; with direct
+// calls everywhere one more stays out of line, and with a final Unlock() insert() itself does.
+// The bytes don't prove this spelling, only a budget window: dead code adds to the budget too and leaves nothing.
+// Counted in dead `if (0) flags = flags * 3 + 1;` lines, this source matches with 0 to 4 of them, direct calls
+// everywhere with 2 to 6 (one disabled debug macro would do, and H&D Deluxe's dta source calls the critical-section
+// functions directly everywhere), wrappers everywhere with a final Unlock() with 24 to 31; each builds the same DLL.
+// This one needs no dead code.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 {
-    EnterCriticalSection(&C_m_p.section);
+    C_m_p.Lock();
     // Only FILE_ATTRIBUTE_HIDDEN: the binary selects between 2 and 0x80 (and al, 0x82; add eax, 0x80)
     int file_flags = flags & DTA_TEMPORARY ? FILE_ATTRIBUTE_HIDDEN : FILE_ATTRIBUTE_NORMAL;
     int disposition = flags & DTA_CREATE_FILE ? CREATE_ALWAYS : OPEN_ALWAYS;
@@ -1341,7 +1344,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 DWORD attributes = GetFileAttributesA(tmp_file_name);
                 if (attributes == -1)
                 {
-                    LeaveCriticalSection(&C_m_p.section);
+                    C_m_p.Unlock();
                     return -1;
                 }
                 attributes &= ~FILE_ATTRIBUTE_READONLY;
@@ -1349,13 +1352,13 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 file = CreateFileA(tmp_file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
                 if (file == INVALID_HANDLE_VALUE)
                 {
-                    LeaveCriticalSection(&C_m_p.section);
+                    C_m_p.Unlock();
                     return -1;
                 }
             }
             else
             {
-                LeaveCriticalSection(&C_m_p.section);
+                C_m_p.Unlock();
                 return -1;
             }
         }
@@ -1370,7 +1373,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 DWORD attributes = GetFileAttributesA(file_name);
                 if (attributes == -1)
                 {
-                    LeaveCriticalSection(&C_m_p.section);
+                    C_m_p.Unlock();
                     return -1;
                 }
                 attributes &= ~FILE_ATTRIBUTE_READONLY;
@@ -1378,13 +1381,13 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
                 file = CreateFileA(file_name, GENERIC_WRITE, NULL, NULL, disposition, file_flags, NULL);
                 if (file == INVALID_HANDLE_VALUE)
                 {
-                    LeaveCriticalSection(&C_m_p.section);
+                    C_m_p.Unlock();
                     return -1;
                 }
             }
             else
             {
-                LeaveCriticalSection(&C_m_p.section);
+                C_m_p.Unlock();
                 return -1;
             }
         }
@@ -1408,7 +1411,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         file_handle.tmp_file_name = new char[strlen(tmp_file_name) + 1];
         if (!file_handle.tmp_file_name)
         {
-            LeaveCriticalSection(&C_m_p.section);
+            C_m_p.Unlock();
             return -1;
         }
         strcpy(file_handle.tmp_file_name, tmp_file_name);
@@ -1418,7 +1421,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
     file_handle.block_content = new uchar[0x8000];
     if (!file_handle.block_content)
     {
-        LeaveCriticalSection(&C_m_p.section);
+        C_m_p.Unlock();
         return -1;
     }
     file_handle.compressed_block_size = 0;
@@ -1446,6 +1449,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         handle = v_file_h.size() - 1;
     }
 
+    // Direct, not C_m_p.Unlock(): see above
     LeaveCriticalSection(&C_m_p.section);
     return handle;
 }
