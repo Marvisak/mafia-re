@@ -638,20 +638,13 @@ bool EXPORT dtaDelete(const char *file_name)
     return DeleteFileA(file_name);
 }
 
-// Not matching yet: the code, the stack frame (fp_block's reuse below), the registers (the statement order of the
-// copy blocks, see the comments there, and of Decompression's initializers) are the original's but for one pair: the
-// first seek loop's preheader loads file before compressed_block_size, the original the other way round (4 bytes;
-// the other two seek loops agree). Everything that flips the pair changes more: an extra reference to
-// block_start_file_pointer, data_offset or fp_block moves other registers, computing fp_block before the archive
-// check, a bool for the direction test, any local declared int, `bits -= 1` or `flags *= 2` in Decompression, or a
-// reload order there flips it together with other code and the frame, and taking a variable's address rehomes it.
-// Without effect: loop forms, operand orders, the spellings inside the seek loops and inside Decompression, every
-// code-neutral spelling elsewhere, declaration places and scopes, one variable for both remaining_block_size or
-// to_read, a register copy or a pointer to compressed_block_size around the loop, DWORD/const/register on the locals,
-// redundant tests of buffer (removed early), the RTM front end, every switch and pragma that keeps the code, and
-// code before this function in the file. tools/framelayout.py models VC6's slot rules and predicts this frame from a
-// /FAs listing; before the reuse it gave the original's groups only with more references than the source makes,
-// which no merge in the final code, no loop-depth weighting and no redundant test accounted for.
+// The stack frame comes from fp_block's reuse below, the registers from the statement order of the copy blocks (see
+// the comments there) and of Decompression's initializers. The last pair, the first seek loop's preheader reloading
+// compressed_block_size before file, comes from result's initializer and the order of current_block and block_count
+// (see the locals). VC6 emits a loop entry's reloads in the order of its register allocator's live-range ids, which
+// it numbers by first appearance and recycles last-freed-first over dozens of rebuilds, so source that compiles to
+// the same instructions can still swap two reloads. tools/framelayout.py models VC6's slot rules and predicts this
+// frame from a /FAs listing.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -681,14 +674,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         return -1;
     }
 
-    // The file handle's state is read into locals and written back at the end, like in the PS2 build
+    // The file handle's state is read into locals and written back at the end, like in the PS2 build. result's
+    // initializer and current_block read before block_count give the first seek loop's reload order (see above);
+    // either alone keeps file's reload first. Every path overwrites result, so its value doesn't show (0, -1 and len
+    // build the same), and it can go anywhere before block_count's initialization.
+    uint result = 0;
     uint size = v_file_h[handle].size;
     uint data_offset = v_file_h[handle].data_offset;
     uint block_start_file_pointer = v_file_h[handle].block_start_file_pointer;
     uint file_pointer = v_file_h[handle].file_pointer;
     uint block_file_pointer = v_file_h[handle].block_file_pointer;
-    uint block_count = v_file_h[handle].block_count;
     uint current_block = v_file_h[handle].current_block;
+    uint block_count = v_file_h[handle].block_count;
     uint compressed_block_size = v_file_h[handle].compressed_block_size;
     uint previous_compressed_block_size = v_file_h[handle].previous_compressed_block_size;
     uint block_size = v_file_h[handle].block_size;
@@ -700,7 +697,6 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         len = size - file_pointer;
     }
 
-    uint result;
     DWORD bytes_read;
     uchar file_buffer[0x8001];
     if (!(v_file_h[handle].flags & DTA_FROM_FILESYSTEM))
