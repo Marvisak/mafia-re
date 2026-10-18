@@ -3030,8 +3030,11 @@ C_str FindMapFile(C_list<char *> *list, const char *name)
 // FUNCTION: LS3DF 0x100723e0
 LS3D_RESULT m_AddNameToList(C_list<char *> *list, const char *name, bool recursive)
 {
+    // s before len: it gives the backslash's stores [len + s] rather than [s + len], as VC6 orders an address's
+    // registers by its allocator's live-range ids, which follow first appearance
+    char *s = NULL;
     int len = strlen(name);
-    char *s = new char[len + 2];
+    s = new char[len + 2];
     if (!s) {
         dbgPrintf(" !! Out of memory !! \tI3D_driver::m_AddNameToList()");
         return I3DERR_OUTOFMEM;
