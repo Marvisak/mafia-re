@@ -1308,8 +1308,9 @@ uint EXPORT dtaBin2Text(char *buffer, uint len)
 // calls everywhere one more stays out of line, and with a final Unlock() insert() itself does.
 // The bytes don't prove this spelling, only a budget window: dead code adds to the budget too and leaves nothing.
 // Counted in dead `if (0) flags = flags * 3 + 1;` lines, this source matches with 0 to 4 of them, direct calls
-// everywhere with 2 to 6 (one disabled debug macro would do, and H&D Deluxe's dta source calls the critical-section
-// functions directly everywhere), wrappers everywhere with a final Unlock() with 24 to 31; each builds the same DLL.
+// everywhere with 2 to 6 (one disabled debug macro would do, and H&D Deluxe's engine calls the critical-section
+// functions directly, though its dta reader has no locking), wrappers everywhere with a final Unlock() with 24 to 31;
+// each builds the same DLL.
 // This one needs no dead code.
 // FUNCTION: RWDATA 0x100039f0
 int EXPORT dtaOpenWrite(const char *file_name, uint flags)
