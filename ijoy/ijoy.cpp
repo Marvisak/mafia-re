@@ -96,20 +96,23 @@ C_joy_base::~C_joy_base()
     leak_detector.objects[LEAK_JOY_BASE]--;
 }
 
-// Not matching yet: the original has device and object in each other's registers (esi and edi), every instruction
-// otherwise the same, a near-tie in VC6's register priority. One more reference to device that stays in the code
-// gives the original's registers (`device->device = NULL` after the Release, a store the original doesn't have), and
-// so does the device cleanup written twice for VC6 to merge (`if (device->device) { Release; delete; } else delete`),
-// but then three instructions load into other scratch registers. References the optimizer removes early (CSE,
-// threading, dead code) don't count. A copy of Close on its own keeps our registers through 256 combinations of loop
-// forms, declaration places and orders, references or pointers to the lists, inline helpers, statements without
-// effect, redundant tests and every /O, /G and /Gz-type switch; front ends other than RTM's and SP5's are untested.
+// The guard on the advance decides the registers. VC6 gives esi to the variable whose references weigh more, each
+// weighted by how often it expects the block to run (about 2 in the outer loop before the inner one, 3 in the inner
+// loop, 1.5 after it), and without the guard device and object weigh exactly the same: one more reference to either
+// decides, and the tie goes to object, where the original has device in esi. The guard's test is a reference to
+// device that counts, because VC6 removes it only after weighing, and leaves nothing behind. What VC6 removes early,
+// so that it doesn't count: a null test of a pointer dereferenced before it, a test with an empty arm (`if (!device)
+// continue;`), a guard outside the loop, `device ? device->next : NULL` or the same store in both arms. What counts
+// but leaves a trace: a loop exit (`if (!device) break;` or `return;`, which makes VC6 save edi at the entry instead
+// of after the first test), `while (device && device->objects)` (laid out unrotated) and a call in the arm (kept).
+// The same guard on the inner loop's advance would count for object and swap the registers back.
 // FUNCTION: IJOY 0x10001150
 void C_joy_base::Close()
 {
     while (enum_context.devices) {
         S_device *device = enum_context.devices;
-        enum_context.devices = device->next;
+        if (device)
+            enum_context.devices = device->next;
         while (device->objects) {
             S_object *object = device->objects;
             device->objects = object->next;

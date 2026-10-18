@@ -43,12 +43,13 @@ if (MSVC_VERSION EQUAL 1200)
     set(CMAKE_CXX_USING_LINKER_VC6RTM "${CMAKE_SOURCE_DIR}/3rdparty/msvc600/VC98/Bin/LINK.EXE")
     set_target_properties(ijoy PROPERTIES LINKER_TYPE VC6RTM)
     target_link_directories(ijoy PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/msvc600/VC98/Lib)
-    # kernel32 first fits the original's imports best (the Rich header is the same either way), but they don't match
-    # yet: the hint/name entries, the order LINK pulls the import objects in, are the original's, the IAT isn't (the
-    # user imports and four or five of the CRT's sit at other slots), which moves every reference to an import slot.
-    # In small test links each DLL's IAT follows the order of first reference (rotated by one without the CRT); with
-    # the CRT and a second DLL some CRT imports move after the user imports. The library order changes it; linker
-    # options, more or reordered references in a leading object, more symbols, WIN32_LEAN_AND_MEAN and /YX don't.
+    # kernel32 first gives the original's hint/name entries, which list the imports in the order LINK pulls them (the
+    # Rich header is the same either way). The IAT doesn't match on current Windows: LINK sorts it by DLL name with the
+    # qsort of the msvcrt.dll it runs on, which doesn't keep equal entries in order, so each DLL's slots depend on that
+    # qsort. The original was linked with VC6's, which Windows 2000's msvcrt.dll has; later versions put the user
+    # imports and some of the CRT's at other slots, which moves every reference to an import slot. Linked on Windows
+    # 2000, or by a LINK.EXE given VC6's qsort, the whole import table matches. rw_data's and setup's originals were
+    # linked with the newer qsort and match on current Windows.
     target_link_libraries(ijoy PRIVATE kernel32 user32 dinput dxguid)
     # No /DEBUG (the original has no debug directory) and no /RELEASE (its checksum is 0).
     # The original's link time (2002-07-17), in the PE header and the export directory
