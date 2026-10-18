@@ -1481,13 +1481,16 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
             }
             menu = GetSystemMetrics(SM_CYMENU);
         }
-        // The window around the client area
-        int x = m_InitDesc.x - frame_x;
-        int y = m_InitDesc.y - menu - caption - frame_y;
-        int sx = m_InitDesc.width + frame_x * 2;
-        int sy = m_InitDesc.height + frame_y * 2 + menu + caption;
+        // The window around the client area, its size in right and bottom. A RECT, as in Insanity3D: its fields that
+        // don't get a register live in the struct, which the frame overlaps with later aggregates (right at depth32[2])
+        RECT rc;
+        rc.left = m_InitDesc.x - frame_x;
+        rc.top = m_InitDesc.y - menu - caption - frame_y;
+        rc.right = m_InitDesc.width + frame_x * 2;
+        rc.bottom = m_InitDesc.height + frame_y * 2 + menu + caption;
         m_MainHWnd = CreateWindowExA(0, "LS3D", "LS3D engine", WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
-            WS_MINIMIZEBOX, x, y, sx, sy, GetDesktopWindow(), m_InitDesc.menu, wc.hInstance, NULL);
+            WS_MINIMIZEBOX, rc.left, rc.top, rc.right, rc.bottom, GetDesktopWindow(), m_InitDesc.menu, wc.hInstance,
+            NULL);
         if (!m_MainHWnd) {
             dbgPrintf("IGraph::Init() - Error create m_MainHWnd !!");
             return I3DERR_GENERIC;
