@@ -638,17 +638,20 @@ bool EXPORT dtaDelete(const char *file_name)
     return DeleteFileA(file_name);
 }
 
-// Not matching yet: the code is complete, the stack slots and some register choices differ. tools/framelayout.py
-// models VC6's slot rules and shows the predicted and the actual slots from a /FAs listing. It gives every slot group
-// of ours but one (the third Decompression copy's len temporary, alone in both builds though free slots exist), and
-// the original's groups only with more references before tail merging than our source makes: size about 2 more,
-// remaining_blocks about 4, the second copy's count about 4, and the first copy's count heavier than size, where ours
-// has the first copy's count and flags heavier. No merge visible in the final code accounts for them. Tried without
-// effect: `out += count; out++`, `dest[out++] = buffer[position++]`, the locals' declaration order and scope, the call
-// result through a named local, the loop bound in a local, `(short)flags >= 0`, `int i`, result reused for the
-// block size, `remaining_block_size >= len`'s branches swapped. The register differences don't follow the slots (they
-// stayed when the slots moved halfway to the original's), and a one-token change in Decompression (`bits -= 1`,
-// `flags = flags << 1`, a memcpy length written twice) reshuffles them all while the instructions stay.
+// Not matching yet: the code, the stack frame (fp_block's reuse below), the registers (the statement order of the
+// copy blocks, see the comments there, and of Decompression's initializers) are the original's but for one pair: the
+// first seek loop's preheader loads file before compressed_block_size, the original the other way round (4 bytes;
+// the other two seek loops agree). Everything that flips the pair changes more: an extra reference to
+// block_start_file_pointer, data_offset or fp_block moves other registers, computing fp_block before the archive
+// check, a bool for the direction test, any local declared int, `bits -= 1` or `flags *= 2` in Decompression, or a
+// reload order there flips it together with other code and the frame, and taking a variable's address rehomes it.
+// Without effect: loop forms, operand orders, the spellings inside the seek loops and inside Decompression, every
+// code-neutral spelling elsewhere, declaration places and scopes, one variable for both remaining_block_size or
+// to_read, a register copy or a pointer to compressed_block_size around the loop, DWORD/const/register on the locals,
+// redundant tests of buffer (removed early), the RTM front end, every switch and pragma that keeps the code, and
+// code before this function in the file. tools/framelayout.py models VC6's slot rules and predicts this frame from a
+// /FAs listing; before the reuse it gave the original's groups only with more references than the source makes,
+// which no merge in the final code, no loop-depth weighting and no redundant test accounted for.
 // FUNCTION: RWDATA 0x100025c0
 uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 {
@@ -865,13 +868,18 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         if (remaining_block_size >= len)
         {
             memcpy(buffer, block_content + block_file_pointer, len);
-            block_file_pointer += len;
+            // The copy blocks of both branches update the locals in this order (file_pointer, block_file_pointer,
+            // result, then len and block_start_file_pointer): the instructions are the same in any order, the
+            // registers of file_pointer's and block_start_file_pointer's updates aren't
             file_pointer += len;
+            block_file_pointer += len;
             result = len;
             if (block_file_pointer == block_size && current_block + 1 < block_count)
             {
-                current_block++;
+                // Advanced in this order here (the seek loops above advance current_block second too, the one after
+                // the whole-blocks loop doesn't): the other order gives the compare and the loads other registers
                 block_start_file_pointer += compressed_block_size + 4;
+                current_block++;
                 if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                 {
                     C_m_p.Unlock();
@@ -897,23 +905,26 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         else
         {
             memcpy(buffer, block_content + block_file_pointer, remaining_block_size);
-            len -= remaining_block_size;
             file_pointer += remaining_block_size;
-            block_start_file_pointer += compressed_block_size + 4;
             block_file_pointer = 0;
             result = remaining_block_size;
+            len -= remaining_block_size;
+            block_start_file_pointer += compressed_block_size + 4;
             if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
                 return -1;
             }
 
-            uint remaining_blocks = len / 0x8000;
+            // The count of whole blocks reuses the seek's block number (size, dead here too, lays out the same): the
+            // original's stack slot for it holds fp_block, size and the first and third copies' flags, which a
+            // variable of its own doesn't weigh enough to join
+            fp_block = len / 0x8000;
             // Not len % 0x8000, which gives an `and`; the original has shr/shl/sub like this (PS2 and Xbox agree)
-            uint remaining_bytes = len - remaining_blocks * 0x8000;
+            uint remaining_bytes = len - fp_block * 0x8000;
 
             // Whole blocks are decoded straight into the caller's buffer
-            for (uint i = 0; i < remaining_blocks; i++)
+            for (uint i = 0; i < fp_block; i++)
             {
                 if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
                 {
@@ -1074,9 +1085,9 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
         if (remaining_block_size >= len)
         {
             memcpy(buffer, block_content + block_file_pointer, len);
+            file_pointer += len;
             block_file_pointer += len;
             result = len;
-            file_pointer += len;
             if (block_file_pointer == block_size && file_pointer < size)
             {
                 block_start_file_pointer += block_size;
@@ -1813,8 +1824,9 @@ static inline int Decompression(uchar *buffer, uchar *dest, uint len)
     }
 
     out = 0;
-    ushort flags = (buffer[1] << 8) + buffer[2];
+    // position before flags: the third copy in dtaRead then keeps buffer[2]'s temporary out of position's register
     uint position = 3;
+    ushort flags = (buffer[1] << 8) + buffer[2];
     uchar bits = 16;
     while (position < len)
     {
