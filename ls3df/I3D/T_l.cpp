@@ -567,31 +567,38 @@ struct S_texel_info {
     I3D_material *mat;                  // sampled
 };
 
-// A face's texel's effect on a lightmap color: 0 if it's opaque (0.95 and more), 2 if transparent (below 0.1), else 1
-// with the color blended by its transparency and color. The material's texture's bytes are B, G, R, A; a material
-// with bit 31 set takes the texel's luminance for its alpha.
+// A face's texel's effect on the color a ray has gathered (color): 2 if the texel is transparent (alpha below 0.1),
+// 0 if it's opaque (above 0.95), else 1 with the color blended towards itself times the texel's color by the alpha.
+// The texture's bytes are A, R, G, B; a material with bit 31 set takes the texel's luminance for its alpha, one
+// without pixels its diffuse color and alpha. pos, f and frm are unused. PS2's has the same blend in both branches
+// (the S_vector temporary times a, through __ml__8S_vectorCFRCf); it scales the coordinates by the size - 1 where the
+// PC clamps them. The x clamp is windows.h's min: as an if, VC6 keeps v on the FPU stack, not in a stack slot.
+// Not matching yet:
+// - The original inlines less: in the diffuse branch operator*'s S_vector constructor is a call, which keeps col in
+//   esi (pushed at the start) and moves the frame's slots. Ours needs about 30 units less budget there; less source
+//   moves it little, and no spelling of the color, the luminance or the blend (a helper, the diffuse branch first)
+//   gave it.
+// - The original loads texture->pixels again after the __ftol calls where ours keeps the test's load, so x gets a
+//   register instead of context's slot. A volatile load gives the original's registers; no spelling of the test or the
+//   lookup did.
 // FUNCTION: LS3DF 0x10066be0
 int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context)
 {
-    I3D_material *mat = ((S_texel_info *)context)->mat;
+    S_texel_info *ti = (S_texel_info *)context;
+    S_vector &col = *(S_vector *)color;
+    I3D_material *mat = ti->mat;
     ITexture *texture = mat->texture;
-    S_vector c;
-    float a;
     if (texture && texture->pixels) {
-        float u = ((S_texel_info *)context)->u;
-        float v = ((S_texel_info *)context)->v;
-        int sx = texture->width;
-        uint x = (int)(sx * u);
-        if (x >= (uint)(sx - 1))
-            x = sx - 1;
-        int sy = texture->height;
-        uint y = (int)(sy * v);
-        if (y >= (uint)(sy - 1))
-            y = sy - 1;
-        const uchar *texel = &texture->pixels[(y * sx + x) * 4];
+        float u = ti->u;
+        float v = ti->v;
+        uint x = min((uint)(int)(texture->width * u), (uint)(texture->width - 1));
+        uint y = min((uint)(int)(texture->height * v), (uint)(texture->height - 1));
+        const uchar *texel = &texture->pixels[(y * texture->width + x) * 4];
+        S_vector c;
         c.x = texel[1] * (1.0f / 255.0f);
         c.y = texel[2] * (1.0f / 255.0f);
         c.z = texel[3] * (1.0f / 255.0f);
+        float a;
         if (mat->flags & MATF_ADD_MODE)
             a = c.x * 0.3f + c.y * 0.6f + c.z * 0.1f;
         else
@@ -601,20 +608,18 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
             return 2;
         if (a > 0.95)
             return 0;
-        S_vector *col = (S_vector *)color;
-        S_vector t = *col * (float)(1.0 - a);
-        *col = t + S_vector(t.x * c.x, t.y * c.y, t.z * c.z) * f;
-        return 1;
+        col *= (float)(1.0 - a);
+        col += S_vector(col.x * c.x, col.y * c.y, col.z * c.z) * a;
+    } else {
+        S_vector c = mat->diffuse;
+        float a = mat->alpha;
+        if (a < 0.1)
+            return 2;
+        if (a > 0.95)
+            return 0;
+        col *= (float)(1.0 - a);
+        col += S_vector(col.x * c.x, col.y * c.y, col.z * c.z) * a;
     }
-    c = mat->diffuse;
-    a = mat->alpha;
-    if (a < 0.1)
-        return 2;
-    if (a > 0.95)
-        return 0;
-    S_vector *col = (S_vector *)color;
-    *col *= (float)(1.0 - a);
-    *col += S_vector(col->x * c.x * f, col->y * c.y * f, col->z * c.z * f);
     return 1;
 }
 
