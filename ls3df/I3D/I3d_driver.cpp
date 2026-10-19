@@ -24,7 +24,7 @@ extern C_VBManager cVBMan;
 // Set when the geometry has to be recomputed (another I3D file's)
 extern bool RecomputeAllGeometry;
 
-// The clipping file's (the name is a guess)
+// clipper.cpp's
 void FreeClipArrays();
 
 // .data
@@ -1733,11 +1733,6 @@ bool RecomputeAllGeometry;
 // VC6 from inlining them here. The markers of the ones below the driver's addresses are in I3D.h, by name, as the
 // linter checks the order of a file's markers.
 #pragma auto_inline(off)
-
-void FreeClipArrays()
-{
-    renderState[4]++;
-}
 
 // STUB: LS3DF 0x1001ef70
 I3D_landpatch::I3D_landpatch()

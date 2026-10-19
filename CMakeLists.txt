@@ -11,7 +11,7 @@ function(vc6_header_dependencies target)
         file(GLOB_RECURSE headers CONFIGURE_DEPENDS
             "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_SOURCE_DIR}/common/*.h")
         get_target_property(sources ${target} SOURCES)
-        set_source_files_properties(${sources} PROPERTIES OBJECT_DEPENDS "${headers}")
+        set_property(SOURCE ${sources} APPEND PROPERTY OBJECT_DEPENDS ${headers})
     endif()
 endfunction()
 

@@ -22,8 +22,9 @@ the repository, e.g. "build/vc6/ijoy/cl/CL.EXE", which loads the C1XX.DLL and c2
 switches after the build's own (the last /O, /G or /Ob wins). They test a front end or a switch the way an edit tests
 a spelling. Optionally the spec also defines ORIG_RANGE = (start, end), to compare only that part of the original, and OURS_RETS = (a, b), to
 take our instructions from after the a-th `ret` through the b-th (a = 0: from the start). The two together isolate
-one exit path of a function. The spec runs as Python, with REPO (the repository path) defined, so it can build its
-variants in loops. The unchanged source is always scored as "base".
+one exit path of a function. SYMBOL = "?name@@..." names our function in the object where the PDB has no public
+symbol for it (a static function). The spec runs as Python, with REPO (the repository path) defined, so it can build
+its variants in loops. The unchanged source is always scored as "base".
 
 Edited files are compiled from a temporary directory: SOURCE itself, and other files through an include directory
 placed before the project's, so an edited header must be reached through the include path (or SOURCE's folder),
@@ -269,7 +270,7 @@ def main():
     sys.path.insert(0, str(REPO / "tools"))
     from funcdiff import find_match
     match = find_match(compare, spec["FUNCTION"])
-    symbol = match.get("symbol")
+    symbol = spec.get("SYMBOL") or match.get("symbol")
     start, end = spec.get("ORIG_RANGE") or (match.orig_addr, None)
     if end is None:
         size = match.size(ImageId.ORIG) or match.max_size(ImageId.ORIG)

@@ -7,6 +7,9 @@ project(ls3df)
 # The folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph are in its __FILE__ strings,
 # the sound files' folder is named here.
 add_library(ls3df SHARED
+    I3D/clipper.cpp
+    I3D/clipper2.cpp
+    I3D/clipping.cpp
     I3D/I3d_animation.cpp
     I3D/I3d_area.cpp
     I3D/I3d_billboard.cpp
@@ -85,6 +88,14 @@ if (MSVC_VERSION EQUAL 1200)
     # /YX - automatic precompiled headers, the default of a VC6 DLL project. They decide where the engine header's zero
     #       vector's $E and the out-of-line copies of the headers' inline functions go (see tools/autopch.py).
     set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
+    # Except clipper2.cpp, which used clipper.cpp's precompiled header (/Yu): the original's object has no $E for the
+    # zero vector, and the vector isn't in its .bss. clipper.cpp creates it (/Yc), which gives its own object the
+    # layout /YX does.
+    file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch clipper_pch)
+    set_property(SOURCE I3D/clipper.cpp APPEND PROPERTY COMPILE_OPTIONS /YcI3D/clipper.h /Fp${clipper_pch})
+    set_property(SOURCE I3D/clipper.cpp APPEND PROPERTY OBJECT_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
+    set_property(SOURCE I3D/clipper2.cpp APPEND PROPERTY COMPILE_OPTIONS /YuI3D/clipper.h /Fp${clipper_pch})
+    set_property(SOURCE I3D/clipper2.cpp APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
 
     # The original's order. Its import directory lists the libraries in the order they were searched: KERNEL32, USER32,
     # GDI32, ole32, d3d8, DINPUT8, DSOUND, WINMM and vorbisfile from the command line, then rw_data and binkw32, which
@@ -103,7 +114,8 @@ if (MSVC_VERSION EQUAL 1200)
     # objects and single meshes, the vertex transforms by the shadows' range (0x10054f60), VertexLightingProcess by the
     # lit objects' lightmaps (0x10021bb0), the camera's UpdateSector by render.cpp; the scene's view, sound and weather
     # functions by render.cpp, its shadow and mirror lists by the shadows and mirrors, MakeReadySectors by I3D code at
-    # 0x10045724.
+    # 0x10045724; the clipper's SetClipParams, ResetClipArrays and entry points by the projectors (0x10046960) and the
+    # shadows (0x10053280).
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
@@ -119,7 +131,12 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?DeleteShadow@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_shadow@@@Z"
         "/INCLUDE:?AddMirror@I3D_scene@@QAEXPAVI3D_mirror@@@Z"
         "/INCLUDE:?DeleteMirror@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_mirror@@@Z"
-        "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ")
+        "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ"
+        "/INCLUDE:?SetClipParams@@YIXABUS_matrix@@0_NMMM@Z" "/INCLUDE:?ResetClipArrays@@YIXXZ"
+        "/INCLUDE:?ClipMesh@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
+        "/INCLUDE:?ClipMeshW@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HI@Z"
+        "/INCLUDE:?ClipSingleMesh@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
+        "/INCLUDE:?ClipSingleMeshW@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HI@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8

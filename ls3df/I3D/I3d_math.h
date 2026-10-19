@@ -282,6 +282,11 @@ struct S_matrix : D3DMATRIX {
 // PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data, which an
 // S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. I3d_math.cpp's copy; the scene file's
 // is annotated in I3D.h.
+// VC6 puts a copy into an object only if the source references it, inline functions nobody calls included, first in
+// the object's .rdata. Ours are the files that include I3D.h (I3D_visual's GetInvMatrix and GetRenderMatrix). The
+// original has one in every object that includes this header (58; clipper.cpp's at 0x1009b2c0, the sound files'),
+// so inline code every file sees references it. Open: which; inline code before the zero vector also moves the files'
+// $Es (tools/autopch.py).
 // GLOBAL: LS3DF 0x1009bf48
 static const D3DMATRIX IdentityMatrixData = {
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -348,9 +353,10 @@ struct S_plane {
 };
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
-// regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp)
+// regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp and
+// again since clipping.cpp's CheckClipFaces)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_vector@@QAE@XZ
+// ??0S_plane@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);
@@ -399,6 +405,12 @@ struct I3D_bbox {
         if (max.z < v.z)
             max.z = v.z;
     }
+};
+
+// A triangle's vertex indices (PS2 I3D_triface). Here, not in I3D.h: the clipper's arrays (clipper.cpp, which
+// includes only this header) hold them.
+struct I3D_triface {
+    ushort vi[3];
 };
 
 // Every file that includes the header gets its own (PS2 name). Its $E isn't where it is defined: the files are

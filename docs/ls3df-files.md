@@ -20,6 +20,11 @@ a name is uncertain, the table says so.
   - Files that define no globals and don't include the header don't appear in the table. They have to be found from
     their code.
   - `Globals.cpp`'s own `ZeroVector` has the same shape, but its code sits before the file's marker.
+- **The header's identity matrix.** Every object that includes the engine header also has its own copy of
+  `IdentityMatrixData` (`I3d_math.h`, 0x40 bytes, never referenced) at the start of its `.rdata`, except one compiled
+  with another file's precompiled header (`clipper2.cpp`). The original has 58. They mark the objects in `.rdata` as
+  the zero vectors do in `.text` and `.bss`, and the first reference from code into the data after a copy names its
+  file. Ours has copies only where `I3D.h` is included (see `I3d_math.h`).
 - **Names.** Strings in each range name the classes (`!! Out of memory  I3D_frame::SetName()`), and two files name
   themselves through `__FILE__`. The PS2 build (`SLUS_206.71`) names its files through `__sinit_<file>.cpp`. Its
   engine files are linked in folder groups (I3D, IGraph, ISound), alphabetically within each and case-insensitively, as
@@ -39,9 +44,10 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 
 | Range | Marker `$E` | Other `$E`s | File | Evidence |
 | --- | --- | --- | --- | --- |
-| `10001000–100013e0` | `100013c0` | `10001000` (empty) | clipping (PC only) | `ReserveClipArrays()` |
-| `100013e0–10004870` | `10004850` | | clipping (PC only) | messages cite `clipping.cpp` and `clipper.cpp` (`ClipFacegroups()`) |
-| `10004870–10004890` | `10004870` | | ? | no code, only the marker |
+| `10001000–100013e0` | `100013c0` | `10001000` (empty) | `clipper.cpp` (PC only) | the projectors' and shadows' clipper: its parameters and arrays, `ReserveClipArrays()` citing `clipper.cpp`; the first object, whose default library requests (`libcpmt` first, no `uuid`) start the link's; written |
+| `100013e0–10003b40` | none | none | `clipper2.cpp`? (PC only) | the faces of an orthogonal and of a perspective volume, clipped; no strings, and no `$E` for the zero vector: compiled with `clipper.cpp`'s precompiled header (`/Yu`). The name, which sorts between its neighbours', is a guess; written |
+| `10003b40–10004870` | `10004850` | | `clipping.cpp` (PC only) | the four entry points (a mesh's vertices into clip space) and `ClipFacegroups()`, whose overflow message cites `clipping.cpp`, the others `clipper.cpp`; the message comes first in the data, from a helper compiled before them that the linker drops; written |
+| `10004870–10004890` | `10004870` | | ? | no code, only the marker; a file of its own, with its own identity matrix (`1009b360`) and zero vector (`100af7d8`) and nothing else left; the name sorts between `clipping.cpp` and `I3d_animation.cpp` |
 | `10004890–10005180` | `10005160` | | `I3d_animation.cpp` | `I3D_animation_set` in PS2's order from its constructor (`10004890`), with the PC's `GetAnimLink` after `GetEndTime` and the rotation's, position's and scale's key functions before the notes'; written |
 | `10005180–10005db0` | `10005180` | | `I3d_area.cpp` | compiled without a precompiled header, so the marker comes first: `I3D_area` in PS2's order from its constructor (`100051a0`), the in-class functions its vtable needs right after it, the PC's `SaveImage` and `LoadImage`, then `C_list::remove` (`10005d20`); written |
 | `10005db0–1000b0c0` | `10008390` | | `I3d_billboard.cpp` | `I3D_billboard` and `I3D_lensflare` in PS2's order (`renderBillboard()`, `I3D_lensflare::LoadImage()`); the marker before the billboard's `m_RenderFGroup`, then the copies of the render state helpers and of `C_VBuffer`'s `Lock` and `Unlock` the linker kept; written |
@@ -82,10 +88,10 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
 | `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings; up to `1005d010` the rest of `IBManager.cpp`'s multiset functions |
 | `1005e3a0–10060c20` | `10060c00` | | `Load.cpp` | `LightMap::m_CreateLM()`, `load.cpp` messages, `.4ds`, `.5ds`, `.6ds` |
-| `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker |
-| `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker |
-| `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has `LoadTargetList`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code; `LoadTargetList` and `LoadMeshImage` written |
-| `10061990–100619b0` | `10061990` | | ? | no code, only the marker |
+| `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker; a file of its own (identity matrix `1009d298`). The `.bss` around this file's and the next one's vectors (`101c3be4`–`101c3c04`, among it the load file's handle at `101c3bfc`) is read by `load4ds.cpp` and the `LoadImage` functions, not by `Load.cpp` |
+| `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker; a file of its own (identity matrix `1009d2d8`) |
+| `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has `LoadTargetList`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code (the count of objects, see the open questions, leaves no room for one); `LoadTargetList` and `LoadMeshImage` written |
+| `10061990–100619b0` | `10061990` | | ? | no code, only the marker; a file of its own (identity matrix `1009d358`); PS2's `Load5ds.cpp` sorts here |
 | `100619b0–10065a10` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()`; after the marker `I3D_driver::BuildAllVBuffers` (`100658f0`), the out-of-line constructors its `$E`s call (`100659a0`, `100659d0`) and a z-bias setter only it calls (`100659f0`); `GetObjectLOD` written |
 | `10065a10–10068880` | `10067d00` | `10065a10`, `10065a30` | `T&l.cpp` (`T_l.cpp`) | one file with its marker after `VertexLightingProcess`, as `I3d_math.cpp`: the lighting in PS2's order, the PC's texel callback, then the vertex helpers the objects and billboards render with (`EnvProcess`, the transforms, the fog, the vertex byte swap) and the copy of `I3D_dummy::GetInvMatrix` they call; written |
 | `10068880–10069e00` | `10069de0` | `10068880` | `VBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\VBManager.cpp`; written: `C_VBuffer`, `C_VBManager`, the same code as `IBManager.cpp`'s |
@@ -119,17 +125,20 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 
 ## Open questions
 
-- **Files with only a marker.** Several ranges hold nothing but a marker (`10004870`, `10060c20`, `10060c40`,
-  `10061990`). Each is either a file whose code is compiled out on PC, or the second zero vector of the file before it.
-  - Each sits right before a file's code, as the area file's own marker (`10005180`) does, which is first because
-    that file had no precompiled header. But the animation, `load4ds.cpp` and `render.cpp` ranges after them have a
-    marker at their end too.
-  - Counted as separate files, the table has more files than the Rich header's 61 C++ objects. So some of them
-    probably belong to the file before.
-  - PS2 constructs two header objects per file, a zero vector and an identity quaternion. PC constructs only the
-    vector.
+- **Files with only a marker.** The ranges that hold nothing but a marker (`10004870`, `10060c20`, `10060c40`,
+  `10061990`) are files of their own: each has its own identity matrix besides its zero vector, which a second zero
+  vector of the file before wouldn't bring. Nothing else of them is left, not even a string or a constant: those
+  would be kept where the first object that has them is (the linker keeps the first copy of a COMDAT), as
+  `clipping.cpp`'s helper keeps its message. So their functions were dropped by `/OPT:REF` or compiled out on PC.
+- **The count.** The original's 58 identity matrices are 48 objects of the I3D group and 5 each of IGraph and ISound.
+  The objects without one: `clipper2.cpp`, and probably one file of each of the portal/pose and singlemesh/singlemorph
+  pairs, which have one copy and one marker each (as files using another's precompiled header, like `clipper2.cpp`).
+  That makes the Rich header's 61 C++ objects, so the ranges without a copy of their own, `1000de70` (three globals and
+  a zero vector, which would have one) and `100529c0`, belong to a neighbouring file, and so does `LoadTargetList`'s
+  `$E`.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera, portal/pose and
-  singlemesh/singlemorph pairs and the ranges marked `none`.
+  singlemesh/singlemorph pairs and the ranges marked `none`. A file compiled with another's precompiled header (`/Yu`)
+  has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.
 - **`.bss` between `IGraph.cpp` and `IShow.cpp`.** `IGraph.cpp`'s ends at `0x101c5ad9`, the first of
   `IShow.cpp`'s (`m_CreateCTextureRenderer`'s statics) is at `0x101c5be8`. Nothing references the 0x108 bytes in
   between, so they are either zero-initialized globals at the end of `IGraph.cpp` or `IShow.cpp` globals whose

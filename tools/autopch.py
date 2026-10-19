@@ -20,6 +20,10 @@ IDE a file used the previous file's when its include lines and switches matched,
 This compiler launcher makes every source create its own: it adds /YX with a precompiled header next to the object
 and deletes that file before and after the compile, so that a rebuild doesn't use an old one.
 
+A source whose own options already name a precompiled header (/Yc or /Yu, with its /Fp) is compiled as it is. Under
+/Yu the statics of the precompiled header aren't the using object's at all: it has no $E for them and nothing of
+them in its .bss (LS3DF's clipper2.cpp, which uses clipper.cpp's).
+
     python tools/autopch.py <compiler> <arguments...>
 """
 import os
@@ -30,7 +34,7 @@ if len(sys.argv) < 3:
     sys.exit(__doc__)
 compiler, args = sys.argv[1], sys.argv[2:]
 obj = next((a[3:] for a in args if a.startswith(("/Fo", "-Fo"))), None)
-if obj is None:
+if obj is None or any(a[:3] in ("/Yc", "-Yc", "/Yu", "-Yu") for a in args):
     sys.exit(subprocess.call([compiler] + args))
 pch = obj + ".pch"
 if os.path.exists(pch):

@@ -159,11 +159,6 @@ struct I3D_bsphere {
     float radius;
 };
 
-// A triangle's vertex indices (PS2 I3D_triface)
-struct I3D_triface {
-    ushort vi[3];
-};
-
 // A vertex's texture coordinates (PS2 I3D_text_coor)
 struct I3D_text_coor {
     float u, v;
@@ -1108,16 +1103,17 @@ public:
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
-// the copies (Update's was a base class's, CBaseRenderer::OnReceiveFirstSample, from I3d_light.cpp to I3d_area.cpp;
-// SetDir's is the scene's SetCallback since I3d_animation.cpp).
+// the copies, which change with the link (tools/foldfix.py): Update's is another class's or a base class's
+// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp), and SetDir's and SetName's are other
+// scene functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetCallback@I3D_scene@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -2130,16 +2126,17 @@ public:
     float env_u_ofs, env_v_ofs;         // 0x64, to the environment map's (EnvProcess)
 };
 
-// A base class function whose folded copy our map lists under an engine object, so crtannotate leaves it out of
-// library_strmbase.h: CBaseRenderer::OnStopStreaming, folded with CBaseFilter::GetSetupData, under IShow.cpp's. Which
-// object our map lists a folded copy under changes with the link (OnStopStreaming's was IShow.cpp's until
-// I3d_interpolator.cpp and again since I3d_area.cpp; CBaseRenderer::OnRenderEnd's, folded with
+// A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
+// crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
+// (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp
+// and again from I3d_area.cpp to I3d_animation.cpp; CBaseRenderer::OnRenderEnd's, folded with
 // I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp;
 // CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp), and the names
-// are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again since
+// clipping.cpp's CheckClipFaces, a function the linker drops), so after a new file or function rerun crtannotate and
+// move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087520
+// ?NumRegions@I3D_void_interface@@UBGHXZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2172,9 +2169,6 @@ public:
 
 // Stubs in I3d_driver.cpp, I3d_scene.cpp and I3d_sector.cpp, after their files' functions though their addresses come
 // before them, so their markers are here, by name
-
-// STUB: LS3DF 0x10001370
-// FreeClipArrays
 
 // STUB: LS3DF 0x1000dec0
 // I3D_scene::TestColGeo
@@ -2256,7 +2250,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
