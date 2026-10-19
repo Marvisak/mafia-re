@@ -55,7 +55,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1001d2f0–1001e860` | `1001e840` | | ? | `I3d_interpolator.cpp` and `I3d_joint.cpp` are due here |
 | `1001e860–1001ef60` | `1001ef40` | | ? | no strings |
 | `1001ef60–100201d0` | `100201b0` | `1001ef60` | landscape (PC only) | `LandTex0.tga`, `Creating landscape patch` |
-| `100201d0–10021570` | `10021550` | | `I3d_light.cpp`? | no strings |
+| `100201d0–10021570` | `10021550` | | `I3d_light.cpp` | after the landscape's out-of-line accessor of its last member (`100201d0`), `I3D_light` in PS2's order from its constructor (`100201f0`) without PS2's specular, ambient and attenuation setters; written |
 | `10021570–10026920` | `10026900` | | `I3d_lit_object.cpp` | `I3D_lit_object::Construct()` |
 | `10026920–1002c8c0` | `1002c8a0` | | `I3d_lit_object.cpp` (second file) | `I3D_lit_object::Load()`, lightmaps |
 | `1002c8c0–10030560` | `1002ea90` | | `I3d_math.cpp` | written. The math from `RandFloat` (`1002cda0`) to `LineLineIntersect`, one file as on PS2; its marker sits between `S_vector::RotateByMatrix` and `RotateByNormMatrix`, not at the end |

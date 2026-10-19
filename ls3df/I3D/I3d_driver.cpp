@@ -1767,12 +1767,6 @@ I3D_landscape::I3D_landscape()
     renderState[24]++;
 }
 
-// STUB: LS3DF 0x100201f0
-I3D_light::I3D_light()
-{
-    renderState[10]++;
-}
-
 // STUB: LS3DF 0x10021570
 I3D_lit_object::I3D_lit_object()
 {

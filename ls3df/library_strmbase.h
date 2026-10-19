@@ -143,7 +143,7 @@
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
 
 // LIBRARY: LS3DF 0x10087ec0
-// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
@@ -284,10 +284,10 @@
 // ?QueryInterface@CBaseInputPin@@W3AGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10089220
-// ?AddRef@CBaseFilter@@W3AGKXZ
+// ?AddRef@CBaseInputPin@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089230
-// ?Release@CBaseFilter@@W3AGKXZ
+// ?Release@CBaseInputPin@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089240
 // ?QueryInterface@CBaseInputPin@@WIM@AGJABU_GUID@@PAPAX@Z

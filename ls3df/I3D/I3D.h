@@ -344,6 +344,35 @@ public:
         return matrix;
     }
 
+    // PS2 name
+    const S_vector &GetWorldPos()
+    {
+        return GetMatrix()(3);
+    }
+
+    // The local z axis, normalized unless the matrix is made from the rotation here (PS2 name; the game's out-of-line
+    // copy is at 0x47a890 in Game.exe)
+    S_vector GetDir()
+    {
+        if (!(frm_flags & FRMFLAGS_MAT_VALID)) {
+            frm_flags |= FRMFLAGS_MAT_VALID;
+            rot.Normalize();
+            f_matrix.SetRot3(rot);
+            return f_matrix(2);
+        }
+        S_vector dir = f_matrix(2);
+        dir.Normalize();
+        return dir;
+    }
+
+    // The world z axis, normalized (PS2 name; the game's out-of-line copy is at 0x47aa40 in Game.exe)
+    S_vector GetWorldDir()
+    {
+        S_vector dir = GetMatrix()(2);
+        dir.Normalize();
+        return dir;
+    }
+
     const char *GetName() const
     {
         return name ? name : "";
@@ -817,15 +846,15 @@ public:
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
-// the copies (Update's is the visual's m_RenderFGroup, which our linker keeps).
+// the copies (Update's is a base class's, CBaseRenderer::OnReceiveFirstSample, since I3d_light.cpp).
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -930,25 +959,39 @@ enum I3D_LIGHTTYPE {
 #define I3DLIGHTMODE_SHADOW 0x20        // the lightmaps test rays to the light (the name is a guess)
 #define I3DLIGHTMODE_LIGHTNESS 0x40     // taken by I3D_scene::GetLightness (the name is a guess)
 
-// A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp isn't written yet). The members are the ones T&l.cpp and the
-// scene read, named after Insanity3D's where the roles agree; the light's UpdateV computes the world values from the
-// others. Its virtual functions are PS2's, in PS2's order (SetDiffuse's overloads in reverse, as MSVC orders them).
-class __declspec(novtable) I3D_light : public I3D_frame {
+// A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp). The PC's has only PS2's diffuse color and one power: its
+// virtual functions are PS2's in PS2's order without the specular, ambient and attenuation setters and SetFogRange
+// (SetRange takes both ranges, as Insanity3D's), SetDiffuse's overloads in reverse, as MSVC orders them. Member names
+// are Insanity3D's where the roles agree (ltype, power, cone_in, cone_out, inner_cos, outer_cos), the others are
+// guesses. UpdateV computes the world values from the others; the setters compute the ones they change themselves.
+// VTABLE: LS3DF 0x1009bc88
+class I3D_light : public I3D_frame {
 public:
     I3D_light();
+    ~I3D_light();
 
+    virtual void __stdcall SetOn(bool on);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    // PS2 names (SetDiffusePower is Insanity3D's SetPower)
     virtual void __stdcall SetLightType(I3D_LIGHTTYPE type);
     virtual void __stdcall SetDiffuse(const S_vector &color);
     virtual void __stdcall SetDiffuse(float r, float g, float b);
+    virtual void __stdcall SetDiffusePower(float power);
+    virtual void __stdcall SetMode(uint mode);
+    virtual void __stdcall SetRange(float near1, float far1);
+    virtual void __stdcall SetCone(float inner, float outer);
 
-    uchar unknown_140[0x10];
+    C_list<I3D_sector *> sectors;       // 0x140, the sectors it lights (Insanity3D's light_sectors)
+    // LoadImage reads the members from mode to cone_out
     uint mode;                          // 0x150, I3DLIGHTMODE_*
     I3D_LIGHTTYPE ltype;                // 0x154
     float power;                        // 0x158
     S_vector diffuse;                   // 0x15c, SetDiffuse's
     float near_range, far_range;        // 0x168, a point light fades out between them (GetLightness); a fog's
                                         // density is near_range
-    uchar unknown_170[8];
+    float cone_in, cone_out;            // 0x170, the spot's cone angles
     S_vector w_pos;                     // 0x178, in world space
     S_vector w_dir;                     // 0x184, in world space
     S_vector color;                     // 0x190, the power applied
@@ -962,9 +1005,12 @@ public:
     float range_f;                      // 0x1d0
     float range_delta;                  // 0x1d4, range_f - range_n
     float range_f_2;                    // 0x1d8, its square
-    uint unknown_1dc;                   // 0x1dc
+    float cone_radius;                  // 0x1dc, of the sphere around the spot's cone, unscaled
     I3D_bsphere bsphere;                // 0x1e0, what a spot lights
 };
+
+// SYNTHETIC: LS3DF 0x10020740
+// I3D_light::`scalar deleting destructor'
 
 // Planes that bound what a camera sees (PC 0x50 bytes; the name is a guess): unit normals pointing inside and their
 // distances (normal.Dot(p) + d = 0 on the plane). The first is the view direction's, the others are the sides'. The
@@ -1681,13 +1727,13 @@ I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
 // Two of the base classes' functions the linker folds with engine functions: CBasePin::EndOfStream with
-// I3D_void_interface::NumLevels (I3d_visual.cpp) and CBaseRenderer::OnStopStreaming with CBaseFilter::GetSetupData
-// (IShow.cpp's copy). The original kept the base classes' copies, our map lists ours under the engine's objects, so
-// crtannotate leaves them out of library_strmbase.h. Which object our map lists a folded copy under changes with the
-// link (CBaseRenderer::OnRenderEnd's was the driver's until I3d_model.cpp), and the names are the ones our PDB keeps
-// (tools/foldfix.py).
+// I3D_void_interface::NumLevels and NumRegions (I3d_visual.cpp) and CBaseRenderer::OnStopStreaming with
+// CBaseFilter::GetSetupData (IShow.cpp's copy). The original kept the base classes' copies, our map lists ours under
+// the engine's objects, so crtannotate leaves them out of library_strmbase.h. Which object our map lists a folded copy
+// under changes with the link (CBaseRenderer::OnRenderEnd's was the driver's until I3d_model.cpp), and the names are
+// the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
-// ?NumLevels@I3D_void_interface@@UBGHXZ
+// ?NumRegions@I3D_void_interface@@UBGHXZ
 
 // LIBRARY: LS3DF 0x10088960
 // ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
