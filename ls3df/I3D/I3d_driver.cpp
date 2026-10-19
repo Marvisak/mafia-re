@@ -1800,18 +1800,6 @@ I3D_part_base::I3D_part_base()
     renderState[34]++;
 }
 
-// STUB: LS3DF 0x10045930
-I3D_pose::I3D_pose()
-{
-    renderState[44]++;
-}
-
-// STUB: LS3DF 0x10045b90
-I3D_pose_set::I3D_pose_set()
-{
-    renderState[45]++;
-}
-
 // STUB: LS3DF 0x10045e30
 I3D_projector::I3D_projector()
 {

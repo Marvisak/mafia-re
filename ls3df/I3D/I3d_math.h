@@ -297,11 +297,13 @@ struct S_quat {
         v.z = z;
     }
 
-    // Insanity3D's name. The axis as a chain (the frame's constructor stores z, y, x); Zero() is three statements
+    // Insanity3D's name, s first as there. The axis as a chain (the constructors store z, y, x); Zero() is three
+    // statements. Through the inline function the pose's constructor sets its zero register where the original does,
+    // the statements written out set it at the start; the frame's constructor compiles the same either way.
     void Identity()
     {
-        v.x = v.y = v.z = 0.0f;
         s = 1.0f;
+        v.x = v.y = v.z = 0.0f;
     }
 
     // Out of line after S_quat::Make(const S_matrix &), its only caller that doesn't inline it
@@ -337,9 +339,9 @@ struct S_plane {
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp and
-// again since clipping.cpp's CheckClipFaces)
+// again from clipping.cpp's CheckClipFaces to I3d_pose.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0S_vector@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

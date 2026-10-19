@@ -24,6 +24,7 @@ add_library(ls3df SHARED
     I3D/I3d_mesh.cpp
     I3D/I3d_model.cpp
     I3D/I3d_object.cpp
+    I3D/I3d_pose.cpp
     I3D/I3d_scene.cpp
     I3D/I3d_sector.cpp
     I3D/I3d_target.cpp

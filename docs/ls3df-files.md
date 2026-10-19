@@ -70,9 +70,9 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10034350–100367b0` | `10036520` | | `I3d_morph.cpp` | `morphBase`, `I3D_morph`; after its marker the morph's `LoadImage` (`10036750`) and `MorphDef` (`10036580`, a reference-counted grid) |
 | `100367b0–1003a430` | `10039260` | | `I3d_object.cpp` | `I3D_object` close to PS2's order (`I3D_object::DetachMesh()`) with the PC's `lod` class (`lod::Create()`) after `Duplicate`; the marker before `m_RenderFGroup` (`renderObject()`) and `LoadImage`; written |
 | `1003a430–1003c070` | `1003c050` | | `I3d_occluder.cpp` | `i3d_occluder::Build`, `UpdateShadow` |
-| `1003c070–1003eac0` | `1003eaa0` | | `I3d_particle.cpp` | `I3D_emitor` |
-| `1003eac0–100437f0` | `100437d0` | `10041de0` (empty) | ? | `renderObject()` |
-| `100437f0–10045e30` | `10045e10` | | `I3d_portal.cpp`, `I3d_pose.cpp` | portal parsing, `I3D_pose`, `I3D_pose_set`; one of the two has no marker |
+| `1003c070–10041800` | `1003eaa0` | | `I3d_particle.cpp` | `I3D_emitor`; after the marker `renderObject()` and the particles' constructors (`1003fa20`, `100406c0`), which store the vtables after the file's identity matrix (`1009c478`), then `C_list::push_back` (`10041700`) and small in-class functions, as at a file's end |
+| `10041800–10045930` | `100437d0` | `10041de0` (empty) | `I3d_portal.cpp` | `I3D_portal` from its constructor (`10041800`), whose vtable (`1009c738`) is the first data after the file's identity matrix (`1009c6f8`); the marker in the middle, the portal parsing after it, up to `LoadImage` (`100458f0`) |
+| `10045930–10045e30` | `10045e10` | | `I3d_pose.cpp` | `I3D_pose`, then `I3D_pose_set`, each from its constructor; its own identity matrix (`1009c750`) before their vtables; written |
 | `10045e30–10048060` | `10048040` | `10046730` | `I3d_projector.cpp` | `I3D_projector::ProcessRecList()` |
 | `10048060–1004e9b0` | `1004a860` | `10048a00`, `10048a50`, `10048aa0` (empty) | `I3d_scene.cpp` | one file with its marker after `SetBackdropRange`, as `I3d_math.cpp`: `I3D_scene` in PS2's order from its constructor (`10048ab0`), the PC's shadow and mirror lists after `Close`, the weather system and the fog states; after the last function the copies of the weather's `C_list` functions, `S_vector`'s empty constructor and the class's in-class functions; written |
 | `1004e9b0–100508b0` | `10050890` | | `I3d_sector.cpp` | from the sound properties' `SetupDefaults` (`1004e9b0`) and `MakeBlend`, `I3D_sector` in PS2's order without its `SetBBox`, `Clear` and `CheckPointDepth`; after the marker the vtable's `SetGroupBits` (`100508b0`, an in-class function) and `C_list::find` (`100508d0`); written |
@@ -131,12 +131,13 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
   would be kept where the first object that has them is (the linker keeps the first copy of a COMDAT), as
   `clipping.cpp`'s helper keeps its message. So their functions were dropped by `/OPT:REF` or compiled out on PC.
 - **The count.** The original's 58 identity matrices are 48 objects of the I3D group and 5 each of IGraph and ISound.
-  The objects without one: `clipper2.cpp`, and probably one file of each of the portal/pose and singlemesh/singlemorph
-  pairs, which have one copy and one marker each (as files using another's precompiled header, like `clipper2.cpp`).
-  That makes the Rich header's 61 C++ objects, so the ranges without a copy of their own, `1000de70` (three globals and
-  a zero vector, which would have one) and `100529c0`, belong to a neighbouring file, and so does `LoadTargetList`'s
-  `$E`.
-- **Files without a marker.** Their boundaries come from their code only: the billboard/camera, portal/pose and
+  The objects without one: `clipper2.cpp`, and probably one file of the singlemesh/singlemorph pair, which has one copy
+  and one marker (as a file using another's precompiled header, like `clipper2.cpp`). The portal and pose files have
+  one each (`1009c6f8`, `1009c750`). That makes 60 of the Rich header's 61 C++ objects, so one more object has no copy:
+  a file without the engine header, or one more compiled with another's precompiled header. The range `100529c0` and
+  `LoadTargetList`'s `$E` are candidates; `1000de70` (three globals and a zero vector) would have a copy, so it belongs
+  to a neighbouring file.
+- **Files without a marker.** Their boundaries come from their code only: the billboard/camera and
   singlemesh/singlemorph pairs and the ranges marked `none`. A file compiled with another's precompiled header (`/Yu`)
   has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.
 - **`.bss` between `IGraph.cpp` and `IShow.cpp`.** `IGraph.cpp`'s ends at `0x101c5ad9`, the first of

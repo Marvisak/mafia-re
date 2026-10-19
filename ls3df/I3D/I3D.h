@@ -723,12 +723,30 @@ public:
 #define POSEF_ROT 0x8                   // rot replaces it
 
 // A frame's pose, which a model's or scene's interpolator blends into its animations (PS2 I3D_pose, 0x38 bytes on PC;
-// the file isn't written yet), reference counted. The member names are guesses.
-class __declspec(novtable) I3D_pose {
+// I3d_pose.cpp), reference counted. The PS2's has no vtable; the PC's has its setters, for the game. The member names
+// are guesses.
+// VTABLE: LS3DF 0x1009c790
+class I3D_pose {
 public:
     I3D_pose();
+    ~I3D_pose();
 
     virtual int __stdcall Release();
+    // Insanity3D's names (I3D_anim_pose). Clear unsets all; a setter's NULL pointer unsets its value.
+    virtual void __stdcall Clear();
+    virtual void __stdcall SetPos(const S_vector *p);
+    virtual void __stdcall SetScale(const S_vector *s);
+    // A rotation that turns the animation's (POSEF_ROT_ADD), and one that replaces it (POSEF_ROT; the name is a guess)
+    virtual void __stdcall SetRot(const S_quat *q);
+    virtual void __stdcall SetRotAbs(const S_quat *q);
+    // The same from a direction and a roll (PS2 name, the reference's): a name's overloads take its first one's slot in
+    // reverse declaration order, so the vtable has the reference's first
+    virtual void __stdcall SetDir(const S_vector *dir, float roll);
+    virtual void __stdcall SetDir(const S_vector &dir, float roll);
+    virtual void __stdcall SetDirAbs(const S_vector &dir, float roll);
+
+    // Names the frame it is for; the pose set's AddPose calls it (the name is its message's)
+    void SetName(const char *n);
 
     // The name of the frame it is for
     const char *GetName() const
@@ -761,12 +779,20 @@ public:
     S_quat rot;                         // 0x28
 };
 
-// Poses for several frames (PS2 I3D_pose_set, 0x18 bytes on PC; the file isn't written yet), reference counted
-class __declspec(novtable) I3D_pose_set {
+// Poses for several frames (PS2 I3D_pose_set, 0x18 bytes on PC; I3d_pose.cpp), reference counted. The PS2's has no
+// vtable. The virtual functions' names are guesses.
+// VTABLE: LS3DF 0x1009c7b4
+class I3D_pose_set {
 public:
     I3D_pose_set();
+    ~I3D_pose_set();
 
     virtual int __stdcall Release();
+    // Keeps the pose, for the frame of the name
+    virtual void __stdcall AddPose(I3D_pose *pose, const char *frame_name);
+    virtual LS3D_RESULT __stdcall DeletePose(I3D_pose *pose);
+    // The name of the frame of a pose, "" past the end
+    virtual const char *__stdcall GetFrameName(int index) const;
 
     int ref;                            // 0x04
     C_list<I3D_pose *> poses;           // 0x08
@@ -1103,17 +1129,17 @@ public:
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
-// the copies, which change with the link (tools/foldfix.py): Update's is another class's or a base class's
-// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp), and SetDir's and SetName's are other
-// scene functions of their shape.
+// the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
+// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp), and SetDir's and SetName's are scene
+// functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
 // ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -2132,11 +2158,10 @@ public:
 // and again from I3d_area.cpp to I3d_animation.cpp; CBaseRenderer::OnRenderEnd's, folded with
 // I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp;
 // CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again since
-// clipping.cpp's CheckClipFaces, a function the linker drops), so after a new file or function rerun crtannotate and
-// move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087520
-// ?NumRegions@I3D_void_interface@@UBGHXZ
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from
+// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp), so after a new file or function rerun
+// crtannotate and move such markers here or back. None is here at the moment. The names are the ones our PDB keeps
+// (tools/foldfix.py).
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2250,7 +2275,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
