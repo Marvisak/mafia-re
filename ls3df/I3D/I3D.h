@@ -455,9 +455,9 @@ public:
 // SYNTHETIC: LS3DF 0x1001a980
 // I3D_frame::`scalar deleting destructor'
 
-// The destructor I3d_frame.cpp's thunk registers for UpdateTargetList: the first $E5 in link order. reccmp pairs the
-// annotations of one name with our functions of that name in address order, so the model, target and 4ds loader
-// files' are annotated too, the later files' aren't.
+// The destructor I3d_frame.cpp's thunk registers for UpdateTargetList: the second $E5 in link order, after
+// clipper.cpp's. reccmp pairs the annotations of one name with our functions of that name in address order, so the
+// landscape, model, target and 4ds loader files' are annotated too, the later files' aren't.
 // SYNTHETIC: LS3DF 0x1001c7b0
 // $E5
 
@@ -1133,10 +1133,10 @@ public:
 // (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp), and SetDir's and SetName's are scene
 // functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
@@ -1216,14 +1216,6 @@ public:
 
 // SYNTHETIC: LS3DF 0x1001a240
 // I3D_dummy::`scalar deleting destructor'
-
-// The other frames, by the sizes the driver allocates (the landscape's name is a guess)
-#define I3D_PLACEHOLDER_FRAME(name, size) \
-    class __declspec(novtable) name : public I3D_frame { \
-    public: \
-        name(); \
-        uchar unknown_140[size - 0x140]; \
-    };
 
 // A light's type (PS2 type; the values are Insanity3D's I3DLIGHT_*, whose order the PC's lighting code agrees with)
 enum I3D_LIGHTTYPE {
@@ -1435,7 +1427,6 @@ public:
 // SYNTHETIC: LS3DF 0x1005a820
 // I3D_volume::`scalar deleting destructor'
 
-I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
 // A particle emitter (PS2 I3D_emitor, 0x1f8 bytes on PC; the file isn't written yet)
 class __declspec(novtable) I3D_emitor : public I3D_frame {
 public:
@@ -1483,7 +1474,7 @@ public:
 // SYNTHETIC: LS3DF 0x10059590
 // I3D_target::`scalar deleting destructor'
 
-// The destructor the target file's thunk registers for globalTargetList: the third $E5 in link order
+// The destructor the target file's thunk registers for globalTargetList: the fifth $E5 in link order
 // SYNTHETIC: LS3DF 0x10059470
 // $E5
 
@@ -1548,8 +1539,8 @@ public:
 // SYNTHETIC: LS3DF 0x10033460
 // I3D_model::`scalar deleting destructor'
 
-// The destructors the model file's thunks register for DuplTargetList and DuplShadowList: the second $E5 in link order,
-// after I3d_frame.cpp's, and the first $E10, before render.cpp's
+// The destructors the model file's thunks register for DuplTargetList and DuplShadowList: the fourth $E5 in link order,
+// after I3d_landscape.cpp's, and the first $E10, before render.cpp's
 // SYNTHETIC: LS3DF 0x10033b80
 // $E5
 
@@ -1927,7 +1918,130 @@ I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
 I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
 I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
 I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
-I3D_PLACEHOLDER_VISUAL(I3D_landpatch, 0x620)
+
+// The landscape (PC only; I3d_landscape.cpp) is Bryan Turner's ROAM demo ("ROAM Simplistic Implementation", January
+// 2000, from his Gamasutra article on ROAM) in the engine's classes: a height map of bytes, MAP_SIZE on a side, in
+// NUM_PATCHES_PER_SIDE patches a side, each a pair of binary triangle trees that a frame splits from a pool of nodes.
+// The demo's names are kept where the roles agree; the PC's additions have guessed names.
+#define MAP_SIZE 1024
+#define NUM_PATCHES_PER_SIDE 16
+#define PATCH_SIZE (MAP_SIZE / NUM_PATCHES_PER_SIDE)
+// The nodes for all patches' trees (the demo has 25000)
+#define POOL_SIZE 50000
+// The depth of a patch's variance trees
+#define VARIANCE_DEPTH 9
+
+// A triangle of a patch's trees: its children once split, and the triangles across its three edges (the demo's)
+struct TriTreeNode {
+    TriTreeNode *LeftChild;
+    TriTreeNode *RightChild;
+    TriTreeNode *BaseNeighbor;
+    TriTreeNode *LeftNeighbor;
+    TriTreeNode *RightNeighbor;
+};
+
+// A square of the landscape (the demo's Patch, 0x620 bytes; I3D_VISUAL_LANDPATCH): a visual whose leaves the
+// landscape's Render draws. The virtual functions after the visual's are the demo's, in its order. The PC's has no
+// visibility flag (the landscape tests render_number) and no SetVisibility.
+// VTABLE: LS3DF 0x1009bb48 I3D_frame
+// VTABLE: LS3DF 0x1009bb38 I3D_void_interface
+class I3D_landpatch : public I3D_visual {
+public:
+    I3D_landpatch();
+    ~I3D_landpatch();
+
+    // Draws nothing. Not in the class: LINK folds an identical function only with others of its kind, in-class or
+    // out of line, and the original's slot points at the copy of the out-of-line ones (0x10087ec0, with
+    // I3D_driver::m_RecomputeUsedVRAM), not at the visual's (0x1004e970). Our linker keeps this file's copy of the
+    // group, the original the base classes'.
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+
+    TriTreeNode *GetBaseLeft()
+    {
+        return &m_BaseLeft;
+    }
+
+    TriTreeNode *GetBaseRight()
+    {
+        return &m_BaseRight;
+    }
+
+    char isDirty()
+    {
+        return m_VarianceDirty;
+    }
+
+    virtual void Init(int heightX, int heightY, int worldX, int worldY, uchar *hMap);
+    virtual void Reset();
+    virtual void Tessellate();
+    virtual void Render();
+    virtual void ComputeVariance();
+
+    virtual void Split(TriTreeNode *tri);
+    virtual void RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY,
+        int node);
+    virtual void RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY);
+    virtual uchar RecursComputeVariance(int leftX, int leftY, uchar leftZ, int rightX, int rightY, uchar rightZ,
+        int apexX, int apexY, uchar apexZ, int node);
+
+    uint unknown_1dc;
+    uchar *m_HeightMap;                 // 0x1e0, at the patch's corner in the landscape's map
+    int m_WorldX, m_WorldY;             // 0x1e4, the patch's place in the map
+    uchar m_VarianceLeft[1 << VARIANCE_DEPTH]; // 0x1ec, by node, one more than the variance
+    uchar m_VarianceRight[1 << VARIANCE_DEPTH]; // 0x3ec
+    uchar *m_CurrentVariance;           // 0x5ec, the tree's whose triangle is being worked on
+    uchar m_VarianceDirty;              // 0x5f0, the variance trees are to be computed
+    TriTreeNode m_BaseLeft;             // 0x5f4, the trees' roots
+    TriTreeNode m_BaseRight;            // 0x608
+    ITexture *texture;                  // 0x61c, rendered with; nothing in LS3DF sets it
+};
+
+// SYNTHETIC: LS3DF 0x1001efa0
+// I3D_landpatch::`scalar deleting destructor'
+
+// A landscape (the demo's Landscape, 0x62144 bytes; FRAME_LANDSCAPE): its patches are its children. The driver keeps
+// the landscapes in a list, and its Render resets, tessellates and renders each in turn.
+// VTABLE: LS3DF 0x1009bbe8
+class I3D_landscape : public I3D_frame {
+public:
+    I3D_landscape();
+    ~I3D_landscape();
+
+    // Takes the height map, loads the textures, makes the patches and the vertex buffer. With size 0, name is the map,
+    // which the landscape keeps; otherwise the map's file, MAP_SIZE + 1 bytes on a side, read whole (size isn't used
+    // otherwise; the names are guesses).
+    virtual void __stdcall Init(const char *name, uint size);
+
+    // The height at a place of the map (the name is a guess). Out of line for the vtable, after the file's $E for the
+    // zero vector.
+    // FUNCTION: LS3DF 0x100201d0
+    virtual uchar __stdcall GetHeight(int x, int y)
+    {
+        return m_HeightMap[y * MAP_SIZE + x];
+    }
+
+    // A node from the pool, NULL when it is used up. The pool and its count are the file's globals, not the demo's
+    // static members: VC6 gives each static data member declared in a header one of the $E numbers of every file
+    // that includes it, which would rename the other files' $Es.
+    static TriTreeNode *AllocateTri();
+
+    // Not virtual, unlike the demo's
+    void Reset();
+    void Tessellate();
+    void Render();
+
+    I3D_landpatch m_Patches[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE]; // 0x140
+    uchar *m_HeightMap;                 // 0x62140, Init's
+};
+
+// SYNTHETIC: LS3DF 0x1001fca0
+// I3D_landscape::`scalar deleting destructor'
+
+// The initializer of I3d_landscape.cpp's gViewPos, empty (S_vector's constructor is): the third $E5 in link order,
+// after I3d_frame.cpp's
+// SYNTHETIC: LS3DF 0x1001ef60
+// $E5
+
 // A mirror (PS2 I3D_mirror, 0x2ec bytes on PC; the file isn't written yet)
 class __declspec(novtable) I3D_mirror : public I3D_visual {
 public:
@@ -2156,12 +2270,14 @@ public:
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp
 // and again from I3d_area.cpp to I3d_animation.cpp; CBaseRenderer::OnRenderEnd's, folded with
-// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp;
-// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from
-// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp), so after a new file or function rerun
-// crtannotate and move such markers here or back. None is here at the moment. The names are the ones our PDB keeps
-// (tools/foldfix.py).
+// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp, and
+// with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's since that file; CBasePin::EndOfStream's I3d_visual.cpp's
+// until then; CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
+// from I3d_sector.cpp to I3d_area.cpp and again from clipping.cpp's CheckClipFaces, a function the linker drops, to
+// I3d_pose.cpp), so after a new file or function rerun crtannotate and move such markers here or back. The names are
+// the ones our PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2275,7 +2391,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -2360,7 +2476,7 @@ private:
 public:
     uint init_flags;                    // 0x04, Init's
     C_list<ITexture *> textures;        // 0x08, the loader's
-    C_list<void *> list_18;             // 0x18, the landscape's
+    C_list<I3D_landscape *> landscapes; // 0x18, the landscapes' constructor and destructor keep it
     C_list<I3D_sector *> sectors;       // 0x28
     C_list<I3D_sound *> sounds;         // 0x38, CreateFrame's
     C_list<I3D_scene *> scenes;         // 0x48, CreateFrame's
@@ -2524,7 +2640,9 @@ extern bool renderCameraChanged;
 extern float RSLodQuality;
 int GetObjectLOD(I3D_object *obj, const float &dist_2);
 
-// I3d_driver.cpp: RenderNumber's previous value
+// I3d_driver.cpp: counts the frames rendered (a frame's render_number is its value when the frame was last rendered),
+// and its previous value
+extern uint RenderNumber;
 extern uint RenderNumberMinus1;
 
 // The loader's (load4ds.cpp defines them): the frames and materials loaded so far, the file and the error
@@ -2536,7 +2654,7 @@ extern int LoadImageHandle;
 extern const char *ImageFileName;
 // The targets loaded, whose lists hold their frames' indices until the frames are loaded (PS2 name)
 extern C_list<I3D_target *> LoadTargetList;
-// The destructor load4ds.cpp's thunk registers for it: the fourth $E5 in link order
+// The destructor load4ds.cpp's thunk registers for it: the sixth $E5 in link order
 // SYNTHETIC: LS3DF 0x10060c90
 // $E5
 I3D_mesh_object *LoadMeshImage();

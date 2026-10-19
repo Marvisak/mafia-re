@@ -19,6 +19,7 @@ add_library(ls3df SHARED
     I3D/I3d_frame.cpp
     I3D/I3d_interpolator.cpp
     I3D/I3d_joint.cpp
+    I3D/I3d_landscape.cpp
     I3D/I3d_light.cpp
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp
@@ -113,10 +114,10 @@ if (MSVC_VERSION EQUAL 1200)
     # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp),
     # RenderShadowTexture by the shadows, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit
     # objects and single meshes, the vertex transforms by the shadows' range (0x10054f60), VertexLightingProcess by the
-    # lit objects' lightmaps (0x10021bb0), the camera's UpdateSector by render.cpp; the scene's view, sound and weather
-    # functions by render.cpp, its shadow and mirror lists by the shadows and mirrors, MakeReadySectors by I3D code at
-    # 0x10045724; the clipper's SetClipParams, ResetClipArrays and entry points by the projectors (0x10046960) and the
-    # shadows (0x10053280).
+    # lit objects' lightmaps (0x10021bb0), the camera's UpdateSector and the landscapes' Reset, Tessellate and Render
+    # by render.cpp; the scene's view, sound and weather functions by render.cpp, its shadow and mirror lists by the
+    # shadows and mirrors, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams, ResetClipArrays and
+    # entry points by the projectors (0x10046960) and the shadows (0x10053280).
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
@@ -133,6 +134,8 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?AddMirror@I3D_scene@@QAEXPAVI3D_mirror@@@Z"
         "/INCLUDE:?DeleteMirror@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_mirror@@@Z"
         "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ"
+        "/INCLUDE:?Reset@I3D_landscape@@QAEXXZ" "/INCLUDE:?Tessellate@I3D_landscape@@QAEXXZ"
+        "/INCLUDE:?Render@I3D_landscape@@QAEXXZ"
         "/INCLUDE:?SetClipParams@@YIXABUS_matrix@@0_NMMM@Z" "/INCLUDE:?ResetClipArrays@@YIXXZ"
         "/INCLUDE:?ClipMesh@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
         "/INCLUDE:?ClipMeshW@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HI@Z"

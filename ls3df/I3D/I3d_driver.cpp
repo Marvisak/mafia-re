@@ -1734,18 +1734,6 @@ bool RecomputeAllGeometry;
 // linter checks the order of a file's markers.
 #pragma auto_inline(off)
 
-// STUB: LS3DF 0x1001ef70
-I3D_landpatch::I3D_landpatch()
-{
-    renderState[36]++;
-}
-
-// STUB: LS3DF 0x1001fbb0
-I3D_landscape::I3D_landscape()
-{
-    renderState[24]++;
-}
-
 // STUB: LS3DF 0x10021570
 I3D_lit_object::I3D_lit_object()
 {
