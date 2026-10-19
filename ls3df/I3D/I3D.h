@@ -200,6 +200,7 @@ inline float I3DIntAsFloat(int i)
 #define FRMFLAGS_CLIP 0x200000          // has to be clipped (the name is a guess)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
 #define FRMFLAGS_UNKNOWN_8000000 0x8000000 // set by the camera's constructor and Duplicate
+#define FRMFLAGS_INTERPOLATOR 0x10000000 // has an interpolator (I3D_IPolSet::GetFrameInterpolator)
 #define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
 #define FRMFLAGS_UPDATE 0x40000000      // to update
 #define FRMFLAGS_WEATHER 0x80000000     // a dummy in a scene's weather system (I3D_scene::WeatherSystemAddDummy)
@@ -207,7 +208,11 @@ inline float I3DIntAsFloat(int i)
 // What a frame's callback is told (PS2 type; the names are guesses). SetCallback's flags are the messages to send.
 enum LS3D_CALLBACK_MESSAGE {
     LS3D_CALLBACK_MESSAGE_0,
+    LS3D_CALLBACK_NOTE = 0x200,         // an animation passed a note key: the note, its time in ms
+                                        // (I3D_interpolator::Update)
     LS3D_CALLBACK_LOD = 0x400,          // a visual's level of detail changed: the old one, the new one (GetObjectLOD)
+    LS3D_CALLBACK_ANIM_END = 0x800,     // an animation reached an end: its index (I3D_IPolSet::Tick)
+    LS3D_CALLBACK_NOTE_STRING = 0x1000, // an animation passed a string note key: the string, its time in ms
 };
 
 // LinkTo's flags: the first is Insanity3D's I3DLINK_UPDMATRIX, the same value and role
@@ -564,22 +569,162 @@ public:
     I3D_portal *next_in_scene;          // 0x104
 };
 
+// An animation's keys for one frame (I3D_animation_set's data, names guessed): the ANIMF_* flags (a word, padded to
+// 4 bytes), then a track for each flag, in the order rotation, position, scale, notes. A track is the number of keys
+// (a word), their times (words, in 1/25 s) and their values: S_quats, S_vectors, notes (words) or string notes
+// (pointers). Each but the notes' ends aligned to 4 bytes, and the string notes' values start aligned.
+#define ANIMF_POS 0x2
+#define ANIMF_ROT 0x4
+#define ANIMF_SCALE 0x8
+#define ANIMF_NOTE 0x10
+#define ANIMF_NOTE_STRING 0x20
+
+// An animation set's animation of one frame (the name is a guess)
+struct S_frame_anim {
+    const char *frame_name;
+    const ushort *keys;                 // 0x04, see ANIMF_*
+};
+
+// An animation file's frames' keys (PS2 I3D_animation_set, 0x14 bytes on PC; the file isn't written yet), reference
+// counted. The virtual functions are the ones the interpolators call, at their slots; the data is the file, loaded
+// into one block (the counts, then the frames).
+class __declspec(novtable) I3D_animation_set {
+public:
+    I3D_animation_set();
+
+    // PS2 names
+    virtual int __stdcall Release();
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    virtual int __stdcall GetEndTime() const;
+    virtual int __stdcall NumAnimations() const;
+
+    void AddRef()
+    {
+        ref++;
+    }
+
+    // PS2 name: the animations (0x10004a70, out of line)
+    const S_frame_anim *GetAnims() const;
+
+    int ref;                            // 0x04
+    uint options;                       // 0x08, the animations' I3DANIMOP_* where SetAnimation gets none
+    uint unknown_0c;
+    void *data;                         // 0x10
+};
+
+// I3D_pose::pose_flags (names guessed): what the pose sets
+#define POSEF_POS 0x1
+#define POSEF_SCALE 0x2
+#define POSEF_ROT_ADD 0x4               // rot turns the animation's rotation
+#define POSEF_ROT 0x8                   // rot replaces it
+
+// A frame's pose, which a model's or scene's interpolator blends into its animations (PS2 I3D_pose, 0x38 bytes on PC;
+// the file isn't written yet), reference counted. The member names are guesses.
+class __declspec(novtable) I3D_pose {
+public:
+    I3D_pose();
+
+    virtual int __stdcall Release();
+
+    // The name of the frame it is for
+    const char *GetName() const
+    {
+        return name ? name : "";
+    }
+
+    // Insanity3D's names (its pose has the position's and rotation's). The interpolator reads the values through them,
+    // as their inline calls show (I3D_interpolator::Update).
+    const S_vector &GetPos1() const
+    {
+        return pos;
+    }
+
+    const S_vector &GetScale1() const
+    {
+        return scale;
+    }
+
+    const S_quat &GetRot1() const
+    {
+        return rot;
+    }
+
+    int ref;                            // 0x04
+    char *name;                         // 0x08
+    uint pose_flags;                    // 0x0c, POSEF_*
+    S_vector pos;                       // 0x10
+    S_vector scale;                     // 0x1c
+    S_quat rot;                         // 0x28
+};
+
+// Poses for several frames (PS2 I3D_pose_set, 0x18 bytes on PC; the file isn't written yet), reference counted
+class __declspec(novtable) I3D_pose_set {
+public:
+    I3D_pose_set();
+
+    virtual int __stdcall Release();
+
+    int ref;                            // 0x04
+    C_list<I3D_pose *> poses;           // 0x08
+};
+
+// The animation options (PS2 type I3D_ANIMOPTIONS; the name is a guess)
+#define I3DANIMOP_LOOP 2                // starts again at the other end
+
 // One of the interpolator set's animations (0x1c bytes; the names are guesses)
 struct S_ipol_anim {
     I3D_animation_set *set;
     bool on;                            // 0x04
-    uint options;                       // 0x08, the model's SetAnimOptions
-    int time;                           // 0x0c
-    int time_1;                         // 0x10, set with time
-    uint unknown_14;
+    uint options;                       // 0x08, I3DANIMOP_*, the model's SetAnimOptions
+    int time;                           // 0x0c, in ms
+    int last_time;                      // 0x10, the time when the interpolators were updated last
+    int delta;                          // 0x14, the last tick's, negative backwards
     float blend;                        // 0x18
 };
 
-class I3D_interpolator;
-class I3D_pose;
-class I3D_pose_set;
+class I3D_IPolSet;
 
-// The animations a scene or a model plays (PS2 I3D_IPolSet, 0xf8 bytes on PC; I3d_interpolator.cpp isn't written yet)
+// One animation's keys of an interpolator's frame (0x1c bytes; the names are guesses): the tracks of the animation's
+// data (ANIMF_*), each its key times followed by the values. flags is 0 where the animation doesn't move the frame.
+struct S_anim_keys {
+    const ushort *pos;                  // 0x00
+    const ushort *rot;                  // 0x04
+    const ushort *scale;                // 0x08
+    const ushort *note;                 // 0x0c
+    ushort num_pos;                     // 0x10
+    ushort num_rot;                     // 0x12
+    ushort num_scale;                   // 0x14
+    ushort num_note;                    // 0x16
+    ushort flags;                       // 0x18, ANIMF_*
+};
+
+// Moves one frame by the animations of its set and a pose (PS2 I3D_interpolator, 0xf4 bytes on PC;
+// I3d_interpolator.cpp). The PC's has a vtable, for the game (I3D_model::GetInterpolators). The member names are
+// guesses.
+// VTABLE: LS3DF 0x1009ba58
+class I3D_interpolator {
+public:
+    I3D_interpolator(I3D_IPolSet *set);
+    ~I3D_interpolator();
+
+    // Forgets the keys of one of the set's animations (the name is a guess)
+    virtual LS3D_RESULT __stdcall ClearAnimation(uint index);
+    // PS2 names
+    virtual void __stdcall SetPose(I3D_pose *p);
+    virtual void __stdcall SetPoseBlend(float blend);
+
+    // PS2 name
+    void Update();
+
+    I3D_pose *pose;                     // 0x04
+    float pose_blend;                   // 0x08
+    S_anim_keys keys[8];                // 0x0c, by the set's animations
+    I3D_frame *frame;                   // 0xec
+    I3D_IPolSet *ipol_set;              // 0xf0
+};
+
+// The animations a scene or a model plays (PS2 I3D_IPolSet, 0xf8 bytes on PC; I3d_interpolator.cpp): an interpolator
+// for each frame that an animation or a pose moves
 class I3D_IPolSet {
 public:
     // Out of line on PS2, inlined on PC
@@ -591,6 +736,7 @@ public:
     ~I3D_IPolSet();
 
     // PS2 names, in PS2's order
+    void Clear();
     void Tick(const int *times);
     void Tick(int time);
     LS3D_RESULT SetAnimation(I3D_animation_set *set, uint index, float blend, uint options);
@@ -601,8 +747,11 @@ public:
     LS3D_RESULT SetPoseBlend(float blend, I3D_pose_set *set);
     float GetPoseBlend() const;
     void ResetAllPoses();
+    void m_releaseUnusedInterpolators();
+    I3D_interpolator *GetFrameInterpolator(I3D_frame *frm);
+    I3D_interpolator *GetFrameInterpolator(const char *frame_name);
 
-    I3D_frame *frame;
+    I3D_frame *frame;                   // the model or scene
     bool changed;                       // 0x04, an animation's blend or time was set
     S_ipol_anim anims[8];               // 0x08
     C_list<I3D_interpolator *> interpolators; // 0xe8
@@ -850,15 +999,16 @@ public:
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
-// the copies (Update's is a base class's, CBaseRenderer::OnReceiveFirstSample, since I3d_light.cpp).
+// the copies (Update's is a base class's, CBaseRenderer::OnReceiveFirstSample, since I3d_light.cpp; SetDir's and
+// SetName's are the scene's vfunc_66 and Duplicate since I3d_interpolator.cpp).
 // FUNCTION: LS3DF 0x1004e970
 // ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1094,7 +1244,37 @@ public:
 // SYNTHETIC: LS3DF 0x1005a170
 // I3D_user::`scalar deleting destructor'
 
-I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
+class I3D_singlemesh;
+
+// I3D_joint::joint_flags (names guessed)
+#define JOINTF_LOADED 0x1               // bone_matrix and index came from the file (LoadImage)
+#define JOINTF_UNKNOWN_4 0x4            // cleared with JOINTF_JMAT_VALID when the joint moves
+#define JOINTF_UNKNOWN_8 0x8
+#define JOINTF_JMAT_VALID 0x10          // joint_matrix is up to date (PS2's GetJointMatrix tests the same bit)
+
+// A bone of a single mesh (PS2 I3D_joint, 0x20c bytes on PC; I3d_joint.cpp): the single mesh's vertices follow it. The
+// file gives it a matrix and its index among the single mesh's joints. Names are guesses; PS2's joint has only the
+// index, the flags and the single mesh (at 0x160, 0x164, 0x168).
+// VTABLE: LS3DF 0x1009baa8
+class I3D_joint : public I3D_frame {
+public:
+    I3D_joint();
+    ~I3D_joint();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+
+    S_matrix bone_matrix;               // 0x140, the file's; a scale of 0.01 by default
+    uint index;                         // 0x180, among the single mesh's joints; loaded with bone_matrix
+    S_matrix matrix_184;                // 0x184, bone_matrix at first
+    S_matrix joint_matrix;              // 0x1c4, the local matrices of the joint and its parents up to the single mesh
+    uint joint_flags;                   // 0x204, JOINTF_*
+    I3D_singlemesh *singlemesh;         // 0x208, whose joints it is in
+};
+
+// SYNTHETIC: LS3DF 0x1001edc0
+// I3D_joint::`scalar deleting destructor'
 
 // A collision volume (PS2 I3D_volume, 0x174 bytes on PC; I3d_volume.cpp). Its world matrix is its local one, made
 // again in every UpdateV. LS3DF uses none of its members but the type (the 4ds loader reads a volume as a frame), so
@@ -1551,7 +1731,11 @@ public:
     // PS2 name
     void DBuild();
 
-    uchar unknown_1dc[0x22c - 0x1dc];
+    uchar unknown_1dc[0x21c - 0x1dc];
+    int num_joints;                     // 0x21c
+    I3D_joint **joints;                 // 0x220, by their index (PS2 0x214)
+    uint joints_changed;                // 0x224, counts the moves of its joints (PS2 0x218; the name is a guess)
+    uint unknown_228;                   // 0x228, joints_changed when the bound volume was computed
 };
 I3D_PLACEHOLDER_VISUAL(I3D_morph, 0x238)
 I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
@@ -1783,29 +1967,15 @@ public:
     float env_u_ofs, env_v_ofs;         // 0x64, to the environment map's (EnvProcess)
 };
 
-// The other parts the driver makes (PS2 names)
-#define I3D_PLACEHOLDER(name, size) \
-    class name { \
-    public: \
-        name(); \
-        uchar unknown_00[size]; \
-    };
-
-I3D_PLACEHOLDER(I3D_animation_set, 0x14)
-I3D_PLACEHOLDER(I3D_pose, 0x38)
-I3D_PLACEHOLDER(I3D_pose_set, 0x18)
-
-// Two of the base classes' functions the linker folds with engine functions: CBaseRenderer::OnRenderEnd with
-// I3D_driver::m_RecomputeUsedVRAM and CBaseRenderer::OnStopStreaming with CBaseFilter::GetSetupData (IShow.cpp's copy).
-// The original kept the base classes' copies, our map lists ours under the engine's objects, so crtannotate leaves them
-// out of library_strmbase.h. Which object our map lists a folded copy under changes with the link (OnRenderEnd's was
-// the driver's until I3d_model.cpp and again since I3d_target.cpp, CBasePin::EndOfStream's I3d_visual.cpp's until
-// then), and the names are the ones our PDB keeps (tools/foldfix.py).
+// A base class function the linker folds with an engine function: CBaseRenderer::OnRenderEnd with
+// I3D_driver::m_RecomputeUsedVRAM. The original kept the base classes' copy, our map lists ours under the driver's
+// object, so crtannotate leaves it out of library_strmbase.h. Which object our map lists a folded copy under changes
+// with the link (OnRenderEnd's was the driver's until I3d_model.cpp and again since I3d_target.cpp,
+// CBasePin::EndOfStream's I3d_visual.cpp's until then, CBaseRenderer::OnStopStreaming's, folded with
+// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp), and the names are the ones our PDB keeps
+// (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087ec0
 // ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
-
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -1836,8 +2006,8 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, I3d_frame.cpp and I3d_scene.cpp, after their files' functions though their addresses come
-// before them, so their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_frame.cpp, I3d_scene.cpp and I3d_interpolator.cpp, after their files' functions though
+// their addresses come before them, so their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
@@ -1872,38 +2042,8 @@ I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 // STUB: LS3DF 0x100153b0
 // I3D_scene::SphereToSphereD
 
-// STUB: LS3DF 0x1001e280
-// I3D_IPolSet::~I3D_IPolSet
-
-// STUB: LS3DF 0x1001e360
-// ?Tick@I3D_IPolSet@@QAEXPBH@Z
-
-// STUB: LS3DF 0x1001e470
-// ?Tick@I3D_IPolSet@@QAEXH@Z
-
-// STUB: LS3DF 0x1001e580
-// I3D_IPolSet::SetAnimation
-
-// STUB: LS3DF 0x1001e7e0
-// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PAVI3D_frame@@PAVI3D_pose@@@Z
-
-// STUB: LS3DF 0x1001e810
-// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PBDPAVI3D_pose@@@Z
-
-// STUB: LS3DF 0x1001e860
-// ?SetPose@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@PAVI3D_pose_set@@@Z
-
-// STUB: LS3DF 0x1001e8c0
-// ?SetPoseBlend@I3D_IPolSet@@QAEXM@Z
-
-// STUB: LS3DF 0x1001e900
-// ?SetPoseBlend@I3D_IPolSet@@QAE?AW4LS3D_RESULT@@MPAVI3D_pose_set@@@Z
-
-// STUB: LS3DF 0x1001e960
-// I3D_IPolSet::GetPoseBlend
-
-// STUB: LS3DF 0x1001e9a0
-// I3D_IPolSet::ResetAllPoses
+// STUB: LS3DF 0x10004a70
+// I3D_animation_set::GetAnims
 
 // STUB: LS3DF 0x100419e0
 // I3D_portal::UpdatePortal

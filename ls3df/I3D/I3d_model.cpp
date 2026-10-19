@@ -172,7 +172,7 @@ LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
     if (!ips)
         return I3DERR_OBJECTNOTFOUND;
     ips->anims[index].time = time;
-    ips->anims[index].time_1 = time;
+    ips->anims[index].last_time = time;
     ips->changed = true;
     return I3D_OK;
 }
@@ -474,46 +474,6 @@ float I3D_model::GetPoseBlend() const
 }
 
 #pragma auto_inline(off)
-
-void I3D_IPolSet::Tick(const int *times)
-{
-    renderState[62]++;
-}
-
-LS3D_RESULT I3D_IPolSet::SetPose(I3D_frame *frame, I3D_pose *pose)
-{
-    return (LS3D_RESULT)renderState[55];
-}
-
-LS3D_RESULT I3D_IPolSet::SetPose(const char *frame_name, I3D_pose *pose)
-{
-    return (LS3D_RESULT)renderState[54];
-}
-
-LS3D_RESULT I3D_IPolSet::SetPose(I3D_pose_set *set)
-{
-    return (LS3D_RESULT)renderState[53];
-}
-
-void I3D_IPolSet::SetPoseBlend(float blend)
-{
-    renderState[50]++;
-}
-
-LS3D_RESULT I3D_IPolSet::SetPoseBlend(float blend, I3D_pose_set *set)
-{
-    return (LS3D_RESULT)renderState[48];
-}
-
-float I3D_IPolSet::GetPoseBlend() const
-{
-    return (float)renderState[42];
-}
-
-void I3D_IPolSet::ResetAllPoses()
-{
-    renderState[41]++;
-}
 
 // STUB: LS3DF 0x10054c20
 void I3D_singlemesh::DBuild()

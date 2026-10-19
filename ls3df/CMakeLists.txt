@@ -12,6 +12,8 @@ add_library(ls3df SHARED
     I3D/I3d_driver.cpp
     I3D/I3d_dummy.cpp
     I3D/I3d_frame.cpp
+    I3D/I3d_interpolator.cpp
+    I3D/I3d_joint.cpp
     I3D/I3d_light.cpp
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp

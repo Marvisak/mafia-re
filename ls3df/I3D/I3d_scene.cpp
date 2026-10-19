@@ -894,7 +894,7 @@ LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
     if (!ips)
         return I3DERR_OBJECTNOTFOUND;
     ips->anims[index].time = time;
-    ips->anims[index].time_1 = time;
+    ips->anims[index].last_time = time;
     ips->changed = true;
     return I3D_OK;
 }
@@ -1681,21 +1681,6 @@ int I3D_scene::TestColSphereVisual() const
 int I3D_scene::SphereToSphereD() const
 {
     return renderState[58];
-}
-
-I3D_IPolSet::~I3D_IPolSet()
-{
-    renderState[59]++;
-}
-
-void I3D_IPolSet::Tick(int time)
-{
-    renderState[60]++;
-}
-
-LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float blend, uint options)
-{
-    return (LS3D_RESULT)renderState[61];
 }
 
 void I3D_portal::UpdatePortal()
