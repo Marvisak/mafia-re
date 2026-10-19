@@ -1036,10 +1036,4 @@ void I3D_shadow::SetTo(I3D_frame *frame)
     unknown_140[0] = 4;
 }
 
-// STUB: LS3DF 0x100599b0
-void I3D_target::UpdateFrames()
-{
-    unknown_140[0] = 5;
-}
-
 #pragma auto_inline(on)

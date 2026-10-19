@@ -75,17 +75,17 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100529c0–` | none | `10052f30` | ? | |
 | `–10056860` | `10056840` | | ? (PC only?) | `I3D_projector::ProcessShadow()`, `I3D_shadow::ProcessShadow()` |
 | `10056860–10057650` | `10057630` | | `I3d_singlemesh.cpp`, `I3d_singlemorph.cpp` | one of the two has no marker |
-| `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound::Open()` |
-| `10059250–1005a140` | `1005a120` | `10059440` | `I3d_target.cpp` | PS2 order |
-| `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | PS2 order |
+| `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound::Open()`; after the marker the sound's `Duplicate` (`10059250`) and a byte setter (`10059360`, PS2's `m_SetState` is next), then two out-of-line inline functions up to `10059440` |
+| `10059250–1005a140` | `1005a120` | `10059440` | `I3d_target.cpp` | from `globalTargetList`'s `$E` (`10059440`) `I3D_target` in PS2's order; written |
+| `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | `I3D_user` in PS2's order; written |
 | `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc`; `I3D_visual` in PS2's order, then its second base `I3D_void_interface`'s functions; written |
-| `1005a7a0–1005aad0` | `1005aab0` | | `I3d_volume.cpp` | PS2 order |
+| `1005a7a0–1005aad0` | `1005aab0` | | `I3d_volume.cpp` | `I3D_volume` in PS2's order; written |
 | `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
 | `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings; up to `1005d010` the rest of `IBManager.cpp`'s multiset functions |
 | `1005e3a0–10060c20` | `10060c00` | | `Load.cpp` | `LightMap::m_CreateLM()`, `load.cpp` messages, `.4ds`, `.5ds`, `.6ds` |
 | `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker |
 | `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker |
-| `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has the `C_list`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code; `LoadMeshImage` written |
+| `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has `LoadTargetList`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code; `LoadTargetList` and `LoadMeshImage` written |
 | `10061990–100619b0` | `10061990` | | ? | no code, only the marker |
 | `100619b0–10065a10` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()`; after the marker `I3D_driver::BuildAllVBuffers` (`100658f0`), the out-of-line constructors its `$E`s call (`100659a0`, `100659d0`) and a z-bias setter only it calls (`100659f0`); `GetObjectLOD` written |
 | `10065a10–10068880` | `10067d00` | `10065a10`, `10065a30` | `T&l.cpp` (`T_l.cpp`) | one file with its marker after `VertexLightingProcess`, as `I3d_math.cpp`: the lighting in PS2's order, the PC's texel callback, then the vertex helpers the objects and billboards render with (`EnvProcess`, the transforms, the fog, the vertex byte swap) and the copy of `I3D_dummy::GetInvMatrix` they call; written |

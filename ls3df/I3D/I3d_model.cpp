@@ -521,10 +521,4 @@ void I3D_singlemesh::DBuild()
     unknown_1dc[0] = 7;
 }
 
-// STUB: LS3DF 0x10059880
-I3D_target *I3D_target::GetTarget(I3D_frame *frame)
-{
-    return (I3D_target *)renderState[30];
-}
-
 #pragma auto_inline(on)

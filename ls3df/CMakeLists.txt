@@ -18,7 +18,10 @@ add_library(ls3df SHARED
     I3D/I3d_model.cpp
     I3D/I3d_object.cpp
     I3D/I3d_scene.cpp
+    I3D/I3d_target.cpp
+    I3D/I3d_user.cpp
     I3D/I3d_visual.cpp
+    I3D/I3d_volume.cpp
     I3D/IBManager.cpp
     I3D/load4ds.cpp
     I3D/render.cpp

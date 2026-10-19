@@ -1875,30 +1875,6 @@ I3D_sound::I3D_sound()
     renderState[12]++;
 }
 
-// STUB: LS3DF 0x10059490
-I3D_target::I3D_target()
-{
-    renderState[22]++;
-}
-
-// STUB: LS3DF 0x100598d0
-void I3D_target::DeleteFromAnyTarget(I3D_frame *frame)
-{
-    renderState[6]++;
-}
-
-// STUB: LS3DF 0x1005a140
-I3D_user::I3D_user()
-{
-    renderState[15]++;
-}
-
-// STUB: LS3DF 0x1005a7a0
-I3D_volume::I3D_volume()
-{
-    renderState[18]++;
-}
-
 // STUB: LS3DF 0x10062010
 void I3D_driver::initRender()
 {

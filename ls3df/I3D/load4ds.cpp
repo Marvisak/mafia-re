@@ -1,4 +1,4 @@
-// The 4ds loader (PS2 load4ds.cpp), in the original from 0x10060c60 to its marker 0x10061970: a C_list's $E, then
+// The 4ds loader (PS2 load4ds.cpp), in the original from 0x10060c60 to its marker 0x10061970: LoadTargetList's $E, then
 // LoadImage (0x10060cb0), LoadMeshImage, two more functions and LoadAnimation5ds (PS2 Load5ds.cpp's,
 // LoadAnimation5ds__FPCcPPvPC9_FILETIME: const char *, void **, const FILETIME *, here in ecx, edx and on the stack,
 // retn 4). Only LoadMeshImage is written yet. Names are the PS2 build's unless noted.
@@ -25,6 +25,11 @@ int LoadImageHandle;
 
 // GLOBAL: LS3DF 0x101c3c04
 const char *ImageFileName;
+
+// The original's $E of this list is the file's first function (0x10060c60), but its entry in .CRT$XCU comes before
+// the zero vector's, as if it were defined above the header's include
+// GLOBAL: LS3DF 0x101c3c08
+C_list<I3D_target *> LoadTargetList;
 
 // An object's mesh from the file: a reference to an earlier object's (the frame's index), or its levels, each with its
 // distance, vertices (0xffff: texture coordinates for the first level's vertices) and face groups. Errors set

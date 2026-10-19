@@ -264,7 +264,7 @@ private:
 
 public:
     // Makes the local matrix from the scale and rotation, or the rotation from the matrix (PS2 name). The dummy file's
-    // copy is the one linked.
+    // copy is the one linked. Both branches scale the rows: the volume's UpdateV calls S_vector::operator*= in each.
     // FUNCTION: LS3DF 0x1001a6e0
     void UpdateMatrix()
     {
@@ -278,15 +278,9 @@ public:
             if (!(frm_flags & FRMFLAGS_QUAT_VALID))
                 rot.Make(f_matrix);
             frm_flags |= FRMFLAGS_ROT_VALID | FRMFLAGS_QUAT_VALID;
-            f_matrix(0, 0) *= scale.x;
-            f_matrix(0, 1) *= scale.x;
-            f_matrix(0, 2) *= scale.x;
-            f_matrix(1, 0) *= scale.y;
-            f_matrix(1, 1) *= scale.y;
-            f_matrix(1, 2) *= scale.y;
-            f_matrix(2, 0) *= scale.z;
-            f_matrix(2, 1) *= scale.z;
-            f_matrix(2, 2) *= scale.z;
+            f_matrix(0) *= scale.x;
+            f_matrix(1) *= scale.y;
+            f_matrix(2) *= scale.z;
         }
     }
 
@@ -329,6 +323,16 @@ public:
             rot.Make(f_matrix);
         frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
+    }
+
+    // Makes m the local matrix, with its scale (the name is a guess; the targets, sectors and the mirrors' file inline
+    // it, at 0x10059e99, 0x1004fc29 and 0x100330c9)
+    void SetLocalMatrix(const S_matrix &m)
+    {
+        f_matrix = m;
+        scale = f_matrix.GetScale();
+        frm_flags = (frm_flags & ~(FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID |
+            FRMFLAGS_ROT_VALID;
     }
 
     // PS2 name
@@ -447,8 +451,8 @@ public:
 // I3D_frame::`scalar deleting destructor'
 
 // The destructor I3d_frame.cpp's thunk registers for UpdateTargetList: the first $E5 in link order. reccmp pairs the
-// annotations of one name with our functions of that name in address order, so the model file's is annotated too, the
-// later files' aren't.
+// annotations of one name with our functions of that name in address order, so the model, target and 4ds loader
+// files' are annotated too, the later files' aren't.
 // SYNTHETIC: LS3DF 0x1001c7b0
 // $E5
 
@@ -467,7 +471,7 @@ public:
 
     // PS2 name (its PS2 parameters; the result type is a guess)
     virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags);
-    // PS2 name, 0x100597f0
+    // PS2 name, 0x10057c40
     virtual bool __stdcall IsPlaying(bool unknown) const;
 
     uint sound_flags;                   // 0x140
@@ -1074,16 +1078,52 @@ public:
 // SYNTHETIC: LS3DF 0x1000b250
 // I3D_camera::`scalar deleting destructor'
 
-// A frame that carries the game's data (PS2 I3D_user, 0x144 bytes on PC). Insanity3D's has the one member.
-class __declspec(novtable) I3D_user : public I3D_frame {
+// A frame that carries the game's data (PS2 I3D_user, 0x144 bytes on PC; I3d_user.cpp). Insanity3D's has the one
+// member, under this name.
+// VTABLE: LS3DF 0x1009cff8
+class I3D_user : public I3D_frame {
 public:
     I3D_user();
+    ~I3D_user();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
 
     uint add_data;                      // 0x140
 };
 
+// SYNTHETIC: LS3DF 0x1005a170
+// I3D_user::`scalar deleting destructor'
+
 I3D_PLACEHOLDER_FRAME(I3D_joint, 0x20c)
-I3D_PLACEHOLDER_FRAME(I3D_volume, 0x174)
+
+// A collision volume (PS2 I3D_volume, 0x174 bytes on PC; I3d_volume.cpp). Its world matrix is its local one, made
+// again in every UpdateV. LS3DF uses none of its members but the type (the 4ds loader reads a volume as a frame), so
+// only the type and the box have names (Insanity3D's volume has both; its other members aren't the PC's).
+// VTABLE: LS3DF 0x1009d158
+class I3D_volume : public I3D_frame {
+public:
+    I3D_volume();
+    ~I3D_volume();
+
+    virtual void UpdateV();
+    // PS2 name
+    virtual uint __stdcall GetVolumeType() const;
+
+    // The type: UpdateV keeps 1 at scale 1, 4 at y scale 1, and gives 5 and 6 x's scale on all axes (Insanity3D's
+    // types, sphere, rectangle, box, cylinder and capped cylinder, end at 5, so its names aren't taken)
+    uint volume_type;                   // 0x140
+    uint unknown_144;
+    uint unknown_148;
+    uint unknown_14c;
+    uint unknown_150;
+    I3D_bbox bbox;                      // 0x154
+    uint unknown_16c;
+    uint unknown_170;
+};
+
+// SYNTHETIC: LS3DF 0x1005a820
+// I3D_volume::`scalar deleting destructor'
+
 I3D_PLACEHOLDER_FRAME(I3D_landscape, 0x62144)
 // A particle emitter (PS2 I3D_emitor, 0x1f8 bytes on PC; the file isn't written yet)
 class __declspec(novtable) I3D_emitor : public I3D_frame {
@@ -1095,20 +1135,49 @@ public:
     uchar unknown_14c[0x1f8 - 0x14c];
 };
 
-// The frames whose members the frames call (PS2 names). Its first virtual function is AddToTarget; DeleteFromTarget
-// and SetTargetFlags follow it in the vtable.
-class __declspec(novtable) I3D_target : public I3D_frame {
+// I3D_target::target_flags: what the target does to its frames (names guessed). TARGETF_LOOKAT, the default, turns
+// them to it; without it they take the parts of its world matrix the others name.
+#define TARGETF_LOOKAT 0x1
+#define TARGETF_ROT 0x2
+#define TARGETF_POS 0x4
+#define TARGETF_SCALE 0x8
+
+// A frame that other frames follow (PS2 I3D_target, 0x154 bytes on PC; I3d_target.cpp): its frames, which are in no
+// other target's list (FRMFLAGS_TARGET), turn to it or take its world position, rotation or scale. A target that moved
+// goes into UpdateTargetList, whose targets I3D_frame::Update updates once the frames are (UpdateFrames). The member
+// names are guesses.
+// VTABLE: LS3DF 0x1009cf58
+class I3D_target : public I3D_frame {
 public:
     I3D_target();
+    ~I3D_target();
 
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    // PS2 names
     virtual void __stdcall AddToTarget(I3D_frame *frame);
+    virtual LS3D_RESULT __stdcall DeleteFromTarget(I3D_frame *frame);
+    virtual void __stdcall SetTargetFlags(uint flags);
 
+    // PS2 names: the target whose list has the frame, NULL if none
     static I3D_target *GetTarget(I3D_frame *frame);
-    void UpdateFrames();
     static void DeleteFromAnyTarget(I3D_frame *frame);
+    void UpdateFrames();
 
-    uchar unknown_140[0x14];
+    C_list<I3D_frame *> frames;         // 0x140, the frames it moves
+    uint target_flags;                  // 0x150, TARGETF_*
 };
+
+// SYNTHETIC: LS3DF 0x10059590
+// I3D_target::`scalar deleting destructor'
+
+// The destructor the target file's thunk registers for globalTargetList: the third $E5 in link order
+// SYNTHETIC: LS3DF 0x10059470
+// $E5
+
+// I3d_frame.cpp's: the targets to update after the frames (PS2 name)
+extern C_list<I3D_target *> UpdateTargetList;
 
 // A frame and a target (PS2 type; the names are guesses): a model's duplication keeps the copies of the frames that had
 // a target with their targets, to give the copies the copied targets
@@ -1726,14 +1795,14 @@ I3D_PLACEHOLDER(I3D_animation_set, 0x14)
 I3D_PLACEHOLDER(I3D_pose, 0x38)
 I3D_PLACEHOLDER(I3D_pose_set, 0x18)
 
-// Two of the base classes' functions the linker folds with engine functions: CBasePin::EndOfStream with
-// I3D_void_interface::NumLevels and NumRegions (I3d_visual.cpp) and CBaseRenderer::OnStopStreaming with
-// CBaseFilter::GetSetupData (IShow.cpp's copy). The original kept the base classes' copies, our map lists ours under
-// the engine's objects, so crtannotate leaves them out of library_strmbase.h. Which object our map lists a folded copy
-// under changes with the link (CBaseRenderer::OnRenderEnd's was the driver's until I3d_model.cpp), and the names are
-// the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087520
-// ?NumRegions@I3D_void_interface@@UBGHXZ
+// Two of the base classes' functions the linker folds with engine functions: CBaseRenderer::OnRenderEnd with
+// I3D_driver::m_RecomputeUsedVRAM and CBaseRenderer::OnStopStreaming with CBaseFilter::GetSetupData (IShow.cpp's copy).
+// The original kept the base classes' copies, our map lists ours under the engine's objects, so crtannotate leaves them
+// out of library_strmbase.h. Which object our map lists a folded copy under changes with the link (OnRenderEnd's was
+// the driver's until I3d_model.cpp and again since I3d_target.cpp, CBasePin::EndOfStream's I3d_visual.cpp's until
+// then), and the names are the ones our PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
 // LIBRARY: LS3DF 0x10088960
 // ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
@@ -2142,4 +2211,9 @@ extern int LoadMaterialu;
 extern LS3D_RESULT ImageErrFlg;
 extern int LoadImageHandle;
 extern const char *ImageFileName;
+// The targets loaded, whose lists hold their frames' indices until the frames are loaded (PS2 name)
+extern C_list<I3D_target *> LoadTargetList;
+// The destructor load4ds.cpp's thunk registers for it: the fourth $E5 in link order
+// SYNTHETIC: LS3DF 0x10060c90
+// $E5
 I3D_mesh_object *LoadMeshImage();

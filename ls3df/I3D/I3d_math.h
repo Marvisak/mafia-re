@@ -102,6 +102,10 @@ struct S_vector {
 
     // PS2 Normalize__8S_vectorFv. A null vector becomes the unit vector along its first non-zero axis. The sum is
     // written out, as in Magnitude.
+    // Open: the original has no out-of-line copy, and inlines it where ours runs out of inline budget: nested in
+    // GetDir and GetWorldDir (the light's constructor, I3D_target::UpdateFrames) and after the camera's starved
+    // GetNormal calls. Declared __forceinline it gives the first two exactly, but then S_quat::Make(const S_matrix &)
+    // inlines S_quat::operator* (the original calls it), so that isn't the whole answer.
     void Normalize()
     {
         float sq = x * x + y * y + z * z;
