@@ -70,7 +70,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100437f0–10045e30` | `10045e10` | | `I3d_portal.cpp`, `I3d_pose.cpp` | portal parsing, `I3D_pose`, `I3D_pose_set`; one of the two has no marker |
 | `10045e30–10048060` | `10048040` | `10046730` | `I3d_projector.cpp` | `I3D_projector::ProcessRecList()` |
 | `10048060–1004e9b0` | `1004a860` | `10048a00`, `10048a50`, `10048aa0` (empty) | `I3d_scene.cpp` | one file with its marker after `SetBackdropRange`, as `I3d_math.cpp`: `I3D_scene` in PS2's order from its constructor (`10048ab0`), the PC's shadow and mirror lists after `Close`, the weather system and the fog states; after the last function the copies of the weather's `C_list` functions, `S_vector`'s empty constructor and the class's in-class functions; written |
-| `1004e9b0–100508b0` | `10050890` | | `I3d_sector.cpp` | `I3D_sector::MakeReady()`; from the sound properties' `SetupDefaults` (`1004e9b0`) |
+| `1004e9b0–100508b0` | `10050890` | | `I3d_sector.cpp` | from the sound properties' `SetupDefaults` (`1004e9b0`) and `MakeBlend`, `I3D_sector` in PS2's order without its `SetBBox`, `Clear` and `CheckPointDepth`; after the marker the vtable's `SetGroupBits` (`100508b0`, an in-class function) and `C_list::find` (`100508d0`); written |
 | `100508b0–100529c0` | `100529a0` | `10050900`, `10050d30` | `I3d_shadow.cpp` | `I3D_shadow` constructor, `ShadowDef` |
 | `100529c0–` | none | `10052f30` | ? | |
 | `–10056860` | `10056840` | | ? (PC only?) | `I3D_projector::ProcessShadow()`, `I3D_shadow::ProcessShadow()` |

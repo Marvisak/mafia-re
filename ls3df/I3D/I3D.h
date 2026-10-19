@@ -194,9 +194,11 @@ inline float I3DIntAsFloat(int i)
 #define FRMFLAGS_CHANGED 0x2000         // moved since the last Update
 #define FRMFLAGS_TARGET 0x4000          // a target's frame (I3D_target::DeleteFromAnyTarget)
 #define FRMFLAGS_SHADOW 0x8000          // a shadow's frame (I3D_shadow::DeleteFromAnyShadow)
-#define FRMFLAGS_HR_SECTORS 0x40000     // the hierarchy has sectors
-#define FRMFLAGS_HR_OCCLUDERS 0x80000   // occluders
-#define FRMFLAGS_HR_AREAS 0x100000      // areas
+// The hierarchy has areas, sectors, occluders: each of these frames has its own from its constructor on, and LinkTo
+// keeps it in a parent of the type
+#define FRMFLAGS_HR_AREAS 0x40000
+#define FRMFLAGS_HR_SECTORS 0x80000
+#define FRMFLAGS_HR_OCCLUDERS 0x100000
 #define FRMFLAGS_CLIP 0x200000          // has to be clipped (the name is a guess)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
 #define FRMFLAGS_UNKNOWN_8000000 0x8000000 // set by the camera's constructor and Duplicate
@@ -259,8 +261,10 @@ public:
     virtual void LoadImage();
 
 private:
-    // The scene calls UpdateHRBoundVolW (Insanity3D's frame has the same friend, "for rendering and fast access")
+    // The scene and the sector's CheckPoint call UpdateHRBoundVolW (Insanity3D's frame has the scene as a friend, "for
+    // rendering and fast access")
     friend class I3D_scene;
+    friend class I3D_sector;
 
     // Exported (the decorated names say private; UpdateWMatrixProc __thiscall, the others __stdcall)
     __declspec(dllexport) void UpdateWMatrixProc();
@@ -480,7 +484,9 @@ public:
     virtual bool __stdcall IsPlaying(bool unknown) const;
 
     uint sound_flags;                   // 0x140
-    uchar unknown_144[0xa8];
+    uchar unknown_144[0x88];
+    C_list<I3D_sector *> sectors;       // 0x1cc, the sectors it sounds in (I3D_sector::AddSound)
+    uchar unknown_1dc[0x10];
 };
 
 // A sector's sound environment (PS2 S_sector_sound_properties, 0x68 bytes): the EAX 3.0 listener properties, scaled to
@@ -496,7 +502,7 @@ struct S_sector_sound_properties {
     float reverb;                       // 0x18
     int reverb_delay;                   // 0x1c, in ms
     float environment_diffusion;        // 0x20
-    float unknown_24;                   // 0x24
+    int blend_time;                     // 0x24, in ms: how long the renderer blends into the sector's environment
     float decay_lf_ratio;               // 0x28
     float room;                         // 0x2c
     int echo_time;                      // 0x30, in ms
@@ -507,8 +513,8 @@ struct S_sector_sound_properties {
     float air_absorption_hf;            // 0x44
     float hf_reference;                 // 0x48
     float lf_reference;                 // 0x4c
-    float reflections_pan[3];           // 0x50
-    float reverb_pan[3];                // 0x5c
+    S_vector reflections_pan;           // 0x50
+    S_vector reverb_pan;                // 0x5c
 
     S_sector_sound_properties() {}
 
@@ -517,56 +523,134 @@ struct S_sector_sound_properties {
     void MakeBlend(const S_sector_sound_properties &a, const S_sector_sound_properties &b, float t, bool unknown);
 };
 
+// SetSoundData's and GetSoundData's index (PS2 type): the members of S_sector_sound_properties in order, the two pans
+// last (the names are guesses)
+enum I3D_SECTOR_SOUND_DATA_INDEX {
+    SSD_ROOM_LF,
+    SSD_ROOM_HF,
+    SSD_DECAY_TIME,
+    SSD_DECAY_HF_RATIO,
+    SSD_REFLECTIONS,
+    SSD_REFLECTIONS_DELAY,
+    SSD_REVERB,
+    SSD_REVERB_DELAY,
+    SSD_ENVIRONMENT_DIFFUSION,
+    SSD_BLEND_TIME,
+    SSD_DECAY_LF_RATIO,
+    SSD_ROOM,
+    SSD_ECHO_TIME,
+    SSD_ECHO_DEPTH,
+    SSD_MODULATION_TIME,
+    SSD_MODULATION_DEPTH,
+    SSD_ROOM_ROLLOFF_FACTOR,
+    SSD_AIR_ABSORPTION_HF,
+    SSD_HF_REFERENCE,
+    SSD_LF_REFERENCE,
+    SSD_REFLECTIONS_PAN,                // through a const S_vector *
+    SSD_REVERB_PAN,
+    SSD_LAST,
+};
+
 // I3D_sector::sct_flags (names guessed; PRIMARY to NEAR are the scene's four sectors)
+#define SCTF_UNKNOWN_1 0x1              // the scene's weather system shows only where the primary sector has it
+#define SCTF_PREPARED 0x4               // MakeReady was called: the sector has its hull's planes
+#define SCTF_OCCLUDER 0x40              // MakeReady makes an occluder of the hull
+#define SCTF_UNKNOWN_100 0x100          // Duplicate keeps it
 #define SCTF_PRIMARY 0x200
+#define SCTF_SOUND_FADE_IN 0x400        // the renderer blends into the sound environment, not out of it
 #define SCTF_SOUND_CHANGED 0x800        // the sound properties are to be given to the listener
 #define SCTF_BACKDROP 0x1000
 #define SCTF_OMNI 0x2000
 #define SCTF_NEAR 0x4000
 
-class __declspec(novtable) I3D_sector : public I3D_frame {
+class I3D_portal;
+class I3D_occluder;
+
+// A part of the scene closed by its hull (PS2 I3D_sector, 0x230 bytes on PC; I3d_sector.cpp), which holds the lights
+// and sounds that reach into it and the portals that lead out of it. The member names are guesses.
+// VTABLE: LS3DF 0x1009ca88
+class I3D_sector : public I3D_frame {
 public:
     I3D_sector();
+    ~I3D_sector();
 
-    // PS2 names, in PS2's order
+    virtual LS3D_RESULT __stdcall SetName(const char *new_name);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+
+    // PS2 names, in PS2's order, without its CheckPointDepth
     virtual void __stdcall AddLight(I3D_light *light);
-    virtual void __stdcall DeleteLight(I3D_light *light);
+    virtual LS3D_RESULT __stdcall DeleteLight(I3D_light *light);
     virtual void __stdcall AddSound(I3D_sound *sound);
-    virtual void __stdcall DeleteSound(I3D_sound *sound);
-    virtual void __stdcall SetSoundData(uint index, uint data);
-    virtual uint __stdcall GetSoundData(uint index) const;
-    // Whether the point is inside the sector
+    virtual LS3D_RESULT __stdcall DeleteSound(I3D_sound *sound);
+    virtual LS3D_RESULT __stdcall SetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index, uint data);
+    virtual uint __stdcall GetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index) const;
+    // Whether the point is inside the sector: its world box and its hull
     virtual bool __stdcall CheckPoint(const S_vector &pos);
 
+    // PS2 name. Out of line after the file's marker, for the vtable.
+    // FUNCTION: LS3DF 0x100508b0
+    virtual void __stdcall SetGroupBits(uint bits)
+    {
+        group_bits = bits;
+        lights_changed++;
+    }
+
     // PS2 names
+    void UpdateCHPlanesW();
     void AddToRemoveFromSceneRing(I3D_scene *scene);
     void MakeReady();
 
     uint lights_changed;                // 0x140, counts the changes to its lights (the name is a guess)
     C_list<I3D_light *> lights;         // 0x144, the lights that reach into it
-    uint unknown_154;
+    int num_fog_lights;                 // 0x154, of the fog types
     C_list<I3D_sound *> sounds;         // 0x158
     S_sector_sound_properties sound_props; // 0x168
     uint sct_flags;                     // 0x1d0, SCTF_*
-    uchar unknown_1d4[0x14];
-    uint unknown_1e8;                   // 0x1e8
-    uint unknown_1ec;                   // 0x1ec
-    I3D_light *fog_light;               // 0x1f0
-    uchar unknown_1f4[0x20];
+    uint group_bits;                    // 0x1d4
+    int num_verts;                      // 0x1d8, the hull's
+    int num_faces;                      // 0x1dc
+    S_vector *verts;                    // 0x1e0
+    ushort *faces;                      // 0x1e4, three vertex indices each
+    uint unknown_1e8;                   // 0x1e8, a float: the renderer's blend into the sound environment, 0 to 1
+    uint unknown_1ec;                   // 0x1ec, the time of its last step, in ms
+    I3D_light *fog_light;               // 0x1f0, the fog light of the lights that is on
+    C_list<I3D_portal *> portals;       // 0x1f4, its own, leading out
+    C_list<I3D_portal *> portals_in;    // 0x204, the other sectors' that lead into it
     I3D_scene *scene;                   // 0x214
-    uchar unknown_218[8];
+    int num_planes;                     // 0x218, the hull's in world space (UpdateCHPlanesW)
+    S_plane *planes;                    // 0x21c
     I3D_sector *next_in_scene;          // 0x220, the scene's ring of sectors
-    uchar unknown_224[0x10];
+    I3D_sector *prev_in_scene;          // 0x224
+    uint unknown_228;                   // 0x228
+    I3D_occluder *occluder;             // 0x22c, made of the hull by MakeReady (SCTF_OCCLUDER)
 };
 
-// A portal between sectors (PS2 I3D_portal; not a frame). The scene keeps a ring of them.
+// SYNTHETIC: LS3DF 0x1004ee60
+// I3D_sector::`scalar deleting destructor'
+
+// SetName's buffer, a function-local static: VC6 puts it into the PDB under its plain name
+// GLOBAL: LS3DF 0x100a86e0
+// name
+
+// A portal between sectors (PS2 I3D_portal, 0x150 bytes on PC; not a frame). The scene keeps a ring of them. The
+// member names are guesses.
 class I3D_portal {
 public:
-    // PS2 name
+    // PS2 names; the file isn't written yet (stubs in I3d_sector.cpp)
+    I3D_portal();
+    ~I3D_portal();
+    void AddToSceneRing(I3D_scene *scene);
     void UpdatePortal();
+    void LoadImage();
 
-    uchar unknown_00[0x104];
+    uchar unknown_00[0xf4];
+    I3D_sector *sector;                 // 0xf4, the sector it leads out of
+    I3D_sector *connect_sector;         // 0xf8, the one it leads into
+    uchar unknown_fc[8];
     I3D_portal *next_in_scene;          // 0x104
+    uchar unknown_108[0x48];
 };
 
 // An animation's keys for one frame (I3D_animation_set's data, names guessed): the ANIMF_* flags (a word, padded to
@@ -1005,7 +1089,7 @@ public:
 // ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetCallback@I3D_scene@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
@@ -1429,9 +1513,15 @@ class __declspec(novtable) I3D_occluder : public I3D_frame {
 public:
     I3D_occluder();
 
+    // PS2 name and parameters: makes the occluder of the faces (the flags' meaning isn't known)
+    virtual LS3D_RESULT __stdcall Build(const S_vector *verts, uint num_verts, const ushort *faces, uint num_faces,
+        uint flags);
+
     void AddToRemoveFromSceneRing(I3D_scene *scene);
 
-    uchar unknown_140[0x4ac];
+    uchar unknown_140[0x4a4];
+    I3D_sector *sector;                 // 0x5e4, the sector whose hull it is (I3D_sector::MakeReady)
+    uint unknown_5e8;
 };
 
 class __declspec(novtable) I3D_area : public I3D_frame {
@@ -1972,8 +2062,12 @@ public:
 // object, so crtannotate leaves it out of library_strmbase.h. Which object our map lists a folded copy under changes
 // with the link (OnRenderEnd's was the driver's until I3d_model.cpp and again since I3d_target.cpp,
 // CBasePin::EndOfStream's I3d_visual.cpp's until then, CBaseRenderer::OnStopStreaming's, folded with
-// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp), and the names are the ones our PDB keeps
-// (tools/foldfix.py).
+// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp, CBasePin::CompleteConnect's, folded with
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's since I3d_sector.cpp), and the names are the ones our
+// PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087520
+// ?NumLevels@I3D_void_interface@@UBGHXZ
+
 // LIBRARY: LS3DF 0x10087ec0
 // ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
@@ -2006,8 +2100,8 @@ public:
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, I3d_frame.cpp, I3d_scene.cpp and I3d_interpolator.cpp, after their files' functions though
-// their addresses come before them, so their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_frame.cpp, I3d_scene.cpp, I3d_interpolator.cpp and I3d_sector.cpp, after their files'
+// functions though their addresses come before them, so their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
@@ -2045,8 +2139,20 @@ public:
 // STUB: LS3DF 0x10004a70
 // I3D_animation_set::GetAnims
 
+// STUB: LS3DF 0x10041800
+// I3D_portal::I3D_portal
+
+// STUB: LS3DF 0x10041850
+// I3D_portal::~I3D_portal
+
+// STUB: LS3DF 0x10041890
+// I3D_portal::AddToSceneRing
+
 // STUB: LS3DF 0x100419e0
 // I3D_portal::UpdatePortal
+
+// STUB: LS3DF 0x100458f0
+// I3D_portal::LoadImage
 
 // An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
 // D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1 without the specular color)

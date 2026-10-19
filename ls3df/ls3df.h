@@ -150,6 +150,29 @@ public:
         return array[i];
     }
 
+    // The sector's portal loops run from begin() to end(), which they compute again after each call (the PS2 build's
+    // too)
+    T *begin()
+    {
+        return array;
+    }
+
+    T *end()
+    {
+        return array + used_size;
+    }
+
+    // Whether v is in the list (the name is a guess)
+    bool find(const T &v) const
+    {
+        const T *p = array;
+        for (int i = used_size; i--; p++) {
+            if (*p == v)
+                return true;
+        }
+        return false;
+    }
+
     // Makes room for n elements (PS2 has it out of line for some element types)
     void reserve(int n)
     {
@@ -243,6 +266,15 @@ public:
         return true;
     }
 };
+
+// The out-of-line copies of remove and find, which the pointer lists' instantiations share (the linker folds them):
+// the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
+// names are the ones our PDB keeps (tools/foldfix.py).
+// TEMPLATE: LS3DF 0x10005d20
+// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
+
+// TEMPLATE: LS3DF 0x100508d0
+// ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z
 
 // The engine's reference-counted string (PS2 C_str). An empty string has no buffer and converts to the address of
 // its null pointer, which reads as "". Insanity3D's C_str (a later, wider version) has the same design; the names of

@@ -807,12 +807,12 @@ void I3D_scene::m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sec
                 p.flLFReference = 20.0f;
             else if (p.flLFReference > 1000.0f)
                 p.flLFReference = 1000.0f;
-            p.vReflectionsPan.x = props.reflections_pan[0];
-            p.vReflectionsPan.y = props.reflections_pan[1];
-            p.vReflectionsPan.z = props.reflections_pan[2];
-            p.vReverbPan.x = props.reverb_pan[0];
-            p.vReverbPan.y = props.reverb_pan[1];
-            p.vReverbPan.z = props.reverb_pan[2];
+            p.vReflectionsPan.x = props.reflections_pan.x;
+            p.vReflectionsPan.y = props.reflections_pan.y;
+            p.vReflectionsPan.z = props.reflections_pan.z;
+            p.vReverbPan.x = props.reverb_pan.x;
+            p.vReverbPan.y = props.reverb_pan.y;
+            p.vReverbPan.z = props.reverb_pan.z;
             listener->SetEAX3Property(DSPROPERTY_EAXLISTENER_ALLPARAMETERS, &p, sizeof(p));
             last_time = time;
         }
@@ -1686,25 +1686,6 @@ int I3D_scene::SphereToSphereD() const
 void I3D_portal::UpdatePortal()
 {
     renderState[11]++;
-}
-
-// STUB: LS3DF 0x1004e9b0
-void S_sector_sound_properties::SetupDefaults()
-{
-    room_lf = 1.0f;
-}
-
-// STUB: LS3DF 0x1004ea50
-void S_sector_sound_properties::MakeBlend(const S_sector_sound_properties &a, const S_sector_sound_properties &b,
-    float t, bool unknown)
-{
-    room_hf = t;
-}
-
-// STUB: LS3DF 0x1004fb40
-void I3D_sector::MakeReady()
-{
-    unknown_154 = 6;
 }
 
 // STUB: LS3DF 0x100603e0

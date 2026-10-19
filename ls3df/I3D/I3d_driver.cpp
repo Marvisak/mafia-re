@@ -1833,12 +1833,6 @@ I3D_projector::I3D_projector()
     renderState[33]++;
 }
 
-// STUB: LS3DF 0x1004ed30
-I3D_sector::I3D_sector()
-{
-    renderState[13]++;
-}
-
 // STUB: LS3DF 0x10050950
 I3D_shadow::I3D_shadow()
 {

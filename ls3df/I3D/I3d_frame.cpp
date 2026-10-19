@@ -483,13 +483,13 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
         for (frm = old_parent; frm; frm = frm->parent) {
             switch (frm->type) {
             case FRAME_SECTOR:
-                frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_AREAS);
+                frm->frm_flags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_OCCLUDERS);
                 break;
             case FRAME_OCCLUDER:
-                frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS);
+                frm->frm_flags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_SECTORS);
                 break;
             case FRAME_AREA:
-                frm->frm_flags &= ~(FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
+                frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS);
                 break;
             default:
                 frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
@@ -1022,12 +1022,6 @@ void I3D_area::AddToRemoveFromSceneRing(I3D_scene *scene)
 void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
 {
     unknown_140[0] = 2;
-}
-
-// STUB: LS3DF 0x1004f260
-void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *scene)
-{
-    unknown_154 = 3;
 }
 
 // STUB: LS3DF 0x10050d80
