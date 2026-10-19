@@ -1121,8 +1121,8 @@ public:
 // SYNTHETIC: LS3DF 0x1004ddc0
 // $E29
 
-// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the second $E10 in link order, after the model
-// file's (Globals.cpp, ITexture.cpp and IS_sound.cpp have one too)
+// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the third $E10 in link order, after the
+// driver's and the model file's (Globals.cpp, ITexture.cpp and IS_sound.cpp have one too)
 // SYNTHETIC: LS3DF 0x10061d00
 // $E10
 
@@ -1130,16 +1130,17 @@ public:
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
-// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp), and SetDir's and SetName's are scene
+// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp and since I3d_material.cpp, whose
+// I3D_material::UpdateTexture and UpdateEnvTexture are in the group too), and SetDir's and SetName's are scene
 // functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
 // ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1540,7 +1541,7 @@ public:
 // I3D_model::`scalar deleting destructor'
 
 // The destructors the model file's thunks register for DuplTargetList and DuplShadowList: the fourth $E5 in link order,
-// after I3d_landscape.cpp's, and the first $E10, before render.cpp's
+// after I3d_landscape.cpp's, and the second $E10, after the driver's and before render.cpp's
 // SYNTHETIC: LS3DF 0x10033b80
 // $E5
 
@@ -2052,15 +2053,24 @@ public:
     uchar unknown_1e4[0x2ec - 0x1e4];
 };
 
-// I3D_material::flags (names guessed)
+// I3D_material::flags (names guessed). The loader reads them from the file, and LoadImage makes the texture's
+// ITexture::Create flags from them (MATF_LOD0 to MATF_IMAGE_ALPHA).
+#define MATF_ENVMAP_SCALE 0xff          // with MATF_ENVMAP, divides its level's env_scale (SetEnvScale; 1 by default)
 #define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (1 to 5, I3D_object::m_RenderFGroup)
-#define MATF_LOD0 0x800                 // the objects render the face group from their first lod
+#define MATF_LOD0 0x800                 // the objects render the face group from their first lod; its texture is the
+                                        // texture manager's (ITC_MANAGED), cleared where there is none
 #define MATF_ENVMAP_MODE 0x7000         // with MATF_ENVMAP, a level's MESHF_ENVMAP_MODE value
-#define MATF_TEXTURE 0x40000            // texture is used; gives its level MESHF_TEXTURE
-#define MATF_ENVMAP 0x80000             // env_texture is used; gives its level MESHF_ENVMAP, and the low byte divides
-                                        // the level's env_scale
+#define MATF_KEEP_PIXELS 0x8000         // ITC_KEEP_PIXELS
 #define MATF_ADDRESS_U_CLAMP 0x10000    // the texture is clamped, not wrapped
 #define MATF_ADDRESS_V_CLAMP 0x20000
+#define MATF_TEXTURE 0x40000            // texture is used; gives its level MESHF_TEXTURE
+#define MATF_ENVMAP 0x80000             // env_texture is used; gives its level MESHF_ENVMAP
+#define MATF_TRUECOLOR 0x100000         // ITC_TRUECOLOR (also with the driver's render state 17)
+#define MATF_NO_DXT 0x200000            // no ITC_DXT where render state 25 asks for it
+#define MATF_FULL_SIZE 0x400000         // no ITC_HALF where RS_LOD_COARSER asks for it
+#define MATF_MIPMAP 0x800000            // ITC_MIPMAP, with the driver's render state 13
+#define MATF_IMAGE_ALPHA 0x1000000      // the alpha is the image's own (ITC_ALPHA), not a second image's
+#define MATF_ANIM_ALPHA 0x2000000       // an animated material's alpha images are numbered like its images
 #define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
 #define MATF_KEEP_DIFFUSE 0x8000000     // textured, the lights still take the diffuse color: gives its level
                                         // MESHF_KEEP_DIFFUSE (after Insanity3D's loader's keep_diffuse)
@@ -2070,29 +2080,59 @@ public:
 #define MATF_TXT_ALPHA 0x40000000       // the texture has alpha: blended (I3D_driver::GetIcon sets it)
 #define MATF_ADD_MODE 0x80000000        // blended additively
 
-// A material (PS2 I3D_material, 0x40 bytes on PC), reference counted
-class __declspec(novtable) I3D_material {
+// A material (PS2 I3D_material, 0x40 bytes on PC), reference counted. I3d_material.cpp; the animated one is in
+// I3D/I3d_material.h. Every function is virtual on PC, where PS2's set the colors directly. Names are PS2's unless
+// noted.
+// VTABLE: LS3DF 0x1009bea0
+class I3D_material {
 public:
     I3D_material();
 
     virtual int __stdcall Release();
-    // PS2 names (0x1002af20 to 0x1002af80); each returns I3D_OK
+    // Each returns I3D_OK
     virtual LS3D_RESULT __stdcall SetAmbient(const S_vector &color);
     virtual LS3D_RESULT __stdcall SetDiffuse(const S_vector &color);
     virtual LS3D_RESULT __stdcall SetEmissive(const S_vector &color);
     virtual LS3D_RESULT __stdcall SetAlpha(float a);
-    virtual void __stdcall SetTexture(ITexture *texture);
-    // PS2 name: makes this material a copy of mat
+    virtual LS3D_RESULT __stdcall SetTexture(ITexture *texture);
+    // Makes this material a copy of mat
     virtual LS3D_RESULT __stdcall Duplicate(I3D_material *mat);
-    // Sets MATF_TWO_SIDED (0x1002b120; Insanity3D's name, whose version takes a bool)
+    // Sets MATF_TWO_SIDED (Insanity3D's name, whose version takes a bool)
     virtual LS3D_RESULT __stdcall Set2Sided();
-    // PS2 name: an animated material's frame
-    virtual void __stdcall UpdateTexture();
-    // PS2 name: the same for the environment map
-    virtual void __stdcall UpdateEnvTexture();
-    // PS2 name (0x1002b040): the environment map, with its MATF_ENVMAP_BLEND and MATF_ENVMAP_MODE values and env_alpha;
-    // a NULL texture clears MATF_ENVMAP
+    // An animated material's frame. Empty here: the copy the original kept is the scene file's (0x1004e970).
+    virtual void __stdcall UpdateTexture()
+    {
+    }
+    // The same for the environment map
+    virtual void __stdcall UpdateEnvTexture()
+    {
+    }
+    // Overloads share the slot of the first one, in reverse order: the second is slot 10, this one slot 11
+    virtual LS3D_RESULT __stdcall SetEnvTexture(ITexture *texture);
+    // The environment map, with its MATF_ENVMAP_BLEND and MATF_ENVMAP_MODE values and env_alpha; a NULL texture
+    // clears MATF_ENVMAP
     virtual LS3D_RESULT __stdcall SetEnvTexture(ITexture *texture, uint blend, uint mode, float a);
+    // PC only (the names are guesses, after Insanity3D's IsCkey)
+    // FUNCTION: LS3DF 0x1002cd80
+    virtual uint __stdcall IsCkey()
+    {
+        return flags & MATF_CKEY_ALPHA;
+    }
+    // FUNCTION: LS3DF 0x1002cd90
+    virtual uint __stdcall IsAnimated()
+    {
+        return flags & MATF_ANIMATED;
+    }
+    virtual LS3D_RESULT __stdcall SetEnvType(uint type);
+    virtual LS3D_RESULT __stdcall SetEnvMode(uint mode);
+    // PC only (the name is a guess): MATF_ENVMAP_SCALE
+    virtual LS3D_RESULT __stdcall SetEnvScale(uint scale);
+    // Without PS2's clamp. The linker folds it with ISND_3Dlistener::SetDistanceFactor, whose copy the original kept.
+    virtual LS3D_RESULT __stdcall SetEnvAlpha(float a);
+    virtual ~I3D_material();
+
+    // The material's part of the 4ds file: the colors, the textures' names. The loader calls it (load4ds.cpp).
+    void LoadImage();
 
     int ref;                            // 0x04
     uint flags;                         // 0x08, MATF_*
@@ -2102,8 +2142,7 @@ public:
     S_vector diffuse;                   // 0x20
     S_vector emissive;                  // 0x2c
     float alpha;                        // 0x38, 1.0 opaque
-    float env_alpha;                    // 0x3c, the environment map's blend factor (MATF_ENVMAP_BLEND 1; PS2's
-                                        // SetEnvAlpha)
+    float env_alpha;                    // 0x3c, the environment map's blend factor (MATF_ENVMAP_BLEND 1)
 
     void AddRef()
     {
@@ -2125,13 +2164,11 @@ public:
     }
 };
 
-// An animated material (PS2 I3D_anim_material)
-class __declspec(novtable) I3D_anim_material : public I3D_material {
-public:
-    I3D_anim_material();
+// SYNTHETIC: LS3DF 0x1002ae80
+// I3D_material::`scalar deleting destructor'
 
-    uchar unknown_40[0x48];
-};
+// The animated material (PS2 I3D_anim_material) holds its frames in std::vectors: I3D/I3d_material.h
+class I3D_anim_material;
 
 // The meshes (PS2 I3d_mesh.cpp; I3d_mesh.cpp): an object's mesh has up to 10 levels of detail, each a vertex buffer and
 // a chain of face groups, one per material, each an index buffer. The buffers are blocks of the vertex and index buffer
@@ -2268,32 +2305,43 @@ public:
 
 // A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
-// (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp
-// and again from I3d_area.cpp to I3d_animation.cpp; CBaseRenderer::OnRenderEnd's, folded with
-// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp, and
-// with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's since that file; CBasePin::EndOfStream's I3d_visual.cpp's
-// until then; CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
-// from I3d_sector.cpp to I3d_area.cpp and again from clipping.cpp's CheckClipFaces, a function the linker drops, to
-// I3d_pose.cpp), so after a new file or function rerun crtannotate and move such markers here or back. The names are
-// the ones our PDB keeps (tools/foldfix.py).
+// (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
+// again from I3d_area.cpp to I3d_animation.cpp and since I3d_material.cpp; CBaseRenderer::OnRenderEnd's, folded with
+// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp and since
+// I3d_material.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file; CBasePin::EndOfStream's
+// I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions,
+// I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from clipping.cpp's CheckClipFaces, a function the
+// linker drops, to I3d_pose.cpp), so after a new file or function rerun crtannotate and move such markers here or back.
+// The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087ec0
-// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
 // buffer comes first, VisualType2String's second.
 
 // RenderShadowTexture's list of the points in texture coordinates, its guard and the destructor its first call
-// registers with atexit. VC6 numbers the last two per file (after the zero vector's three numbers), so the names
-// hold only while no other file has them.
+// registers with atexit. VC6 numbers the last two per file (after the zero vector's three numbers and one for
+// <vector>'s template static, through I3D/I3d_material.h), so the names hold only while no other file has them. The
+// guard's place in the original's .bss, between IconMaterialList and driverTickTime, is the hash bucket of $S27 or
+// $S33 (tools/bsshash.py, with the decorated name), ours of $S24 comes after driverTickTime: the original's file
+// numbered 3 (or 9) more before it.
 // GLOBAL: LS3DF 0x100bfc88
 // points
 
 // GLOBAL: LS3DF 0x100bffc0
-// $S23
+// $S24
 
 // SYNTHETIC: LS3DF 0x100165e0
-// $E24
+// $E25
+
+// The destructor the driver's thunk registers for IconMaterialList: the first $E10 in link order, before the model
+// file's and render.cpp's
+// SYNTHETIC: LS3DF 0x10015560
+// $E10
 
 // DrawSphere's matrix
 // GLOBAL: LS3DF 0x100afc28
@@ -2391,7 +2439,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,

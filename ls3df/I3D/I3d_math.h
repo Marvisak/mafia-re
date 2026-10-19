@@ -341,7 +341,7 @@ struct S_plane {
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp and
 // again from clipping.cpp's CheckClipFaces to I3d_pose.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_vector@@QAE@XZ
+// ??0S_plane@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

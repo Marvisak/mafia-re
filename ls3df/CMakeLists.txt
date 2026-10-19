@@ -21,6 +21,7 @@ add_library(ls3df SHARED
     I3D/I3d_joint.cpp
     I3D/I3d_landscape.cpp
     I3D/I3d_light.cpp
+    I3D/I3d_material.cpp
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp
     I3D/I3d_model.cpp
@@ -127,6 +128,7 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
         "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
         "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ"
+        "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ"
         "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?SetViewProjMatrix@I3D_scene@@QAEXABUS_matrix@@@Z"
         "/INCLUDE:?m_UpdateSoundProperties@I3D_scene@@QAEXPAVI3D_sector@@0M@Z"
         "/INCLUDE:?AddShadow@I3D_scene@@QAEXPAVI3D_shadow@@@Z"

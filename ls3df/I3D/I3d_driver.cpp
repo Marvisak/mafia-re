@@ -12,6 +12,7 @@
 // DrawCircle2D), as if all of it were inline helpers and VC6's inline budget ran out earlier than in our build; with
 // everything as helpers, our build inlines the short draws' blend code too. Open.
 #include "I3D/I3D.h"
+#include "I3D/I3d_material.h"
 #include "IGraph/IGraph.h"
 #include "I3D/VBManager.h"
 #include "ISound/ISound.h"
@@ -1738,18 +1739,6 @@ bool RecomputeAllGeometry;
 I3D_lit_object::I3D_lit_object()
 {
     renderState[27]++;
-}
-
-// STUB: LS3DF 0x1002ade0
-I3D_material::I3D_material()
-{
-    renderState[38]++;
-}
-
-// STUB: LS3DF 0x1002b190
-I3D_anim_material::I3D_anim_material()
-{
-    renderState[39]++;
 }
 
 // STUB: LS3DF 0x10031820
