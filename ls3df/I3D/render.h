@@ -93,12 +93,17 @@ inline void SetCullState(uint cull)
     }
 }
 
-// D3DRS_CLIPPING (always inlined; Insanity3D has the same helper, commented out, under this name)
+// D3DRS_CLIPPING (Insanity3D has the same helper, commented out, under this name). Two calls, as IGraph::SetState's
+// DXS_CLIPPING: the copy the linker kept is the mirrors' file's.
+// FUNCTION: LS3DF 0x100333d0
 inline void SetClipping(uint clip)
 {
     if (m_CurrClipState != clip) {
         m_CurrClipState = clip;
-        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, clip);
+        if (clip == 1)
+            m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+        else
+            m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, FALSE);
     }
 }
 

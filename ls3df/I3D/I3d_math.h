@@ -103,9 +103,12 @@ struct S_vector {
     // PS2 Normalize__8S_vectorFv. A null vector becomes the unit vector along its first non-zero axis. The sum is
     // written out, as in Magnitude.
     // Open: the original has no out-of-line copy, and inlines it where ours runs out of inline budget: nested in
-    // GetDir and GetWorldDir (the light's constructor, I3D_target::UpdateFrames) and after the camera's starved
-    // GetNormal calls. Declared __forceinline it gives the first two exactly, but then S_quat::Make(const S_matrix &)
-    // inlines S_quat::operator* (the original calls it), so that isn't the whole answer.
+    // GetDir and GetWorldDir (the light's constructor, I3D_target::UpdateFrames, the mirror's UpdateVisibility and
+    // PrepareReflection) and after the camera's starved GetNormal calls. Declared __forceinline it gives those four
+    // exactly, but then S_quat::Make(const S_matrix &) inlines S_quat::operator* (the original calls it) and leaves
+    // later constructors, operator+ and Dot out of line (it charges the budget), so that isn't the whole answer.
+    // Neither Square() for the sum, *this *= for the products, an else for the second return, nor if/else statements
+    // for the signs inline it in those four, and each scores worse elsewhere.
     void Normalize()
     {
         float sq = x * x + y * y + z * z;
@@ -341,7 +344,7 @@ struct S_plane {
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp and
 // again from clipping.cpp's CheckClipFaces to I3d_pose.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0S_vector@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

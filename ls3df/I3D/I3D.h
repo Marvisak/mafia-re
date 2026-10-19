@@ -107,6 +107,8 @@ enum I3D_RENDERSTATE {
     RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
     RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
     RS_ZBIAS_SHADOW = 55,               // RsZBiasShadow
+    RS_DRAWMIRRORS = 59,                // the mirrors render what they reflect (Insanity3D's name for its own
+                                        // state 12); 1 by default
     RS_ENVMAP_SCALE = 62,               // a float, 1.0 by default: the planar environment maps' scale (EnvProcess);
                                         // 666 frees the vertex buffers in video memory instead
     RS_LAST = 63,
@@ -257,10 +259,11 @@ public:
     virtual void LoadImage();
 
 private:
-    // The scene and the sector's CheckPoint call UpdateHRBoundVolW (Insanity3D's frame has the scene as a friend, "for
-    // rendering and fast access")
+    // The scene, the sector's CheckPoint and the mirrors' search for what they reflect call UpdateHRBoundVolW
+    // (Insanity3D's frame has the scene as a friend, "for rendering and fast access")
     friend class I3D_scene;
     friend class I3D_sector;
+    friend class I3D_mirror;
 
     // Exported (the decorated names say private; UpdateWMatrixProc __thiscall, the others __stdcall)
     __declspec(dllexport) void UpdateWMatrixProc();
@@ -1656,7 +1659,8 @@ enum SHADOW_MODE {
 // FRMFLAGS_INV_MAT_VALID)
 #define VISF_UNKNOWN_10 0x10            // the level of detail follows the textures loaded, and the lighting takes
                                         // the first lod's cache, not the current one's
-#define VISF_WORLD_SPACE 0x40           // the vertices are in world space (SetSpace): a move invalidates nothing
+#define VISF_UNKNOWN_20 0x20            // the mirrors don't reflect it
+#define VISF_WORLD_SPACE 0x40          // the vertices are in world space (SetSpace): a move invalidates nothing
 #define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
@@ -1711,6 +1715,15 @@ public:
         if (!(vis_flags & VISF_WBOUND_VALID))
             UpdateWBoundProc();
         return vis_bound_w;
+    }
+
+    // The visual's own bound volume, updated first if it isn't (the name is a guess, after GetWBoundVolume; the mirrors
+    // inline it)
+    const I3D_bvolume &GetBoundVolume()
+    {
+        if (!(vis_flags & VISF_BOUND_VALID))
+            UpdateBoundProc();
+        return vis_bound;
     }
 
     // The inverse of the world matrix, identity in world space (Insanity3D's name; other files inline it)
@@ -1953,8 +1966,8 @@ public:
 
     // Draws nothing. Not in the class: LINK folds an identical function only with others of its kind, in-class or
     // out of line, and the original's slot points at the copy of the out-of-line ones (0x10087ec0, with
-    // I3D_driver::m_RecomputeUsedVRAM), not at the visual's (0x1004e970). Our linker keeps this file's copy of the
-    // group, the original the base classes'.
+    // I3D_driver::m_RecomputeUsedVRAM), not at the visual's (0x1004e970). The original keeps the base classes' copy of
+    // the group; which one our linker keeps changes with the link (see the markers of folded base class functions).
     virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
 
     TriTreeNode *GetBaseLeft()
@@ -2043,15 +2056,67 @@ public:
 // SYNTHETIC: LS3DF 0x1001ef60
 // $E5
 
-// A mirror (PS2 I3D_mirror, 0x2ec bytes on PC; the file isn't written yet)
-class __declspec(novtable) I3D_mirror : public I3D_visual {
+// I3D_mirror::mirror_flags (names guessed)
+#define MIRF_VIEW_BOX 0x1               // view_box is set
+#define MIRF_PREPARED 0x4               // bsphere, inv_view_box and mirror_matrix are up to date (until it moves)
+#define MIRF_VISIBLE 0x100              // the camera sees its front (UpdateVisibility)
+#define MIRF_REFLECT 0x200              // near enough to render what it reflects
+
+// A mirror (PS2 I3D_mirror, 0x2ec bytes on PC; I3d_mirror.cpp): its faces, which the rendering draws in its color, or,
+// near the camera, as a window into the scene reflected in the mirror's plane. It reflects the visuals in its view box,
+// a box in its local space: for each it keeps a copy, a visual of the same type with VISF_PROXY whose user_data is the
+// visual, placed by mirror_matrix. PS2's has only the box, the color and the faces (in an index buffer, with a GetFaces
+// the PC lacks), and of these functions LoadImage and, not virtual, SetColor and SetViewBox. Member names are guesses.
+// VTABLE: LS3DF 0x1009c0a0 I3D_frame
+// VTABLE: LS3DF 0x1009c090 I3D_void_interface
+class I3D_mirror : public I3D_visual {
 public:
     I3D_mirror();
+    ~I3D_mirror();
 
-    uchar unknown_1dc[4];
+    virtual void __stdcall Tick(int time);
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    // PS2 names. SetViewBox scales m's axes by half the box's size and moves it to the box's center, so that the view
+    // box is the cube (-1, -1, -1)-(1, 1, 1) in view_box's space.
+    virtual void __stdcall SetViewBox(const I3D_bbox &bbox, const S_matrix &m);
+    virtual void __stdcall SetColor(const S_vector &c);
+
+    // The rendering's (PC only, the names are guesses): whether the camera sees the mirror and whether it reflects, the
+    // copies of the visuals it reflects (their number), and the faces in a color, flags as I3D_driver::DrawTriangles'
+    void UpdateVisibility();
+    int PrepareReflection();
+    void Draw(const S_vector &c, uint flags);
+
+    // Adds the visuals in the branch from frm that are in pCurrentMirror's view box to MirroredVisualList
+    static void CollectVisuals(I3D_frame *frm);
+
+    uint unknown_1dc;
     I3D_scene *scene;                   // 0x1e0, the scene's AddMirror
-    uchar unknown_1e4[0x2ec - 0x1e4];
+    C_list<I3D_visual *> copies;        // 0x1e4, of the visuals it reflects
+    I3D_bsphere bsphere;                // 0x1f4, the view box's, in world space
+    float radius_2;                     // 0x204, bsphere.radius squared
+    S_matrix inv_view_box;              // 0x208, world space to the view box's
+    S_matrix mirror_matrix;             // 0x248, a world matrix to its reflection in the mirror's plane
+    uint mirror_flags;                  // 0x288, MIRF_*
+    S_matrix view_box;                  // 0x28c, in local space; LoadImage reads the members from here to num_faces
+    S_vector color;                     // 0x2cc
+    float range;                        // 0x2d8, 100: the reflection is rendered nearer than this (FOVDistCorrection
+                                        // scales it)
+    int num_verts;                      // 0x2dc
+    int num_faces;                      // 0x2e0
+    S_vector *verts;                    // 0x2e4, in local space
+    I3D_triface *faces;                 // 0x2e8
 };
+
+// SYNTHETIC: LS3DF 0x100318f0
+// I3D_mirror::`scalar deleting destructor'
+
+// The destructor the mirror file's thunk registers for MirroredVisualList
+// SYNTHETIC: LS3DF 0x100324e0
+// $E6
 
 // I3D_material::flags (names guessed). The loader reads them from the file, and LoadImage makes the texture's
 // ITexture::Create flags from them (MATF_LOD0 to MATF_IMAGE_ALPHA).
@@ -2307,15 +2372,12 @@ public:
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
 // again from I3d_area.cpp to I3d_animation.cpp and since I3d_material.cpp; CBaseRenderer::OnRenderEnd's, folded with
-// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp and since
-// I3d_material.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file; CBasePin::EndOfStream's
-// I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions,
-// I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from clipping.cpp's CheckClipFaces, a function the
-// linker drops, to I3d_pose.cpp), so after a new file or function rerun crtannotate and move such markers here or back.
-// The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
-
+// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp and from
+// I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file;
+// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from
+// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp), so after a new file or function rerun
+// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10088960
 // ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
@@ -2545,6 +2607,8 @@ extern DWORD m_LVertex2VS;
 extern uint m_CurrClipState;
 extern uint m_CurrColorOp1;
 extern uint m_CurrFogState;
+// D3DRS_ZFUNC: 1 D3DCMP_LESSEQUAL, 0 D3DCMP_ALWAYS
+extern uint m_CurrZFunc;
 extern uint m_CurrFogColor;
 extern uint m_CullMode;
 // The color op that modulates by the texture: D3DTOP_MODULATE2X, or D3DTOP_MODULATE without it
@@ -2616,6 +2680,16 @@ inline void SetAlphaOp(uint op)
 // The values the driver set last, by I3D_RENDERSTATE
 extern int renderState[RS_LAST];
 
+// The draws' vertices (the mirrors' too)
+extern C_list<LVERTEX> LVertList;
+
+// I3D_driver::DrawTriangles' flags, which the mirrors' Draw takes too: the transparency is the low byte (Insanity3D's
+// name for its mask, spelling included; the other names are guesses)
+#define I3DDRAW_TRANPARENCY_MASK 0xff
+#define I3DDRAW_TRANSFORMED 0x100       // the vertices are transformed (TLVERTEX)
+#define I3DDRAW_NOCULL 0x200
+#define I3DDRAW_CULL_CW 0x400
+
 // Whether the driver is initialised (set by its Init, cleared by its Close)
 extern bool I3DIsInit;
 
@@ -2683,6 +2757,9 @@ struct ADD_FG_HELP_STRUCT {
 
 // render.cpp
 extern I3D_scene *pCurrentScene;
+// The distances' scale for the current camera's field of view (PS2 name). Declared before AddFGHlpStruct, which hashes
+// to the same .bss bucket: the global declared last comes first.
+extern float FOVDistCorrection;
 extern ADD_FG_HELP_STRUCT AddFGHlpStruct;
 extern bool renderCameraChanged;
 extern float RSLodQuality;

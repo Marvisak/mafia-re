@@ -30,6 +30,10 @@ I3D_sector *pLastCameraSector;
 // GLOBAL: LS3DF 0x101c4cfc
 I3D_sector *pPrevLastCameraSector;
 
+// A constant divided by the current camera's field of view, which scales the distances (Render sets it)
+// GLOBAL: LS3DF 0x101c4ca0
+float FOVDistCorrection;
+
 // RS_LOD_QUALITY scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)
 // GLOBAL: LS3DF 0x101c4ca4

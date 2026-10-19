@@ -814,13 +814,6 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
         &LVertList[0], sizeof(LVERTEX));
 }
 
-// DrawTriangles' flags: the transparency is the low byte (Insanity3D's name for its mask, spelling included; the
-// other names are guesses)
-#define I3DDRAW_TRANPARENCY_MASK 0xff
-#define I3DDRAW_TRANSFORMED 0x100       // the vertices are transformed (TLVERTEX)
-#define I3DDRAW_NOCULL 0x200
-#define I3DDRAW_CULL_CW 0x400
-
 // FUNCTION: LS3DF 0x10016ff0
 LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx)
@@ -1739,12 +1732,6 @@ bool RecomputeAllGeometry;
 I3D_lit_object::I3D_lit_object()
 {
     renderState[27]++;
-}
-
-// STUB: LS3DF 0x10031820
-I3D_mirror::I3D_mirror()
-{
-    renderState[37]++;
 }
 
 // STUB: LS3DF 0x10034e30
