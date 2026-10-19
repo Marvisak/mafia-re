@@ -30,6 +30,7 @@ add_library(ls3df SHARED
     I3D/I3d_pose.cpp
     I3D/I3d_scene.cpp
     I3D/I3d_sector.cpp
+    I3D/I3d_sound.cpp
     I3D/I3d_target.cpp
     I3D/I3d_user.cpp
     I3D/I3d_visual.cpp
@@ -117,9 +118,9 @@ if (MSVC_VERSION EQUAL 1200)
     # RenderShadowTexture by the shadows, the lod's destructor by the lit objects and single meshes, the vertex transforms
     # by the shadows' range (0x10054f60), VertexLightingProcess by the lit objects' lightmaps (0x10021bb0), the camera's
     # UpdateSector, the landscapes' Reset, Tessellate and Render and the mirrors' UpdateVisibility, PrepareReflection
-    # and Draw by render.cpp; the scene's view, sound and weather functions by render.cpp, its shadow list by the
-    # shadows, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams, ResetClipArrays and entry points
-    # by the projectors (0x10046960) and the shadows (0x10053280).
+    # and Draw by render.cpp; the sounds' m_SetState and the scene's view, sound and weather functions by render.cpp,
+    # its shadow list by the shadows, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams,
+    # ResetClipArrays and entry points by the projectors (0x10046960) and the shadows (0x10053280).
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
@@ -131,6 +132,7 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ"
         "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?SetViewProjMatrix@I3D_scene@@QAEXABUS_matrix@@@Z"
         "/INCLUDE:?m_UpdateSoundProperties@I3D_scene@@QAEXPAVI3D_sector@@0M@Z"
+        "/INCLUDE:?m_SetState@I3D_sound@@QAEXE@Z"
         "/INCLUDE:?AddShadow@I3D_scene@@QAEXPAVI3D_shadow@@@Z"
         "/INCLUDE:?DeleteShadow@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_shadow@@@Z"
         "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ"

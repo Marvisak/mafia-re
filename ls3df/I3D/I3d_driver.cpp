@@ -1794,12 +1794,6 @@ I3D_singlemorph::I3D_singlemorph()
     renderState[32]++;
 }
 
-// STUB: LS3DF 0x10057650
-I3D_sound::I3D_sound()
-{
-    renderState[12]++;
-}
-
 // STUB: LS3DF 0x10062010
 void I3D_driver::initRender()
 {

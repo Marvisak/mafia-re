@@ -110,7 +110,7 @@ LS3D_RESULT ISND_driver::SetVolume(float vol)
         for (int i = pI3DDriver->sounds.size(); i--; ) {
             I3D_sound *sound = pI3DDriver->sounds[i];
             if (sound->IsPlaying(false))
-                sound->sound_flags |= 8;
+                sound->snd_flags |= SOUNDF_VOLUME;
         }
     }
     return I3D_OK;

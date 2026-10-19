@@ -20,6 +20,8 @@ class I3D_dummy;
 class I3D_material;
 class ITexture;
 class ISND_3Dlistener;
+class ISND_3Dsound;
+class ISND_source;
 class I3D_frame;
 class I3D_camera;
 class I3D_sector;
@@ -473,20 +475,128 @@ public:
 // GLOBAL: LS3DF 0x100c0048
 // updating
 
-class __declspec(novtable) I3D_sound : public I3D_frame {
+// A sound's type (PS2 type; the names are Insanity3D's, which has the same first four values)
+enum I3D_SOUNDTYPE {
+    I3DSOUND_NULL,                      // silent: SetOn switches it off
+    I3DSOUND_POINT,                     // fades out with the distance
+    I3DSOUND_SPOT,                      // and outside its cone
+    I3DSOUND_AMBIENT,                   // everywhere at its volume; the only type for a sound without a 3D buffer
+};
+
+// I3D_sound::Open's flags (Insanity3D's name for the same value and role)
+#define I3DLOAD_SOUND_FREQUENCY 0x8     // the source's frequency can be changed (ISND_FREQUENCY)
+
+// I3D_sound::snd_flags (the names are guesses): what m_UpdateSound has to give the voice, and the playing's own state
+#define SOUNDF_POS 0x1                  // the position
+#define SOUNDF_DIR 0x2                  // the direction
+#define SOUNDF_RANGE 0x4                // SetRange: the scaled ranges are to be computed again
+#define SOUNDF_VOLUME 0x8               // SetVolume: the volume is given to the voice even if it changed little
+#define SOUNDF_OUTVOL 0x10              // SetOutVol
+#define SOUNDF_FREQUENCY 0x20           // SetFrequency
+#define SOUNDF_CONE 0x40                // SetCone
+#define SOUNDF_SCALE 0x80               // the scaled ranges are to be computed again
+#define SOUNDF_TYPE 0x100               // SetSoundType: the voice's 3D mode is to be set
+#define SOUNDF_CAMERA_SECTOR 0x200      // the camera is in one of its sectors (SetOn)
+#define SOUNDF_FADE_IN 0x400            // fade's direction, in its areas (SetOn)
+#define SOUNDF_FADE_OUT 0x800
+#define SOUNDF_PLAY 0x1000              // the voice is to be started by the next m_UpdateSound
+#define SOUNDF_VELOCITY 0x2000          // SetVelocity
+
+// I3D_sound::state (the names are guesses; PS2's m_SetState sets it)
+enum {
+    SOUNDSTATE_STOP = 1,
+    SOUNDSTATE_PLAY,
+    SOUNDSTATE_PAUSE,                   // out of range: the voice is stopped, the time keeps running
+    SOUNDSTATE_RESUME,                  // m_UpdateSound switches it on again
+    SOUNDSTATE_NOCAMERA,                // switched on without a camera: m_UpdateSound switches it on again
+};
+
+// A sound in the scene (PS2 I3D_sound, 0x1ec bytes on PC; I3d_sound.cpp), which plays a source through a 3D sound of
+// the sound driver, its voice. Insanity3D's I3D_sound gives the names of the members whose roles agree (voice,
+// snd_src, snd_flags, snd_type, open_flags, the ranges, volumes, cone and pause members); the others are guesses.
+// VTABLE: LS3DF 0x1009ce78
+class I3D_sound : public I3D_frame {
 public:
     I3D_sound();
+    ~I3D_sound();
 
-    // PS2 name (its PS2 parameters; the result type is a guess)
-    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags);
-    // PS2 name, 0x10057c40
-    virtual bool __stdcall IsPlaying(bool unknown) const;
+    // The game's (PS2 names). In PS2's order but for SetVelocity, which comes after GetRange and GetCone there.
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    // Whether the voice plays, or with real false whether the sound would (it keeps time while paused)
+    virtual bool __stdcall IsPlaying(bool real) const;
+    virtual void __stdcall SetSoundType(I3D_SOUNDTYPE type);
+    // The volume is 1 up to range_n, falls to mid_vol at range_mid of the way to range_f and to 0 at range_f
+    virtual void __stdcall SetRange(float near_range, float far_range, float mid, float mid_vol);
+    virtual void __stdcall SetCone(float in_angle, float out_angle);
+    virtual void __stdcall SetOutVol(float vol);
+    virtual void __stdcall SetVolume(float vol);
+    virtual void __stdcall SetLoop(bool loop);
+    virtual LS3D_RESULT __stdcall SetCurrTime(uint time);
+    virtual void __stdcall SetFrequency(float freq);
+    virtual void __stdcall GetRange(float &near_range, float &far_range, float &mid, float &mid_vol) const;
+    virtual void __stdcall GetCone(float &in_angle, float &out_angle) const;
+    virtual uint __stdcall GetCurrTime() const;
+    virtual uint __stdcall GetPlayTime() const;
+    virtual void __stdcall SetOn(bool on, bool update);
+    virtual void __stdcall SetVelocity(const S_vector &v);
+    virtual void __stdcall ForceUpdate();
 
-    uint sound_flags;                   // 0x140
-    uchar unknown_144[0x88];
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+
+    // Out of line at the file's end, for the vtable
+    // FUNCTION: LS3DF 0x10059420
+    virtual void __stdcall SetOn(bool on)
+    {
+        SetOn(on, false);
+    }
+
+    // PS2 names
+    void m_Pause();
+    void m_UpdateSound();
+    void m_SetState(uchar new_state);
+
+    float GetRangeVolume(float dist) const;
+
+    uint snd_flags;                     // 0x140, SOUNDF_*
+    uchar state;                        // 0x144, SOUNDSTATE_*
+    uint priority;                      // 0x148, the voice's Play's
+    uint unknown_14c;                   // 0x14c
+    uint start_time;                    // 0x150, timeGetTime when it played from the start
+    uint pause_time;                    // 0x154, timeGetTime when it paused
+    uint pause_pos;                     // 0x158, the position it paused at
+    ISND_3Dsound *voice;                // 0x15c
+    ISND_source *snd_src;               // 0x160
+    bool loop;                          // 0x164
+    float range_n;                      // 0x168
+    float scaled_range_n;               // 0x16c, scaled by the world scale
+    float range_f;                      // 0x170
+    float scaled_range_f;               // 0x174
+    float scaled_range_f_2;             // 0x178, its square
+    float range_mid;                    // 0x17c, of the way from range_n to range_f
+    float scaled_range_mid;             // 0x180, the distance
+    float range_mid_vol;                // 0x184, the volume there
+    float volume_out;                   // 0x188, outside the cone
+    float volume;                       // 0x18c
+    float virtual_volume;               // 0x190, the voice's
+    float frequency;                    // 0x194, of the source's
+    uint open_flags;                    // 0x198, ISND_*: the source's
+    I3D_SOUNDTYPE snd_type;             // 0x19c
+    float cone_in;                      // 0x1a0
+    float cos_cone_in;                  // 0x1a4, of half of it
+    float cone_out;                     // 0x1a8
+    float cos_cone_out;                 // 0x1ac
+    I3D_sector *fade_sector;            // 0x1b0, whose blend it follows (SCTF_SOUND_FADE_IN)
+    float fade;                         // 0x1b4, its fading's volume, 0 to 1, -1 when it doesn't fade
+    uint fade_time;                     // 0x1b8, timeGetTime at its last step
+    uint fade_length;                   // 0x1bc, in ms
+    S_vector velocity;                  // 0x1c0
     C_list<I3D_sector *> sectors;       // 0x1cc, the sectors it sounds in (I3D_sector::AddSound)
     C_list<I3D_area *> areas;           // 0x1dc, the areas it sounds in (I3D_area::AddSound)
 };
+
+// SYNTHETIC: LS3DF 0x100577c0
+// I3D_sound::`scalar deleting destructor'
 
 // A sector's sound environment (PS2 S_sector_sound_properties, 0x68 bytes): the EAX 3.0 listener properties, scaled to
 // 0..1 or in milliseconds, which the scene converts (I3D_scene::m_UpdateSoundProperties). The members are named after
@@ -612,7 +722,7 @@ public:
     int num_faces;                      // 0x1dc
     S_vector *verts;                    // 0x1e0
     ushort *faces;                      // 0x1e4, three vertex indices each
-    uint unknown_1e8;                   // 0x1e8, a float: the renderer's blend into the sound environment, 0 to 1
+    float unknown_1e8;                  // 0x1e8, the renderer's blend into the sound environment, 0 to 1
     uint unknown_1ec;                   // 0x1ec, the time of its last step, in ms
     I3D_light *fog_light;               // 0x1f0, the fog light of the lights that is on
     C_list<I3D_portal *> portals;       // 0x1f4, its own, leading out
@@ -1137,13 +1247,13 @@ public:
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too), and SetDir's and SetName's are scene
 // functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?UpdateTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -2371,15 +2481,14 @@ public:
 // A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
-// again from I3d_area.cpp to I3d_animation.cpp and since I3d_material.cpp; CBaseRenderer::OnRenderEnd's, folded with
-// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp and from
-// I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file;
+// again from I3d_area.cpp to I3d_animation.cpp and from I3d_material.cpp to I3d_sound.cpp; CBaseRenderer::OnRenderEnd's,
+// folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp
+// and from I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file;
 // CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
 // I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from
 // clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp), so after a new file or function rerun
-// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py). None needs
+// one at the moment.
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2501,7 +2610,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,

@@ -80,7 +80,7 @@
 // ?Inactive@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10087520
-// ?EndOfStream@CBasePin@@UAGJXZ
+// ?SetMediaType@CBaseRenderer@@UAEJPBVCMediaType@@@Z
 
 // LIBRARY: LS3DF 0x10087530
 // ?BreakConnect@CBaseRenderer@@UAEJXZ
@@ -146,13 +146,13 @@
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
 
 // LIBRARY: LS3DF 0x10087ec0
-// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?OnRenderEnd@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
 // LIBRARY: LS3DF 0x10087f20
-// ?QueryInterface@CBaseInputPin@@UAGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseFilter@@UAGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10087f40
 // ??_GCRendererInputPin@@UAEPAXI@Z
@@ -179,10 +179,10 @@
 // ?CompleteConnect@CRendererInputPin@@UAEJPAUIPin@@@Z
 
 // LIBRARY: LS3DF 0x10088290
-// ?AddRef@CBaseFilter@@UAGKXZ
+// ?AddRef@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882a0
-// ?Release@CBaseFilter@@UAGKXZ
+// ?Release@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882b0
 // ?QueryId@CRendererInputPin@@UAGJPAPAG@Z
@@ -218,7 +218,7 @@
 // ?OnStopStreaming@CBaseVideoRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088540
-// ?OnWaitStart@CBaseVideoRenderer@@UAEXXZ
+// ?OnWaitEnd@CBaseVideoRenderer@@UAEXXZ
 
 // LIBRARY: LS3DF 0x10088550
 // ?PreparePerformanceData@CBaseVideoRenderer@@QAEXHH@Z
@@ -246,6 +246,9 @@
 
 // LIBRARY: LS3DF 0x100887e0
 // ?SendQuality@CBaseVideoRenderer@@UAEJ_J0@Z
+
+// LIBRARY: LS3DF 0x10088960
+// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088980
 // ?ShouldDrawSampleNow@CBaseVideoRenderer@@UAEJPAUIMediaSample@@PA_J1@Z
@@ -284,10 +287,10 @@
 // ?JoinFilterGraph@CBaseVideoRenderer@@UAGJPAUIFilterGraph@@PBG@Z
 
 // LIBRARY: LS3DF 0x10089210
-// ?QueryInterface@CBaseInputPin@@W3AGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseFilter@@W3AGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10089220
-// ?AddRef@CBaseInputPin@@W3AGKXZ
+// ?AddRef@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089230
 // ?Release@CBaseFilter@@W3AGKXZ
@@ -533,7 +536,7 @@
 // ?Notify@CBaseInputPin@@UAGJPAUIBaseFilter@@UtagQuality@@@Z
 
 // LIBRARY: LS3DF 0x1008b440
-// ?QueryVendorInfo@CBaseFilter@@UAGJPAPAG@Z
+// ?GetAllocatorRequirements@CBaseInputPin@@UAGJPAU_AllocatorProperties@@@Z
 
 // LIBRARY: LS3DF 0x1008b450
 // ?CheckStreaming@CBaseInputPin@@UAEJXZ

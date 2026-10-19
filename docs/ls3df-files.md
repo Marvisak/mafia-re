@@ -80,7 +80,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100529c0–` | none | `10052f30` | ? | |
 | `–10056860` | `10056840` | | ? (PC only?) | `I3D_projector::ProcessShadow()`, `I3D_shadow::ProcessShadow()` |
 | `10056860–10057650` | `10057630` | | `I3d_singlemesh.cpp`, `I3d_singlemorph.cpp` | one of the two has no marker |
-| `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound::Open()`; after the marker the sound's `Duplicate` (`10059250`) and a byte setter (`10059360`, PS2's `m_SetState` is next), then two out-of-line inline functions up to `10059440` |
+| `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound` in PS2's order from its constructor (`10057650`), without `m_Pause` (inlined everywhere); after the marker `Duplicate` (`10059250`) and `m_SetState` (`10059360`), its `LoadImage` folded into `I3D_area`'s, then the out-of-line `ISND_source::GetFileName` and `I3D_sound::SetOn(bool)` up to `10059440`; written |
 | `10059250–1005a140` | `1005a120` | `10059440` | `I3d_target.cpp` | from `globalTargetList`'s `$E` (`10059440`) `I3D_target` in PS2's order; written |
 | `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | `I3D_user` in PS2's order; written |
 | `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc`; `I3D_visual` in PS2's order, then its second base `I3D_void_interface`'s functions; written |
