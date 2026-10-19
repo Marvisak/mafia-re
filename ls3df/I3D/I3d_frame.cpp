@@ -1013,11 +1013,6 @@ fail:
 // fold them; auto_inline(off) keeps VC6 from inlining them here.
 #pragma auto_inline(off)
 
-void I3D_area::AddToRemoveFromSceneRing(I3D_scene *scene)
-{
-    unknown_140[0] = 1;
-}
-
 // STUB: LS3DF 0x1003a650
 void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
 {

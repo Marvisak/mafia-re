@@ -25,6 +25,7 @@ class I3D_camera;
 class I3D_sector;
 class I3D_light;
 class I3D_sound;
+class I3D_area;
 class I3D_animation_set;
 class I3D_mesh_object;
 struct S_vector4;
@@ -486,7 +487,7 @@ public:
     uint sound_flags;                   // 0x140
     uchar unknown_144[0x88];
     C_list<I3D_sector *> sectors;       // 0x1cc, the sectors it sounds in (I3D_sector::AddSound)
-    uchar unknown_1dc[0x10];
+    C_list<I3D_area *> areas;           // 0x1dc, the areas it sounds in (I3D_area::AddSound)
 };
 
 // A sector's sound environment (PS2 S_sector_sound_properties, 0x68 bytes): the EAX 3.0 listener properties, scaled to
@@ -1035,9 +1036,9 @@ public:
     uint unknown_270;
     bool unknown_274;
     bool unknown_275;
-    uint unknown_278;
-    uint unknown_27c;
-    bool unknown_280;
+    int num_areas;                      // 0x278, the ring of areas
+    I3D_area *areas;                    // 0x27c
+    bool areas_changed;                 // 0x280, set when an area joins or leaves the ring
     ISND_3Dlistener *listener;          // 0x284
     C_list<I3D_frame *> list_288;       // 0x288, released by Close
     uint ws_flags;                      // 0x298, WSF_*
@@ -1086,13 +1087,13 @@ public:
 // the copies (Update's is a base class's, CBaseRenderer::OnReceiveFirstSample, since I3d_light.cpp; SetDir's and
 // SetName's are the scene's vfunc_66 and Duplicate since I3d_interpolator.cpp).
 // FUNCTION: LS3DF 0x1004e970
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetCallback@I3D_scene@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1524,14 +1525,62 @@ public:
     uint unknown_5e8;
 };
 
-class __declspec(novtable) I3D_area : public I3D_frame {
+// A part of the scene closed by its faces (PS2 I3D_area, 0x17c bytes on PC; I3d_area.cpp), which knows the sounds
+// that play in it. The scene keeps a ring of them, and render.cpp the areas the camera is in (CheckPoint). The member
+// names are guesses.
+// VTABLE: LS3DF 0x1009b460
+class I3D_area : public I3D_frame {
 public:
     I3D_area();
+    ~I3D_area();
 
-    void AddToRemoveFromSceneRing(I3D_scene *scene);
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void SaveImage();
+    virtual void LoadImage();
 
-    uchar unknown_140[0x3c];
+    // PS2 names; the PC's vtable has CheckPoint after the sounds' functions, where PS2's source has it before them.
+    // Build's last parameter is the distance from one vertex to the next.
+    virtual LS3D_RESULT __stdcall Build(const S_vector *verts, uint num_verts, const ushort *faces, uint num_faces,
+        uint stride);
+    virtual void __stdcall AddSound(I3D_sound *sound);
+    virtual LS3D_RESULT __stdcall DeleteSound(I3D_sound *sound);
+    // Whether the point is behind all the faces' planes
+    virtual bool __stdcall CheckPoint(const S_vector &pos);
+
+    // PS2 names, out of line after the constructor, for the vtable. The time is at least 1.
+    // FUNCTION: LS3DF 0x10005250
+    virtual void __stdcall SetSwitchFadeTime(uint time)
+    {
+        switch_fade_time = time > 1 ? time : 1;
+    }
+
+    // FUNCTION: LS3DF 0x10005280
+    virtual uint __stdcall GetSwitchFadeTime()
+    {
+        return switch_fade_time;
+    }
+
+    // PS2 name
+    void AddToRemoveFromSceneRing(I3D_scene *new_scene);
+
+    int num_verts;                      // 0x140
+    S_vector *verts;                    // 0x144, in local space
+    S_vector *verts_w;                  // 0x148, in world space (UpdateV)
+    int num_faces;                      // 0x14c
+    ushort *faces;                      // 0x150, three vertex indices each
+    I3D_area *prev_in_scene;            // 0x154, the scene's ring of areas
+    I3D_area *next_in_scene;            // 0x158
+    S_plane *planes;                    // 0x15c, one for each face, in world space (UpdateV)
+    I3D_scene *scene;                   // 0x160
+    int unknown_164;                    // 0x164, -1 when the sounds change
+    C_list<I3D_sound *> sounds;         // 0x168, the sounds that play in it
+    uint switch_fade_time;              // 0x178, 500 by default
 };
+
+// SYNTHETIC: LS3DF 0x10005290
+// I3D_area::`scalar deleting destructor'
 
 class __declspec(novtable) I3D_shadow : public I3D_frame {
 public:
@@ -2062,14 +2111,17 @@ public:
 // object, so crtannotate leaves it out of library_strmbase.h. Which object our map lists a folded copy under changes
 // with the link (OnRenderEnd's was the driver's until I3d_model.cpp and again since I3d_target.cpp,
 // CBasePin::EndOfStream's I3d_visual.cpp's until then, CBaseRenderer::OnStopStreaming's, folded with
-// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp, CBasePin::CompleteConnect's, folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's since I3d_sector.cpp), and the names are the ones our
-// PDB keeps (tools/foldfix.py).
+// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp and again since I3d_area.cpp,
+// CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's since
+// I3d_sector.cpp), and the names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
 // ?NumLevels@I3D_void_interface@@UBGHXZ
 
 // LIBRARY: LS3DF 0x10087ec0
 // ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2100,20 +2152,14 @@ public:
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, I3d_frame.cpp, I3d_scene.cpp, I3d_interpolator.cpp and I3d_sector.cpp, after their files'
-// functions though their addresses come before them, so their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_scene.cpp, I3d_interpolator.cpp and I3d_sector.cpp, after their files' functions though
+// their addresses come before them, so their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
 
 // STUB: LS3DF 0x10004890
 // I3D_animation_set::I3D_animation_set
-
-// STUB: LS3DF 0x100051a0
-// I3D_area::I3D_area
-
-// STUB: LS3DF 0x10005440
-// I3D_area::AddToRemoveFromSceneRing
 
 // STUB: LS3DF 0x1000dec0
 // I3D_scene::TestColGeo

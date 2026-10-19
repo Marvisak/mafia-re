@@ -102,9 +102,9 @@ I3D_scene::I3D_scene()
     unknown_270 = 0;
     unknown_274 = false;
     unknown_275 = false;
-    unknown_278 = 0;
-    unknown_27c = 0;
-    unknown_280 = false;
+    num_areas = 0;
+    areas = NULL;
+    areas_changed = false;
     listener = NULL;
     frm_flags |= FRMFLAGS_LOCKED;
 

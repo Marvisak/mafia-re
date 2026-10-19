@@ -338,13 +338,19 @@ struct S_plane {
     S_vector normal;
     float d;
 
+    // Insanity3D's constructors and ComputePlane: the plane through three points, which the area's UpdateV builds
+    // for each face. Defined after the zero vector, as inline code before it moves the files' $Es (see ZeroSVector).
+    S_plane() {}
+    S_plane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
+    void ComputePlane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
+
     I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
 };
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
-// regions): the scene file's copy, folded with S_plane's implicit constructor, whose name our PDB keeps
+// regions): the scene file's copy, folded with S_plane's, whose name our PDB keeps
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_vector@@QAE@XZ
+// ??0S_plane@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);
@@ -399,6 +405,20 @@ struct I3D_bbox {
 // compiled with /YX (see tools/autopch.py). Nothing but its $E references it. PS2's files also construct a ZeroSQuat;
 // the PC's construct only the vector.
 static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
+
+// Through the constructor VC6 inlines ComputePlane's calls as the area's UpdateV does; the three calls written at the
+// call site sum the normal's squares and scale it in another order, and ComputePlane called there in yet another.
+inline S_plane::S_plane(const S_vector &v0, const S_vector &v1, const S_vector &v2)
+{
+    ComputePlane(v0, v1, v2);
+}
+
+inline void S_plane::ComputePlane(const S_vector &v0, const S_vector &v1, const S_vector &v2)
+{
+    normal.GetNormal(v0, v1, v2);
+    normal.Normalize();
+    d = -normal.Dot(v0);
+}
 
 // Globals.cpp (PS2 names)
 extern I3D_bbox UnitBBox;

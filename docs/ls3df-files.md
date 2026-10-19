@@ -14,7 +14,7 @@ a name is uncertain, the table says so.
     globals.
   - Its code comes last in the file's code, after all the functions, followed only by out-of-line inline and
     template functions, or in the middle of a long file. That is VC6's automatic precompiled headers (`/YX`), see
-    `tools/autopch.py`.
+    `tools/autopch.py`. A file without one has it first, before its functions (`I3d_area.cpp`).
 - **Reading the table.** Each such `$E` closes a file's code. A zero-vector entry whose code lies past the current
   file's marker starts the next file, and so does any other entry past it (a file without the header).
   - Files that define no globals and don't include the header don't appear in the table. They have to be found from
@@ -43,8 +43,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `100013e0–10004870` | `10004850` | | clipping (PC only) | messages cite `clipping.cpp` and `clipper.cpp` (`ClipFacegroups()`) |
 | `10004870–10004890` | `10004870` | | ? | no code, only the marker |
 | `10004890–10005180` | `10005160` | | `I3d_animation.cpp` | `I3D_animation_set` |
-| `10005180–100051a0` | `10005180` | | ? | no code, only the marker |
-| `100051a0–10005db0` | none | | `I3d_area.cpp` | `I3D_area::Build()`; no zero vector of its own |
+| `10005180–10005db0` | `10005180` | | `I3d_area.cpp` | compiled without a precompiled header, so the marker comes first: `I3D_area` in PS2's order from its constructor (`100051a0`), the in-class functions its vtable needs right after it, the PC's `SaveImage` and `LoadImage`, then `C_list::remove` (`10005d20`); written |
 | `10005db0–1000b0c0` | `10008390` | | `I3d_billboard.cpp` | `I3D_billboard` and `I3D_lensflare` in PS2's order (`renderBillboard()`, `I3D_lensflare::LoadImage()`); the marker before the billboard's `m_RenderFGroup`, then the copies of the render state helpers and of `C_VBuffer`'s `Lock` and `Unlock` the linker kept; written |
 | `1000b0c0–1000de70` | `1000de50` | | `I3d_camera.cpp` | `I3D_camera` in PS2's order, from its constructor (`1000b0c0`) to `UpdateV`; after it the copies of `S_vector`'s constructor, `operator-`, `Dot` and `GetNormal` the linker kept, then the marker; written |
 | `1000de70–1000dec0` | `1000dea0` | `1000de70`, `1000de80`, `1000de90` (empty) | ? | no functions, three globals with empty constructors |
@@ -120,9 +119,11 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 
 ## Open questions
 
-- **Files with only a marker.** Several ranges hold nothing but a marker (`10004870`, `10005180`, `10060c20`,
-  `10060c40`, `10061990`). Each is either a file whose code is compiled out on PC, or the second zero vector of the
-  file before it.
+- **Files with only a marker.** Several ranges hold nothing but a marker (`10004870`, `10060c20`, `10060c40`,
+  `10061990`). Each is either a file whose code is compiled out on PC, or the second zero vector of the file before it.
+  - Each sits right before a file's code, as the area file's own marker (`10005180`) does, which is first because
+    that file had no precompiled header. But the animation, `load4ds.cpp` and `render.cpp` ranges after them have a
+    marker at their end too.
   - Counted as separate files, the table has more files than the Rich header's 61 C++ objects. So some of them
     probably belong to the file before.
   - PS2 constructs two header objects per file, a zero vector and an identity quaternion. PC constructs only the

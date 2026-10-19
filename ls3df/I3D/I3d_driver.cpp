@@ -1744,11 +1744,6 @@ I3D_animation_set::I3D_animation_set()
     renderState[43]++;
 }
 
-I3D_area::I3D_area()
-{
-    renderState[21]++;
-}
-
 // STUB: LS3DF 0x1001ef70
 I3D_landpatch::I3D_landpatch()
 {
