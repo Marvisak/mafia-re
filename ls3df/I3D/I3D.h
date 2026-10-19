@@ -670,31 +670,55 @@ struct S_frame_anim {
     const ushort *keys;                 // 0x04, see ANIMF_*
 };
 
-// An animation file's frames' keys (PS2 I3D_animation_set, 0x14 bytes on PC; the file isn't written yet), reference
-// counted. The virtual functions are the ones the interpolators call, at their slots; the data is the file, loaded
-// into one block (the counts, then the frames).
-class __declspec(novtable) I3D_animation_set {
+// An animation file's data as the loader leaves it, in one block (the names are guesses): the number of frames and the
+// end time (in 1/25 s), then each frame's name and keys. The pointers are offsets into the block, which Open turns
+// into addresses, the string notes' relative to the end of their track.
+struct S_anim_set_data {
+    ushort num_anims;
+    ushort end_time;                    // 0x02
+    S_frame_anim anims[1];              // 0x04
+};
+
+// An animation file's frames' keys (PS2 I3D_animation_set, 0x14 bytes on PC), reference counted. The PS2 build's has
+// no vtable and keeps the file's name; the PC's has neither the name nor the PS2's Close and destructor out of line.
+// The key functions take a frame's index (a "link", as their messages say) and a key's.
+// VTABLE: LS3DF 0x1009b3e0
+class I3D_animation_set {
 public:
     I3D_animation_set();
+    ~I3D_animation_set();
+    void Close();
 
-    // PS2 names
+    // PS2 names but GetAnimLink (Insanity3D's), NumRotKeys, GetRotKey, NumPosKeys, NumSclKeys, GetSclKey and
+    // GetNoteKeyStr (their messages')
     virtual int __stdcall Release();
     virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
     virtual int __stdcall GetEndTime() const;
     virtual int __stdcall NumAnimations() const;
+    virtual const char *__stdcall GetAnimLink(int index) const;
+    virtual int __stdcall GetAnimIndex(const char *frame_name) const;
+    virtual int __stdcall NumPosKeys(uint link) const;
+    virtual LS3D_RESULT __stdcall GetPosKey(uint link, uint key, int &time, S_vector &pos) const;
+    virtual int __stdcall NumRotKeys(uint link) const;
+    virtual LS3D_RESULT __stdcall GetRotKey(uint link, uint key, int &time, S_quat &rot) const;
+    virtual int __stdcall NumSclKeys(uint link) const;
+    virtual LS3D_RESULT __stdcall GetSclKey(uint link, uint key, int &time, S_vector &scale) const;
+    virtual int __stdcall NumNoteKeys(uint link, int *is_note) const;
+    virtual LS3D_RESULT __stdcall GetNoteKey(uint link, uint key, int &time, short &note) const;
+    virtual LS3D_RESULT __stdcall GetNoteKeyStr(uint link, uint key, int &time, const char *&note) const;
 
     void AddRef()
     {
         ref++;
     }
 
-    // PS2 name: the animations (0x10004a70, out of line)
+    // PS2 name: the animations
     const S_frame_anim *GetAnims() const;
 
     int ref;                            // 0x04
     uint options;                       // 0x08, the animations' I3DANIMOP_* where SetAnimation gets none
-    uint unknown_0c;
-    void *data;                         // 0x10
+    uint unknown_0c;                    // the PS2's name is here; the PC's constructor leaves it alone
+    S_anim_set_data *data;              // 0x10
 };
 
 // I3D_pose::pose_flags (names guessed): what the pose sets
@@ -1084,13 +1108,13 @@ public:
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
-// the copies (Update's is a base class's, CBaseRenderer::OnReceiveFirstSample, since I3d_light.cpp; SetDir's and
-// SetName's are the scene's vfunc_66 and Duplicate since I3d_interpolator.cpp).
+// the copies (Update's was a base class's, CBaseRenderer::OnReceiveFirstSample, from I3d_light.cpp to I3d_area.cpp;
+// SetDir's is the scene's SetCallback since I3d_animation.cpp).
 // FUNCTION: LS3DF 0x1004e970
-// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?SetCallback@I3D_scene@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
@@ -2106,20 +2130,14 @@ public:
     float env_u_ofs, env_v_ofs;         // 0x64, to the environment map's (EnvProcess)
 };
 
-// A base class function the linker folds with an engine function: CBaseRenderer::OnRenderEnd with
-// I3D_driver::m_RecomputeUsedVRAM. The original kept the base classes' copy, our map lists ours under the driver's
-// object, so crtannotate leaves it out of library_strmbase.h. Which object our map lists a folded copy under changes
-// with the link (OnRenderEnd's was the driver's until I3d_model.cpp and again since I3d_target.cpp,
-// CBasePin::EndOfStream's I3d_visual.cpp's until then, CBaseRenderer::OnStopStreaming's, folded with
-// CBaseFilter::GetSetupData, IShow.cpp's until I3d_interpolator.cpp and again since I3d_area.cpp,
-// CBasePin::CompleteConnect's, folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's since
-// I3d_sector.cpp), and the names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087520
-// ?NumLevels@I3D_void_interface@@UBGHXZ
-
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
-
+// A base class function whose folded copy our map lists under an engine object, so crtannotate leaves it out of
+// library_strmbase.h: CBaseRenderer::OnStopStreaming, folded with CBaseFilter::GetSetupData, under IShow.cpp's. Which
+// object our map lists a folded copy under changes with the link (OnStopStreaming's was IShow.cpp's until
+// I3d_interpolator.cpp and again since I3d_area.cpp; CBaseRenderer::OnRenderEnd's, folded with
+// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp and from I3d_target.cpp to I3d_area.cpp;
+// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp), and the names
+// are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10088960
 // ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
@@ -2152,14 +2170,11 @@ public:
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, I3d_scene.cpp, I3d_interpolator.cpp and I3d_sector.cpp, after their files' functions though
-// their addresses come before them, so their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_scene.cpp and I3d_sector.cpp, after their files' functions though their addresses come
+// before them, so their markers are here, by name
 
 // STUB: LS3DF 0x10001370
 // FreeClipArrays
-
-// STUB: LS3DF 0x10004890
-// I3D_animation_set::I3D_animation_set
 
 // STUB: LS3DF 0x1000dec0
 // I3D_scene::TestColGeo
@@ -2181,9 +2196,6 @@ public:
 
 // STUB: LS3DF 0x100153b0
 // I3D_scene::SphereToSphereD
-
-// STUB: LS3DF 0x10004a70
-// I3D_animation_set::GetAnims
 
 // STUB: LS3DF 0x10041800
 // I3D_portal::I3D_portal

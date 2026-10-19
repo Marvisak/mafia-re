@@ -42,7 +42,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10001000–100013e0` | `100013c0` | `10001000` (empty) | clipping (PC only) | `ReserveClipArrays()` |
 | `100013e0–10004870` | `10004850` | | clipping (PC only) | messages cite `clipping.cpp` and `clipper.cpp` (`ClipFacegroups()`) |
 | `10004870–10004890` | `10004870` | | ? | no code, only the marker |
-| `10004890–10005180` | `10005160` | | `I3d_animation.cpp` | `I3D_animation_set` |
+| `10004890–10005180` | `10005160` | | `I3d_animation.cpp` | `I3D_animation_set` in PS2's order from its constructor (`10004890`), with the PC's `GetAnimLink` after `GetEndTime` and the rotation's, position's and scale's key functions before the notes'; written |
 | `10005180–10005db0` | `10005180` | | `I3d_area.cpp` | compiled without a precompiled header, so the marker comes first: `I3D_area` in PS2's order from its constructor (`100051a0`), the in-class functions its vtable needs right after it, the PC's `SaveImage` and `LoadImage`, then `C_list::remove` (`10005d20`); written |
 | `10005db0–1000b0c0` | `10008390` | | `I3d_billboard.cpp` | `I3D_billboard` and `I3D_lensflare` in PS2's order (`renderBillboard()`, `I3D_lensflare::LoadImage()`); the marker before the billboard's `m_RenderFGroup`, then the copies of the render state helpers and of `C_VBuffer`'s `Lock` and `Unlock` the linker kept; written |
 | `1000b0c0–1000de70` | `1000de50` | | `I3d_camera.cpp` | `I3D_camera` in PS2's order, from its constructor (`1000b0c0`) to `UpdateV`; after it the copies of `S_vector`'s constructor, `operator-`, `Dot` and `GetNormal` the linker kept, then the marker; written |

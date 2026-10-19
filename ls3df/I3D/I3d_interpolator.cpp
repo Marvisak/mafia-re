@@ -698,14 +698,3 @@ I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(const char *frame_name)
     frm->frm_flags |= FRMFLAGS_INTERPOLATOR;
     return ip;
 }
-
-// The functions of other files the interpolators call, until those are written. They come after the file's functions
-// (see I3d_driver.cpp); their markers are in I3D.h, by name, as their addresses come before the file's.
-#pragma auto_inline(off)
-
-const S_frame_anim *I3D_animation_set::GetAnims() const
-{
-    return data ? (const S_frame_anim *)((char *)data + 4) : NULL;
-}
-
-#pragma auto_inline(on)
