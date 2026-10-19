@@ -24,7 +24,7 @@ a name is uncertain, the table says so.
   `IdentityMatrixData` (`I3d_math.h`, 0x40 bytes, never referenced) at the start of its `.rdata`, except one compiled
   with another file's precompiled header (`clipper2.cpp`). The original has 58. They mark the objects in `.rdata` as
   the zero vectors do in `.text` and `.bss`, and the first reference from code into the data after a copy names its
-  file. Ours has copies only where `I3D.h` is included (see `I3d_math.h`).
+  file. Ours has them through an inline function nobody calls, as the original must (see `I3d_math.h`).
 - **Names.** Strings in each range name the classes (`!! Out of memory  I3D_frame::SetName()`), and two files name
   themselves through `__FILE__`. The PS2 build (`SLUS_206.71`) names its files through `__sinit_<file>.cpp`. Its
   engine files are linked in folder groups (I3D, IGraph, ISound), alphabetically within each and case-insensitively, as

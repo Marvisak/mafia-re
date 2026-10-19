@@ -279,23 +279,6 @@ struct S_matrix : D3DMATRIX {
     I3D_MATH_API float __stdcall GetUScale() const;
 };
 
-// PS2 has a copy in every file that uses it (a local IdentityMatrix in .data); here it is constant data, which an
-// S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. I3d_math.cpp's copy; the scene file's
-// is annotated in I3D.h.
-// VC6 puts a copy into an object only if the source references it, inline functions nobody calls included, first in
-// the object's .rdata. Ours are the files that include I3D.h (I3D_visual's GetInvMatrix and GetRenderMatrix). The
-// original has one in every object that includes this header (58; clipper.cpp's at 0x1009b2c0, the sound files'),
-// so inline code every file sees references it. Open: which; inline code before the zero vector also moves the files'
-// $Es (tools/autopch.py).
-// GLOBAL: LS3DF 0x1009bf48
-static const D3DMATRIX IdentityMatrixData = {
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f,
-};
-#define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
-
 // A rotation: s is the cosine of half the angle, v the axis scaled by its sine (PS2 __ct__6S_quatFfRC8S_vector). PS2's
 // layout has the axis first, the PC's s.
 struct S_quat {
@@ -417,6 +400,24 @@ struct I3D_triface {
 // compiled with /YX (see tools/autopch.py). Nothing but its $E references it. PS2's files also construct a ZeroSQuat;
 // the PC's construct only the vector.
 static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
+
+// PS2 has a copy in every file that uses it (a local IdentityMatrix in .data, after the zero vector); here it is
+// constant data, which an S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. I3d_math.cpp's
+// copy; the scene file's is annotated in I3D.h.
+// Every object of the original that includes the header has a copy, first in its .rdata (58; clipper.cpp's at
+// 0x1009b2c0), though only 12 read theirs. VC6 puts one into an object only where the source references it, inline
+// functions nobody calls included, so the header has one every file sees: I3DGetIdentityMatrix (Insanity3D's name,
+// which has it out of line), never called. After the zero vector: its body before it would move the files' $Es (the
+// driver's one function late, tools/autopch.py).
+// GLOBAL: LS3DF 0x1009bf48
+static const D3DMATRIX IdentityMatrixData = {
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f,
+};
+#define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
+inline const S_matrix &I3DGetIdentityMatrix() { return IdentityMatrix; }
 
 // Through the constructor VC6 inlines ComputePlane's calls as the area's UpdateV does; the three calls written at the
 // call site sum the normal's squares and scale it in another order, and ComputePlane called there in yet another.
