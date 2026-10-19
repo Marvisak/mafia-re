@@ -1,9 +1,10 @@
 // The lighting (PS2 T&l.cpp; the & would split the build's link command, which runs through cmd.exe), at
 // 0x10065a10-0x10068880 in the original. PS2 picks up to 8 of the current sector's lights for an object and the hardware
 // lights it; the PC lights the vertices itself, PrepareLights picking the lights and an assembly loop lighting each
-// vertex. After the lighting come the lightmaps' VertexLightingProcess (0x10066e90, not written yet), the header's zero
-// vector's $E (0x10067d00) and the vertex helpers the objects and billboards render with. Names are the PS2 build's
-// unless noted.
+// vertex. After the lighting come the lightmaps' VertexLightingProcess (0x10066e90), the header's zero vector's $E
+// (0x10067d00) and the vertex helpers the objects and billboards render with. Names are the PS2 build's unless noted.
+// Not matching yet: the copy of I3D_dummy::GetInvMatrix comes after EnvProcess, its first caller, where the original's
+// is at the file's end (0x10068840), so the original's headers have more inline code before I3D_dummy's.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 
@@ -621,6 +622,170 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
         col += S_vector(col.x * c.x, col.y * c.y, col.z * c.z) * a;
     }
     return 1;
+}
+
+// The light at a lightmap's texel (pos, with the normal) from the current sector's lightmap lights: the ambient lights'
+// sum, and the diffuse sum of the point, spot and directional lights, each by its angle to the normal and its range or
+// cone. For a light with I3DLIGHTMODE_SHADOW (with a scene and flags & 1) a ray from just off the surface to the light
+// (TestColGeo, its texels through TexelCallback) filters it, and the rays that hit a face from behind are counted: if
+// all did, the texel is inside the geometry, out is magenta and *inside true. Otherwise out is the material's emissive
+// color plus the sums times its ambient and diffuse colors (white for a texture without MATF_KEEP_DIFFUSE), scaled
+// down to a maximum of 2 and clamped at 0. x above 0 adds 0x2000000 to the ray's flags and passes frm to the test.
+// PS2 name and parameters, pos and normal by value on PC. PS2's (and the Xbox's, 0x2301e0) attenuates by factors,
+// doubles the lights and takes the material at the end; the shadow test is the same in all three. The cases are in the
+// original's order (its jump table's); the unused light types are listed, as their entries go to the loop's end where
+// values above 7 go to the shadow test, in the PS2 and Xbox builds too. Case 1's square is Square() (the Xbox calls it
+// in both cases), which gives the original's order of the FPU code; its range scale divides through
+// S_vector::operator/, whose reciprocal takes the stack slot the original stores it in.
+// Not matching yet:
+// - Registers: the original keeps lp on the stack (in ecx between calls) and gives esi to *lp, edi to col_flags (saving
+//   out and restoring it at the end of each pass) and ebp to x; ours gives lp a register, so the frame is 4 bytes
+//   smaller and the temporaries' copies are scheduled differently. Declaration order, the loop's spelling, a named
+//   light pointer and nested ifs for the first tests (as PS2 and the Xbox have them) didn't move it.
+// - Inlining: the original leaves only -ldir's S_vector constructor and the final sum's outer one out of line; ours
+//   leaves -ldir's too, but also both products' constructors and both sums' operator+. Probes: about 2 more units of
+//   source and 5 more zero-cost inline calls between the switch and the final sum give the original's calls.
+// FUNCTION: LS3DF 0x10066e90
+void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_material *mat, I3D_scene *scene,
+    uint flags, bool *inside, I3D_frame *frm, int x)
+{
+    S_vector ambient, diffuse, emissive;
+    if (mat) {
+        emissive = mat->emissive;
+        if (mat->flags & MATF_TEXTURE && !(mat->flags & MATF_KEEP_DIFFUSE)) {
+            ambient.x = ambient.y = ambient.z = 1.0f;
+            diffuse = ambient;
+        } else {
+            ambient = mat->ambient;
+            diffuse = mat->diffuse;
+        }
+    } else {
+        ambient.x = ambient.y = ambient.z = 1.0f;
+        emissive.Zero();
+        diffuse = ambient;
+    }
+    S_vector diff_sum(0.0f, 0.0f, 0.0f);
+    S_vector amb_sum(0.0f, 0.0f, 0.0f);
+    uint num_back = 0;
+    uint num_rays = 0;
+    S_vector color, dir, from;
+    I3D_light **lp = &pCurrentSector->lights[0];
+    for (int n = pCurrentSector->lights.size(); n--; lp++) {
+        if (!((*lp)->mode & I3DLIGHTMODE_LIGHTMAP) || !((*lp)->frm_flags & FRMFLAGS_ON))
+            continue;
+        if (IsAbsMrgZero((*lp)->power))
+            continue;
+        uint col_flags = 0x20130000;
+        if (x > 0)
+            col_flags = 0x22130000;
+        switch ((*lp)->ltype) {
+        case I3DLIGHT_AMBIENT:
+            amb_sum += (*lp)->color;
+            continue;
+        case I3DLIGHT_POINT: {
+            S_vector lpos = (*lp)->w_pos;
+            S_vector d = lpos - pos;
+            float sq = d.Square();
+            if (sq > (*lp)->range_f_2)
+                continue;
+            float dot = d.Dot(normal);
+            if (dot <= 0.0f)
+                continue;
+            float dist = (float)sqrt(sq);
+            dot /= dist;
+            if (dist <= (*lp)->range_n)
+                color = (*lp)->color * dot;
+            else
+                color = (*lp)->color * dot * ((*lp)->range_f - dist) / (*lp)->range_delta;
+            from = pos + normal * 0.0075f;
+            dir = lpos - from;
+            break;
+        }
+        case I3DLIGHT_SPOT: {
+            S_vector ldir = -(*lp)->w_dir;
+            S_vector lpos = (*lp)->w_pos;
+            dir = lpos - pos;
+            float sq = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
+            if (sq > (*lp)->range_f_2)
+                continue;
+            float dot = dir.Dot(normal);
+            if (dot <= 0.0f)
+                continue;
+            float dist = (float)sqrt(sq);
+            if (IsMrgZeroLess(dist))
+                continue;
+            float att;
+            if (dist > (*lp)->range_n)
+                att = ((*lp)->range_f - dist) / (*lp)->range_delta;
+            else
+                att = 1.0f;
+            float inv = 1.0 / dist;
+            float cos = ldir.Dot(dir) * inv;
+            if (cos <= (*lp)->outer_cos)
+                continue;
+            if (cos <= (*lp)->inner_cos)
+                att *= (cos - (*lp)->outer_cos) * (*lp)->cone_scale;
+            color = (*lp)->color * att * dot * inv;
+            from = pos + normal * 0.0075f;
+            dir = lpos - from;
+            break;
+        }
+        case I3DLIGHT_DIRECTIONAL: {
+            S_vector ldir = (*lp)->w_dir;
+            float dot = ldir.Dot(normal);
+            if (dot >= 0.0f)
+                continue;
+            color = (*lp)->color * -dot;
+            from = pos + normal * 0.0075f;
+            dir = -ldir;
+            col_flags |= 0x40000;
+            break;
+        }
+        case I3DLIGHT_NULL:
+        case I3DLIGHT_FOG:
+        case I3DLIGHT_POINTAMBIENT:
+        case I3DLIGHT_POINTFOG:
+            continue;
+        }
+        if (scene && flags & 1 && (*lp)->mode & I3DLIGHTMODE_SHADOW) {
+            if (IsAbsMrgZero(color.Sum()))
+                continue;
+            num_rays++;
+            S_vector filter(1.0f, 1.0f, 1.0f);
+            float col_dist;
+            S_vector col_normal;
+            I3D_frame *f = scene->TestColGeo(from, dir, col_flags, &col_dist, &col_normal, NULL, &filter, TexelCallback,
+                x > 0 ? frm : NULL, x);
+            if (f && (f->GetType() != FRAME_VISUAL || ((I3D_visual *)f)->visual_type != I3D_VISUAL_BILLBOARD)) {
+                dir.Normalize();
+                if (dir.Dot(col_normal) >= 0.0f)
+                    num_back++;
+            }
+            color *= filter;
+        }
+        diff_sum += color;
+    }
+    if (inside && num_back > 0 && num_back == num_rays) {
+        out = S_vector(1.0f, 0.0f, 1.0f);
+        *inside = true;
+        return;
+    }
+    out = emissive + (amb_sum * ambient + diffuse * diff_sum);
+    float m = max(out.x, max(out.y, out.z));
+    if (m > 2.0) {
+        float r = 1.0f / m;
+        out.x = out.x * r * 2.0f;
+        out.y = out.y * r * 2.0f;
+        out.z = out.z * r * 2.0f;
+    }
+    if (out.x < 0.0f)
+        out.x = 0.0f;
+    if (out.y < 0.0f)
+        out.y = 0.0f;
+    if (out.z < 0.0f)
+        out.z = 0.0f;
+    if (inside)
+        *inside = false;
 }
 
 // The vertices' environment map coordinates (u, v at dst) from their positions and normals at src, m being the

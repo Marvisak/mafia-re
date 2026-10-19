@@ -89,11 +89,12 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
-    # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp), RenderShadowTexture
-    # by the shadows, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit objects and single
-    # meshes, the vertex transforms by the shadows' range (0x10054f60), the camera's UpdateSector by render.cpp; the
-    # scene's view, sound and weather functions by render.cpp, its shadow and mirror lists by the shadows and mirrors,
-    # MakeReadySectors by I3D code at 0x10045724.
+    # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp),
+    # RenderShadowTexture by the shadows, the visual's SetBoundVolume by the mirrors, the lod's destructor by the lit
+    # objects and single meshes, the vertex transforms by the shadows' range (0x10054f60), VertexLightingProcess by the
+    # lit objects' lightmaps (0x10021bb0), the camera's UpdateSector by render.cpp; the scene's view, sound and weather
+    # functions by render.cpp, its shadow and mirror lists by the shadows and mirrors, MakeReadySectors by I3D code at
+    # 0x10045724.
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
@@ -101,6 +102,7 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:??1lod@@UAE@XZ"
         "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
         "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
+        "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
         "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ"
         "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?SetViewProjMatrix@I3D_scene@@QAEXABUS_matrix@@@Z"
         "/INCLUDE:?m_UpdateSoundProperties@I3D_scene@@QAEXPAVI3D_sector@@0M@Z"

@@ -700,12 +700,13 @@ public:
     virtual void __stdcall Close();
     // i3d_collision.cpp (not written yet): a ray from from along dir against the geometry; texel_cb is asked about the
     // texels it passes through (TexelCallback), with cb_context (the parameter types are guesses, the callbacks' after
-    // TexelCallback's). TestColGeo1 and the others are PS2's names, but their parameters aren't checked.
+    // TexelCallback's). TestColGeo returns the frame hit, whose type VertexLightingProcess tests. TestColGeo1 and the
+    // others are PS2's names, but their parameters aren't checked.
     virtual int __stdcall TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos,
         S_vector *normal, void *cb, void *cb_context, void *texel_cb, int x) const;
-    virtual int __stdcall TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist, S_vector *normal,
-        void *cb, void *cb_context, int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *),
-        I3D_frame *frm, int x) const;
+    virtual I3D_frame *__stdcall TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist,
+        S_vector *normal, void *cb, void *cb_context,
+        int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *), I3D_frame *frm, int x) const;
     virtual int __stdcall TestColHierarchy() const;
     virtual int __stdcall TestColSphere() const;
     virtual int __stdcall TestColSphereHierarchy() const;
@@ -926,6 +927,7 @@ enum I3D_LIGHTTYPE {
 // tests the second)
 #define I3DLIGHTMODE_VERTEX 0x1
 #define I3DLIGHTMODE_LIGHTMAP 0x2
+#define I3DLIGHTMODE_SHADOW 0x20        // the lightmaps test rays to the light (the name is a guess)
 #define I3DLIGHTMODE_LIGHTNESS 0x40     // taken by I3D_scene::GetLightness (the name is a guess)
 
 // A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp isn't written yet). The members are the ones T&l.cpp and the

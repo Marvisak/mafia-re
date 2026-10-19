@@ -167,6 +167,35 @@ struct S_vector {
         return *this;
     }
 
+    // Insanity3D's, component by component
+    S_vector operator*(const S_vector &v) const
+    {
+        return S_vector(x * v.x, y * v.y, z * v.z);
+    }
+
+    // Insanity3D's, component by component
+    S_vector &operator*=(const S_vector &v)
+    {
+        x *= v.x;
+        y *= v.y;
+        z *= v.z;
+        return *this;
+    }
+
+    // Insanity3D's: the reciprocal goes into a local, which keeps a stack slot where VC6 inlines it
+    // (VertexLightingProcess)
+    S_vector operator/(float f) const
+    {
+        float r = 1.0f / f;
+        return S_vector(x * r, y * r, z * r);
+    }
+
+    // Insanity3D's
+    float Sum() const
+    {
+        return x + y + z;
+    }
+
     void Zero()
     {
         x = 0.0f;

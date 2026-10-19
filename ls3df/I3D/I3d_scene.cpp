@@ -1645,11 +1645,11 @@ bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
 // addresses are in I3D.h, by name, as the linter checks the order of a file's markers.
 #pragma auto_inline(off)
 
-int I3D_scene::TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist, S_vector *normal,
-    void *cb, void *cb_context, int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *),
-    I3D_frame *frm, int x) const
+I3D_frame *I3D_scene::TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist,
+    S_vector *normal, void *cb, void *cb_context,
+    int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *), I3D_frame *frm, int x) const
 {
-    return renderState[46];
+    return (I3D_frame *)renderState[46];
 }
 
 int I3D_scene::TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos, S_vector *normal,
