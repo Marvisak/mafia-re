@@ -112,7 +112,9 @@ enum I3D_RENDERSTATE {
     RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
     RS_LOD_INDEX = 38,                  // -1 by default; the rendering copies it to ForceLodIndex, which nothing reads
                                         // (Insanity3D's name for its forced level of detail, -1 its default too)
-    RS_USESHADOWS = 43,                 // the shadows are rendered (Insanity3D's name for its own state 13)
+    RS_USE_OCCLUSION = 39,              // the occluders hide what is behind them (Insanity3D's name for its own
+                                        // state 47)
+    RS_USESHADOWS = 43,                // the shadows are rendered (Insanity3D's name for its own state 13)
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
     RS_LOD_SCALE = 50,                  // in percent
@@ -205,6 +207,7 @@ inline float I3DIntAsFloat(int i)
 #define FRMFLAGS_CHANGED 0x2000         // moved since the last Update
 #define FRMFLAGS_TARGET 0x4000          // a target's frame (I3D_target::DeleteFromAnyTarget)
 #define FRMFLAGS_SHADOW 0x8000          // a shadow's frame (I3D_shadow::DeleteFromAnyShadow)
+#define FRMFLAGS_UNKNOWN_10000 0x10000  // an occluder hides nothing without it (I3D_occluder::UpdateShadow)
 // The hierarchy has areas, sectors, occluders: each of these frames has its own from its constructor on, and LinkTo
 // keeps it in a parent of the type
 #define FRMFLAGS_HR_AREAS 0x40000
@@ -709,6 +712,7 @@ enum I3D_SECTOR_SOUND_DATA_INDEX {
 #define SCTF_UNKNOWN_1 0x1              // the scene's weather system shows only where the primary sector has it
 #define SCTF_PREPARED 0x4               // MakeReady was called: the sector has its hull's planes
 #define SCTF_OCCLUDER 0x40              // MakeReady makes an occluder of the hull
+#define SCTF_UNKNOWN_80 0x80            // the occluder made of its hull hides nothing (ProcessOccluders)
 #define SCTF_UNKNOWN_100 0x100          // Duplicate keeps it
 #define SCTF_PRIMARY 0x200
 #define SCTF_SOUND_FADE_IN 0x400        // the renderer blends into the sound environment, not out of it
@@ -777,7 +781,8 @@ public:
     S_plane *planes;                    // 0x21c
     I3D_sector *next_in_scene;          // 0x220, the scene's ring of sectors
     I3D_sector *prev_in_scene;          // 0x224
-    uint unknown_228;                   // 0x228
+    I3D_occluder *occluders;            // 0x228, the occluders in it, linked through their next_in_sector
+                                        // (OCCL_UpdateOcclLists)
     I3D_occluder *occluder;             // 0x22c, made of the hull by MakeReady (SCTF_OCCLUDER)
 };
 
@@ -787,6 +792,9 @@ public:
 // SetName's buffer, a function-local static: VC6 puts it into the PDB under its plain name
 // GLOBAL: LS3DF 0x100a86e0
 // name
+
+// I3D_portal::portal_flags (the name is a guess)
+#define PORTALF_OCCLUDED 0x2            // an occluder hides it (OCCL_PrepareSector2)
 
 // A portal between sectors (PS2 I3D_portal, 0x150 bytes on PC; not a frame). The scene keeps a ring of them. The
 // member names are guesses.
@@ -799,10 +807,16 @@ public:
     void UpdatePortal();
     void LoadImage();
 
-    uchar unknown_00[0xf4];
+    uchar unknown_00[4];                // its vtable
+    int num_verts;                      // 0x04
+    uint portal_flags;                  // 0x08, PORTALF_*
+    uchar unknown_0c[0x78];
+    S_vector verts_w[8];                // 0x84, in world space
+    S_plane plane;                      // 0xe4, in world space
     I3D_sector *sector;                 // 0xf4, the sector it leads out of
     I3D_sector *connect_sector;         // 0xf8, the one it leads into
-    uchar unknown_fc[8];
+    uint unknown_fc;                    // 0xfc, an occluder doesn't hide the portal into the sector where it is set
+    uchar unknown_100[4];
     I3D_portal *next_in_scene;          // 0x104
     uchar unknown_108[0x48];
 };
@@ -1297,10 +1311,11 @@ public:
     int num_sectors;                    // 0x260, the ring of sectors
     I3D_sector *sectors;                // 0x264
     uint unknown_268;
-    uint unknown_26c;
-    uint unknown_270;
-    bool unknown_274;
-    bool unknown_275;
+    int num_occluders;                  // 0x26c, the ring of occluders
+    I3D_occluder *occluders;            // 0x270
+    bool unknown_274;                   // set when an occluder joins the ring
+    bool occluders_changed;             // 0x275, the sectors' lists of occluders are to be made again
+                                        // (OCCL_UpdateOcclLists)
     int num_areas;                      // 0x278, the ring of areas
     I3D_area *areas;                    // 0x27c
     bool areas_changed;                 // 0x280, set when an area joins or leaves the ring
@@ -1403,16 +1418,17 @@ public:
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
 // (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp, from I3d_material.cpp, whose
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
-// to I3d_singlemorph.cpp, I3D_visual::m_RenderFGroup's since I3d_projector.cpp), and SetDir's and SetName's are scene
+// to I3d_singlemorph.cpp, I3D_visual::m_RenderFGroup's in I3d_projector.cpp and since I3d_occluder.cpp, UpdateTexture's
+// in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?UpdateTexture@I3D_material@@UAGXXZ
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
 // ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1826,20 +1842,76 @@ public:
 // SYNTHETIC: LS3DF 0x10033bd0
 // $E10
 
-class __declspec(novtable) I3D_occluder : public I3D_frame {
+// I3D_occluder::occl_flags (the names are guesses)
+#define OCCLF_ACTIVE 0x2                // UpdateShadow made its volume this frame, and nothing hides it
+#define OCCLF_PORTAL 0x4                // the camera is on both sides of its sector's portals: it hides no portal
+
+// A convex body that hides what is behind it (PS2 I3D_occluder, 0x5ec bytes on PC; I3d_occluder.cpp). For the camera
+// UpdateShadow makes the volume it hides: the planes of the faces turned to the camera, the planes through the camera
+// and the silhouette's edges, and a plane along the view through the silhouette's farthest vertex. The scene keeps a
+// ring of them, each sector a list of those in it (OCCL_UpdateOcclLists). The member names are guesses.
+// VTABLE: LS3DF 0x1009c420
+class I3D_occluder : public I3D_frame {
 public:
     I3D_occluder();
+    ~I3D_occluder();
 
-    // PS2 name and parameters: makes the occluder of the faces (the flags' meaning isn't known)
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+
+    // PS2 name and parameters: copies the faces and the vertices, which are stride bytes apart
     virtual LS3D_RESULT __stdcall Build(const S_vector *verts, uint num_verts, const ushort *faces, uint num_faces,
-        uint flags);
+        uint stride);
 
+    // PS2 names
     void AddToRemoveFromSceneRing(I3D_scene *scene);
+    LS3D_RESULT Build();
+    void UpdateShadow();
+    bool TestVertListW(int num, S_vector *verts);
 
-    uchar unknown_140[0x4a4];
+    uint num_verts;                     // 0x140
+    uint num_faces;                     // 0x144
+    S_vector *verts;                    // 0x148, in local space
+    S_vector *verts_w;                  // 0x14c, in world space (UpdateV)
+    ushort *faces;                      // 0x150, three vertex indices each
+    I3D_occluder *prev_in_scene;        // 0x154, the scene's ring of occluders
+    I3D_occluder *next_in_scene;        // 0x158
+    ushort *edge_faces;                 // 0x15c, three for each face: the face across each edge (Build)
+    uchar *edge_sides;                  // 0x160, and which of that face's edges it is
+    S_plane *planes;                    // 0x164, one for each face, in world space (UpdateV)
+    ushort *face_flags;                 // 0x168, one for each face: 1 if it faces the camera
+    S_plane side_planes[35];            // 0x16c, through the camera and the silhouette's edges (UpdateShadow)
+    int num_side_planes;                // 0x39c
+    S_plane face_planes[33];            // 0x3a0, of the faces turned to the camera
+    int num_face_planes;                // 0x5b0
+    S_plane depth_plane;                // 0x5b4, along the view, through the silhouette's farthest vertex
+    uint occl_flags;                    // 0x5c4, OCCLF_*
+    I3D_scene *scene;                   // 0x5c8
+    S_vector center;                    // 0x5cc, of the vertices' box in world space (UpdateV)
+    float radius;                       // 0x5d8, of the sphere around it; Build sets 1, 0 means never built
+    float radius_2;                     // 0x5dc, its square
+    I3D_occluder *next_in_sector;       // 0x5e0, the sector's list (I3D_sector::occluders)
     I3D_sector *sector;                 // 0x5e4, the sector whose hull it is (I3D_sector::MakeReady)
-    uint unknown_5e8;
+    float dist;                         // 0x5e8, from the camera: CullOcclsEachOther takes the nearer ones first
 };
+
+// SYNTHETIC: LS3DF 0x1003a500
+// I3D_occluder::`scalar deleting destructor'
+
+// The occluder file's zero vector, which the constructor copies
+// GLOBAL: LS3DF 0x101b43b0
+// ZeroSVector
+
+// The occluder file's static functions, defined before their callers as PS2 has them: VC6 emits them after
+// ProcessOccluders, their first caller, so their markers would be out of address order there. They have no public
+// symbol, so their names are the PDB's procedure names.
+// FUNCTION: LS3DF 0x1003c2e0
+// CullOcclsEachOther
+
+// FUNCTION: LS3DF 0x1003c480
+// POIS_EnumProc
 
 // A part of the scene closed by its faces (PS2 I3D_area, 0x17c bytes on PC; I3d_area.cpp), which knows the sounds
 // that play in it. The scene keeps a ring of them, and render.cpp the areas the camera is in (CheckPoint). The member
@@ -1901,7 +1973,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_sound@@UAEXXZ
+// ?LoadImage@I3D_area@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
 // its name, under the frame the shadow is set to, moves
@@ -2319,10 +2391,11 @@ public:
 // I3D_billboard::`scalar deleting destructor'
 
 // SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
-// billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and the morphs' since I3d_projector.cpp,
-// so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
+// billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and in render.cpp, the morphs' in
+// I3d_projector.cpp and since I3d_occluder.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates
+// it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
+// ?SetSpace@I3D_morph@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -3117,13 +3190,12 @@ public:
 // (0x10087ec0), folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to
 // I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp, from I3d_singlemorph.cpp to i3d_collision.cpp and in
 // I3d_shadow.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file, from I3d_morph.cpp to
-// I3d_singlemesh.cpp and since I3d_projector.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
+// I3d_singlemesh.cpp and from I3d_projector.cpp to render.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
 // I3d_pose.cpp and from I3d_morph.cpp to I3d_shadow.cpp), so after a new file or function rerun crtannotate and move
-// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// such markers here or back (none is here since I3d_occluder.cpp). The names are the ones our PDB keeps
+// (tools/foldfix.py).
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3164,9 +3236,6 @@ public:
 
 // Stubs in I3d_driver.cpp, I3d_scene.cpp, I3d_sector.cpp and render.cpp, after their files' functions though their
 // addresses come before them, so their markers are here, by name
-
-// STUB: LS3DF 0x1003c070
-// ProcessOccluders
 
 // STUB: LS3DF 0x1003cbb0
 // InitParticle
@@ -3231,14 +3300,14 @@ struct TLVERTEX2 {
 // The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
 // I3D files written later (0x10041700)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
+// ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
-// after the shadow visual's SetOn and since I3d_projector.cpp after vector<ITexture *>::_Destroy); the original keeps
-// the area file's copy
+// and render.cpp after the shadow visual's SetOn, in I3d_projector.cpp after vector<ITexture *>::_Destroy and since
+// I3d_occluder.cpp after Tick itself); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -3799,6 +3868,11 @@ void ProcessOccluders(I3D_scene *scene);
 void InitParticle();
 void CloseParticle();
 extern I3D_visual *pParticleVisual;
+
+// I3d_occluder.cpp (PS2 names), for the portals' processing: the sectors' lists of occluders, made again where the
+// scene's ring changed, and the volumes of a sector's occluders, which hide the portals behind them
+void OCCL_UpdateOcclLists(I3D_scene *scene);
+void OCCL_PrepareSector2(I3D_sector *sector);
 
 // I3d_driver.cpp: counts the frames rendered (a frame's render_number is its value when the frame was last rendered),
 // and its previous value

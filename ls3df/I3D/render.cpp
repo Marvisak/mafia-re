@@ -868,15 +868,10 @@ inline void I3D_driver::m_DrawAllSortedFG()
         pCurrentScene->m_RenderWeatherSystem();
 }
 
-// The functions of other files the rendering calls, until those are written (the portals', the occluders' and the
-// particles' files). After their callers: VC6 would know these can't throw. Their markers are in I3D.h, by name, as
+// The functions of other files the rendering calls, until those are written (the portals' and the particles'
+// files). After their callers: VC6 would know these can't throw. Their markers are in I3D.h, by name, as
 // their addresses come before the file's.
 #pragma auto_inline(off)
-
-void ProcessOccluders(I3D_scene *scene)
-{
-    renderState[46]++;
-}
 
 void InitParticle()
 {

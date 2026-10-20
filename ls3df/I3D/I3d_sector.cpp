@@ -109,7 +109,7 @@ I3D_sector::I3D_sector()
     num_fog_lights = 0;
     prev_in_scene = NULL;
     next_in_scene = NULL;
-    unknown_228 = 0;
+    occluders = NULL;
     occluder = NULL;
     frm_flags |= FRMFLAGS_HR_SECTORS;
     unknown_1e8 = 0;

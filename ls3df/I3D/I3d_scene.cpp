@@ -93,10 +93,10 @@ I3D_scene::I3D_scene()
     num_sectors = 0;
     sectors = NULL;
     unknown_268 = 0;
-    unknown_26c = 0;
-    unknown_270 = 0;
+    num_occluders = 0;
+    occluders = NULL;
     unknown_274 = false;
-    unknown_275 = false;
+    occluders_changed = false;
     num_areas = 0;
     areas = NULL;
     areas_changed = false;

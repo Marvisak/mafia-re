@@ -1008,15 +1008,3 @@ fail:
     ImageErrFlg = I3DERR_OUTOFMEM;
     ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
 }
-
-// The functions of other files the frames call, until those are written. Their bodies differ, or the linker would
-// fold them; auto_inline(off) keeps VC6 from inlining them here.
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x1003a650
-void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
-{
-    unknown_140[0] = 2;
-}
-
-#pragma auto_inline(on)

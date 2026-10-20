@@ -340,6 +340,7 @@ struct S_plane {
     // Insanity3D's constructors and ComputePlane: the plane through three points, which the area's UpdateV builds
     // for each face. Defined after the zero vector, as inline code before it moves the files' $Es (see ZeroSVector).
     S_plane() {}
+    S_plane(const S_vector &n, float d1);
     S_plane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
     void ComputePlane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
 
@@ -431,6 +432,9 @@ static const D3DMATRIX IdentityMatrixData = {
 };
 #define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
 inline const S_matrix &I3DGetIdentityMatrix() { return IdentityMatrix; }
+
+// Insanity3D's: the occluders' UpdateShadow assigns its plane along the view through a temporary of it
+inline S_plane::S_plane(const S_vector &n, float d1) : normal(n), d(d1) {}
 
 // Through the constructor VC6 inlines ComputePlane's calls as the area's UpdateV does; the three calls written at the
 // call site sum the normal's squares and scale it in another order, and ComputePlane called there in yet another.
