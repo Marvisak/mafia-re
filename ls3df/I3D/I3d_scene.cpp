@@ -1645,44 +1645,6 @@ bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
 // addresses are in I3D.h, by name, as the linter checks the order of a file's markers.
 #pragma auto_inline(off)
 
-I3D_frame *I3D_scene::TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist,
-    S_vector *normal, void *cb, void *cb_context,
-    int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *), I3D_frame *frm, int x) const
-{
-    return (I3D_frame *)renderState[46];
-}
-
-int I3D_scene::TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos, S_vector *normal,
-    void *cb, void *cb_context, void *texel_cb, int x) const
-{
-    return renderState[47];
-}
-
-int I3D_scene::TestColHierarchy() const
-{
-    return renderState[51];
-}
-
-int I3D_scene::TestColSphere() const
-{
-    return renderState[52];
-}
-
-int I3D_scene::TestColSphereHierarchy() const
-{
-    return renderState[56];
-}
-
-int I3D_scene::TestColSphereVisual() const
-{
-    return renderState[57];
-}
-
-int I3D_scene::SphereToSphereD() const
-{
-    return renderState[58];
-}
-
 void I3D_portal::UpdatePortal()
 {
     renderState[11]++;

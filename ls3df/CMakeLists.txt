@@ -14,6 +14,7 @@ add_library(ls3df SHARED
     I3D/I3d_area.cpp
     I3D/I3d_billboard.cpp
     I3D/I3d_camera.cpp
+    I3D/i3d_collision.cpp
     I3D/I3d_driver.cpp
     I3D/I3d_dummy.cpp
     I3D/I3d_frame.cpp

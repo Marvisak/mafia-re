@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -1042,7 +1042,7 @@
 // GLOBAL: LS3DF 0x100ac790
 // ___badioinfo
 
-// GLOBAL: LS3DF 0x100ac7b0
+// GLOBAL: LS3DF 0x100ac7b4
 // __amblksiz
 
 // GLOBAL: LS3DF 0x100ac920

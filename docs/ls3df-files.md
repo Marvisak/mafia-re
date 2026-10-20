@@ -52,8 +52,7 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10005180–10005db0` | `10005180` | | `I3d_area.cpp` | compiled without a precompiled header, so the marker comes first: `I3D_area` in PS2's order from its constructor (`100051a0`), the in-class functions its vtable needs right after it, the PC's `SaveImage` and `LoadImage`, then `C_list::remove` (`10005d20`); written |
 | `10005db0–1000b0c0` | `10008390` | | `I3d_billboard.cpp` | `I3D_billboard` and `I3D_lensflare` in PS2's order (`renderBillboard()`, `I3D_lensflare::LoadImage()`); the marker before the billboard's `m_RenderFGroup`, then the copies of the render state helpers and of `C_VBuffer`'s `Lock` and `Unlock` the linker kept; written |
 | `1000b0c0–1000de70` | `1000de50` | | `I3d_camera.cpp` | `I3D_camera` in PS2's order, from its constructor (`1000b0c0`) to `UpdateV`; after it the copies of `S_vector`'s constructor, `operator-`, `Dot` and `GetNormal` the linker kept, then the marker; written |
-| `1000de70–1000dec0` | `1000dea0` | `1000de70`, `1000de80`, `1000de90` (empty) | ? | no functions, three globals with empty constructors |
-| `1000dec0–` about `10015530` | none | `10011d20`–`10011d50` (empty) | `i3d_collision.cpp` | collision tests; PS2 has it between the camera and the driver |
+| `1000de70–10015530` | `1000dea0` | `1000de70`, `1000de80`, `1000de90`, `10011d20`–`10011d50` (empty) | `i3d_collision.cpp` | the collision tests in PS2's order: the empty `$E`s of three globals, the marker (due before the first function, as PS2 defines the static helpers first), `TestColGeo` (`1000dec0`) with `testSubtree`, `testVisual` and `DefaultTexelCallback` after it, `TestColGeo1`, `TestColHierarchy` and its static's atexit thunk (`10011d10`), the sphere tests' globals' empty `$E`s, then `TestColSphere` to `SphereToSphereD`; the copies of `S_vector`'s `operator*` and `operator+`, `Square`, `SetNormalized`, `I3D_bbox::Absorb` and the file's `SphereIntersect` after their first callers; its identity matrix is at `1009b778`; written |
 | `10015530–1001a1e0` | `10016fd0` | `10015530`, `10015580`, `100155d0`, `100188a0` | `I3d_driver.cpp` | one file with its marker after `DrawLines`, as `I3d_math.cpp`: `I3D_driver` in PS2's order with the PC's icons and shadow rasterizer after `GetState`, `VolumeBall`'s `$E` before `DrawSphere`, then two `C_list` reserves; written |
 | `1001a1e0–1001a6e0` | `1001a6c0` | | `I3d_dummy.cpp` | `I3D_dummy` in PS2's order (the constructor `CreateFrame` calls, `Duplicate`, `Normalize`, the load of its box), with the PC's `UpdateV` after `Duplicate`; written |
 | `1001a6e0–1001d2f0` | `1001c280` | `1001c780` | `I3d_frame.cpp` | one file with its marker after `EnumSubtree`, as `I3d_math.cpp`: `I3D_frame` from the constructor (`1001a7f0`, after the dummy file's copy of `UpdateMatrix`) to `LoadImage`, in PS2's order; `UpdateTargetList`'s `$E` after `SetProperty`; written |
@@ -135,8 +134,7 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
   files using another's precompiled header). The portal and pose files have one each (`1009c6f8`, `1009c750`), and so
   have the single mesh and single morph (`1009cc48`, `1009cd40`). That makes 60 of the Rich header's 61 C++ objects, so
   one more object has no copy: a file without the engine header, or one more compiled with another's precompiled
-  header. `LoadTargetList`'s `$E` is a candidate; `1000de70` (three globals and a zero vector) would have a copy, so it
-  belongs to a neighbouring file.
+  header. `LoadTargetList`'s `$E` is a candidate.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera pair and the ranges
   marked `none`. A file compiled with another's precompiled header (`/Yu`)
   has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.

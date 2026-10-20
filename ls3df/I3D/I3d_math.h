@@ -82,6 +82,8 @@ struct S_vector {
         return S_vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
     }
 
+    // The out-of-line copy the linker kept is in collision code
+    // FUNCTION: LS3DF 0x10012500
     float Square() const
     {
         return x * x + y * y + z * z;
@@ -129,6 +131,15 @@ struct S_vector {
         z *= f;
     }
 
+    // PS2 __ml__8S_vectorCFRCf: the factor by reference, so it is read again for each component. Before operator+:
+    // the collision file's out-of-line copies of the two, deferred items of the precompiled header, come in header
+    // order.
+    // FUNCTION: LS3DF 0x100112a0
+    S_vector operator*(const float &f) const
+    {
+        return S_vector(x * f, y * f, z * f);
+    }
+
     // PS2 __pl__8S_vectorCFRC8S_vector
     // FUNCTION: LS3DF 0x100112d0
     S_vector operator+(const S_vector &v) const
@@ -155,13 +166,6 @@ struct S_vector {
     S_vector operator-() const
     {
         return S_vector(-x, -y, -z);
-    }
-
-    // PS2 __ml__8S_vectorCFRCf: the factor by reference, so it is read again for each component
-    // FUNCTION: LS3DF 0x100112a0
-    S_vector operator*(const float &f) const
-    {
-        return S_vector(x * f, y * f, z * f);
     }
 
     // Insanity3D's. Through these the members are addressed from the vector, not from the struct that holds it
@@ -379,7 +383,9 @@ struct I3D_bbox {
         max.x = max.y = max.z = -1e16f;
     }
 
-    // Grows the box to hold the point (PS2 Absorb__8I3D_bboxFRC8S_vector)
+    // Grows the box to hold the point (PS2 Absorb__8I3D_bboxFRC8S_vector). The out-of-line copy the linker kept is in
+    // collision code.
+    // FUNCTION: LS3DF 0x10014dd0
     void Absorb(const S_vector &v)
     {
         if (min.x > v.x)

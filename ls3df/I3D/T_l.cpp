@@ -562,12 +562,6 @@ void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_obje
     }
 }
 
-// What the lightmaps' texel callback is given about a face (the name is a guess)
-struct S_texel_info {
-    float u, v;                         // the texel's coordinates
-    I3D_material *mat;                  // sampled
-};
-
 // A face's texel's effect on the color a ray has gathered (color): 2 if the texel is transparent (alpha below 0.1),
 // 0 if it's opaque (above 0.95), else 1 with the color blended towards itself times the texel's color by the alpha.
 // The texture's bytes are A, R, G, B; a material with bit 31 set takes the texel's luminance for its alpha, one

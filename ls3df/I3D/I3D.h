@@ -359,6 +359,25 @@ public:
         return matrix;
     }
 
+    // The scale in world space: the frame's own at the top of the hierarchy, else the world matrix's (the name is a
+    // guess). Returned from each branch, so VC6 writes the result where it goes; a conditional expression selects a
+    // pointer to either and copies after (the collision tests' billboards in mode 2).
+    S_vector GetWorldScale()
+    {
+        if (!parent)
+            return scale;
+        return GetMatrix().GetScale();
+    }
+
+    // The hierarchy's bound volume in world space, updated first if it isn't (the name is a guess, after the visuals'
+    // GetWBoundVolume; the collision tests, free functions, reach the private UpdateHRBoundVolW through it)
+    const I3D_bvolume &GetHRBoundVolumeW()
+    {
+        if (!(frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+            UpdateHRBoundVolW();
+        return bound_w;
+    }
+
     // PS2 name
     const S_vector &GetWorldPos()
     {
@@ -1075,6 +1094,55 @@ struct WE_STRUCT {
 
 class I3D_shadow;
 class I3D_mirror;
+class I3D_face_group;
+class I3D_visual;
+
+// What a collision test's callback answers about a hit (PS2 type; the names are guesses)
+enum COLL_ENUMRET {
+    COLL_ACCEPT,                        // the hit counts
+    COLL_ACCEPT_STOP,                   // the hit counts, and the test stops
+    COLL_IGNORE,                        // the hit doesn't count
+    COLL_IGNORE_CHILDREN,               // nor do the visual's children
+};
+
+// A collision test's callback, asked about each hit: the point (or the zero vector), its distance, the frame and the
+// test's context (PS2's parameters)
+typedef COLL_ENUMRET __stdcall I3D_COLLISION_CALLBACK(const S_vector &pos, float dist, I3D_frame *frm, void *context);
+
+// The texel callback of a ray's test (COLF_COLORKEY), asked about each face hit: the point, its distance, the frame,
+// the test's context and the texel (an S_texel_info). It answers 0 for an opaque texel, 2 for a transparent one, which
+// the ray passes, 1 else (PS2's parameters; T&l.cpp's TexelCallback)
+typedef int __stdcall I3D_TEXEL_CALLBACK(const S_vector &pos, float dist, I3D_frame *frm, void *context, void *texel);
+
+// What a face's texel callback is given about the texel hit (the name is a guess)
+struct S_texel_info {
+    float u, v;                         // the texel's coordinates
+    I3D_material *mat;                  // sampled
+};
+
+// TestColHierarchy's result (PS2 I3D_COLLISION, 0x1c bytes on PC; the member names are guesses)
+struct I3D_COLLISION {
+    float dist;
+    S_vector normal;                    // 0x04, in world space
+    ushort v[3];                        // 0x10, the face's vertices
+    I3D_face_group *fgroup;             // 0x18, the face's group
+};
+
+// The collision tests' flags (the names are guesses but COLF_COLORKEY's, after Insanity3D's I3DCOL_COLORKEY)
+#define COLF_BOX 0x1                    // a ray: a visual's box is its hit, not its faces
+#define COLF_ACCEPT_ANY 0x10000         // a ray: a hit counts though a nearer one was found, and an opaque one clears
+                                        // the context's color (the lights' shadow rays)
+#define COLF_COLORKEY 0x20000           // a ray: the faces' texels are tested (the texel callback)
+#define COLF_INFINITE 0x40000           // a ray: from goes on beyond from + dir
+#define COLF_TWO_SIDED 0x100000         // a ray: every face is two-sided
+#define COLF_FIRST_HIT 0x1000000        // a ray: the first hit ends the test
+#define COLF_FRAME_LOD 0x2000000        // the frame given is tested at the level of detail given, the others at 0
+#define COLF_UNKNOWN_4000000 0x4000000  // the visuals with VISF_UNKNOWN_1000 aren't tested
+#define COLF_HIDDEN 0x8000000           // the frames switched off are tested too
+#define COLF_EXCLUDE_SUBTREE 0x10000000 // the frame given and its children aren't tested
+#define COLF_OMNI_SECTOR 0x20000000     // the scene's omni sector is tested too
+#define COLF_NEAR_SECTOR 0x40000000     // and its near sector
+#define COLF_FIRST_FACE 0x80000000      // a visual's first face hit is its hit
 
 // The scene (PS2 I3D_scene, 0x33c bytes on PC; I3d_scene.cpp). Its virtual functions are in PS2's order; the PC lacks
 // PS2's UpdatePortals, the watched frames, two of four GetSector overloads and one of two SetFrameSectorPos, and its
@@ -1131,20 +1199,30 @@ public:
     virtual LS3D_RESULT __stdcall SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) const;
     virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
     virtual void __stdcall Close();
-    // i3d_collision.cpp (not written yet): a ray from from along dir against the geometry; texel_cb is asked about the
-    // texels it passes through (TexelCallback), with cb_context (the parameter types are guesses, the callbacks' after
-    // TexelCallback's). TestColGeo returns the frame hit, whose type VertexLightingProcess tests. TestColGeo1 and the
-    // others are PS2's names, but their parameters aren't checked.
-    virtual int __stdcall TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos,
-        S_vector *normal, void *cb, void *cb_context, void *texel_cb, int x) const;
+    // i3d_collision.cpp (PS2's names and parameters). A ray from from along dir, as long as dir, against the visuals'
+    // faces in the primary sector (and the near and omni ones, COLF_NEAR_SECTOR, COLF_OMNI_SECTOR): the nearest
+    // frame hit, the hit's distance or point and its normal. cb is asked about each hit, texel_cb about its texel
+    // (COLF_COLORKEY, DefaultTexelCallback without one), both with cb_context. frm is a frame or subtree to leave
+    // out or the one to test (the flags say which), lod the mesh level to test.
+    virtual I3D_frame *__stdcall TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos,
+        S_vector *normal, I3D_COLLISION_CALLBACK *cb, void *cb_context, I3D_TEXEL_CALLBACK *texel_cb, int lod) const;
     virtual I3D_frame *__stdcall TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist,
-        S_vector *normal, void *cb, void *cb_context,
-        int (__stdcall *texel_cb)(const S_vector &, float, I3D_frame *, void *, void *), I3D_frame *frm, int x) const;
-    virtual int __stdcall TestColHierarchy() const;
-    virtual int __stdcall TestColSphere() const;
-    virtual int __stdcall TestColSphereHierarchy() const;
-    virtual int __stdcall TestColSphereVisual() const;
-    virtual int __stdcall SphereToSphereD() const;
+        S_vector *normal, I3D_COLLISION_CALLBACK *cb, void *cb_context, I3D_TEXEL_CALLBACK *texel_cb, I3D_frame *frm,
+        int lod) const;
+    // The ray against the hierarchy of root only, its face in col
+    virtual I3D_frame *__stdcall TestColHierarchy(const S_vector &from, const S_vector &dir, I3D_frame *root,
+        I3D_COLLISION &col, uint flags, I3D_frame *frm, int lod, I3D_COLLISION_CALLBACK *cb) const;
+    // A sphere of radius moved from from along dir: the nearest frame hit and the point
+    virtual I3D_frame *__stdcall TestColSphere(const S_vector &from, const S_vector &dir, float radius, uint flags,
+        S_vector *pos, I3D_frame *frm, I3D_COLLISION_CALLBACK *cb) const;
+    virtual I3D_frame *__stdcall TestColSphereHierarchy(const S_vector &from, const S_vector &dir, float radius,
+        I3D_frame *root, uint flags, S_vector *pos, I3D_frame *frm, I3D_COLLISION_CALLBACK *cb) const;
+    virtual I3D_frame *__stdcall TestColSphereVisual(const S_vector &from, const S_vector &dir, float radius,
+        I3D_visual *vis, uint flags, S_vector *pos) const;
+    // Two spheres moving from from1 to to1 and from from2 to to2: the fraction of the move at which they touch, -1 if
+    // they don't, 0 if their relative move is shorter than the sum of the radii
+    virtual float __stdcall SphereToSphereD(float radius1, const S_vector &from1, const S_vector &to1, float radius2,
+        const S_vector &from2, const S_vector &to2) const;
     // Every object's and lightmapped object's SetSpace
     virtual void __stdcall SetSpace(bool world);
     virtual void __stdcall SetWeatherSystemParam(WS_PARAM param, uint value);
@@ -1228,11 +1306,39 @@ public:
 // SYNTHETIC: LS3DF 0x10048eb0
 // I3D_scene::`scalar deleting destructor'
 
+// The collision file's $E18 and $E29, the first in link order, annotated for the scene's to pair with the scene's: the
+// destructor TestColHierarchy registers for its static retNormal (it has nothing to destroy) and kolBod's empty
+// initializer
+// SYNTHETIC: LS3DF 0x10011d10
+// $E18
+
+// SYNTHETIC: LS3DF 0x10011d50
+// $E29
+
+// The collision file's functions whose markers would be out of address order there: its static helpers are defined
+// before their callers, as PS2 has them (the zero vector's $E comes due before TestColGeo only so), and VC6 emits each
+// after its first caller. The static ones have no public symbol, so their names are the PDB's procedure names.
+// FUNCTION: LS3DF 0x1000dec0
+// ?TestColGeo@I3D_scene@@UBGPAVI3D_frame@@ABUS_vector@@0IPAMPAU3@P6G?AW4COLL_ENUMRET@@0MPAV2@PAX@Z4P6GH0M344@Z3H@Z
+
+// FUNCTION: LS3DF 0x1000e780
+// testVisual
+
+// FUNCTION: LS3DF 0x10011d60
+// ?TestColSphere@I3D_scene@@UBGPAVI3D_frame@@ABUS_vector@@0MIPAU3@PAV2@P6G?AW4COLL_ENUMRET@@0M2PAX@Z@Z
+
+// FUNCTION: LS3DF 0x10012520
+// sphTestVisual
+
+// FUNCTION: LS3DF 0x100152a0
+// ?SphereIntersect@@YI_NABUI3D_bsphere@@@Z
+
 // The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
 // m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file: Globals.cpp has
 // a $E13 and a $E18 too, IGraph.cpp both. reccmp pairs the annotations of one name with our functions of that name in
-// address order, so the scene's (the first in link order) and Globals.cpp's $E13 (I3d_math.h) are annotated, while
-// IGraph.cpp's stay unmatched. The constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
+// address order, so the scene's (the first $E13 in link order, the second $E18 after the collision file's) and
+// Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay unmatched. The constructor's bigBox registers
+// $E26, which I3d_driver.cpp has before it.
 // SYNTHETIC: LS3DF 0x10048a30
 // $E13
 
@@ -1255,10 +1361,10 @@ public:
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
 // to I3d_singlemorph.cpp), and SetDir's and SetName's are scene functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
@@ -1791,6 +1897,7 @@ enum SHADOW_MODE {
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
 #define VISF_UNKNOWN_800 0x800          // set by the objects' constructor, SetMesh and Duplicate
+#define VISF_UNKNOWN_1000 0x1000        // the collision tests leave it out with COLF_UNKNOWN_4000000
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
 #define VISF_PROJECTOR_2 0x4000         // projector mode 2
 #define VISF_PROXY 0x10000              // renders the face groups of the visual in user_data (the name is a guess)
@@ -2009,7 +2116,7 @@ public:
 // billboard file's copy, our linker the single meshes' since I3d_singlemesh.cpp, so the marker is by the name our PDB
 // keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
+// ?SetSpace@I3D_billboard@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2783,21 +2890,22 @@ public:
 
 // A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
-// (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
-// again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp and from I3d_morph.cpp to
-// I3d_singlemorph.cpp; CBaseRenderer::OnRenderEnd's, folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until
-// I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp and since
-// I3d_singlemorph.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp
-// to I3d_singlemesh.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
-// CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
-// from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
-// I3d_pose.cpp and since I3d_morph.cpp), so after a new file or function rerun crtannotate and move such markers here
-// or back. The names are the ones our PDB keeps (tools/foldfix.py).
+// (CBaseRenderer::OnStopStreaming's (0x10088960), folded with CBaseFilter::GetSetupData, was IShow.cpp's until
+// I3d_interpolator.cpp, again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp, from
+// I3d_morph.cpp to I3d_singlemorph.cpp and since i3d_collision.cpp; CBaseRenderer::OnRenderEnd's, folded with
+// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp, from
+// I3d_material.cpp to I3d_mirror.cpp and from I3d_singlemorph.cpp to i3d_collision.cpp, and with
+// I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp to I3d_singlemesh.cpp;
+// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's (0x10087520), folded with
+// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp, again from
+// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp and since I3d_morph.cpp), so after a new
+// file or function rerun crtannotate and move such markers here or back. The names are the ones our PDB keeps
+// (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
 // ?NumRegions@I3D_void_interface@@UBGHXZ
 
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2838,27 +2946,6 @@ public:
 
 // Stubs in I3d_driver.cpp, I3d_scene.cpp and I3d_sector.cpp, after their files' functions though their addresses come
 // before them, so their markers are here, by name
-
-// STUB: LS3DF 0x1000dec0
-// I3D_scene::TestColGeo
-
-// STUB: LS3DF 0x10011430
-// I3D_scene::TestColGeo1
-
-// STUB: LS3DF 0x100118e0
-// I3D_scene::TestColHierarchy
-
-// STUB: LS3DF 0x10011d60
-// I3D_scene::TestColSphere
-
-// STUB: LS3DF 0x10014aa0
-// I3D_scene::TestColSphereHierarchy
-
-// STUB: LS3DF 0x10014e50
-// I3D_scene::TestColSphereVisual
-
-// STUB: LS3DF 0x100153b0
-// I3D_scene::SphereToSphereD
 
 // STUB: LS3DF 0x10041800
 // I3D_portal::I3D_portal
