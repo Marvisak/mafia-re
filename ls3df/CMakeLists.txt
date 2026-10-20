@@ -30,8 +30,10 @@ add_library(ls3df SHARED
     I3D/I3d_morph.cpp
     I3D/I3d_object.cpp
     I3D/I3d_pose.cpp
+    I3D/I3d_projector.cpp
     I3D/I3d_scene.cpp
     I3D/I3d_sector.cpp
+    I3D/I3d_shadow.cpp
     I3D/I3d_singlemesh.cpp
     I3D/I3d_singlemorph.cpp
     I3D/I3d_sound.cpp
@@ -119,32 +121,24 @@ if (MSVC_VERSION EQUAL 1200)
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
     # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp),
-    # RenderShadowTexture by the shadows, VertexLightingProcess by the lit objects' lightmaps (0x10021bb0), the camera's
-    # UpdateSector, the landscapes' Reset, Tessellate and Render and the mirrors' UpdateVisibility, PrepareReflection
-    # and Draw by render.cpp; the sounds' m_SetState and the scene's view, sound and weather functions by render.cpp,
-    # its shadow list by the shadows, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams,
-    # ResetClipArrays and entry points by the projectors (0x10046960) and the shadows (0x10053280).
+    # VertexLightingProcess by the lit objects' lightmaps (0x10021bb0), the camera's UpdateSector, the landscapes'
+    # Reset, Tessellate and Render, the mirrors' UpdateVisibility, PrepareReflection and Draw and the shadows' Prepare
+    # and ProcessShadows by render.cpp; the sounds' m_SetState and the scene's view, sound and weather functions by
+    # render.cpp, MakeReadySectors by I3D code at 0x10045724.
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
-        "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
         "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
         "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ"
         "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ"
         "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?SetViewProjMatrix@I3D_scene@@QAEXABUS_matrix@@@Z"
         "/INCLUDE:?m_UpdateSoundProperties@I3D_scene@@QAEXPAVI3D_sector@@0M@Z"
         "/INCLUDE:?m_SetState@I3D_sound@@QAEXE@Z"
-        "/INCLUDE:?AddShadow@I3D_scene@@QAEXPAVI3D_shadow@@@Z"
-        "/INCLUDE:?DeleteShadow@I3D_scene@@QAE?AW4LS3D_RESULT@@PAVI3D_shadow@@@Z"
         "/INCLUDE:?m_UpdateWeatherSystem@I3D_scene@@QAEXXZ" "/INCLUDE:?m_RenderWeatherSystem@I3D_scene@@QAEXXZ"
         "/INCLUDE:?Reset@I3D_landscape@@QAEXXZ" "/INCLUDE:?Tessellate@I3D_landscape@@QAEXXZ"
         "/INCLUDE:?Render@I3D_landscape@@QAEXXZ"
         "/INCLUDE:?UpdateVisibility@I3D_mirror@@QAEXXZ" "/INCLUDE:?PrepareReflection@I3D_mirror@@QAEHXZ"
         "/INCLUDE:?Draw@I3D_mirror@@QAEXABUS_vector@@I@Z"
-        "/INCLUDE:?SetClipParams@@YIXABUS_matrix@@0_NMMM@Z" "/INCLUDE:?ResetClipArrays@@YIXXZ"
-        "/INCLUDE:?ClipMesh@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
-        "/INCLUDE:?ClipMeshW@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HI@Z"
-        "/INCLUDE:?ClipSingleMesh@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
-        "/INCLUDE:?ClipSingleMeshW@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HI@Z")
+        "/INCLUDE:?Prepare@I3D_shadow@@QAEXXZ" "/INCLUDE:?ProcessShadows@@YIXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8

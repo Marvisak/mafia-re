@@ -1019,10 +1019,4 @@ void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *scene)
     unknown_140[0] = 2;
 }
 
-// STUB: LS3DF 0x10050d80
-void I3D_shadow::SetTo(I3D_frame *frame)
-{
-    unknown_140[0] = 4;
-}
-
 #pragma auto_inline(on)

@@ -1361,13 +1361,13 @@ public:
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
 // to I3d_singlemorph.cpp), and SetDir's and SetName's are scene functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
 // ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?Duplicate@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1455,12 +1455,15 @@ enum I3D_LIGHTTYPE {
     I3DLIGHT_FOG,
     I3DLIGHT_POINTAMBIENT,
     I3DLIGHT_POINTFOG,
+    I3DLIGHT_UNKNOWN_8,                 // only the shadows know it: it adds to their lights' sum as a point light
+                                        // does, but never gives their direction (Insanity3D has its layered fog here)
 };
 
 // I3D_light::mode: what the light lights (Insanity3D's names; PrepareLights is given the first, the lightmaps' code
 // tests the second)
 #define I3DLIGHTMODE_VERTEX 0x1
 #define I3DLIGHTMODE_LIGHTMAP 0x2
+#define I3DLIGHTMODE_DYNAMIC_SHADOW 0x8 // the shadows (I3D_shadow) take it (the name is a guess)
 #define I3DLIGHTMODE_SHADOW 0x20        // the lightmaps test rays to the light (the name is a guess)
 #define I3DLIGHTMODE_LIGHTNESS 0x40     // taken by I3D_scene::GetLightness (the name is a guess)
 
@@ -1855,17 +1858,167 @@ public:
 // FUNCTION: LS3DF 0x10005ce0
 // ?LoadImage@I3D_sound@@UAEXXZ
 
-class __declspec(novtable) I3D_shadow : public I3D_frame {
+// A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
+// its name, under the frame the shadow is set to, moves
+struct S_shadow_part {
+    char *name;                         // 0x00, the frame's name without the model's
+    int num_verts;                      // 0x04
+    int num_faces;                      // 0x08
+};
+
+// A shadow's geometry as its file (.6ds, Load.cpp) has it, shared by the copies of a shadow, reference counted (PC
+// only; "!! RefCount  this:0x%x  ShadowDef" names the class). Each part's vertices are in its frame's space, its faces
+// index them from the part's first vertex.
+class ShadowDef {
+public:
+    int ref;                            // 0x00
+    C_list<S_vector> verts;             // 0x04
+    C_list<ushort> faces;               // 0x14, three vertex indices each
+    C_list<S_shadow_part> parts;        // 0x24
+
+    ShadowDef() : verts(10), faces(64), parts(10)
+    {
+        ref = 1;
+        parts.reserve(20);
+        verts.reserve(160);
+        faces.reserve(240);
+    }
+
+    ~ShadowDef();
+
+    void Release()
+    {
+        if (--ref < 0)
+            dbgPrintf("!! RefCount  this:0x%x  ShadowDef", this);
+        else if (!ref)
+            delete this;
+    }
+};
+
+// A frame of a shadow's hierarchy that a part of its geometry follows, and the part's vertices (PC only, the names are
+// guesses)
+struct S_shadow_frame {
+    I3D_frame *frame;                   // NULL once the frame is destroyed (DeleteFromAnyShadow)
+    int num_verts;
+};
+
+// What a shadow keeps from frame to frame (SetShadowLock's type, PS2's name; the values' names are guesses)
+enum I3D_LOCK {
+    I3DLOCK_NONE,                       // everything is computed again each frame
+    I3DLOCK_VERTICES,                   // the vertices once transformed
+    I3DLOCK_LIGHT,                      // and the light's direction and the texture once rendered
+    I3DLOCK_RECEIVERS,                  // and the faces it falls on, in the buffer managers' buffers
+};
+
+// I3D_shadow::shd_flags (PC only, the names are guesses). Prepare clears the changes first, then the steps set them.
+#define SHDF_TEXTURE_CHANGED 0x1        // RenderTexture rendered the texture again
+#define SHDF_DIR_CHANGED 0x2            // the light's direction changed (light_matrix)
+#define SHDF_VERTS_CHANGED 0x4          // UpdateVertices transformed the vertices again
+#define SHDF_OPACITY_CHANGED 0x8
+#define SHDF_RECEIVERS_CHANGED 0x10     // ProcessShadow found other receivers
+#define SHDF_TEXTURE_VALID 0x400
+#define SHDF_LIGHT_VALID 0x800          // the light and its direction are up to date
+#define SHDF_VERTS_VALID 0x1000
+#define SHDF_RECEIVERS_VALID 0x2000     // the receivers' faces are clipped (ProcessShadow)
+#define SHDF_NONE 0x8000                // no light casts it, or it has no geometry
+
+class I3D_shadow_visual;
+
+// A shadow (PS2 I3D_shadow, 0x214 bytes on PC; I3d_shadow.cpp). PS2's is a stub; the PC's casts the geometry of its
+// ShadowDef, moved by the frames of the frame it is set to, from the strongest light of its sector, renders it into a
+// texture and projects that onto the visuals around it (the receivers) through its visual. Its virtual functions are
+// PS2's in PS2's order. Names are PS2's where it has the member (orthogonal, range, max_texture_distance, color,
+// reverse_factor, shadow_lock, the texture size), the others are guesses.
+// VTABLE: LS3DF 0x1009cb40
+class I3D_shadow : public I3D_frame {
 public:
     I3D_shadow();
+    ~I3D_shadow();
 
+    virtual LS3D_RESULT __stdcall LinkTo(I3D_frame *frame, uint flags);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    // PS2 names
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, void *cb, void *context);
+    virtual void __stdcall Close();
+    virtual LS3D_RESULT __stdcall SetTextureSize(int x, int y);
+    virtual void __stdcall SetRange(float r);
+    virtual LS3D_RESULT __stdcall SetMaxTextureDistance(float d);
+    virtual void __stdcall SetShadowLock(I3D_LOCK lock);
+    virtual void __stdcall SetReverseFactor(float f);
+    virtual void __stdcall SetColor(const S_vector &c);
+    virtual void __stdcall SetOrthogonal(bool b);
+
+    // The name is a guess: Duplicate copies the range through it (fld, fstp), as the value goes through a parameter
+    void SetVisibleRange(float r)
+    {
+        visible_range = r;
+    }
+
+    // PS2 names
     void SetTo(I3D_frame *frame);
     static void DeleteFromAnyShadow(I3D_frame *frame);
 
-    uchar unknown_140[0x48];
+    // What the rendering calls for each shadow of the scene before it queues the visuals (render.cpp), and its steps
+    // (PC only, the names are guesses)
+    void Prepare();
+    bool UpdateVertices();
+    bool UpdateLight();
+    bool RenderTexture();
+
+    bool orthogonal;                    // 0x140, PS2's
+    ShadowDef *def;                     // 0x144
+    S_vector *verts;                    // 0x148, the parts' vertices, in their frames' spaces
+    S_vector *verts_w;                  // 0x14c, the same in world space, in the same block
+    float *points;                      // 0x150, in the light's space: x, y pairs
+    int num_verts;                      // 0x154
+    ushort *faces;                      // 0x158, three indices into the vertices each
+    int num_faces;                      // 0x15c
+    ITexture *texture;                  // 0x160
+    I3D_bbox bbox;                      // 0x164, of the points, in the light's space
+    S_vector color;                     // 0x17c, PS2's
     I3D_scene *scene;                   // 0x188, the scene's AddShadow
-    uchar unknown_18c[0x88];
+    I3D_sector *sector;                 // 0x18c, the one it is in
+    S_shadow_frame *frames;             // 0x190
+    int num_frames;                     // 0x194
+    I3D_shadow_visual *visual;          // 0x198
+    int size_x, size_y;                 // 0x19c, the texture's, PS2's
+    float range;                        // 0x1a4, PS2's: how far it reaches beyond the box
+    S_vector light_dir;                 // 0x1a8, from the light to the shadow
+    S_matrix light_matrix;              // 0x1b4, from world space into the light's
+    I3D_LOCK shadow_lock;               // 0x1f4, PS2's
+    float opacity;                      // 0x1f8, by the lights' strength, 0 without a light
+    float max_texture_distance;         // 0x1fc, PS2's: how far the box reaches towards the light
+    float visible_range;                // 0x200, scaled by FOVDistCorrection: farther from the camera it isn't
+                                        // rendered (100 by default; only Duplicate sets it)
+    int verts_count;                    // 0x204, the frames' update counts when the vertices were transformed
+    uint shd_flags;                     // 0x208, SHDF_*
+    int lights_count;                   // 0x20c, the sector's lights_changed and the shadow's update count then
+    float reverse_factor;               // 0x210, PS2's
 };
+
+// SYNTHETIC: LS3DF 0x10050b70
+// I3D_shadow::`scalar deleting destructor'
+
+// The destructors the shadow file's thunks register for globalShadowList, SetTo's FoundFrames and ShadowVisualQueue.
+// reccmp pairs the annotations of one name with our functions of that name in address order: the shadow file's $E13
+// comes between the scene's and Globals.cpp's (I3d_math.h), its $E18 after the collision file's and the scene's.
+// SYNTHETIC: LS3DF 0x10050930
+// $E13
+
+// SYNTHETIC: LS3DF 0x10050d60
+// $E18
+
+// SYNTHETIC: LS3DF 0x10052f60
+// $E24
+
+// The shadow file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space)
+// GLOBAL: LS3DF 0x1009cb00
+// IdentityMatrixData
+
+// And its zero vector, which the visual's constructor copies
+// GLOBAL: LS3DF 0x101b4f30
+// ZeroSVector
 
 // The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are the morph's
 // messages'). The visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and
@@ -2070,6 +2223,14 @@ public:
         return mesh;
     }
 
+    // The level the visual's mesh is rendered at, the first with VISF_UNKNOWN_10 (the name is a guess). The shadows'
+    // receivers read it through this: written out, VC6 reads the flags once for two uses where the original reads
+    // them again.
+    int GetMeshLOD() const
+    {
+        return vis_flags & VISF_UNKNOWN_10 ? 0 : cur_lod;
+    }
+
     float sort_dist;                    // 0x1dc, orders the transparent face groups (set by the rendering)
     I3D_mesh_object *mesh;              // 0x1e0
     lod *lods[10];                      // 0x1e4, one per level of the mesh
@@ -2116,7 +2277,7 @@ public:
 // billboard file's copy, our linker the single meshes' since I3d_singlemesh.cpp, so the marker is by the name our PDB
 // keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_billboard@@UAGX_N@Z
+// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2892,20 +3053,20 @@ public:
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's (0x10088960), folded with CBaseFilter::GetSetupData, was IShow.cpp's until
 // I3d_interpolator.cpp, again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp, from
-// I3d_morph.cpp to I3d_singlemorph.cpp and since i3d_collision.cpp; CBaseRenderer::OnRenderEnd's, folded with
-// I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp, from
-// I3d_material.cpp to I3d_mirror.cpp and from I3d_singlemorph.cpp to i3d_collision.cpp, and with
-// I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp to I3d_singlemesh.cpp;
-// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's (0x10087520), folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp, again from
-// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp and since I3d_morph.cpp), so after a new
-// file or function rerun crtannotate and move such markers here or back. The names are the ones our PDB keeps
+// I3d_morph.cpp to I3d_singlemorph.cpp and from i3d_collision.cpp to I3d_shadow.cpp; CBaseRenderer::OnRenderEnd's
+// (0x10087ec0), folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to
+// I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp, from I3d_singlemorph.cpp to i3d_collision.cpp and since
+// I3d_shadow.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp to
+// I3d_singlemesh.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's (0x10087520),
+// folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp, again
+// from clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp and since I3d_morph.cpp), so after a
+// new file or function rerun crtannotate and move such markers here or back. The names are the ones our PDB keeps
 // (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
 // ?NumRegions@I3D_void_interface@@UBGHXZ
 
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3007,7 +3168,7 @@ struct TLVERTEX2 {
 // copy after the scene's SetOn, or from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself); the original
 // keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -3260,6 +3421,67 @@ struct ADD_FG_HELP_STRUCT {
         unknown_0c = 0;
     }
 };
+
+// A vertex of a shadow's receivers (0x18 bytes, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1; the name is a guess)
+struct S_shadow_vertex {
+    S_vector pos;                       // in world space
+    uint color;                         // the shadow's color, its opacity fading out with the depth
+    float u, v;                         // in the shadow's texture
+};
+
+// What a shadow renders (PC only, 0x26c bytes; visual type SHD, the class name is a guess): the faces of the visuals
+// the shadow falls on (its receivers), clipped to its volume, which it is placed and scaled to, with the shadow's
+// texture. The game never sees it; it overrides the frame functions that would change it with empty ones.
+// VTABLE: LS3DF 0x1009cbd8 I3D_frame
+// VTABLE: LS3DF 0x1009cbc4 I3D_void_interface
+class I3D_shadow_visual : public I3D_visual {
+public:
+    I3D_shadow_visual();
+    ~I3D_shadow_visual();
+
+    virtual void __stdcall SetCallback(I3D_CALLBACK *cb, uint flags) {}
+    virtual void __stdcall SetOn(bool on) {}
+    virtual LS3D_RESULT __stdcall SetName(const char *new_name)
+    {
+        return I3D_OK;
+    }
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame)
+    {
+        return I3D_OK;
+    }
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+
+    // PC only, the names are guesses but ProcessShadow's, which its messages name
+    void AddFGroups();
+    void ProcessShadow();
+
+    uint unknown_1dc;                   // 0x1dc, nothing in LS3DF uses it (the objects' sort_dist is here)
+    I3D_shadow *shadow;                 // 0x1e0
+    S_shadow_vertex *verts;             // 0x1e4, in system memory, without I3DLOCK_RECEIVERS
+    int verts_alloc;                    // 0x1e8
+    int num_verts;                      // 0x1ec
+    ushort *faces;                      // 0x1f0, three indices each, in system memory
+    int faces_alloc;                    // 0x1f4
+    int num_faces;                      // 0x1f8, the opaque materials'
+    int num_faces_t;                    // 0x1fc, the transparent ones', after them
+    COMPLETE_VB_STRUCT vb;              // 0x200, the vertices with I3DLOCK_RECEIVERS
+    COMPLETE_IB_STRUCT ib;              // 0x20c, the faces
+    RENDER_FG_HELP_STRUCT rfg;          // 0x218, what m_AddFGroups queues for the opaque faces
+    RENDER_FG_HELP_STRUCT rfg_t;        // 0x238, for the transparent ones
+    S_vector center_t;                  // 0x258, of the transparent faces, in world space
+    int num_receivers;                  // 0x264
+    int receivers_count;                // 0x268, the sum of the receivers' update counts and current lods
+};
+
+// SYNTHETIC: LS3DF 0x10052e70
+// I3D_shadow_visual::`scalar deleting destructor'
+
+// The shadows' visuals whose receivers the rendering has to clip this frame and what it calls for them (I3d_shadow.cpp),
+// and the visuals a projector or shadow falls on (I3d_projector.cpp; the names are guesses)
+extern C_list<I3D_shadow_visual *> ShadowVisualQueue;
+void ProcessShadows();
+extern I3D_visual *ShadowReceivers[512];
 
 // render.cpp
 extern I3D_scene *pCurrentScene;

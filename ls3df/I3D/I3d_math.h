@@ -410,8 +410,8 @@ struct I3D_triface {
 };
 
 // Every file that includes the header gets its own (PS2 name). Its $E isn't where it is defined: the files are
-// compiled with /YX (see tools/autopch.py). Nothing but its $E references it. PS2's files also construct a ZeroSQuat;
-// the PC's construct only the vector.
+// compiled with /YX (see tools/autopch.py). Besides its $E, only the collision tests and the shadows' visual read
+// it. PS2's files also construct a ZeroSQuat; the PC's construct only the vector.
 static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
 
 // PS2 has a copy in every file that uses it (a local IdentityMatrix in .data, after the zero vector); here it is

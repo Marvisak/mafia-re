@@ -1764,18 +1764,6 @@ I3D_projector::I3D_projector()
     renderState[33]++;
 }
 
-// STUB: LS3DF 0x10050950
-I3D_shadow::I3D_shadow()
-{
-    renderState[23]++;
-}
-
-// STUB: LS3DF 0x10051480
-void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
-{
-    renderState[5]++;
-}
-
 // STUB: LS3DF 0x10062010
 void I3D_driver::initRender()
 {
