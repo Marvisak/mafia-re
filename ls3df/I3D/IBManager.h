@@ -129,7 +129,7 @@ inline void C_IBuffer::Unlock()
 // ??1?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x1005bb20
-// ?reserve@?$C_list@PAUS_IB_block@@@@QAEXH@Z
+// ?reserve@?$C_list@PAUS_VB_block@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF 0x1005bb80
 // ?begin@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAE?AViterator@12@XZ

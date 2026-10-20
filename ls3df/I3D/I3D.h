@@ -1252,13 +1252,13 @@ public:
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
 // (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp, from I3d_material.cpp, whose
-// I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and since
-// I3d_singlemesh.cpp), and SetDir's and SetName's are scene functions of their shape.
+// I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
+// to I3d_singlemorph.cpp), and SetDir's and SetName's are scene functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
@@ -1747,7 +1747,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_area@@UAEXXZ
+// ?LoadImage@I3D_sound@@UAEXXZ
 
 class __declspec(novtable) I3D_shadow : public I3D_frame {
 public:
@@ -2317,7 +2317,31 @@ public:
 // SYNTHETIC: LS3DF 0x10034e90
 // I3D_morph::`scalar deleting destructor'
 
-I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
+// A single morph (PS2 I3D_singlemorph, 0x248 bytes on PC; I3d_singlemorph.cpp): a single mesh whose levels are summed
+// by the weights before the joints move the vertices. Its copies share the mesh; Duplicate gives it a copy of a morph's
+// or single morph's own.
+// VTABLE: LS3DF 0x1009cd90 I3D_frame
+// VTABLE: LS3DF 0x1009cd80 I3D_void_interface
+class I3D_singlemorph : public I3D_singlemesh, public morphBase {
+public:
+    I3D_singlemorph();
+    ~I3D_singlemorph();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    virtual void __stdcall UpdateBoundProc();
+    virtual void __stdcall SetMesh(I3D_mesh_object *m, bool keep_lods);
+    virtual int __stdcall NumLevels() const;
+    virtual int __stdcall NumRegions() const;
+    virtual LS3D_RESULT __stdcall SetWeight(int region, int level, float weight);
+    virtual float __stdcall GetWeight(int region, int level) const;
+    // The levels summed into the mesh first, if the weights changed
+    virtual void UpdateLodVertices(int lod_index);
+};
+
+// SYNTHETIC: LS3DF 0x10056ef0
+// I3D_singlemorph::`scalar deleting destructor'
+
 I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
 I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
 I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
@@ -2760,11 +2784,11 @@ public:
 // A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
-// again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp and since I3d_morph.cpp;
-// CBaseRenderer::OnRenderEnd's, folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from
-// I3d_target.cpp to I3d_area.cpp and from I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup
-// I3d_landscape.cpp's in that file and from I3d_morph.cpp to I3d_singlemesh.cpp; CBasePin::EndOfStream's
-// I3d_visual.cpp's until then;
+// again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp and from I3d_morph.cpp to
+// I3d_singlemorph.cpp; CBaseRenderer::OnRenderEnd's, folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until
+// I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp and since
+// I3d_singlemorph.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp
+// to I3d_singlemesh.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
 // I3d_pose.cpp and since I3d_morph.cpp), so after a new file or function rerun crtannotate and move such markers here
@@ -2772,8 +2796,8 @@ public:
 // LIBRARY: LS3DF 0x10087520
 // ?NumRegions@I3D_void_interface@@UBGHXZ
 
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2893,10 +2917,10 @@ struct TLVERTEX2 {
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
-// copy after the scene's SetOn or, since I3d_singlemesh.cpp, after Tick itself); the original keeps the area file's
-// copy
+// copy after the scene's SetOn, or from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself); the original
+// keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,

@@ -1710,7 +1710,7 @@ void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
 }
 
 // Empty, as on PS2. The linker folds it with the DirectShow base classes' empty CBaseRenderer::OnRenderEnd, whose
-// copy the original kept (0x10087ec0, annotated in library_strmbase.h).
+// copy the original kept (0x10087ec0; see the markers of folded base class functions in I3D.h).
 void I3D_driver::m_RecomputeUsedVRAM()
 {
 }
@@ -1774,12 +1774,6 @@ I3D_shadow::I3D_shadow()
 void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
 {
     renderState[5]++;
-}
-
-// STUB: LS3DF 0x10056e80
-I3D_singlemorph::I3D_singlemorph()
-{
-    renderState[32]++;
 }
 
 // STUB: LS3DF 0x10062010
