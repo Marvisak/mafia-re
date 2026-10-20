@@ -107,10 +107,11 @@ struct S_vector {
     // Open: the original has no out-of-line copy, and inlines it where ours runs out of inline budget: nested in
     // GetDir and GetWorldDir (the light's constructor, I3D_target::UpdateFrames, the mirror's UpdateVisibility and
     // PrepareReflection) and after the camera's starved GetNormal calls. Declared __forceinline it gives those four
-    // exactly, but then S_quat::Make(const S_matrix &) inlines S_quat::operator* (the original calls it) and leaves
-    // later constructors, operator+ and Dot out of line (it charges the budget), so that isn't the whole answer.
-    // Neither Square() for the sum, *this *= for the products, an else for the second return, nor if/else statements
-    // for the signs inline it in those four, and each scores worse elsewhere.
+    // exactly, and the portals' UpdatePortal (through S_plane's three-point constructor), but then
+    // S_quat::Make(const S_matrix &) inlines S_quat::operator* (the original calls it) and leaves later constructors,
+    // operator+ and Dot out of line (it charges the budget), so that isn't the whole answer.
+    // Neither Square() for the sum, *this *= for the products, an else for the second return, if/else statements for
+    // the signs nor sq reused for the reciprocal changes any inline decision of those five.
     void Normalize()
     {
         float sq = x * x + y * y + z * z;
@@ -162,6 +163,8 @@ struct S_vector {
     {
         return S_vector(x - v.x, y - v.y, z - v.z);
     }
+
+    S_vector &operator-=(const S_vector &v);
 
     S_vector operator-() const
     {
@@ -349,9 +352,9 @@ struct S_plane {
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp,
-// from clipping.cpp's CheckClipFaces to I3d_pose.cpp and since I3d_singlemesh.cpp)
+// from clipping.cpp's CheckClipFaces to I3d_pose.cpp and from I3d_singlemesh.cpp to I3d_occluder.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0S_vector@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);
@@ -432,6 +435,16 @@ static const D3DMATRIX IdentityMatrixData = {
 };
 #define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
 inline const S_matrix &I3DGetIdentityMatrix() { return IdentityMatrix; }
+
+// Insanity3D's. Defined after the zero vector, as inline code before it moves the files' $Es (see ZeroSVector): the
+// portals' ParsePortal copies a vertex and subtracts the next in place, its z left dead.
+inline S_vector &S_vector::operator-=(const S_vector &v)
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+    return *this;
+}
 
 // Insanity3D's: the occluders' UpdateShadow assigns its plane along the view through a temporary of it
 inline S_plane::S_plane(const S_vector &n, float d1) : normal(n), d(d1) {}

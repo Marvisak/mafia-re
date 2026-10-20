@@ -89,10 +89,10 @@ I3D_scene::I3D_scene()
     current_camera = NULL;
     num_portals = 0;
     portals = NULL;
-    unknown_25c = 0;
+    portal_version = 0;
     num_sectors = 0;
     sectors = NULL;
-    unknown_268 = 0;
+    sector_version = 0;
     num_occluders = 0;
     occluders = NULL;
     unknown_274 = false;
@@ -1577,16 +1577,10 @@ bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
     return true;
 }
 
-// The functions of other files the scene calls, until those are written. They come after the scene's functions: VC6
-// knows that a function compiled earlier in the file can't throw (see I3d_driver.cpp). Their bodies differ, or the
-// linker would fold them; auto_inline(off) keeps VC6 from inlining them here. The markers of the ones below the scene's
-// addresses are in I3D.h, by name, as the linter checks the order of a file's markers.
+// The function of another file the scene calls, until that is written. It comes after the scene's functions: VC6 knows
+// that a function compiled earlier in the file can't throw (see I3d_driver.cpp). Its body differs from the other
+// stubs', or the linker would fold them; auto_inline(off) keeps VC6 from inlining it here.
 #pragma auto_inline(off)
-
-void I3D_portal::UpdatePortal()
-{
-    renderState[11]++;
-}
 
 // STUB: LS3DF 0x100603e0
 LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, void *cb, void *context, I3D_frame *root)

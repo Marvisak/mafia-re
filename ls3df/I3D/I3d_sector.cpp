@@ -101,7 +101,7 @@ I3D_sector::I3D_sector()
     verts = NULL;
     num_faces = 0;
     faces = NULL;
-    sct_flags = SCTF_UNKNOWN_1 | SCTF_SOUND_CHANGED;
+    sct_flags = SCTF_VISIBLE | SCTF_SOUND_CHANGED;
     num_planes = 0;
     planes = NULL;
     lights_changed = 0;
@@ -183,7 +183,7 @@ void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *new_scene)
             prev_in_scene->next_in_scene = next_in_scene;
             next_in_scene->prev_in_scene = prev_in_scene;
         }
-        scene->unknown_25c = 0;
+        scene->portal_version = 0;
         scene = NULL;
     }
     scene = new_scene;
@@ -199,7 +199,7 @@ void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *new_scene)
             new_scene->sectors->prev_in_scene = this;
         }
         new_scene->num_sectors++;
-        scene->unknown_25c = 0;
+        scene->portal_version = 0;
         if (occluder && occluder->parent == this)
             occluder->LinkTo(scene->primary_sector, I3DLINK_UPDMATRIX);
     }
@@ -585,29 +585,3 @@ void I3D_sector::LoadImage()
         }
     }
 }
-
-// The functions of other files the sectors call, until those are written. They come after the file's functions (see
-// I3d_driver.cpp); their markers are in I3D.h, by name, as their addresses come before the file's.
-#pragma auto_inline(off)
-
-I3D_portal::I3D_portal()
-{
-    renderState[6]++;
-}
-
-I3D_portal::~I3D_portal()
-{
-    renderState[7]++;
-}
-
-void I3D_portal::AddToSceneRing(I3D_scene *scene)
-{
-    renderState[8]++;
-}
-
-void I3D_portal::LoadImage()
-{
-    renderState[9]++;
-}
-
-#pragma auto_inline(on)

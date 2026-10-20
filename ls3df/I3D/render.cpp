@@ -463,7 +463,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 
     if (!renderCB && renderState[RS_DRAWVISUALS]) {
         // The backdrop, behind everything, sorted far to near from the camera
-        if (scene->primary_sector->sct_flags & SCTF_UNKNOWN_1) {
+        if (scene->primary_sector->sct_flags & SCTF_VISIBLE) {
             pViewProjMatrix = &pCurrentCamera->m_bd_view_proj;
             scene->SetViewProjMatrix(*pViewProjMatrix);
             m_pD3DDevice8->SetTransform(D3DTS_VIEW, &pCurrentCamera->m_bd_view);
@@ -558,11 +558,11 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         I3D_sector *sct = scene->sectors;
         int i = scene->num_sectors;
         while (i--) {
-            if (sct->sct_flags & SCTF_UNKNOWN_1)
+            if (sct->sct_flags & SCTF_VISIBLE)
                 AddSectorFGroups(sct);
             sct = sct->next_in_scene;
         }
-        if (scene->primary_sector->sct_flags & SCTF_UNKNOWN_1)
+        if (scene->primary_sector->sct_flags & SCTF_VISIBLE)
             AddSectorFGroups(scene->primary_sector);
         AddSectorFGroups(scene->omni_sector);
     }
@@ -868,9 +868,8 @@ inline void I3D_driver::m_DrawAllSortedFG()
         pCurrentScene->m_RenderWeatherSystem();
 }
 
-// The functions of other files the rendering calls, until those are written (the portals' and the particles'
-// files). After their callers: VC6 would know these can't throw. Their markers are in I3D.h, by name, as
-// their addresses come before the file's.
+// The functions of the particles' file the rendering calls, until that is written. After their callers: VC6 would know
+// these can't throw. Their markers are in I3D.h, by name, as their addresses come before the file's.
 #pragma auto_inline(off)
 
 void InitParticle()
@@ -881,11 +880,6 @@ void InitParticle()
 void CloseParticle()
 {
     renderState[52]++;
-}
-
-void ProcessPortals(I3D_scene *scene)
-{
-    renderState[44]++;
 }
 
 #pragma auto_inline(on)

@@ -576,11 +576,11 @@ void ProcessOccluders(I3D_scene *scene)
         return;
     I3D_sector *sct = scene->sectors;
     for (int i = scene->num_sectors; i--; sct = sct->next_in_scene) {
-        if ((sct->sct_flags & SCTF_UNKNOWN_1) && sct->occluders)
+        if ((sct->sct_flags & SCTF_VISIBLE) && sct->occluders)
             ProcessOccludersInSector(sct);
     }
     sct = scene->primary_sector;
-    if (sct->sct_flags & SCTF_UNKNOWN_1)
+    if (sct->sct_flags & SCTF_VISIBLE)
         ProcessOccludersInSector(sct);
 }
 
@@ -620,7 +620,7 @@ void OCCL_PrepareSector2(I3D_sector *sct)
             p->portal_flags &= ~PORTALF_OCCLUDED;
             for (o = sct->occluders; o; o = o->next_in_sector) {
                 if ((o->occl_flags & OCCLF_ACTIVE) && !(o->occl_flags & OCCLF_PORTAL) &&
-                    o->TestVertListW(p->num_verts, p->verts_w)) {
+                    o->TestVertListW(p->num_verts, (S_vector *)p->verts_w)) {
                     p->portal_flags |= PORTALF_OCCLUDED;
                     break;
                 }
@@ -632,10 +632,10 @@ void OCCL_PrepareSector2(I3D_sector *sct)
         I3D_portal *p = *pp;
         if (p->plane.normal.Dot(cpos) + p->plane.d < 0.0f) {
             p->portal_flags &= ~PORTALF_OCCLUDED;
-            if (!p->unknown_fc) {
+            if (!p->twin) {
                 for (o = sct->occluders; o; o = o->next_in_sector) {
                     if ((o->occl_flags & OCCLF_ACTIVE) && !(o->occl_flags & OCCLF_PORTAL) &&
-                        o->TestVertListW(p->num_verts, p->verts_w)) {
+                        o->TestVertListW(p->num_verts, (S_vector *)p->verts_w)) {
                         p->portal_flags |= PORTALF_OCCLUDED;
                         break;
                     }

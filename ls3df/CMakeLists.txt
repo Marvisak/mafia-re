@@ -30,6 +30,7 @@ add_library(ls3df SHARED
     I3D/I3d_morph.cpp
     I3D/I3d_object.cpp
     I3D/I3d_occluder.cpp
+    I3D/I3d_portal.cpp
     I3D/I3d_pose.cpp
     I3D/I3d_projector.cpp
     I3D/I3d_scene.cpp
@@ -123,13 +124,10 @@ if (MSVC_VERSION EQUAL 1200)
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
     # /Gr's). VertexLightingProcess is called by the lit objects' lightmaps (0x10021bb0), the materials' LoadImage by the
-    # loader, MakeReadySectors (0x10045724), OCCL_UpdateOcclLists (0x100457a1) and OCCL_PrepareSector2 (0x10044f81) by
-    # the portals' code.
+    # loader.
     target_link_options(ls3df PRIVATE
         "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
-        "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ"
-        "/INCLUDE:?MakeReadySectors@I3D_scene@@QAEXXZ" "/INCLUDE:?OCCL_UpdateOcclLists@@YIXPAVI3D_scene@@@Z"
-        "/INCLUDE:?OCCL_PrepareSector2@@YIXPAVI3D_sector@@@Z")
+        "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8
