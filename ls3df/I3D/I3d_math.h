@@ -165,7 +165,9 @@ struct S_vector {
     }
 
     // Insanity3D's. Through these the members are addressed from the vector, not from the struct that holds it
-    // (S_quat::Make(const S_vector &, float)).
+    // (S_quat::Make(const S_vector &, float)). The single meshes' file has the out-of-line copy, for its
+    // I3D_joint::GetJointMatrix.
+    // FUNCTION: LS3DF 0x10056e60
     S_vector &operator*=(const float &f)
     {
         x *= f;
@@ -341,10 +343,10 @@ struct S_plane {
 };
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
-// regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp and
-// again from clipping.cpp's CheckClipFaces to I3d_pose.cpp)
+// regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp,
+// from clipping.cpp's CheckClipFaces to I3d_pose.cpp and since I3d_singlemesh.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_vector@@QAE@XZ
+// ??0S_plane@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

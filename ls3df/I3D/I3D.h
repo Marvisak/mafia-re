@@ -399,6 +399,13 @@ public:
         return orig_name ? orig_name : "";
     }
 
+    // Insanity3D's name. The single meshes' proxies reach their visual through it; written as the member, VC6 inlines
+    // more of I3D_singlemesh::UpdateLodVertices' calls than the original.
+    uint GetData() const
+    {
+        return user_data;
+    }
+
     I3D_FRAME_TYPE GetType() const
     {
         return type;
@@ -1244,17 +1251,17 @@ public:
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
 // LinkTo are folded with other empty functions of their shape, so the markers are by name, the names our PDB keeps for
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
-// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp and since I3d_material.cpp, whose
-// I3D_material::UpdateTexture and UpdateEnvTexture are in the group too), and SetDir's and SetName's are scene
-// functions of their shape.
+// (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp, from I3d_material.cpp, whose
+// I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and since
+// I3d_singlemesh.cpp), and SetDir's and SetName's are scene functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?Duplicate@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1503,6 +1510,9 @@ public:
     virtual void UpdateV();
     virtual void LoadImage();
 
+    // joint_matrix, made again if the joint moved (PS2 name; defined after the single meshes' classes)
+    const S_matrix &GetJointMatrix();
+
     S_matrix bone_matrix;               // 0x140, the file's; a scale of 0.01 by default
     uint index;                         // 0x180, among the single mesh's joints; loaded with bone_matrix
     S_matrix matrix_184;                // 0x184, bone_matrix at first
@@ -1737,7 +1747,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_sound@@UAEXXZ
+// ?LoadImage@I3D_area@@UAEXXZ
 
 class __declspec(novtable) I3D_shadow : public I3D_frame {
 public:
@@ -1995,6 +2005,12 @@ public:
 // SYNTHETIC: LS3DF 0x10005df0
 // I3D_billboard::`scalar deleting destructor'
 
+// SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
+// billboard file's copy, our linker the single meshes' since I3d_singlemesh.cpp, so the marker is by the name our PDB
+// keeps (tools/foldfix.py updates it).
+// FUNCTION: LS3DF 0x10005e30
+// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
+
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
     float pos;                          // where on the line from the light through the screen's center
@@ -2040,21 +2056,166 @@ public:
 // C_list<GLOW_STRUCT>::reserve
 
 I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
-// A mesh deformed by joints (PS2 I3D_singlemesh; the file isn't written yet). The single morph is one too: the model's
+// The single meshes (PS2 I3d_singlemesh.cpp; I3d_singlemesh.cpp): a mesh whose vertices the joints below it move.
+// For each level of the mesh the file gives the joints' part of its vertices, joint by joint in the order of their
+// indices: the vertices the joint moves alone, then those it shares with another joint by their weights; the vertices
+// after all joints' stay where the mesh has them. PS2 keeps one SMeshDef in the single mesh, the PC one per lod.
+
+// A joint's part of a level (PS2 SM_INFO, 0x68 bytes on PC; the names are guesses). The file has it up to weights.
+struct SM_INFO {
+    S_matrix matrix;                    // 0x00, from the mesh's space into the joint's
+    int num_verts;                      // 0x40, the vertices the joint moves alone
+    int num_blend;                      // 0x44, the vertices after them, blended with blend_joint's moves
+    int blend_joint;                    // 0x48, the other joint's index + 1, 0 for the single mesh itself
+    I3D_bbox bbox;                      // 0x4c, of the joint's vertices, in its space
+    float *weights;                     // 0x64, the joint's share of each of the num_blend vertices
+};
+
+// The joints' parts of a level, shared by the copies of a single mesh (PS2 SMeshDef, 0x28 bytes on PC), reference
+// counted
+struct SMeshDef {
+    int ref;                            // 0x00
+    int num_joints;                     // 0x04, of info
+    SM_INFO *info;                      // 0x08
+    int num_rigid;                      // 0x0c, the vertices at the level's end that no joint moves
+    I3D_bbox bbox;                      // 0x10, of the level
+
+    SMeshDef()
+    {
+        ref = 1;
+        num_joints = 0;
+        info = NULL;
+        num_rigid = 0;
+        bbox.Invalidate();
+    }
+
+    ~SMeshDef()
+    {
+        SM_INFO *p = info;
+        for (int i = num_joints; i--; p++)
+            delete[] p->weights;
+        delete[] info;
+    }
+
+    void Release()
+    {
+        if (--ref >= 0 && !ref)
+            delete this;
+    }
+};
+
+// A single mesh's vertex as the joints move it (0x18 bytes): its position and normal. The lods' vertex buffers are
+// transformed and lit from them, and the shadows and projectors clip them (clipper.h).
+struct S_clip_sm_vertex {
+    S_vector pos;
+    S_vector normal;
+};
+
+// A single mesh's lod (PC only, the name is a guess): an object's lod with the joints' part of its level and the
+// level's vertices as the joints move them. Its constructor is inlined where the single meshes create one; its
+// destructor is defined inline in I3d_singlemesh.cpp, which puts the copy after the scalar deleting destructor.
+// VTABLE: LS3DF 0x1009cd38
+class SMeshLod : public lod {
+public:
+    SMeshLod()
+    {
+        def = NULL;
+        memset(&vb_skin, 0, sizeof(vb_skin));
+        joints_changed = (uint)-2000;
+    }
+    ~SMeshLod();
+
+    SMeshDef *def;                      // 0x30
+    COMPLETE_VB_STRUCT vb_skin;         // 0x34, the moved vertices (S_clip_sm_vertex)
+    uint joints_changed;                // 0x40, the single mesh's when they were moved
+};
+
+// SYNTHETIC: LS3DF 0x10056ad0
+// SMeshLod::`scalar deleting destructor'
+
+// A mesh moved by joints (PS2 I3D_singlemesh, 0x22c bytes on PC): an object whose lods are SMeshLods. Its joints are
+// the I3D_joints among the frames below it (DBuild), by their index. The single morph is one too: the model's
 // duplication builds both.
-class __declspec(novtable) I3D_singlemesh : public I3D_visual {
+// VTABLE: LS3DF 0x1009cc98 I3D_frame
+// VTABLE: LS3DF 0x1009cc88 I3D_void_interface
+class I3D_singlemesh : public I3D_object {
 public:
     I3D_singlemesh();
+    ~I3D_singlemesh();
 
-    // PS2 name
-    void DBuild();
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    // Empty: the vertices stay in local space. The linker folded it with the billboard's (0x10005e30).
+    virtual void __stdcall SetSpace(bool world);
+    virtual void __stdcall UpdateBoundProc();
+    virtual void m_AddFGroups();
+    // The joints are moved again too (PS2 names; VC6 puts the second at the first's slot)
+    virtual void __stdcall UpdateVertices();
+    virtual void __stdcall UpdateVertices(int index);
+    // A joint's box in its space, or the first level's (index -1), from the first lod (PS2 name)
+    virtual const I3D_bbox *__stdcall GetJointBBox(int index) const;
+    // The lod's moved vertices, locked, moved again first if the joints moved (PS2 name; PS2's returns the positions,
+    // in a buffer of its own)
+    virtual const S_clip_sm_vertex *__stdcall GetVertexPos(int lod_index);
+    // The joint that moves the lod's vertex (PS2 name)
+    virtual I3D_joint *__stdcall GetVertexJoint(int vertex, int lod_index);
+    // Moves the lod's vertices by the joints (PC only, the name is a guess)
+    virtual void UpdateLodVertices(int lod_index);
 
-    uchar unknown_1dc[0x21c - 0x1dc];
+    // PS2 names
+    LS3D_RESULT DuplicateSinglemeshDef(I3D_singlemesh *sm);
+    void UpdateBVolumeProc();
+    // Finds the joints again; false if it has none
+    bool DBuild();
+    // The positions of the lod's vertices into its vertex buffer, stride bytes apart: those no joint moves from the
+    // mesh, then the moved ones (PC only, the names are guesses)
+    void CopyRigidPositions(uchar *dst, uint stride, int lod_index);
+    void CopyMovedPositions(uchar *dst, uint stride, int lod_index);
+
     int num_joints;                     // 0x21c
     I3D_joint **joints;                 // 0x220, by their index (PS2 0x214)
     uint joints_changed;                // 0x224, counts the moves of its joints (PS2 0x218; the name is a guess)
-    uint unknown_228;                   // 0x228, joints_changed when the bound volume was computed
+    uint bvol_joints_changed;           // 0x228, joints_changed when the bound volume was computed
 };
+
+// SYNTHETIC: LS3DF 0x10054290
+// I3D_singlemesh::`scalar deleting destructor'
+
+// I3D_joint::GetJointMatrix: its local matrix times its parents' up to the single mesh's level (the first visual,
+// sector or model), or up to a parent joint whose own is up to date. Here, after SMeshLod: the single meshes' file has
+// the out-of-line copy, which the precompiled header defers to the end of the file, after SMeshLod's scalar deleting
+// destructor and destructor, as in the original, only if the header has it after that class.
+// Not matching yet: the original's copy calls S_vector::operator*= out of line for four of the first UpdateMatrix's
+// row scalings and inlines the loop's, ours inlines almost all of the first. Five empty inline calls after the first
+// UpdateMatrix (a probe) give the original's calls, so the original had that many more inline calls pending there;
+// no source for them is known. The callers that inline the function don't change with them.
+// FUNCTION: LS3DF 0x10056ba0
+inline const S_matrix &I3D_joint::GetJointMatrix()
+{
+    if (!(joint_flags & JOINTF_JMAT_VALID)) {
+        joint_flags |= JOINTF_JMAT_VALID;
+        UpdateMatrix();
+        joint_matrix = f_matrix;
+        for (I3D_frame *frm = parent; frm; frm = frm->parent) {
+            switch (frm->GetType()) {
+            case FRAME_VISUAL:
+            case FRAME_SECTOR:
+            case FRAME_MODEL:
+                return joint_matrix;
+            case FRAME_JOINT:
+                if (((I3D_joint *)frm)->joint_flags & JOINTF_JMAT_VALID) {
+                    joint_matrix = joint_matrix * ((I3D_joint *)frm)->joint_matrix;
+                    return joint_matrix;
+                }
+            default:
+                frm->UpdateMatrix();
+                joint_matrix = joint_matrix * frm->f_matrix;
+            }
+        }
+    }
+    return joint_matrix;
+}
+
 // The morphs (PS2 I3d_morph.cpp; I3d_morph.cpp): a mesh whose vertices are a weighted sum of its levels. A morph's
 // vertices are split into regions, each with a weight for every level; m_pMorphDef holds the levels' positions and
 // normals for each region of each lod of the mesh, and the morph sums them into the lod's vertices when the weights
@@ -2602,16 +2763,14 @@ public:
 // again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp and since I3d_morph.cpp;
 // CBaseRenderer::OnRenderEnd's, folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from
 // I3d_target.cpp to I3d_area.cpp and from I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup
-// I3d_landscape.cpp's in that file and since I3d_morph.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
+// I3d_landscape.cpp's in that file and from I3d_morph.cpp to I3d_singlemesh.cpp; CBasePin::EndOfStream's
+// I3d_visual.cpp's until then;
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
 // I3d_pose.cpp and since I3d_morph.cpp), so after a new file or function rerun crtannotate and move such markers here
 // or back. The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
-// ?NumLevels@I3D_void_interface@@UBGHXZ
-
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?NumRegions@I3D_void_interface@@UBGHXZ
 
 // LIBRARY: LS3DF 0x10088960
 // ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
@@ -2734,9 +2893,10 @@ struct TLVERTEX2 {
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
-// copy after the scene's SetOn); the original keeps the area file's copy
+// copy after the scene's SetOn or, since I3d_singlemesh.cpp, after Tick itself); the original keeps the area file's
+// copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,

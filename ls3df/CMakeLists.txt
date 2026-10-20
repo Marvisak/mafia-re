@@ -31,6 +31,7 @@ add_library(ls3df SHARED
     I3D/I3d_pose.cpp
     I3D/I3d_scene.cpp
     I3D/I3d_sector.cpp
+    I3D/I3d_singlemesh.cpp
     I3D/I3d_sound.cpp
     I3D/I3d_target.cpp
     I3D/I3d_user.cpp
@@ -116,8 +117,7 @@ if (MSVC_VERSION EQUAL 1200)
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
     # /Gr's). The buffer managers' m_UnlockAll*Buffers are called by the driver's Render (render.cpp),
-    # RenderShadowTexture by the shadows, the lod's destructor by the lit objects and single meshes, the vertex transforms
-    # by the shadows' range (0x10054f60), VertexLightingProcess by the lit objects' lightmaps (0x10021bb0), the camera's
+    # RenderShadowTexture by the shadows, VertexLightingProcess by the lit objects' lightmaps (0x10021bb0), the camera's
     # UpdateSector, the landscapes' Reset, Tessellate and Render and the mirrors' UpdateVisibility, PrepareReflection
     # and Draw by render.cpp; the sounds' m_SetState and the scene's view, sound and weather functions by render.cpp,
     # its shadow list by the shadows, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams,
@@ -126,9 +126,6 @@ if (MSVC_VERSION EQUAL 1200)
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
-        "/INCLUDE:??1lod@@UAE@XZ"
-        "/INCLUDE:?TransformVertices@@YIXPAXPBXIABUS_matrix@@2@Z"
-        "/INCLUDE:?TransformVerticesBlend@@YIXPAXPBXIABUS_matrix@@2PBM22@Z"
         "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
         "/INCLUDE:?UpdateSector@I3D_camera@@QAEXXZ"
         "/INCLUDE:?LoadImage@I3D_material@@QAEXXZ" "/INCLUDE:?LoadImage@I3D_anim_material@@QAEXXZ"

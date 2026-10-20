@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z

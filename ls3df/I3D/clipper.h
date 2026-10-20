@@ -26,11 +26,8 @@ struct S_clip_vertex {
 #define CLIP_NEAR 0x10                  // z < 0
 #define CLIP_FAR 0x20                   // z > 1
 
-// A single mesh's or single morph's vertex, as the clipper reads it (0x18 bytes; the rest isn't known)
-struct S_clip_sm_vertex {
-    S_vector pos;
-    float unknown_0c[3];
-};
+// A single mesh's or single morph's vertex (I3D.h)
+struct S_clip_sm_vertex;
 
 // The driver's (I3d_driver.cpp): the frustum's edges are split where they span more depth than this
 extern float RsNonOrthoTessellation;

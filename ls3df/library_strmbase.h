@@ -142,11 +142,14 @@
 // LIBRARY: LS3DF 0x10087e90
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
 
+// LIBRARY: LS3DF 0x10087ec0
+// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
 // LIBRARY: LS3DF 0x10087f20
-// ?QueryInterface@CBaseInputPin@@UAGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseFilter@@UAGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10087f40
 // ??_GCRendererInputPin@@UAEPAXI@Z
@@ -281,7 +284,7 @@
 // ?QueryInterface@CBaseInputPin@@W3AGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10089220
-// ?AddRef@CBaseInputPin@@W3AGKXZ
+// ?AddRef@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089230
 // ?Release@CBaseFilter@@W3AGKXZ

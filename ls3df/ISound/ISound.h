@@ -221,7 +221,7 @@ public:
 // copy; which one our linker keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py
 // updates it).
 // FUNCTION: LS3DF 0x1007b180
-// ?SetEnvAlpha@I3D_material@@UAG?AW4LS3D_RESULT@@M@Z
+// ?SetDistanceFactor@ISND_3Dlistener@@UAG?AW4LS3D_RESULT@@M@Z
 
 // The hardware 3D channel lists (IS_sound.cpp; PS2 names)
 struct CHANNEL_STRUCT {
@@ -313,9 +313,10 @@ public:
 };
 
 // GetCaps (return I3D_OK) is folded with other functions that return 0 the same way. The original kept its copy, our
-// build one of DirectShow's base classes', so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
+// build its own or one of DirectShow's base classes' (CBasePin::Run's until I3d_singlemesh.cpp), so the marker is by
+// the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x1007b950
-// ?Run@CBasePin@@UAEJ_J@Z
+// ?GetCaps@ISND_driver@@UBG?AW4LS3D_RESULT@@PAI@Z
 
 // PS2 names
 extern bool ISndIsInit;

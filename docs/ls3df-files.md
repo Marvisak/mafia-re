@@ -77,9 +77,9 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10048060–1004e9b0` | `1004a860` | `10048a00`, `10048a50`, `10048aa0` (empty) | `I3d_scene.cpp` | one file with its marker after `SetBackdropRange`, as `I3d_math.cpp`: `I3D_scene` in PS2's order from its constructor (`10048ab0`), the PC's shadow and mirror lists after `Close`, the weather system and the fog states; after the last function the copies of the weather's `C_list` functions, `S_vector`'s empty constructor and the class's in-class functions; written |
 | `1004e9b0–100508b0` | `10050890` | | `I3d_sector.cpp` | from the sound properties' `SetupDefaults` (`1004e9b0`) and `MakeBlend`, `I3D_sector` in PS2's order without its `SetBBox`, `Clear` and `CheckPointDepth`; after the marker the vtable's `SetGroupBits` (`100508b0`, an in-class function) and `C_list::find` (`100508d0`); written |
 | `100508b0–100529c0` | `100529a0` | `10050900`, `10050d30` | `I3d_shadow.cpp` | `I3D_shadow` constructor, `ShadowDef` |
-| `100529c0–` | none | `10052f30` | ? | |
-| `–10056860` | `10056840` | | ? (PC only?) | `I3D_projector::ProcessShadow()`, `I3D_shadow::ProcessShadow()` |
-| `10056860–10057650` | `10057630` | | `I3d_singlemesh.cpp`, `I3d_singlemorph.cpp` | one of the two has no marker |
+| `100529c0–10054240` | none | `10052f30` | ? (PC only?) | the shadows' visual (`I3D_VISUAL_SHADOW`, its constructor `10052ce0`) and the shadows' and projectors' receivers (`10053280`: `I3D_shadow::ProcessShadow()`, `I3D_projector::ProcessShadow()`, `!! Maximum shadow receivers reached`); the visual's vtables (`1009cbc4`, `1009cbd8`) follow the shadow file's data with no identity matrix of their own: compiled with another file's precompiled header (`/Yu`), as `clipper2.cpp` |
+| `10054240–10056e80` | `10056840` | | `I3d_singlemesh.cpp` | `I3D_singlemesh` in PS2's order from its constructor (`10054240`), whose vtables (`1009cc88`) follow the file's identity matrix (`1009cc48`), with the PC's lods (`SMeshLod`) and their vertex helpers; after the marker, which follows `m_AddFGroups`, `LoadImage`, the lod's scalar deleting destructor and destructor, then the out-of-line `I3D_joint::GetJointMatrix` (`10056ba0`) and `S_vector::operator*=` (`10056e60`); written |
+| `10056e80–10057650` | `10057630` | | `I3d_singlemorph.cpp` | `I3D_singlemorph` from its constructor (`10056e80`), whose vtables (`1009cd80`) follow the file's identity matrix (`1009cd40`): PS2's `NumLevels`, `NumRegions`, `SetWeight`, `GetWeight`, `SetMesh`, `Duplicate`, an `UpdateBoundProc` that jumps to the single mesh's, the lod vertices and `LoadImage` |
 | `10057650–10059250` | `10059230` | | `I3d_sound.cpp` | `I3D_sound` in PS2's order from its constructor (`10057650`), without `m_Pause` (inlined everywhere); after the marker `Duplicate` (`10059250`) and `m_SetState` (`10059360`), its `LoadImage` folded into `I3D_area`'s, then the out-of-line `ISND_source::GetFileName` and `I3D_sound::SetOn(bool)` up to `10059440`; written |
 | `10059250–1005a140` | `1005a120` | `10059440` | `I3d_target.cpp` | from `globalTargetList`'s `$E` (`10059440`) `I3D_target` in PS2's order; written |
 | `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | `I3D_user` in PS2's order; written |
@@ -131,14 +131,14 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
   would be kept where the first object that has them is (the linker keeps the first copy of a COMDAT), as
   `clipping.cpp`'s helper keeps its message. So their functions were dropped by `/OPT:REF` or compiled out on PC.
 - **The count.** The original's 58 identity matrices are 48 objects of the I3D group and 5 each of IGraph and ISound.
-  The objects without one: `clipper2.cpp`, and probably one file of the singlemesh/singlemorph pair, which has one copy
-  and one marker (as a file using another's precompiled header, like `clipper2.cpp`). The portal and pose files have
-  one each (`1009c6f8`, `1009c750`). That makes 60 of the Rich header's 61 C++ objects, so one more object has no copy:
-  a file without the engine header, or one more compiled with another's precompiled header. The range `100529c0` and
-  `LoadTargetList`'s `$E` are candidates; `1000de70` (three globals and a zero vector) would have a copy, so it belongs
-  to a neighbouring file.
-- **Files without a marker.** Their boundaries come from their code only: the billboard/camera and
-  singlemesh/singlemorph pairs and the ranges marked `none`. A file compiled with another's precompiled header (`/Yu`)
+  The objects without one: `clipper2.cpp` and the shadows' visual's file at `100529c0`, both without a marker too (as
+  files using another's precompiled header). The portal and pose files have one each (`1009c6f8`, `1009c750`), and so
+  have the single mesh and single morph (`1009cc48`, `1009cd40`). That makes 60 of the Rich header's 61 C++ objects, so
+  one more object has no copy: a file without the engine header, or one more compiled with another's precompiled
+  header. `LoadTargetList`'s `$E` is a candidate; `1000de70` (three globals and a zero vector) would have a copy, so it
+  belongs to a neighbouring file.
+- **Files without a marker.** Their boundaries come from their code only: the billboard/camera pair and the ranges
+  marked `none`. A file compiled with another's precompiled header (`/Yu`)
   has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.
 - **`.bss` between `IGraph.cpp` and `IShow.cpp`.** `IGraph.cpp`'s ends at `0x101c5ad9`, the first of
   `IShow.cpp`'s (`m_CreateCTextureRenderer`'s statics) is at `0x101c5be8`. Nothing references the 0x108 bytes in

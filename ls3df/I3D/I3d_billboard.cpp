@@ -28,7 +28,6 @@ I3D_billboard::~I3D_billboard()
 {
 }
 
-// FUNCTION: LS3DF 0x10005e30
 void I3D_billboard::SetSpace(bool world)
 {
 }

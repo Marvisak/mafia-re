@@ -472,13 +472,3 @@ float I3D_model::GetPoseBlend() const
         return 0.0f;
     return ipol_set->GetPoseBlend();
 }
-
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x10054c20
-void I3D_singlemesh::DBuild()
-{
-    unknown_1dc[0] = 7;
-}
-
-#pragma auto_inline(on)

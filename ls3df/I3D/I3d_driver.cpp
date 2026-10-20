@@ -1776,12 +1776,6 @@ void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
     renderState[5]++;
 }
 
-// STUB: LS3DF 0x10054240
-I3D_singlemesh::I3D_singlemesh()
-{
-    renderState[29]++;
-}
-
 // STUB: LS3DF 0x10056e80
 I3D_singlemorph::I3D_singlemorph()
 {
