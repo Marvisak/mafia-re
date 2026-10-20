@@ -143,13 +143,13 @@ int I3D_void_interface::NumRegions() const
 }
 
 // FUNCTION: LS3DF 0x1005a760
-LS3D_RESULT I3D_void_interface::SetWeight(int level, int region, float weight)
+LS3D_RESULT I3D_void_interface::SetWeight(int region, int level, float weight)
 {
     return I3DERR_GENERIC;
 }
 
 // FUNCTION: LS3DF 0x1005a770
-float I3D_void_interface::GetWeight(int level, int region) const
+float I3D_void_interface::GetWeight(int region, int level) const
 {
     return 0.0f;
 }

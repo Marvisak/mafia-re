@@ -216,7 +216,7 @@ void I3D_area::SaveImage()
     dbgPrintf("** nepodporovany typ:%s  SaveImage()  %s", pI3DDriver->FrameType2String(type), GetName());
 }
 
-// FUNCTION: LS3DF 0x10005ce0
+// Folded with I3D_sound::LoadImage, so the marker is in I3D.h, by name
 void I3D_area::LoadImage()
 {
     dbgPrintf("** nepodporovany typ:%s  LoadImage()  %s", pI3DDriver->FrameType2String(type), GetName());

@@ -26,6 +26,7 @@ add_library(ls3df SHARED
     I3D/I3d_mesh.cpp
     I3D/I3d_mirror.cpp
     I3D/I3d_model.cpp
+    I3D/I3d_morph.cpp
     I3D/I3d_object.cpp
     I3D/I3d_pose.cpp
     I3D/I3d_scene.cpp
@@ -120,7 +121,8 @@ if (MSVC_VERSION EQUAL 1200)
     # UpdateSector, the landscapes' Reset, Tessellate and Render and the mirrors' UpdateVisibility, PrepareReflection
     # and Draw by render.cpp; the sounds' m_SetState and the scene's view, sound and weather functions by render.cpp,
     # its shadow list by the shadows, MakeReadySectors by I3D code at 0x10045724; the clipper's SetClipParams,
-    # ResetClipArrays and entry points by the projectors (0x10046960) and the shadows (0x10053280).
+    # ResetClipArrays and entry points by the projectors (0x10046960) and the shadows (0x10053280); morphBase's
+    # constructor, Clear, SetWeightB, GetWeightB and first UpdateMorphLod by the single morphs (0x10056e80-0x10057630).
     target_link_options(ls3df PRIVATE "/INCLUDE:?m_UnlockAllIBuffers@C_IBManager@@QAEXXZ"
         "/INCLUDE:?m_UnlockAllVBuffers@C_VBManager@@QAEXXZ"
         "/INCLUDE:?RenderShadowTexture@I3D_driver@@QAE?AW4LS3D_RESULT@@PBMIPBGIPAVITexture@@0@Z"
@@ -144,7 +146,10 @@ if (MSVC_VERSION EQUAL 1200)
         "/INCLUDE:?ClipMesh@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
         "/INCLUDE:?ClipMeshW@@YI_NPBUI3D_vertex@@HPAVI3D_face_group@@HI@Z"
         "/INCLUDE:?ClipSingleMesh@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HIABUS_matrix@@@Z"
-        "/INCLUDE:?ClipSingleMeshW@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HI@Z")
+        "/INCLUDE:?ClipSingleMeshW@@YI_NPBUS_clip_sm_vertex@@HPAVI3D_face_group@@HI@Z"
+        "/INCLUDE:??0morphBase@@QAE@XZ" "/INCLUDE:?Clear@morphBase@@QAEXXZ"
+        "/INCLUDE:?SetWeightB@morphBase@@QAE?AW4LS3D_RESULT@@HHM@Z" "/INCLUDE:?GetWeightB@morphBase@@QBEMHH@Z"
+        "/INCLUDE:?UpdateMorphLod@morphBase@@QAEXHPAVI3D_mesh_object@@@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8

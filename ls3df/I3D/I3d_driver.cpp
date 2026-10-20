@@ -1734,12 +1734,6 @@ I3D_lit_object::I3D_lit_object()
     renderState[27]++;
 }
 
-// STUB: LS3DF 0x10034e30
-I3D_morph::I3D_morph()
-{
-    renderState[31]++;
-}
-
 // STUB: LS3DF 0x1003a430
 I3D_occluder::I3D_occluder()
 {

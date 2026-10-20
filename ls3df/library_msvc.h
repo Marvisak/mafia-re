@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -120,6 +120,12 @@
 
 // LIBRARY: LS3DF 0x1008debc SYMBOL
 // _rand
+
+// LIBRARY: LS3DF 0x1008dede SYMBOL
+// __aligned_malloc
+
+// LIBRARY: LS3DF 0x1008df26 SYMBOL
+// __aligned_free
 
 // LIBRARY: LS3DF 0x1008df40 SYMBOL
 // _strncpy
@@ -1027,8 +1033,14 @@
 // GLOBAL: LS3DF 0x100ac294
 // ___decimal_point
 
+// GLOBAL: LS3DF 0x100ac298
+// ___decimal_point_length
+
 // GLOBAL: LS3DF 0x100ac410
 // __iob
+
+// GLOBAL: LS3DF 0x100ac790
+// ___badioinfo
 
 // GLOBAL: LS3DF 0x100ac7b0
 // __amblksiz

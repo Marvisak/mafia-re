@@ -69,7 +69,7 @@ LS3D_RESULT ISND_3Dlistener::SetVelocity(const S_vector &velocity)
     return I3D_OK;
 }
 
-// FUNCTION: LS3DF 0x1007b180
+// Folded with I3D_material::SetEnvAlpha, so the marker is in ISound.h, by name
 LS3D_RESULT ISND_3Dlistener::SetDistanceFactor(float factor)
 {
     ds_data.flDistanceFactor = factor;

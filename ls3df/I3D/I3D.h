@@ -30,6 +30,7 @@ class I3D_sound;
 class I3D_area;
 class I3D_animation_set;
 class I3D_mesh_object;
+class I3D_mesh_level;
 struct S_vector4;
 class C_IBuffer;
 class C_VBuffer;
@@ -1247,7 +1248,7 @@ public:
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too), and SetDir's and SetName's are scene
 // functions of their shape.
 // FUNCTION: LS3DF 0x1004e970
-// ?UpdateTexture@I3D_material@@UAGXXZ
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
 // ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
@@ -1733,6 +1734,11 @@ public:
 // SYNTHETIC: LS3DF 0x10005290
 // I3D_area::`scalar deleting destructor'
 
+// LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
+// keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
+// FUNCTION: LS3DF 0x10005ce0
+// ?LoadImage@I3D_sound@@UAEXXZ
+
 class __declspec(novtable) I3D_shadow : public I3D_frame {
 public:
     I3D_shadow();
@@ -1745,16 +1751,16 @@ public:
     uchar unknown_18c[0x88];
 };
 
-// The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are guesses). The
-// visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and NumRegions'
-// (return 0) are folded with a DirectShow base class function (0x10087520), so they have no markers.
+// The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are the morph's
+// messages'). The visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and
+// NumRegions' (return 0) are folded with a DirectShow base class function (0x10087520), so they have no markers.
 // VTABLE: LS3DF 0x1009d108
 class I3D_void_interface {
 public:
     virtual int __stdcall NumLevels() const;
     virtual int __stdcall NumRegions() const;
-    virtual LS3D_RESULT __stdcall SetWeight(int level, int region, float weight);
-    virtual float __stdcall GetWeight(int level, int region) const;
+    virtual LS3D_RESULT __stdcall SetWeight(int region, int level, float weight);
+    virtual float __stdcall GetWeight(int region, int level) const;
 };
 
 // What SetShadowMode and SetProjectorMode take (PS2 type; the values' names aren't known). The shadows and projectors
@@ -1817,6 +1823,12 @@ private:
 
 public:
     void SetBoundVolume(const I3D_bvolume &bvol);
+
+    // Insanity3D's name (its GetVisualType1)
+    I3D_VISUAL_TYPE GetVisualType() const
+    {
+        return visual_type;
+    }
 
     // The visual's bound volume in world space, updated first if it isn't (the name is a guess; the lighting and the
     // visuals' rendering inline it)
@@ -1935,6 +1947,12 @@ public:
     // Like SetTransparency, for fade (PC only, the name is a guess)
     void SetFade(float f);
 
+    // Insanity3D's name
+    I3D_mesh_object *GetMesh() const
+    {
+        return mesh;
+    }
+
     float sort_dist;                    // 0x1dc, orders the transparent face groups (set by the rendering)
     I3D_mesh_object *mesh;              // 0x1e0
     lod *lods[10];                      // 0x1e4, one per level of the mesh
@@ -2037,7 +2055,107 @@ public:
     uint joints_changed;                // 0x224, counts the moves of its joints (PS2 0x218; the name is a guess)
     uint unknown_228;                   // 0x228, joints_changed when the bound volume was computed
 };
-I3D_PLACEHOLDER_VISUAL(I3D_morph, 0x238)
+// The morphs (PS2 I3d_morph.cpp; I3d_morph.cpp): a mesh whose vertices are a weighted sum of its levels. A morph's
+// vertices are split into regions, each with a weight for every level; m_pMorphDef holds the levels' positions and
+// normals for each region of each lod of the mesh, and the morph sums them into the lod's vertices when the weights
+// change (UpdateMorphLod). Class names are PS2's, member names the messages' (m_numLevels, m_numRegions, m_pMorphDef)
+// or guesses.
+
+// A region's vertices in one lod (PS2 morph_region, 0xc bytes)
+struct morph_region {
+    morph_region();
+    ~morph_region();
+
+    int num_verts;
+    ushort *indices;                    // 0x04, the mesh vertex each one moves
+    S_vector *verts;                    // 0x08, for each vertex a position and a normal per level, 16-byte aligned
+};
+
+// The levels of a morph, shared by its copies (PS2 MorphDef, 0x38 bytes on PC), reference counted
+class MorphDef {
+public:
+    MorphDef(int lods, int regs);
+    ~MorphDef();
+    int Release();
+
+    int num_lods;                       // 0x00
+    int num_regions;                    // 0x04
+    morph_region *regions;              // 0x08, num_regions for each lod
+    int ref;                            // 0x0c
+    I3D_bvolume bvol;                   // 0x10, the morph's (LoadImageB reads it)
+};
+
+// What morphBase::unknown_18 points to (PC only): nothing in LS3DF creates one, the morphs only release it. Its
+// objects' types aren't known; Release is their first virtual function, as the mesh levels'.
+struct S_morph_unknown {
+    I3D_mesh_level *unknown_00[8];
+    I3D_mesh_level *unknown_20[16];
+
+    ~S_morph_unknown();
+};
+
+// morphBase::flags (names guessed; PS2's are other bits, a dirty bit for each lod, 0x10000 and 0x20000)
+#define MORPHF_DIRTY 0x1                // the weights changed: UpdateMorphLod moves the vertices
+#define MORPHF_LOADED 0x2               // m_pMorphDef holds the levels (LoadImageB, or Duplicate's copy)
+#define MORPHF_UNKNOWN_4 0x4            // set by the constructor, cleared by LoadImage and Duplicate; nothing tests it
+
+// What a morph is besides its visual (PS2 morphBase, 0x1c bytes on PC): the weights and the levels. The PS2's is
+// polymorphic, the PC's isn't. Its destructor is the PS2's BogusDestructor.
+class morphBase {
+public:
+    morphBase();
+    ~morphBase()
+    {
+        Clear();
+    }
+
+    // Frees the weights and the levels
+    void Clear();
+    LS3D_RESULT SetWeightB(int region, int level, float weight);
+    float GetWeightB(int region, int level) const;
+    // norm_weights from weights: each region's scaled to a sum of 1, or all on the first level if they are all zero
+    void NormalizeWeights();
+    // Sums the levels of the lod's regions into its vertices, if the weights changed (the second one also into the
+    // positions at pos, stride bytes apart: a lod's vertices)
+    void UpdateMorphLod(int lod, I3D_mesh_object *mesh);
+    void UpdateMorphLod(void *pos, uint stride, int lod, I3D_mesh_object *mesh);
+    // Shares mb's levels and copies its weights
+    LS3D_RESULT DuplicateMorphDef(morphBase *mb);
+    void LoadImageB();
+
+    uint flags;                         // 0x00, MORPHF_*
+    int m_numLevels;                    // 0x04
+    int m_numRegions;                   // 0x08
+    float *weights;                     // 0x0c, m_numLevels for each region; norm_weights is in the same block
+    float *norm_weights;                // 0x10
+    MorphDef *m_pMorphDef;              // 0x14
+    S_morph_unknown *unknown_18;        // 0x18
+};
+
+// A morph (PS2 I3D_morph, 0x238 bytes on PC): an object whose mesh is its own copy of the original's, which the
+// weights move
+// VTABLE: LS3DF 0x1009c268 I3D_frame
+// VTABLE: LS3DF 0x1009c258 I3D_void_interface
+class I3D_morph : public I3D_object, public morphBase {
+public:
+    I3D_morph();
+    ~I3D_morph();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void LoadImage();
+    // Empty: the vertices stay in local space. The linker folded it with the billboard's (0x10005e30).
+    virtual void __stdcall SetSpace(bool world);
+    virtual void m_AddFGroups();
+    virtual void __stdcall SetMesh(I3D_mesh_object *m, bool keep_lods);
+    virtual int __stdcall NumLevels() const;
+    virtual int __stdcall NumRegions() const;
+    virtual LS3D_RESULT __stdcall SetWeight(int region, int level, float weight);
+    virtual float __stdcall GetWeight(int region, int level) const;
+};
+
+// SYNTHETIC: LS3DF 0x10034e90
+// I3D_morph::`scalar deleting destructor'
+
 I3D_PLACEHOLDER_VISUAL(I3D_singlemorph, 0x248)
 I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
 I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
@@ -2481,14 +2599,22 @@ public:
 // A base class function whose folded copy our map lists under an engine object is left out of library_strmbase.h by
 // crtannotate and gets a marker here. Which object our map lists a folded copy under changes with the link
 // (CBaseRenderer::OnStopStreaming's, folded with CBaseFilter::GetSetupData, was IShow.cpp's until I3d_interpolator.cpp,
-// again from I3d_area.cpp to I3d_animation.cpp and from I3d_material.cpp to I3d_sound.cpp; CBaseRenderer::OnRenderEnd's,
-// folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to I3d_area.cpp
-// and from I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file;
-// CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's, folded with
-// I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp and again from
-// clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp), so after a new file or function rerun
-// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py). None needs
-// one at the moment.
+// again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp and since I3d_morph.cpp;
+// CBaseRenderer::OnRenderEnd's, folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from
+// I3d_target.cpp to I3d_area.cpp and from I3d_material.cpp to I3d_mirror.cpp, and with I3D_landpatch::m_RenderFGroup
+// I3d_landscape.cpp's in that file and since I3d_morph.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
+// CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
+// from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
+// I3d_pose.cpp and since I3d_morph.cpp), so after a new file or function rerun crtannotate and move such markers here
+// or back. The names are the ones our PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087520
+// ?NumLevels@I3D_void_interface@@UBGHXZ
+
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -2610,7 +2736,7 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
