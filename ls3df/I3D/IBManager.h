@@ -132,7 +132,7 @@ inline void C_IBuffer::Unlock()
 // ?reserve@?$C_list@PAUS_VB_block@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF 0x1005bb80
-// ?begin@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAE?AViterator@12@XZ
+// ?begin@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAE?AViterator@12@XZ
 
 // TEMPLATE: LS3DF 0x1005bb90
 // ?erase@?$_Tree@PAVC_IBuffer@@PAV1@U_Kfn@?$multiset@PAVC_IBuffer@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@std@@@std@@US_IBuffer_less@@V?$allocator@PAVC_IBuffer@@@4@@std@@QAE?AViterator@12@V312@@Z
@@ -198,7 +198,7 @@ inline void C_IBuffer::Unlock()
 // ?_Dec@const_iterator@?$_Tree@PAUS_IB_block@@PAU1@U_Kfn@?$multiset@PAUS_IB_block@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@std@@@std@@US_IB_block_less@@V?$allocator@PAUS_IB_block@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x1005d000
-// ?_Construct@std@@YIXPAPAUS_IB_block@@ABQAU2@@Z
+// ?_Construct@std@@YIXPAPAUS_VB_block@@ABQAU2@@Z
 
 // The trees' empty node and its reference count, after cIBMan in .bss
 // GLOBAL: LS3DF 0x101b5118

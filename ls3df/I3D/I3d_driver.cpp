@@ -1758,12 +1758,6 @@ I3D_part_base::I3D_part_base()
     renderState[34]++;
 }
 
-// STUB: LS3DF 0x10045e30
-I3D_projector::I3D_projector()
-{
-    renderState[33]++;
-}
-
 // STUB: LS3DF 0x10062010
 void I3D_driver::initRender()
 {

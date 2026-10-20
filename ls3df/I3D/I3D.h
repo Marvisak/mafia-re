@@ -378,6 +378,13 @@ public:
         return bound_w;
     }
 
+    // Whether the frame is on (the name is a guess; the projectors' CollectReceivers reads the flags through it, so VC6
+    // loads them again for the bound volume's test after it)
+    bool IsOn() const
+    {
+        return frm_flags & FRMFLAGS_ON;
+    }
+
     // PS2 name
     const S_vector &GetWorldPos()
     {
@@ -1336,9 +1343,9 @@ public:
 // The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
 // m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file: Globals.cpp has
 // a $E13 and a $E18 too, IGraph.cpp both. reccmp pairs the annotations of one name with our functions of that name in
-// address order, so the scene's (the first $E13 in link order, the second $E18 after the collision file's) and
-// Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay unmatched. The constructor's bigBox registers
-// $E26, which I3d_driver.cpp has before it.
+// address order, so the scene's (the second $E13 in link order, after the projector file's, and the second $E18, after
+// the collision file's) and Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay unmatched. The
+// constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
 // SYNTHETIC: LS3DF 0x10048a30
 // $E13
 
@@ -1359,12 +1366,13 @@ public:
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
 // (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp, from I3d_material.cpp, whose
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
-// to I3d_singlemorph.cpp), and SetDir's and SetName's are scene functions of their shape.
+// to I3d_singlemorph.cpp, I3D_visual::m_RenderFGroup's since I3d_projector.cpp), and SetDir's and SetName's are scene
+// functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?Duplicate@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
@@ -1856,7 +1864,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_sound@@UAEXXZ
+// ?LoadImage@I3D_area@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
 // its name, under the frame the shadow is set to, moves
@@ -2274,10 +2282,10 @@ public:
 // I3D_billboard::`scalar deleting destructor'
 
 // SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
-// billboard file's copy, our linker the single meshes' since I3d_singlemesh.cpp, so the marker is by the name our PDB
-// keeps (tools/foldfix.py updates it).
+// billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and the morphs' since I3d_projector.cpp,
+// so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
+// ?SetSpace@I3D_morph@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2610,7 +2618,6 @@ public:
 // SYNTHETIC: LS3DF 0x10056ef0
 // I3D_singlemorph::`scalar deleting destructor'
 
-I3D_PLACEHOLDER_VISUAL(I3D_projector, 0x264)
 I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
 I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
 
@@ -3055,18 +3062,15 @@ public:
 // I3d_interpolator.cpp, again from I3d_area.cpp to I3d_animation.cpp, from I3d_material.cpp to I3d_sound.cpp, from
 // I3d_morph.cpp to I3d_singlemorph.cpp and from i3d_collision.cpp to I3d_shadow.cpp; CBaseRenderer::OnRenderEnd's
 // (0x10087ec0), folded with I3D_driver::m_RecomputeUsedVRAM, the driver's until I3d_model.cpp, from I3d_target.cpp to
-// I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp, from I3d_singlemorph.cpp to i3d_collision.cpp and since
-// I3d_shadow.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file and from I3d_morph.cpp to
-// I3d_singlemesh.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then; CBasePin::CompleteConnect's (0x10087520),
-// folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's from I3d_sector.cpp to I3d_area.cpp, again
-// from clipping.cpp's CheckClipFaces, a function the linker drops, to I3d_pose.cpp and since I3d_morph.cpp), so after a
-// new file or function rerun crtannotate and move such markers here or back. The names are the ones our PDB keeps
-// (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087520
-// ?NumRegions@I3D_void_interface@@UBGHXZ
-
+// I3d_area.cpp, from I3d_material.cpp to I3d_mirror.cpp, from I3d_singlemorph.cpp to i3d_collision.cpp and in
+// I3d_shadow.cpp, and with I3D_landpatch::m_RenderFGroup I3d_landscape.cpp's in that file, from I3d_morph.cpp to
+// I3d_singlemesh.cpp and since I3d_projector.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
+// CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
+// from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
+// I3d_pose.cpp and from I3d_morph.cpp to I3d_shadow.cpp), so after a new file or function rerun crtannotate and move
+// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3165,10 +3169,11 @@ struct TLVERTEX2 {
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
-// copy after the scene's SetOn, or from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself); the original
-// keeps the area file's copy
+// copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
+// after the shadow visual's SetOn and since I3d_projector.cpp after vector<ITexture *>::_Destroy); the original keeps
+// the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
+// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -3422,11 +3427,12 @@ struct ADD_FG_HELP_STRUCT {
     }
 };
 
-// A vertex of a shadow's receivers (0x18 bytes, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1; the name is a guess)
+// A vertex of a shadow's or a projector's receivers (0x18 bytes, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1; the name is
+// a guess)
 struct S_shadow_vertex {
     S_vector pos;                       // in world space
-    uint color;                         // the shadow's color, its opacity fading out with the depth
-    float u, v;                         // in the shadow's texture
+    uint color;                         // the shadow's or projector's color, faded with the depth
+    float u, v;                         // in the texture
 };
 
 // What a shadow renders (PC only, 0x26c bytes; visual type SHD, the class name is a guess): the faces of the visuals
@@ -3477,10 +3483,122 @@ public:
 // SYNTHETIC: LS3DF 0x10052e70
 // I3D_shadow_visual::`scalar deleting destructor'
 
+// What SetMode takes (PS2 type; the values' names are guesses). The low two bits choose the blending, 0 adding the
+// texture (D3DBLEND_ONE, ONE) and the others blending it by its alpha; the next ones how the projection fades with the
+// depth in the projector's volume: not at all (0), from the projector out (4) or from the middle out (8). Fading, an
+// added projection darkens its color, a blended one its alpha. 2, 3, 6 and 7 blend without a fade.
+enum PROJECTOR_MODE {
+    PROJECTOR_MODE_ADD,
+    PROJECTOR_MODE_BLEND,
+    PROJECTOR_MODE_ADD_FADE = 4,
+    PROJECTOR_MODE_BLEND_FADE,
+    PROJECTOR_MODE_ADD_FADE_MID = 8,
+    PROJECTOR_MODE_BLEND_FADE_MID,
+};
+
+// MakeProjection's flags (the names are guesses)
+#define PROJF_OMNI_SECTOR 0x2           // without a frame, the scene's omni sector too
+#define PROJF_NO_MODELS 0x4             // not into models
+#define PROJF_OWN_SECTOR 0x8            // without a frame, only the projector's sector and its own children
+#define PROJF_NO_CHILDREN 0x10          // only the frame itself
+
+// I3D_projector::proj_flags (the name is a guess)
+#define PROJF_RECEIVERS_VALID 0x1       // the receivers' faces are kept (a lock, MakeProjection)
+
+// A projector (PS2 I3D_projector, 0x264 bytes on PC; I3d_projector.cpp): a visual that projects its texture, or its
+// material's, onto the visuals around it that take projectors (SHADOW_MODE 1 or 2 by SetProjectorMode), its receivers,
+// within its volume, the unit box (orthogonal) or the frustum along its z axis. Their faces are clipped to the volume
+// (clipper.h) and rendered with the texture, as a shadow's visual does (that code is a copy of this). Its virtual
+// functions are PS2's in PS2's order. Names are PS2's where it has the member (orthogonal, texture, material, alpha,
+// color, mode, the lock, the reverse factor), the others are guesses.
+// VTABLE: LS3DF 0x1009c818 I3D_frame
+// VTABLE: LS3DF 0x1009c808 I3D_void_interface
+class I3D_projector : public I3D_visual {
+public:
+    I3D_projector();
+    ~I3D_projector();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+    // PS2 names
+    virtual void __stdcall SetTexture(ITexture *tex);
+    virtual void __stdcall SetMaterial(I3D_material *mat);
+    virtual void __stdcall SetOrthogonal(bool b);
+    virtual void __stdcall SetAlpha(float a);
+    virtual void __stdcall SetReverseFactor(float f);
+    virtual void __stdcall SetColor(const S_vector &c);
+    virtual void __stdcall SetMode(PROJECTOR_MODE m);
+    virtual void __stdcall SetProjectorLock(I3D_LOCK lock);
+    // Collects the receivers under frame (or in the projector's sector or scene, PROJF_*) and clips their faces once,
+    // for good: it locks the projector (I3DLOCK_RECEIVERS). PS2's is empty, defined in the class.
+    virtual void __stdcall MakeProjection(uint flags, I3D_frame *frame);
+
+    // The name is a guess: Duplicate copies the range through it (fld, fstp), as the value goes through a parameter
+    void SetVisibleRange(float r)
+    {
+        visible_range = r;
+    }
+
+    // PC only, the names are guesses but ProcessRecList's, which its messages name. ProcessShadow is the shadows'
+    // visual's name for its copy of the code.
+    void AddFGroups();
+    void ProcessRecList();
+    void ProcessShadow();
+    static void CollectReceivers(I3D_frame *frm);
+
+    uint unknown_1dc;                   // 0x1dc, nothing in LS3DF uses it (the objects' sort_dist is here)
+    bool orthogonal;                    // 0x1e0
+    float visible_range;                // 0x1e4, scaled by FOVDistCorrection: farther from the camera it isn't
+                                        // rendered (100 by default)
+    float alpha;                        // 0x1e8, 1.0 opaque
+    S_vector color;                     // 0x1ec, white by default
+    I3D_LOCK projector_lock;            // 0x1f8, any but I3DLOCK_NONE keeps the receivers' faces in the buffers
+    ITexture *texture;                  // 0x1fc, else the material's
+    I3D_material *material;             // 0x200
+    PROJECTOR_MODE mode;                // 0x204
+    S_shadow_vertex *verts;             // 0x208, in system memory, without a lock
+    int verts_alloc;                    // 0x20c
+    int num_verts;                      // 0x210
+    ushort *faces;                      // 0x214, three indices each, in system memory
+    COMPLETE_VB_STRUCT vb;              // 0x218, the vertices with a lock
+    COMPLETE_IB_STRUCT ib;              // 0x224, the faces
+    int faces_alloc;                    // 0x230
+    int num_faces;                      // 0x234, the opaque materials'
+    int num_faces_t;                    // 0x238, the transparent ones', after them
+    RENDER_FG_HELP_STRUCT *rfg;         // 0x23c, two, what m_AddFGroups queues for the opaque and the transparent faces
+    S_vector center_t;                  // 0x240, of the transparent faces, in world space
+    int receivers_update;               // 0x24c, the update count the receivers were collected at, -1
+    int num_receivers;                  // 0x250
+    int receivers_count;                // 0x254, the sum of the receivers' update counts and current lods
+    I3D_sector *sector;                 // 0x258, the one it is in, until it moves
+    uint proj_flags;                    // 0x25c, PROJF_RECEIVERS_VALID
+    float reverse_factor;               // 0x260
+};
+
+// SYNTHETIC: LS3DF 0x10045fe0
+// I3D_projector::`scalar deleting destructor'
+
+// The destructor the projector file's thunk registers for ProjectorsToRender, the first $E13 in link order (see the
+// scene's)
+// SYNTHETIC: LS3DF 0x10046760
+// $E13
+
+// The projector file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space), and its
+// zero vector, which the constructor copies
+// GLOBAL: LS3DF 0x1009c7c8
+// IdentityMatrixData
+
+// GLOBAL: LS3DF 0x101b45fc
+// ZeroSVector
+
 // The shadows' visuals whose receivers the rendering has to clip this frame and what it calls for them (I3d_shadow.cpp),
-// and the visuals a projector or shadow falls on (I3d_projector.cpp; the names are guesses)
+// the same for the projectors, and the visuals a projector or shadow falls on (I3d_projector.cpp; the names are guesses)
 extern C_list<I3D_shadow_visual *> ShadowVisualQueue;
 void ProcessShadows();
+void ProcessProjectors();
 extern I3D_visual *ShadowReceivers[512];
 
 // render.cpp

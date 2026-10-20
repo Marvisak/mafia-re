@@ -26,8 +26,7 @@
 // The shadow's file loader (Load.cpp, not written yet; the name is a guess)
 LS3D_RESULT LoadShadow(const char *file_name, uint flags, void *cb, void *context, ShadowDef *def);
 
-// IGraph.cpp's D3DRS_ZBIAS as it set it last, and the driver's for the shadows (RS_ZBIAS_SHADOW)
-extern uint m_CurrZBias;
+// The driver's bias for the shadows (RS_ZBIAS_SHADOW)
 extern int RsZBiasShadow;
 
 // Every shadow (PS2 name)
@@ -1093,10 +1092,7 @@ void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     pGlobalIGraph->SetWorldMatrix(GetMatrix());
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
-    if (m_CurrZBias != (uint)RsZBiasShadow) {
-        m_CurrZBias = RsZBiasShadow;
-        m_pD3DDevice8->SetRenderState(D3DRS_ZBIAS, RsZBiasShadow);
-    }
+    SetZBias(RsZBiasShadow);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
     if (shadow->shadow_lock == I3DLOCK_RECEIVERS) {
         SetVertexFormat(0);

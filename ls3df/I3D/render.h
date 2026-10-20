@@ -107,4 +107,18 @@ inline void SetClipping(uint clip)
     }
 }
 
+// IGraph.cpp's D3DRS_ZBIAS as it set it last
+extern uint m_CurrZBias;
+
+// D3DRS_ZBIAS (the name is a guess): the shadows' and projectors' bias. As a helper, its call spends the inline budget
+// that keeps the projectors' m_RenderFGroup from inlining its SetVertexFormat, as the original's doesn't; written out,
+// it does.
+inline void SetZBias(int bias)
+{
+    if (m_CurrZBias != (uint)bias) {
+        m_CurrZBias = bias;
+        m_pD3DDevice8->SetRenderState(D3DRS_ZBIAS, bias);
+    }
+}
+
 #endif
