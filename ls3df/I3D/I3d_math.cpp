@@ -18,19 +18,6 @@
 #define QUAT_ONE_LIMIT (1.0 - MRG_ZERO)
 #define SLERP_DELTA 0.0001
 
-// Min and max through references (the clamp in S_vector::AngleTo takes the address of its constants)
-template<class T>
-inline const T &Min(const T &a, const T &b)
-{
-    return a < b ? a : b;
-}
-
-template<class T>
-inline const T &Max(const T &a, const T &b)
-{
-    return a > b ? a : b;
-}
-
 // FUNCTION: LS3DF 0x1002cda0
 float __cdecl RandFloat()
 {

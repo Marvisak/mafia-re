@@ -70,7 +70,9 @@ inline void SetVertexFormat(uint format)
     }
 }
 
-// The second texture stage's color op (always inlined, so the name is a guess)
+// The second texture stage's color op (the name is a guess). The rendering calls it out of line; the copy the linker
+// keeps is in an I3D file not written yet.
+// FUNCTION: LS3DF 0x10029f30
 inline void SetColorOp1(uint op)
 {
     if (m_CurrColorOp1 != op) {
@@ -110,14 +112,76 @@ inline void SetClipping(uint clip)
 // IGraph.cpp's D3DRS_ZBIAS as it set it last
 extern uint m_CurrZBias;
 
-// D3DRS_ZBIAS (the name is a guess): the shadows' and projectors' bias. As a helper, its call spends the inline budget
-// that keeps the projectors' m_RenderFGroup from inlining its SetVertexFormat, as the original's doesn't; written out,
-// it does.
+// D3DRS_ZBIAS (the name is a guess): the shadows' and projectors' bias, and the rendering's for the visuals with
+// 0x100. As a helper, its call spends the inline budget that keeps the projectors' m_RenderFGroup from inlining its
+// SetVertexFormat, as the original's doesn't; written out, it does. The copy the linker keeps is render.cpp's, after
+// its functions.
+// FUNCTION: LS3DF 0x100659f0
 inline void SetZBias(int bias)
 {
     if (m_CurrZBias != (uint)bias) {
         m_CurrZBias = bias;
         m_pD3DDevice8->SetRenderState(D3DRS_ZBIAS, bias);
+    }
+}
+
+// IGraph.cpp's fog render states, which SetFog keeps
+extern int m_CurrFogType;
+extern float m_CurrFogStart;
+extern float m_CurrFogEnd;
+
+// The fog render states, set where they differ from IGraph's (PC only, the name is a guess): linear from start to end
+// (type 0), or exponential (1) or squared (2) with start as the density
+// FUNCTION: LS3DF 0x1004e390
+inline void SetFog(uint state, uint type, float start, float end, uint color)
+{
+    if (m_CurrFogState != state) {
+        m_CurrFogState = state;
+        if (state == TRUE)
+            m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, TRUE);
+        else {
+            m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
+            return;
+        }
+    }
+    if (!state)
+        return;
+    if (m_CurrFogType != type) {
+        m_CurrFogType = type;
+        switch (type) {
+        case 0:
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+            break;
+        case 1:
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP);
+            break;
+        case 2:
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP2);
+            break;
+        }
+    }
+    switch (m_CurrFogType) {
+    case 0:
+        if (!IsAbsMrgZero(m_CurrFogEnd - end)) {
+            m_CurrFogEnd = end;
+            m_pD3DDevice8->SetRenderState(D3DRS_FOGEND, I3DFloatAsInt(end));
+        }
+        if (!IsAbsMrgZero(m_CurrFogStart - start)) {
+            m_CurrFogStart = start;
+            m_pD3DDevice8->SetRenderState(D3DRS_FOGSTART, I3DFloatAsInt(start));
+        }
+        break;
+    case 1:
+    case 2:
+        if (!IsAbsMrgZero(m_CurrFogStart - start)) {
+            m_CurrFogStart = start;
+            m_pD3DDevice8->SetRenderState(D3DRS_FOGDENSITY, I3DFloatAsInt(start));
+        }
+        break;
+    }
+    if (m_CurrFogColor != color) {
+        m_CurrFogColor = color;
+        m_pD3DDevice8->SetRenderState(D3DRS_FOGCOLOR, color);
     }
 }
 

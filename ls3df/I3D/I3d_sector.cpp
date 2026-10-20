@@ -19,19 +19,6 @@ int portalVersion;
 // GLOBAL: LS3DF 0x101b4f2c
 int sectorVersion;
 
-// Min and max through references, as I3d_math.cpp's: SetSoundData's clamps take the addresses of their bounds
-template<class T>
-inline const T &Min(const T &a, const T &b)
-{
-    return a < b ? a : b;
-}
-
-template<class T>
-inline const T &Max(const T &a, const T &b)
-{
-    return a > b ? a : b;
-}
-
 // The listener's defaults: EAX 3.0's generic environment, scaled as the members are, without the room, and half a
 // second to blend into it. PS2's only clears the struct and sets the blend time.
 // FUNCTION: LS3DF 0x1004e9b0

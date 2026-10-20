@@ -35,11 +35,6 @@ void UnloadManagedTextures();
 // I3d_driver.cpp
 extern int driverTickTime;
 
-// IGraph.cpp's fog render states
-extern int m_CurrFogType;
-extern float m_CurrFogStart;
-extern float m_CurrFogEnd;
-
 // render.cpp: the areas the camera is in, and the sectors it was last in
 extern C_list<I3D_area *> CurrentActiveAreaList;
 extern I3D_sector *pLastCameraSector;
@@ -86,9 +81,9 @@ I3D_scene::I3D_scene()
 {
     type = FRAME_SCENE;
     ipol_set = NULL;
-    cb_context = 0;
+    cb_flags = 0;
     callback = NULL;
-    unknown_220 = S_vector(0.0f, .5f, .4f);
+    bg_color = S_vector(0.0f, .5f, .4f);
     backdrop_ncp = 1.0f;
     backdrop_fcp = 10000.0f;
     current_camera = NULL;
@@ -175,12 +170,12 @@ I3D_scene::~I3D_scene()
 }
 
 // FUNCTION: LS3DF 0x10049120
-SCN_CALLBACK *I3D_scene::SetCallback(SCN_CALLBACK *cb, uint context)
+SCN_CALLBACK *I3D_scene::SetCallback(SCN_CALLBACK *cb, uint flags)
 {
     if (!cb)
-        cb_context = 0;
+        cb_flags = 0;
     else
-        cb_context = context;
+        cb_flags = flags;
     SCN_CALLBACK *old = callback;
     callback = cb;
     return old;
@@ -531,16 +526,16 @@ LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, void *cb, void *c
 void I3D_scene::Close()
 {
     UnloadManagedTextures();
-    primary_sector->unknown_130 = 0;
-    backdrop_sector->unknown_130 = 0;
-    omni_sector->unknown_130 = 0;
-    near_sector->unknown_130 = 0;
+    primary_sector->next_visual = NULL;
+    backdrop_sector->next_visual = NULL;
+    omni_sector->next_visual = NULL;
+    near_sector->next_visual = NULL;
     CurrentActiveAreaList.clear();
     for (int i = primary_sector->sounds.size(); i--; )
         primary_sector->DeleteSound(primary_sector->sounds[0]);
-    for (int j = list_288.size(); j--; )
-        list_288[j]->Release();
-    list_288.clear();
+    for (int j = lensflares.size(); j--; )
+        lensflares[j]->Release();
+    lensflares.clear();
     pI3DDriver->sectors.clear();
     tick_frames.clear();
     delete ipol_set;
@@ -1504,8 +1499,6 @@ void I3D_scene::m_UpdateWeatherSystem()
     }
 }
 
-inline void SetFog(uint state, uint type, float start, float end, uint color);
-
 // The particles m_UpdateWeatherSystem wrote, in the primary sector's fog, untextured rain or textured snow
 // FUNCTION: LS3DF 0x1004ddd0
 void I3D_scene::m_RenderWeatherSystem()
@@ -1548,61 +1541,6 @@ void I3D_scene::m_RenderWeatherSystem()
     m_pD3DDevice8->SetStreamSource(0, WSComplVBStr.vb, sizeof(WS_VERTEX));
     m_pD3DDevice8->DrawPrimitive(D3DPT_TRIANGLELIST, WSComplVBStr.base, CurrentWECnt * 4);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-}
-
-// The fog render states, set where they differ from IGraph's (PC only, the name is a guess): linear from start to end
-// (type 0), or exponential (1) or squared (2) with start as the density
-// FUNCTION: LS3DF 0x1004e390
-inline void SetFog(uint state, uint type, float start, float end, uint color)
-{
-    if (m_CurrFogState != state) {
-        m_CurrFogState = state;
-        if (state == TRUE)
-            m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, TRUE);
-        else {
-            m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-            return;
-        }
-    }
-    if (!state)
-        return;
-    if (m_CurrFogType != type) {
-        m_CurrFogType = type;
-        switch (type) {
-        case 0:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-            break;
-        case 1:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP);
-            break;
-        case 2:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP2);
-            break;
-        }
-    }
-    switch (m_CurrFogType) {
-    case 0:
-        if (!IsAbsMrgZero(m_CurrFogEnd - end)) {
-            m_CurrFogEnd = end;
-            m_pD3DDevice8->SetRenderState(D3DRS_FOGEND, I3DFloatAsInt(end));
-        }
-        if (!IsAbsMrgZero(m_CurrFogStart - start)) {
-            m_CurrFogStart = start;
-            m_pD3DDevice8->SetRenderState(D3DRS_FOGSTART, I3DFloatAsInt(start));
-        }
-        break;
-    case 1:
-    case 2:
-        if (!IsAbsMrgZero(m_CurrFogStart - start)) {
-            m_CurrFogStart = start;
-            m_pD3DDevice8->SetRenderState(D3DRS_FOGDENSITY, I3DFloatAsInt(start));
-        }
-        break;
-    }
-    if (m_CurrFogColor != color) {
-        m_CurrFogColor = color;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGCOLOR, color);
-    }
 }
 
 // Whether the frame's bounding sphere is inside the camera's view

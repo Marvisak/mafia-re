@@ -317,7 +317,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         else
             m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
         break;
-    case RS_RECOMPUTE_GEOMETRY:
+    case RS_DRAWVISUALS:
         if (value)
             RecomputeAllGeometry = true;
         break;
@@ -1720,6 +1720,11 @@ void I3D_driver::m_RecomputeUsedVRAM()
 // GLOBAL: LS3DF 0x100a93f0
 bool RecomputeAllGeometry;
 
+// The particles' renderer, a visual that renders render.cpp's ParticleElementsList (I3d_particle.cpp; the name is a
+// guess). Zero-initialized here, which keeps it out of VC6's hash of the driver's globals.
+// GLOBAL: LS3DF 0x101b43d8
+I3D_visual *pParticleVisual = NULL;
+
 
 // The functions of other files the driver calls, until those are written. They come after the driver's functions:
 // VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
@@ -1756,31 +1761,6 @@ I3D_part_element::I3D_part_element()
 I3D_part_base::I3D_part_base()
 {
     renderState[34]++;
-}
-
-// STUB: LS3DF 0x10062010
-void I3D_driver::initRender()
-{
-    renderState[0]++;
-}
-
-// STUB: LS3DF 0x10062020
-void I3D_driver::closeRender()
-{
-    renderState[1]++;
-}
-
-// STUB: LS3DF 0x10062030
-LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
-{
-    renderState[2]++;
-    return I3D_OK;
-}
-
-// STUB: LS3DF 0x100658f0
-void I3D_driver::BuildAllVBuffers(I3D_scene *scene)
-{
-    renderState[3]++;
 }
 
 #pragma auto_inline(on)

@@ -53,7 +53,7 @@ I3D_frame::I3D_frame()
     bound_w.bsphere.radius = 0.0f;
     frm_flags = FRMFLAGS_UPDATE | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID | FRMFLAGS_QUAT_VALID | FRMFLAGS_ROT_VALID |
         FRMFLAGS_ON;
-    unknown_130 = 0;
+    next_visual = NULL;
     ff_left = NULL;
     ff_right = NULL;
     render_number = -1;

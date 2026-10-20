@@ -90,7 +90,8 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker; a file of its own (identity matrix `1009d2d8`) |
 | `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has `LoadTargetList`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code (the count of objects, see the open questions, leaves no room for one); `LoadTargetList` and `LoadMeshImage` written |
 | `10061990–100619b0` | `10061990` | | ? | no code, only the marker; a file of its own (identity matrix `1009d358`); PS2's `Load5ds.cpp` sorts here |
-| `100619b0–10065a10` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()`; after the marker `I3D_driver::BuildAllVBuffers` (`100658f0`), the out-of-line constructors its `$E`s call (`100659a0`, `100659d0`) and a z-bias setter only it calls (`100659f0`); `GetObjectLOD` written |
+| `100619b0–10061cd0` | none | none | `RadixSort.cpp` | the radix sort (`RadixSort32` with its passes inlined), which PS2 has at the start of `render.cpp`'s code: a file of its own without the engine header, neither marker nor identity matrix, its counts the first `.bss` of an object before `render.cpp`'s (`101c3c30`). The name is H&D Deluxe's; written |
+| `10061cd0–10065a10` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()` and what it calls, the sounds' areas and sectors among it; after the marker `I3D_driver::BuildAllVBuffers` (`100658f0`), the out-of-line constructors its `$E`s call (`100659a0`, `100659d0`) and a z-bias setter only it calls (`100659f0`); written |
 | `10065a10–10068880` | `10067d00` | `10065a10`, `10065a30` | `T&l.cpp` (`T_l.cpp`) | one file with its marker after `VertexLightingProcess`, as `I3d_math.cpp`: the lighting in PS2's order, the PC's texel callback, then the vertex helpers the objects and billboards render with (`EnvProcess`, the transforms, the fog, the vertex byte swap) and the copy of `I3D_dummy::GetInvMatrix` they call; written |
 | `10068880–10069e00` | `10069de0` | `10068880` | `VBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\VBManager.cpp`; written: `C_VBuffer`, `C_VBManager`, the same code as `IBManager.cpp`'s |
 | `10069e00–1006ad40` | none | none | `VBManager.cpp` | the rest of its multisets' out-of-line functions, after the marker; written |
@@ -131,9 +132,10 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 - **The count.** The original's 58 identity matrices are 48 objects of the I3D group and 5 each of IGraph and ISound.
   The object without one: `clipper2.cpp`, without a marker too (a file using another's precompiled header); the
   shadows' visual is code of `I3d_shadow.cpp`'s object. The portal and pose files have one each (`1009c6f8`,
-  `1009c750`), and so have the single mesh and single morph (`1009cc48`, `1009cd40`). That makes 59 of the Rich
-  header's 61 C++ objects, so two more objects have no copy: files without the engine header, or more compiled with
-  another's precompiled header. `LoadTargetList`'s `$E` is a candidate.
+  `1009c750`), and so have the single mesh and single morph (`1009cc48`, `1009cd40`). With `RadixSort.cpp`, a file
+  without the engine header, that makes 60 of the Rich header's 61 C++ objects, so one more object has no copy: a
+  file without the engine header, or one more compiled with another's precompiled header. `LoadTargetList`'s `$E` is
+  a candidate.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera pair and the ranges
   marked `none`. A file compiled with another's precompiled header (`/Yu`)
   has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.

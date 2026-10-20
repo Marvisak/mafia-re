@@ -223,6 +223,20 @@ public:
         used_size++;
     }
 
+    // Appends v unless the list has it, and tells whether it did (the name is a guess). Render's area list is the only
+    // user: the Xbox build has it out of line, PS2 and PC inline it, its own search and all, but call the push_back in
+    // it, which the other lists' push_backs around it inline. A helper's nested call gets only a share of the budget.
+    bool push_back_unique(const T &v)
+    {
+        const T *p = array;
+        for (int i = used_size; i--; p++) {
+            if (*p == v)
+                return false;
+        }
+        push_back(v);
+        return true;
+    }
+
     // A copy of l's elements (PS2 has it out of line for some element types)
     C_list &operator=(const C_list &l)
     {
@@ -271,7 +285,7 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
+// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z

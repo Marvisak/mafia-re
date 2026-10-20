@@ -462,3 +462,18 @@ const S_vector *BBoxVertices(const I3D_bbox &bbox);
 // $S12
 // SYNTHETIC: LS3DF 0x1006bc90
 // $E13
+
+// The smaller and the larger of two values, through references (PS2 Min<T>, which the sort lists' Sort calls): the
+// clamps of S_vector::AngleTo and the sectors' SetSoundData take the addresses of their bounds. After the zero vector,
+// with the other inline code that mustn't move the files' $Es.
+template<class T>
+inline const T &Min(const T &a, const T &b)
+{
+    return a < b ? a : b;
+}
+
+template<class T>
+inline const T &Max(const T &a, const T &b)
+{
+    return a > b ? a : b;
+}

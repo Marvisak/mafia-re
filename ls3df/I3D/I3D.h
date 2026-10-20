@@ -2,6 +2,7 @@
 
 #include "ls3df.h"
 #include "I3D/I3d_math.h"
+#include "I3D/RadixSort.h"
 
 #include <d3d8.h>
 
@@ -23,6 +24,8 @@ class ISND_3Dlistener;
 class ISND_3Dsound;
 class ISND_source;
 class I3D_frame;
+class I3D_visual;
+class I3D_lensflare;
 class I3D_camera;
 class I3D_sector;
 class I3D_light;
@@ -95,18 +98,25 @@ enum I3D_RENDERSTATE {
     RS_MIPMAP = 2,                      // the mip filter: 0 none, 1 point, 2 linear
     RS_USEZB = 3,                       // the z-buffer
     RS_WBUFFER = 4,                     // a w-buffer where there is a z-buffer (ZBufferEnable)
+    RS_CLEAR = 5,                       // the rendering clears the screen first
+    RS_CLEAR_ZBUFFER = 6,               // and the z-buffer (and stencil, where there is one)
     RS_DITHER = 7,
     RS_MIPMAP_BIAS = 8,                 // the textures' mipmap LOD bias
     RS_WIREFRAME = 9,
-    RS_RECOMPUTE_GEOMETRY = 18,         // sets RecomputeAllGeometry
+    RS_DRAWVISUALS = 18,                // the rendering draws the sectors' visuals (Insanity3D's name, the same number);
+                                        // setting it sets RecomputeAllGeometry
     RS_FOG = 19,                        // fog (Insanity3D's name, the same number); refused where the hardware
                                         // lacks it (m_ProblemFlags 0x80)
     RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
                                         // name, the same number)
     RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
+    RS_LOD_INDEX = 38,                  // -1 by default; the rendering copies it to ForceLodIndex, which nothing reads
+                                        // (Insanity3D's name for its forced level of detail, -1 its default too)
+    RS_USESHADOWS = 43,                 // the shadows are rendered (Insanity3D's name for its own state 13)
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
     RS_LOD_SCALE = 50,                  // in percent
+    RS_USEPROJECTORS = 51,              // the projectors are rendered (the name is a guess, after RS_USESHADOWS)
     RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
     RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
     RS_ZBIAS_SHADOW = 55,               // RsZBiasShadow
@@ -486,7 +496,8 @@ public:
     I3D_frame *parent;                  // 0x120
     I3D_frame *child;                   // 0x124, the first child
     I3D_frame *prev, *next;             // 0x128, the siblings
-    uint unknown_130;                   // 0x130
+    I3D_visual *next_visual;            // 0x130, a sector's visuals to render, linked from the sector's own (the
+                                        // rendering's; the name is a guess)
     I3D_frame *ff_left, *ff_right;      // 0x134, the fast find tree (PS2 0x114, 0x118)
     int render_number;                  // 0x13c, the driver's RenderNumber when the frame was last rendered, -1
 };
@@ -1034,9 +1045,12 @@ public:
     C_list<I3D_interpolator *> interpolators; // 0xe8
 };
 
-// What a scene's callback is told (PS2 type; the PC's messages aren't known)
+// What a scene's callback is told (PS2 type; the names are guesses): the rendering's stages, each sent if its bit is in
+// the scene's cb_flags
 enum SCN_CALLBACK_MESSAGE {
-    SCN_CALLBACK_MESSAGE_0,
+    SCN_CALLBACK_PRE_RENDER,            // the scene began, before anything is drawn
+    SCN_CALLBACK_POST_SCENE,            // the scene is drawn, before the near sector and the lens flares
+    SCN_CALLBACK_POST_RENDER,           // everything is drawn, before the scene ends
 };
 
 typedef uint __stdcall SCN_CALLBACK(SCN_CALLBACK_MESSAGE message, uint param1, uint param2);
@@ -1172,7 +1186,7 @@ public:
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame) { return I3D_OK; }
 
     // PS2 names
-    virtual SCN_CALLBACK *__stdcall SetCallback(SCN_CALLBACK *cb, uint context);
+    virtual SCN_CALLBACK *__stdcall SetCallback(SCN_CALLBACK *cb, uint flags);
     virtual LS3D_RESULT __stdcall Render();
     virtual I3D_frame *__stdcall FindFrame(const char *name, uint flags) const;
     virtual void __stdcall AddFrame(I3D_frame *frame);
@@ -1258,7 +1272,7 @@ public:
     LS3D_RESULT DeleteMirror(I3D_mirror *mirror);
 
     SCN_CALLBACK *callback;             // 0x140
-    uint cb_context;                    // 0x144
+    uint cb_flags;                      // 0x144, the messages the rendering sends: bit n for message n
     C_list<I3D_frame *> tick_frames;    // 0x148, the frames the scene ticks (FRMFLAGS_TICK)
     C_list<I3D_shadow *> shadows;       // 0x158
     C_list<I3D_mirror *> mirrors;       // 0x168
@@ -1273,7 +1287,7 @@ public:
     I3D_sector *backdrop_sector;        // 0x214 (Insanity3D's name)
     I3D_sector *omni_sector;            // 0x218
     I3D_sector *near_sector;            // 0x21c
-    S_vector unknown_220;               // 0x220
+    S_vector bg_color;                  // 0x220, the rendering clears the screen to it (the name is a guess)
     C_list<I3D_frame *> owned_frames;   // 0x22c, the frames AddFrame took
     RECT viewport;                      // 0x23c, x, y and the size (Insanity3D's name)
     float backdrop_ncp, backdrop_fcp;   // 0x24c, SetBackdropRange's (the names are guesses)
@@ -1291,7 +1305,8 @@ public:
     I3D_area *areas;                    // 0x27c
     bool areas_changed;                 // 0x280, set when an area joins or leaves the ring
     ISND_3Dlistener *listener;          // 0x284
-    C_list<I3D_frame *> list_288;       // 0x288, released by Close
+    C_list<I3D_lensflare *> lensflares; // 0x288, the lens flares the rendering has met, until they fade out (they
+                                        // hold a reference; Close releases them)
     uint ws_flags;                      // 0x298, WSF_*
     C_list<WE_STRUCT> ws_elements;      // 0x29c, the particles
     float ws_density;                   // 0x2ac
@@ -1313,11 +1328,14 @@ public:
 // SYNTHETIC: LS3DF 0x10048eb0
 // I3D_scene::`scalar deleting destructor'
 
-// The collision file's $E18 and $E29, the first in link order, annotated for the scene's to pair with the scene's: the
-// destructor TestColHierarchy registers for its static retNormal (it has nothing to destroy) and kolBod's empty
-// initializer
+// The collision file's $E18, $E23 and $E29, the first in link order, annotated for the scene's and render.cpp's to pair
+// with theirs: the destructor TestColHierarchy registers for its static retNormal (it has nothing to destroy), the next
+// static's and kolBod's empty initializer
 // SYNTHETIC: LS3DF 0x10011d10
 // $E18
+
+// SYNTHETIC: LS3DF 0x10011d30
+// $E23
 
 // SYNTHETIC: LS3DF 0x10011d50
 // $E29
@@ -1352,13 +1370,32 @@ public:
 // SYNTHETIC: LS3DF 0x10048a80
 // $E18
 
+// The scene's empty initializer, the second $E23 in link order, after the collision file's
+// SYNTHETIC: LS3DF 0x10048aa0
+// $E23
+
 // SYNTHETIC: LS3DF 0x1004ddc0
 // $E29
 
-// The destructor render.cpp's thunk registers for CurrentActiveAreaList: the third $E10 in link order, after the
-// driver's and the model file's (Globals.cpp, ITexture.cpp and IS_sound.cpp have one too)
+// The destructors render.cpp's thunks register for CurrentActiveAreaList, SoundsForDeactivation, AddFGHlpStruct and
+// ParticleElementsList: the fourth $E13 in link order (after the projector file's, the scene's and the shadows', before
+// Globals.cpp's), the fourth $E18 (after the collision file's, the scene's and the shadows'), the third $E23 (after the
+// collision file's and the scene's) and the first $E28 (before IGraph.cpp's)
 // SYNTHETIC: LS3DF 0x10061d00
-// $E10
+// $E13
+
+// SYNTHETIC: LS3DF 0x10061d50
+// $E18
+
+// SYNTHETIC: LS3DF 0x10061d90
+// $E23
+
+// SYNTHETIC: LS3DF 0x10061df0
+// $E28
+
+// And render.cpp's zero vector, which the mirrors' reflections are drawn with
+// GLOBAL: LS3DF 0x101c4c50
+// ZeroSVector
 
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
@@ -1369,7 +1406,7 @@ public:
 // to I3d_singlemorph.cpp, I3D_visual::m_RenderFGroup's since I3d_projector.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?UpdateTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
 // ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
@@ -1864,7 +1901,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_area@@UAEXXZ
+// ?LoadImage@I3D_sound@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
 // its name, under the frame the shadow is set to, moves
@@ -2285,7 +2322,7 @@ public:
 // billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and the morphs' since I3d_projector.cpp,
 // so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_morph@@UAGX_N@Z
+// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2618,8 +2655,24 @@ public:
 // SYNTHETIC: LS3DF 0x10056ef0
 // I3D_singlemorph::`scalar deleting destructor'
 
-I3D_PLACEHOLDER_VISUAL(I3D_part_base, 0x284)
-I3D_PLACEHOLDER_VISUAL(I3D_part_element, 0x310)
+// The particles (PS2 I3D_part_base and I3D_part_element, 0x284 and 0x310 bytes on PC; I3d_particle.cpp, not written
+// yet): billboards, the element's constructor inlining the base's. The rendering queues them for the particles'
+// renderer with a key from these members (VisualProc).
+class __declspec(novtable) I3D_part_base : public I3D_billboard {
+public:
+    I3D_part_base();
+
+    ushort sort_group;                  // 0x268, the high word of the rendering's key (the name is a guess)
+    uint part_flags;                    // 0x26c, 0x600: queued for the particles' renderer, 3: sort_dist is in the key
+    uchar unknown_270[0x284 - 0x270];
+};
+
+class __declspec(novtable) I3D_part_element : public I3D_part_base {
+public:
+    I3D_part_element();
+
+    uchar unknown_284[0x310 - 0x284];
+};
 
 // The landscape (PC only; I3d_landscape.cpp) is Bryan Turner's ROAM demo ("ROAM Simplistic Implementation", January
 // 2000, from his Gamasutra article on ROAM) in the engine's classes: a height map of bytes, MAP_SIZE on a side, in
@@ -3109,8 +3162,17 @@ public:
 // GLOBAL: LS3DF 0x100bffc8
 // str
 
-// Stubs in I3d_driver.cpp, I3d_scene.cpp and I3d_sector.cpp, after their files' functions though their addresses come
-// before them, so their markers are here, by name
+// Stubs in I3d_driver.cpp, I3d_scene.cpp, I3d_sector.cpp and render.cpp, after their files' functions though their
+// addresses come before them, so their markers are here, by name
+
+// STUB: LS3DF 0x1003c070
+// ProcessOccluders
+
+// STUB: LS3DF 0x1003cbb0
+// InitParticle
+
+// STUB: LS3DF 0x1003cc70
+// CloseParticle
 
 // STUB: LS3DF 0x10041800
 // I3D_portal::I3D_portal
@@ -3123,6 +3185,9 @@ public:
 
 // STUB: LS3DF 0x100419e0
 // I3D_portal::UpdatePortal
+
+// STUB: LS3DF 0x10045700
+// ProcessPortals
 
 // STUB: LS3DF 0x100458f0
 // I3D_portal::LoadImage
@@ -3173,7 +3238,7 @@ struct TLVERTEX2 {
 // after the shadow visual's SetOn and since I3d_projector.cpp after vector<ITexture *>::_Destroy); the original keeps
 // the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
+// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -3249,8 +3314,9 @@ public:
 
 private:
     // render.cpp (PS2 names)
-    void initRender();
+    LS3D_RESULT initRender();
     void closeRender();
+    void m_DrawAllSortedFG();
 
     // The fast find tree's rebuild (PS2 name)
     void OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int num);
@@ -3405,27 +3471,139 @@ struct RENDER_FG_HELP_STRUCT {
     ITexture *env_texture;              // 0x1c
 };
 
+// A list of data to sort by their keys (PS2 C_sort_list<int>, with these three members; the names and the functions
+// are H&D Deluxe's C_sort_list's, an earlier relative): it doubles when it is full, and Reserve makes room for n
+// entries, dropping the ones it has. RadixSort32 sorts it.
+template<class T>
+class C_sort_list {
+public:
+    sort_entry_32 *base;
+    uint res_num;                       // 0x04, the entries base has room for
+    uint count;                         // 0x08
+
+    C_sort_list() : base(NULL), res_num(0), count(0) {}
+
+    ~C_sort_list()
+    {
+        delete[] base;
+        base = NULL;
+        res_num = 0;
+        count = 0;
+    }
+
+    bool ReAllocate(uint new_res)
+    {
+        sort_entry_32 *new_base = new sort_entry_32[new_res];
+        if (!new_base)
+            return false;
+        memcpy(new_base, base, count * sizeof(sort_entry_32));
+        res_num = new_res;
+        delete[] base;
+        base = new_base;
+        return true;
+    }
+
+    void Reserve(uint n)
+    {
+        if (n > res_num) {
+            if (base)
+                delete[] base;
+            base = new sort_entry_32[n];
+            if (base)
+                res_num = n;
+        }
+    }
+
+    bool Add(const T &t, uint sort_value)
+    {
+        if (count == res_num && !ReAllocate(res_num * 2))
+            return false;
+        base[count].sort_value = sort_value;
+        base[count].data = (uint)t;
+        count++;
+        return true;
+    }
+
+    void Clear()
+    {
+        count = 0;
+    }
+
+    // The first num entries, all with 0
+    void Sort(uint num = 0)
+    {
+        RadixSort32(base, num ? Min(count, num) : count);
+    }
+
+    T &operator[](int i)
+    {
+        return (T &)base[i].data;
+    }
+};
+
+// The out-of-line copy of ReAllocate the linker kept, the particles' file's in the original
+// TEMPLATE: LS3DF 0x10041770
+// C_sort_list<int>::ReAllocate
+
 // What the rendering gives the visuals' m_AddFGroups (PS2 name; the PC's members differ). Its constructor is out of line
-// in render.cpp.
-struct ADD_FG_HELP_STRUCT {
+// in render.cpp. Aligned to 16 bytes, as PS2's is (its cam_pos is a VU vector): the functions that inline Clear on it,
+// render.cpp's Render and BuildAllVBuffers, get the Processor Pack's aligned frames, an ebp frame without ebx (there is
+// nothing on the stack to align, so without the and esp). Aligned to 8 they compile the same.
+struct __declspec(align(16)) ADD_FG_HELP_STRUCT {
     S_vector cam_pos;                   // 0x00, the camera's position
     uint unknown_0c;
     I3D_camera *camera;                 // 0x10, pCurrentCamera
     I3D_sector *sector;                 // 0x14, the visual's
     I3D_scene *scene;                   // 0x18
     C_list<RENDER_FG_HELP_STRUCT> fgroups; // 0x1c, the face groups to render
-    uint unknown_2c[3];                 // 0x2c
-    uint num_opaque;                    // 0x38, counts the face groups queued
-    uint num_transparent;               // 0x3c
+    C_sort_list<int> sort;              // 0x2c, the face groups' indices, which the rendering sorts and draws in order
+    int num_opaque;                     // 0x38, counts the face groups queued: these come first in the sorted order
+    int num_transparent;                // 0x3c, and these after them, drawn from the last
 
+    // FUNCTION: LS3DF 0x100659a0
     ADD_FG_HELP_STRUCT() : fgroups(0x400)
     {
-        unknown_2c[0] = 0;
-        unknown_2c[1] = 0;
-        unknown_2c[2] = 0;
         unknown_0c = 0;
     }
+
+    // Empties the queue (the name is a guess)
+    void Clear()
+    {
+        num_opaque = 0;
+        num_transparent = 0;
+        fgroups.reset();
+        sort.Clear();
+    }
 };
+
+// SYNTHETIC: LS3DF 0x10061da0
+// ADD_FG_HELP_STRUCT::~ADD_FG_HELP_STRUCT
+
+// A particle visual queued for the particles' renderer, with its key (PC only, the names are guesses)
+struct S_particle_item {
+    I3D_visual *vis;
+    uint sort_value;                    // 0x04, the particle's sort_group, and with 3 in its part_flags its sort_dist
+};
+
+// The particle visuals the rendering queues (VisualProc) for the particles' renderer, which sorts and renders them
+// (PC only, the names are guesses). Its constructor is out of line in render.cpp.
+struct PARTICLE_HLP_STRUCT {
+    C_list<S_particle_item> visuals;    // 0x00
+    C_sort_list<int> sort;              // 0x10, visuals' indices
+    uint unknown_1c;                    // nothing references it
+
+    // FUNCTION: LS3DF 0x100659d0
+    PARTICLE_HLP_STRUCT() : visuals(0x2000) {}
+
+    void Clear()
+    {
+        visuals.reset();
+        sort.Clear();
+    }
+};
+
+// SYNTHETIC: LS3DF 0x10061e00
+// PARTICLE_HLP_STRUCT::~PARTICLE_HLP_STRUCT
 
 // A vertex of a shadow's or a projector's receivers (0x18 bytes, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1; the name is
 // a guess)
@@ -3603,13 +3781,24 @@ extern I3D_visual *ShadowReceivers[512];
 
 // render.cpp
 extern I3D_scene *pCurrentScene;
-// The distances' scale for the current camera's field of view (PS2 name). Declared before AddFGHlpStruct, which hashes
-// to the same .bss bucket: the global declared last comes first.
+// The distances' scale for the current camera's field of view and its square (PS2 names). Declared before
+// AddFGHlpStruct, which hashes to the same .bss bucket: the global declared last comes first.
 extern float FOVDistCorrection;
+extern float FOVDistCorrection2;
 extern ADD_FG_HELP_STRUCT AddFGHlpStruct;
+extern PARTICLE_HLP_STRUCT ParticleElementsList;
 extern bool renderCameraChanged;
 extern float RSLodQuality;
 int GetObjectLOD(I3D_object *obj, const float &dist_2);
+
+// What the rendering calls in other files (PS2 names but the particles' visual's, a guess; the particles' functions
+// aren't PS2's): the scene's portals and occluders, which decide the sectors' visuals to render, and the particles'
+// renderer, a visual of the particles' file that renders ParticleElementsList
+void ProcessPortals(I3D_scene *scene);
+void ProcessOccluders(I3D_scene *scene);
+void InitParticle();
+void CloseParticle();
+extern I3D_visual *pParticleVisual;
 
 // I3d_driver.cpp: counts the frames rendered (a frame's render_number is its value when the frame was last rendered),
 // and its previous value
