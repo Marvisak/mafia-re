@@ -171,7 +171,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
     u_ofs = uo;
     v_ofs = vo;
     format &= 3;
-    if (m_HardwareCaps & 1) {
+    if (m_HardwareCaps & HWCAPS_HWTL) {
         switch (format) {
         case 1: {
             LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, 0);
@@ -240,7 +240,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
     uint format = flags & 7;
     uint stride;
     uint vf;
-    if (m_HardwareCaps & 1) {
+    if (m_HardwareCaps & HWCAPS_HWTL) {
         if (!vb.vb) {
             switch (format) {
             case 1:
@@ -659,7 +659,7 @@ void I3D_object::m_AddFGroups()
             uv = &verts->tex;
             uv_stride = sizeof(I3D_vertex);
         }
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP) {
                 LVERTEX2 *v = (LVERTEX2 *)lv;
                 for (int n = num_verts; n; n--) {
@@ -706,7 +706,7 @@ void I3D_object::m_AddFGroups()
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)verts,
                     sizeof(I3D_vertex), this, GetInvMatrix(), I3DLIGHTMODE_VERTEX, moved, l);
@@ -725,7 +725,7 @@ void I3D_object::m_AddFGroups()
     if (l->alpha_dirty) {
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
             else
@@ -745,7 +745,7 @@ void I3D_object::m_AddFGroups()
             l->env_v_ofs = mesh->env_v_ofs;
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            if (m_HardwareCaps & 1)
+            if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
                     level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
@@ -756,7 +756,7 @@ void I3D_object::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & 1)) {
+    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
         if (frm_flags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
@@ -771,12 +771,12 @@ void I3D_object::m_AddFGroups()
             SetClipping(FALSE);
         }
         m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
-        if (!(m_HardwareCaps & 4)) {
+        if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
             FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
                 level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & 0x80));
+                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
         }
     }
 
@@ -819,7 +819,7 @@ void I3D_object::m_AddFGroups()
 }
 
 // Renders a face group m_AddFGroups queued: the material's states, its texture and environment map (in one pass, or
-// in two where the hardware can't blend them, see m_HardwareCaps' single pass bit), and a fog pass that renders the
+// in two where the hardware can't blend them, without HWCAPS_SINGLEPASS), and a fog pass that renders the
 // fog color over the face group with the vertices' fog in their alpha (SwapVertexBytes)
 // Not matching yet: the multipass branch without a material keeps its own SetTexture(0, NULL), which the original
 // shares with the untextured branch, and SetColorOp, SetAlphaState and SetAlphaOp stay inline later than in the
@@ -850,7 +850,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     IDirect3DVertexBuffer8 *vb = l->vb.vb;
     uint reset = 0;
     SetAlphaOp(D3DTOP_MODULATE);
-    if (m_HardwareCaps & 0x80) {
+    if (m_HardwareCaps & HWCAPS_SINGLEPASS) {
         if (!mat) {
             SetColorOp(m_Modulate2X);
             SetColorOp1(D3DTOP_DISABLE);
@@ -946,7 +946,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTexture(0, NULL);
             }
         }
-        if (m_HardwareCaps & 1)
+        if (m_HardwareCaps & HWCAPS_HWTL)
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
         SetVertexFormat(l->vb.buffer->vertex_format);
         m_pD3DDevice8->SetStreamSource(0, vb, l->vb.buffer->stride);

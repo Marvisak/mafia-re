@@ -671,7 +671,7 @@ void IGraph::Clear(uint color, float z, uint flags)
         d3d_flags = D3DCLEAR_TARGET;
     if (flags & 2)
         d3d_flags |= D3DCLEAR_ZBUFFER;
-    if (m_HardwareCaps & 0x10)
+    if (m_HardwareCaps & HWCAPS_STENCIL)
         d3d_flags |= D3DCLEAR_STENCIL;
     m_pD3DDevice8->Clear(0, NULL, d3d_flags, color, z, 0);
 }
@@ -1016,7 +1016,7 @@ LS3D_RESULT IGraph::DrawPrimitiveList(PRIMITIVE_TYPE type, uint num_prims, const
 }
 
 // Transformed vertices are drawn from memory, the others through IGraph's dynamic buffers if the hardware has them
-// (m_HardwareCaps & 1)
+// (HWCAPS_HWTL)
 // FUNCTION: LS3DF 0x1006d750
 LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts, const void *indices, uint num_prims,
     const void *verts, LS3D_STREAM_TYPE stream)
@@ -1052,7 +1052,7 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
     uint stride;
     switch (stream) {
     case LS3D_STREAM_LVERTEX:
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             BYTE *vb_data, *ib_data;
             if (m_VBPos + num_verts < 15000)
                 m_VB.vb->Lock((m_VBPos + m_VB.base) * 0x18, num_verts * 0x18, &vb_data, D3DLOCK_NOOVERWRITE);
@@ -1315,7 +1315,7 @@ LS3D_RESULT ResetDevice(bool reset)
             DX_ERROR(hr, 1644);
             return I3DERR_GENERIC;
         }
-        if ((m_HardwareCaps & 1) && !m_VB.vb) {
+        if ((m_HardwareCaps & HWCAPS_HWTL) && !m_VB.vb) {
             if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
                     15000, m_VB, VF_LVERTEX, false))
                 dbgPrintf("Error creating Global Vertex Buffer !");
@@ -1334,7 +1334,7 @@ LS3D_RESULT ResetDevice(bool reset)
     DWORD ldecl[] = {D3DVSD_STREAM(0), D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),
         D3DVSD_REG(D3DVSDE_DIFFUSE, D3DVSDT_D3DCOLOR), D3DVSD_REG(D3DVSDE_TEXCOORD0, D3DVSDT_FLOAT2), D3DVSD_END()};
     hr = m_pD3DDevice8->CreateVertexShader(ldecl, NULL, &m_LVertexVS,
-        m_HardwareCaps & 1 ? 0 : D3DUSAGE_SOFTWAREPROCESSING);
+        m_HardwareCaps & HWCAPS_HWTL ? 0 : D3DUSAGE_SOFTWAREPROCESSING);
     if (FAILED(hr)) {
         DX_ERROR(hr, 1697);
         return I3DERR_GENERIC;
@@ -1343,7 +1343,7 @@ LS3D_RESULT ResetDevice(bool reset)
         D3DVSD_REG(D3DVSDE_DIFFUSE, D3DVSDT_D3DCOLOR), D3DVSD_REG(D3DVSDE_TEXCOORD0, D3DVSDT_FLOAT2),
         D3DVSD_REG(D3DVSDE_TEXCOORD1, D3DVSDT_FLOAT2), D3DVSD_END()};
     hr = m_pD3DDevice8->CreateVertexShader(l2decl, NULL, &m_LVertex2VS,
-        m_HardwareCaps & 1 ? 0 : D3DUSAGE_SOFTWAREPROCESSING);
+        m_HardwareCaps & HWCAPS_HWTL ? 0 : D3DUSAGE_SOFTWAREPROCESSING);
     if (FAILED(hr)) {
         DX_ERROR(hr, 1707);
         return I3DERR_GENERIC;
@@ -1355,7 +1355,8 @@ LS3D_RESULT ResetDevice(bool reset)
     m_pD3DDevice8->SetRenderState(D3DRS_FOGEND, F2DW(300.0f));
     m_pD3DDevice8->SetRenderState(D3DRS_FOGSTART, F2DW(0.0f));
     m_pD3DDevice8->SetRenderState(D3DRS_FOGCOLOR, 0xffffffff);
-    m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+    m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
+        D3DFOG_LINEAR);
     m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
     m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
     m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
@@ -1661,19 +1662,19 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         m_ProblemFlags |= 0x102;
     }
     if ((m_InitDesc.flags & IGRAPH_HWTL) && (caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT)) {
-        m_HardwareCaps |= 1;
+        m_HardwareCaps |= HWCAPS_HWTL;
         dbgPrintf("Using HARDWARE T&L.");
     }
     if (m_InitDesc.flags & IGRAPH_MULTIPASS)
         dbgPrintf("Using MULTIPASS rendering.");
     else {
-        m_HardwareCaps |= 0x80;
+        m_HardwareCaps |= HWCAPS_SINGLEPASS;
         dbgPrintf("Using SINGLEPASS rendering.");
     }
-    if (!(m_HardwareCaps & 0x80) && (m_HardwareCaps & 1)) {
+    if (!(m_HardwareCaps & HWCAPS_SINGLEPASS) && (m_HardwareCaps & HWCAPS_HWTL)) {
         dbgPrintf("\nWARNING ! HARDWARE TRANSFORMATIONS and MULTIPASS cannot be set simultaneously !!! "
             "Forcing software transformations !\n");
-        m_HardwareCaps &= ~1;
+        m_HardwareCaps &= ~HWCAPS_HWTL;
     }
     if ((caps.TextureOpCaps & D3DTEXOPCAPS_MODULATE2X) && !(m_ProblemFlags & 4))
         m_Modulate2X = D3DTOP_MODULATE2X;
@@ -1764,7 +1765,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         if (m_D3DPresentParams.AutoDepthStencilFormat == D3DFMT_D15S1 ||
                 m_D3DPresentParams.AutoDepthStencilFormat == D3DFMT_D24X4S4 ||
                 m_D3DPresentParams.AutoDepthStencilFormat == D3DFMT_D24S8)
-            m_HardwareCaps |= 0x10;
+            m_HardwareCaps |= HWCAPS_STENCIL;
     }
 
     // Full scene antialiasing
@@ -1810,7 +1811,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         dbgPrintf("\nIGraph::Init() - Warning. SLOW REFERENCE RASTERIZER used !!\n");
         m_DeviceType = D3DDEVTYPE_REF;
     }
-    hr = m_pD3D8->CreateDevice(m_InitDesc.adapter, m_DeviceType, m_MainHWnd, (m_HardwareCaps & 1 ?
+    hr = m_pD3D8->CreateDevice(m_InitDesc.adapter, m_DeviceType, m_MainHWnd, (m_HardwareCaps & HWCAPS_HWTL ?
         D3DCREATE_MIXED_VERTEXPROCESSING : D3DCREATE_SOFTWARE_VERTEXPROCESSING) | D3DCREATE_MULTITHREADED,
         &m_D3DPresentParams, &m_pD3DDevice8);
     if (FAILED(hr)) {
@@ -1827,7 +1828,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
     if (m_InitDesc.flags & (IGRAPH_FSAA2 | IGRAPH_FSAA4))
         m_pD3DDevice8->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
-    if (!(m_HardwareCaps & 1))
+    if (!(m_HardwareCaps & HWCAPS_HWTL))
         m_pD3DDevice8->SetRenderState(D3DRS_SOFTWAREVERTEXPROCESSING, TRUE);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPMAPLODBIAS, F2DW(0.0f));
     m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
@@ -1881,11 +1882,11 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         m_TrueColorTexturePixelFormat = D3DFMT_A8R8G8B8;
     if (!(m_ProblemFlags & 8)) {
         if (IsTextureFormatOk(D3DFMT_DXT1, mode.Format)) {
-            m_HardwareCaps |= 8;
+            m_HardwareCaps |= HWCAPS_DXT;
             m_DXTTexturePixelFormat = D3DFMT_DXT1;
         }
         if (IsTextureFormatOk(D3DFMT_DXT3, mode.Format)) {
-            m_HardwareCaps |= 8;
+            m_HardwareCaps |= HWCAPS_DXT;
             m_DXTAlphaTexturePixelFormat = D3DFMT_DXT3;
         }
     }
@@ -1910,7 +1911,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     }
     m_LeftHandedMouse = GetSystemMetrics(SM_SWAPBUTTON) != 0;
     ResetRenderProps();
-    if (m_HardwareCaps & 1) {
+    if (m_HardwareCaps & HWCAPS_HWTL) {
         if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
                 15000, m_VB, VF_LVERTEX, false))
             dbgPrintf("Error creating Global Vertex Buffer !");
@@ -1918,14 +1919,14 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
             dbgPrintf("Error creating Global Index Buffer !");
     }
     if (caps.Caps2 & D3DCAPS2_FULLSCREENGAMMA) {
-        m_HardwareCaps |= 0x20;
+        m_HardwareCaps |= HWCAPS_GAMMA;
         LS3DGAMMARAMP ramp;
         GetGammaRamp(&ramp);
         // Whether the card's ramp has 8 bits only (GetGammaRamp then widens it)
-        m_HardwareCaps |= 0x40;
+        m_HardwareCaps |= HWCAPS_GAMMA8;
         for (i = 256; i--; ) {
             if (ramp.red[i] > 0xff || ramp.green[i] > 0xff || ramp.blue[i] > 0xff)
-                m_HardwareCaps &= ~0x40;
+                m_HardwareCaps &= ~HWCAPS_GAMMA8;
         }
     }
     if (m_InitDesc.flags & IGRAPH_RENDER_THREAD) {
@@ -3126,7 +3127,7 @@ int IGraph::GetUncachedTextureCnt()
 // FUNCTION: LS3DF 0x10072710
 bool IGraph::SetGammaRamp(LS3DGAMMARAMP *ramp, uint flags)
 {
-    if (!(m_HardwareCaps & 0x20))
+    if (!(m_HardwareCaps & HWCAPS_GAMMA))
         return false;
     m_pD3DDevice8->SetGammaRamp(flags != 0, (const D3DGAMMARAMP *)ramp);
     return true;
@@ -3135,10 +3136,10 @@ bool IGraph::SetGammaRamp(LS3DGAMMARAMP *ramp, uint flags)
 // FUNCTION: LS3DF 0x10072750
 bool IGraph::GetGammaRamp(LS3DGAMMARAMP *ramp)
 {
-    if (!(m_HardwareCaps & 0x20))
+    if (!(m_HardwareCaps & HWCAPS_GAMMA))
         return false;
     m_pD3DDevice8->GetGammaRamp((D3DGAMMARAMP *)ramp);
-    if (m_HardwareCaps & 0x40) {
+    if (m_HardwareCaps & HWCAPS_GAMMA8) {
         for (int i = 256; i--; ) {
             ramp->red[i] |= ramp->red[i] << 8;
             ramp->green[i] |= ramp->green[i] << 8;

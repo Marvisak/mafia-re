@@ -453,6 +453,19 @@ extern IGraph *pGlobalIGraph;
 extern I3D_driver *pI3DDriver;
 extern ISND_driver *pISndDriver;
 
+// IGraph.cpp's m_HardwareCaps, what IGraph::Init found the device can do (names guessed; Init's messages name hardware
+// T&L and single pass). Both IGraph's files and the I3D files test them, so they are here. Bit 2 is neither set nor
+// tested.
+enum {
+    HWCAPS_HWTL = 0x1,                  // hardware T&L: IGRAPH_HWTL on a card that has it, never with multipass
+    HWCAPS_TABLEFOG = 0x4,              // table fog instead of vertex fog computed by FogProcess; Init never sets it
+    HWCAPS_DXT = 0x8,                   // DXT1 or DXT3 textures, which make every texture at least 4x4
+    HWCAPS_STENCIL = 0x10,              // the depth buffer has stencil bits: D3DCLEAR_STENCIL << 2, the clears shift it
+    HWCAPS_GAMMA = 0x20,                // a full screen gamma ramp (D3DCAPS2_FULLSCREENGAMMA)
+    HWCAPS_GAMMA8 = 0x40,               // the card's ramp has 8-bit entries, which GetGammaRamp widens to 16 bits
+    HWCAPS_SINGLEPASS = 0x80,           // not IGRAPH_MULTIPASS: the environment map blends in the texture's pass
+};
+
 // The undecorated exports are __cdecl, where the engine's default is __fastcall (/Gr): the original's calls of
 // I3DGetResultMessage clean up the stack. __declspec(dllexport) has to come before the return type: VC6 ignores it
 // after a '*' (C4518).

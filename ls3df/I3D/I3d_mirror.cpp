@@ -232,7 +232,7 @@ void I3D_mirror::UpdateVisibility()
     mirror_flags |= MIRF_VISIBLE;
     float dist = FOVDistCorrection * range;
     S_vector d = GetWorldPos() - pCurrentCamera->GetWorldPos();
-    if (d.Square() > dist * dist || !(m_HardwareCaps & 1) || !renderState[RS_DRAWMIRRORS])
+    if (d.Square() > dist * dist || !(m_HardwareCaps & HWCAPS_HWTL) || !renderState[RS_DRAWMIRRORS])
         mirror_flags &= ~MIRF_REFLECT;
     else
         mirror_flags |= MIRF_REFLECT;
@@ -326,7 +326,7 @@ int I3D_mirror::PrepareReflection()
         return 0;
     }
 
-    m_pD3DDevice8->Clear(0, NULL, D3DCLEAR_ZBUFFER | (m_HardwareCaps & 0x10) >> 2, 0, 0.0f, 0);
+    m_pD3DDevice8->Clear(0, NULL, D3DCLEAR_ZBUFFER | (m_HardwareCaps & HWCAPS_STENCIL) >> 2, 0, 0.0f, 0);
     LVertList.reserve(num_verts);
     LVertList.used_size = num_verts;
     const S_vector &cam_pos = pCurrentCamera->GetWorldPos();

@@ -220,7 +220,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         uint clear = renderState[RS_CLEAR] != 0;
         pGlobalIGraph->ResetRenderProps();
         if (renderState[RS_CLEAR_ZBUFFER])
-            clear |= ((m_HardwareCaps & 0x10) | 8) >> 2;
+            clear |= ((m_HardwareCaps & HWCAPS_STENCIL) | D3DCLEAR_ZBUFFER << 2) >> 2;
         m_pD3DDevice8->Clear(0, NULL, clear, ((((uint)-1 << 8 | FloatToInt(scene->bg_color.x * 255.0f)) << 8 |
             FloatToInt(scene->bg_color.y * 255.0f)) << 8) | FloatToInt(scene->bg_color.z * 255.0f), 1.0f, 0);
         if (!renderCB)
@@ -236,7 +236,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         pGlobalIGraph->ResetRenderProps();
     }
     if (renderState[RS_CLEAR_ZBUFFER])
-        clear |= ((m_HardwareCaps & 0x10) | 8) >> 2;
+        clear |= ((m_HardwareCaps & HWCAPS_STENCIL) | D3DCLEAR_ZBUFFER << 2) >> 2;
     // The viewport: the scene's position and size
     RECT rc;
     rc.left = scene->viewport.left;
@@ -439,7 +439,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         if (pCurrentCamera->sector->sct_flags & SCTF_SOUND_CHANGED)
             scene->m_UpdateSoundProperties(pCurrentCamera->sector, NULL, 1.0f);
 
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             I3D_mirror **pm = &scene->mirrors[0];
             for (int i = scene->mirrors.size(); i--; pm++)
                 (*pm)->Tick(0);
@@ -525,7 +525,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             m_CullMode = D3DCULL_CCW;
             SetCullState(D3DCULL_NONE);
             if (visible) {
-                m_pD3DDevice8->Clear(0, NULL, ((m_HardwareCaps & 0x10) | 8) >> 2, 0, 1.0f, 0);
+                m_pD3DDevice8->Clear(0, NULL, ((m_HardwareCaps & HWCAPS_STENCIL) | D3DCLEAR_ZBUFFER << 2) >> 2, 0, 1.0f,
+                    0);
                 m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
                 I3D_mirror **pm2 = &scene->mirrors[0];
                 for (int j = scene->mirrors.size(); j--; pm2++) {
@@ -630,7 +631,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         if (scene->near_sector->child && renderState[RS_DRAWVISUALS]) {
             AddFGHlpStruct.Clear();
             ParticleElementsList.Clear();
-            m_pD3DDevice8->Clear(0, NULL, ((m_HardwareCaps & 0x10) | 8) >> 2, 0, 1.0f, 0);
+            m_pD3DDevice8->Clear(0, NULL, ((m_HardwareCaps & HWCAPS_STENCIL) | D3DCLEAR_ZBUFFER << 2) >> 2, 0, 1.0f, 0);
             pViewProjMatrix = &pCurrentCamera->m_near_view_proj;
             scene->SetViewProjMatrix(*pViewProjMatrix);
             m_pD3DDevice8->SetTransform(D3DTS_PROJECTION, &pCurrentCamera->m_near_proj);

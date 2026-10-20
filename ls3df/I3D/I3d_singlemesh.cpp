@@ -559,10 +559,10 @@ void I3D_singlemesh::m_AddFGroups()
     }
     if (moved) {
         lv = l->vb.buffer->Lock(base, 0);
-        CopyRigidPositions(lv, m_HardwareCaps & 1 ?
+        CopyRigidPositions(lv, m_HardwareCaps & HWCAPS_HWTL ?
             (level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX)) :
             (level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX)), lod_index);
-        CopyMovedPositions(lv, m_HardwareCaps & 1 ?
+        CopyMovedPositions(lv, m_HardwareCaps & HWCAPS_HWTL ?
             (level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX)) :
             (level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX)), lod_index);
     }
@@ -575,7 +575,7 @@ void I3D_singlemesh::m_AddFGroups()
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)sv,
                     sizeof(S_clip_sm_vertex), this, GetInvMatrix(), I3DLIGHTMODE_VERTEX, moved, l);
@@ -594,7 +594,7 @@ void I3D_singlemesh::m_AddFGroups()
     if (l->alpha_dirty) {
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
             else
@@ -611,7 +611,7 @@ void I3D_singlemesh::m_AddFGroups()
         if (level->GetFlags() & MESHF_ENVMAP) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            if (m_HardwareCaps & 1)
+            if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), sv, sizeof(S_clip_sm_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
                     level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
@@ -620,7 +620,7 @@ void I3D_singlemesh::m_AddFGroups()
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
                     level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
         }
-        if (!(m_HardwareCaps & 1)) {
+        if (!(m_HardwareCaps & HWCAPS_HWTL)) {
             if (frm_flags & FRMFLAGS_CLIP) {
                 m_pD3DDevice8->SetStreamSource(0, l->vb_skin.vb, l->vb_skin.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
@@ -635,12 +635,12 @@ void I3D_singlemesh::m_AddFGroups()
                 SetClipping(FALSE);
             }
             m_pD3DDevice8->ProcessVertices(l->vb_skin.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
-            if (!(m_HardwareCaps & 4)) {
+            if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
                 if (!lv)
                     lv = l->vb.buffer->Lock(base, 0);
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
                     level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & 0x80));
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
             }
         }
     }

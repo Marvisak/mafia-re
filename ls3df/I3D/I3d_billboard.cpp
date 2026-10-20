@@ -415,7 +415,7 @@ void I3D_billboard::m_AddFGroups()
             lv = l->vb.buffer->Lock(base, 0);
         S_matrix m = g_matrix;
         m.Inverse(S_matrix(m));
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)verts,
                     sizeof(I3D_vertex), this, m, I3DLIGHTMODE_VERTEX, moved || renderCameraChanged, l);
@@ -434,7 +434,7 @@ void I3D_billboard::m_AddFGroups()
     if (l->alpha_dirty) {
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
-        if (m_HardwareCaps & 1) {
+        if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
             else
@@ -459,7 +459,7 @@ void I3D_billboard::m_AddFGroups()
             l->env_v_ofs = mesh->env_v_ofs;
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            if (m_HardwareCaps & 1)
+            if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, g_matrix, level->env_scale, l->env_u_ofs, l->env_v_ofs,
                     level->GetFlags() & MESHF_ENVMAP_MODE, env_dummy);
@@ -470,7 +470,7 @@ void I3D_billboard::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & 1)) {
+    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
         if (frm_flags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
@@ -485,12 +485,12 @@ void I3D_billboard::m_AddFGroups()
             SetClipping(FALSE);
         }
         m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
-        if (!(m_HardwareCaps & 4)) {
+        if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
             FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
                 level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & 0x80));
+                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
         }
     }
 
@@ -554,7 +554,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     IDirect3DVertexBuffer8 *vb = l->vb.vb;
     uint reset = 0;
     SetAlphaOp(D3DTOP_MODULATE);
-    if (m_HardwareCaps & 0x80) {
+    if (m_HardwareCaps & HWCAPS_SINGLEPASS) {
         if (!mat) {
             SetColorOp(m_Modulate2X);
             SetColorOp1(D3DTOP_DISABLE);
@@ -643,7 +643,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTexture(0, NULL);
             }
         }
-        if (m_HardwareCaps & 1)
+        if (m_HardwareCaps & HWCAPS_HWTL)
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
         if (rot_axis == 4)
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);

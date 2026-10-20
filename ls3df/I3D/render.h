@@ -150,13 +150,16 @@ inline void SetFog(uint state, uint type, float start, float end, uint color)
         m_CurrFogType = type;
         switch (type) {
         case 0:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
+                D3DFOG_LINEAR);
             break;
         case 1:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP);
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
+                D3DFOG_EXP);
             break;
         case 2:
-            m_pD3DDevice8->SetRenderState(m_HardwareCaps & 4 ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE, D3DFOG_EXP2);
+            m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
+                D3DFOG_EXP2);
             break;
         }
     }

@@ -2209,7 +2209,7 @@ public:
     virtual ~lod();
 
     // Copies the texture coordinates at uv (stride bytes apart, offset by u_ofs and v_ofs) into the vertices of format
-    // 1 or 2 (one or two coordinate pairs), as m_HardwareCaps' T&L bit lays them out (the name is a guess)
+    // 1 or 2 (one or two coordinate pairs), as HWCAPS_HWTL lays them out (the name is a guess)
     void SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, float u_ofs, float v_ofs);
 
     // Gives the lod a vertex buffer of the format (flags' low bits; 4 needs hardware T&L) if it has none, and fills in
@@ -3353,7 +3353,7 @@ extern uint m_CullMode;
 extern uint m_Modulate2X;
 // What Init found the hardware lacks (bit 0x10, 0x20, 0x40: the environment blends 1, 2 and 5 in one pass)
 extern uint m_ProblemFlags;
-// What the device can do: 1 hardware T&L, 4 table fog, 0x80 single pass (bits named in IGraph::Init's messages)
+// What the device can do (HWCAPS_*, ls3df.h)
 extern uint m_HardwareCaps;
 
 extern uint m_AlphaRef;

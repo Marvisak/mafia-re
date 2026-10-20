@@ -76,7 +76,7 @@ bool AddTextureToTextureManager(ITexture *texture, const char *name, uint flags)
 bool RemoveTextureFromTextureManager(ITexture *texture);
 
 // The texture size Create makes of an image: half of it with ITC_HALF, scaled down to fit the card's limits, then
-// rounded up to powers of two, at least 4 where the card needs that for DXT (m_HardwareCaps & 8)
+// rounded up to powers of two, at least 4 where the card needs that for DXT (HWCAPS_DXT)
 #define TEXTURE_SIZE(sx, sy)                                                                                         \
     {                                                                                                                \
         float scale_x = 1.0f;                                                                                        \
@@ -89,11 +89,11 @@ bool RemoveTextureFromTextureManager(ITexture *texture);
         sx = (ushort)(sx * scale);                                                                                   \
         sy = (ushort)(sy * scale);                                                                                   \
         ushort x, y;                                                                                                 \
-        if (m_HardwareCaps & 8)                                                                                      \
+        if (m_HardwareCaps & HWCAPS_DXT)                                                                             \
             x = 4;                                                                                                   \
         else                                                                                                         \
             x = 1;                                                                                                   \
-        if (m_HardwareCaps & 8)                                                                                      \
+        if (m_HardwareCaps & HWCAPS_DXT)                                                                             \
             y = 4;                                                                                                   \
         else                                                                                                         \
             y = 1;                                                                                                   \
