@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project(ls3df)
 
-# The engine. The original has 61 C++ objects and one C object of its own, the sources are added file by file, in the
-# original's order. Files with only STUB functions so far are there for the link.
+# The engine. The original has 61 C++ objects and one C object of its own, the sources in the original's order.
 # The folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph are in its __FILE__ strings,
 # the sound files' folder is named here.
 add_library(ls3df SHARED
@@ -22,6 +21,7 @@ add_library(ls3df SHARED
     I3D/I3d_joint.cpp
     I3D/I3d_landscape.cpp
     I3D/I3d_light.cpp
+    I3D/I3d_lit_object.cpp
     I3D/I3d_material.cpp
     I3D/I3d_math.cpp
     I3D/I3d_mesh.cpp
@@ -126,14 +126,6 @@ if (MSVC_VERSION EQUAL 1200)
         ${eaxguid} dsound winmm strmiids strmbase vorbisfile)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
-    # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
-    # /Gr's). VertexLightingProcess is called by the lit objects' lightmaps (0x10021bb0), LightMap's constructor,
-    # destructor, m_FillLineRGB, m_Resize and m_CreateLM by the lit objects.
-    target_link_options(ls3df PRIVATE
-        "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
-        "/INCLUDE:??0LightMap@@QAE@XZ" "/INCLUDE:??1LightMap@@QAE@XZ" "/INCLUDE:?m_FillLineRGB@LightMap@@QAEXPAPAE0HI@Z"
-        "/INCLUDE:?m_Resize@LightMap@@QAE_NPAURECTANGLE_INFO@@HHPAPAE@Z"
-        "/INCLUDE:?m_CreateLM@LightMap@@QAE_NPAGPAURECTANGLE_INFO@@HPAIPAVI3D_lit_object@@@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8

@@ -16,6 +16,11 @@ struct S_quat;
 struct S_vector2 {
     float x, y;
 
+    S_vector2();
+    S_vector2(float x, float y);
+
+    // The lit object file's copy
+    // FUNCTION: LS3DF 0x100268e0
     float Dot(const S_vector2 &v) const
     {
         return x * v.x + y * v.y;
@@ -25,6 +30,14 @@ struct S_vector2 {
     {
         return x * x + y * y;
     }
+
+    float Magnitude() const;
+
+    S_vector2 operator-(const S_vector2 &v) const;
+    // Normalized unless null (the name is a guess)
+    void Normalize();
+    // The distance to the line through p along dir, positive on its left (Insanity3D's name)
+    float DistanceToLine(const S_vector2 &p, const S_vector2 &dir) const;
 
     I3D_MATH_API float __stdcall AngleTo(const S_vector2 &v) const;
 };
@@ -353,9 +366,9 @@ struct S_plane {
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp,
 // from clipping.cpp's CheckClipFaces to I3d_pose.cpp, from I3d_singlemesh.cpp to I3d_occluder.cpp and in
-// I3d_particle.cpp)
+// I3d_particle.cpp, the lit object file's VERTEX_STRUCT's since I3d_lit_object.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0VERTEX_STRUCT@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);
@@ -436,6 +449,41 @@ static const D3DMATRIX IdentityMatrixData = {
 };
 #define IdentityMatrix (*(const S_matrix *)&IdentityMatrixData)
 inline const S_matrix &I3DGetIdentityMatrix() { return IdentityMatrix; }
+
+// The lit objects' (Construct). Defined after the zero vector, as inline code before it moves the files' $Es (see
+// ZeroSVector). Magnitude too, though the original's copy comes before Dot's and the lit object file's $E: defined
+// in the class, it moves the driver's $E past DrawTriangles.
+inline S_vector2::S_vector2() {}
+
+// FUNCTION: LS3DF 0x100268c0
+inline float S_vector2::Magnitude() const
+{
+    return (float)sqrt(x * x + y * y);
+}
+
+inline S_vector2::S_vector2(float x1, float y1) : x(x1), y(y1) {}
+
+inline S_vector2 S_vector2::operator-(const S_vector2 &v) const
+{
+    return S_vector2(x - v.x, y - v.y);
+}
+
+inline void S_vector2::Normalize()
+{
+    float len = Magnitude();
+    if (len > MRG_ZERO) {
+        float r = 1.0f / len;
+        x *= r;
+        y *= r;
+    }
+}
+
+inline float S_vector2::DistanceToLine(const S_vector2 &p, const S_vector2 &dir) const
+{
+    S_vector2 n(-dir.y, dir.x);
+    n.Normalize();
+    return Dot(n) - p.Dot(n);
+}
 
 // Insanity3D's. Defined after the zero vector, as inline code before it moves the files' $Es (see ZeroSVector): the
 // portals' ParsePortal copies a vertex and subtracts the next in place, its z left dead.

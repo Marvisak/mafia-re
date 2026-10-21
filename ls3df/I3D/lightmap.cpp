@@ -563,13 +563,14 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // tightest new texture of 128 to 512 texels a side. Where none does, every rectangle of 4 texels or more is halved and
 // it starts again. Then it creates the texture where it is new, counts its memory in mem, copies the texels into it by
 // its format, sets each rectangle's u and v, keeps the offsets and puts the texture's free room back into the list,
-// sorted. The rectangles' texels are freed but a 3x3 one's color. PS2's textures are 256 texels a side at most.
+// sorted. The rectangles' texels are freed but a 3x3 one's color. PS2's textures are 256 texels a side at most, and
+// it takes the lit object too (the PC's returns with ret 0x10).
 // Not matching yet: the original's frame is 8 bytes larger, and it calls the candidates' vector deleting destructor
 // out of line at every failing return, ours inlines most of them (more inline calls pending after them in the
 // original, as in the destructor: the offsets read without a local copy are some of them). Registers differ all
 // through.
 // FUNCTION: LS3DF 0x1005e3f0
-bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem, I3D_lit_object *obj)
+bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem)
 {
     order.reset();
     area = 0;

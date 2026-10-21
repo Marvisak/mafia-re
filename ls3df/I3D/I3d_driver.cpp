@@ -1,8 +1,7 @@
 // The 3D driver (PS2 I3d_driver.cpp), at 0x10015530-0x1001a1e0 in the original: I3D_driver in PS2's order, with the
 // PC's resource icon and shadow texture rasterizer after GetState, and the C_list templates' out-of-line functions at
 // the end. The header's zero vector has its $E at 0x10016fd0, after DrawLines. The order of the file's .bss
-// (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. The functions of other files the driver calls are stubs at the
-// end. Names are the PS2 build's unless noted.
+// (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. Names are the PS2 build's unless noted.
 //
 // The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
 // the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
@@ -1719,18 +1718,3 @@ void I3D_driver::m_RecomputeUsedVRAM()
 
 // GLOBAL: LS3DF 0x100a93f0
 bool RecomputeAllGeometry;
-
-// The functions of other files the driver calls, until those are written. They come after the driver's functions:
-// VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
-// ~I3D_driver and the Create functions. Their bodies differ, or the linker would fold them; auto_inline(off) keeps
-// VC6 from inlining them here. The markers of the ones below the driver's addresses are in I3D.h, by name, as the
-// linter checks the order of a file's markers.
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x10021570
-I3D_lit_object::I3D_lit_object()
-{
-    renderState[27]++;
-}
-
-#pragma auto_inline(on)

@@ -221,7 +221,7 @@ public:
 // copy; which one our linker keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py
 // updates it).
 // FUNCTION: LS3DF 0x1007b180
-// ?SetEnvAlpha@I3D_material@@UAG?AW4LS3D_RESULT@@M@Z
+// ?SetDistanceFactor@ISND_3Dlistener@@UAG?AW4LS3D_RESULT@@M@Z
 
 // The hardware 3D channel lists (IS_sound.cpp; PS2 names)
 struct CHANNEL_STRUCT {

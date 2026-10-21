@@ -7,7 +7,6 @@
 #include "ls3df.h"
 
 class ITexture;
-class I3D_lit_object;
 
 // A lightmap's rectangle of texels (PS2 RECTANGLE_INFO, 0x1c bytes). The lit object computes data; m_CreateLM packs
 // the rectangle into a texture, converts its texels and sets u and v.
@@ -55,7 +54,7 @@ public:
     void m_FillLineRGB(uchar **src, uchar **dst, int num, uint pitch);
     void m_FillLineRGB(uchar **src, uchar **r, uchar **g, uchar **b, int num, uint pitch);
     bool m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst);
-    bool m_CreateLM(ushort *indices, RECTANGLE_INFO *rects, int num, uint *mem, I3D_lit_object *obj);
+    bool m_CreateLM(ushort *indices, RECTANGLE_INFO *rects, int num, uint *mem);
 
     ITexture *texture;                  // 0x00
     C_list<OFFSET_STRUCT> offsets;      // 0x04, of the rectangles in order

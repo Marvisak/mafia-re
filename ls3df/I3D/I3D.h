@@ -6,10 +6,7 @@
 
 #include <d3d8.h>
 
-// The 3D engine (PS2 I3d_*.cpp). The placeholders of the classes not recovered yet keep the members and virtual
-// functions the written files use at their offsets and vtable slots, the sizes the driver allocates, and declare the
-// constructors it calls (stubs, see I3d_driver.cpp). They are __declspec(novtable) so that the stubs don't need the
-// virtual functions, none of which is written yet; the real classes will drop it.
+// The 3D engine (PS2 I3d_*.cpp).
 
 // windows.h's DrawText macro would rename the driver's DrawText
 #undef DrawText
@@ -117,6 +114,7 @@ enum I3D_RENDERSTATE {
                                         // (Insanity3D's name for its forced level of detail, -1 its default too)
     RS_USE_OCCLUSION = 39,              // the occluders hide what is behind them (Insanity3D's name for its own
                                         // state 47)
+    RS_LM_AA_RATIO = 40,                // the lightmaps' samples per texel and axis (Construct; the name is a guess)
     RS_USESHADOWS = 43,                // the shadows are rendered (Insanity3D's name for its own state 13)
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
@@ -184,11 +182,13 @@ struct I3D_text_coor {
     float u, v;
 };
 
-// A float's bits as an int, for the render states that hold floats (Insanity3D's I3DFloatAsInt): the parameter is
-// stored and read back, as the original's constants go through a stack slot
-inline int I3DFloatAsInt(float f)
+// A float's bits as an int, for the render states that hold floats (Insanity3D's I3DFloatAsInt): the value is
+// copied to a local and read back, as the original's constants go through a stack slot. By reference: the lit
+// object's Construct calls its out-of-line copy (0x100268b0) with the float's address in ecx.
+inline int I3DFloatAsInt(const float &f)
 {
-    return *(int *)&f;
+    float t = f;
+    return *(int *)&t;
 }
 
 // The other way (Insanity3D's I3DIntAsFloat), for the parameters that pass floats as their bits
@@ -1426,9 +1426,9 @@ public:
 // The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
 // m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file: Globals.cpp has
 // a $E13 and a $E18 too, IGraph.cpp both. reccmp pairs the annotations of one name with our functions of that name in
-// address order, so the scene's (the second $E13 in link order, after the projector file's, and the second $E18, after
-// the collision file's) and Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay unmatched. The
-// constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
+// address order, so the scene's (the third $E13 in link order, after the lit objects' and the projector file's, and the
+// second $E18, after the collision file's) and Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay
+// unmatched. The constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
 // SYNTHETIC: LS3DF 0x10048a30
 // $E13
 
@@ -1443,9 +1443,9 @@ public:
 // $E29
 
 // The destructors render.cpp's thunks register for CurrentActiveAreaList, SoundsForDeactivation, AddFGHlpStruct and
-// ParticleElementsList: the fourth $E13 in link order (after the projector file's, the scene's and the shadows', before
-// Globals.cpp's), the fourth $E18 (after the collision file's, the scene's and the shadows'), the third $E23 (after the
-// collision file's and the scene's) and the first $E28 (before IGraph.cpp's)
+// ParticleElementsList: the fifth $E13 in link order (after the lit objects', the projector file's, the scene's and the
+// shadows', before Globals.cpp's), the fourth $E18 (after the collision file's, the scene's and the shadows'), the
+// third $E23 (after the collision file's and the scene's) and the first $E28 (before IGraph.cpp's)
 // SYNTHETIC: LS3DF 0x10061d00
 // $E13
 
@@ -1472,13 +1472,13 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -2401,7 +2401,9 @@ public:
         return inv_matrix;
     }
 
-    // The matrix the vertices are rendered with: the world matrix, identity in world space (the name is a guess)
+    // The matrix the vertices are rendered with: the world matrix, identity in world space (the name is a guess). The
+    // copy is the lit object file's.
+    // FUNCTION: LS3DF 0x1002ad00
     const S_matrix &GetRenderMatrix()
     {
         if (vis_flags & VISF_WORLD_SPACE)
@@ -2418,13 +2420,6 @@ public:
 
 // SYNTHETIC: LS3DF 0x1005a350
 // I3D_visual::`scalar deleting destructor'
-
-#define I3D_PLACEHOLDER_VISUAL(name, size) \
-    class __declspec(novtable) name : public I3D_visual { \
-    public: \
-        name(); \
-        uchar unknown_1dc[size - 0x1dc]; \
-    };
 
 // An object's lighting state for one of its mesh's levels (PC only; the object file's "lod::Create()" names the
 // class): its own vertex buffer, which the object renders from
@@ -2546,10 +2541,10 @@ public:
 
 // SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
 // billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and in render.cpp, the morphs' in
-// I3d_projector.cpp and from I3d_occluder.cpp to I3d_particle.cpp, the billboard's since Load.cpp, so the marker is by
-// the name our PDB keeps (tools/foldfix.py updates it).
+// I3d_projector.cpp, from I3d_occluder.cpp to I3d_particle.cpp and since I3d_lit_object.cpp, the billboard's from
+// Load.cpp to lightmap.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
+// ?SetSpace@I3D_morph@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2595,7 +2590,162 @@ public:
 // TEMPLATE: LS3DF 0x1000af20
 // C_list<GLOW_STRUCT>::reserve
 
-I3D_PLACEHOLDER_VISUAL(I3D_lit_object, 0x370)
+class LightMap;
+struct RECTANGLE_INFO;
+
+// A lit vertex: a vertex of the mesh's level in one of the lightmaps' rectangles (PC only; postProcess' message names
+// pVI->rect, the rest is guessed). A vertex of faces in different rectangles has a lit vertex in each.
+struct VERTEX_INFO {
+    ushort vertex;                      // 0x00, the level's
+    ushort rect;                        // 0x02, the rectangle's index
+};
+
+// A lit object's lighting of one level of its mesh (PS2 litLod, 0x74 bytes on PC; I3d_lit_object.cpp): a lod whose
+// vertices take their colors from lightmaps, or from colors per vertex. The lightmaps' vertices are the lit vertices,
+// rendered through an index buffer of their own; the colors are the level's vertices'. The m_ names are the
+// messages' (m_pUV, m_pLitUV, m_numRectangles, m_numPIndex), the others are guessed in their style.
+// VTABLE: LS3DF 0x1009be5c
+class litLod : public lod {
+public:
+    litLod()
+    {
+        m_numLVertices = 0;
+        m_pUV = NULL;
+        m_pLitUV = NULL;
+        unknown_3c = NULL;
+        update_count = 0;
+        m_pLM = NULL;
+        m_numPIndex = 0;
+        m_pPIndex = NULL;
+        m_pRectangles = NULL;
+        m_numRectangles = 0;
+        memset(&ib, 0, sizeof(ib));
+        m_pVI = NULL;
+        memset(&pos_vb, 0, sizeof(pos_vb));
+        mem = 0;
+        dirty = true;
+    }
+    ~litLod();
+
+    // Gives the lod its vertex buffer from the level's vertices: colored per vertex (flags bit 0), or the lit
+    // vertices with their lightmap coordinates (PS2 name; the PC's parameters)
+    bool Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags);
+    // Packs the rectangles into the lightmap's texture and maps the lit vertices into it. Loaded, the index buffer was
+    // read; else it is built from the faces' rectangles (PS2 name; the messages say postLoadProcess).
+    bool postProcess(I3D_mesh_level *level, bool loaded);
+
+    // The lit vertex of the vertex in the rectangle (PS2 name, inlined)
+    int m_GetLVertex(ushort &vertex, ushort &rect)
+    {
+        VERTEX_INFO *vi = m_pVI;
+        for (int i = 0; i < m_numLVertices; i++, vi++) {
+            if (vi->vertex == vertex && vi->rect == rect)
+                return i;
+        }
+        dbgPrintf("!! vertex not found GetLVertex() vertex:%d rectangle:%d", vertex, rect);
+        return 0;
+    }
+
+    // The face group's faces' rectangles (PS2 name, inlined)
+    void AddFGindex(ushort *indices, int index)
+    {
+        if (index >= m_numPIndex)
+            dbgPrintf("!! Illegal order:%d  m_numPIndex:%d   litLod::AddFGindex()", index, m_numPIndex);
+        else
+            m_pPIndex[index] = indices;
+    }
+
+    // Room for the face groups' rectangles, cleared (PS2 name, inlined)
+    bool SetNumFGI(int num)
+    {
+        uint size = num * sizeof(ushort *);
+        m_pPIndex = (ushort **)new uchar[size];
+        if (!m_pPIndex)
+            return false;
+        m_numPIndex = num;
+        memset(m_pPIndex, 0, size);
+        return true;
+    }
+
+    int m_numLVertices;                 // 0x30, the lit vertices, or the level's vertices with colors
+    I3D_text_coor *m_pUV;               // 0x34, the lit vertices' texture coordinates (the level's, postProcess)
+    I3D_text_coor *m_pLitUV;            // 0x38, their lightmap coordinates, in their rectangles until postProcess
+    void *unknown_3c;                   // 0x3c, freed only
+    VERTEX_INFO *m_pVI;                 // 0x40
+    union {
+        uint *m_pColors;                // 0x44, the colors, one per vertex
+        COMPLETE_VB_STRUCT pos_vb;      // 0x44, the lightmaps': the lit vertices' positions, without hardware T&L
+    };
+    RECTANGLE_INFO *m_pRectangles;      // 0x50
+    int m_numRectangles;                // 0x54
+    LightMap *m_pLM;                    // 0x58, the rectangles packed into a texture
+    int m_numPIndex;                    // 0x5c, the level's face groups
+    ushort **m_pPIndex;                 // 0x60, for each face group its faces' rectangles
+    COMPLETE_IB_STRUCT ib;              // 0x64, the faces in lit vertices
+    uint mem;                           // 0x70, the lightmap's memory (m_CreateLM's), 0 for colors
+};
+
+// SYNTHETIC: LS3DF 0x10029f60
+// litLod::`scalar deleting destructor'
+
+// One of a lit object's lightings (PC only, the names are guessed). PS2 has the same with three lods.
+struct S_lit_level {
+    bool constructed;                   // 0x00, by Construct or Load
+    uint mode;                          // 0x04, 1 colors per vertex, 2 lightmaps
+    float resolution;                   // 0x08, Construct's, 5.0
+    float angle;                        // 0x0c, 45.0
+    litLod *lods[10];                   // 0x10, one per level of the mesh
+};
+
+// A visual whose mesh is lit by lightmaps, or by colors per vertex (PS2 I3D_lit_object, 0x370 bytes on PC;
+// I3d_lit_object.cpp): it has six lightings, one of them active, which Construct computes from the scene's lights or
+// Load reads. Its own virtual functions are in PS2's order.
+// VTABLE: LS3DF 0x1009bd70 I3D_frame
+// VTABLE: LS3DF 0x1009bd5c I3D_void_interface
+class I3D_lit_object : public I3D_object {
+public:
+    I3D_lit_object();
+    ~I3D_lit_object();
+
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+    virtual void __stdcall SetMesh(I3D_mesh_object *m, bool keep_lods);
+    virtual void __stdcall UpdateVertices();
+    virtual void __stdcall UpdateVertices(int index);
+    virtual LS3D_RESULT __stdcall Construct(I3D_scene *scene, S_vector &color, float resolution, uint flags,
+        I3D_LOAD_CB_PROC *cb, void *context);
+    virtual LS3D_RESULT __stdcall Destruct(uint flags);
+    virtual LS3D_RESULT __stdcall Load(int handle);
+    virtual LS3D_RESULT __stdcall Save(int handle);
+    virtual LS3D_RESULT __stdcall SetMode(uint mode);
+    virtual void __stdcall SetActiveLevel(int index);
+    virtual uint __stdcall GetTotalLMMemory();
+    virtual int __stdcall GetNumRectInfos(int lod_index, int index);
+    virtual RECTANGLE_INFO *__stdcall GetRectInfos(int lod_index, int index);
+    virtual void __stdcall UpdateLMFromRectInfos(int lod_index, int index);
+    virtual int __stdcall GetRectInfoFlags(int lod_index, int index, int flags);
+
+    int active_level;                   // 0x21c, of levels
+    S_lit_level levels[6];              // 0x220
+};
+
+// SYNTHETIC: LS3DF 0x100215e0
+// I3D_lit_object::`scalar deleting destructor'
+
+// The destructor m_AddFGroups registers for its static list of PrepareLights' colors (0x101b42f8, in a block, so not
+// in the PDB): the first $E13 in link order (see the scene's)
+// SYNTHETIC: LS3DF 0x10028d20
+// $E13
+
+// The lit object file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space)
+// GLOBAL: LS3DF 0x1009bcf8
+// IdentityMatrixData
+
+// The constructor of Construct's lists of the faces in each rectangle, out of line for the vector constructor iterator
+// TEMPLATE: LS3DF 0x1002ad30
+// C_list<NEW_FACE_STRUCT>::C_list<NEW_FACE_STRUCT>
+
 // The single meshes (PS2 I3d_singlemesh.cpp; I3d_singlemesh.cpp): a mesh whose vertices the joints below it move.
 // For each level of the mesh the file gives the joints' part of its vertices, joint by joint in the order of their
 // indices: the vertices the joint moves alone, then those it shares with another joint by their weights; the vertices
@@ -3254,6 +3404,12 @@ public:
         ref++;
     }
 
+    // The name is a guess
+    const float &GetAlpha() const
+    {
+        return alpha;
+    }
+
     ITexture *GetTexture()
     {
         if (flags & MATF_ANIMATED)
@@ -3323,6 +3479,22 @@ public:
     int num_faces;                      // 0x08
     I3D_face_group *next;               // 0x0c, the level's next one
     COMPLETE_IB_STRUCT ib;              // 0x10
+
+    // The members by reference (the names are guesses)
+    I3D_material *const &GetMaterial() const
+    {
+        return material;
+    }
+
+    const int &NumFaces() const
+    {
+        return num_faces;
+    }
+
+    I3D_face_group *const &GetNext() const
+    {
+        return next;
+    }
 };
 
 // SYNTHETIC: LS3DF 0x10030960
@@ -3420,14 +3592,10 @@ public:
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
 // I3d_pose.cpp, from I3d_morph.cpp to I3d_shadow.cpp and since I3d_particle.cpp; OnRenderEnd's again from
-// I3d_portal.cpp to I3d_particle.cpp, OnStopStreaming's in I3d_portal.cpp only, and both again since lightmap.cpp,
-// where CompleteConnect's went back to the base classes), so after a new file or function rerun crtannotate and move
-// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
-
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// I3d_portal.cpp to I3d_particle.cpp, OnStopStreaming's in I3d_portal.cpp only, and both again from lightmap.cpp to
+// Load5ds.cpp, where CompleteConnect's went back to the base classes; with I3d_lit_object.cpp all three are the base
+// classes' again), so after a new file or function rerun crtannotate and move such markers here or back. None is needed
+// now; the names are the ones our PDB keeps (tools/foldfix.py).
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3510,10 +3678,10 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
 // and render.cpp after the shadow visual's SetOn, in I3d_projector.cpp after vector<ITexture *>::_Destroy, in
-// I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and since Load.cpp after the shadow
-// visual's SetOn); the original keeps the area file's copy
+// I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and from Load.cpp to lightmap.cpp after
+// the shadow visual's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
+// ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -4037,7 +4205,7 @@ public:
 // SYNTHETIC: LS3DF 0x10045fe0
 // I3D_projector::`scalar deleting destructor'
 
-// The destructor the projector file's thunk registers for ProjectorsToRender, the first $E13 in link order (see the
+// The destructor the projector file's thunk registers for ProjectorsToRender, the second $E13 in link order (see the
 // scene's)
 // SYNTHETIC: LS3DF 0x10046760
 // $E13
