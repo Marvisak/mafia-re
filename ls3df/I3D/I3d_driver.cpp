@@ -11,9 +11,9 @@
 // DrawCircle2D), as if all of it were inline helpers and VC6's inline budget ran out earlier than in our build; with
 // everything as helpers, our build inlines the short draws' blend code too. Open.
 #include "I3D/I3D.h"
-#include "I3D/I3d_material.h"
+#include "I3D/mesh/I3d_material.h"
 #include "IGraph/IGraph.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/VBManager.h"
 #include "ISound/ISound.h"
 
 #include <stdio.h>

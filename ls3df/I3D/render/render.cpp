@@ -6,9 +6,9 @@
 // small inline functions before the vector in the headers put it there (tools/autopch.py); 30 or 40 leave it after
 // Render, 50 and 60 put it after VisualProc.
 #include "I3D/I3D.h"
-#include "I3D/IBManager.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "ISound/ISound.h"
 #include <mmsystem.h>

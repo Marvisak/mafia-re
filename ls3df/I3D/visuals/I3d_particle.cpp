@@ -19,9 +19,9 @@
 //   headers had more inline code before them, see tools/autopch.py). The pointer lists' push_back the original keeps
 //   is this file's (0x10041700), ours another's.
 #include "I3D/I3D.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
-#include "I3D/IBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
+#include "I3D/render/IBManager.h"
 #include "IGraph/IGraph.h"
 
 #include <string.h>

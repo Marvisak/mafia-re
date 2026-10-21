@@ -10,8 +10,8 @@
 // file's copy of the empty SetSpace, which it folds with the billboard's and the morphs', where the original keeps the
 // billboard file's (I3D.h).
 #include "I3D/I3D.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

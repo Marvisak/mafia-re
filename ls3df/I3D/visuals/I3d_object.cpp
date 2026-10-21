@@ -2,8 +2,8 @@
 // PC's lods (each level's own vertex buffer) after Duplicate. Its marker $E (0x10039260) comes before m_RenderFGroup.
 // Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 
 // FUNCTION: LS3DF 0x100367b0

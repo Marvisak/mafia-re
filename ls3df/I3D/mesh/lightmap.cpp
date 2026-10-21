@@ -9,7 +9,7 @@
 // Not matching yet: the zero vector's $E comes after m_CreateLM in ours. An unused function of 25 to 55 statements
 // before m_FillLineRGB puts it at the original's place (tools/autopch.py), so the original's source up to there was
 // that much longer; PS2's FreeTexBlList is in it already.
-#include "I3D/lightmap.h"
+#include "I3D/mesh/lightmap.h"
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 

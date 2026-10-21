@@ -2,7 +2,7 @@
 // the rendering's functions (PC only) among PS2's. The header's zero vector has its $E at the end (0x100333b0), and
 // after it the out-of-line copy of SetClipping (render.h). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
-#include "I3D/render.h"
+#include "I3D/render/render.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

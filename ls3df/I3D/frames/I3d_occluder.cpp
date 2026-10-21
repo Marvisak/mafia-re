@@ -13,7 +13,7 @@
 //   x87 stack (see the function).
 // - POIS_EnumProc and OCCL_PrepareSector2: a jump target and a term order, see the functions.
 #include "I3D/I3D.h"
-#include "I3D/XSBTree.h"
+#include "I3D/frames/XSBTree.h"
 #include "dta.h"
 
 #include <math.h>

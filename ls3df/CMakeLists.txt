@@ -2,60 +2,61 @@ cmake_minimum_required(VERSION 3.25)
 
 project(ls3df)
 
-# The engine. The original has 61 C++ objects and one C object of its own, the sources in the original's order.
-# The folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph are in its __FILE__ strings,
-# the sound files' folder is named here.
+# The engine. The original has 61 C++ objects and one C object of its own, the sources in the original's order, by file
+# name within each group. The top folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph
+# are in its __FILE__ strings, the sound files' folder is named here. I3D's subfolders are ours: the original's I3D was
+# flat (C:\MyProjects\engine8\I3D\IBManager.cpp).
 add_library(ls3df SHARED
-    I3D/clipper.cpp
-    I3D/clipper2.cpp
-    I3D/clipping.cpp
-    I3D/clipping2.cpp
-    I3D/I3d_animation.cpp
-    I3D/I3d_area.cpp
-    I3D/I3d_billboard.cpp
-    I3D/I3d_camera.cpp
+    I3D/render/clipper.cpp
+    I3D/render/clipper2.cpp
+    I3D/render/clipping.cpp
+    I3D/render/clipping2.cpp
+    I3D/anim/I3d_animation.cpp
+    I3D/frames/I3d_area.cpp
+    I3D/visuals/I3d_billboard.cpp
+    I3D/frames/I3d_camera.cpp
     I3D/i3d_collision.cpp
     I3D/I3d_driver.cpp
-    I3D/I3d_dummy.cpp
-    I3D/I3d_frame.cpp
-    I3D/I3d_interpolator.cpp
-    I3D/I3d_joint.cpp
-    I3D/I3d_landscape.cpp
-    I3D/I3d_light.cpp
-    I3D/I3d_lit_object.cpp
-    I3D/I3d_material.cpp
+    I3D/frames/I3d_dummy.cpp
+    I3D/frames/I3d_frame.cpp
+    I3D/anim/I3d_interpolator.cpp
+    I3D/frames/I3d_joint.cpp
+    I3D/visuals/I3d_landscape.cpp
+    I3D/frames/I3d_light.cpp
+    I3D/visuals/I3d_lit_object.cpp
+    I3D/mesh/I3d_material.cpp
     I3D/I3d_math.cpp
-    I3D/I3d_mesh.cpp
-    I3D/I3d_mirror.cpp
-    I3D/I3d_model.cpp
-    I3D/I3d_morph.cpp
-    I3D/I3d_object.cpp
-    I3D/I3d_occluder.cpp
-    I3D/I3d_particle.cpp
-    I3D/I3d_portal.cpp
-    I3D/I3d_pose.cpp
-    I3D/I3d_projector.cpp
+    I3D/mesh/I3d_mesh.cpp
+    I3D/visuals/I3d_mirror.cpp
+    I3D/frames/I3d_model.cpp
+    I3D/visuals/I3d_morph.cpp
+    I3D/visuals/I3d_object.cpp
+    I3D/frames/I3d_occluder.cpp
+    I3D/visuals/I3d_particle.cpp
+    I3D/frames/I3d_portal.cpp
+    I3D/anim/I3d_pose.cpp
+    I3D/visuals/I3d_projector.cpp
     I3D/I3d_scene.cpp
-    I3D/I3d_sector.cpp
-    I3D/I3d_shadow.cpp
-    I3D/I3d_singlemesh.cpp
-    I3D/I3d_singlemorph.cpp
-    I3D/I3d_sound.cpp
-    I3D/I3d_target.cpp
-    I3D/I3d_user.cpp
-    I3D/I3d_visual.cpp
-    I3D/I3d_volume.cpp
-    I3D/IBManager.cpp
-    I3D/lightmap.cpp
-    I3D/Load.cpp
-    I3D/Load3ds.cpp
-    I3D/load4ds.cpp
-    I3D/Load5ds.cpp
-    I3D/Load6ds.cpp
-    I3D/RadixSort.cpp
-    I3D/render.cpp
-    I3D/T_l.cpp
-    I3D/VBManager.cpp
+    I3D/frames/I3d_sector.cpp
+    I3D/visuals/I3d_shadow.cpp
+    I3D/visuals/I3d_singlemesh.cpp
+    I3D/visuals/I3d_singlemorph.cpp
+    I3D/frames/I3d_sound.cpp
+    I3D/frames/I3d_target.cpp
+    I3D/frames/I3d_user.cpp
+    I3D/visuals/I3d_visual.cpp
+    I3D/frames/I3d_volume.cpp
+    I3D/render/IBManager.cpp
+    I3D/mesh/lightmap.cpp
+    I3D/load/Load.cpp
+    I3D/load/Load3ds.cpp
+    I3D/load/load4ds.cpp
+    I3D/load/Load5ds.cpp
+    I3D/load/Load6ds.cpp
+    I3D/render/RadixSort.cpp
+    I3D/render/render.cpp
+    I3D/render/T_l.cpp
+    I3D/render/VBManager.cpp
     IGraph/cpuid.c
     IGraph/Globals.cpp
     IGraph/IGraph.cpp
@@ -113,10 +114,10 @@ if (MSVC_VERSION EQUAL 1200)
     # zero vector, and the vector isn't in its .bss. clipper.cpp creates it (/Yc), which gives its own object the
     # layout /YX does.
     file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch clipper_pch)
-    set_property(SOURCE I3D/clipper.cpp APPEND PROPERTY COMPILE_OPTIONS /YcI3D/clipper.h /Fp${clipper_pch})
-    set_property(SOURCE I3D/clipper.cpp APPEND PROPERTY OBJECT_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
-    set_property(SOURCE I3D/clipper2.cpp APPEND PROPERTY COMPILE_OPTIONS /YuI3D/clipper.h /Fp${clipper_pch})
-    set_property(SOURCE I3D/clipper2.cpp APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
+    set_property(SOURCE I3D/render/clipper.cpp APPEND PROPERTY COMPILE_OPTIONS /YcI3D/render/clipper.h /Fp${clipper_pch})
+    set_property(SOURCE I3D/render/clipper.cpp APPEND PROPERTY OBJECT_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
+    set_property(SOURCE I3D/render/clipper2.cpp APPEND PROPERTY COMPILE_OPTIONS /YuI3D/render/clipper.h /Fp${clipper_pch})
+    set_property(SOURCE I3D/render/clipper2.cpp APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/clipper.pch)
 
     # The original's order. Its import directory lists the libraries in the order they were searched: KERNEL32, USER32,
     # GDI32, ole32, d3d8, DINPUT8, DSOUND, WINMM and vorbisfile from the command line, then rw_data and binkw32, which

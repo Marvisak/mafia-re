@@ -2,7 +2,7 @@
 
 #include "ls3df.h"
 #include "I3D/I3d_math.h"
-#include "I3D/RadixSort.h"
+#include "I3D/render/RadixSort.h"
 
 #include <d3d8.h>
 
@@ -3416,7 +3416,7 @@ public:
 // SYNTHETIC: LS3DF 0x1002ae80
 // I3D_material::`scalar deleting destructor'
 
-// The animated material (PS2 I3D_anim_material) holds its frames in std::vectors: I3D/I3d_material.h
+// The animated material (PS2 I3D_anim_material) holds its frames in std::vectors: I3D/mesh/I3d_material.h
 class I3D_anim_material;
 
 // The meshes (PS2 I3d_mesh.cpp; I3d_mesh.cpp): an object's mesh has up to 10 levels of detail, each a vertex buffer and
@@ -3591,8 +3591,8 @@ public:
 
 // RenderShadowTexture's list of the points in texture coordinates, its guard and the destructor its first call
 // registers with atexit. VC6 numbers the last two per file (after the zero vector's three numbers and one for
-// <vector>'s template static, through I3D/I3d_material.h), so the names hold only while no other file has them. The
-// guard's place in the original's .bss, between IconMaterialList and driverTickTime, is the hash bucket of $S27 or
+// <vector>'s template static, through I3D/mesh/I3d_material.h), so the names hold only while no other file has them.
+// The guard's place in the original's .bss, between IconMaterialList and driverTickTime, is the hash bucket of $S27 or
 // $S33 (tools/bsshash.py, with the decorated name), ours of $S24 comes after driverTickTime: the original's file
 // numbered 3 (or 9) more before it.
 // GLOBAL: LS3DF 0x100bfc88
@@ -4279,7 +4279,7 @@ extern int LoadImageHandle;
 extern const char *ImageFileName;
 extern C_list<I3D_target *> LoadTargetList;
 // The destructor load4ds.cpp's thunk registers for it: the second $E6 in link order, after the mirror file's (the file
-// includes I3D/I3d_material.h, whose <vector> takes a number)
+// includes I3D/mesh/I3d_material.h, whose <vector> takes a number)
 // SYNTHETIC: LS3DF 0x10060c90
 // $E6
 LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time);

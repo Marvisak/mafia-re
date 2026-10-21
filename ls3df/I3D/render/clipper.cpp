@@ -8,7 +8,7 @@
 // Shapes the original needs: SetClipParams copies its parameters before it computes the ratios.
 #include <new>
 
-#include "I3D/clipper.h"
+#include "I3D/render/clipper.h"
 
 #include <string.h>
 

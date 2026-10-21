@@ -3,8 +3,8 @@
 // UpdateMorphLod. The header's zero vector has its $E after m_AddFGroups (0x10036520). Names are the PS2 build's
 // unless noted.
 #include "I3D/I3D.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 #include <malloc.h>

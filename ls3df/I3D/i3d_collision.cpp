@@ -9,7 +9,7 @@
 // would be out of address order here are in I3D.h, by name. Names are the PS2 build's unless noted. The texel test of
 // testVisual inlines C_VBuffer::Lock (VBManager.h).
 #include "I3D/I3D.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 
 // GLOBAL: LS3DF 0x100af82c

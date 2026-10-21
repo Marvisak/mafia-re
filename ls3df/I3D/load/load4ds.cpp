@@ -9,7 +9,7 @@
 //   name hashes between theirs.
 #pragma hdrstop
 #include "I3D/I3D.h"
-#include "I3D/I3d_material.h"
+#include "I3D/mesh/I3d_material.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

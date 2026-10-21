@@ -6,8 +6,8 @@
 // inlines it into its draws whatever its size (16 dead statements didn't stop it); ours also come due earlier (after
 // the billboard's m_RenderFGroup, in the original after Draw), the headers' inline content again (see autopch.py).
 #include "I3D/I3D.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 #include <mmsystem.h>

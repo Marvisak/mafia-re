@@ -8,7 +8,7 @@
 // as VC6 does: MakeCountIndicies is inline, the other helpers are plain functions VC6 inlines (/Ob2). Names are the
 // PS2 build's but the helpers without a PS2 counterpart (H&D's).
 #include "ls3df.h"
-#include "I3D/RadixSort.h"
+#include "I3D/render/RadixSort.h"
 #include <algorithm>
 
 // The counts of each byte value of the keys, by byte (PS2 names)

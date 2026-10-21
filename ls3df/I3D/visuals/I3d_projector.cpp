@@ -11,10 +11,10 @@
 // calls it, and the registers differ from there to the end. The original's push_back, which stores the size in the
 // copy's statement (ls3df.h), gives the function exactly.
 #include "I3D/I3D.h"
-#include "I3D/IBManager.h"
-#include "I3D/clipper.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/clipper.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

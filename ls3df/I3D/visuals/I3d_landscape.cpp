@@ -11,7 +11,7 @@
 // from memory, which moves the loop's registers; no spelling that compiles to the same code changed it. Our linker
 // keeps this file's copy of the empty m_RenderFGroup's fold group, the original the base classes' (I3D.h).
 #include "I3D/I3D.h"
-#include "I3D/render.h"
+#include "I3D/render/render.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

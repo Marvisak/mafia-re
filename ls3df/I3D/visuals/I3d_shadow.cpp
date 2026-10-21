@@ -15,10 +15,10 @@
 //   dot product and SetNormalized's reciprocal are scheduled differently on the FPU.
 // - The visual's constructor finishes copying the zero vector later, so its stores of 1 take eax, not ecx.
 #include "I3D/I3D.h"
-#include "I3D/IBManager.h"
-#include "I3D/clipper.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/clipper.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 
 #include <string.h>

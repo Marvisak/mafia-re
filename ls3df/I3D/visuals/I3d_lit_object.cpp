@@ -17,10 +17,10 @@
 // and litLod's right before ~litLod, and GetRenderMatrix at the end (the original's headers had more inline code
 // before them, see tools/autopch.py).
 #include "I3D/I3D.h"
-#include "I3D/lightmap.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
-#include "I3D/IBManager.h"
+#include "I3D/mesh/lightmap.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
+#include "I3D/render/IBManager.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

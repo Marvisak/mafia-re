@@ -10,7 +10,7 @@
 // Open: I3D_anim_material::Duplicate (see there), and so the original's out-of-line vector::insert(P, x)
 // (0x1002c900), which only its first push_back calls. Our IsCkey and IsAnimated come between vector::size and erase,
 // the original's after std::copy.
-#include "I3D/I3d_material.h"
+#include "I3D/mesh/I3d_material.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
 

@@ -3,7 +3,7 @@
 // destructor and m_Init and C_IBManager's functions; the PC's C_IBuffer also shares its buffer out (m_Alloc, m_Free).
 // The header's zero vector (0x101b50ec) has its $E at 0x1005c740, among the multisets' functions (ours comes earlier
 // among them: see tools/autopch.py).
-#include "I3D/IBManager.h"
+#include "I3D/render/IBManager.h"
 #include "IGraph/IGraph.h"
 
 #include <dxerr8.h>

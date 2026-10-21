@@ -6,9 +6,9 @@
 //   original's headers have more inline code before them.
 // - .bss: the function-local statics' names are guesses that don't hash into the original's order (see I3D.h).
 #include "I3D/I3D.h"
-#include "I3D/IBManager.h"
-#include "I3D/render.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/render.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 #include "ISound/ISound.h"
 #include "ISound/eax.h"

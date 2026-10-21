@@ -7,8 +7,8 @@
 // declaration order (from m_Sleeping at 0x101c59ac).
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
-#include "I3D/IBManager.h"
-#include "I3D/VBManager.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/VBManager.h"
 #include "ISound/ISound.h"
 #include "dta.h"
 

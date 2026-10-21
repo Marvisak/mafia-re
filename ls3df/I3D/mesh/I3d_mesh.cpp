@@ -2,9 +2,9 @@
 // I3D_mesh_object, each in PS2's order with the PC's additions. The header's zero vector has its $E at the end
 // (0x10031800). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
-#include "I3D/I3d_material.h"
-#include "I3D/IBManager.h"
-#include "I3D/VBManager.h"
+#include "I3D/mesh/I3d_material.h"
+#include "I3D/render/IBManager.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 
 #include <math.h>

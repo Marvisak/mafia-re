@@ -2,7 +2,7 @@
 // in the original, then the multisets' out-of-line functions up to 0x1006ad40. The same code as IBManager.cpp, which
 // it was probably copied from or to. The header's zero vector (0x101c5008) has its $E at 0x10069de0, among the
 // multisets' functions (ours comes earlier among them: see tools/autopch.py).
-#include "I3D/VBManager.h"
+#include "I3D/render/VBManager.h"
 #include "IGraph/IGraph.h"
 
 #include <dxerr8.h>

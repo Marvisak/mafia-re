@@ -14,7 +14,7 @@
 // Open: the world-space ones' three temporaries before and at the loop's top take eax, ecx and edx in another order;
 // in ClipFacegroups the transparent branch's and the face groups' calls' registers.
 #include "I3D/I3D.h"
-#include "I3D/clipper.h"
+#include "I3D/render/clipper.h"
 
 #include <string.h>
 
