@@ -110,6 +110,9 @@ enum I3D_RENDERSTATE {
     RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
                                         // name, the same number)
     RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
+    RS_LMTRUECOLOR = 34,                // the lightmaps' textures in the true color format, where there is one
+                                        // (Insanity3D's name, its number is 35)
+    RS_LMDITHER = 35,                   // the 16-bit lightmaps dithered (Insanity3D's name, its number is 36)
     RS_LOD_INDEX = 38,                  // -1 by default; the rendering copies it to ForceLodIndex, which nothing reads
                                         // (Insanity3D's name for its forced level of detail, -1 its default too)
     RS_USE_OCCLUSION = 39,              // the occluders hide what is behind them (Insanity3D's name for its own
@@ -2546,7 +2549,7 @@ public:
 // I3d_projector.cpp and from I3d_occluder.cpp to I3d_particle.cpp, the billboard's since Load.cpp, so the marker is by
 // the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_billboard@@UAGX_N@Z
+// ?SetSpace@I3D_singlemesh@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -3417,10 +3420,14 @@ public:
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
 // I3d_pose.cpp, from I3d_morph.cpp to I3d_shadow.cpp and since I3d_particle.cpp; OnRenderEnd's again from
-// I3d_portal.cpp to I3d_particle.cpp, OnStopStreaming's in I3d_portal.cpp only), so after a new file or function rerun
-// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087520
-// ?NumRegions@I3D_void_interface@@UBGHXZ
+// I3d_portal.cpp to I3d_particle.cpp, OnStopStreaming's in I3d_portal.cpp only, and both again since lightmap.cpp,
+// where CompleteConnect's went back to the base classes), so after a new file or function rerun crtannotate and move
+// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
+// LIBRARY: LS3DF 0x10087ec0
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
+
+// LIBRARY: LS3DF 0x10088960
+// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3498,7 +3505,7 @@ struct TLVERTEX2 {
 // The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
 // I3D files written later (0x10041700)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
+// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
@@ -4118,7 +4125,7 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// C_list<S_vector>::reserve
+// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);

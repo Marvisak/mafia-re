@@ -209,6 +209,11 @@ public:
         return array[used_size++];
     }
 
+    // Open: the original stores the size before the copy, array[used_size++] = v (PS2's too): lightmap.cpp's lists call
+    // TEXBL_STRUCT's assignment after the store, which this form gives only for elements without one (it gives the
+    // same code for those). That form spends one statement less of inline budget, which gives I3d_projector.cpp's
+    // ProcessRecList and lightmap.cpp's TEXBL_STRUCT list exactly, but takes I3d_singlemesh.cpp's UpdateLodVertices
+    // and I3D_part_base::m_AddFGroups out of their matches: their sources were fitted to this budget.
     void push_back(const T &v)
     {
         if (used_size >= res_size) {
@@ -254,6 +259,39 @@ public:
     {
         if (--used_size)
             array[i] = array[used_size];
+    }
+
+    // Removes the last element, if any (the name is a guess)
+    void pop_back()
+    {
+        if (used_size)
+            used_size--;
+    }
+
+    // Inserts v before element i, moving the ones after it up (the name is a guess; lightmap.cpp's sorted list)
+    void insert(int i, const T &v)
+    {
+        if (i == used_size) {
+            push_back(v);
+        } else {
+            push_back();
+            int n = used_size - i - 1;
+            while (n--)
+                array[i + n + 1] = array[i + n];
+            array[i] = v;
+        }
+    }
+
+    // Removes element i, moving the ones after it down (the name is a guess)
+    void erase_ordered(int i)
+    {
+        if (i == used_size - 1) {
+            pop_back();
+        } else {
+            for (int j = 0; j < used_size - i - 1; j++)
+                array[i + j] = array[i + j + 1];
+            pop_back();
+        }
     }
 
     // Removes the first element equal to v the same way, and tells whether there was one

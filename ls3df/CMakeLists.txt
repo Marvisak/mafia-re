@@ -45,6 +45,7 @@ add_library(ls3df SHARED
     I3D/I3d_visual.cpp
     I3D/I3d_volume.cpp
     I3D/IBManager.cpp
+    I3D/lightmap.cpp
     I3D/Load.cpp
     I3D/load4ds.cpp
     I3D/Load5ds.cpp
@@ -126,9 +127,13 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's link time (2003-06-24), in the PE header and the export directory
     postlink(ls3df --timestamp 0x3ef851b2)
     # Temporary, until their callers in I3D code are written: without a reference, /OPT:REF drops these (the names are
-    # /Gr's). VertexLightingProcess is called by the lit objects' lightmaps (0x10021bb0).
+    # /Gr's). VertexLightingProcess is called by the lit objects' lightmaps (0x10021bb0), LightMap's constructor,
+    # destructor, m_FillLineRGB, m_Resize and m_CreateLM by the lit objects.
     target_link_options(ls3df PRIVATE
-        "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z")
+        "/INCLUDE:?VertexLightingProcess@@YIXAAUS_vector@@U1@1PAVI3D_material@@PAVI3D_scene@@IPA_NPAVI3D_frame@@H@Z"
+        "/INCLUDE:??0LightMap@@QAE@XZ" "/INCLUDE:??1LightMap@@QAE@XZ" "/INCLUDE:?m_FillLineRGB@LightMap@@QAEXPAPAE0HI@Z"
+        "/INCLUDE:?m_Resize@LightMap@@QAE_NPAURECTANGLE_INFO@@HHPAPAE@Z"
+        "/INCLUDE:?m_CreateLM@LightMap@@QAE_NPAGPAURECTANGLE_INFO@@HPAIPAVI3D_lit_object@@@Z")
 else()
     # dxerr8.lib uses the CRT's old swprintf
     target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8

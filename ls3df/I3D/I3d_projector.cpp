@@ -8,7 +8,8 @@
 // Not matching yet: ProcessRecList inlines C_list::push_back into the vertex buffer's Lock, as the original does, only
 // with about 11 more statements' worth of source anywhere in the function (dead code measures it; the alpha in more
 // statements, int literals, casts, a helper for the vertex loops or __forceinline float helpers don't count). Ours
-// calls it, and the registers differ from there to the end.
+// calls it, and the registers differ from there to the end. The original's push_back, which stores the size in the
+// copy's statement (ls3df.h), gives the function exactly.
 #include "I3D/I3D.h"
 #include "I3D/IBManager.h"
 #include "I3D/clipper.h"
