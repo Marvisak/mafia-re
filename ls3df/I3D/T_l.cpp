@@ -47,8 +47,8 @@ struct S_temp_light {
 };
 
 // The file's .bss isn't laid out yet: the original has TempLightList (PS2 name, bucket 286) after pTempLight (704),
-// and two 12-byte objects nothing references at 0x101c4d24 and 0x101c4d64. The $E at 0x10065a10 is identical but
-// unmatched: its only reference points inside TempLightList, and $E5 is in several files.
+// and two 12-byte objects nothing references at 0x101c4d24 and 0x101c4d64. TempLightList's $E (0x10065a10) is annotated
+// by name in I3D.h.
 // GLOBAL: LS3DF 0x101c4d20
 int TempLightIndex;
 

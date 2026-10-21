@@ -428,19 +428,18 @@ struct I3D_triface {
 };
 
 // Every file that includes the header gets its own (PS2 name). Its $E isn't where it is defined: the files are
-// compiled with /YX (see tools/autopch.py). Besides its $E, only the collision tests and the shadows' visual read
-// it. PS2's files also construct a ZeroSQuat; the PC's construct only the vector.
+// compiled with /YX (see tools/autopch.py). Besides its $E, the collision tests, the occluder's, the projector's and
+// the shadows' visual's constructors and render.cpp's mirrors read it. PS2's files also construct a ZeroSQuat; the
+// PC's construct only the vector. Every file's copy is annotated at the end of this header.
 static S_vector ZeroSVector(0.0f, 0.0f, 0.0f);
 
 // PS2 has a copy in every file that uses it (a local IdentityMatrix in .data, after the zero vector); here it is
-// constant data, which an S_matrix can't be (no initializer list with a base class), so the D3DMATRIX. I3d_math.cpp's
-// copy; the scene file's is annotated in I3D.h.
+// constant data, which an S_matrix can't be (no initializer list with a base class), so the D3DMATRIX.
 // Every object of the original that includes the header has a copy, first in its .rdata (58; clipper.cpp's at
 // 0x1009b2c0), though only 12 read theirs. VC6 puts one into an object only where the source references it, inline
 // functions nobody calls included, so the header has one every file sees: I3DGetIdentityMatrix (Insanity3D's name,
 // which has it out of line), never called. After the zero vector: its body before it would move the files' $Es (the
-// driver's one function late, tools/autopch.py).
-// GLOBAL: LS3DF 0x1009bf48
+// driver's one function late, tools/autopch.py). Every file's copy is annotated at the end of this header.
 static const D3DMATRIX IdentityMatrixData = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
@@ -522,12 +521,24 @@ const S_vector *BBoxVertices(const I3D_bbox &bbox);
 
 // The guard of BBoxVertices' static buffer, and the function its first call registers with atexit (it has nothing
 // to destroy). VC6 numbers both per file, after the zero vector's three numbers, so the names hold only while no
-// other file has them. The scene's file and IGraph.cpp have a $E13 too: reccmp pairs the annotations of a name with our
-// functions of that name in address order, so this one holds with the scene's annotated (I3D.h) and IGraph.cpp's not.
+// other file has them. Other files have a $E13 too: reccmp pairs the annotations of a name with our functions of that
+// name in address order, so this one holds with every earlier file's annotated (the sixth, after render.cpp's, I3D.h).
 // GLOBAL: LS3DF 0x101c5290
 // $S12
 // SYNTHETIC: LS3DF 0x1006bc90
 // $E13
+
+// More of Globals.cpp's $Es, annotated for later files' of the same names: the destructor StaticInstance's thunk
+// registers (the ninth $E5 in link order, after T&l.cpp's), UnitBBox's initializer (the third $E10, after the driver's
+// and the model file's) and ZeroVector's (the fifth $E18, after render.cpp's)
+// SYNTHETIC: LS3DF 0x1006b660
+// $E5
+
+// SYNTHETIC: LS3DF 0x1006bb80
+// $E10
+
+// SYNTHETIC: LS3DF 0x1006bcc0
+// $E18
 
 // The smaller and the larger of two values, through references (PS2 Min<T>, which the sort lists' Sort calls): the
 // clamps of S_vector::AngleTo and the sectors' SetSoundData take the addresses of their bounds. After the zero vector,
@@ -543,3 +554,359 @@ inline const T &Max(const T &a, const T &b)
 {
     return a > b ? a : b;
 }
+
+// Every file's ZeroSVector and IdentityMatrixData in the original, in link order. reccmp pairs globals of one name
+// with ours in address order (without a warning), so all of them are annotated: one left out would give each file
+// after it the next file's. The files' $Es pair through the vectors too: reccmp matches the .CRT$XCU entries by the
+// matched globals they write.
+
+// clipper.cpp
+// GLOBAL: LS3DF 0x100aef6c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b2c0
+// IdentityMatrixData
+
+// clipping.cpp
+// GLOBAL: LS3DF 0x100af7cc
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b320
+// IdentityMatrixData
+
+// clipping2.cpp
+// GLOBAL: LS3DF 0x100af7d8
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b360
+// IdentityMatrixData
+
+// I3d_animation.cpp
+// GLOBAL: LS3DF 0x100af7e4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b3a0
+// IdentityMatrixData
+
+// I3d_area.cpp
+// GLOBAL: LS3DF 0x100af7f0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b420
+// IdentityMatrixData
+
+// I3d_billboard.cpp
+// GLOBAL: LS3DF 0x100af800
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b4d0
+// IdentityMatrixData
+
+// I3d_camera.cpp
+// GLOBAL: LS3DF 0x100af80c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b690
+// IdentityMatrixData
+
+// i3d_collision.cpp
+// GLOBAL: LS3DF 0x100af838
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b778
+// IdentityMatrixData
+
+// I3d_driver.cpp
+// GLOBAL: LS3DF 0x100afbac
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b7f0
+// IdentityMatrixData
+
+// I3d_dummy.cpp
+// GLOBAL: LS3DF 0x100c0010
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b8e0
+// IdentityMatrixData
+
+// I3d_frame.cpp
+// GLOBAL: LS3DF 0x100c001c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009b978
+// IdentityMatrixData
+
+// I3d_interpolator.cpp
+// GLOBAL: LS3DF 0x100c004c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009ba18
+// IdentityMatrixData
+
+// I3d_joint.cpp
+// GLOBAL: LS3DF 0x100c0058
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009ba68
+// IdentityMatrixData
+
+// I3d_landscape.cpp
+// GLOBAL: LS3DF 0x100c0068
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009baf8
+// IdentityMatrixData
+
+// I3d_light.cpp
+// GLOBAL: LS3DF 0x101b42ec
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009bc40
+// IdentityMatrixData
+
+// I3d_lit_object.cpp: GetInvMatrix and GetRenderMatrix use the matrix in world space
+// GLOBAL: LS3DF 0x101b4308
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009bcf8
+// IdentityMatrixData
+
+// I3d_material.cpp
+// GLOBAL: LS3DF 0x101b4318
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009be60
+// IdentityMatrixData
+
+// I3d_math.cpp
+// GLOBAL: LS3DF 0x101b4324
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009bf48
+// IdentityMatrixData
+
+// I3d_mesh.cpp
+// GLOBAL: LS3DF 0x101b4330
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009bfa0
+// IdentityMatrixData
+
+// I3d_mirror.cpp
+// GLOBAL: LS3DF 0x101b434c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c050
+// IdentityMatrixData
+
+// I3d_model.cpp
+// GLOBAL: LS3DF 0x101b435c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c120
+// IdentityMatrixData
+
+// I3d_morph.cpp
+// GLOBAL: LS3DF 0x101b4398
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c218
+// IdentityMatrixData
+
+// I3d_object.cpp
+// GLOBAL: LS3DF 0x101b43a4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c2f8
+// IdentityMatrixData
+
+// I3d_occluder.cpp: the constructor copies the vector
+// GLOBAL: LS3DF 0x101b43b0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c3e0
+// IdentityMatrixData
+
+// I3d_particle.cpp: GetRenderMatrix uses the matrix in world space, the renderer as its world matrix
+// GLOBAL: LS3DF 0x101b43cc
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c478
+// IdentityMatrixData
+
+// I3d_portal.cpp
+// GLOBAL: LS3DF 0x101b43e0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c6f8
+// IdentityMatrixData
+
+// I3d_pose.cpp
+// GLOBAL: LS3DF 0x101b45ec
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c750
+// IdentityMatrixData
+
+// I3d_projector.cpp: the constructor copies the vector; GetInvMatrix and GetRenderMatrix use the matrix in world
+// space
+// GLOBAL: LS3DF 0x101b45fc
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c7c8
+// IdentityMatrixData
+
+// I3d_scene.cpp: the matrix is m_RenderWeatherSystem's world matrix
+// GLOBAL: LS3DF 0x101b4e3c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009c8b8
+// IdentityMatrixData
+
+// I3d_sector.cpp
+// GLOBAL: LS3DF 0x101b4f1c
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009ca48
+// IdentityMatrixData
+
+// I3d_shadow.cpp: the visual's constructor copies the vector; GetInvMatrix and GetRenderMatrix use the matrix in
+// world space
+// GLOBAL: LS3DF 0x101b4f30
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009cb00
+// IdentityMatrixData
+
+// I3d_singlemesh.cpp
+// GLOBAL: LS3DF 0x101b5088
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009cc48
+// IdentityMatrixData
+
+// I3d_singlemorph.cpp
+// GLOBAL: LS3DF 0x101b5094
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009cd40
+// IdentityMatrixData
+
+// I3d_sound.cpp
+// GLOBAL: LS3DF 0x101b50a0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009ce30
+// IdentityMatrixData
+
+// I3d_target.cpp
+// GLOBAL: LS3DF 0x101b50ac
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009cf18
+// IdentityMatrixData
+
+// I3d_user.cpp
+// GLOBAL: LS3DF 0x101b50c8
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009cfb8
+// IdentityMatrixData
+
+// I3d_visual.cpp
+// GLOBAL: LS3DF 0x101b50d4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d048
+// IdentityMatrixData
+
+// I3d_volume.cpp
+// GLOBAL: LS3DF 0x101b50e0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d118
+// IdentityMatrixData
+
+// IBManager.cpp
+// GLOBAL: LS3DF 0x101b50ec
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d1b0
+// IdentityMatrixData
+
+// lightmap.cpp
+// GLOBAL: LS3DF 0x101b5138
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d1f0
+// IdentityMatrixData
+
+// Load.cpp: the vector is right before LoadFramy: the 1-based reads of the frames address 4 bytes before the
+// array (load4ds.cpp), which falls in it
+// GLOBAL: LS3DF 0x101b5154
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d250
+// IdentityMatrixData
+
+// Load3ds.cpp
+// GLOBAL: LS3DF 0x101c3bd8
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d298
+// IdentityMatrixData
+
+// load4ds.cpp
+// GLOBAL: LS3DF 0x101c3bf0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d2d8
+// IdentityMatrixData
+
+// Load5ds.cpp
+// GLOBAL: LS3DF 0x101c3c18
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d318
+// IdentityMatrixData
+
+// Load6ds.cpp
+// GLOBAL: LS3DF 0x101c3c24
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d358
+// IdentityMatrixData
+
+// render.cpp: the mirrors' reflections are drawn with the vector
+// GLOBAL: LS3DF 0x101c4c50
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d398
+// IdentityMatrixData
+
+// T&l.cpp
+// GLOBAL: LS3DF 0x101c4d44
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d3e0
+// IdentityMatrixData
+
+// VBManager.cpp
+// GLOBAL: LS3DF 0x101c5008
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d430
+// IdentityMatrixData
+
+// Globals.cpp
+// GLOBAL: LS3DF 0x101c51c0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d480
+// IdentityMatrixData
+
+// IGraph.cpp
+// GLOBAL: LS3DF 0x101c5414
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d4c0
+// IdentityMatrixData
+
+// IShow.cpp
+// GLOBAL: LS3DF 0x101c5c40
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d630
+// IdentityMatrixData
+
+// IShowStream.cpp
+// GLOBAL: LS3DF 0x101c5dac
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d850
+// IdentityMatrixData
+
+// ITexture.cpp
+// GLOBAL: LS3DF 0x101c61f8
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d890
+// IdentityMatrixData
+
+// IS_3Dlistener.cpp
+// GLOBAL: LS3DF 0x101c62b4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d928
+// IdentityMatrixData
+
+// IS_3Dsound.cpp
+// GLOBAL: LS3DF 0x101c62c4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009d9a0
+// IdentityMatrixData
+
+// IS_driver.cpp
+// GLOBAL: LS3DF 0x101c62d0
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009da48
+// IdentityMatrixData
+
+// IS_sound.cpp
+// GLOBAL: LS3DF 0x101c62f4
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009dac8
+// IdentityMatrixData
+
+// IS_source.cpp
+// GLOBAL: LS3DF 0x101c6310
+// ZeroSVector
+// GLOBAL: LS3DF 0x1009db50
+// IdentityMatrixData

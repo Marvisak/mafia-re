@@ -241,6 +241,14 @@ struct TERMINATED_CHANNEL_STRUCT {
     uint loop;                          // ISND_LOOP
 };
 
+// The destructors IS_sound.cpp's thunks register for ChannelList and TerminatedChannelList: the last $E5 and $E10 in
+// link order, after ITexture.cpp's
+// SYNTHETIC: LS3DF 0x1007c2d0
+// $E5
+
+// SYNTHETIC: LS3DF 0x1007c320
+// $E10
+
 // The stream functions the driver keeps (PC only), through which IShow plays music. Nothing in LS3DF fills the table in:
 // the driver only deletes it when it closes, and frees a library it never loads (module), presumably the one that
 // provided it. The functions are __fastcall, the engine's default; the names are guesses.

@@ -83,6 +83,14 @@ inline bool S_IBuffer_less::operator()(C_IBuffer *const &b1, C_IBuffer *const &b
 // PS2 name
 extern C_IBManager cIBMan;
 
+// Its initializer's thunk and the destructor it registers: the first $E11 in link order, annotated for T&l.cpp's after
+// it, and the second $E9, after the collision file's
+// SYNTHETIC: LS3DF 0x1005aad0
+// $E11
+
+// SYNTHETIC: LS3DF 0x1005aaf0
+// $E9
+
 // A buffer locked read-only is locked again for writing
 inline uchar *C_IBuffer::Lock(int index, uint lock_flags)
 {

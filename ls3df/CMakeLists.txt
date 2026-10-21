@@ -9,6 +9,7 @@ add_library(ls3df SHARED
     I3D/clipper.cpp
     I3D/clipper2.cpp
     I3D/clipping.cpp
+    I3D/clipping2.cpp
     I3D/I3d_animation.cpp
     I3D/I3d_area.cpp
     I3D/I3d_billboard.cpp
@@ -47,8 +48,10 @@ add_library(ls3df SHARED
     I3D/IBManager.cpp
     I3D/lightmap.cpp
     I3D/Load.cpp
+    I3D/Load3ds.cpp
     I3D/load4ds.cpp
     I3D/Load5ds.cpp
+    I3D/Load6ds.cpp
     I3D/RadixSort.cpp
     I3D/render.cpp
     I3D/T_l.cpp

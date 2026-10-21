@@ -1393,14 +1393,30 @@ public:
 // SYNTHETIC: LS3DF 0x10048eb0
 // I3D_scene::`scalar deleting destructor'
 
-// The collision file's $E18, $E23 and $E29, the first in link order, annotated for the scene's and render.cpp's to pair
-// with theirs: the destructor TestColHierarchy registers for its static retNormal (it has nothing to destroy), the next
-// static's and kolBod's empty initializer
+// The collision file's $Es, the first of each name in link order (the scene's, the shadows' and render.cpp's pair with
+// theirs after them): the empty initializers of normala, lineBase and lineDir, the destructor TestColHierarchy registers
+// for its static retNormal (it has nothing to destroy), and the empty initializers of sphBox, lineDest, colPointSph and
+// kolBod. An empty initializer uses no global, so reccmp can pair it only by name.
+// SYNTHETIC: LS3DF 0x1000de70
+// $E9
+
+// SYNTHETIC: LS3DF 0x1000de80
+// $E12
+
+// SYNTHETIC: LS3DF 0x1000de90
+// $E15
+
 // SYNTHETIC: LS3DF 0x10011d10
 // $E18
 
+// SYNTHETIC: LS3DF 0x10011d20
+// $E20
+
 // SYNTHETIC: LS3DF 0x10011d30
 // $E23
+
+// SYNTHETIC: LS3DF 0x10011d40
+// $E26
 
 // SYNTHETIC: LS3DF 0x10011d50
 // $E29
@@ -1424,11 +1440,10 @@ public:
 // ?SphereIntersect@@YI_NABUI3D_bsphere@@@Z
 
 // The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
-// m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file: Globals.cpp has
-// a $E13 and a $E18 too, IGraph.cpp both. reccmp pairs the annotations of one name with our functions of that name in
-// address order, so the scene's (the third $E13 in link order, after the lit objects' and the projector file's, and the
-// second $E18, after the collision file's) and Globals.cpp's $E13 (I3d_math.h) are annotated, while IGraph.cpp's stay
-// unmatched. The constructor's bigBox registers $E26, which I3d_driver.cpp has before it.
+// m_UpdateWeatherSystem's CamOldPos registers (it has nothing to destroy). VC6 numbers them per file, and other files
+// have these names too. reccmp pairs the annotations of one name with our functions of that name in address order, so
+// every file's up to the last one that needs it is annotated: the scene's are the third $E13 in link order (after the
+// lit objects' and the projector file's) and the second $E18 (after the collision file's).
 // SYNTHETIC: LS3DF 0x10048a30
 // $E13
 
@@ -1438,6 +1453,11 @@ public:
 // The scene's empty initializer, the second $E23 in link order, after the collision file's
 // SYNTHETIC: LS3DF 0x10048aa0
 // $E23
+
+// The destructor the constructor's static bigBox registers (it has nothing to destroy): the second $E26 in link order,
+// after the collision file's
+// SYNTHETIC: LS3DF 0x10048ea0
+// $E26
 
 // SYNTHETIC: LS3DF 0x1004ddc0
 // $E29
@@ -1457,10 +1477,6 @@ public:
 
 // SYNTHETIC: LS3DF 0x10061df0
 // $E28
-
-// And render.cpp's zero vector, which the mirrors' reflections are drawn with
-// GLOBAL: LS3DF 0x101c4c50
-// ZeroSVector
 
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
@@ -1510,10 +1526,6 @@ public:
 
 // GLOBAL: LS3DF 0x101b4e30
 // CamOldPos
-
-// The scene file's copy of I3d_math.h's identity matrix (m_RenderWeatherSystem's world matrix)
-// GLOBAL: LS3DF 0x1009c8b8
-// IdentityMatrixData
 
 // I3D_dummy::dummy_flags (names guessed)
 #define DUMMYF_NORMALIZED 0x1           // Normalize made the box (0, 0, 0) to (1, 1, 1)
@@ -2052,10 +2064,6 @@ public:
 // SYNTHETIC: LS3DF 0x1003a500
 // I3D_occluder::`scalar deleting destructor'
 
-// The occluder file's zero vector, which the constructor copies
-// GLOBAL: LS3DF 0x101b43b0
-// ZeroSVector
-
 // The occluder file's static functions, defined before their callers as PS2 has them: VC6 emits them after
 // ProcessOccluders, their first caller, so their markers would be out of address order there. They have no public
 // symbol, so their names are the PDB's procedure names.
@@ -2280,14 +2288,6 @@ public:
 
 // SYNTHETIC: LS3DF 0x10052f60
 // $E24
-
-// The shadow file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space)
-// GLOBAL: LS3DF 0x1009cb00
-// IdentityMatrixData
-
-// And its zero vector, which the visual's constructor copies
-// GLOBAL: LS3DF 0x101b4f30
-// ZeroSVector
 
 // The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are the morph's
 // messages'). The visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and
@@ -2738,10 +2738,6 @@ public:
 // SYNTHETIC: LS3DF 0x10028d20
 // $E13
 
-// The lit object file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space)
-// GLOBAL: LS3DF 0x1009bcf8
-// IdentityMatrixData
-
 // The constructor of Construct's lists of the faces in each rectangle, out of line for the vector constructor iterator
 // TEMPLATE: LS3DF 0x1002ad30
 // C_list<NEW_FACE_STRUCT>::C_list<NEW_FACE_STRUCT>
@@ -3114,14 +3110,6 @@ public:
 
 // SYNTHETIC: LS3DF 0x1003fbe0
 // I3D_part_element::`scalar deleting destructor'
-
-// The particle file's copy of I3d_math.h's identity matrix (GetRenderMatrix in world space, the renderer's world
-// matrix), and its zero vector
-// GLOBAL: LS3DF 0x1009c478
-// IdentityMatrixData
-
-// GLOBAL: LS3DF 0x101b43cc
-// ZeroSVector
 
 // The landscape (PC only; I3d_landscape.cpp) is Bryan Turner's ROAM demo ("ROAM Simplistic Implementation", January
 // 2000, from his Gamasutra article on ROAM) in the engine's classes: a height map of bytes, MAP_SIZE on a side, in
@@ -3621,6 +3609,13 @@ public:
 // SYNTHETIC: LS3DF 0x10015560
 // $E10
 
+// And those for TLVertList and LVertList: the second $E15 and $E20 in link order, after the collision file's
+// SYNTHETIC: LS3DF 0x100155b0
+// $E15
+
+// SYNTHETIC: LS3DF 0x10015600
+// $E20
+
 // DrawSphere's matrix
 // GLOBAL: LS3DF 0x100afc28
 // m
@@ -3895,6 +3890,17 @@ void TransformVerticesBlend(void *dst, const void *src, uint count, const S_matr
 void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode);
 void SwapVertexBytes(uchar *a, uchar *b, uint stride, const I3D_triface *faces, uint num_faces, int restore);
 int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context);
+
+// T&l.cpp's $E5, TempLightList's constructor loop: its only reference points inside the array, so reccmp can pair it only
+// by name. The eighth $E5 in link order, after clipper.cpp's and the frame, landscape, model, portal, target and lightmap
+// files'.
+// SYNTHETIC: LS3DF 0x10065a10
+// $E5
+
+// And the destructor PrepareLights registers for its static color (S_color's, empty): the second $E11 in link order,
+// after IBManager.cpp's
+// SYNTHETIC: LS3DF 0x10066b40
+// $E11
 
 // render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
 extern I3D_camera *pCurrentCamera;
@@ -4210,14 +4216,6 @@ public:
 // SYNTHETIC: LS3DF 0x10046760
 // $E13
 
-// The projector file's copy of I3d_math.h's identity matrix (GetInvMatrix and GetRenderMatrix in world space), and its
-// zero vector, which the constructor copies
-// GLOBAL: LS3DF 0x1009c7c8
-// IdentityMatrixData
-
-// GLOBAL: LS3DF 0x101b45fc
-// ZeroSVector
-
 // The shadows' visuals whose receivers the rendering has to clip this frame and what it calls for them (I3d_shadow.cpp),
 // the same for the projectors, and the visuals a projector or shadow falls on (I3d_projector.cpp; the names are guesses)
 extern C_list<I3D_shadow_visual *> ShadowVisualQueue;
@@ -4268,10 +4266,6 @@ LS3D_RESULT LoadAnimation(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     I3D_animation_set *set);
 LS3D_RESULT LoadShadow(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context, ShadowDef *def);
 void LoadProgress(float p);
-// Load.cpp's zero vector, right before LoadFramy: the 1-based reads of the frames address 4 bytes before the array
-// (load4ds.cpp), which falls in the vector
-// GLOBAL: LS3DF 0x101b5154
-// ZeroSVector
 extern I3D_frame *LoadFramy[10000];
 extern int LoadFramu;
 extern I3D_material *LoadMaterialy[5000];

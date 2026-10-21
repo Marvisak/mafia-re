@@ -498,6 +498,10 @@ public:
 // GLOBAL: LS3DF 0x101c5da8
 // pin_enum
 
+// The destructor IShowStream.cpp's thunk registers for stream_shows: the tenth $E5 in link order, after Globals.cpp's
+// SYNTHETIC: LS3DF 0x100758c0
+// $E5
+
 // ITexture::Create's flags. The Xbox build's messages name ITC_USE_ALPHA and ITC_EMPTY; the other names are guesses.
 enum {
     ITC_FROM_MEMORY = 0x1,              // the name points to a bitmap in memory (a BITMAPINFOHEADER, the bits after it)
@@ -606,9 +610,19 @@ DWORD WINAPI RenderThreadProc(void *param);
 // C_list<S_texture_slot>::C_list<S_texture_slot>
 
 // And its destructor, which the linker folds with the other lists' identical ones: the original's copy is in I3D code
-// (another list's, not known yet), ours keeps the name of C_IBuffer's list of blocks (IBManager.h)
+// (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
+// with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// C_list<S_IB_block *>::~C_list<S_IB_block *>
+// ??1?$C_list@PAVC_VBuffer@@@@QAE@XZ
+
+// The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
+// destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after
+// Globals.cpp's
+// SYNTHETIC: LS3DF 0x1007a5a0
+// $E5
+
+// SYNTHETIC: LS3DF 0x1007a5f0
+// $E10
 
 // Globals.cpp
 void ErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message);

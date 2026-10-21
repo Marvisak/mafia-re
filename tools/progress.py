@@ -43,13 +43,19 @@ class Target:
 
 
 # The function counts come from Binary Ninja: its functions from the start of .text up to the first import
-# thunk or CRT function (the address in the comment). rw_data's, IJoy's and both setups' are exact. The others
-# still include Binary Ninja's mistakes (padding and pieces of functions taken for functions); correct them as
-# those binaries are worked on. Once reccmp knows more functions than the count here, its number is used.
+# thunk or CRT function (the address in the comment). rw_data's, IJoy's and both setups' are exact. Game.exe's
+# still includes Binary Ninja's mistakes (padding and pieces of functions taken for functions); correct it as
+# that binary is worked on. Once reccmp knows more functions than the count here, its number is used.
+# LS3DF's is exact and counts the engine only, up to the libraries linked after it (dxerr8, S3TC, the DirectShow
+# base classes), as --nolib does; so are the base classes' adjustor thunks and IUnknown members in IShow.cpp's
+# object. Checked against reccmp's functions one by one: Binary Ninja's 1364 there (5 of them start in the padding
+# before the function), less 2 pieces of IsCPUID's __except, 2 runs of padding and 4 of the base classes'
+# functions, plus 5 that Binary Ninja misses (IGraph::EndScene, ITexture::Preload, two $E and the destructor
+# stream_shows registers, 0x100758c0).
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
-    Target("LS3DF.dll", "LS3DF", 1660),  # 0x1008d3e0
+    Target("LS3DF.dll", "LS3DF", 1361),  # 0x1007d9d0
     Target("Game.exe", None, 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
     Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158

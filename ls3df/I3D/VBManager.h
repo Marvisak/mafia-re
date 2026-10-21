@@ -96,6 +96,10 @@ inline bool S_VBuffer_less::operator()(C_VBuffer *const &b1, C_VBuffer *const &b
 // PS2 name
 extern C_VBManager cVBMan;
 
+// The destructor its initializer's thunk registers: the third $E9 in link order, after IBManager.cpp's
+// SYNTHETIC: LS3DF 0x100688a0
+// $E9
+
 // A buffer locked read-only is locked again for writing
 // FUNCTION: LS3DF 0x1000af80
 inline uchar *C_VBuffer::Lock(int index, uint lock_flags)

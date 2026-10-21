@@ -520,10 +520,17 @@ LS3D_EXPORT int __cdecl dbgPrintf(const char *format, ...);
 LS3D_EXPORT int __cdecl dbgPrintf1(const char *format, ...);
 void dbgPrintGuid(const void *guid);
 
-// The destructors IGraph.cpp's thunks in .CRT$XCU register with atexit for m_AdapterFormatList, m_CachedTextureList,
-// m_UncachedTextureList and m_MapsList, by name. VC6 numbers these functions per file, and only these names are in
-// no other file; reccmp pairs a name several files have ($E13, $E18, $E23) only with a warning for each, so the other
-// destructors stay unmatched, and their thunks below 100% though identical.
+// The destructors IGraph.cpp's thunks in .CRT$XCU register with atexit, by name: m_DlgHWndList's, the one for
+// m_AppName and m_SleepAppName, m_AdapterModeList's, then m_AdapterFormatList's, m_CachedTextureList's,
+// m_UncachedTextureList's and m_MapsList's. VC6 numbers these functions per file, and reccmp pairs the annotations of
+// a name with our functions of that name in address order (with an "Ambiguous match" warning for each): the first
+// three are the seventh $E13, the sixth $E18 (both after Globals.cpp's) and the fourth $E23 (after render.cpp's).
+// SYNTHETIC: LS3DF 0x1006bd70
+// $E13
+// SYNTHETIC: LS3DF 0x1006bdb0
+// $E18
+// SYNTHETIC: LS3DF 0x1006be10
+// $E23
 // SYNTHETIC: LS3DF 0x1006be60
 // $E28
 // SYNTHETIC: LS3DF 0x1006beb0
