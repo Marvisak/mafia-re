@@ -867,19 +867,3 @@ inline void I3D_driver::m_DrawAllSortedFG()
     if (GlobalDrawWeather)
         pCurrentScene->m_RenderWeatherSystem();
 }
-
-// The functions of the particles' file the rendering calls, until that is written. After their callers: VC6 would know
-// these can't throw. Their markers are in I3D.h, by name, as their addresses come before the file's.
-#pragma auto_inline(off)
-
-void InitParticle()
-{
-    renderState[47]++;
-}
-
-void CloseParticle()
-{
-    renderState[52]++;
-}
-
-#pragma auto_inline(on)

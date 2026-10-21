@@ -79,9 +79,6 @@
 // LIBRARY: LS3DF 0x10087500
 // ?Inactive@CBaseRenderer@@UAEJXZ
 
-// LIBRARY: LS3DF 0x10087520
-// ?CompleteConnect@CBasePin@@UAEJPAUIPin@@@Z
-
 // LIBRARY: LS3DF 0x10087530
 // ?BreakConnect@CBaseRenderer@@UAEJXZ
 
@@ -176,10 +173,10 @@
 // ?CompleteConnect@CRendererInputPin@@UAEJPAUIPin@@@Z
 
 // LIBRARY: LS3DF 0x10088290
-// ?AddRef@CBaseInputPin@@UAGKXZ
+// ?AddRef@CBaseFilter@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882a0
-// ?Release@CBaseInputPin@@UAGKXZ
+// ?Release@CBaseFilter@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882b0
 // ?QueryId@CRendererInputPin@@UAGJPAPAG@Z
@@ -243,6 +240,9 @@
 
 // LIBRARY: LS3DF 0x100887e0
 // ?SendQuality@CBaseVideoRenderer@@UAEJ_J0@Z
+
+// LIBRARY: LS3DF 0x10088960
+// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088980
 // ?ShouldDrawSampleNow@CBaseVideoRenderer@@UAEJPAUIMediaSample@@PA_J1@Z
@@ -530,7 +530,7 @@
 // ?Notify@CBaseInputPin@@UAGJPAUIBaseFilter@@UtagQuality@@@Z
 
 // LIBRARY: LS3DF 0x1008b440
-// ?QueryVendorInfo@CBaseFilter@@UAGJPAPAG@Z
+// ?GetAllocatorRequirements@CBaseInputPin@@UAGJPAU_AllocatorProperties@@@Z
 
 // LIBRARY: LS3DF 0x1008b450
 // ?CheckStreaming@CBaseInputPin@@UAEJXZ

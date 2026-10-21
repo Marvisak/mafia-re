@@ -30,6 +30,7 @@ add_library(ls3df SHARED
     I3D/I3d_morph.cpp
     I3D/I3d_object.cpp
     I3D/I3d_occluder.cpp
+    I3D/I3d_particle.cpp
     I3D/I3d_portal.cpp
     I3D/I3d_pose.cpp
     I3D/I3d_projector.cpp

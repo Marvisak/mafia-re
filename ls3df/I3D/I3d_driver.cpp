@@ -1720,12 +1720,6 @@ void I3D_driver::m_RecomputeUsedVRAM()
 // GLOBAL: LS3DF 0x100a93f0
 bool RecomputeAllGeometry;
 
-// The particles' renderer, a visual that renders render.cpp's ParticleElementsList (I3d_particle.cpp; the name is a
-// guess). Zero-initialized here, which keeps it out of VC6's hash of the driver's globals.
-// GLOBAL: LS3DF 0x101b43d8
-I3D_visual *pParticleVisual = NULL;
-
-
 // The functions of other files the driver calls, until those are written. They come after the driver's functions:
 // VC6 knows that a function compiled earlier in the file can't throw, and would leave the EH states out of
 // ~I3D_driver and the Create functions. Their bodies differ, or the linker would fold them; auto_inline(off) keeps
@@ -1737,24 +1731,6 @@ I3D_visual *pParticleVisual = NULL;
 I3D_lit_object::I3D_lit_object()
 {
     renderState[27]++;
-}
-
-// STUB: LS3DF 0x1003de50
-I3D_emitor::I3D_emitor()
-{
-    renderState[25]++;
-}
-
-// STUB: LS3DF 0x1003fa20
-I3D_part_element::I3D_part_element()
-{
-    renderState[35]++;
-}
-
-// STUB: LS3DF 0x100406c0
-I3D_part_base::I3D_part_base()
-{
-    renderState[34]++;
 }
 
 #pragma auto_inline(on)

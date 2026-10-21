@@ -1461,13 +1461,13 @@ public:
 // I3d_occluder.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1761,15 +1761,116 @@ public:
 // SYNTHETIC: LS3DF 0x1005a820
 // I3D_volume::`scalar deleting destructor'
 
-// A particle emitter (PS2 I3D_emitor, 0x1f8 bytes on PC; the file isn't written yet)
-class __declspec(novtable) I3D_emitor : public I3D_frame {
+// I3D_emitor's parameters (PS2 type; PS2's emitter is another design, so the names are guesses after their roles).
+// The times are in ms, the angles in radians, the rates per second.
+enum PARTICLE_PARAM {
+    PP_EMIT_TIME,                       // the time between two particles
+    PP_EMIT_TIME_RND,                   // a random part of it
+    PP_LIFE_TIME,                       // a particle's life
+    PP_LIFE_TIME_RND,
+    PP_GROW_1,                          // a particle's scale grows by a rate between these two
+    PP_GROW_2,
+    PP_POS_RND,                         // the size of the box around the emitter a particle starts in
+    PP_DIR_RND,                         // how far its end direction strays
+    PP_DIR_TIME,                        // the time after which it strays again, 0 never
+    PP_DIR_TIME_RND,
+    PP_DIR_TIME_STRAY,                  // how far it strays then
+    PP_FADE_IN,                         // the part of its life it fades in over
+    PP_FADE_OUT,                        // the part of its life after which it fades out
+    PP_VELOCITY_X,                      // its velocity at its start
+    PP_VELOCITY_Y,
+    PP_VELOCITY_Z,
+    PP_VELOCITY_END_X,                  // and at its end
+    PP_VELOCITY_END_Y,
+    PP_VELOCITY_END_Z,
+    PP_FLAGS,                           // the particles' part_flags (3 and 0x600)
+    PP_MAX_PARTICLES,                   // the emitter switches itself off after so many, 0 never; turns it on
+    PP_VELOCITY_WORLD,                  // the velocities are in world space, not turned with the emitter
+    PP_VELOCITY_END_WORLD,
+    PP_PRE_TICK,                        // a time to run the emitter for at once
+    PP_ROT_SPEED_1,                     // a particle turns at a speed between these two
+    PP_ROT_SPEED_2,
+    PP_SCALE,                           // a particle's scale, times the emitter's
+    PP_UNUSED_27,
+    PP_BILLBOARD,                       // the particles turn to the camera
+    PP_COLOR,                           // their color at their start (a pointer to an S_vector)
+    PP_COLOR_END,                       // and at their end
+    PP_OMNI_SECTOR,                     // they go into the scene's omni sector, not the emitter's sector
+    PP_ROT_AXIS,                        // their billboards' rot_axis
+    PP_AXIS_MODE,                       // and axis_mode
+    PP_LAST,
+};
+
+class I3D_part_element;
+
+// A particle emitter (PS2 I3D_emitor, 0x1f8 bytes on PC; I3d_particle.cpp): a frame that creates a particle
+// (I3D_part_element) with its mesh every so often in its sector, which the particle leaves when it dies. Its
+// parameters are SetParam's. PS2's is another design (its particles are its own elements in a vertex buffer), so
+// all but the class's and SetParam's names are guesses.
+// VTABLE: LS3DF 0x1009c538
+class I3D_emitor : public I3D_frame {
 public:
     I3D_emitor();
+    ~I3D_emitor();
 
-    uchar unknown_140[8];
+    virtual void __stdcall Tick(int time);
+    virtual void __stdcall SetOn(bool on);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void UpdateV();
+    virtual void LoadImage();
+    // The mesh of the particles it creates (PS2 SetTexture's slot)
+    virtual void __stdcall SetMesh(I3D_mesh_object *m);
+    virtual LS3D_RESULT __stdcall SetParam(PARTICLE_PARAM param, uint value);
+    virtual uint __stdcall GetParam(PARTICLE_PARAM param) const;
+    // The parameters' defaults
+    virtual void __stdcall Reset();
+    // Kills its particles (PS2 name)
+    virtual void __stdcall KillElements();
+    // Ticks its particles
+    virtual void __stdcall TickElements(int time);
+    // Switches its particles on or off
+    virtual void __stdcall SetElementsOn(bool on);
+
+    ushort id;                          // 0x140, from the driver: the particles' sort_group with 0x600
+    uint part_flags;                    // 0x144, PP_FLAGS
     I3D_mesh_object *mesh;              // 0x148, its particles' (I3D_object::Duplicate)
-    uchar unknown_14c[0x1f8 - 0x14c];
+    C_list<I3D_part_element *> elements; // 0x14c, the living particles it created
+    uint time;                          // 0x15c, since the last particle
+    uint emit_time;                     // 0x160, until the next one
+    int num_emitted;                    // 0x164
+    I3D_sector *sector;                 // 0x168, the first sector above it, where the particles go
+    uint p_emit_time;                   // 0x16c, the parameters: PP_EMIT_TIME
+    uint p_emit_time_rnd;               // 0x170
+    uint p_life_time;                   // 0x174
+    uint p_life_time_rnd;               // 0x178
+    float p_scale;                      // 0x17c
+    float p_grow_1;                     // 0x180
+    float p_grow_2;                     // 0x184
+    float p_pos_rnd;                    // 0x188
+    float p_dir_rnd;                    // 0x18c
+    float p_fade_in;                    // 0x190
+    float p_fade_out;                   // 0x194
+    uint p_dir_time;                    // 0x198
+    uint p_dir_time_rnd;                // 0x19c
+    float p_dir_time_stray;             // 0x1a0
+    S_vector p_velocity;                // 0x1a4
+    S_vector p_velocity_end;            // 0x1b0
+    int p_max_particles;                // 0x1bc
+    uchar p_velocity_world;             // 0x1c0
+    uchar p_velocity_end_world;         // 0x1c1
+    float p_rot_speed_1;                // 0x1c4
+    float p_rot_speed_2;                // 0x1c8
+    uint p_pre_tick;                    // 0x1cc
+    bool p_billboard;                   // 0x1d0
+    S_vector p_color;                   // 0x1d4
+    S_vector p_color_end;               // 0x1e0
+    bool p_omni_sector;                 // 0x1ec
+    uint p_rot_axis;                    // 0x1f0
+    int p_axis_mode;                    // 0x1f4
 };
+
+// SYNTHETIC: LS3DF 0x1003df00
+// I3D_emitor::`scalar deleting destructor'
 
 // I3D_target::target_flags: what the target does to its frames (names guessed). TARGETF_LOOKAT, the default, turns
 // them to it; without it they take the parts of its world matrix the others name.
@@ -2199,6 +2300,8 @@ enum SHADOW_MODE {
 
 // I3D_visual::vis_flags (names guessed; BOUND_VALID and INV_MAT_VALID after Insanity3D's VISF_BOUNDS_VALID and
 // FRMFLAGS_INV_MAT_VALID)
+#define VISF_COLOR_CHANGED 0x4          // a particle's color or transparency changed: m_AddFGroups writes them into
+                                        // its lod's vertices
 #define VISF_UNKNOWN_10 0x10            // the level of detail follows the textures loaded, and the lighting takes
                                         // the first lod's cache, not the current one's
 #define VISF_UNKNOWN_20 0x20            // the mirrors don't reflect it
@@ -2768,24 +2871,96 @@ public:
 // SYNTHETIC: LS3DF 0x10056ef0
 // I3D_singlemorph::`scalar deleting destructor'
 
-// The particles (PS2 I3D_part_base and I3D_part_element, 0x284 and 0x310 bytes on PC; I3d_particle.cpp, not written
-// yet): billboards, the element's constructor inlining the base's. The rendering queues them for the particles'
-// renderer with a key from these members (VisualProc).
-class __declspec(novtable) I3D_part_base : public I3D_billboard {
+// I3D_part_base::part_flags (names guessed)
+#define PARTF_OPAQUE 0x1                // rendered opaque while not faded, else blended
+#define PARTF_ALPHA 0x2                 // with 3: blended by alpha (else added), sort_dist in the rendering's key
+#define PARTF_MESH 0x200                // the particles' renderer draws the mesh, else a quad
+#define PARTF_RENDERER 0x600            // queued for the particles' renderer (VisualProc)
+
+// The particles (PS2 I3D_part_base and I3D_part_element, 0x284 and 0x310 bytes on PC; I3d_particle.cpp): billboards
+// of one color, which turn to the camera only with billboard set. The rendering queues them for the particles'
+// renderer with a key from sort_group and sort_dist (VisualProc), or renders them itself. An element is an emitter's
+// particle, which moves, turns, grows and fades over its life. The names but the classes' are guesses.
+// VTABLE: LS3DF 0x1009c660 I3D_frame
+// VTABLE: LS3DF 0x1009c650 I3D_void_interface
+class I3D_part_base : public I3D_billboard {
 public:
     I3D_part_base();
 
-    ushort sort_group;                  // 0x268, the high word of the rendering's key (the name is a guess)
-    uint part_flags;                    // 0x26c, 0x600: queued for the particles' renderer, 3: sort_dist is in the key
-    uchar unknown_270[0x284 - 0x270];
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+    virtual void m_AddFGroups();
+    virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
+    // The sector it is lit by, else the rendering's
+    // FUNCTION: LS3DF 0x100417d0
+    virtual void __stdcall SetSector(I3D_sector *s)
+    {
+        sector = s;
+    }
+    // FUNCTION: LS3DF 0x100417f0
+    virtual I3D_sector *__stdcall GetSector()
+    {
+        return sector;
+    }
+
+    ushort sort_group;                  // 0x268, the high word of the rendering's key
+    uint part_flags;                    // 0x26c, PARTF_*
+    S_vector color;                     // 0x270
+    bool billboard;                     // 0x27c, turned to the camera
+    I3D_sector *sector;                 // 0x280
 };
 
-class __declspec(novtable) I3D_part_element : public I3D_part_base {
+// SYNTHETIC: LS3DF 0x10040740
+// I3D_part_base::`scalar deleting destructor'
+
+// The implicit destructor, a jump to the billboard's
+// SYNTHETIC: LS3DF 0x10040760
+// I3D_part_base::~I3D_part_base
+
+// VTABLE: LS3DF 0x1009c5b8 I3D_frame
+// VTABLE: LS3DF 0x1009c5a4 I3D_void_interface
+class I3D_part_element : public I3D_part_base {
 public:
     I3D_part_element();
+    ~I3D_part_element();
 
-    uchar unknown_284[0x310 - 0x284];
+    virtual void __stdcall Tick(int time);
+    virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
+
+    I3D_emitor *emitor;                 // 0x284, which created it, until it dies
+    uint life;                          // 0x288
+    int life_max;                       // 0x28c, the emitter's longest
+    uint unknown_290;
+    S_vector dir_start;                 // 0x294, the start velocity's direction
+    S_vector dir_end;                   // 0x2a0, the end velocity's
+    S_vector dir;                       // 0x2ac, where it heads, dir_end strayed
+    uint dir_time;                      // 0x2b8, the emitter's PP_DIR_TIME
+    uint dir_time_rnd;                  // 0x2bc
+    float dir_time_stray;               // 0x2c0
+    float rot_speed;                    // 0x2c4, per ms
+    float speed_start;                  // 0x2c8
+    float speed_end;                    // 0x2cc
+    uint fade_in;                       // 0x2d0, ms
+    uint fade_out;                      // 0x2d4
+    float grow;                         // 0x2d8, per ms
+    S_vector color_start;               // 0x2dc
+    S_vector color_end;                 // 0x2e8
+    S_vector dir_prev;                  // 0x2f4, where it headed before dir
+    int age;                            // 0x300
+    float speed;                        // 0x304
+    int dir_period;                     // 0x308, until it strays again, 0 never
+    int dir_counter;                    // 0x30c
 };
+
+// SYNTHETIC: LS3DF 0x1003fbe0
+// I3D_part_element::`scalar deleting destructor'
+
+// The particle file's copy of I3d_math.h's identity matrix (GetRenderMatrix in world space, the renderer's world
+// matrix), and its zero vector
+// GLOBAL: LS3DF 0x1009c478
+// IdentityMatrixData
+
+// GLOBAL: LS3DF 0x101b43cc
+// ZeroSVector
 
 // The landscape (PC only; I3d_landscape.cpp) is Bryan Turner's ROAM demo ("ROAM Simplistic Implementation", January
 // 2000, from his Gamasutra article on ROAM) in the engine's classes: a height map of bytes, MAP_SIZE on a side, in
@@ -3233,14 +3408,14 @@ public:
 // I3d_singlemesh.cpp and from I3d_projector.cpp to render.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
-// I3d_pose.cpp and from I3d_morph.cpp to I3d_shadow.cpp; OnRenderEnd's and OnStopStreaming's both again since
-// I3d_portal.cpp), so after a new file or function rerun crtannotate and move such markers here or back. The names are
-// the ones our PDB keeps (tools/foldfix.py).
+// I3d_pose.cpp, from I3d_morph.cpp to I3d_shadow.cpp and since I3d_particle.cpp; OnRenderEnd's again since
+// I3d_portal.cpp, OnStopStreaming's in I3d_portal.cpp only), so after a new file or function rerun crtannotate and move
+// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087ec0
-// ?m_RecomputeUsedVRAM@I3D_driver@@UAGXXZ
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
-// LIBRARY: LS3DF 0x10088960
-// ?GetSetupData@CBaseFilter@@UAEPAU_AMOVIESETUP_FILTER@@XZ
+// LIBRARY: LS3DF 0x10087520
+// ?NumRegions@I3D_void_interface@@UBGHXZ
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -3278,14 +3453,6 @@ public:
 
 // GLOBAL: LS3DF 0x100bffc8
 // str
-
-// Stubs in render.cpp, after its functions though their addresses come before them, so their markers are here, by name
-
-// STUB: LS3DF 0x1003cbb0
-// InitParticle
-
-// STUB: LS3DF 0x1003cc70
-// CloseParticle
 
 // An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
 // D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1 without the specular color)
@@ -3334,7 +3501,7 @@ struct TLVERTEX2 {
 // I3d_occluder.cpp after Tick itself and since I3d_portal.cpp after the shadow visual's SetOn); the original keeps the
 // area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -3560,11 +3727,14 @@ struct RENDER_FG_HELP_STRUCT {
     uint sort_value;                    // 0x04, the transparent ones' 0x80000000 | the distance, else the texture's
                                         // uid (0x40000000 | it for MATF_CKEY_ALPHA), 0 untextured (Insanity3D's name)
     uint clip;                          // 0x08, the frame's FRMFLAGS_CLIP
-    uint unknown_0c;
+    int first;                          // 0x0c, the particles' renderer's: its group's first entry in the sorted order
     I3D_face_group *fg;                 // 0x10
     I3D_sector *sector;                 // 0x14, lit by
     ITexture *texture;                  // 0x18
-    ITexture *env_texture;              // 0x1c
+    union {
+        ITexture *env_texture;          // 0x1c
+        uint num;                       // 0x1c, the particles' renderer's: its group's number of particles
+    };
 };
 
 // A list of data to sort by their keys (PS2 C_sort_list<int>, with these three members; the names and the functions
@@ -3892,9 +4062,13 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2);
 // renderer, a visual of the particles' file that renders ParticleElementsList
 void ProcessPortals(I3D_scene *scene);
 void ProcessOccluders(I3D_scene *scene);
-void InitParticle();
+LS3D_RESULT InitParticle();
 void CloseParticle();
 extern I3D_visual *pParticleVisual;
+
+// The particles' renderer's (I3d_particle.cpp, which declares the class)
+// SYNTHETIC: LS3DF 0x1003cc80
+// I3D_part_renderer::`scalar deleting destructor'
 
 // I3d_occluder.cpp (PS2 names), for the portals' processing: the sectors' lists of occluders, made again where the
 // scene's ring changed, and the volumes of a sector's occluders, which hide the portals behind them
