@@ -315,7 +315,7 @@ I3D_joint *I3D_singlemesh::GetVertexJoint(int vertex, int lod_index)
     I3D_joint **jp = joints;
     SM_INFO *info = l->def->info;
     for (int i = num_joints; i > 0; i--, jp++, info++) {
-        vertex -= info->num_verts + info->num_blend;
+        vertex -= info->num_verts + info->m_vertNum;
         if (vertex < 0)
             return *jp;
     }
@@ -389,7 +389,7 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
     const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
     __declspec(align(16)) S_matrix m, mn, m2, mn2;
     for (int i = num_joints; i; i--, jp++, info++) {
-        if (info->num_blend || info->num_verts) {
+        if (info->m_vertNum || info->num_verts) {
             m = info->matrix * (*jp)->GetJointMatrix();
             mn.SetRot(m);
         }
@@ -398,7 +398,7 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
             src += info->num_verts;
             dst += info->num_verts;
         }
-        if (info->num_blend) {
+        if (info->m_vertNum) {
             if (!info->blend_joint) {
                 m2.Identity();
                 mn2.Identity();
@@ -407,9 +407,9 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
                 m2 = def->info[info->blend_joint - 1].matrix * m2;
                 mn2.SetRot(m2);
             }
-            TransformVerticesBlend(dst, src, info->num_blend, m, mn, info->weights, m2, mn2);
-            src += info->num_blend;
-            dst += info->num_blend;
+            TransformVerticesBlend(dst, src, info->m_vertNum, m, mn, info->weights, m2, mn2);
+            src += info->m_vertNum;
+            dst += info->m_vertNum;
         }
     }
 }
@@ -668,9 +668,9 @@ void I3D_singlemesh::m_AddFGroups()
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
             else
-                h.sort_value = (h.texture ? h.texture->uid : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -730,14 +730,14 @@ void I3D_singlemesh::LoadImage()
         def->info = info;
         while (num--) {
             dtaRead(LoadImageHandle, info, sizeof(SM_INFO) - sizeof(info->weights));
-            if (info->num_blend) {
-                info->weights = new float[info->num_blend];
+            if (info->m_vertNum) {
+                info->weights = new float[info->m_vertNum];
                 if (!info->weights) {
-                    dbgPrintf("!! Out of memory I3D_singlemesh::LoadImage() m_vertNum:%d", info->num_blend);
+                    dbgPrintf("!! Out of memory I3D_singlemesh::LoadImage() m_vertNum:%d", info->m_vertNum);
                     ImageErrFlg = I3DERR_OUTOFMEM;
                     return;
                 }
-                dtaRead(LoadImageHandle, info->weights, info->num_blend * sizeof(float));
+                dtaRead(LoadImageHandle, info->weights, info->m_vertNum * sizeof(float));
             } else
                 info->weights = NULL;
             info++;

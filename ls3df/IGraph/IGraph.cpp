@@ -464,7 +464,7 @@ ITexture *IGraph::CreateITexture()
     ITexture *texture = new ITexture;
     if (!texture)
         return NULL;
-    texture->uid = ++m_TextureUID;
+    texture->m_UID = ++m_TextureUID;
     if (m_TextureUID >= 0x7fff)
         m_TextureUID = 0;
     return texture;
@@ -483,9 +483,9 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
             return I3DERR_INVALIDPARAMS;
         for (int i = m_CachedTextureList.size(); i; ) {
             ITexture *t = m_CachedTextureList[--i];
-            if (t->create_flags == flags && !_strcmpi(t->name, name) && (!(flags & 4) || !_strcmpi(t->alpha_name,
+            if (t->m_CreateFlags == flags && !_strcmpi(t->m_pName, name) && (!(flags & 4) || !_strcmpi(t->m_pAlphaName,
                     alpha_name))) {
-                t->ref++;
+                t->m_RefCount++;
                 *texture = t;
                 return I3D_OK;
             }
@@ -530,7 +530,7 @@ bool IGraph::SetTexture(ITexture *texture)
 {
     if (!texture)
         return m_pD3DDevice8->SetTexture(0, NULL) >= 0 ? true : false;
-    IDirect3DTexture8 *d3d_texture = texture->texture;
+    IDirect3DTexture8 *d3d_texture = texture->m_pD3DTexture8;
     return m_pD3DDevice8->SetTexture(0, d3d_texture) >= 0 ? true : false;
 }
 
@@ -2001,8 +2001,8 @@ void IGraph::Close()
     if (m_CachedTextureList.size() > 0) {
         dbgPrintf("\nWARNING! Releasing unreleased CACHED textures:");
         for (i = m_CachedTextureList.size(); i--; ) {
-            dbgPrintf("   %s, %s, Refs:%i", &m_CachedTextureList[i]->file_name[0],
-                &m_CachedTextureList[i]->alpha_file_name[0], m_CachedTextureList[i]->ref);
+            dbgPrintf("   %s, %s, Refs:%i", &m_CachedTextureList[i]->m_FileName[0],
+                &m_CachedTextureList[i]->m_AlphaFileName[0], m_CachedTextureList[i]->m_RefCount);
             while (m_CachedTextureList[i]->Release());
         }
         m_CachedTextureList.clear();
@@ -2010,8 +2010,8 @@ void IGraph::Close()
     if (m_UncachedTextureList.size() > 0) {
         dbgPrintf("\nWARNING! Releasing unreleased UNCACHED textures:");
         for (i = m_UncachedTextureList.size(); i--; ) {
-            dbgPrintf("   %s, %s, Refs:%i", &m_UncachedTextureList[i]->file_name[0],
-                &m_UncachedTextureList[i]->alpha_file_name[0], m_UncachedTextureList[i]->ref);
+            dbgPrintf("   %s, %s, Refs:%i", &m_UncachedTextureList[i]->m_FileName[0],
+                &m_UncachedTextureList[i]->m_AlphaFileName[0], m_UncachedTextureList[i]->m_RefCount);
             while (m_UncachedTextureList[i]->Release());
         }
         m_UncachedTextureList.clear();

@@ -537,7 +537,7 @@ LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, 
     uint pitch;
     if (renderState[RS_SHADOW_SW]) {
         // Twice the texture's size, less one: the last pixel's coordinate
-        ushort sx = texture->width, sy = texture->height;
+        ushort sx = texture->m_Width, sy = texture->m_Height;
         sy = sy * 2 - 1;
         __asm {
             mov edi, shadow_buffer
@@ -579,7 +579,7 @@ LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, 
         }
         DrawShadowTrianglesSW(&points[0], indx, num_faces);
         uchar *dst = (uchar *)texture->Lock(NULL, pitch, 0);
-        int side = texture->width;
+        int side = texture->m_Width;
         int skip = 0x200 - (side << 1);
         __asm {
             mov edi, dst
@@ -613,8 +613,8 @@ LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, 
         }
     } else {
         texture->Fill(NULL, 0, 0);
-        float scale_x = (texture->width - 1) / (box[3] - box[0]);
-        float scale_y = (texture->height - 1) / (box[4] - box[1]);
+        float scale_x = (texture->m_Width - 1) / (box[3] - box[0]);
+        float scale_y = (texture->m_Height - 1) / (box[4] - box[1]);
         __asm {
             mov ecx, num_verts
             mov edi, dword ptr points
@@ -1007,14 +1007,14 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
     }
     ITexture *texture = mat->texture;
-    m_pD3DDevice8->SetTexture(0, texture ? texture->texture : NULL);
+    m_pD3DDevice8->SetTexture(0, texture ? texture->m_pD3DTexture8 : NULL);
     if (m_CurrVertexFormat) {
         m_CurrVertexFormat = 0;
         m_pD3DDevice8->SetVertexShader(m_LVertexVS);
     }
     size *= 16.0f;
-    float du = 16.0f / pFontMat->GetTexture()->width;
-    float dv = 16.0f / pFontMat->GetTexture()->height;
+    float du = 16.0f / pFontMat->GetTexture()->m_Width;
+    float dv = 16.0f / pFontMat->GetTexture()->m_Height;
     int len = strlen(text);
     LVertList.resize(len * 6);
     LVERTEX *v = &LVertList[0];
@@ -1088,7 +1088,7 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
     }
     if (mat->texture)
-        m_pD3DDevice8->SetTexture(0, mat->texture->texture);
+        m_pD3DDevice8->SetTexture(0, mat->texture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
     if (m_CurrVertexFormat != 4) {
@@ -1096,8 +1096,8 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
         m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
     }
     size *= 16.0f;
-    float du = 16.0f / pFontMat->GetTexture()->width;
-    float dv = 16.0f / pFontMat->GetTexture()->height;
+    float du = 16.0f / pFontMat->GetTexture()->m_Width;
+    float dv = 16.0f / pFontMat->GetTexture()->m_Height;
     int len = strlen(text);
     TLVertList.resize(len * 6);
     TLVERTEX *v = &TLVertList[0];
@@ -1220,7 +1220,7 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
     } else
         SetAlphaState(0);
     ITexture *texture = mat->texture;
-    m_pD3DDevice8->SetTexture(0, texture ? texture->texture : NULL);
+    m_pD3DDevice8->SetTexture(0, texture ? texture->m_pD3DTexture8 : NULL);
     SetVertexFormat(0);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(LVERTEX));
 }

@@ -583,12 +583,12 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
     S_vector &col = *(S_vector *)color;
     I3D_material *mat = ti->mat;
     ITexture *texture = mat->texture;
-    if (texture && texture->pixels) {
+    if (texture && texture->m_pPixels) {
         float u = ti->u;
         float v = ti->v;
-        uint x = min((uint)(int)(texture->width * u), (uint)(texture->width - 1));
-        uint y = min((uint)(int)(texture->height * v), (uint)(texture->height - 1));
-        const uchar *texel = &texture->pixels[(y * texture->width + x) * 4];
+        uint x = min((uint)(int)(texture->m_Width * u), (uint)(texture->m_Width - 1));
+        uint y = min((uint)(int)(texture->m_Height * v), (uint)(texture->m_Height - 1));
+        const uchar *texel = &texture->m_pPixels[(y * texture->m_Width + x) * 4];
         S_vector c;
         c.x = texel[1] * (1.0f / 255.0f);
         c.y = texel[2] * (1.0f / 255.0f);

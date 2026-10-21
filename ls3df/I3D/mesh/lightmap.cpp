@@ -153,10 +153,10 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
 }
 
 // FUNCTION: LS3DF 0x1005d520
-LightMap::LightMap() : offsets(10), order(64)
+LightMap::LightMap() : m_OffsetList(10), m_OrderList(64)
 {
-    texture = NULL;
-    rects = NULL;
+    m_pTexture = NULL;
+    m_pRects = NULL;
 }
 
 // Releases the texture. Where other levels still use it, its rectangles become free room again, filled white; where
@@ -169,12 +169,12 @@ LightMap::LightMap() : offsets(10), order(64)
 // FUNCTION: LS3DF 0x1005d550
 LightMap::~LightMap()
 {
-    if (texture) {
-        if (texture->Release() <= 0) {
-            pI3DDriver->textures.remove(texture);
+    if (m_pTexture) {
+        if (m_pTexture->Release() <= 0) {
+            pI3DDriver->textures.remove(m_pTexture);
             pI3DDriver->m_RecomputeUsedVRAM();
             for (int i = 0; i < GlobalRemainTexBlList.size(); i++) {
-                if (GlobalRemainTexBlList[i].texture == texture) {
+                if (GlobalRemainTexBlList[i].texture == m_pTexture) {
                     m_EraseRectList(&GlobalRemainTexBlList[i]);
                     GlobalRemainTexBlList.erase_ordered(i);
                     break;
@@ -183,23 +183,25 @@ LightMap::~LightMap()
         } else {
             int i = GlobalRemainTexBlList.size();
             while (i--) {
-                if (GlobalRemainTexBlList[i].texture == texture)
+                if (GlobalRemainTexBlList[i].texture == m_pTexture)
                     break;
             }
             if (i > -1) {
                 TEXBL_STRUCT tb;
                 memcpy(&tb, &GlobalRemainTexBlList[i], sizeof(tb));
                 GlobalRemainTexBlList.erase_ordered(i);
-                for (int j = 0; j < order.size(); j++) {
+                for (int j = 0; j < m_OrderList.size(); j++) {
                     RECT rc;
-                    if (offsets[j].rotated)
-                        SetRect(&rc, offsets[j].x, offsets[j].y, rects[order[j]].tex_sy, rects[order[j]].tex_sx);
+                    if (m_OffsetList[j].rotated)
+                        SetRect(&rc, m_OffsetList[j].x, m_OffsetList[j].y, m_pRects[m_OrderList[j]].tex_sy,
+                            m_pRects[m_OrderList[j]].tex_sx);
                     else
-                        SetRect(&rc, offsets[j].x, offsets[j].y, rects[order[j]].tex_sx, rects[order[j]].tex_sy);
+                        SetRect(&rc, m_OffsetList[j].x, m_OffsetList[j].y, m_pRects[m_OrderList[j]].tex_sx,
+                            m_pRects[m_OrderList[j]].tex_sy);
                     m_AddRectToRectList(&tb, &rc);
                     rc.right += rc.left;
                     rc.bottom += rc.top;
-                    texture->Fill(&rc, 0xffffffff, 0);
+                    m_pTexture->Fill(&rc, 0xffffffff, 0);
                 }
                 bool inserted = false;
                 for (i = 0; i < GlobalRemainTexBlList.size(); i++) {
@@ -572,9 +574,9 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // FUNCTION: LS3DF 0x1005e3f0
 bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem)
 {
-    order.reset();
-    area = 0;
-    rects = ri;
+    m_OrderList.reset();
+    m_Area = 0;
+    m_pRects = ri;
     for (;;) {
         int max_area = 0;
         ushort best_index = 0;
@@ -589,13 +591,13 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         if (max_area <= 0)
             break;
         ri[best_index].u = 666.0f;
-        order.push_back(best_index);
+        m_OrderList.push_back(best_index);
     }
     ushort i;
-    for (i = 0; i < order.size(); i++)
-        area += ri[order[i]].area;
-    for (i = 0; i < order.size(); i++) {
-        RECTANGLE_INFO &r = ri[order[i]];
+    for (i = 0; i < m_OrderList.size(); i++)
+        m_Area += ri[m_OrderList[i]].area;
+    for (i = 0; i < m_OrderList.size(); i++) {
+        RECTANGLE_INFO &r = ri[m_OrderList[i]];
         m_ConvertRGB(r.tex_sx, r.tex_sy, r.data, &r.tex_data);
     }
 
@@ -604,7 +606,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     TEXBL_STRUCT *best = NULL;
     for (int j = 0; j < GlobalRemainTexBlList.size(); j++) {
         TEXBL_STRUCT &g = GlobalRemainTexBlList[j];
-        if (area > g.free_area)
+        if (m_Area > g.free_area)
             continue;
         memcpy(&tb, &g, sizeof(tb));
         tb.first = NULL;
@@ -612,8 +614,8 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         if (!m_DuplicateRectList(&g, &tb))
             return false;
         bool failed = false;
-        for (ushort k = 0; k < order.size(); k++) {
-            RECTANGLE_INFO &r = ri[order[k]];
+        for (ushort k = 0; k < m_OrderList.size(); k++) {
+            RECTANGLE_INFO &r = ri[m_OrderList[k]];
             if (tb.free_area < r.area) {
                 m_EraseRectList(&tb);
                 failed = true;
@@ -626,7 +628,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
             }
             if (res == 1) {
                 m_EraseRectList(&tb);
-                k = order.size();
+                k = m_OrderList.size();
                 failed = true;
             }
         }
@@ -645,7 +647,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     while (!best) {
         for (int sy = 128; sy <= max_sy; sy <<= 1) {
             for (int sx = 128; sx <= max_sx; sx <<= 1) {
-                if (area > sx * sy)
+                if (m_Area > sx * sy)
                     continue;
                 TEXBL_STRUCT t;
                 t.sx = sx;
@@ -656,13 +658,13 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 t.last = NULL;
                 t.texture = NULL;
                 bool failed = false;
-                for (ushort k = 0; k < order.size(); k++) {
-                    int res = m_AddTexture(&t, &ri[order[k]]);
+                for (ushort k = 0; k < m_OrderList.size(); k++) {
+                    int res = m_AddTexture(&t, &ri[m_OrderList[k]]);
                     if (res == 0x80000001)
                         return false;
                     if (res == 1) {
                         m_EraseRectList(&t);
-                        k = order.size();
+                        k = m_OrderList.size();
                         failed = true;
                     }
                 }
@@ -680,12 +682,12 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
             }
         }
         if (!best) {
-            dbgPrintf("m_CreateLM() - !! NEVESLO !! => zmensuji %i LM na ctvrtinu.", order.size());
-            int old_area = area;
-            for (int k = 0; k < order.size(); k++) {
-                RECTANGLE_INFO &r = ri[order[k]];
+            dbgPrintf("m_CreateLM() - !! NEVESLO !! => zmensuji %i LM na ctvrtinu.", m_OrderList.size());
+            int old_area = m_Area;
+            for (int k = 0; k < m_OrderList.size(); k++) {
+                RECTANGLE_INFO &r = ri[m_OrderList[k]];
                 if (r.tex_sx >= 4 && r.tex_sy >= 4) {
-                    area -= r.area;
+                    m_Area -= r.area;
                     ushort sx = max(4, r.tex_sx >> 1);
                     ushort sy = max(4, r.tex_sy >> 1);
                     uchar *data = NULL;
@@ -693,14 +695,14 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                     r.tex_sx = sx;
                     r.tex_sy = sy;
                     r.area = sx * sy;
-                    area += r.area;
+                    m_Area += r.area;
                     delete[] (uchar *)r.tex_data;
                     r.tex_data = NULL;
                     m_ConvertRGB(r.tex_sx, r.tex_sy, data, &r.tex_data);
                     delete[] data;
                 }
             }
-            if (area == old_area) {
+            if (m_Area == old_area) {
                 dbgPrintf("LightMap::m_CreateLM() - ERROR!! There are no LMs for RESIZE !!");
                 return false;
             }
@@ -709,52 +711,52 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
 
     // The texture
     if (best->texture) {
-        texture = best->texture;
-        texture->ref++;
+        m_pTexture = best->texture;
+        m_pTexture->m_RefCount++;
     } else {
-        texture = pGlobalIGraph->CreateITexture();
-        if (!texture) {
+        m_pTexture = pGlobalIGraph->CreateITexture();
+        if (!m_pTexture) {
             m_EraseRectList(best);
             return false;
         }
         if (renderState[RS_LMTRUECOLOR] && m_TrueColorTexturePixelFormat) {
-            if (texture->Create(NULL, NULL, 0x88400, best->sx, best->sy, 0) < 0) {
+            if (m_pTexture->Create(NULL, NULL, 0x88400, best->sx, best->sy, 0) < 0) {
                 m_EraseRectList(best);
                 return false;
             }
         } else {
-            if (texture->Create(NULL, NULL, 0x88008, best->sx, best->sy, 0) < 0) {
+            if (m_pTexture->Create(NULL, NULL, 0x88008, best->sx, best->sy, 0) < 0) {
                 m_EraseRectList(best);
                 return false;
             }
         }
     }
-    switch (texture->format) {
+    switch (m_pTexture->m_Format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8:
-        *mem += area * 4;
+        *mem += m_Area * 4;
         break;
     case D3DFMT_R8G8B8:
     case D3DFMT_L8:
-        *mem += area * 3;
+        *mem += m_Area * 3;
         break;
     case D3DFMT_R5G6B5:
     case D3DFMT_X1R5G5B5:
     case D3DFMT_A1R5G5B5:
-        *mem += area * 2;
+        *mem += m_Area * 2;
         break;
     }
     if (!best->texture)
-        texture->Fill(NULL, 0xffffffff, 0);
+        m_pTexture->Fill(NULL, 0xffffffff, 0);
     uint pitch;
-    uchar *bits = (uchar *)texture->Lock(NULL, pitch, 0);
+    uchar *bits = (uchar *)m_pTexture->Lock(NULL, pitch, 0);
     if (!bits) {
         m_EraseRectList(best);
         return false;
     }
-    for (i = 0; i < order.size(); i++) {
-        RECTANGLE_INFO &r = ri[order[i]];
-        switch (texture->format) {
+    for (i = 0; i < m_OrderList.size(); i++) {
+        RECTANGLE_INFO &r = ri[m_OrderList[i]];
+        switch (m_pTexture->m_Format) {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
         case D3DFMT_A1R5G5B5: {
@@ -769,7 +771,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 uchar cg = c >> 8;
                 uchar cb = c;
                 ushort col;
-                if (texture->format == D3DFMT_R5G6B5)
+                if (m_pTexture->m_Format == D3DFMT_R5G6B5)
                     col = (cb >> 3) | (cr >> 3) << 11 | (cg >> 2) << 5;
                 else
                     col = (cb >> 3) | (cr >> 3) << 10 | 0x8000 | (cg >> 3) << 5;
@@ -837,9 +839,9 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         }
         case D3DFMT_L8: {
             uchar *src = (uchar *)r.tex_data;
-            uchar *d0 = bits + best->offsets[i].y * texture->width + best->offsets[i].x;
-            uchar *d1 = d0 + texture->width * texture->height;
-            uchar *d2 = d0 + texture->width * texture->height * 2;
+            uchar *d0 = bits + best->offsets[i].y * m_pTexture->m_Width + best->offsets[i].x;
+            uchar *d1 = d0 + m_pTexture->m_Width * m_pTexture->m_Height;
+            uchar *d2 = d0 + m_pTexture->m_Width * m_pTexture->m_Height * 2;
             if (r.tex_sx == 3 && r.tex_sy == 3) {
                 r.u = (float)best->offsets[i].x / best->sx;
                 r.v = (float)best->offsets[i].y / best->sy;
@@ -863,7 +865,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                     uchar *dd0 = d0;
                     uchar *dd1 = d1;
                     uchar *dd2 = d2;
-                    m_FillLineRGB(&src, &dd0, &dd1, &dd2, r.tex_sx, texture->width);
+                    m_FillLineRGB(&src, &dd0, &dd1, &dd2, r.tex_sx, m_pTexture->m_Width);
                     d0++;
                     d1++;
                     d2++;
@@ -883,14 +885,14 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         }
         }
     }
-    texture->Unlock();
+    m_pTexture->Unlock();
     if (!best->texture) {
-        pI3DDriver->textures.push_back(texture);
+        pI3DDriver->textures.push_back(m_pTexture);
         pI3DDriver->m_RecomputeUsedVRAM();
-        best->texture = texture;
+        best->texture = m_pTexture;
     }
     for (i = 0; i < best->offsets.size(); i++)
-        offsets.push_back(best->offsets[i]);
+        m_OffsetList.push_back(best->offsets[i]);
     best->offsets.clear();
 
     // The texture's room left goes back into the list
@@ -904,14 +906,14 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     }
     if (!inserted)
         GlobalRemainTexBlList.push_back(*best);
-    for (i = 0; i < order.size(); i++) {
-        if (ri[order[i]].area > 9) {
-            delete[] ri[order[i]].data;
-            ri[order[i]].data = NULL;
-            delete[] (uchar *)ri[order[i]].tex_data;
-            ri[order[i]].tex_data = NULL;
+    for (i = 0; i < m_OrderList.size(); i++) {
+        if (ri[m_OrderList[i]].area > 9) {
+            delete[] ri[m_OrderList[i]].data;
+            ri[m_OrderList[i]].data = NULL;
+            delete[] (uchar *)ri[m_OrderList[i]].tex_data;
+            ri[m_OrderList[i]].tex_data = NULL;
         }
     }
-    texture->texture->AddDirtyRect(NULL);
+    m_pTexture->m_pD3DTexture8->AddDirtyRect(NULL);
     return true;
 }

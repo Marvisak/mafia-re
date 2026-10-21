@@ -12,11 +12,11 @@
 // FUNCTION: LS3DF 0x10034370
 morphBase::morphBase()
 {
-    flags = MORPHF_DIRTY | MORPHF_UNKNOWN_4;
+    m_Flags = MORPHF_DIRTY | MORPHF_UNKNOWN_4;
     m_numLevels = 0;
     m_numRegions = 0;
-    weights = NULL;
-    norm_weights = NULL;
+    m_pWeights = NULL;
+    m_pNormWeights = NULL;
     m_pMorphDef = NULL;
     unknown_18 = NULL;
 }
@@ -24,11 +24,11 @@ morphBase::morphBase()
 // FUNCTION: LS3DF 0x10034390
 void morphBase::Clear()
 {
-    flags = (flags & ~MORPHF_LOADED) | MORPHF_DIRTY;
+    m_Flags = (m_Flags & ~MORPHF_LOADED) | MORPHF_DIRTY;
     m_numLevels = 0;
     m_numRegions = 0;
-    delete[] weights;
-    weights = NULL;
+    delete[] m_pWeights;
+    m_pWeights = NULL;
     delete unknown_18;
     unknown_18 = NULL;
     if (m_pMorphDef) {
@@ -40,37 +40,37 @@ void morphBase::Clear()
 // FUNCTION: LS3DF 0x10034460
 LS3D_RESULT morphBase::SetWeightB(int region, int level, float weight)
 {
-    weights[region * m_numLevels + level] = weight;
-    flags |= MORPHF_DIRTY;
+    m_pWeights[region * m_numLevels + level] = weight;
+    m_Flags |= MORPHF_DIRTY;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10034490
 float morphBase::GetWeightB(int region, int level) const
 {
-    return weights[region * m_numLevels + level];
+    return m_pWeights[region * m_numLevels + level];
 }
 
-// The region's weights are addressed twice (&weights[base]): VC6 keeps the address in a register of its own and copies
-// it into each loop's pointer, where one pointer walked in both loops shares the register
+// The region's weights are addressed twice (&m_pWeights[base]): VC6 keeps the address in a register of its own and
+// copies it into each loop's pointer, where one pointer walked in both loops shares the register
 // FUNCTION: LS3DF 0x100344b0
 void morphBase::NormalizeWeights()
 {
     int base = 0;
     for (int i = m_numRegions; i--; ) {
         float sum = 0.0f;
-        const float *p = &weights[base];
+        const float *p = &m_pWeights[base];
         for (int j = m_numLevels; j--; )
             sum += (float)fabs(*p++);
         if (sum < MRG_ZERO) {
-            float *nw = &norm_weights[base];
+            float *nw = &m_pNormWeights[base];
             *nw++ = 1.0f;
             for (j = m_numLevels - 1; j; j--)
                 *nw++ = 0.0f;
         } else {
             float f = 1.0f / sum;
-            float *nw = &norm_weights[base];
-            const float *q = &weights[base];
+            float *nw = &m_pNormWeights[base];
+            const float *q = &m_pWeights[base];
             for (j = m_numLevels; j--; ) {
                 *nw = *q * f;
                 q++;
@@ -88,21 +88,21 @@ void morphBase::NormalizeWeights()
 // FUNCTION: LS3DF 0x10034570
 void morphBase::UpdateMorphLod(int lod, I3D_mesh_object *mesh)
 {
-    if (!(flags & MORPHF_DIRTY) || !(flags & MORPHF_LOADED))
+    if (!(m_Flags & MORPHF_DIRTY) || !(m_Flags & MORPHF_LOADED))
         return;
     NormalizeWeights();
     if (!m_pMorphDef)
         return;
     morph_region *r = NULL;
-    if (lod < m_pMorphDef->num_lods)
-        r = &m_pMorphDef->regions[lod * m_pMorphDef->num_regions];
+    if (lod < m_pMorphDef->m_numLods)
+        r = &m_pMorphDef->m_pRegions[lod * m_pMorphDef->m_numRegions];
     if (!r || !mesh)
         return;
     I3D_mesh_level *level = mesh->GetLOD(lod);
     if (!level)
         return;
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
-    const float *w = norm_weights;
+    const float *w = m_pNormWeights;
     for (int i = m_numRegions; i--; r++) {
         const ushort *ind = r->indices;
         const S_vector *d = r->verts;
@@ -125,28 +125,28 @@ void morphBase::UpdateMorphLod(int lod, I3D_mesh_object *mesh)
         }
         w += m_numLevels;
     }
-    flags &= ~MORPHF_DIRTY;
+    m_Flags &= ~MORPHF_DIRTY;
 }
 
 // PC only (the name is the first one's): the positions go into a lod's vertices too
 // FUNCTION: LS3DF 0x10034810
 void morphBase::UpdateMorphLod(void *pos_out, uint stride, int lod, I3D_mesh_object *mesh)
 {
-    if (!(flags & MORPHF_DIRTY) || !(flags & MORPHF_LOADED))
+    if (!(m_Flags & MORPHF_DIRTY) || !(m_Flags & MORPHF_LOADED))
         return;
     NormalizeWeights();
     if (!m_pMorphDef)
         return;
     morph_region *r = NULL;
-    if (lod < m_pMorphDef->num_lods)
-        r = &m_pMorphDef->regions[lod * m_pMorphDef->num_regions];
+    if (lod < m_pMorphDef->m_numLods)
+        r = &m_pMorphDef->m_pRegions[lod * m_pMorphDef->m_numRegions];
     if (!r || !mesh)
         return;
     I3D_mesh_level *level = mesh->GetLOD(lod);
     if (!level)
         return;
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
-    const float *w = norm_weights;
+    const float *w = m_pNormWeights;
     for (int i = m_numRegions; i--; r++) {
         const ushort *ind = r->indices;
         const S_vector *d = r->verts;
@@ -170,7 +170,7 @@ void morphBase::UpdateMorphLod(void *pos_out, uint stride, int lod, I3D_mesh_obj
         }
         w += m_numLevels;
     }
-    flags &= ~MORPHF_DIRTY;
+    m_Flags &= ~MORPHF_DIRTY;
 }
 
 // FUNCTION: LS3DF 0x10034ad0
@@ -183,17 +183,17 @@ LS3D_RESULT morphBase::DuplicateMorphDef(morphBase *mb)
     if (m_pMorphDef)
         m_pMorphDef->Release();
     m_pMorphDef = mb->m_pMorphDef;
-    m_pMorphDef->ref++;
+    m_pMorphDef->m_RefCount++;
     m_numLevels = mb->m_numLevels;
     m_numRegions = mb->m_numRegions;
-    delete[] weights;
-    weights = new float[m_numLevels * m_numRegions * 2];
-    if (!weights) {
+    delete[] m_pWeights;
+    m_pWeights = new float[m_numLevels * m_numRegions * 2];
+    if (!m_pWeights) {
         dbgPrintf("!! Out of memory  morphBase::DuplicateMorphDef()");
         return I3DERR_OUTOFMEM;
     }
-    norm_weights = weights + m_numLevels * m_numRegions;
-    memcpy(weights, mb->weights, m_numLevels * m_numRegions * sizeof(float));
+    m_pNormWeights = m_pWeights + m_numLevels * m_numRegions;
+    memcpy(m_pWeights, mb->m_pWeights, m_numLevels * m_numRegions * sizeof(float));
     return I3D_OK;
 }
 
@@ -218,8 +218,8 @@ void morphBase::LoadImageB()
         return;
     }
     morph_region *r = NULL;
-    if (m_pMorphDef->num_lods > 0)
-        r = m_pMorphDef->regions;
+    if (m_pMorphDef->m_numLods > 0)
+        r = m_pMorphDef->m_pRegions;
     for (int i = m_numRegions * num_lods; i--; r++) {
         r->num_verts = 0;
         dtaRead(LoadImageHandle, &r->num_verts, 2);
@@ -249,23 +249,23 @@ void morphBase::LoadImageB()
                 r->indices = NULL;
         }
     }
-    weights = new float[m_numRegions * m_numLevels * 2];
-    if (!weights) {
+    m_pWeights = new float[m_numRegions * m_numLevels * 2];
+    if (!m_pWeights) {
         dbgPrintf("!! Out of memory  morphBase::LoadImageB()");
         m_numLevels = 0;
         m_numRegions = 0;
         ImageErrFlg = I3DERR_OUTOFMEM;
         return;
     }
-    norm_weights = weights + m_numLevels * m_numRegions;
-    float *w = weights;
+    m_pNormWeights = m_pWeights + m_numLevels * m_numRegions;
+    float *w = m_pWeights;
     for (i = m_numRegions; i > 0; i--) {
         *w++ = 1.0f;
         for (int j = m_numLevels - 1; j > 0; j--)
             *w++ = 0.0f;
     }
-    flags |= MORPHF_LOADED;
-    dtaRead(LoadImageHandle, &m_pMorphDef->bvol, sizeof(I3D_bvolume));
+    m_Flags |= MORPHF_LOADED;
+    dtaRead(LoadImageHandle, &m_pMorphDef->m_BVolume, sizeof(I3D_bvolume));
 }
 
 // FUNCTION: LS3DF 0x10034e30
@@ -330,7 +330,7 @@ void I3D_morph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     I3D_object::SetMesh(m, keep_lods);
     if (m_pMorphDef)
-        vis_bound = m_pMorphDef->bvol;
+        vis_bound = m_pMorphDef->m_BVolume;
     if (!(vis_flags & VISF_WORLD_SPACE))
         vis_flags &= ~VISF_WBOUND_VALID;
 }
@@ -349,7 +349,7 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
     else
         vis_flags &= ~VISF_WBOUND_VALID;
     I3D_frame::Duplicate(frame);
-    flags &= ~(MORPHF_LOADED | MORPHF_UNKNOWN_4);
+    m_Flags &= ~(MORPHF_LOADED | MORPHF_UNKNOWN_4);
     if (frame->GetType() != FRAME_VISUAL) {
         if (frame->GetType() == FRAME_EMITOR) {
             memset(lods, 0, sizeof(lods));
@@ -382,7 +382,7 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
                 m->Release();
                 return r;
             }
-            flags |= MORPHF_LOADED;
+            m_Flags |= MORPHF_LOADED;
             SetMesh(m, false);
             m->Release();
             lightness = obj->lightness;
@@ -613,9 +613,9 @@ void I3D_morph::m_AddFGroups()
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
             else
-                h.sort_value = (h.texture ? h.texture->uid : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -639,46 +639,46 @@ S_morph_unknown::~S_morph_unknown()
 // FUNCTION: LS3DF 0x10036580
 MorphDef::MorphDef(int lods, int regs)
 {
-    ref = 1;
+    m_RefCount = 1;
     if (lods > 0 && regs > 0) {
-        regions = new morph_region[lods * regs];
-        if (!regions) {
+        m_pRegions = new morph_region[lods * regs];
+        if (!m_pRegions) {
             dbgPrintf("!! Out of memory  MorphDef constructor");
-            num_lods = 0;
-            num_regions = 0;
+            m_numLods = 0;
+            m_numRegions = 0;
         } else {
-            num_lods = lods;
-            num_regions = regs;
-            bvol.bbox.Invalidate();
-            bvol.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
-            bvol.bsphere.radius = 0.0f;
+            m_numLods = lods;
+            m_numRegions = regs;
+            m_BVolume.bbox.Invalidate();
+            m_BVolume.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
+            m_BVolume.bsphere.radius = 0.0f;
         }
     } else {
         dbgPrintf("!! Invalid parameter  MorphDef constructor");
-        num_lods = 0;
-        num_regions = 0;
-        regions = NULL;
+        m_numLods = 0;
+        m_numRegions = 0;
+        m_pRegions = NULL;
     }
 }
 
 // Inlined everywhere (Release, and Clear's copy of it): the linker drops the copy
 MorphDef::~MorphDef()
 {
-    delete[] regions;
+    delete[] m_pRegions;
 }
 
 // FUNCTION: LS3DF 0x100366b0
 int MorphDef::Release()
 {
-    if (--ref < 0) {
+    if (--m_RefCount < 0) {
         dbgPrintf("!! RefCount:0x%x    (MorphDef)", this);
         return 0;
     }
-    if (!ref) {
+    if (!m_RefCount) {
         delete this;
         return 0;
     }
-    return ref;
+    return m_RefCount;
 }
 
 // FUNCTION: LS3DF 0x10036710
@@ -700,11 +700,11 @@ morph_region::~morph_region()
 // FUNCTION: LS3DF 0x10036750
 void I3D_morph::LoadImage()
 {
-    flags &= ~MORPHF_UNKNOWN_4;
+    m_Flags &= ~MORPHF_UNKNOWN_4;
     I3D_object::LoadImage();
     LoadImageB();
     if (m_pMorphDef)
-        vis_bound = m_pMorphDef->bvol;
+        vis_bound = m_pMorphDef->m_BVolume;
     if (!(vis_flags & VISF_WORLD_SPACE))
         vis_flags &= ~VISF_WBOUND_VALID;
 }

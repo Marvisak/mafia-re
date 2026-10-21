@@ -2,7 +2,8 @@
 
 // The lightmaps' textures (PS2 lightmap.cpp; lightmap.cpp): a lit object's lightmaps are rectangles of texels, which
 // LightMap packs into shared textures. The textures with room left are in the file's list of TEXBL_STRUCTs, each with
-// its free rectangles (lightmap.cpp defines the structure). PS2 types, member names guessed.
+// its free rectangles (lightmap.cpp defines the structure). PS2 types, member names guessed, LightMap's in the m_ style
+// of litLod's (the lit object file's messages name those).
 
 #include "ls3df.h"
 
@@ -56,11 +57,11 @@ public:
     bool m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst);
     bool m_CreateLM(ushort *indices, RECTANGLE_INFO *rects, int num, uint *mem);
 
-    ITexture *texture;                  // 0x00
-    C_list<OFFSET_STRUCT> offsets;      // 0x04, of the rectangles in order
-    RECTANGLE_INFO *rects;              // 0x14, the lit object's
-    C_list<ushort> order;               // 0x18, rects' indices, the largest first
-    int area;                           // 0x28, of all of them
+    ITexture *m_pTexture;               // 0x00
+    C_list<OFFSET_STRUCT> m_OffsetList; // 0x04, of the rectangles in order
+    RECTANGLE_INFO *m_pRects;           // 0x14, the lit object's
+    C_list<ushort> m_OrderList;         // 0x18, m_pRects' indices, the largest first
+    int m_Area;                         // 0x28, of all of them
 };
 
 // The destructor lightmap.cpp's thunk registers for its list of textures: the seventh $E5 in link order, after the

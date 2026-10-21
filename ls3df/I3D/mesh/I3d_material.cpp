@@ -95,11 +95,11 @@ LS3D_RESULT I3D_material::SetTexture(ITexture *tex)
         flags &= ~(MATF_TEXTURE | MATF_ANIMATED | MATF_CKEY_ALPHA | MATF_TXT_ALPHA | MATF_ADD_MODE);
         texture = tex;
         if (tex) {
-            tex->ref++;
-            if (texture->flags & (ITC_ALPHA | ITC_USE_ALPHA))
+            tex->m_RefCount++;
+            if (texture->m_Flags & (ITC_ALPHA | ITC_USE_ALPHA))
                 flags |= MATF_TXT_ALPHA;
-            if (texture->flags & ITC_COLORKEY) {
-                if (texture->flags & ITC_MIPMAP)
+            if (texture->m_Flags & ITC_COLORKEY) {
+                if (texture->m_Flags & ITC_MIPMAP)
                     flags |= MATF_CKEY_ALPHA | MATF_TXT_ALPHA;
                 else
                     flags |= MATF_CKEY_ALPHA;
@@ -118,7 +118,7 @@ LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex)
             env_texture->Release();
         env_texture = tex;
         if (tex) {
-            tex->ref++;
+            tex->m_RefCount++;
             flags |= MATF_ENVMAP;
         } else
             flags &= ~MATF_ENVMAP;
@@ -134,7 +134,7 @@ LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex, uint blend, uint mode, fl
             env_texture->Release();
         env_texture = tex;
         if (tex)
-            tex->ref++;
+            tex->m_RefCount++;
     }
     env_alpha = a;
     if (tex)
@@ -353,7 +353,7 @@ LS3D_RESULT I3D_anim_material::Duplicate(I3D_material *mat)
         for (j = 0; j < amat->textures.size(); j++) {
             textures.push_back(amat->textures[j]);
             if (textures[j])
-                textures[j]->ref++;
+                textures[j]->m_RefCount++;
         }
         texture = textures[0];
     } else {
@@ -364,7 +364,7 @@ LS3D_RESULT I3D_anim_material::Duplicate(I3D_material *mat)
         for (j = 0; j < amat->env_textures.size(); j++) {
             env_textures.push_back(amat->env_textures[j]);
             if (env_textures[j])
-                env_textures[j]->ref++;
+                env_textures[j]->m_RefCount++;
         }
         env_texture = env_textures[0];
     } else {

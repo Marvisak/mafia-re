@@ -67,7 +67,7 @@ void I3D_singlemorph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     I3D_object::SetMesh(m, keep_lods);
     if (m_pMorphDef)
-        vis_bound = m_pMorphDef->bvol;
+        vis_bound = m_pMorphDef->m_BVolume;
     if (!(vis_flags & VISF_WORLD_SPACE))
         vis_flags &= ~VISF_WBOUND_VALID;
 }
@@ -87,7 +87,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
         vis_flags &= ~VISF_WBOUND_VALID;
     I3D_frame::Duplicate(frame);
     joints_changed++;
-    flags &= ~(MORPHF_LOADED | MORPHF_UNKNOWN_4);
+    m_Flags &= ~(MORPHF_LOADED | MORPHF_UNKNOWN_4);
     if (frame->GetType() != FRAME_VISUAL) {
         if (frame->GetType() == FRAME_EMITOR) {
             Clear();
@@ -137,7 +137,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
                 lightness = sm->lightness;
                 transparency = sm->transparency;
                 I3D_morph *mo = (I3D_morph *)frame;
-                if (!(mo->flags & MORPHF_LOADED))
+                if (!(mo->m_Flags & MORPHF_LOADED))
                     SetMesh(sm->mesh, false);
                 else {
                     LS3D_RESULT r = DuplicateMorphDef(mo);
@@ -155,7 +155,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
                         m->Release();
                         return r;
                     }
-                    flags |= MORPHF_LOADED;
+                    m_Flags |= MORPHF_LOADED;
                     SetMesh(m, false);
                     m->Release();
                 }
@@ -178,7 +178,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
             {
                 lightness = sm->lightness;
                 transparency = sm->transparency;
-                if (!(sm->flags & MORPHF_LOADED))
+                if (!(sm->m_Flags & MORPHF_LOADED))
                     SetMesh(sm->mesh, false);
                 else {
                     LS3D_RESULT r = DuplicateMorphDef(sm);
@@ -196,7 +196,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
                         m->Release();
                         return r;
                     }
-                    flags |= MORPHF_LOADED;
+                    m_Flags |= MORPHF_LOADED;
                     SetMesh(m, false);
                     m->Release();
                 }
@@ -227,7 +227,7 @@ void I3D_singlemorph::UpdateBoundProc()
 // FUNCTION: LS3DF 0x10057590
 void I3D_singlemorph::UpdateLodVertices(int lod_index)
 {
-    if (flags & MORPHF_DIRTY) {
+    if (m_Flags & MORPHF_DIRTY) {
         UpdateMorphLod(lod_index, mesh);
         UpdateVertices(lod_index);
     }
@@ -238,13 +238,13 @@ void I3D_singlemorph::UpdateLodVertices(int lod_index)
 // FUNCTION: LS3DF 0x100575d0
 void I3D_singlemorph::LoadImage()
 {
-    flags &= ~MORPHF_UNKNOWN_4;
+    m_Flags &= ~MORPHF_UNKNOWN_4;
     I3D_singlemesh::LoadImage();
     if (ImageErrFlg)
         return;
     LoadImageB();
     if (m_pMorphDef)
-        vis_bound = m_pMorphDef->bvol;
+        vis_bound = m_pMorphDef->m_BVolume;
     if (!(vis_flags & VISF_WORLD_SPACE))
         vis_flags &= ~VISF_WBOUND_VALID;
 }

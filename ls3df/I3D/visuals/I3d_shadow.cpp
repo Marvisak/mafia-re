@@ -1085,7 +1085,7 @@ void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     SetBlendState(0);
     SetCullState(D3DCULL_CCW);
     SetClipping(1);
-    m_pD3DDevice8->SetTexture(0, shadow->texture->texture);
+    m_pD3DDevice8->SetTexture(0, shadow->texture->m_pD3DTexture8);
     pGlobalIGraph->SetWorldMatrix(GetMatrix());
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);

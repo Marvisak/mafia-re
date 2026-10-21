@@ -348,7 +348,8 @@ class CTextureRenderer;
 // A movie playing into textures (PS2 IShow.cpp, 0x8c bytes): a Bink video, an AVI file through DirectShow (rendered
 // by CTextureRenderer, the DirectX SDK's texture renderer sample) or any other file DirectShow plays, or an Ogg
 // Vorbis file, which plays through DirectSound (PC only). PS2 names; the PC-only functions and the members have
-// guessed names.
+// guessed names, but m_RefCount, which Release's message names. The members' follow it and IGraph's PS2 globals
+// (m_pD3DDevice8, m_SceneBegun): m_ and the name in mixed case, p for pointers, no other type prefix.
 // VTABLE: LS3DF 0x1009d670
 class IShow {
 public:
@@ -374,7 +375,7 @@ public:
     // FUNCTION: LS3DF 0x10075820
     virtual float __stdcall GetVolume()
     {
-        return volume;
+        return m_Volume;
     }
 
     virtual int __stdcall GetRegionCnt();
@@ -386,7 +387,7 @@ public:
     // FUNCTION: LS3DF 0x10075830
     virtual int __stdcall GetDecodedFrameNum()
     {
-        return decoded_frame;
+        return m_DecodedFrameNum;
     }
 
     // PC only: music through the sound driver's stream functions (IShowStream.cpp)
@@ -397,7 +398,7 @@ public:
     // FUNCTION: LS3DF 0x10075840
     virtual int __stdcall IsStreamPlaying()
     {
-        return !stream_done;
+        return !m_StreamDone;
     }
 
     virtual LS3D_RESULT __stdcall StopStream();
@@ -410,36 +411,36 @@ public:
     void m_PrepareVerts();
     HRESULT m_CreateCTextureRenderer(const WCHAR *name);
 
-    IGraphBuilder *graph;               // 0x04, DirectShow
-    IMediaControl *control;             // 0x08
-    IMediaSeeking *seeking;             // 0x0c
+    IGraphBuilder *m_pGraphBuilder;     // 0x04, DirectShow
+    IMediaControl *m_pMediaControl;     // 0x08
+    IMediaSeeking *m_pMediaSeeking;     // 0x0c
     int unknown_10;                     // 0x10
-    IBasicAudio *audio;                 // 0x14
-    IMediaEvent *media_event;           // 0x18
-    BINK *bink;                         // 0x1c
-    bool init;                          // 0x20
-    int ref;                            // 0x24
-    uint flags;                         // 0x28, ISHOW_*
-    RECT rect;                          // 0x2c, where on the screen
-    float volume;                       // 0x3c
-    C_list<S_show_region> regions;      // 0x40
-    CTextureRenderer *renderer;         // 0x50, DirectShow's AVI files
-    int decoded_frame;                  // 0x54, counted by the renderer
-    int stream;                         // 0x58, the sound driver's stream, -1 if none
-    bool stream_init;                   // 0x5c
-    bool stream_paused;                 // 0x5d
-    bool stream_done;                   // 0x5e, the stream callback's end
-    DWORD thread_id;                    // 0x60, Ogg: the thread that decodes into the sound buffer
-    HANDLE thread;                      // 0x64
-    HANDLE event;                       // 0x68, signalled at each of the buffer's notification positions
-    IDirectSoundNotify *notify;         // 0x6c
-    IDirectSoundBuffer8 *sound_buffer;  // 0x70
-    int notify_count;                   // 0x74, notifications since the buffer was filled from its start
-    int write_pos;                      // 0x78, how far the buffer is filled
-    int buffer_size;                    // 0x7c
-    bool filling;                       // 0x80, m_FillBuffer runs
-    OggVorbis_File *vf;                 // 0x84
-    int dta_handle;                     // 0x88, the Ogg file
+    IBasicAudio *m_pBasicAudio;         // 0x14
+    IMediaEvent *m_pMediaEvent;         // 0x18
+    BINK *m_pBink;                      // 0x1c
+    bool m_Init;                        // 0x20
+    int m_RefCount;                     // 0x24
+    uint m_Flags;                       // 0x28, ISHOW_*
+    RECT m_Rect;                        // 0x2c, where on the screen
+    float m_Volume;                     // 0x3c
+    C_list<S_show_region> m_RegionList; // 0x40
+    CTextureRenderer *m_pTextureRenderer; // 0x50, DirectShow's AVI files
+    int m_DecodedFrameNum;              // 0x54, counted by the renderer
+    int m_Stream;                       // 0x58, the sound driver's stream, -1 if none
+    bool m_StreamInit;                  // 0x5c
+    bool m_StreamPaused;                // 0x5d
+    bool m_StreamDone;                  // 0x5e, the stream callback's end
+    DWORD m_ThreadID;                   // 0x60, Ogg: the thread that decodes into the sound buffer
+    HANDLE m_Thread;                    // 0x64
+    HANDLE m_Event;                     // 0x68, signalled at each of the buffer's notification positions
+    IDirectSoundNotify *m_pDSNotify;    // 0x6c
+    IDirectSoundBuffer8 *m_pDSBuffer8;  // 0x70
+    int m_NotifyCount;                  // 0x74, notifications since the buffer was filled from its start
+    int m_WritePos;                     // 0x78, how far the buffer is filled
+    int m_BufferSize;                   // 0x7c
+    bool m_Filling;                     // 0x80, m_FillBuffer runs
+    OggVorbis_File *m_pVorbisFile;      // 0x84
+    int m_DtaHandle;                    // 0x88, the Ogg file
 };
 
 // IShow.cpp's texture renderer (CTextureRenderer, the DirectX SDK sample's, declared there): what the compiler
@@ -528,7 +529,8 @@ enum {
 struct S_managed_texture;
 
 // A texture (PS2 ITexture.cpp, 0x4c bytes). PS2's ITexture isn't virtual; the PC's virtual functions are __stdcall.
-// Names are the PS2 build's where it has the function, the rest guessed.
+// Names are the PS2 build's where it has the function and m_RefCount Release's message's, the rest guessed (the members
+// in IShow's style).
 // VTABLE: LS3DF 0x1009d8d4
 class ITexture {
 public:
@@ -559,24 +561,24 @@ private:
     bool m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint sy, int no_dither);
 
 public:
-    ushort uid;                         // 0x04, from IGraph::CreateITexture
-    IDirect3DTexture8 *texture;         // 0x08
-    IDirect3DSurface8 *lock_surface;    // 0x0c, while locked
-    bool init;                          // 0x10
-    int ref;                            // 0x14
-    C_str file_name;                    // 0x18
-    const char *name;                   // 0x1c, file_name without its directory, which the cache compares
-    C_str alpha_file_name;              // 0x20
-    const char *alpha_name;             // 0x24
-    ushort width, height;               // 0x28
-    D3DFORMAT format;                   // 0x2c
-    uint flags;                         // 0x30, ITC_*, as adjusted by Create
-    uint create_flags;                  // 0x34, as Create got them, which the cache compares
-    uint color_key;                     // 0x38, in the texture's format
-    uchar *pixels;                      // 0x3c, the image as 32 bits (ARGB bytes)
-    ushort levels;                      // 0x40
-    uint mem_size;                      // 0x44, of all levels
-    S_managed_texture *managed;         // 0x48, ITC_MANAGED
+    ushort m_UID;                       // 0x04, from IGraph::CreateITexture
+    IDirect3DTexture8 *m_pD3DTexture8;  // 0x08
+    IDirect3DSurface8 *m_pLockSurface;  // 0x0c, while locked
+    bool m_Init;                        // 0x10
+    int m_RefCount;                     // 0x14
+    C_str m_FileName;                   // 0x18
+    const char *m_pName;                // 0x1c, m_FileName without its directory, which the cache compares
+    C_str m_AlphaFileName;              // 0x20
+    const char *m_pAlphaName;           // 0x24
+    ushort m_Width, m_Height;           // 0x28
+    D3DFORMAT m_Format;                 // 0x2c
+    uint m_Flags;                       // 0x30, ITC_*, as adjusted by Create
+    uint m_CreateFlags;                 // 0x34, as Create got them, which the cache compares
+    uint m_ColorKey;                    // 0x38, in the texture's format
+    uchar *m_pPixels;                   // 0x3c, the image as 32 bits (ARGB bytes)
+    ushort m_Levels;                    // 0x40
+    uint m_MemSize;                     // 0x44, of all levels
+    S_managed_texture *m_pManaged;      // 0x48, ITC_MANAGED
 };
 
 // PS2 name

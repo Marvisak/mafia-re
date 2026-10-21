@@ -65,9 +65,9 @@ void I3D_lit_object::SetActiveLevel(int index)
         if (level.lods[i]) {
             cVBMan.m_Free(level.lods[i]->vb);
             memset(&level.lods[i]->vb, 0, sizeof(level.lods[i]->vb));
-            if (level.lods[i]->mem > 0) {
-                cVBMan.m_Free(level.lods[i]->pos_vb);
-                memset(&level.lods[i]->pos_vb, 0, sizeof(level.lods[i]->pos_vb));
+            if (level.lods[i]->m_MemSize > 0) {
+                cVBMan.m_Free(level.lods[i]->m_PosVB);
+                memset(&level.lods[i]->m_PosVB, 0, sizeof(level.lods[i]->m_PosVB));
             }
             level.lods[i]->dirty = true;
             level.lods[i]->lights_changed = (uint)-1;
@@ -139,7 +139,7 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
         return;
     LightMap *lm = level.lods[lod_index]->m_pLM;
     uint pitch;
-    uchar *dst = (uchar *)lm->texture->Lock(NULL, pitch, 0);
+    uchar *dst = (uchar *)lm->m_pTexture->Lock(NULL, pitch, 0);
     if (!dst)
         return;
     RECTANGLE_INFO *ri = level.lods[lod_index]->m_pRectangles;
@@ -149,12 +149,12 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
         int x;
         if (ri->u < 2.0f) {
             rotated = false;
-            x = (int)(lm->texture->width * ri->u);
+            x = (int)(lm->m_pTexture->m_Width * ri->u);
         } else {
             rotated = true;
-            x = (int)(lm->texture->width * (ri->u - 2.0f));
+            x = (int)(lm->m_pTexture->m_Width * (ri->u - 2.0f));
         }
-        int y = (int)(lm->texture->height * ri->v);
+        int y = (int)(lm->m_pTexture->m_Height * ri->v);
         uchar *p = dst + y * pitch + x * 4;
         if (ri->tex_sx == 3 && ri->tex_sy == 3) {
             uint skip = pitch - ri->tex_sx * 4;
@@ -195,8 +195,8 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
         }
         ri++;
     }
-    lm->texture->Unlock();
-    lm->texture->AddDirtyRect(NULL);
+    lm->m_pTexture->Unlock();
+    lm->m_pTexture->AddDirtyRect(NULL);
 }
 
 // Locks the lod's index buffer (PC; PS2's locks the lightmap's texture)
@@ -206,7 +206,7 @@ int I3D_lit_object::GetRectInfoFlags(int lod_index, int index, int flags)
     litLod *l = levels[index].lods[lod_index];
     if (!l)
         return -1;
-    l->ib.buffer->Lock(l->ib.base, 0);
+    l->m_IB.buffer->Lock(l->m_IB.base, 0);
     return 0;
 }
 
@@ -1309,13 +1309,13 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                         delete l;
                         return I3DERR_FILECORRUPTED;
                     }
-                    if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, num_indices, l->ib)) {
+                    if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, num_indices, l->m_IB)) {
                         dbgPrintf("!! Out of memory  I3D_litobject::Load()");
                         delete l;
                         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
                         return I3DERR_OUTOFMEM;
                     }
-                    ushort *indx = (ushort *)l->ib.buffer->Lock(l->ib.base, 0);
+                    ushort *indx = (ushort *)l->m_IB.buffer->Lock(l->m_IB.base, 0);
                     if (!dtaRead(handle, indx, num_indices * sizeof(ushort))) {
                         dbgPrintf("!! Error reading data   I3D_lit_object::read()  this:0x%x %s  handle:0x%x", this,
                             GetName(), handle);
@@ -1491,7 +1491,7 @@ uint I3D_lit_object::GetTotalLMMemory()
         for (int i = 0; i < 6; i++) {
             for (uint j = 0; j < mesh->num_lods; j++) {
                 if (levels[i].lods[j])
-                    total += levels[i].lods[j]->mem;
+                    total += levels[i].lods[j]->m_MemSize;
             }
         }
     }
@@ -1616,9 +1616,9 @@ void I3D_lit_object::m_AddFGroups()
                     AddFGHlpStruct.num_transparent++;
                 } else {
                     if (mat->flags & MATF_CKEY_ALPHA)
-                        h.sort_value = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
+                        h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
                     else
-                        h.sort_value = (h.texture ? h.texture->uid : 0) & 0x7fff;
+                        h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
                     AddFGHlpStruct.num_opaque++;
                 }
             }
@@ -1697,19 +1697,19 @@ void I3D_lit_object::m_AddFGroups()
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
             fog = 1;
             if (frm_flags & FRMFLAGS_CLIP) {
-                m_pD3DDevice8->SetStreamSource(0, l->pos_vb.vb, l->pos_vb.buffer->stride);
+                m_pD3DDevice8->SetStreamSource(0, l->m_PosVB.vb, l->m_PosVB.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
-                l->pos_vb.buffer->Unlock();
+                l->m_PosVB.buffer->Unlock();
                 SetVertexFormat(VF_VERTEX);
                 SetClipping(TRUE);
-                m_pD3DDevice8->ProcessVertices(l->pos_vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
+                m_pD3DDevice8->ProcessVertices(l->m_PosVB.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
             } else {
-                m_pD3DDevice8->SetStreamSource(0, l->pos_vb.vb, l->pos_vb.buffer->stride);
+                m_pD3DDevice8->SetStreamSource(0, l->m_PosVB.vb, l->m_PosVB.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
-                l->pos_vb.buffer->Unlock();
+                l->m_PosVB.buffer->Unlock();
                 SetVertexFormat(VF_VERTEX);
                 SetClipping(FALSE);
-                m_pD3DDevice8->ProcessVertices(l->pos_vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
+                m_pD3DDevice8->ProcessVertices(l->m_PosVB.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
             }
         }
         if (fog && !(m_HardwareCaps & HWCAPS_TABLEFOG)) {
@@ -1722,8 +1722,8 @@ void I3D_lit_object::m_AddFGroups()
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->color + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
                     num_verts, AddFGHlpStruct.sector->fog_light, 1);
         }
-        h.env_texture = l->m_pLM->texture;
-        lm_uid = h.env_texture->uid;
+        h.env_texture = l->m_pLM->m_pTexture;
+        lm_uid = h.env_texture->m_UID;
     }
     // The opaque face groups sort by the lightmap's texture, then by their own
     int first = 0;
@@ -1746,9 +1746,9 @@ void I3D_lit_object::m_AddFGroups()
                 AddFGHlpStruct.num_transparent++;
             } else {
                 if (mat->flags & MATF_CKEY_ALPHA)
-                    h.sort_value = (lm_uid | 0x8000) << 15 | (h.texture ? h.texture->uid : 0) & 0x7fff;
+                    h.sort_value = (lm_uid | 0x8000) << 15 | (h.texture ? h.texture->m_UID : 0) & 0x7fff;
                 else
-                    h.sort_value = (lm_uid & 0x7fff) << 15 | (h.texture ? h.texture->uid : 0) & 0x7fff;
+                    h.sort_value = (lm_uid & 0x7fff) << 15 | (h.texture ? h.texture->m_UID : 0) & 0x7fff;
                 AddFGHlpStruct.num_opaque++;
             }
         }
@@ -1761,7 +1761,7 @@ void I3D_lit_object::m_AddFGroups()
 // with its lightmap (in one pass, the lightmap in the first stage and the texture in the second, or without
 // HWCAPS_SINGLEPASS in two, and a fog pass)
 // Not matching yet: the original calls SetColorOp1(m_Modulate2X) of the single pass out of line (a little less inline
-// budget there), and its draws read help->first before l->ib.base (the allocator's order; the sum spelled either way
+// budget there), and its draws read help->first before l->m_IB.base (the allocator's order; the sum spelled either way
 // compiles the same).
 // FUNCTION: LS3DF 0x10028d40
 void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
@@ -1819,7 +1819,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
             if (help->texture) {
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-                m_pD3DDevice8->SetTexture(0, help->texture->texture);
+                m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
                 reset |= 8;
             } else {
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
@@ -1875,7 +1875,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetAlphaState(0);
             SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
             if (help->texture)
-                m_pD3DDevice8->SetTexture(0, help->texture->texture);
+                m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
             else
                 m_pD3DDevice8->SetTexture(0, NULL);
         }
@@ -1894,7 +1894,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
         if (m_HardwareCaps & HWCAPS_SINGLEPASS) {
             // The lightmap in the first stage, added to the vertices' colors, the texture in the second
             SetColorOp(D3DTOP_ADD);
-            m_pD3DDevice8->SetTexture(0, help->env_texture->texture);
+            m_pD3DDevice8->SetTexture(0, help->env_texture->m_pD3DTexture8);
             if (!mat) {
                 SetColorOp1(D3DTOP_DISABLE);
                 SetAlphaState(0);
@@ -1924,7 +1924,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
                 if (help->texture) {
                     SetColorOp1(m_Modulate2X);
-                    m_pD3DDevice8->SetTexture(1, help->texture->texture);
+                    m_pD3DDevice8->SetTexture(1, help->texture->m_pD3DTexture8);
                 } else
                     SetColorOp1(D3DTOP_DISABLE);
             }
@@ -1932,8 +1932,8 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
             SetVertexFormat(l->vb.buffer->vertex_format);
             m_pD3DDevice8->SetStreamSource(0, vb, l->vb.buffer->stride);
-            m_pD3DDevice8->SetIndices(l->ib.ib, l->vb.base);
-            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->ib.base + help->first,
+            m_pD3DDevice8->SetIndices(l->m_IB.ib, l->vb.base);
+            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                 fg->num_faces);
             if (reset & 1)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
@@ -1971,7 +1971,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
                 if (help->texture) {
                     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
-                    m_pD3DDevice8->SetTexture(0, help->texture->texture);
+                    m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
                     SetColorOp(D3DTOP_SELECTARG1);
                     reset |= 1;
                 } else {
@@ -1981,8 +1981,8 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             }
             SetVertexFormat(l->vb.buffer->vertex_format);
             m_pD3DDevice8->SetStreamSource(0, vb, l->vb.buffer->stride);
-            m_pD3DDevice8->SetIndices(l->ib.ib, l->vb.base);
-            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->ib.base + help->first,
+            m_pD3DDevice8->SetIndices(l->m_IB.ib, l->vb.base);
+            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                 fg->num_faces);
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
             if (m_ProblemFlags & 0x40)
@@ -1996,8 +1996,8 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_EQUAL);
             } else
                 SetAlphaState(0);
-            m_pD3DDevice8->SetTexture(0, help->env_texture->texture);
-            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->ib.base + help->first,
+            m_pD3DDevice8->SetTexture(0, help->env_texture->m_pD3DTexture8);
+            m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                 fg->num_faces);
             m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
             if (m_CurrFogState == TRUE) {
@@ -2009,7 +2009,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
                 SetAlphaState(1);
                 SetBlendState(0);
-                m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->ib.base + help->first,
+                m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                     fg->num_faces);
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
                 m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, TRUE);
@@ -2047,21 +2047,21 @@ litLod::~litLod()
         ri++;
     }
     delete[] (uchar *)m_pRectangles;
-    cIBMan.m_Free(ib);
+    cIBMan.m_Free(m_IB);
     delete[] m_pVI;
-    if (mem > 0)
-        cVBMan.m_Free(pos_vb);
+    if (m_MemSize > 0)
+        cVBMan.m_Free(m_PosVB);
     else
         delete[] m_pColors;
-    mem = 0;
+    m_MemSize = 0;
 }
 
 // FUNCTION: LS3DF 0x1002a0e0
 bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
 {
-    if (flags & 2 && !dirty && pos_vb.vb) {
-        cVBMan.m_Free(pos_vb);
-        memset(&pos_vb, 0, sizeof(pos_vb));
+    if (flags & 2 && !dirty && m_PosVB.vb) {
+        cVBMan.m_Free(m_PosVB);
+        memset(&m_PosVB, 0, sizeof(m_PosVB));
     }
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
     if (!m_numLVertices) {
@@ -2117,14 +2117,14 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
             v++;
         }
     } else {
-        if (!dirty || !pos_vb.buffer) {
-            if (!cVBMan.m_Alloc(D3DFVF_XYZ, D3DUSAGE_SOFTWAREPROCESSING, sizeof(S_vector), m_numLVertices, pos_vb,
+        if (!dirty || !m_PosVB.buffer) {
+            if (!cVBMan.m_Alloc(D3DFVF_XYZ, D3DUSAGE_SOFTWAREPROCESSING, sizeof(S_vector), m_numLVertices, m_PosVB,
                     VF_VERTEX, false)) {
                 dbgPrintf("litLod::Create() - Error create VertexBuffer for LM !!");
                 return false;
             }
         }
-        S_vector *pos = (S_vector *)pos_vb.buffer->Lock(pos_vb.base, 0);
+        S_vector *pos = (S_vector *)m_PosVB.buffer->Lock(m_PosVB.base, 0);
         for (int i = m_numLVertices; i; ) {
             i--;
             pos[i] = verts[m_pVI[i].vertex].pos;
@@ -2147,8 +2147,8 @@ bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
     ushort *indices = new ushort[m_numRectangles];
     for (int i = 0; i < m_numRectangles; i++)
         indices[i] = i;
-    mem = 0;
-    if (!m_pLM->m_CreateLM(indices, m_pRectangles, m_numRectangles, &mem)) {
+    m_MemSize = 0;
+    if (!m_pLM->m_CreateLM(indices, m_pRectangles, m_numRectangles, &m_MemSize)) {
         dbgPrintf("!! can't create LM  litLod::postLoadProcess()  this:0x%x", this);
         delete[] indices;
         return false;
@@ -2156,7 +2156,7 @@ bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
     delete[] indices;
     m_pUV = new I3D_text_coor[m_numLVertices];
     if (!loaded) {
-        if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, level->NumFaces() * 3, ib)) {
+        if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, level->NumFaces() * 3, m_IB)) {
             dbgPrintf("!! Out of memory  litLod::postLoadProcess");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return false;
@@ -2168,9 +2168,9 @@ bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
     }
     I3D_text_coor *uv = m_pUV;
     float *lit_uv = (float *)m_pLitUV;
-    float su = 1.0f / m_pLM->texture->width;
+    float su = 1.0f / m_pLM->m_pTexture->m_Width;
     VERTEX_INFO *vi = m_pVI;
-    float sv = 1.0f / m_pLM->texture->height;
+    float sv = 1.0f / m_pLM->m_pTexture->m_Height;
     int n = m_numLVertices;
     while (n--) {
         I3D_vertex &vt = level->LockVertices(0)[vi->vertex];
@@ -2195,7 +2195,7 @@ bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
         uv++;
     }
     if (!loaded) {
-        ushort *indx = (ushort *)ib.buffer->Lock(ib.base, 0);
+        ushort *indx = (ushort *)m_IB.buffer->Lock(m_IB.base, 0);
         int fg_index = 0;
         for (I3D_face_group *fg = level->fgroups; fg; fg_index++, fg = fg->next) {
             ushort *rects = m_pPIndex[fg_index];

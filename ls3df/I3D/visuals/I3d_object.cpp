@@ -809,9 +809,9 @@ void I3D_object::m_AddFGroups()
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->uid : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
             else
-                h.sort_value = (h.texture ? h.texture->uid : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -879,7 +879,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                     default:
                         dbgPrintf("renderObject() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
                     }
-                    m_pD3DDevice8->SetTexture(1, h->env_texture->texture);
+                    m_pD3DDevice8->SetTexture(1, h->env_texture->m_pD3DTexture8);
                 } else {
                     switch ((mat->flags >> 8) & 7) {
                     case 1:
@@ -901,7 +901,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                     default:
                         dbgPrintf("renderObject() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
                     }
-                    m_pD3DDevice8->SetTexture(0, h->env_texture->texture);
+                    m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
                     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
                     SetColorOp1(D3DTOP_DISABLE);
                     reset = 1;
@@ -940,7 +940,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             }
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
-                m_pD3DDevice8->SetTexture(0, h->texture->texture);
+                m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
             } else if (!h->env_texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, NULL);
@@ -995,7 +995,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             }
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
-                m_pD3DDevice8->SetTexture(0, h->texture->texture);
+                m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
             } else if (h->env_texture && (!(m_ProblemFlags & 0x10) || (mat->flags & MATF_ENVMAP_BLEND) != 0x100) &&
                     (!(m_ProblemFlags & 0x20) || (mat->flags & MATF_ENVMAP_BLEND) != 0x200) &&
                     (!(m_ProblemFlags & 0x40) || (mat->flags & MATF_ENVMAP_BLEND) != 0x500)) {
@@ -1019,7 +1019,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 default:
                     dbgPrintf("renderObject() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
                 }
-                m_pD3DDevice8->SetTexture(0, h->env_texture->texture);
+                m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
                 reset |= 1;
             } else {
@@ -1048,7 +1048,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             default:
                 dbgPrintf("renderObject() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
             }
-            m_pD3DDevice8->SetTexture(0, h->env_texture->texture);
+            m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
             reset |= 1;
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);

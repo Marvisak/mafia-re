@@ -16,8 +16,8 @@ static void __stdcall StreamCallback(int stream, int event)
     case 1:
         for (int i = stream_shows.size(); i--;) {
             IShow *show = stream_shows[i];
-            if (stream == show->stream)
-                show->stream_done = true;
+            if (stream == show->m_Stream)
+                show->m_StreamDone = true;
         }
         break;
     }
@@ -29,8 +29,8 @@ LS3D_RESULT IShow::OpenStream(const char *name, int unused)
     CloseStream();
     if (FAILED(pISndDriver->streams->Init(0)))
         return I3DERR_UNSUPPORTED;
-    stream_init = true;
-    if (FAILED(pISndDriver->streams->Open(0, &stream, StreamCallback, name, 0)))
+    m_StreamInit = true;
+    if (FAILED(pISndDriver->streams->Open(0, &m_Stream, StreamCallback, name, 0)))
         return I3DERR_NOFILE;
     // Added once. The pointer and the count are set before the size is tested: assigned after it, they take other
     // registers.
@@ -54,29 +54,29 @@ LS3D_RESULT IShow::OpenStream(const char *name, int unused)
 // FUNCTION: LS3DF 0x10075a20
 void IShow::CloseStream()
 {
-    stream_paused = false;
-    stream_done = false;
+    m_StreamPaused = false;
+    m_StreamDone = false;
     stream_shows.remove(this);
-    if (stream != -1) {
+    if (m_Stream != -1) {
         StopStream();
-        if (FAILED(pISndDriver->streams->CloseStream(stream)))
+        if (FAILED(pISndDriver->streams->CloseStream(m_Stream)))
             return;
-        stream = -1;
+        m_Stream = -1;
     }
-    if (stream_init) {
+    if (m_StreamInit) {
         if (SUCCEEDED(pISndDriver->streams->Close(0)))
-            stream_init = false;
+            m_StreamInit = false;
     }
 }
 
 // FUNCTION: LS3DF 0x10075ad0
 LS3D_RESULT IShow::PlayStream(bool loop)
 {
-    if (stream_paused) {
-        stream_paused = false;
-        if (FAILED(pISndDriver->streams->Resume(stream)))
+    if (m_StreamPaused) {
+        m_StreamPaused = false;
+        if (FAILED(pISndDriver->streams->Resume(m_Stream)))
             return I3DERR_GENERIC;
-    } else if (FAILED(pISndDriver->streams->Play(stream, loop)))
+    } else if (FAILED(pISndDriver->streams->Play(m_Stream, loop)))
         return I3DERR_GENERIC;
     return I3D_OK;
 }
@@ -84,26 +84,26 @@ LS3D_RESULT IShow::PlayStream(bool loop)
 // FUNCTION: LS3DF 0x10075b30
 LS3D_RESULT IShow::StopStream()
 {
-    return FAILED(pISndDriver->streams->Stop(stream)) ? I3DERR_GENERIC : I3D_OK;
+    return FAILED(pISndDriver->streams->Stop(m_Stream)) ? I3DERR_GENERIC : I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10075b60
 LS3D_RESULT IShow::PauseStream()
 {
-    if (FAILED(pISndDriver->streams->Pause(stream)))
+    if (FAILED(pISndDriver->streams->Pause(m_Stream)))
         return I3DERR_GENERIC;
-    stream_paused = true;
+    m_StreamPaused = true;
     return I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10075b90
 LS3D_RESULT IShow::SetStreamVolume(int volume)
 {
-    return FAILED(pISndDriver->streams->SetVolume(stream, 0, volume)) ? I3DERR_GENERIC : I3D_OK;
+    return FAILED(pISndDriver->streams->SetVolume(m_Stream, 0, volume)) ? I3DERR_GENERIC : I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10075bc0
 LS3D_RESULT IShow::SetStreamPan(int pan)
 {
-    return FAILED(pISndDriver->streams->SetPan(stream, 0, pan)) ? I3DERR_GENERIC : I3D_OK;
+    return FAILED(pISndDriver->streams->SetPan(m_Stream, 0, pan)) ? I3DERR_GENERIC : I3D_OK;
 }

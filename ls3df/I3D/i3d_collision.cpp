@@ -429,7 +429,7 @@ static void testVisual(I3D_visual *vis)
                     if (lpCallbackGeoTex) {
                         S_vector pos;           // never set
                         if (!fg->material ||
-                            (!fg->material->texture || !fg->material->texture->pixels) &&
+                            (!fg->material->texture || !fg->material->texture->m_pPixels) &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f) ||
                             fg->material->texture && fg->material->flags <= MATF_TWO_SIDED &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f)) {
@@ -553,7 +553,7 @@ static void testVisual(I3D_visual *vis)
                     if (lpCallbackGeoTex) {
                         S_vector pos;           // never set
                         if (!fg->material ||
-                            (!fg->material->texture || !fg->material->texture->pixels) &&
+                            (!fg->material->texture || !fg->material->texture->m_pPixels) &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f) ||
                             fg->material->texture && fg->material->flags <= MATF_TWO_SIDED &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f)) {
@@ -769,22 +769,22 @@ static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_f
     S_texel_info *ti = (S_texel_info *)texel;
     I3D_material *mat = ti->mat;
     ITexture *texture = mat->texture;
-    if (texture && texture->pixels) {
+    if (texture && texture->m_pPixels) {
         float u = ti->u;
         float v = ti->v;
-        uint x = min((uint)(int)(texture->width * u), (uint)(texture->width - 1));
-        uint y = min((uint)(int)(texture->height * v), (uint)(texture->height - 1));
-        uint i = y * texture->width + x;
+        uint x = min((uint)(int)(texture->m_Width * u), (uint)(texture->m_Width - 1));
+        uint y = min((uint)(int)(texture->m_Height * v), (uint)(texture->m_Height - 1));
+        uint i = y * texture->m_Width + x;
         float a;
         if (mat->flags & MATF_ADD_MODE) {
-            const uchar *p = &texture->pixels[i * 4];
+            const uchar *p = &texture->m_pPixels[i * 4];
             S_vector c;
             c.x = p[1] * (1.0f / 255.0f);
             c.y = p[2] * (1.0f / 255.0f);
             c.z = p[3] * (1.0f / 255.0f);
             a = c.x * 0.3f + c.y * 0.6f + c.z * 0.1f;
         } else
-            a = texture->pixels[i * 4] * (1.0f / 255.0f);
+            a = texture->m_pPixels[i * 4] * (1.0f / 255.0f);
         if (a * mat->alpha < 0.1)
             return 2;
     } else if (mat->alpha < 0.1f)

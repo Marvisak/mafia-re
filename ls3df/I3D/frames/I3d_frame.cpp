@@ -39,7 +39,7 @@ I3D_frame::I3D_frame()
     scale = S_vector(1.0f, 1.0f, 1.0f);
     rot.Identity();
     world_scale = 1.0f;
-    owner = NULL;
+    m_pOwner = NULL;
     callback = NULL;
     user_data = 0;
     name = NULL;
@@ -101,18 +101,18 @@ uint I3D_frame::Release()
 // FUNCTION: LS3DF 0x1001ab00
 void I3D_frame::DeleteFromOwner()
 {
-    if (!owner)
+    if (!m_pOwner)
         return;
-    switch (owner->type) {
+    switch (m_pOwner->type) {
     case FRAME_MODEL:
-        ((I3D_model *)owner)->DeleteFrame(this);
+        ((I3D_model *)m_pOwner)->DeleteFrame(this);
         break;
     case FRAME_SCENE:
-        ((I3D_scene *)owner)->DeleteFrame(this);
+        ((I3D_scene *)m_pOwner)->DeleteFrame(this);
         break;
     default:
-        dbgPrintf("!! Invalid owner type:%d  m_pOwner:0x%x  this:0x%x  %s  I3D_frame::DeleteFromOwner()", owner->type,
-            owner, this, GetName());
+        dbgPrintf("!! Invalid owner type:%d  m_pOwner:0x%x  this:0x%x  %s  I3D_frame::DeleteFromOwner()",
+            m_pOwner->type, m_pOwner, this, GetName());
     }
 }
 

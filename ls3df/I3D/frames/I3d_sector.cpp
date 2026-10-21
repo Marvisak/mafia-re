@@ -334,13 +334,13 @@ void I3D_sector::MakeReady()
             dbgPrintf(" !! Out of memory !!  I3D_sector::MakeReady() [2]");
         else {
             occl->Build(verts, num_verts, faces, num_faces, 0xc);
-            if (!owner)
+            if (!m_pOwner)
                 dbgPrintf("!!+ Sector has no owner. I3D_sector::MakeReady() this:0x%x %s", this, GetName());
             else {
-                if (owner->GetType() == FRAME_SCENE)
-                    ((I3D_scene *)owner)->AddFrame(occl);
+                if (m_pOwner->GetType() == FRAME_SCENE)
+                    ((I3D_scene *)m_pOwner)->AddFrame(occl);
                 else
-                    ((I3D_model *)owner)->AddFrame(occl);
+                    ((I3D_model *)m_pOwner)->AddFrame(occl);
                 occl->Release();
             }
             if (scene) {

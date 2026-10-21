@@ -127,7 +127,7 @@ void I3D_part_renderer::m_AddFGroups()
             if (part->part_flags & PARTF_OPAQUE && part->fade * part->transparency >= 1.0f) {
                 h.sort_value = 0;
                 if (h.texture)
-                    h.sort_value = h.texture->uid & 0x7fff;
+                    h.sort_value = h.texture->m_UID & 0x7fff;
                 AddFGHlpStruct.num_opaque++;
             } else {
                 h.sort_value = (FloatToInt(part->sort_dist) & 0x3fffffff) | 0x80000000;
@@ -283,7 +283,7 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetBlendState(1);
         }
         if (h->texture)
-            m_pD3DDevice8->SetTexture(0, h->texture->texture);
+            m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
         else
             m_pD3DDevice8->SetTexture(0, NULL);
     }
@@ -1177,7 +1177,7 @@ void I3D_part_base::m_AddFGroups()
         if (part_flags & PARTF_OPAQUE && fade * transparency >= 1.0f) {
             h.sort_value = 0;
             if (h.texture)
-                h.sort_value = h.texture->uid & 0x7fff;
+                h.sort_value = h.texture->m_UID & 0x7fff;
             AddFGHlpStruct.num_opaque++;
         } else {
             h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
@@ -1236,7 +1236,7 @@ void I3D_part_base::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetBlendState(1);
         }
         if (h->texture)
-            m_pD3DDevice8->SetTexture(0, h->texture->texture);
+            m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
         else
             m_pD3DDevice8->SetTexture(0, NULL);
     }

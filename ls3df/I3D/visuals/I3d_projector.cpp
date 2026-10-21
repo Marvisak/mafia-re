@@ -150,7 +150,7 @@ void I3D_projector::SetTexture(ITexture *tex)
             texture->Release();
         texture = tex;
         if (tex)
-            tex->ref++;
+            tex->m_RefCount++;
     }
 }
 
@@ -845,9 +845,9 @@ void I3D_projector::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     SetCullState(D3DCULL_CCW);
     SetClipping(1);
     if (texture)
-        m_pD3DDevice8->SetTexture(0, texture->texture);
+        m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
     else
-        m_pD3DDevice8->SetTexture(0, material->GetTexture()->texture);
+        m_pD3DDevice8->SetTexture(0, material->GetTexture()->m_pD3DTexture8);
     pGlobalIGraph->SetWorldMatrix(GetMatrix());
     SetZBias(RsZBiasProjector);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);

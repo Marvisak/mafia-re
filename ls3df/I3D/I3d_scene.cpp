@@ -234,11 +234,11 @@ I3D_frame *I3D_scene::FindFrame(const char *name, uint flags) const
 // FUNCTION: LS3DF 0x10049290
 void I3D_scene::AddFrame(I3D_frame *frame)
 {
-    if (frame->owner == frame)
+    if (frame->m_pOwner == frame)
         return;
     frame->ref++;
     frame->DeleteFromOwner();
-    frame->owner = this;
+    frame->m_pOwner = this;
     owned_frames.push_back(frame);
     if (frame->GetType() != FRAME_EMITOR)
         return;
@@ -255,7 +255,7 @@ void I3D_scene::AddFrame(I3D_frame *frame)
 LS3D_RESULT I3D_scene::DeleteFrame(I3D_frame *frame)
 {
     if (owned_frames.remove(frame)) {
-        frame->owner = NULL;
+        frame->m_pOwner = NULL;
         if (frame->frm_flags & FRMFLAGS_TICK) {
             frame->frm_flags &= ~FRMFLAGS_TICK;
             tick_frames.remove(frame);
@@ -539,7 +539,7 @@ void I3D_scene::Close()
     ipol_set = NULL;
     I3D_frame **p = &owned_frames[0];
     for (int k = owned_frames.size(); k--; p++) {
-        (*p)->owner = NULL;
+        (*p)->m_pOwner = NULL;
         (*p)->Release();
     }
     owned_frames.reset();
@@ -1528,7 +1528,7 @@ void I3D_scene::m_RenderWeatherSystem()
     SetAlphaState(1);
     SetBlendState(0);
     if (ws_flags & WSF_SNOW && pSnowTexture)
-        m_pD3DDevice8->SetTexture(0, pSnowTexture->texture);
+        m_pD3DDevice8->SetTexture(0, pSnowTexture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);

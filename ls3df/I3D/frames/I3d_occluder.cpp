@@ -147,8 +147,8 @@ LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
     AddToRemoveFromSceneRing(NULL);
     if (frame) {
         I3D_scene *scn;
-        if (frame->owner && frame->owner->GetType() == FRAME_SCENE)
-            scn = (I3D_scene *)frame->owner;
+        if (frame->m_pOwner && frame->m_pOwner->GetType() == FRAME_SCENE)
+            scn = (I3D_scene *)frame->m_pOwner;
         else {
             scn = NULL;
             for (I3D_frame *f = frame; f; f = f->parent) {

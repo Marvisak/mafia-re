@@ -142,7 +142,7 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
                 for (i = 0; i < last; i++) {
                     if (i == lod)
                         continue;
-                    if (mesh->levels[i]->fgroups->material->GetTexture()->flags & ITC_LOADED) {
+                    if (mesh->levels[i]->fgroups->material->GetTexture()->m_Flags & ITC_LOADED) {
                         lod = i;
                         break;
                     }
@@ -702,8 +702,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 // FUNCTION: LS3DF 0x10065560
 static void VisualProc(I3D_visual *vis)
 {
-    if (vis->owner)
-        vis->owner->render_number = RenderNumber;
+    if (vis->m_pOwner)
+        vis->m_pOwner->render_number = RenderNumber;
     if (m_ProblemFlags & 2)
         vis->frm_flags |= FRMFLAGS_CLIP;
     switch (vis->GetVisualType()) {

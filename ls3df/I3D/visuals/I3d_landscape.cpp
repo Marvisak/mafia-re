@@ -293,7 +293,7 @@ void I3D_landpatch::Render()
     RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE);
     gLandVB->Unlock();
     pGlobalIGraph->SetWorldMatrix(GetMatrix());
-    m_pD3DDevice8->SetTexture(0, texture ? texture->texture : NULL);
+    m_pD3DDevice8->SetTexture(0, texture ? texture->m_pD3DTexture8 : NULL);
     m_pD3DDevice8->DrawPrimitive(D3DPT_TRIANGLELIST, 0, gNumLandVerts / 3);
 }
 
@@ -434,7 +434,7 @@ void I3D_landscape::Render()
     SetCullState(D3DCULL_CCW);
     SetVertexFormat(1);
     m_pD3DDevice8->SetStreamSource(0, gLandVB, sizeof(LVERTEX2));
-    m_pD3DDevice8->SetTexture(1, gLandTextures[4] ? gLandTextures[4]->texture : NULL);
+    m_pD3DDevice8->SetTexture(1, gLandTextures[4] ? gLandTextures[4]->m_pD3DTexture8 : NULL);
     SetAlphaState(0);
     SetColorOp1(D3DTOP_MODULATE);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);

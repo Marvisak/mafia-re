@@ -256,7 +256,7 @@ struct I3D_bvolume {
 
 // The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC, vtable 0x1009b9b8). The game reaches its
 // members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, user_data,
-// frm_flags, matrix, f_matrix, name, parent, type), the others are guesses.
+// frm_flags, matrix, f_matrix, name, parent, type), m_pOwner DeleteFromOwner's message's, the others are guesses.
 // VTABLE: LS3DF 0x1009b9b8
 class I3D_frame {
 public:
@@ -502,7 +502,7 @@ public:
     char *name;                         // 0x100, "model.frame" in a model
     const char *orig_name;              // 0x104, the frame's own name, inside name
     I3D_CALLBACK *callback;             // 0x108
-    I3D_frame *owner;                   // 0x10c, the model or scene the frame is in
+    I3D_frame *m_pOwner;                // 0x10c, the model or scene the frame is in
     I3D_FRAME_TYPE type;                // 0x110
     float world_scale;                  // 0x114
     uint update_count;                  // 0x118, counts the updates that moved it
@@ -2619,10 +2619,10 @@ public:
         m_pPIndex = NULL;
         m_pRectangles = NULL;
         m_numRectangles = 0;
-        memset(&ib, 0, sizeof(ib));
+        memset(&m_IB, 0, sizeof(m_IB));
         m_pVI = NULL;
-        memset(&pos_vb, 0, sizeof(pos_vb));
-        mem = 0;
+        memset(&m_PosVB, 0, sizeof(m_PosVB));
+        m_MemSize = 0;
         dirty = true;
     }
     ~litLod();
@@ -2674,15 +2674,15 @@ public:
     VERTEX_INFO *m_pVI;                 // 0x40
     union {
         uint *m_pColors;                // 0x44, the colors, one per vertex
-        COMPLETE_VB_STRUCT pos_vb;      // 0x44, the lightmaps': the lit vertices' positions, without hardware T&L
+        COMPLETE_VB_STRUCT m_PosVB;     // 0x44, the lightmaps': the lit vertices' positions, without hardware T&L
     };
     RECTANGLE_INFO *m_pRectangles;      // 0x50
     int m_numRectangles;                // 0x54
     LightMap *m_pLM;                    // 0x58, the rectangles packed into a texture
     int m_numPIndex;                    // 0x5c, the level's face groups
     ushort **m_pPIndex;                 // 0x60, for each face group its faces' rectangles
-    COMPLETE_IB_STRUCT ib;              // 0x64, the faces in lit vertices
-    uint mem;                           // 0x70, the lightmap's memory (m_CreateLM's), 0 for colors
+    COMPLETE_IB_STRUCT m_IB;            // 0x64, the faces in lit vertices
+    uint m_MemSize;                     // 0x70, the lightmap's memory (m_CreateLM's), 0 for colors
 };
 
 // SYNTHETIC: LS3DF 0x10029f60
@@ -2747,14 +2747,15 @@ public:
 // indices: the vertices the joint moves alone, then those it shares with another joint by their weights; the vertices
 // after all joints' stay where the mesh has them. PS2 keeps one SMeshDef in the single mesh, the PC one per lod.
 
-// A joint's part of a level (PS2 SM_INFO, 0x68 bytes on PC; the names are guesses). The file has it up to weights.
+// A joint's part of a level (PS2 SM_INFO, 0x68 bytes on PC; m_vertNum is LoadImage's message's, the other names are
+// guesses). The file has it up to weights.
 struct SM_INFO {
     S_matrix matrix;                    // 0x00, from the mesh's space into the joint's
     int num_verts;                      // 0x40, the vertices the joint moves alone
-    int num_blend;                      // 0x44, the vertices after them, blended with blend_joint's moves
+    int m_vertNum;                      // 0x44, the vertices after them, blended with blend_joint's moves
     int blend_joint;                    // 0x48, the other joint's index + 1, 0 for the single mesh itself
     I3D_bbox bbox;                      // 0x4c, of the joint's vertices, in its space
-    float *weights;                     // 0x64, the joint's share of each of the num_blend vertices
+    float *weights;                     // 0x64, the joint's share of each of the m_vertNum vertices
 };
 
 // The joints' parts of a level, shared by the copies of a single mesh (PS2 SMeshDef, 0x28 bytes on PC), reference
@@ -2906,7 +2907,7 @@ inline const S_matrix &I3D_joint::GetJointMatrix()
 // vertices are split into regions, each with a weight for every level; m_pMorphDef holds the levels' positions and
 // normals for each region of each lod of the mesh, and the morph sums them into the lod's vertices when the weights
 // change (UpdateMorphLod). Class names are PS2's, member names the messages' (m_numLevels, m_numRegions, m_pMorphDef)
-// or guesses.
+// or guesses, the classes' in the messages' style.
 
 // A region's vertices in one lod (PS2 morph_region, 0xc bytes)
 struct morph_region {
@@ -2925,11 +2926,11 @@ public:
     ~MorphDef();
     int Release();
 
-    int num_lods;                       // 0x00
-    int num_regions;                    // 0x04
-    morph_region *regions;              // 0x08, num_regions for each lod
-    int ref;                            // 0x0c
-    I3D_bvolume bvol;                   // 0x10, the morph's (LoadImageB reads it)
+    int m_numLods;                      // 0x00
+    int m_numRegions;                   // 0x04
+    morph_region *m_pRegions;           // 0x08, m_numRegions for each lod
+    int m_RefCount;                     // 0x0c
+    I3D_bvolume m_BVolume;              // 0x10, the morph's (LoadImageB reads it)
 };
 
 // What morphBase::unknown_18 points to (PC only): nothing in LS3DF creates one, the morphs only release it. Its
@@ -2941,7 +2942,7 @@ struct S_morph_unknown {
     ~S_morph_unknown();
 };
 
-// morphBase::flags (names guessed; PS2's are other bits, a dirty bit for each lod, 0x10000 and 0x20000)
+// morphBase::m_Flags (names guessed; PS2's are other bits, a dirty bit for each lod, 0x10000 and 0x20000)
 #define MORPHF_DIRTY 0x1                // the weights changed: UpdateMorphLod moves the vertices
 #define MORPHF_LOADED 0x2               // m_pMorphDef holds the levels (LoadImageB, or Duplicate's copy)
 #define MORPHF_UNKNOWN_4 0x4            // set by the constructor, cleared by LoadImage and Duplicate; nothing tests it
@@ -2960,7 +2961,8 @@ public:
     void Clear();
     LS3D_RESULT SetWeightB(int region, int level, float weight);
     float GetWeightB(int region, int level) const;
-    // norm_weights from weights: each region's scaled to a sum of 1, or all on the first level if they are all zero
+    // m_pNormWeights from m_pWeights: each region's scaled to a sum of 1, or all on the first level if they are all
+    // zero
     void NormalizeWeights();
     // Sums the levels of the lod's regions into its vertices, if the weights changed (the second one also into the
     // positions at pos, stride bytes apart: a lod's vertices)
@@ -2970,11 +2972,11 @@ public:
     LS3D_RESULT DuplicateMorphDef(morphBase *mb);
     void LoadImageB();
 
-    uint flags;                         // 0x00, MORPHF_*
+    uint m_Flags;                       // 0x00, MORPHF_*
     int m_numLevels;                    // 0x04
     int m_numRegions;                   // 0x08
-    float *weights;                     // 0x0c, m_numLevels for each region; norm_weights is in the same block
-    float *norm_weights;                // 0x10
+    float *m_pWeights;                  // 0x0c, m_numLevels for each region; m_pNormWeights is in the same block
+    float *m_pNormWeights;              // 0x10
     MorphDef *m_pMorphDef;              // 0x14
     S_morph_unknown *unknown_18;        // 0x18
 };

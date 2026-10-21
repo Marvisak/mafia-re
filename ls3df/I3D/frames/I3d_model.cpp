@@ -30,7 +30,7 @@ void I3D_model::Close()
     ipol_set = NULL;
     I3D_frame **p = &frames[0];
     for (int i = frames.size(); i--; p++) {
-        (*p)->owner = NULL;
+        (*p)->m_pOwner = NULL;
         (*p)->Release();
     }
     frames.reset();
@@ -74,14 +74,14 @@ void I3D_model::AddFrame(I3D_frame *frame)
     frame->ref++;
     frame->DeleteFromOwner();
     frames.push_back(frame);
-    frame->owner = this;
+    frame->m_pOwner = this;
 }
 
 // FUNCTION: LS3DF 0x10033720
 LS3D_RESULT I3D_model::DeleteFrame(I3D_frame *frame)
 {
     if (frames.remove(frame)) {
-        frame->owner = NULL;
+        frame->m_pOwner = NULL;
         if (frame->ref > 0)
             frame->Release();
         return I3D_OK;

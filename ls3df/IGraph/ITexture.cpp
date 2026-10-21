@@ -101,23 +101,23 @@ bool RemoveTextureFromTextureManager(ITexture *texture);
             x <<= 1;                                                                                                 \
         while (sy > y)                                                                                               \
             y <<= 1;                                                                                                 \
-        width = x;                                                                                                   \
-        height = y;                                                                                                  \
+        m_Width = x;                                                                                                 \
+        m_Height = y;                                                                                                \
     }
 
 // FUNCTION: LS3DF 0x10075c10
 ITexture::ITexture()
 {
-    uid = 0;
-    init = false;
-    texture = NULL;
-    lock_surface = NULL;
-    ref = 1;
-    pixels = NULL;
-    mem_size = 0;
-    flags = 0;
-    create_flags = 0;
-    managed = NULL;
+    m_UID = 0;
+    m_Init = false;
+    m_pD3DTexture8 = NULL;
+    m_pLockSurface = NULL;
+    m_RefCount = 1;
+    m_pPixels = NULL;
+    m_MemSize = 0;
+    m_Flags = 0;
+    m_CreateFlags = 0;
+    m_pManaged = NULL;
 }
 
 // FUNCTION: LS3DF 0x10075c50
@@ -129,15 +129,15 @@ ITexture::~ITexture()
 // FUNCTION: LS3DF 0x10075cd0
 int ITexture::Release()
 {
-    if (--ref < 0) {
+    if (--m_RefCount < 0) {
         dbgPrintf("!! m_RefCount  ITexture this:0x%x", this);
         return 0;
     }
-    if (!ref) {
+    if (!m_RefCount) {
         delete this;
         return 0;
     }
-    return ref;
+    return m_RefCount;
 }
 
 // Makes this a copy of another texture, with a texture of its own
@@ -146,36 +146,36 @@ LS3D_RESULT ITexture::Duplicate(ITexture *src)
 {
     IDirect3DSurface8 *src_surface, *dst_surface;
     Close();
-    if (src && src->init) {
-        flags = src->flags;
-        create_flags = src->create_flags;
-        file_name = src->file_name;
-        name = src->name;
-        alpha_file_name = src->alpha_file_name;
-        alpha_name = src->alpha_name;
-        width = src->width;
-        height = src->height;
-        color_key = src->color_key;
-        if (src->pixels) {
-            pixels = new uchar[width * height * 4];
-            if (!pixels)
+    if (src && src->m_Init) {
+        m_Flags = src->m_Flags;
+        m_CreateFlags = src->m_CreateFlags;
+        m_FileName = src->m_FileName;
+        m_pName = src->m_pName;
+        m_AlphaFileName = src->m_AlphaFileName;
+        m_pAlphaName = src->m_pAlphaName;
+        m_Width = src->m_Width;
+        m_Height = src->m_Height;
+        m_ColorKey = src->m_ColorKey;
+        if (src->m_pPixels) {
+            m_pPixels = new uchar[m_Width * m_Height * 4];
+            if (!m_pPixels)
                 return I3DERR_OUTOFMEM;
-            memcpy(pixels, src->pixels, width * height * 4);
+            memcpy(m_pPixels, src->m_pPixels, m_Width * m_Height * 4);
         }
-        levels = src->levels;
-        mem_size = src->mem_size;
+        m_Levels = src->m_Levels;
+        m_MemSize = src->m_MemSize;
         D3DSURFACE_DESC desc;
-        src->texture->GetLevelDesc(0, &desc);
-        m_pD3DDevice8->CreateTexture(width, height, levels, 0, desc.Format, D3DPOOL_MANAGED, &texture);
-        for (int i = levels; i; ) {
-            src->texture->GetSurfaceLevel(--i, &src_surface);
-            texture->GetSurfaceLevel(i, &dst_surface);
+        src->m_pD3DTexture8->GetLevelDesc(0, &desc);
+        m_pD3DDevice8->CreateTexture(m_Width, m_Height, m_Levels, 0, desc.Format, D3DPOOL_MANAGED, &m_pD3DTexture8);
+        for (int i = m_Levels; i; ) {
+            src->m_pD3DTexture8->GetSurfaceLevel(--i, &src_surface);
+            m_pD3DTexture8->GetSurfaceLevel(i, &dst_surface);
             m_pD3DDevice8->CopyRects(src_surface, NULL, 0, dst_surface, NULL);
             src_surface->Release();
             dst_surface->Release();
         }
         m_UncachedTextureList.push_back(this);
-        init = true;
+        m_Init = true;
         Preload();
     }
     return I3D_OK;
@@ -210,78 +210,78 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     FILETIME SrcBMPLastWriteTime;
 
     Close();
-    this->flags = flags;
-    create_flags = flags;
+    this->m_Flags = flags;
+    m_CreateFlags = flags;
     if (flags & ITC_MANAGED) {
-        file_name = name;
-        int len = file_name.Size();
-        const char *cp = &file_name[0], *slash = (const char *)-1;
+        m_FileName = name;
+        int len = m_FileName.Size();
+        const char *cp = &m_FileName[0], *slash = (const char *)-1;
         for (; len; len--, cp++) {
             if (*cp == '\\')
                 slash = cp;
         }
-        this->name = slash + 1 ? slash + 1 : cp;
-        if (!AddTextureToTextureManager(this, name, this->flags))
+        this->m_pName = slash + 1 ? slash + 1 : cp;
+        if (!AddTextureToTextureManager(this, name, this->m_Flags))
             return I3DERR_GENERIC;
-        init = true;
+        m_Init = true;
         m_CachedTextureList.push_back(this);
         return I3D_OK;
     }
 
     if (flags & ITC_FROM_MEMORY) {
-        this->flags = flags | ITC_UNCACHED;
+        this->m_Flags = flags | ITC_UNCACHED;
         if (!name)
             return I3DERR_INVALIDPARAMS;
         if (sx > 0)
-            width = sx;
+            m_Width = sx;
         else
-            width = (ushort)((BITMAPINFOHEADER *)name)->biWidth;
+            m_Width = (ushort)((BITMAPINFOHEADER *)name)->biWidth;
         if (sy > 0)
-            height = sy;
+            m_Height = sy;
         else
-            height = (ushort)((BITMAPINFOHEADER *)name)->biHeight;
-        ushort w = width, h = height;
-        if (this->flags & ITC_HALF) {
+            m_Height = (ushort)((BITMAPINFOHEADER *)name)->biHeight;
+        ushort w = m_Width, h = m_Height;
+        if (this->m_Flags & ITC_HALF) {
             w >>= 1;
             h >>= 1;
         }
         TEXTURE_SIZE(w, h);
-        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, true, NULL, -1))
+        if (!LoadImage(name, 0, 0, this->m_Flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, true, NULL, -1))
             return I3DERR_FILECORRUPTED;
         SrcBMPPitchAdder = SrcBMPInfo.biBitCount / 8 * SrcBMPInfo.biWidth + SrcBMPInfo.biXPelsPerMeter;
     } else if (name) {
-        this->flags = flags & ~ITC_EMPTY;
-        file_name = name;
+        this->m_Flags = flags & ~ITC_EMPTY;
+        m_FileName = name;
         int handle = -1;
-        LS3D_RESULT result = pGlobalIGraph->GetImageInfo(name, width, height, TempBPP, 0, &handle);
+        LS3D_RESULT result = pGlobalIGraph->GetImageInfo(name, m_Width, m_Height, TempBPP, 0, &handle);
         if (result < 0)
             return result;
-        int len = file_name.Size();
-        const char *cp = &file_name[0], *slash = (const char *)-1;
+        int len = m_FileName.Size();
+        const char *cp = &m_FileName[0], *slash = (const char *)-1;
         for (; len; len--, cp++) {
             if (*cp == '\\')
                 slash = cp;
         }
-        this->name = slash + 1 ? slash + 1 : cp;
-        if (this->flags & ITC_ALPHA) {
+        this->m_pName = slash + 1 ? slash + 1 : cp;
+        if (this->m_Flags & ITC_ALPHA) {
             if (TempBPP == 8 || TempBPP == 24)
-                this->flags &= ~ITC_ALPHA;
+                this->m_Flags &= ~ITC_ALPHA;
             if (TempBPP == 16)
-                this->flags |= ITC_COLORKEY;
+                this->m_Flags |= ITC_COLORKEY;
         }
         if (sx > 0)
-            width = sx;
+            m_Width = sx;
         if (sy > 0)
-            height = sy;
-        if (!(this->flags & ITC_ANYSIZE)) {
-            ushort w = width, h = height;
-            if (this->flags & ITC_HALF) {
+            m_Height = sy;
+        if (!(this->m_Flags & ITC_ANYSIZE)) {
+            ushort w = m_Width, h = m_Height;
+            if (this->m_Flags & ITC_HALF) {
                 w >>= 1;
                 h >>= 1;
             }
             TEXTURE_SIZE(w, h);
         }
-        if (!LoadImage(name, 0, 0, this->flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, false,
+        if (!LoadImage(name, 0, 0, this->m_Flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, false,
                 &SrcBMPLastWriteTime, handle))
             return I3DERR_FILECORRUPTED;
         SrcBMPPitchAdder = SrcBMPInfo.biBitCount / 8 * SrcBMPInfo.biWidth + SrcBMPInfo.biXPelsPerMeter;
@@ -289,40 +289,40 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         if (!(flags & ITC_EMPTY)) {
             dbgPrintf("ITexture::Create() - Warning! Neither Texture nor Alpha was specified, but ITC_EMPTY wasn't "
                 "used!");
-            this->flags |= ITC_EMPTY;
+            this->m_Flags |= ITC_EMPTY;
         }
-        width = sx;
-        height = sy;
+        m_Width = sx;
+        m_Height = sy;
         ushort w = sx, h = sy;
-        if (this->flags & ITC_HALF) {
+        if (this->m_Flags & ITC_HALF) {
             w >>= 1;
             h >>= 1;
         }
-        if (!(this->flags & ITC_ANYSIZE))
+        if (!(this->m_Flags & ITC_ANYSIZE))
             TEXTURE_SIZE(w, h);
     }
 
-    if (alpha_name && *alpha_name && !(this->flags & ITC_USE_ALPHA)) {
+    if (alpha_name && *alpha_name && !(this->m_Flags & ITC_USE_ALPHA)) {
         dbgPrintf("ITexture::Create() - Warning! AlphaName was specified, but ITC_USE_ALPHA wasn't! (%s, %s)", name,
             alpha_name);
-        this->flags |= ITC_USE_ALPHA;
+        this->m_Flags |= ITC_USE_ALPHA;
     }
-    if (this->flags & ITC_USE_ALPHA) {
+    if (this->m_Flags & ITC_USE_ALPHA) {
         if (alpha_name) {
-            alpha_file_name = alpha_name;
-            if (!LoadImage(alpha_name, SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, this->flags, &pSrcOptBMPPtr,
+            m_AlphaFileName = alpha_name;
+            if (!LoadImage(alpha_name, SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, this->m_Flags, &pSrcOptBMPPtr,
                     &pSrcOptBMPPal, &SrcOptBMPInfo, false, &SrcOptBMPLastWriteTime, -1)) {
                 delete[] pSrcBMPPal;
                 delete[] pSrcBMPPtr;
                 return I3DERR_NOFILE1;
             }
-            int len = alpha_file_name.Size();
-            const char *cp = &alpha_file_name[0], *slash = (const char *)-1;
+            int len = m_AlphaFileName.Size();
+            const char *cp = &m_AlphaFileName[0], *slash = (const char *)-1;
             for (; len; len--, cp++) {
                 if (*cp == '\\')
                     slash = cp;
             }
-            this->alpha_name = slash + 1 ? slash + 1 : cp;
+            this->m_pAlphaName = slash + 1 ? slash + 1 : cp;
             pOptBMPPtr = new uchar[SrcOptBMPInfo.biHeight * SrcOptBMPInfo.biXPelsPerMeter];
             if (!pOptBMPPtr) {
                 delete[] pSrcBMPPtr;
@@ -370,8 +370,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             pSrcOptBMPPtr = NULL;
             delete[] pSrcOptBMPPal;
             pSrcOptBMPPal = NULL;
-        } else if (!(this->flags & ITC_EMPTY)) {
-            this->flags &= ~ITC_USE_ALPHA;
+        } else if (!(this->m_Flags & ITC_EMPTY)) {
+            this->m_Flags &= ~ITC_USE_ALPHA;
             dbgPrintf("ITexture::Create() - Warning! ITC_USE_ALPHA specified, but ( AlphaName == NULL ) !!  %s", name);
         }
     }
@@ -380,53 +380,53 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     D3DFORMAT format;
     D3DFORMAT dxt_format = (D3DFORMAT)0;
     ushort dxt = 0;
-    if (!(this->flags & ITC_TRUECOLOR) || (format = m_TrueColorTexturePixelFormat) == 0) {
-        this->flags &= ~ITC_TRUECOLOR;
-        if ((this->flags & (ITC_ALPHA | ITC_USE_ALPHA)) && !(this->flags & ITC_COLORKEY)) {
-            if (this->flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
+    if (!(this->m_Flags & ITC_TRUECOLOR) || (format = m_TrueColorTexturePixelFormat) == 0) {
+        this->m_Flags &= ~ITC_TRUECOLOR;
+        if ((this->m_Flags & (ITC_ALPHA | ITC_USE_ALPHA)) && !(this->m_Flags & ITC_COLORKEY)) {
+            if (this->m_Flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
                 dxt = 3;
                 dxt_format = m_AlphaTexturePixelFormat;
             } else
                 format = m_AlphaTexturePixelFormat;
-        } else if (this->flags & ITC_COLORKEY) {
-            if (!(this->flags & ITC_MIPMAP)) {
-                if (this->flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
+        } else if (this->m_Flags & ITC_COLORKEY) {
+            if (!(this->m_Flags & ITC_MIPMAP)) {
+                if (this->m_Flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
                     dxt = 2;
                     dxt_format = m_Alpha1TexturePixelFormat;
                 } else
                     format = m_Alpha1TexturePixelFormat;
             } else {
-                if (this->flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
+                if (this->m_Flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
                     dxt = 3;
                     dxt_format = m_AlphaTexturePixelFormat;
                 } else
                     format = m_AlphaTexturePixelFormat;
             }
         } else {
-            if (this->flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
+            if (this->m_Flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
                 dxt = 1;
                 dxt_format = m_Alpha1TexturePixelFormat;
             } else
                 format = m_TexturePixelFormat;
         }
     }
-    this->format = format;
-    ushort num_levels = !(this->flags & ITC_MIPMAP) ? 1 : levels;
-    m_pD3DDevice8->CreateTexture(width, height, num_levels, 0, format, D3DPOOL_MANAGED, &texture);
-    this->levels = (ushort)texture->GetLevelCount();
+    this->m_Format = format;
+    ushort num_levels = !(this->m_Flags & ITC_MIPMAP) ? 1 : levels;
+    m_pD3DDevice8->CreateTexture(m_Width, m_Height, num_levels, 0, format, D3DPOOL_MANAGED, &m_pD3DTexture8);
+    this->m_Levels = (ushort)m_pD3DTexture8->GetLevelCount();
 
-    if (!(this->flags & (ITC_EMPTY | ITC_KEEP_PIXELS | ITC_FROM_MEMORY))) {
+    if (!(this->m_Flags & (ITC_EMPTY | ITC_KEEP_PIXELS | ITC_FROM_MEMORY))) {
         bool presaved = false;
         if (dxt == 1)
             presaved = m_TryPresavedDXT(name, NULL, 1, &SrcBMPLastWriteTime, NULL);
         else if (dxt > 1)
-            presaved = m_TryPresavedDXT(name, this->alpha_name, dxt, &SrcBMPLastWriteTime, &SrcOptBMPLastWriteTime);
-        else if (this->format == D3DFMT_R5G6B5 || this->format == D3DFMT_X1R5G5B5 ||
-                this->format == D3DFMT_A1R5G5B5)
+            presaved = m_TryPresavedDXT(name, this->m_pAlphaName, dxt, &SrcBMPLastWriteTime, &SrcOptBMPLastWriteTime);
+        else if (this->m_Format == D3DFMT_R5G6B5 || this->m_Format == D3DFMT_X1R5G5B5 ||
+                this->m_Format == D3DFMT_A1R5G5B5)
             presaved = m_TryPresaved_555_565(name, &SrcBMPLastWriteTime);
         if (presaved) {
-            init = true;
-            if (!(this->flags & ITC_UNCACHED))
+            m_Init = true;
+            if (!(this->m_Flags & ITC_UNCACHED))
                 m_CachedTextureList.push_back(this);
             else
                 m_UncachedTextureList.push_back(this);
@@ -437,33 +437,33 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         }
     }
 
-    if (!(this->flags & ITC_EMPTY)) {
-        pixels = new uchar[SrcBMPInfo.biWidth * SrcBMPInfo.biHeight * 4];
-        if (!pixels) {
+    if (!(this->m_Flags & ITC_EMPTY)) {
+        m_pPixels = new uchar[SrcBMPInfo.biWidth * SrcBMPInfo.biHeight * 4];
+        if (!m_pPixels) {
             delete[] pSrcBMPPtr;
             delete[] pSrcBMPPal;
             return I3DERR_OUTOFMEM;
         }
         // To ARGB bytes, the rows from the top: the image's start bottom-up
-        color_key = 0;
+        m_ColorKey = 0;
         switch (SrcBMPInfo.biBitCount) {
         case 8: {
             // The color key is palette entry 0's color in the texture's format
             switch (format) {
             case D3DFMT_R5G6B5:
-                color_key = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 11 | pSrcBMPPal[1] >> 2 << 5;
+                m_ColorKey = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 11 | pSrcBMPPal[1] >> 2 << 5;
                 break;
             case D3DFMT_A8R8G8B8:
-                color_key = pSrcBMPPal[0] | pSrcBMPPal[2] << 16 | pSrcBMPPal[1] << 8;
+                m_ColorKey = pSrcBMPPal[0] | pSrcBMPPal[2] << 16 | pSrcBMPPal[1] << 8;
                 break;
             case D3DFMT_A4R4G4B4:
             case D3DFMT_DXT3:
-                color_key = pSrcBMPPal[0] >> 4 | pSrcBMPPal[2] >> 4 << 8 | pSrcBMPPal[1] >> 4 << 4;
+                m_ColorKey = pSrcBMPPal[0] >> 4 | pSrcBMPPal[2] >> 4 << 8 | pSrcBMPPal[1] >> 4 << 4;
                 break;
             case D3DFMT_X1R5G5B5:
             case D3DFMT_A1R5G5B5:
             case D3DFMT_DXT1:
-                color_key = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 10 | pSrcBMPPal[1] >> 3 << 5;
+                m_ColorKey = pSrcBMPPal[0] >> 3 | pSrcBMPPal[2] >> 3 << 10 | pSrcBMPPal[1] >> 3 << 5;
                 break;
             }
             uchar *opt = NULL;
@@ -471,13 +471,13 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biWidth;
             int i = SrcBMPInfo.biHeight - 1;
             uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
-            uchar *dst = pixels;
+            uchar *dst = m_pPixels;
             for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     uchar c = *src;
                     if (opt)
                         *dst = *opt++;
-                    else if (this->flags & ITC_COLORKEY) {
+                    else if (this->m_Flags & ITC_COLORKEY) {
                         uint color;
                         switch (format) {
                         case D3DFMT_R5G6B5:
@@ -499,7 +499,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                                 pSrcBMPPal[c * 4 + 1] >> 3 << 5;
                             break;
                         }
-                        *dst = color == color_key ? 0 : 0xff;
+                        *dst = color == m_ColorKey ? 0 : 0xff;
                     } else
                         *dst = 0xff;
                     dst++;
@@ -521,16 +521,16 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             SrcBMPPitchAdder = (uint)SrcBMPPitchAdder >> 1;
             int i = SrcBMPInfo.biHeight - 1;
             ushort *src = (ushort *)((uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter);
-            uchar *dst = pixels;
+            uchar *dst = m_pPixels;
             for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     ushort c = *src;
                     uchar r = (c & 0x7c00) >> 7, g = (c & 0x3e0) >> 2, b = *src << 3;
-                    if (this->flags & ITC_ALPHA)
+                    if (this->m_Flags & ITC_ALPHA)
                         *dst = c & 0x8000 ? 0xff : 0;
                     else if (opt)
                         *dst = *opt++;
-                    else if ((this->flags & ITC_COLORKEY) && c == color_key)
+                    else if ((this->m_Flags & ITC_COLORKEY) && c == m_ColorKey)
                         *dst = 0;
                     else
                         *dst = 0xff;
@@ -551,13 +551,13 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
             int i = SrcBMPInfo.biHeight - 1;
             uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
-            uchar *dst = pixels;
+            uchar *dst = m_pPixels;
             for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     uchar r = src[2], g = src[1], b = src[0];
                     if (opt)
                         *dst = *opt++;
-                    else if ((this->flags & ITC_COLORKEY) && b == color_key)
+                    else if ((this->m_Flags & ITC_COLORKEY) && b == m_ColorKey)
                         *dst = 0;
                     else
                         *dst = 0xff;
@@ -578,15 +578,15 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
             int i = SrcBMPInfo.biHeight - 1;
             uchar *src = (uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter;
-            uchar *dst = pixels;
+            uchar *dst = m_pPixels;
             for (; i >= 0; i--) {
                 for (int j = 0; j < SrcBMPInfo.biWidth; j++) {
                     uchar r = src[2], b = src[0], g = src[1];
-                    if (this->flags & ITC_ALPHA)
+                    if (this->m_Flags & ITC_ALPHA)
                         *dst = src[3];
                     else if (opt)
                         *dst = *opt++;
-                    else if ((this->flags & ITC_COLORKEY) && b == color_key)
+                    else if ((this->m_Flags & ITC_COLORKEY) && b == m_ColorKey)
                         *dst = 0;
                     else
                         *dst = 0xff;
@@ -615,20 +615,20 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         delete[] pOptBMPPtr;
     }
 
-    if (!(this->flags & ITC_EMPTY)) {
+    if (!(this->m_Flags & ITC_EMPTY)) {
         uchar *resized = NULL;
-        if (width != SrcBMPInfo.biWidth || height != SrcBMPInfo.biHeight) {
-            pGlobalIGraph->ResizeImage(SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, SrcBMPInfo.biWidth * 4, pixels,
-                width, height, width * 4, &resized, 4, 1);
-            delete[] pixels;
-            pixels = resized;
+        if (m_Width != SrcBMPInfo.biWidth || m_Height != SrcBMPInfo.biHeight) {
+            pGlobalIGraph->ResizeImage(SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, SrcBMPInfo.biWidth * 4, m_pPixels,
+                m_Width, m_Height, m_Width * 4, &resized, 4, 1);
+            delete[] m_pPixels;
+            m_pPixels = resized;
         }
     }
 
-    if (!(this->flags & ITC_FROM_MEMORY) && dxt >= 1) {
-        if (m_TryPresavedDXT(name, this->alpha_name, dxt, &SrcBMPLastWriteTime, &SrcOptBMPLastWriteTime)) {
-            init = true;
-            if (!(this->flags & ITC_UNCACHED))
+    if (!(this->m_Flags & ITC_FROM_MEMORY) && dxt >= 1) {
+        if (m_TryPresavedDXT(name, this->m_pAlphaName, dxt, &SrcBMPLastWriteTime, &SrcOptBMPLastWriteTime)) {
+            m_Init = true;
+            if (!(this->m_Flags & ITC_UNCACHED))
                 m_CachedTextureList.push_back(this);
             else
                 m_UncachedTextureList.push_back(this);
@@ -638,32 +638,32 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     }
 
     // The levels: the first from the image, each further one a quarter of the one before, filtered from it
-    uint level_sx = width, level_sy = height;
-    uint pitch = width * 4;
+    uint level_sx = m_Width, level_sy = m_Height;
+    uint pitch = m_Width * 4;
     uchar *level_src = NULL, *level_dst = NULL;
-    if (!(this->flags & ITC_EMPTY) && this->levels > 1) {
+    if (!(this->m_Flags & ITC_EMPTY) && this->m_Levels > 1) {
         level_src = new uchar[level_sx * level_sy * 4];
         if (!level_src)
             return I3DERR_GENERIC;
-        memcpy(level_src, pixels, width * height * 4);
-        level_dst = new uchar[width * height * 2];
+        memcpy(level_src, m_pPixels, m_Width * m_Height * 4);
+        level_dst = new uchar[m_Width * m_Height * 2];
         if (!level_dst) {
             delete[] level_src;
             return I3DERR_OUTOFMEM;
         }
     }
     IDirect3DTexture8 *dxt_texture = NULL;
-    if (!(this->flags & ITC_EMPTY) && dxt_format != D3DFMT_UNKNOWN) {
-        if (FAILED(m_pD3DDevice8->CreateTexture(width, height, num_levels, 0, dxt_format, D3DPOOL_MANAGED,
+    if (!(this->m_Flags & ITC_EMPTY) && dxt_format != D3DFMT_UNKNOWN) {
+        if (FAILED(m_pD3DDevice8->CreateTexture(m_Width, m_Height, num_levels, 0, dxt_format, D3DPOOL_MANAGED,
                 &dxt_texture))) {
             delete[] level_src;
             delete[] level_dst;
             return I3DERR_GENERIC;
         }
     }
-    for (int level = 0; level < this->levels; level++) {
+    for (int level = 0; level < this->m_Levels; level++) {
         IDirect3DSurface8 *surface;
-        if (FAILED(texture->GetSurfaceLevel(level, &surface))) {
+        if (FAILED(m_pD3DTexture8->GetSurfaceLevel(level, &surface))) {
             if (dxt_texture)
                 dxt_texture->Release();
             delete[] level_src;
@@ -679,8 +679,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             delete[] level_dst;
             return I3DERR_GENERIC;
         }
-        mem_size += desc.Size;
-        if (!(this->flags & ITC_EMPTY)) {
+        m_MemSize += desc.Size;
+        if (!(this->m_Flags & ITC_EMPTY)) {
             bool ok;
             if (!level) {
                 if (dxt_texture) {
@@ -692,11 +692,11 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                         delete[] level_dst;
                         return I3DERR_GENERIC;
                     }
-                    ok = m_Convert(pixels, dxt_surface, width, height, 0);
-                    CompressTexture(file_name, dxt, dxt_surface, surface);
+                    ok = m_Convert(m_pPixels, dxt_surface, m_Width, m_Height, 0);
+                    CompressTexture(m_FileName, dxt, dxt_surface, surface);
                     dxt_surface->Release();
                 } else
-                    ok = m_Convert(pixels, surface, width, height, dxt);
+                    ok = m_Convert(m_pPixels, surface, m_Width, m_Height, dxt);
             } else {
                 // Each pixel of the smaller level from four: 3/8 of the two on one diagonal, 1/8 of the others
                 // (dx and dy count the smaller level's pixels and rows)
@@ -742,7 +742,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                         return I3DERR_GENERIC;
                     }
                     ok = m_Convert(level_dst, dxt_surface, level_sx, level_sy, 0);
-                    CompressTexture(file_name, dxt, dxt_surface, surface);
+                    CompressTexture(m_FileName, dxt, dxt_surface, surface);
                     dxt_surface->Release();
                 } else
                     ok = m_Convert(level_dst, surface, level_sx, level_sy, dxt);
@@ -761,45 +761,45 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         surface->Release();
     }
 
-    if (this->flags & ITC_EMPTY) {
-        if (this->flags & ITC_FILL)
+    if (this->m_Flags & ITC_EMPTY) {
+        if (this->m_Flags & ITC_FILL)
             Fill(NULL, 0, 0);
         m_UncachedTextureList.push_back(this);
-        init = true;
+        m_Init = true;
         return I3D_OK;
     }
-    if (!(this->flags & ITC_KEEP_PIXELS)) {
-        delete[] pixels;
-        pixels = NULL;
+    if (!(this->m_Flags & ITC_KEEP_PIXELS)) {
+        delete[] m_pPixels;
+        m_pPixels = NULL;
     }
     if (dxt_texture)
         dxt_texture->Release();
     delete[] level_src;
     delete[] level_dst;
-    if (!(this->flags & ITC_UNCACHED))
+    if (!(this->m_Flags & ITC_UNCACHED))
         m_CachedTextureList.push_back(this);
     else
         m_UncachedTextureList.push_back(this);
-    init = true;
+    m_Init = true;
     Preload();
 
     // Saves the levels for m_TryPresavedDXT and m_TryPresaved_555_565 (PS2 saves only the DXT ones)
-    if (!(this->flags & ITC_FROM_MEMORY) && dxt > 0) {
+    if (!(this->m_Flags & ITC_FROM_MEMORY) && dxt > 0) {
         char file[256];
         memset(file, 0, 255);
         int len = strlen(name) - 4;
         strncpy(file, name, len);
-        if (this->alpha_name && dxt == 3) {
+        if (this->m_pAlphaName && dxt == 3) {
             strcat(file, "_");
-            int alpha_len = strlen(this->alpha_name) - 4;
+            int alpha_len = strlen(this->m_pAlphaName) - 4;
             len += alpha_len + 1;
-            strncat(file, this->alpha_name, alpha_len);
+            strncat(file, this->m_pAlphaName, alpha_len);
         }
         char num[20];
-        _itoa(this->levels, num, 10);
+        _itoa(this->m_Levels, num, 10);
         file[len] = '_';
         strcat(file, num);
-        if (this->flags & ITC_HALF)
+        if (this->m_Flags & ITC_HALF)
             strcat(file, "L");
         strcat(file, ".");
         len = strlen(file);
@@ -817,15 +817,15 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         struct {
             int sx, sy;
         } size;
-        size.sx = width;
-        size.sy = height;
+        size.sx = m_Width;
+        size.sy = m_Height;
         dtaWrite(handle, &size, 8);
         dtaWrite(handle, &SrcBMPLastWriteTime, 8);
         if (format == D3DFMT_DXT3)
             dtaWrite(handle, &SrcOptBMPLastWriteTime, 8);
-        for (int i = 0; i < this->levels; i++) {
+        for (int i = 0; i < this->m_Levels; i++) {
             IDirect3DSurface8 *surface;
-            if (FAILED(texture->GetSurfaceLevel(i, &surface))) {
+            if (FAILED(m_pD3DTexture8->GetSurfaceLevel(i, &surface))) {
                 dtaClose(handle);
                 dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
                 return I3D_OK;
@@ -848,22 +848,22 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         }
         dtaClose(handle);
     }
-    if (!(this->flags & ITC_FROM_MEMORY) && (this->format == D3DFMT_R5G6B5 || this->format == D3DFMT_X1R5G5B5 ||
-            this->format == D3DFMT_A1R5G5B5)) {
+    if (!(this->m_Flags & ITC_FROM_MEMORY) && (this->m_Format == D3DFMT_R5G6B5 || this->m_Format == D3DFMT_X1R5G5B5 ||
+            this->m_Format == D3DFMT_A1R5G5B5)) {
         char file[256];
         memset(file, 0, 255);
         int len = strlen(name) - 4;
         strncpy(file, name, len);
         char num[20];
-        _itoa(this->levels, num, 10);
+        _itoa(this->m_Levels, num, 10);
         file[len] = '_';
         strcat(file, num);
-        if (this->flags & ITC_HALF)
+        if (this->m_Flags & ITC_HALF)
             strcat(file, "L");
         strcat(file, ".");
         len = strlen(file);
         file[len] = '5';
-        if (this->format == D3DFMT_R5G6B5)
+        if (this->m_Format == D3DFMT_R5G6B5)
             file[len + 1] = '6';
         else
             file[len + 1] = '5';
@@ -879,13 +879,13 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         struct {
             int sx, sy;
         } size;
-        size.sx = width;
-        size.sy = height;
+        size.sx = m_Width;
+        size.sy = m_Height;
         dtaWrite(handle, &size, 8);
         dtaWrite(handle, &SrcBMPLastWriteTime, 8);
-        for (int i = 0; i < this->levels; i++) {
+        for (int i = 0; i < this->m_Levels; i++) {
             IDirect3DSurface8 *surface;
-            if (FAILED(texture->GetSurfaceLevel(i, &surface))) {
+            if (FAILED(m_pD3DTexture8->GetSurfaceLevel(i, &surface))) {
                 dtaClose(handle);
                 dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
                 return I3D_OK;
@@ -928,10 +928,10 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
         strncat(file, alpha_name, alpha_len);
     }
     char num[20];
-    _itoa(levels, num, 10);
+    _itoa(m_Levels, num, 10);
     file[len] = '_';
     strcat(file, num);
-    if (flags & ITC_HALF)
+    if (m_Flags & ITC_HALF)
         strcat(file, "L");
     strcat(file, ".");
     len = strlen(file);
@@ -955,20 +955,20 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
             size.sx = 0;
             size.sy = 0;
             dtaRead(handle, &size, 8);
-            if (size.sx == width && size.sy == height) {
+            if (size.sx == m_Width && size.sy == m_Height) {
                 FILETIME file_time;
                 dtaRead(handle, &file_time, 8);
                 if (dxt == 3) {
                     FILETIME file_alpha_time;
                     dtaRead(handle, &file_alpha_time, 8);
                 }
-                mem_size = 0;
-                for (int i = 0; i < levels; i++) {
+                m_MemSize = 0;
+                for (int i = 0; i < m_Levels; i++) {
                     IDirect3DSurface8 *surface;
-                    texture->GetSurfaceLevel(i, &surface);
+                    m_pD3DTexture8->GetSurfaceLevel(i, &surface);
                     D3DSURFACE_DESC desc;
                     surface->GetDesc(&desc);
-                    mem_size += desc.Size;
+                    m_MemSize += desc.Size;
                     D3DLOCKED_RECT lr;
                     surface->LockRect(&lr, NULL, 0);
                     dtaRead(handle, lr.pBits, desc.Size);
@@ -993,15 +993,15 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
     int len = strlen(name) - 4;
     strncpy(file, name, len);
     char num[20];
-    _itoa(levels, num, 10);
+    _itoa(m_Levels, num, 10);
     file[len] = '_';
     strcat(file, num);
-    if (flags & ITC_HALF)
+    if (m_Flags & ITC_HALF)
         strcat(file, "L");
     strcat(file, ".");
     len = strlen(file);
     file[len] = '5';
-    if (format == D3DFMT_R5G6B5)
+    if (m_Format == D3DFMT_R5G6B5)
         file[len + 1] = '6';
     else
         file[len + 1] = '5';
@@ -1023,16 +1023,16 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
             size.sx = 0;
             size.sy = 0;
             dtaRead(handle, &size, 8);
-            if (size.sx == width && size.sy == height) {
+            if (size.sx == m_Width && size.sy == m_Height) {
                 FILETIME file_time;
                 dtaRead(handle, &file_time, 8);
-                mem_size = 0;
-                for (int i = 0; i < levels; i++) {
+                m_MemSize = 0;
+                for (int i = 0; i < m_Levels; i++) {
                     IDirect3DSurface8 *surface;
-                    texture->GetSurfaceLevel(i, &surface);
+                    m_pD3DTexture8->GetSurfaceLevel(i, &surface);
                     D3DSURFACE_DESC desc;
                     surface->GetDesc(&desc);
-                    mem_size += desc.Size;
+                    m_MemSize += desc.Size;
                     D3DLOCKED_RECT lr;
                     surface->LockRect(&lr, NULL, 0);
                     dtaRead(handle, lr.pBits, desc.Size);
@@ -1051,49 +1051,49 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
 // FUNCTION: LS3DF 0x10078670
 bool ITexture::IsInit()
 {
-    return init;
+    return m_Init;
 }
 
 // FUNCTION: LS3DF 0x10078680
 void ITexture::Close()
 {
     Unlock();
-    if (flags & ITC_MANAGED) {
+    if (m_Flags & ITC_MANAGED) {
         RemoveTextureFromTextureManager(this);
-        managed = NULL;
-        texture = NULL;
+        m_pManaged = NULL;
+        m_pD3DTexture8 = NULL;
     }
-    if (pixels) {
-        delete[] pixels;
-        pixels = NULL;
+    if (m_pPixels) {
+        delete[] m_pPixels;
+        m_pPixels = NULL;
     }
-    width = 0;
-    height = 0;
-    format = (D3DFORMAT)0;
-    flags = 0;
-    color_key = 0;
-    mem_size = 0;
-    file_name = "";
-    name = NULL;
-    alpha_file_name = "";
-    alpha_name = NULL;
+    m_Width = 0;
+    m_Height = 0;
+    m_Format = (D3DFORMAT)0;
+    m_Flags = 0;
+    m_ColorKey = 0;
+    m_MemSize = 0;
+    m_FileName = "";
+    m_pName = NULL;
+    m_AlphaFileName = "";
+    m_pAlphaName = NULL;
     m_CachedTextureList.remove(this);
     m_UncachedTextureList.remove(this);
-    if (texture) {
-        texture->Release();
-        texture = NULL;
+    if (m_pD3DTexture8) {
+        m_pD3DTexture8->Release();
+        m_pD3DTexture8 = NULL;
     }
-    init = false;
+    m_Init = false;
 }
 
 // FUNCTION: LS3DF 0x100787c0
 void *ITexture::Lock(RECT *rect, uint &pitch, ushort level)
 {
-    if (lock_surface)
+    if (m_pLockSurface)
         return NULL;
-    texture->GetSurfaceLevel(level, &lock_surface);
+    m_pD3DTexture8->GetSurfaceLevel(level, &m_pLockSurface);
     D3DLOCKED_RECT lr;
-    lock_surface->LockRect(&lr, rect, D3DLOCK_NO_DIRTY_UPDATE);
+    m_pLockSurface->LockRect(&lr, rect, D3DLOCK_NO_DIRTY_UPDATE);
     pitch = lr.Pitch;
     return lr.pBits;
 }
@@ -1101,17 +1101,17 @@ void *ITexture::Lock(RECT *rect, uint &pitch, ushort level)
 // FUNCTION: LS3DF 0x10078820
 void ITexture::Unlock()
 {
-    if (lock_surface) {
-        lock_surface->UnlockRect();
-        lock_surface->Release();
-        lock_surface = NULL;
+    if (m_pLockSurface) {
+        m_pLockSurface->UnlockRect();
+        m_pLockSurface->Release();
+        m_pLockSurface = NULL;
     }
 }
 
 // FUNCTION: LS3DF 0x10078850
 HRESULT ITexture::AddDirtyRect(const RECT *rect)
 {
-    return texture->AddDirtyRect(rect);
+    return m_pD3DTexture8->AddDirtyRect(rect);
 }
 
 // Draws a point with the texture, which makes the driver upload it
@@ -1123,7 +1123,7 @@ LS3D_RESULT ITexture::Preload()
             m_CurrVertexFormat = 4;
             m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
         }
-        m_pD3DDevice8->SetTexture(0, texture);
+        m_pD3DDevice8->SetTexture(0, m_pD3DTexture8);
         m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &preload_vertex, sizeof(LS3D_TLVERTEX));
         return I3D_OK;
     }
@@ -1132,7 +1132,7 @@ LS3D_RESULT ITexture::Preload()
         m_CurrVertexFormat = 4;
         m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
     }
-    m_pD3DDevice8->SetTexture(0, texture);
+    m_pD3DDevice8->SetTexture(0, m_pD3DTexture8);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &preload_vertex, sizeof(LS3D_TLVERTEX));
     m_pD3DDevice8->EndScene();
     return I3D_OK;
@@ -1143,7 +1143,7 @@ LS3D_RESULT ITexture::Preload()
 bool ITexture::Fill(RECT *rect, uint color, ushort level)
 {
     D3DSURFACE_DESC desc;
-    if (FAILED(texture->GetLevelDesc(level, &desc)))
+    if (FAILED(m_pD3DTexture8->GetLevelDesc(level, &desc)))
         return false;
     uint pitch;
     uchar *p = (uchar *)Lock(rect, pitch, level);
@@ -1151,7 +1151,7 @@ bool ITexture::Fill(RECT *rect, uint color, ushort level)
         return false;
     uint sx = !rect ? desc.Width : rect->right - rect->left;
     uint sy = !rect ? desc.Height : rect->bottom - rect->top;
-    switch (format) {
+    switch (m_Format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8: {
         uint add = pitch - sx * 4;
@@ -1211,7 +1211,7 @@ bool ITexture::Fill(RECT *rect, uint color, ushort level)
         return false;
     }
     Unlock();
-    texture->AddDirtyRect(rect);
+    m_pD3DTexture8->AddDirtyRect(rect);
     return true;
 }
 
@@ -1222,8 +1222,8 @@ bool ITexture::Draw(int x, int y)
     RECT rect, screen, visible;
     rect.left = x;
     rect.top = y;
-    rect.right = x + width;
-    rect.bottom = y + height;
+    rect.right = x + m_Width;
+    rect.bottom = y + m_Height;
     screen.left = 0;
     screen.top = 0;
     screen.right = pGlobalIGraph->Scrn_sx();
@@ -1232,12 +1232,12 @@ bool ITexture::Draw(int x, int y)
         return true;
     draw_quad[0].x = (float)x;
     draw_quad[0].y = (float)y;
-    draw_quad[1].x = (float)x + width;
+    draw_quad[1].x = (float)x + m_Width;
     draw_quad[1].y = (float)y;
     draw_quad[2].x = (float)x;
-    draw_quad[2].y = (float)y + height;
-    draw_quad[3].x = (float)x + width;
-    draw_quad[3].y = (float)y + height;
+    draw_quad[2].y = (float)y + m_Height;
+    draw_quad[3].x = (float)x + m_Width;
+    draw_quad[3].y = (float)y + m_Height;
     pGlobalIGraph->SetTexture(this);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
@@ -1285,15 +1285,15 @@ bool ITexture::Draw(RECT rect, uint color0, uint color1, uint color2, uint color
 // FUNCTION: LS3DF 0x10078e40
 bool ITexture::SaveToTGA(const char *name)
 {
-    if (format == D3DFMT_DXT1 || format == D3DFMT_DXT2 || format == D3DFMT_DXT3 || format == D3DFMT_DXT4 ||
-            format == D3DFMT_DXT5) {
+    if (m_Format == D3DFMT_DXT1 || m_Format == D3DFMT_DXT2 || m_Format == D3DFMT_DXT3 || m_Format == D3DFMT_DXT4 ||
+            m_Format == D3DFMT_DXT5) {
         dbgPrintf("!! ITexture::SaveToTGA() - Cannot create file %s  Compresed pixel format isn't supported", name);
         return false;
     }
     S_tga_header header;
     memset(&header, 0, sizeof(header));
     header.type = 2;
-    switch (format) {
+    switch (m_Format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8:
     case D3DFMT_A4R4G4B4:
@@ -1309,8 +1309,8 @@ bool ITexture::SaveToTGA(const char *name)
         header.bits_per_pixel = 24;
         break;
     }
-    header.width = width;
-    header.height = height;
+    header.width = m_Width;
+    header.height = m_Height;
     int handle = dtaOpenWrite(name, 0x10000);
     if (handle < 0) {
         dbgPrintf("!! ITexture::SaveToTGA() - Cannot create file %s", name);
@@ -1325,7 +1325,7 @@ bool ITexture::SaveToTGA(const char *name)
     }
     // TGA's rows go up
     p += (header.height - 1) * pitch;
-    switch (format) {
+    switch (m_Format) {
     case D3DFMT_R5G6B5: {
         ushort *row = new ushort[header.width];
         for (int y = header.height; y; y--) {
@@ -1568,7 +1568,7 @@ struct S_vector4 {
 bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint sy, int no_dither)
 {
     S_vector4 *err = NULL;
-    if (!no_dither && (flags & ITC_DITHER)) {
+    if (!no_dither && (m_Flags & ITC_DITHER)) {
         int n = (sx + 2) * (sy + 1);
         // Bytes, by a shift: new S_vector4[n] shares n * 16 with the clearing below, which takes sy's register
         err = (S_vector4 *)new uchar[n << 4];
@@ -1591,7 +1591,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     case D3DFMT_A4R4G4B4: {
         uchar *dst = (uchar *)lr.pBits;
         int skip = lr.Pitch - sx * 2;
-        if (!(flags & ITC_DITHER)) {
+        if (!(m_Flags & ITC_DITHER)) {
             __asm {
                 mov esi, src
                 mov edi, dst
@@ -1671,7 +1671,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     case D3DFMT_R5G6B5: {
         uchar *dst = (uchar *)lr.pBits;
         int skip = lr.Pitch - sx * 2;
-        if (!(flags & ITC_DITHER)) {
+        if (!(m_Flags & ITC_DITHER)) {
             __asm {
                 mov esi, src
                 mov edi, dst
@@ -1743,7 +1743,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     case D3DFMT_A1R5G5B5: {
         uchar *dst = (uchar *)lr.pBits;
         int skip = lr.Pitch - sx * 2;
-        if (!(flags & ITC_DITHER)) {
+        if (!(m_Flags & ITC_DITHER)) {
             __asm {
                 mov esi, src
                 mov edi, dst
@@ -2039,20 +2039,20 @@ void RestoreManagedTextures(uint flags)
 // FUNCTION: LS3DF 0x1007a910
 bool ITexture::Request()
 {
-    if (!(flags & ITC_MANAGED))
+    if (!(m_Flags & ITC_MANAGED))
         return true;
     EnterCriticalSection(&m_FrameSection);
-    managed->last_frame = m_FrameCounter;
-    if (flags & ITC_LOADED) {
+    m_pManaged->last_frame = m_FrameCounter;
+    if (m_Flags & ITC_LOADED) {
         LeaveCriticalSection(&m_FrameSection);
         return true;
     }
-    if (!(flags & ITC_QUEUED) && load_queue_len < 256) {
+    if (!(m_Flags & ITC_QUEUED) && load_queue_len < 256) {
         load_queue[load_queue_put] = this;
         if (++load_queue_put >= 256)
             load_queue_put = 0;
         load_queue_len++;
-        flags |= ITC_QUEUED;
+        m_Flags |= ITC_QUEUED;
     }
     LeaveCriticalSection(&m_FrameSection);
     return false;
@@ -2070,9 +2070,9 @@ DWORD WINAPI RenderThreadProc(void *param)
             while (load_queue_len > 0) {
                 texture = load_queue[load_queue_out];
                 if (texture) {
-                    if (texture->managed->last_frame + 1 >= (uint)m_FrameCounter)
+                    if (texture->m_pManaged->last_frame + 1 >= (uint)m_FrameCounter)
                         break;
-                    texture->flags &= ~ITC_QUEUED;
+                    texture->m_Flags &= ~ITC_QUEUED;
                 }
                 if (++load_queue_out >= 256)
                     load_queue_out = 0;
@@ -2082,24 +2082,24 @@ DWORD WINAPI RenderThreadProc(void *param)
                 LeaveCriticalSection(&m_FrameSection);
                 continue;
             }
-            texture->ref++;
+            texture->m_RefCount++;
             LeaveCriticalSection(&m_FrameSection);
-            S_managed_texture *managed = texture->managed;
+            S_managed_texture *managed = texture->m_pManaged;
             int pool = managed->pool;
             S_texture_slot *slot;
             int oldest = 0;
             ITexture *first = pool_textures[pool][0].texture;
             if (first) {
                 EnterCriticalSection(&m_FrameSection);
-                uint oldest_frame = first->managed->last_frame;
+                uint oldest_frame = first->m_pManaged->last_frame;
                 for (int i = 1; i < pool_textures[pool].size(); i++) {
                     if (!pool_textures[pool][i].texture) {
                         oldest_frame = 0;
                         oldest = i;
                         break;
                     }
-                    if (pool_textures[pool][i].texture->managed->last_frame < oldest_frame) {
-                        oldest_frame = pool_textures[pool][i].texture->managed->last_frame;
+                    if (pool_textures[pool][i].texture->m_pManaged->last_frame < oldest_frame) {
+                        oldest_frame = pool_textures[pool][i].texture->m_pManaged->last_frame;
                         oldest = i;
                     }
                 }
@@ -2118,8 +2118,8 @@ DWORD WINAPI RenderThreadProc(void *param)
                 }
                 ITexture *old = pool_textures[pool][oldest].texture;
                 if (old) {
-                    old->texture = NULL;
-                    old->flags &= ~(ITC_QUEUED | ITC_LOADED);
+                    old->m_pD3DTexture8 = NULL;
+                    old->m_Flags &= ~(ITC_QUEUED | ITC_LOADED);
                 }
                 LeaveCriticalSection(&m_FrameSection);
             }
@@ -2127,8 +2127,8 @@ DWORD WINAPI RenderThreadProc(void *param)
         load:
             D3DLOCKED_RECT lr;
             sysmem_textures[pool].surface->LockRect(&lr, NULL, 0);
-            texture->width = (ushort)slot->desc.Width;
-            texture->height = (ushort)slot->desc.Height;
+            texture->m_Width = (ushort)slot->desc.Width;
+            texture->m_Height = (ushort)slot->desc.Height;
             int handle = dtaOpen(managed->file_name, false);
             // After the header: "DXT", the version, the size and the image's time
             dtaSeek(handle, 0x16, 1);
@@ -2138,8 +2138,8 @@ DWORD WINAPI RenderThreadProc(void *param)
             m_pD3DDevice8->UpdateTexture(sysmem_textures[pool].d3d_texture, slot->d3d_texture);
             EnterCriticalSection(&m_FrameSection);
             slot->texture = texture;
-            texture->texture = slot->d3d_texture;
-            texture->flags = texture->flags & ~(ITC_QUEUED | ITC_LOADED) | ITC_LOADED;
+            texture->m_pD3DTexture8 = slot->d3d_texture;
+            texture->m_Flags = texture->m_Flags & ~(ITC_QUEUED | ITC_LOADED) | ITC_LOADED;
             texture->Release();
             if (++load_queue_out >= 256)
                 load_queue_out = 0;
@@ -2186,8 +2186,8 @@ bool AddTextureToTextureManager(ITexture *texture, const char *name, uint flags)
         return false;
     }
     strncpy(managed->file_name, file, size);
-    texture->texture = NULL;
-    texture->managed = managed;
+    texture->m_pD3DTexture8 = NULL;
+    texture->m_pManaged = managed;
     managed_textures.push_back(managed);
     return true;
 }
@@ -2199,7 +2199,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
     EnterCriticalSection(&m_FrameSection);
     for (int i = managed_textures.size(); i--; ) {
         if (managed_textures[i]->texture == texture) {
-            if (load_queue_len > 0 && (texture->flags & ITC_QUEUED)) {
+            if (load_queue_len > 0 && (texture->m_Flags & ITC_QUEUED)) {
                 for (ITexture **p = load_queue + 256; p != load_queue; ) {
                     if (*--p == texture)
                         *p = NULL;
@@ -2211,7 +2211,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
             break;
         }
     }
-    if (texture->flags & ITC_LOADED) {
+    if (texture->m_Flags & ITC_LOADED) {
         for (int j = 0; j < 3; j++) {
             for (int k = pool_textures[j].size(); k--; ) {
                 if (pool_textures[j][k].texture == texture)
@@ -2219,7 +2219,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
             }
         }
     }
-    texture->flags &= ~(ITC_QUEUED | ITC_LOADED);
+    texture->m_Flags &= ~(ITC_QUEUED | ITC_LOADED);
     LeaveCriticalSection(&m_FrameSection);
     return true;
 }
@@ -2232,7 +2232,7 @@ void UnloadManagedTextures()
     for (int i = 0; i < 3; i++) {
         for (int j = pool_textures[i].size(); j--; ) {
             if (pool_textures[i][j].texture) {
-                pool_textures[i][j].texture->flags &= ~ITC_LOADED;
+                pool_textures[i][j].texture->m_Flags &= ~ITC_LOADED;
                 pool_textures[i][j].texture = NULL;
             }
         }
