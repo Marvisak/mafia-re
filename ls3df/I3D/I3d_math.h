@@ -352,9 +352,10 @@ struct S_plane {
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and
 // regions): the scene file's copy, folded with S_plane's (our PDB keeps either name, S_plane's until I3d_area.cpp,
-// from clipping.cpp's CheckClipFaces to I3d_pose.cpp and from I3d_singlemesh.cpp to I3d_occluder.cpp)
+// from clipping.cpp's CheckClipFaces to I3d_pose.cpp, from I3d_singlemesh.cpp to I3d_occluder.cpp and in
+// I3d_particle.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0S_vector@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

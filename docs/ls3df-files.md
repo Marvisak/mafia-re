@@ -83,12 +83,12 @@ functions fall into the next range: `ISND_sound::GetSource` at `0x1007b680` belo
 | `1005a140–1005a200` | `1005a1e0` | | `I3d_user.cpp` | `I3D_user` in PS2's order; written |
 | `1005a200–1005a7a0` | `1005a780` | | `I3d_visual.cpp` | `I3D_visual::SetSpace()`, exported `UpdateWBoundProc`; `I3D_visual` in PS2's order, then its second base `I3D_void_interface`'s functions; written |
 | `1005a7a0–1005aad0` | `1005aab0` | | `I3d_volume.cpp` | `I3D_volume` in PS2's order; written |
-| `1005aad0–1005c760` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
-| `1005c760–1005e3a0` | `1005e380` | `1005d010` | `lightmap.cpp`? | no strings; up to `1005d010` the rest of `IBManager.cpp`'s multiset functions |
-| `1005e3a0–10060c20` | `10060c00` | | `Load.cpp` | `LightMap::m_CreateLM()`, `load.cpp` messages, `.4ds`, `.5ds`, `.6ds` |
-| `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker; a file of its own (identity matrix `1009d298`). The `.bss` around this file's and the next one's vectors (`101c3be4`–`101c3c04`, among it the load file's handle at `101c3bfc`) is read by `load4ds.cpp` and the `LoadImage` functions, not by `Load.cpp` |
-| `10060c40–10060c60` | `10060c40` | | ? | no code, only the marker; a file of its own (identity matrix `1009d2d8`) |
-| `10060c60–10061990` | `10061970` | `10060c60` | `load4ds.cpp` | the 4ds loader's `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), two more functions and `LoadAnimation5ds` (PS2's `Load5ds.cpp`); the table has `LoadTargetList`'s `$E` before the zero vector's, so either the file defines it above its include of the header or it belongs to a file of its own without code (the count of objects, see the open questions, leaves no room for one); `LoadTargetList` and `LoadMeshImage` written |
+| `1005aad0–1005d010` | `1005c740` | `1005aad0` | `IBManager.cpp` | `__FILE__` `C:\MyProjects\engine8\I3D\IBManager.cpp`; written: `C_IBuffer`, `C_IBManager` and the multisets' out-of-line functions |
+| `1005d010–10060390` | `1005e380` | `1005d010` | `lightmap.cpp` | one file with its marker in the middle, as `I3d_math.cpp`, after the rest of `IBManager.cpp`'s multiset functions: PS2's `LightMap` from the `$E` of its list of free texture blocks (`GlobalRemainTexBlList`, PS2's static, the `.bss` before the file's vector), up to `m_CreateLM` (`1005e3f0`, the messages `LightMap::m_CreateLM()`, the list's other users) and the list's out-of-line templates |
+| `10060390–10060c20` | `10060c00` | | `Load.cpp` | `LoadProgress`, `LoadHierarchy`, `LoadAnimation` and the PC's `LoadShadow` (the `load.cpp  ?::Open()` messages, `.4ds`, `.5ds`, `.6ds`); its `.bss` (`progress` to `loadingAnim`, `101b5148`–`101c3bd5`) is PS2's names in VC6's hash order around the vector (`101b5154`), the loaded frames and materials among them; written |
+| `10060c20–10060c40` | `10060c20` | | ? | no code, only the marker; a file of its own (identity matrix `1009d298`, zero vector `101c3bd8`), between `Load.cpp`'s `.bss` and `load4ds.cpp`'s |
+| `10060c40–10061800` | `10060c40` | `10060c60` | `load4ds.cpp` | without a precompiled header: the marker first (as `I3d_area.cpp`), then `LoadTargetList`'s `$E`, `LoadImage()` and `LoadMeshImage()` (PS2 names, PS2 order), `LoadShadowImage()` (its message) and `C_list<S_vector>::reserve`, which only it calls out of line; the `.bss` of `ImageErrFlg`, `LoadImageHandle`, `ImageFileName` and `LoadTargetList` lies around its vector (`101c3bf0`), so the marker isn't another file's; written |
+| `10061800–10061990` | `10061970` | | `Load5ds.cpp` | `LoadAnimation5ds` (PS2's `Load5ds.cpp`, its message `load5ds.cpp`), then the marker; written |
 | `10061990–100619b0` | `10061990` | | ? | no code, only the marker; a file of its own (identity matrix `1009d358`); PS2's `Load5ds.cpp` sorts here |
 | `100619b0–10061cd0` | none | none | `RadixSort.cpp` | the radix sort (`RadixSort32` with its passes inlined), which PS2 has at the start of `render.cpp`'s code: a file of its own without the engine header, neither marker nor identity matrix, its counts the first `.bss` of an object before `render.cpp`'s (`101c3c30`). The name is H&D Deluxe's; written |
 | `10061cd0–10065a10` | `100658d0` | `10061cd0`, `10061d20`, `10061d70`, `10061dd0` | `render.cpp` | `I3D_driver::Render()` and what it calls, the sounds' areas and sectors among it; after the marker `I3D_driver::BuildAllVBuffers` (`100658f0`), the out-of-line constructors its `$E`s call (`100659a0`, `100659d0`) and a z-bias setter only it calls (`100659f0`); written |
@@ -124,8 +124,8 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
 
 ## Open questions
 
-- **Files with only a marker.** The ranges that hold nothing but a marker (`10004870`, `10060c20`, `10060c40`,
-  `10061990`) are files of their own: each has its own identity matrix besides its zero vector, which a second zero
+- **Files with only a marker.** The ranges that hold nothing but a marker (`10004870`, `10060c20`, `10061990`) are
+  files of their own: each has its own identity matrix besides its zero vector, which a second zero
   vector of the file before wouldn't bring. Nothing else of them is left, not even a string or a constant: those
   would be kept where the first object that has them is (the linker keeps the first copy of a COMDAT), as
   `clipping.cpp`'s helper keeps its message. So their functions were dropped by `/OPT:REF` or compiled out on PC.
@@ -134,8 +134,7 @@ After `IS_source.cpp` and before the CRT (`0x1008d404` on) come library objects:
   shadows' visual is code of `I3d_shadow.cpp`'s object. The portal and pose files have one each (`1009c6f8`,
   `1009c750`), and so have the single mesh and single morph (`1009cc48`, `1009cd40`). With `RadixSort.cpp`, a file
   without the engine header, that makes 60 of the Rich header's 61 C++ objects, so one more object has no copy: a
-  file without the engine header, or one more compiled with another's precompiled header. `LoadTargetList`'s `$E` is
-  a candidate.
+  file without the engine header, or one more compiled with another's precompiled header.
 - **Files without a marker.** Their boundaries come from their code only: the billboard/camera pair and the ranges
   marked `none`. A file compiled with another's precompiled header (`/Yu`)
   has no marker and the header's statics aren't in its `.bss` (`clipper2.cpp`), so these may be such files.

@@ -224,6 +224,7 @@ inline float I3DIntAsFloat(int i)
 // What a frame's callback is told (PS2 type; the names are guesses). SetCallback's flags are the messages to send.
 enum LS3D_CALLBACK_MESSAGE {
     LS3D_CALLBACK_MESSAGE_0,
+    CBM_PROGRESS = 8,                   // a loader's progress (I3D_LOAD_CB_PROC; Insanity3D's name, its value is 0)
     LS3D_CALLBACK_NOTE = 0x200,         // an animation passed a note key: the note, its time in ms
                                         // (I3D_interpolator::Update)
     LS3D_CALLBACK_LOD = 0x400,          // a visual's level of detail changed: the old one, the new one (GetObjectLOD)
@@ -236,6 +237,13 @@ enum LS3D_CALLBACK_MESSAGE {
 
 // A frame's callback (PS2's parameters; the calling convention isn't confirmed)
 typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
+
+// The callback the Open functions' loaders report to (Insanity3D's name, PS2's parameters; Load.cpp): CBM_PROGRESS with
+// the progress from 0 to 1 as a float's bits and 0 at the start, 1 on the way and 2 at the end, then the caller's
+// context. The flags of the Open functions say what to report (Insanity3D's names and values).
+typedef void __stdcall I3D_LOAD_CB_PROC(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context);
+#define I3DLOAD_LOG 0x1                 // kept without a callback
+#define I3DLOAD_PROGRESS 0x2
 
 // A bounding box and the sphere around it (PS2 I3D_bvolume)
 struct I3D_bvolume {
@@ -569,7 +577,7 @@ public:
     ~I3D_sound();
 
     // The game's (PS2 names). In PS2's order but for SetVelocity, which comes after GetRange and GetCone there.
-    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context);
     // Whether the voice plays, or with real false whether the sound would (it keeps time while paused)
     virtual bool __stdcall IsPlaying(bool real) const;
     virtual void __stdcall SetSoundType(I3D_SOUNDTYPE type);
@@ -898,7 +906,7 @@ public:
     // PS2 names but GetAnimLink (Insanity3D's), NumRotKeys, GetRotKey, NumPosKeys, NumSclKeys, GetSclKey and
     // GetNoteKeyStr (their messages')
     virtual int __stdcall Release();
-    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context);
     virtual int __stdcall GetEndTime() const;
     virtual int __stdcall NumAnimations() const;
     virtual const char *__stdcall GetAnimLink(int index) const;
@@ -1271,7 +1279,7 @@ public:
     virtual I3D_sector *__stdcall GetSector(const S_vector &pos, I3D_sector **list, int num) const;
     virtual void __stdcall SetBackdropRange(float near1, float far1);
     virtual LS3D_RESULT __stdcall SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) const;
-    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, void *cb, void *context);
+    virtual LS3D_RESULT __stdcall Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context);
     virtual void __stdcall Close();
     // i3d_collision.cpp (PS2's names and parameters). A ray from from along dir, as long as dir, against the visuals'
     // faces in the primary sector (and the near and omni ones, COLF_NEAR_SECTOR, COLF_OMNI_SECTOR): the nearest
@@ -1457,17 +1465,17 @@ public:
 // the copies, which change with the link (tools/foldfix.py): Update's is its own, another class's or a base class's
 // (CBaseRenderer::OnReceiveFirstSample's from I3d_light.cpp to I3d_area.cpp, from I3d_material.cpp, whose
 // I3D_material::UpdateTexture and UpdateEnvTexture are in the group too, to I3d_sound.cpp and from I3d_singlemesh.cpp
-// to I3d_singlemorph.cpp and again since I3d_portal.cpp, I3D_visual::m_RenderFGroup's in I3d_projector.cpp and in
-// I3d_occluder.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
+// to I3d_singlemorph.cpp and again in I3d_portal.cpp, I3D_visual::m_RenderFGroup's in I3d_projector.cpp, in
+// I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
 // ?m_RenderFGroup@I3D_visual@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
 
 // FUNCTION: LS3DF 0x1004e990
-// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+// ?SetName@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
@@ -1930,7 +1938,7 @@ class I3D_model : public I3D_frame {
 public:
     I3D_model();
 
-    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, void *cb, void *context);
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context);
     virtual void __stdcall Close();
     virtual void __stdcall AddFrame(I3D_frame *frame);
     virtual LS3D_RESULT __stdcall DeleteFrame(I3D_frame *frame);
@@ -2197,7 +2205,7 @@ public:
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
     virtual void UpdateV();
     // PS2 names
-    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, void *cb, void *context);
+    virtual LS3D_RESULT __stdcall Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context);
     virtual void __stdcall Close();
     virtual LS3D_RESULT __stdcall SetTextureSize(int x, int y);
     virtual void __stdcall SetRange(float r);
@@ -2535,10 +2543,10 @@ public:
 
 // SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
 // billboard file's copy, our linker the single meshes' from I3d_singlemesh.cpp and in render.cpp, the morphs' in
-// I3d_projector.cpp and since I3d_occluder.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates
-// it).
+// I3d_projector.cpp and from I3d_occluder.cpp to I3d_particle.cpp, the billboard's since Load.cpp, so the marker is by
+// the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_morph@@UAGX_N@Z
+// ?SetSpace@I3D_billboard@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -3408,12 +3416,9 @@ public:
 // I3d_singlemesh.cpp and from I3d_projector.cpp to render.cpp; CBasePin::EndOfStream's I3d_visual.cpp's until then;
 // CBasePin::CompleteConnect's (0x10087520), folded with I3D_void_interface::NumLevels and NumRegions, I3d_visual.cpp's
 // from I3d_sector.cpp to I3d_area.cpp, again from clipping.cpp's CheckClipFaces, a function the linker drops, to
-// I3d_pose.cpp, from I3d_morph.cpp to I3d_shadow.cpp and since I3d_particle.cpp; OnRenderEnd's again since
-// I3d_portal.cpp, OnStopStreaming's in I3d_portal.cpp only), so after a new file or function rerun crtannotate and move
-// such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
-// LIBRARY: LS3DF 0x10087ec0
-// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
-
+// I3d_pose.cpp, from I3d_morph.cpp to I3d_shadow.cpp and since I3d_particle.cpp; OnRenderEnd's again from
+// I3d_portal.cpp to I3d_particle.cpp, OnStopStreaming's in I3d_portal.cpp only), so after a new file or function rerun
+// crtannotate and move such markers here or back. The names are the ones our PDB keeps (tools/foldfix.py).
 // LIBRARY: LS3DF 0x10087520
 // ?NumRegions@I3D_void_interface@@UBGHXZ
 
@@ -3498,10 +3503,10 @@ struct TLVERTEX2 {
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
 // and render.cpp after the shadow visual's SetOn, in I3d_projector.cpp after vector<ITexture *>::_Destroy, in
-// I3d_occluder.cpp after Tick itself and since I3d_portal.cpp after the shadow visual's SetOn); the original keeps the
-// area file's copy
+// I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and since Load.cpp after the shadow
+// visual's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?SetOn@I3D_shadow_visual@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -4080,16 +4085,40 @@ void OCCL_PrepareSector2(I3D_sector *sector);
 extern uint RenderNumber;
 extern uint RenderNumberMinus1;
 
-// The loader's (load4ds.cpp defines them): the frames and materials loaded so far, the file and the error
+// Load.cpp (PS2 names): the loaders of the Open functions, a hierarchy's (.4ds) into a model or a scene's primary
+// sector, an animation set's (.5ds) and a shadow's (.6ds); the progress the 4ds loader reports; and the frames and
+// materials loaded so far, by their 1-based index in the file, and the number of animations the file says it has
+LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context, I3D_frame *root);
+LS3D_RESULT LoadAnimation(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context,
+    I3D_animation_set *set);
+LS3D_RESULT LoadShadow(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context, ShadowDef *def);
+void LoadProgress(float p);
+// Load.cpp's zero vector, right before LoadFramy: the 1-based reads of the frames address 4 bytes before the array
+// (load4ds.cpp), which falls in the vector
+// GLOBAL: LS3DF 0x101b5154
+// ZeroSVector
 extern I3D_frame *LoadFramy[10000];
+extern int LoadFramu;
 extern I3D_material *LoadMaterialy[5000];
 extern int LoadMaterialu;
+extern int LoadAnimCount;
+
+// load4ds.cpp (PS2 names but LoadShadowImage, its message's): the file being loaded, its error, and the targets loaded,
+// whose lists hold their frames' indices until the frames are loaded
 extern LS3D_RESULT ImageErrFlg;
 extern int LoadImageHandle;
 extern const char *ImageFileName;
-// The targets loaded, whose lists hold their frames' indices until the frames are loaded (PS2 name)
 extern C_list<I3D_target *> LoadTargetList;
-// The destructor load4ds.cpp's thunk registers for it: the seventh $E5 in link order
+// The destructor load4ds.cpp's thunk registers for it: the second $E6 in link order, after the mirror file's (the file
+// includes I3D/I3d_material.h, whose <vector> takes a number)
 // SYNTHETIC: LS3DF 0x10060c90
-// $E5
+// $E6
+LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time);
 I3D_mesh_object *LoadMeshImage();
+LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
+// Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
+// TEMPLATE: LS3DF 0x10061790
+// C_list<S_vector>::reserve
+
+// Load5ds.cpp (PS2 name): an animation file's data
+LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);

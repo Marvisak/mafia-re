@@ -12,9 +12,6 @@
 
 #include <string.h>
 
-// The loader (Load.cpp, not written yet)
-LS3D_RESULT LoadAnimation(const char *file_name, uint flags, void *cb, void *context, I3D_animation_set *set);
-
 // Steps p over a track of keys whose values are size words long: the count, the times, the values, the end aligned
 // to 4 bytes. With p a reference, VC6 adds the position track's values as [p + n*14 + 2], as the original; returning
 // the new pointer gives [n*14 + p + 2].
@@ -63,7 +60,7 @@ int I3D_animation_set::Release()
 // Loads the file and turns the offsets in it into addresses: the frames' names and keys, then the string notes'.
 // Its tracks are skipped with an int count, which VC6 widens once (movzx); SkipTrack's ushort is widened at each use.
 // FUNCTION: LS3DF 0x10004900
-LS3D_RESULT I3D_animation_set::Open(const char *file_name, uint flags, void *cb, void *context)
+LS3D_RESULT I3D_animation_set::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
     LS3D_RESULT r = LoadAnimation(file_name, flags, cb, context, this);
@@ -395,15 +392,3 @@ LS3D_RESULT I3D_animation_set::GetNoteKeyStr(uint link, uint key, int &time, con
     note = *(const char *const *)k;
     return I3D_OK;
 }
-
-// The functions of other files the animation set calls, until those are written. They come after the file's functions
-// (see I3d_driver.cpp).
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x10060840
-LS3D_RESULT LoadAnimation(const char *file_name, uint flags, void *cb, void *context, I3D_animation_set *set)
-{
-    return (LS3D_RESULT)renderState[15];
-}
-
-#pragma auto_inline(on)

@@ -14,6 +14,7 @@ uint __stdcall dtaRead(int handle, void *buffer, uint len);
 int __stdcall dtaWrite(int handle, const void *buffer, uint len);
 int __stdcall dtaSeek(int handle, int distance_to_move, int move_method);
 bool __stdcall dtaClose(int handle);
+bool __stdcall dtaDelete(const char *file_name);
 bool __stdcall dtaGetTime(int handle, struct _FILETIME *time, bool force_check_from_file);
 }
 

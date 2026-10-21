@@ -26,9 +26,6 @@ struct WS_VERTEX {
     float u, v;
 };
 
-// The loader (Load.cpp, not written yet)
-LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, void *cb, void *context, I3D_frame *root);
-
 // ITexture.cpp
 void UnloadManagedTextures();
 
@@ -510,7 +507,7 @@ LS3D_RESULT I3D_scene::SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) 
 }
 
 // FUNCTION: LS3DF 0x1004a300
-LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, void *cb, void *context)
+LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
     if (!file_name)
@@ -1576,16 +1573,3 @@ bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
         return false;
     return true;
 }
-
-// The function of another file the scene calls, until that is written. It comes after the scene's functions: VC6 knows
-// that a function compiled earlier in the file can't throw (see I3d_driver.cpp). Its body differs from the other
-// stubs', or the linker would fold them; auto_inline(off) keeps VC6 from inlining it here.
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x100603e0
-LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, void *cb, void *context, I3D_frame *root)
-{
-    return (LS3D_RESULT)renderState[14];
-}
-
-#pragma auto_inline(on)

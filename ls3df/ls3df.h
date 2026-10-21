@@ -285,7 +285,7 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
+// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z

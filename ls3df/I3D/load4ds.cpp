@@ -1,22 +1,21 @@
-// The 4ds loader (PS2 load4ds.cpp), in the original from 0x10060c60 to its marker 0x10061970: LoadTargetList's $E, then
-// LoadImage (0x10060cb0), LoadMeshImage, two more functions and LoadAnimation5ds (PS2 Load5ds.cpp's,
-// LoadAnimation5ds__FPCcPPvPC9_FILETIME: const char *, void **, const FILETIME *, here in ecx, edx and on the stack,
-// retn 4). Only LoadMeshImage is written yet. Names are the PS2 build's unless noted.
+// The 4ds loader (PS2 load4ds.cpp), at 0x10060c40-0x10061800 in the original: the header's zero vector's $E, the target
+// list's, then LoadImage, LoadMeshImage, the PC's LoadShadowImage and C_list<S_vector>::reserve, out of line for it.
+// Names are the PS2 build's unless noted.
+// - No precompiled header: the zero vector's $E is the file's first function (0x10060c40), before the target list's
+//   (0x10060c60), as in .CRT$XCU. #pragma hdrstop before the includes leaves the file without one (see I3d_area.cpp).
+// - The file's .bss is its globals' and the zero vector's in VC6's hash order (ImageErrFlg, ShadowInfo, the vector,
+//   LoadImageHandle, ImageFileName, LoadTargetList). Open: a dword nothing references at 0x101c3c00, between
+//   LoadImageHandle and ImageFileName, a global with external linkage (VC6 gives an unreferenced static none) whose
+//   name hashes between theirs.
+#pragma hdrstop
 #include "I3D/I3D.h"
+#include "I3D/I3d_material.h"
+#include "IGraph/IGraph.h"
 #include "dta.h"
 
-// The loader's state, which the frames' LoadImage functions read from and set (Load.cpp's or its neighbours'; the
-// original's .bss has them from 0x101b5160 on, among the zero vectors of two files without code). The frames and the
-// materials loaded so far, by their 1-based index in the file.
-// GLOBAL: LS3DF 0x101b5160
-I3D_frame *LoadFramy[10000];
+#include <string.h>
 
-// GLOBAL: LS3DF 0x101beda8
-I3D_material *LoadMaterialy[5000];
-
-// GLOBAL: LS3DF 0x101c3bc8
-int LoadMaterialu;
-
+// The 4ds loader's state, which the frames' LoadImage functions read from and set: the error, the file and its name
 // GLOBAL: LS3DF 0x101c3be4
 LS3D_RESULT ImageErrFlg;
 
@@ -26,10 +25,178 @@ int LoadImageHandle;
 // GLOBAL: LS3DF 0x101c3c04
 const char *ImageFileName;
 
-// The original's $E of this list is the file's first function (0x10060c60), but its entry in .CRT$XCU comes before
-// the zero vector's, as if it were defined above the header's include
 // GLOBAL: LS3DF 0x101c3c08
 C_list<I3D_target *> LoadTargetList;
+
+// A .6ds file's counts (PC only, the names are guesses), read at once: its vertices, its faces' indices and its parts.
+// The name is chosen for the .bss order (VC6's hash puts it before the zero vector, after ImageErrFlg).
+struct S_shadow_info {
+    ushort num_verts;
+    ushort num_indices;
+    ushort num_parts;
+};
+
+// GLOBAL: LS3DF 0x101c3be8
+static S_shadow_info ShadowInfo;
+
+// The visuals' types by their index in the file (PC only, the name is a guess; PS2's types are the indices)
+// GLOBAL: LS3DF 0x100a915c
+static I3D_VISUAL_TYPE VisualTypes[] = {
+    I3D_VISUAL_OBJECT, I3D_VISUAL_LIT_OBJECT, I3D_VISUAL_SINGLEMESH, I3D_VISUAL_SINGLEMORPH, I3D_VISUAL_BILLBOARD,
+    I3D_VISUAL_MORPH, I3D_VISUAL_LENSF, I3D_VISUAL_PROJECTOR, I3D_VISUAL_MIRROR,
+};
+
+// Loads a .4ds file: its materials, then its frames, each linked to its parent (by its 1-based index) and loading its
+// own data (the frames' LoadImage functions), then the targets' frames. The frames stay in LoadFramy for the caller;
+// the materials are released, the meshes keep them. PS2's also builds the single meshes; the PC's never compares the
+// timestamp.
+// FUNCTION: LS3DF 0x10060cb0
+LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
+{
+    LoadFramu = 0;
+    LoadMaterialu = 0;
+    LoadAnimCount = 0;
+    LoadTargetList.reset();
+    if (!file_name || !*file_name)
+        return I3DERR_INVALIDPARAMS;
+    LoadImageHandle = dtaOpen(file_name, false);
+    if (LoadImageHandle < 0)
+        return I3DERR_NOFILE;
+    char id[4];
+    id[0] = 0;
+    dtaRead(LoadImageHandle, id, 4);
+    if (strcmp(id, "4DS")) {
+        dtaClose(LoadImageHandle);
+        return I3DERR_FILECORRUPTED;
+    }
+    int version = 0;
+    dtaRead(LoadImageHandle, &version, 2);
+    if (version != 29) {
+        dtaClose(LoadImageHandle);
+        return I3DERR_BADVERSION;
+    }
+    FILETIME ft;
+    dtaRead(LoadImageHandle, &ft, sizeof(ft));
+    ImageFileName = file_name;
+    ImageErrFlg = I3D_OK;
+    dtaRead(LoadImageHandle, &LoadMaterialu, 2);
+    int i;
+    for (i = 0; i < LoadMaterialu; i++) {
+        LoadProgress((float)(i / 2) / LoadMaterialu);
+        uint flags;
+        dtaRead(LoadImageHandle, &flags, 4);
+        I3D_material *mat;
+        if (flags & MATF_ANIMATED) {
+            I3D_anim_material *amat = pI3DDriver->CreateAnimMaterial();
+            if (!amat) {
+                dbgPrintf("!! Anim. Material not created  LoadImage() %s", file_name);
+                ImageErrFlg = I3DERR_OUTOFMEM;
+                break;
+            }
+            amat->flags = flags;
+            amat->LoadImage();
+            mat = amat;
+        } else {
+            mat = pI3DDriver->CreateMaterial();
+            if (!mat) {
+                dbgPrintf("!! Material not created  LoadImage() %s", file_name);
+                ImageErrFlg = I3DERR_OUTOFMEM;
+                break;
+            }
+            mat->flags = flags;
+            mat->LoadImage();
+        }
+        LoadMaterialy[i] = mat;
+        if (ImageErrFlg) {
+            dbgPrintf("!! Error: %s while loading material ID:%d  %s", I3DGetResultMessage(ImageErrFlg), i + 1,
+                file_name);
+            break;
+        }
+    }
+    LoadMaterialu = i;
+    if (!ImageErrFlg) {
+        dtaRead(LoadImageHandle, &LoadFramu, 2);
+        int j;
+        for (j = 0; j < LoadFramu; j++) {
+            LoadProgress((float)(j / 2) / LoadFramu + .5f);
+            int type = 0;
+            dtaRead(LoadImageHandle, &type, 1);
+            I3D_frame *frm;
+            if (type == FRAME_VISUAL) {
+                uint vtype = 0;
+                dtaRead(LoadImageHandle, &vtype, 1);
+                if (vtype >= sizeof(VisualTypes) / sizeof(VisualTypes[0])) {
+                    dbgPrintf("!! Invalid visual type:%d  LoadImage() %s", vtype, file_name);
+                    ImageErrFlg = I3DERR_FILECORRUPTED;
+                    break;
+                }
+                I3D_visual *vis = pI3DDriver->CreateVisual(VisualTypes[vtype]);
+                if (!vis) {
+                    ImageErrFlg = I3DERR_GENERIC;
+                    break;
+                }
+                dtaRead(LoadImageHandle, &vis->vis_flags, 2);
+                vis->vis_flags &= ~(VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
+                frm = vis;
+            } else {
+                if (type >= 0x12) {
+                    ImageErrFlg = I3DERR_FILECORRUPTED;
+                    break;
+                }
+                frm = pI3DDriver->CreateFrame((I3D_FRAME_TYPE)type);
+                if (!frm) {
+                    ImageErrFlg = I3DERR_GENERIC;
+                    break;
+                }
+            }
+            int parent = 0;
+            dtaRead(LoadImageHandle, &parent, 2);
+            if (parent) {
+                if (parent > j) {
+                    dbgPrintf("!! Invalid parent ID:%d  LoadImage() %s", parent, file_name);
+                    ImageErrFlg = I3DERR_FILECORRUPTED;
+                    break;
+                }
+                frm->LinkTo(LoadFramy[parent - 1], 0);
+            }
+            LoadFramy[j] = frm;
+            frm->LoadImage();
+            if (ImageErrFlg)
+                break;
+        }
+        LoadFramu = j;
+        dtaRead(LoadImageHandle, &LoadAnimCount, 1);
+    }
+    // The targets' lists hold their frames' indices: an index past the frames loaded is an error, 0 none. Removing one
+    // moves the list's last frame into its place, so the pointer stays. The list is tested before its count is read
+    // for the loop, as each target's count is read before its frames.
+    if (LoadTargetList.size()) {
+        I3D_target **pt = &LoadTargetList[0];
+        for (int n = LoadTargetList.size(); n--; pt++) {
+            int k = (*pt)->frames.size();
+            I3D_frame **pf = &(*pt)->frames[0];
+            while (k--) {
+                int index = (int)*pf;
+                if (index > LoadFramu) {
+                    ImageErrFlg = I3DERR_FILECORRUPTED;
+                    *pf = NULL;
+                    (*pt)->DeleteFromTarget(NULL);
+                } else if (!index) {
+                    (*pt)->DeleteFromTarget(NULL);
+                } else {
+                    *pf = LoadFramy[index - 1];
+                    LoadFramy[index - 1]->frm_flags |= FRMFLAGS_TARGET;
+                    pf++;
+                }
+            }
+        }
+    }
+    dtaClose(LoadImageHandle);
+    LoadImageHandle = -1;
+    for (i = 0; i < LoadMaterialu; i++)
+        LoadMaterialy[i]->Release();
+    return ImageErrFlg;
+}
 
 // An object's mesh from the file: a reference to an earlier object's (the frame's index), or its levels, each with its
 // distance, vertices (0xffff: texture coordinates for the first level's vertices) and face groups. Errors set
@@ -117,4 +284,69 @@ I3D_mesh_object *LoadMeshImage()
         level->Release();
     }
     return mesh;
+}
+
+// Loads a .6ds file into a shadow's geometry: the vertices, the faces' indices, then each part's counts and the name of
+// its frame (PC only, the name is its message's). With a time the file's timestamp has to be that one.
+// FUNCTION: LS3DF 0x10061450
+LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time)
+{
+    if (!file_name || !*file_name)
+        return I3DERR_INVALIDPARAMS;
+    LoadImageHandle = dtaOpen(file_name, false);
+    if (LoadImageHandle < 0)
+        return I3DERR_NOFILE;
+    char id[4];
+    id[0] = 0;
+    dtaRead(LoadImageHandle, id, 4);
+    if (strcmp(id, "6DS")) {
+        dtaClose(LoadImageHandle);
+        return I3DERR_FILECORRUPTED;
+    }
+    int version = 0;
+    dtaRead(LoadImageHandle, &version, 2);
+    if (version != 2) {
+        dtaClose(LoadImageHandle);
+        return I3DERR_BADVERSION;
+    }
+    FILETIME ft;
+    dtaRead(LoadImageHandle, &ft, sizeof(ft));
+    if (time && CompareFileTime(time, &ft)) {
+        dtaClose(LoadImageHandle);
+        return I3DERR_BADTIMESTAMP;
+    }
+    dtaRead(LoadImageHandle, &ShadowInfo, sizeof(ShadowInfo));
+    if (ShadowInfo.num_verts) {
+        def->verts.reserve(ShadowInfo.num_verts);
+        dtaRead(LoadImageHandle, &def->verts[0], ShadowInfo.num_verts * sizeof(S_vector));
+        def->verts.used_size = ShadowInfo.num_verts;
+    }
+    if (ShadowInfo.num_indices) {
+        def->faces.reserve(ShadowInfo.num_indices);
+        dtaRead(LoadImageHandle, &def->faces[0], ShadowInfo.num_indices * sizeof(ushort));
+        def->faces.used_size = ShadowInfo.num_indices;
+    }
+    if (ShadowInfo.num_parts) {
+        def->parts.reserve(ShadowInfo.num_parts);
+        def->parts.used_size = ShadowInfo.num_parts;
+        S_shadow_part *part = &def->parts[0];
+        while (ShadowInfo.num_parts--) {
+            dtaRead(LoadImageHandle, &part->num_verts, 8);
+            int len = 0;
+            dtaRead(LoadImageHandle, &len, 1);
+            part->name = new char[len + 1];
+            if (!part->name) {
+                dbgPrintf("!! Out of memory  LoadShadowImage()  %s", file_name);
+                ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+                return I3DERR_OUTOFMEM;
+            }
+            if (len)
+                dtaRead(LoadImageHandle, part->name, len);
+            part->name[len] = 0;
+            part++;
+        }
+    }
+    dtaClose(LoadImageHandle);
+    LoadImageHandle = -1;
+    return I3D_OK;
 }

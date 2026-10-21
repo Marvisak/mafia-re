@@ -23,9 +23,6 @@
 
 #include <string.h>
 
-// The shadow's file loader (Load.cpp, not written yet; the name is a guess)
-LS3D_RESULT LoadShadow(const char *file_name, uint flags, void *cb, void *context, ShadowDef *def);
-
 // The driver's bias for the shadows (RS_ZBIAS_SHADOW)
 extern int RsZBiasShadow;
 
@@ -330,7 +327,7 @@ void I3D_shadow::Close()
 }
 
 // FUNCTION: LS3DF 0x100515e0
-LS3D_RESULT I3D_shadow::Open(const char *name, uint flags, void *cb, void *context)
+LS3D_RESULT I3D_shadow::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
     def = new ShadowDef;
@@ -1117,16 +1114,3 @@ void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 }
-
-// The functions of other files the shadows call, until those are written. They come after the file's functions: VC6
-// knows that a function compiled earlier in the file can't throw (see I3d_driver.cpp). auto_inline(off) keeps VC6 from
-// inlining them here.
-#pragma auto_inline(off)
-
-// STUB: LS3DF 0x10060a50
-LS3D_RESULT LoadShadow(const char *file_name, uint flags, void *cb, void *context, ShadowDef *def)
-{
-    return (LS3D_RESULT)renderState[13];
-}
-
-#pragma auto_inline(on)

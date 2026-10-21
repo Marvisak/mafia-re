@@ -88,7 +88,7 @@ I3D_sound::~I3D_sound()
 // Opens the file's source, which the sound driver's sources share, and a voice for it. A source without a 3D buffer
 // (a stereo one) can only be ambient.
 // FUNCTION: LS3DF 0x10057940
-LS3D_RESULT I3D_sound::Open(const char *file_name, uint flags, void *cb, void *context)
+LS3D_RESULT I3D_sound::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     if (!pISndDriver->IsInit())
         return I3DERR_NOTINITIALIZED;

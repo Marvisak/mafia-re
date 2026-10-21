@@ -9,9 +9,6 @@
 // (as IGraph.cpp's)
 #include <new>
 
-// The loader (Load.cpp, not written yet)
-LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, void *cb, void *context, I3D_frame *root);
-
 // FUNCTION: LS3DF 0x10033410
 I3D_model::I3D_model()
 {
@@ -48,7 +45,7 @@ void I3D_model::Close()
 
 // Named frames go into the fast find tree under the model's name (SetName), not their own
 // FUNCTION: LS3DF 0x100335a0
-LS3D_RESULT I3D_model::Open(const char *name, uint flags, void *cb, void *context)
+LS3D_RESULT I3D_model::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
     int fast_find = renderState[RS_FAST_FIND];

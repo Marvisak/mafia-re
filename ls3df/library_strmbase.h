@@ -142,6 +142,9 @@
 // LIBRARY: LS3DF 0x10087e90
 // ?SetRepaintStatus@CBaseRenderer@@QAEXH@Z
 
+// LIBRARY: LS3DF 0x10087ec0
+// ?OnRenderStart@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+
 // LIBRARY: LS3DF 0x10087ed0
 // ??0CRendererInputPin@@QAE@PAVCBaseRenderer@@PAJPBG@Z
 
@@ -173,7 +176,7 @@
 // ?CompleteConnect@CRendererInputPin@@UAEJPAUIPin@@@Z
 
 // LIBRARY: LS3DF 0x10088290
-// ?AddRef@CBaseFilter@@UAGKXZ
+// ?AddRef@CBaseInputPin@@UAGKXZ
 
 // LIBRARY: LS3DF 0x100882a0
 // ?Release@CBaseFilter@@UAGKXZ
@@ -212,7 +215,7 @@
 // ?OnStopStreaming@CBaseVideoRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088540
-// ?OnWaitEnd@CBaseVideoRenderer@@UAEXXZ
+// ?OnWaitStart@CBaseVideoRenderer@@UAEXXZ
 
 // LIBRARY: LS3DF 0x10088550
 // ?PreparePerformanceData@CBaseVideoRenderer@@QAEXHH@Z
@@ -242,7 +245,7 @@
 // ?SendQuality@CBaseVideoRenderer@@UAEJ_J0@Z
 
 // LIBRARY: LS3DF 0x10088960
-// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
+// ?OnStartStreaming@CBaseRenderer@@UAEJXZ
 
 // LIBRARY: LS3DF 0x10088980
 // ?ShouldDrawSampleNow@CBaseVideoRenderer@@UAEJPAUIMediaSample@@PA_J1@Z
