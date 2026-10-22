@@ -50,9 +50,13 @@ struct S_state
 
 extern S_state dialog_state;
 extern S_settings settings;
+#ifndef SETUP_1_0
+// 1.2 added the W-buffer test: 1.0 neither clears the setting nor disables its checkbox
 extern bool supports_w_buffer;
+#endif
 
-// Error is defined before SetText, but 1.2 has it after DialogFunc. Its marker matches by name, here in a header, so
-// the linter doesn't check it against main.cpp's order.
+// Error is defined before SetText, but 1.2 has it after DialogFunc, as 1.0 does. Its marker matches by name, here in a
+// header, so the linter doesn't check it against main.cpp's order.
 // FUNCTION: SETUP 0x402550
+// FUNCTION: SETUP10 0x402180
 // Error

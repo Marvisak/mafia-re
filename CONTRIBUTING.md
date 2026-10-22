@@ -40,6 +40,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    - `LS3DF.dll` and `IJoy.dll`: Steam's copies are identical to retail.
    - `rw_data.dll`: the retail copy from CD 2. Steam's has a one-byte patch at file offset `0x4720`.
    - `setup.exe`: `Patch\setup.exe` from the official 1.2 patch, `mafia_patch_1.2_eng.exe`.
+   - `Setup.1.0.exe`, the secondary target `SETUP10`: the `setup.exe` of the original 1.0 release (linked 2002-07-28), saved under that name; `reccmp-project.yml` has its SHA-256. The `vc6` and `vc6-pdb` builds build it too, as `setup_1_0`.
    - `LS3DF.1.1.dll`, the secondary target `LS3DF11`: `Patch\LS3DF.dll` from the official 1.1 patch, `mafiapatchv1.1en.exe`, saved under that name. The `vc6` and `vc6-pdb` builds build it too, as `ls3df_1_1`.
    - `Game.exe`: no unprotected copy survives, and Steam's is a SafeDisc unwrap. `tools/reconstruct_game_exe.py` rebuilds the original as `target/Game.orig.exe` from Steam's `Game.exe`, CD 2's `MafiaGame\Game.exe` (saved as `target/Game.cd2.exe`) and the patch exe.
 4. Build:
@@ -49,7 +50,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
    The linker stamps its output with the time of the link and the path of the PDB. The `vc6` and `vs2008` builds then write the originals' values into it (`tools/postlink.py`), so a finished binary can come out identical to the original; their PDBs no longer pair with them in a debugger. The `vc6-pdb` build keeps the linker's.
-5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `IJOY`, `LS3DF`, `LS3DF11` and `GAME` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take the same names with `--target`:
+5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `SETUP10`, `IJOY`, `LS3DF`, `LS3DF11` and `GAME` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take the same names with `--target`:
    ```bash
    cd build/vc6-pdb
    ../../.venv/Scripts/reccmp-reccmp --target RWDATA --nolib                  # score of every function

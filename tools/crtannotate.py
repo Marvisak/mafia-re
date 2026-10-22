@@ -50,6 +50,7 @@ library_<name>.h, with no import thunks.
 Run it from the repository root after building the target's PDB preset:
 
     .venv/Scripts/python tools/crtannotate.py SETUP
+    .venv/Scripts/python tools/crtannotate.py SETUP10 --out library_msvc_1_0.h
     .venv/Scripts/python tools/crtannotate.py SETUPSTEAM --pdb-build build/vs2008 --out library_msvc_steam.h
     .venv/Scripts/python tools/crtannotate.py LS3DF --library STRMBASE
 """

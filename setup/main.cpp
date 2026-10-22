@@ -1,5 +1,8 @@
 // setup.exe has two source files (the Rich header has two objects from the compiler), whose names are unknown. 1.2
-// has this one's code at 0x401000-0x4025b0, in the order of this file apart from Error, and hw.cpp's after it.
+// has this one's code at 0x401000-0x4025b0, in the order of this file apart from Error, and hw.cpp's after it; 1.0
+// at 0x401000-0x4021b0, in the same order.
+// 1.0 (SETUP_1_0) has its texts in the code and the dialog: 1.2 moved them to a string table, set at
+// WM_INITDIALOG.
 #include "main.h"
 #include "hw.h"
 #include "settings.h"
@@ -10,6 +13,7 @@
 // This file's only global in 1.2, the start of its .data. The rest are in hw.cpp.
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
+// GLOBAL: SETUP10 0x40d040
 // GLOBAL: SETUPSTEAM 0x405019
 bool settings_loaded = true;
 
@@ -35,6 +39,10 @@ inline void GetWindowHandles(S_state &state, HWND main_window)
 // FUNCTION: SETUPSTEAM 0x4011f0
 static void Error(const char *msg)
 {
+#ifdef SETUP_1_0
+    // STRING: SETUP10 0x40d1e4
+    MessageBoxA(dialog_state.windows.main, msg, "Setup error", MB_OK);
+#else
     char buffer[128];
     if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
     {
@@ -42,9 +50,11 @@ static void Error(const char *msg)
         strcpy(buffer, "Setup error");
     }
     MessageBoxA(dialog_state.windows.main, msg, buffer, MB_OK);
+#endif
     EndDialog(dialog_state.windows.main, 0);
 }
 
+#ifndef SETUP_1_0
 // FUNCTION: SETUP 0x401000
 // FUNCTION: SETUPSTEAM 0x401270
 bool SetText(HWND window, uint uid)
@@ -70,8 +80,10 @@ bool SetDialogText(HWND main_window, int dlg, uint uid)
     }
     return false;
 }
+#endif
 
 // FUNCTION: SETUP 0x4010b0
+// FUNCTION: SETUP10 0x401000
 // FUNCTION: SETUPSTEAM 0x4012e0
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -98,6 +110,7 @@ inline void HandleComboField(uint uid, bool &value)
 }
 
 // FUNCTION: SETUP 0x401220
+// FUNCTION: SETUP10 0x401170
 // FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
 {
@@ -143,17 +156,19 @@ void ToggleFields()
 }
 
 // FUNCTION: SETUP 0x401320
+// FUNCTION: SETUP10 0x401270
 // FUNCTION: SETUPSTEAM 0x401470
 void ToggleExpertSettings()
 {
     // A static of the only function that uses it: Steam's build places it after the settings, whose constructor
     // the compiler turned into initialized data, which a global's initializer would be placed before.
-    // 1.2 reads and writes it as a dword, Steam's rebuild as a byte.
+    // 1.0 and 1.2 read and write it as a dword, Steam's rebuild as a byte.
 #ifdef SETUP_STEAM
     // GLOBAL: SETUPSTEAM 0x40505b
     static bool expert_settings_enabled = true;
 #else
     // GLOBAL: SETUP 0x40e044
+    // GLOBAL: SETUP10 0x40d044
     static BOOL expert_settings_enabled = TRUE;
 #endif
     RECT window_rect;
@@ -166,24 +181,36 @@ void ToggleExpertSettings()
         SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top - 75, SWP_SHOWWINDOW);
         expert_settings_enabled = false;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
+#ifdef SETUP_1_0
+        // STRING: SETUP10 0x40d094
+        SetWindowTextA(button, "Open expert settings...");
+#else
         SetText(button, IDS_OPENEXPERTSETTINGS);
+#endif
     }
     else
     {
         SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top + 75, SWP_SHOWWINDOW);
         expert_settings_enabled = true;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
+#ifdef SETUP_1_0
+        // STRING: SETUP10 0x40d078
+        SetWindowTextA(button, "Close expert settings...");
+#else
         SetText(button, IDS_CLOSEEXPERTSETTINGS);
+#endif
     }
 }
 
 // FUNCTION: SETUP 0x4013e0
+// FUNCTION: SETUP10 0x401330
 // FUNCTION: SETUPSTEAM 0x401550
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     switch (Msg)
     {
     case WM_INITDIALOG:
+#ifndef SETUP_1_0
         SetText(hWnd, IDS_SETUP);
         SetDialogText(hWnd, IDC_BUTTON_AUTODETECT, IDS_AUTODETECT);
         SetDialogText(hWnd, IDC_BUTTON_EXIT, IDS_EXIT);
@@ -211,6 +238,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         SetDialogText(hWnd, IDC_TEXTUREQUALITY, IDS_TEXTUREQUALITY);
         SetDialogText(hWnd, IDC_LIGHTMAPQUALITY, IDS_LIGHTMAPQUALITY);
         SetDialogText(hWnd, IDC_SOUND, IDS_SOUND);
+#endif
 
         GetWindowHandles(dialog_state, hWnd);
         ToggleExpertSettings();
@@ -288,6 +316,11 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
         if (!LoadD3D8())
         {
+#ifdef SETUP_1_0
+            // The message 1.2's string table has as IDS_DIRECTXENUMERROR, which its code doesn't load
+            // STRING: SETUP10 0x40d11c
+            Error("DirectX : Display devices could not be enumerated.");
+#else
             char buffer[256];
             if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
             {
@@ -296,6 +329,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 strcpy(buffer, "DirectX : Display devices could not be enumerated.");
             }
             Error(buffer);
+#endif
         }
         // The controls are refreshed here, after WM_INITDIALOG and for the command cases that jump back. Steam's build
         // has its strings before the command cases' (VS2008 keeps string literals in order of first use); the code is
@@ -321,14 +355,29 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_SUSPENDWHENINACTIVE, BM_SETCHECK, settings.suspend_when_inactive ? BST_CHECKED : BST_UNCHECKED, NULL);
             SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_CLIPALWAYS, BM_SETCHECK, settings.clip_always ? BST_CHECKED : BST_UNCHECKED, NULL);
             SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_MULTIPASSRENDERING, BM_SETCHECK, settings.multipass_rendering ? BST_CHECKED : BST_UNCHECKED, NULL);
+#ifndef SETUP_1_0
             if (!supports_w_buffer)
             {
                 settings.w_buffer = false;
             }
+#endif
             SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_WBUFFER, BM_SETCHECK, settings.w_buffer ? BST_CHECKED : BST_UNCHECKED, NULL);
+#ifndef SETUP_1_0
             EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
+#endif
 
             SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
+#ifdef SETUP_1_0
+            // STRING: SETUP10 0x40d108
+            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Stereo headphones");
+            // STRING: SETUP10 0x40d0f8
+            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Stereo speakers");
+            // STRING: SETUP10 0x40d0e0
+            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Quadraphonic speakers");
+            // STRING: SETUP10 0x40d0c4
+            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"5.1 surround sound speakers");
+            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
+#else
 
             // A block of its own: 1.2 gives this buffer the stack slot of the cases' captions, which a buffer in the function's
             // scope can't share
@@ -364,19 +413,23 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
                 SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
             }
+#endif
             LoadAdapterData(-1);
             ToggleFields();
 
             // GetDlgItem for every message, as both builds call it
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_RESETCONTENT, NULL, NULL);
             // STRING: SETUP 0x40e088
+            // STRING: SETUP10 0x40d0bc
             int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 0);
             // The typo is in the binary
             // STRING: SETUP 0x40e080
+            // STRING: SETUP10 0x40d0b4
             pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 2);
             // STRING: SETUP 0x40e078
+            // STRING: SETUP10 0x40d0ac
             pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 1);
 
@@ -432,6 +485,15 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             ToggleFields();
             if (settings.texture_true_color && LOWORD(wParam) == IDC_CHECK_TEXTURETRUECOLOR && dialog_state.vram_size < 64)
             {
+#ifdef SETUP_1_0
+                if (MessageBoxA(
+                        hWnd,
+                        // STRING: SETUP10 0x40d150
+                        "Selecting truecolor textures is only recommended\n\rfor video cards with 64MB video RAM or above.\n\rContinue?",
+                        // STRING: SETUP10 0x40d1bc
+                        "Warning",
+                        MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+#else
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_LOWVRAMWARNING, buffer, sizeof(buffer)) == 0)
                 {
@@ -446,6 +508,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 }
 
                 if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+#endif
                 {
                     settings.texture_true_color = false;
                     goto refresh;
@@ -531,6 +594,16 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
             if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
             {
+#ifdef SETUP_1_0
+                // 1.2 has "Warning" as the caption here too
+                if (MessageBoxA(
+                        hWnd,
+                        // STRING: SETUP10 0x40d1c4
+                        "Discard changes ?!",
+                        // STRING: SETUP10 0x40d1d8
+                        "WARNING...",
+                        MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+#else
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
                 {
@@ -544,6 +617,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     strcpy(caption, "Warning");
                 }
                 if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+#endif
                 {
                     return 0;
                 }

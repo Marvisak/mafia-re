@@ -6,6 +6,7 @@
 
 // From the DirectX SDK's dxguid.lib, the only one of its GUIDs setup uses
 // GLOBAL: SETUP 0x40d37c
+// GLOBAL: SETUP10 0x40c36c
 // GLOBAL: SETUPSTEAM 0x40414c
 // IID_IDirectDraw7
 

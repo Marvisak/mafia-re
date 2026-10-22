@@ -13,6 +13,15 @@ targets:
       sha256: c0c1601220821393a56477d400601e282ff49bbf8d21a0297f90f46a27afc8e0
     data_sources:
       - setup/library_msvc.csv
+  SETUP10:
+    filename: Setup.1.0.exe
+    source_root:
+      - setup
+      - common
+    hash:
+      sha256: 4e1300a1456710279a39201f5d5cf4b5df4b75ddde3a695f8d344e2612df1b99
+    data_sources:
+      - setup/library_msvc_1_0.csv
   IJOY:
     filename: IJoy.dll
     source_root: ijoy

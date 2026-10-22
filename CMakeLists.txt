@@ -47,6 +47,10 @@ if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(ls3df ls3df_1_1)
     unset(LS3DF_1_1)
     add_subdirectory(game)
+    # 1.0's setup.exe, from the same sources (setup/CMakeLists.txt)
+    set(SETUP_1_0 ON)
+    add_subdirectory(setup setup_1_0)
+    unset(SETUP_1_0)
 endif()
 add_subdirectory(setup)
 
@@ -61,6 +65,9 @@ targets:
   SETUP:
     path: $<TARGET_FILE:setup>
     pdb: $<TARGET_PDB_FILE:setup>
+  SETUP10:
+    path: $<TARGET_FILE:setup_1_0>
+    pdb: $<TARGET_PDB_FILE:setup_1_0>
   IJOY:
     path: $<TARGET_FILE:ijoy>
     pdb: $<TARGET_PDB_FILE:ijoy>
