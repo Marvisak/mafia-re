@@ -52,10 +52,15 @@ class Target:
 # before the function), less 2 pieces of IsCPUID's __except, 2 runs of padding and 4 of the base classes'
 # functions, plus 5 that Binary Ninja misses (IGraph::EndScene, ITexture::Preload, two $E and the destructor
 # stream_shows registers, 0x100758c0).
+# Patch 1.1's LS3DF is counted the same way: Binary Ninja's 1357 up to d3d8's thunk (5 of them start in the padding
+# before the function), less 2 pieces of IsCPUID's __except, 2 runs of padding and 3 of the base classes' functions
+# (CBaseVideoRenderer's IUnknown members), plus the same 5 it misses. The particle base's scalar deleting destructor
+# (0x1003ea30) is the engine's, as in 1.2, though CRendererInputPin's has the same bytes.
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
     Target("LS3DF.dll", "LS3DF", 1361),  # 0x1007d9d0
+    Target("LS3DF.dll (patch 1.1)", "LS3DF11", 1355, svg="LS3DF.1.1"),  # 0x1007a800
     Target("Game.exe", "GAME", 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
     Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158

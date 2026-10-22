@@ -1,21 +1,26 @@
 # Mafia-RE
 
-Decompilation of *Mafia: The City of Lost Heaven* (Illusion Softworks, 2002), PC version 1.2: the last official patch, and
-the version Steam ships.
+Decompilation of *Mafia: The City of Lost Heaven* (Illusion Softworks, 2002) for PC, in every released version: the
+original 1.0, the official patches 1.1 and 1.2, and Steam's rebuild of the setup ([Versions](#versions)). Version 1.2,
+the last official patch and the version Steam ships, is the main target. The other versions are built from the same
+source, with their differences kept behind macros.
 
 The goal is a byte-exact decompilation: source code that, built with the compilers and linkers the original binaries were
-built with, produces files identical to the originals.
+built with, produces files identical to the originals of each version.
 
 ## Progress
 
 <img src="docs/progress/Game.svg" width="50%"><img src="docs/progress/LS3DF.svg" width="50%">
 <img src="docs/progress/rw_data.svg" width="50%"><img src="docs/progress/IJoy.svg" width="50%">
 <img src="docs/progress/setup.svg" width="50%"><img src="docs/progress/setup.steam.svg" width="50%">
+<img src="docs/progress/LS3DF.1.1.svg" width="50%">
 
 The cards count each binary's own functions, without the C runtime linked into it. *Implemented* is how many of them
 have source, *accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those, and the bar is the
 score summed over all of them. The function counts of binaries that haven't been started are estimates.
 *setup.exe (Steam 2010)* is Steam's rebuild of the setup, built from the same source with Visual C++ 2008.
+*LS3DF.dll (patch 1.1)* is the engine of the 1.1 patch, built from the same source with its differences behind
+`ENGINE_VERSION`.
 
 | Binary | Status |
 | --- | --- |
@@ -24,6 +29,20 @@ score summed over all of them. The function counts of binaries that haven't been
 | `LS3DF.dll` (engine) | Every source file is written: the 3D engine (frames and visuals, meshes, objects and lightmapped objects, models, animation, cameras, lights, particles, portals and sectors, shadows and projectors, collision, the scene loaders, the renderer, the driver with its vertex and index buffers, and the math), the graphics layer (the Direct3D device, textures, and video through Bink and DirectShow) and the sound driver. About nine in ten of its functions compile to the original instructions. The others differ mostly in register allocation and in what the compiler inlines, and until they match the file differs from the original too, its code shifted by their sizes. The libraries it links are in place: S3's texture compressor comes from the original's own objects, and the DirectX 8.1 SDK's DirectShow base classes build from the SDK's source to the original's bytes. |
 | `Game.exe` | Started. The build is in place: the entry point compiles to the original's instructions, the C runtime is linked as in the original, and the resources are the original's apart from the icon ([below](#gameexe-icon)). The rest is written in the order the game runs, so that the rebuilt executable gets further with each step: first through the start-up to the main menu. With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it is compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
 | `IJoy.dll` | Done. Every function compiles to the original instructions, and linked on Windows 2000 the build is identical to the original. On current Windows the order of the imports within each DLL differs, because the linker sorts them with the system's `msvcrt.dll`, whose sort has changed since. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
+
+## Versions
+
+Each version replaced only some of the binaries. A binary that a version didn't change is the previous version's file.
+
+| Version | Built | Its own binaries | State |
+| --- | --- | --- | --- |
+| 1.0 | July–August 2002 | All of them | Its `Game.exe`, `LS3DF.dll` and `setup.exe` aren't started yet. |
+| Patch 1.1 | November 2002 – March 2003 | `Game.exe`, `LS3DF.dll`, `setup.exe` | `LS3DF.dll` is a target, built from the engine's source with its differences behind `ENGINE_VERSION` (393 against 1.2's 395); about nine in ten of its functions are 1.2's. Its `setup.exe` is the target above: the 1.2 patch ships the same file. Its `Game.exe` survives only inside its SafeDisc protection, so it can't be compared yet. |
+| Patch 1.2 | June 2003 | `Game.exe`, `LS3DF.dll` | The main target, [above](#progress). |
+| Steam | April 2010 | `setup.exe` | A target, built from the setup's source with Steam's changes behind `SETUP_STEAM`. Steam's other binaries are 1.2's, some with small patches of their own. |
+
+Neither patch contains `rw_data.dll` or `IJoy.dll`, and both were built in July 2002, before 1.0's other binaries, so the
+targets above are most likely the same files in every version.
 
 ## Building
 
