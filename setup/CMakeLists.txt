@@ -7,15 +7,26 @@ project(setup)
 # The top-level CMakeLists.txt adds this directory a second time with SETUP_1_0 set, for 1.0's setup as target
 # setup_1_0: the same toolchain, SDK, libraries and link (its Rich header is 1.2's but for one import less).
 # The sources keep each version's differences behind the macro of the same name.
+# It adds it again with SETUP_LANGUAGE set for the language versions Steam ships that are builds of their own, as
+# target setup_<language>, built with res/<language>.rc: Russian, 1.2's code. Steam's German, French, Italian and
+# Spanish ones are its 2010 rebuild localized after the link (below).
 option(SETUP_STEAM "Build Steam's 2010 rebuild of setup.exe instead of the 1.2 one" OFF)
 
 if (SETUP_1_0)
 	set(setup setup_1_0)
+elseif (SETUP_LANGUAGE)
+	set(setup setup_${SETUP_LANGUAGE})
 else()
 	set(setup setup)
 endif()
 
-add_executable(${setup} WIN32 main.cpp hw.cpp res/setup.rc)
+if (SETUP_LANGUAGE)
+	set(resources res/${SETUP_LANGUAGE}.rc)
+else()
+	set(resources res/setup.rc)
+endif()
+
+add_executable(${setup} WIN32 main.cpp hw.cpp ${resources})
 set_target_properties(${setup} PROPERTIES OUTPUT_NAME setup)
 
 if (SETUP_1_0)
@@ -66,6 +77,12 @@ if (MSVC_VERSION EQUAL 1200)
 		# 1.0's link time (2002-07-28) and CodeView record: the same PDB path, linked into five times (age 5)
 		postlink(${setup} --timestamp 0x3d433684 --codeview-signature 0x3d432d1e --codeview-age 5
 			"--codeview-path=C:\\Mafia\\_src\\setup\\Release\\setup.pdb")
+	elseif (SETUP_LANGUAGE STREQUAL "russian")
+		# The Russian one's link time (2003-01-23) and CodeView record: another machine's tree, linked into twice.
+		# That machine's LINK sorted the imports with an older qsort than today's msvcrt.dll has (as IJoy's did), so
+		# on current Windows each DLL's imports come in another order than the original's.
+		postlink(${setup} --timestamp 0x3e3018ce --codeview-signature 0x3e3004ad --codeview-age 2
+			"--codeview-path=D:\\mafia\\_SRC\\setup\\Release\\setup.pdb")
 	else()
 		# The original's link time (2002-11-07) and CodeView record: its PDB, linked into twice (age 2)
 		postlink(${setup} --timestamp 0x3dca7e48 --codeview-signature 0x3dca7530 --codeview-age 2
@@ -103,5 +120,25 @@ endif()
 vc6_header_dependencies(${setup})
 # RC's dependency output lists only included headers, not the files the script loads, so a splash or icon extracted
 # over the placeholders (README) wouldn't rebuild the resources
-set_property(SOURCE res/setup.rc APPEND PROPERTY OBJECT_DEPENDS
+set_property(SOURCE ${resources} APPEND PROPERTY OBJECT_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/res/splash.bmp" "${CMAKE_CURRENT_SOURCE_DIR}/res/mafia.ico")
+
+# Steam's German, French, Italian and Spanish setup.exe are its 2010 rebuild with other resources, written after the
+# link through UpdateResource (tools/localize.py): setup_<language>/setup.exe, from this build's setup.exe and
+# res/<language>.rc
+if (SETUP_STEAM)
+	foreach(language german french italian spanish)
+		set(res "${CMAKE_CURRENT_BINARY_DIR}/${language}.res")
+		add_custom_command(OUTPUT "${res}"
+			COMMAND "${CMAKE_RC_COMPILER}" "/fo${res}" "${CMAKE_CURRENT_SOURCE_DIR}/res/${language}.rc"
+			DEPENDS res/${language}.rc res/resource.h
+			VERBATIM)
+		set(localized "${CMAKE_BINARY_DIR}/setup_${language}/setup.exe")
+		add_custom_command(OUTPUT "${localized}"
+			COMMAND "${MAFIA_PYTHON}" "${CMAKE_SOURCE_DIR}/tools/localize.py" "$<TARGET_FILE:${setup}>" "${res}"
+				"${localized}"
+			DEPENDS ${setup} "${res}" "${CMAKE_SOURCE_DIR}/tools/localize.py"
+			VERBATIM)
+		add_custom_target(setup_${language} ALL DEPENDS "${localized}")
+	endforeach()
+endif()

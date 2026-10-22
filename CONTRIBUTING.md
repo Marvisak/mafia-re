@@ -41,6 +41,8 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    - `rw_data.dll`: the retail copy from CD 2. Steam's has a one-byte patch at file offset `0x4720`.
    - `setup.exe`: `Patch\setup.exe` from the official 1.2 patch, `mafia_patch_1.2_eng.exe`.
    - `Setup.1.0.exe`, the secondary target `SETUP10`: the `setup.exe` of the original 1.0 release (linked 2002-07-28), saved under that name; `reccmp-project.yml` has its SHA-256. The `vc6` and `vc6-pdb` builds build it too, as `setup_1_0`.
+   - `setup.steam.exe`, the secondary target `SETUPSTEAM`: Steam's 2010 `setup.exe`, at the top of the game's folder. The `vs2008` build builds it.
+   - `setup.<language>.exe` for `german`, `french`, `italian`, `spanish` and `russian`: the same `setup.exe` of Steam's version in that language (the game's language setting in Steam), saved under that name. The `vs2008` build makes the first four as `setup_<language>/setup.exe`, the `vc6` build the Russian one as `setup_russian`; they have no reccmp targets of their own (step 5).
    - `LS3DF.1.1.dll`, the secondary target `LS3DF11`: `Patch\LS3DF.dll` from the official 1.1 patch, `mafiapatchv1.1en.exe`, saved under that name. The `vc6` and `vc6-pdb` builds build it too, as `ls3df_1_1`.
    - `Game.exe`: no unprotected copy survives, and Steam's is a SafeDisc unwrap. `tools/reconstruct_game_exe.py` rebuilds the original as `target/Game.orig.exe` from Steam's `Game.exe`, CD 2's `MafiaGame\Game.exe` (saved as `target/Game.cd2.exe`) and the patch exe.
 4. Build:
@@ -59,6 +61,11 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    .venv/Scripts/python tools/funcdiff.py dtaRead                             # what kind of differences are left
    .venv/Scripts/python tools/filediff.py                                     # the whole file: headers, layout, data
    .venv/Scripts/python tools/progress.py                                     # redraw the README's progress cards
+   ```
+   Steam's language setups have the code of `SETUP` (Russian) or `SETUPSTEAM` (the others), so filediff compares them with that target and the original named by `--orig`:
+   ```bash
+   .venv/Scripts/python tools/filediff.py --target SETUP --orig target/setup.russian.exe --ours build/vc6/setup_russian/setup.exe
+   .venv/Scripts/python tools/filediff.py --target SETUPSTEAM --pdb-build build/vs2008 --orig target/setup.german.exe --ours build/vs2008/setup_german/setup.exe
    ```
 
 ## Running the rebuilt Game.exe

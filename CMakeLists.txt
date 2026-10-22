@@ -30,6 +30,13 @@ function(postlink target)
     endif()
 endfunction()
 
+# VC6 LINK converts a target's .res through CVTRES into a temporary file whose name two links at once can share
+# (CVT1108, "cannot open ...\lnk2 for writing"), so the VC6 builds link one target at a time.
+if (MSVC_VERSION EQUAL 1200)
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS vc6_link=1)
+    set(CMAKE_JOB_POOL_LINK vc6_link)
+endif()
+
 # VC6 has no /FS: /Zi compiles of one target share its vc60.pdb, and parallel ones fail with C1033.
 # Only the PDB build compiles with /Zi, so only it runs one compile at a time.
 if (MSVC_VERSION EQUAL 1200 AND CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
@@ -51,6 +58,10 @@ if (NOT MSVC_VERSION EQUAL 1500)
     set(SETUP_1_0 ON)
     add_subdirectory(setup setup_1_0)
     unset(SETUP_1_0)
+    # Steam's Russian setup.exe: 1.2's code with Russian resources (setup/CMakeLists.txt)
+    set(SETUP_LANGUAGE russian)
+    add_subdirectory(setup setup_russian)
+    unset(SETUP_LANGUAGE)
 endif()
 add_subdirectory(setup)
 

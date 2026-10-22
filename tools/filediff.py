@@ -417,6 +417,8 @@ def main() -> None:
     parser.add_argument("--target", default="RWDATA")
     parser.add_argument("--pdb-build", default=str(REPO / "build" / "vc6-pdb"), help="build tree reccmp uses")
     parser.add_argument("--ours", help="byte-exact build of the binary (default: same path under build/vc6)")
+    parser.add_argument("--orig", help="original binary (default: the target's); for a build with the target's code "
+                                       "and layout, such as Steam's language setups")
     parser.add_argument("--objects", action="store_true", help="list every object, not just problems")
     parser.add_argument("--bytes", metavar="ADDR", help="dump the differing bytes of the object at this original address")
     args = parser.parse_args()
@@ -426,7 +428,7 @@ def main() -> None:
     compare = Compare.from_target(target)
     pdb_path = Path(target.recompiled_path)
     ours_path = Path(args.ours) if args.ours else Path(str(pdb_path).replace("vc6-pdb", "vc6"))
-    orig, ours = PE(Path(target.original_path)), PE(ours_path)
+    orig, ours = PE(Path(args.orig) if args.orig else Path(target.original_path)), PE(ours_path)
     pdb_map = load_map(pdb_path.with_suffix(".map"))
     ours_map = load_map(ours_path.with_suffix(".map"))
 
