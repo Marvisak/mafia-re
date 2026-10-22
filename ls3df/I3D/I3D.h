@@ -3535,10 +3535,10 @@ public:
     float env_scale;                    // 0x40, the environment map's (EnvProcess), 2 * sqrt(2) by default
 
     // The flags (the name is a guess; the visuals' m_AddFGroups read them through it, which their inlining shows)
-    // Returns a reference (the billboard agent's finding, 2026-10-22): by value, VC6 loads the flags at the start of the
-    // inlined lod::Create call in the visuals' m_AddFGroups; by reference it reads them where the argument is pushed
-    // (mov dl, byte ptr [eax + 0x3c]; mov ecx, [eax + 8]; test dl, 8), and the first Lock's push_back stays out of
-    // line, as in the original (the object's, morph's, particles', single mesh's and billboard's m_AddFGroups).
+    // Returns a reference: by value, VC6 loads the flags at the start of the inlined lod::Create call in the visuals'
+    // m_AddFGroups; by reference it reads them where the argument is pushed (mov dl, byte ptr [eax + 0x3c]; mov ecx,
+    // [eax + 8]; test dl, 8), and the first Lock's push_back stays out of line, as in the original (the object's,
+    // morph's, particles', single mesh's and billboard's m_AddFGroups).
     const uint &GetFlags() const
     {
         return mesh_flags;

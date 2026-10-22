@@ -212,10 +212,9 @@ struct S_vector {
 
     // Insanity3D's: the reciprocal goes into a local, which keeps a stack slot where VC6 inlines it
     // (VertexLightingProcess)
-    // The reciprocal is computed into the parameter (the clipper agent's finding, 2026-10-22): a local for it kept the
-    // divisor on the FPU stack in ClipFacesPersp's tessellation step (fld 1.0; fdiv st(3)), where the original consumes
-    // it (fxch st(2); fdivr [1.0]); the parameter also gives I3D_part_element::Tick's color step, and changes nothing
-    // else in the DLL.
+    // The reciprocal is computed into the parameter: a local for it kept the divisor on the FPU stack in
+    // ClipFacesPersp's tessellation step (fld 1.0; fdiv st(3)), where the original consumes it (fxch st(2);
+    // fdivr [1.0]); the parameter also gives I3D_part_element::Tick's color step, and changes nothing else in the DLL.
     S_vector operator/(float f) const
     {
         f = 1.0f / f;
