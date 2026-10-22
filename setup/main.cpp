@@ -317,14 +317,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
 #ifdef SETUP_1_0
             // STRING: SETUP10 0x40d108
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Stereo headphones");
+            AddString(IDC_COMBO_SOUND, "Stereo headphones");
             // STRING: SETUP10 0x40d0f8
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Stereo speakers");
+            AddString(IDC_COMBO_SOUND, "Stereo speakers");
             // STRING: SETUP10 0x40d0e0
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"Quadraphonic speakers");
+            AddString(IDC_COMBO_SOUND, "Quadraphonic speakers");
             // STRING: SETUP10 0x40d0c4
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)"5.1 surround sound speakers");
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
+            AddString(IDC_COMBO_SOUND, "5.1 surround sound speakers");
+            SetSelection(IDC_COMBO_SOUND, settings.sound_type);
 #else
 
             // A block of its own: 1.2 gives this buffer the stack slot of the cases' captions, which a buffer in the function's
