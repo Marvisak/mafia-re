@@ -1,4 +1,5 @@
 #include "resource.h"
+#include "../version.h"
 #include <windows.h>
 
 // 1.2 has the bitmap and the strings in Czech and everything else in English (U.S.), one block per language as in
@@ -9,7 +10,7 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 IDB_SPLASH BITMAP "splash.bmp"
 
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_CZECH
 STRINGTABLE
 {
     IDS_DISPLAY, " Display "
@@ -68,7 +69,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDI_SETUP ICON "mafia.ico"
 
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
 // 1.0's dialog has the final texts. The group boxes and two of the labels have no id: 1.2 gave them ids, so that
 // WM_INITDIALOG can set their texts, widened the labels "Fullscene antialiasing" and "Resolution" and put a "*" into
 // every text it replaces.

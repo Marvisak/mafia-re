@@ -5,6 +5,8 @@
 #include <types.h>
 #include <settings.h>
 
+#include "version.h"
+
 #define BIT_DEPTH_16 0x1
 #define BIT_DEPTH_32 0x2
 #define MULTISAMPLE_2X_WINDOWED 0x4
@@ -50,7 +52,7 @@ struct S_state
 
 extern S_state dialog_state;
 extern S_settings settings;
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_1_2
 // 1.2 added the W-buffer test: 1.0 neither clears the setting nor disables its checkbox
 extern bool supports_w_buffer;
 #endif
@@ -59,4 +61,5 @@ extern bool supports_w_buffer;
 // header, so the linter doesn't check it against main.cpp's order.
 // FUNCTION: SETUP 0x402550
 // FUNCTION: SETUP10 0x402180
+// FUNCTION: SETUPPL 0x402520
 // Error

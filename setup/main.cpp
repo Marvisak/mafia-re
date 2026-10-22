@@ -1,7 +1,7 @@
 // setup.exe has two source files (the Rich header has two objects from the compiler), whose names are unknown. 1.2
 // has this one's code at 0x401000-0x4025b0, in the order of this file apart from Error, and hw.cpp's after it; 1.0
 // at 0x401000-0x4021b0, in the same order.
-// 1.0 (SETUP_1_0) has its texts in the code and the dialog: 1.2 moved them to a string table, set at
+// 1.0 has its texts in the code and the dialog: 1.2 moved them to a string table, set at
 // WM_INITDIALOG.
 // Steam's Czech setup (2002-08-23, between 1.0 and 1.2) was built without optimization (VC6 SP5 without the Processor
 // Pack, /Od /Ob1 /Oi /Gy /G6), which keeps the source's shape: every local and an inlined function's non-constant
@@ -19,6 +19,7 @@
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
 // GLOBAL: SETUP10 0x40d040
+// GLOBAL: SETUPPL 0x40e040
 // GLOBAL: SETUPSTEAM 0x405019
 bool settings_loaded = true;
 
@@ -44,7 +45,7 @@ inline void GetWindowHandles(S_state &state, HWND main_window)
 // FUNCTION: SETUPSTEAM 0x4011f0
 static void Error(const char *msg)
 {
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
     // STRING: SETUP10 0x40d1e4
     MessageBoxA(dialog_state.windows.main, msg, "Setup error", MB_OK);
 #else
@@ -52,6 +53,7 @@ static void Error(const char *msg)
     if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
     {
         // STRING: SETUP 0x40e138
+        // STRING: SETUPPL 0x40e138
         strcpy(buffer, "Setup error");
     }
     MessageBoxA(dialog_state.windows.main, msg, buffer, MB_OK);
@@ -59,8 +61,9 @@ static void Error(const char *msg)
     EndDialog(dialog_state.windows.main, 0);
 }
 
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_CZECH
 // FUNCTION: SETUP 0x401000
+// FUNCTION: SETUPPL 0x401000
 // FUNCTION: SETUPSTEAM 0x401270
 bool SetText(HWND window, uint uid)
 {
@@ -75,6 +78,7 @@ bool SetText(HWND window, uint uid)
 
 // Inlined into DialogFunc in Steam's rebuild
 // FUNCTION: SETUP 0x401050
+// FUNCTION: SETUPPL 0x401050
 bool SetDialogText(HWND main_window, int dlg, uint uid)
 {
     char buffer[1024];
@@ -89,6 +93,7 @@ bool SetDialogText(HWND main_window, int dlg, uint uid)
 
 // FUNCTION: SETUP 0x4010b0
 // FUNCTION: SETUP10 0x401000
+// FUNCTION: SETUPPL 0x4010b0
 // FUNCTION: SETUPSTEAM 0x4012e0
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -135,6 +140,7 @@ inline void SetCheck(int id, bool checked)
 
 // FUNCTION: SETUP 0x401220
 // FUNCTION: SETUP10 0x401170
+// FUNCTION: SETUPPL 0x401220
 // FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
 {
@@ -167,6 +173,7 @@ void ToggleFields()
 
 // FUNCTION: SETUP 0x401320
 // FUNCTION: SETUP10 0x401270
+// FUNCTION: SETUPPL 0x401320
 // FUNCTION: SETUPSTEAM 0x401470
 void ToggleExpertSettings()
 {
@@ -179,6 +186,7 @@ void ToggleExpertSettings()
 #else
     // GLOBAL: SETUP 0x40e044
     // GLOBAL: SETUP10 0x40d044
+    // GLOBAL: SETUPPL 0x40e044
     static BOOL expert_settings_enabled = TRUE;
 #endif
     RECT window_rect;
@@ -193,7 +201,7 @@ void ToggleExpertSettings()
         SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top - expert_height, SWP_SHOWWINDOW);
         expert_settings_enabled = false;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
         // STRING: SETUP10 0x40d094
         SetWindowTextA(button, "Open expert settings...");
 #else
@@ -205,7 +213,7 @@ void ToggleExpertSettings()
         SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top + expert_height, SWP_SHOWWINDOW);
         expert_settings_enabled = true;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
         // STRING: SETUP10 0x40d078
         SetWindowTextA(button, "Close expert settings...");
 #else
@@ -216,14 +224,17 @@ void ToggleExpertSettings()
 
 // FUNCTION: SETUP 0x4013e0
 // FUNCTION: SETUP10 0x401330
+// FUNCTION: SETUPPL 0x4013e0
 // FUNCTION: SETUPSTEAM 0x401550
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     switch (Msg)
     {
     case WM_INITDIALOG:
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_CZECH
+#if SETUP_DATE >= SETUP_DATE_POLISH
         SetText(hWnd, IDS_SETUP);
+#endif
         SetDialogText(hWnd, IDC_BUTTON_AUTODETECT, IDS_AUTODETECT);
         SetDialogText(hWnd, IDC_BUTTON_EXIT, IDS_EXIT);
         SetDialogText(hWnd, IDC_BUTTON_SAVE, IDS_SAVE);
@@ -264,7 +275,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     autodetect_done:
         if (!LoadD3D8())
         {
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
             // The message 1.2's string table has as IDS_DIRECTXENUMERROR, which its code doesn't load
             // STRING: SETUP10 0x40d11c
             Error("DirectX : Display devices could not be enumerated.");
@@ -274,6 +285,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             {
                 // This loads in different error message than it reads from resources
                 // STRING: SETUP 0x40e0e8
+                // STRING: SETUPPL 0x40e0e8
                 strcpy(buffer, "DirectX : Display devices could not be enumerated.");
             }
             Error(buffer);
@@ -303,19 +315,19 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             SetCheck(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
             SetCheck(IDC_CHECK_CLIPALWAYS, settings.clip_always);
             SetCheck(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_1_2
             if (!supports_w_buffer)
             {
                 settings.w_buffer = false;
             }
 #endif
             SetCheck(IDC_CHECK_WBUFFER, settings.w_buffer);
-#ifndef SETUP_1_0
+#if SETUP_DATE >= SETUP_DATE_1_2
             EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
 #endif
 
             SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
             // STRING: SETUP10 0x40d108
             AddString(IDC_COMBO_SOUND, "Stereo headphones");
             // STRING: SETUP10 0x40d0f8
@@ -334,6 +346,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_STEREOHEADPHONES, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e0d4
+                    // STRING: SETUPPL 0x40e0d4
                     strcpy(buffer, "Stereo headphones");
                 }
                 AddString(IDC_COMBO_SOUND, buffer);
@@ -341,6 +354,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e0c4
+                    // STRING: SETUPPL 0x40e0c4
                     strcpy(buffer, "Stereo speakers");
                 }
                 AddString(IDC_COMBO_SOUND, buffer);
@@ -348,6 +362,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e0ac
+                    // STRING: SETUPPL 0x40e0ac
                     // STRING: SETUPSTEAM 0x4041f8
                     strcpy(buffer, "Quadraphonic speakers");
                 }
@@ -356,6 +371,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e090
+                    // STRING: SETUPPL 0x40e090
                     strcpy(buffer, "5.1 surround sound speakers");
                 }
                 AddString(IDC_COMBO_SOUND, buffer);
@@ -369,15 +385,18 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_RESETCONTENT, NULL, NULL);
             // STRING: SETUP 0x40e088
             // STRING: SETUP10 0x40d0bc
+            // STRING: SETUPPL 0x40e088
             int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 0);
             // The typo is in the binary
             // STRING: SETUP 0x40e080
             // STRING: SETUP10 0x40d0b4
+            // STRING: SETUPPL 0x40e080
             pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 2);
             // STRING: SETUP 0x40e078
             // STRING: SETUP10 0x40d0ac
+            // STRING: SETUPPL 0x40e078
             pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
             SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 1);
 
@@ -435,7 +454,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             ToggleFields();
             if (settings.texture_true_color && LOWORD(wParam) == IDC_CHECK_TEXTURETRUECOLOR && dialog_state.vram_size < 64)
             {
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
                 int result = MessageBoxA(
                         hWnd,
                         // STRING: SETUP10 0x40d150
@@ -454,6 +473,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_WARNING, caption, sizeof(caption)) == 0)
                 {
                     // STRING: SETUP 0x40e11c
+                    // STRING: SETUPPL 0x40e11c
                     strcpy(caption, "Warning");
                 }
 
@@ -627,7 +647,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
             if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
             {
-#ifdef SETUP_1_0
+#if SETUP_DATE < SETUP_DATE_CZECH
                 // 1.2 has "Warning" as the caption here too
                 if (MessageBoxA(
                         hWnd,
@@ -641,6 +661,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e124
+                    // STRING: SETUPPL 0x40e124
                     strcpy(buffer, "Discard changes ?!");
                 }
 

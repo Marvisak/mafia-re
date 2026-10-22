@@ -58,9 +58,12 @@ if (NOT MSVC_VERSION EQUAL 1500)
     set(SETUP_1_0 ON)
     add_subdirectory(setup setup_1_0)
     unset(SETUP_1_0)
-    # Steam's Russian setup.exe: 1.2's code with Russian resources (setup/CMakeLists.txt)
+    # Steam's Russian and Polish setup.exe: 1.2's code and the week older Polish code, with their own resources
+    # (setup/CMakeLists.txt)
     set(SETUP_LANGUAGE russian)
     add_subdirectory(setup setup_russian)
+    set(SETUP_LANGUAGE polish)
+    add_subdirectory(setup setup_polish)
     unset(SETUP_LANGUAGE)
 endif()
 add_subdirectory(setup)
@@ -79,6 +82,9 @@ targets:
   SETUP10:
     path: $<TARGET_FILE:setup_1_0>
     pdb: $<TARGET_PDB_FILE:setup_1_0>
+  SETUPPL:
+    path: $<TARGET_FILE:setup_polish>
+    pdb: $<TARGET_PDB_FILE:setup_polish>
   IJOY:
     path: $<TARGET_FILE:ijoy>
     pdb: $<TARGET_PDB_FILE:ijoy>

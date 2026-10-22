@@ -20,6 +20,7 @@ inline bool LoadSettings(S_settings &settings)
     HKEY key;
     // STRING: SETUP 0x40e054
     // STRING: SETUP10 0x40d054
+    // STRING: SETUPPL 0x40e054
     if (RegOpenKeyA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", &key) != ERROR_SUCCESS)
     {
         return false;
@@ -30,6 +31,7 @@ inline bool LoadSettings(S_settings &settings)
     S_settings buffer;
     // STRING: SETUP 0x40e048
     // STRING: SETUP10 0x40d048
+    // STRING: SETUPPL 0x40e048
     if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, (LPBYTE)&buffer, &size))
     {
         size = 0;

@@ -22,6 +22,15 @@ targets:
       sha256: 4e1300a1456710279a39201f5d5cf4b5df4b75ddde3a695f8d344e2612df1b99
     data_sources:
       - setup/library_msvc_1_0.csv
+  SETUPPL:
+    filename: setup.polish.exe
+    source_root:
+      - setup
+      - common
+    hash:
+      sha256: c46afb2e835992c33a8beb8fa15816a8e557f1e4c97532ae24ca4966a9057a88
+    data_sources:
+      - setup/library_msvc_polish.csv
   IJOY:
     filename: IJoy.dll
     source_root: ijoy

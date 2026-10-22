@@ -6,10 +6,10 @@ project(setup)
 # SETUP_STEAM builds Steam's 2010 rebuild instead: Visual C++ 2008 SP1, the DirectX 8.1 SDK (3rdparty/dx81sdk).
 # The top-level CMakeLists.txt adds this directory a second time with SETUP_1_0 set, for 1.0's setup as target
 # setup_1_0: the same toolchain, SDK, libraries and link (its Rich header is 1.2's but for one import less).
-# The sources keep each version's differences behind the macro of the same name.
 # It adds it again with SETUP_LANGUAGE set for the language versions Steam ships that are builds of their own, as
-# target setup_<language>, built with res/<language>.rc: Russian, 1.2's code. Steam's German, French, Italian and
-# Spanish ones are its 2010 rebuild localized after the link (below).
+# target setup_<language>, built with res/<language>.rc: Russian (1.2's code) and Polish. Steam's German, French,
+# Italian and Spanish ones are its 2010 rebuild localized after the link (below).
+# The sources keep the code's versions apart by SETUP_DATE (version.h), which a build of older code sets.
 option(SETUP_STEAM "Build Steam's 2010 rebuild of setup.exe instead of the 1.2 one" OFF)
 
 if (SETUP_1_0)
@@ -30,7 +30,9 @@ add_executable(${setup} WIN32 main.cpp hw.cpp ${resources})
 set_target_properties(${setup} PROPERTIES OUTPUT_NAME setup)
 
 if (SETUP_1_0)
-	target_compile_definitions(${setup} PRIVATE SETUP_1_0)
+	target_compile_definitions(${setup} PRIVATE SETUP_DATE=SETUP_DATE_1_0)
+elseif (SETUP_LANGUAGE STREQUAL "polish")
+	target_compile_definitions(${setup} PRIVATE SETUP_DATE=SETUP_DATE_POLISH)
 endif()
 
 if (SETUP_STEAM)
@@ -83,6 +85,10 @@ if (MSVC_VERSION EQUAL 1200)
 		# on current Windows each DLL's imports come in another order than the original's.
 		postlink(${setup} --timestamp 0x3e3018ce --codeview-signature 0x3e3004ad --codeview-age 2
 			"--codeview-path=D:\\mafia\\_SRC\\setup\\Release\\setup.pdb")
+	elseif (SETUP_LANGUAGE STREQUAL "polish")
+		# The Polish one's link time (2002-10-30) and CodeView record: 1.2's tree, a new PDB (age 1)
+		postlink(${setup} --timestamp 0x3dbfc39e --codeview-signature 0x3dbfc39e --codeview-age 1
+			"--codeview-path=C:\\Mafia\\_src\\setup\\Release\\setup.pdb")
 	else()
 		# The original's link time (2002-11-07) and CodeView record: its PDB, linked into twice (age 2)
 		postlink(${setup} --timestamp 0x3dca7e48 --codeview-signature 0x3dca7530 --codeview-age 2

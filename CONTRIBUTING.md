@@ -42,7 +42,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    - `setup.exe`: `Patch\setup.exe` from the official 1.2 patch, `mafia_patch_1.2_eng.exe`.
    - `Setup.1.0.exe`, the secondary target `SETUP10`: the `setup.exe` of the original 1.0 release (linked 2002-07-28), saved under that name; `reccmp-project.yml` has its SHA-256. The `vc6` and `vc6-pdb` builds build it too, as `setup_1_0`.
    - `setup.steam.exe`, the secondary target `SETUPSTEAM`: Steam's 2010 `setup.exe`, at the top of the game's folder. The `vs2008` build builds it.
-   - `setup.<language>.exe` for `german`, `french`, `italian`, `spanish` and `russian`: the same `setup.exe` of Steam's version in that language (the game's language setting in Steam), saved under that name. The `vs2008` build makes the first four as `setup_<language>/setup.exe`, the `vc6` build the Russian one as `setup_russian`; they have no reccmp targets of their own (step 5).
+   - `setup.<language>.exe` for `german`, `french`, `italian`, `spanish`, `russian` and `polish`: the same `setup.exe` of Steam's version in that language (the game's language setting in Steam), saved under that name. The `vs2008` build makes the first four as `setup_<language>/setup.exe`, the `vc6` builds the Russian and Polish ones as `setup_russian` and `setup_polish`. The Polish one is the secondary target `SETUPPL`; the others have the code of `SETUP` or `SETUPSTEAM` and no reccmp targets of their own (step 5).
    - `LS3DF.1.1.dll`, the secondary target `LS3DF11`: `Patch\LS3DF.dll` from the official 1.1 patch, `mafiapatchv1.1en.exe`, saved under that name. The `vc6` and `vc6-pdb` builds build it too, as `ls3df_1_1`.
    - `Game.exe`: no unprotected copy survives, and Steam's is a SafeDisc unwrap. `tools/reconstruct_game_exe.py` rebuilds the original as `target/Game.orig.exe` from Steam's `Game.exe`, CD 2's `MafiaGame\Game.exe` (saved as `target/Game.cd2.exe`) and the patch exe.
 4. Build:
@@ -52,7 +52,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
    The linker stamps its output with the time of the link and the path of the PDB. The `vc6` and `vs2008` builds then write the originals' values into it (`tools/postlink.py`), so a finished binary can come out identical to the original; their PDBs no longer pair with them in a debugger. The `vc6-pdb` build keeps the linker's.
-5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `SETUP10`, `IJOY`, `LS3DF`, `LS3DF11` and `GAME` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take the same names with `--target`:
+5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `SETUP10`, `SETUPPL`, `IJOY`, `LS3DF`, `LS3DF11` and `GAME` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take the same names with `--target`:
    ```bash
    cd build/vc6-pdb
    ../../.venv/Scripts/reccmp-reccmp --target RWDATA --nolib                  # score of every function
