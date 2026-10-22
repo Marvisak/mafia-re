@@ -39,6 +39,10 @@ either side. In an EXE reccmp then compares their raw addresses, which differ wh
 them does, so those functions match only once the layout does (_pgmname in __setargv, _unwind_handler in
 __abnormal_termination).
 
+A function the target's own annotations (FUNCTION, SYNTHETIC, TEMPLATE, STUB) already place in the original is left
+to them: an identical function of the library folded with one of the target's, of which the original kept the
+target's copy and our build the library's.
+
 With --library it annotates the objects of another static library instead (LS3DF's STRMBASE, DirectShow's base
 classes), the same way: functions by their bytes, globals and vtables by the pointers to them. It writes
 library_<name>.h, with no import thunks.
@@ -92,6 +96,9 @@ STATIC_DATA = "<static>"
 
 # reccmp's name of a vtable: X::`vftable', or X::`vftable'{for `Y'} for one of multiple inheritance
 VTABLE_NAME = re.compile(r"^(.+)::`vftable'(?:\{for `(.+)'\})?$")
+
+# A function annotation of the target's own code
+OWN_MARKER = re.compile(r"//\s*(FUNCTION|TEMPLATE|SYNTHETIC|STUB):\s*(\w+)\s+(0x[0-9a-fA-F]+)")
 
 
 class PE:
@@ -497,6 +504,17 @@ def main() -> None:
 
     out = Path(target.source_paths[0]) / args.out
     csv = out.with_suffix(".csv")
+    # A copy the original kept in the target's own code, which our build kept in the library (LS3DF11's folded
+    # I3D_part_base::`scalar deleting destructor', which our build kept as CRendererInputPin's), is annotated there
+    claimed = set()
+    for root in target.source_paths:
+        for path in Path(root).rglob("*"):
+            if path.suffix in (".h", ".cpp", ".c") and path.resolve() != out.resolve():
+                for m in OWN_MARKER.finditer(path.read_text(encoding="latin-1")):
+                    if m.group(2) == args.target:
+                        claimed.add(int(m.group(3), 16))
+    skipped = [(addr, name) for addr, name in functions if addr in claimed]
+    functions = [(addr, name) for addr, name in functions if addr not in claimed]
     if args.library:
         text = LIBRARY_HEADER.format(name=Path(target.original_path).name, library=args.library)
     else:
@@ -526,6 +544,8 @@ def main() -> None:
           f" -> {out.relative_to(REPO).as_posix()}")
     for addr, name in failed:
         print(f"  not found: {name} (ours 0x{addr:x})")
+    for addr, name in skipped:
+        print(f"  left to the target's own annotation at 0x{addr:x}: {name}")
     for name in no_thunk:
         print(f"  no thunk in the original: {name}")
     for name, best, cand in outvoted:
