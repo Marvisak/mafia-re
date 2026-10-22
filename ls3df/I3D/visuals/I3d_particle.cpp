@@ -142,9 +142,9 @@ void I3D_part_renderer::m_AddFGroups()
 // A particle's color with its alpha, for its vertices (the name is a guess). VC6 computes the operands left to right,
 // and the original's order is blue, green, red, alpha.
 #define PART_COLOR(part) \
-    (FloatToInt(vertex_light_mult * (part)->color.z) | (FloatToInt(vertex_light_mult * (part)->color.y) | \
-        (FloatToInt(vertex_light_mult * (part)->color.x) | \
-        FloatToInt((part)->fade * (part)->transparency * 255.0f) << 8) << 8) << 8)
+    (FloatToInt(vertex_light_mult * (part)->color.z) | FloatToInt(vertex_light_mult * (part)->color.y) << 8 | \
+        FloatToInt(vertex_light_mult * (part)->color.x) << 16 | \
+        FloatToInt((part)->fade * (part)->transparency * 255.0f) << 24)
 
 // Draws a group m_AddFGroups queued: the meshes of its particles (their first levels' first face group's vertices and
 // faces, transformed, in the group's first particle's flags) or a quad for each, untransformed, with the first face

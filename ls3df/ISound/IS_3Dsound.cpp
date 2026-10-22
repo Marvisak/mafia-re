@@ -55,13 +55,15 @@ LS3D_RESULT ISND_3Dsound::SetDistances(float min, float max)
     return I3D_OK;
 }
 
-// The angles are in radians, DirectSound's in degrees
+// The angles are in radians, DirectSound's in degrees. Insanity3D converts them as angle * 180.0f / PI, which VC6
+// folds into one product; the original's factor (57.295784f) is that quotient with pi as 3.1415926f, not the
+// engine's PI (3.1415927f).
 // FUNCTION: LS3DF 0x1007b540
 LS3D_RESULT ISND_3Dsound::SetCone(float in_angle, float out_angle)
 {
     if (lpDSB3D8
-        && FAILED(lpDSB3D8->SetConeAngles((DWORD)(in_angle * 57.295784f), (DWORD)(out_angle * 57.295784f),
-            DS3D_IMMEDIATE)))
+        && FAILED(lpDSB3D8->SetConeAngles((DWORD)(in_angle * 180.0f / 3.1415926f),
+            (DWORD)(out_angle * 180.0f / 3.1415926f), DS3D_IMMEDIATE)))
         return I3DERR_GENERIC;
     return I3D_OK;
 }

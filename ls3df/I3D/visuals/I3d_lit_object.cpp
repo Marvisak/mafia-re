@@ -1072,7 +1072,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                             S_vector col;
                             VertexLightingProcess(col, verts[vi].pos, verts[vi].normal, fg->GetMaterial(), scene,
                                 flags, NULL, this, lod_index);
-                            l->m_pColors[vi] = (FloatToInt(col.x * 127.5) << 8 | FloatToInt(col.y * 127.5)) << 8 |
+                            l->m_pColors[vi] = FloatToInt(col.x * 127.5) << 16 | FloatToInt(col.y * 127.5) << 8 |
                                 alpha | FloatToInt(col.z * 127.5);
                             verts[vi].done = true;
                         }
@@ -1778,10 +1778,8 @@ void I3D_lit_object::m_AddFGroups()
 // Renders a face group m_AddFGroups queued: not lit yet in the texture factor's color, with its colors per vertex, or
 // with its lightmap (in one pass, the lightmap in the first stage and the texture in the second, or without
 // HWCAPS_SINGLEPASS in two, and a fog pass)
-// Not matching yet: the original calls SetColorOp1(m_Modulate2X) of the single pass out of line (a little less inline
-// budget there: about 2 units, as one dead statement more in SetColorOp1 or SetCullState gives; less source in the
-// function, the cull state as a ternary and the helpers' other natural shapes don't), and its draws read help->first
-// before l->m_IB.base (the allocator's order; the sum spelled either way compiles the same).
+// The single pass's SetColorOp1(m_Modulate2X) is out of line in the original, as the render-state helpers' asserts
+// (I3D.h) leave the budget.
 // FUNCTION: LS3DF 0x10028d40
 void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 {
@@ -1835,7 +1833,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+            SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (help->texture) {
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
                 m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
@@ -1892,7 +1890,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+            SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (help->texture)
                 m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
             else
@@ -1940,7 +1938,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                     SetBlendState(0);
                 } else
                     SetAlphaState(0);
-                SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+                SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
                 if (help->texture) {
                     SetColorOp1(m_Modulate2X);
                     m_pD3DDevice8->SetTexture(1, help->texture->m_pD3DTexture8);
@@ -1987,7 +1985,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                     SetBlendState(0);
                 } else
                     SetAlphaState(0);
-                SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+                SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
                 if (help->texture) {
                     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
                     m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
@@ -2114,7 +2112,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
                     uint b = (col & 0xff) << 1;
                     if (b > 0xff)
                         b = 0xff;
-                    v->color = (r << 8 | g) << 8 | b | a;
+                    v->color = r << 16 | g << 8 | b | a;
                     c++;
                     v++;
                 }

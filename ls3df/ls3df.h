@@ -322,7 +322,7 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
+// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z
@@ -497,7 +497,7 @@ enum {
     HWCAPS_HWTL = 0x1,                  // hardware T&L: IGRAPH_HWTL on a card that has it, never with multipass
     HWCAPS_TABLEFOG = 0x4,              // table fog instead of vertex fog computed by FogProcess; Init never sets it
     HWCAPS_DXT = 0x8,                   // DXT1 or DXT3 textures, which make every texture at least 4x4
-    HWCAPS_STENCIL = 0x10,              // the depth buffer has stencil bits: D3DCLEAR_STENCIL << 2, the clears shift it
+    HWCAPS_STENCIL = 0x10,              // the depth buffer has stencil bits, which the clears clear too
     HWCAPS_GAMMA = 0x20,                // a full screen gamma ramp (D3DCAPS2_FULLSCREENGAMMA)
     HWCAPS_GAMMA8 = 0x40,               // the card's ramp has 8-bit entries, which GetGammaRamp widens to 16 bits
     HWCAPS_SINGLEPASS = 0x80,           // not IGRAPH_MULTIPASS: the environment map blends in the texture's pass

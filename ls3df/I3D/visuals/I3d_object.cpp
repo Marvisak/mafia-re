@@ -831,11 +831,7 @@ void I3D_object::m_AddFGroups()
 // fog color over the face group with the vertices' fog in their alpha (SwapVertexBytes)
 // The cull mode goes through render.h's SetCullState, the multipass's last SetColorOp is written out and the fog pass
 // calls SwapVertexBytes in each branch of the stride (the original pushes 0x28 and 0x20 in two arms), as in
-// I3D_billboard's: that gives the original's out-of-line calls but one, a SetColorOp of the multipass's switch, which
-// a SetCullState one dead statement longer (render.h) also calls out of line (as I3D_lit_object's needs).
-// Not matching yet: the original keeps h in ebx from the start to the single pass's texture tests and l in esi (ours l
-// in ebx, h not in a register at all), which moves the registers of the constants all through; with it, the proxy
-// branch's num_verts tails merge differently.
+// I3D_billboard's. The out-of-line calls, and with them the registers, need the render-state helpers' asserts (I3D.h).
 // FUNCTION: LS3DF 0x10039280
 void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
@@ -942,7 +938,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+            SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
@@ -990,7 +986,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
+            SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);

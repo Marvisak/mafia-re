@@ -101,8 +101,7 @@ bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FOR
     }
     pI3DDriver->m_RecomputeUsedVRAM();
     free_blocks.insert(new S_VB_block(NULL, 0, num_vertices));
-    // A dynamic buffer is locked with D3DLOCK_DISCARD
-    vb->Lock(0, 0, &data, (this->usage & D3DUSAGE_DYNAMIC) << 4);
+    vb->Lock(0, 0, &data, this->usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0);
     lock_index = cVBMan.locked_buffers.size();
     cVBMan.locked_buffers.push_back(this);
     return true;

@@ -541,11 +541,8 @@ void I3D_billboard::m_AddFGroups()
 // z writes for rot_axis 4. Both cull modes go through render.h's SetCullState (the proxy's folds to the written-out
 // test, but spends the inline budget the original spent). The fog pass calls SwapVertexBytes in each branch of the
 // stride: the original pushes 0x28 or 0x20 in two arms where the conditional expression gives sete/lea.
-// Not matching yet: the original calls cases 4 and 5's SetColorOp out of line in the multipass switch; ours inlines
-// case 4. An inline call spending one more statement before it (a dead one, Spend(0) with one statement under if
-// (x)) gives the original's calls exactly, so the original's source spends a little more; accessors (GetMaterial,
-// NumFaces, GetMesh, GetAlpha) add budget instead. Also the proxy branch's registers, SetCullState's two calls not
-// sharing their call instruction, and h kept in ebp in the single pass texture choice, where the original reloads it.
+// The multipass switch calls cases 4 and 5's SetColorOp out of line as the original does only with the render-state
+// helpers' asserts (I3D.h).
 // FUNCTION: LS3DF 0x100083b0
 void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
@@ -1000,8 +997,8 @@ void I3D_lensflare::Draw(bool test)
         float y0 = p.y - h * 0.5f;
         float x1 = p.x + w * 0.5f;
         float y1 = p.y + h * 0.5f;
-        uint c = (((FloatToInt(intensity * visibility * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-            FloatToInt(color.y * 255.0f)) << 8) | FloatToInt(color.z * 255.0f);
+        uint c = FloatToInt(intensity * visibility * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+            FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
         TLVERTEX v[4];
         v[0].color = c;
         v[0].x = x0;
@@ -1081,8 +1078,8 @@ void I3D_lensflare::Draw(bool test)
         float y0 = p.y - h;
         float x1 = p.x + w;
         float y1 = p.y + h;
-        uint c = (((FloatToInt((!i ? 1.0f : fade) * intensity * visibility * 255.0f) << 8 | FloatToInt(color.x * 255.0f))
-            << 8 | FloatToInt(color.y * 255.0f)) << 8) | FloatToInt(color.z * 255.0f);
+        uint c = FloatToInt((!i ? 1.0f : fade) * intensity * visibility * 255.0f) << 24 |
+            FloatToInt(color.x * 255.0f) << 16 | FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
         TLVERTEX v[4];
         v[0].color = c;
         v[0].x = x0;

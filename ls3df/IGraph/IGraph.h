@@ -615,7 +615,7 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// ??1?$C_list@PAVI3D_area@@@@QAE@XZ
+// ??1?$C_list@UDUMMY_STRUCT@@@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after

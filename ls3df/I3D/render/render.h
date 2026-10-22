@@ -9,64 +9,68 @@
 // multipass helpers the original calls.
 #include "I3D/I3D.h"
 
+// Its assert is Insanity3D's, the default of SetupBlendInternal's switch (I3D.h has the helpers' asserts)
 // FUNCTION: LS3DF 0x1000ab40
 inline void SetBlendState(uint state)
 {
-    if (m_CurrBlendState != state) {
-        m_CurrBlendState = state;
-        switch (state) {
-        case 0:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-            break;
-        case 1:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-            break;
-        case 2:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-            break;
-        case 3:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
-            break;
-        case 4:
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
-            break;
-        }
+    if (m_CurrBlendState == state)
+        return;
+    m_CurrBlendState = state;
+    switch (state) {
+    case 0:
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        break;
+    case 1:
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+        break;
+    case 2:
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+        break;
+    case 3:
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+        break;
+    case 4:
+        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
+        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+        break;
+    default:
+        assert(0);
     }
 }
 
 // FUNCTION: LS3DF 0x1000ae50
 inline void SetVertexFormat(uint format)
 {
-    if (m_CurrVertexFormat != format) {
-        m_CurrVertexFormat = format;
-        switch (format) {
-        case 0:
-            m_pD3DDevice8->SetVertexShader(m_LVertexVS);
-            break;
-        case 1:
-            m_pD3DDevice8->SetVertexShader(m_LVertex2VS);
-            break;
-        case 2:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE);
-            break;
-        case 3:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE | D3DFVF_TEX1);
-            break;
-        case 4:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
-            break;
-        case 5:
-            m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2);
-            break;
-        case 6:
-            m_pD3DDevice8->SetVertexShader(m_VertexVS);
-            break;
-        }
+    assert(m_pD3DDevice8);
+    if (m_CurrVertexFormat == format)
+        return;
+    m_CurrVertexFormat = format;
+    switch (format) {
+    case 0:
+        m_pD3DDevice8->SetVertexShader(m_LVertexVS);
+        break;
+    case 1:
+        m_pD3DDevice8->SetVertexShader(m_LVertex2VS);
+        break;
+    case 2:
+        m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE);
+        break;
+    case 3:
+        m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE | D3DFVF_TEX1);
+        break;
+    case 4:
+        m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
+        break;
+    case 5:
+        m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2);
+        break;
+    case 6:
+        m_pD3DDevice8->SetVertexShader(m_VertexVS);
+        break;
     }
 }
 
@@ -75,10 +79,11 @@ inline void SetVertexFormat(uint format)
 // FUNCTION: LS3DF 0x10029f30
 inline void SetColorOp1(uint op)
 {
-    if (m_CurrColorOp1 != op) {
-        m_CurrColorOp1 = op;
-        m_pD3DDevice8->SetTextureStageState(1, D3DTSS_COLOROP, op);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrColorOp1 == op)
+        return;
+    m_CurrColorOp1 = op;
+    m_pD3DDevice8->SetTextureStageState(1, D3DTSS_COLOROP, op);
 }
 
 // D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; the name is a guess). The
@@ -86,13 +91,14 @@ inline void SetColorOp1(uint op)
 // FUNCTION: LS3DF 0x10029ef0
 inline void SetCullState(uint cull)
 {
-    if (m_CurrCullState != cull) {
-        m_CurrCullState = cull;
-        if (cull == D3DCULL_CCW)
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
-        else
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, cull);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrCullState == cull)
+        return;
+    m_CurrCullState = cull;
+    if (cull == D3DCULL_CCW)
+        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
+    else
+        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, cull);
 }
 
 // D3DRS_CLIPPING (Insanity3D has the same helper, commented out, under this name). Two calls, as IGraph::SetState's
@@ -100,13 +106,14 @@ inline void SetCullState(uint cull)
 // FUNCTION: LS3DF 0x100333d0
 inline void SetClipping(uint clip)
 {
-    if (m_CurrClipState != clip) {
-        m_CurrClipState = clip;
-        if (clip == 1)
-            m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
-        else
-            m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, FALSE);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrClipState == clip)
+        return;
+    m_CurrClipState = clip;
+    if (clip == 1)
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
+    else
+        m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, FALSE);
 }
 
 // IGraph.cpp's D3DRS_ZBIAS as it set it last
@@ -119,10 +126,11 @@ extern uint m_CurrZBias;
 // FUNCTION: LS3DF 0x100659f0
 inline void SetZBias(int bias)
 {
-    if (m_CurrZBias != (uint)bias) {
-        m_CurrZBias = bias;
-        m_pD3DDevice8->SetRenderState(D3DRS_ZBIAS, bias);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrZBias == (uint)bias)
+        return;
+    m_CurrZBias = bias;
+    m_pD3DDevice8->SetRenderState(D3DRS_ZBIAS, bias);
 }
 
 // IGraph.cpp's fog render states, which SetFog keeps
@@ -143,8 +151,7 @@ inline void SetFog(uint state, uint type, float start, float end, uint color)
             m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
             return;
         }
-    }
-    if (!state)
+    } else if (!state)
         return;
     if (m_CurrFogType != type) {
         m_CurrFogType = type;

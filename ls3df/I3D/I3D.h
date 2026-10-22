@@ -4,6 +4,7 @@
 #include "I3D/I3d_math.h"
 #include "I3D/render/RadixSort.h"
 
+#include <assert.h>
 #include <d3d8.h>
 
 // The 3D engine (PS2 I3d_*.cpp).
@@ -2136,7 +2137,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_area@@UAEXXZ
+// ?LoadImage@I3D_sound@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
 // its name, under the frame the shadow is set to, moves
@@ -3681,7 +3682,7 @@ struct TLVERTEX2 {
 // The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
 // I3D files written later (0x10041700)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
+// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
@@ -3813,52 +3814,61 @@ extern D3DVIEWPORT8 m_D3DViewPort8;
 // Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC they are inline, in
 // I3D/render/render.h with SetBlendState and SetVertexFormat: VC6 inlines them where the inline budget allows it, and the
 // copies the linker kept are in the billboard file's code.
+// They return early when the state is set already, as IGraph::SetState's cases break, and each has one statement that
+// compiles to nothing, an assert (NDEBUG, ls3df/CMakeLists.txt): one ((void)0) less in each costs Render the
+// post-render SetAlphaOp and the lens flares' SetClipping and erase, and the object's, lit object's and billboard's
+// m_RenderFGroup their original calls. SetFog has none. SetBlendState's is Insanity3D's (default: assert(0); in
+// SetupBlendInternal's switch, the same cost there); Insanity3D's other counterparts (SetupTextureStage, SetupAlphaTest,
+// EnableNoCull, SetFVF) assert nothing, so the others' condition is a guess.
 
 // FUNCTION: LS3DF 0x1000aa30
 inline void SetAlphaState(uint state)
 {
-    if (m_CurrAlphaState != state) {
-        m_CurrAlphaState = state;
-        switch (state) {
-        case 0:
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-            break;
-        case 1:
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
-            break;
-        case 3:
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
-            break;
-        case 2:
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-            m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
-            break;
-        }
+    assert(m_pD3DDevice8);
+    if (m_CurrAlphaState == state)
+        return;
+    m_CurrAlphaState = state;
+    switch (state) {
+    case 0:
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+        break;
+    case 1:
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
+        break;
+    case 3:
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
+        break;
+    case 2:
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+        m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
+        break;
     }
 }
 
 // FUNCTION: LS3DF 0x1000ac30
 inline void SetColorOp(uint op)
 {
-    if (m_CurrColorOp != op) {
-        m_CurrColorOp = op;
-        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLOROP, op);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrColorOp == op)
+        return;
+    m_CurrColorOp = op;
+    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLOROP, op);
 }
 
 // FUNCTION: LS3DF 0x1000ac60
 inline void SetAlphaOp(uint op)
 {
-    if (m_CurrAlphaOp != op) {
-        m_CurrAlphaOp = op;
-        m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ALPHAOP, op);
-    }
+    assert(m_pD3DDevice8);
+    if (m_CurrAlphaOp == op)
+        return;
+    m_CurrAlphaOp = op;
+    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ALPHAOP, op);
 }
 
 // I3d_driver.cpp's globals (PS2 names)

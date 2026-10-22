@@ -1022,8 +1022,8 @@ oom:
                 v->pos = *r;
                 v->u = (r->x + 1.0f) * .5f;
                 v->v = (r->y + 1.0f) * .5f;
-                v->color = (((FloatToInt((1.0f - r->z) * shadow->opacity * 255.0f) << 8 |
-                    FloatToInt(shadow->color.x * 255.0f)) << 8 | FloatToInt(shadow->color.y * 255.0f)) << 8) |
+                v->color = FloatToInt((1.0f - r->z) * shadow->opacity * 255.0f) << 24 |
+                    FloatToInt(shadow->color.x * 255.0f) << 16 | FloatToInt(shadow->color.y * 255.0f) << 8 |
                     FloatToInt(shadow->color.z * 255.0f);
             }
             ushort *f;

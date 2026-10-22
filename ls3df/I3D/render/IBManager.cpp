@@ -101,8 +101,7 @@ bool C_IBuffer::m_Init(uint usage, uint count)
     }
     free_blocks.insert(new S_IB_block(NULL, 0, num_indices));
     pI3DDriver->m_RecomputeUsedVRAM();
-    // A dynamic buffer is locked with D3DLOCK_DISCARD
-    ib->Lock(0, 0, &data, (this->usage & D3DUSAGE_DYNAMIC) << 4);
+    ib->Lock(0, 0, &data, this->usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0);
     lock_index = cIBMan.locked_buffers.size();
     cIBMan.locked_buffers.push_back(this);
     return true;

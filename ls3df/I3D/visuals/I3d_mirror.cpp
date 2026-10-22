@@ -326,7 +326,8 @@ int I3D_mirror::PrepareReflection()
         return 0;
     }
 
-    m_pD3DDevice8->Clear(0, NULL, D3DCLEAR_ZBUFFER | (m_HardwareCaps & HWCAPS_STENCIL) >> 2, 0, 0.0f, 0);
+    m_pD3DDevice8->Clear(0, NULL, m_HardwareCaps & HWCAPS_STENCIL ? D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL : D3DCLEAR_ZBUFFER,
+        0, 0.0f, 0);
     LVertList.reserve(num_verts);
     LVertList.used_size = num_verts;
     const S_vector &cam_pos = pCurrentCamera->GetWorldPos();

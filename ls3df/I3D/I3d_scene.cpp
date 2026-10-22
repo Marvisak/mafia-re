@@ -1159,7 +1159,7 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
                 uint b = (ws_color & 0xff) << 1;
                 if (b > 0xff)
                     b = 0xff;
-                color = (((r << 8) | g) << 8) | b | a;
+                color = r << 16 | g << 8 | b | a;
                 a = ws_color_2 & 0xff000000;
                 r = (ws_color_2 >> 15) & 0x1fe;
                 if (r > 0xff)
@@ -1170,7 +1170,7 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
                 b = (ws_color_2 & 0xff) << 1;
                 if (b > 0xff)
                     b = 0xff;
-                color_2 = (((r << 8) | g) << 8) | b | a;
+                color_2 = r << 16 | g << 8 | b | a;
             } else {
                 color = ws_color;
                 color_2 = ws_color_2;
@@ -1348,7 +1348,7 @@ void I3D_scene::m_UpdateWeatherSystem()
             uint b = (ws_color & 0xff) << 1;
             if (b > 0xff)
                 b = 0xff;
-            color = (((r << 8) | g) << 8) | b | a;
+            color = r << 16 | g << 8 | b | a;
             a = ws_color_2 & 0xff000000;
             r = (ws_color_2 >> 15) & 0x1fe;
             if (r > 0xff)
@@ -1359,7 +1359,7 @@ void I3D_scene::m_UpdateWeatherSystem()
             b = (ws_color_2 & 0xff) << 1;
             if (b > 0xff)
                 b = 0xff;
-            color_2 = (((r << 8) | g) << 8) | b | a;
+            color_2 = r << 16 | g << 8 | b | a;
         } else {
             color = ws_color;
             color_2 = ws_color_2;
@@ -1516,16 +1516,16 @@ void I3D_scene::m_RenderWeatherSystem()
         case I3DLIGHT_FOG: {
             float end = pCurrentCamera->fcp * fog->range_f;
             float start = end * fog->range_n;
-            SetFog(TRUE, 0, start, end, ((((uint)-1 << 8 | FloatToInt(fog->diffuse.x * 255.0f)) << 8 |
-                FloatToInt(fog->diffuse.y * 255.0f)) << 8) | FloatToInt(fog->diffuse.z * 255.0f));
+            SetFog(TRUE, 0, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
         } break;
         case I3DLIGHT_POINTAMBIENT:
-            SetFog(TRUE, 1, fog->near_range, 0.0f, ((((uint)-1 << 8 | FloatToInt(fog->diffuse.x * 255.0f)) << 8 |
-                FloatToInt(fog->diffuse.y * 255.0f)) << 8) | FloatToInt(fog->diffuse.z * 255.0f));
+            SetFog(TRUE, 1, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
             break;
         case I3DLIGHT_POINTFOG:
-            SetFog(TRUE, 2, fog->near_range, 0.0f, ((((uint)-1 << 8 | FloatToInt(fog->diffuse.x * 255.0f)) << 8 |
-                FloatToInt(fog->diffuse.y * 255.0f)) << 8) | FloatToInt(fog->diffuse.z * 255.0f));
+            SetFog(TRUE, 2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
             break;
         }
     }

@@ -449,8 +449,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((0xffffff00 | FloatToInt(a * color.x * 255.0f)) << 8 | FloatToInt(a * color.y * 255.0f))
-                    << 8 | FloatToInt(a * color.z * 255.0f);
+                v->color = 0xff000000 | FloatToInt(a * color.x * 255.0f) << 16 |
+                    FloatToInt(a * color.y * 255.0f) << 8 | FloatToInt(a * color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_ADD_FADE_MID:
@@ -463,8 +463,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((0xffffff00 | FloatToInt(a * color.x * 255.0f)) << 8 | FloatToInt(a * color.y * 255.0f))
-                    << 8 | FloatToInt(a * color.z * 255.0f);
+                v->color = 0xff000000 | FloatToInt(a * color.x * 255.0f) << 16 |
+                    FloatToInt(a * color.y * 255.0f) << 8 | FloatToInt(a * color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_BLEND_FADE:
@@ -477,8 +477,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((FloatToInt(a * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                    FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+                v->color = FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                    FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_BLEND_FADE_MID:
@@ -491,14 +491,14 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((FloatToInt(a * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                    FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+                v->color = FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                    FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             }
             break;
         default: {
             // An alpha below 1 is converted unscaled (the original's too)
-            uint c = ((FloatToInt(alpha < 1.0f ? alpha : 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+            uint c = FloatToInt(alpha < 1.0f ? alpha : 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             for (i = num_verts; i--; v++, r++) {
                 v->pos = *r;
                 v->u = (r->x + 1.0f) * .5f;
@@ -525,8 +525,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((0xffffff00 | FloatToInt(a * color.x * 255.0f)) << 8 | FloatToInt(a * color.y * 255.0f))
-                    << 8 | FloatToInt(a * color.z * 255.0f);
+                v->color = 0xff000000 | FloatToInt(a * color.x * 255.0f) << 16 |
+                    FloatToInt(a * color.y * 255.0f) << 8 | FloatToInt(a * color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_ADD_FADE_MID:
@@ -545,8 +545,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((0xffffff00 | FloatToInt(a * color.x * 255.0f)) << 8 | FloatToInt(a * color.y * 255.0f))
-                    << 8 | FloatToInt(a * color.z * 255.0f);
+                v->color = 0xff000000 | FloatToInt(a * color.x * 255.0f) << 16 |
+                    FloatToInt(a * color.y * 255.0f) << 8 | FloatToInt(a * color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_BLEND_FADE:
@@ -565,8 +565,8 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((FloatToInt(a * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                    FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+                v->color = FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                    FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             }
             break;
         case PROJECTOR_MODE_BLEND_FADE_MID:
@@ -585,13 +585,13 @@ void I3D_projector::ProcessRecList()
                     a = 1.0f;
                 else if (a < 0.0f)
                     a = 0.0f;
-                v->color = ((FloatToInt(a * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                    FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+                v->color = FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                    FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             }
             break;
         default: {
-            uint c = ((FloatToInt(alpha < 1.0f ? alpha : 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
-                FloatToInt(color.y * 255.0f)) << 8 | FloatToInt(color.z * 255.0f);
+            uint c = FloatToInt(alpha < 1.0f ? alpha : 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 |
+                FloatToInt(color.y * 255.0f) << 8 | FloatToInt(color.z * 255.0f);
             for (i = num_verts; i--; v++, r++) {
                 v->pos = *r;
                 if (IsMrgZeroLess(r->z)) {

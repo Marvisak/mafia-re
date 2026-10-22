@@ -101,6 +101,9 @@ if (MSVC_VERSION EQUAL 1200)
     # /Ob2 - inline any suitable function, not only inline ones: ISND_3Dlistener::Release inlines the destructor, a
     #        plain function of the same file (I3D code calls it out of line)
     target_compile_options(ls3df PRIVATE /MT /GX /G6 /Ob2)
+    # NDEBUG - a VC6 release configuration: the render-state helpers' asserts compile to nothing but count for the
+    #          inline budget (I3D.h)
+    target_compile_definitions(ls3df PRIVATE NDEBUG)
     # /Gr is a per-file option: IShow.cpp is __cdecl by default (/Gd), as its helpers take their arguments on the stack,
     # and so do vorbisfile's callbacks, which libvorbis' header declares without a calling convention
     get_target_property(ls3df_sources ls3df SOURCES)

@@ -812,6 +812,13 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
 // hoists the two loads, and in the transformed branch keeps reserve's new array in its register across the join, as
 // the original does; taken once before the test, it loads the array again after the join. With render.h's helpers the
 // budget runs out at the transformed branch's SetVertexFormat, which the original calls.
+// Not matching yet: with the helpers' asserts (I3D.h) it runs out before the last SetCullState too, which the original
+// inlines. 4 to 16 ((void)0) of source more give the original's calls (24 inline SetVertexFormat too), as four asserts
+// of the parameters would (two, or one of them joined with &&, don't); (void)x;, unused locals, SetFog's spellings,
+// other locals for the flags, SetClipping(TRUE) as a call (reserve goes out of line) and the fog turned off written out
+// don't. MakeColor as one expression does it too, but then DrawCircle2D inlines S_vector's constructor (about three
+// statements' worth before it, which no spelling of its list's sizing gives); the other draws take up to eight
+// ((void)0) unchanged. PS2's DrawTriangles has the same statements in the same order (no clipping, which is PC only).
 // FUNCTION: LS3DF 0x10016ff0
 LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx)
