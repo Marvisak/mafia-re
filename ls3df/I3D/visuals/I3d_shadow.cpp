@@ -145,7 +145,8 @@ void I3D_shadow::SetTo(I3D_frame *frame)
     if (visual && visual->parent)
         visual->LinkTo(NULL, 0);
     S_shadow_frame *sf = frames;
-    for (int i = num_frames; i--; sf++) {
+    int i;
+    for (i = num_frames; i--; sf++) {
         if (sf->frame)
             sf->frame->frm_flags &= ~FRMFLAGS_SHADOW;
     }
@@ -201,7 +202,8 @@ void I3D_shadow::SetTo(I3D_frame *frame)
     for (i = FoundFrames.size(); i--; m++, sf++) {
         S_shadow_part *p = SetToParts;
         int first_vert = 0, first_face = 0;
-        for (int j = m->part; j--; p++) {
+        int j;
+        for (j = m->part; j--; p++) {
             first_vert += p->num_verts;
             first_face += p->num_faces;
         }
@@ -441,7 +443,8 @@ bool I3D_shadow::UpdateVertices()
         return true;
     int count = 0;
     S_shadow_frame *sf = frames;
-    for (int i = num_frames; i--; sf++) {
+    int i;
+    for (i = num_frames; i--; sf++) {
         if (sf->frame)
             count += sf->frame->update_count;
     }
@@ -856,7 +859,8 @@ void I3D_shadow_visual::ProcessShadow()
     const I3D_bvolume &bvol = GetWBoundVolume();
     uint bits = shadow->sector->group_bits;
     RENDER_FG_HELP_STRUCT *fg = &AddFGHlpStruct.fgroups[0];
-    for (int i = AddFGHlpStruct.fgroups.size(); i--; fg++) {
+    int i;
+    for (i = AddFGHlpStruct.fgroups.size(); i--; fg++) {
         if (last == fg->vis)
             continue;
         last = fg->vis;

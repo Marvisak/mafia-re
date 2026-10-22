@@ -60,7 +60,8 @@ void morphBase::NormalizeWeights()
     for (int i = m_numRegions; i--; ) {
         float sum = 0.0f;
         const float *p = &m_pWeights[base];
-        for (int j = m_numLevels; j--; )
+        int j;
+        for (j = m_numLevels; j--; )
             sum += (float)fabs(*p++);
         if (sum < MRG_ZERO) {
             float *nw = &m_pNormWeights[base];
@@ -220,7 +221,8 @@ void morphBase::LoadImageB()
     morph_region *r = NULL;
     if (m_pMorphDef->m_numLods > 0)
         r = m_pMorphDef->m_pRegions;
-    for (int i = m_numRegions * num_lods; i--; r++) {
+    int i;
+    for (i = m_numRegions * num_lods; i--; r++) {
         r->num_verts = 0;
         dtaRead(LoadImageHandle, &r->num_verts, 2);
         if (r->num_verts) {
@@ -635,7 +637,8 @@ void I3D_morph::m_AddFGroups()
 // FUNCTION: LS3DF 0x10036540
 S_morph_unknown::~S_morph_unknown()
 {
-    for (int i = 0; i < 8; i++) {
+    int i;
+    for (i = 0; i < 8; i++) {
         if (unknown_00[i])
             unknown_00[i]->Release();
     }

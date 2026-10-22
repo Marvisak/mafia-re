@@ -91,7 +91,8 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
     if (frame->GetType() != FRAME_VISUAL) {
         if (frame->GetType() == FRAME_EMITOR) {
             Clear();
-            for (int i = 0; i < num_joints; i++) {
+            int i;
+            for (i = 0; i < num_joints; i++) {
                 if (joints[i])
                     joints[i]->singlemesh = NULL;
             }
@@ -107,7 +108,8 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
         return I3D_OK;
     }
     Clear();
-    for (int i = 0; i < num_joints; i++) {
+    int i;
+    for (i = 0; i < num_joints; i++) {
         if (joints[i])
             joints[i]->singlemesh = NULL;
     }

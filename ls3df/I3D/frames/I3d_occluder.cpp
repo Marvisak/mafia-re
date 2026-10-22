@@ -189,7 +189,8 @@ void I3D_occluder::UpdateV()
     const S_vector *v = verts;
     S_vector *vw = verts_w;
     const S_matrix &m = GetMatrix();
-    for (int i = n; i--; )
+    int i;
+    for (i = n; i--; )
         *vw++ = *v++ * m;
     const ushort *fc = faces;
     S_plane *p = planes;
@@ -278,7 +279,8 @@ LS3D_RESULT I3D_occluder::Build()
         return I3DERR_OUTOFMEM;
     }
     const ushort *fc = faces;
-    for (uint i = 0; i < num_faces; i++) {
+    uint i;
+    for (i = 0; i < num_faces; i++) {
         TRISIDE2 ts;
         ts.face = i;
         ts.side = 0;

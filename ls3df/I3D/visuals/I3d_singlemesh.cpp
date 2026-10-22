@@ -33,7 +33,8 @@ I3D_singlemesh::I3D_singlemesh()
 // FUNCTION: LS3DF 0x100542b0
 I3D_singlemesh::~I3D_singlemesh()
 {
-    for (int i = 0; i < num_joints; i++) {
+    int i;
+    for (i = 0; i < num_joints; i++) {
         if (joints[i])
             joints[i]->singlemesh = NULL;
     }
@@ -113,7 +114,8 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
     joints_changed++;
     if (frame->GetType() != FRAME_VISUAL) {
         if (frame->GetType() == FRAME_EMITOR) {
-            for (int i = 0; i < num_joints; i++) {
+            int i;
+            for (i = 0; i < num_joints; i++) {
                 if (joints[i])
                     joints[i]->singlemesh = NULL;
             }
@@ -127,7 +129,8 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
         }
         return I3D_OK;
     }
-    for (int i = 0; i < num_joints; i++) {
+    int i;
+    for (i = 0; i < num_joints; i++) {
         if (joints[i])
             joints[i]->singlemesh = NULL;
     }
@@ -253,7 +256,8 @@ static void findJoint(I3D_frame *frm);
 // FUNCTION: LS3DF 0x10054c20
 bool I3D_singlemesh::DBuild()
 {
-    for (int i = 0; i < num_joints; i++) {
+    int i;
+    for (i = 0; i < num_joints; i++) {
         if (joints[i])
             joints[i]->singlemesh = NULL;
     }

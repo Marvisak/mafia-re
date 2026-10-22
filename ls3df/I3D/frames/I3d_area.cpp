@@ -117,7 +117,8 @@ void I3D_area::UpdateV()
         return;
     const S_vector *v = verts;
     S_vector *vw = verts_w;
-    for (int i = num_verts; i--; )
+    int i;
+    for (i = num_verts; i--; )
         *vw++ = *v++ * GetMatrix();
     const ushort *fc = faces;
     S_plane *p = planes;

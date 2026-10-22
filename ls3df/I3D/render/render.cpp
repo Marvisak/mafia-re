@@ -371,7 +371,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             }
         } else if (pCurrentCamera->sector != pLastCameraSector) {
             pPrevLastCameraSector = pLastCameraSector;
-            for (int i = pLastCameraSector->sounds.size(); i--; ) {
+            int i;
+            for (i = pLastCameraSector->sounds.size(); i--; ) {
                 I3D_sound *snd = pLastCameraSector->sounds[i];
                 if (snd->snd_flags & SOUNDF_CAMERA_SECTOR && !pCurrentCamera->sector->sounds.find(snd)) {
                     snd->fade_sector = pLastCameraSector;
@@ -387,8 +388,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             pLastCameraSector->unknown_1ec = time;
             if (!sectors.find(pLastCameraSector))
                 sectors.push_back(pLastCameraSector);
-            // The first loop's counter again (VC6's for scope), as below for the sectors' blends: the original's frame
-            // has one slot for the two loops' counters, area's
+            // The first loop's counter again, as below for the sectors' blends: the original's frame has one slot for
+            // the two loops' counters, area's
             for (i = 0; i < pLastCameraSector->sounds.size(); i++) {
                 I3D_sound *snd = pLastCameraSector->sounds[i];
                 if (!(snd->snd_flags & SOUNDF_CAMERA_SECTOR)) {
@@ -400,7 +401,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             }
         }
 
-        for (int i = sounds.size(); i--; ) {
+        int i;
+        for (i = sounds.size(); i--; ) {
             I3D_sound *snd = sounds[i];
             if (snd->frm_flags & FRMFLAGS_ON && snd->state != SOUNDSTATE_STOP) {
                 if (snd->update_count != snd->unknown_14c) {

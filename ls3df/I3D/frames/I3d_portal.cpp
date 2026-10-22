@@ -1589,7 +1589,8 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
     }
     S_vector cpos = pCurrentCamera->GetWorldPos();
     I3D_portal **pp = &sct->portals[0];
-    for (int i = sct->portals.size(); i--; pp++) {
+    int i;
+    for (i = sct->portals.size(); i--; pp++) {
         I3D_portal *pt = *pp;
         if (cpos.Dot(pt->plane.normal) + pt->plane.d > 0.0f && !(pt->portal_flags & PORTALF_OCCLUDED))
             ParsePortal(p, pt, false);

@@ -458,7 +458,8 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                     // the group's vertices
                     group_verts.reset();
                     group_verts.reserve(group.size() * 3);
-                    for (int j = group.size(); j--; ) {
+                    int j;
+                    for (j = group.size(); j--; ) {
                         ushort *vi = faces[group[j]].face.vi;
                         for (int k = 0; k < 3; k++) {
                             if (!group_verts.find(vi[k]))
@@ -602,7 +603,8 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                         data[8] = 0xff;
                     } else {
                         S_vector2 pt(0.0f, 0.0f);
-                        for (int y = 0; y < sy; y++) {
+                        int y;
+                        for (y = 0; y < sy; y++) {
                             for (int x = 0; x < sx; x++) {
                                 S_vector col(0.0f, 0.0f, 0.0f);
                                 int num = 0;
@@ -964,7 +966,8 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                     ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
                     return I3DERR_OUTOFMEM;
                 }
-                for (int n = 0; n < l->m_numLVertices; n++)
+                int n;
+                for (n = 0; n < l->m_numLVertices; n++)
                     l->m_pLitUV[n].u = -1.0f;
                 int last = l->m_numLVertices - 1;
                 for (n = 0; n < l->m_numLVertices; n++) {

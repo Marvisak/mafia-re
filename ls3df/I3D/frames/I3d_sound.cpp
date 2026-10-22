@@ -73,7 +73,8 @@ I3D_sound::~I3D_sound()
 {
     SetOn(false);
     I3D_sector **sp = &sectors[0];
-    for (int i = sectors.size(); i--; sp++)
+    int i;
+    for (i = sectors.size(); i--; sp++)
         (*sp)->DeleteSound(this);
     I3D_area **ap = &areas[0];
     for (i = areas.size(); i--; ap++)
@@ -346,7 +347,8 @@ void I3D_sound::SetOn(bool on, bool update)
         // threading), the areas' keeps its loop guard and its flag in a register
         if (sectors.size() > 0) {
             I3D_sector **sp = &sectors[0];
-            for (int i = sectors.size(); i--; sp++) {
+            int i;
+            for (i = sectors.size(); i--; sp++) {
                 if (pCurrentCamera->sector == *sp)
                     break;
             }

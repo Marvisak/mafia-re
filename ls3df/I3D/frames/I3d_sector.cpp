@@ -132,7 +132,8 @@ I3D_sector::~I3D_sector()
         occluder = NULL;
     }
     I3D_light **lp = &lights[0];
-    for (int i = lights.size(); i--; lp++)
+    int i;
+    for (i = lights.size(); i--; lp++)
         (*lp)->sectors.remove(this);
     lights.clear();
     for (i = sounds.size(); i--; )
@@ -521,7 +522,8 @@ LS3D_RESULT I3D_sector::Duplicate(I3D_frame *frame)
             }
             S_vector *dst = verts;
             const S_vector *src = sct->verts;
-            for (int i = num_verts; i--; )
+            int i;
+            for (i = num_verts; i--; )
                 *dst++ = *src++;
             num_faces = sct->num_faces;
             if (num_faces) {

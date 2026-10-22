@@ -338,7 +338,8 @@ void I3D_projector::ProcessRecList()
     else
         SetClipParams(GetInvMatrix(), GetRenderMatrix(), orthogonal, lift, 0.0f, reverse_factor);
     I3D_visual **rp = ShadowReceivers;
-    for (int i = receiver_count; i--; rp++) {
+    int i;
+    for (i = receiver_count; i--; rp++) {
         const S_vector *corners = BBoxVertices((*rp)->GetBoundVolume().bbox);
         S_matrix m = (*rp)->GetMatrix() * GetInvMatrix();
         uint clip = 0;
@@ -677,7 +678,8 @@ void I3D_projector::ProcessShadow()
     const I3D_bvolume &bvol = GetWBoundVolume();
     uint bits = sector->group_bits;
     RENDER_FG_HELP_STRUCT *fg = &AddFGHlpStruct.fgroups[0];
-    for (int i = AddFGHlpStruct.fgroups.size(); i--; fg++) {
+    int i;
+    for (i = AddFGHlpStruct.fgroups.size(); i--; fg++) {
         if (last == fg->vis)
             continue;
         last = fg->vis;
