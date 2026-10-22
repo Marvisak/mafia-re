@@ -17,31 +17,33 @@
 // FUNCTION: SETUPSTEAM 0x401080
 inline bool LoadSettings(S_settings &settings)
 {
-    HKEY key;
+    HKEY registry_key;
     // STRING: SETUP 0x40e054
     // STRING: SETUP10 0x40d054
+    // STRING: SETUPCZ 0x40e054
     // STRING: SETUPPL 0x40e054
-    if (RegOpenKeyA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", &key) != ERROR_SUCCESS)
+    if (RegOpenKeyA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", &registry_key) != ERROR_SUCCESS)
     {
         return false;
     }
 
     DWORD type;
-    DWORD size = sizeof(S_settings);
+    DWORD value_size = sizeof(S_settings);
     S_settings buffer;
     // STRING: SETUP 0x40e048
     // STRING: SETUP10 0x40d048
+    // STRING: SETUPCZ 0x40e048
     // STRING: SETUPPL 0x40e048
-    if (RegQueryValueExA(key, "LS3D_setup", NULL, &type, (LPBYTE)&buffer, &size))
+    if (RegQueryValueExA(registry_key, "LS3D_setup", NULL, &type, (LPBYTE)&buffer, &value_size))
     {
-        size = 0;
+        value_size = 0;
     }
-    RegCloseKey(key);
+    RegCloseKey(registry_key);
 
     // Two checks, not one with ||: 1.2 keeps each failure return inline after its check, which an || would
     // merge into one shared exit.
     // The magic of the passed settings is checked, not the one read from the registry, this is what the original does
-    if (size != sizeof(S_settings))
+    if (value_size != sizeof(S_settings))
     {
         return false;
     }
@@ -57,18 +59,18 @@ inline bool LoadSettings(S_settings &settings)
 // FUNCTION: SETUPSTEAM 0x401120
 inline bool SaveSettings(S_settings &settings)
 {
-    HKEY key;
-    DWORD deposition;
-    if (RegCreateKeyExA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", NULL, NULL, NULL, SETTINGS_ACCESS, NULL, &key, &deposition) != ERROR_SUCCESS)
+    HKEY registry_key;
+    DWORD action;
+    if (RegCreateKeyExA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", NULL, NULL, NULL, SETTINGS_ACCESS, NULL, &registry_key, &action) != ERROR_SUCCESS)
     {
         return false;
     }
 
-    if (RegSetValueExA(key, "LS3D_setup", NULL, REG_BINARY, (BYTE *)&settings, sizeof(S_settings)) != ERROR_SUCCESS)
+    if (RegSetValueExA(registry_key, "LS3D_setup", NULL, REG_BINARY, (BYTE *)&settings, sizeof(S_settings)) != ERROR_SUCCESS)
     {
-        RegCloseKey(key);
+        RegCloseKey(registry_key);
         return false;
     }
-    RegCloseKey(key);
+    RegCloseKey(registry_key);
     return true;
 }

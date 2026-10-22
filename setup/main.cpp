@@ -4,10 +4,14 @@
 // 1.0 has its texts in the code and the dialog: 1.2 moved them to a string table, set at
 // WM_INITDIALOG.
 // Steam's Czech setup (2002-08-23, between 1.0 and 1.2) was built without optimization (VC6 SP5 without the Processor
-// Pack, /Od /Ob1 /Oi /Gy /G6), which keeps the source's shape: every local and an inlined function's non-constant
-// arguments in stack slots of their own, every statement where it is written, the cases in source order. Compiled the
-// same way, this file and hw.cpp give its code but for what 1.2 added (the caption text, the W-buffer test, the
-// multisampling order), and the shapes the comments credit to "the Czech setup" come from that comparison.
+// Pack, /Od /Ob1 /Oi /Gf /Gy /G6), which keeps the source's shape: every local and an inlined function's non-constant
+// arguments in stack slots of their own, every statement where it is written, the cases in source order. Its build
+// (setup_czech) compiles this file and hw.cpp the same way, with what came later behind SETUP_DATE (the caption text,
+// the W-buffer test, the multisampling order), and gives its code byte for byte; the shapes the comments credit to
+// "the Czech setup" come from that comparison.
+// Without optimization VC6 lays out each scope's locals by a hash of their names (tools/bsshash.py's bucket mod 16,
+// the lowest at the top of the frame), so the locals' names in both files, which are ours, are chosen to give the
+// Czech setup's frames. The optimized builds don't depend on them.
 #include "main.h"
 #include "hw.h"
 #include "settings.h"
@@ -19,6 +23,7 @@
 // Initialized to true in the binary (it lives in .data, not .bss), overwritten in WinMain anyway
 // GLOBAL: SETUP 0x40e040
 // GLOBAL: SETUP10 0x40d040
+// GLOBAL: SETUPCZ 0x40e040
 // GLOBAL: SETUPPL 0x40e040
 // GLOBAL: SETUPSTEAM 0x405019
 bool settings_loaded = true;
@@ -53,6 +58,7 @@ static void Error(const char *msg)
     if (LoadStringA(NULL, IDS_SETUPERROR, buffer, sizeof(buffer)) == 0)
     {
         // STRING: SETUP 0x40e138
+        // STRING: SETUPCZ 0x40e138
         // STRING: SETUPPL 0x40e138
         strcpy(buffer, "Setup error");
     }
@@ -63,6 +69,7 @@ static void Error(const char *msg)
 
 #if SETUP_DATE >= SETUP_DATE_CZECH
 // FUNCTION: SETUP 0x401000
+// FUNCTION: SETUPCZ 0x401000
 // FUNCTION: SETUPPL 0x401000
 // FUNCTION: SETUPSTEAM 0x401270
 bool SetText(HWND window, uint uid)
@@ -78,6 +85,7 @@ bool SetText(HWND window, uint uid)
 
 // Inlined into DialogFunc in Steam's rebuild
 // FUNCTION: SETUP 0x401050
+// FUNCTION: SETUPCZ 0x401050
 // FUNCTION: SETUPPL 0x401050
 bool SetDialogText(HWND main_window, int dlg, uint uid)
 {
@@ -93,6 +101,7 @@ bool SetDialogText(HWND main_window, int dlg, uint uid)
 
 // FUNCTION: SETUP 0x4010b0
 // FUNCTION: SETUP10 0x401000
+// FUNCTION: SETUPCZ 0x4010a0
 // FUNCTION: SETUPPL 0x4010b0
 // FUNCTION: SETUPSTEAM 0x4012e0
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -140,6 +149,7 @@ inline void SetCheck(int id, bool checked)
 
 // FUNCTION: SETUP 0x401220
 // FUNCTION: SETUP10 0x401170
+// FUNCTION: SETUPCZ 0x401210
 // FUNCTION: SETUPPL 0x401220
 // FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
@@ -173,6 +183,7 @@ void ToggleFields()
 
 // FUNCTION: SETUP 0x401320
 // FUNCTION: SETUP10 0x401270
+// FUNCTION: SETUPCZ 0x401410
 // FUNCTION: SETUPPL 0x401320
 // FUNCTION: SETUPSTEAM 0x401470
 void ToggleExpertSettings()
@@ -184,6 +195,8 @@ void ToggleExpertSettings()
     // GLOBAL: SETUPSTEAM 0x40505b
     static bool expert_settings_enabled = true;
 #else
+    // The Czech setup's (0x40e044) has no marker: built without optimization, VC6 leaves it out of the PDB, so
+    // reccmp has no name for ours and compares the two addresses
     // GLOBAL: SETUP 0x40e044
     // GLOBAL: SETUP10 0x40d044
     // GLOBAL: SETUPPL 0x40e044
@@ -224,6 +237,7 @@ void ToggleExpertSettings()
 
 // FUNCTION: SETUP 0x4013e0
 // FUNCTION: SETUP10 0x401330
+// FUNCTION: SETUPCZ 0x4014f0
 // FUNCTION: SETUPPL 0x4013e0
 // FUNCTION: SETUPSTEAM 0x401550
 INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -231,6 +245,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     switch (Msg)
     {
     case WM_INITDIALOG:
+    {
 #if SETUP_DATE >= SETUP_DATE_CZECH
 #if SETUP_DATE >= SETUP_DATE_POLISH
         SetText(hWnd, IDS_SETUP);
@@ -285,6 +300,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             {
                 // This loads in different error message than it reads from resources
                 // STRING: SETUP 0x40e0e8
+                // STRING: SETUPCZ 0x40e104
                 // STRING: SETUPPL 0x40e0e8
                 strcpy(buffer, "DirectX : Display devices could not be enumerated.");
             }
@@ -295,124 +311,126 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         // has its strings before the command cases' (VS2008 keeps string literals in order of first use); the code is
         // the same either way.
     refresh:
+        // Both builds test each flag (setne): a bool passed as it is would be zero-extended
+        SetCheck(IDC_CHECK_FULLSCREEN, settings.fullscreen);
+        SetCheck(IDC_CHECK_TRIPLEBUFFERING, settings.triple_buffering);
+        SetCheck(IDC_CHECK_HARDWARETRANSFORM, settings.hardware_transform);
+        if (settings.hardware_transform)
         {
-            // Both builds test each flag (setne): a bool passed as it is would be zero-extended
-            SetCheck(IDC_CHECK_FULLSCREEN, settings.fullscreen);
-            SetCheck(IDC_CHECK_TRIPLEBUFFERING, settings.triple_buffering);
-            SetCheck(IDC_CHECK_HARDWARETRANSFORM, settings.hardware_transform);
-            if (settings.hardware_transform)
-            {
-                settings.multipass_rendering = false;
-            }
-            SetCheck(IDC_CHECK_TEXTURETRUECOLOR, settings.texture_true_color);
-            SetCheck(IDC_CHECK_TEXTURELOWDETAIL, settings.texture_low_detail);
-            SetCheck(IDC_CHECK_VSYNC, settings.vsync);
-            SetCheck(IDC_CHECK_LIGHTMAPTRUECOLOR, settings.lightmap_true_color);
-            SetCheck(IDC_CHECK_TEXTURECOMPRESSED, settings.texture_compressed);
-            SetCheck(IDC_CHECK_SOUND, !settings.disable_sound);
-            SetCheck(IDC_CHECK_SOFTWAREMIXINGONLY, settings.software_mixing_only);
-            SetCheck(IDC_CHECK_DISABLEEAX, settings.disable_eax);
-            SetCheck(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
-            SetCheck(IDC_CHECK_CLIPALWAYS, settings.clip_always);
-            SetCheck(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
+            settings.multipass_rendering = false;
+        }
+        SetCheck(IDC_CHECK_TEXTURETRUECOLOR, settings.texture_true_color);
+        SetCheck(IDC_CHECK_TEXTURELOWDETAIL, settings.texture_low_detail);
+        SetCheck(IDC_CHECK_VSYNC, settings.vsync);
+        SetCheck(IDC_CHECK_LIGHTMAPTRUECOLOR, settings.lightmap_true_color);
+        SetCheck(IDC_CHECK_TEXTURECOMPRESSED, settings.texture_compressed);
+        SetCheck(IDC_CHECK_SOUND, settings.disable_sound ? false : true);
+        SetCheck(IDC_CHECK_SOFTWAREMIXINGONLY, settings.software_mixing_only);
+        SetCheck(IDC_CHECK_DISABLEEAX, settings.disable_eax);
+        SetCheck(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
+        SetCheck(IDC_CHECK_CLIPALWAYS, settings.clip_always);
+        SetCheck(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
 #if SETUP_DATE >= SETUP_DATE_1_2
-            if (!supports_w_buffer)
-            {
-                settings.w_buffer = false;
-            }
+        if (!supports_w_buffer)
+        {
+            settings.w_buffer = false;
+        }
 #endif
-            SetCheck(IDC_CHECK_WBUFFER, settings.w_buffer);
+        SetCheck(IDC_CHECK_WBUFFER, settings.w_buffer);
 #if SETUP_DATE >= SETUP_DATE_1_2
-            EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
+        EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
 #endif
 
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
+        SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_RESETCONTENT, NULL, NULL);
 #if SETUP_DATE < SETUP_DATE_CZECH
-            // STRING: SETUP10 0x40d108
-            AddString(IDC_COMBO_SOUND, "Stereo headphones");
-            // STRING: SETUP10 0x40d0f8
-            AddString(IDC_COMBO_SOUND, "Stereo speakers");
-            // STRING: SETUP10 0x40d0e0
-            AddString(IDC_COMBO_SOUND, "Quadraphonic speakers");
-            // STRING: SETUP10 0x40d0c4
-            AddString(IDC_COMBO_SOUND, "5.1 surround sound speakers");
-            SetSelection(IDC_COMBO_SOUND, settings.sound_type);
+        // STRING: SETUP10 0x40d108
+        AddString(IDC_COMBO_SOUND, "Stereo headphones");
+        // STRING: SETUP10 0x40d0f8
+        AddString(IDC_COMBO_SOUND, "Stereo speakers");
+        // STRING: SETUP10 0x40d0e0
+        AddString(IDC_COMBO_SOUND, "Quadraphonic speakers");
+        // STRING: SETUP10 0x40d0c4
+        AddString(IDC_COMBO_SOUND, "5.1 surround sound speakers");
+        SetSelection(IDC_COMBO_SOUND, settings.sound_type);
 #else
 
-            // A block of its own: 1.2 gives this buffer the stack slot of the cases' captions, which a buffer in the function's
-            // scope can't share
-            {
-                char buffer[256];
-                if (LoadStringA(NULL, IDS_STEREOHEADPHONES, buffer, sizeof(buffer)) == 0)
-                {
-                    // STRING: SETUP 0x40e0d4
-                    // STRING: SETUPPL 0x40e0d4
-                    strcpy(buffer, "Stereo headphones");
-                }
-                AddString(IDC_COMBO_SOUND, buffer);
+        char buffer[256];
+        if (LoadStringA(NULL, IDS_STEREOHEADPHONES, buffer, sizeof(buffer)) == 0)
+        {
+            // STRING: SETUP 0x40e0d4
+            // STRING: SETUPCZ 0x40e0f0
+            // STRING: SETUPPL 0x40e0d4
+            strcpy(buffer, "Stereo headphones");
+        }
+        AddString(IDC_COMBO_SOUND, buffer);
 
-                if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
-                {
-                    // STRING: SETUP 0x40e0c4
-                    // STRING: SETUPPL 0x40e0c4
-                    strcpy(buffer, "Stereo speakers");
-                }
-                AddString(IDC_COMBO_SOUND, buffer);
+        if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
+        {
+            // STRING: SETUP 0x40e0c4
+            // STRING: SETUPCZ 0x40e0e0
+            // STRING: SETUPPL 0x40e0c4
+            strcpy(buffer, "Stereo speakers");
+        }
+        AddString(IDC_COMBO_SOUND, buffer);
 
-                if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
-                {
-                    // STRING: SETUP 0x40e0ac
-                    // STRING: SETUPPL 0x40e0ac
-                    // STRING: SETUPSTEAM 0x4041f8
-                    strcpy(buffer, "Quadraphonic speakers");
-                }
-                AddString(IDC_COMBO_SOUND, buffer);
+        if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
+        {
+            // STRING: SETUP 0x40e0ac
+            // STRING: SETUPCZ 0x40e0c8
+            // STRING: SETUPPL 0x40e0ac
+            // STRING: SETUPSTEAM 0x4041f8
+            strcpy(buffer, "Quadraphonic speakers");
+        }
+        AddString(IDC_COMBO_SOUND, buffer);
 
-                if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
-                {
-                    // STRING: SETUP 0x40e090
-                    // STRING: SETUPPL 0x40e090
-                    strcpy(buffer, "5.1 surround sound speakers");
-                }
-                AddString(IDC_COMBO_SOUND, buffer);
-                SetSelection(IDC_COMBO_SOUND, settings.sound_type);
-            }
+        if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
+        {
+            // STRING: SETUP 0x40e090
+            // STRING: SETUPCZ 0x40e0ac
+            // STRING: SETUPPL 0x40e090
+            strcpy(buffer, "5.1 surround sound speakers");
+        }
+        AddString(IDC_COMBO_SOUND, buffer);
+        SetSelection(IDC_COMBO_SOUND, settings.sound_type);
 #endif
-            LoadAdapterData(-1);
-            ToggleFields();
+        LoadAdapterData(-1);
+        ToggleFields();
 
-            // GetDlgItem for every message, as both builds call it
-            SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_RESETCONTENT, NULL, NULL);
-            // STRING: SETUP 0x40e088
-            // STRING: SETUP10 0x40d0bc
-            // STRING: SETUPPL 0x40e088
-            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
-            SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 0);
-            // The typo is in the binary
-            // STRING: SETUP 0x40e080
-            // STRING: SETUP10 0x40d0b4
-            // STRING: SETUPPL 0x40e080
-            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
-            SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 2);
-            // STRING: SETUP 0x40e078
-            // STRING: SETUP10 0x40d0ac
-            // STRING: SETUPPL 0x40e078
-            pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
-            SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, pos, 1);
+        // GetDlgItem for every message, as both builds call it
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_RESETCONTENT, NULL, NULL);
+        // STRING: SETUP 0x40e088
+        // STRING: SETUP10 0x40d0bc
+        // STRING: SETUPCZ 0x40e0a4
+        // STRING: SETUPPL 0x40e088
+        int item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 0);
+        // The typo is in the binary
+        // STRING: SETUP 0x40e080
+        // STRING: SETUP10 0x40d0b4
+        // STRING: SETUPCZ 0x40e09c
+        // STRING: SETUPPL 0x40e080
+        item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 2);
+        // STRING: SETUP 0x40e078
+        // STRING: SETUP10 0x40d0ac
+        // STRING: SETUPCZ 0x40e094
+        // STRING: SETUPPL 0x40e078
+        item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 1);
 
-            int language_count = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCOUNT, NULL, NULL);
-            for (int i = 0; i < language_count; i++)
+        int language_count = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCOUNT, NULL, NULL);
+        for (int i = 0; i < language_count; i++)
+        {
+            // The item data in item, as the Czech setup has it
+            item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, i, NULL);
+            if (item == settings.language)
             {
-                // The item data in pos, as the Czech setup has it
-                pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, i, NULL);
-                if (pos == settings.language)
-                {
-                    SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETCURSEL, i, NULL);
-                    break;
-                }
+                SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETCURSEL, i, NULL);
+                break;
             }
         }
         break;
+    }
     case WM_COMMAND:
         // The cases in the Czech setup's order. The checkbox case comes before Exit: Steam's build has its "Warning"
         // first. VS2008 lays out the jump table's targets in source order, and so does VC6, which lays out the rest by
@@ -455,7 +473,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (settings.texture_true_color && LOWORD(wParam) == IDC_CHECK_TEXTURETRUECOLOR && dialog_state.vram_size < 64)
             {
 #if SETUP_DATE < SETUP_DATE_CZECH
-                int result = MessageBoxA(
+                int button = MessageBoxA(
                         hWnd,
                         // STRING: SETUP10 0x40d150
                         "Selecting truecolor textures is only recommended\n\rfor video cards with 64MB video RAM or above.\n\rContinue?",
@@ -469,18 +487,19 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     // Loads the wrong string again
                     strcpy(buffer, "DirectX : Display devices could not be enumerated.");
                 }
-                char caption[128];
-                if (LoadStringA(NULL, IDS_WARNING, caption, sizeof(caption)) == 0)
+                char title[128];
+                if (LoadStringA(NULL, IDS_WARNING, title, sizeof(title)) == 0)
                 {
                     // STRING: SETUP 0x40e11c
+                    // STRING: SETUPCZ 0x40e08c
                     // STRING: SETUPPL 0x40e11c
-                    strcpy(caption, "Warning");
+                    strcpy(title, "Warning");
                 }
 
-                int result = MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION);
+                int button = MessageBoxA(hWnd, buffer, title, MB_YESNO | MB_ICONEXCLAMATION);
 #endif
-                // The result in a local, where the exit prompt compares the call: the Czech setup has both
-                if (result == IDNO)
+                // The button in a local, where the exit prompt compares the call: the Czech setup has both
+                if (button == IDNO)
                 {
                     settings.texture_true_color = false;
                     goto refresh;
@@ -528,9 +547,9 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 {
                     break;
                 }
-                S_adapter_mode *adapter_data = (S_adapter_mode *)data;
-                settings.width = adapter_data->width;
-                settings.height = adapter_data->height;
+                S_adapter_mode *selected_mode = (S_adapter_mode *)data;
+                settings.width = selected_mode->width;
+                settings.height = selected_mode->height;
                 LoadAdapterRefreshRates();
                 LoadAdapterData(pos);
             }
@@ -594,6 +613,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.texture_true_color = false;
                 settings.texture_low_detail = true;
                 settings.texture_compressed = true;
+                goto autodetect_done;
             }
             else if (dialog_state.vram_size <= 16)
             {
@@ -604,6 +624,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.texture_true_color = false;
                 settings.texture_low_detail = true;
                 settings.texture_compressed = true;
+                goto autodetect_done;
             }
             else if (dialog_state.vram_size <= 32)
             {
@@ -614,6 +635,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.texture_true_color = false;
                 settings.texture_low_detail = false;
                 settings.texture_compressed = true;
+                goto autodetect_done;
             }
             else if (dialog_state.vram_size <= 64)
             {
@@ -624,6 +646,7 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.texture_true_color = false;
                 settings.texture_low_detail = false;
                 settings.texture_compressed = true;
+                goto autodetect_done;
             }
             else
             {
@@ -634,52 +657,51 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.texture_true_color = true;
                 settings.texture_low_detail = false;
                 settings.texture_compressed = false;
+                goto autodetect_done;
             }
-            goto autodetect_done;
         case IDC_BUTTON_SAVE:
             SaveSettings(settings);
             EndDialog(hWnd, 0);
             break;
         case IDC_BUTTON_EXIT:
+        S_settings saved_settings;
+        LoadSettings(saved_settings);
+
+        if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
         {
-            S_settings saved_settings;
-            LoadSettings(saved_settings);
-
-            if (memcmp(&saved_settings, &settings, sizeof(S_settings)) != 0)
-            {
 #if SETUP_DATE < SETUP_DATE_CZECH
-                // 1.2 has "Warning" as the caption here too
-                if (MessageBoxA(
-                        hWnd,
-                        // STRING: SETUP10 0x40d1c4
-                        "Discard changes ?!",
-                        // STRING: SETUP10 0x40d1d8
-                        "WARNING...",
-                        MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+            // 1.2 has "Warning" as the title here too
+            if (MessageBoxA(
+                    hWnd,
+                    // STRING: SETUP10 0x40d1c4
+                    "Discard changes ?!",
+                    // STRING: SETUP10 0x40d1d8
+                    "WARNING...",
+                    MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
 #else
-                char buffer[256];
-                if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
-                {
-                    // STRING: SETUP 0x40e124
-                    // STRING: SETUPPL 0x40e124
-                    strcpy(buffer, "Discard changes ?!");
-                }
-
-                char caption[128];
-                if (LoadStringA(NULL, IDS_WARNING, caption, sizeof(caption)) == 0)
-                {
-                    strcpy(caption, "Warning");
-                }
-                if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
-#endif
-                {
-                    return 0;
-                }
+            char buffer[256];
+            if (LoadStringA(NULL, IDS_DISCARDCHANGES, buffer, sizeof(buffer)) == 0)
+            {
+                // STRING: SETUP 0x40e124
+                // STRING: SETUPCZ 0x40e078
+                // STRING: SETUPPL 0x40e124
+                strcpy(buffer, "Discard changes ?!");
             }
 
-            EndDialog(hWnd, -1);
-            break;
+            char title[128];
+            if (LoadStringA(NULL, IDS_WARNING, title, sizeof(title)) == 0)
+            {
+                strcpy(title, "Warning");
+            }
+            if (MessageBoxA(hWnd, buffer, title, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+#endif
+            {
+                return 0;
+            }
         }
+
+        EndDialog(hWnd, -1);
+        break;
         }
         break;
     }

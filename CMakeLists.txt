@@ -64,6 +64,9 @@ if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(setup setup_russian)
     set(SETUP_LANGUAGE polish)
     add_subdirectory(setup setup_polish)
+    # And the Czech one, August 2002's code built without optimization
+    set(SETUP_LANGUAGE czech)
+    add_subdirectory(setup setup_czech)
     unset(SETUP_LANGUAGE)
 endif()
 add_subdirectory(setup)
@@ -82,6 +85,9 @@ targets:
   SETUP10:
     path: $<TARGET_FILE:setup_1_0>
     pdb: $<TARGET_PDB_FILE:setup_1_0>
+  SETUPCZ:
+    path: $<TARGET_FILE:setup_czech>
+    pdb: $<TARGET_PDB_FILE:setup_czech>
   SETUPPL:
     path: $<TARGET_FILE:setup_polish>
     pdb: $<TARGET_PDB_FILE:setup_polish>

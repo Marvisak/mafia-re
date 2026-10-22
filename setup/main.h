@@ -61,5 +61,6 @@ extern bool supports_w_buffer;
 // header, so the linter doesn't check it against main.cpp's order.
 // FUNCTION: SETUP 0x402550
 // FUNCTION: SETUP10 0x402180
+// FUNCTION: SETUPCZ 0x402bf0
 // FUNCTION: SETUPPL 0x402520
 // Error

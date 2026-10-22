@@ -22,6 +22,15 @@ targets:
       sha256: 4e1300a1456710279a39201f5d5cf4b5df4b75ddde3a695f8d344e2612df1b99
     data_sources:
       - setup/library_msvc_1_0.csv
+  SETUPCZ:
+    filename: setup.czech.exe
+    source_root:
+      - setup
+      - common
+    hash:
+      sha256: c6abff923ecedafc26be3f1abdb8fe286f3a0be1e787ea7b659b6c01a077d25d
+    data_sources:
+      - setup/library_msvc_czech.csv
   SETUPPL:
     filename: setup.polish.exe
     source_root:

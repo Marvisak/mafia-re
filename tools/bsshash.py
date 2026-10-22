@@ -18,6 +18,9 @@ from bucket 0 up:
 - Alignment: 1-byte objects 1, 2-byte 2, 3 to 0x3f bytes 4, 0x40 bytes and more 8, or the type's
   own alignment if that is larger (double, __int64).
 
+A function compiled without optimization lays out the locals of each scope by the same hash: the
+bucket mod 16, the lowest at the top of the frame (Steam's Czech setup.exe, setup/main.cpp).
+
 Give the names in declaration order:
 
     .venv/Scripts/python tools/bsshash.py v_file_h v_handle C_m_p C_l_d unreferenced_buffer

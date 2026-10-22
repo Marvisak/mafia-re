@@ -7,8 +7,9 @@ project(setup)
 # The top-level CMakeLists.txt adds this directory a second time with SETUP_1_0 set, for 1.0's setup as target
 # setup_1_0: the same toolchain, SDK, libraries and link (its Rich header is 1.2's but for one import less).
 # It adds it again with SETUP_LANGUAGE set for the language versions Steam ships that are builds of their own, as
-# target setup_<language>, built with res/<language>.rc: Russian (1.2's code) and Polish. Steam's German, French,
-# Italian and Spanish ones are its 2010 rebuild localized after the link (below).
+# target setup_<language>, built with res/<language>.rc: Russian (1.2's code), Polish and Czech (older code, the Czech
+# one without optimization). Steam's German, French, Italian and Spanish ones are its 2010 rebuild localized after the
+# link (below).
 # The sources keep the code's versions apart by SETUP_DATE (version.h), which a build of older code sets.
 option(SETUP_STEAM "Build Steam's 2010 rebuild of setup.exe instead of the 1.2 one" OFF)
 
@@ -33,6 +34,8 @@ if (SETUP_1_0)
 	target_compile_definitions(${setup} PRIVATE SETUP_DATE=SETUP_DATE_1_0)
 elseif (SETUP_LANGUAGE STREQUAL "polish")
 	target_compile_definitions(${setup} PRIVATE SETUP_DATE=SETUP_DATE_POLISH)
+elseif (SETUP_LANGUAGE STREQUAL "czech")
+	target_compile_definitions(${setup} PRIVATE SETUP_DATE=SETUP_DATE_CZECH)
 endif()
 
 if (SETUP_STEAM)
@@ -65,6 +68,21 @@ if (MSVC_VERSION EQUAL 1200)
 	# /Gz - every function in the binary is __stdcall
 	# /G6 - Pentium Pro scheduling, the only switch that puts SetText's push 0x400 before the lea of its buffer
 	target_compile_options(${setup} PRIVATE /ML /Gz /G6)
+	if (SETUP_LANGUAGE STREQUAL "czech")
+		# The Czech one was built without optimization but with the rest of /O2: inline expansion, intrinsics, string
+		# pooling (its literals in reverse order of use) and function-level linking. That is what VC6's Standard Edition,
+		# which has no optimizer, makes of a Release build. /Od comes after the global /O2 (warning D4025) and turns /Gf
+		# off with it. Its code generator is plain SP5's (the Rich header's 8966): SP5+PP's CL and C1XX with plain SP5's
+		# C2.DLL, as LS3DF's base classes (ls3df/CMakeLists.txt).
+		target_compile_options(${setup} PRIVATE /Od /Ob1 /Oi /Gf /Gy)
+		set(czech_cl "${CMAKE_CURRENT_BINARY_DIR}/czech_cl")
+		file(COPY "${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/CL.EXE"
+			"${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/C1.DLL"
+			"${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5_vcpp/VC98/Bin/C1XX.DLL"
+			"${CMAKE_SOURCE_DIR}/3rdparty/msvc600_sp5/VC98/Bin/C2.DLL" DESTINATION "${czech_cl}")
+		set_target_properties(${setup} PROPERTIES
+			CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/clswap.py;${czech_cl};--comp-id;00162306")
+	endif()
 
 	# The original was linked with /DEBUG: it ends with a CodeView record naming its PDB, and /DEBUG's
 	# default /OPT:NOREF kept every import thunk and all of dxguid.lib's GUIDs. /OPT:NOREF also overrides
@@ -89,6 +107,11 @@ if (MSVC_VERSION EQUAL 1200)
 		# The Polish one's link time (2002-10-30) and CodeView record: 1.2's tree, a new PDB (age 1)
 		postlink(${setup} --timestamp 0x3dbfc39e --codeview-signature 0x3dbfc39e --codeview-age 1
 			"--codeview-path=C:\\Mafia\\_src\\setup\\Release\\setup.pdb")
+	elseif (SETUP_LANGUAGE STREQUAL "czech")
+		# The Czech one's link time (2002-08-23) and CodeView record: a copy of the project on the Russian one's machine,
+		# a new PDB (age 1). As the Russian one's, its imports come in another order on current Windows.
+		postlink(${setup} --timestamp 0x3d664bce --codeview-signature 0x3d664bce --codeview-age 1
+			"--codeview-path=D:\\mafia\\_src\\setup_cz\\Release\\setup.pdb")
 	else()
 		# The original's link time (2002-11-07) and CodeView record: its PDB, linked into twice (age 2)
 		postlink(${setup} --timestamp 0x3dca7e48 --codeview-signature 0x3dca7530 --codeview-age 2

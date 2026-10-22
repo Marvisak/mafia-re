@@ -23,6 +23,7 @@ bool supports_w_buffer = true;
 // the layout only rules names out.
 // GLOBAL: SETUP 0x410d48
 // GLOBAL: SETUP10 0x40fde8
+// GLOBAL: SETUPCZ 0x410d48
 // GLOBAL: SETUPPL 0x410d48
 // GLOBAL: SETUPSTEAM 0x405fc0
 char message_buffer[256];
@@ -31,21 +32,25 @@ char message_buffer[256];
 // the same place: the layout doesn't tell which file had them.
 // GLOBAL: SETUP 0x410e48
 // GLOBAL: SETUP10 0x40fee8
+// GLOBAL: SETUPCZ 0x410e48
 // GLOBAL: SETUPPL 0x410e48
 // GLOBAL: SETUPSTEAM 0x4060c0
 S_state dialog_state;
 // GLOBAL: SETUP 0x410e70
 // GLOBAL: SETUP10 0x40ff10
+// GLOBAL: SETUPCZ 0x410e70
 // GLOBAL: SETUPPL 0x410e70
 // GLOBAL: SETUPSTEAM 0x4053b8
 IDirect3D8 *direct3d8;
 // GLOBAL: SETUP 0x410e74
 // GLOBAL: SETUP10 0x40ff14
+// GLOBAL: SETUPCZ 0x410e78
 // GLOBAL: SETUPPL 0x410e74
 // GLOBAL: SETUPSTEAM 0x40501c
 S_settings settings;
 // GLOBAL: SETUP 0x410eb8
 // GLOBAL: SETUP10 0x40ff58
+// GLOBAL: SETUPCZ 0x410eb8
 // GLOBAL: SETUPPL 0x410eb8
 // GLOBAL: SETUPSTEAM 0x4053c0
 S_adapter_mode adapter_modes[256];
@@ -54,13 +59,14 @@ S_adapter_mode adapter_modes[256];
 // Requires DirectDraw7 which was already deprecated at the time
 // FUNCTION: SETUP 0x4026f0
 // FUNCTION: SETUP10 0x4022e0
+// FUNCTION: SETUPCZ 0x402e00
 // FUNCTION: SETUPPL 0x4026c0
 // FUNCTION: SETUPSTEAM 0x4026d0
 int GetTotalVRAM(GUID *guid)
 {
     IDirectDraw7 *dd;
-    HRESULT result = DirectDrawCreateEx(guid, (LPVOID *)&dd, IID_IDirectDraw7, NULL);
-    if (FAILED(result))
+    HRESULT rc = DirectDrawCreateEx(guid, (LPVOID *)&dd, IID_IDirectDraw7, NULL);
+    if (FAILED(rc))
     {
         return 0;
     }
@@ -71,8 +77,8 @@ int GetTotalVRAM(GUID *guid)
 
     DWORD vram;
     DWORD available_vram;
-    result = dd->GetAvailableVidMem(&caps, &vram, &available_vram);
-    if (FAILED(result))
+    rc = dd->GetAvailableVidMem(&caps, &vram, &available_vram);
+    if (FAILED(rc))
     {
         return 0;
     }
@@ -80,15 +86,16 @@ int GetTotalVRAM(GUID *guid)
 
     // In place, and an empty for, as in the Czech setup
     vram /= 0x100000;
-    int vram_mb;
-    for (vram_mb = 1; vram > (uint)vram_mb; vram_mb <<= 1)
+    int size;
+    for (size = 1; vram > (uint)size; size <<= 1)
     {
     }
-    return vram_mb;
+    return size;
 }
 
 // FUNCTION: SETUP 0x402780
 // FUNCTION: SETUP10 0x402370
+// FUNCTION: SETUPCZ 0x402ea0
 // FUNCTION: SETUPPL 0x402750
 // FUNCTION: SETUPSTEAM 0x402750
 bool LoadAdapterRefreshRates()
@@ -98,21 +105,22 @@ bool LoadAdapterRefreshRates()
     {
         SendMessageA(dialog_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
         // STRING: SETUP10 0x40d1f8
-        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)"Default");
+        int item = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)"Default");
 #else
-    char buffer[128];
     if (dialog_state.windows.refresh_rate)
     {
+        char buffer[128];
         if (LoadStringA(NULL, IDS_DEFAULT, buffer, sizeof(buffer)) == 0)
         {
             // STRING: SETUP 0x40e150
+            // STRING: SETUPCZ 0x40e14c
             // STRING: SETUPPL 0x40e14c
             strcpy(buffer, "Default");
         }
         SendMessageA(dialog_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
-        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)buffer);
+        int item = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)buffer);
 #endif
-        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, NULL);
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, item, NULL);
     }
 
     if (!direct3d8)
@@ -127,17 +135,17 @@ bool LoadAdapterRefreshRates()
     }
 
     int selected = 0;
-    int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
-    for (int i = 0; i < adapter_mode_count; ++i)
+    int number_of_modes = direct3d8->GetAdapterModeCount(settings.adapter);
+    D3DDISPLAYMODE display_mode;
+    for (int i = 0; i < number_of_modes; ++i)
     {
-        D3DDISPLAYMODE mode;
-        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, i, &mode);
+        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, i, &display_mode);
         if (result != D3D_OK)
         {
             continue;
         }
 
-        switch (mode.Format)
+        switch (display_mode.Format)
         {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
@@ -157,26 +165,27 @@ bool LoadAdapterRefreshRates()
             continue;
         }
 
-        if (mode.Width != settings.width)
+        if (display_mode.Width != settings.width)
         {
             continue;
         }
-        if (mode.Height != settings.height)
+        if (display_mode.Height != settings.height)
         {
             continue;
         }
-        if (mode.RefreshRate == 0)
+        if (display_mode.RefreshRate == 0)
         {
             continue;
         }
 
         // STRING: SETUP 0x40e148
         // STRING: SETUP10 0x40d1f0
+        // STRING: SETUPCZ 0x40e144
         // STRING: SETUPPL 0x40e144
-        sprintf(message_buffer, "%d Hz", mode.RefreshRate);
+        sprintf(message_buffer, "%d Hz", display_mode.RefreshRate);
         int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)message_buffer);
-        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
-        if (settings.refresh_rate == mode.RefreshRate)
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, display_mode.RefreshRate);
+        if (settings.refresh_rate == display_mode.RefreshRate)
         {
             selected = pos;
         }
@@ -192,6 +201,7 @@ bool LoadAdapterRefreshRates()
 
 // FUNCTION: SETUP 0x402940
 // FUNCTION: SETUP10 0x4024f0
+// FUNCTION: SETUPCZ 0x403100
 // FUNCTION: SETUPPL 0x402910
 // FUNCTION: SETUPSTEAM 0x402930
 bool LoadAdapterModes()
@@ -206,11 +216,8 @@ bool LoadAdapterModes()
         return false;
     }
 
-#if SETUP_DATE >= SETUP_DATE_CZECH
-    char buffer[256];
-#endif
-    D3DADAPTER_IDENTIFIER8 identifier;
-    HRESULT result = direct3d8->GetAdapterIdentifier(settings.adapter, 0, &identifier);
+    D3DADAPTER_IDENTIFIER8 adapter_info;
+    HRESULT result = direct3d8->GetAdapterIdentifier(settings.adapter, 0, &adapter_info);
     // The same call in both branches, as in the Czech setup
     if (result == D3D_OK)
     {
@@ -229,24 +236,26 @@ bool LoadAdapterModes()
                 message_buffer,
                 // STRING: SETUP10 0x40d218
                 "Driver version: %d.%02d.%02d.%04d",
-                HIWORD(identifier.DriverVersion.HighPart),
-                LOWORD(identifier.DriverVersion.HighPart),
-                HIWORD(identifier.DriverVersion.LowPart),
-                LOWORD(identifier.DriverVersion.LowPart));
+                HIWORD(adapter_info.DriverVersion.HighPart),
+                LOWORD(adapter_info.DriverVersion.HighPart),
+                HIWORD(adapter_info.DriverVersion.LowPart),
+                LOWORD(adapter_info.DriverVersion.LowPart));
 #else
+            char buffer[256];
             if (LoadStringA(NULL, IDS_DRIVERVERSION, buffer, sizeof(buffer)) == 0)
             {
                 // STRING: SETUP 0x40e170
+                // STRING: SETUPCZ 0x40e16c
                 // STRING: SETUPPL 0x40e16c
                 strcpy(buffer, "Driver version: %d.%02d.%02d.%04d");
             }
             sprintf(
                 message_buffer,
                 buffer,
-                HIWORD(identifier.DriverVersion.HighPart),
-                LOWORD(identifier.DriverVersion.HighPart),
-                HIWORD(identifier.DriverVersion.LowPart),
-                LOWORD(identifier.DriverVersion.LowPart));
+                HIWORD(adapter_info.DriverVersion.HighPart),
+                LOWORD(adapter_info.DriverVersion.HighPart),
+                HIWORD(adapter_info.DriverVersion.LowPart),
+                LOWORD(adapter_info.DriverVersion.LowPart));
 #endif
         }
         else
@@ -259,6 +268,7 @@ bool LoadAdapterModes()
     {
         // STRING: SETUP 0x40e164
         // STRING: SETUP10 0x40d20c
+        // STRING: SETUPCZ 0x40e160
         // STRING: SETUPPL 0x40e160
         sprintf(message_buffer, "VRAM: %iMB", dialog_state.vram_size);
         SetWindowTextA(dialog_state.windows.vram_size, message_buffer);
@@ -269,23 +279,23 @@ bool LoadAdapterModes()
         return true;
     }
 
-    // The flags initialized before the loop, the result locals, the continues and the listing loop reusing new_mode and
-    // i, as in the Czech setup
-    int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
-    int total_modes = 0;
+    // The flags initialized before the loop, the result locals, the continues and the listing loop reusing new_entry and
+    // index, as in the Czech setup
+    int number_of_modes = direct3d8->GetAdapterModeCount(settings.adapter);
+    int cached_modes = 0;
     int bit_depth_flags = 0;
-    S_adapter_mode *new_mode = adapter_modes;
-    int i;
-    for (i = 0; i < adapter_mode_count; ++i)
+    S_adapter_mode *new_entry = adapter_modes;
+    D3DDISPLAYMODE display_mode;
+    int index;
+    for (index = 0; index < number_of_modes; ++index)
     {
-        D3DDISPLAYMODE mode;
-        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, i, &mode);
+        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, index, &display_mode);
         if (result != D3D_OK)
         {
             continue;
         }
 
-        switch (mode.Format)
+        switch (display_mode.Format)
         {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
@@ -300,43 +310,43 @@ bool LoadAdapterModes()
         }
 
 #if SETUP_DATE >= SETUP_DATE_1_2
-        // The multisample flags are collected directly in the next free slot, even when the mode turns out to be a
-        // duplicate. 1.0 checks them only for a new mode, below.
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        // The multisample flags are collected directly in the next free slot, even when the display_mode turns out to be a
+        // duplicate. 1.0 checks them only for a new display_mode, below.
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_2X_WINDOWED;
+            new_entry->flags |= MULTISAMPLE_2X_WINDOWED;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_4X_WINDOWED;
+            new_entry->flags |= MULTISAMPLE_4X_WINDOWED;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_2X_FULLSCREEN;
+            new_entry->flags |= MULTISAMPLE_2X_FULLSCREEN;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_4X_FULLSCREEN;
+            new_entry->flags |= MULTISAMPLE_4X_FULLSCREEN;
         }
 #endif
 
         // Both loops walk a pointer assigned before them: the builds load adapter_modes ahead of the loop's guard test
         S_adapter_mode *cached_mode = adapter_modes;
-        for (int j = 0; j < total_modes; ++j, ++cached_mode)
+        for (int j = 0; j < cached_modes; ++j, ++cached_mode)
         {
-            if (cached_mode->width != mode.Width)
+            if (cached_mode->width != display_mode.Width)
             {
                 continue;
             }
-            if (cached_mode->height != mode.Height)
+            if (cached_mode->height != display_mode.Height)
             {
                 continue;
             }
 #if SETUP_DATE >= SETUP_DATE_1_2
-            cached_mode->flags |= new_mode->flags & MULTISAMPLE_MASK;
+            cached_mode->flags |= new_entry->flags & MULTISAMPLE_MASK;
 #endif
             if ((cached_mode->flags & bit_depth_flags) == 0)
             {
@@ -347,56 +357,57 @@ bool LoadAdapterModes()
             goto next_mode;
         }
 
-        // In 1.2 the multisample flags collected above are lost for a new mode, this is what the original does. 1.0
+        // In 1.2 the multisample flags collected above are lost for a new display_mode, this is what the original does. 1.0
         // keeps those of the first format a resolution comes in.
-        new_mode->width = mode.Width;
-        new_mode->height = mode.Height;
-        new_mode->flags = bit_depth_flags;
+        new_entry->width = display_mode.Width;
+        new_entry->height = display_mode.Height;
+        new_entry->flags = bit_depth_flags;
 #if SETUP_DATE < SETUP_DATE_1_2
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, TRUE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_2X_WINDOWED;
+            new_entry->flags |= MULTISAMPLE_2X_WINDOWED;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, TRUE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_4X_WINDOWED;
+            new_entry->flags |= MULTISAMPLE_4X_WINDOWED;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, FALSE, D3DMULTISAMPLE_2_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_2X_FULLSCREEN;
+            new_entry->flags |= MULTISAMPLE_2X_FULLSCREEN;
         }
 
-        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
+        if (direct3d8->CheckDeviceMultiSampleType(settings.adapter, D3DDEVTYPE_HAL, display_mode.Format, FALSE, D3DMULTISAMPLE_4_SAMPLES) >= D3D_OK)
         {
-            new_mode->flags |= MULTISAMPLE_4X_FULLSCREEN;
+            new_entry->flags |= MULTISAMPLE_4X_FULLSCREEN;
         }
 #endif
 
-        new_mode++;
-        total_modes++;
-        if (total_modes >= 256)
+        new_entry++;
+        cached_modes++;
+        if (cached_modes >= 256)
         {
             break;
         }
     next_mode:;
     }
 
-    new_mode = adapter_modes;
-    for (i = 0; i < total_modes; ++i)
+    new_entry = adapter_modes;
+    for (index = 0; index < cached_modes; ++index)
     {
         // STRING: SETUP 0x40e158
         // STRING: SETUP10 0x40d200
+        // STRING: SETUPCZ 0x40e154
         // STRING: SETUPPL 0x40e154
-        sprintf(message_buffer, "%4d x %4d", new_mode->width, new_mode->height);
+        sprintf(message_buffer, "%4d x %4d", new_entry->width, new_entry->height);
         int pos = SendMessageA(dialog_state.windows.resolution, CB_ADDSTRING, -1, (LPARAM)message_buffer);
-        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, (LPARAM)new_mode);
-        if (new_mode->width == settings.width && new_mode->height == settings.height)
+        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, (LPARAM)new_entry);
+        if (new_entry->width == settings.width && new_entry->height == settings.height)
         {
             SendMessageA(dialog_state.windows.resolution, CB_SETCURSEL, pos, NULL);
         }
-        new_mode++;
+        new_entry++;
     }
     LoadAdapterRefreshRates();
 
@@ -405,6 +416,7 @@ bool LoadAdapterModes()
 
 // FUNCTION: SETUP 0x402c80
 // FUNCTION: SETUP10 0x402800
+// FUNCTION: SETUPCZ 0x4035f0
 // FUNCTION: SETUPPL 0x402c50
 // FUNCTION: SETUPSTEAM 0x402ca0
 bool LoadAdapterData(int adapter)
@@ -414,6 +426,7 @@ bool LoadAdapterData(int adapter)
     if (LoadStringA(NULL, IDS_OFF, buffer, sizeof(buffer)) == 0)
     {
         // STRING: SETUP 0x40e1a4
+        // STRING: SETUPCZ 0x40e1a0
         // STRING: SETUPPL 0x40e1a0
         strcpy(buffer, " OFF");
     }
@@ -423,11 +436,11 @@ bool LoadAdapterData(int adapter)
     SendMessageA(dialog_state.windows.antialiasing, CB_RESETCONTENT, NULL, NULL);
 #if SETUP_DATE < SETUP_DATE_CZECH
     // STRING: SETUP10 0x40d24c
-    int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" OFF");
+    int sel = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" OFF");
 #else
-    int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)buffer);
+    int sel = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)buffer);
 #endif
-    SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, NULL);
+    SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, sel, NULL);
     if (adapter == -1)
     {
         // Uses the adapter mode count as the bound, not the number of cached modes, this is what the original does
@@ -460,6 +473,7 @@ bool LoadAdapterData(int adapter)
     {
         // STRING: SETUP 0x40e1a0
         // STRING: SETUP10 0x40d248
+        // STRING: SETUPCZ 0x40e19c
         // STRING: SETUPPL 0x40e19c
         int pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"16");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 16);
@@ -473,6 +487,7 @@ bool LoadAdapterData(int adapter)
     {
         // STRING: SETUP 0x40e19c
         // STRING: SETUP10 0x40d244
+        // STRING: SETUPCZ 0x40e198
         // STRING: SETUPPL 0x40e198
         int pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"32");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 32);
@@ -518,6 +533,7 @@ bool LoadAdapterData(int adapter)
         {
             // STRING: SETUP 0x40e198
             // STRING: SETUP10 0x40d240
+            // STRING: SETUPCZ 0x40e194
             // STRING: SETUPPL 0x40e194
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
@@ -530,6 +546,7 @@ bool LoadAdapterData(int adapter)
         {
             // STRING: SETUP 0x40e194
             // STRING: SETUP10 0x40d23c
+            // STRING: SETUPCZ 0x40e190
             // STRING: SETUPPL 0x40e190
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
@@ -545,6 +562,7 @@ bool LoadAdapterData(int adapter)
 
 // FUNCTION: SETUP 0x402f90
 // FUNCTION: SETUP10 0x402ac0
+// FUNCTION: SETUPCZ 0x403ac0
 // FUNCTION: SETUPPL 0x402f60
 // FUNCTION: SETUPSTEAM 0x402fe0
 bool LoadD3D8()
@@ -566,10 +584,10 @@ bool LoadD3D8()
         return false;
     }
 
-    int adapter_count = direct3d8->GetAdapterCount();
+    int adapters = direct3d8->GetAdapterCount();
     // Two checks, which VC6 merges into one store: an || gives the same code but other registers, in both builds (the
     // locals' declaration order and place change nothing)
-    if (settings.adapter >= adapter_count)
+    if (settings.adapter >= adapters)
     {
         settings.adapter = 0;
     }
@@ -579,9 +597,9 @@ bool LoadD3D8()
     }
 
     int current_adapter = 0;
-    D3DADAPTER_IDENTIFIER8 identifier;
-    for (int i = 0; i < adapter_count; ++i)
+    for (int i = 0; i < adapters; ++i)
     {
+        D3DADAPTER_IDENTIFIER8 identifier;
         HRESULT result = direct3d8->GetAdapterIdentifier(i, 0, &identifier);
         if (result != D3D_OK)
         {
@@ -617,6 +635,7 @@ bool LoadD3D8()
 // Inlined into WinMain in Steam's rebuild
 // FUNCTION: SETUP 0x4030f0
 // FUNCTION: SETUP10 0x402bd0
+// FUNCTION: SETUPCZ 0x403c40
 // FUNCTION: SETUPPL 0x403070
 void FreeD3D8()
 {
