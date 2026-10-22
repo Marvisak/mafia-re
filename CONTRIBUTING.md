@@ -48,7 +48,7 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cmake --preset vs2008 && cmake --build --preset vs2008        # Steam's 2010 setup.exe, Visual C++ 2008 SP1
    ```
    The linker stamps its output with the time of the link and the path of the PDB. The `vc6` and `vs2008` builds then write the originals' values into it (`tools/postlink.py`), so a finished binary can come out identical to the original; their PDBs no longer pair with them in a debugger. The `vc6-pdb` build keeps the linker's.
-5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `IJOY` and `LS3DF` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take `--target SETUP` too:
+5. Compare with the original. The reccmp targets are `RWDATA`, `SETUP`, `IJOY`, `LS3DF` and `GAME` (run from `build/vc6-pdb`) and `SETUPSTEAM`, Steam's 2010 `setup.exe` (run from `build/vs2008`); funcdiff and filediff take the same names with `--target`:
    ```bash
    cd build/vc6-pdb
    ../../.venv/Scripts/reccmp-reccmp --target RWDATA --nolib                  # score of every function
@@ -58,6 +58,18 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    .venv/Scripts/python tools/filediff.py                                     # the whole file: headers, layout, data
    .venv/Scripts/python tools/progress.py                                     # redraw the README's progress cards
    ```
+
+## Running the rebuilt Game.exe
+
+`Game.exe` is written in the order the game runs, so a build can be tried in the game itself. It works from its own
+folder, so copy `build/vc6/game/Game.exe` into the game's folder (Steam's is `steamapps\common\Mafia\Mafia`) under
+another name and start it there. It is the unpatched 1.2 executable, so it needs what that one does, where Steam's
+patched copy doesn't:
+
+- The game's CD: a folder `MafiaGame` with `a1.dta` in it at the root of some drive. A `subst` drive will do.
+- All of the game's archives. Steam's install lacks `a0.dta` and `ab.dta`, which are on the third CD.
+- The settings the 1.2 setup (`Patch\setup.exe` in the patch) saves. Steam's setup saves them where only Steam's
+  `Game.exe` looks.
 
 ## Debug Symbols
 

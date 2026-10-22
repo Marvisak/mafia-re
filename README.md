@@ -22,7 +22,7 @@ score summed over all of them. The function counts of binaries that haven't been
 | `rw_data.dll` | Done. The Visual C++ 6.0 build is identical to the original, byte for byte. |
 | `setup.exe` | Fully decompiled. With the original splash and icon ([below](#setupexe-splash-and-icon)), the Visual C++ 6.0 build is identical to the 1.2 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1: every function matches, and the file differs only in one size field of its relocation section, and so in its checksum. That size depends on code in the 2010 source that the linker discarded, which hasn't been recovered. |
 | `LS3DF.dll` (engine) | Every source file is written: the 3D engine (frames and visuals, meshes, objects and lightmapped objects, models, animation, cameras, lights, particles, portals and sectors, shadows and projectors, collision, the scene loaders, the renderer, the driver with its vertex and index buffers, and the math), the graphics layer (the Direct3D device, textures, and video through Bink and DirectShow) and the sound driver. About nine in ten of its functions compile to the original instructions. The others differ mostly in register allocation and in what the compiler inlines, and until they match the file differs from the original too, its code shifted by their sizes. The libraries it links are in place: S3's texture compressor comes from the original's own objects, and the DirectX 8.1 SDK's DirectShow base classes build from the SDK's source to the original's bytes. |
-| `Game.exe` | Not started. With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it will be compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
+| `Game.exe` | Started. The build is in place: the entry point compiles to the original's instructions, the C runtime is linked as in the original, and the resources are the original's apart from the icon ([below](#gameexe-icon)). The rest is written in the order the game runs, so that the rebuilt executable gets further with each step: first through the start-up to the main menu. With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it is compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
 | `IJoy.dll` | Done. Every function compiles to the original instructions, and linked on Windows 2000 the build is identical to the original. On current Windows the order of the imports within each DLL differs, because the linker sorts them with the system's `msvcrt.dll`, whose sort has changed since. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
 
 ## Building
@@ -90,6 +90,17 @@ Don't commit the extracted files. Git shows them as modified; this hides them:
 
 ```bash
 git update-index --skip-worktree setup/res/splash.bmp setup/res/mafia.ico
+```
+
+### Game.exe icon
+
+`game/res/mafia.ico` is a placeholder too: `Game.exe`'s icon is the game's artwork. Its 32×32 image isn't the setup's, so
+it needs extracting from `Game.exe` itself: save icon group 1 (32×32 and 16×16 in one file) as `game/res/mafia.ico`
+with a resource editor, from Steam's `Game.exe` (in the game's folder) or from the reconstructed one. Hide it from git
+the same way:
+
+```bash
+git update-index --skip-worktree game/res/mafia.ico
 ```
 
 ## Contributing

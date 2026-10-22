@@ -1,0 +1,81 @@
+#include "resource.h"
+#include <windows.h>
+
+// The original has everything in Czech but the crash dialog, which is English (U.S.), one block per language as in a
+// VC6 resource script. RC writes the string tables after all other resources, which gives the original's order. The
+// two dialogs are named resources: their names had no #define in the original's resource.h.
+
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+
+IDI_MAFIA ICON "mafia.ico"
+
+IDD_PASSWORD DIALOG 0, 0, 218, 94
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "MAFIA"
+FONT 8, "MS Sans Serif"
+{
+    LTEXT "Password:", -1, 37, 52, 34, 8
+    EDITTEXT IDC_PASSWORD, 81, 50, 100, 12, ES_PASSWORD | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 51, 73, 42, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 124, 73, 42, 14
+    LTEXT "FOR INTERNAL USE OF TAKE2 ONLY!", -1, 44, 7, 130, 8
+    LTEXT "THIS VERSION WILL EXPIRE ON xxxxxxxx.", -1, 37, 17, 142, 8
+    LTEXT "(C)1998-2002 ILLUSION SOFTWORKS", -1, 46, 28, 126, 8
+}
+
+IDR_MENU1 MENU
+{
+    MENUITEM "MAFIA - Illusion Softworks", 65535, GRAYED
+}
+
+1 VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904e2"
+        {
+            VALUE "Comments", ""
+            VALUE "CompanyName", "Illusion Softworks\0"
+            VALUE "FileDescription", "MAFIA\0"
+            VALUE "FileVersion", "Master 1.0\0"
+            VALUE "InternalName", "MAFIA\0"
+            VALUE "LegalCopyright", "Copyright \251 2001\0"
+            VALUE "LegalTrademarks", ""
+            VALUE "OriginalFilename", "Game.exe\0"
+            VALUE "PrivateBuild", ""
+            VALUE "ProductName", "MAFIA\0"
+            VALUE "ProductVersion", "Master 1.0\0"
+            VALUE "SpecialBuild", ""
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x409, 1250
+    }
+}
+
+STRINGTABLE
+{
+    IDS_REGISTRY_KEY, "Software\LS3D game reg\Setup"
+    IDS_APP_NAME, "Mafia"
+    IDS_APP_TITLE, "Mafia"
+}
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+IDD_CRASH DIALOG 0, 0, 323, 284
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Program crash..."
+FONT 8, "MS Sans Serif"
+{
+    DEFPUSHBUTTON "Send crash info by e-mail", IDC_CRASH_SEND, 18, 262, 124, 14, WS_DISABLED
+    PUSHBUTTON "Close", IDOK, 254, 262, 50, 14
+    EDITTEXT IDC_CRASH_TEXT, 0, 0, 323, 250, ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+}

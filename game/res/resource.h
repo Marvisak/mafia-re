@@ -1,0 +1,11 @@
+#define IDI_MAFIA 1
+
+#define IDR_MENU1 103
+
+#define IDC_CRASH_TEXT 1004
+#define IDC_CRASH_SEND 1005
+#define IDC_PASSWORD 1004
+
+#define IDS_REGISTRY_KEY 1
+#define IDS_APP_NAME 2
+#define IDS_APP_TITLE 3

@@ -5,11 +5,14 @@ project(mafia)
 include_directories(common)
 
 # VC6 has no /showIncludes, so Ninja can't tell which headers a source includes.
-# Make every source of the target depend on all project headers instead.
+# Make every source of the target depend on all project headers instead, and on those of the other folders given.
 function(vc6_header_dependencies target)
     if (MSVC_VERSION EQUAL 1200)
-        file(GLOB_RECURSE headers CONFIGURE_DEPENDS
-            "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_SOURCE_DIR}/common/*.h")
+        set(globs "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_SOURCE_DIR}/common/*.h")
+        foreach(dir ${ARGN})
+            list(APPEND globs "${dir}/*.h")
+        endforeach()
+        file(GLOB_RECURSE headers CONFIGURE_DEPENDS ${globs})
         get_target_property(sources ${target} SOURCES)
         set_property(SOURCE ${sources} APPEND PROPERTY OBJECT_DEPENDS ${headers})
     endif()
@@ -39,6 +42,7 @@ if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(rw_data)
     add_subdirectory(ijoy)
     add_subdirectory(ls3df)
+    add_subdirectory(game)
 endif()
 add_subdirectory(setup)
 
@@ -59,6 +63,9 @@ targets:
   LS3DF:
     path: $<TARGET_FILE:ls3df>
     pdb: $<TARGET_PDB_FILE:ls3df>
+  GAME:
+    path: $<TARGET_FILE:game>
+    pdb: $<TARGET_PDB_FILE:game>
 ")
 elseif (MSVC_VERSION EQUAL 1500)
     file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/reccmp-build.yml" CONTENT
