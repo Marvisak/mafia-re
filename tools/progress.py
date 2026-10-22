@@ -7,7 +7,7 @@ The numbers count each binary's own functions and leave the CRT out, as reccmp's
 - Progress (the bar, and the number next to the binary's name): the scores summed over every function
   of the original, so a function without source counts as 0.
 
-It builds each card's preset first (vc6-pdb, and vs2008 for Steam's setup.exe), because reccmp reads the
+It builds each card's preset first (vc6-pdb), because reccmp reads the
 PDB and a stale one gives wrong numbers.
 Run it from the repository root and commit the cards with the change that moved them:
 
@@ -59,12 +59,10 @@ class Target:
 TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
-    Target("setup.exe (1.0)", "SETUP10", 13, svg="setup.1.0"),  # 0x402bf0
     Target("LS3DF.dll", "LS3DF", 1361),  # 0x1007d9d0
     Target("LS3DF.dll (patch 1.1)", "LS3DF11", 1355, svg="LS3DF.1.1"),  # 0x1007a800
     Target("Game.exe", "GAME", 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
-    Target("setup.exe (Steam 2010)", "SETUPSTEAM", 16, "vs2008", "setup.steam"),  # 0x403158
 ]
 
 BAR_WIDTH = 352

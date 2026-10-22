@@ -13,7 +13,6 @@ built with, produces files identical to the originals of each version.
 <img src="docs/progress/Game.svg" width="50%"><img src="docs/progress/LS3DF.svg" width="50%">
 <img src="docs/progress/LS3DF.1.1.svg" width="50%"><img src="docs/progress/rw_data.svg" width="50%">
 <img src="docs/progress/IJoy.svg" width="50%"><img src="docs/progress/setup.svg" width="50%">
-<img src="docs/progress/setup.steam.svg" width="50%"><img src="docs/progress/setup.1.0.svg" width="50%">
 
 The cards count each binary's own functions, without the C runtime linked into it. *Implemented* is how many of them
 have source, *accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those, and the bar is the
