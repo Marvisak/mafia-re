@@ -58,14 +58,14 @@ void FreeTexBlList(int *mem)
     GlobalRemainTexBlList.clear();
 }
 
-// A pixel's error, which the dithering passes on to its neighbours (PC only, the name is a guess)
-struct S_dither_error {
-    float r, g, b;
-};
-
 // Converts a rectangle's texels to the lightmaps' texture format: copied for the 24 and 32-bit formats, to 16 bits
-// for the 1-5-5-5 ones, dithered with RS_LMDITHER. PS2's only copies them. A 3x3 rectangle keeps its single color.
-// Not matching yet: the original keeps sx in bx and sy in bp, and the dithering's 16-bit color is computed otherwise.
+// for the 1-5-5-5 ones, dithered with RS_LMDITHER (Floyd-Steinberg, each texel's error an S_vector, as PS2's; new[]
+// skips S_vector's empty constructor). A 3x3 rectangle keeps its single color.
+// The 16-bit colors: green masked before the shift ((g & 0xf8) << 2) and the dithered blue masked after it give the
+// original's byte loads and shifts (and sx in bx from the start), the blue texel read inside the expression (*s++)
+// and the dithered loop's third s++ after the store its late increments. The memset's size starts with the sizeof, as
+// PS2's ((sx + 2) * 16 first): VC6 then keeps the element count across new[] and multiplies again, where n * sizeof
+// in any spelling keeps n * 12.
 // FUNCTION: LS3DF 0x1005d090
 bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
 {
@@ -76,11 +76,10 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
         fmt = m_TrueColorTexturePixelFormat;
     else
         fmt = m_Alpha1TexturePixelFormat;
-    S_dither_error *err = NULL;
+    S_vector *err = NULL;
     if ((fmt == D3DFMT_X1R5G5B5 || fmt == D3DFMT_A1R5G5B5) && renderState[RS_LMDITHER]) {
-        int n = (sx + 2) * (sy + 1);
-        err = new S_dither_error[n];
-        memset(err, 0, n * sizeof(S_dither_error));
+        err = new S_vector[(sx + 2) * (sy + 1)];
+        memset(err, 0, sizeof(S_vector) * (sx + 2) * (sy + 1));
     }
     uchar *s = (uchar *)src;
     switch (fmt) {
@@ -90,29 +89,29 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
         if (renderState[RS_LMDITHER]) {
             for (int y = 0; y < sy; y++) {
                 for (int x = 0; x < sx; x++) {
-                    S_dither_error &e = err[y * (sx + 2) + x + 1];
-                    float r = *s++ + e.r;
-                    float g = *s++ + e.g;
-                    float b = *s++ + e.b;
+                    S_vector &e = err[y * (sx + 2) + x + 1];
+                    float r = *s++ + e.x;
+                    float g = *s++ + e.y;
+                    float b = *s + e.z;
                     float er = (float)(fmod(r, 8.0) / 16);
                     float eg = (float)(fmod(g, 8.0) / 16);
                     float eb = (float)(fmod(b, 8.0) / 16);
-                    S_dither_error &e1 = err[y * (sx + 2) + x + 2];
-                    e1.r += er * 7.0f;
-                    e1.g += eg * 7.0f;
-                    e1.b += eb * 7.0f;
-                    S_dither_error &e2 = err[(y + 1) * (sx + 2) + x];
-                    e2.r += er * 3.0f;
-                    e2.g += eg * 3.0f;
-                    e2.b += eb * 3.0f;
-                    S_dither_error &e3 = err[(y + 1) * (sx + 2) + x + 1];
-                    e3.r += er * 5.0f;
-                    e3.g += eg * 5.0f;
-                    e3.b += eb * 5.0f;
-                    S_dither_error &e4 = err[(y + 1) * (sx + 2) + x + 2];
-                    e4.r += er;
-                    e4.g += eg;
-                    e4.b += eb;
+                    S_vector &e1 = err[y * (sx + 2) + x + 2];
+                    e1.x += er * 7.0f;
+                    e1.y += eg * 7.0f;
+                    e1.z += eb * 7.0f;
+                    S_vector &e2 = err[(y + 1) * (sx + 2) + x];
+                    e2.x += er * 3.0f;
+                    e2.y += eg * 3.0f;
+                    e2.z += eb * 3.0f;
+                    S_vector &e3 = err[(y + 1) * (sx + 2) + x + 1];
+                    e3.x += er * 5.0f;
+                    e3.y += eg * 5.0f;
+                    e3.z += eb * 5.0f;
+                    S_vector &e4 = err[(y + 1) * (sx + 2) + x + 2];
+                    e4.x += er;
+                    e4.y += eg;
+                    e4.z += eb;
                     if (r > 255.0f)
                         r = 255.0f;
                     if (g > 255.0f)
@@ -123,7 +122,8 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
                     int ig = FloatToInt(g);
                     int ib = FloatToInt(b);
                     ((ushort *)*dst)[y * sx + x] =
-                        0x8000 | ((ir >> 3) & 0x1f) << 10 | ((ig >> 3) & 0x1f) << 5 | ((ib >> 3) & 0x1f);
+                        0x8000 | (ir >> 3) << 10 | (ig & 0xf8) << 2 | ((ib >> 3) & 0x1f);
+                    s++;
                 }
             }
         } else {
@@ -131,8 +131,7 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
                 for (int x = 0; x < sx; x++) {
                     uchar r = *s++;
                     uchar g = *s++;
-                    uchar b = *s++;
-                    ((ushort *)*dst)[y * sx + x] = (b >> 3) | (r >> 3) << 10 | 0x8000 | (g >> 3) << 5;
+                    ((ushort *)*dst)[y * sx + x] = 0x8000 | (r >> 3) << 10 | (g & 0xf8) << 2 | (*s++ >> 3);
                 }
             }
         }
@@ -369,8 +368,9 @@ bool LightMap::m_DuplicateRectList(TEXBL_STRUCT *src, TEXBL_STRUCT *dst)
 // Packs a rectangle into the first free rectangle it fits, rotated where that fits better, records where it went in the
 // texture's offsets and splits the rest of the free rectangle in two, keeping the larger piece whole. 1 where it
 // doesn't fit, 0 where it does. A texture without free rectangles yet gets all of itself as one.
-// Not matching yet: the original adds to the new rectangle's top and to the old one's left in memory (add dword ptr
-// [nr.top], sx), ours through a register; and two registers in the offset's push_back.
+// The offsets are initialized in each block ({x, y, rotated}, as PS2's from a template), which gives the second
+// push_back's registers; each split subtracts from the new rectangle's bottom in both branches (PS2's order), which VC6
+// hoists but which keeps its adds in memory (add dword ptr [nr.top], sx): written once before the if, it loads them.
 // FUNCTION: LS3DF 0x1005dd40
 int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
 {
@@ -401,11 +401,8 @@ int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
     }
     if (!mode)
         return 1;
-    OFFSET_STRUCT o;
     if (mode != 1 && mode != 2) {
-        o.x = r->rc.left;
-        o.y = r->rc.top;
-        o.rotated = true;
+        OFFSET_STRUCT o = {r->rc.left, r->rc.top, true};
         tb->offsets.push_back(o);
         if (r->rc.right == sy && r->rc.bottom == sx) {
             m_RemoveRectFromRectList(tb, r);
@@ -432,11 +429,12 @@ int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
         RECT nr = r->rc;
         nr.top += sx;
         r->rc.left += sy;
-        nr.bottom -= sx;
         if (m == b1) {
             nr.right = sy;
+            nr.bottom -= sx;
             r->rc.right -= sy;
         } else {
+            nr.bottom -= sx;
             r->rc.bottom = sx;
             r->rc.right -= sy;
         }
@@ -445,9 +443,7 @@ int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
         m_AddRectToRectList(tb, &nr);
         return 0;
     } else {
-        o.x = r->rc.left;
-        o.y = r->rc.top;
-        o.rotated = false;
+        OFFSET_STRUCT o = {r->rc.left, r->rc.top, false};
         tb->offsets.push_back(o);
         if (r->rc.right == sx && r->rc.bottom == sy) {
             m_RemoveRectFromRectList(tb, r);
@@ -478,11 +474,12 @@ int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
             nr = r->rc;
             nr.top += sy;
             r->rc.left += sx;
-            nr.bottom -= sy;
             if (m == a1) {
                 nr.right = sx;
+                nr.bottom -= sy;
                 r->rc.right -= sx;
             } else {
+                nr.bottom -= sy;
                 r->rc.bottom = sy;
                 r->rc.right -= sx;
             }
@@ -490,11 +487,12 @@ int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
             nr = r->rc;
             nr.top += sx;
             r->rc.left += sy;
-            nr.bottom -= sx;
             if (m == a3) {
                 nr.right = sy;
+                nr.bottom -= sx;
                 r->rc.right -= sy;
             } else {
+                nr.bottom -= sx;
                 r->rc.bottom = sx;
                 r->rc.right -= sy;
             }
@@ -567,10 +565,17 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // its format, sets each rectangle's u and v, keeps the offsets and puts the texture's free room back into the list,
 // sorted. The rectangles' texels are freed but a 3x3 one's color. PS2's textures are 256 texels a side at most, and
 // it takes the lit object too (the PC's returns with ret 0x10).
-// Not matching yet: the original's frame is 8 bytes larger, and it calls the candidates' vector deleting destructor
-// out of line at every failing return, ours inlines most of them (more inline calls pending after them in the
-// original, as in the destructor: the offsets read without a local copy are some of them). Registers differ all
-// through.
+// From the original's code and PS2's: the copy loop reads each rectangle's offset into a local first (the original
+// copies x, y and rotated to the stack before the switch), the texture is created in the if block, the candidate's
+// members are set in PS2's order (which gives the original's stores), m_AddTexture's results are a switch (PS2 tests
+// 1 first, the original 0x80000001: VC6 compares by value), each 3x3 branch computes its stride first, from tex_sx, as
+// PS2 does, and a failed fit ends its loop through used_size, which VC6 reads as a word (size() reads a dword).
+// Not matching yet: push_back's store of the size (ls3df.h) and the inline budget: the original calls the candidates'
+// vector deleting destructor out of line at all six failing returns in their scope, ours inlines it at each, and with
+// the original's push_back ours inlines one assignment more in the insertion. 25 or more calls of an empty inline
+// function before Unlock fix the returns (then the candidates' push_back calls it out of line, where the original
+// inlines it); dead statements anywhere don't; no source for the difference is known. The frame's slot order and
+// registers differ all through.
 // FUNCTION: LS3DF 0x1005e3f0
 bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem)
 {
@@ -621,15 +626,15 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 failed = true;
                 break;
             }
-            int res = m_AddTexture(&tb, &r);
-            if (res == 0x80000001) {
+            switch (m_AddTexture(&tb, &r)) {
+            case 1:
+                m_EraseRectList(&tb);
+                k = m_OrderList.used_size;
+                failed = true;
+                break;
+            case 0x80000001:
                 m_EraseRectList(&tb);
                 return false;
-            }
-            if (res == 1) {
-                m_EraseRectList(&tb);
-                k = m_OrderList.size();
-                failed = true;
             }
         }
         if (failed)
@@ -650,22 +655,23 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 if (m_Area > sx * sy)
                     continue;
                 TEXBL_STRUCT t;
+                t.first = NULL;
+                t.last = NULL;
                 t.sx = sx;
                 t.sy = sy;
                 t.free_area = 0;
                 t.lost_area = 0;
-                t.first = NULL;
-                t.last = NULL;
                 t.texture = NULL;
                 bool failed = false;
                 for (ushort k = 0; k < m_OrderList.size(); k++) {
-                    int res = m_AddTexture(&t, &ri[m_OrderList[k]]);
-                    if (res == 0x80000001)
-                        return false;
-                    if (res == 1) {
+                    switch (m_AddTexture(&t, &ri[m_OrderList[k]])) {
+                    case 1:
                         m_EraseRectList(&t);
-                        k = m_OrderList.size();
+                        k = m_OrderList.used_size;
                         failed = true;
+                        break;
+                    case 0x80000001:
+                        return false;
                     }
                 }
                 if (!failed)
@@ -710,10 +716,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     }
 
     // The texture
-    if (best->texture) {
-        m_pTexture = best->texture;
-        m_pTexture->m_RefCount++;
-    } else {
+    if (!best->texture) {
         m_pTexture = pGlobalIGraph->CreateITexture();
         if (!m_pTexture) {
             m_EraseRectList(best);
@@ -730,6 +733,9 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 return false;
             }
         }
+    } else {
+        m_pTexture = best->texture;
+        m_pTexture->m_RefCount++;
     }
     switch (m_pTexture->m_Format) {
     case D3DFMT_A8R8G8B8:
@@ -756,16 +762,18 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     }
     for (i = 0; i < m_OrderList.size(); i++) {
         RECTANGLE_INFO &r = ri[m_OrderList[i]];
+        OFFSET_STRUCT off = best->offsets[i];
         switch (m_pTexture->m_Format) {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
         case D3DFMT_A1R5G5B5: {
             ushort *src = (ushort *)r.tex_data;
             uint pitch2 = pitch >> 1;
-            ushort *d = (ushort *)bits + best->offsets[i].y * pitch2 + best->offsets[i].x;
+            ushort *d = (ushort *)bits + off.y * pitch2 + off.x;
             if (r.tex_sx == 3 && r.tex_sy == 3) {
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                int stride = pitch2 - r.tex_sx;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 uint c = (uint)r.data;
                 uchar cr = c >> 16;
                 uchar cg = c >> 8;
@@ -778,11 +786,11 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 for (int y = 0; y < 3; y++) {
                     for (int x = 0; x < 3; x++)
                         *d++ = col;
-                    d += pitch2 - 3;
+                    d += stride;
                 }
-            } else if (best->offsets[i].rotated) {
-                r.u = (float)best->offsets[i].x / best->sx + 2.0f;
-                r.v = (float)best->offsets[i].y / best->sy;
+            } else if (off.rotated) {
+                r.u = (float)off.x / best->sx + 2.0f;
+                r.v = (float)off.y / best->sy;
                 for (int y = 0; y < r.tex_sy; y++) {
                     ushort *dd = d;
                     m_FillLineWord(&src, &dd, r.tex_sx, pitch >> 1);
@@ -790,8 +798,8 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 }
             } else {
                 int stride = pitch2 - r.tex_sx;
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 for (int y = 0; y < r.tex_sy; y++) {
                     m_FillLineWord(&src, &d, r.tex_sx, 1);
                     d += stride;
@@ -802,10 +810,11 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         case D3DFMT_A8R8G8B8:
         case D3DFMT_X8R8G8B8: {
             uchar *src = (uchar *)r.tex_data;
-            uchar *d = bits + best->offsets[i].y * pitch + best->offsets[i].x * 4;
+            uchar *d = bits + off.y * pitch + off.x * 4;
             if (r.tex_sx == 3 && r.tex_sy == 3) {
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                int stride = pitch - r.tex_sx * 4;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 uint c = (uint)r.data;
                 uchar cr = c >> 16;
                 uchar cg = c >> 8;
@@ -816,11 +825,11 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                         *d = cr;
                         d += 2;
                     }
-                    d += pitch - 12;
+                    d += stride;
                 }
-            } else if (best->offsets[i].rotated) {
-                r.u = (float)best->offsets[i].x / best->sx + 2.0f;
-                r.v = (float)best->offsets[i].y / best->sy;
+            } else if (off.rotated) {
+                r.u = (float)off.x / best->sx + 2.0f;
+                r.v = (float)off.y / best->sy;
                 for (int y = 0; y < r.tex_sy; y++) {
                     uchar *dd = d;
                     m_FillLineRGB(&src, &dd, r.tex_sx, pitch);
@@ -828,8 +837,8 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 }
             } else {
                 int stride = pitch - r.tex_sx * 4;
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 for (int y = 0; y < r.tex_sy; y++) {
                     m_FillLineRGB(&src, &d, r.tex_sx, 4);
                     d += stride;
@@ -839,12 +848,13 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         }
         case D3DFMT_L8: {
             uchar *src = (uchar *)r.tex_data;
-            uchar *d0 = bits + best->offsets[i].y * m_pTexture->m_Width + best->offsets[i].x;
+            uchar *d0 = bits + off.y * m_pTexture->m_Width + off.x;
             uchar *d1 = d0 + m_pTexture->m_Width * m_pTexture->m_Height;
             uchar *d2 = d0 + m_pTexture->m_Width * m_pTexture->m_Height * 2;
             if (r.tex_sx == 3 && r.tex_sy == 3) {
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                int stride = best->sx - r.tex_sx;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 uint c = (uint)r.data;
                 uchar cr = c >> 16;
                 uchar cg = c >> 8;
@@ -854,13 +864,13 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                         *d1++ = cg;
                         *d2++ = (uchar)c;
                     }
-                    d0 += best->sx - 3;
-                    d1 += best->sx - 3;
-                    d2 += best->sx - 3;
+                    d0 += stride;
+                    d1 += stride;
+                    d2 += stride;
                 }
-            } else if (best->offsets[i].rotated) {
-                r.u = (float)best->offsets[i].x / best->sx + 2.0f;
-                r.v = (float)best->offsets[i].y / best->sy;
+            } else if (off.rotated) {
+                r.u = (float)off.x / best->sx + 2.0f;
+                r.v = (float)off.y / best->sy;
                 for (int y = 0; y < r.tex_sy; y++) {
                     uchar *dd0 = d0;
                     uchar *dd1 = d1;
@@ -871,8 +881,8 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                     d2++;
                 }
             } else {
-                r.u = (float)best->offsets[i].x / best->sx;
-                r.v = (float)best->offsets[i].y / best->sy;
+                r.u = (float)off.x / best->sx;
+                r.v = (float)off.y / best->sy;
                 int stride = best->sx - r.tex_sx;
                 for (int y = 0; y < r.tex_sy; y++) {
                     m_FillLineRGB(&src, &d0, &d1, &d2, r.tex_sx, 1);

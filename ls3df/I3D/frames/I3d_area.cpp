@@ -107,10 +107,9 @@ LS3D_RESULT I3D_area::LinkTo(I3D_frame *frame, uint flags)
     return I3D_OK;
 }
 
-// The vertices in world space, and the faces' planes through S_plane's constructor (I3d_math.h).
-// Open: Normalize's null-vector branch stores y's -1 or 1 through the FPU, the original's as an integer, as in the
-// sector's UpdateCHPlanesW. The branch written as if/else gives that, but breaks Normalize's other callers (the light's
-// UpdateV, S_quat::Inverse, the scene's GetLightness and UnmapScreenPoint).
+// The vertices in world space, and the faces' planes through S_plane's constructor (I3d_math.h), whose normalization
+// stores the null normal's -1 or 1 as integer constants (S_plane::NormalizeNormal), where Normalize's would go through
+// the FPU.
 // FUNCTION: LS3DF 0x100055d0
 void I3D_area::UpdateV()
 {

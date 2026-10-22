@@ -13,6 +13,9 @@ C_list<CHANNEL_STRUCT> ChannelList(64);
 // GLOBAL: LS3DF 0x101c62e4
 C_list<TERMINATED_CHANNEL_STRUCT> TerminatedChannelList(512);
 
+// Open: the original spills the frequency factor of both divisions with fld/fstp, in a slot of its own; ours copies it
+// with integer moves, into the status's slot (a frame 4 bytes smaller). GetFrequency with a local, a reference or no
+// const, and inline helpers taking the factor as a parameter don't give it.
 // FUNCTION: LS3DF 0x1007c340
 void UpdateAllTerminatedBuffs()
 {
@@ -20,19 +23,21 @@ void UpdateAllTerminatedBuffs()
         return;
     uint time = timeGetTime();
 
-    // Free the channels of the sounds that have ended
+    // Free the channels of the sounds that have ended. An erase in each branch, which VC6 merges: one erase after the
+    // playing branch's Stop (a continue for a sound still playing) gives the same instructions with time in ebx and i
+    // in a stack slot, the original's the other way round.
     int i = ChannelList.size();
     while (i--) {
         if (ChannelList[i].loop)
             continue;
         DWORD status;
         ChannelList[i].buffer->GetStatus(&status);
-        if (status & DSBSTATUS_PLAYING) {
-            if (time - ChannelList[i].start_time < ChannelList[i].sound->GetSource()->GetPlayTime())
-                continue;
+        if (!(status & DSBSTATUS_PLAYING))
+            ChannelList.erase(i);
+        else if (time - ChannelList[i].start_time >= ChannelList[i].sound->GetSource()->GetPlayTime()) {
             ChannelList[i].buffer->Stop();
+            ChannelList.erase(i);
         }
-        ChannelList.erase(i);
     }
     if (!TerminatedChannelList.size())
         return;

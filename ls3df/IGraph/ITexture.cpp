@@ -190,6 +190,13 @@ LS3D_RESULT ITexture::Reload()
 
 // Creates the texture from an image file (or one in memory, ITC_FROM_MEMORY), with the alpha from another image if
 // given, or an empty one (ITC_EMPTY). sx and sy override the image's size, levels the number of mipmap levels.
+// SrcBMPPitchAdder is unsigned and halved after i in the 16-bit case: the original stores it back there (dead), and
+// level_sy is declared first (the original loads m_Height first).
+// Open: mostly the register allocation and the frame. The original keeps the zero of dxt and dxt_format in ecx for the
+// format choice (cmp esi, ecx; format in esi, stored once after the choice) and level in edi at the level loop's top
+// (push edi for its zeros); its mipmap filter walks the source from bytes 1 (upper pixels) and 2 (lower), ours from
+// 3 and 2, and reads the first byte of three pixels at their use. Alpha case 1 with src++ after the store gives the
+// original's order there but moves registers all through the function.
 // FUNCTION: LS3DF 0x10075f50
 LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flags, ushort sx, ushort sy,
     ushort levels)
@@ -197,7 +204,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     // PS2 names: the PS2 build has these as globals
     void *pSrcBMPPtr = NULL;
     uchar *pSrcBMPPal = NULL;
-    int SrcBMPPitchAdder = 0;
+    uint SrcBMPPitchAdder = 0;
     void *pSrcOptBMPPtr = NULL;
     void *pSrcOptBMPPal = NULL;
     int SrcOptBMPPitchAdder = 0;
@@ -518,8 +525,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             uchar *opt = NULL;
             if (pOptBMPPtr)
                 opt = pOptBMPPtr + (SrcOptBMPInfo.biHeight - 1) * SrcOptBMPInfo.biXPelsPerMeter;
-            SrcBMPPitchAdder = (uint)SrcBMPPitchAdder >> 1;
             int i = SrcBMPInfo.biHeight - 1;
+            SrcBMPPitchAdder >>= 1;
             ushort *src = (ushort *)((uchar *)pSrcBMPPtr + i * SrcBMPInfo.biXPelsPerMeter);
             uchar *dst = m_pPixels;
             for (; i >= 0; i--) {
@@ -638,7 +645,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     }
 
     // The levels: the first from the image, each further one a quarter of the one before, filtered from it
-    uint level_sx = m_Width, level_sy = m_Height;
+    uint level_sy = m_Height, level_sx = m_Width;
     uint pitch = m_Width * 4;
     uchar *level_src = NULL, *level_dst = NULL;
     if (!(this->m_Flags & ITC_EMPTY) && this->m_Levels > 1) {
@@ -1139,6 +1146,9 @@ LS3D_RESULT ITexture::Preload()
 }
 
 // Fills a rectangle of a level (the whole level without one) with a color, given as X8R8G8B8
+// Open: the original's rep stos counts come from the row's bytes (mov ecx, sx*4; shr ecx, 2; lea ecx, [sx*2]; shr
+// ecx, 1) and it steps p with lea [p + sx*4]; every counted loop tried (up or down, int or unsigned, pointer or byte
+// counters, indexed, std::fill) counts sx, or (n - 1) / 4 + 1 for byte counters.
 // FUNCTION: LS3DF 0x10078940
 bool ITexture::Fill(RECT *rect, uint color, ushort level)
 {
@@ -2006,6 +2016,7 @@ void ReleaseManagedTextures()
 }
 
 // Creates the pools' textures up to their budgets
+// Open: VC6's pointer into pool_textures is on res_size in the original, on used_size in ours.
 // FUNCTION: LS3DF 0x1007a710
 void RestoreManagedTextures(uint flags)
 {
@@ -2059,6 +2070,8 @@ bool ITexture::Request()
 }
 
 // The loading thread (IGraph::Init starts it)
+// Open: the skip loop's texture path reloads the queue's length before the shared advance of the out index in the
+// original, after it in ours, and the length at the end is in edx in the original, ecx in ours.
 // FUNCTION: LS3DF 0x1007a9b0
 DWORD WINAPI RenderThreadProc(void *param)
 {
@@ -2066,15 +2079,19 @@ DWORD WINAPI RenderThreadProc(void *param)
         if (load_queue_len) {
             EnterCriticalSection(&m_FrameSection);
             ITexture *texture;
-            // Skip the textures nobody asked for since the last frame
+            // Skip the textures nobody asked for since the last frame. The out index advanced in both branches (VC6
+            // merges them) gives the original's registers for texture and the pool's list (pool * 16); written once
+            // after the if, the instructions are the original's but those two swap ebx and ebp, which declarations,
+            // first appearances and the grow path's form don't move.
             while (load_queue_len > 0) {
                 texture = load_queue[load_queue_out];
                 if (texture) {
                     if (texture->m_pManaged->last_frame + 1 >= (uint)m_FrameCounter)
                         break;
                     texture->m_Flags &= ~ITC_QUEUED;
-                }
-                if (++load_queue_out >= 256)
+                    if (++load_queue_out >= 256)
+                        load_queue_out = 0;
+                } else if (++load_queue_out >= 256)
                     load_queue_out = 0;
                 load_queue_len--;
             }

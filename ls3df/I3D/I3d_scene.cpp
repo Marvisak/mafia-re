@@ -1,8 +1,8 @@
 // The scene (PS2 I3d_scene.cpp), at 0x10048a00-0x1004e9b0 in the original: I3D_scene in PS2's order, with the PC's
 // shadow and mirror lists after Close. After the last function come the copies of the C_list functions of the weather's
 // structures, and of the scene's inline functions, the linker kept. Names are the PS2 build's unless noted.
-// - /YX (tools/autopch.py): the header's zero vector has its $E after SetBackdropRange (0x1004a860), ours after Close,
-//   and the copies of the class's in-class functions come at the file's end, ours after m_UpdateSoundProperties: the
+// - /YX (tools/autopch.py): the header's zero vector has its $E after SetBackdropRange (0x1004a860), ours after
+//   DeleteShadow, and the copies of the class's in-class functions come at the file's end, ours after GetAnimBlend: the
 //   original's headers have more inline code before them.
 // - .bss: the function-local statics' names are guesses that don't hash into the original's order (see I3D.h).
 #include "I3D/I3D.h"
@@ -414,18 +414,12 @@ LS3D_RESULT I3D_scene::TransformPoints(const S_vector *in, S_vector4 *out, uint 
     return I3D_OK;
 }
 
-// Open: the original reads the count once, into a register of its own that push_back's test reuses (so the pointer
-// takes edi, saved at the start); ours reloads it. Loop forms, a count local and a flag compile the same.
+// C_list::push_back_unique: its search reads the count into a register of its own, which the inlined push_back's
+// test reuses; the search written out here (loop forms, a count local, a flag, find()) reloads it
 // FUNCTION: LS3DF 0x10049f90
 void I3D_scene::AddTickFrame(I3D_frame *frame)
 {
-    I3D_frame **p = &tick_frames[0];
-    for (int i = tick_frames.size(); i--; p++) {
-        if (*p == frame)
-            goto found;
-    }
-    tick_frames.push_back(frame);
-found:
+    tick_frames.push_back_unique(frame);
     frame->frm_flags |= FRMFLAGS_TICK;
 }
 
@@ -958,12 +952,16 @@ void I3D_scene::WeatherSystemReset()
 }
 
 // The dummy's box in world space: its center and radius, three of its faces as planes and its edges' lengths. A free
-// function despite its name, as PS2's signature has it (m_PrepareDummyStruct__FP12DUMMY_STRUCTP9I3D_dummy). Each face
-// is made in one plane local and copied, as in the original (Insanity3D's S_plane::ComputePlane has the same three
-// steps). Open: the original inlines Normalize all three times but calls GetNormal and Dot, which no amount of source
-// gives with them inline (VC6 takes GetNormal before Normalize, and Dot whenever Normalize fits); a forced inline
-// Normalize does, but costs S_quat::Make and the camera. The original has no out-of-line copy of Normalize anywhere;
-// ours comes from camera code that doesn't inline it.
+// function despite its name, as PS2's signature has it (m_PrepareDummyStruct__FP12DUMMY_STRUCTP9I3D_dummy). The
+// radius through Square(): the original squares half's members from memory, as an inlined method does. The planes'
+// GetNormal and Dot are out of line and their normalization inline (with S_plane's integer -1 and 1), which a nested
+// call gives: here ComputePlane on one plane local, copied out.
+// Open: the inline budget. With ComputePlane the original has less budget left at the end (it calls the operator- of
+// size[1] and size[2]) and the center's constructor out of line. PS2 builds the planes in three temporaries, which
+// ds->planes[i] = S_plane(a, b, c) gives; with S_plane's three-point constructor written out (GetNormal,
+// NormalizeNormal, Dot, instead of a ComputePlane call; I3d_math.h) that gives the original's calls at the end, and
+// with about 4 statements' more cost before the center (a probe, no source found) the original's code with the
+// stack slots of the vectors left. The constructor written out breaks the area's UpdateV, though.
 // FUNCTION: LS3DF 0x1004b510
 void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 {
@@ -979,19 +977,13 @@ void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
     v3 = S_vector(bb.max.x, bb.min.y, bb.min.z) * m;
     S_vector half = (v_max - v_min) * .5f;
     ds->center = v_min + half;
-    ds->radius_2 = half.x * half.x + half.y * half.y + half.z * half.z;
+    ds->radius_2 = half.Square();
     S_plane pl;
-    pl.normal.GetNormal(v3, v2, v1);
-    pl.normal.Normalize();
-    pl.d = -pl.normal.Dot(v3);
+    pl.ComputePlane(v3, v2, v1);
     ds->planes[0] = pl;
-    pl.normal.GetNormal(v3, v_max, v2);
-    pl.normal.Normalize();
-    pl.d = -pl.normal.Dot(v3);
+    pl.ComputePlane(v3, v_max, v2);
     ds->planes[1] = pl;
-    pl.normal.GetNormal(v2, v_max, v1);
-    pl.normal.Normalize();
-    pl.d = -pl.normal.Dot(v2);
+    pl.ComputePlane(v2, v_max, v1);
     ds->planes[2] = pl;
     ds->size[0] = (v2 - v_max).Magnitude();
     ds->size[1] = (v1 - v2).Magnitude();
@@ -1038,8 +1030,14 @@ DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 }
 
 // The floats come as their bits. A new color is written into the particles' vertices (doubled where the color op can't
-// modulate by 2), a new size, speed or kind gives every particle its shape again.
-// Not matching yet: this sits in another register (the original's esi is our edi, its edi our esi).
+// modulate by 2), a new size, speed or kind gives every particle its shape again. The mode is a switch (dec, je,
+// dec, je), the color test's plain branch is the else (out of line) and the alpha is taken first, as in
+// m_UpdateWeatherSystem: with these this and the other registers are the original's.
+// Not matching yet: the ranges' sqrt. The original keeps both ranges on the FPU stack (the new one read back from
+// I3DIntAsFloat's slot, squared through fld st(0)), and the two cases differ in order, so they aren't merged; ours
+// multiplies the new one from memory and merges the two. The sums done in double ((double)x * x + (double)y * y)
+// give the original's instructions with other pops; a local, the other order, S_vector2's Magnitude, this-> or a
+// helper don't.
 // FUNCTION: LS3DF 0x1004bce0
 void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
 {
@@ -1117,12 +1115,16 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
         update = 2;
         break;
     case WS_PARAM_MODE:
-        if (value == 2)
+        switch (value) {
+        case 2:
             ws_flags |= WSF_MODE_2;
-        else if (value == 1)
+            break;
+        case 1:
             ws_flags |= WSF_MODE_1;
-        else
+            break;
+        default:
             ws_flags &= ~(WSF_MODE_1 | WSF_MODE_2);
+        }
         return;
     default:
         return;
@@ -1146,10 +1148,8 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
     case 1:
         if (WSComplVBStr.vb) {
             uint color, color_2;
-            if (!(m_ProblemFlags & 4)) {
-                color = ws_color;
-                color_2 = ws_color_2;
-            } else {
+            if (m_ProblemFlags & 4) {
+                uint a = ws_color & 0xff000000;
                 uint r = (ws_color >> 15) & 0x1fe;
                 if (r > 0xff)
                     r = 0xff;
@@ -1159,7 +1159,8 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
                 uint b = (ws_color & 0xff) << 1;
                 if (b > 0xff)
                     b = 0xff;
-                color = (((r << 8) | g) << 8) | b | (ws_color & 0xff000000);
+                color = (((r << 8) | g) << 8) | b | a;
+                a = ws_color_2 & 0xff000000;
                 r = (ws_color_2 >> 15) & 0x1fe;
                 if (r > 0xff)
                     r = 0xff;
@@ -1169,7 +1170,10 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
                 b = (ws_color_2 & 0xff) << 1;
                 if (b > 0xff)
                     b = 0xff;
-                color_2 = (((r << 8) | g) << 8) | b | (ws_color_2 & 0xff000000);
+                color_2 = (((r << 8) | g) << 8) | b | a;
+            } else {
+                color = ws_color;
+                color_2 = ws_color_2;
             }
             WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, 0);
             for (uint i = ws_count; i--; v += 12) {
@@ -1226,7 +1230,11 @@ uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
     case WS_PARAM_WIND_Z:
         return I3DFloatAsInt(ws_wind.z);
     case WS_PARAM_SNOW:
-        return (ws_flags & WSF_SNOW) != 0;
+        // An if, as the mode's: VC6 narrows the test to the flags' low byte and then turns it into a shift of that
+        // byte (movzx), where (ws_flags & WSF_SNOW) != 0 shifts the dword
+        if (ws_flags & WSF_SNOW)
+            return 1;
+        return 0;
     case WS_PARAM_MODE:
         if (ws_flags & WSF_MODE_1)
             return 1;

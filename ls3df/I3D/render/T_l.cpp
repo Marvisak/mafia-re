@@ -11,8 +11,10 @@
 #include <math.h>
 
 // A vector with a fourth float, which the constructors clear (the assembly steps through vectors by 16 bytes; PS2 has
-// the name, __ct__9S_vector4Fv)
-struct S_vector4 : public S_vector {
+// the name, __ct__9S_vector4Fv). 16-byte aligned: TempAmbient and TempLightList are, and PrepareLights, which uses
+// TempAmbient's inlined members, has the Processor Pack's aligned frame (no ebx: as a plain struct ours gave ebx the
+// object and edi the matrix where the original reloads it).
+struct __declspec(align(16)) S_vector4 : public S_vector {
     float w;
 
     S_vector4() : w(0.0f) {}
@@ -87,6 +89,10 @@ struct S_color : public S_vector {
     }
 };
 
+// PrepareLights' static color: VC6 puts a function's static into the PDB under its plain name
+// GLOBAL: LS3DF 0x101c4d50
+// TempColor
+
 // The vertex the assembly lights (the name is a guess)
 // GLOBAL: LS3DF 0x101c4d40
 const uchar *pVertices;
@@ -117,7 +123,7 @@ void LightingSetSector(I3D_sector *sector)
 static inline int GetTempLightIndex()
 {
     if (GlobalLightCount < 8)
-        return GlobalLightCount++;
+        return ++GlobalLightCount - 1;
     for (uint i = 0; i < GlobalLightCount; i++) {
         if (TempLightList[i].energy < TempLightEnergy)
             return i;
@@ -366,7 +372,16 @@ red_ok:
 // Lights a mesh level's vertices for an object: picks up to 8 of the current sector's lights of the mode (with their
 // position and direction in the object's space, m being the object's inverse world matrix), and writes each vertex's
 // color, or the average of them all for VISF_UNKNOWN_80, unless the lights are the ones rec was lit by. Returns whether
-// it wrote the colors. Its first half is PS2's PrepareLights.
+// it wrote the colors. Its first half is PS2's PrepareLights, which reads the list's size first and increments the
+// light count before it returns it less one, as here.
+// The unused light types are listed: the original's jump table covers all eight. The vertex loops walk a copy of dst
+// made before the branch, which takes mode's stack slot as in the original (and the assembly's t dst's). The clamps
+// store 0xff first. The spot light's square is written out (Square() squares x first, the original z). The key's loop
+// indexes the list: a pointer walked down keeps a guard of its own inside the > 0 test.
+// Not matching yet: the point light's GetMatrix tests the flags through ecx and copies the light to esi after, ours
+// copies first (GetWorldPos, a matrix or light local, UpdateWMatrix and matrix, the position written into the sum, a
+// cast didn't change it). TempColor's guard (0x101c4d74) has no marker: i3d_collision.cpp's object has a $S10 too, so
+// a by-name one pairs only with both annotated.
 // FUNCTION: LS3DF 0x10065a70
 bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uchar *src, uint src_stride,
     I3D_object *obj, const S_matrix &m, uint mode, bool force, lod *rec)
@@ -395,9 +410,10 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     float scale = m.GetUScale();
 
     uint key = 0;
+    int i = pCurrentSector->lights.size();
     GlobalLightCount = 0;
     I3D_light **lp = &pCurrentSector->lights[0];
-    for (int i = pCurrentSector->lights.size(); i--; lp++) {
+    for (; i--; lp++) {
         pTempLight = *lp;
         if (!(pTempLight->mode & mode) || !(pTempLight->frm_flags & FRMFLAGS_ON))
             continue;
@@ -409,7 +425,8 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
             key += pTempLight->update_count;
             break;
         case I3DLIGHT_SPOT: {
-            float dist_2 = (bpos - pTempLight->bsphere.pos).Square();
+            S_vector d = bpos - pTempLight->bsphere.pos;
+            float dist_2 = d.x * d.x + d.y * d.y + d.z * d.z;
             float r = bradius + pTempLight->bsphere.radius;
             if (!(r * r <= dist_2)) {
                 TempLightEnergy = (pTempLight->color.x + pTempLight->color.y + pTempLight->color.z) /
@@ -461,6 +478,11 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
             }
             break;
         }
+        case I3DLIGHT_NULL:
+        case I3DLIGHT_FOG:
+        case I3DLIGHT_POINTAMBIENT:
+        case I3DLIGHT_POINTFOG:
+            continue;
         case I3DLIGHT_DIRECTIONAL:
             TempLightEnergy = pTempLight->color.x + pTempLight->color.y + pTempLight->color.z;
             TempLightIndex = GetTempLightIndex();
@@ -476,12 +498,9 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
         }
     }
 
-    if (GlobalLightCount) {
-        S_temp_light *tl = &TempLightList[GlobalLightCount];
-        for (uint j = GlobalLightCount; j--; ) {
-            tl--;
-            key += tl->light->update_count;
-        }
+    if (GlobalLightCount > 0) {
+        for (uint j = GlobalLightCount; j--; )
+            key += TempLightList[j].light->update_count;
         key *= GlobalLightCount;
     }
     uint *cached = obj->vis_flags & VISF_UNKNOWN_10 ? &obj->lods[0]->light_key : &obj->lods[obj->cur_lod]->light_key;
@@ -499,6 +518,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
         TempAmbient += mat->emissive;
     }
 
+    uchar *p = dst;
     pVertices = src;
     if (obj->vis_flags & VISF_UNKNOWN_80) {
         uint r = 0, g = 0, b = 0;
@@ -510,24 +530,18 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
             pVertices += src_stride;
         }
         uint num = level->num_vertices;
-        uint rr = r / num;
-        if (rr > 0xff)
-            rr = 0xff;
-        uint gg = g / num;
-        if (gg > 0xff)
-            gg = 0xff;
-        uint bb = b / num;
-        if (bb > 0xff)
-            bb = 0xff;
+        uint rr = r / num > 0xff ? 0xff : r / num;
+        uint gg = g / num > 0xff ? 0xff : g / num;
+        uint bb = b / num > 0xff ? 0xff : b / num;
         uint color = TempAlpha | rr << 16 | gg << 8 | bb;
         for (; num; num--) {
-            *(uint *)dst = color;
-            dst += dst_stride;
+            *(uint *)p = color;
+            p += dst_stride;
         }
     } else {
         for (uint n = level->num_vertices; n; n--) {
-            *(uint *)dst = LightVertex();
-            dst += dst_stride;
+            *(uint *)p = LightVertex();
+            p += dst_stride;
             pVertices += src_stride;
         }
     }
@@ -568,22 +582,23 @@ void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_obje
 // without pixels its diffuse color and alpha. pos, f and frm are unused. PS2's has the same blend in both branches
 // (the S_vector temporary times a, through __ml__8S_vectorCFRCf); it scales the coordinates by the size - 1 where the
 // PC clamps them. The x clamp is windows.h's min: as an if, VC6 keeps v on the FPU stack, not in a stack slot.
-// Not matching yet:
-// - The original inlines less: in the diffuse branch operator*'s S_vector constructor is a call, which keeps col in
-//   esi (pushed at the start) and moves the frame's slots. Ours needs about 30 units less budget there; less source
-//   moves it little, and no spelling of the color, the luminance or the blend (a helper, the diffuse branch first)
-//   gave it.
-// - The original loads texture->pixels again after the __ftol calls where ours keeps the test's load, so x gets a
-//   register instead of context's slot. A volatile load gives the original's registers; no spelling of the test or the
-//   lookup did.
+// The texture is tested through the material and read through a local, so VC6 doesn't take the test's load of the
+// pixels for the lookup's (as the same expression or through an accessor it does, keeps it across the __ftol calls and
+// x loses its stack slot): the original loads them again after the conversions.
+// Not matching yet: the original inlines less: in the diffuse branch operator*'s S_vector constructor is a call, which
+// keeps col in esi (pushed at the start) and moves the frame's slots. Six dead statements with a sum and a product
+// (if (0) col += c * a;) at the texture branch's end give that, and all of the function but one load's order (col
+// before a at the texture branch's blend); five don't, seven also leave operator+= out of line. Pending inline calls
+// after the blend don't, and neither did any spelling of the color, the luminance (Dot) or the blend (a helper, the
+// diffuse branch first, Insanity3D's col += col * c * a). PS2's lays out the diffuse branch first.
 // FUNCTION: LS3DF 0x10066be0
 int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context)
 {
     S_texel_info *ti = (S_texel_info *)context;
     S_vector &col = *(S_vector *)color;
     I3D_material *mat = ti->mat;
-    ITexture *texture = mat->texture;
-    if (texture && texture->m_pPixels) {
+    if (mat->texture && mat->texture->m_pPixels) {
+        ITexture *texture = mat->texture;
         float u = ti->u;
         float v = ti->v;
         uint x = min((uint)(int)(texture->m_Width * u), (uint)(texture->m_Width - 1));
@@ -631,14 +646,18 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
 // values above 7 go to the shadow test, in the PS2 and Xbox builds too. Case 1's square is Square() (the Xbox calls it
 // in both cases), which gives the original's order of the FPU code; its range scale divides through
 // S_vector::operator/, whose reciprocal takes the stack slot the original stores it in.
+// The light is a local from the switch on (the original keeps it in esi through the shadow test, and its frame and
+// registers follow from that; as (*lp) VC6 gives lp a register instead), read again after the spot light's
+// IsMrgZeroLess, where the original reloads it from lp: no other spelling found gives that reload (a reference, the
+// local at the loop's top, the spot light's rest through (*lp)).
 // Not matching yet:
-// - Registers: the original keeps lp on the stack (in ecx between calls) and gives esi to *lp, edi to col_flags (saving
-//   out and restoring it at the end of each pass) and ebp to x; ours gives lp a register, so the frame is 4 bytes
-//   smaller and the temporaries' copies are scheduled differently. Declaration order, the loop's spelling, a named
-//   light pointer and nested ifs for the first tests (as PS2 and the Xbox have them) didn't move it.
-// - Inlining: the original leaves only -ldir's S_vector constructor and the final sum's outer one out of line; ours
-//   leaves -ldir's too, but also both products' constructors and both sums' operator+. Probes: about 2 more units of
-//   source and 5 more zero-cost inline calls between the switch and the final sum give the original's calls.
+// - Inlining: ours leaves the directional light's from sum's constructor out of line too. Two or three dead statements
+//   (if (0) x = x;) before the final sum give the original's calls; with one the final sum's operator+ stays out of
+//   line, with four -ldir's constructor is inlined too. Natural candidates (col_flags |= for the x flag, the shadow test through (*lp), Sum()
+//   written out, the frame type read directly) didn't give them.
+// - With those, only the FPU operand order differs: the spot and directional lights' Dot(normal) (the original loads
+//   normal's z and y first, as in the point light's), the shadow test's dir.Dot(col_normal), color *= filter and
+//   diff_sum += color. Swapped operands and the declarations' order and place don't change them.
 // FUNCTION: LS3DF 0x10066e90
 void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_material *mat, I3D_scene *scene,
     uint flags, bool *inside, I3D_frame *frm, int x)
@@ -672,35 +691,36 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
         uint col_flags = 0x20130000;
         if (x > 0)
             col_flags = 0x22130000;
-        switch ((*lp)->ltype) {
+        I3D_light *lt = *lp;
+        switch (lt->ltype) {
         case I3DLIGHT_AMBIENT:
-            amb_sum += (*lp)->color;
+            amb_sum += lt->color;
             continue;
         case I3DLIGHT_POINT: {
-            S_vector lpos = (*lp)->w_pos;
+            S_vector lpos = lt->w_pos;
             S_vector d = lpos - pos;
             float sq = d.Square();
-            if (sq > (*lp)->range_f_2)
+            if (sq > lt->range_f_2)
                 continue;
             float dot = d.Dot(normal);
             if (dot <= 0.0f)
                 continue;
             float dist = (float)sqrt(sq);
             dot /= dist;
-            if (dist <= (*lp)->range_n)
-                color = (*lp)->color * dot;
+            if (dist <= lt->range_n)
+                color = lt->color * dot;
             else
-                color = (*lp)->color * dot * ((*lp)->range_f - dist) / (*lp)->range_delta;
+                color = lt->color * dot * (lt->range_f - dist) / lt->range_delta;
             from = pos + normal * 0.0075f;
             dir = lpos - from;
             break;
         }
         case I3DLIGHT_SPOT: {
-            S_vector ldir = -(*lp)->w_dir;
-            S_vector lpos = (*lp)->w_pos;
+            S_vector ldir = -lt->w_dir;
+            S_vector lpos = lt->w_pos;
             dir = lpos - pos;
             float sq = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-            if (sq > (*lp)->range_f_2)
+            if (sq > lt->range_f_2)
                 continue;
             float dot = dir.Dot(normal);
             if (dot <= 0.0f)
@@ -708,28 +728,29 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
             float dist = (float)sqrt(sq);
             if (IsMrgZeroLess(dist))
                 continue;
+            lt = *lp;
             float att;
-            if (dist > (*lp)->range_n)
-                att = ((*lp)->range_f - dist) / (*lp)->range_delta;
+            if (dist > lt->range_n)
+                att = (lt->range_f - dist) / lt->range_delta;
             else
                 att = 1.0f;
             float inv = 1.0 / dist;
             float cos = ldir.Dot(dir) * inv;
-            if (cos <= (*lp)->outer_cos)
+            if (cos <= lt->outer_cos)
                 continue;
-            if (cos <= (*lp)->inner_cos)
-                att *= (cos - (*lp)->outer_cos) * (*lp)->cone_scale;
-            color = (*lp)->color * att * dot * inv;
+            if (cos <= lt->inner_cos)
+                att *= (cos - lt->outer_cos) * lt->cone_scale;
+            color = lt->color * att * dot * inv;
             from = pos + normal * 0.0075f;
             dir = lpos - from;
             break;
         }
         case I3DLIGHT_DIRECTIONAL: {
-            S_vector ldir = (*lp)->w_dir;
+            S_vector ldir = lt->w_dir;
             float dot = ldir.Dot(normal);
             if (dot >= 0.0f)
                 continue;
-            color = (*lp)->color * -dot;
+            color = lt->color * -dot;
             from = pos + normal * 0.0075f;
             dir = -ldir;
             col_flags |= 0x40000;
@@ -741,7 +762,7 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
         case I3DLIGHT_POINTFOG:
             continue;
         }
-        if (scene && flags & 1 && (*lp)->mode & I3DLIGHTMODE_SHADOW) {
+        if (scene && flags & 1 && lt->mode & I3DLIGHTMODE_SHADOW) {
             if (IsAbsMrgZero(color.Sum()))
                 continue;
             num_rays++;
@@ -791,16 +812,17 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
 // VC6 compiles the C here as without optimization (count-- through memory, every local in memory, no inlining:
 // S_vector's empty constructor and GetInvMatrix are calls), unlike FogProcess's, which has __asm too; `#pragma
 // optimize("", off)` around it changes nothing. The pointer local per vertex gives the original's copy of the vertex
-// into a slot of its own, a cast in the call doesn't. Not matching yet: the slot order (each sphere mode's vector
-// and float are swapped, and the dummy pointer sits above the matrix where the original has it below; casts,
-// references and the declaration order didn't move them).
+// into a slot of its own, a cast in the call doesn't. The slots come scope by scope, each scope's locals in the order
+// of a 16-bucket hash of their names (.bss's hash, mod 16; the lowest bucket at the top), so the names give the order:
+// norm (1) above t (4), mat (1) above dummy (6), p (0) above v (6). With n (14) the float came first, with mm (7) the
+// dummy, and the matrix took 4 bytes of padding to its 8-byte alignment.
 // FUNCTION: LS3DF 0x10067d20
 void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, uint count, const S_vector &cam_pos,
     const S_matrix &m, float scale, float u_ofs, float v_ofs, int mode, I3D_frame *frm)
 {
     switch (mode) {
     case 0: {
-        S_vector n;
+        S_vector norm;
         float t;
         __asm {
             mov ecx, count
@@ -851,7 +873,7 @@ sphere_z:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x20]
             faddp st(1), st
-            fst n.x
+            fst norm.x
             fmul st, st(1)
             fld dword ptr [esi + 0xc]
             fmul dword ptr [edx + 4]
@@ -861,7 +883,7 @@ sphere_z:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x24]
             faddp st(1), st
-            fst n.y
+            fst norm.y
             fmul st, st(3)
             faddp st(1), st
             fld dword ptr [esi + 0xc]
@@ -872,21 +894,21 @@ sphere_z:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x28]
             faddp st(1), st
-            fst n.z
+            fst norm.z
             fmul st, st(4)
             faddp st(1), st
             fmul TwoFloat
-            fld n.x
+            fld norm.x
             fmul st, st(1)
             fsub st, st(2)
             fxch st(2)
             fstp t
-            fld n.y
+            fld norm.y
             fmul st, st(1)
             fsub st, st(3)
             fxch st(3)
             fstp t
-            fld n.z
+            fld norm.z
             fmul st, st(1)
             fsub st, st(4)
             fxch st(4)
@@ -950,7 +972,7 @@ sphere_z_end:
         break;
     }
     case 1: {
-        S_vector n;
+        S_vector norm;
         float t;
         __asm {
             mov ecx, count
@@ -1001,7 +1023,7 @@ sphere_y:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x20]
             faddp st(1), st
-            fst n.x
+            fst norm.x
             fmul st, st(1)
             fld dword ptr [esi + 0xc]
             fmul dword ptr [edx + 4]
@@ -1011,7 +1033,7 @@ sphere_y:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x24]
             faddp st(1), st
-            fst n.y
+            fst norm.y
             fmul st, st(3)
             faddp st(1), st
             fld dword ptr [esi + 0xc]
@@ -1022,21 +1044,21 @@ sphere_y:
             fld dword ptr [esi + 0x14]
             fmul dword ptr [edx + 0x28]
             faddp st(1), st
-            fst n.z
+            fst norm.z
             fmul st, st(4)
             faddp st(1), st
             fmul TwoFloat
-            fld n.x
+            fld norm.x
             fmul st, st(1)
             fsub st, st(2)
             fxch st(2)
             fstp t
-            fld n.y
+            fld norm.y
             fmul st, st(1)
             fsub st, st(3)
             fxch st(3)
             fstp t
-            fld n.z
+            fld norm.z
             fmul st, st(1)
             fsub st, st(4)
             fxch st(4)
@@ -1139,10 +1161,10 @@ sphere_y_end:
         if (!frm)
             break;
         I3D_dummy *dummy = (I3D_dummy *)frm;
-        S_matrix mm = m * dummy->GetInvMatrix();
+        S_matrix mat = m * dummy->GetInvMatrix();
         while (count--) {
             const S_vector *v = (const S_vector *)src;
-            S_vector p = *v * mm;
+            S_vector p = *v * mat;
             if (p.z < 0.0f)
                 ((float *)dst)[0] = 0.0f;
             else if (p.z > 1.0f)

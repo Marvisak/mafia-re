@@ -4,11 +4,10 @@
 // lod's scalar deleting destructor and destructor, then the out-of-line I3D_joint::GetJointMatrix and
 // S_vector::operator*=. Names are the PS2 build's unless noted.
 //
-// Still open: m_AddFGroups, as I3D_object's (the original keeps this in ebx, uses no ebp and has one more stack slot);
-// GetJointMatrix's copy (I3D.h); and in UpdateBVolumeProc the operands of the sphere center's x sum, which come the
-// other way round (the allocator's live-range ids: every spelling of the sum compiles the same). Our linker keeps this
-// file's copy of the empty SetSpace, which it folds with the billboard's and the morphs', where the original keeps the
-// billboard file's (I3D.h).
+// Still open: m_AddFGroups' face group loop (see there); GetJointMatrix's copy (I3D.h); and in UpdateBVolumeProc the
+// operands of the sphere center's x sum, which come the other way round (the allocator's live-range ids: every
+// spelling of the sum compiles the same). Our linker keeps this file's copy of the empty SetSpace, which it folds with
+// the billboard's and the morphs', where the original keeps the billboard file's (I3D.h).
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"
@@ -244,7 +243,7 @@ void I3D_singlemesh::UpdateBVolumeProc()
     vis_bound.bbox = bb;
     S_vector half = (bb.max - bb.min) * 0.5f;
     vis_bound.bsphere.pos = bb.min + half;
-    vis_bound.bsphere.radius = (float)sqrt(half.Square());
+    vis_bound.bsphere.radius = (float)sqrt(half.x * half.x + half.y * half.y + half.z * half.z);
     vis_flags = (vis_flags & ~VISF_WBOUND_VALID) | VISF_BOUND_VALID;
     DiscardHRBoundVol();
 }
@@ -345,8 +344,9 @@ const S_clip_sm_vertex *I3D_singlemesh::GetVertexPos(int lod_index)
 // first call, with the vertices no joint moves copied from the mesh. A proxy moves its visual's.
 // The inline budget decides the shape: the original inlines C_list::push_back in the first and third Lock and calls it
 // in the second and fourth, and calls the second GetJointMatrix. That takes the proxy's visual through GetData (an
-// inline call pending between the second and the third Lock), the rigid copy as a post-decrement loop of post-
-// increments (a little less source), and jp stepped before info (the loop's last register).
+// inline call pending between the second and the third Lock), the rigid copy counting num_rigid itself down (a
+// post-decrement loop of post-increments; a counter of its own is a little more source, which inlines the second
+// Lock's push_back), and jp stepped before info (the loop's last register).
 // FUNCTION: LS3DF 0x10054f60
 void I3D_singlemesh::UpdateLodVertices(int lod_index)
 {
@@ -375,7 +375,7 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
             int first = level->num_vertices - num_rigid;
             const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base + first, 0);
             S_clip_sm_vertex *dst = (S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base + first, 0);
-            for (int i = num_rigid; i--; )
+            while (num_rigid--)
                 *dst++ = *(const S_clip_sm_vertex *)src++;
         }
     }
@@ -475,7 +475,18 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 }
 
 // As I3D_object's, with the lod's vertices moved by the joints: the lod's vertex buffer gets their positions, and is
-// lit and transformed from them
+// lit and transformed from them.
+// The position copies and FogProcess are an if/else with a call in each branch (the original hoists lod_index's push
+// above the hardware test, and pushes FogProcess' stride in the branches). The inline budget: the original inlines
+// C_list::push_back in the alpha block's Lock and calls it in the environment map's, which takes no inline call
+// between the two (the alpha block's and the environment test's flags read as the member; through GetFlags both
+// Locks inline it) and enough pending after them: EnvProcess' two GetFlags and the face groups' GetNext and
+// GetMaterial, as in the particles' m_AddFGroups (one of the last two would do; written as the members, both Locks
+// inline it).
+// Not matching yet: the face group loop keeps fg in edx and reloads it after the texture updates, ours reloads it
+// at the loop's top; the original loads the material's alpha before fade (every spelling of the product compiles the
+// same), and swaps which of num_transparent++ and the push_back's size increment are a read-modify-write; the stack
+// slots of some temporaries follow.
 // FUNCTION: LS3DF 0x10055930
 void I3D_singlemesh::m_AddFGroups()
 {
@@ -559,12 +570,14 @@ void I3D_singlemesh::m_AddFGroups()
     }
     if (moved) {
         lv = l->vb.buffer->Lock(base, 0);
-        CopyRigidPositions(lv, m_HardwareCaps & HWCAPS_HWTL ?
-            (level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX)) :
-            (level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX)), lod_index);
-        CopyMovedPositions(lv, m_HardwareCaps & HWCAPS_HWTL ?
-            (level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX)) :
-            (level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX)), lod_index);
+        if (m_HardwareCaps & HWCAPS_HWTL)
+            CopyRigidPositions(lv, level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX), lod_index);
+        else
+            CopyRigidPositions(lv, level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), lod_index);
+        if (m_HardwareCaps & HWCAPS_HWTL)
+            CopyMovedPositions(lv, level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX), lod_index);
+        else
+            CopyMovedPositions(lv, level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), lod_index);
     }
     if (!l->vb_skin.buffer)
         return;
@@ -595,12 +608,12 @@ void I3D_singlemesh::m_AddFGroups()
         if (!lv)
             lv = l->vb.buffer->Lock(base, 0);
         if (m_HardwareCaps & HWCAPS_HWTL) {
-            if (level->GetFlags() & MESHF_ENVMAP)
+            if (level->mesh_flags & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
             else
                 SetVertexAlpha((uchar *)&((LVERTEX *)lv)->color, sizeof(LVERTEX), level, this, l);
         } else {
-            if (level->GetFlags() & MESHF_ENVMAP)
+            if (level->mesh_flags & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((TLVERTEX2 *)lv)->color, sizeof(TLVERTEX2), level, this, l);
             else
                 SetVertexAlpha((uchar *)&((TLVERTEX *)lv)->color, sizeof(TLVERTEX), level, this, l);
@@ -608,7 +621,7 @@ void I3D_singlemesh::m_AddFGroups()
     }
 
     if (renderCameraChanged || render_number != RenderNumberMinus1 || moved) {
-        if (level->GetFlags() & MESHF_ENVMAP) {
+        if (level->mesh_flags & MESHF_ENVMAP) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
             if (m_HardwareCaps & HWCAPS_HWTL)
@@ -638,9 +651,12 @@ void I3D_singlemesh::m_AddFGroups()
             if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
                 if (!lv)
                     lv = l->vb.buffer->Lock(base, 0);
-                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
-                    level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+                if (level->GetFlags() & MESHF_ENVMAP)
+                    FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2),
+                        num_verts, AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+                else
+                    FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX),
+                        num_verts, AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
             }
         }
     }
@@ -649,8 +665,8 @@ void I3D_singlemesh::m_AddFGroups()
     h.sector = AddFGHlpStruct.sector;
     h.clip = frm_flags & FRMFLAGS_CLIP;
     h.vis = this;
-    for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
-        I3D_material *mat = fg->material;
+    for (I3D_face_group *fg = level->fgroups; fg; fg = fg->GetNext()) {
+        I3D_material *mat = fg->GetMaterial();
         h.fg = fg;
         if (mat && mat->flags & MATF_TEXTURE)
             h.texture = mat->GetTexture();
@@ -660,7 +676,7 @@ void I3D_singlemesh::m_AddFGroups()
             h.env_texture = mat->GetEnvTexture();
         else
             h.env_texture = NULL;
-        if (!mat || !h.texture && !(mat->alpha * fade * transparency < 1.0f)) {
+        if (!mat || !h.texture && mat->alpha * fade * transparency >= 1.0f) {
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {

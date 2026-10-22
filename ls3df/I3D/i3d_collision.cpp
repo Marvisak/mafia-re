@@ -193,14 +193,17 @@ inline bool AcceptHit(I3D_visual *vis)
 // it, and the nearest is kept. Its distance is measured back in world space; the collision callback then decides.
 // The original's oddities stay: the box's distance is scaled by dir's square only in world space, the box hit passes
 // its normal as the callback's point, and the texel callback gets a point never set (PS2's do the same).
-// The billboard modes invert through temporaries: with a named copy VC6 merges the ends of cases 2 and 3, which the
-// original keeps apart. Mode 2's scale comes from GetWorldScale, which constructs either branch's vector in s.
+// The billboard modes invert through a named copy each, declared in the case's block: the three share one slot, as the
+// original's do (through temporaries S_matrix(m) each takes a slot of its own). Mode 2's scale comes from
+// GetWorldScale, which constructs either branch's vector in s.
 // Each test that rejects a face steps to the next face itself (PS2 has the increments there too): with the step in the
-// for statement VC6 jumps to it directly and lays out the loop's end after the rest.
-// Not matching yet: the frame (our three temporary matrices take a slot each, the original's one), a few nested
-// inline decisions (the mirror's GetNormal leaves both operator- calls out of line, the two-sided normal its first
-// operator* and second operator-), and the register allocation (the original keeps I3D_VISUAL_BILLBOARD in ebx and
-// zero in edi); 96.5% with registers and stack offsets masked.
+// for statement VC6 jumps to it directly and lays out the loop's end after the rest. The face groups' loops count a
+// copy of the count: counting num itself, VC6 stores it before the GetFaces call, the original after.
+// Not matching yet: the frame (4 bytes smaller than the original's, and laid out otherwise), a few nested inline
+// decisions (the mirror's GetNormal leaves both operator- calls out of line, the two-sided normal its first operator*
+// and second operator-: the original had less inline budget there), the operands VC6 keeps on the FPU stack in some
+// products (as in sphTestVisual), and the register allocation (the original keeps I3D_VISUAL_BILLBOARD in ebx and zero
+// in edi; no spelling of mat's selection gives that); 97% with registers and stack offsets masked.
 static void testVisual(I3D_visual *vis)
 {
     S_vector dir, base;
@@ -223,7 +226,8 @@ static void testVisual(I3D_visual *vis)
                 m(2) = r1 * vis->scale.z;
                 m(3) = vis->GetMatrix()(3);
                 bill_matrix = m;
-                m.Inverse(S_matrix(m));
+                S_matrix tmp = m;
+                m.Inverse(tmp);
                 break;
             }
             case 2: {
@@ -236,13 +240,15 @@ static void testVisual(I3D_visual *vis)
                 m(2) = r1 * s.z;
                 m(3) = vis->GetMatrix()(3);
                 bill_matrix = m;
-                m.Inverse(S_matrix(m));
+                S_matrix tmp = m;
+                m.Inverse(tmp);
                 break;
             }
             default: {
                 bill->ProductBillMatrix(lineBase, &m);
                 bill_matrix = m;
-                m.Inverse(S_matrix(m));
+                S_matrix tmp = m;
+                m.Inverse(tmp);
             }
             }
         } else
@@ -389,7 +395,7 @@ static void testVisual(I3D_visual *vis)
                 // One-sided: the faces turned away from the ray are left out
                 int num = fg->num_faces;
                 const I3D_triface *faces = fg->GetFaces();
-                for (; num > 0; num--) {
+                for (int i = num; i > 0; i--) {
                     const S_vector *vert0 = (const S_vector *)(verts + faces->vi[0] * stride);
                     const S_vector *vert1 = (const S_vector *)(verts + faces->vi[1] * stride);
                     const S_vector *vert2 = (const S_vector *)(verts + faces->vi[2] * stride);
@@ -514,7 +520,7 @@ static void testVisual(I3D_visual *vis)
                 // Two-sided: the faces turned away count too
                 int num = fg->num_faces;
                 const I3D_triface *faces = fg->GetFaces();
-                for (; num > 0; num--) {
+                for (int i = num; i > 0; i--) {
                     const S_vector *vert0 = (const S_vector *)(verts + faces->vi[0] * stride);
                     const S_vector *vert1 = (const S_vector *)(verts + faces->vi[1] * stride);
                     const S_vector *vert2 = (const S_vector *)(verts + faces->vi[2] * stride);
@@ -672,7 +678,9 @@ static void testVisual(I3D_visual *vis)
 // The ray against a box (the name is a guess; PS2 inlines it too): lineBase inside it, or the box's center's distance
 // from the line against the box's extent along the axes crossed with the line. The corners are separate references
 // (the original keeps max in a register of its own), and the dot product is written out: through Dot, a call of its
-// own, VC6 leaves it out of line here.
+// own, VC6 leaves it out of line here. The absolute values are written at each use (PS2 computes them again in each
+// test): VC6 shares them, stores |y| and |z| and keeps |x| on the FPU stack, and only so loads them before the extents
+// (as float locals the extents come first).
 inline bool LineIntersectBox(const S_vector &min, const S_vector &max)
 {
     if (lineBase.x >= min.x && lineBase.x <= max.x && lineBase.y >= min.y && lineBase.y <= max.y &&
@@ -684,14 +692,11 @@ inline bool LineIntersectBox(const S_vector &min, const S_vector &max)
     S_vector p = lineBase + lineDir * t;
     S_vector w = center - p;
     S_vector e = (max - min) * .5f;
-    float ay = (float)fabs(lineDir.y);
-    float az = (float)fabs(lineDir.z);
-    if (fabs(lineDir.z * w.y - w.z * lineDir.y) > az * e.y + ay * e.z)
+    if (fabs(lineDir.z * w.y - w.z * lineDir.y) > (float)fabs(lineDir.z) * e.y + (float)fabs(lineDir.y) * e.z)
         return false;
-    float ax = (float)fabs(lineDir.x);
-    if (fabs(w.z * lineDir.x - w.x * lineDir.z) > az * e.x + ax * e.z)
+    if (fabs(w.z * lineDir.x - w.x * lineDir.z) > (float)fabs(lineDir.z) * e.x + (float)fabs(lineDir.x) * e.z)
         return false;
-    if (fabs(w.x * lineDir.y - lineDir.x * w.y) > ay * e.x + ax * e.y)
+    if (fabs(w.x * lineDir.y - lineDir.x * w.y) > (float)fabs(lineDir.y) * e.x + (float)fabs(lineDir.x) * e.y)
         return false;
     return true;
 }
@@ -716,8 +721,8 @@ inline bool LineIntersectSphere(const I3D_bsphere &bs)
 
 // The frame's hierarchy against the ray: its box (a sector without one always), then a visual's sphere and faces,
 // then its children until a callback stops the test.
-// Not matching yet: in the box's tests VC6 loads the other operand of three products first (lineDir.x before w.z, the
-// extents before the absolute values); the operands' order in the source doesn't move them.
+// Not matching yet: in the box's tests VC6 loads lineDir.y and lineDir.x before w.z (the original w.z first); no order
+// of the products' operands, terms or tests and no (void) reference moves them (the term order of t does change code).
 // FUNCTION: LS3DF 0x1000e370
 static void testSubtree(I3D_frame *frm)
 {
@@ -759,32 +764,31 @@ static void testSubtree(I3D_frame *frm)
 }
 
 // The texel callback without one of the caller's: 2 for a transparent texel (alpha below 0.1), 1 else. It takes the
-// alpha as T&l.cpp's TexelCallback does, the texel's index computed before the branches and the color's channels in
-// a vector.
-// Not matching yet: the original keeps mat in a stack slot and loads texture->pixels again after the __ftol calls,
-// where ours keeps the test's load (TexelCallback has the same open difference).
+// alpha as T&l.cpp's TexelCallback does, the color's channels in a vector. The texture is tested through the material
+// and read through a local, as there: VC6 then loads the pixels again after the __ftol calls (with the local tested,
+// it keeps the test's load). The texel's index is written in each branch: through a local VC6 swaps the registers of
+// x and the height (ebx and ebp).
 // FUNCTION: LS3DF 0x10011300
 static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_frame *frm, void *context, void *texel)
 {
     S_texel_info *ti = (S_texel_info *)texel;
     I3D_material *mat = ti->mat;
-    ITexture *texture = mat->texture;
-    if (texture && texture->m_pPixels) {
+    if (mat->texture && mat->texture->m_pPixels) {
+        ITexture *texture = mat->texture;
         float u = ti->u;
         float v = ti->v;
         uint x = min((uint)(int)(texture->m_Width * u), (uint)(texture->m_Width - 1));
         uint y = min((uint)(int)(texture->m_Height * v), (uint)(texture->m_Height - 1));
-        uint i = y * texture->m_Width + x;
         float a;
         if (mat->flags & MATF_ADD_MODE) {
-            const uchar *p = &texture->m_pPixels[i * 4];
+            const uchar *p = &texture->m_pPixels[(y * texture->m_Width + x) * 4];
             S_vector c;
             c.x = p[1] * (1.0f / 255.0f);
             c.y = p[2] * (1.0f / 255.0f);
             c.z = p[3] * (1.0f / 255.0f);
             a = c.x * 0.3f + c.y * 0.6f + c.z * 0.1f;
         } else
-            a = texture->m_pPixels[i * 4] * (1.0f / 255.0f);
+            a = texture->m_pPixels[(y * texture->m_Width + x) * 4] * (1.0f / 255.0f);
         if (a * mat->alpha < 0.1)
             return 2;
     } else if (mat->alpha < 0.1f)
@@ -1004,9 +1008,15 @@ inline bool SphereIntersect(const I3D_bsphere &bs)
 // (the point of the plane nearest to the start in the face's box, then in the face or near one of its edges) gives
 // the start, one the sphere crosses during the move the point where it reaches the plane, the nearest of them goes to
 // kolBod. A billboard's space is the one it has turned to the start in.
-// Not matching yet: the register allocation and scheduling all through (95% with registers and stack offsets masked),
-// and one nested inline decision: after the first edge's SetNormalized the original inlines the projection's
-// operator- and Dot (calling S_vector's constructor), ours calls both.
+// The face loop counts a copy of the count (counting num, VC6 stores it before the GetFaces call, the original after).
+// A hit at the start sets best before kolBod: in the other order VC6 merges the inside case's tail with the edges'. The
+// moving half compares proj's square first (the original computes it before the edge's square), the start's half the
+// edge's square first.
+// Not matching yet (98% with stack offsets masked): the frame; inlining: the original leaves the starting half's third
+// d = p - c constructor out of line and inlines the moving half's second Dot, which two pending inline calls anywhere
+// after that d (empty inline functions as a probe) give exactly, natural source not found; and which operands VC6 keeps
+// on the FPU stack in the normal's Normalize, d0 and the start point's products. PS2 computes d0 and d1 as a.Dot(n) and
+// b.Dot(n), which gives those three as the original but then needs more inline budget (and changes the edges' Dots).
 static void sphTestVisual(I3D_visual *vis)
 {
     S_vector lb, ld;
@@ -1076,7 +1086,7 @@ static void sphTestVisual(I3D_visual *vis)
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
         int num = fg->num_faces;
         const I3D_triface *faces = fg->GetFaces();
-        for (; num > 0; faces++, num--) {
+        for (int i = num; i > 0; faces++, i--) {
             const S_vector &v0 = *(const S_vector *)(verts + faces->vi[0] * stride);
             const S_vector &v1 = *(const S_vector *)(verts + faces->vi[1] * stride);
             const S_vector &v2 = *(const S_vector *)(verts + faces->vi[2] * stride);
@@ -1143,8 +1153,8 @@ static void sphTestVisual(I3D_visual *vis)
                     float u = d1w * d22 - d2w * d12;
                     float v = d2w * d11 - d1w * d12;
                     if (u >= 0.0 && v >= 0.0 && u + v <= (float)fabs(d11 * d22 - d12 * d12)) {
-                        kolBod = p;
                         best = 0.0f;
+                        kolBod = p;
                         if (colFlags & COLF_FIRST_FACE)
                             goto done;
                     } else {
@@ -1154,8 +1164,8 @@ static void sphTestVisual(I3D_visual *vis)
                         S_vector c = v0 + dir * proj;
                         S_vector d = p - c;
                         if ((v1 - v0).Square() >= proj * proj && d.Square() <= r2) {
-                            kolBod = c;
                             best = 0.0f;
+                            kolBod = c;
                             if (colFlags & COLF_FIRST_FACE)
                                 goto done;
                         } else {
@@ -1164,8 +1174,8 @@ static void sphTestVisual(I3D_visual *vis)
                             c = v2 + dir * proj;
                             S_vector d = p - c;
                             if ((v1 - v2).Square() >= proj * proj && d.Square() <= r2) {
-                                kolBod = c;
                                 best = 0.0f;
+                                kolBod = c;
                                 if (colFlags & COLF_FIRST_FACE)
                                     goto done;
                             } else {
@@ -1174,8 +1184,8 @@ static void sphTestVisual(I3D_visual *vis)
                                 c = v0 + dir * proj;
                                 S_vector d = p - c;
                                 if ((v0 - v2).Square() >= proj * proj && d.Square() <= r2) {
-                                    kolBod = c;
                                     best = 0.0f;
+                                    kolBod = c;
                                     if (colFlags & COLF_FIRST_FACE)
                                         goto done;
                                 }
@@ -1251,7 +1261,7 @@ static void sphTestVisual(I3D_visual *vis)
                         float proj = dir.Dot(q - v0);
                         S_vector c = v0 + dir * proj;
                         S_vector d = q - c;
-                        if ((v1 - v0).Square() >= proj * proj && d.Square() <= r2) {
+                        if (proj * proj <= (v1 - v0).Square() && d.Square() <= r2) {
                             if (best > t) {
                                 best = t;
                                 kolBod = c;
@@ -1263,7 +1273,7 @@ static void sphTestVisual(I3D_visual *vis)
                             proj = dir.Dot(q - v2);
                             c = v2 + dir * proj;
                             float dist2 = (q - c).Square();
-                            if ((v1 - v2).Square() >= proj * proj && dist2 <= r2) {
+                            if (proj * proj <= (v1 - v2).Square() && dist2 <= r2) {
                                 if (best > t) {
                                     best = t;
                                     kolBod = c;
@@ -1275,7 +1285,7 @@ static void sphTestVisual(I3D_visual *vis)
                                 proj = dir.Dot(q - v0);
                                 c = v0 + dir * proj;
                                 float dist2 = (q - c).Square();
-                                if ((v0 - v2).Square() >= proj * proj && dist2 <= r2) {
+                                if (proj * proj <= (v0 - v2).Square() && dist2 <= r2) {
                                     if (best > t) {
                                         best = t;
                                         kolBod = c;
@@ -1313,7 +1323,11 @@ done:
 // box and sphere and faces, then its children until a callback stops the test. The visual's type is read as the
 // member: through GetVisualType, one more inline call to come, VC6 leaves more of the second SphereIntersect's calls
 // out of line than the original.
-// Not matching yet: the stack slots of the first SphereIntersect's temporaries.
+// Not matching yet: the stack slots of the SphereIntersects' temporaries. The original passes p - bs.pos to Square by its
+// slot, a named local (S_vector v = p - bs.pos; PS2 has one too), which gives every slot, but then the second
+// SphereIntersect leaves lineDir * d's constructor out of line: the original had about 19 statements' worth more
+// source in this function (as dead code, 18 or 19 if (0) frm = frm; give 100%). Not found: case labels, a type local,
+// the box test written out (too much), GetVisualType (too little).
 // FUNCTION: LS3DF 0x10012140
 static void sphTestSubtree(I3D_frame *frm)
 {

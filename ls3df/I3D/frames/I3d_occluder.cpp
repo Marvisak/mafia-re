@@ -6,12 +6,12 @@
 //   is declared inline: an out-of-line copy before ProcessOccluders would bring the statics it calls up to it.
 //
 // Not matching yet:
-// - UpdateV and UpdateShadow: the original inlines S_vector::Normalize in the planes' S_plane constructor and in
-//   UpdateShadow's view direction, where ours runs out of inline budget (the open question in I3d_math.h). With
-//   Normalize __forceinline, UpdateShadow calls exactly what the original does.
+// - UpdateV: the inline budget for ComputePlane's Dot, see the function.
+// - UpdateShadow, OCCL_PrepareSector2: the order of a few products' operands and of the terms of their sums, see the
+//   functions.
 // - CullOcclsEachOther (and its copy inlined in ProcessOccluders): VC6 keeps a different one of its two floats on the
 //   x87 stack (see the function).
-// - POIS_EnumProc and OCCL_PrepareSector2: a jump target and a term order, see the functions.
+// - POIS_EnumProc: a jump target, see the function.
 #include "I3D/I3D.h"
 #include "I3D/frames/XSBTree.h"
 #include "dta.h"
@@ -166,30 +166,41 @@ LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
 
 // The vertices in world space, the faces' planes through S_plane's constructor (I3d_math.h), as the area's UpdateV, and
 // the sphere around the vertices' box.
-// Open: besides Normalize (see the top), the original keeps the vertex count in a stack slot of its own and counts the
-// transform loop with a copy; ours counts with the count itself.
+// - The early return tests the member and the count is read after it: tested through n, VC6 knows the count isn't 0
+//   and drops the transform loop's guard, which the original has (it reads the count again from n's slot after
+//   GetMatrix's call and counts with a copy).
+// - The matrix through a reference local, which takes ebx in the transform loop as the original's &matrix does
+//   (UpdateWMatrix() and matrix give the count ebx and compute the address in each pass).
+// - The three vertices through references declared from the last on, and the plane a temporary: the order VC6 then
+//   sums the normal's squares (x, y, z) and Dot's products (y, z, x) in. A named plane, the vertices in the call or
+//   the references declared from the first on sum them in other orders.
+// - The box loop's count assigned before its pointer: the original computes it first, in edx.
+// Open: the inline budget. The original inlines all of ComputePlane but GetNormal's two operator- calls; ours also
+// calls the Dot of its d. 3 to 19 dead statements (if (0) radius = radius * radius_2 + dist;) at the top give the
+// original's code exactly, and so does ComputePlane declared __forceinline (see I3d_math.h). No spelling of the
+// radius, the box loop, the transform loop or the plane (ComputePlane called on a named plane inlines the Dot but sums
+// the normal's squares in another order) adds that much.
 // FUNCTION: LS3DF 0x1003a800
 void I3D_occluder::UpdateV()
 {
-    int n = num_verts;
-    if (!n)
+    if (!num_verts)
         return;
+    int n = num_verts;
     const S_vector *v = verts;
     S_vector *vw = verts_w;
-    UpdateWMatrix();
+    const S_matrix &m = GetMatrix();
     for (int i = n; i--; )
-        *vw++ = *v++ * matrix;
+        *vw++ = *v++ * m;
     const ushort *fc = faces;
     S_plane *p = planes;
     for (i = num_faces; i--; ) {
-        S_plane pl(verts_w[fc[0]], verts_w[fc[1]], verts_w[fc[2]]);
+        const S_vector &v2 = verts_w[fc[2]], &v1 = verts_w[fc[1]], &v0 = verts_w[fc[0]];
+        *p++ = S_plane(v0, v1, v2);
         fc += 3;
-        *p++ = pl;
     }
     S_vector vmin = verts_w[0];
     S_vector vmax = verts_w[0];
-    v = verts_w + 1;
-    for (i = num_verts - 1; i--; v++) {
+    for (i = num_verts - 1, v = verts_w + 1; i--; v++) {
         if (vmin.x > v->x)
             vmin.x = v->x;
         if (vmin.y > v->y)
@@ -301,6 +312,19 @@ LS3D_RESULT I3D_occluder::Build()
 // camera and each silhouette edge (an edge between a face turned to it and one turned away), and depth_plane. Gives
 // up when there would be more planes than the arrays hold. The planes come through S_plane's constructors; the three
 // edges are written out, as PS2's, and the third's first operator- is inlined in the original as in ours.
+// - The face flags' pointer steps in both branches, as PS2's: stepped after the if/else, VC6 swaps the registers of
+//   the plane and the flags.
+// - depth_plane is assigned and read through a reference and changed directly: the original keeps its address in edi
+//   for the loop's depth tests and copies the temporary plane through a register.
+// - One vector for the three edges, at the top of the function: the original keeps the three in one stack area (and
+//   ours otherwise has a frame 24 bytes larger).
+// Open: the order of some products' operands and of some sums' terms: the first loop's and depth_plane's Dot (the
+// original loads the plane's component first, ours the camera's), the view direction's squares (y, z, x in the
+// original), and the planes' squares and Dot. The orders follow VC6's internal numbering; the spellings tried (Dot's
+// object and argument swapped, the camera's position through a reference, the plane through a pointer, the vertices
+// through references in any order, the direction constructed or assigned) don't move them, except that the camera's
+// position read into a reference before the plane gives the first loop's order but steps the plane pointer after the
+// call.
 // FUNCTION: LS3DF 0x1003b130
 void I3D_occluder::UpdateShadow()
 {
@@ -326,15 +350,15 @@ void I3D_occluder::UpdateShadow()
     if (parent && !(parent->frm_flags & FRMFLAGS_ON))
         return;
 
+    S_vector v;
     const S_plane *pl = planes;
     ushort *ff = face_flags;
     for (int i = num_faces; i--; ) {
         const S_plane &p = *pl++;
         if (p.normal.Dot(pCurrentCamera->GetWorldPos()) + p.d > 0.0f)
-            *ff |= 1;
+            *ff++ |= 1;
         else
-            *ff &= ~1;
-        ff++;
+            *ff++ &= ~1;
     }
 
     ushort *ef = edge_faces;
@@ -347,8 +371,9 @@ void I3D_occluder::UpdateShadow()
     int j = 0;
     S_vector dir = pCurrentCamera->GetMatrix()(2);
     dir.Normalize();
-    depth_plane = S_plane(dir, 0.0f);
-    depth_plane.d = -(pCurrentCamera->GetWorldPos().Dot(depth_plane.normal) + depth_plane.d);
+    S_plane &dp = depth_plane;
+    dp = S_plane(dir, 0.0f);
+    depth_plane.d = -(pCurrentCamera->GetWorldPos().Dot(dp.normal) + dp.d);
 
     while (n--) {
         if (face_flags[j] & 1) {
@@ -357,30 +382,30 @@ void I3D_occluder::UpdateShadow()
             num_face_planes++;
             if (!(face_flags[*ef] & 1)) {
                 k = ef - edge_faces;
-                S_vector v = verts_w[faces[k + 1]];
+                v = verts_w[faces[k + 1]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
                 num_side_planes++;
-                float d = v.Dot(depth_plane.normal) + depth_plane.d;
+                float d = v.Dot(dp.normal) + dp.d;
                 if (d > 0.0f)
                     depth_plane.d -= d;
             }
             ef++;
             if (!(face_flags[*ef] & 1)) {
                 k = ef - edge_faces;
-                S_vector v = verts_w[faces[k + 1]];
+                v = verts_w[faces[k + 1]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
                 num_side_planes++;
-                float d = v.Dot(depth_plane.normal) + depth_plane.d;
+                float d = v.Dot(dp.normal) + dp.d;
                 if (d > 0.0f)
                     depth_plane.d -= d;
             }
             ef++;
             if (!(face_flags[*ef] & 1)) {
                 k = ef - edge_faces;
-                S_vector v = verts_w[faces[k - 2]];
+                v = verts_w[faces[k - 2]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
                 num_side_planes++;
-                float d = v.Dot(depth_plane.normal) + depth_plane.d;
+                float d = v.Dot(dp.normal) + dp.d;
                 if (d > 0.0f)
                     depth_plane.d -= d;
             }
@@ -413,8 +438,11 @@ inline bool I3D_occluder::TestVertListW(int num, S_vector *v)
 
 // Each nearest occluder takes the volumes behind it out of the work, so that the others test fewer. The plane tests
 // are written out, as PS2's (no Dot).
-// Open: VC6 keeps last on the x87 stack in the original and best in memory, ours the other way round; no spelling of
-// the loops, the declarations or the assignment of last changed that.
+// Open: VC6 keeps last on the x87 stack in the original (loaded before the prologue) and best in memory, cached on the
+// stack only in the first loop; ours keeps best on the stack for the whole loop and last in memory. No spelling of the
+// loops (do-while, last assigned in a for's step or at the end), the declarations, the assignment of last, the second
+// loop's compare (best or last) or best's address taken changed that; last as a double goes on the stack but best is
+// then never cached.
 static void CullOcclsEachOther(I3D_sector *sct)
 {
     float last = 0.0f;
@@ -586,9 +614,12 @@ void ProcessOccluders(I3D_scene *scene)
 
 // The volumes of the sector's occluders for the camera, and which of the sector's portals they hide. An occluder made
 // of a hull whose portals the camera sees from both sides hides no portal. The portals' planes take the camera's
-// position as Dot's argument, the first loop's through a reference.
-// Open: of the two copies of TestVertListW, the second (the portals into the sector) sums its products in another order
-// than the original's; the first matches.
+// position as Dot's argument, the first loop's through a reference. The loop over the portals into the sector has a
+// counter and an occluder variable of its own: with those of the loop before, TestVertListW's second copy sums its
+// depth test's products in another order.
+// Open: two products' operands come in the other order, the x product of the first copy's depth test and the last side
+// plane product of the second copy's. Of the variable choices of the four loops, the Dot spellings of the portal tests
+// and TestVertListW's (1024 combinations), none gives both copies; each best one leaves two products swapped.
 // FUNCTION: LS3DF 0x1003c610
 void OCCL_PrepareSector2(I3D_sector *sct)
 {
@@ -628,14 +659,14 @@ void OCCL_PrepareSector2(I3D_sector *sct)
         }
     }
     pp = &sct->portals_in[0];
-    for (i = sct->portals_in.size(); i--; pp++) {
+    for (int j = sct->portals_in.size(); j--; pp++) {
         I3D_portal *p = *pp;
         if (p->plane.normal.Dot(cpos) + p->plane.d < 0.0f) {
             p->portal_flags &= ~PORTALF_OCCLUDED;
             if (!p->twin) {
-                for (o = sct->occluders; o; o = o->next_in_sector) {
-                    if ((o->occl_flags & OCCLF_ACTIVE) && !(o->occl_flags & OCCLF_PORTAL) &&
-                        o->TestVertListW(p->num_verts, (S_vector *)p->verts_w)) {
+                for (I3D_occluder *oi = sct->occluders; oi; oi = oi->next_in_sector) {
+                    if ((oi->occl_flags & OCCLF_ACTIVE) && !(oi->occl_flags & OCCLF_PORTAL) &&
+                        oi->TestVertListW(p->num_verts, (S_vector *)p->verts_w)) {
                         p->portal_flags |= PORTALF_OCCLUDED;
                         break;
                     }

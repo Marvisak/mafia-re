@@ -413,9 +413,14 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
 }
 
 // I3D_object::m_AddFGroups without the lods that follow the textures loaded (VISF_UNKNOWN_10): the vertices are
-// summed into the lod's when the weights changed, which lights it again
-// Not matching yet, as I3D_object::m_AddFGroups: the original keeps this in ebx, uses no ebp and has one more stack
-// slot, and the blocks are laid out after that (the lod's allocation after the first Lock's first part).
+// summed into the lod's when the weights changed, which lights it again. As there, ProcessVertices is in both clipping
+// branches, FogProcess in both branches of the stride and the help struct's clip assigned first; lv is declared before
+// base and dest (the order of their stores).
+// The loop reads the material through GetMaterial(): the original has one more inline call after the alpha Lock than
+// the rest of ours, without which that Lock's push_back is inlined (an empty inline call anywhere after it does the
+// same).
+// Not matching yet: the loop's alpha * fade * transparency loads fade first (the original alpha, as I3D_object's),
+// whichever way the product is written.
 // FUNCTION: LS3DF 0x100354f0
 void I3D_morph::m_AddFGroups()
 {
@@ -490,9 +495,9 @@ void I3D_morph::m_AddFGroups()
         l->update_count = update_count;
     } else
         moved = false;
+    uchar *lv = NULL;
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
-    uchar *lv = NULL;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
         l->SetUV(level->GetFlags() & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
             mesh->u_ofs, mesh->v_ofs);
@@ -573,29 +578,33 @@ void I3D_morph::m_AddFGroups()
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(TRUE);
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         } else {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(FALSE);
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         }
-        m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
-                level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            if (level->GetFlags() & MESHF_ENVMAP)
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            else
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
         }
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.sector = AddFGHlpStruct.sector;
     h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.sector = AddFGHlpStruct.sector;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
-        I3D_material *mat = fg->material;
+        I3D_material *mat = fg->GetMaterial();
         h.fg = fg;
         if (mat && mat->flags & MATF_TEXTURE)
             h.texture = mat->GetTexture();
@@ -605,7 +614,7 @@ void I3D_morph::m_AddFGroups()
             h.env_texture = mat->GetEnvTexture();
         else
             h.env_texture = NULL;
-        if (!mat || !h.texture && !(mat->alpha * fade * transparency < 1.0f)) {
+        if (!mat || !h.texture && mat->alpha * fade * transparency >= 1.0f) {
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {

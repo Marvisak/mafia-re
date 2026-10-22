@@ -188,7 +188,8 @@ public:
         array = a;
     }
 
-    // Makes the list n elements long, keeping the first ones
+    // Makes the list n elements long, keeping the first ones. Only I3D_driver::DrawText uses it: the other draws fill
+    // their lists with reserve(n) and used_size = n, whose inline decisions follow the original's (its comment).
     void resize(int n)
     {
         reserve(n);
@@ -209,11 +210,10 @@ public:
         return array[used_size++];
     }
 
-    // Open: the original stores the size before the copy, array[used_size++] = v (PS2's too): lightmap.cpp's lists call
-    // TEXBL_STRUCT's assignment after the store, which this form gives only for elements without one (it gives the
-    // same code for those). That form spends one statement less of inline budget, which gives I3d_projector.cpp's
-    // ProcessRecList and lightmap.cpp's TEXBL_STRUCT list exactly, but takes I3d_singlemesh.cpp's UpdateLodVertices
-    // and I3D_part_base::m_AddFGroups out of their matches: their sources were fitted to this budget.
+    // The size is stored before the copy, as PS2's is: the out-of-line C_list<TEXBL_STRUCT>::push_back (lightmap.cpp)
+    // and I3D_projector::ProcessRecList are exact only this way. It spends one statement less of inline budget than
+    // array[used_size] = v; used_size++, to which I3d_singlemesh.cpp's UpdateLodVertices and I3D_part_base::m_AddFGroups
+    // had been fitted (100% and 96% with it, 62% and 67% now): their sources need refitting.
     void push_back(const T &v)
     {
         if (used_size >= res_size) {
@@ -224,12 +224,11 @@ public:
             delete[] array;
             array = a;
         }
-        array[used_size] = v;
-        used_size++;
+        array[used_size++] = v;
     }
 
-    // Appends v unless the list has it, and tells whether it did (the name is a guess). Render's area list is the only
-    // user: the Xbox build has it out of line, PS2 and PC inline it, its own search and all, but call the push_back in
+    // Appends v unless the list has it, and tells whether it did (the name is a guess). Render's area list and the scene's
+    // AddTickFrame use it (the search keeps the count in a register the inlined push_back's size test reuses). Render: the Xbox build has it out of line, PS2 and PC inline it, its own search and all, but call the push_back in
     // it, which the other lists' push_backs around it inline. A helper's nested call gets only a share of the budget.
     bool push_back_unique(const T &v)
     {
@@ -323,7 +322,7 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
+// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z

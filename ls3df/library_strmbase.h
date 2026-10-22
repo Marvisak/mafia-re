@@ -287,13 +287,13 @@
 // ?JoinFilterGraph@CBaseVideoRenderer@@UAGJPAUIFilterGraph@@PBG@Z
 
 // LIBRARY: LS3DF 0x10089210
-// ?QueryInterface@CBaseInputPin@@W3AGJABU_GUID@@PAPAX@Z
+// ?QueryInterface@CBaseFilter@@W3AGJABU_GUID@@PAPAX@Z
 
 // LIBRARY: LS3DF 0x10089220
 // ?AddRef@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089230
-// ?Release@CBaseInputPin@@W3AGKXZ
+// ?Release@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF 0x10089240
 // ?QueryInterface@CBaseInputPin@@WIM@AGJABU_GUID@@PAPAX@Z
@@ -536,7 +536,7 @@
 // ?Notify@CBaseInputPin@@UAGJPAUIBaseFilter@@UtagQuality@@@Z
 
 // LIBRARY: LS3DF 0x1008b440
-// ?GetAllocatorRequirements@CBaseInputPin@@UAGJPAU_AllocatorProperties@@@Z
+// ?QueryVendorInfo@CBaseFilter@@UAGJPAPAG@Z
 
 // LIBRARY: LS3DF 0x1008b450
 // ?CheckStreaming@CBaseInputPin@@UAEJXZ

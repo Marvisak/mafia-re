@@ -117,15 +117,14 @@ struct S_vector {
 
     // PS2 Normalize__8S_vectorFv. A null vector becomes the unit vector along its first non-zero axis. The sum is
     // written out, as in Magnitude.
-    // Open: the original has no out-of-line copy, and inlines it where ours runs out of inline budget: nested in
-    // GetDir and GetWorldDir (the light's constructor, I3D_target::UpdateFrames, the mirror's UpdateVisibility and
-    // PrepareReflection) and after the camera's starved GetNormal calls. Declared __forceinline it gives those four
-    // exactly, and the portals' UpdatePortal (through S_plane's three-point constructor), but then
-    // S_quat::Make(const S_matrix &) inlines S_quat::operator* (the original calls it) and leaves later constructors,
-    // operator+ and Dot out of line (it charges the budget), so that isn't the whole answer.
-    // Neither Square() for the sum, *this *= for the products, an else for the second return, if/else statements for
-    // the signs nor sq reused for the reciprocal changes any inline decision of those five.
-    void Normalize()
+    // __forceinline: the original has no out-of-line copy of it, while the linker kept one of every other inline of
+    // the vector, and it is inlined wherever a nested call would be starved of inline budget (in GetDir and
+    // GetWorldDir: the light's constructor, I3D_target::UpdateFrames, the mirror's UpdateVisibility and
+    // PrepareReflection; after the camera's starved GetNormal calls; LightMap::m_ConvertRGB). Plain inline, those stay
+    // out of line in ours, and no amount of source in the callers (dead code worth 70 statements in the mirror's
+    // UpdateVisibility) or fewer later inline calls brings them in. Forced, its body still charges the budget:
+    // S_quat::Make(const S_matrix &) then inlines S_quat::operator*, which the original calls (see there).
+    __forceinline void Normalize()
     {
         float sq = x * x + y * y + z * z;
         if (fabs(sq - 1.0f) < MRG_ZERO)
@@ -213,10 +212,14 @@ struct S_vector {
 
     // Insanity3D's: the reciprocal goes into a local, which keeps a stack slot where VC6 inlines it
     // (VertexLightingProcess)
+    // The reciprocal is computed into the parameter (the clipper agent's finding, 2026-10-22): a local for it kept the
+    // divisor on the FPU stack in ClipFacesPersp's tessellation step (fld 1.0; fdiv st(3)), where the original consumes
+    // it (fxch st(2); fdivr [1.0]); the parameter also gives I3D_part_element::Tick's color step, and changes nothing
+    // else in the DLL.
     S_vector operator/(float f) const
     {
-        float r = 1.0f / f;
-        return S_vector(x * r, y * r, z * r);
+        f = 1.0f / f;
+        return S_vector(x * f, y * f, z * f);
     }
 
     // Insanity3D's
@@ -359,6 +362,7 @@ struct S_plane {
     S_plane(const S_vector &n, float d1);
     S_plane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
     void ComputePlane(const S_vector &v0, const S_vector &v1, const S_vector &v2);
+    __forceinline void NormalizeNormal();
 
     I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
 };
@@ -504,11 +508,50 @@ inline S_plane::S_plane(const S_vector &v0, const S_vector &v1, const S_vector &
     ComputePlane(v0, v1, v2);
 }
 
+// Through the constructor VC6 inlines the three calls as the area's UpdateV does; the three calls written at the call
+// site sum the normal's squares and scale it in another order, and ComputePlane called there in yet another.
 inline void S_plane::ComputePlane(const S_vector &v0, const S_vector &v1, const S_vector &v2)
 {
     normal.GetNormal(v0, v1, v2);
-    normal.Normalize();
+    NormalizeNormal();
     d = -normal.Dot(v0);
+}
+
+// The plane's own normalization, not S_vector::Normalize: where a null normal gets its unit vector, the planes built by
+// ComputePlane (the area's and occluder's UpdateV, the occluder's UpdateShadow, the portal's UpdatePortal) store x's
+// and y's -1 or 1 as integer constants, which these if/else statements give, while Normalize's ternaries store y
+// through the FPU, as the vectors normalized directly need (S_quat::Inverse, the light's UpdateV, UnmapScreenPoint).
+// __forceinline like Normalize: written out in ComputePlane it costs ComputePlane the budget that inlines GetNormal
+// in the portal's UpdatePortal, and as a plain inline function it is starved there; ComputePlane itself forced
+// inlines more than the original in the occluder's UpdateShadow. (The name is a guess: nothing names it.)
+__forceinline void S_plane::NormalizeNormal()
+{
+    float sq = normal.x * normal.x + normal.y * normal.y + normal.z * normal.z;
+    if (fabs(sq - 1.0f) < MRG_ZERO)
+        return;
+    if (sq < MRG_ZERO) {
+        if (normal.x != 0.0f) {
+            if (normal.x < 0.0f)
+                normal.x = -1.0f;
+            else
+                normal.x = 1.0f;
+        } else if (normal.z != 0.0f) {
+            if (normal.z < 0.0f)
+                normal.z = -1.0f;
+            else
+                normal.z = 1.0f;
+        } else {
+            if (normal.y < 0.0f)
+                normal.y = -1.0f;
+            else
+                normal.y = 1.0f;
+        }
+        return;
+    }
+    float f = 1.0f / (float)sqrt(sq);
+    normal.x *= f;
+    normal.y *= f;
+    normal.z *= f;
 }
 
 // Globals.cpp (PS2 names)

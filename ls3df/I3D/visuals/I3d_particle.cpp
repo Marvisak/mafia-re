@@ -10,9 +10,9 @@
 //   it, ours in edi), the instructions otherwise the same.
 // - The emitter's Tick: the scale's QUAT_VALID test (the original reads the flags' byte into al ahead of the FPU's
 //   pop) and life_max's two loads, in the other order (no spelling of the sum moves them).
-// - The element's Tick: the time step. The original converts dt once into a stack temporary that the rotation and the
-//   growth share, and multiplies the speed by the int (fimul); our float local is rounded again before its first use,
-//   and without it the frame is 4 bytes smaller than the original's.
+// - The element's Tick: the scale's copy (one store scheduled after the QUAT_VALID test in the original, as in the
+//   emitter's Tick, so most likely SetScale's or S_vector's spelling in the headers) and the color's reciprocal, which
+//   the original stores and multiplies in from memory for all three components (no spelling of the sum moved it).
 // - The particles' m_AddFGroups: two stack slots (lod_index and num_verts) swapped, and l reloaded once more in the
 //   original.
 // - SetSector and GetSector, in the class: ours come after the element's Tick, the original's at the file's end (its
@@ -911,6 +911,9 @@ LS3D_RESULT I3D_part_element::Duplicate(I3D_frame *frame)
 // Moves, turns and grows the particle in steps of at most 10 ms, heading from dir_prev to dir (which strays again
 // every dir_period), at a speed and in a color from their start to their end, faded in and out. At the end of its life
 // it leaves its tick list, its parent, its emitter and its scene.
+// The step is set to 10 first and replaced (one store after the join). The rotation and the growth convert dt in their
+// products, which VC6 does once into a temporary; the speed's step is a double product (fld speed; fimul dt), which
+// a float product would take from that temporary.
 // FUNCTION: LS3DF 0x1003fe40
 void I3D_part_element::Tick(int time)
 {
@@ -928,9 +931,7 @@ void I3D_part_element::Tick(int time)
         return;
     }
     while (time > 0) {
-        int dt = 10;
-        if (time < 10)
-            dt = time;
+        int dt = time >= 10 ? 10 : time;
         time -= 10;
         if (dir_period > 0) {
             dir_counter += dt;
@@ -945,9 +946,8 @@ void I3D_part_element::Tick(int time)
                 dir.Normalize();
             }
         }
-        float fdt = (float)dt;
         S_quat q;
-        q.Make(S_vector(0.0f, 0.0f, 1.0f), fdt * rot_speed);
+        q.Make(S_vector(0.0f, 0.0f, 1.0f), dt * rot_speed);
         if (!(frm_flags & FRMFLAGS_QUAT_VALID)) {
             frm_flags |= FRMFLAGS_QUAT_VALID;
             rot.Make(f_matrix);
@@ -956,7 +956,7 @@ void I3D_part_element::Tick(int time)
         rot.Normalize();
         frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
-        SetScale(GetScale() * (float)(fdt * grow + 1.0));
+        SetScale(GetScale() * (float)(dt * grow + 1.0));
 
         float alpha;
         int a = age;
@@ -983,7 +983,7 @@ void I3D_part_element::Tick(int time)
         } else
             f = (float)age / life_max;
         S_vector d = dir * f + dir_prev * (1.0f - f);
-        SetPos(f_matrix(3) + d * (float)(speed * dt * .001));
+        SetPos(f_matrix(3) + d * (float)(dt * .001 * speed));
     }
     Update();
 }
@@ -1029,7 +1029,9 @@ LS3D_RESULT I3D_part_base::Duplicate(I3D_frame *frame)
 
 // Like the billboard's, with the color written into the lod's vertices where it changed and no lighting or
 // environment map: the matrix turned to the camera only with billboard set, the lod's sector the particle's own if it
-// has one, and transparent unless PARTF_OPAQUE and not faded
+// has one, and transparent unless PARTF_OPAQUE and not faded. The face groups are walked through their GetNext and
+// GetMaterial (as the single meshes'): the inline call pending after the first Lock keeps its push_back out of line,
+// as the original has it.
 // FUNCTION: LS3DF 0x10040820
 void I3D_part_base::m_AddFGroups()
 {
@@ -1170,8 +1172,8 @@ void I3D_part_base::m_AddFGroups()
     h.vis = this;
     h.clip = frm_flags & FRMFLAGS_CLIP;
     h.sector = sector ? sector : AddFGHlpStruct.sector;
-    for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
-        I3D_material *mat = fg->material;
+    for (I3D_face_group *fg = level->fgroups; fg; fg = fg->GetNext()) {
+        I3D_material *mat = fg->GetMaterial();
         h.fg = fg;
         h.texture = mat && mat->flags & MATF_TEXTURE ? mat->GetTexture() : NULL;
         if (part_flags & PARTF_OPAQUE && fade * transparency >= 1.0f) {

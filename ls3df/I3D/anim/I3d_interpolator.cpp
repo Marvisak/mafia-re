@@ -42,7 +42,8 @@ LS3D_RESULT I3D_interpolator::ClearAnimation(uint index)
 
 // The key time of an animation time (the keys are 1/25 s apart) and a track's values, after its key times, aligned to
 // 4 bytes (the names are guesses). Update reads every track through them: their calls after the pose code cut the
-// inline share of the pose's quaternion products to the original's (see Update).
+// inline share of the pose's quaternion products to the original's (see Update). KeyValues' two returns cost a little
+// more than a conditional expression, which the blended pose's quaternion product needs.
 static inline ushort KeyTime(int time)
 {
     return time / 40;
@@ -50,7 +51,9 @@ static inline ushort KeyTime(int time)
 
 static inline const void *KeyValues(const ushort *times, int n)
 {
-    return n & 1 ? times + n : times + n + 1;
+    if (n & 1)
+        return times + n;
+    return times + n + 1;
 }
 
 // Blends the animations' keys at their times into the frame's position, rotation and scale, each animation by its
@@ -61,10 +64,14 @@ static inline const void *KeyValues(const ushort *times, int n)
 // values are block locals, assigned: the rotation's shares its area with the pose code's quaternion, as the original's.
 // The inline budget: the original's full pose leaves the vector operators of its quaternion product out of line, the
 // blended one only the constructors. The pose's accessors and the key helpers' calls give that; without them ours
-// inlines more.
-// Not matching yet: registers and a few stack slots all through. The original keeps t_last in bx and tests the keys'
-// flags from memory twice where ours keeps them in bx, and merges the blended position's and scale's stores with the
-// copies' at the join.
+// inlines more. The pose's flags are read where they are tested (the original loads them after the blend's compare,
+// hoisted from both branches; a local loads them before it), and its blended parts copy the pose's value first when
+// nothing was moved yet (the original lays the copies out inline).
+// Not matching yet: registers and a few stack slots all through. The tracks' loops keep t in edx in the original, ours
+// in a register of its own (edi, ebp), which takes v's or the keys pointer's; declaring n first keeps t in edx but
+// loads n before the division, and without a t local the division comes after KeyValues. The notes loop keeps
+// t_last in bx and tests the keys' flags from memory twice where ours keeps them in bx, and the blended position's
+// and scale's stores are merged with the copies' at the join.
 // FUNCTION: LS3DF 0x1001d320
 void I3D_interpolator::Update()
 {
@@ -213,13 +220,12 @@ void I3D_interpolator::Update()
 
     // The pose: in full it replaces only what an animation moves (a rotation always), blended it adds to it
     if (pose && pose_blend > 0.0f) {
-        uint flags = pose->pose_flags;
         if (pose_blend >= 1.0f) {
-            if (flags & POSEF_POS)
+            if (pose->pose_flags & POSEF_POS)
                 pos = pose->GetPos1();
-            if (flags & POSEF_SCALE)
+            if (pose->pose_flags & POSEF_SCALE)
                 scale = pose->GetScale1();
-            if (flags & POSEF_ROT_ADD) {
+            if (pose->pose_flags & POSEF_ROT_ADD) {
                 if (num_rot) {
                     num_rot++;
                     rot = pose->GetRot1() * rot;
@@ -227,40 +233,40 @@ void I3D_interpolator::Update()
                     rot = pose->GetRot1();
                     num_rot = 1;
                 }
-            } else if (flags & POSEF_ROT) {
+            } else if (pose->pose_flags & POSEF_ROT) {
                 rot = pose->GetRot1();
                 num_rot = 1;
             }
         } else {
-            if (flags & POSEF_POS) {
-                if (num_pos)
-                    pos = pose->GetPos1() * pose_blend + pos * (1.0f - pose_blend);
-                else
+            if (pose->pose_flags & POSEF_POS) {
+                if (!num_pos)
                     pos = pose->GetPos1();
+                else
+                    pos = pose->GetPos1() * pose_blend + pos * (1.0f - pose_blend);
                 num_pos++;
             }
-            if (flags & POSEF_SCALE) {
-                if (num_scale)
-                    scale = pose->GetScale1() * pose_blend + scale * (1.0f - pose_blend);
-                else
+            if (pose->pose_flags & POSEF_SCALE) {
+                if (!num_scale)
                     scale = pose->GetScale1();
+                else
+                    scale = pose->GetScale1() * pose_blend + scale * (1.0f - pose_blend);
                 num_scale++;
             }
-            if (flags & POSEF_ROT_ADD) {
-                if (num_rot) {
+            if (pose->pose_flags & POSEF_ROT_ADD) {
+                if (!num_rot) {
+                    rot = pose->GetRot1();
+                    num_rot = 1;
+                } else {
                     num_rot++;
                     S_quat q = pose->GetRot1();
                     q.s *= pose_blend;
                     rot = q * rot;
-                } else {
-                    rot = pose->GetRot1();
-                    num_rot = 1;
                 }
-            } else if (flags & POSEF_ROT) {
-                if (num_rot)
-                    rot = rot.Slerp(pose->GetRot1(), pose_blend, false);
-                else
+            } else if (pose->pose_flags & POSEF_ROT) {
+                if (!num_rot)
                     rot = pose->GetRot1();
+                else
+                    rot = rot.Slerp(pose->GetRot1(), pose_blend, false);
                 num_rot++;
             }
         }

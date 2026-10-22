@@ -11,8 +11,12 @@
 // function's literals after its code, so the message came from a function compiled before ClipFacegroups; the helper
 // isn't static, so VC6 also compiles a copy of it where it is defined, which nothing calls and the linker drops. The
 // message cites clipping.cpp, the other two clipper.cpp.
-// Open: the world-space ones' three temporaries before and at the loop's top take eax, ecx and edx in another order;
-// in ClipFacegroups the transparent branch's and the face groups' calls' registers.
+// ClipFacegroups assigns clip_two_sided once after the blend test, and VC6 copies it into both branches; written in
+// each branch, the copies and the face groups' calls took other registers.
+// Open: the world-space ones' three temporaries before and at the loop's top: the original's clip_verts copy, matrix
+// and result address take ecx, edx and eax, ours eax, ecx and edx (a rotation, the same in both functions and both
+// loops, and with the perspective branch removed). Dead locals, (void) uses, the positions of i, v and cv, references
+// for the matrix, the vertex or the clip vertex, and the loop's other forms don't move it.
 #include "I3D/I3D.h"
 #include "I3D/render/clipper.h"
 
@@ -121,11 +125,9 @@ static bool ClipFacegroups(I3D_face_group *fg)
                 clip_fg_blend = true;
                 if (!clip_with_alpha)
                     continue;
-                clip_two_sided = mat->flags & MATF_TWO_SIDED;
-            } else {
+            } else
                 clip_fg_blend = false;
-                clip_two_sided = mat->flags & MATF_TWO_SIDED;
-            }
+            clip_two_sided = mat->flags & MATF_TWO_SIDED;
         } else {
             clip_two_sided = 0;
             clip_fg_blend = 0;

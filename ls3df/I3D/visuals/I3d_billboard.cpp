@@ -1,7 +1,7 @@
 // The billboards and lens flares (PS2 I3d_billboard.cpp), at 0x10005db0-0x1000b0c0 in the original: I3D_billboard and
 // I3D_lensflare in PS2's order. The marker $E (0x10008390) comes before the billboard's m_RenderFGroup, and the copies
 // of the render state helpers the linker kept follow the lens flare's Draw. Names are the PS2 build's unless noted.
-// The three big functions' frames are 4 bytes larger in the original. The kept copies come in the original's order
+// Draw's frame is 4 bytes larger in the original. The kept copies come in the original's order
 // only with SetBlendState between SetAlphaState and SetColorOp in the header the driver sees, and the driver then
 // inlines it into its draws whatever its size (16 dead statements didn't stop it); ours also come due earlier (after
 // the billboard's m_RenderFGroup, in the original after Draw), the headers' inline content again (see autopch.py).
@@ -101,10 +101,13 @@ LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
 // axes scaled by the billboard's, mode 3 the local matrix times the camera's. The rows a rotation keeps are copied with
 // assembly. Modes 0 and 1 write the rotation times GetRenderMatrix() out element by element, where PS2 builds the
 // rotation with Identity() and multiplies; the normalized vectors are PS2's (a = v; a.y = 0.0f; a.Normalize(), VC6
-// folding the zero).
-// Not matching yet: the original has an ebp frame (and this spilled to it), though its assembly has no labels, jumps
-// or pushes VC6 can't follow; labels, a goto, this in a block, inlined assembly helpers, /Oy- and #pragma optimize
-// don't give it one.
+// folding the zero). The sums under e's square roots are written z first: the squares are then the ones a.Normalize()
+// computed, kept on the FPU stack as in the original (x first reorders both). Mode 2's scale is GetWorldScale(): a
+// conditional expression copies through a temporary, 12 bytes more frame.
+// Not matching yet: the order VC6 loads the two terms of a product sum in (a.x's term first in the original, a.z's in
+// ours; writing them the other way round changes nothing there but reorders the rest of the function), e.Normalize's
+// sum in two cases, a factor order in mode 1 and in the inlined UpdateMatrix of mode 3. 64 combinations of the square
+// roots' term orders and e's initialization (constructor or assignment) don't do better.
 // FUNCTION: LS3DF 0x10006090
 void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 {
@@ -116,7 +119,7 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
             S_vector a = v;
             a.y = 0.0f;
             a.Normalize();
-            S_vector e((float)sqrt(v.x * v.x + v.z * v.z), v.y, 0.0f);
+            S_vector e((float)sqrt(v.z * v.z + v.x * v.x), v.y, 0.0f);
             e.Normalize();
             const S_matrix &mat = GetRenderMatrix();
             (*m)(0, 0) = e.y * mat(1, 0) + (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.x;
@@ -147,7 +150,7 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
         case 1: {
             S_vector v = cam_pos * GetInvMatrix();
             S_vector e;
-            e = S_vector((float)sqrt(v.x * v.x + v.z * v.z), v.y, 0.0f);
+            e = S_vector((float)sqrt(v.z * v.z + v.x * v.x), v.y, 0.0f);
             e.Normalize();
             S_vector a = v;
             a.y = 0.0f;
@@ -183,7 +186,7 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
             S_vector a = v;
             a.y = 0.0f;
             a.Normalize();
-            S_vector e((float)sqrt(v.x * v.x + v.z * v.z), v.y, 0.0f);
+            S_vector e((float)sqrt(v.z * v.z + v.x * v.x), v.y, 0.0f);
             e.Normalize();
             const S_matrix &mat = GetRenderMatrix();
             (*m)(0, 0) = a.x * mat(2, 0) - a.z * mat(0, 0);
@@ -306,7 +309,7 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
         break;
     case 2: {
         *m = AddFGHlpStruct.camera->view_inv;
-        S_vector s = !parent ? scale : GetMatrix().GetScale();
+        S_vector s = GetWorldScale();
         S_vector r1 = (*m)(1);
         (*m)(0) *= s.x;
         (*m)(1) = (*m)(2) * s.y;
@@ -322,7 +325,12 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 }
 
 // Like I3D_object's, with the matrix turned to the camera, which the environment map and the transformation take
-// too; a mode 5 environment map maps into the parent's first dummy child
+// too; a mode 5 environment map maps into the parent's first dummy child. The fade adds the previous level's whole
+// distance (fadd without the fmul by 0.5), and FogProcess is called in each branch of the stride (push 0x28 and push
+// 0x20 in two arms, as the original's); the help structure is filled in the original's store order.
+// Not matching yet: the stack slots (this, lod_index, num_verts and the Lock's push_back temporary sit elsewhere), the
+// lod::Create call's argument loads (the original loads level->num_vertices before the constant pushes and tests the
+// flags in memory) and lod_index read twice where the original copies it.
 // FUNCTION: LS3DF 0x100073c0
 void I3D_billboard::m_AddFGroups()
 {
@@ -385,7 +393,7 @@ void I3D_billboard::m_AddFGroups()
     if (lod_index == mesh->num_lods - 1 && level->lod_dist > 0.0f) {
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
-            f += mesh->levels[lod_index - 1]->lod_dist * 0.5f;
+            f += mesh->levels[lod_index - 1]->lod_dist;
         float s = RSLodQuality * world_scale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
@@ -400,9 +408,9 @@ void I3D_billboard::m_AddFGroups()
         l->update_count = update_count;
     } else
         moved = false;
+    uchar *lv = NULL;
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
-    uchar *lv = NULL;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
         l->SetUV(level->GetFlags() & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
             mesh->u_ofs, mesh->v_ofs);
@@ -488,16 +496,19 @@ void I3D_billboard::m_AddFGroups()
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
-                level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            if (level->GetFlags() & MESHF_ENVMAP)
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            else
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
         }
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.sector = AddFGHlpStruct.sector;
     h.clip = frm_flags & FRMFLAGS_CLIP;
     h.vis = this;
+    h.sector = AddFGHlpStruct.sector;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
         I3D_material *mat = fg->material;
         h.fg = fg;
@@ -509,7 +520,7 @@ void I3D_billboard::m_AddFGroups()
             h.env_texture = mat->GetEnvTexture();
         else
             h.env_texture = NULL;
-        if (!mat || !h.texture && !(mat->alpha * fade * transparency < 1.0f)) {
+        if (!mat || !h.texture && mat->alpha * fade * transparency >= 1.0f) {
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
@@ -527,10 +538,14 @@ void I3D_billboard::m_AddFGroups()
 }
 
 // Like I3D_object's, rendered with g_matrix: the cull mode set once (none for a proxy, else by the material), and no
-// z writes for rot_axis 4. The material's cull mode goes through render.h's SetCullState: written out, the inline
-// budget comes out otherwise.
-// Not matching yet: the original keeps base in a stack slot, zeroes esi in the branch without hardware T&L and calls
-// two of that switch's SetColorOps out of line (ours four; a helper for the switch made it worse).
+// z writes for rot_axis 4. Both cull modes go through render.h's SetCullState (the proxy's folds to the written-out
+// test, but spends the inline budget the original spent). The fog pass calls SwapVertexBytes in each branch of the
+// stride: the original pushes 0x28 or 0x20 in two arms where the conditional expression gives sete/lea.
+// Not matching yet: the original calls cases 4 and 5's SetColorOp out of line in the multipass switch; ours inlines
+// case 4. An inline call spending one more statement before it (a dead one, Spend(0) with one statement under if
+// (x)) gives the original's calls exactly, so the original's source spends a little more; accessors (GetMaterial,
+// NumFaces, GetMesh, GetAlpha) add budget instead. Also the proxy branch's registers, SetCullState's two calls not
+// sharing their call instruction, and h kept in ebp in the single pass texture choice, where the original reloads it.
 // FUNCTION: LS3DF 0x100083b0
 void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
@@ -541,10 +556,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     if (vis_flags & VISF_PROXY) {
         I3D_object *obj = (I3D_object *)user_data;
         l = obj->lods[obj->cur_lod];
-        if (m_CurrCullState != D3DCULL_NONE) {
-            m_CurrCullState = D3DCULL_NONE;
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-        }
+        SetCullState(D3DCULL_NONE);
         num_verts = mesh->levels[obj->cur_lod]->num_vertices;
     } else {
         l = lods[cur_lod];
@@ -715,7 +727,12 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
                 reset |= 1;
             } else {
-                SetColorOp(m_Modulate2X);
+                // Written out: the original calls cases 4 and 5's SetColorOp out of line but inlines this one (and so
+                // does I3D_object's), which an equal call after them can't give
+                if (m_CurrColorOp != m_Modulate2X) {
+                    m_CurrColorOp = m_Modulate2X;
+                    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLOROP, m_Modulate2X);
+                }
                 m_pD3DDevice8->SetTexture(0, NULL);
             }
         }
@@ -757,15 +774,19 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetBlendState(0);
             const I3D_triface *faces = fg->GetFaces();
             uchar *v = buffer->Lock(base, 0);
-            SwapVertexBytes(v + 0x13, v + 0x17, buffer->vertex_format == VF_TLVERTEX2 ? sizeof(TLVERTEX2) : sizeof(TLVERTEX),
-                faces, fg->num_faces, 0);
+            if (buffer->vertex_format == VF_TLVERTEX2)
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
+            else
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 0);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
             faces = fg->GetFaces();
             v = buffer->Lock(base, 0);
-            SwapVertexBytes(v + 0x13, v + 0x17, buffer->vertex_format == VF_TLVERTEX2 ? sizeof(TLVERTEX2) : sizeof(TLVERTEX),
-                faces, fg->num_faces, 1);
+            if (buffer->vertex_format == VF_TLVERTEX2)
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
+            else
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 1);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
@@ -878,9 +899,15 @@ LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)
 // enlarged and the others faded by the angle to the view direction. Spellings the original's code shows: windows.h's
 // min and max, the constant first where the original loads it first (max(1.0f, ...)); the viewport's half sizes in
 // parentheses; the time step multiplied in each arm of the ternary; if (time - last_update);
-// target_color.Dot(target_color); each vertex's color assigned first and the four specular colors last.
-// Not matching yet: the original keeps the position in ebp and ebx across the camera's matrix update and zeroes ebx
-// only after timeGetTime, where ours spends ebx on the zero first.
+// target_color.Dot(target_color); each vertex's color assigned first and the four specular colors last. The single
+// glow's position is a local of its own (p): with pos's address taken by the out-of-line operator*=, VC6 kept pos in
+// memory and made ebx the zero register from the start, where the original keeps pos.x and pos.y in ebp and ebx and
+// zeroes ebx only after timeGetTime. SetTexture is called in each branch (the original pushes in two arms); sx and sy
+// are declared once for both branches (same code, closer slots).
+// Not matching yet: the frame (4 bytes larger in the original, its slots sorted otherwise), the order VC6 sums the
+// squares of dir's and pos's Normalize in (the original's x first lets it hoist fld pos.x above the glow count test;
+// no spelling of the else branch or of Normalize moved it), the loop's visibility * size operand order and the order
+// of some stores (the single glow's first vertex color first).
 // FUNCTION: LS3DF 0x10009890
 void I3D_lensflare::Draw(bool test)
 {
@@ -890,6 +917,7 @@ void I3D_lensflare::Draw(bool test)
         return;
     S_vector dir;
     float dist;
+    int sx, sy;
     if (glows.size() == 1) {
         dir = pos - cam_pos;
         dist = (float)sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
@@ -940,9 +968,8 @@ void I3D_lensflare::Draw(bool test)
     if (IsMrgZeroLess(visibility))
         return;
     if (glows.size() == 1) {
-        pos = GetWBoundVolume().bsphere.pos;
+        S_vector p = GetWBoundVolume().bsphere.pos;
         I3D_material *mat = glows[0].mat;
-        int sx, sy;
         if (!mat->texture)
             sx = sy = 64;
         else {
@@ -960,19 +987,19 @@ void I3D_lensflare::Draw(bool test)
         float w = sx * k * s;
         float h = sy * k * s;
         const S_matrix &vp = *pViewProjMatrix;
-        float pw = pos.x * vp(0, 3) + pos.y * vp(1, 3) + pos.z * vp(2, 3) + vp(3, 3);
+        float pw = p.x * vp(0, 3) + p.y * vp(1, 3) + p.z * vp(2, 3) + vp(3, 3);
         if (pw <= 0.0f) {
             visibility = 0.0f;
             return;
         }
         float rw = 1.0f / pw;
-        pos *= vp;
-        pos.x = (pos.x * rw + 1.0f) * (m_D3DViewPort8.Width * 0.5f) + m_D3DViewPort8.X;
-        pos.y = (1.0f - pos.y * rw) * (m_D3DViewPort8.Height * 0.5f) + m_D3DViewPort8.Y;
-        float x0 = pos.x - w * 0.5f;
-        float y0 = pos.y - h * 0.5f;
-        float x1 = pos.x + w * 0.5f;
-        float y1 = pos.y + h * 0.5f;
+        p *= vp;
+        p.x = (p.x * rw + 1.0f) * (m_D3DViewPort8.Width * 0.5f) + m_D3DViewPort8.X;
+        p.y = (1.0f - p.y * rw) * (m_D3DViewPort8.Height * 0.5f) + m_D3DViewPort8.Y;
+        float x0 = p.x - w * 0.5f;
+        float y0 = p.y - h * 0.5f;
+        float x1 = p.x + w * 0.5f;
+        float y1 = p.y + h * 0.5f;
         uint c = (((FloatToInt(intensity * visibility * 255.0f) << 8 | FloatToInt(color.x * 255.0f)) << 8 |
             FloatToInt(color.y * 255.0f)) << 8) | FloatToInt(color.z * 255.0f);
         TLVERTEX v[4];
@@ -1008,7 +1035,10 @@ void I3D_lensflare::Draw(bool test)
         v[1].specular = 0;
         v[2].specular = 0;
         v[3].specular = 0;
-        m_pD3DDevice8->SetTexture(0, mat->texture ? mat->GetTexture()->m_pD3DTexture8 : NULL);
+        if (mat->texture)
+            m_pD3DDevice8->SetTexture(0, mat->GetTexture()->m_pD3DTexture8);
+        else
+            m_pD3DDevice8->SetTexture(0, NULL);
         SetVertexFormat(VF_TLVERTEX);
         m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(TLVERTEX));
         return;
@@ -1022,7 +1052,6 @@ void I3D_lensflare::Draw(bool test)
     for (int i = glows.size(); i--; ) {
         S_vector p = pos * glows[i].pos + center;
         I3D_material *mat = glows[i].mat;
-        int sx, sy;
         if (!mat->texture)
             sx = sy = 64;
         else {
@@ -1044,10 +1073,14 @@ void I3D_lensflare::Draw(bool test)
         p *= vp;
         p.x = (p.x * rw + 1.0f) * (m_D3DViewPort8.Width * 0.5f) + m_D3DViewPort8.X;
         p.y = (1.0f - p.y * rw) * (m_D3DViewPort8.Height * 0.5f) + m_D3DViewPort8.Y;
-        float x0 = p.x - w * 0.5f;
-        float y0 = p.y - h * 0.5f;
-        float x1 = p.x + w * 0.5f;
-        float y1 = p.y + h * 0.5f;
+        // Halved in place: the halves stay on the FPU stack for x1 and y1 (written w * 0.5f four times, as in the
+        // single glow, VC6 adds them from memory)
+        w *= 0.5f;
+        float x0 = p.x - w;
+        h *= 0.5f;
+        float y0 = p.y - h;
+        float x1 = p.x + w;
+        float y1 = p.y + h;
         uint c = (((FloatToInt((!i ? 1.0f : fade) * intensity * visibility * 255.0f) << 8 | FloatToInt(color.x * 255.0f))
             << 8 | FloatToInt(color.y * 255.0f)) << 8) | FloatToInt(color.z * 255.0f);
         TLVERTEX v[4];
@@ -1083,7 +1116,10 @@ void I3D_lensflare::Draw(bool test)
         v[1].specular = 0;
         v[2].specular = 0;
         v[3].specular = 0;
-        m_pD3DDevice8->SetTexture(0, mat->texture ? mat->GetTexture()->m_pD3DTexture8 : NULL);
+        if (mat->texture)
+            m_pD3DDevice8->SetTexture(0, mat->GetTexture()->m_pD3DTexture8);
+        else
+            m_pD3DDevice8->SetTexture(0, NULL);
         SetVertexFormat(VF_TLVERTEX);
         m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(TLVERTEX));
     }

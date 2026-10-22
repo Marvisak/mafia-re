@@ -563,9 +563,13 @@ uchar *I3D_object::LockVertices(int index, uint flags)
 
 // Queues the face groups of the level of detail the distance picks, after bringing its lod up to date: created with
 // the level's vertices, the texture coordinates of the level shown (VISF_UNKNOWN_10), lit, its alpha, the environment
-// map and, without hardware T&L, transformed and fogged
-// Not matching yet: the register allocation (the original keeps this in ebx, ours in ebp) and one more stack slot in
-// the original.
+// map and, without hardware T&L, transformed and fogged. ProcessVertices is in both clipping branches and FogProcess
+// called in each branch of the stride (the original pushes 0x28 and 0x20 in two arms, tail-merged): the copies' extra
+// references to num_verts give the original's stack slots. The help struct's clip is assigned first, as the original
+// stores it.
+// Not matching yet: the distance's squares come out x, z, y, the original's z, y, x. That is the sum written out
+// (S_vector d = ...; d.x * d.x + d.y * d.y + d.z * d.z), but its source then leaves the alpha Lock's push_back inline
+// and the four PrepareLights calls unmerged; Dot and a GetWBoundVolume() without the reference give Square()'s order.
 // FUNCTION: LS3DF 0x10038020
 void I3D_object::m_AddFGroups()
 {
@@ -656,8 +660,8 @@ void I3D_object::m_AddFGroups()
             uv = (const I3D_text_coor *)mesh->levels[cur_lod]->vb.buffer;
             uv_stride = sizeof(I3D_text_coor);
         } else {
-            uv = &verts->tex;
             uv_stride = sizeof(I3D_vertex);
+            uv = &verts->tex;
         }
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP) {
@@ -763,26 +767,30 @@ void I3D_object::m_AddFGroups()
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(TRUE);
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         } else {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(FALSE);
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         }
-        m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, 0);
-            FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z,
-                level->GetFlags() & MESHF_ENVMAP ? sizeof(TLVERTEX2) : sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            if (level->GetFlags() & MESHF_ENVMAP)
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
+            else
+                FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX), num_verts,
+                    AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
         }
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.sector = AddFGHlpStruct.sector;
     h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.sector = AddFGHlpStruct.sector;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
         I3D_material *mat = fg->material;
@@ -801,7 +809,7 @@ void I3D_object::m_AddFGroups()
                 h.env_texture = mat->GetEnvTexture();
         } else
             h.env_texture = NULL;
-        if (!mat || !h.texture && !(mat->alpha * fade * transparency < 1.0f)) {
+        if (!mat || !h.texture && mat->alpha * fade * transparency >= 1.0f) {
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
@@ -821,9 +829,13 @@ void I3D_object::m_AddFGroups()
 // Renders a face group m_AddFGroups queued: the material's states, its texture and environment map (in one pass, or
 // in two where the hardware can't blend them, without HWCAPS_SINGLEPASS), and a fog pass that renders the
 // fog color over the face group with the vertices' fog in their alpha (SwapVertexBytes)
-// Not matching yet: the multipass branch without a material keeps its own SetTexture(0, NULL), which the original
-// shares with the untextured branch, and SetColorOp, SetAlphaState and SetAlphaOp stay inline later than in the
-// original. Insanity3D's shape of the cull code (SetCullState, or EnableNoCull's ternary) scored worse.
+// The cull mode goes through render.h's SetCullState, the multipass's last SetColorOp is written out and the fog pass
+// calls SwapVertexBytes in each branch of the stride (the original pushes 0x28 and 0x20 in two arms), as in
+// I3D_billboard's: that gives the original's out-of-line calls but one, a SetColorOp of the multipass's switch, which
+// a SetCullState one dead statement longer (render.h) also calls out of line (as I3D_lit_object's needs).
+// Not matching yet: the original keeps h in ebx from the start to the single pass's texture tests and l in esi (ours l
+// in ebx, h not in a register at all), which moves the registers of the constants all through; with it, the proxy
+// branch's num_verts tails merge differently.
 // FUNCTION: LS3DF 0x10039280
 void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
@@ -930,14 +942,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            uint cull = ((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27;
-            if (m_CurrCullState != cull) {
-                m_CurrCullState = cull;
-                if (cull == D3DCULL_CCW)
-                    m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
-                else
-                    m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, cull);
-            }
+            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
@@ -985,14 +990,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 SetBlendState(0);
             } else
                 SetAlphaState(0);
-            uint cull = ((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27;
-            if (m_CurrCullState != cull) {
-                m_CurrCullState = cull;
-                if (cull == D3DCULL_CCW)
-                    m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
-                else
-                    m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, cull);
-            }
+            SetCullState(((~mat->flags & MATF_TWO_SIDED) | 0x8000000) >> 27);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
@@ -1023,7 +1021,10 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
                 reset |= 1;
             } else {
-                SetColorOp(m_Modulate2X);
+                if (m_CurrColorOp != m_Modulate2X) {
+                    m_CurrColorOp = m_Modulate2X;
+                    m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLOROP, m_Modulate2X);
+                }
                 m_pD3DDevice8->SetTexture(0, NULL);
             }
         }
@@ -1065,15 +1066,19 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetBlendState(0);
             const I3D_triface *faces = fg->GetFaces();
             uchar *v = buffer->Lock(base, 0);
-            SwapVertexBytes(v + 0x13, v + 0x17, buffer->vertex_format == VF_TLVERTEX2 ? sizeof(TLVERTEX2) : sizeof(TLVERTEX),
-                faces, fg->num_faces, 0);
+            if (buffer->vertex_format == VF_TLVERTEX2)
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
+            else
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 0);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
             faces = fg->GetFaces();
             v = buffer->Lock(base, 0);
-            SwapVertexBytes(v + 0x13, v + 0x17, buffer->vertex_format == VF_TLVERTEX2 ? sizeof(TLVERTEX2) : sizeof(TLVERTEX),
-                faces, fg->num_faces, 1);
+            if (buffer->vertex_format == VF_TLVERTEX2)
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
+            else
+                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 1);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);

@@ -3,18 +3,20 @@
 // the end. The header's zero vector has its $E at 0x10016fd0, after DrawLines. The order of the file's .bss
 // (0x100af8e8-0x100c0010, VC6's hash) isn't worked out. Names are the PS2 build's unless noted.
 //
-// The debugging draws set D3D's render states through IGraph's caches. Their color operation and alpha state code is
-// the inline helpers' (I3D.h): the same code written out takes other registers. The blend and vertex format code is a
-// call in the short draws (render.h's inline helpers, which this file doesn't see) and written out in the long ones,
-// which may be other helpers of the same kind. The long ones also
-// leave calls out of line that our build inlines (C_list::reserve in DrawText, S_vector's constructor in
-// DrawCircle2D), as if all of it were inline helpers and VC6's inline budget ran out earlier than in our build; with
-// everything as helpers, our build inlines the short draws' blend code too. Open.
+// The debugging draws set D3D's render states through IGraph's caches with the rendering's inline helpers (I3D.h's and
+// render.h's): SetFog(FALSE, ...) for the fog, as render.cpp turns it off, SetCullState, SetBlendState and
+// SetVertexFormat. Which calls VC6 inlines is the inline budget's: the short draws call SetBlendState and
+// SetVertexFormat, the long ones inline them until the budget runs out (DrawSprite calls them from its second branch's
+// SetBlendState on, DrawTriangles in its transformed branch). Written out instead, those blocks left the budget too
+// large in the long draws; the fog block written out, too large in all of them, and the clipping block as SetClipping
+// too small in the short ones. The lists are filled as load4ds.cpp fills its, reserve(n) and then used_size, except in
+// DrawText (see there).
 #include "I3D/I3D.h"
 #include "I3D/mesh/I3d_material.h"
 #include "IGraph/IGraph.h"
 #include "I3D/render/VBManager.h"
 #include "ISound/ISound.h"
+#include "I3D/render/render.h"
 
 #include <stdio.h>
 
@@ -673,20 +675,20 @@ I3D_material *I3D_driver::GetIcon(uint res_id)
     return mat;
 }
 
-// The draws' color: the alpha byte is a transparency
+// The draws' color: the alpha byte is a transparency. The components go through locals: as one expression it spends
+// less of the inline budget, and DrawCircle2D inlines S_vector's constructor, which the original calls. The text draws
+// write it out with the material's color, which the original reads through the material's register.
 static inline uint MakeColor(float a, const S_vector &color)
 {
-    return FloatToInt(a * 255.0f) << 24 | FloatToInt(color.x * 255.0f) << 16 | FloatToInt(color.y * 255.0f) << 8 |
-        FloatToInt(color.z * 255.0f);
+    int ia = FloatToInt(a * 255.0f), r = FloatToInt(color.x * 255.0f), g = FloatToInt(color.y * 255.0f),
+        b = FloatToInt(color.z * 255.0f);
+    return ia << 24 | r << 16 | g << 8 | b;
 }
 
 // FUNCTION: LS3DF 0x100166c0
 void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alpha)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -713,10 +715,7 @@ void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alph
 // FUNCTION: LS3DF 0x100168f0
 void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -745,10 +744,7 @@ void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
 // FUNCTION: LS3DF 0x10016b20
 void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vector &color, uint alpha)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -780,10 +776,7 @@ void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vect
 void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint alpha)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -799,7 +792,8 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
     SetBlendState(0);
     m_pD3DDevice8->SetTexture(0, NULL);
     SetVertexFormat(0);
-    LVertList.resize(num_verts);
+    LVertList.reserve(num_verts);
+    LVertList.used_size = num_verts;
     LVERTEX *lv = &LVertList[0];
     for (uint i = 0; i < num_verts; i++) {
         const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
@@ -813,14 +807,16 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
         &LVertList[0], sizeof(LVERTEX));
 }
 
+// The textured loops walk a pointer to the coordinates and one to the texture coordinates (the original addresses the
+// second at a fixed offset from the first). Each branch of the texture test takes the vertex pointer itself: VC6
+// hoists the two loads, and in the transformed branch keeps reserve's new array in its register across the join, as
+// the original does; taken once before the test, it loads the array again after the join. With render.h's helpers the
+// budget runs out at the transformed branch's SetVertexFormat, which the original calls.
 // FUNCTION: LS3DF 0x10016ff0
 LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -833,35 +829,22 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
         SetAlphaState(0);
     else
         SetAlphaState(1);
-    if (m_CurrBlendState) {
-        m_CurrBlendState = 0;
-        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    }
+    SetBlendState(0);
     uint no_cull = flags & I3DDRAW_NOCULL;
-    if (no_cull) {
-        if (m_CurrCullState != D3DCULL_NONE) {
-            m_CurrCullState = D3DCULL_NONE;
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-        }
-    } else if (flags & I3DDRAW_CULL_CW) {
-        if (m_CurrCullState != D3DCULL_CW) {
-            m_CurrCullState = D3DCULL_CW;
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-        }
-    } else {
-        if (m_CurrCullState != D3DCULL_CCW) {
-            m_CurrCullState = D3DCULL_CCW;
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
-        }
-    }
+    if (no_cull)
+        SetCullState(D3DCULL_NONE);
+    else if (flags & I3DDRAW_CULL_CW)
+        SetCullState(D3DCULL_CW);
+    else
+        SetCullState(D3DCULL_CCW);
     if (!(flags & I3DDRAW_TRANSFORMED)) {
-        LVertList.resize(num_verts);
-        LVERTEX *lv = &LVertList[0];
+        LVertList.reserve(num_verts);
+        LVertList.used_size = num_verts;
         if (tx) {
+            LVERTEX *lv = &LVertList[0];
+            const S_vector *v = (const S_vector *)verts;
+            const I3D_text_coor *t = tx;
             for (uint i = 0; i < num_verts; i++) {
-                const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
-                const I3D_text_coor *t = (const I3D_text_coor *)((const uchar *)tx + i * vstride);
                 lv->x = v->x;
                 lv->y = v->y;
                 lv->z = v->z;
@@ -869,8 +852,11 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
                 lv->u = t->u;
                 lv->v = t->v;
                 lv++;
+                v = (const S_vector *)((const uchar *)v + vstride);
+                t = (const I3D_text_coor *)((const uchar *)t + vstride);
             }
         } else {
+            LVERTEX *lv = &LVertList[0];
             for (uint i = 0; i < num_verts; i++) {
                 const S_vector *v = (const S_vector *)((const uchar *)verts + i * vstride);
                 lv->x = v->x;
@@ -881,19 +867,17 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
             }
             m_pD3DDevice8->SetTexture(0, NULL);
         }
-        if (m_CurrVertexFormat) {
-            m_CurrVertexFormat = 0;
-            m_pD3DDevice8->SetVertexShader(m_LVertexVS);
-        }
+        SetVertexFormat(0);
         m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
             &LVertList[0], sizeof(LVERTEX));
     } else {
-        TLVertList.resize(num_verts);
-        TLVERTEX *tlv = &TLVertList[0];
+        TLVertList.reserve(num_verts);
+        TLVertList.used_size = num_verts;
         if (tx) {
+            TLVERTEX *tlv = &TLVertList[0];
+            const float *v = (const float *)verts;
+            const I3D_text_coor *t = tx;
             for (uint i = 0; i < num_verts; i++) {
-                const float *v = (const float *)((const uchar *)verts + i * vstride);
-                const I3D_text_coor *t = (const I3D_text_coor *)((const uchar *)tx + i * vstride);
                 tlv->x = v[0];
                 tlv->y = v[1];
                 tlv->z = v[2];
@@ -903,8 +887,11 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
                 tlv->u = t->u;
                 tlv->v = t->v;
                 tlv++;
+                v = (const float *)((const uchar *)v + vstride);
+                t = (const I3D_text_coor *)((const uchar *)t + vstride);
             }
         } else {
+            TLVERTEX *tlv = &TLVertList[0];
             for (uint i = 0; i < num_verts; i++) {
                 const float *v = (const float *)((const uchar *)verts + i * vstride);
                 tlv->x = v[0];
@@ -921,12 +908,8 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
         m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
             &TLVertList[0], sizeof(TLVERTEX));
     }
-    if (no_cull || flags & I3DDRAW_CULL_CW) {
-        if (m_CurrCullState != D3DCULL_CCW) {
-            m_CurrCullState = D3DCULL_CCW;
-            m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
-        }
-    }
+    if (no_cull || flags & I3DDRAW_CULL_CW)
+        SetCullState(D3DCULL_CCW);
     return I3D_OK;
 }
 
@@ -934,10 +917,7 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
 void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector &color, int num_segments,
     uint alpha)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -953,7 +933,8 @@ void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector
     SetBlendState(0);
     S_matrix m = RotateZMatrix(PI * 2.0f / num_segments);
     num_segments++;
-    TLVertList.resize(num_segments);
+    TLVertList.reserve(num_segments);
+    TLVertList.used_size = num_segments;
     TLVERTEX *v = &TLVertList[0];
     S_vector dir(0.0f, -radius, 0.0f);
     for (int i = num_segments; i--; v++) {
@@ -971,21 +952,22 @@ void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_LINESTRIP, num_segments, &TLVertList[0], sizeof(TLVERTEX));
 }
 
+// The size goes into two locals, the width for the x coordinates and the height for the y ones (the original stores
+// it twice, fst and fstp). The list is sized through C_list::resize, whose nested reserve gets only a share of the
+// inline budget and stays out of line, as in the original. Open: written as in the other draws (reserve, then
+// used_size), our build inlines it; about one SetAlphaState's worth of spending more before it fixes that, and the
+// same amount fixes DrawSprite with its color written out, so both probably had something in the camera block that
+// ours lacks (spellings of the block tried: a reference to the matrix, assignment, UpdateWMatrix and the member, the
+// global tested directly, an if around the rest).
 // FUNCTION: LS3DF 0x10017890
 void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, float size)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
     }
-    if (m_CurrCullState != D3DCULL_NONE) {
-        m_CurrCullState = D3DCULL_NONE;
-        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-    }
+    SetCullState(D3DCULL_NONE);
     I3D_frame *cam = pCurrentCamera;
     if (!cam)
         return;
@@ -994,25 +976,23 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
     pGlobalIGraph->SetWorldMatrix(m);
     I3D_material *mat = pFontMat;
     float a = (255 - alpha) * (1.0f / 255.0f);
-    uint c = MakeColor(a, mat->diffuse);
+    uint c = FloatToInt(a * 255.0f) << 24 | FloatToInt(mat->diffuse.x * 255.0f) << 16 |
+        FloatToInt(mat->diffuse.y * 255.0f) << 8 | FloatToInt(mat->diffuse.z * 255.0f);
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
         SetAlphaState(0);
     else
         SetAlphaState(1);
-    if (m_CurrBlendState) {
-        m_CurrBlendState = 0;
-        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    }
+    SetBlendState(0);
     ITexture *texture = mat->texture;
-    m_pD3DDevice8->SetTexture(0, texture ? texture->m_pD3DTexture8 : NULL);
-    if (m_CurrVertexFormat) {
-        m_CurrVertexFormat = 0;
-        m_pD3DDevice8->SetVertexShader(m_LVertexVS);
-    }
-    size *= 16.0f;
+    if (texture)
+        m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
+    else
+        m_pD3DDevice8->SetTexture(0, NULL);
+    SetVertexFormat(0);
+    float w = size * 16.0f;
+    float h = size * 16.0f;
     float du = 16.0f / pFontMat->GetTexture()->m_Width;
     float dv = 16.0f / pFontMat->GetTexture()->m_Height;
     int len = strlen(text);
@@ -1022,25 +1002,25 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
         uchar ch = text[i];
         float u = ch % 16 * du;
         float t = (ch >> 4) * dv;
-        v[0].x = i * size;
+        v[0].x = i * w;
         v[0].y = 0.0f;
         v[0].z = 0.0f;
         v[0].color = c;
         v[0].u = u;
         v[0].v = t + dv;
-        v[1].x = (i + 1.0f) * size;
-        v[1].y = size;
+        v[1].x = (i + 1.0f) * w;
+        v[1].y = h;
         v[1].z = 0.0f;
         v[1].color = c;
         v[1].u = u + du;
         v[1].v = t;
-        v[2].x = i * size;
-        v[2].y = size;
+        v[2].x = i * w;
+        v[2].y = h;
         v[2].z = 0.0f;
         v[2].color = c;
         v[2].u = u;
         v[2].v = t;
-        v[3].x = (i + 1.0f) * size;
+        v[3].x = (i + 1.0f) * w;
         v[3].y = 0.0f;
         v[3].z = 0.0f;
         v[3].color = c;
@@ -1056,89 +1036,82 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
         m_pD3DDevice8->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 }
 
+// Each character's quad is v[0] to v[3] at (x, y), (x + w, y), (x, y + h), (x + w, y + h), drawn as the triangles 0 1 2
+// and 3 2 1 (v[4] and v[5] copy v[2] and v[1]). The four specular stores come after the four vertices: written with
+// each vertex, VC6 schedules them early and the loop's registers differ.
 // FUNCTION: LS3DF 0x10017d40
 void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float size)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
     }
-    if (m_CurrCullState != D3DCULL_NONE) {
-        m_CurrCullState = D3DCULL_NONE;
-        m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-    }
+    SetCullState(D3DCULL_NONE);
     I3D_material *mat = pFontMat;
     if (!mat)
         return;
     float a = (255 - alpha) * (1.0f / 255.0f);
-    uint c = MakeColor(a, mat->diffuse);
+    uint c = FloatToInt(a * 255.0f) << 24 | FloatToInt(mat->diffuse.x * 255.0f) << 16 |
+        FloatToInt(mat->diffuse.y * 255.0f) << 8 | FloatToInt(mat->diffuse.z * 255.0f);
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
         SetAlphaState(0);
     else
         SetAlphaState(1);
-    if (m_CurrBlendState) {
-        m_CurrBlendState = 0;
-        m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-        m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    }
+    SetBlendState(0);
     if (mat->texture)
         m_pD3DDevice8->SetTexture(0, mat->texture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
-    if (m_CurrVertexFormat != 4) {
-        m_CurrVertexFormat = 4;
-        m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
-    }
-    size *= 16.0f;
+    SetVertexFormat(4);
+    float w = size * 16.0f;
+    float h = size * 16.0f;
     float du = 16.0f / pFontMat->GetTexture()->m_Width;
     float dv = 16.0f / pFontMat->GetTexture()->m_Height;
     int len = strlen(text);
-    TLVertList.resize(len * 6);
+    TLVertList.reserve(len * 6);
+    TLVertList.used_size = len * 6;
     TLVERTEX *v = &TLVertList[0];
     for (int i = 0; i < len; i++) {
         uchar ch = text[i];
         float u = ch % 16 * du;
         float t = (ch >> 4) * dv;
-        v[0].x = i * size + x;
+        v[0].x = i * w + x;
         v[0].y = (float)y;
         v[0].z = 1.0f;
         v[0].rhw = 1.0f;
         v[0].color = c;
-        v[0].specular = 0;
         v[0].u = u;
         v[0].v = t;
-        v[1].x = (i + 1.0f) * size + x;
-        v[1].y = y + size;
+        v[1].x = (i + 1.0f) * w + x;
+        v[1].y = (float)y;
         v[1].z = 1.0f;
         v[1].rhw = 1.0f;
         v[1].color = c;
-        v[1].specular = 0;
         v[1].u = u + du;
-        v[1].v = t + dv;
-        v[2].x = i * size + x;
-        v[2].y = y + size;
+        v[1].v = t;
+        v[2].x = i * w + x;
+        v[2].y = y + h;
         v[2].z = 1.0f;
         v[2].rhw = 1.0f;
         v[2].color = c;
-        v[2].specular = 0;
         v[2].u = u;
         v[2].v = t + dv;
-        v[3].x = (i + 1.0f) * size + x;
-        v[3].y = (float)y;
+        v[3].x = (i + 1.0f) * w + x;
+        v[3].y = y + h;
         v[3].z = 1.0f;
         v[3].rhw = 1.0f;
         v[3].color = c;
-        v[3].specular = 0;
         v[3].u = u + du;
-        v[3].v = t;
+        v[3].v = t + dv;
+        v[0].specular = 0;
+        v[1].specular = 0;
+        v[2].specular = 0;
+        v[3].specular = 0;
         v[4] = v[2];
-        v[5] = v[0];
+        v[5] = v[1];
         v += 6;
     }
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
@@ -1155,13 +1128,14 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
     m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
 }
 
+// The corners are computed where they are stored (with locals, VC6 computes both first). The texture is set in two
+// calls, which VC6 tail-merges into two pushes. Open (100%*): the original loads mat after the alpha's conversion, as
+// the color written out gives; written out, though, the budget lets the second branch inline its SetBlendState(1) (see
+// DrawText).
 // FUNCTION: LS3DF 0x100182f0
 void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size)
 {
-    if (m_CurrFogState) {
-        m_CurrFogState = FALSE;
-        m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
-    }
+    SetFog(FALSE, 0, 0.0f, 0.0f, 0);
     if (m_CurrClipState != TRUE) {
         m_CurrClipState = TRUE;
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
@@ -1175,39 +1149,34 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
     uint c = MakeColor((255 - alpha) * (1.0f / 255.0f), mat->diffuse);
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
-    float lo = size * -.5f, hi = size * .5f;
     LVERTEX v[4];
-    v[0].x = lo;
-    v[0].y = lo;
+    v[0].x = size * -.5f;
+    v[0].y = size * -.5f;
     v[0].z = 0.0f;
     v[0].color = c;
     v[0].u = .001f;
     v[0].v = .999f;
-    v[1].x = lo;
-    v[1].y = hi;
+    v[1].x = size * -.5f;
+    v[1].y = size * .5f;
     v[1].z = 0.0f;
     v[1].color = c;
     v[1].u = .001f;
     v[1].v = .001f;
-    v[2].x = hi;
-    v[2].y = lo;
+    v[2].x = size * .5f;
+    v[2].y = size * -.5f;
     v[2].z = 0.0f;
     v[2].color = c;
     v[2].u = .999f;
     v[2].v = .999f;
-    v[3].x = hi;
-    v[3].y = hi;
+    v[3].x = size * .5f;
+    v[3].y = size * .5f;
     v[3].z = 0.0f;
     v[3].color = c;
     v[3].u = .999f;
     v[3].v = .001f;
     if (mat->flags & MATF_ADD_MODE) {
         SetAlphaState(1);
-        if (m_CurrBlendState != 1) {
-            m_CurrBlendState = 1;
-            m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-            m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-        }
+        SetBlendState(1);
     } else if (mat->flags & MATF_TXT_ALPHA) {
         SetAlphaState(1);
         if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
@@ -1220,7 +1189,10 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
     } else
         SetAlphaState(0);
     ITexture *texture = mat->texture;
-    m_pD3DDevice8->SetTexture(0, texture ? texture->m_pD3DTexture8 : NULL);
+    if (texture)
+        m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
+    else
+        m_pD3DDevice8->SetTexture(0, NULL);
     SetVertexFormat(0);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(LVERTEX));
 }

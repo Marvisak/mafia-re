@@ -1010,10 +1010,15 @@ void S_quat::Make(const S_vector &axis, float angle)
 // branch's and spill its products), each component a flat sum of two matrix elements (VC6 reorders a flat chain, a
 // pair in parentheses would stay a group). The element accessors are inline calls too, which keep GetScale's and row
 // 0's constructors out of line, as in the original.
-// Not matching yet: the Cross path's -axis keeps its constructor out of line (a little inline budget short; more dead
-// source brings an earlier constructor in first), the rows' inlined Cross multiply their operands in the other order
-// (no spelling of Cross or of the row accessor changes it), the term order of d1.Dot(d2) and of the Cross and Dot
-// test, and two swapped stack slots (Magnitude's sq and the assembly helper's argument).
+// Not matching yet: the inline budget since S_vector::Normalize is __forceinline (I3d_math.h): its two forced bodies
+// here charge the budget without adding source, so the original's inlined constructors, operator+ and Dot after them
+// stay out of line and q1 * q2 is inlined where the original calls S_quat::operator*. Before that the Cross path's
+// -axis kept its constructor out of line (a little budget short) and the rest matched (91%). Dead source anywhere,
+// dead inline calls, the normalizations written out or a plain-inline twin for these two calls (which gives the
+// earlier state back) all move the axis rebuild's two out-of-line constructors first. Also open: the rows' inlined
+// Cross multiply their operands in the other order (no spelling of Cross or of the row accessor changes it), the
+// term order of d1.Dot(d2) and of the Cross and Dot test, and two swapped stack slots (Magnitude's sq and the
+// assembly helper's argument).
 // FUNCTION: LS3DF 0x1002eef0
 void S_quat::Make(const S_matrix &m)
 {

@@ -123,9 +123,13 @@ RECTANGLE_INFO *I3D_lit_object::GetRectInfos(int lod_index, int index)
 
 // Copies the rectangles' texels into the lightmap's texture, after the caller changed them (GetRectInfos), resized
 // where the texture has them smaller; true color lightmaps only
-// Not matching yet: the original's frame is 0x24 bytes, ours 0x14. Two of its slots nothing references; q (with the
-// single color's skip), the rotation flag and the outer counter have slots of their own, where ours keeps the flag and
-// q in a dead parameter's; the registers differ in turn. No declaration scope moved it.
+// The width as a float local makes the rotated product load it first (fild, then u - 2), where the product written
+// out multiplies by it last (fimul); p built in steps loads the pitch before dst, as the original; the bytes of the
+// single color as locals shift the 16 bits first.
+// Not matching yet: only the frame differs. The original's is 0x24 bytes, ours 0x14: two of its slots nothing
+// references, q has the single color's skip's slot, the rotation flag a cell of its own and the outer counter the
+// width's conversion slot; the dead parameters hold pitch (this), src (lod_index) and p (index), where ours has p,
+// pitch, and the flag, q and the counter. No declaration scope moved it.
 // FUNCTION: LS3DF 0x10021830
 void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
 {
@@ -149,23 +153,30 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
         int x;
         if (ri->u < 2.0f) {
             rotated = false;
-            x = (int)(lm->m_pTexture->m_Width * ri->u);
+            float w = lm->m_pTexture->m_Width;
+            x = (int)(w * ri->u);
         } else {
             rotated = true;
-            x = (int)(lm->m_pTexture->m_Width * (ri->u - 2.0f));
+            float w = lm->m_pTexture->m_Width;
+            x = (int)(w * (ri->u - 2.0f));
         }
         int y = (int)(lm->m_pTexture->m_Height * ri->v);
-        uchar *p = dst + y * pitch + x * 4;
+        uchar *p = dst;
+        p += y * pitch;
+        p += x * 4;
         if (ri->tex_sx == 3 && ri->tex_sy == 3) {
             uint skip = pitch - ri->tex_sx * 4;
             uint c = (uint)ri->data;
+            uchar r = (uchar)(c >> 16);
+            uchar g = (uchar)(c >> 8);
+            uchar b = (uchar)c;
             for (int j = 3; j--; ) {
                 for (int k = 3; k--; ) {
-                    *p = (uchar)c;
+                    *p = b;
                     p++;
-                    *p = (uchar)(c >> 8);
+                    *p = g;
                     p++;
-                    *p = (uchar)(c >> 16);
+                    *p = r;
                     p += 2;
                 }
                 p += skip;
@@ -296,8 +307,12 @@ inline void T_swap(T &a, T &b)
 // list's constructor, GetRenderMatrix, push_back and operator[], the accessors, I3DFloatAsInt, GetMSCount). About 2000
 // more expression operations anywhere in the function reproduce that (dead code works too: 600 statements like
 // x = x * k + 1 give the original's calls; with fewer the budget grows, as the model in CLAUDE.md says, so the cap is
-// the function's total size), but no source the original could have had is found yet. The frame is 0x10 bytes larger
-// in the original, and the registers and slots differ all through.
+// the function's total size), but no source the original could have had is found yet. Where the dead code sits doesn't
+// matter. Three dead statements in C_list::operator[] give the same calls at the end and keep the earlier nested
+// decisions (FACE_STRUCT::SetNormal's operator- out of line, which more source in the function inlines), so the extra
+// cost is more likely in the headers' helpers than here; with FloatToInt __forceinline too, the colors' branch calls
+// out of line exactly what the original does (it inlines only FloatToInt there). The frame is 0x10 bytes larger in the
+// original, and the registers and slots differ all through.
 // FUNCTION: LS3DF 0x10021bb0
 LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float resolution, uint flags,
     I3D_LOAD_CB_PROC *cb, void *context)
@@ -1106,9 +1121,11 @@ struct S_lm_header {
 #pragma pack(pop)
 
 // The lightings saved in the scene file: a byte with a bit set for each, then each's header and lods
-// Not matching yet: the original's maps' loop has all four callee-saved registers busy, so it computes sx * sy * 3
-// again after each call and keeps dtaRead's result in a slot (its frame is 4 bytes larger); and it places the shared
-// epilogue last, after the error blocks, where ours puts it after the lightings' loop's guard.
+// A map's read result is a local: compared in the call's expression, VC6 keeps sx * sy in a register across the call,
+// where the original computes it again after it and keeps the result in a slot. The rectangles' loop steps ri first.
+// Not matching yet: the bits' count tests num_levels & bit with the operands the other way round (PS2's and is
+// bit & num_levels, the same on PC), the face groups' loop has f and rects in each other's register, and
+// SetNumFGI's m_numPIndex store comes before the memset's xor eax, eax.
 // FUNCTION: LS3DF 0x10026980
 LS3D_RESULT I3D_lit_object::Load(int handle)
 {
@@ -1193,7 +1210,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                     memset(ri, 0, counts.num_rects * sizeof(RECTANGLE_INFO));
                     l->m_pRectangles = ri;
                     l->m_numRectangles = counts.num_rects;
-                    for (int r = 0; r < counts.num_rects; r++, ri++) {
+                    for (int r = 0; r < counts.num_rects; ri++, r++) {
                         uchar single;
                         if (dtaRead(handle, &single, 1) != 1) {
                             dbgPrintf("!! error reading data   I3D_lit_object::Load()  this:0x%x %s  handle:0x%x",
@@ -1241,7 +1258,8 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                                     delete l;
                                     return I3DERR_OUTOFMEM;
                                 }
-                                if (dtaRead(handle, data, sx * sy * 3) != (uint)(sx * sy * 3)) {
+                                uint read = dtaRead(handle, data, sx * sy * 3);
+                                if (read != (uint)(sx * sy * 3)) {
                                     delete[] data;
                                     dbgPrintf("!! error reading data   I3D_lit_object::Load()  this:0x%x %s  "
                                         "handle:0x%x", this, GetName(), handle);
@@ -1761,8 +1779,9 @@ void I3D_lit_object::m_AddFGroups()
 // with its lightmap (in one pass, the lightmap in the first stage and the texture in the second, or without
 // HWCAPS_SINGLEPASS in two, and a fog pass)
 // Not matching yet: the original calls SetColorOp1(m_Modulate2X) of the single pass out of line (a little less inline
-// budget there), and its draws read help->first before l->m_IB.base (the allocator's order; the sum spelled either way
-// compiles the same).
+// budget there: about 2 units, as one dead statement more in SetColorOp1 or SetCullState gives; less source in the
+// function, the cull state as a ternary and the helpers' other natural shapes don't), and its draws read help->first
+// before l->m_IB.base (the allocator's order; the sum spelled either way compiles the same).
 // FUNCTION: LS3DF 0x10028d40
 void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 {

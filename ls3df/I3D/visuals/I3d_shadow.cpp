@@ -751,14 +751,14 @@ I3D_shadow_visual::I3D_shadow_visual()
     rfg.fg = NULL;
     rfg.sector = NULL;
     rfg.texture = NULL;
+    rfg.clip = 1;
     rfg_t.fg = NULL;
     rfg_t.sector = NULL;
     rfg_t.texture = NULL;
+    rfg_t.clip = 1;
     shadow = NULL;
     num_receivers = 0;
     receivers_count = 0;
-    rfg.clip = 1;
-    rfg_t.clip = 1;
     rfg.vis = this;
     rfg_t.vis = this;
     memset(&vb, 0, sizeof(vb) + sizeof(ib));

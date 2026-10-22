@@ -11,11 +11,30 @@
 // compute y twice where z is constant. Both functions' spread step sets n.z where d.z is meant, in the original too.
 // Shapes the original needs: the near plane's t as (0.0f - a->pos.z) / ... (VC6 makes -a->pos.z / ... into
 // -(a->pos.z / ...)); the cull's threshold on the left of its compare.
-// Open: both functions' registers, and ClipFacesOrtho's block order. The original keeps the face pointer and count in
-// memory and caches clip_verts and clip_poly_num in ebx and ebp through the passes, where ours keeps constants (-1, 2)
-// in registers; its clipping block comes after the return. No spelling of the face loop, the copy, the locals' scopes
-// or inline helpers for the plane code moved either. The order of the float literals (0.0 before -1.0) follows the
-// code.
+// - Each pass's edge code reaches the a-inside case's two vertex blocks by goto: an edge leaving through one plane
+//   jumps to the block of that plane, an edge crossing both writes its first vertex inline and jumps to the other's.
+//   The original has only those four blocks per pass, and nothing short of a join explains it: Persp's both-planes
+//   block and the jump target begin with three identical instructions, which VC6 would hoist above the branch were
+//   the target reached from there alone, and the second vertex reloads clip_vert_count where a straight-line copy
+//   keeps it in a register. Written out (nested if/else, one copy per case), each function grew by 60 to 125
+//   instructions and every register moved.
+// - The face count is a local copy (count); counting the parameter down gives it a register and moves the others.
+// - After each pass the plane flags are collected through a pointer and a count of the remaining vertices (the
+//   count-down loop); for (i = 1; i < n; i++) keeps the index.
+// - The center is scaled through S_vector::operator*=: while it is summed, its members then sit on the FPU stack in
+//   the original's order (y, z, x); a reciprocal multiplied into each member gives z, y, x.
+// - Float sums whose term order VC6 picks itself: Ortho's spread sum is (d.z * d.z + d.x * d.x) + d.y * d.y, the
+//   original's x, z, y (the parentheses count: unparenthesized, the same terms compile differently), and Persp's
+//   lift sum n.x * n.x + (n.y * n.y + n.z * n.z) (with count, the plain sum squares x first); the other sums are
+//   written plainly.
+// - Ortho's last pass sets clip_poly_num before closing the polygon (the other two passes after it): its value is
+//   then computed in a register of its own while out stays live.
+// - Persp's triangulation: the first index after the nearest vertex is a local (first), which keeps VC6 from
+//   reassociating n - (min_i + 1); the fan's i and j are declared before the first triangle's stores.
+// Open: Persp's tessellation step (b->pos - a->pos) / dz. The original consumes dz in the reciprocal (fxch st(2);
+// fdivr [1.0]), which VC6 gives only when S_vector::operator/ reuses its parameter (f = 1.0f / f; return S_vector(x *
+// f, y * f, z * f)), a change to the math header; the header's local reciprocal keeps dz on the FPU stack (fld 1.0;
+// fdiv st(3)). No spelling in this file gives it. The order of the float literals (0.0 before -1.0) follows the code.
 #include <new>
 
 #include "I3D/render/clipper.h"
@@ -43,7 +62,8 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
         fo = clip_next_face_t;
     else
         fo = clip_next_face;
-    for (; num_faces--; faces++) {
+    int count = num_faces;
+    for (; count--; faces++) {
         S_clip_vertex *v0 = &clip_verts[faces->vi[0]];
         S_clip_vertex *v1 = &clip_verts[faces->vi[1]];
         S_clip_vertex *v2 = &clip_verts[faces->vi[2]];
@@ -98,46 +118,9 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                                 clip_vert_end->index = -1;
                                 clip_vert_end++;
                                 clip_vert_count++;
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.z = 1.0f;
-                                t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                                clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                if (clip_vert_end->pos.x < -1.0f)
-                                    clip_vert_end->clip = CLIP_LEFT;
-                                else if (clip_vert_end->pos.x > 1.0f)
-                                    clip_vert_end->clip = CLIP_RIGHT;
-                                else
-                                    clip_vert_end->clip = 0;
-                                if (clip_vert_end->pos.y < -1.0f)
-                                    clip_vert_end->clip |= CLIP_BOTTOM;
-                                else if (clip_vert_end->pos.y > 1.0f)
-                                    clip_vert_end->clip |= CLIP_TOP;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            } else {
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.z = 0.0f;
-                                t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                                clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                if (clip_vert_end->pos.x < -1.0f)
-                                    clip_vert_end->clip = CLIP_LEFT;
-                                else if (clip_vert_end->pos.x > 1.0f)
-                                    clip_vert_end->clip = CLIP_RIGHT;
-                                else
-                                    clip_vert_end->clip = 0;
-                                if (clip_vert_end->pos.y < -1.0f)
-                                    clip_vert_end->clip |= CLIP_BOTTOM;
-                                else if (clip_vert_end->pos.y > 1.0f)
-                                    clip_vert_end->clip |= CLIP_TOP;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            }
+                                goto far_vertex;
+                            } else
+                                goto near_vertex;
                         }
                     } else if (a->clip & CLIP_FAR) {
                         if (b->clip & CLIP_NEAR) {
@@ -160,49 +143,14 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.z = 0.0f;
-                            t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            if (clip_vert_end->pos.x < -1.0f)
-                                clip_vert_end->clip = CLIP_LEFT;
-                            else if (clip_vert_end->pos.x > 1.0f)
-                                clip_vert_end->clip = CLIP_RIGHT;
-                            else
-                                clip_vert_end->clip = 0;
-                            if (clip_vert_end->pos.y < -1.0f)
-                                clip_vert_end->clip |= CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 1.0f)
-                                clip_vert_end->clip |= CLIP_TOP;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else if (!(b->clip & CLIP_FAR)) {
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.z = 1.0f;
-                            t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            if (clip_vert_end->pos.x < -1.0f)
-                                clip_vert_end->clip = CLIP_LEFT;
-                            else if (clip_vert_end->pos.x > 1.0f)
-                                clip_vert_end->clip = CLIP_RIGHT;
-                            else
-                                clip_vert_end->clip = 0;
-                            if (clip_vert_end->pos.y < -1.0f)
-                                clip_vert_end->clip |= CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 1.0f)
-                                clip_vert_end->clip |= CLIP_TOP;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto near_vertex;
+                        } else if (b->clip & CLIP_FAR) {
+                        } else
+                            goto far_vertex;
                     } else {
                         *out++ = in[0];
                         if (b->clip & CLIP_NEAR) {
+                    near_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.z = 0.0f;
                             t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
@@ -223,6 +171,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end++;
                             clip_vert_count++;
                         } else if (b->clip & CLIP_FAR) {
+                    far_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.z = 1.0f;
                             t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
@@ -261,9 +210,10 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                     out = clip_poly_buf1;
                 }
                 if (clip_poly_num > 0) {
-                    clip = clip_verts[in[0]].clip;
-                    for (int i = 1; i < clip_poly_num; i++)
-                        clip |= clip_verts[in[i]].clip;
+                    ushort *p = in;
+                    clip = clip_verts[*p++].clip;
+                    for (int i = clip_poly_num - 1; i; i--)
+                        clip |= clip_verts[*p++].clip;
                 } else
                     clip = 0;
             }
@@ -289,36 +239,9 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                                 clip_vert_end->index = -1;
                                 clip_vert_end++;
                                 clip_vert_count++;
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.x = 1.0f;
-                                t = (1.0f - a->pos.x) / (b->pos.x - a->pos.x);
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                                if (clip_vert_end->pos.y < -1.0f)
-                                    clip_vert_end->clip = CLIP_BOTTOM;
-                                else if (clip_vert_end->pos.y > 1.0f)
-                                    clip_vert_end->clip = CLIP_TOP;
-                                else
-                                    clip_vert_end->clip = 0;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            } else {
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.x = -1.0f;
-                                t = (-1.0f - a->pos.x) / (b->pos.x - a->pos.x);
-                                clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                                clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                                if (clip_vert_end->pos.y < -1.0f)
-                                    clip_vert_end->clip = CLIP_BOTTOM;
-                                else if (clip_vert_end->pos.y > 1.0f)
-                                    clip_vert_end->clip = CLIP_TOP;
-                                else
-                                    clip_vert_end->clip = 0;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            }
+                                goto right_vertex;
+                            } else
+                                goto left_vertex;
                         }
                     } else if (a->clip & CLIP_RIGHT) {
                         if (b->clip & CLIP_LEFT) {
@@ -336,39 +259,14 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.x = -1.0f;
-                            t = (-1.0f - a->pos.x) / (b->pos.x - a->pos.x);
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                            if (clip_vert_end->pos.y < -1.0f)
-                                clip_vert_end->clip = CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 1.0f)
-                                clip_vert_end->clip = CLIP_TOP;
-                            else
-                                clip_vert_end->clip = 0;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else if (!(b->clip & CLIP_RIGHT)) {
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.x = 1.0f;
-                            t = (1.0f - a->pos.x) / (b->pos.x - a->pos.x);
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                            if (clip_vert_end->pos.y < -1.0f)
-                                clip_vert_end->clip = CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 1.0f)
-                                clip_vert_end->clip = CLIP_TOP;
-                            else
-                                clip_vert_end->clip = 0;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto left_vertex;
+                        } else if (b->clip & CLIP_RIGHT) {
+                        } else
+                            goto right_vertex;
                     } else {
                         *out++ = in[0];
                         if (b->clip & CLIP_LEFT) {
+                    left_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.x = -1.0f;
                             t = (-1.0f - a->pos.x) / (b->pos.x - a->pos.x);
@@ -384,6 +282,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end++;
                             clip_vert_count++;
                         } else if (b->clip & CLIP_RIGHT) {
+                    right_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.x = 1.0f;
                             t = (1.0f - a->pos.x) / (b->pos.x - a->pos.x);
@@ -417,9 +316,10 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                     out = clip_poly_buf1;
                 }
                 if (clip_poly_num > 0) {
-                    clip = clip_verts[in[0]].clip;
-                    for (int i = 1; i < clip_poly_num; i++)
-                        clip |= clip_verts[in[i]].clip;
+                    ushort *p = in;
+                    clip = clip_verts[*p++].clip;
+                    for (int i = clip_poly_num - 1; i; i--)
+                        clip |= clip_verts[*p++].clip;
                 } else
                     clip = 0;
             }
@@ -439,24 +339,9 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                                 clip_vert_end->index = -1;
                                 clip_vert_end++;
                                 clip_vert_count++;
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.y = 1.0f;
-                                t = (1.0f - a->pos.y) / (b->pos.y - a->pos.y);
-                                clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                                clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            } else {
-                                *out++ = clip_vert_count;
-                                clip_vert_end->pos.y = -1.0f;
-                                t = (-1.0f - a->pos.y) / (b->pos.y - a->pos.y);
-                                clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                                clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                                clip_vert_end->index = -1;
-                                clip_vert_end++;
-                                clip_vert_count++;
-                            }
+                                goto top_vertex;
+                            } else
+                                goto bottom_vertex;
                         }
                     } else if (a->clip & CLIP_TOP) {
                         if (b->clip & CLIP_BOTTOM) {
@@ -468,27 +353,14 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.y = -1.0f;
-                            t = (-1.0f - a->pos.y) / (b->pos.y - a->pos.y);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else if (!(b->clip & CLIP_TOP)) {
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.y = 1.0f;
-                            t = (1.0f - a->pos.y) / (b->pos.y - a->pos.y);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.z = (b->pos.z - a->pos.z) * t + a->pos.z;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto bottom_vertex;
+                        } else if (b->clip & CLIP_TOP) {
+                        } else
+                            goto top_vertex;
                     } else {
                         *out++ = in[0];
                         if (b->clip & CLIP_BOTTOM) {
+                    bottom_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.y = -1.0f;
                             t = (-1.0f - a->pos.y) / (b->pos.y - a->pos.y);
@@ -498,6 +370,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_end++;
                             clip_vert_count++;
                         } else if (b->clip & CLIP_TOP) {
+                    top_vertex:
                             *out++ = clip_vert_count;
                             clip_vert_end->pos.y = 1.0f;
                             t = (1.0f - a->pos.y) / (b->pos.y - a->pos.y);
@@ -512,22 +385,23 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                 }
                 // The polygon is in out: close it, and clip it from there
                 if (swap) {
+                    clip_poly_num = out - clip_poly_buf1;
                     *out = clip_poly_buf1[0];
                     swap = false;
-                    clip_poly_num = out - clip_poly_buf1;
                     in = clip_poly_buf1;
                     out = clip_poly_buf2;
                 } else {
+                    clip_poly_num = out - clip_poly_buf2;
                     *out = clip_poly_buf2[0];
                     swap = true;
-                    clip_poly_num = out - clip_poly_buf2;
                     in = clip_poly_buf2;
                     out = clip_poly_buf1;
                 }
                 if (clip_poly_num > 0) {
-                    clip = clip_verts[in[0]].clip;
-                    for (int i = 1; i < clip_poly_num; i++)
-                        clip |= clip_verts[in[i]].clip;
+                    ushort *p = in;
+                    clip = clip_verts[*p++].clip;
+                    for (int i = clip_poly_num - 1; i; i--)
+                        clip |= clip_verts[*p++].clip;
                 } else
                     clip = 0;
             }
@@ -557,17 +431,14 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                 S_vector c = clip_verts[in[0]].pos;
                 for (i = 1; i < clip_poly_num; i++)
                     c += clip_verts[in[i]].pos;
-                float r = 1.0f / clip_poly_num;
-                c.x *= r;
-                c.y *= r;
-                c.z *= r;
+                c *= 1.0f / clip_poly_num;
                 for (i = 0; i < clip_poly_num; i++) {
                     int vi = in[i];
                     if (vi >= first_vert) {
                         clip_verts[vi].pos += offs;
                         if (clip_spread > 0.0f) {
                             S_vector d = clip_verts[vi].pos - c;
-                            float sq = d.x * d.x + d.y * d.y + d.z * d.z;
+                            float sq = (d.z * d.z + d.x * d.x) + d.y * d.y;
                             if (sq < MRG_ZERO) {
                                 if (d.x != 0.0f)
                                     d.x = d.x < 0.0f ? -1.0f : 1.0f;
@@ -608,7 +479,8 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
         fo = clip_next_face_t;
     else
         fo = clip_next_face;
-    for (; num_faces--; faces++) {
+    int count = num_faces;
+    for (; count--; faces++) {
         S_clip_vertex *v0 = &clip_verts[faces->vi[0]];
         S_clip_vertex *v1 = &clip_verts[faces->vi[1]];
         S_clip_vertex *v2 = &clip_verts[faces->vi[2]];
@@ -660,44 +532,9 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.z = 1.0f;
-                            t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            if (clip_vert_end->pos.x < -1.0f)
-                                clip_vert_end->clip = CLIP_LEFT;
-                            else if (clip_vert_end->pos.x > 1.0f)
-                                clip_vert_end->clip = CLIP_RIGHT;
-                            else
-                                clip_vert_end->clip = 0;
-                            if (clip_vert_end->pos.y < -1.0f)
-                                clip_vert_end->clip |= CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 1.0f)
-                                clip_vert_end->clip |= CLIP_TOP;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else {
-                            *out++ = clip_vert_count;
-                            clip_vert_end->pos.z = 0.0f;
-                            t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            if (clip_vert_end->pos.x < 0.0f)
-                                clip_vert_end->clip = CLIP_LEFT;
-                            else if (clip_vert_end->pos.x > 0.0f)
-                                clip_vert_end->clip = CLIP_RIGHT;
-                            else
-                                clip_vert_end->clip = 0;
-                            if (clip_vert_end->pos.y < 0.0f)
-                                clip_vert_end->clip |= CLIP_BOTTOM;
-                            else if (clip_vert_end->pos.y > 0.0f)
-                                clip_vert_end->clip |= CLIP_TOP;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto far_vertex;
+                        } else
+                            goto near_vertex;
                     }
                 } else if (a->clip & CLIP_FAR) {
                     if (b->clip & CLIP_NEAR) {
@@ -719,47 +556,14 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end->index = -1;
                         clip_vert_end++;
                         clip_vert_count++;
-                        *out++ = clip_vert_count;
-                        clip_vert_end->pos.z = 0.0f;
-                        t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        if (clip_vert_end->pos.x < 0.0f)
-                            clip_vert_end->clip = CLIP_LEFT;
-                        else if (clip_vert_end->pos.x > 0.0f)
-                            clip_vert_end->clip = CLIP_RIGHT;
-                        else
-                            clip_vert_end->clip = 0;
-                        if (clip_vert_end->pos.y < 0.0f)
-                            clip_vert_end->clip |= CLIP_BOTTOM;
-                        else if (clip_vert_end->pos.y > 0.0f)
-                            clip_vert_end->clip |= CLIP_TOP;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    } else if (!(b->clip & CLIP_FAR)) {
-                        *out++ = clip_vert_count;
-                        clip_vert_end->pos.z = 1.0f;
-                        t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        if (clip_vert_end->pos.x < -1.0f)
-                            clip_vert_end->clip = CLIP_LEFT;
-                        else if (clip_vert_end->pos.x > 1.0f)
-                            clip_vert_end->clip = CLIP_RIGHT;
-                        else
-                            clip_vert_end->clip = 0;
-                        if (clip_vert_end->pos.y < -1.0f)
-                            clip_vert_end->clip |= CLIP_BOTTOM;
-                        else if (clip_vert_end->pos.y > 1.0f)
-                            clip_vert_end->clip |= CLIP_TOP;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    }
+                        goto near_vertex;
+                    } else if (b->clip & CLIP_FAR) {
+                    } else
+                        goto far_vertex;
                 } else {
                     *out++ = in[0];
                     if (b->clip & CLIP_NEAR) {
+                near_vertex:
                         *out++ = clip_vert_count;
                         clip_vert_end->pos.z = 0.0f;
                         t = (0.0f - a->pos.z) / (b->pos.z - a->pos.z);
@@ -779,6 +583,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end++;
                         clip_vert_count++;
                     } else if (b->clip & CLIP_FAR) {
+                far_vertex:
                         *out++ = clip_vert_count;
                         clip_vert_end->pos.z = 1.0f;
                         t = (1.0f - a->pos.z) / (b->pos.z - a->pos.z);
@@ -816,9 +621,10 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                 out = clip_poly_buf1;
             }
             if (clip_poly_num > 0) {
-                clip = clip_verts[in[0]].clip;
-                for (int i = 1; i < clip_poly_num; i++)
-                    clip |= clip_verts[in[i]].clip;
+                ushort *p = in;
+                clip = clip_verts[*p++].clip;
+                for (int i = clip_poly_num - 1; i; i--)
+                    clip |= clip_verts[*p++].clip;
             } else
                 clip = 0;
         }
@@ -845,38 +651,9 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            t = (a->pos.z - a->pos.x) / (b->pos.x - a->pos.x - b->pos.z + a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = clip_vert_end->pos.x;
-                            if (fabs(clip_vert_end->pos.y) > clip_vert_end->pos.z) {
-                                if (clip_vert_end->pos.y < 0.0f)
-                                    clip_vert_end->clip = CLIP_BOTTOM;
-                                else
-                                    clip_vert_end->clip = CLIP_TOP;
-                            } else
-                                clip_vert_end->clip = 0;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else {
-                            *out++ = clip_vert_count;
-                            t = (a->pos.x + a->pos.z) / (a->pos.x + a->pos.z - b->pos.x - b->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = -clip_vert_end->pos.x;
-                            if (fabs(clip_vert_end->pos.y) > clip_vert_end->pos.z) {
-                                if (clip_vert_end->pos.y < 0.0f)
-                                    clip_vert_end->clip = CLIP_BOTTOM;
-                                else
-                                    clip_vert_end->clip = CLIP_TOP;
-                            } else
-                                clip_vert_end->clip = 0;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto right_vertex;
+                        } else
+                            goto left_vertex;
                     }
                 } else if (a->clip & CLIP_RIGHT) {
                     if (b->clip & CLIP_LEFT) {
@@ -895,41 +672,14 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end->index = -1;
                         clip_vert_end++;
                         clip_vert_count++;
-                        *out++ = clip_vert_count;
-                        t = (a->pos.x + a->pos.z) / (a->pos.x + a->pos.z - b->pos.x - b->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        clip_vert_end->pos.z = -clip_vert_end->pos.x;
-                        if (fabs(clip_vert_end->pos.y) > clip_vert_end->pos.z) {
-                            if (clip_vert_end->pos.y < 0.0f)
-                                clip_vert_end->clip = CLIP_BOTTOM;
-                            else
-                                clip_vert_end->clip = CLIP_TOP;
-                        } else
-                            clip_vert_end->clip = 0;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    } else if (!(b->clip & CLIP_RIGHT)) {
-                        *out++ = clip_vert_count;
-                        t = (a->pos.z - a->pos.x) / (b->pos.x - a->pos.x - b->pos.z + a->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        clip_vert_end->pos.z = clip_vert_end->pos.x;
-                        if (fabs(clip_vert_end->pos.y) > clip_vert_end->pos.z) {
-                            if (clip_vert_end->pos.y < 0.0f)
-                                clip_vert_end->clip = CLIP_BOTTOM;
-                            else
-                                clip_vert_end->clip = CLIP_TOP;
-                        } else
-                            clip_vert_end->clip = 0;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    }
+                        goto left_vertex;
+                    } else if (b->clip & CLIP_RIGHT) {
+                    } else
+                        goto right_vertex;
                 } else {
                     *out++ = in[0];
                     if (b->clip & CLIP_LEFT) {
+                left_vertex:
                         *out++ = clip_vert_count;
                         t = (a->pos.x + a->pos.z) / (a->pos.x + a->pos.z - b->pos.x - b->pos.z);
                         clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
@@ -946,6 +696,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end++;
                         clip_vert_count++;
                     } else if (b->clip & CLIP_RIGHT) {
+                right_vertex:
                         *out++ = clip_vert_count;
                         t = (a->pos.z - a->pos.x) / (b->pos.x - a->pos.x - b->pos.z + a->pos.z);
                         clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
@@ -980,9 +731,10 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                 out = clip_poly_buf1;
             }
             if (clip_poly_num > 0) {
-                clip = clip_verts[in[0]].clip;
-                for (int i = 1; i < clip_poly_num; i++)
-                    clip |= clip_verts[in[i]].clip;
+                ushort *p = in;
+                clip = clip_verts[*p++].clip;
+                for (int i = clip_poly_num - 1; i; i--)
+                    clip |= clip_verts[*p++].clip;
             } else
                 clip = 0;
         }
@@ -1002,24 +754,9 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                             clip_vert_end->index = -1;
                             clip_vert_end++;
                             clip_vert_count++;
-                            *out++ = clip_vert_count;
-                            t = (a->pos.z - a->pos.y) / (b->pos.y - a->pos.y - b->pos.z + a->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = clip_vert_end->pos.y;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        } else {
-                            *out++ = clip_vert_count;
-                            t = (a->pos.y + a->pos.z) / (a->pos.y + a->pos.z - b->pos.y - b->pos.z);
-                            clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                            clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                            clip_vert_end->pos.z = -clip_vert_end->pos.y;
-                            clip_vert_end->index = -1;
-                            clip_vert_end++;
-                            clip_vert_count++;
-                        }
+                            goto top_vertex;
+                        } else
+                            goto bottom_vertex;
                     }
                 } else if (a->clip & CLIP_TOP) {
                     if (b->clip & CLIP_BOTTOM) {
@@ -1031,27 +768,14 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end->index = -1;
                         clip_vert_end++;
                         clip_vert_count++;
-                        *out++ = clip_vert_count;
-                        t = (a->pos.y + a->pos.z) / (a->pos.y + a->pos.z - b->pos.y - b->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        clip_vert_end->pos.z = -clip_vert_end->pos.y;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    } else if (!(b->clip & CLIP_TOP)) {
-                        *out++ = clip_vert_count;
-                        t = (a->pos.z - a->pos.y) / (b->pos.y - a->pos.y - b->pos.z + a->pos.z);
-                        clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
-                        clip_vert_end->pos.y = (b->pos.y - a->pos.y) * t + a->pos.y;
-                        clip_vert_end->pos.z = clip_vert_end->pos.y;
-                        clip_vert_end->index = -1;
-                        clip_vert_end++;
-                        clip_vert_count++;
-                    }
+                        goto bottom_vertex;
+                    } else if (b->clip & CLIP_TOP) {
+                    } else
+                        goto top_vertex;
                 } else {
                     *out++ = in[0];
                     if (b->clip & CLIP_BOTTOM) {
+                bottom_vertex:
                         *out++ = clip_vert_count;
                         t = (a->pos.y + a->pos.z) / (a->pos.y + a->pos.z - b->pos.y - b->pos.z);
                         clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
@@ -1061,6 +785,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_end++;
                         clip_vert_count++;
                     } else if (b->clip & CLIP_TOP) {
+                top_vertex:
                         *out++ = clip_vert_count;
                         t = (a->pos.z - a->pos.y) / (b->pos.y - a->pos.y - b->pos.z + a->pos.z);
                         clip_vert_end->pos.x = (b->pos.x - a->pos.x) * t + a->pos.x;
@@ -1088,9 +813,10 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                 out = clip_poly_buf1;
             }
             if (clip_poly_num > 0) {
-                clip = clip_verts[in[0]].clip;
-                for (int i = 1; i < clip_poly_num; i++)
-                    clip |= clip_verts[in[i]].clip;
+                ushort *p = in;
+                clip = clip_verts[*p++].clip;
+                for (int i = clip_poly_num - 1; i; i--)
+                    clip |= clip_verts[*p++].clip;
             } else
                 clip = 0;
         }
@@ -1145,18 +871,19 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                 fo->vi[2] = in[2];
                 fo++;
             } else {
-                if (min_i + 1 < clip_poly_num) {
-                    memcpy(out, &in[min_i + 1], (clip_poly_num - (min_i + 1)) * sizeof(ushort));
+                int first = min_i + 1;
+                if (first < clip_poly_num) {
+                    memcpy(out, &in[first], (clip_poly_num - first) * sizeof(ushort));
                     if (min_i)
-                        memcpy(&out[clip_poly_num - (min_i + 1)], in, min_i * sizeof(ushort));
+                        memcpy(&out[clip_poly_num - first], in, min_i * sizeof(ushort));
                 } else
                     memcpy(out, in, min_i * sizeof(ushort));
                 int hi = clip_poly_num - 2, lo = 0;
+                int i = 1, j = clip_poly_num - 3;
                 fo->vi[0] = out[hi];
                 fo->vi[1] = in[min_i];
                 fo->vi[2] = out[0];
                 fo++;
-                int i = 1, j = clip_poly_num - 3;
                 while (j > i) {
                     if (clip_verts[out[j]].pos.z < clip_verts[out[i]].pos.z) {
                         fo->vi[0] = out[hi];
@@ -1183,7 +910,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
             S_vector n;
             n.GetNormal(v0->pos, v1->pos, v2->pos);
             S_vector offs;
-            float sq = n.x * n.x + n.y * n.y + n.z * n.z;
+            float sq = n.x * n.x + (n.y * n.y + n.z * n.z);
             if (sq < MRG_ZERO) {
                 if (n.x != 0.0f)
                     n.x = n.x < 0.0f ? -1.0f : 1.0f;
@@ -1198,10 +925,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
             int i;
             for (i = 1; i < clip_poly_num; i++)
                 c += clip_verts[in[i]].pos;
-            float r = 1.0f / clip_poly_num;
-            c.x *= r;
-            c.y *= r;
-            c.z *= r;
+            c *= 1.0f / clip_poly_num;
             for (i = 0; i < clip_poly_num; i++) {
                 int vi = in[i];
                 if (vi >= first_vert) {

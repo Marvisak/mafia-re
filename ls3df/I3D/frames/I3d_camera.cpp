@@ -249,11 +249,19 @@ void I3D_camera::UpdateSector()
 // shapes: the transposition through m[r][c] (the original loads ahead of the stores), the four corners shared by both
 // branches and assigned (copied from the product's temporary), the others constructed in place, the near projection's
 // first plane copied by element and the orthogonal one's whole frustum by array (two rep movsd, as PS2's two memcpy).
-// Open: the inline budget. The original calls GetNormal out of line in the first two frustums and inlines it in the
-// third (its operator- calls out of line), with Normalize inlined throughout and the third frustum's first Dot out of
-// line. Ours inlines GetNormal early and runs out in the third frustum. A wrapper around GetNormal (a nested call,
-// starved early) gives the first two frustums' calls; Normalize inside the same wrapper is starved too, so it isn't
-// that. The original's source had more budget or another shape for these calls.
+// Each side plane is PS2's `pl = S_plane(pos, a, b)`: the original stores a null normal's -1 or 1 as integer constants,
+// S_plane's normalization (S_vector::Normalize stores them through the FPU), its plane local's copies vanish (a
+// ComputePlane on a named plane keeps a store of d and a larger frame), and the plane constructor's nested GetNormal is
+// what VC6 starves early and inlines in the third frustum. The non-orthogonal code is the else block: its aggregates
+// share the areas of the orthogonal block's (the near corners nc1 and nc2 over that block's temporaries, the three
+// regions' plane temporaries apart), as in the original; after a `return` in the if block they don't.
+// Open: the inline budget. The original's calls (GetNormal out of line in the first two frustums with Dot inlined, in
+// the third GetNormal inlined with its operator- calls out of line, the first Dot out of line and the last plane's first
+// operator- inlined without its constructor) need about 7 more statements of source and two more pending inline calls
+// right before the near projection's second plane: dead code (`if (0) { ... }` x7) and two default-constructed
+// vectors declared there give the original's calls and 99% (the rest is the sums' operand order). Without them ours
+// calls Dot out of line in the orthogonal frustum's last two planes and in all four of the third's. No source for
+// either is known.
 // FUNCTION: LS3DF 0x1000ba30
 void I3D_camera::UpdateV()
 {
@@ -279,7 +287,6 @@ void I3D_camera::UpdateV()
     m_near_view_proj.Make4X4(m_view, m_near_proj);
     (S_vector &)frustums[0].normal[0] = matrix(2);
     frustums[0].d[0] = -matrix(2).Dot(matrix(3));
-    S_vector n;
     S_vector c0, c1, c2, c3;
     if (orthogonal) {
         float x = 1.0f / ortho_scale;
@@ -290,103 +297,85 @@ void I3D_camera::UpdateV()
         c3 = S_vector(x, -y, 0.0f) * matrix;
         S_vector v4 = S_vector(-x, -y, 1.0f) * matrix;
         S_vector v5 = S_vector(x, y, 1.0f) * matrix;
-        n.GetNormal(v4, c0, c1);
-        n.Normalize();
-        (S_vector &)frustums[0].normal[1] = n;
-        frustums[0].d[1] = -n.Dot(v4);
-        n.GetNormal(v5, c3, c2);
-        n.Normalize();
-        (S_vector &)frustums[0].normal[2] = n;
-        frustums[0].d[2] = -n.Dot(v5);
-        n.GetNormal(v5, c2, c0);
-        n.Normalize();
-        (S_vector &)frustums[0].normal[3] = n;
-        frustums[0].d[3] = -n.Dot(v5);
-        n.GetNormal(v4, c1, c3);
-        n.Normalize();
-        (S_vector &)frustums[0].normal[4] = n;
-        frustums[0].d[4] = -n.Dot(v4);
+        S_plane pl;
+        pl = S_plane(v4, c0, c1);
+        (S_vector &)frustums[0].normal[1] = pl.normal;
+        frustums[0].d[1] = pl.d;
+        pl = S_plane(v5, c3, c2);
+        (S_vector &)frustums[0].normal[2] = pl.normal;
+        frustums[0].d[2] = pl.d;
+        pl = S_plane(v5, c2, c0);
+        (S_vector &)frustums[0].normal[3] = pl.normal;
+        frustums[0].d[3] = pl.d;
+        pl = S_plane(v4, c1, c3);
+        (S_vector &)frustums[0].normal[4] = pl.normal;
+        frustums[0].d[4] = pl.d;
         (S_vector &)frustums[1].normal[0] = matrix(2);
         frustums[1].d[0] = 0.0f;
-        n.GetNormal(v4, c0, c1);
-        n.Normalize();
-        (S_vector &)frustums[1].normal[1] = n;
-        frustums[1].d[1] = -n.Dot(v4);
-        n.GetNormal(v5, c3, c2);
-        n.Normalize();
-        (S_vector &)frustums[1].normal[2] = n;
-        frustums[1].d[2] = -n.Dot(v5);
-        n.GetNormal(v5, c2, c0);
-        n.Normalize();
-        (S_vector &)frustums[1].normal[3] = n;
-        frustums[1].d[3] = -n.Dot(v5);
-        n.GetNormal(v4, c1, c3);
-        n.Normalize();
-        (S_vector &)frustums[1].normal[4] = n;
-        frustums[1].d[4] = -n.Dot(v4);
+        pl = S_plane(v4, c0, c1);
+        (S_vector &)frustums[1].normal[1] = pl.normal;
+        frustums[1].d[1] = pl.d;
+        pl = S_plane(v5, c3, c2);
+        (S_vector &)frustums[1].normal[2] = pl.normal;
+        frustums[1].d[2] = pl.d;
+        pl = S_plane(v5, c2, c0);
+        (S_vector &)frustums[1].normal[3] = pl.normal;
+        frustums[1].d[3] = pl.d;
+        pl = S_plane(v4, c1, c3);
+        (S_vector &)frustums[1].normal[4] = pl.normal;
+        frustums[1].d[4] = pl.d;
         memcpy(frustums[2].normal, frustums[0].normal, sizeof(frustums[0].normal));
         memcpy(frustums[2].d, frustums[0].d, sizeof(frustums[0].d));
-        return;
+    } else {
+        const S_vector &pos = matrix(3);
+        S_plane pl;
+        c0 = S_vector(-ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
+        c1 = S_vector(-ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
+        c2 = S_vector(ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
+        c3 = S_vector(ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
+        pl = S_plane(pos, c0, c1);
+        (S_vector &)frustums[0].normal[1] = pl.normal;
+        frustums[0].d[1] = pl.d;
+        pl = S_plane(pos, c3, c2);
+        (S_vector &)frustums[0].normal[2] = pl.normal;
+        frustums[0].d[2] = pl.d;
+        pl = S_plane(pos, c2, c0);
+        (S_vector &)frustums[0].normal[3] = pl.normal;
+        frustums[0].d[3] = pl.d;
+        pl = S_plane(pos, c1, c3);
+        (S_vector &)frustums[0].normal[4] = pl.normal;
+        frustums[0].d[4] = pl.d;
+        (S_vector &)frustums[1].normal[0] = matrix(2);
+        frustums[1].d[0] = 0.0f;
+        pl = S_plane(pos, c0, c1);
+        (S_vector &)frustums[1].normal[1] = pl.normal;
+        frustums[1].d[1] = pl.d;
+        pl = S_plane(pos, c3, c2);
+        (S_vector &)frustums[1].normal[2] = pl.normal;
+        frustums[1].d[2] = pl.d;
+        pl = S_plane(pos, c2, c0);
+        (S_vector &)frustums[1].normal[3] = pl.normal;
+        frustums[1].d[3] = pl.d;
+        pl = S_plane(pos, c1, c3);
+        (S_vector &)frustums[1].normal[4] = pl.normal;
+        frustums[1].d[4] = pl.d;
+        frustums[2].normal[0] = frustums[0].normal[0];
+        frustums[2].d[0] = frustums[0].d[0];
+        S_vector nc0 = S_vector(-near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
+        S_vector nc1 = S_vector(-near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
+        S_vector nc2 = S_vector(near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
+        S_vector nc3 = S_vector(near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
+        pl = S_plane(pos, nc0, nc1);
+        (S_vector &)frustums[2].normal[1] = pl.normal;
+        frustums[2].d[1] = pl.d;
+        pl = S_plane(pos, nc3, nc2);
+        (S_vector &)frustums[2].normal[2] = pl.normal;
+        frustums[2].d[2] = pl.d;
+        pl = S_plane(pos, nc2, nc0);
+        (S_vector &)frustums[2].normal[3] = pl.normal;
+        frustums[2].d[3] = pl.d;
+        pl = S_plane(pos, nc1, nc3);
+        (S_vector &)frustums[2].normal[4] = pl.normal;
+        frustums[2].d[4] = pl.d;
     }
-    const S_vector &pos = matrix(3);
-    c0 = S_vector(-ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
-    c1 = S_vector(-ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
-    c2 = S_vector(ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
-    c3 = S_vector(ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
-    n.GetNormal(pos, c0, c1);
-    n.Normalize();
-    (S_vector &)frustums[0].normal[1] = n;
-    frustums[0].d[1] = -n.Dot(pos);
-    n.GetNormal(pos, c3, c2);
-    n.Normalize();
-    (S_vector &)frustums[0].normal[2] = n;
-    frustums[0].d[2] = -n.Dot(pos);
-    n.GetNormal(pos, c2, c0);
-    n.Normalize();
-    (S_vector &)frustums[0].normal[3] = n;
-    frustums[0].d[3] = -n.Dot(pos);
-    n.GetNormal(pos, c1, c3);
-    n.Normalize();
-    (S_vector &)frustums[0].normal[4] = n;
-    frustums[0].d[4] = -n.Dot(pos);
-    (S_vector &)frustums[1].normal[0] = matrix(2);
-    frustums[1].d[0] = 0.0f;
-    n.GetNormal(pos, c0, c1);
-    n.Normalize();
-    (S_vector &)frustums[1].normal[1] = n;
-    frustums[1].d[1] = -n.Dot(pos);
-    n.GetNormal(pos, c3, c2);
-    n.Normalize();
-    (S_vector &)frustums[1].normal[2] = n;
-    frustums[1].d[2] = -n.Dot(pos);
-    n.GetNormal(pos, c2, c0);
-    n.Normalize();
-    (S_vector &)frustums[1].normal[3] = n;
-    frustums[1].d[3] = -n.Dot(pos);
-    n.GetNormal(pos, c1, c3);
-    n.Normalize();
-    (S_vector &)frustums[1].normal[4] = n;
-    frustums[1].d[4] = -n.Dot(pos);
-    frustums[2].normal[0] = frustums[0].normal[0];
-    frustums[2].d[0] = frustums[0].d[0];
-    S_vector nc0 = S_vector(-near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-    S_vector nc1 = S_vector(-near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-    S_vector nc2 = S_vector(near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-    S_vector nc3 = S_vector(near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-    n.GetNormal(pos, nc0, nc1);
-    n.Normalize();
-    (S_vector &)frustums[2].normal[1] = n;
-    frustums[2].d[1] = -n.Dot(pos);
-    n.GetNormal(pos, nc3, nc2);
-    n.Normalize();
-    (S_vector &)frustums[2].normal[2] = n;
-    frustums[2].d[2] = -n.Dot(pos);
-    n.GetNormal(pos, nc2, nc0);
-    n.Normalize();
-    (S_vector &)frustums[2].normal[3] = n;
-    frustums[2].d[3] = -n.Dot(pos);
-    n.GetNormal(pos, nc1, nc3);
-    n.Normalize();
-    (S_vector &)frustums[2].normal[4] = n;
-    frustums[2].d[4] = -n.Dot(pos);
 }

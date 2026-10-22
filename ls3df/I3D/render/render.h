@@ -1,9 +1,9 @@
 #ifndef I3D_RENDER_H
 #define I3D_RENDER_H
 
-// Render state helpers of the rendering code (the file's name is a guess). I3d_driver.cpp doesn't include it: its
-// draws call the copies the linker kept (in the billboard file's code), where the visuals' rendering inlines them as far
-// as the inline budget allows. I3D.h declares the two with copies for the driver.
+// Render state helpers of the rendering code (the file's name is a guess), included by every file that draws, the
+// driver's draws too: as calls they give those the original's inline decisions (I3d_driver.cpp's comment), and where
+// the budget doesn't inline them the calls go to the copies the linker kept (in the billboard file's code).
 // They are inline functions because the original's I3D_object::m_RenderFGroup inlines SetBlendState and
 // SetVertexFormat in its first calls and calls them in later ones. Written out instead, our build inlined the
 // multipass helpers the original calls.

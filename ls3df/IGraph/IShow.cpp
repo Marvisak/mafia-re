@@ -975,6 +975,7 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
     // The connection brings in the AVI Splitter between the two. A block of its own: the original gives its locals'
     // slots to the pin loop's afterwards. Not matching yet: the original stores pEnum = NULL after the call's pushes,
     // ours after the first push (pEnum declared before the Releases puts the call right but the store too early).
+    // Ours is VC6's usual order (I3d_sound.cpp's CreateSource(&src) has it too): the store before the vtable load.
     {
         IEnumFilters *pEnum = NULL;
         m_pGraphBuilder->EnumFilters(&pEnum);
@@ -1100,7 +1101,9 @@ HRESULT CTextureRenderer::SetMediaType(const CMediaType *pmt)
 
 // Copies the sample's frame into the regions' textures, the video's rows bottom up, and counts it. One src for both
 // formats, as the original's frame has. Open: the original gives pitch the dead pSample's slot and pBmpBuffer one of
-// its own, ours the reverse.
+// its own, ours the reverse. The more referenced of the two gets the slot (one more use of pitch, an initializer or a
+// message, gives the original's), ties go to pBmpBuffer whatever the declarations' or last uses' order, and references
+// that leave no code (if (0) pitch++, (void)&pitch) don't count.
 // FUNCTION: LS3DF 0x100755c0
 HRESULT CTextureRenderer::DoRenderSample(IMediaSample *pSample)
 {

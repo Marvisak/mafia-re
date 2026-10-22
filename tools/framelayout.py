@@ -60,6 +60,8 @@ def parse(path, func):
             if "BYTE PTR " + (m2.group(1) or "") not in ops: wide.add(sym)
             elif m2.group(1): byte.add(sym)
             if mn == "lea": lea.add(sym); uses.add(sym); defs.add(sym)
+            elif mn.startswith("f") and not mn.startswith(("fst", "fist", "fnst", "fbstp")): uses.add(sym)   # fld/fadd/fmul/fcomp m32 read
+            elif mn.startswith(("fst", "fist", "fbstp")): defs.add(sym)
             elif mn in ("cmp", "test", "push") or not memdst: uses.add(sym)
             elif mn in RMW: uses.add(sym); defs.add(sym)
             else: defs.add(sym)
@@ -70,8 +72,8 @@ def parse(path, func):
         ins.append(d)
     for d in ins:
         if d["mn"] == "ret": d["succ"] = []
-        elif d["mn"] == "jmp": d["succ"] = [labels[d["tgt"]]]
-        elif d["tgt"]: d["succ"] = [d["idx"] + 1, labels[d["tgt"]]]
+        elif d["mn"] == "jmp": d["succ"] = [labels[d["tgt"]]] if d["tgt"] in labels else []   # an EH funclet's jmp to ___CxxFrameHandler leaves the function
+        elif d["tgt"]: d["succ"] = [d["idx"] + 1] + ([labels[d["tgt"]]] if d["tgt"] in labels else [])
         else: d["succ"] = [d["idx"] + 1] if d["idx"] + 1 < len(ins) else []
     return ins, syms, frame
 

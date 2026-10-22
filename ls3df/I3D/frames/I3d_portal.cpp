@@ -11,11 +11,9 @@
 //   build has the blocks byte for byte (with a push and pop of ebx around the first).
 //
 // Not matching yet:
-// - UpdatePortal and the occluders' part of CTP_EnumProcFirst: S_vector::Normalize, which the original inlines inside
-//   S_plane's constructor (I3d_math.h's open question; with Normalize __forceinline UpdatePortal is exact).
-// - CTP_EnumProcFirst's frame (0x114 bytes, ours smaller): the original's slots are known, see the function.
-// - CullThruPortal: the corners of the near plane, see the function.
-// - ParsePortal: the vertex count and the search loops' counter have swapped registers.
+// - CTP_EnumProcFirst and CullThruPortal: the inline budget of their side planes (S_plane's three-point constructor),
+//   and through it the frame and the corners' x87 registers, see the functions.
+// - ParsePortal: two registers, see the function.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 #include "dta.h"
@@ -106,7 +104,6 @@ bool I3D_portal::IsOn() const
 
 // The vertices in world space, the box's center and the sphere around it, and the plane (its normal out of the sector),
 // through S_plane's three-point constructor: the original's normal and d are one temporary, copied into the member.
-// Open: the original inlines Normalize there, ours calls it (see the file's comment).
 // FUNCTION: LS3DF 0x100419e0
 void I3D_portal::UpdatePortal()
 {
@@ -182,10 +179,19 @@ static I3D_sector *CTP_pSector = NULL;
 //   > (their jne), and the radius is read from the frame again.
 // - The occluders' view plane goes through an S_frustum local: the original's frame has its 0x50 bytes at
 //   [ebp - 0x114], of which only normal[0] and d[0] are used.
-// Open: the frame. The original's slots: r at -4; d, -r, bits and clip at -8; pos at -0x14, the box at -0x7c and -0x70,
-// d1 to d4 at -0x64, -0xb4, -0xac and -0xb0, the blocks' t at -0xbc, -0xc0, -0xb8 and -0x60, f at -0xc4, root at -0xa8;
-// in the occluders' part cpos at -0x14, the corners at -0x7c, -0x70, -0x98 and -0xa4, the planes at -0x5c, -0x4c,
-// -0x3c and -0x8c.
+// - The occluders' part is a block of its own: its vectors share the frame with the loop's (pos with cpos, the box with
+//   two corners), which `if (root->type != FRAME_SECTOR) return;` before function-scope locals doesn't give. Their
+//   distance to the view plane is written out (it loads the center's components first, through Dot the plane's), the
+//   range test is a `>` (test ah, 0x41; jne) around the rest.
+// Open: the planes' inline budget. The original inlines GetNormal in all four planes, leaving its operator- calls
+// partly out of line (the first plane's constructor and second operator-, the two constructors of the second and third,
+// the fourth's second operator-). With the loop's plane tests through Dot ours leaves all eight operator- out of line,
+// written out it inlines nearly all; two pending inline calls in the loop come closest (84-85%, no natural spelling).
+// The frame follows the weights of those inlined copies: the original's slots are r at -4; d, -r, bits and clip at -8;
+// pos at -0x14, the box at -0x7c and -0x70, d1 to d4 at -0x64, -0xb4, -0xac and -0xb0, the blocks' t at -0xbc, -0xc0,
+// -0xb8 and -0x60, f at -0xc4, root at -0xa8; in the occluders' part cpos at -0x14, c at -0x20, the corners at -0x7c,
+// -0x70, -0x98 and -0xa4, the planes at -0x5c, -0x4c, -0x3c and -0x8c (the fourth's x and y stay on the x87 stack
+// through the loop).
 // FUNCTION: LS3DF 0x10041df0
 void CTP_EnumProcFirst(I3D_frame *root)
 {
@@ -684,36 +690,34 @@ void CTP_EnumProcFirst(I3D_frame *root)
         if (frm->child)
             CTP_EnumProcFirst(frm);
     }
-    if (root->type != FRAME_SECTOR)
-        return;
-    // The sector's occluders in front of the camera, between its planes and the corners of the near plane (the
-    // camera's own view, through any portal)
-    I3D_camera *cam = pCurrentCamera;
-    float x = cam->ncp_x * 100.0f;
-    float y = cam->ncp_y * 100.0f;
-    float z = cam->ncp * 100.0f;
-    S_vector p0 = S_vector(-x, y, z) * cam->view_inv;
-    S_vector p1 = S_vector(-x, -y, z) * pCurrentCamera->view_inv;
-    S_vector p2 = S_vector(x, y, z) * pCurrentCamera->view_inv;
-    S_vector p3 = S_vector(x, -y, z) * pCurrentCamera->view_inv;
-    S_vector cpos = pCurrentCamera->GetWorldPos();
-    S_frustum vf;
-    vf.normal[0] = pCurrentCamera->frustums[0].normal[0];
-    vf.d[0] = pCurrentCamera->frustums[0].d[0];
-    S_plane pl1(cpos, p0, p1);
-    S_plane pl2(cpos, p3, p2);
-    S_plane pl3(cpos, p2, p0);
-    S_plane pl4(cpos, p1, p3);
-    for (I3D_occluder *o = ((I3D_sector *)root)->occluders; o; o = o->next_in_sector) {
-        S_vector c = o->center;
-        o->dist = ((S_vector &)vf.normal[0]).Dot(c) + vf.d[0];
-        if (o->dist + o->radius <= pCurrentCamera->ncp)
-            continue;
-        if (o->dist - o->radius < pCurrentCamera->fcp) {
-            float nr = -o->radius;
-            if (pl1.normal.Dot(c) + pl1.d > nr && pl2.normal.Dot(c) + pl2.d > nr && pl3.normal.Dot(c) + pl3.d > nr &&
-                pl4.normal.Dot(c) + pl4.d > nr)
-                o->frm_flags |= FRMFLAGS_UNKNOWN_10000;
+    if (root->type == FRAME_SECTOR) {
+        // The sector's occluders in front of the camera, between its planes and the corners of the near plane (the
+        // camera's own view, through any portal)
+        I3D_camera *cam = pCurrentCamera;
+        float x = cam->ncp_x * 100.0f;
+        float y = cam->ncp_y * 100.0f;
+        float z = cam->ncp * 100.0f;
+        S_vector p0 = S_vector(-x, y, z) * cam->view_inv;
+        S_vector p1 = S_vector(-x, -y, z) * pCurrentCamera->view_inv;
+        S_vector p2 = S_vector(x, y, z) * pCurrentCamera->view_inv;
+        S_vector p3 = S_vector(x, -y, z) * pCurrentCamera->view_inv;
+        S_vector cpos = pCurrentCamera->GetWorldPos();
+        S_frustum vf;
+        vf.normal[0] = pCurrentCamera->frustums[0].normal[0];
+        vf.d[0] = pCurrentCamera->frustums[0].d[0];
+        S_plane pl1(cpos, p0, p1);
+        S_plane pl2(cpos, p3, p2);
+        S_plane pl3(cpos, p2, p0);
+        S_plane pl4(cpos, p1, p3);
+        for (I3D_occluder *o = ((I3D_sector *)root)->occluders; o; o = o->next_in_sector) {
+            S_vector c = o->center;
+            o->dist = vf.normal[0].x * c.x + vf.normal[0].y * c.y + vf.normal[0].z * c.z + vf.d[0];
+            if (o->dist + o->radius > pCurrentCamera->ncp && o->dist - o->radius < pCurrentCamera->fcp) {
+                float nr = -o->radius;
+                if (pl1.normal.Dot(c) + pl1.d > nr && pl2.normal.Dot(c) + pl2.d > nr &&
+                    pl3.normal.Dot(c) + pl3.d > nr && pl4.normal.Dot(c) + pl4.d > nr)
+                    o->frm_flags |= FRMFLAGS_UNKNOWN_10000;
+            }
         }
     }
 }
@@ -1203,13 +1207,17 @@ void CTP_EnumProc(I3D_frame *root)
 // times its distance) or, through a portal, of the portal's clip box on it, the near and far distances and the view's
 // plane of the sector's projection, then the sector's frames against them. In the backdrop the camera is at the origin.
 // The PC computes the corners from the matrix's rows (PS2 multiplies four vectors by the matrix), each branch with its
-// own switch over the projection, whose near and default cases VC6 merges across the branches.
-// Open: the corners. The original computes the plane's center c into v0's slot (stored at once), keeps the six row
-// products on the x87 stack and builds each corner from c reloaded (c - y - x, ...; v0 last, over c). Ours keeps c in
-// registers whatever the spelling (floats, a vector built by its constructor or by the operators, products as locals or
-// as common subexpressions), and the inline budget differs: the original inlines GetNormal in all four planes with its
-// operator- calls partly out of line (the first one's constructor, the second), as nothing written out here gives;
-// the operators for the corners starve the planes instead.
+// own switch over the projection, whose near and default cases VC6 merges across the branches. The side planes are
+// S_planes assigned into one local and copied out: their null normals get S_plane::NormalizeNormal's integer -1 and 1
+// for y and z (Normalize's ternaries store them through the x87), and PS2 assigns each from a temporary into one plane.
+// Open: the inline budget and the corners. The original inlines GetNormal in all four planes with its operator- calls
+// partly out of line (the first three planes' constructor of the first and their second, the fourth's second); ours
+// inlines nearly all of them (any spelling of the planes, the matrix or the corners). The original computes the
+// plane's center c into v0's slot (stored at once), keeps the six row products on the x87 stack and builds each corner
+// from c reloaded (c - y - x, ...; v0 last, over c). Ours keeps c in registers whatever the spelling (floats, a vector
+// built by its constructor or by the operators, products as locals, first or as common subexpressions, element
+// accessors, a pointer, a helper taking the corners by reference), and the operators for the corners starve the
+// planes instead.
 // FUNCTION: LS3DF 0x100437f0
 void CullThruPortal(I3D_frame *frm, I3D_portal *portal, uint flags)
 {
@@ -1310,23 +1318,20 @@ void CullThruPortal(I3D_frame *frm, I3D_portal *portal, uint flags)
             CTP_Far = pCurrentCamera->fcp;
         }
     }
-    S_vector n;
-    n.GetNormal(cpos, v0, v1);
-    n.Normalize();
-    CTP_VFnormals[1] = n;
-    CTP_VFds[1] = -n.Dot(cpos);
-    n.GetNormal(cpos, v3, v2);
-    n.Normalize();
-    CTP_VFnormals[2] = n;
-    CTP_VFds[2] = -n.Dot(cpos);
-    n.GetNormal(cpos, v2, v0);
-    n.Normalize();
-    CTP_VFnormals[3] = n;
-    CTP_VFds[3] = -n.Dot(cpos);
-    n.GetNormal(cpos, v1, v3);
-    n.Normalize();
-    CTP_VFnormals[4] = n;
-    CTP_VFds[4] = -n.Dot(cpos);
+    // The side planes through the camera, each assigned from a temporary into one plane (PS2 too)
+    S_plane pl;
+    pl = S_plane(cpos, v0, v1);
+    CTP_VFnormals[1] = pl.normal;
+    CTP_VFds[1] = pl.d;
+    pl = S_plane(cpos, v3, v2);
+    CTP_VFnormals[2] = pl.normal;
+    CTP_VFds[2] = pl.d;
+    pl = S_plane(cpos, v2, v0);
+    CTP_VFnormals[3] = pl.normal;
+    CTP_VFds[3] = pl.d;
+    pl = S_plane(cpos, v1, v3);
+    CTP_VFnormals[4] = pl.normal;
+    CTP_VFds[4] = pl.d;
     I3D_sector *sct = (I3D_sector *)frm;
     if (!(sct->sct_flags & SCTF_CULLED)) {
         CTP_EnumProcFirst(frm);
@@ -1351,9 +1356,13 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p);
 // plane (a vertex at w = 0) is the whole screen.
 // - The whole screen is one block that the w = 0 exit and ERROR 1 go to (in the original ERROR 1 runs into the
 //   projection loop's exit, which VC6 moved after the loop); ERROR 2 has its own copy.
-// - The edges are a vertex copied and the other subtracted in place (operator-=; their z is dead), the wrap test reads
-//   the count from the portal (PS2 too), and the parent's clip box is applied by if/else statements (windows.h's
-//   min and max load both operands onto the x87 stack).
+// - The edges are a vertex copied and the other subtracted in place (operator-=; their z is dead), with q stepped back
+//   and forth around the neighbour (PS2 too, the original's sub ecx, 0xc ... add ecx, 0xc), the wrap test and the loops
+//   read the count from the portal (PS2 too: a local count moves it into another register), and the parent's clip box
+//   is applied by if/else statements (windows.h's min and max load both operands onto the x87 stack).
+// Open: two registers, the vertex count times 3 at the copy loop (edx, ours eax) and times 12 in the wrap test (eax,
+// ours edi); no order of the copy's pointers, spelling of the wrap test, of the steps or of the declarations moves
+// them.
 // FUNCTION: LS3DF 0x10044600
 void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
 {
@@ -1386,15 +1395,15 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
     if (p->parse_flags & PORTALPF_ALL_BEHIND)
         return;
     if (p->parse_flags & PORTALPF_SOME_BEHIND) {
-        n = p->num_verts;
-        // The vertices twice, for the walk around from the first behind the camera
+        // The vertices twice, for the walk around from the first behind the camera. Each loop's count is read from
+        // the portal (PS2 too).
+        int i = p->num_verts;
         const S_vector *src = pv;
-        S_vector *dst = pv + n;
-        int i = n;
+        S_vector *dst = pv + i;
         while (i--)
             *dst++ = *src++;
         S_vector *q = pv;
-        i = n;
+        i = p->num_verts;
         while (i--) {
             if (!(q->z > 0.0f))
                 break;
@@ -1404,7 +1413,7 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
             dbgPrintf("!! ParsePortal ERROR 1 !!");
             goto all;
         }
-        i = n;
+        i = p->num_verts;
         while (i--) {
             if (!(q->z <= 0.0f))
                 break;
@@ -1419,7 +1428,9 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
         }
         // The vertices in front, from the first after those behind: the edges into and out of them cross behind
         S_vector d1 = *q;
-        d1 -= q[-1];
+        q--;
+        d1 -= *q;
+        q++;
         if (q >= q + p->num_verts)
             q -= p->num_verts;
         p->rect_min = *q;
@@ -1435,7 +1446,9 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
                 p->rect_max.y = q->y;
             q++;
         }
-        S_vector d2 = q[-1];
+        q--;
+        S_vector d2 = *q;
+        q++;
         d2 -= *q;
         if (d1.x >= 0.0f || d2.x >= 0.0f)
             p->rect_max.x = 1.01f;

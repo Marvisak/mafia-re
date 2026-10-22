@@ -13,10 +13,11 @@ extern IDirect3DDevice8 *m_pD3DDevice8;
 // GLOBAL: LS3DF 0x101c5014
 C_VBManager cVBMan;
 
-// Out of line in the original (0x100688b0), where C_VBManager::m_Alloc calls it; ours is inlined there, which costs
-// m_Alloc most of its score, and without an out-of-line copy it has no marker. A little more source tips it over
-// VC6's /Ob2 limit for functions not declared inline (two more assignments VC6 merges away are enough), so the
-// original's had something these statements don't show.
+// Out of line, where C_VBManager::m_Alloc calls it: it is just over VC6's /Ob2 limit for functions not declared
+// inline, which IBManager.cpp's, two assignments shorter, is under. With num_free = 0 it is under too (m_Alloc then
+// inlines it); num_free = num_vertices compiles to the same zero store (VC6 propagates it) and is a little more
+// source, as is any assignment that leaves no code (a repeated one too).
+// FUNCTION: LS3DF 0x100688b0
 C_VBuffer::C_VBuffer()
 {
     data = NULL;
@@ -25,7 +26,7 @@ C_VBuffer::C_VBuffer()
     usage = 0;
     vb = NULL;
     num_vertices = 0;
-    num_free = 0;
+    num_free = num_vertices;
     pool = D3DPOOL_MANAGED;
     vertex_format = VF_LVERTEX;
     lock_index = -1;
@@ -34,8 +35,11 @@ C_VBuffer::C_VBuffer()
 }
 
 // Clears the COMPLETE_VB_STRUCT of every block still given out
-// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short,
-// no source found).
+// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short).
+// An empty destructor declared in S_VB_block gives that (and the registers), with either loop's delete going
+// through it, but then VC6 tests the pointer before each delete, which the original doesn't. An inline call of about
+// 4 dead statements at the start or the end gives it too; zero-cost inline calls, Unlock() for the if (data) block and
+// the loops' spellings don't.
 // FUNCTION: LS3DF 0x10068af0
 C_VBuffer::~C_VBuffer()
 {

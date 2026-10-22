@@ -701,54 +701,58 @@ I3D_frame *I3D_frame::FindChildFrame(const char *frame_name, uint flags) const
 I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
 {
     uint type_flags = flags & ENUMF_ALL;
+    uint ok;
     if (type_flags != ENUMF_ALL) {
         switch (type) {
-        case FRAME_VISUAL: type_flags &= ENUMF_VISUAL; break;
-        case FRAME_LIGHT: type_flags &= ENUMF_LIGHT; break;
-        case FRAME_CAMERA: type_flags &= ENUMF_CAMERA; break;
-        case FRAME_SOUND: type_flags &= ENUMF_SOUND; break;
-        case FRAME_SECTOR: type_flags &= ENUMF_SECTOR; break;
-        case FRAME_DUMMY: type_flags &= ENUMF_DUMMY; break;
-        case FRAME_MODEL: type_flags &= ENUMF_MODEL; break;
-        case FRAME_USER: type_flags &= ENUMF_USER; break;
-        case FRAME_VOLUME: type_flags &= ENUMF_VOLUME; break;
-        case FRAME_SHADOW: type_flags &= ENUMF_SHADOW; break;
-        case FRAME_TARGET: type_flags &= ENUMF_TARGET; break;
-        case FRAME_AREA: type_flags &= ENUMF_AREA; break;
-        default: type_flags = 0;
+        case FRAME_VISUAL: ok = type_flags & ENUMF_VISUAL; break;
+        case FRAME_LIGHT: ok = type_flags & ENUMF_LIGHT; break;
+        case FRAME_CAMERA: ok = type_flags & ENUMF_CAMERA; break;
+        case FRAME_SOUND: ok = type_flags & ENUMF_SOUND; break;
+        case FRAME_SECTOR: ok = type_flags & ENUMF_SECTOR; break;
+        case FRAME_DUMMY: ok = type_flags & ENUMF_DUMMY; break;
+        case FRAME_MODEL: ok = type_flags & ENUMF_MODEL; break;
+        case FRAME_USER: ok = type_flags & ENUMF_USER; break;
+        case FRAME_VOLUME: ok = type_flags & ENUMF_VOLUME; break;
+        case FRAME_SHADOW: ok = type_flags & ENUMF_SHADOW; break;
+        case FRAME_TARGET: ok = type_flags & ENUMF_TARGET; break;
+        case FRAME_AREA: ok = type_flags & ENUMF_AREA; break;
+        default: ok = 0;
         }
-        if (!type_flags)
-            goto children;
-    }
-    if (frame_name) {
+    } else
+        ok = 1;
+    if (ok && frame_name) {
         if (!name)
-            goto children;
-        if (!(flags & ENUMF_WILDMASK)) {
+            ok = 0;
+        else if (!(flags & ENUMF_WILDMASK)) {
             if (flags & ENUMF_CASESENS) {
                 if (strcmp(frame_name, name))
-                    goto children;
+                    ok = 0;
             } else if (stricmp(frame_name, name))
-                goto children;
+                ok = 0;
         } else if (flags & ENUMF_CASESENS) {
             int len = min(strlen(frame_name), strlen(name)) + 1;
             for (const char *cp = frame_name, *cp1 = name; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
-                if (*cp != '?' && *cp != *cp1)
-                    goto children;
+                if (*cp != '?' && *cp != *cp1) {
+                    ok = 0;
+                    break;
+                }
             }
         } else {
             int len = min(strlen(frame_name), strlen(name)) + 1;
             for (const char *cp = frame_name, *cp1 = name; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
-                if (*cp != '?' && toupper(*cp) != toupper(*cp1))
-                    goto children;
+                if (*cp != '?' && toupper(*cp) != toupper(*cp1)) {
+                    ok = 0;
+                    break;
+                }
             }
         }
     }
-    return this;
-children:
+    if (ok)
+        return this;
     for (I3D_frame *frm = child; frm; frm = frm->next) {
         I3D_frame *found = frm->GetChildFrame(frame_name, flags);
         if (found)

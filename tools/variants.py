@@ -38,6 +38,11 @@ line) and vc6-pdb (reccmp finds the original function through it) first.
     .venv/Scripts/python tools/variants.py spec.py --mask rs        # registers and [esp + N] offsets masked
     .venv/Scripts/python tools/variants.py spec.py --calls          # each variant's out-of-line calls
     .venv/Scripts/python tools/variants.py spec.py --show NAME      # unified diff of one variant
+    .venv/Scripts/python tools/variants.py spec.py --pdb-build build/agent1   # another PDB tree (see below)
+
+reccmp pairs our function with the original through the PDB build's line numbers, so once the tree's source has
+moved lines since `build/vc6-pdb` was built, the base can land on another function ("no matched function", or wild
+scores). Rebuild that tree, or pass a private one built from the current source with --pdb-build.
 """
 
 import argparse
@@ -259,6 +264,9 @@ def main():
     parser.add_argument("--show", metavar="NAME", help="print the diff of one variant against the original")
     parser.add_argument("--context", type=int, default=2, help="context lines for --show (default 2)")
     parser.add_argument("--jobs", type=int, default=os.cpu_count(), help="parallel compiles")
+    parser.add_argument("--pdb-build", metavar="DIR", default=str(PDB_BUILD),
+                        help="the PDB build tree reccmp finds the original function through (default build/vc6-pdb); "
+                        "a private tree built from the edited source once its line numbers have drifted from vc6-pdb's")
     args = parser.parse_args()
 
     spec = {"REPO": REPO}
@@ -266,7 +274,7 @@ def main():
     source = (REPO / spec["SOURCE"]).resolve()
 
     logging.basicConfig(level=logging.ERROR)
-    compare = Compare.from_target(RecCmpProject.from_directory(PDB_BUILD).get(spec["TARGET"]))
+    compare = Compare.from_target(RecCmpProject.from_directory(Path(args.pdb_build)).get(spec["TARGET"]))
     sys.path.insert(0, str(REPO / "tools"))
     from funcdiff import find_match
     match = find_match(compare, spec["FUNCTION"])

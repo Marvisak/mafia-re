@@ -280,7 +280,10 @@ public:
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
     virtual ~I3D_frame();
     // Empty: the linker folds them with other empty functions, and the original's slots point at the base classes'
-    // copy (CBaseVideoRenderer::OnWaitEnd, 0x10088540)
+    // copy (CBaseVideoRenderer::OnWaitEnd, 0x10088540, defined out of class in renbase.cpp), where ours point at the
+    // first object's in-class copy (I3d_billboard.cpp's). Defined out of class here (with I3D_visual::m_AddFGroups),
+    // they fold with that copy's group, but our linker then keeps I3d_visual.cpp's copy, neither the first object's
+    // nor the last's: which copy LINK keeps isn't understood yet (2026-10-22).
     virtual void UpdateV() {}
     virtual void SaveImage() {}
     virtual void LoadImage();
@@ -1488,7 +1491,7 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?UpdateEnvTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
 // ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
@@ -3531,7 +3534,11 @@ public:
     float env_scale;                    // 0x40, the environment map's (EnvProcess), 2 * sqrt(2) by default
 
     // The flags (the name is a guess; the visuals' m_AddFGroups read them through it, which their inlining shows)
-    uint GetFlags() const
+    // Returns a reference (the billboard agent's finding, 2026-10-22): by value, VC6 loads the flags at the start of the
+    // inlined lod::Create call in the visuals' m_AddFGroups; by reference it reads them where the argument is pushed
+    // (mov dl, byte ptr [eax + 0x3c]; mov ecx, [eax + 8]; test dl, 8), and the first Lock's push_back stays out of
+    // line, as in the original (the object's, morph's, particles', single mesh's and billboard's m_AddFGroups).
+    const uint &GetFlags() const
     {
         return mesh_flags;
     }
@@ -3602,6 +3609,10 @@ public:
 
 // GLOBAL: LS3DF 0x100bffc0
 // $S24
+
+// The guard of I3D_scene's constructor's static bigBox (I3d_scene.cpp), the only $S25 among our function statics
+// GLOBAL: LS3DF 0x101b4e5e
+// $S25
 
 // SYNTHETIC: LS3DF 0x100165e0
 // $E25
@@ -3799,12 +3810,9 @@ extern uint m_HardwareCaps;
 extern uint m_AlphaRef;
 extern D3DVIEWPORT8 m_D3DViewPort8;
 
-// Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC they are inline:
-// VC6 inlines them where the inline budget allows it, and the copies the linker kept are in the billboard file's code.
-// SetBlendState and SetVertexFormat are defined in render.h, which I3d_driver.cpp doesn't include, so its draws call
-// them.
-void SetBlendState(uint state);
-void SetVertexFormat(uint format);
+// Functions that set a render state where it changed (names guessed). PS2 inlines them all. On PC they are inline, in
+// I3D/render/render.h with SetBlendState and SetVertexFormat: VC6 inlines them where the inline budget allows it, and the
+// copies the linker kept are in the billboard file's code.
 
 // FUNCTION: LS3DF 0x1000aa30
 inline void SetAlphaState(uint state)
@@ -4289,7 +4297,7 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
+// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);

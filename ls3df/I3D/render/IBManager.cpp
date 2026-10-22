@@ -35,8 +35,11 @@ C_IBuffer::C_IBuffer()
 }
 
 // Clears the COMPLETE_IB_STRUCT of every block still given out
-// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short,
-// no source found).
+// Not matching yet: the original's inlined ~multiset calls its last begin() out of line (a little inline budget short).
+// An empty destructor declared in S_IB_block gives that (and the registers), with either loop's delete going
+// through it, but then VC6 tests the pointer before each delete, which the original doesn't. An inline call of about
+// 4 dead statements at the start or the end gives it too; zero-cost inline calls, Unlock() for the if (data) block and
+// the loops' spellings don't.
 // FUNCTION: LS3DF 0x1005abf0
 C_IBuffer::~C_IBuffer()
 {

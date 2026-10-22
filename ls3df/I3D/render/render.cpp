@@ -192,6 +192,9 @@ inline void AddSectorFGroups(I3D_sector *sct)
 // the mirrors' reflections, the sectors, the landscapes, the particles, the near sector and the lens flares, each
 // pass sorting the face groups queued by the visuals (AddFGHlpStruct) and drawing them (m_DrawAllSortedFG). The
 // scene's callback is told of the stages in its cb_flags.
+// Open: the post-render callback's SetAlphaOp is inlined since C_list::push_back stores the size first (one statement
+// less of budget per inlined copy, four of them here); two empty inline calls at the top push it out of line as the
+// original has it, but take the lens flares' erase out with them, so the original's extra cost sits between them.
 // FUNCTION: LS3DF 0x10062030
 LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 {
