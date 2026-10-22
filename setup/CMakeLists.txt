@@ -100,7 +100,8 @@ if (MSVC_VERSION EQUAL 1200)
 	elseif (SETUP_LANGUAGE STREQUAL "russian")
 		# The Russian one's link time (2003-01-23) and CodeView record: another machine's tree, linked into twice.
 		# That machine's LINK sorted the imports with an older qsort than today's msvcrt.dll has (as IJoy's did), so
-		# on current Windows each DLL's imports come in another order than the original's.
+		# on current Windows each DLL's imports come in another order than the original's. Linked on Windows 2000, whose
+		# msvcrt.dll has that qsort, the build is identical; 1.0's, 1.2's and the Polish one then differ in their imports.
 		postlink(${setup} --timestamp 0x3e3018ce --codeview-signature 0x3e3004ad --codeview-age 2
 			"--codeview-path=D:\\mafia\\_SRC\\setup\\Release\\setup.pdb")
 	elseif (SETUP_LANGUAGE STREQUAL "polish")
@@ -109,7 +110,8 @@ if (MSVC_VERSION EQUAL 1200)
 			"--codeview-path=C:\\Mafia\\_src\\setup\\Release\\setup.pdb")
 	elseif (SETUP_LANGUAGE STREQUAL "czech")
 		# The Czech one's link time (2002-08-23) and CodeView record: a copy of the project on the Russian one's machine,
-		# a new PDB (age 1). As the Russian one's, its imports come in another order on current Windows.
+		# a new PDB (age 1). As the Russian one's, its imports come in another order on current Windows and in the
+		# original's on Windows 2000.
 		postlink(${setup} --timestamp 0x3d664bce --codeview-signature 0x3d664bce --codeview-age 1
 			"--codeview-path=D:\\mafia\\_src\\setup_cz\\Release\\setup.pdb")
 	else()
