@@ -5,7 +5,8 @@
 #pragma pack(push, 1)
 struct S_settings
 {
-    uchar magic;
+    // Signed: Steam's Czech setup, built without optimization, sign-extends it for LoadSettings' check
+    char magic;
     char adapter;
     int width;
     int height;

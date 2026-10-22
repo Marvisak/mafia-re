@@ -89,13 +89,11 @@ elseif (MSVC_VERSION EQUAL 1500)
 	# they are resolved. dxguid before ddraw for the Rich header.
 	# d3d8.lib comes from hw.cpp's #pragma comment(lib), after MSVCRT, as the thunk order shows
 	target_link_libraries(${setup} PRIVATE kernel32 user32 advapi32 comctl32 dxguid ddraw)
-	# Ours is 18 bytes short of the original's .reloc VirtualSize (0x5a8 against 0x5ba), so the checksum differs too.
-	# VS2008's linker reserves 2 bytes for every absolute address in its input, also in code it then discards: /LTCG
-	# compiles a separate copy of each function it inlines (even one called only from dead code, `if (0) f();`) and
-	# the linker drops it unreferenced. Unreferenced functions don't count, /LTCG drops them first; unreferenced data
-	# does, VS2008 keeps it. So the 2010 source inlined code with nine more absolute addresses than ours, which code
-	# isn't known. An inline function storing to nine globals, called from a dead branch in WinMain, makes the file
-	# identical, but it isn't the original's source.
+	# .reloc's VirtualSize (0x5ba) counts code the linker discarded: VS2008's linker reserves 2 bytes for every absolute
+	# address in its input, also in code it then drops. /LTCG compiles a separate copy of each function it inlines (even
+	# one called only from dead code, `if (0) f();`) and the linker drops it unreferenced. Unreferenced functions don't
+	# count, /LTCG drops them first; unreferenced data does, VS2008 keeps it. The nine addresses in main.cpp's four
+	# dialog helpers, inlined everywhere, give the original's size.
 	# The original's link time (2010-04-07) and its PDB's GUID and age; /RELEASE's checksum is computed again after
 	postlink(${setup} --timestamp 0x4bbc50b1 --codeview-guid 30b9c62b279e3745966e7ab4e7290a90 --codeview-age 1 --checksum)
 else()

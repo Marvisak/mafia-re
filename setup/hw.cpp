@@ -8,6 +8,9 @@
 // CRT's thunks (1.2 with KERNEL32's, Steam's after MSVCR90's), not with the import libraries of the command line
 #pragma comment(lib, "d3d8.lib")
 
+// The shapes the comments credit to "the Czech setup" come from Steam's Czech setup, built without optimization
+// (main.cpp)
+
 #ifndef SETUP_1_0
 // The first initialized data of this file in 1.2. 1.0 has none: its literals start this file's data.
 // GLOBAL: SETUP 0x40e144
@@ -50,7 +53,8 @@ S_adapter_mode adapter_modes[256];
 int GetTotalVRAM(GUID *guid)
 {
     IDirectDraw7 *dd;
-    if (FAILED(DirectDrawCreateEx(guid, (LPVOID *)&dd, IID_IDirectDraw7, NULL)))
+    HRESULT result = DirectDrawCreateEx(guid, (LPVOID *)&dd, IID_IDirectDraw7, NULL);
+    if (FAILED(result))
     {
         return 0;
     }
@@ -61,17 +65,18 @@ int GetTotalVRAM(GUID *guid)
 
     DWORD vram;
     DWORD available_vram;
-    if (FAILED(dd->GetAvailableVidMem(&caps, &vram, &available_vram)))
+    result = dd->GetAvailableVidMem(&caps, &vram, &available_vram);
+    if (FAILED(result))
     {
         return 0;
     }
     dd->Release();
 
-    uint total_mb = vram / 0x100000;
-    int vram_mb = 1;
-    while (total_mb > (uint)vram_mb)
+    // In place, and an empty for, as in the Czech setup
+    vram /= 0x100000;
+    int vram_mb;
+    for (vram_mb = 1; vram > (uint)vram_mb; vram_mb <<= 1)
     {
-        vram_mb <<= 1;
     }
     return vram_mb;
 }
@@ -107,55 +112,71 @@ bool LoadAdapterRefreshRates()
         return false;
     }
 
-    if (dialog_state.windows.refresh_rate)
+    // Early returns, a result local and a continue for each test, as in the Czech setup
+    if (!dialog_state.windows.refresh_rate)
     {
-        int selected = 0;
-        int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
-        for (int i = 0; i < adapter_mode_count; ++i)
+        return true;
+    }
+
+    int selected = 0;
+    int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
+    for (int i = 0; i < adapter_mode_count; ++i)
+    {
+        D3DDISPLAYMODE mode;
+        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, i, &mode);
+        if (result != D3D_OK)
         {
-            D3DDISPLAYMODE mode;
-            if (direct3d8->EnumAdapterModes(settings.adapter, i, &mode) == D3D_OK)
+            continue;
+        }
+
+        switch (mode.Format)
+        {
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+            if (settings.bit_depth != 16)
             {
-                switch (mode.Format)
-                {
-                case D3DFMT_R5G6B5:
-                case D3DFMT_X1R5G5B5:
-                    if (settings.bit_depth != 16)
-                    {
-                        continue;
-                    }
-                    break;
-                case D3DFMT_A8R8G8B8:
-                case D3DFMT_X8R8G8B8:
-                    if (settings.bit_depth != 32)
-                    {
-                        continue;
-                    }
-                    break;
-                default:
-                    continue;
-                }
-
-                if (mode.Width == settings.width && mode.Height == settings.height && mode.RefreshRate != 0)
-                {
-                    // STRING: SETUP 0x40e148
-                    // STRING: SETUP10 0x40d1f0
-                    sprintf(message_buffer, "%d Hz", mode.RefreshRate);
-                    int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)message_buffer);
-                    SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
-                    if (settings.refresh_rate == mode.RefreshRate)
-                    {
-                        selected = pos;
-                    }
-                }
+                continue;
             }
+            break;
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+            if (settings.bit_depth != 32)
+            {
+                continue;
+            }
+            break;
+        default:
+            continue;
         }
 
-        SendMessageA(dialog_state.windows.refresh_rate, CB_SETCURSEL, selected, NULL);
-        if (selected == 0)
+        if (mode.Width != settings.width)
         {
-            settings.refresh_rate = 0;
+            continue;
         }
+        if (mode.Height != settings.height)
+        {
+            continue;
+        }
+        if (mode.RefreshRate == 0)
+        {
+            continue;
+        }
+
+        // STRING: SETUP 0x40e148
+        // STRING: SETUP10 0x40d1f0
+        sprintf(message_buffer, "%d Hz", mode.RefreshRate);
+        int pos = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)message_buffer);
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, pos, mode.RefreshRate);
+        if (settings.refresh_rate == mode.RefreshRate)
+        {
+            selected = pos;
+        }
+    }
+
+    SendMessageA(dialog_state.windows.refresh_rate, CB_SETCURSEL, selected, NULL);
+    if (selected == 0)
+    {
+        settings.refresh_rate = 0;
     }
     return true;
 }
@@ -180,7 +201,15 @@ bool LoadAdapterModes()
 #endif
     D3DADAPTER_IDENTIFIER8 identifier;
     HRESULT result = direct3d8->GetAdapterIdentifier(settings.adapter, 0, &identifier);
-    dialog_state.vram_size = GetTotalVRAM(NULL);
+    // The same call in both branches, as in the Czech setup
+    if (result == D3D_OK)
+    {
+        dialog_state.vram_size = GetTotalVRAM(NULL);
+    }
+    else
+    {
+        dialog_state.vram_size = GetTotalVRAM(NULL);
+    }
     if (dialog_state.windows.driver_version)
     {
         if (result == D3D_OK)
@@ -228,18 +257,22 @@ bool LoadAdapterModes()
         return true;
     }
 
+    // The flags initialized before the loop, the result locals, the continues and the listing loop reusing new_mode and
+    // i, as in the Czech setup
     int adapter_mode_count = direct3d8->GetAdapterModeCount(settings.adapter);
     int total_modes = 0;
+    int bit_depth_flags = 0;
     S_adapter_mode *new_mode = adapter_modes;
-    for (int i = 0; i < adapter_mode_count; ++i)
+    int i;
+    for (i = 0; i < adapter_mode_count; ++i)
     {
         D3DDISPLAYMODE mode;
-        if (direct3d8->EnumAdapterModes(settings.adapter, i, &mode) != D3D_OK)
+        HRESULT result = direct3d8->EnumAdapterModes(settings.adapter, i, &mode);
+        if (result != D3D_OK)
         {
             continue;
         }
 
-        int bit_depth_flags;
         switch (mode.Format)
         {
         case D3DFMT_R5G6B5:
@@ -282,19 +315,24 @@ bool LoadAdapterModes()
         S_adapter_mode *cached_mode = adapter_modes;
         for (int j = 0; j < total_modes; ++j, ++cached_mode)
         {
-            if (cached_mode->width == mode.Width && cached_mode->height == mode.Height)
+            if (cached_mode->width != mode.Width)
             {
-#ifndef SETUP_1_0
-                cached_mode->flags |= new_mode->flags & MULTISAMPLE_MASK;
-#endif
-                if ((cached_mode->flags & bit_depth_flags) == 0)
-                {
-                    cached_mode->flags |= bit_depth_flags;
-                }
-                // A found flag tested after the loop is threaded away into the same jump, but moves the outer loop's
-                // counter and bound into other registers and hoists the SendMessageA load out of the listing loop
-                goto next_mode;
+                continue;
             }
+            if (cached_mode->height != mode.Height)
+            {
+                continue;
+            }
+#ifndef SETUP_1_0
+            cached_mode->flags |= new_mode->flags & MULTISAMPLE_MASK;
+#endif
+            if ((cached_mode->flags & bit_depth_flags) == 0)
+            {
+                cached_mode->flags |= bit_depth_flags;
+            }
+            // A found flag tested after the loop is threaded away into the same jump, but moves the outer loop's
+            // counter and bound into other registers and hoists the SendMessageA load out of the listing loop
+            goto next_mode;
         }
 
         // In 1.2 the multisample flags collected above are lost for a new mode, this is what the original does. 1.0
@@ -325,25 +363,27 @@ bool LoadAdapterModes()
 #endif
 
         new_mode++;
-        if (++total_modes >= 256)
+        total_modes++;
+        if (total_modes >= 256)
         {
             break;
         }
     next_mode:;
     }
 
-    S_adapter_mode *cached_mode = adapter_modes;
-    for (int j = 0; j < total_modes; ++j, ++cached_mode)
+    new_mode = adapter_modes;
+    for (i = 0; i < total_modes; ++i)
     {
         // STRING: SETUP 0x40e158
         // STRING: SETUP10 0x40d200
-        sprintf(message_buffer, "%4d x %4d", cached_mode->width, cached_mode->height);
+        sprintf(message_buffer, "%4d x %4d", new_mode->width, new_mode->height);
         int pos = SendMessageA(dialog_state.windows.resolution, CB_ADDSTRING, -1, (LPARAM)message_buffer);
-        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, (LPARAM)cached_mode);
-        if (cached_mode->width == settings.width && cached_mode->height == settings.height)
+        SendMessageA(dialog_state.windows.resolution, CB_SETITEMDATA, pos, (LPARAM)new_mode);
+        if (new_mode->width == settings.width && new_mode->height == settings.height)
         {
             SendMessageA(dialog_state.windows.resolution, CB_SETCURSEL, pos, NULL);
         }
+        new_mode++;
     }
     LoadAdapterRefreshRates();
 
@@ -405,7 +445,7 @@ bool LoadAdapterData(int adapter)
     {
         // STRING: SETUP 0x40e1a0
         // STRING: SETUP10 0x40d248
-        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"16");
+        int pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"16");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 16);
         if ((adapter_data->flags & BIT_DEPTH_32) == 0 && settings.bit_depth == 32)
         {
@@ -417,7 +457,7 @@ bool LoadAdapterData(int adapter)
     {
         // STRING: SETUP 0x40e19c
         // STRING: SETUP10 0x40d244
-        pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"32");
+        int pos = SendMessageA(dialog_state.windows.bit_depth, CB_INSERTSTRING, -1, (LPARAM)"32");
         SendMessageA(dialog_state.windows.bit_depth, CB_SETITEMDATA, pos, 32);
         if ((adapter_data->flags & BIT_DEPTH_16) == 0 && settings.bit_depth == 16)
         {
@@ -425,20 +465,20 @@ bool LoadAdapterData(int adapter)
         }
     }
 
-    if (settings.bit_depth != 16 && (adapter_data->flags & (BIT_DEPTH_16 | BIT_DEPTH_32)) == (BIT_DEPTH_16 | BIT_DEPTH_32))
+    if (settings.bit_depth == 16 || (adapter_data->flags & (BIT_DEPTH_16 | BIT_DEPTH_32)) != (BIT_DEPTH_16 | BIT_DEPTH_32))
     {
-        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 1, NULL);
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 0, NULL);
     }
     else
     {
-        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 0, NULL);
+        SendMessageA(dialog_state.windows.bit_depth, CB_SETCURSEL, 1, NULL);
     }
 
     if (settings.fullscreen)
     {
         if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
         {
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
+            int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
@@ -447,7 +487,7 @@ bool LoadAdapterData(int adapter)
         }
         if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
         {
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
+            int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
@@ -461,7 +501,7 @@ bool LoadAdapterData(int adapter)
         {
             // STRING: SETUP 0x40e198
             // STRING: SETUP10 0x40d240
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
+            int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
             if (settings.antialiasing == 2)
             {
@@ -472,7 +512,7 @@ bool LoadAdapterData(int adapter)
         {
             // STRING: SETUP 0x40e194
             // STRING: SETUP10 0x40d23c
-            pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
+            int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
             SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
             if (settings.antialiasing == 4)
             {
@@ -492,7 +532,11 @@ bool LoadD3D8()
     if (!dialog_state.windows.display)
     {
         direct3d8 = Direct3DCreate8(D3D_SDK_VERSION);
-        return direct3d8 ? true : false;
+        if (!direct3d8)
+        {
+            return false;
+        }
+        return true;
     }
 
     SendMessageA(dialog_state.windows.display, CB_RESETCONTENT, NULL, NULL);
@@ -518,14 +562,17 @@ bool LoadD3D8()
     D3DADAPTER_IDENTIFIER8 identifier;
     for (int i = 0; i < adapter_count; ++i)
     {
-        if (direct3d8->GetAdapterIdentifier(i, 0, &identifier) == D3D_OK)
+        HRESULT result = direct3d8->GetAdapterIdentifier(i, 0, &identifier);
+        if (result != D3D_OK)
         {
-            int index = SendMessageA(dialog_state.windows.display, CB_INSERTSTRING, -1, (LPARAM)identifier.Description);
-            SendMessageA(dialog_state.windows.display, CB_SETITEMDATA, index, i);
-            if (settings.adapter == i)
-            {
-                current_adapter = SendMessageA(dialog_state.windows.display, CB_GETCOUNT, NULL, NULL) - 1;
-            }
+            continue;
+        }
+
+        int index = SendMessageA(dialog_state.windows.display, CB_INSERTSTRING, -1, (LPARAM)identifier.Description);
+        SendMessageA(dialog_state.windows.display, CB_SETITEMDATA, index, i);
+        if (settings.adapter == i)
+        {
+            current_adapter = SendMessageA(dialog_state.windows.display, CB_GETCOUNT, NULL, NULL) - 1;
         }
     }
     SendMessageA(dialog_state.windows.display, CB_SETCURSEL, current_adapter, NULL);

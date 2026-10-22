@@ -3,6 +3,11 @@
 // at 0x401000-0x4021b0, in the same order.
 // 1.0 (SETUP_1_0) has its texts in the code and the dialog: 1.2 moved them to a string table, set at
 // WM_INITDIALOG.
+// Steam's Czech setup (2002-08-23, between 1.0 and 1.2) was built without optimization (VC6 SP5 without the Processor
+// Pack, /Od /Ob1 /Oi /Gy /G6), which keeps the source's shape: every local and an inlined function's non-constant
+// arguments in stack slots of their own, every statement where it is written, the cases in source order. Compiled the
+// same way, this file and hw.cpp give its code but for what 1.2 added (the caption text, the W-buffer test, the
+// multisampling order), and the shapes the comments credit to "the Czech setup" come from that comparison.
 #include "main.h"
 #include "hw.h"
 #include "settings.h"
@@ -96,17 +101,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 // FUNCTION: SETUPSTEAM 0x401340
-inline void HandleComboField(uint uid, bool &value)
+inline void HandleComboField(int uid, bool &value)
 {
-    // An if/else, not value = ... == BST_CHECKED: with that, 1.2 folds the sound checkbox's negation into the compare
-    if (SendDlgItemMessageA(dialog_state.windows.main, uid, BM_GETCHECK, NULL, NULL) == BST_CHECKED)
-    {
-        value = true;
-    }
-    else
-    {
-        value = false;
-    }
+    // The Czech setup's ?:, which gives 1.2's code only together with the sound toggle's conditional in DialogFunc:
+    // with either alone, 1.2 folds the toggle into this compare
+    value = SendDlgItemMessageA(dialog_state.windows.main, uid, BM_GETCHECK, NULL, NULL) == BST_CHECKED ? true : false;
+}
+
+// Every call of these four is inlined, in every build; their names are ours. The Czech setup shows three of them
+// through the stack slots of their calls (EnableItem's id, which the conversion to uint makes one, and its handle;
+// SetCheck's flag; SetSelection's index). AddString's arguments are constants and an address, which leave no trace
+// there; it is the simplest helper that fits Steam's .reloc (setup/CMakeLists.txt), not a certain one.
+inline void EnableItem(uint id, BOOL enable)
+{
+    HWND window = GetDlgItem(dialog_state.windows.main, id);
+    EnableWindow(window, enable);
+}
+
+inline void AddString(int id, const char *text)
+{
+    SendDlgItemMessageA(dialog_state.windows.main, id, CB_ADDSTRING, NULL, (LPARAM)text);
+}
+
+inline void SetSelection(int id, int index)
+{
+    SendDlgItemMessageA(dialog_state.windows.main, id, CB_SETCURSEL, index, NULL);
+}
+
+inline void SetCheck(int id, bool checked)
+{
+    SendDlgItemMessageA(dialog_state.windows.main, id, BM_SETCHECK, checked ? BST_CHECKED : BST_UNCHECKED, NULL);
 }
 
 // FUNCTION: SETUP 0x401220
@@ -114,44 +138,30 @@ inline void HandleComboField(uint uid, bool &value)
 // FUNCTION: SETUPSTEAM 0x401370
 void ToggleFields()
 {
-    // The handles go through a local: 1.2 calls GetDlgItem before pushing TRUE or FALSE
-    HWND window;
     if (settings.fullscreen)
     {
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_VSYNC);
-        EnableWindow(window, TRUE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_REFRESHRATE);
-        EnableWindow(window, TRUE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_BITDEPTH);
-        EnableWindow(window, TRUE);
+        EnableItem(IDC_CHECK_VSYNC, TRUE);
+        EnableItem(IDC_COMBO_REFRESHRATE, TRUE);
+        EnableItem(IDC_COMBO_BITDEPTH, TRUE);
     }
     else
     {
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_VSYNC);
-        EnableWindow(window, FALSE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_REFRESHRATE);
-        EnableWindow(window, FALSE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_BITDEPTH);
-        EnableWindow(window, FALSE);
+        EnableItem(IDC_CHECK_VSYNC, FALSE);
+        EnableItem(IDC_COMBO_REFRESHRATE, FALSE);
+        EnableItem(IDC_COMBO_BITDEPTH, FALSE);
     }
 
     if (!settings.disable_sound)
     {
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_SOUND);
-        EnableWindow(window, TRUE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
-        EnableWindow(window, TRUE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_DISABLEEAX);
-        EnableWindow(window, TRUE);
+        EnableItem(IDC_COMBO_SOUND, TRUE);
+        EnableItem(IDC_CHECK_SOFTWAREMIXINGONLY, TRUE);
+        EnableItem(IDC_CHECK_DISABLEEAX, TRUE);
     }
     else
     {
-        window = GetDlgItem(dialog_state.windows.main, IDC_COMBO_SOUND);
-        EnableWindow(window, FALSE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY);
-        EnableWindow(window, FALSE);
-        window = GetDlgItem(dialog_state.windows.main, IDC_CHECK_DISABLEEAX);
-        EnableWindow(window, FALSE);
+        EnableItem(IDC_COMBO_SOUND, FALSE);
+        EnableItem(IDC_CHECK_SOFTWAREMIXINGONLY, FALSE);
+        EnableItem(IDC_CHECK_DISABLEEAX, FALSE);
     }
 }
 
@@ -173,12 +183,14 @@ void ToggleExpertSettings()
 #endif
     RECT window_rect;
     GetWindowRect(dialog_state.windows.main, &window_rect);
+    // A const local: the Czech setup stores it and folds every use
+    const int expert_height = 75;
 
     // The button's handle goes through a local: 1.2 calls GetDlgItem before pushing the string id, which keeps
     // the two branches from sharing their tails
     if (expert_settings_enabled)
     {
-        SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top - 75, SWP_SHOWWINDOW);
+        SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top - expert_height, SWP_SHOWWINDOW);
         expert_settings_enabled = false;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
 #ifdef SETUP_1_0
@@ -190,7 +202,7 @@ void ToggleExpertSettings()
     }
     else
     {
-        SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top + 75, SWP_SHOWWINDOW);
+        SetWindowPos(dialog_state.windows.main, HWND_TOP, window_rect.left, window_rect.top, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top + expert_height, SWP_SHOWWINDOW);
         expert_settings_enabled = true;
         HWND button = GetDlgItem(dialog_state.windows.main, IDC_BUTTON_EXPERTSETTINGS);
 #ifdef SETUP_1_0
@@ -246,74 +258,10 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         if (!settings_loaded)
         {
             dialog_state.vram_size = GetTotalVRAM(NULL);
-        autodetect:
-            settings.multipass_rendering = false;
-            settings.suspend_when_inactive = true;
-            settings.clip_always = false;
-            settings.antialiasing = 0;
-            settings.fullscreen = true;
-            settings.hardware_transform = true;
-            settings.vsync = false;
-            settings.refresh_rate = 0;
-            settings.disable_sound = false;
-            settings.software_mixing_only = false;
-            if (dialog_state.vram_size <= 8)
-            {
-                settings.width = 640;
-                settings.height = 480;
-                settings.bit_depth = 16;
-                settings.lightmap_true_color = false;
-                settings.texture_true_color = false;
-                settings.texture_low_detail = true;
-                settings.texture_compressed = true;
-            }
-            else
-            {
-                if (dialog_state.vram_size <= 16)
-                {
-                    settings.width = 800;
-                    settings.height = 600;
-                    settings.bit_depth = 16;
-                    settings.texture_true_color = false;
-                    settings.texture_low_detail = true;
-                    settings.texture_compressed = true;
-                }
-                else
-                {
-                    // bit_depth and texture_low_detail in each branch: the compilers merge the stores, but the three
-                    // copies make 1.2 keep 32 in a register from the function's start
-                    if (dialog_state.vram_size <= 32)
-                    {
-                        settings.width = 800;
-                        settings.height = 600;
-                        settings.texture_true_color = false;
-                        settings.texture_compressed = true;
-                        settings.bit_depth = 32;
-                        settings.texture_low_detail = false;
-                    }
-                    else if (dialog_state.vram_size <= 64)
-                    {
-                        settings.width = 1024;
-                        settings.height = 768;
-                        settings.texture_true_color = false;
-                        settings.texture_compressed = true;
-                        settings.bit_depth = 32;
-                        settings.texture_low_detail = false;
-                    }
-                    else
-                    {
-                        settings.width = 1280;
-                        settings.height = 1024;
-                        settings.texture_true_color = true;
-                        settings.texture_compressed = false;
-                        settings.bit_depth = 32;
-                        settings.texture_low_detail = false;
-                    }
-                }
-                settings.lightmap_true_color = true;
-            }
+            goto autodetect;
         }
-
+        // The autodetection comes back here (below, in IDC_BUTTON_AUTODETECT)
+    autodetect_done:
         if (!LoadD3D8())
         {
 #ifdef SETUP_1_0
@@ -337,31 +285,31 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     refresh:
         {
             // Both builds test each flag (setne): a bool passed as it is would be zero-extended
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_FULLSCREEN, BM_SETCHECK, settings.fullscreen ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_TRIPLEBUFFERING, BM_SETCHECK, settings.triple_buffering ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_HARDWARETRANSFORM, BM_SETCHECK, settings.hardware_transform ? BST_CHECKED : BST_UNCHECKED, NULL);
+            SetCheck(IDC_CHECK_FULLSCREEN, settings.fullscreen);
+            SetCheck(IDC_CHECK_TRIPLEBUFFERING, settings.triple_buffering);
+            SetCheck(IDC_CHECK_HARDWARETRANSFORM, settings.hardware_transform);
             if (settings.hardware_transform)
             {
                 settings.multipass_rendering = false;
             }
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_TEXTURETRUECOLOR, BM_SETCHECK, settings.texture_true_color ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_TEXTURELOWDETAIL, BM_SETCHECK, settings.texture_low_detail ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_VSYNC, BM_SETCHECK, settings.vsync ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_LIGHTMAPTRUECOLOR, BM_SETCHECK, settings.lightmap_true_color ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_TEXTURECOMPRESSED, BM_SETCHECK, settings.texture_compressed ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_SOUND, BM_SETCHECK, settings.disable_sound ? BST_UNCHECKED : BST_CHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_SOFTWAREMIXINGONLY, BM_SETCHECK, settings.software_mixing_only ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_DISABLEEAX, BM_SETCHECK, settings.disable_eax ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_SUSPENDWHENINACTIVE, BM_SETCHECK, settings.suspend_when_inactive ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_CLIPALWAYS, BM_SETCHECK, settings.clip_always ? BST_CHECKED : BST_UNCHECKED, NULL);
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_MULTIPASSRENDERING, BM_SETCHECK, settings.multipass_rendering ? BST_CHECKED : BST_UNCHECKED, NULL);
+            SetCheck(IDC_CHECK_TEXTURETRUECOLOR, settings.texture_true_color);
+            SetCheck(IDC_CHECK_TEXTURELOWDETAIL, settings.texture_low_detail);
+            SetCheck(IDC_CHECK_VSYNC, settings.vsync);
+            SetCheck(IDC_CHECK_LIGHTMAPTRUECOLOR, settings.lightmap_true_color);
+            SetCheck(IDC_CHECK_TEXTURECOMPRESSED, settings.texture_compressed);
+            SetCheck(IDC_CHECK_SOUND, !settings.disable_sound);
+            SetCheck(IDC_CHECK_SOFTWAREMIXINGONLY, settings.software_mixing_only);
+            SetCheck(IDC_CHECK_DISABLEEAX, settings.disable_eax);
+            SetCheck(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
+            SetCheck(IDC_CHECK_CLIPALWAYS, settings.clip_always);
+            SetCheck(IDC_CHECK_MULTIPASSRENDERING, settings.multipass_rendering);
 #ifndef SETUP_1_0
             if (!supports_w_buffer)
             {
                 settings.w_buffer = false;
             }
 #endif
-            SendDlgItemMessageA(dialog_state.windows.main, IDC_CHECK_WBUFFER, BM_SETCHECK, settings.w_buffer ? BST_CHECKED : BST_UNCHECKED, NULL);
+            SetCheck(IDC_CHECK_WBUFFER, settings.w_buffer);
 #ifndef SETUP_1_0
             EnableWindow(GetDlgItem(hWnd, IDC_CHECK_WBUFFER), supports_w_buffer);
 #endif
@@ -388,14 +336,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     // STRING: SETUP 0x40e0d4
                     strcpy(buffer, "Stereo headphones");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
+                AddString(IDC_COMBO_SOUND, buffer);
 
                 if (LoadStringA(NULL, IDS_STEREOSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e0c4
                     strcpy(buffer, "Stereo speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
+                AddString(IDC_COMBO_SOUND, buffer);
 
                 if (LoadStringA(NULL, IDS_QUADROPHONICSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
@@ -403,15 +351,15 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     // STRING: SETUPSTEAM 0x4041f8
                     strcpy(buffer, "Quadraphonic speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
+                AddString(IDC_COMBO_SOUND, buffer);
 
                 if (LoadStringA(NULL, IDS_SURROUNDSPEAKERS, buffer, sizeof(buffer)) == 0)
                 {
                     // STRING: SETUP 0x40e090
                     strcpy(buffer, "5.1 surround sound speakers");
                 }
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_ADDSTRING, NULL, (LPARAM)buffer);
-                SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_SETCURSEL, settings.sound_type, NULL);
+                AddString(IDC_COMBO_SOUND, buffer);
+                SetSelection(IDC_COMBO_SOUND, settings.sound_type);
             }
 #endif
             LoadAdapterData(-1);
@@ -436,18 +384,20 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             int language_count = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCOUNT, NULL, NULL);
             for (int i = 0; i < language_count; i++)
             {
-                if (SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, i, NULL) == settings.language)
+                // The item data in pos, as the Czech setup has it
+                pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, i, NULL);
+                if (pos == settings.language)
                 {
                     SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETCURSEL, i, NULL);
                     break;
                 }
             }
-
-            return 0;
         }
+        break;
     case WM_COMMAND:
-        // The checkbox case comes before Exit: Steam's build has its "Warning" first. VS2008 lays out the jump table's
-        // targets in source order, and so does VC6, which lays out the rest by the dispatch tree.
+        // The cases in the Czech setup's order. The checkbox case comes before Exit: Steam's build has its "Warning"
+        // first. VS2008 lays out the jump table's targets in source order, and so does VC6, which lays out the rest by
+        // the dispatch tree. Every case breaks to the one return at the end, as in the Czech setup.
         switch (LOWORD(wParam))
         {
         case IDC_CHECK_FULLSCREEN:
@@ -474,8 +424,8 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             HandleComboField(IDC_CHECK_LIGHTMAPTRUECOLOR, settings.lightmap_true_color);
             HandleComboField(IDC_CHECK_TEXTURECOMPRESSED, settings.texture_compressed);
             HandleComboField(IDC_CHECK_SOUND, settings.disable_sound);
-            // Compared with true, not negated with !: both builds compare the flag with 1
-            settings.disable_sound = settings.disable_sound != true;
+            // The Czech setup's conditional of two assignments (see HandleComboField)
+            settings.disable_sound == true ? settings.disable_sound = false : settings.disable_sound = true;
             HandleComboField(IDC_CHECK_SOFTWAREMIXINGONLY, settings.software_mixing_only);
             HandleComboField(IDC_CHECK_DISABLEEAX, settings.disable_eax);
             HandleComboField(IDC_CHECK_SUSPENDWHENINACTIVE, settings.suspend_when_inactive);
@@ -486,13 +436,13 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (settings.texture_true_color && LOWORD(wParam) == IDC_CHECK_TEXTURETRUECOLOR && dialog_state.vram_size < 64)
             {
 #ifdef SETUP_1_0
-                if (MessageBoxA(
+                int result = MessageBoxA(
                         hWnd,
                         // STRING: SETUP10 0x40d150
                         "Selecting truecolor textures is only recommended\n\rfor video cards with 64MB video RAM or above.\n\rContinue?",
                         // STRING: SETUP10 0x40d1bc
                         "Warning",
-                        MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+                        MB_YESNO | MB_ICONEXCLAMATION);
 #else
                 char buffer[256];
                 if (LoadStringA(NULL, IDS_LOWVRAMWARNING, buffer, sizeof(buffer)) == 0)
@@ -507,8 +457,10 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                     strcpy(caption, "Warning");
                 }
 
-                if (MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+                int result = MessageBoxA(hWnd, buffer, caption, MB_YESNO | MB_ICONEXCLAMATION);
 #endif
+                // The result in a local, where the exit prompt compares the call: the Czech setup has both
+                if (result == IDNO)
                 {
                     settings.texture_true_color = false;
                     goto refresh;
@@ -525,14 +477,14 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.hardware_transform = false;
                 goto refresh;
             }
-            return 0;
+            break;
         case IDC_COMBO_SOUND:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 settings.sound_type = SendDlgItemMessageA(dialog_state.windows.main, IDC_COMBO_SOUND, CB_GETCURSEL, NULL, NULL);
                 ToggleFields();
             }
-            return 0;
+            break;
         case IDC_COMBO_DISPLAY:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
@@ -541,28 +493,35 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 settings.adapter = SendMessageA(dialog_state.windows.display, CB_GETITEMDATA, pos, NULL);
                 LoadAdapterModes();
             }
-            return 0;
+            break;
         case IDC_COMBO_RESOLUTION:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 int pos = SendMessageA(dialog_state.windows.resolution, CB_GETCURSEL, NULL, NULL);
-                S_adapter_mode *adapter_data = (S_adapter_mode *)SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, pos, NULL);
-                if (adapter_data && adapter_data != (S_adapter_mode *)CB_ERR)
+                // Two tests and a cast into a second local, as the Czech setup has them
+                LRESULT data = SendMessageA(dialog_state.windows.resolution, CB_GETITEMDATA, pos, NULL);
+                if (!data)
                 {
-                    settings.width = adapter_data->width;
-                    settings.height = adapter_data->height;
-                    LoadAdapterRefreshRates();
-                    LoadAdapterData(pos);
+                    break;
                 }
+                if (data == CB_ERR)
+                {
+                    break;
+                }
+                S_adapter_mode *adapter_data = (S_adapter_mode *)data;
+                settings.width = adapter_data->width;
+                settings.height = adapter_data->height;
+                LoadAdapterRefreshRates();
+                LoadAdapterData(pos);
             }
-            return 0;
+            break;
         case IDC_COMBO_ANTIALIASING:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 int pos = (uchar)SendMessageA(dialog_state.windows.antialiasing, CB_GETCURSEL, NULL, NULL);
                 settings.antialiasing = SendMessageA(dialog_state.windows.antialiasing, CB_GETITEMDATA, pos, NULL);
             }
-            return 0;
+            break;
         case IDC_COMBO_REFRESHRATE:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
@@ -570,23 +529,97 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 // Cut to a byte as well, this is what the original does
                 settings.refresh_rate = (uchar)SendMessageA(dialog_state.windows.refresh_rate, CB_GETITEMDATA, pos, NULL);
             }
-            return 0;
+            break;
         case IDC_COMBO_BITDEPTH:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 int pos = (uchar)SendMessageA(dialog_state.windows.bit_depth, CB_GETCURSEL, NULL, NULL);
                 settings.bit_depth = SendMessageA(dialog_state.windows.bit_depth, CB_GETITEMDATA, pos, NULL);
             }
-            return 0;
+            break;
         case IDC_BUTTON_EXPERTSETTINGS:
             ToggleExpertSettings();
-            return 0;
+            break;
+        case IDC_COMBO_LANGUAGE:
+        {
+            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCURSEL, NULL, NULL);
+            if (pos != CB_ERR)
+            {
+                settings.language = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, pos, NULL);
+            }
+            break;
+        }
         case IDC_BUTTON_AUTODETECT:
-            // Both builds have the autodetection once, in WM_INITDIALOG, entered from there and from this button. The
-            // register allocation's edge code shows a join, not two merged copies: WM_INITDIALOG sets the constant
-            // register (mov edx, 0x20) and jumps past this case's load of vram_size. Two copies don't merge in VC6
-            // (their registers differ), and written as a function, VS2008 doesn't inline it into DialogFunc.
-            goto autodetect;
+            // The autodetection is here once, entered from WM_INITDIALOG too, and returns to it: the Czech setup has it
+            // in this case, which WM_INITDIALOG reaches through VC6's jump stub for a goto into the switch, and both
+            // optimized builds show the join (WM_INITDIALOG sets the constant register, mov edx, 0x20, and jumps past
+            // this case's load of vram_size). Every branch sets all seven settings, as in the Czech setup.
+        autodetect:
+            settings.multipass_rendering = false;
+            settings.suspend_when_inactive = true;
+            settings.clip_always = false;
+            settings.antialiasing = 0;
+            settings.fullscreen = true;
+            settings.hardware_transform = true;
+            settings.vsync = false;
+            settings.refresh_rate = 0;
+            settings.disable_sound = false;
+            settings.software_mixing_only = false;
+            if (dialog_state.vram_size <= 8)
+            {
+                settings.width = 640;
+                settings.height = 480;
+                settings.bit_depth = 16;
+                settings.lightmap_true_color = false;
+                settings.texture_true_color = false;
+                settings.texture_low_detail = true;
+                settings.texture_compressed = true;
+            }
+            else if (dialog_state.vram_size <= 16)
+            {
+                settings.width = 800;
+                settings.height = 600;
+                settings.bit_depth = 16;
+                settings.lightmap_true_color = true;
+                settings.texture_true_color = false;
+                settings.texture_low_detail = true;
+                settings.texture_compressed = true;
+            }
+            else if (dialog_state.vram_size <= 32)
+            {
+                settings.width = 800;
+                settings.height = 600;
+                settings.bit_depth = 32;
+                settings.lightmap_true_color = true;
+                settings.texture_true_color = false;
+                settings.texture_low_detail = false;
+                settings.texture_compressed = true;
+            }
+            else if (dialog_state.vram_size <= 64)
+            {
+                settings.width = 1024;
+                settings.height = 768;
+                settings.bit_depth = 32;
+                settings.lightmap_true_color = true;
+                settings.texture_true_color = false;
+                settings.texture_low_detail = false;
+                settings.texture_compressed = true;
+            }
+            else
+            {
+                settings.width = 1280;
+                settings.height = 1024;
+                settings.bit_depth = 32;
+                settings.lightmap_true_color = true;
+                settings.texture_true_color = true;
+                settings.texture_low_detail = false;
+                settings.texture_compressed = false;
+            }
+            goto autodetect_done;
+        case IDC_BUTTON_SAVE:
+            SaveSettings(settings);
+            EndDialog(hWnd, 0);
+            break;
         case IDC_BUTTON_EXIT:
         {
             S_settings saved_settings;
@@ -624,25 +657,10 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             }
 
             EndDialog(hWnd, -1);
-            return 0;
+            break;
         }
-        case IDC_BUTTON_SAVE:
-            SaveSettings(settings);
-            EndDialog(hWnd, 0);
-            return 0;
-        case IDC_COMBO_LANGUAGE:
-        {
-            int pos = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCURSEL, NULL, NULL);
-            if (pos != CB_ERR)
-            {
-                settings.language = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETITEMDATA, pos, NULL);
-            }
-            return 0;
         }
-        default:
-            return 0;
-        }
-    default:
-        return 0;
+        break;
     }
+    return 0;
 }
