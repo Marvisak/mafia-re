@@ -10,6 +10,7 @@
 #include <malloc.h>
 
 // FUNCTION: LS3DF 0x10034370
+// FUNCTION: LS3DF11 0x100333d0
 morphBase::morphBase()
 {
     m_Flags = MORPHF_DIRTY | MORPHF_UNKNOWN_4;
@@ -22,6 +23,7 @@ morphBase::morphBase()
 }
 
 // FUNCTION: LS3DF 0x10034390
+// FUNCTION: LS3DF11 0x100333f0
 void morphBase::Clear()
 {
     m_Flags = (m_Flags & ~MORPHF_LOADED) | MORPHF_DIRTY;
@@ -38,6 +40,7 @@ void morphBase::Clear()
 }
 
 // FUNCTION: LS3DF 0x10034460
+// FUNCTION: LS3DF11 0x100334c0
 LS3D_RESULT morphBase::SetWeightB(int region, int level, float weight)
 {
     m_pWeights[region * m_numLevels + level] = weight;
@@ -46,6 +49,7 @@ LS3D_RESULT morphBase::SetWeightB(int region, int level, float weight)
 }
 
 // FUNCTION: LS3DF 0x10034490
+// FUNCTION: LS3DF11 0x100334f0
 float morphBase::GetWeightB(int region, int level) const
 {
     return m_pWeights[region * m_numLevels + level];
@@ -54,6 +58,7 @@ float morphBase::GetWeightB(int region, int level) const
 // The region's weights are addressed twice (&m_pWeights[base]): VC6 keeps the address in a register of its own and
 // copies it into each loop's pointer, where one pointer walked in both loops shares the register
 // FUNCTION: LS3DF 0x100344b0
+// FUNCTION: LS3DF11 0x10033510
 void morphBase::NormalizeWeights()
 {
     int base = 0;
@@ -87,6 +92,7 @@ void morphBase::NormalizeWeights()
 // before the loop, the position's x in it), which goes by the allocator's live range ids (tools/c2trace.py); the second
 // UpdateMorphLod has the second of them.
 // FUNCTION: LS3DF 0x10034570
+// FUNCTION: LS3DF11 0x100335d0
 void morphBase::UpdateMorphLod(int lod, I3D_mesh_object *mesh)
 {
     if (!(m_Flags & MORPHF_DIRTY) || !(m_Flags & MORPHF_LOADED))
@@ -131,6 +137,7 @@ void morphBase::UpdateMorphLod(int lod, I3D_mesh_object *mesh)
 
 // PC only (the name is the first one's): the positions go into a lod's vertices too
 // FUNCTION: LS3DF 0x10034810
+// FUNCTION: LS3DF11 0x10033840
 void morphBase::UpdateMorphLod(void *pos_out, uint stride, int lod, I3D_mesh_object *mesh)
 {
     if (!(m_Flags & MORPHF_DIRTY) || !(m_Flags & MORPHF_LOADED))
@@ -175,6 +182,7 @@ void morphBase::UpdateMorphLod(void *pos_out, uint stride, int lod, I3D_mesh_obj
 }
 
 // FUNCTION: LS3DF 0x10034ad0
+// FUNCTION: LS3DF11 0x10033ad0
 LS3D_RESULT morphBase::DuplicateMorphDef(morphBase *mb)
 {
     if (!mb->m_pMorphDef) {
@@ -202,6 +210,7 @@ LS3D_RESULT morphBase::DuplicateMorphDef(morphBase *mb)
 // their positions and normals in every level and, if a byte says so, their indices; the weights start on the first
 // level. The bound volume comes last.
 // FUNCTION: LS3DF 0x10034bd0
+// FUNCTION: LS3DF11 0x10033bd0
 void morphBase::LoadImageB()
 {
     dtaRead(LoadImageHandle, &m_numLevels, 1);
@@ -271,6 +280,7 @@ void morphBase::LoadImageB()
 }
 
 // FUNCTION: LS3DF 0x10034e30
+// FUNCTION: LS3DF11 0x10033e30
 I3D_morph::I3D_morph()
 {
     visual_type = I3D_VISUAL_MORPH;
@@ -279,6 +289,7 @@ I3D_morph::I3D_morph()
 // Empty, but defined here: the original's comes right after the constructor's scalar deleting destructor, where an
 // inline one, in the precompiled header, would be deferred (/YX)
 // FUNCTION: LS3DF 0x10034eb0
+// FUNCTION: LS3DF11 0x10033eb0
 I3D_morph::~I3D_morph()
 {
 }
@@ -288,18 +299,21 @@ void I3D_morph::SetSpace(bool world)
 }
 
 // FUNCTION: LS3DF 0x10034fe0
+// FUNCTION: LS3DF11 0x10033fe0
 int I3D_morph::NumLevels() const
 {
     return m_numLevels;
 }
 
 // FUNCTION: LS3DF 0x10034ff0
+// FUNCTION: LS3DF11 0x10033ff0
 int I3D_morph::NumRegions() const
 {
     return m_numRegions;
 }
 
 // FUNCTION: LS3DF 0x10035000
+// FUNCTION: LS3DF11 0x10034000
 LS3D_RESULT I3D_morph::SetWeight(int region, int level, float weight)
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels) {
@@ -318,6 +332,7 @@ LS3D_RESULT I3D_morph::SetWeight(int region, int level, float weight)
 }
 
 // FUNCTION: LS3DF 0x100350b0
+// FUNCTION: LS3DF11 0x100340b0
 float I3D_morph::GetWeight(int region, int level) const
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels)
@@ -328,6 +343,7 @@ float I3D_morph::GetWeight(int region, int level) const
 }
 
 // FUNCTION: LS3DF 0x10035130
+// FUNCTION: LS3DF11 0x10034130
 void I3D_morph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     I3D_object::SetMesh(m, keep_lods);
@@ -342,6 +358,7 @@ void I3D_morph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 // inside that test, as the objects' and billboards' do. The inline accessors after the second Clear (GetVisualType, two
 // GetMesh) keep Release out of line in both Clears, as the original has it; without them VC6 inlines it.
 // FUNCTION: LS3DF 0x10035180
+// FUNCTION: LS3DF11 0x10034180
 LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -424,6 +441,7 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
 // Not matching yet: the loop's alpha * fade * transparency loads fade first (the original alpha, as I3D_object's),
 // whichever way the product is written.
 // FUNCTION: LS3DF 0x100354f0
+// FUNCTION: LS3DF11 0x10034510
 void I3D_morph::m_AddFGroups()
 {
     if (!mesh)
@@ -635,6 +653,7 @@ void I3D_morph::m_AddFGroups()
 
 // PC only. After the marker: the morph's file defines it after m_AddFGroups, and Clear inlines it all the same.
 // FUNCTION: LS3DF 0x10036540
+// FUNCTION: LS3DF11 0x100352a0
 S_morph_unknown::~S_morph_unknown()
 {
     int i;
@@ -649,6 +668,7 @@ S_morph_unknown::~S_morph_unknown()
 }
 
 // FUNCTION: LS3DF 0x10036580
+// FUNCTION: LS3DF11 0x100352e0
 MorphDef::MorphDef(int lods, int regs)
 {
     m_RefCount = 1;
@@ -680,6 +700,7 @@ MorphDef::~MorphDef()
 }
 
 // FUNCTION: LS3DF 0x100366b0
+// FUNCTION: LS3DF11 0x10035410
 int MorphDef::Release()
 {
     if (--m_RefCount < 0) {
@@ -694,6 +715,7 @@ int MorphDef::Release()
 }
 
 // FUNCTION: LS3DF 0x10036710
+// FUNCTION: LS3DF11 0x10035470
 morph_region::morph_region()
 {
     num_verts = 0;
@@ -702,6 +724,7 @@ morph_region::morph_region()
 }
 
 // FUNCTION: LS3DF 0x10036720
+// FUNCTION: LS3DF11 0x10035480
 morph_region::~morph_region()
 {
     delete[] indices;
@@ -710,6 +733,7 @@ morph_region::~morph_region()
 }
 
 // FUNCTION: LS3DF 0x10036750
+// FUNCTION: LS3DF11 0x100354b0
 void I3D_morph::LoadImage()
 {
     m_Flags &= ~MORPHF_UNKNOWN_4;

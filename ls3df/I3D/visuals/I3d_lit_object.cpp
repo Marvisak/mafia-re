@@ -32,6 +32,7 @@ extern D3DFORMAT m_TrueColorTexturePixelFormat;
 extern bool m_DisableSleeping;
 
 // FUNCTION: LS3DF 0x10021570
+// FUNCTION: LS3DF11 0x100210a0
 I3D_lit_object::I3D_lit_object()
 {
     visual_type = I3D_VISUAL_LIT_OBJECT;
@@ -46,6 +47,7 @@ I3D_lit_object::I3D_lit_object()
 }
 
 // FUNCTION: LS3DF 0x10021600
+// FUNCTION: LS3DF11 0x10021130
 I3D_lit_object::~I3D_lit_object()
 {
     for (int i = 0; i < 6; i++) {
@@ -58,6 +60,7 @@ I3D_lit_object::~I3D_lit_object()
 
 // Frees the vertex buffers of the active lighting's lods, which renders them again, and makes another one active
 // FUNCTION: LS3DF 0x100216a0
+// FUNCTION: LS3DF11 0x100211d0
 void I3D_lit_object::SetActiveLevel(int index)
 {
     S_lit_level &level = levels[active_level];
@@ -78,6 +81,7 @@ void I3D_lit_object::SetActiveLevel(int index)
 }
 
 // FUNCTION: LS3DF 0x10021740
+// FUNCTION: LS3DF11 0x10021270
 void I3D_lit_object::UpdateVertices()
 {
     for (int i = 0; i < 6; i++) {
@@ -92,6 +96,7 @@ void I3D_lit_object::UpdateVertices()
 }
 
 // FUNCTION: LS3DF 0x10021790
+// FUNCTION: LS3DF11 0x100212c0
 void I3D_lit_object::UpdateVertices(int index)
 {
     for (int i = 0; i < 6; i++) {
@@ -104,6 +109,7 @@ void I3D_lit_object::UpdateVertices(int index)
 }
 
 // FUNCTION: LS3DF 0x100217d0
+// FUNCTION: LS3DF11 0x10021300
 int I3D_lit_object::GetNumRectInfos(int lod_index, int index)
 {
     S_lit_level &level = levels[index];
@@ -113,6 +119,7 @@ int I3D_lit_object::GetNumRectInfos(int lod_index, int index)
 }
 
 // FUNCTION: LS3DF 0x10021800
+// FUNCTION: LS3DF11 0x10021330
 RECTANGLE_INFO *I3D_lit_object::GetRectInfos(int lod_index, int index)
 {
     S_lit_level &level = levels[index];
@@ -131,6 +138,7 @@ RECTANGLE_INFO *I3D_lit_object::GetRectInfos(int lod_index, int index)
 // width's conversion slot; the dead parameters hold pitch (this), src (lod_index) and p (index), where ours has p,
 // pitch, and the flag, q and the counter. No declaration scope moved it.
 // FUNCTION: LS3DF 0x10021830
+// FUNCTION: LS3DF11 0x10021360
 void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
 {
     if (!renderState[RS_LMTRUECOLOR] || !m_TrueColorTexturePixelFormat) {
@@ -212,6 +220,7 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
 
 // Locks the lod's index buffer (PC; PS2's locks the lightmap's texture)
 // FUNCTION: LS3DF 0x10021ad0
+// FUNCTION: LS3DF11 0x10021600
 int I3D_lit_object::GetRectInfoFlags(int lod_index, int index, int flags)
 {
     litLod *l = levels[index].lods[lod_index];
@@ -314,6 +323,7 @@ inline void T_swap(T &a, T &b)
 // out of line exactly what the original does (it inlines only FloatToInt there). The frame is 0x10 bytes larger in the
 // original, and the registers and slots differ all through.
 // FUNCTION: LS3DF 0x10021bb0
+// FUNCTION: LS3DF11 0x10021650
 LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float resolution, uint flags,
     I3D_LOAD_CB_PROC *cb, void *context)
 {
@@ -1100,6 +1110,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
 }
 
 // FUNCTION: LS3DF 0x10026930
+// FUNCTION: LS3DF11 0x100263d0
 LS3D_RESULT I3D_lit_object::Destruct(uint flags)
 {
     levels[active_level].constructed = false;
@@ -1130,6 +1141,7 @@ struct S_lm_header {
 // bit & num_levels, the same on PC), the face groups' loop has f and rects in each other's register, and
 // SetNumFGI's m_numPIndex store comes before the memset's xor eax, eax.
 // FUNCTION: LS3DF 0x10026980
+// FUNCTION: LS3DF11 0x10026420
 LS3D_RESULT I3D_lit_object::Load(int handle)
 {
     Destruct(0);
@@ -1421,6 +1433,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
 }
 
 // FUNCTION: LS3DF 0x10027580
+// FUNCTION: LS3DF11 0x10026f60
 LS3D_RESULT I3D_lit_object::Save(int handle)
 {
     dbgPrintf("NEMUZETE UKLADAT LM, KDYZ JE #define LS3D_FINAL !!!!!!!");
@@ -1428,6 +1441,7 @@ LS3D_RESULT I3D_lit_object::Save(int handle)
 }
 
 // FUNCTION: LS3DF 0x100275a0
+// FUNCTION: LS3DF11 0x10026f80
 LS3D_RESULT I3D_lit_object::SetMode(uint mode)
 {
     Destruct(0);
@@ -1436,6 +1450,7 @@ LS3D_RESULT I3D_lit_object::SetMode(uint mode)
 }
 
 // FUNCTION: LS3DF 0x100275d0
+// FUNCTION: LS3DF11 0x10026fb0
 LS3D_RESULT I3D_lit_object::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -1480,6 +1495,7 @@ LS3D_RESULT I3D_lit_object::Duplicate(I3D_frame *frame)
 
 // keep_lods keeps the lightings
 // FUNCTION: LS3DF 0x10027760
+// FUNCTION: LS3DF11 0x10027140
 void I3D_lit_object::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     if (m == mesh) {
@@ -1505,6 +1521,7 @@ void I3D_lit_object::SetMesh(I3D_mesh_object *m, bool keep_lods)
 
 // The lightmaps' memory, of all the lightings
 // FUNCTION: LS3DF 0x10027830
+// FUNCTION: LS3DF11 0x10027210
 uint I3D_lit_object::GetTotalLMMemory()
 {
     uint total = 0;
@@ -1522,6 +1539,7 @@ uint I3D_lit_object::GetTotalLMMemory()
 // Queues the face groups of the level of detail the distance picks, after bringing the active lighting's lod up to
 // date (PS2's renderLitObject() in the messages)
 // FUNCTION: LS3DF 0x10027880
+// FUNCTION: LS3DF11 0x10027260
 void I3D_lit_object::m_AddFGroups()
 {
     if (!mesh)
@@ -1784,6 +1802,7 @@ void I3D_lit_object::m_AddFGroups()
 // The single pass's SetColorOp1(m_Modulate2X) is out of line in the original, as the render-state helpers' asserts
 // (I3D.h) leave the budget.
 // FUNCTION: LS3DF 0x10028d40
+// FUNCTION: LS3DF11 0x100283d0
 void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 {
     S_lit_level *lit;
@@ -2044,6 +2063,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 }
 
 // FUNCTION: LS3DF 0x10029f80
+// FUNCTION: LS3DF11 0x10029610
 litLod::~litLod()
 {
     delete[] m_pUV;
@@ -2077,6 +2097,7 @@ litLod::~litLod()
 }
 
 // FUNCTION: LS3DF 0x1002a0e0
+// FUNCTION: LS3DF11 0x10029770
 bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
 {
     if (flags & 2 && !dirty && m_PosVB.vb) {
@@ -2156,6 +2177,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1002a790
+// FUNCTION: LS3DF11 0x10029b10
 bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
 {
     m_pLM = new LightMap;

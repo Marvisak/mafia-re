@@ -17,13 +17,16 @@ extern int OFFD_ListUsed;
 
 // The frame the last destructor ran for, so that an enumeration doesn't go on into a frame its callback deleted
 // GLOBAL: LS3DF 0x100c0028
+// GLOBAL: LS3DF11 0x100bd148
 I3D_frame *lastDestroyedFrame;
 
 // OFFD_CountFrames' count
 // GLOBAL: LS3DF 0x100c002c
+// GLOBAL: LS3DF11 0x100bd14c
 int OFFD_NumFrames;
 
 // FUNCTION: LS3DF 0x1001a7f0
+// FUNCTION: LS3DF11 0x1001a310
 I3D_frame::I3D_frame()
 {
     ref = 1;
@@ -60,6 +63,7 @@ I3D_frame::I3D_frame()
 }
 
 // FUNCTION: LS3DF 0x1001a9a0
+// FUNCTION: LS3DF11 0x1001a4c0
 I3D_frame::~I3D_frame()
 {
     if (frm_flags & FRMFLAGS_FFTREE)
@@ -90,6 +94,7 @@ I3D_frame::~I3D_frame()
 }
 
 // FUNCTION: LS3DF 0x1001aae0
+// FUNCTION: LS3DF11 0x1001a600
 uint I3D_frame::Release()
 {
     if (--ref > 0)
@@ -99,6 +104,7 @@ uint I3D_frame::Release()
 }
 
 // FUNCTION: LS3DF 0x1001ab00
+// FUNCTION: LS3DF11 0x1001a620
 void I3D_frame::DeleteFromOwner()
 {
     if (!m_pOwner)
@@ -118,6 +124,7 @@ void I3D_frame::DeleteFromOwner()
 
 // The rotation of a direction and a roll (PC: pitch from the direction's height, yaw from its ground direction)
 // FUNCTION: LS3DF 0x1001ab50
+// FUNCTION: LS3DF11 0x1001a670
 void I3D_frame::SetDir(const S_vector &dir, float roll)
 {
     float pitch = 0.0f, yaw = 0.0f;
@@ -158,6 +165,7 @@ void I3D_frame::SetDir(const S_vector &dir, float roll)
 }
 
 // FUNCTION: LS3DF 0x1001b040
+// FUNCTION: LS3DF11 0x1001ab60
 void I3D_frame::SetWorldDir(const S_vector &dir, float roll)
 {
     if (!parent) {
@@ -177,6 +185,7 @@ void I3D_frame::SetWorldDir(const S_vector &dir, float roll)
 }
 
 // FUNCTION: LS3DF 0x1001b160
+// FUNCTION: LS3DF11 0x1001ac80
 void I3D_frame::SetWorldPos(const S_vector &pos)
 {
     if (!parent)
@@ -189,6 +198,7 @@ void I3D_frame::SetWorldPos(const S_vector &pos)
 }
 
 // FUNCTION: LS3DF 0x1001b230
+// FUNCTION: LS3DF11 0x1001ad50
 void I3D_frame::SetWorldPosDir(const S_vector &pos, const S_vector &dir, float roll)
 {
     if (!parent) {
@@ -211,6 +221,7 @@ void I3D_frame::SetWorldPosDir(const S_vector &pos, const S_vector &dir, float r
 }
 
 // FUNCTION: LS3DF 0x1001b3c0
+// FUNCTION: LS3DF11 0x1001aee0
 void I3D_frame::SetCallback(I3D_CALLBACK *cb, uint flags)
 {
     flags &= FRMFLAGS_CALLBACK_MASK;
@@ -223,6 +234,7 @@ void I3D_frame::SetCallback(I3D_CALLBACK *cb, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1001b400
+// FUNCTION: LS3DF11 0x1001af20
 void I3D_frame::SetOn(bool on)
 {
     if (on)
@@ -232,6 +244,7 @@ void I3D_frame::SetOn(bool on)
 }
 
 // FUNCTION: LS3DF 0x1001b430
+// FUNCTION: LS3DF11 0x1001af50
 void I3D_frame::RemoveFromFFTree()
 {
     frm_flags &= ~FRMFLAGS_FFTREE;
@@ -263,6 +276,7 @@ void I3D_frame::RemoveFromFFTree()
 }
 
 // FUNCTION: LS3DF 0x1001b500
+// FUNCTION: LS3DF11 0x1001b020
 void I3D_frame::AddToFFTree()
 {
     static int addcounter;
@@ -300,6 +314,7 @@ void I3D_frame::AddToFFTree()
 // The fast find tree's counts and list. VC6 inlines OFFD_CountFrames_ one level into OFFD_CountFrames, and turns the
 // recursions into the right branch into loops.
 // FUNCTION: LS3DF 0x1001b600
+// FUNCTION: LS3DF11 0x1001b120
 int I3D_frame::OFFD_CountFrames()
 {
     OFFD_NumFrames = 1;
@@ -311,6 +326,7 @@ int I3D_frame::OFFD_CountFrames()
 }
 
 // FUNCTION: LS3DF 0x1001b680
+// FUNCTION: LS3DF11 0x1001b1a0
 void I3D_frame::OFFD_CountFrames_()
 {
     if (ff_left)
@@ -321,6 +337,7 @@ void I3D_frame::OFFD_CountFrames_()
 }
 
 // FUNCTION: LS3DF 0x1001b6b0
+// FUNCTION: LS3DF11 0x1001b1d0
 void I3D_frame::AlphabeticalListOfFrames_()
 {
     if (ff_left)
@@ -331,6 +348,7 @@ void I3D_frame::AlphabeticalListOfFrames_()
 }
 
 // FUNCTION: LS3DF 0x1001b6f0
+// FUNCTION: LS3DF11 0x1001b210
 LS3D_RESULT I3D_frame::SetName(const char *new_name)
 {
     if (name == new_name)
@@ -359,6 +377,7 @@ LS3D_RESULT I3D_frame::SetName(const char *new_name)
 }
 
 // FUNCTION: LS3DF 0x1001b800
+// FUNCTION: LS3DF11 0x1001b320
 LS3D_RESULT I3D_frame::SetModelName(const char *model_name)
 {
     if (!orig_name)
@@ -381,6 +400,7 @@ LS3D_RESULT I3D_frame::SetModelName(const char *model_name)
 }
 
 // FUNCTION: LS3DF 0x1001b8f0
+// FUNCTION: LS3DF11 0x1001b410
 LS3D_RESULT I3D_frame::ResetModelName()
 {
     if (orig_name == name)
@@ -409,11 +429,13 @@ LS3D_RESULT I3D_frame::ResetModelName()
 }
 
 // FUNCTION: LS3DF 0x1001b9d0
+// FUNCTION: LS3DF11 0x1001b4f0
 LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
 {
     // The sectors, occluders and areas register in their scene, which changes with the sector the frame is in
     struct EnumHelp {
         // FUNCTION: LS3DF 0x1001be40
+        // FUNCTION: LS3DF11 0x1001b960
         static I3DENUMRET __stdcall I3D_EnumProc(I3D_frame *frame, uint user)
         {
             ((I3D_sector *)frame)->AddToRemoveFromSceneRing((I3D_scene *)user);
@@ -422,6 +444,7 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
     };
     struct EnumHelp1 {
         // FUNCTION: LS3DF 0x1001be60
+        // FUNCTION: LS3DF11 0x1001b980
         static I3DENUMRET __stdcall I3D_EnumProc(I3D_frame *frame, uint user)
         {
             ((I3D_occluder *)frame)->AddToRemoveFromSceneRing((I3D_scene *)user);
@@ -430,6 +453,7 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
     };
     struct EnumHelp2 {
         // FUNCTION: LS3DF 0x1001be80
+        // FUNCTION: LS3DF11 0x1001b9a0
         static I3DENUMRET __stdcall I3D_EnumProc(I3D_frame *frame, uint user)
         {
             ((I3D_area *)frame)->AddToRemoveFromSceneRing((I3D_scene *)user);
@@ -530,6 +554,7 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1001bea0
+// FUNCTION: LS3DF11 0x1001b9c0
 I3D_frame *I3D_frame::AddChild(I3D_frame *frame)
 {
     frm_flags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
@@ -551,6 +576,7 @@ I3D_frame *I3D_frame::AddChild(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1001bf20
+// FUNCTION: LS3DF11 0x1001ba40
 I3D_frame *I3D_frame::RemoveChild(I3D_frame *frame)
 {
     if (frame->parent != this)
@@ -579,6 +605,7 @@ I3D_frame *I3D_frame::RemoveChild(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1001bfd0
+// FUNCTION: LS3DF11 0x1001baf0
 I3D_frame *I3D_frame::GetChild(int index) const
 {
     if (index < num_children) {
@@ -597,6 +624,7 @@ static inline int I3Dtoupper(int c)
 }
 
 // FUNCTION: LS3DF 0x1001c020
+// FUNCTION: LS3DF11 0x1001bb40
 LS3D_RESULT I3D_frame::EnumSubtree(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const
 {
     uint type_flags = flags & ENUMF_ALL;
@@ -667,6 +695,7 @@ children:
 }
 
 // FUNCTION: LS3DF 0x1001c2a0
+// FUNCTION: LS3DF11 0x1001bdc0
 LS3D_RESULT I3D_frame::EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const
 {
     if (child) {
@@ -683,6 +712,7 @@ LS3D_RESULT I3D_frame::EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, con
 
 // PS2 binds it globally: not static, so VC6 emits it here, not after FindChildFrame
 // FUNCTION: LS3DF 0x1001c310
+// FUNCTION: LS3DF11 0x1001be30
 I3DENUMRET __stdcall FindChildCallBack(I3D_frame *frame, uint user)
 {
     *(I3D_frame **)user = frame;
@@ -690,6 +720,7 @@ I3DENUMRET __stdcall FindChildCallBack(I3D_frame *frame, uint user)
 }
 
 // FUNCTION: LS3DF 0x1001c330
+// FUNCTION: LS3DF11 0x1001be50
 I3D_frame *I3D_frame::FindChildFrame(const char *frame_name, uint flags) const
 {
     I3D_frame *frm = NULL;
@@ -698,6 +729,7 @@ I3D_frame *I3D_frame::FindChildFrame(const char *frame_name, uint flags) const
 }
 
 // FUNCTION: LS3DF 0x1001c360
+// FUNCTION: LS3DF11 0x1001be80
 I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
 {
     uint type_flags = flags & ENUMF_ALL;
@@ -762,6 +794,7 @@ I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1001c5b0
+// FUNCTION: LS3DF11 0x1001c0d0
 LS3D_RESULT I3D_frame::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -796,6 +829,7 @@ LS3D_RESULT I3D_frame::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1001c700
+// FUNCTION: LS3DF11 0x1001c220
 LS3D_RESULT I3D_frame::SetProperty(const char *prop)
 {
     delete[] property;
@@ -818,6 +852,7 @@ LS3D_RESULT I3D_frame::SetProperty(const char *prop)
 // The targets to update after the frames (I3D_target's), defined here: its $E is between SetProperty and
 // UpdateWMatrixProc
 // GLOBAL: LS3DF 0x100c0034
+// GLOBAL: LS3DF11 0x100bd154
 C_list<I3D_target *> UpdateTargetList;
 
 // The original calls it out of line from this file too, where VC6 inlines ours; why isn't known (writing
@@ -825,6 +860,7 @@ C_list<I3D_target *> UpdateTargetList;
 #pragma auto_inline(off)
 
 // FUNCTION: LS3DF 0x1001c7d0
+// FUNCTION: LS3DF11 0x1001c2f0
 void I3D_frame::UpdateWMatrixProc()
 {
     UpdateMatrix();
@@ -844,6 +880,7 @@ void I3D_frame::UpdateWMatrixProc()
 // Inline: Update inlines it, the recursion needs the copy (/Ob2 alone takes only small functions). Our copy comes
 // after Update, the original's before it: open
 // FUNCTION: LS3DF 0x1001c9a0
+// FUNCTION: LS3DF11 0x1001c4c0
 inline void I3D_frame::UpdateChildren()
 {
     uint changed = frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
@@ -865,6 +902,7 @@ inline void I3D_frame::UpdateChildren()
 }
 
 // FUNCTION: LS3DF 0x1001ca60
+// FUNCTION: LS3DF11 0x1001c580
 void I3D_frame::Update()
 {
     UpdateChildren();
@@ -888,6 +926,7 @@ void I3D_frame::Update()
 }
 
 // FUNCTION: LS3DF 0x1001cc00
+// FUNCTION: LS3DF11 0x1001c720
 void I3D_frame::DiscardHRBoundVol()
 {
     if (type == FRAME_SECTOR)
@@ -903,6 +942,7 @@ void I3D_frame::DiscardHRBoundVol()
 }
 
 // FUNCTION: LS3DF 0x1001cc50
+// FUNCTION: LS3DF11 0x1001c770
 void I3D_frame::UpdateHRBoundVol()
 {
     if (type == FRAME_SECTOR) {
@@ -942,6 +982,7 @@ void I3D_frame::UpdateHRBoundVol()
 
 // The local bound volume of a box (PC only, the name is a guess)
 // FUNCTION: LS3DF 0x1001ce80
+// FUNCTION: LS3DF11 0x1001c9a0
 void I3D_frame::SetBoundVolume(const I3D_bbox &bbox)
 {
     if (bbox.min.x <= bbox.max.x) {
@@ -957,6 +998,7 @@ void I3D_frame::SetBoundVolume(const I3D_bbox &bbox)
 }
 
 // FUNCTION: LS3DF 0x1001cf90
+// FUNCTION: LS3DF11 0x1001cab0
 void I3D_frame::UpdateHRBoundVolW()
 {
     if (!(frm_flags & FRMFLAGS_HR_BOUND_VALID))
@@ -980,6 +1022,7 @@ void I3D_frame::UpdateHRBoundVolW()
 }
 
 // FUNCTION: LS3DF 0x1001d1c0
+// FUNCTION: LS3DF11 0x1001cce0
 void I3D_frame::LoadImage()
 {
     dtaRead(LoadImageHandle, &f_matrix(3), sizeof(S_vector));

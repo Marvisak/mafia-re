@@ -28,12 +28,14 @@ I3D_interpolator::~I3D_interpolator()
 }
 
 // FUNCTION: LS3DF 0x1001d2f0
+// FUNCTION: LS3DF11 0x1001ce10
 void I3D_interpolator::SetPoseBlend(float blend)
 {
     pose_blend = blend;
 }
 
 // FUNCTION: LS3DF 0x1001d300
+// FUNCTION: LS3DF11 0x1001ce20
 LS3D_RESULT I3D_interpolator::ClearAnimation(uint index)
 {
     keys[index].flags = 0;
@@ -73,6 +75,7 @@ static inline const void *KeyValues(const ushort *times, int n)
 // t_last in bx and tests the keys' flags from memory twice where ours keeps them in bx, and the blended position's
 // and scale's stores are merged with the copies' at the join.
 // FUNCTION: LS3DF 0x1001d320
+// FUNCTION: LS3DF11 0x1001ce40
 void I3D_interpolator::Update()
 {
     if (!frame)
@@ -329,6 +332,7 @@ void I3D_interpolator::Update()
 
 // The set is told of the change; a pose leaving is released, one coming kept
 // FUNCTION: LS3DF 0x1001e230
+// FUNCTION: LS3DF11 0x1001dd50
 void I3D_interpolator::SetPose(I3D_pose *p)
 {
     if (p == pose)
@@ -346,6 +350,7 @@ void I3D_interpolator::SetPose(I3D_pose *p)
 }
 
 // FUNCTION: LS3DF 0x1001e280
+// FUNCTION: LS3DF11 0x1001dda0
 I3D_IPolSet::~I3D_IPolSet()
 {
     Clear();
@@ -354,6 +359,7 @@ I3D_IPolSet::~I3D_IPolSet()
 // The original calls it from the destructor: VC6 inlines it automatically unless it is a little larger than it is
 // without the local in the first loop
 // FUNCTION: LS3DF 0x1001e2e0
+// FUNCTION: LS3DF11 0x1001de00
 void I3D_IPolSet::Clear()
 {
     I3D_interpolator **p = &interpolators[0];
@@ -373,6 +379,7 @@ void I3D_IPolSet::Clear()
 // tells the callback of the first frame that has one for it, and starts again at the other end if it loops, else
 // stops.
 // FUNCTION: LS3DF 0x1001e360
+// FUNCTION: LS3DF11 0x1001de80
 void I3D_IPolSet::Tick(const int *times)
 {
     int i;
@@ -420,6 +427,7 @@ void I3D_IPolSet::Tick(const int *times)
 
 // The same with one time for all the animations
 // FUNCTION: LS3DF 0x1001e470
+// FUNCTION: LS3DF11 0x1001df90
 void I3D_IPolSet::Tick(int time)
 {
     int i;
@@ -469,6 +477,7 @@ void I3D_IPolSet::Tick(int time)
 // names; NULL stops the index-th. The interpolators keep pointers into the set's keys. The options are the set's
 // where none are given.
 // FUNCTION: LS3DF 0x1001e580
+// FUNCTION: LS3DF11 0x1001e0a0
 LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float blend, uint options)
 {
     if (anims[index].set != set) {
@@ -553,6 +562,7 @@ LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float 
 }
 
 // FUNCTION: LS3DF 0x1001e7e0
+// FUNCTION: LS3DF11 0x1001e300
 LS3D_RESULT I3D_IPolSet::SetPose(I3D_frame *frm, I3D_pose *pose)
 {
     I3D_interpolator *ip = GetFrameInterpolator(frm);
@@ -564,6 +574,7 @@ LS3D_RESULT I3D_IPolSet::SetPose(I3D_frame *frm, I3D_pose *pose)
 }
 
 // FUNCTION: LS3DF 0x1001e810
+// FUNCTION: LS3DF11 0x1001e330
 LS3D_RESULT I3D_IPolSet::SetPose(const char *frame_name, I3D_pose *pose)
 {
     I3D_interpolator *ip = GetFrameInterpolator(frame_name);
@@ -576,6 +587,7 @@ LS3D_RESULT I3D_IPolSet::SetPose(const char *frame_name, I3D_pose *pose)
 
 // Each pose to the frame of its name
 // FUNCTION: LS3DF 0x1001e860
+// FUNCTION: LS3DF11 0x1001e380
 LS3D_RESULT I3D_IPolSet::SetPose(I3D_pose_set *set)
 {
     I3D_pose **p = &set->poses[0];
@@ -590,6 +602,7 @@ LS3D_RESULT I3D_IPolSet::SetPose(I3D_pose_set *set)
 }
 
 // FUNCTION: LS3DF 0x1001e8c0
+// FUNCTION: LS3DF11 0x1001e3e0
 void I3D_IPolSet::SetPoseBlend(float blend)
 {
     I3D_interpolator **p = &interpolators[0];
@@ -600,6 +613,7 @@ void I3D_IPolSet::SetPoseBlend(float blend)
 
 // The blend of the frames of the set's poses
 // FUNCTION: LS3DF 0x1001e900
+// FUNCTION: LS3DF11 0x1001e420
 LS3D_RESULT I3D_IPolSet::SetPoseBlend(float blend, I3D_pose_set *set)
 {
     changed = true;
@@ -615,6 +629,7 @@ LS3D_RESULT I3D_IPolSet::SetPoseBlend(float blend, I3D_pose_set *set)
 
 // The first interpolator's with a pose
 // FUNCTION: LS3DF 0x1001e960
+// FUNCTION: LS3DF11 0x1001e480
 float I3D_IPolSet::GetPoseBlend() const
 {
     I3D_interpolator *const *p = &interpolators[0];
@@ -626,6 +641,7 @@ float I3D_IPolSet::GetPoseBlend() const
 }
 
 // FUNCTION: LS3DF 0x1001e9a0
+// FUNCTION: LS3DF11 0x1001e4c0
 void I3D_IPolSet::ResetAllPoses()
 {
     I3D_interpolator **p = &interpolators[0];
@@ -640,6 +656,7 @@ void I3D_IPolSet::ResetAllPoses()
 // one's index, not closed up as PS2's: the ones after it are lost. Like Clear, it is at the size VC6 inlines
 // automatically: written with || (the same code) SetAnimation inlines both calls.
 // FUNCTION: LS3DF 0x1001e9e0
+// FUNCTION: LS3DF11 0x1001e500
 void I3D_IPolSet::m_releaseUnusedInterpolators()
 {
     int i = interpolators.size();
@@ -663,6 +680,7 @@ void I3D_IPolSet::m_releaseUnusedInterpolators()
 
 // The frame's interpolator, made if it has none
 // FUNCTION: LS3DF 0x1001ea60
+// FUNCTION: LS3DF11 0x1001e580
 I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(I3D_frame *frm)
 {
     I3D_interpolator **p = &interpolators[0];
@@ -684,6 +702,7 @@ I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(I3D_frame *frm)
 // The interpolator of the frame of that name (its own, without the model's), made if it has none; NULL if the model or
 // scene has no such frame
 // FUNCTION: LS3DF 0x1001eba0
+// FUNCTION: LS3DF11 0x1001e6c0
 I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(const char *frame_name)
 {
     I3D_interpolator **p = &interpolators[0];

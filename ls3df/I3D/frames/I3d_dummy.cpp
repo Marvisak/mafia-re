@@ -6,6 +6,7 @@
 #include "dta.h"
 
 // FUNCTION: LS3DF 0x1001a1e0
+// FUNCTION: LS3DF11 0x10019d00
 I3D_dummy::I3D_dummy()
 {
     type = FRAME_DUMMY;
@@ -14,6 +15,7 @@ I3D_dummy::I3D_dummy()
 }
 
 // FUNCTION: LS3DF 0x1001a260
+// FUNCTION: LS3DF11 0x10019d80
 I3D_dummy::~I3D_dummy()
 {
     if (frm_flags & FRMFLAGS_WEATHER) {
@@ -23,6 +25,7 @@ I3D_dummy::~I3D_dummy()
 }
 
 // FUNCTION: LS3DF 0x1001a2e0
+// FUNCTION: LS3DF11 0x10019e00
 LS3D_RESULT I3D_dummy::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -33,6 +36,7 @@ LS3D_RESULT I3D_dummy::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1001a330
+// FUNCTION: LS3DF11 0x10019e50
 void I3D_dummy::UpdateV()
 {
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
@@ -42,6 +46,7 @@ void I3D_dummy::UpdateV()
 // Which of S_vector's constructors VC6 leaves out of line here is the inline budget's choice: the GetScale() calls
 // make the difference, the second branch's before its size (after it, the size's constructor stays out of line).
 // FUNCTION: LS3DF 0x1001a350
+// FUNCTION: LS3DF11 0x10019e70
 void I3D_dummy::Normalize(uint mode)
 {
     if (mode == 2) {
@@ -66,6 +71,7 @@ void I3D_dummy::Normalize(uint mode)
 }
 
 // FUNCTION: LS3DF 0x1001a6a0
+// FUNCTION: LS3DF11 0x1001a1c0
 void I3D_dummy::LoadImage()
 {
     I3D_frame::LoadImage();

@@ -5,6 +5,7 @@
 #include "IGraph/IGraph.h"
 
 // FUNCTION: LS3DF 0x1000b0c0
+// FUNCTION: LS3DF11 0x1000ac60
 I3D_camera::I3D_camera()
 {
     type = FRAME_CAMERA;
@@ -37,6 +38,7 @@ I3D_camera::I3D_camera()
 
 // PC only: the scene it is active in forgets it
 // FUNCTION: LS3DF 0x1000b270
+// FUNCTION: LS3DF11 0x1000ae10
 I3D_camera::~I3D_camera()
 {
     if (scene)
@@ -44,6 +46,7 @@ I3D_camera::~I3D_camera()
 }
 
 // FUNCTION: LS3DF 0x1000b290
+// FUNCTION: LS3DF11 0x1000ae30
 LS3D_RESULT I3D_camera::Duplicate(I3D_frame *frame)
 {
     LS3D_RESULT ret = I3D_frame::Duplicate(frame);
@@ -87,6 +90,7 @@ LS3D_RESULT I3D_camera::Duplicate(I3D_frame *frame)
 // Open: the original hoists the backdrop copy's rep movsd setup above the branch as lea edi, mov ecx, mov esi; ours
 // comes out as mov esi, mov ecx, lea edi (where the copy and the declarations go doesn't change it).
 // FUNCTION: LS3DF 0x1000b400
+// FUNCTION: LS3DF11 0x1000afa0
 void I3D_camera::UpdateProjMatrix()
 {
     memset(&m_proj, 0, sizeof(m_proj));
@@ -153,6 +157,7 @@ void I3D_camera::UpdateProjMatrix()
 // a bad range or aspect is ignored). The perspective's take effect when not orthogonal, the ortho scale's when
 // orthogonal, the range's always.
 // FUNCTION: LS3DF 0x1000b690
+// FUNCTION: LS3DF11 0x1000b230
 void I3D_camera::SetFOV(float fov)
 {
     if (fov < .01f || fov >= PI) {
@@ -165,6 +170,7 @@ void I3D_camera::SetFOV(float fov)
 }
 
 // FUNCTION: LS3DF 0x1000b720
+// FUNCTION: LS3DF11 0x1000b2c0
 void I3D_camera::SetNearFOV(float fov)
 {
     if (fov < .01f || fov >= PI) {
@@ -177,6 +183,7 @@ void I3D_camera::SetNearFOV(float fov)
 }
 
 // FUNCTION: LS3DF 0x1000b7b0
+// FUNCTION: LS3DF11 0x1000b350
 void I3D_camera::SetRange(float near1, float far1)
 {
     if (fabs(far1 - near1) < .01f || near1 < .001 || far1 < .001) {
@@ -190,6 +197,7 @@ void I3D_camera::SetRange(float near1, float far1)
 }
 
 // FUNCTION: LS3DF 0x1000b840
+// FUNCTION: LS3DF11 0x1000b3e0
 void I3D_camera::SetNearRange(float near1, float far1)
 {
     if (fabs(far1 - near1) < .01f || near1 < .001 || far1 < .001) {
@@ -203,6 +211,7 @@ void I3D_camera::SetNearRange(float near1, float far1)
 }
 
 // FUNCTION: LS3DF 0x1000b8d0
+// FUNCTION: LS3DF11 0x1000b470
 void I3D_camera::SetOrthoScale(float scale)
 {
     if (scale < 1e-6)
@@ -213,6 +222,7 @@ void I3D_camera::SetOrthoScale(float scale)
 }
 
 // FUNCTION: LS3DF 0x1000b930
+// FUNCTION: LS3DF11 0x1000b4d0
 void I3D_camera::SetOrthogonal(bool b)
 {
     orthogonal = b;
@@ -220,6 +230,7 @@ void I3D_camera::SetOrthogonal(bool b)
 }
 
 // FUNCTION: LS3DF 0x1000b950
+// FUNCTION: LS3DF11 0x1000b4f0
 void I3D_camera::SetAspectRatio(float aspect)
 {
     if (aspect < .01 || aspect > 100.0f) {
@@ -232,6 +243,7 @@ void I3D_camera::SetAspectRatio(float aspect)
 }
 
 // FUNCTION: LS3DF 0x1000b9d0
+// FUNCTION: LS3DF11 0x1000b570
 void I3D_camera::UpdateSector()
 {
     if (scene) {
@@ -263,6 +275,7 @@ void I3D_camera::UpdateSector()
 // calls Dot out of line in the orthogonal frustum's last two planes and in all four of the third's. No source for
 // either is known.
 // FUNCTION: LS3DF 0x1000ba30
+// FUNCTION: LS3DF11 0x1000b5d0
 void I3D_camera::UpdateV()
 {
     UpdateSector();

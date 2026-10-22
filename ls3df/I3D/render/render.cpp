@@ -21,49 +21,62 @@ extern bool RecomputeAllGeometry;
 
 // The areas the camera is in (the scene's Close empties it)
 // GLOBAL: LS3DF 0x101c4ce4
+// GLOBAL: LS3DF11 0x101c1df4
 C_list<I3D_area *> CurrentActiveAreaList;
 
 // The sounds of the areas the camera left, which fade out
 // GLOBAL: LS3DF 0x101c4c40
+// GLOBAL: LS3DF11 0x101c1d50
 C_list<I3D_sound *> SoundsForDeactivation;
 
 // GLOBAL: LS3DF 0x101c4c60
+// GLOBAL: LS3DF11 0x101c1d70
 ADD_FG_HELP_STRUCT AddFGHlpStruct;
 
 // GLOBAL: LS3DF 0x101c4cb0
+// GLOBAL: LS3DF11 0x101c1dc0
 PARTICLE_HLP_STRUCT ParticleElementsList;
 
 // GLOBAL: LS3DF 0x101c4cf4
+// GLOBAL: LS3DF11 0x101c1e04
 I3D_scene *pCurrentScene = NULL;
 
 // The camera rendered with
 // GLOBAL: LS3DF 0x101c4cf8
+// GLOBAL: LS3DF11 0x101c1e08
 I3D_camera *pCurrentCamera = NULL;
 
 // The sector the camera was in at the last rendering, and the one before it
 // GLOBAL: LS3DF 0x101c4cfc
+// GLOBAL: LS3DF11 0x101c1e0c
 I3D_sector *pPrevLastCameraSector = NULL;
 
 // GLOBAL: LS3DF 0x101c4d00
+// GLOBAL: LS3DF11 0x101c1e10
 I3D_sector *pLastCameraSector = NULL;
 
 // GLOBAL: LS3DF 0x101c4cd0
+// GLOBAL: LS3DF11 0x101c1de0
 S_matrix *pViewProjMatrix;
 
 // GLOBAL: LS3DF 0x101c4ce0
+// GLOBAL: LS3DF11 0x101c1df0
 bool renderCameraChanged;
 
 // A constant divided by the current camera's field of view, which scales the distances, and its square (Render sets
 // them)
 // GLOBAL: LS3DF 0x101c4ca0
+// GLOBAL: LS3DF11 0x101c1db0
 float FOVDistCorrection;
 
 // GLOBAL: LS3DF 0x101c4cd4
+// GLOBAL: LS3DF11 0x101c1de4
 float FOVDistCorrection2;
 
 // RS_LOD_QUALITY scaled by the current camera's field of view, which the levels' distances are compared with (Render
 // sets it)
 // GLOBAL: LS3DF 0x101c4ca4
+// GLOBAL: LS3DF11 0x101c1db4
 float RSLodQuality;
 
 // Nothing references the 16 bytes of zero-initialized globals between the sectors and the flags: PS2 declares
@@ -72,17 +85,21 @@ uint unknown_4D04[4] = {0};
 
 // The rendering runs a callback of the scene's (Render may be called from it), and it runs (PS2 names)
 // GLOBAL: LS3DF 0x101c4d14
+// GLOBAL: LS3DF11 0x101c1e24
 bool renderCB = false;
 
 // GLOBAL: LS3DF 0x101c4d15
+// GLOBAL: LS3DF11 0x101c1e25
 bool rendering = false;
 
 // The weather is rendered after the opaque face groups (m_DrawAllSortedFG)
 // GLOBAL: LS3DF 0x101c4cd8
+// GLOBAL: LS3DF11 0x101c1de8
 bool GlobalDrawWeather;
 
 // RS_LOD_INDEX, copied by Render (PC only, the name is Insanity3D's force_lod_index's); nothing reads it
 // GLOBAL: LS3DF 0x101c4cdc
+// GLOBAL: LS3DF11 0x101c1dec
 int ForceLodIndex;
 
 // Nothing references these 8 bytes of the hashed globals, between RSLodQuality and ParticleElementsList (the name is
@@ -96,6 +113,7 @@ uint unknown_4CA8[2];
 // The count is decremented in place (num--, then num + 1 for one past the last), and the texture search assigns lod
 // inside its loop (then if (i >= last) lod = last;), which lets the exhausted loop jump straight to that assignment.
 // FUNCTION: LS3DF 0x10061e30
+// FUNCTION: LS3DF11 0x1005f0a0
 int GetObjectLOD(I3D_object *obj, const float &dist_2)
 {
     I3D_mesh_object *mesh = obj->mesh;
@@ -162,6 +180,7 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
 }
 
 // FUNCTION: LS3DF 0x10062010
+// FUNCTION: LS3DF11 0x1005f280
 LS3D_RESULT I3D_driver::initRender()
 {
     closeRender();
@@ -170,6 +189,7 @@ LS3D_RESULT I3D_driver::initRender()
 }
 
 // FUNCTION: LS3DF 0x10062020
+// FUNCTION: LS3DF11 0x1005f290
 void I3D_driver::closeRender()
 {
     CloseParticle();
@@ -196,6 +216,7 @@ inline void AddSectorFGroups(I3D_sector *sct)
 // the post-render callback calls SetAlphaOp out of line, as the original does, only with the render-state helpers'
 // asserts (I3D.h) and the fog colors packed flat in m_DrawAllSortedFG.
 // FUNCTION: LS3DF 0x10062030
+// FUNCTION: LS3DF11 0x1005f2a0
 LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 {
     if (!scene)
@@ -706,6 +727,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 // Queues a visual's face groups: the particles for the particles' renderer, the lens flares into the scene's list,
 // the others through their m_AddFGroups (the projectors only with RS_USEPROJECTORS). After Render, its first caller.
 // FUNCTION: LS3DF 0x10065560
+// FUNCTION: LS3DF11 0x100627d0
 static void VisualProc(I3D_visual *vis)
 {
     if (vis->m_pOwner)
@@ -748,6 +770,7 @@ static void VisualProc(I3D_visual *vis)
 // Queues the face groups of every visual in the branch from frm, those of an object's mesh once for each level, as
 // if seen from each level's distance (BuildAllVBuffers)
 // FUNCTION: LS3DF 0x10065770
+// FUNCTION: LS3DF11 0x100629e0
 void NextFFrameProc(I3D_frame *frm)
 {
     for (; frm; frm = frm->next) {
@@ -783,6 +806,7 @@ void NextFFrameProc(I3D_frame *frm)
 // Builds every visual's vertex buffers by queueing their face groups, those of meshes for each level (PS2's second
 // pass, which frees memory, isn't on PC)
 // FUNCTION: LS3DF 0x100658f0
+// FUNCTION: LS3DF11 0x10062b60
 void I3D_driver::BuildAllVBuffers(I3D_scene *scene)
 {
     I3D_frame *frm = CreateFrame(FRAME_SECTOR);

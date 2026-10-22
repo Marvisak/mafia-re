@@ -26,298 +26,388 @@
 
 // Guards the frame counter of the game's render thread (PC only)
 // GLOBAL: LS3DF 0x101c52a0
+// GLOBAL: LS3DF11 0x101c23a0
 CRITICAL_SECTION m_FrameSection;
 
 // GLOBAL: LS3DF 0x101c52b8
+// GLOBAL: LS3DF11 0x101c23b8
 uint m_InternalTimer;
 
 // GLOBAL: LS3DF 0x101c52bc
+// GLOBAL: LS3DF11 0x101c23bc
 static uint m_KBInitFlags;
 
 // GLOBAL: LS3DF 0x101c52c0
+// GLOBAL: LS3DF11 0x101c23c0
 D3DPRESENT_PARAMETERS m_D3DPresentParams;
 
 // GLOBAL: LS3DF 0x101c52f4
+// GLOBAL: LS3DF11 0x101c23f4
 D3DFORMAT m_TrueColorTexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c52f8
+// GLOBAL: LS3DF11 0x101c23f8
 uint m_CurrFogColor;
 
 // GLOBAL: LS3DF 0x101c52fc
+// GLOBAL: LS3DF11 0x101c23fc
 uint m_CurrZBias;
 
 // GLOBAL: LS3DF 0x101c5300
+// GLOBAL: LS3DF11 0x101c2400
 uchar m_KeyboardData[256];
 
 // GLOBAL: LS3DF 0x101c5400
+// GLOBAL: LS3DF11 0x101c2500
 uint m_Modulate2X;
 
 // GLOBAL: LS3DF 0x101c5404
+// GLOBAL: LS3DF11 0x101c2504
 bool m_LeftHandedMouse;
 
 // GLOBAL: LS3DF 0x101c5408
+// GLOBAL: LS3DF11 0x101c2508
 HWND m_ChildHWnd;
 
 // GLOBAL: LS3DF 0x101c540c
+// GLOBAL: LS3DF11 0x101c250c
 D3DFORMAT m_DXTTexturePixelFormat;
 
 // The index buffer's next free index (PC only)
 // GLOBAL: LS3DF 0x101c5410
+// GLOBAL: LS3DF11 0x101c2510
 int m_IBPos;
 
 // GLOBAL: LS3DF 0x101c5434
+// GLOBAL: LS3DF11 0x101c2534
 IDirectInputDevice8A *m_pDIKeyboard8;
 
 // GLOBAL: LS3DF 0x101c5458
+// GLOBAL: LS3DF11 0x101c2558
 HWND m_MainHWnd;
 
 // GLOBAL: LS3DF 0x101c545c
+// GLOBAL: LS3DF11 0x101c255c
 uint m_CurrColorOp;
 
 // GLOBAL: LS3DF 0x101c5460
+// GLOBAL: LS3DF11 0x101c2560
 D3DFORMAT m_Alpha1TexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c5464
+// GLOBAL: LS3DF11 0x101c2564
 D3DFORMAT m_AlphaTexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c5468
+// GLOBAL: LS3DF11 0x101c2568
 int m_MouseMode;
 
 // GLOBAL: LS3DF 0x101c546c
+// GLOBAL: LS3DF11 0x101c256c
 static uint m_KBLastChar;
 
 // GLOBAL: LS3DF 0x101c5474
+// GLOBAL: LS3DF11 0x101c2574
 uint m_CurrBlendState;
 
 // GLOBAL: LS3DF 0x101c5478
+// GLOBAL: LS3DF11 0x101c2578
 static uint m_KBLastKey;
 
 // GLOBAL: LS3DF 0x101c547c
+// GLOBAL: LS3DF11 0x101c257c
 IDirect3D8 *m_pD3D8;
 
 // What DrawPrimitiveList set last: 0 IGraph's vertex shader, 4 transformed vertices
 // GLOBAL: LS3DF 0x101c5480
+// GLOBAL: LS3DF11 0x101c2580
 uint m_CurrVertexFormat;
 
 // GLOBAL: LS3DF 0x101c5488
+// GLOBAL: LS3DF11 0x101c2588
 uchar m_OldKeyboardData[256];
 
 // GLOBAL: LS3DF 0x101c5588
+// GLOBAL: LS3DF11 0x101c2688
 uint m_MaxTextureHeight;
 
 // GLOBAL: LS3DF 0x101c558c
+// GLOBAL: LS3DF11 0x101c268c
 uint m_CurrCullState;
 
 // GLOBAL: LS3DF 0x101c5590
+// GLOBAL: LS3DF11 0x101c2690
 D3DVIEWPORT8 m_D3DViewPort8;
 
 // GLOBAL: LS3DF 0x101c55a8
+// GLOBAL: LS3DF11 0x101c26a8
 float m_CurrFogEnd;
 
 // GLOBAL: LS3DF 0x101c55ac
+// GLOBAL: LS3DF11 0x101c26ac
 IDirectInput8A *m_pDI8;
 
 // IGraph's part of a dynamic vertex buffer, for DrawIndexedPrimitiveList (PC only)
 // GLOBAL: LS3DF 0x101c55b0
+// GLOBAL: LS3DF11 0x101c26b0
 COMPLETE_VB_STRUCT m_VB;
 
 // GLOBAL: LS3DF 0x101c55bc
+// GLOBAL: LS3DF11 0x101c26bc
 IGRAPH_INIT_DESC m_InitDesc;
 
 // GLOBAL: LS3DF 0x101c55f4
+// GLOBAL: LS3DF11 0x101c26f4
 int m_CurrFogType;
 
 // GLOBAL: LS3DF 0x101c55f8
+// GLOBAL: LS3DF11 0x101c26f8
 uchar m_ReadKeysBuffer[64];
 
 // GLOBAL: LS3DF 0x101c5638
+// GLOBAL: LS3DF11 0x101c2738
 D3DFORMAT m_TexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c563c
+// GLOBAL: LS3DF11 0x101c273c
 uint m_HardwareCaps;
 
 // The mouse's capabilities (PC only)
 // GLOBAL: LS3DF 0x101c5640
+// GLOBAL: LS3DF11 0x101c2740
 DIDEVCAPS m_MouseCaps;
 
 // The characters of WM_CHAR, from index 1
 // GLOBAL: LS3DF 0x101c5670
+// GLOBAL: LS3DF11 0x101c2770
 static uint m_KeyBuffer[32];
 
 // GLOBAL: LS3DF 0x101c56f0
+// GLOBAL: LS3DF11 0x101c27f0
 DIMOUSESTATE m_MouseData;
 
 // GLOBAL: LS3DF 0x101c5700
+// GLOBAL: LS3DF11 0x101c2800
 D3DFORMAT m_DXTAlphaTexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c5704
+// GLOBAL: LS3DF11 0x101c2804
 uint m_CurrAlphaState;
 
 // The name of a key, from GetKeyName (PC only)
 // GLOBAL: LS3DF 0x101c5718
+// GLOBAL: LS3DF11 0x101c2818
 DIPROPSTRING m_KeyName;
 
 // GLOBAL: LS3DF 0x101c5930
+// GLOBAL: LS3DF11 0x101c2a30
 uint m_CurrFogState;
 
 // What DXS_CLIPPING was set to (PC only)
 // GLOBAL: LS3DF 0x101c5934
+// GLOBAL: LS3DF11 0x101c2a34
 uint m_CurrClipState;
 
 // GLOBAL: LS3DF 0x101c593c
+// GLOBAL: LS3DF11 0x101c2a3c
 uint m_MaxTextureWidth;
 
 // The render thread's id (PC only)
 // GLOBAL: LS3DF 0x101c5938
+// GLOBAL: LS3DF11 0x101c2a38
 DWORD m_RenderThreadID;
 
 // GLOBAL: LS3DF 0x101c5940
+// GLOBAL: LS3DF11 0x101c2a40
 static uint m_KBLastChar1;
 
 // GLOBAL: LS3DF 0x101c5944
+// GLOBAL: LS3DF11 0x101c2a44
 uint m_CullMode;
 
 // GLOBAL: LS3DF 0x101c595c
+// GLOBAL: LS3DF11 0x101c2a5c
 IDirectInputDevice8A *m_pDIMouse8;
 
 // GLOBAL: LS3DF 0x101c5960
+// GLOBAL: LS3DF11 0x101c2a60
 uint m_CurrColorOp1;
 
 // GLOBAL: LS3DF 0x101c5964
+// GLOBAL: LS3DF11 0x101c2a64
 uint m_CurrColorOp2;
 
 // GLOBAL: LS3DF 0x101c5968
+// GLOBAL: LS3DF11 0x101c2a68
 float m_CurrFogStart;
 
 // What Init found the hardware lacks (the bits aren't known yet)
 // GLOBAL: LS3DF 0x101c5970
+// GLOBAL: LS3DF11 0x101c2a70
 uint m_ProblemFlags;
 
 // GLOBAL: LS3DF 0x101c5974
+// GLOBAL: LS3DF11 0x101c2a74
 uint m_CurrAlphaOp;
 
 // The vertex buffer's next free vertex (PC only)
 // GLOBAL: LS3DF 0x101c5978
+// GLOBAL: LS3DF11 0x101c2a78
 int m_VBPos;
 
 // GLOBAL: LS3DF 0x101c597c
+// GLOBAL: LS3DF11 0x101c2a7c
 IDirect3DDevice8 *m_pD3DDevice8;
 
 // GLOBAL: LS3DF 0x101c5980
+// GLOBAL: LS3DF11 0x101c2a80
 uint m_CurrAddressU;
 
 // GLOBAL: LS3DF 0x101c5984
+// GLOBAL: LS3DF11 0x101c2a84
 uint m_CurrAddressV;
 
 // GLOBAL: LS3DF 0x101c5988
+// GLOBAL: LS3DF11 0x101c2a88
 POINT m_MousePos;
 
 // And of a dynamic index buffer (PC only)
 // GLOBAL: LS3DF 0x101c5990
+// GLOBAL: LS3DF11 0x101c2a90
 COMPLETE_IB_STRUCT m_IB;
 
 // The globals with dynamic initializers, in the order the original constructs them (.CRT$XCU)
 
 // GLOBAL: LS3DF 0x101c5424
+// GLOBAL: LS3DF11 0x101c2524
 C_list<void *> m_DlgHWndList;
 
 // The window's title, and the title from before the engine fell asleep (PC only), constructed by one $E
 // GLOBAL: LS3DF 0x101c5420
+// GLOBAL: LS3DF11 0x101c2520
 // m_AppName
 // GLOBAL: LS3DF 0x101c5484
+// GLOBAL: LS3DF11 0x101c2584
 // m_SleepAppName
 C_str m_AppName, m_SleepAppName;
 
 // GLOBAL: LS3DF 0x101c599c
+// GLOBAL: LS3DF11 0x101c2a9c
 C_list<D3DDISPLAYMODE> m_AdapterModeList(8);
 
 // GLOBAL: LS3DF 0x101c594c
+// GLOBAL: LS3DF11 0x101c2a4c
 C_list<D3DFORMAT> m_AdapterFormatList;
 
 // GLOBAL: LS3DF 0x101c5448
+// GLOBAL: LS3DF11 0x101c2548
 C_list<ITexture *> m_CachedTextureList(0x400);
 
 // GLOBAL: LS3DF 0x101c5438
+// GLOBAL: LS3DF11 0x101c2538
 C_list<ITexture *> m_UncachedTextureList(0x400);
 
 // GLOBAL: LS3DF 0x101c5708
+// GLOBAL: LS3DF11 0x101c2808
 C_list<char *> m_MapsList;
 
 // Declared after m_ProblemFlags, in the same .bss bucket
 // GLOBAL: LS3DF 0x101c596c
+// GLOBAL: LS3DF11 0x101c2a6c
 static uint m_FPSTimer = timeGetTime();
 
 // Initialized to zero, so in declaration order
 
 // GLOBAL: LS3DF 0x101c59ac
+// GLOBAL: LS3DF11 0x101c2aac
 bool m_Sleeping = false;
 
 // GLOBAL: LS3DF 0x101c59ad
+// GLOBAL: LS3DF11 0x101c2aad
 bool m_DisableSleeping = false;
 
 // GLOBAL: LS3DF 0x101c59ae
+// GLOBAL: LS3DF11 0x101c2aae
 ushort m_TextureUID = 0;
 
 // GLOBAL: LS3DF 0x101c59b0
+// GLOBAL: LS3DF11 0x101c2ab0
 bool m_InitIsOK = false;
 
 // GLOBAL: LS3DF 0x101c59b1
+// GLOBAL: LS3DF11 0x101c2ab1
 bool m_KeyboardInitIsOK = false;
 
 // GLOBAL: LS3DF 0x101c59b2
+// GLOBAL: LS3DF11 0x101c2ab2
 bool m_MouseInitIsOK = false;
 
 // GLOBAL: LS3DF 0x101c59b3
+// GLOBAL: LS3DF11 0x101c2ab3
 bool m_SceneBegun = false;
 
 // The vertex shaders ResetDevice creates: positions; positions, colors and texture coordinates (the
 // default for LS3D_STREAM_LVERTEX); the same with two sets of texture coordinates
 // GLOBAL: LS3DF 0x101c59b4
+// GLOBAL: LS3DF11 0x101c2ab4
 DWORD m_VertexVS = 0;
 
 // GLOBAL: LS3DF 0x101c59b8
+// GLOBAL: LS3DF11 0x101c2ab8
 DWORD m_LVertexVS = 0;
 
 // GLOBAL: LS3DF 0x101c59bc
+// GLOBAL: LS3DF11 0x101c2abc
 DWORD m_LVertex2VS = 0;
 
 // GLOBAL: LS3DF 0x101c59c0
+// GLOBAL: LS3DF11 0x101c2ac0
 DWORD m_StateBlock = 0;
 
 // GLOBAL: LS3DF 0x101c59c4
+// GLOBAL: LS3DF11 0x101c2ac4
 static int m_FPSCounter = 0;
 
 // GLOBAL: LS3DF 0x101c59c8
+// GLOBAL: LS3DF11 0x101c2ac8
 static int m_FPSResult = 0;
 
 // Whether Present shows the frame rate (PC only)
 // GLOBAL: LS3DF 0x101c59cc
+// GLOBAL: LS3DF11 0x101c2acc
 bool m_ShowFPS = false;
 
 // GLOBAL: LS3DF 0x101c59cd
+// GLOBAL: LS3DF11 0x101c2acd
 bool unknown_59cd = false;
 
 // Whether the game's render thread runs (PC only)
 // GLOBAL: LS3DF 0x101c59ce
+// GLOBAL: LS3DF11 0x101c2ace
 bool m_RenderThreadRunning = false;
 
 // The game's render thread, suspended while the engine sleeps (PC only)
 // GLOBAL: LS3DF 0x101c59d0
+// GLOBAL: LS3DF11 0x101c2ad0
 HANDLE m_RenderThread = NULL;
 
 // The alpha reference of DXS_ALPHA mode 3 (PC only)
 // GLOBAL: LS3DF 0x100a9948
+// GLOBAL: LS3DF11 0x100a6a68
 uint m_AlphaRef = 0x20;
 
 // The device type, D3DDEVTYPE_REF with IGRAPH_REFERENCE (PC only)
 // GLOBAL: LS3DF 0x100a994c
+// GLOBAL: LS3DF11 0x100a6a6c
 D3DDEVTYPE m_DeviceType = D3DDEVTYPE_HAL;
 
 // GLOBAL: LS3DF 0x100a9950
+// GLOBAL: LS3DF11 0x100a6a70
 uint m_CurrZFunc = 1;
 
 // The frames presented, counted for the game's render thread (PC only)
 // GLOBAL: LS3DF 0x100a9954
+// GLOBAL: LS3DF11 0x100a6a74
 int m_FrameCounter = 1;
 
 // The characters of the keys, without and with shift, for TranslateKey (PC only)
@@ -328,6 +418,7 @@ struct S_key_char {
 };
 
 // GLOBAL: LS3DF 0x100a9958
+// GLOBAL: LS3DF11 0x100a6a78
 S_key_char key_table[] = {
     {DIK_SPACE, ' ', ' '},
     {DIK_0, '0', ')'},
@@ -401,6 +492,7 @@ LS3D_RESULT ResetDevice(bool reset);
 C_str FindMapFile(C_list<char *> *list, const char *name);
 
 // FUNCTION: LS3DF 0x1006bf80
+// FUNCTION: LS3DF11 0x10069010
 IGraph::IGraph()
 {
     m_InitIsOK = false;
@@ -441,6 +533,7 @@ IGraph::IGraph()
 }
 
 // FUNCTION: LS3DF 0x1006c1a0
+// FUNCTION: LS3DF11 0x10069230
 IGraph::~IGraph()
 {
     if (m_InitIsOK)
@@ -450,6 +543,7 @@ IGraph::~IGraph()
 }
 
 // FUNCTION: LS3DF 0x1006c1d0
+// FUNCTION: LS3DF11 0x10069260
 IShow *IGraph::CreateIShow()
 {
     IShow *show = new IShow;
@@ -459,6 +553,7 @@ IShow *IGraph::CreateIShow()
 }
 
 // FUNCTION: LS3DF 0x1006c230
+// FUNCTION: LS3DF11 0x100692c0
 ITexture *IGraph::CreateITexture()
 {
     ITexture *texture = new ITexture;
@@ -473,6 +568,7 @@ ITexture *IGraph::CreateITexture()
 // Looks for the texture among the cached ones unless flags say otherwise, then creates it from the file found in
 // the maps directories, or in Maps\.
 // FUNCTION: LS3DF 0x1006c2c0
+// FUNCTION: LS3DF11 0x10069350
 LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uint flags, ITexture **texture)
 {
     *texture = NULL;
@@ -526,6 +622,7 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
 }
 
 // FUNCTION: LS3DF 0x1006c7c0
+// FUNCTION: LS3DF11 0x10069850
 bool IGraph::SetTexture(ITexture *texture)
 {
     if (!texture)
@@ -535,18 +632,21 @@ bool IGraph::SetTexture(ITexture *texture)
 }
 
 // FUNCTION: LS3DF 0x1006c800
+// FUNCTION: LS3DF11 0x10069890
 HWND IGraph::GetMainHWND()
 {
     return m_MainHWnd;
 }
 
 // FUNCTION: LS3DF 0x1006c810
+// FUNCTION: LS3DF11 0x100698a0
 HWND IGraph::GetChildHWND()
 {
     return m_ChildHWnd;
 }
 
 // FUNCTION: LS3DF 0x1006c820
+// FUNCTION: LS3DF11 0x100698b0
 void IGraph::SetAppName(const char *name)
 {
     if (strcmp(m_AppName, name)) {
@@ -556,6 +656,7 @@ void IGraph::SetAppName(const char *name)
 }
 
 // FUNCTION: LS3DF 0x1006c8b0
+// FUNCTION: LS3DF11 0x10069940
 void IGraph::SetAppNameDebug(const char *format, ...)
 {
     char text[252];
@@ -564,12 +665,14 @@ void IGraph::SetAppNameDebug(const char *format, ...)
 }
 
 // FUNCTION: LS3DF 0x1006c8f0
+// FUNCTION: LS3DF11 0x10069980
 const char *IGraph::GetAppName()
 {
     return m_AppName;
 }
 
 // FUNCTION: LS3DF 0x1006c910
+// FUNCTION: LS3DF11 0x100699a0
 bool IGraph::AddDlgHWND(void *hwnd)
 {
     if (!hwnd)
@@ -579,6 +682,7 @@ bool IGraph::AddDlgHWND(void *hwnd)
 }
 
 // FUNCTION: LS3DF 0x1006c9a0
+// FUNCTION: LS3DF11 0x10069a30
 bool IGraph::DeleteDlgHWND(void *hwnd)
 {
     return m_DlgHWndList.remove(hwnd);
@@ -587,6 +691,7 @@ bool IGraph::DeleteDlgHWND(void *hwnd)
 // Hands the window messages on, unless a dialog takes them, and keeps the characters typed. While the engine
 // sleeps, it waits for messages here.
 // FUNCTION: LS3DF 0x1006ca40
+// FUNCTION: LS3DF11 0x10069ad0
 void IGraph::ProcessWinMessages()
 {
     MSG msg;
@@ -664,6 +769,7 @@ void IGraph::ProcessWinMessages()
 }
 
 // FUNCTION: LS3DF 0x1006cc50
+// FUNCTION: LS3DF11 0x10069ce0
 void IGraph::Clear(uint color, float z, uint flags)
 {
     uint d3d_flags = 0;
@@ -677,6 +783,7 @@ void IGraph::Clear(uint color, float z, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1006cca0
+// FUNCTION: LS3DF11 0x10069d30
 void IGraph::ResetRenderProps()
 {
     m_pD3DDevice8->ApplyStateBlock(m_StateBlock);
@@ -702,6 +809,7 @@ void IGraph::ResetRenderProps()
 }
 
 // FUNCTION: LS3DF 0x1006cd40
+// FUNCTION: LS3DF11 0x10069dd0
 void IGraph::SetState(DX_STATE state, uint value)
 {
     switch (state) {
@@ -857,6 +965,7 @@ void IGraph::SetState(DX_STATE state, uint value)
 }
 
 // FUNCTION: LS3DF 0x1006d350
+// FUNCTION: LS3DF11 0x1006a3e0
 uint IGraph::GetState(DX_STATE state)
 {
     DWORD value;
@@ -900,12 +1009,14 @@ uint IGraph::GetState(DX_STATE state)
 }
 
 // FUNCTION: LS3DF 0x1006d450
+// FUNCTION: LS3DF11 0x1006a4e0
 void IGraph::SetWorldMatrix(const S_matrix &m)
 {
     m_pD3DDevice8->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&m);
 }
 
 // FUNCTION: LS3DF 0x1006d470
+// FUNCTION: LS3DF11 0x1006a500
 void IGraph::BeginScene()
 {
     if (m_SceneBegun)
@@ -915,6 +1026,7 @@ void IGraph::BeginScene()
 }
 
 // FUNCTION: LS3DF 0x1006d4a0
+// FUNCTION: LS3DF11 0x1006a530
 void IGraph::EndScene()
 {
     m_SceneBegun = false;
@@ -923,6 +1035,7 @@ void IGraph::EndScene()
 
 // Shows the frame, after the frame rate if it is on. A lost device is waited for and reset.
 // FUNCTION: LS3DF 0x1006d4c0
+// FUNCTION: LS3DF11 0x1006a550
 void IGraph::Present()
 {
     UpdateAllTerminatedBuffs();
@@ -963,6 +1076,7 @@ void IGraph::Present()
 }
 
 // FUNCTION: LS3DF 0x1006d640
+// FUNCTION: LS3DF11 0x1006a6d0
 LS3D_RESULT IGraph::DrawPrimitiveList(PRIMITIVE_TYPE type, uint num_prims, const void *verts, LS3D_STREAM_TYPE stream)
 {
     if (!num_prims)
@@ -1018,6 +1132,7 @@ LS3D_RESULT IGraph::DrawPrimitiveList(PRIMITIVE_TYPE type, uint num_prims, const
 // Transformed vertices are drawn from memory, the others through IGraph's dynamic buffers if the hardware has them
 // (HWCAPS_HWTL)
 // FUNCTION: LS3DF 0x1006d750
+// FUNCTION: LS3DF11 0x1006a7e0
 LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts, const void *indices, uint num_prims,
     const void *verts, LS3D_STREAM_TYPE stream)
 {
@@ -1116,6 +1231,7 @@ static inline void RestoreRenderStates()
 // The engine's window. While it is inactive or minimized, the engine sleeps (IGRAPH_SLEEP): it adds " ..zzZZ" to the
 // title and suspends the game's render thread.
 // FUNCTION: LS3DF 0x1006da60
+// FUNCTION: LS3DF11 0x1006aaf0
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
@@ -1197,6 +1313,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 // The cases are in the original's order, which isn't the enum's
 // FUNCTION: LS3DF 0x1006ded0
+// FUNCTION: LS3DF11 0x1006af60
 const char *IGraph::GetFormatName(D3DFORMAT format) const
 {
     switch (format) {
@@ -1300,6 +1417,7 @@ inline DWORD F2DW(float f)
 // Frees what a lost device has to give up, resets the device (unless only the shaders and states are wanted again)
 // and creates IGraph's vertex shaders and the default render states again
 // FUNCTION: LS3DF 0x1006e1a0
+// FUNCTION: LS3DF11 0x1006b230
 LS3D_RESULT ResetDevice(bool reset)
 {
     if (m_StateBlock)
@@ -1397,6 +1515,7 @@ LS3D_RESULT ResetDevice(bool reset)
 }
 
 // FUNCTION: LS3DF 0x1006e740
+// FUNCTION: LS3DF11 0x1006b7d0
 LS3D_RESULT IGraph::SetViewPort(LS3D_VIEWPORT *viewport)
 {
     m_D3DViewPort8 = *(D3DVIEWPORT8 *)viewport;
@@ -1404,6 +1523,7 @@ LS3D_RESULT IGraph::SetViewPort(LS3D_VIEWPORT *viewport)
 }
 
 // FUNCTION: LS3DF 0x1006e780
+// FUNCTION: LS3DF11 0x1006b810
 LS3D_VIEWPORT *IGraph::GetViewPort()
 {
     return (LS3D_VIEWPORT *)&m_D3DViewPort8;
@@ -1427,6 +1547,7 @@ static inline BOOL IsTextureFormatOk(D3DFORMAT texture_format, D3DFORMAT adapter
 
 // Creates the window and the device after Close, logs the system, and finds the formats to use
 // FUNCTION: LS3DF 0x1006e790
+// FUNCTION: LS3DF11 0x1006b820
 LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
 {
     // DirectX 8.1 brought this DLL
@@ -1945,6 +2066,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
 
 // qsort's comparison of the display modes: by width, then height, then format descending
 // FUNCTION: LS3DF 0x1006fdc0
+// FUNCTION: LS3DF11 0x1006ce50
 static int __cdecl SortModesCallback(const void *a, const void *b)
 {
     const D3DDISPLAYMODE *m1 = (const D3DDISPLAYMODE *)a, *m2 = (const D3DDISPLAYMODE *)b;
@@ -1962,12 +2084,14 @@ static int __cdecl SortModesCallback(const void *a, const void *b)
 }
 
 // FUNCTION: LS3DF 0x10070180
+// FUNCTION: LS3DF11 0x1006d210
 bool IGraph::IsInit()
 {
     return m_InitIsOK;
 }
 
 // FUNCTION: LS3DF 0x10070190
+// FUNCTION: LS3DF11 0x1006d220
 IGRAPH_INIT_DESC *IGraph::GetResInitDesc()
 {
     return &m_InitDesc;
@@ -1975,6 +2099,7 @@ IGRAPH_INIT_DESC *IGraph::GetResInitDesc()
 
 // Releases everything Init made, and the textures still alive (which it lists in the log)
 // FUNCTION: LS3DF 0x100701a0
+// FUNCTION: LS3DF11 0x1006d230
 void IGraph::Close()
 {
     ClipCursor(NULL);
@@ -2057,24 +2182,28 @@ void IGraph::Close()
 }
 
 // FUNCTION: LS3DF 0x100704e0
+// FUNCTION: LS3DF11 0x1006d570
 int IGraph::Scrn_sx()
 {
     return m_InitDesc.flags & IGRAPH_CHILD_WINDOW ? m_InitDesc.child_rect.right : m_InitDesc.width;
 }
 
 // FUNCTION: LS3DF 0x10070500
+// FUNCTION: LS3DF11 0x1006d590
 int IGraph::Scrn_sy()
 {
     return m_InitDesc.flags & IGRAPH_CHILD_WINDOW ? m_InitDesc.child_rect.bottom : m_InitDesc.height;
 }
 
 // FUNCTION: LS3DF 0x10070520
+// FUNCTION: LS3DF11 0x1006d5b0
 int IGraph::BPP()
 {
     return m_InitDesc.bpp;
 }
 
 // FUNCTION: LS3DF 0x10070530
+// FUNCTION: LS3DF11 0x1006d5c0
 D3DFORMAT IGraph::GetD3DFormat()
 {
     return m_D3DPresentParams.BackBufferFormat;
@@ -2089,6 +2218,7 @@ enum {
 // Reads an image's size and depth from its header. With a handle the file stays open, at its start, for the caller to
 // read. With flags & 1 nothing is read.
 // FUNCTION: LS3DF 0x10070540
+// FUNCTION: LS3DF11 0x1006d5d0
 LS3D_RESULT IGraph::GetImageInfo(const char *name, ushort &sx, ushort &sy, uchar &bpp, uint flags, int *handle)
 {
     if (flags & 1)
@@ -2201,6 +2331,7 @@ struct S_rla_header {
 // bytes as n - 1 and the byte, n (up to 128) other bytes as -n and the bytes. Returns the encoded length.
 // (PC only, name guessed)
 // FUNCTION: LS3DF 0x100706d0
+// FUNCTION: LS3DF11 0x1006d760
 short EncodeRLAChannel(const uint *src, uchar *dst, int count, uint mask, int shift)
 {
     // The pointers are walked through copies, declared after len and left: with the parameters themselves, or in
@@ -2251,6 +2382,7 @@ short EncodeRLAChannel(const uint *src, uchar *dst, int count, uint mask, int sh
 // flags 1 nothing is written to a file: the frame is copied bottom-up to the memory name points to (as 24 bits with
 // 0x20000) and with 0x100000 the depth to z_buffer.
 // FUNCTION: LS3DF 0x10070890
+// FUNCTION: LS3DF11 0x1006d920
 bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
 {
     if (!(flags & 1) && !strstr(name, ".TGA") && !strstr(name, ".tga"))
@@ -2556,6 +2688,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
 
 // Flags 1: exclusive, 2: the keys come from the window messages (ProcessWinMessages)
 // FUNCTION: LS3DF 0x100716a0
+// FUNCTION: LS3DF11 0x1006e730
 LS3D_RESULT IGraph::KeyboardInit(uint flags)
 {
     KeyboardClose();
@@ -2590,12 +2723,14 @@ LS3D_RESULT IGraph::KeyboardInit(uint flags)
 }
 
 // FUNCTION: LS3DF 0x100717b0
+// FUNCTION: LS3DF11 0x1006e840
 bool IGraph::IsKeyboardInit()
 {
     return m_KeyboardInitIsOK;
 }
 
 // FUNCTION: LS3DF 0x100717c0
+// FUNCTION: LS3DF11 0x1006e850
 void IGraph::KeyboardClose()
 {
     if (m_pDIKeyboard8) {
@@ -2609,6 +2744,7 @@ void IGraph::KeyboardClose()
 // Reads the keys, acquiring the keyboard again if it was lost. Ctrl+Alt+Shift+F12 switches the frame rate on or off
 // (and F11 another switch) unless the game sets 0x10000.
 // FUNCTION: LS3DF 0x100717f0
+// FUNCTION: LS3DF11 0x1006e880
 LS3D_RESULT IGraph::UpdateKeyboardData()
 {
     if (!m_pDIKeyboard8)
@@ -2634,6 +2770,7 @@ LS3D_RESULT IGraph::UpdateKeyboardData()
 
 // Takes the oldest character typed out of the buffer
 // FUNCTION: LS3DF 0x10071910
+// FUNCTION: LS3DF11 0x1006e9a0
 uint IGraph::ReadCharBuffer()
 {
     memmove(m_KeyBuffer, m_KeyBuffer + 1, sizeof(m_KeyBuffer) - sizeof(m_KeyBuffer[0]));
@@ -2642,6 +2779,7 @@ uint IGraph::ReadCharBuffer()
 }
 
 // FUNCTION: LS3DF 0x10071940
+// FUNCTION: LS3DF11 0x1006e9d0
 void IGraph::ClearCharBuffer()
 {
     memset(m_KeyBuffer, 0, sizeof(m_KeyBuffer));
@@ -2650,6 +2788,7 @@ void IGraph::ClearCharBuffer()
 // The key pressed since the last update (a DIK_* code), not counting shift, control and alt. ReadChar then gives
 // its character.
 // FUNCTION: LS3DF 0x10071960
+// FUNCTION: LS3DF11 0x1006e9f0
 uint IGraph::ReadKey()
 {
     if (m_KBInitFlags & 2) {
@@ -2672,6 +2811,7 @@ uint IGraph::ReadKey()
 }
 
 // FUNCTION: LS3DF 0x10071a10
+// FUNCTION: LS3DF11 0x1006eaa0
 uint IGraph::ReadChar()
 {
     uint c = m_KBLastChar;
@@ -2680,6 +2820,7 @@ uint IGraph::ReadChar()
 }
 
 // FUNCTION: LS3DF 0x10071a30
+// FUNCTION: LS3DF11 0x1006eac0
 bool IGraph::TestKey(uchar key)
 {
     return m_KeyboardData[key] >> 7;
@@ -2687,6 +2828,7 @@ bool IGraph::TestKey(uchar key)
 
 // The keys ReadKeys reports, at most 64
 // FUNCTION: LS3DF 0x10071a50
+// FUNCTION: LS3DF11 0x1006eae0
 LS3D_RESULT IGraph::DefineKeys(const uchar *keys, uint count)
 {
     if (!keys || count > 64)
@@ -2698,6 +2840,7 @@ LS3D_RESULT IGraph::DefineKeys(const uchar *keys, uint count)
 
 // A bit for each key DefineKeys gave that is down
 // FUNCTION: LS3DF 0x10071aa0
+// FUNCTION: LS3DF11 0x1006eb30
 ulong IGraph::ReadKeys()
 {
     ulong keys = 0;
@@ -2709,6 +2852,7 @@ ulong IGraph::ReadKeys()
 }
 
 // FUNCTION: LS3DF 0x10071af0
+// FUNCTION: LS3DF11 0x1006eb80
 bool IGraph::KeyShift()
 {
     if ((m_KeyboardData[DIK_LSHIFT] & 0x80) || (m_KeyboardData[DIK_RSHIFT] & 0x80))
@@ -2717,6 +2861,7 @@ bool IGraph::KeyShift()
 }
 
 // FUNCTION: LS3DF 0x10071b10
+// FUNCTION: LS3DF11 0x1006eba0
 bool IGraph::KeyCtrl()
 {
     if ((m_KeyboardData[DIK_LCONTROL] & 0x80) || (m_KeyboardData[DIK_RCONTROL] & 0x80))
@@ -2725,6 +2870,7 @@ bool IGraph::KeyCtrl()
 }
 
 // FUNCTION: LS3DF 0x10071b30
+// FUNCTION: LS3DF11 0x1006ebc0
 bool IGraph::KeyAlt()
 {
     if ((m_KeyboardData[DIK_LMENU] & 0x80) || (m_KeyboardData[DIK_RMENU] & 0x80))
@@ -2734,6 +2880,7 @@ bool IGraph::KeyAlt()
 
 // SKEY_*; left and right shift 0x20 and 0x40, control 0x80 and 0x100, alt 0x200 and 0x400
 // FUNCTION: LS3DF 0x10071b50
+// FUNCTION: LS3DF11 0x1006ebe0
 uint IGraph::GetShiftKeys(bool update)
 {
     if (update)
@@ -2765,6 +2912,7 @@ uint IGraph::GetShiftKeys(bool update)
 
 // A key's character, shifted with SKEY_SHIFT
 // FUNCTION: LS3DF 0x10071c00
+// FUNCTION: LS3DF11 0x1006ec90
 uchar IGraph::TranslateKey(uchar key, uint shift_keys)
 {
     for (S_key_char *p = key_table; p->key; p++) {
@@ -2776,6 +2924,7 @@ uchar IGraph::TranslateKey(uchar key, uint shift_keys)
 
 // The key's name from DirectInput, a wide string
 // FUNCTION: LS3DF 0x10071c40
+// FUNCTION: LS3DF11 0x1006ecd0
 const char *IGraph::GetKeyName(int key)
 {
     if (!m_pDIKeyboard8)
@@ -2791,6 +2940,7 @@ const char *IGraph::GetKeyName(int key)
 // Mode 0: the cursor, 1: relative movement (exclusive), -1: only tells the current mode. Switching from the cursor to
 // relative movement waits for the buttons to be released.
 // FUNCTION: LS3DF 0x10071ca0
+// FUNCTION: LS3DF11 0x1006ed30
 LS3D_RESULT IGraph::MouseInit(int mode)
 {
     if (mode == -1)
@@ -2830,12 +2980,14 @@ LS3D_RESULT IGraph::MouseInit(int mode)
 }
 
 // FUNCTION: LS3DF 0x10071dc0
+// FUNCTION: LS3DF11 0x1006ee50
 bool IGraph::IsMouseInit()
 {
     return m_MouseInitIsOK;
 }
 
 // FUNCTION: LS3DF 0x10071dd0
+// FUNCTION: LS3DF11 0x1006ee60
 void IGraph::MouseClose()
 {
     if (m_pDIMouse8) {
@@ -2851,6 +3003,7 @@ void IGraph::MouseClose()
 
 // Reads the mouse. With the cursor, the window's position is computed but not used.
 // FUNCTION: LS3DF 0x10071e20
+// FUNCTION: LS3DF11 0x1006eeb0
 LS3D_RESULT IGraph::UpdateMouseData()
 {
     if (!m_pDIMouse8)
@@ -2892,18 +3045,21 @@ LS3D_RESULT IGraph::UpdateMouseData()
 }
 
 // FUNCTION: LS3DF 0x10071f90
+// FUNCTION: LS3DF11 0x1006f020
 int IGraph::Mouse_rx()
 {
     return m_MouseData.lX;
 }
 
 // FUNCTION: LS3DF 0x10071fa0
+// FUNCTION: LS3DF11 0x1006f030
 int IGraph::Mouse_ry()
 {
     return m_MouseData.lY;
 }
 
 // FUNCTION: LS3DF 0x10071fb0
+// FUNCTION: LS3DF11 0x1006f040
 int IGraph::Mouse_rz()
 {
     return m_MouseData.lZ;
@@ -2911,6 +3067,7 @@ int IGraph::Mouse_rz()
 
 // The position is the client area's; in a window the cursor goes to the screen position
 // FUNCTION: LS3DF 0x10071fc0
+// FUNCTION: LS3DF11 0x1006f050
 void IGraph::SetMousePos(int x, int y)
 {
     m_MousePos.x = x;
@@ -2936,12 +3093,14 @@ void IGraph::SetMousePos(int x, int y)
 }
 
 // FUNCTION: LS3DF 0x100720a0
+// FUNCTION: LS3DF11 0x1006f130
 int IGraph::Mouse_x()
 {
     return m_MousePos.x;
 }
 
 // FUNCTION: LS3DF 0x100720b0
+// FUNCTION: LS3DF11 0x1006f140
 int IGraph::Mouse_y()
 {
     return m_MousePos.y;
@@ -2949,6 +3108,7 @@ int IGraph::Mouse_y()
 
 // MBUT_*
 // FUNCTION: LS3DF 0x100720c0
+// FUNCTION: LS3DF11 0x1006f150
 uint IGraph::GetMouseButtons()
 {
     uint buttons = 0;
@@ -2962,6 +3122,7 @@ uint IGraph::GetMouseButtons()
 }
 
 // FUNCTION: LS3DF 0x100720f0
+// FUNCTION: LS3DF11 0x1006f180
 void IGraph::NullTimer()
 {
     m_InternalTimer = timeGetTime();
@@ -2969,6 +3130,7 @@ void IGraph::NullTimer()
 
 // The time since the last call, at least min_time (it sleeps for the rest) and at most max_time if that is set
 // FUNCTION: LS3DF 0x10072100
+// FUNCTION: LS3DF11 0x1006f190
 uint IGraph::GetTimer(uint min_time, uint max_time)
 {
     uint last = m_InternalTimer;
@@ -2987,13 +3149,16 @@ uint IGraph::GetTimer(uint min_time, uint max_time)
 
 // The maps directory the last map was found in (PC only, names guessed)
 // GLOBAL: LS3DF 0x101c59d8
+// GLOBAL: LS3DF11 0x101c2ad8
 char m_LastMapDir[256] = {0};
 // GLOBAL: LS3DF 0x101c5ad8
+// GLOBAL: LS3DF11 0x101c2bd8
 bool m_LastMapDirOK = false;
 
 // Finds a map file: as named if the name has a path, else in the directory the last one was found in, else in the
 // maps directories, the last added first. Returns the full name, or an empty string. (PC only, name guessed)
 // FUNCTION: LS3DF 0x10072150
+// FUNCTION: LS3DF11 0x1006f1e0
 C_str FindMapFile(C_list<char *> *list, const char *name)
 {
     WIN32_FIND_DATA fd;
@@ -3032,6 +3197,7 @@ C_str FindMapFile(C_list<char *> *list, const char *name)
 
 // Adds a directory to the list, with a backslash at its end, and with recursive its subdirectories too
 // FUNCTION: LS3DF 0x100723e0
+// FUNCTION: LS3DF11 0x1006f470
 LS3D_RESULT m_AddNameToList(C_list<char *> *list, const char *name, bool recursive)
 {
     // s before len: it gives the backslash's stores [len + s] rather than [s + len], as VC6 orders an address's
@@ -3073,6 +3239,7 @@ LS3D_RESULT m_AddNameToList(C_list<char *> *list, const char *name, bool recursi
 }
 
 // FUNCTION: LS3DF 0x100725f0
+// FUNCTION: LS3DF11 0x1006f680
 LS3D_RESULT IGraph::AddMapsDir(const char *dir, bool recursive)
 {
     return m_AddNameToList(&m_MapsList, dir, recursive);
@@ -3080,6 +3247,7 @@ LS3D_RESULT IGraph::AddMapsDir(const char *dir, bool recursive)
 
 // Removes every directory whose name contains dir
 // FUNCTION: LS3DF 0x10072610
+// FUNCTION: LS3DF11 0x1006f6a0
 LS3D_RESULT IGraph::DeleteMapsDir(const char *dir)
 {
     for (int i = m_MapsList.size(); i; ) {
@@ -3093,6 +3261,7 @@ LS3D_RESULT IGraph::DeleteMapsDir(const char *dir)
 }
 
 // FUNCTION: LS3DF 0x10072670
+// FUNCTION: LS3DF11 0x1006f700
 void IGraph::ClearMapDirs()
 {
     for (int i = m_MapsList.size(); i; )
@@ -3101,30 +3270,35 @@ void IGraph::ClearMapDirs()
 }
 
 // FUNCTION: LS3DF 0x100726d0
+// FUNCTION: LS3DF11 0x1006f760
 ITexture **IGraph::GetCachedTextures()
 {
     return &m_CachedTextureList[0];
 }
 
 // FUNCTION: LS3DF 0x100726e0
+// FUNCTION: LS3DF11 0x1006f770
 int IGraph::GetCachedTextureCnt()
 {
     return m_CachedTextureList.size();
 }
 
 // FUNCTION: LS3DF 0x100726f0
+// FUNCTION: LS3DF11 0x1006f780
 ITexture **IGraph::GetUncachedTextures()
 {
     return &m_UncachedTextureList[0];
 }
 
 // FUNCTION: LS3DF 0x10072700
+// FUNCTION: LS3DF11 0x1006f790
 int IGraph::GetUncachedTextureCnt()
 {
     return m_UncachedTextureList.size();
 }
 
 // FUNCTION: LS3DF 0x10072710
+// FUNCTION: LS3DF11 0x1006f7a0
 bool IGraph::SetGammaRamp(LS3DGAMMARAMP *ramp, uint flags)
 {
     if (!(m_HardwareCaps & HWCAPS_GAMMA))
@@ -3134,6 +3308,7 @@ bool IGraph::SetGammaRamp(LS3DGAMMARAMP *ramp, uint flags)
 }
 
 // FUNCTION: LS3DF 0x10072750
+// FUNCTION: LS3DF11 0x1006f7e0
 bool IGraph::GetGammaRamp(LS3DGAMMARAMP *ramp)
 {
     if (!(m_HardwareCaps & HWCAPS_GAMMA))
@@ -3153,6 +3328,7 @@ bool IGraph::GetGammaRamp(LS3DGAMMARAMP *ramp)
 // the area each pixel covers (an empty area gives magenta); otherwise, and when enlarging, the nearest pixel is taken.
 // The interior of the area advances its offset twice per pixel, as the original does.
 // FUNCTION: LS3DF 0x100727d0
+// FUNCTION: LS3DF11 0x1006f860
 bool IGraph::ResizeImage(int sx, int sy, uint pitch, uchar *src, int dst_sx, int dst_sy, uint dst_pitch, uchar **dst,
     uint bpp, int filter)
 {

@@ -52,28 +52,35 @@ struct S_temp_light {
 // and two 12-byte objects nothing references at 0x101c4d24 and 0x101c4d64. TempLightList's $E (0x10065a10) is annotated
 // by name in I3D.h.
 // GLOBAL: LS3DF 0x101c4d20
+// GLOBAL: LS3DF11 0x101c1e30
 int TempLightIndex;
 
 // The lights' scale of the vertex colors: 128, or 255 without MODULATE2X (IGraph::Init). Insanity3D's driver has the
 // same choice in a member of this name (0.5 or 1.0).
 // GLOBAL: LS3DF 0x100a9470
+// GLOBAL: LS3DF11 0x100a65d8
 float vertex_light_mult = 128.0f;
 
 // The assembly's constants (names guessed)
 // GLOBAL: LS3DF 0x100a9474
+// GLOBAL: LS3DF11 0x100a65dc
 float TwoFloat = 2.0f;
 
 // GLOBAL: LS3DF 0x100a9478
+// GLOBAL: LS3DF11 0x100a65e0
 float HalfFloat = 0.5f;
 
 // GLOBAL: LS3DF 0x100a947c
+// GLOBAL: LS3DF11 0x100a65e4
 float OneFloat = 1.0f;
 
 // GLOBAL: LS3DF 0x101c4d80
+// GLOBAL: LS3DF11 0x101c1e90
 S_temp_light TempLightList[8];
 
 // The ambient lights' sum (the name is a guess)
 // GLOBAL: LS3DF 0x101c4d30
+// GLOBAL: LS3DF11 0x101c1e40
 S_vector4 TempAmbient(0.0f, 0.0f, 0.0f);
 
 // The type of PrepareLights' static color: it has a destructor, empty, which the static's first use registers with
@@ -91,29 +98,37 @@ struct S_color : public S_vector {
 
 // PrepareLights' static color: VC6 puts a function's static into the PDB under its plain name
 // GLOBAL: LS3DF 0x101c4d50
+// GLOBAL: LS3DF11 0x101c1e60
 // TempColor
 
 // The vertex the assembly lights (the name is a guess)
 // GLOBAL: LS3DF 0x101c4d40
+// GLOBAL: LS3DF11 0x101c1e50
 const uchar *pVertices;
 
 // GLOBAL: LS3DF 0x101c4d5c
+// GLOBAL: LS3DF11 0x101c1e6c
 float TempLightEnergy;
 
 // GLOBAL: LS3DF 0x101c4d60
+// GLOBAL: LS3DF11 0x101c1e70
 I3D_light *pTempLight;
 
 // The vertex colors' alpha, in the top byte (the name is a guess)
 // GLOBAL: LS3DF 0x101c4d70
+// GLOBAL: LS3DF11 0x101c1e80
 uint TempAlpha;
 
 // GLOBAL: LS3DF 0x101c5000
+// GLOBAL: LS3DF11 0x101c2110
 uint GlobalLightCount = 0;
 
 // GLOBAL: LS3DF 0x101c5004
+// GLOBAL: LS3DF11 0x101c2114
 I3D_sector *pCurrentSector = NULL;
 
 // FUNCTION: LS3DF 0x10065a60
+// FUNCTION: LS3DF11 0x10062d40
 void LightingSetSector(I3D_sector *sector)
 {
     pCurrentSector = sector;
@@ -383,6 +398,7 @@ red_ok:
 // cast didn't change it). TempColor's guard (0x101c4d74) has no marker: i3d_collision.cpp's object has a $S10 too, so
 // a by-name one pairs only with both annotated.
 // FUNCTION: LS3DF 0x10065a70
+// FUNCTION: LS3DF11 0x10062d50
 bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uchar *src, uint src_stride,
     I3D_object *obj, const S_matrix &m, uint mode, bool force, lod *rec)
 {
@@ -555,6 +571,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
 // Writes a mesh level's alpha into its vertex colors (at dst, the colors' bytes) if it changed since rec's last (the
 // name is a guess)
 // FUNCTION: LS3DF 0x10066b50
+// FUNCTION: LS3DF11 0x10063e30
 void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_object *obj, lod *rec)
 {
     if (!level || !level->fgroups)
@@ -592,6 +609,7 @@ void SetVertexAlpha(uchar *dst, uint dst_stride, I3D_mesh_level *level, I3D_obje
 // after the blend don't, and neither did any spelling of the color, the luminance (Dot) or the blend (a helper, the
 // diffuse branch first, Insanity3D's col += col * c * a). PS2's lays out the diffuse branch first.
 // FUNCTION: LS3DF 0x10066be0
+// FUNCTION: LS3DF11 0x10063ec0
 int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context)
 {
     S_texel_info *ti = (S_texel_info *)context;
@@ -659,6 +677,7 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
 //   normal's z and y first, as in the point light's), the shadow test's dir.Dot(col_normal), color *= filter and
 //   diff_sum += color. Swapped operands and the declarations' order and place don't change them.
 // FUNCTION: LS3DF 0x10066e90
+// FUNCTION: LS3DF11 0x10064170
 void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_material *mat, I3D_scene *scene,
     uint flags, bool *inside, I3D_frame *frm, int x)
 {
@@ -817,6 +836,7 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
 // norm (1) above t (4), mat (1) above dummy (6), p (0) above v (6). With n (14) the float came first, with mm (7) the
 // dummy, and the matrix took 4 bytes of padding to its 8-byte alignment.
 // FUNCTION: LS3DF 0x10067d20
+// FUNCTION: LS3DF11 0x10065000
 void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, uint count, const S_vector &cam_pos,
     const S_matrix &m, float scale, float u_ofs, float v_ofs, int mode, I3D_frame *frm)
 {
@@ -1188,6 +1208,7 @@ sphere_y_end:
 // The vertices' positions and normals at src (I3D_vertex) through m and mn into dst (a position and a normal each;
 // the name is a guess)
 // FUNCTION: LS3DF 0x10068360
+// FUNCTION: LS3DF11 0x10065640
 void TransformVertices(void *dst, const void *src, uint count, const S_matrix &m, const S_matrix &mn)
 {
     __asm {
@@ -1264,6 +1285,7 @@ transform_loop:
 
 // The same blended: weights[i] of the first matrices' result, the rest of the second's (the name is a guess)
 // FUNCTION: LS3DF 0x10068430
+// FUNCTION: LS3DF11 0x10065710
 void TransformVerticesBlend(void *dst, const void *src, uint count, const S_matrix &m1, const S_matrix &mn1,
     const float *weights, const S_matrix &m2, const S_matrix &mn2)
 {
@@ -1424,6 +1446,7 @@ blend_loop:
 // both scaled by the current camera's far clipping plane: 255 up to the near range and 0 from the far one on (mode 0),
 // or the other way round (mode 1). One stride steps both. (The name is a guess.)
 // FUNCTION: LS3DF 0x100685d0
+// FUNCTION: LS3DF11 0x100658b0
 void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode)
 {
     if (!light)
@@ -1552,6 +1575,7 @@ fog_inv_next:
 // Swaps the byte at a with the one at b in each vertex of the faces, a vertex once: the byte before b says whether
 // it is swapped, and restore swaps those back (the name is a guess)
 // FUNCTION: LS3DF 0x10068760
+// FUNCTION: LS3DF11 0x10065a40
 void SwapVertexBytes(uchar *a, uchar *b, uint stride, const I3D_triface *faces, uint num_faces, int restore)
 {
     uchar from, to;

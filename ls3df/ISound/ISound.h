@@ -12,18 +12,25 @@
 
 // From the DirectX 8.1 SDK: dxguid.lib's GUIDs
 // GLOBAL: LS3DF 0x100a182c
+// GLOBAL: LS3DF11 0x1009e82c
 // DS3DALG_NO_VIRTUALIZATION
 // GLOBAL: LS3DF 0x100a183c
+// GLOBAL: LS3DF11 0x1009e83c
 // IID_IKsPropertySet
 // GLOBAL: LS3DF 0x100a184c
+// GLOBAL: LS3DF11 0x1009e84c
 // IID_IDirectSoundNotify
 // GLOBAL: LS3DF 0x100a185c
+// GLOBAL: LS3DF11 0x1009e85c
 // IID_IDirectSound3DBuffer
 // GLOBAL: LS3DF 0x100a186c
+// GLOBAL: LS3DF11 0x1009e86c
 // IID_IDirectSound3DListener
 // GLOBAL: LS3DF 0x100a187c
+// GLOBAL: LS3DF11 0x1009e87c
 // IID_IDirectSoundBuffer8
 // GLOBAL: LS3DF 0x100a188c
+// GLOBAL: LS3DF11 0x1009e88c
 // IID_IDirectSound8
 
 // What ISND_driver::Init(ISND_INIT *) takes (PS2 name)
@@ -69,6 +76,7 @@ struct S_wave_format {
 
 // A sound loaded from a WAV file into a DirectSound buffer (PS2 IS_source.cpp). It isn't polymorphic on PS2.
 // VTABLE: LS3DF 0x1009db90
+// VTABLE: LS3DF11 0x1009ab90
 class ISND_source {
 public:
     ISND_source();
@@ -91,9 +99,11 @@ public:
     // The out-of-line copy the linker kept is in I3D code. Its "" is the engine's, in .data like VC6's other literals.
     // reccmp's string search skips empty strings, so the original's needs a marker; the CRT's in .rdata is "\x00".
     // FUNCTION: LS3DF 0x10059370
+    // FUNCTION: LS3DF11 0x10056a30
     const char *GetFileName() const
     {
         // STRING: LS3DF 0x100af7fc
+        // STRING: LS3DF11 0x100ac91c
         return filename ? filename : C_str("");
     }
 
@@ -114,6 +124,7 @@ public:
 
 // A sound playing a source (PS2 IS_sound.cpp)
 // VTABLE: LS3DF 0x1009db08
+// VTABLE: LS3DF11 0x1009ab08
 class ISND_sound {
 public:
     ISND_sound();
@@ -135,6 +146,7 @@ public:
 
     // The out-of-line copy the linker kept is in IS_3Dsound.cpp, after its last function
     // FUNCTION: LS3DF 0x1007b680
+    // FUNCTION: LS3DF11 0x100784c0
     virtual ISND_source *__stdcall GetSource()
     {
         return source;
@@ -166,10 +178,12 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1007c910
+// SYNTHETIC: LS3DF11 0x10079740
 // ISND_sound::`scalar deleting destructor'
 
 // A sound with a 3D buffer (PS2 IS_3Dsound.cpp)
 // VTABLE: LS3DF 0x1009d9e0
+// VTABLE: LS3DF11 0x1009a9e0
 class ISND_3Dsound : public ISND_sound {
 public:
     ISND_3Dsound();
@@ -190,10 +204,12 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1007b390
+// SYNTHETIC: LS3DF11 0x100781d0
 // ISND_3Dsound::`scalar deleting destructor'
 
 // The listener (PS2 IS_3Dlistener.cpp). Its destructor isn't virtual: I3D code calls it directly.
 // VTABLE: LS3DF 0x1009d968
+// VTABLE: LS3DF11 0x1009a968
 class ISND_3Dlistener {
 public:
     ISND_3Dlistener();
@@ -221,6 +237,7 @@ public:
 // copy; which one our linker keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py
 // updates it).
 // FUNCTION: LS3DF 0x1007b180
+// FUNCTION: LS3DF11 0x1002a480
 // ?SetDistanceFactor@ISND_3Dlistener@@UAG?AW4LS3D_RESULT@@M@Z
 
 // The hardware 3D channel lists (IS_sound.cpp; PS2 names)
@@ -244,9 +261,11 @@ struct TERMINATED_CHANNEL_STRUCT {
 // The destructors IS_sound.cpp's thunks register for ChannelList and TerminatedChannelList: the last $E5 and $E10 in
 // link order, after ITexture.cpp's
 // SYNTHETIC: LS3DF 0x1007c2d0
+// SYNTHETIC: LS3DF11 0x10079100
 // $E5
 
 // SYNTHETIC: LS3DF 0x1007c320
+// SYNTHETIC: LS3DF11 0x10079150
 // $E10
 
 // The stream functions the driver keeps (PC only), through which IShow plays music. Nothing in LS3DF fills the table in:
@@ -272,6 +291,7 @@ struct ISND_STREAM_FUNCS {
 // The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
 // each name's overloads at the first one's slot in reverse order, which gives the original's vtable.
 // VTABLE: LS3DF 0x1009da88
+// VTABLE: LS3DF11 0x1009aa88
 class ISND_driver {
 public:
     ISND_driver();

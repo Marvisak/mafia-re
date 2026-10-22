@@ -74,6 +74,7 @@ extern int num_clip_results_t;          // what the projector divides clip_cente
 // The initializer of clip_center_t, empty (S_vector's constructor is): the first $E5 in link order. reccmp pairs the
 // annotations of one name with our functions of that name in address order, so it is annotated, before I3D.h's.
 // SYNTHETIC: LS3DF 0x10001000
+// SYNTHETIC: LS3DF11 0x10001000
 // $E5
 
 void SetClipParams(const S_matrix &m, const S_matrix &world, bool ortho, float offset, float expand, float reverse);

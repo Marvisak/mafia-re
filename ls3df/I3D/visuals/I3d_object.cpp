@@ -7,6 +7,7 @@
 #include "IGraph/IGraph.h"
 
 // FUNCTION: LS3DF 0x100367b0
+// FUNCTION: LS3DF11 0x10035510
 I3D_object::I3D_object()
 {
     vis_flags |= VISF_UNKNOWN_800;
@@ -21,6 +22,7 @@ I3D_object::I3D_object()
 }
 
 // FUNCTION: LS3DF 0x10036840
+// FUNCTION: LS3DF11 0x100355a0
 I3D_object::~I3D_object()
 {
     for (int i = 0; i < 10; i++)
@@ -31,6 +33,7 @@ I3D_object::~I3D_object()
 }
 
 // FUNCTION: LS3DF 0x100368e0
+// FUNCTION: LS3DF11 0x10035640
 void I3D_object::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     if (m == mesh) {
@@ -62,6 +65,7 @@ void I3D_object::SetMesh(I3D_mesh_object *m, bool keep_lods)
 }
 
 // FUNCTION: LS3DF 0x10036a20
+// FUNCTION: LS3DF11 0x10035780
 void I3D_object::UpdateVertices()
 {
     for (int i = 0; i < 10; i++) {
@@ -71,6 +75,7 @@ void I3D_object::UpdateVertices()
 }
 
 // FUNCTION: LS3DF 0x10036a50
+// FUNCTION: LS3DF11 0x100357b0
 void I3D_object::UpdateVertices(int index)
 {
     if (lods[index])
@@ -78,6 +83,7 @@ void I3D_object::UpdateVertices(int index)
 }
 
 // FUNCTION: LS3DF 0x10036a70
+// FUNCTION: LS3DF11 0x100357d0
 LS3D_RESULT I3D_object::DetachMesh()
 {
     if (mesh && mesh->ref >= 2) {
@@ -100,6 +106,7 @@ LS3D_RESULT I3D_object::DetachMesh()
 }
 
 // FUNCTION: LS3DF 0x10036b10
+// FUNCTION: LS3DF11 0x10035870
 LS3D_RESULT I3D_object::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -144,6 +151,7 @@ LS3D_RESULT I3D_object::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10036c70
+// FUNCTION: LS3DF11 0x100359d0
 lod::lod()
 {
     lights_changed = (uint)-1;
@@ -160,12 +168,14 @@ lod::lod()
 }
 
 // FUNCTION: LS3DF 0x10036ce0
+// FUNCTION: LS3DF11 0x10035a40
 lod::~lod()
 {
     cVBMan.m_Free(vb);
 }
 
 // FUNCTION: LS3DF 0x10036d00
+// FUNCTION: LS3DF11 0x10035a60
 void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, float uo, float vo)
 {
     u_ofs = uo;
@@ -231,6 +241,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
 // The copy loops walk their pointers, the parameters included, in place and count a copy of num down: VC6 then keeps
 // the vertex pointer on a member (lea eax, [edx + 8]), as in SetUV
 // FUNCTION: LS3DF 0x10037030
+// FUNCTION: LS3DF11 0x10035c30
 bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, const I3D_text_coor *uv, uint uv_stride,
     const I3D_text_coor *uv2, uint uv2_stride, float uo, float vo)
 {
@@ -435,6 +446,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
 }
 
 // FUNCTION: LS3DF 0x100378b0
+// FUNCTION: LS3DF11 0x10036160
 void I3D_object::SetSpace(bool world)
 {
     if (vis_flags & VISF_WORLD_SPACE) {
@@ -492,6 +504,7 @@ void I3D_object::SetSpace(bool world)
 }
 
 // FUNCTION: LS3DF 0x10037d50
+// FUNCTION: LS3DF11 0x10036600
 void I3D_object::SetLightness(float l)
 {
     if (!mesh)
@@ -508,6 +521,7 @@ void I3D_object::SetLightness(float l)
 }
 
 // FUNCTION: LS3DF 0x10037dd0
+// FUNCTION: LS3DF11 0x10036680
 void I3D_object::SetTransparency(float t)
 {
     if (!mesh)
@@ -524,6 +538,7 @@ void I3D_object::SetTransparency(float t)
 }
 
 // FUNCTION: LS3DF 0x10037e60
+// FUNCTION: LS3DF11 0x10036710
 void I3D_object::ResetLightInfo()
 {
     if (!mesh)
@@ -537,6 +552,7 @@ void I3D_object::ResetLightInfo()
 }
 
 // FUNCTION: LS3DF 0x10037ea0
+// FUNCTION: LS3DF11 0x10036750
 void I3D_object::SetFade(float f)
 {
     if (!mesh)
@@ -553,6 +569,7 @@ void I3D_object::SetFade(float f)
 }
 
 // FUNCTION: LS3DF 0x10037f30
+// FUNCTION: LS3DF11 0x100367e0
 uchar *I3D_object::LockVertices(int index, uint flags)
 {
     lod *l = lods[index];
@@ -571,6 +588,7 @@ uchar *I3D_object::LockVertices(int index, uint flags)
 // (S_vector d = ...; d.x * d.x + d.y * d.y + d.z * d.z), but its source then leaves the alpha Lock's push_back inline
 // and the four PrepareLights calls unmerged; Dot and a GetWBoundVolume() without the reference give Square()'s order.
 // FUNCTION: LS3DF 0x10038020
+// FUNCTION: LS3DF11 0x10036830
 void I3D_object::m_AddFGroups()
 {
     if (!mesh)
@@ -833,6 +851,7 @@ void I3D_object::m_AddFGroups()
 // calls SwapVertexBytes in each branch of the stride (the original pushes 0x28 and 0x20 in two arms), as in
 // I3D_billboard's. The out-of-line calls, and with them the registers, need the render-state helpers' asserts (I3D.h).
 // FUNCTION: LS3DF 0x10039280
+// FUNCTION: LS3DF11 0x100377c0
 void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
     I3D_face_group *fg = h->fg;
@@ -1091,6 +1110,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 }
 
 // FUNCTION: LS3DF 0x1003a400
+// FUNCTION: LS3DF11 0x10038940
 void I3D_object::LoadImage()
 {
     I3D_visual::LoadImage();

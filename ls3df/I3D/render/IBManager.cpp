@@ -16,6 +16,7 @@ extern IDirect3DDevice8 *m_pD3DDevice8;
     "C:\\MyProjects\\engine8\\I3D\\IBManager.cpp", line)
 
 // GLOBAL: LS3DF 0x101b50f8
+// GLOBAL: LS3DF11 0x101b2218
 C_IBManager cIBMan;
 
 // Inlined into C_IBManager::m_Alloc, its out-of-line copy dropped; the multiset's destructor its unwinding needs
@@ -41,6 +42,7 @@ C_IBuffer::C_IBuffer()
 // 4 dead statements at the start or the end gives it too; zero-cost inline calls, Unlock() for the if (data) block and
 // the loops' spellings don't.
 // FUNCTION: LS3DF 0x1005abf0
+// FUNCTION: LS3DF11 0x100582a0
 C_IBuffer::~C_IBuffer()
 {
     S_IB_block **p = &used_blocks[0];
@@ -73,6 +75,7 @@ C_IBuffer::~C_IBuffer()
 // Creates the buffer, at least 0x10000 indices, in the managed pool if it is static and processed in software, and
 // locks it. Out of video memory it evicts managed resources and tries again, then tries the managed pool.
 // FUNCTION: LS3DF 0x1005ae00
+// FUNCTION: LS3DF11 0x100584a0
 bool C_IBuffer::m_Init(uint usage, uint count)
 {
     this->usage = usage;
@@ -109,6 +112,7 @@ bool C_IBuffer::m_Init(uint usage, uint count)
 
 // Gives out count indices from the smallest free block that has room, and returns the first one's index, or -1
 // FUNCTION: LS3DF 0x1005aff0
+// FUNCTION: LS3DF11 0x10058670
 int C_IBuffer::m_Alloc(uint count, COMPLETE_IB_STRUCT *owner)
 {
     std::multiset<S_IB_block *, S_IB_block_less>::iterator it;
@@ -131,6 +135,7 @@ int C_IBuffer::m_Alloc(uint count, COMPLETE_IB_STRUCT *owner)
 
 // Takes back the block that starts at index, joined with the free blocks next to it
 // FUNCTION: LS3DF 0x1005b1b0
+// FUNCTION: LS3DF11 0x10058810
 bool C_IBuffer::m_Free(uint index)
 {
     S_IB_block **p = &used_blocks[0];
@@ -179,6 +184,7 @@ bool C_IBuffer::m_Free(uint index)
 }
 
 // FUNCTION: LS3DF 0x1005b390
+// FUNCTION: LS3DF11 0x100589c0
 C_IBManager::C_IBManager()
 {
     locked_buffers.reserve(256);
@@ -196,6 +202,7 @@ C_IBManager::~C_IBManager()
 
 // Gives out count indices of a buffer of the usage, from the first that has room, or from a new one
 // FUNCTION: LS3DF 0x1005b6c0
+// FUNCTION: LS3DF11 0x10058cc0
 bool C_IBManager::m_Alloc(uint usage, uint count, COMPLETE_IB_STRUCT &ib)
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
@@ -231,6 +238,7 @@ void C_IBManager::m_Free(COMPLETE_IB_STRUCT &ib)
 }
 
 // FUNCTION: LS3DF 0x1005b960
+// FUNCTION: LS3DF11 0x10058f30
 void C_IBManager::m_UnlockAllIBuffers()
 {
     C_IBuffer **p = &locked_buffers[0];
@@ -248,6 +256,7 @@ void C_IBManager::m_UnlockAllIBuffers()
 
 // Deletes the buffers that have nothing given out
 // FUNCTION: LS3DF 0x1005b9d0
+// FUNCTION: LS3DF11 0x10058fa0
 void C_IBManager::m_FreeAllUnusedIBuffers()
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
@@ -262,6 +271,7 @@ restart:
 }
 
 // FUNCTION: LS3DF 0x1005ba30
+// FUNCTION: LS3DF11 0x10059000
 void C_IBManager::m_FreeAllIBuffers()
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
@@ -278,6 +288,7 @@ restart:
 
 // Deletes the buffers in the default pool, which a reset device loses
 // FUNCTION: LS3DF 0x1005baa0
+// FUNCTION: LS3DF11 0x10059070
 void C_IBManager::m_FreeAllVRAMIBuffers()
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;

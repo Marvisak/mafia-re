@@ -12,81 +12,118 @@
 
 // From the DirectX 8.1 SDK: dinput8.lib's data formats, dxguid.lib's GUIDs and dxerr8.lib's error strings
 // GLOBAL: LS3DF 0x100a160c
+// GLOBAL: LS3DF11 0x1009e60c
 // c_dfDIKeyboard
 // GLOBAL: LS3DF 0x100a1814
+// GLOBAL: LS3DF11 0x1009e814
 // c_dfDIMouse
 // GLOBAL: LS3DF 0x100a189c
+// GLOBAL: LS3DF11 0x1009e89c
 // GUID_SysKeyboard
 // GLOBAL: LS3DF 0x100a18ac
+// GLOBAL: LS3DF11 0x1009e8ac
 // GUID_SysMouse
 // GLOBAL: LS3DF 0x100a18fc
+// GLOBAL: LS3DF11 0x1009e8fc
 // IID_IDirectInput8A
 // LIBRARY: LS3DF 0x1007d9d6 SYMBOL
+// LIBRARY: LS3DF11 0x1007a806 SYMBOL
 // _DXGetErrorString8A@4
 
 // strmiids.lib's DirectShow GUIDs, which IShow.cpp and the base classes use: one object, laid out as in the
 // original
 // GLOBAL: LS3DF 0x100a1a30
+// GLOBAL: LS3DF11 0x1009ea30
 // IID_IGraphBuilder
 // GLOBAL: LS3DF 0x100a1a40
+// GLOBAL: LS3DF11 0x1009ea40
 // IID_IMediaEventSink
 // GLOBAL: LS3DF 0x100a1a50
+// GLOBAL: LS3DF11 0x1009ea50
 // IID_IQualityControl
 // GLOBAL: LS3DF 0x100a1a60
+// GLOBAL: LS3DF11 0x1009ea60
 // IID_IFilterMapper
 // GLOBAL: LS3DF 0x100a1a70
+// GLOBAL: LS3DF11 0x1009ea70
 // IID_IMediaSeeking
 // GLOBAL: LS3DF 0x100a1a80
+// GLOBAL: LS3DF11 0x1009ea80
 // IID_IAMovieSetup
 // GLOBAL: LS3DF 0x100a1a90
+// GLOBAL: LS3DF11 0x1009ea90
 // IID_IMemInputPin
 // GLOBAL: LS3DF 0x100a1aa0
+// GLOBAL: LS3DF11 0x1009eaa0
 // IID_IMemAllocator
 // GLOBAL: LS3DF 0x100a1ab0
+// GLOBAL: LS3DF11 0x1009eab0
 // IID_IMediaSample2
 // GLOBAL: LS3DF 0x100a1ac0
+// GLOBAL: LS3DF11 0x1009eac0
 // IID_IBaseFilter
 // GLOBAL: LS3DF 0x100a1ad0
+// GLOBAL: LS3DF11 0x1009ead0
 // IID_IMediaFilter
 // GLOBAL: LS3DF 0x100a1ae0
+// GLOBAL: LS3DF11 0x1009eae0
 // IID_IEnumMediaTypes
 // GLOBAL: LS3DF 0x100a1af0
+// GLOBAL: LS3DF11 0x1009eaf0
 // IID_IEnumPins
 // GLOBAL: LS3DF 0x100a1b00
+// GLOBAL: LS3DF11 0x1009eb00
 // IID_IPin
 // GLOBAL: LS3DF 0x100a1b10
+// GLOBAL: LS3DF11 0x1009eb10
 // IID_IBasicAudio
 // GLOBAL: LS3DF 0x100a1b20
+// GLOBAL: LS3DF11 0x1009eb20
 // IID_IMediaPosition
 // GLOBAL: LS3DF 0x100a1b30
+// GLOBAL: LS3DF11 0x1009eb30
 // IID_IMediaEvent
 // GLOBAL: LS3DF 0x100a1b40
+// GLOBAL: LS3DF11 0x1009eb40
 // IID_IMediaControl
 // GLOBAL: LS3DF 0x100a1b50
+// GLOBAL: LS3DF11 0x1009eb50
 // LIBID_QuartzTypeLib
 // GLOBAL: LS3DF 0x100a1b60
+// GLOBAL: LS3DF11 0x1009eb60
 // TIME_FORMAT_MEDIA_TIME
 // GLOBAL: LS3DF 0x100a1b70
+// GLOBAL: LS3DF11 0x1009eb70
 // IID_IQualProp
 // GLOBAL: LS3DF 0x100a1b80
+// GLOBAL: LS3DF11 0x1009eb80
 // FORMAT_VideoInfo
 // GLOBAL: LS3DF 0x100a1b90
+// GLOBAL: LS3DF11 0x1009eb90
 // CLSID_MemoryAllocator
 // GLOBAL: LS3DF 0x100a1ba0
+// GLOBAL: LS3DF11 0x1009eba0
 // CLSID_DSoundRender
 // GLOBAL: LS3DF 0x100a1bb0
+// GLOBAL: LS3DF11 0x1009ebb0
 // CLSID_FilterGraph
 // GLOBAL: LS3DF 0x100a1bc0
+// GLOBAL: LS3DF11 0x1009ebc0
 // CLSID_FilterMapper
 // GLOBAL: LS3DF 0x100a1bd0
+// GLOBAL: LS3DF11 0x1009ebd0
 // MEDIASUBTYPE_RGB32
 // GLOBAL: LS3DF 0x100a1be0
+// GLOBAL: LS3DF11 0x1009ebe0
 // MEDIASUBTYPE_RGB555
 // GLOBAL: LS3DF 0x100a1bf0
+// GLOBAL: LS3DF11 0x1009ebf0
 // MEDIASUBTYPE_RGB565
 // GLOBAL: LS3DF 0x100a1c00
+// GLOBAL: LS3DF11 0x1009ec00
 // MEDIATYPE_Audio
 // GLOBAL: LS3DF 0x100a1c10
+// GLOBAL: LS3DF11 0x1009ec10
 // MEDIATYPE_Video
 
 class IShow;
@@ -220,6 +257,7 @@ enum {
 };
 
 // VTABLE: LS3DF 0x1009d500
+// VTABLE: LS3DF11 0x1009a500
 class IGraph {
 public:
     IGraph();
@@ -351,6 +389,7 @@ class CTextureRenderer;
 // guessed names, but m_RefCount, which Release's message names. The members' follow it and IGraph's PS2 globals
 // (m_pD3DDevice8, m_SceneBegun): m_ and the name in mixed case, p for pointers, no other type prefix.
 // VTABLE: LS3DF 0x1009d670
+// VTABLE: LS3DF11 0x1009a670
 class IShow {
 public:
     IShow();
@@ -373,6 +412,7 @@ public:
     virtual LS3D_RESULT __stdcall SetVolume(float vol);
 
     // FUNCTION: LS3DF 0x10075820
+    // FUNCTION: LS3DF11 0x10072680
     virtual float __stdcall GetVolume()
     {
         return m_Volume;
@@ -385,6 +425,7 @@ public:
     virtual LS3D_RESULT __stdcall RenderVideoUntilKeyPressOrEnd();
 
     // FUNCTION: LS3DF 0x10075830
+    // FUNCTION: LS3DF11 0x10072690
     virtual int __stdcall GetDecodedFrameNum()
     {
         return m_DecodedFrameNum;
@@ -396,6 +437,7 @@ public:
     virtual LS3D_RESULT __stdcall PlayStream(bool loop);
 
     // FUNCTION: LS3DF 0x10075840
+    // FUNCTION: LS3DF11 0x100726a0
     virtual int __stdcall IsStreamPlaying()
     {
         return !m_StreamDone;
@@ -417,7 +459,10 @@ public:
     int unknown_10;                     // 0x10
     IBasicAudio *m_pBasicAudio;         // 0x14
     IMediaEvent *m_pMediaEvent;         // 0x18
+#if ENGINE_VERSION >= 395
     BINK *m_pBink;                      // 0x1c
+#endif
+    // In 1.1 the members from here to m_DecodedFrameNum are 4 lower, m_pBink comes after them
     bool m_Init;                        // 0x20
     int m_RefCount;                     // 0x24
     uint m_Flags;                       // 0x28, ISHOW_*
@@ -426,6 +471,9 @@ public:
     C_list<S_show_region> m_RegionList; // 0x40
     CTextureRenderer *m_pTextureRenderer; // 0x50, DirectShow's AVI files
     int m_DecodedFrameNum;              // 0x54, counted by the renderer
+#if ENGINE_VERSION < 395
+    BINK *m_pBink;                      // 0x54
+#endif
     int m_Stream;                       // 0x58, the sound driver's stream, -1 if none
     bool m_StreamInit;                  // 0x5c
     bool m_StreamPaused;                // 0x5d
@@ -446,61 +494,84 @@ public:
 // IShow.cpp's texture renderer (CTextureRenderer, the DirectX SDK sample's, declared there): what the compiler
 // generates for it and what it emits of the base classes' inline functions, at the end of IShow.cpp
 // SYNTHETIC: LS3DF 0x100753e0
+// SYNTHETIC: LS3DF11 0x10072240
 // CTextureRenderer::`scalar deleting destructor'
 
 // The adjustor thunks of its IAMovieSetup, IQualProp and IQualityControl vtables to DECLARE_IUNKNOWN's members
 // LIBRARY: LS3DF 0x10075770
+// LIBRARY: LS3DF11 0x100725d0
 // ?QueryInterface@CBaseVideoRenderer@@W3AGJABU_GUID@@PAPAX@Z
 // LIBRARY: LS3DF 0x10075780
+// LIBRARY: LS3DF11 0x100725e0
 // ?AddRef@CBaseVideoRenderer@@W3AGKXZ
 // LIBRARY: LS3DF 0x10075790
+// LIBRARY: LS3DF11 0x100725f0
 // ?Release@CBaseVideoRenderer@@W3AGKXZ
 // LIBRARY: LS3DF 0x100757a0
+// LIBRARY: LS3DF11 0x10072600
 // ?QueryInterface@CBaseVideoRenderer@@WNE@AGJABU_GUID@@PAPAX@Z
 // LIBRARY: LS3DF 0x100757b0
+// LIBRARY: LS3DF11 0x10072610
 // ?AddRef@CBaseVideoRenderer@@WNE@AGKXZ
 // LIBRARY: LS3DF 0x100757c0
+// LIBRARY: LS3DF11 0x10072620
 // ?Release@CBaseVideoRenderer@@WNE@AGKXZ
 // LIBRARY: LS3DF 0x100757d0
+// LIBRARY: LS3DF11 0x10072630
 // ?QueryInterface@CBaseVideoRenderer@@WNI@AGJABU_GUID@@PAPAX@Z
 // LIBRARY: LS3DF 0x100757e0
+// LIBRARY: LS3DF11 0x10072640
 // ?AddRef@CBaseVideoRenderer@@WNI@AGKXZ
 // LIBRARY: LS3DF 0x100757f0
+// LIBRARY: LS3DF11 0x10072650
 // ?Release@CBaseVideoRenderer@@WNI@AGKXZ
 
 // DECLARE_IUNKNOWN's members themselves (renbase.h)
 // LIBRARY: LS3DF 0x10075860
+// LIBRARY: LS3DF11 0x100726f0
 // ?QueryInterface@CBaseVideoRenderer@@UAGJABU_GUID@@PAPAX@Z
 // LIBRARY: LS3DF 0x10075870
+// LIBRARY: LS3DF11 0x10072700
 // ?AddRef@CBaseVideoRenderer@@UAGKXZ
 // LIBRARY: LS3DF 0x10075880
+// LIBRARY: LS3DF11 0x10072710
 // ?Release@CBaseVideoRenderer@@UAGKXZ
 
 // Its class id, __uuidof(CLSID_TextureRenderer)
 // GLOBAL: LS3DF 0x100aacd8
+// GLOBAL: LS3DF11 0x100a7df8
 // _GUID_71771540_2017_11cf_ae26_0020afd79767
 
 // m_CreateCTextureRenderer's statics. This compiler puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so a by-name marker matches it.
 // GLOBAL: LS3DF 0x101c5be8
+// GLOBAL: LS3DF11 0x101c2ce8
 // pins_found
 // GLOBAL: LS3DF 0x101c5bf0
+// GLOBAL: LS3DF11 0x101c2cf0
 // media_types_array
 // GLOBAL: LS3DF 0x101c5c4c
+// GLOBAL: LS3DF11 0x101c2d4c
 // types_found
 // GLOBAL: LS3DF 0x101c5c50
+// GLOBAL: LS3DF11 0x101c2d50
 // name_buf
 // GLOBAL: LS3DF 0x101c5d50
+// GLOBAL: LS3DF11 0x101c2e50
 // pins_list
 // GLOBAL: LS3DF 0x101c5da0
+// GLOBAL: LS3DF11 0x101c2ea0
 // splitter
 // GLOBAL: LS3DF 0x101c5da4
+// GLOBAL: LS3DF11 0x101c2ea4
 // enum_mt
 // GLOBAL: LS3DF 0x101c5da8
+// GLOBAL: LS3DF11 0x101c2ea8
 // pin_enum
 
 // The destructor IShowStream.cpp's thunk registers for stream_shows: the tenth $E5 in link order, after Globals.cpp's
 // SYNTHETIC: LS3DF 0x100758c0
+// SYNTHETIC: LS3DF11 0x10072750
 // $E5
 
 // ITexture::Create's flags. The Xbox build's messages name ITC_USE_ALPHA and ITC_EMPTY; the other names are guesses.
@@ -532,6 +603,7 @@ struct S_managed_texture;
 // Names are the PS2 build's where it has the function and m_RefCount Release's message's, the rest guessed (the members
 // in IShow's style).
 // VTABLE: LS3DF 0x1009d8d4
+// VTABLE: LS3DF11 0x1009a8d4
 class ITexture {
 public:
     ITexture();
@@ -609,22 +681,30 @@ DWORD WINAPI RenderThreadProc(void *param);
 // The pool array's constructor, out of line for the vector constructor iterator (its default grow size is two of the
 // 0x2c-byte texture slots)
 // TEMPLATE: LS3DF 0x1007b040
+// TEMPLATE: LS3DF11 0x1002a020
 // C_list<S_texture_slot>::C_list<S_texture_slot>
 
 // And its destructor, which the linker folds with the other lists' identical ones: the original's copy is in I3D code
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
+// TEMPLATE: LS3DF11 0x1004e760
 // ??1?$C_list@UDUMMY_STRUCT@@@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after
 // Globals.cpp's
 // SYNTHETIC: LS3DF 0x1007a5a0
+// SYNTHETIC: LS3DF11 0x10077410
 // $E5
 
 // SYNTHETIC: LS3DF 0x1007a5f0
+// SYNTHETIC: LS3DF11 0x10077460
 // $E10
+
+// 1.1 has IShow.cpp's CreateRegions before CopyFrameToAllTextures, out of the file's order
+// FUNCTION: LS3DF11 0x100707c0
+// CreateRegions
 
 // Globals.cpp
 void ErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message);

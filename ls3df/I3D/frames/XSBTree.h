@@ -65,9 +65,11 @@ public:
 
 // The occluder file's out-of-line copies, after its functions: the destructor for Build's unwinding, and Add_r
 // TEMPLATE: LS3DF 0x1003cae0
+// TEMPLATE: LS3DF11 0x1003b020
 // ??1?$XSBTree@UTRISIDE2@@@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x1003caf0
+// TEMPLATE: LS3DF11 0x1003b030
 // ?Add_r@?$XSBTree@UTRISIDE2@@@@QAEPAU_NODE@1@PAU21@@Z
 
 // Adds tmp below n: a loop, where PS2's recursion is, with the new node's setup in each branch (VC6 merges them, and

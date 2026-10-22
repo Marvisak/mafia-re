@@ -51,10 +51,15 @@ extern uint ZBufferEnable;
 struct __declspec(uuid("{71771540-2017-11cf-ae26-0020afd79767}")) CLSID_TextureRenderer;
 
 // VTABLE: LS3DF 0x1009d788 CUnknown
+// VTABLE: LS3DF11 0x1009a788 CUnknown
 // VTABLE: LS3DF 0x1009d748 IBaseFilter
+// VTABLE: LS3DF11 0x1009a748 IBaseFilter
 // VTABLE: LS3DF 0x1009d734 IAMovieSetup
+// VTABLE: LS3DF11 0x1009a734 IAMovieSetup
 // VTABLE: LS3DF 0x1009d710 IQualProp
+// VTABLE: LS3DF11 0x1009a710 IQualProp
 // VTABLE: LS3DF 0x1009d6fc IQualityControl
+// VTABLE: LS3DF11 0x1009a6fc IQualityControl
 class CTextureRenderer : public CBaseVideoRenderer {
 public:
     CTextureRenderer(LPUNKNOWN pUnk, HRESULT *phr);
@@ -84,6 +89,7 @@ static int close_func(void *datasource);
 static long tell_func(void *datasource);
 
 // FUNCTION: LS3DF 0x100733a0
+// FUNCTION: LS3DF11 0x10070430
 IShow::IShow() : m_RegionList(1)
 {
     m_RefCount = 1;
@@ -118,6 +124,7 @@ IShow::IShow() : m_RegionList(1)
 }
 
 // FUNCTION: LS3DF 0x100734c0
+// FUNCTION: LS3DF11 0x10070550
 IShow::~IShow()
 {
     Close();
@@ -135,12 +142,14 @@ IShow::~IShow()
 }
 
 // FUNCTION: LS3DF 0x10073570
+// FUNCTION: LS3DF11 0x10070600
 int IShow::AddRef()
 {
     return ++m_RefCount;
 }
 
 // FUNCTION: LS3DF 0x10073580
+// FUNCTION: LS3DF11 0x10070610
 int IShow::Release()
 {
     Close();
@@ -160,6 +169,7 @@ int IShow::Release()
 // play is declared at the top with the other address-taken locals: declared in its block, it takes the dead
 // parameter's slot, where the original gives it one of its own and a spilled copy the parameter's.
 // FUNCTION: LS3DF 0x100735d0
+// FUNCTION: LS3DF11 0x10070660
 void IShow::m_FillBuffer(bool first)
 {
     while (m_Filling)
@@ -241,6 +251,7 @@ done:
 
 // Copies the Bink video's frame into the regions' textures
 // FUNCTION: LS3DF 0x100738a0
+// FUNCTION: LS3DF11 0x100709b0
 void CopyFrameToAllTextures(IShow *show)
 {
     for (int i = show->m_RegionList.size(); i--;) {
@@ -320,6 +331,7 @@ D3DFORMAT CreateRegions(int width, int height, IShow *show)
 }
 
 // FUNCTION: LS3DF 0x10073ba0
+// FUNCTION: LS3DF11 0x10070ac0
 LS3D_RESULT IShow::Open(const char *name, uint open_flags)
 {
     Close();
@@ -420,6 +432,7 @@ LS3D_RESULT IShow::Open(const char *name, uint open_flags)
 // Refills the Ogg sound buffer behind the play position at each notification, and stops it once all of it has
 // played past the file's end
 // FUNCTION: LS3DF 0x10073fe0
+// FUNCTION: LS3DF11 0x10070f00
 DWORD WINAPI OggThreadProc(void *param)
 {
     IShow *show = (IShow *)param;
@@ -445,24 +458,28 @@ DWORD WINAPI OggThreadProc(void *param)
 // vorbisfile reads the Ogg file through rw_data; the data source is the handle. The names are those of Insanity3D's
 // Ogg loader, ov_callbacks' fields.
 // FUNCTION: LS3DF 0x10074060
+// FUNCTION: LS3DF11 0x10070f80
 static size_t read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
     return dtaRead(*(int *)datasource, ptr, size * nmemb);
 }
 
 // FUNCTION: LS3DF 0x10074080
+// FUNCTION: LS3DF11 0x10070fa0
 static int seek_func(void *datasource, ogg_int64_t offset, int whence)
 {
     return dtaSeek(*(int *)datasource, (int)offset, whence) == -1 ? -1 : 0;
 }
 
 // FUNCTION: LS3DF 0x100740b0
+// FUNCTION: LS3DF11 0x10070fd0
 static int close_func(void *datasource)
 {
     return dtaClose(*(int *)datasource);
 }
 
 // FUNCTION: LS3DF 0x100740c0
+// FUNCTION: LS3DF11 0x10070fe0
 static long tell_func(void *datasource)
 {
     return dtaSeek(*(int *)datasource, 0, SEEK_CUR);
@@ -475,6 +492,7 @@ bool IShow::IsInit()
 }
 
 // FUNCTION: LS3DF 0x100740f0
+// FUNCTION: LS3DF11 0x10071000
 void IShow::Close()
 {
     Stop();
@@ -505,6 +523,7 @@ void IShow::Close()
 }
 
 // FUNCTION: LS3DF 0x100741c0
+// FUNCTION: LS3DF11 0x100710d0
 LS3D_RESULT IShow::Play()
 {
     if (!m_Init)
@@ -536,6 +555,7 @@ LS3D_RESULT IShow::Play()
 }
 
 // FUNCTION: LS3DF 0x10074270
+// FUNCTION: LS3DF11 0x10071180
 LS3D_RESULT IShow::Stop()
 {
     if (!m_Init)
@@ -560,6 +580,7 @@ LS3D_RESULT IShow::Stop()
 }
 
 // FUNCTION: LS3DF 0x10074300
+// FUNCTION: LS3DF11 0x100711f0
 LS3D_RESULT IShow::Pause()
 {
     if (!m_Init)
@@ -584,6 +605,7 @@ LS3D_RESULT IShow::Pause()
 
 // Places the regions' vertices: the movie is scaled to the rectangle
 // FUNCTION: LS3DF 0x10074380
+// FUNCTION: LS3DF11 0x10071270
 void IShow::m_PrepareVerts()
 {
     float scale_x, scale_y;
@@ -629,6 +651,7 @@ void IShow::m_PrepareVerts()
 
 // NULL: the window's client area
 // FUNCTION: LS3DF 0x100745a0
+// FUNCTION: LS3DF11 0x10071490
 LS3D_RESULT IShow::SetRect(const RECT *rc)
 {
     HWND hwnd = m_InitDesc.flags & IGRAPH_CHILD_WINDOW ? m_ChildHWnd : m_MainHWnd;
@@ -643,6 +666,7 @@ LS3D_RESULT IShow::SetRect(const RECT *rc)
 }
 
 // FUNCTION: LS3DF 0x10074640
+// FUNCTION: LS3DF11 0x10071530
 LS3D_RESULT IShow::GetRect(RECT *rc)
 {
     if (!m_Init)
@@ -652,6 +676,7 @@ LS3D_RESULT IShow::GetRect(RECT *rc)
 }
 
 // FUNCTION: LS3DF 0x10074680
+// FUNCTION: LS3DF11 0x10071570
 LS3D_RESULT IShow::GetVideoRect(RECT *rc)
 {
     if (!m_Init)
@@ -674,6 +699,7 @@ LS3D_RESULT IShow::GetVideoRect(RECT *rc)
 
 // 0 while it plays, 1 once it has stopped or ended, 2 while paused, -1 if nothing is open
 // FUNCTION: LS3DF 0x10074700
+// FUNCTION: LS3DF11 0x100715c0
 int IShow::GetEvent()
 {
     if (!m_Init)
@@ -706,6 +732,7 @@ int IShow::GetEvent()
 
 // In milliseconds
 // FUNCTION: LS3DF 0x10074800
+// FUNCTION: LS3DF11 0x100716c0
 LS3D_RESULT IShow::SetCurrentPos(uint pos)
 {
     if (!m_Init)
@@ -736,6 +763,7 @@ LS3D_RESULT IShow::SetCurrentPos(uint pos)
 }
 
 // FUNCTION: LS3DF 0x10074960
+// FUNCTION: LS3DF11 0x10071820
 LS3D_RESULT IShow::GetCurrentPos(uint *pos)
 {
     if (!m_Init)
@@ -756,6 +784,7 @@ LS3D_RESULT IShow::GetCurrentPos(uint *pos)
 
 // From 0 to 1: Bink's volume is linear, DirectSound's and DirectShow's in hundredths of a decibel
 // FUNCTION: LS3DF 0x10074a30
+// FUNCTION: LS3DF11 0x100718f0
 LS3D_RESULT IShow::SetVolume(float vol)
 {
     if (!m_Init)
@@ -778,12 +807,14 @@ LS3D_RESULT IShow::SetVolume(float vol)
 }
 
 // FUNCTION: LS3DF 0x10074ae0
+// FUNCTION: LS3DF11 0x100719a0
 int IShow::GetRegionCnt()
 {
     return m_RegionList.size();
 }
 
 // FUNCTION: LS3DF 0x10074af0
+// FUNCTION: LS3DF11 0x100719b0
 S_show_region *IShow::GetRegions()
 {
     Sleep(0);
@@ -808,6 +839,7 @@ LS3D_RESULT IShow::ProcessBinkFrame()
 }
 
 // FUNCTION: LS3DF 0x10074b70
+// FUNCTION: LS3DF11 0x100719d0
 LS3D_RESULT IShow::RenderCurrentFrame()
 {
     if (!m_Init)
@@ -859,6 +891,7 @@ LS3D_RESULT IShow::RenderCurrentFrame()
 }
 
 // FUNCTION: LS3DF 0x10074d70
+// FUNCTION: LS3DF11 0x10071bd0
 LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
 {
     if (!m_Init)
@@ -916,6 +949,7 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
 // sample's InitDShowTextureRenderer, which also ran the graph), then, if the AVI Splitter that brings in has a pin with
 // an audio type, DirectShow's sound renderer connected to it
 // FUNCTION: LS3DF 0x10074f40
+// FUNCTION: LS3DF11 0x10071da0
 HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
 {
     // Statics, not locals: the original's .bss has them around the header's zero vector (0x101c5be8-0x101c5dab). And
@@ -1050,6 +1084,7 @@ CTextureRenderer::CTextureRenderer(LPUNKNOWN pUnk, HRESULT *phr)
 }
 
 // FUNCTION: LS3DF 0x10075400
+// FUNCTION: LS3DF11 0x10072260
 CTextureRenderer::~CTextureRenderer()
 {
     if (m_pSoundRenderer)
@@ -1059,6 +1094,7 @@ CTextureRenderer::~CTextureRenderer()
 // Accepts only RGB video in the textures' format: 32 bits for a true color movie if the card has a true color texture
 // format, else the 16-bit format of the card's textures (the sample accepts RGB24)
 // FUNCTION: LS3DF 0x10075480
+// FUNCTION: LS3DF11 0x100722e0
 HRESULT CTextureRenderer::CheckMediaType(const CMediaType *pmt)
 {
     HRESULT hr = E_FAIL;
@@ -1083,6 +1119,7 @@ HRESULT CTextureRenderer::CheckMediaType(const CMediaType *pmt)
 
 // The connection is made: the movie's regions are created for the video's size
 // FUNCTION: LS3DF 0x10075530
+// FUNCTION: LS3DF11 0x10072390
 HRESULT CTextureRenderer::SetMediaType(const CMediaType *pmt)
 {
     VIDEOINFO *pviBmp = (VIDEOINFO *)pmt->Format();
@@ -1105,6 +1142,7 @@ HRESULT CTextureRenderer::SetMediaType(const CMediaType *pmt)
 // message, gives the original's), ties go to pBmpBuffer whatever the declarations' or last uses' order, and references
 // that leave no code (if (0) pitch++, (void)&pitch) don't count.
 // FUNCTION: LS3DF 0x100755c0
+// FUNCTION: LS3DF11 0x10072420
 HRESULT CTextureRenderer::DoRenderSample(IMediaSample *pSample)
 {
     BYTE *pBmpBuffer;

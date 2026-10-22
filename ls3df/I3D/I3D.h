@@ -259,6 +259,7 @@ struct I3D_bvolume {
 // members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, user_data,
 // frm_flags, matrix, f_matrix, name, parent, type), m_pOwner DeleteFromOwner's message's, the others are guesses.
 // VTABLE: LS3DF 0x1009b9b8
+// VTABLE: LS3DF11 0x100989b8
 class I3D_frame {
 public:
     I3D_frame();
@@ -305,6 +306,7 @@ public:
     // Makes the local matrix from the scale and rotation, or the rotation from the matrix (PS2 name). The dummy file's
     // copy is the one linked. Both branches scale the rows: the volume's UpdateV calls S_vector::operator*= in each.
     // FUNCTION: LS3DF 0x1001a6e0
+    // FUNCTION: LS3DF11 0x1001a200
     void UpdateMatrix()
     {
         if (!(frm_flags & FRMFLAGS_MAT_VALID)) {
@@ -521,21 +523,25 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1001a980
+// SYNTHETIC: LS3DF11 0x1001a4a0
 // I3D_frame::`scalar deleting destructor'
 
 // The destructor I3d_frame.cpp's thunk registers for UpdateTargetList: the second $E5 in link order, after
 // clipper.cpp's. reccmp pairs the annotations of one name with our functions of that name in address order, so the
 // landscape, model, target and 4ds loader files' are annotated too, the later files' aren't.
 // SYNTHETIC: LS3DF 0x1001c7b0
+// SYNTHETIC: LS3DF11 0x1001c2d0
 // $E5
 
 // The function-local statics of I3d_frame.cpp (PS2 names): AddToFFTree's count of the frames added, Update's guard
 // against updating the targets twice. VC6 puts a function's static into the PDB with its plain name, so they have
 // by-name markers.
 // GLOBAL: LS3DF 0x100c0044
+// GLOBAL: LS3DF11 0x100bd164
 // addcounter
 
 // GLOBAL: LS3DF 0x100c0048
+// GLOBAL: LS3DF11 0x100bd168
 // updating
 
 // A sound's type (PS2 type; the names are Insanity3D's, which has the same first four values)
@@ -578,6 +584,7 @@ enum {
 // the sound driver, its voice. Insanity3D's I3D_sound gives the names of the members whose roles agree (voice,
 // snd_src, snd_flags, snd_type, open_flags, the ranges, volumes, cone and pause members); the others are guesses.
 // VTABLE: LS3DF 0x1009ce78
+// VTABLE: LS3DF11 0x10099e78
 class I3D_sound : public I3D_frame {
 public:
     I3D_sound();
@@ -609,6 +616,7 @@ public:
 
     // Out of line at the file's end, for the vtable
     // FUNCTION: LS3DF 0x10059420
+    // FUNCTION: LS3DF11 0x10056ae0
     virtual void __stdcall SetOn(bool on)
     {
         SetOn(on, false);
@@ -659,6 +667,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x100577c0
+// SYNTHETIC: LS3DF11 0x10054e80
 // I3D_sound::`scalar deleting destructor'
 
 // A sector's sound environment (PS2 S_sector_sound_properties, 0x68 bytes): the EAX 3.0 listener properties, scaled to
@@ -746,6 +755,7 @@ class I3D_occluder;
 // A part of the scene closed by its hull (PS2 I3D_sector, 0x234 bytes on PC; I3d_sector.cpp), which holds the lights
 // and sounds that reach into it and the portals that lead out of it. The member names are guesses.
 // VTABLE: LS3DF 0x1009ca88
+// VTABLE: LS3DF11 0x10099a88
 class I3D_sector : public I3D_frame {
 public:
     I3D_sector();
@@ -768,6 +778,7 @@ public:
 
     // PS2 name. Out of line after the file's marker, for the vtable.
     // FUNCTION: LS3DF 0x100508b0
+    // FUNCTION: LS3DF11 0x1004e710
     virtual void __stdcall SetGroupBits(uint bits)
     {
         group_bits = bits;
@@ -808,10 +819,12 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1004ee60
+// SYNTHETIC: LS3DF11 0x1004ccc0
 // I3D_sector::`scalar deleting destructor'
 
 // SetName's buffer, a function-local static: VC6 puts it into the PDB under its plain name
 // GLOBAL: LS3DF 0x100a86e0
+// GLOBAL: LS3DF11 0x100a5848
 // name
 
 // I3D_portal::portal_flags (the names are guesses; the loader reads them)
@@ -832,6 +845,7 @@ public:
 // without a twin leads into the sector its first vertex is in (UpdatePortalInterconnection). The member names are
 // guesses.
 // VTABLE: LS3DF 0x1009c738
+// VTABLE: LS3DF11 0x10099738
 class I3D_portal {
 public:
     // PS2 names
@@ -869,6 +883,7 @@ public:
 // The initializer of the portal file's CTP_VFnormals, empty (S_vector's constructor is): the fifth $E5 in link order,
 // after the model file's
 // SYNTHETIC: LS3DF 0x10041de0
+// SYNTHETIC: LS3DF11 0x1003fe60
 // $E5
 
 // The sectors' file's counts of the sectors' and the portals' changes (PS2 names)
@@ -904,6 +919,7 @@ struct S_anim_set_data {
 // no vtable and keeps the file's name; the PC's has neither the name nor the PS2's Close and destructor out of line.
 // The key functions take a frame's index (a "link", as their messages say) and a key's.
 // VTABLE: LS3DF 0x1009b3e0
+// VTABLE: LS3DF11 0x100983e0
 class I3D_animation_set {
 public:
     I3D_animation_set();
@@ -952,6 +968,7 @@ public:
 // I3d_pose.cpp), reference counted. The PS2's has no vtable; the PC's has its setters, for the game. The member names
 // are guesses.
 // VTABLE: LS3DF 0x1009c790
+// VTABLE: LS3DF11 0x10099790
 class I3D_pose {
 public:
     I3D_pose();
@@ -1008,6 +1025,7 @@ public:
 // Poses for several frames (PS2 I3D_pose_set, 0x18 bytes on PC; I3d_pose.cpp), reference counted. The PS2's has no
 // vtable. The virtual functions' names are guesses.
 // VTABLE: LS3DF 0x1009c7b4
+// VTABLE: LS3DF11 0x100997b4
 class I3D_pose_set {
 public:
     I3D_pose_set();
@@ -1058,6 +1076,7 @@ struct S_anim_keys {
 // I3d_interpolator.cpp). The PC's has a vtable, for the game (I3D_model::GetInterpolators). The member names are
 // guesses.
 // VTABLE: LS3DF 0x1009ba58
+// VTABLE: LS3DF11 0x10098a58
 class I3D_interpolator {
 public:
     I3D_interpolator(I3D_IPolSet *set);
@@ -1238,6 +1257,7 @@ struct I3D_COLLISION {
 // Render takes nothing. Besides the primary sector it has three of its own (backdrop, omni, near; LS3DF names all four),
 // and a weather system of rain or snow particles around the camera.
 // VTABLE: LS3DF 0x1009c8f8
+// VTABLE: LS3DF11 0x100998f8
 class I3D_scene : public I3D_frame {
 public:
     I3D_scene();
@@ -1395,6 +1415,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10048eb0
+// SYNTHETIC: LS3DF11 0x10046e00
 // I3D_scene::`scalar deleting destructor'
 
 // The collision file's $Es, the first of each name in link order (the scene's, the shadows' and render.cpp's pair with
@@ -1402,45 +1423,58 @@ public:
 // for its static retNormal (it has nothing to destroy), and the empty initializers of sphBox, lineDest, colPointSph and
 // kolBod. An empty initializer uses no global, so reccmp can pair it only by name.
 // SYNTHETIC: LS3DF 0x1000de70
+// SYNTHETIC: LS3DF11 0x1000da10
 // $E9
 
 // SYNTHETIC: LS3DF 0x1000de80
+// SYNTHETIC: LS3DF11 0x1000da20
 // $E12
 
 // SYNTHETIC: LS3DF 0x1000de90
+// SYNTHETIC: LS3DF11 0x1000da30
 // $E15
 
 // SYNTHETIC: LS3DF 0x10011d10
+// SYNTHETIC: LS3DF11 0x10011830
 // $E18
 
 // SYNTHETIC: LS3DF 0x10011d20
+// SYNTHETIC: LS3DF11 0x10011840
 // $E20
 
 // SYNTHETIC: LS3DF 0x10011d30
+// SYNTHETIC: LS3DF11 0x10011850
 // $E23
 
 // SYNTHETIC: LS3DF 0x10011d40
+// SYNTHETIC: LS3DF11 0x10011860
 // $E26
 
 // SYNTHETIC: LS3DF 0x10011d50
+// SYNTHETIC: LS3DF11 0x10011870
 // $E29
 
 // The collision file's functions whose markers would be out of address order there: its static helpers are defined
 // before their callers, as PS2 has them (the zero vector's $E comes due before TestColGeo only so), and VC6 emits each
 // after its first caller. The static ones have no public symbol, so their names are the PDB's procedure names.
 // FUNCTION: LS3DF 0x1000dec0
+// FUNCTION: LS3DF11 0x1000da60
 // ?TestColGeo@I3D_scene@@UBGPAVI3D_frame@@ABUS_vector@@0IPAMPAU3@P6G?AW4COLL_ENUMRET@@0MPAV2@PAX@Z4P6GH0M344@Z3H@Z
 
 // FUNCTION: LS3DF 0x1000e780
+// FUNCTION: LS3DF11 0x1000e320
 // testVisual
 
 // FUNCTION: LS3DF 0x10011d60
+// FUNCTION: LS3DF11 0x10011880
 // ?TestColSphere@I3D_scene@@UBGPAVI3D_frame@@ABUS_vector@@0MIPAU3@PAV2@P6G?AW4COLL_ENUMRET@@0M2PAX@Z@Z
 
 // FUNCTION: LS3DF 0x10012520
+// FUNCTION: LS3DF11 0x10012040
 // sphTestVisual
 
 // FUNCTION: LS3DF 0x100152a0
+// FUNCTION: LS3DF11 0x10014dc0
 // ?SphereIntersect@@YI_NABUI3D_bsphere@@@Z
 
 // The destructors the scene file's thunks register for WSNearSectorList and WSNearDummyList, and the one
@@ -1449,21 +1483,26 @@ public:
 // every file's up to the last one that needs it is annotated: the scene's are the third $E13 in link order (after the
 // lit objects' and the projector file's) and the second $E18 (after the collision file's).
 // SYNTHETIC: LS3DF 0x10048a30
+// SYNTHETIC: LS3DF11 0x10046980
 // $E13
 
 // SYNTHETIC: LS3DF 0x10048a80
+// SYNTHETIC: LS3DF11 0x100469d0
 // $E18
 
 // The scene's empty initializer, the second $E23 in link order, after the collision file's
 // SYNTHETIC: LS3DF 0x10048aa0
+// SYNTHETIC: LS3DF11 0x100469f0
 // $E23
 
 // The destructor the constructor's static bigBox registers (it has nothing to destroy): the second $E26 in link order,
 // after the collision file's
 // SYNTHETIC: LS3DF 0x10048ea0
+// SYNTHETIC: LS3DF11 0x10046df0
 // $E26
 
 // SYNTHETIC: LS3DF 0x1004ddc0
+// SYNTHETIC: LS3DF11 0x1004bc50
 // $E29
 
 // The destructors render.cpp's thunks register for CurrentActiveAreaList, SoundsForDeactivation, AddFGHlpStruct and
@@ -1471,15 +1510,19 @@ public:
 // shadows', before Globals.cpp's), the fourth $E18 (after the collision file's, the scene's and the shadows'), the
 // third $E23 (after the collision file's and the scene's) and the first $E28 (before IGraph.cpp's)
 // SYNTHETIC: LS3DF 0x10061d00
+// SYNTHETIC: LS3DF11 0x1005ef70
 // $E13
 
 // SYNTHETIC: LS3DF 0x10061d50
+// SYNTHETIC: LS3DF11 0x1005efc0
 // $E18
 
 // SYNTHETIC: LS3DF 0x10061d90
+// SYNTHETIC: LS3DF11 0x1005f000
 // $E23
 
 // SYNTHETIC: LS3DF 0x10061df0
+// SYNTHETIC: LS3DF11 0x1005f060
 // $E28
 
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
@@ -1492,30 +1535,38 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
+// FUNCTION: LS3DF11 0x100726d0
 // ?UpdateEnvTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
+// FUNCTION: LS3DF11 0x10051f90
 // ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
+// FUNCTION: LS3DF11 0x10051fb0
 // ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
+// FUNCTION: LS3DF11 0x1004c800
 // ?LinkTo@I3D_scene@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@I@Z
 
 // The weather system's lists, out of line after the scene's functions
 // TEMPLATE: LS3DF 0x1004e6e0
+// TEMPLATE: LS3DF11 0x1004c570
 // C_list<WE_STRUCT>::reserve
 
 // TEMPLATE: LS3DF 0x1004e7a0
+// TEMPLATE: LS3DF11 0x1004c630
 // C_list<WE_STRUCT>::push_back
 
 // TEMPLATE: LS3DF 0x1004e880
+// TEMPLATE: LS3DF11 0x1004c710
 // C_list<DUMMY_STRUCT>::push_back
 
 // The helper these lists' new[] construct their elements' vector arrays with; the original's copy is in the first I3D
 // file, ours in the scene's
 // SYNTHETIC: LS3DF 0x10001340
+// SYNTHETIC: LS3DF11 0x10001340
 // `vector constructor iterator'
 
 // The scene's function-local statics (VC6 writes them into the PDB under their plain names, but not
@@ -1523,12 +1574,15 @@ public:
 // isn't the original's yet: CamOldPos and LastUpdateTime come before the header's zero vector and WSNearSectorList
 // there, the constructor's guard after the weather system's, bigBox after InitialSoundProp.
 // GLOBAL: LS3DF 0x101b4ee0
+// GLOBAL: LS3DF11 0x101b2000
 // bigBox
 
 // GLOBAL: LS3DF 0x101b4e48
+// GLOBAL: LS3DF11 0x101b1f68
 // LastUpdateTime
 
 // GLOBAL: LS3DF 0x101b4e30
+// GLOBAL: LS3DF11 0x101b1f50
 // CamOldPos
 
 // I3D_dummy::dummy_flags (names guessed)
@@ -1540,6 +1594,7 @@ public:
 // A frame with a box (PS2 I3D_dummy, 0x19c bytes on PC; I3d_dummy.cpp). The game marks places and regions with them,
 // and the scenes' weather system takes its regions from them.
 // VTABLE: LS3DF 0x1009b920
+// VTABLE: LS3DF11 0x10098920
 class I3D_dummy : public I3D_frame {
 public:
     I3D_dummy();
@@ -1555,6 +1610,7 @@ public:
     // The inverse of the world matrix (PC only; Insanity3D's frames have it under this name. T&l.cpp's copy is the one
     // linked)
     // FUNCTION: LS3DF 0x10068840
+    // FUNCTION: LS3DF11 0x10065b20
     const S_matrix &GetInvMatrix()
     {
         if (!(dummy_flags & DUMMYF_INV_MAT_VALID)) {
@@ -1570,6 +1626,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1001a240
+// SYNTHETIC: LS3DF11 0x10019d60
 // I3D_dummy::`scalar deleting destructor'
 
 // A light's type (PS2 type; the values are Insanity3D's I3DLIGHT_*, whose order the PC's lighting code agrees with)
@@ -1600,6 +1657,7 @@ enum I3D_LIGHTTYPE {
 // are Insanity3D's where the roles agree (ltype, power, cone_in, cone_out, inner_cos, outer_cos), the others are
 // guesses. UpdateV computes the world values from the others; the setters compute the ones they change themselves.
 // VTABLE: LS3DF 0x1009bc88
+// VTABLE: LS3DF11 0x10098c88
 class I3D_light : public I3D_frame {
 public:
     I3D_light();
@@ -1645,6 +1703,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10020740
+// SYNTHETIC: LS3DF11 0x10020270
 // I3D_light::`scalar deleting destructor'
 
 // Planes that bound what a camera sees (PC 0x50 bytes; the name is a guess): unit normals pointing inside and their
@@ -1660,6 +1719,7 @@ struct S_frustum {
 // SetNearRange). Names are Insanity3D's where it has the member (fov_a, ncp, fcp, ortho_scale, m_view, m_proj; the
 // scene's aspect_ratio, the orthogonal flag, curr_sector's role), the others are guesses.
 // VTABLE: LS3DF 0x1009b6d0
+// VTABLE: LS3DF11 0x100986d0
 class I3D_camera : public I3D_frame {
 public:
     I3D_camera();
@@ -1707,11 +1767,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1000b250
+// SYNTHETIC: LS3DF11 0x1000adf0
 // I3D_camera::`scalar deleting destructor'
 
 // A frame that carries the game's data (PS2 I3D_user, 0x144 bytes on PC; I3d_user.cpp). Insanity3D's has the one
 // member, under this name.
 // VTABLE: LS3DF 0x1009cff8
+// VTABLE: LS3DF11 0x10099ff8
 class I3D_user : public I3D_frame {
 public:
     I3D_user();
@@ -1723,6 +1785,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1005a170
+// SYNTHETIC: LS3DF11 0x10057830
 // I3D_user::`scalar deleting destructor'
 
 class I3D_singlemesh;
@@ -1737,6 +1800,7 @@ class I3D_singlemesh;
 // file gives it a matrix and its index among the single mesh's joints. Names are guesses; PS2's joint has only the
 // index, the flags and the single mesh (at 0x160, 0x164, 0x168).
 // VTABLE: LS3DF 0x1009baa8
+// VTABLE: LS3DF11 0x10098aa8
 class I3D_joint : public I3D_frame {
 public:
     I3D_joint();
@@ -1758,12 +1822,14 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1001edc0
+// SYNTHETIC: LS3DF11 0x1001e8e0
 // I3D_joint::`scalar deleting destructor'
 
 // A collision volume (PS2 I3D_volume, 0x174 bytes on PC; I3d_volume.cpp). Its world matrix is its local one, made
 // again in every UpdateV. LS3DF uses none of its members but the type (the 4ds loader reads a volume as a frame), so
 // only the type and the box have names (Insanity3D's volume has both; its other members aren't the PC's).
 // VTABLE: LS3DF 0x1009d158
+// VTABLE: LS3DF11 0x1009a158
 class I3D_volume : public I3D_frame {
 public:
     I3D_volume();
@@ -1786,6 +1852,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1005a820
+// SYNTHETIC: LS3DF11 0x10057ed0
 // I3D_volume::`scalar deleting destructor'
 
 // I3D_emitor's parameters (PS2 type; PS2's emitter is another design, so the names are guesses after their roles).
@@ -1835,6 +1902,7 @@ class I3D_part_element;
 // parameters are SetParam's. PS2's is another design (its particles are its own elements in a vertex buffer), so
 // all but the class's and SetParam's names are guesses.
 // VTABLE: LS3DF 0x1009c538
+// VTABLE: LS3DF11 0x10099538
 class I3D_emitor : public I3D_frame {
 public:
     I3D_emitor();
@@ -1897,6 +1965,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1003df00
+// SYNTHETIC: LS3DF11 0x1003c1f0
 // I3D_emitor::`scalar deleting destructor'
 
 // I3D_target::target_flags: what the target does to its frames (names guessed). TARGETF_LOOKAT, the default, turns
@@ -1911,6 +1980,7 @@ public:
 // goes into UpdateTargetList, whose targets I3D_frame::Update updates once the frames are (UpdateFrames). The member
 // names are guesses.
 // VTABLE: LS3DF 0x1009cf58
+// VTABLE: LS3DF11 0x10099f58
 class I3D_target : public I3D_frame {
 public:
     I3D_target();
@@ -1934,11 +2004,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10059590
+// SYNTHETIC: LS3DF11 0x10056c50
 // I3D_target::`scalar deleting destructor'
 
 // The destructor the target file's thunk registers for globalTargetList: the sixth $E5 in link order, after the
 // portal file's
 // SYNTHETIC: LS3DF 0x10059470
+// SYNTHETIC: LS3DF11 0x10056b30
 // $E5
 
 // I3d_frame.cpp's: the targets to update after the frames (PS2 name)
@@ -1953,6 +2025,7 @@ struct TARGET_ITEM {
 
 // A hierarchy of frames loaded from a file, which it owns, and its animations (PS2 I3D_model, 0x158 bytes on PC)
 // VTABLE: LS3DF 0x1009c160
+// VTABLE: LS3DF11 0x10099160
 class I3D_model : public I3D_frame {
 public:
     I3D_model();
@@ -2000,14 +2073,17 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10033460
+// SYNTHETIC: LS3DF11 0x10032430
 // I3D_model::`scalar deleting destructor'
 
 // The destructors the model file's thunks register for DuplTargetList and DuplShadowList: the fourth $E5 in link order,
 // after I3d_landscape.cpp's, and the second $E10, after the driver's and before render.cpp's
 // SYNTHETIC: LS3DF 0x10033b80
+// SYNTHETIC: LS3DF11 0x10032b90
 // $E5
 
 // SYNTHETIC: LS3DF 0x10033bd0
+// SYNTHETIC: LS3DF11 0x10032be0
 // $E10
 
 // I3D_occluder::occl_flags (the names are guesses)
@@ -2019,6 +2095,7 @@ public:
 // and the silhouette's edges, and a plane along the view through the silhouette's farthest vertex. The scene keeps a
 // ring of them, each sector a list of those in it (OCCL_UpdateOcclLists). The member names are guesses.
 // VTABLE: LS3DF 0x1009c420
+// VTABLE: LS3DF11 0x10099420
 class I3D_occluder : public I3D_frame {
 public:
     I3D_occluder();
@@ -2066,21 +2143,25 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1003a500
+// SYNTHETIC: LS3DF11 0x10038a40
 // I3D_occluder::`scalar deleting destructor'
 
 // The occluder file's static functions, defined before their callers as PS2 has them: VC6 emits them after
 // ProcessOccluders, their first caller, so their markers would be out of address order there. They have no public
 // symbol, so their names are the PDB's procedure names.
 // FUNCTION: LS3DF 0x1003c2e0
+// FUNCTION: LS3DF11 0x1003a820
 // CullOcclsEachOther
 
 // FUNCTION: LS3DF 0x1003c480
+// FUNCTION: LS3DF11 0x1003a9c0
 // POIS_EnumProc
 
 // A part of the scene closed by its faces (PS2 I3D_area, 0x17c bytes on PC; I3d_area.cpp), which knows the sounds
 // that play in it. The scene keeps a ring of them, and render.cpp the areas the camera is in (CheckPoint). The member
 // names are guesses.
 // VTABLE: LS3DF 0x1009b460
+// VTABLE: LS3DF11 0x10098460
 class I3D_area : public I3D_frame {
 public:
     I3D_area();
@@ -2103,12 +2184,14 @@ public:
 
     // PS2 names, out of line after the constructor, for the vtable. The time is at least 1.
     // FUNCTION: LS3DF 0x10005250
+    // FUNCTION: LS3DF11 0x10005240
     virtual void __stdcall SetSwitchFadeTime(uint time)
     {
         switch_fade_time = time > 1 ? time : 1;
     }
 
     // FUNCTION: LS3DF 0x10005280
+    // FUNCTION: LS3DF11 0x10005270
     virtual uint __stdcall GetSwitchFadeTime()
     {
         return switch_fade_time;
@@ -2132,11 +2215,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10005290
+// SYNTHETIC: LS3DF11 0x10005280
 // I3D_area::`scalar deleting destructor'
 
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
+// FUNCTION: LS3DF11 0x10005cd0
 // ?LoadImage@I3D_sound@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
@@ -2211,6 +2296,7 @@ class I3D_shadow_visual;
 // PS2's in PS2's order. Names are PS2's where it has the member (orthogonal, range, max_texture_distance, color,
 // reverse_factor, shadow_lock, the texture size), the others are guesses.
 // VTABLE: LS3DF 0x1009cb40
+// VTABLE: LS3DF11 0x10099b40
 class I3D_shadow : public I3D_frame {
 public:
     I3D_shadow();
@@ -2279,24 +2365,29 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10050b70
+// SYNTHETIC: LS3DF11 0x1004e9f0
 // I3D_shadow::`scalar deleting destructor'
 
 // The destructors the shadow file's thunks register for globalShadowList, SetTo's FoundFrames and ShadowVisualQueue.
 // reccmp pairs the annotations of one name with our functions of that name in address order: the shadow file's $E13
 // comes between the scene's and Globals.cpp's (I3d_math.h), its $E18 after the collision file's and the scene's.
 // SYNTHETIC: LS3DF 0x10050930
+// SYNTHETIC: LS3DF11 0x1004e7b0
 // $E13
 
 // SYNTHETIC: LS3DF 0x10050d60
+// SYNTHETIC: LS3DF11 0x1004ebe0
 // $E18
 
 // SYNTHETIC: LS3DF 0x10052f60
+// SYNTHETIC: LS3DF11 0x10050de0
 // $E24
 
 // The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are the morph's
 // messages'). The visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and
 // NumRegions' (return 0) are folded with a DirectShow base class function (0x10087520), so they have no markers.
 // VTABLE: LS3DF 0x1009d108
+// VTABLE: LS3DF11 0x1009a108
 class I3D_void_interface {
 public:
     virtual int __stdcall NumLevels() const;
@@ -2342,7 +2433,9 @@ struct RENDER_FG_HELP_STRUCT;
 // frame's bound volume takes its box from there (I3D_frame::UpdateHRBoundVol). PS2's virtual GetVisualType and
 // SetBoundBox aren't in LS3DF, and SetBoundVolume isn't virtual on PC.
 // VTABLE: LS3DF 0x1009d098 I3D_frame
+// VTABLE: LS3DF11 0x1009a098 I3D_frame
 // VTABLE: LS3DF 0x1009d088 I3D_void_interface
+// VTABLE: LS3DF11 0x1009a088 I3D_void_interface
 class I3D_visual : public I3D_frame, public I3D_void_interface {
 public:
     I3D_visual();
@@ -2408,6 +2501,7 @@ public:
     // The matrix the vertices are rendered with: the world matrix, identity in world space (the name is a guess). The
     // copy is the lit object file's.
     // FUNCTION: LS3DF 0x1002ad00
+    // FUNCTION: LS3DF11 0x10029fd0
     const S_matrix &GetRenderMatrix()
     {
         if (vis_flags & VISF_WORLD_SPACE)
@@ -2422,12 +2516,18 @@ public:
     uint vis_flags;                     // 0x1d8, VISF_*
 };
 
+// 1.1's copy of UpdateBoundProc is I3d_morph.cpp's object's, out of I3d_visual.cpp's order
+// FUNCTION: LS3DF11 0x100344f0
+// I3D_visual::UpdateBoundProc
+
 // SYNTHETIC: LS3DF 0x1005a350
+// SYNTHETIC: LS3DF11 0x10057a10
 // I3D_visual::`scalar deleting destructor'
 
 // An object's lighting state for one of its mesh's levels (PC only; the object file's "lod::Create()" names the
 // class): its own vertex buffer, which the object renders from
 // VTABLE: LS3DF 0x1009c3d8
+// VTABLE: LS3DF11 0x100993d8
 class lod {
 public:
     lod();
@@ -2454,12 +2554,15 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10036cb0
+// SYNTHETIC: LS3DF11 0x10035a10
 // lod::`scalar deleting destructor'
 
 // A visual made of a mesh (PS2 I3D_object, 0x21c bytes on PC; I3d_object.cpp): a level of the mesh is rendered from a
 // lod of the object's own. Its billboards, lens flares, single meshes, morphs, particles and lit objects derive from it.
 // VTABLE: LS3DF 0x1009c348 I3D_frame
+// VTABLE: LS3DF11 0x10099348 I3D_frame
 // VTABLE: LS3DF 0x1009c338 I3D_void_interface
+// VTABLE: LS3DF11 0x10099338 I3D_void_interface
 class I3D_object : public I3D_visual {
 public:
     I3D_object();
@@ -2511,12 +2614,15 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10036820
+// SYNTHETIC: LS3DF11 0x10035580
 // I3D_object::`scalar deleting destructor'
 
 // A visual that turns to the camera (PS2 I3D_billboard, 0x268 bytes on PC; I3d_billboard.cpp): its mesh is rendered
 // with g_matrix, which ProductBillMatrix computes for the camera. Names are Insanity3D's (rot_axis, g_matrix) or guesses.
 // VTABLE: LS3DF 0x1009b520 I3D_frame
+// VTABLE: LS3DF11 0x10098520 I3D_frame
 // VTABLE: LS3DF 0x1009b510 I3D_void_interface
+// VTABLE: LS3DF11 0x10098510 I3D_void_interface
 class I3D_billboard : public I3D_object {
 public:
     I3D_billboard();
@@ -2541,6 +2647,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10005df0
+// SYNTHETIC: LS3DF11 0x10005de0
 // I3D_billboard::`scalar deleting destructor'
 
 // SetSpace is folded with the morphs' and the single meshes', the same empty function. The original keeps the
@@ -2548,6 +2655,7 @@ public:
 // I3d_projector.cpp, from I3d_occluder.cpp to I3d_particle.cpp and since I3d_lit_object.cpp, the billboard's from
 // Load.cpp to lightmap.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
+// FUNCTION: LS3DF11 0x10009360
 // ?SetSpace@I3D_morph@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
@@ -2559,7 +2667,9 @@ struct GLOW_STRUCT {
 // A light's flare on the screen (PS2 I3D_lensflare, 0x27c bytes on PC; I3d_billboard.cpp): its glows, drawn by Draw
 // (PS2 name), which the scene calls for each lens flare after the rendering
 // VTABLE: LS3DF 0x1009b5c8 I3D_frame
+// VTABLE: LS3DF11 0x100985c8 I3D_frame
 // VTABLE: LS3DF 0x1009b5b8 I3D_void_interface
+// VTABLE: LS3DF11 0x100985b8 I3D_void_interface
 class I3D_lensflare : public I3D_object {
 public:
     I3D_lensflare();
@@ -2589,9 +2699,11 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10009610
+// SYNTHETIC: LS3DF11 0x10009290
 // I3D_lensflare::`scalar deleting destructor'
 
 // TEMPLATE: LS3DF 0x1000af20
+// TEMPLATE: LS3DF11 0x1000abb0
 // C_list<GLOW_STRUCT>::reserve
 
 class LightMap;
@@ -2609,6 +2721,7 @@ struct VERTEX_INFO {
 // rendered through an index buffer of their own; the colors are the level's vertices'. The m_ names are the
 // messages' (m_pUV, m_pLitUV, m_numRectangles, m_numPIndex), the others are guessed in their style.
 // VTABLE: LS3DF 0x1009be5c
+// VTABLE: LS3DF11 0x10098e5c
 class litLod : public lod {
 public:
     litLod()
@@ -2690,6 +2803,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10029f60
+// SYNTHETIC: LS3DF11 0x100295f0
 // litLod::`scalar deleting destructor'
 
 // One of a lit object's lightings (PC only, the names are guessed). PS2 has the same with three lods.
@@ -2705,7 +2819,9 @@ struct S_lit_level {
 // I3d_lit_object.cpp): it has six lightings, one of them active, which Construct computes from the scene's lights or
 // Load reads. Its own virtual functions are in PS2's order.
 // VTABLE: LS3DF 0x1009bd70 I3D_frame
+// VTABLE: LS3DF11 0x10098d70 I3D_frame
 // VTABLE: LS3DF 0x1009bd5c I3D_void_interface
+// VTABLE: LS3DF11 0x10098d5c I3D_void_interface
 class I3D_lit_object : public I3D_object {
 public:
     I3D_lit_object();
@@ -2735,15 +2851,18 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x100215e0
+// SYNTHETIC: LS3DF11 0x10021110
 // I3D_lit_object::`scalar deleting destructor'
 
 // The destructor m_AddFGroups registers for its static list of PrepareLights' colors (0x101b42f8, in a block, so not
 // in the PDB): the first $E13 in link order (see the scene's)
 // SYNTHETIC: LS3DF 0x10028d20
+// SYNTHETIC: LS3DF11 0x100283b0
 // $E13
 
 // The constructor of Construct's lists of the faces in each rectangle, out of line for the vector constructor iterator
 // TEMPLATE: LS3DF 0x1002ad30
+// TEMPLATE: LS3DF11 0x1002a000
 // C_list<NEW_FACE_STRUCT>::C_list<NEW_FACE_STRUCT>
 
 // The single meshes (PS2 I3d_singlemesh.cpp; I3d_singlemesh.cpp): a mesh whose vertices the joints below it move.
@@ -2806,6 +2925,7 @@ struct S_clip_sm_vertex {
 // level's vertices as the joints move them. Its constructor is inlined where the single meshes create one; its
 // destructor is defined inline in I3d_singlemesh.cpp, which puts the copy after the scalar deleting destructor.
 // VTABLE: LS3DF 0x1009cd38
+// VTABLE: LS3DF11 0x10099d38
 class SMeshLod : public lod {
 public:
     SMeshLod()
@@ -2822,13 +2942,16 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10056ad0
+// SYNTHETIC: LS3DF11 0x10054470
 // SMeshLod::`scalar deleting destructor'
 
 // A mesh moved by joints (PS2 I3D_singlemesh, 0x22c bytes on PC): an object whose lods are SMeshLods. Its joints are
 // the I3D_joints among the frames below it (DBuild), by their index. The single morph is one too: the model's
 // duplication builds both.
 // VTABLE: LS3DF 0x1009cc98 I3D_frame
+// VTABLE: LS3DF11 0x10099c98 I3D_frame
 // VTABLE: LS3DF 0x1009cc88 I3D_void_interface
+// VTABLE: LS3DF11 0x10099c88 I3D_void_interface
 class I3D_singlemesh : public I3D_object {
 public:
     I3D_singlemesh();
@@ -2870,6 +2993,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10054290
+// SYNTHETIC: LS3DF11 0x10052010
 // I3D_singlemesh::`scalar deleting destructor'
 
 // I3D_joint::GetJointMatrix: its local matrix times its parents' up to the single mesh's level (the first visual,
@@ -2988,7 +3112,9 @@ public:
 // A morph (PS2 I3D_morph, 0x238 bytes on PC): an object whose mesh is its own copy of the original's, which the
 // weights move
 // VTABLE: LS3DF 0x1009c268 I3D_frame
+// VTABLE: LS3DF11 0x10099268 I3D_frame
 // VTABLE: LS3DF 0x1009c258 I3D_void_interface
+// VTABLE: LS3DF11 0x10099258 I3D_void_interface
 class I3D_morph : public I3D_object, public morphBase {
 public:
     I3D_morph();
@@ -3007,13 +3133,16 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10034e90
+// SYNTHETIC: LS3DF11 0x10033e90
 // I3D_morph::`scalar deleting destructor'
 
 // A single morph (PS2 I3D_singlemorph, 0x248 bytes on PC; I3d_singlemorph.cpp): a single mesh whose levels are summed
 // by the weights before the joints move the vertices. Its copies share the mesh; Duplicate gives it a copy of a morph's
 // or single morph's own.
 // VTABLE: LS3DF 0x1009cd90 I3D_frame
+// VTABLE: LS3DF11 0x10099d90 I3D_frame
 // VTABLE: LS3DF 0x1009cd80 I3D_void_interface
+// VTABLE: LS3DF11 0x10099d80 I3D_void_interface
 class I3D_singlemorph : public I3D_singlemesh, public morphBase {
 public:
     I3D_singlemorph();
@@ -3032,6 +3161,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10056ef0
+// SYNTHETIC: LS3DF11 0x100545b0
 // I3D_singlemorph::`scalar deleting destructor'
 
 // I3D_part_base::part_flags (names guessed)
@@ -3045,7 +3175,9 @@ public:
 // renderer with a key from sort_group and sort_dist (VisualProc), or renders them itself. An element is an emitter's
 // particle, which moves, turns, grows and fades over its life. The names but the classes' are guesses.
 // VTABLE: LS3DF 0x1009c660 I3D_frame
+// VTABLE: LS3DF11 0x10099660 I3D_frame
 // VTABLE: LS3DF 0x1009c650 I3D_void_interface
+// VTABLE: LS3DF11 0x10099650 I3D_void_interface
 class I3D_part_base : public I3D_billboard {
 public:
     I3D_part_base();
@@ -3055,11 +3187,13 @@ public:
     virtual void m_RenderFGroup(RENDER_FG_HELP_STRUCT *help);
     // The sector it is lit by, else the rendering's
     // FUNCTION: LS3DF 0x100417d0
+    // FUNCTION: LS3DF11 0x1003f850
     virtual void __stdcall SetSector(I3D_sector *s)
     {
         sector = s;
     }
     // FUNCTION: LS3DF 0x100417f0
+    // FUNCTION: LS3DF11 0x1003f870
     virtual I3D_sector *__stdcall GetSector()
     {
         return sector;
@@ -3073,14 +3207,18 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10040740
+// SYNTHETIC: LS3DF11 0x1003ea30
 // I3D_part_base::`scalar deleting destructor'
 
 // The implicit destructor, a jump to the billboard's
 // SYNTHETIC: LS3DF 0x10040760
+// SYNTHETIC: LS3DF11 0x1003ea50
 // I3D_part_base::~I3D_part_base
 
 // VTABLE: LS3DF 0x1009c5b8 I3D_frame
+// VTABLE: LS3DF11 0x100995b8 I3D_frame
 // VTABLE: LS3DF 0x1009c5a4 I3D_void_interface
+// VTABLE: LS3DF11 0x100995a4 I3D_void_interface
 class I3D_part_element : public I3D_part_base {
 public:
     I3D_part_element();
@@ -3115,6 +3253,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1003fbe0
+// SYNTHETIC: LS3DF11 0x1003ded0
 // I3D_part_element::`scalar deleting destructor'
 
 // The landscape (PC only; I3d_landscape.cpp) is Bryan Turner's ROAM demo ("ROAM Simplistic Implementation", January
@@ -3142,7 +3281,9 @@ struct TriTreeNode {
 // landscape's Render draws. The virtual functions after the visual's are the demo's, in its order. The PC's has no
 // visibility flag (the landscape tests render_number) and no SetVisibility.
 // VTABLE: LS3DF 0x1009bb48 I3D_frame
+// VTABLE: LS3DF11 0x10098b48 I3D_frame
 // VTABLE: LS3DF 0x1009bb38 I3D_void_interface
+// VTABLE: LS3DF11 0x10098b38 I3D_void_interface
 class I3D_landpatch : public I3D_visual {
 public:
     I3D_landpatch();
@@ -3195,11 +3336,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1001efa0
+// SYNTHETIC: LS3DF11 0x1001eac0
 // I3D_landpatch::`scalar deleting destructor'
 
 // A landscape (the demo's Landscape, 0x62144 bytes; FRAME_LANDSCAPE): its patches are its children. The driver keeps
 // the landscapes in a list, and its Render resets, tessellates and renders each in turn.
 // VTABLE: LS3DF 0x1009bbe8
+// VTABLE: LS3DF11 0x10098be8
 class I3D_landscape : public I3D_frame {
 public:
     I3D_landscape();
@@ -3213,6 +3356,7 @@ public:
     // The height at a place of the map (the name is a guess). Out of line for the vtable, after the file's $E for the
     // zero vector.
     // FUNCTION: LS3DF 0x100201d0
+    // FUNCTION: LS3DF11 0x1001fd00
     virtual uchar __stdcall GetHeight(int x, int y)
     {
         return m_HeightMap[y * MAP_SIZE + x];
@@ -3233,11 +3377,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1001fca0
+// SYNTHETIC: LS3DF11 0x1001f7d0
 // I3D_landscape::`scalar deleting destructor'
 
 // The initializer of I3d_landscape.cpp's gViewPos, empty (S_vector's constructor is): the third $E5 in link order,
 // after I3d_frame.cpp's
 // SYNTHETIC: LS3DF 0x1001ef60
+// SYNTHETIC: LS3DF11 0x1001ea80
 // $E5
 
 // I3D_mirror::mirror_flags (names guessed)
@@ -3252,7 +3398,9 @@ public:
 // visual, placed by mirror_matrix. PS2's has only the box, the color and the faces (in an index buffer, with a GetFaces
 // the PC lacks), and of these functions LoadImage and, not virtual, SetColor and SetViewBox. Member names are guesses.
 // VTABLE: LS3DF 0x1009c0a0 I3D_frame
+// VTABLE: LS3DF11 0x100990a0 I3D_frame
 // VTABLE: LS3DF 0x1009c090 I3D_void_interface
+// VTABLE: LS3DF11 0x10099090 I3D_void_interface
 class I3D_mirror : public I3D_visual {
 public:
     I3D_mirror();
@@ -3296,10 +3444,12 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x100318f0
+// SYNTHETIC: LS3DF11 0x100308c0
 // I3D_mirror::`scalar deleting destructor'
 
 // The destructor the mirror file's thunk registers for MirroredVisualList
 // SYNTHETIC: LS3DF 0x100324e0
+// SYNTHETIC: LS3DF11 0x100314b0
 // $E6
 
 // I3D_material::flags (names guessed). The loader reads them from the file, and LoadImage makes the texture's
@@ -3333,6 +3483,7 @@ public:
 // I3D/I3d_material.h. Every function is virtual on PC, where PS2's set the colors directly. Names are PS2's unless
 // noted.
 // VTABLE: LS3DF 0x1009bea0
+// VTABLE: LS3DF11 0x10098ea0
 class I3D_material {
 public:
     I3D_material();
@@ -3363,11 +3514,13 @@ public:
     virtual LS3D_RESULT __stdcall SetEnvTexture(ITexture *texture, uint blend, uint mode, float a);
     // PC only (the names are guesses, after Insanity3D's IsCkey)
     // FUNCTION: LS3DF 0x1002cd80
+    // FUNCTION: LS3DF11 0x1002c080
     virtual uint __stdcall IsCkey()
     {
         return flags & MATF_CKEY_ALPHA;
     }
     // FUNCTION: LS3DF 0x1002cd90
+    // FUNCTION: LS3DF11 0x1002c090
     virtual uint __stdcall IsAnimated()
     {
         return flags & MATF_ANIMATED;
@@ -3420,6 +3573,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1002ae80
+// SYNTHETIC: LS3DF11 0x1002a170
 // I3D_material::`scalar deleting destructor'
 
 // The animated material (PS2 I3D_anim_material) holds its frames in std::vectors: I3D/mesh/I3d_material.h
@@ -3451,6 +3605,7 @@ struct I3D_mesh_stats {
 
 // A face group: a material's triangles of a mesh level (0x1c bytes on PC). Its destructor is I3d_mesh.cpp's.
 // VTABLE: LS3DF 0x1009bfe0
+// VTABLE: LS3DF11 0x10098fe0
 class I3D_face_group {
 public:
     I3D_face_group();
@@ -3492,6 +3647,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10030960
+// SYNTHETIC: LS3DF11 0x1002fb70
 // I3D_face_group::`scalar deleting destructor'
 
 // I3D_mesh_level::mesh_flags (names guessed; the bits come from the face groups' materials, see AddFGroup)
@@ -3503,6 +3659,7 @@ public:
 // A mesh level: a level of detail's vertices and face groups (0x44 bytes on PC), reference counted. Its destructor is
 // I3d_mesh.cpp's.
 // VTABLE: LS3DF 0x1009bffc
+// VTABLE: LS3DF11 0x10098ffc
 class I3D_mesh_level {
 public:
     I3D_mesh_level();
@@ -3548,6 +3705,7 @@ public:
 // A mesh: up to 10 levels of detail and their bound volume (0x6c bytes on PC), reference counted. Its destructor is
 // I3d_mesh.cpp's.
 // VTABLE: LS3DF 0x1009c030
+// VTABLE: LS3DF11 0x10099030
 class I3D_mesh_object {
 public:
     I3D_mesh_object();
@@ -3606,41 +3764,52 @@ public:
 // $S33 (tools/bsshash.py, with the decorated name), ours of $S24 comes after driverTickTime: the original's file
 // numbered 3 (or 9) more before it.
 // GLOBAL: LS3DF 0x100bfc88
+// GLOBAL: LS3DF11 0x100bcda8
 // points
 
 // GLOBAL: LS3DF 0x100bffc0
+// GLOBAL: LS3DF11 0x100bd0e0
 // $S24
 
 // The guard of I3D_scene's constructor's static bigBox (I3d_scene.cpp), the only $S25 among our function statics
 // GLOBAL: LS3DF 0x101b4e5e
+// GLOBAL: LS3DF11 0x101b1f7e
 // $S25
 
 // SYNTHETIC: LS3DF 0x100165e0
+// SYNTHETIC: LS3DF11 0x10016100
 // $E25
 
 // The destructor the driver's thunk registers for IconMaterialList: the first $E10 in link order, before the model
 // file's and render.cpp's
 // SYNTHETIC: LS3DF 0x10015560
+// SYNTHETIC: LS3DF11 0x10015080
 // $E10
 
 // And those for TLVertList and LVertList: the second $E15 and $E20 in link order, after the collision file's
 // SYNTHETIC: LS3DF 0x100155b0
+// SYNTHETIC: LS3DF11 0x100150d0
 // $E15
 
 // SYNTHETIC: LS3DF 0x10015600
+// SYNTHETIC: LS3DF11 0x10015120
 // $E20
 
 // DrawSphere's matrix
 // GLOBAL: LS3DF 0x100afc28
+// GLOBAL: LS3DF11 0x100acd48
 // m
 
 // GLOBAL: LS3DF 0x100af8e8
+// GLOBAL: LS3DF11 0x100aca08
 // str
 
 // GLOBAL: LS3DF 0x100bffa8
+// GLOBAL: LS3DF11 0x100bd0c8
 // si
 
 // GLOBAL: LS3DF 0x100bffc8
+// GLOBAL: LS3DF11 0x100bd0e8
 // str
 
 // An untransformed vertex with a color, as DrawLines and DrawTriangles pass them (PS2 LVERTEX, D3DFVF_XYZ |
@@ -3675,13 +3844,16 @@ struct TLVERTEX2 {
 
 // The draws' lists' reserve, out of line where VC6 didn't inline it, after I3d_driver.cpp's functions
 // TEMPLATE: LS3DF 0x1001a100
+// TEMPLATE: LS3DF11 0x10019c20
 // C_list<TLVERTEX>::reserve
 // TEMPLATE: LS3DF 0x1001a170
+// TEMPLATE: LS3DF11 0x10019c90
 // C_list<LVERTEX>::reserve
 
 // The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
 // I3D files written later (0x10041700)
 // TEMPLATE: LS3DF 0x10041700
+// TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
@@ -3690,12 +3862,14 @@ struct TLVERTEX2 {
 // I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and from Load.cpp to lightmap.cpp after
 // the shadow visual's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
+// FUNCTION: LS3DF11 0x10051fa0
 // ?SetOn@I3D_scene@@UAGX_N@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
 // and its Render takes the scene only.
 // VTABLE: LS3DF 0x1009b830
+// VTABLE: LS3DF11 0x10098830
 class I3D_driver {
 public:
     I3D_driver();
@@ -3822,6 +3996,7 @@ extern D3DVIEWPORT8 m_D3DViewPort8;
 // EnableNoCull, SetFVF) assert nothing, so the others' condition is a guess.
 
 // FUNCTION: LS3DF 0x1000aa30
+// FUNCTION: LS3DF11 0x1000a6c0
 inline void SetAlphaState(uint state)
 {
     assert(m_pD3DDevice8);
@@ -3852,6 +4027,7 @@ inline void SetAlphaState(uint state)
 }
 
 // FUNCTION: LS3DF 0x1000ac30
+// FUNCTION: LS3DF11 0x1000a8c0
 inline void SetColorOp(uint op)
 {
     assert(m_pD3DDevice8);
@@ -3862,6 +4038,7 @@ inline void SetColorOp(uint op)
 }
 
 // FUNCTION: LS3DF 0x1000ac60
+// FUNCTION: LS3DF11 0x1000a8f0
 inline void SetAlphaOp(uint op)
 {
     assert(m_pD3DDevice8);
@@ -3915,11 +4092,13 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
 // by name. The eighth $E5 in link order, after clipper.cpp's and the frame, landscape, model, portal, target and lightmap
 // files'.
 // SYNTHETIC: LS3DF 0x10065a10
+// SYNTHETIC: LS3DF11 0x10062cf0
 // $E5
 
 // And the destructor PrepareLights registers for its static color (S_color's, empty): the second $E11 in link order,
 // after IBManager.cpp's
 // SYNTHETIC: LS3DF 0x10066b40
+// SYNTHETIC: LS3DF11 0x10063e20
 // $E11
 
 // render.cpp's camera, which the 3D texts and sprites face and the fog is scaled by
@@ -4015,6 +4194,7 @@ public:
 
 // The out-of-line copy of ReAllocate the linker kept, the particles' file's in the original
 // TEMPLATE: LS3DF 0x10041770
+// TEMPLATE: LS3DF11 0x1003f7f0
 // C_sort_list<int>::ReAllocate
 
 // What the rendering gives the visuals' m_AddFGroups (PS2 name; the PC's members differ). Its constructor is out of line
@@ -4033,6 +4213,7 @@ struct __declspec(align(16)) ADD_FG_HELP_STRUCT {
     int num_transparent;                // 0x3c, and these after them, drawn from the last
 
     // FUNCTION: LS3DF 0x100659a0
+    // FUNCTION: LS3DF11 0x10062c80
     ADD_FG_HELP_STRUCT() : fgroups(0x400)
     {
         unknown_0c = 0;
@@ -4049,6 +4230,7 @@ struct __declspec(align(16)) ADD_FG_HELP_STRUCT {
 };
 
 // SYNTHETIC: LS3DF 0x10061da0
+// SYNTHETIC: LS3DF11 0x1005f010
 // ADD_FG_HELP_STRUCT::~ADD_FG_HELP_STRUCT
 
 // A particle visual queued for the particles' renderer, with its key (PC only, the names are guesses)
@@ -4065,6 +4247,7 @@ struct PARTICLE_HLP_STRUCT {
     uint unknown_1c;                    // nothing references it
 
     // FUNCTION: LS3DF 0x100659d0
+    // FUNCTION: LS3DF11 0x10062cb0
     PARTICLE_HLP_STRUCT() : visuals(0x2000) {}
 
     void Clear()
@@ -4075,6 +4258,7 @@ struct PARTICLE_HLP_STRUCT {
 };
 
 // SYNTHETIC: LS3DF 0x10061e00
+// SYNTHETIC: LS3DF11 0x1005f070
 // PARTICLE_HLP_STRUCT::~PARTICLE_HLP_STRUCT
 
 // A vertex of a shadow's or a projector's receivers (0x18 bytes, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1; the name is
@@ -4089,7 +4273,9 @@ struct S_shadow_vertex {
 // the shadow falls on (its receivers), clipped to its volume, which it is placed and scaled to, with the shadow's
 // texture. The game never sees it; it overrides the frame functions that would change it with empty ones.
 // VTABLE: LS3DF 0x1009cbd8 I3D_frame
+// VTABLE: LS3DF11 0x10099bd8 I3D_frame
 // VTABLE: LS3DF 0x1009cbc4 I3D_void_interface
+// VTABLE: LS3DF11 0x10099bc4 I3D_void_interface
 class I3D_shadow_visual : public I3D_visual {
 public:
     I3D_shadow_visual();
@@ -4131,6 +4317,7 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10052e70
+// SYNTHETIC: LS3DF11 0x10050cf0
 // I3D_shadow_visual::`scalar deleting destructor'
 
 // What SetMode takes (PS2 type; the values' names are guesses). The low two bits choose the blending, 0 adding the
@@ -4162,7 +4349,9 @@ enum PROJECTOR_MODE {
 // functions are PS2's in PS2's order. Names are PS2's where it has the member (orthogonal, texture, material, alpha,
 // color, mode, the lock, the reverse factor), the others are guesses.
 // VTABLE: LS3DF 0x1009c818 I3D_frame
+// VTABLE: LS3DF11 0x10099818 I3D_frame
 // VTABLE: LS3DF 0x1009c808 I3D_void_interface
+// VTABLE: LS3DF11 0x10099808 I3D_void_interface
 class I3D_projector : public I3D_visual {
 public:
     I3D_projector();
@@ -4229,11 +4418,13 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x10045fe0
+// SYNTHETIC: LS3DF11 0x10044060
 // I3D_projector::`scalar deleting destructor'
 
 // The destructor the projector file's thunk registers for ProjectorsToRender, the second $E13 in link order (see the
 // scene's)
 // SYNTHETIC: LS3DF 0x10046760
+// SYNTHETIC: LS3DF11 0x100447f0
 // $E13
 
 // The shadows' visuals whose receivers the rendering has to clip this frame and what it calls for them (I3d_shadow.cpp),
@@ -4266,6 +4457,7 @@ extern I3D_visual *pParticleVisual;
 
 // The particles' renderer's (I3d_particle.cpp, which declares the class)
 // SYNTHETIC: LS3DF 0x1003cc80
+// SYNTHETIC: LS3DF11 0x1003b1c0
 // I3D_part_renderer::`scalar deleting destructor'
 
 // I3d_occluder.cpp (PS2 names), for the portals' processing: the sectors' lists of occluders, made again where the
@@ -4301,12 +4493,14 @@ extern C_list<I3D_target *> LoadTargetList;
 // The destructor load4ds.cpp's thunk registers for it: the second $E6 in link order, after the mirror file's (the file
 // includes I3D/mesh/I3d_material.h, whose <vector> takes a number)
 // SYNTHETIC: LS3DF 0x10060c90
+// SYNTHETIC: LS3DF11 0x1005df70
 // $E6
 LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time);
 I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
+// TEMPLATE: LS3DF11 0x1005d600
 // ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data

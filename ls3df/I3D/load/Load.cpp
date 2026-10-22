@@ -17,43 +17,56 @@ extern bool m_DisableSleeping;
 // whether a hierarchy or shadow or an animation set is being loaded. Their .bss is in the order of VC6's hash of the
 // names, with the loaded frames' and materials' among them.
 // GLOBAL: LS3DF 0x101b5148
+// GLOBAL: LS3DF11 0x101b2258
 static float progress;
 
 // GLOBAL: LS3DF 0x101b514c
+// GLOBAL: LS3DF11 0x101b225c
 I3D_LOAD_CB_PROC *pLoadCallback;
 
 // GLOBAL: LS3DF 0x101b5150
+// GLOBAL: LS3DF11 0x101b2260
 uint LoadCBflags;
 
 // GLOBAL: LS3DF 0x101b5160
+// GLOBAL: LS3DF11 0x101b2270
 I3D_frame *LoadFramy[10000];
 
 // GLOBAL: LS3DF 0x101beda0
+// GLOBAL: LS3DF11 0x101bbeb0
 int LoadFramu;
 
 // GLOBAL: LS3DF 0x101beda4
+// GLOBAL: LS3DF11 0x101bbeb4
 static float lastProgress;
 
 // GLOBAL: LS3DF 0x101beda8
+// GLOBAL: LS3DF11 0x101bbeb8
 I3D_material *LoadMaterialy[5000];
 
 // GLOBAL: LS3DF 0x101c3bc8
+// GLOBAL: LS3DF11 0x101c0cd8
 int LoadMaterialu;
 
 // GLOBAL: LS3DF 0x101c3bcc
+// GLOBAL: LS3DF11 0x101c0cdc
 int LoadAnimCount;
 
 // GLOBAL: LS3DF 0x101c3bd0
+// GLOBAL: LS3DF11 0x101c0ce0
 void *LoadCbContext;
 
 // GLOBAL: LS3DF 0x101c3bd4
+// GLOBAL: LS3DF11 0x101c0ce4
 static bool loading;
 
 // GLOBAL: LS3DF 0x101c3bd5
+// GLOBAL: LS3DF11 0x101c0ce5
 static bool loadingAnim;
 
 // Reports the progress, in steps of 0.02 at least
 // FUNCTION: LS3DF 0x10060390
+// FUNCTION: LS3DF11 0x1005d670
 void LoadProgress(float p)
 {
     if (p < lastProgress + .02f)
@@ -67,6 +80,7 @@ void LoadProgress(float p)
 // Loads a .4ds file into root, a model or a scene's primary sector: the frames without a parent are linked to root, and
 // the model or the scene owns them. A file with animations gets the animation set of its .5ds file.
 // FUNCTION: LS3DF 0x100603e0
+// FUNCTION: LS3DF11 0x1005d6c0
 LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context, I3D_frame *root)
 {
     if (!root || !file_name || !*file_name) {
@@ -192,6 +206,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
 
 // Loads a .5ds file's data into the animation set
 // FUNCTION: LS3DF 0x10060840
+// FUNCTION: LS3DF11 0x1005db20
 LS3D_RESULT LoadAnimation(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context,
     I3D_animation_set *set)
 {
@@ -250,6 +265,7 @@ LS3D_RESULT LoadAnimation(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
 
 // Loads a .6ds file into the shadow's geometry (PC only, the name is a guess)
 // FUNCTION: LS3DF 0x10060a50
+// FUNCTION: LS3DF11 0x1005dd30
 LS3D_RESULT LoadShadow(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context, ShadowDef *def)
 {
     if (!def || !file_name || !*file_name) {

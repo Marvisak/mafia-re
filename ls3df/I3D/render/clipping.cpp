@@ -36,6 +36,7 @@ bool CheckClipFaces()
 
 // A mesh's vertices into clip space through m and the volume's matrix, then its face groups
 // FUNCTION: LS3DF 0x10003b40
+// FUNCTION: LS3DF11 0x10003b40
 bool ClipMesh(const I3D_vertex *verts, int num_verts, I3D_face_group *fgroups, int num_faces, uint transp,
     const S_matrix &m)
 {
@@ -111,6 +112,7 @@ bool ClipMesh(const I3D_vertex *verts, int num_verts, I3D_face_group *fgroups, i
 
 // The face groups' faces into the two lists, and their vertices into the result
 // FUNCTION: LS3DF 0x10003dc0
+// FUNCTION: LS3DF11 0x10003dc0
 static bool ClipFacegroups(I3D_face_group *fg)
 {
     clip_vert_end = clip_verts + clip_vert_count;
@@ -209,6 +211,7 @@ static bool ClipFacegroups(I3D_face_group *fg)
 
 // The same with the vertices in world space
 // FUNCTION: LS3DF 0x10004110
+// FUNCTION: LS3DF11 0x10004110
 bool ClipMeshW(const I3D_vertex *verts, int num_verts, I3D_face_group *fgroups, int num_faces, uint transp)
 {
     if (!ReserveClipArrays(num_verts, num_faces))
@@ -286,6 +289,7 @@ bool ClipMeshW(const I3D_vertex *verts, int num_verts, I3D_face_group *fgroups, 
 
 // ClipMesh for a single mesh's or single morph's vertices
 // FUNCTION: LS3DF 0x10004370
+// FUNCTION: LS3DF11 0x10004370
 bool ClipSingleMesh(const S_clip_sm_vertex *verts, int num_verts, I3D_face_group *fgroups, int num_faces, uint transp,
     const S_matrix &m)
 {
@@ -361,6 +365,7 @@ bool ClipSingleMesh(const S_clip_sm_vertex *verts, int num_verts, I3D_face_group
 
 // ClipMeshW for a single mesh's or single morph's vertices
 // FUNCTION: LS3DF 0x100045f0
+// FUNCTION: LS3DF11 0x100045f0
 bool ClipSingleMeshW(const S_clip_sm_vertex *verts, int num_verts, I3D_face_group *fgroups, int num_faces,
     uint transp)
 {

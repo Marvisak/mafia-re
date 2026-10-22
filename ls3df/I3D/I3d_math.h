@@ -21,6 +21,7 @@ struct S_vector2 {
 
     // The lit object file's copy
     // FUNCTION: LS3DF 0x100268e0
+    // FUNCTION: LS3DF11 0x10026380
     float Dot(const S_vector2 &v) const
     {
         return x * v.x + y * v.y;
@@ -50,10 +51,12 @@ struct S_vector {
 
     // The out-of-line copies of this constructor and Dot the linker kept are in camera code
     // FUNCTION: LS3DF 0x1000dd60
+    // FUNCTION: LS3DF11 0x1000d900
     S_vector(float x, float y, float z) : x(x), y(y), z(z) {}
 
     // PS2 has these out of line (Dot__8S_vectorCFRC8S_vector, Cross__8S_vectorCFRC8S_vector)
     // FUNCTION: LS3DF 0x1000ddb0
+    // FUNCTION: LS3DF11 0x1000d950
     float Dot(const S_vector &v) const
     {
         return x * v.x + y * v.y + z * v.z;
@@ -62,6 +65,7 @@ struct S_vector {
     // Sets the vector to v normalized (the name is a guess). The out-of-line copy the linker kept is in collision code.
     // The sum is written out, as in Magnitude: through Dot, the math's callers leave that call out of line.
     // FUNCTION: LS3DF 0x10014970
+    // FUNCTION: LS3DF11 0x10014490
     void SetNormalized(const S_vector &v)
     {
         x = v.x;
@@ -90,6 +94,7 @@ struct S_vector {
     }
 
     // FUNCTION: LS3DF 0x1002e360
+    // FUNCTION: LS3DF11 0x1002d660
     S_vector Cross(const S_vector &v) const
     {
         return S_vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
@@ -97,6 +102,7 @@ struct S_vector {
 
     // The out-of-line copy the linker kept is in collision code
     // FUNCTION: LS3DF 0x10012500
+    // FUNCTION: LS3DF11 0x10012020
     float Square() const
     {
         return x * x + y * y + z * z;
@@ -105,6 +111,7 @@ struct S_vector {
     // PS2 Magnitude__8S_vectorCFv. The sum is written out: a nested Square() call would take inline budget of its
     // own, which S_quat::Make(const S_matrix &) doesn't have where the original inlines the whole computation.
     // FUNCTION: LS3DF 0x1002f9f0
+    // FUNCTION: LS3DF11 0x1002ecf0
     float Magnitude() const
     {
         float sq = x * x + y * y + z * z;
@@ -148,6 +155,7 @@ struct S_vector {
     // the collision file's out-of-line copies of the two, deferred items of the precompiled header, come in header
     // order.
     // FUNCTION: LS3DF 0x100112a0
+    // FUNCTION: LS3DF11 0x10010dc0
     S_vector operator*(const float &f) const
     {
         return S_vector(x * f, y * f, z * f);
@@ -155,6 +163,7 @@ struct S_vector {
 
     // PS2 __pl__8S_vectorCFRC8S_vector
     // FUNCTION: LS3DF 0x100112d0
+    // FUNCTION: LS3DF11 0x10010df0
     S_vector operator+(const S_vector &v) const
     {
         return S_vector(x + v.x, y + v.y, z + v.z);
@@ -171,6 +180,7 @@ struct S_vector {
 
     // The out-of-line copy the linker kept is in camera code
     // FUNCTION: LS3DF 0x1000dd80
+    // FUNCTION: LS3DF11 0x1000d920
     S_vector operator-(const S_vector &v) const
     {
         return S_vector(x - v.x, y - v.y, z - v.z);
@@ -187,6 +197,7 @@ struct S_vector {
     // (S_quat::Make(const S_vector &, float)). The single meshes' file has the out-of-line copy, for its
     // I3D_joint::GetJointMatrix.
     // FUNCTION: LS3DF 0x10056e60
+    // FUNCTION: LS3DF11 0x10053420
     S_vector &operator*=(const float &f)
     {
         x *= f;
@@ -239,6 +250,7 @@ struct S_vector {
     // differences are vectors: the copy the linker kept in camera code keeps one in a frame of its own, and where the
     // camera inlines it late, the two operator- calls stay out of line.
     // FUNCTION: LS3DF 0x1000ddd0
+    // FUNCTION: LS3DF11 0x1000d970
     void GetNormal(const S_vector &u1, const S_vector &v1, const S_vector &w1)
     {
         S_vector u = w1 - v1, v = u1 - v1;
@@ -335,6 +347,7 @@ struct S_quat {
 
     // Out of line after S_quat::Make(const S_matrix &), its only caller that doesn't inline it
     // FUNCTION: LS3DF 0x1002fa70
+    // FUNCTION: LS3DF11 0x1002ed70
     S_quat operator*(const S_quat &q) const
     {
         return S_quat(s * q.s - v.Dot(q.v), q.v * s + v * q.s + v.Cross(q.v));
@@ -371,6 +384,7 @@ struct S_plane {
 // from clipping.cpp's CheckClipFaces to I3d_pose.cpp, from I3d_singlemesh.cpp to I3d_occluder.cpp and in
 // I3d_particle.cpp, the lit object file's VERTEX_STRUCT's since I3d_lit_object.cpp)
 // FUNCTION: LS3DF 0x1004e960
+// FUNCTION: LS3DF11 0x1004c7f0
 // ??0VERTEX_STRUCT@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
@@ -407,6 +421,7 @@ struct I3D_bbox {
     // Grows the box to hold the point (PS2 Absorb__8I3D_bboxFRC8S_vector). The out-of-line copy the linker kept is in
     // collision code.
     // FUNCTION: LS3DF 0x10014dd0
+    // FUNCTION: LS3DF11 0x100148f0
     void Absorb(const S_vector &v)
     {
         if (min.x > v.x)
@@ -458,6 +473,7 @@ inline const S_matrix &I3DGetIdentityMatrix() { return IdentityMatrix; }
 inline S_vector2::S_vector2() {}
 
 // FUNCTION: LS3DF 0x100268c0
+// FUNCTION: LS3DF11 0x10026360
 inline float S_vector2::Magnitude() const
 {
     return (float)sqrt(x * x + y * y);
@@ -566,20 +582,25 @@ const S_vector *BBoxVertices(const I3D_bbox &bbox);
 // other file has them. Other files have a $E13 too: reccmp pairs the annotations of a name with our functions of that
 // name in address order, so this one holds with every earlier file's annotated (the sixth, after render.cpp's, I3D.h).
 // GLOBAL: LS3DF 0x101c5290
+// GLOBAL: LS3DF11 0x101c2390
 // $S12
 // SYNTHETIC: LS3DF 0x1006bc90
+// SYNTHETIC: LS3DF11 0x10068d20
 // $E13
 
 // More of Globals.cpp's $Es, annotated for later files' of the same names: the destructor StaticInstance's thunk
 // registers (the ninth $E5 in link order, after T&l.cpp's), UnitBBox's initializer (the third $E10, after the driver's
 // and the model file's) and ZeroVector's (the fifth $E18, after render.cpp's)
 // SYNTHETIC: LS3DF 0x1006b660
+// SYNTHETIC: LS3DF11 0x100686f0
 // $E5
 
 // SYNTHETIC: LS3DF 0x1006bb80
+// SYNTHETIC: LS3DF11 0x10068c10
 // $E10
 
 // SYNTHETIC: LS3DF 0x1006bcc0
+// SYNTHETIC: LS3DF11 0x10068d50
 // $E18
 
 // The smaller and the larger of two values, through references (PS2 Min<T>, which the sort lists' Sort calls): the
@@ -604,351 +625,467 @@ inline const T &Max(const T &a, const T &b)
 
 // clipper.cpp
 // GLOBAL: LS3DF 0x100aef6c
+// GLOBAL: LS3DF11 0x100ac08c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b2c0
+// GLOBAL: LS3DF11 0x100982c0
 // IdentityMatrixData
 
 // clipping.cpp
 // GLOBAL: LS3DF 0x100af7cc
+// GLOBAL: LS3DF11 0x100ac8ec
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b320
+// GLOBAL: LS3DF11 0x10098320
 // IdentityMatrixData
 
 // clipping2.cpp
 // GLOBAL: LS3DF 0x100af7d8
+// GLOBAL: LS3DF11 0x100ac8f8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b360
+// GLOBAL: LS3DF11 0x10098360
 // IdentityMatrixData
 
 // I3d_animation.cpp
 // GLOBAL: LS3DF 0x100af7e4
+// GLOBAL: LS3DF11 0x100ac904
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b3a0
+// GLOBAL: LS3DF11 0x100983a0
 // IdentityMatrixData
 
 // I3d_area.cpp
 // GLOBAL: LS3DF 0x100af7f0
+// GLOBAL: LS3DF11 0x100ac910
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b420
+// GLOBAL: LS3DF11 0x10098420
 // IdentityMatrixData
 
 // I3d_billboard.cpp
 // GLOBAL: LS3DF 0x100af800
+// GLOBAL: LS3DF11 0x100ac920
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b4d0
+// GLOBAL: LS3DF11 0x100984d0
 // IdentityMatrixData
 
 // I3d_camera.cpp
 // GLOBAL: LS3DF 0x100af80c
+// GLOBAL: LS3DF11 0x100ac92c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b690
+// GLOBAL: LS3DF11 0x10098690
 // IdentityMatrixData
 
 // i3d_collision.cpp
 // GLOBAL: LS3DF 0x100af838
+// GLOBAL: LS3DF11 0x100ac958
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b778
+// GLOBAL: LS3DF11 0x10098778
 // IdentityMatrixData
 
 // I3d_driver.cpp
 // GLOBAL: LS3DF 0x100afbac
+// GLOBAL: LS3DF11 0x100acccc
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b7f0
+// GLOBAL: LS3DF11 0x100987f0
 // IdentityMatrixData
 
 // I3d_dummy.cpp
 // GLOBAL: LS3DF 0x100c0010
+// GLOBAL: LS3DF11 0x100bd130
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b8e0
+// GLOBAL: LS3DF11 0x100988e0
 // IdentityMatrixData
 
 // I3d_frame.cpp
 // GLOBAL: LS3DF 0x100c001c
+// GLOBAL: LS3DF11 0x100bd13c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009b978
+// GLOBAL: LS3DF11 0x10098978
 // IdentityMatrixData
 
 // I3d_interpolator.cpp
 // GLOBAL: LS3DF 0x100c004c
+// GLOBAL: LS3DF11 0x100bd16c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009ba18
+// GLOBAL: LS3DF11 0x10098a18
 // IdentityMatrixData
 
 // I3d_joint.cpp
 // GLOBAL: LS3DF 0x100c0058
+// GLOBAL: LS3DF11 0x100bd178
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009ba68
+// GLOBAL: LS3DF11 0x10098a68
 // IdentityMatrixData
 
 // I3d_landscape.cpp
 // GLOBAL: LS3DF 0x100c0068
+// GLOBAL: LS3DF11 0x100bd188
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009baf8
+// GLOBAL: LS3DF11 0x10098af8
 // IdentityMatrixData
 
 // I3d_light.cpp
 // GLOBAL: LS3DF 0x101b42ec
+// GLOBAL: LS3DF11 0x101b140c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009bc40
+// GLOBAL: LS3DF11 0x10098c40
 // IdentityMatrixData
 
 // I3d_lit_object.cpp: GetInvMatrix and GetRenderMatrix use the matrix in world space
 // GLOBAL: LS3DF 0x101b4308
+// GLOBAL: LS3DF11 0x101b1428
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009bcf8
+// GLOBAL: LS3DF11 0x10098cf8
 // IdentityMatrixData
 
 // I3d_material.cpp
 // GLOBAL: LS3DF 0x101b4318
+// GLOBAL: LS3DF11 0x101b1438
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009be60
+// GLOBAL: LS3DF11 0x10098e60
 // IdentityMatrixData
 
 // I3d_math.cpp
 // GLOBAL: LS3DF 0x101b4324
+// GLOBAL: LS3DF11 0x101b1444
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009bf48
+// GLOBAL: LS3DF11 0x10098f48
 // IdentityMatrixData
 
 // I3d_mesh.cpp
 // GLOBAL: LS3DF 0x101b4330
+// GLOBAL: LS3DF11 0x101b1450
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009bfa0
+// GLOBAL: LS3DF11 0x10098fa0
 // IdentityMatrixData
 
 // I3d_mirror.cpp
 // GLOBAL: LS3DF 0x101b434c
+// GLOBAL: LS3DF11 0x101b146c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c050
+// GLOBAL: LS3DF11 0x10099050
 // IdentityMatrixData
 
 // I3d_model.cpp
 // GLOBAL: LS3DF 0x101b435c
+// GLOBAL: LS3DF11 0x101b147c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c120
+// GLOBAL: LS3DF11 0x10099120
 // IdentityMatrixData
 
 // I3d_morph.cpp
 // GLOBAL: LS3DF 0x101b4398
+// GLOBAL: LS3DF11 0x101b14b8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c218
+// GLOBAL: LS3DF11 0x10099218
 // IdentityMatrixData
 
 // I3d_object.cpp
 // GLOBAL: LS3DF 0x101b43a4
+// GLOBAL: LS3DF11 0x101b14c4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c2f8
+// GLOBAL: LS3DF11 0x100992f8
 // IdentityMatrixData
 
 // I3d_occluder.cpp: the constructor copies the vector
 // GLOBAL: LS3DF 0x101b43b0
+// GLOBAL: LS3DF11 0x101b14d0
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c3e0
+// GLOBAL: LS3DF11 0x100993e0
 // IdentityMatrixData
 
 // I3d_particle.cpp: GetRenderMatrix uses the matrix in world space, the renderer as its world matrix
 // GLOBAL: LS3DF 0x101b43cc
+// GLOBAL: LS3DF11 0x101b14ec
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c478
+// GLOBAL: LS3DF11 0x10099478
 // IdentityMatrixData
 
 // I3d_portal.cpp
 // GLOBAL: LS3DF 0x101b43e0
+// GLOBAL: LS3DF11 0x101b1500
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c6f8
+// GLOBAL: LS3DF11 0x100996f8
 // IdentityMatrixData
 
 // I3d_pose.cpp
 // GLOBAL: LS3DF 0x101b45ec
+// GLOBAL: LS3DF11 0x101b170c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c750
+// GLOBAL: LS3DF11 0x10099750
 // IdentityMatrixData
 
 // I3d_projector.cpp: the constructor copies the vector; GetInvMatrix and GetRenderMatrix use the matrix in world
 // space
 // GLOBAL: LS3DF 0x101b45fc
+// GLOBAL: LS3DF11 0x101b171c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c7c8
+// GLOBAL: LS3DF11 0x100997c8
 // IdentityMatrixData
 
 // I3d_scene.cpp: the matrix is m_RenderWeatherSystem's world matrix
 // GLOBAL: LS3DF 0x101b4e3c
+// GLOBAL: LS3DF11 0x101b1f5c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009c8b8
+// GLOBAL: LS3DF11 0x100998b8
 // IdentityMatrixData
 
 // I3d_sector.cpp
 // GLOBAL: LS3DF 0x101b4f1c
+// GLOBAL: LS3DF11 0x101b203c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009ca48
+// GLOBAL: LS3DF11 0x10099a48
 // IdentityMatrixData
 
 // I3d_shadow.cpp: the visual's constructor copies the vector; GetInvMatrix and GetRenderMatrix use the matrix in
 // world space
 // GLOBAL: LS3DF 0x101b4f30
+// GLOBAL: LS3DF11 0x101b2050
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009cb00
+// GLOBAL: LS3DF11 0x10099b00
 // IdentityMatrixData
 
 // I3d_singlemesh.cpp
 // GLOBAL: LS3DF 0x101b5088
+// GLOBAL: LS3DF11 0x101b21a8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009cc48
+// GLOBAL: LS3DF11 0x10099c48
 // IdentityMatrixData
 
 // I3d_singlemorph.cpp
 // GLOBAL: LS3DF 0x101b5094
+// GLOBAL: LS3DF11 0x101b21b4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009cd40
+// GLOBAL: LS3DF11 0x10099d40
 // IdentityMatrixData
 
 // I3d_sound.cpp
 // GLOBAL: LS3DF 0x101b50a0
+// GLOBAL: LS3DF11 0x101b21c0
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009ce30
+// GLOBAL: LS3DF11 0x10099e30
 // IdentityMatrixData
 
 // I3d_target.cpp
 // GLOBAL: LS3DF 0x101b50ac
+// GLOBAL: LS3DF11 0x101b21cc
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009cf18
+// GLOBAL: LS3DF11 0x10099f18
 // IdentityMatrixData
 
 // I3d_user.cpp
 // GLOBAL: LS3DF 0x101b50c8
+// GLOBAL: LS3DF11 0x101b21e8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009cfb8
+// GLOBAL: LS3DF11 0x10099fb8
 // IdentityMatrixData
 
 // I3d_visual.cpp
 // GLOBAL: LS3DF 0x101b50d4
+// GLOBAL: LS3DF11 0x101b21f4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d048
+// GLOBAL: LS3DF11 0x1009a048
 // IdentityMatrixData
 
 // I3d_volume.cpp
 // GLOBAL: LS3DF 0x101b50e0
+// GLOBAL: LS3DF11 0x101b2200
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d118
+// GLOBAL: LS3DF11 0x1009a118
 // IdentityMatrixData
 
 // IBManager.cpp
 // GLOBAL: LS3DF 0x101b50ec
+// GLOBAL: LS3DF11 0x101b220c
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d1b0
+// GLOBAL: LS3DF11 0x1009a1b0
 // IdentityMatrixData
 
 // lightmap.cpp
 // GLOBAL: LS3DF 0x101b5138
+// GLOBAL: LS3DF11 0x101b2248
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d1f0
+// GLOBAL: LS3DF11 0x1009a1f0
 // IdentityMatrixData
 
 // Load.cpp: the vector is right before LoadFramy: the 1-based reads of the frames address 4 bytes before the
 // array (load4ds.cpp), which falls in it
 // GLOBAL: LS3DF 0x101b5154
+// GLOBAL: LS3DF11 0x101b2264
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d250
+// GLOBAL: LS3DF11 0x1009a250
 // IdentityMatrixData
 
 // Load3ds.cpp
 // GLOBAL: LS3DF 0x101c3bd8
+// GLOBAL: LS3DF11 0x101c0ce8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d298
+// GLOBAL: LS3DF11 0x1009a298
 // IdentityMatrixData
 
 // load4ds.cpp
 // GLOBAL: LS3DF 0x101c3bf0
+// GLOBAL: LS3DF11 0x101c0d00
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d2d8
+// GLOBAL: LS3DF11 0x1009a2d8
 // IdentityMatrixData
 
 // Load5ds.cpp
 // GLOBAL: LS3DF 0x101c3c18
+// GLOBAL: LS3DF11 0x101c0d28
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d318
+// GLOBAL: LS3DF11 0x1009a318
 // IdentityMatrixData
 
 // Load6ds.cpp
 // GLOBAL: LS3DF 0x101c3c24
+// GLOBAL: LS3DF11 0x101c0d34
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d358
+// GLOBAL: LS3DF11 0x1009a358
 // IdentityMatrixData
 
 // render.cpp: the mirrors' reflections are drawn with the vector
 // GLOBAL: LS3DF 0x101c4c50
+// GLOBAL: LS3DF11 0x101c1d60
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d398
+// GLOBAL: LS3DF11 0x1009a398
 // IdentityMatrixData
 
 // T&l.cpp
 // GLOBAL: LS3DF 0x101c4d44
+// GLOBAL: LS3DF11 0x101c1e54
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d3e0
+// GLOBAL: LS3DF11 0x1009a3e0
 // IdentityMatrixData
 
 // VBManager.cpp
 // GLOBAL: LS3DF 0x101c5008
+// GLOBAL: LS3DF11 0x101c2118
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d430
+// GLOBAL: LS3DF11 0x1009a430
 // IdentityMatrixData
 
 // Globals.cpp
 // GLOBAL: LS3DF 0x101c51c0
+// GLOBAL: LS3DF11 0x101c22c0
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d480
+// GLOBAL: LS3DF11 0x1009a480
 // IdentityMatrixData
 
 // IGraph.cpp
 // GLOBAL: LS3DF 0x101c5414
+// GLOBAL: LS3DF11 0x101c2514
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d4c0
+// GLOBAL: LS3DF11 0x1009a4c0
 // IdentityMatrixData
 
 // IShow.cpp
 // GLOBAL: LS3DF 0x101c5c40
+// GLOBAL: LS3DF11 0x101c2d40
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d630
+// GLOBAL: LS3DF11 0x1009a630
 // IdentityMatrixData
 
 // IShowStream.cpp
 // GLOBAL: LS3DF 0x101c5dac
+// GLOBAL: LS3DF11 0x101c2eac
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d850
+// GLOBAL: LS3DF11 0x1009a850
 // IdentityMatrixData
 
 // ITexture.cpp
 // GLOBAL: LS3DF 0x101c61f8
+// GLOBAL: LS3DF11 0x101c32f8
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d890
+// GLOBAL: LS3DF11 0x1009a890
 // IdentityMatrixData
 
 // IS_3Dlistener.cpp
 // GLOBAL: LS3DF 0x101c62b4
+// GLOBAL: LS3DF11 0x101c33b4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d928
+// GLOBAL: LS3DF11 0x1009a928
 // IdentityMatrixData
 
 // IS_3Dsound.cpp
 // GLOBAL: LS3DF 0x101c62c4
+// GLOBAL: LS3DF11 0x101c33c4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009d9a0
+// GLOBAL: LS3DF11 0x1009a9a0
 // IdentityMatrixData
 
 // IS_driver.cpp
 // GLOBAL: LS3DF 0x101c62d0
+// GLOBAL: LS3DF11 0x101c33d0
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009da48
+// GLOBAL: LS3DF11 0x1009aa48
 // IdentityMatrixData
 
 // IS_sound.cpp
 // GLOBAL: LS3DF 0x101c62f4
+// GLOBAL: LS3DF11 0x101c33f4
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009dac8
+// GLOBAL: LS3DF11 0x1009aac8
 // IdentityMatrixData
 
 // IS_source.cpp
 // GLOBAL: LS3DF 0x101c6310
+// GLOBAL: LS3DF11 0x101c3410
 // ZeroSVector
 // GLOBAL: LS3DF 0x1009db50
+// GLOBAL: LS3DF11 0x1009ab50
 // IdentityMatrixData

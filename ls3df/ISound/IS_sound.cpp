@@ -8,15 +8,18 @@
 // PS2's __sinit_IS_sound.cpp constructs the lists in this order
 
 // GLOBAL: LS3DF 0x101c6300
+// GLOBAL: LS3DF11 0x101c3400
 C_list<CHANNEL_STRUCT> ChannelList(64);
 
 // GLOBAL: LS3DF 0x101c62e4
+// GLOBAL: LS3DF11 0x101c33e4
 C_list<TERMINATED_CHANNEL_STRUCT> TerminatedChannelList(512);
 
 // Open: the original spills the frequency factor of both divisions with fld/fstp, in a slot of its own; ours copies it
 // with integer moves, into the status's slot (a frame 4 bytes smaller). GetFrequency with a local, a reference or no
 // const, and inline helpers taking the factor as a parameter don't give it.
 // FUNCTION: LS3DF 0x1007c340
+// FUNCTION: LS3DF11 0x10079170
 void UpdateAllTerminatedBuffs()
 {
     if (!MaxHWChannels || !(pISndDriver->create_flags & ISNDINIT_EAX))
@@ -87,6 +90,7 @@ void UpdateAllTerminatedBuffs()
 }
 
 // FUNCTION: LS3DF 0x1007c6d0
+// FUNCTION: LS3DF11 0x10079500
 void TraceDSErrors(HRESULT hr)
 {
     switch (hr) {
@@ -145,6 +149,7 @@ void TraceDSErrors(HRESULT hr)
 }
 
 // FUNCTION: LS3DF 0x1007c8e0
+// FUNCTION: LS3DF11 0x10079710
 ISND_sound::ISND_sound() : lpDSB8(NULL), source(NULL)
 {
     ref = 1;
@@ -153,12 +158,14 @@ ISND_sound::ISND_sound() : lpDSB8(NULL), source(NULL)
 }
 
 // FUNCTION: LS3DF 0x1007c960
+// FUNCTION: LS3DF11 0x10079790
 ISND_sound::~ISND_sound()
 {
     Close();
 }
 
 // FUNCTION: LS3DF 0x1007c9a0
+// FUNCTION: LS3DF11 0x100797d0
 int ISND_sound::Release()
 {
     if (--ref < 0) {
@@ -173,6 +180,7 @@ int ISND_sound::Release()
 }
 
 // FUNCTION: LS3DF 0x1007c9d0
+// FUNCTION: LS3DF11 0x10079800
 LS3D_RESULT ISND_sound::Open(ISND_source *source, uint flags)
 {
     Close();
@@ -190,6 +198,7 @@ LS3D_RESULT ISND_sound::Open(ISND_source *source, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1007ca30
+// FUNCTION: LS3DF11 0x10079860
 LS3D_RESULT ISND_sound::Close()
 {
     Stop();
@@ -205,6 +214,7 @@ LS3D_RESULT ISND_sound::Close()
 }
 
 // FUNCTION: LS3DF 0x1007ca70
+// FUNCTION: LS3DF11 0x100798a0
 LS3D_RESULT ISND_sound::Play(ISND_source *source, uint flags)
 {
     LS3D_RESULT result = Open(source, flags);
@@ -214,6 +224,7 @@ LS3D_RESULT ISND_sound::Play(ISND_source *source, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1007caa0
+// FUNCTION: LS3DF11 0x100798d0
 LS3D_RESULT ISND_sound::Play(uint flags, uint priority)
 {
     if (!lpDSB8)
@@ -318,6 +329,7 @@ play:
 }
 
 // FUNCTION: LS3DF 0x1007cf50
+// FUNCTION: LS3DF11 0x10079d80
 LS3D_RESULT ISND_sound::Stop()
 {
     if (!lpDSB8)
@@ -345,6 +357,7 @@ LS3D_RESULT ISND_sound::Stop()
 
 // In milliseconds
 // FUNCTION: LS3DF 0x1007d040
+// FUNCTION: LS3DF11 0x10079e70
 uint ISND_sound::GetCurrTime() const
 {
     if (!lpDSB8)
@@ -355,6 +368,7 @@ uint ISND_sound::GetCurrTime() const
 }
 
 // FUNCTION: LS3DF 0x1007d090
+// FUNCTION: LS3DF11 0x10079ec0
 LS3D_RESULT ISND_sound::SetCurrTime(uint time)
 {
     if (!lpDSB8)
@@ -380,6 +394,7 @@ LS3D_RESULT ISND_sound::SetCurrTime(uint time)
 
 // From linear to DirectSound's hundredths of a decibel, scaled by the driver's volume
 // FUNCTION: LS3DF 0x1007d160
+// FUNCTION: LS3DF11 0x10079f90
 LS3D_RESULT ISND_sound::SetVolume(float volume)
 {
     if ((flags & ISND_NOVOLUME) || !lpDSB8)
@@ -401,6 +416,7 @@ LS3D_RESULT ISND_sound::SetVolume(float volume)
 }
 
 // FUNCTION: LS3DF 0x1007d1f0
+// FUNCTION: LS3DF11 0x1007a020
 LS3D_RESULT ISND_sound::SetVolumeLOG(float volume)
 {
     this->volume = volume;
@@ -412,6 +428,7 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(float volume)
 
 // In hundredths of a decibel
 // FUNCTION: LS3DF 0x1007d240
+// FUNCTION: LS3DF11 0x1007a070
 LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
 {
     if ((flags & ISND_NOVOLUME) || !lpDSB8)
@@ -429,6 +446,7 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
 
 // A factor of the source's sample rate
 // FUNCTION: LS3DF 0x1007d2b0
+// FUNCTION: LS3DF11 0x1007a0e0
 LS3D_RESULT ISND_sound::SetFrequency(float frequency)
 {
     if (!(flags & ISND_FREQUENCY) || !lpDSB8)
@@ -444,6 +462,7 @@ LS3D_RESULT ISND_sound::SetFrequency(float frequency)
 }
 
 // FUNCTION: LS3DF 0x1007d340
+// FUNCTION: LS3DF11 0x1007a170
 LS3D_RESULT ISND_sound::SetPanning(float panning)
 {
     if ((flags & ISND_NOPANNING) || !lpDSB8)
@@ -463,6 +482,7 @@ LS3D_RESULT ISND_sound::SetPanning(float panning)
 }
 
 // FUNCTION: LS3DF 0x1007d3e0
+// FUNCTION: LS3DF11 0x1007a210
 bool ISND_sound::IsPlaying() const
 {
     if (!lpDSB8)

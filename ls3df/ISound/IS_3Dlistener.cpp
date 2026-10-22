@@ -4,6 +4,7 @@
 #include "ISound/eax.h"
 
 // FUNCTION: LS3DF 0x1007b060
+// FUNCTION: LS3DF11 0x10077eb0
 ISND_3Dlistener::ISND_3Dlistener()
 {
     ref = 1;
@@ -15,17 +16,20 @@ ISND_3Dlistener::ISND_3Dlistener()
 }
 
 // FUNCTION: LS3DF 0x1007b0a0
+// FUNCTION: LS3DF11 0x10077ef0
 ISND_3Dlistener::~ISND_3Dlistener()
 {
 }
 
 // FUNCTION: LS3DF 0x1007b0b0
+// FUNCTION: LS3DF11 0x10077f00
 int ISND_3Dlistener::AddRef()
 {
     return ++ref;
 }
 
 // FUNCTION: LS3DF 0x1007b0c0
+// FUNCTION: LS3DF11 0x10077f10
 int ISND_3Dlistener::Release()
 {
     if (--ref < 0) {
@@ -40,6 +44,7 @@ int ISND_3Dlistener::Release()
 }
 
 // FUNCTION: LS3DF 0x1007b100
+// FUNCTION: LS3DF11 0x10077f50
 LS3D_RESULT ISND_3Dlistener::SetPos(const S_vector &pos)
 {
     ds_data.vPosition.x = pos.x;
@@ -49,6 +54,7 @@ LS3D_RESULT ISND_3Dlistener::SetPos(const S_vector &pos)
 }
 
 // FUNCTION: LS3DF 0x1007b120
+// FUNCTION: LS3DF11 0x10077f70
 LS3D_RESULT ISND_3Dlistener::SetDir(const S_vector &dir, const S_vector &up)
 {
     ds_data.vOrientFront.x = dir.x;
@@ -61,6 +67,7 @@ LS3D_RESULT ISND_3Dlistener::SetDir(const S_vector &dir, const S_vector &up)
 }
 
 // FUNCTION: LS3DF 0x1007b160
+// FUNCTION: LS3DF11 0x10077fb0
 LS3D_RESULT ISND_3Dlistener::SetVelocity(const S_vector &velocity)
 {
     ds_data.vVelocity.x = velocity.x;
@@ -77,6 +84,7 @@ LS3D_RESULT ISND_3Dlistener::SetDistanceFactor(float factor)
 }
 
 // FUNCTION: LS3DF 0x1007b190
+// FUNCTION: LS3DF11 0x10077fd0
 LS3D_RESULT ISND_3Dlistener::SetDopplerFactor(float factor)
 {
     ds_data.flDopplerFactor = factor;
@@ -84,6 +92,7 @@ LS3D_RESULT ISND_3Dlistener::SetDopplerFactor(float factor)
 }
 
 // FUNCTION: LS3DF 0x1007b1a0
+// FUNCTION: LS3DF11 0x10077fe0
 LS3D_RESULT ISND_3Dlistener::SetRolloffFactor(float factor)
 {
     ds_data.flRolloffFactor = factor;
@@ -91,6 +100,7 @@ LS3D_RESULT ISND_3Dlistener::SetRolloffFactor(float factor)
 }
 
 // FUNCTION: LS3DF 0x1007b1b0
+// FUNCTION: LS3DF11 0x10077ff0
 LS3D_RESULT ISND_3Dlistener::Update()
 {
     return SUCCEEDED(pISndDriver->ds_listener8->SetAllParameters(&ds_data, DS3D_IMMEDIATE)) ? I3D_OK : I3DERR_GENERIC;
@@ -101,11 +111,13 @@ LS3D_RESULT ISND_3Dlistener::Update()
 // builds the jump table (one group gives the same code with other registers: fewer references to property). Any split
 // into two or more groups before the vectors gives the original; vectors before a scalar group put their body first.
 // FUNCTION: LS3DF 0x1007b1e0
+// FUNCTION: LS3DF11 0x10078020
 LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
 {
     if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
         return I3DERR_UNSUPPORTED;
     // GLOBAL: LS3DF 0x101c62c0
+    // GLOBAL: LS3DF11 0x101c33c0
     static uint data;
     data = value;
     switch (property) {
@@ -147,6 +159,7 @@ LS3D_RESULT ISND_3Dlistener::SetEAXProperty(int property, uint value)
 }
 
 // FUNCTION: LS3DF 0x1007b280
+// FUNCTION: LS3DF11 0x100780c0
 LS3D_RESULT ISND_3Dlistener::SetEAX3Property(uint property, void *data, uint size)
 {
     if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
@@ -156,6 +169,7 @@ LS3D_RESULT ISND_3Dlistener::SetEAX3Property(uint property, void *data, uint siz
 }
 
 // FUNCTION: LS3DF 0x1007b2d0
+// FUNCTION: LS3DF11 0x10078110
 LS3D_RESULT ISND_3Dlistener::GetEAX3Property(uint property, void *data, uint size, uint *returned)
 {
     if (!pISndDriver->eax_property_set || !(pISndDriver->create_flags & ISNDINIT_EAX30))
@@ -166,6 +180,7 @@ LS3D_RESULT ISND_3Dlistener::GetEAX3Property(uint property, void *data, uint siz
 }
 
 // FUNCTION: LS3DF 0x1007b320
+// FUNCTION: LS3DF11 0x10078160
 LS3D_RESULT ISND_3Dlistener::CommitDeferredSettings()
 {
     return SUCCEEDED(pISndDriver->ds_listener8->CommitDeferredSettings()) ? I3D_OK : I3DERR_GENERIC;

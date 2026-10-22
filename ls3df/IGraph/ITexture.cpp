@@ -34,10 +34,12 @@ extern int m_FrameCounter;
 
 // What Preload draws: one point, which makes the driver upload the texture
 // GLOBAL: LS3DF 0x100aad38
+// GLOBAL: LS3DF11 0x100a7e58
 static LS3D_TLVERTEX preload_vertex = {0.0f, 0.0f, 0.0f, 1.0f, 0, 0, 0.0f, 0.0f};
 
 // Draw(int, int)'s quad, a triangle strip; Draw fills in the positions
 // GLOBAL: LS3DF 0x100aad58
+// GLOBAL: LS3DF11 0x100a7e78
 static LS3D_TLVERTEX draw_quad[4] = {
     {0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff, 0, 0.0f, 0.0f},
     {0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff, 0, 1.0f, 0.0f},
@@ -47,6 +49,7 @@ static LS3D_TLVERTEX draw_quad[4] = {
 
 // Draw(RECT, ...)'s, whose colors are the arguments
 // GLOBAL: LS3DF 0x100aadd8
+// GLOBAL: LS3DF11 0x100a7ef8
 static LS3D_TLVERTEX draw_quad_colored[4] = {
     {0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff, 0, 0.0f, 0.0f},
     {0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff, 0, 1.0f, 0.0f},
@@ -57,16 +60,20 @@ static LS3D_TLVERTEX draw_quad_colored[4] = {
 // The texture manager's three pools: how much video memory each may take before its thread evicts the least recently
 // used texture of the pool, and the size of its textures (a managed texture's file name ends in its pool's number)
 // GLOBAL: LS3DF 0x100aae58
+// GLOBAL: LS3DF11 0x100a7f78
 static int pool_budgets[3] = {0x100000, 0x100000, 0x100000};
 
 // GLOBAL: LS3DF 0x100aae64
+// GLOBAL: LS3DF11 0x100a7f84
 static int pool_sizes[3] = {256, 128, 64};
 
 // The versions of the presaved files (PS2 name for the DXT one)
 // GLOBAL: LS3DF 0x1009d8d0
+// GLOBAL: LS3DF11 0x1009a8d0
 static const short DXTCurrentVersion = 9;
 
 // GLOBAL: LS3DF 0x1009d8d2
+// GLOBAL: LS3DF11 0x1009a8d2
 static const short TEXCurrentVersion = 1;
 
 bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void **palette, BITMAPINFOHEADER *bmi,
@@ -106,6 +113,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture);
     }
 
 // FUNCTION: LS3DF 0x10075c10
+// FUNCTION: LS3DF11 0x10072aa0
 ITexture::ITexture()
 {
     m_UID = 0;
@@ -121,12 +129,14 @@ ITexture::ITexture()
 }
 
 // FUNCTION: LS3DF 0x10075c50
+// FUNCTION: LS3DF11 0x10072ae0
 ITexture::~ITexture()
 {
     Close();
 }
 
 // FUNCTION: LS3DF 0x10075cd0
+// FUNCTION: LS3DF11 0x10072b60
 int ITexture::Release()
 {
     if (--m_RefCount < 0) {
@@ -142,6 +152,7 @@ int ITexture::Release()
 
 // Makes this a copy of another texture, with a texture of its own
 // FUNCTION: LS3DF 0x10075d10
+// FUNCTION: LS3DF11 0x10072ba0
 LS3D_RESULT ITexture::Duplicate(ITexture *src)
 {
     IDirect3DSurface8 *src_surface, *dst_surface;
@@ -182,6 +193,7 @@ LS3D_RESULT ITexture::Duplicate(ITexture *src)
 }
 
 // FUNCTION: LS3DF 0x10075f30
+// FUNCTION: LS3DF11 0x10072dc0
 LS3D_RESULT ITexture::Reload()
 {
     dbgPrintf("ITexture::Reload() - WAS NOT IMPLEMENTED !");
@@ -198,6 +210,7 @@ LS3D_RESULT ITexture::Reload()
 // 3 and 2, and reads the first byte of three pixels at their use. Alpha case 1 with src++ after the store gives the
 // original's order there but moves registers all through the function.
 // FUNCTION: LS3DF 0x10075f50
+// FUNCTION: LS3DF11 0x10072de0
 LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flags, ushort sx, ushort sy,
     ushort levels)
 {
@@ -921,6 +934,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
 // Loads the levels Create saved (<name>[_<alpha name>]_<levels>[L].DX<type>), if the file is there and fits. The alpha
 // time is read in a block of its own and the level loop has its locked rect: the original's frame overlaps the two.
 // FUNCTION: LS3DF 0x10078190
+// FUNCTION: LS3DF11 0x10075000
 bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dxt, FILETIME *time,
     FILETIME *alpha_time)
 {
@@ -993,6 +1007,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
 
 // The same for the 16-bit formats (<name>_<levels>[L].555 or .565)
 // FUNCTION: LS3DF 0x10078430
+// FUNCTION: LS3DF11 0x100752a0
 bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
 {
     char file[256];
@@ -1056,12 +1071,14 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
 }
 
 // FUNCTION: LS3DF 0x10078670
+// FUNCTION: LS3DF11 0x100754e0
 bool ITexture::IsInit()
 {
     return m_Init;
 }
 
 // FUNCTION: LS3DF 0x10078680
+// FUNCTION: LS3DF11 0x100754f0
 void ITexture::Close()
 {
     Unlock();
@@ -1094,6 +1111,7 @@ void ITexture::Close()
 }
 
 // FUNCTION: LS3DF 0x100787c0
+// FUNCTION: LS3DF11 0x10075630
 void *ITexture::Lock(RECT *rect, uint &pitch, ushort level)
 {
     if (m_pLockSurface)
@@ -1106,6 +1124,7 @@ void *ITexture::Lock(RECT *rect, uint &pitch, ushort level)
 }
 
 // FUNCTION: LS3DF 0x10078820
+// FUNCTION: LS3DF11 0x10075690
 void ITexture::Unlock()
 {
     if (m_pLockSurface) {
@@ -1116,6 +1135,7 @@ void ITexture::Unlock()
 }
 
 // FUNCTION: LS3DF 0x10078850
+// FUNCTION: LS3DF11 0x100756c0
 HRESULT ITexture::AddDirtyRect(const RECT *rect)
 {
     return m_pD3DTexture8->AddDirtyRect(rect);
@@ -1123,6 +1143,7 @@ HRESULT ITexture::AddDirtyRect(const RECT *rect)
 
 // Draws a point with the texture, which makes the driver upload it
 // FUNCTION: LS3DF 0x10078860
+// FUNCTION: LS3DF11 0x100756d0
 LS3D_RESULT ITexture::Preload()
 {
     if (m_SceneBegun) {
@@ -1150,6 +1171,7 @@ LS3D_RESULT ITexture::Preload()
 // ecx, 1) and it steps p with lea [p + sx*4]; every counted loop tried (up or down, int or unsigned, pointer or byte
 // counters, indexed, std::fill) counts sx, or (n - 1) / 4 + 1 for byte counters.
 // FUNCTION: LS3DF 0x10078940
+// FUNCTION: LS3DF11 0x100757b0
 bool ITexture::Fill(RECT *rect, uint color, ushort level)
 {
     D3DSURFACE_DESC desc;
@@ -1227,6 +1249,7 @@ bool ITexture::Fill(RECT *rect, uint color, ushort level)
 
 // Draws the texture on the screen at its size
 // FUNCTION: LS3DF 0x10078b70
+// FUNCTION: LS3DF11 0x100759e0
 bool ITexture::Draw(int x, int y)
 {
     RECT rect, screen, visible;
@@ -1260,6 +1283,7 @@ bool ITexture::Draw(int x, int y)
 
 // Draws the texture stretched over a rectangle, with a color at each corner
 // FUNCTION: LS3DF 0x10078cf0
+// FUNCTION: LS3DF11 0x10075b60
 bool ITexture::Draw(RECT rect, uint color0, uint color1, uint color2, uint color3)
 {
     RECT screen, visible;
@@ -1293,6 +1317,7 @@ bool ITexture::Draw(RECT rect, uint color0, uint color1, uint color2, uint color
 
 // Saves level 0 as an uncompressed TGA (the 16-bit formats as 1555, A4R4G4B4 as 32 bits)
 // FUNCTION: LS3DF 0x10078e40
+// FUNCTION: LS3DF11 0x10075cb0
 bool ITexture::SaveToTGA(const char *name)
 {
     if (m_Format == D3DFMT_DXT1 || m_Format == D3DFMT_DXT2 || m_Format == D3DFMT_DXT3 || m_Format == D3DFMT_DXT4 ||
@@ -1377,6 +1402,7 @@ bool ITexture::SaveToTGA(const char *name)
 // 4 bytes per entry. The BITMAPINFOHEADER's biXPelsPerMeter holds the row pitch. sx and sy scale the image (no
 // filtering). The PS2 build also reads its own .imc format.
 // FUNCTION: LS3DF 0x10079150
+// FUNCTION: LS3DF11 0x10075fc0
 bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void **palette, BITMAPINFOHEADER *bmi,
     bool from_memory, FILETIME *time, int handle)
 {
@@ -1575,6 +1601,7 @@ struct S_vector4 {
 // Converts a level from ARGB bytes to the surface's format. The plain conversions are assembly, the dithered ones
 // (ITC_DITHER, which no_dither turns off) Floyd-Steinberg. L8 holds three planes, of R, G and B.
 // FUNCTION: LS3DF 0x100798c0
+// FUNCTION: LS3DF11 0x10076730
 bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint sy, int no_dither)
 {
     S_vector4 *err = NULL;
@@ -1891,6 +1918,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
 
 // Compresses a level, converted to dxt_format, to DXT1 (type 1, or 2 with 1-bit alpha) or DXT3 (type 3)
 // FUNCTION: LS3DF 0x1007a380
+// FUNCTION: LS3DF11 0x100771f0
 bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect3DSurface8 *dst)
 {
     float weights[3] = {0.3086f, 0.6094f, 0.0820f};
@@ -1968,32 +1996,41 @@ struct S_texture_slot {
 };
 
 // GLOBAL: LS3DF 0x101c5dc8
+// GLOBAL: LS3DF11 0x101c2ec8
 static ITexture *load_queue[256];
 
 // GLOBAL: LS3DF 0x101c628c
+// GLOBAL: LS3DF11 0x101c338c
 static C_list<S_managed_texture *> managed_textures(0x400);
 
 // GLOBAL: LS3DF 0x101c61c8
+// GLOBAL: LS3DF11 0x101c32c8
 static C_list<S_texture_slot> pool_textures[3];
 
 // GLOBAL: LS3DF 0x101c6208
+// GLOBAL: LS3DF11 0x101c3308
 static S_texture_slot sysmem_textures[3];
 
 // GLOBAL: LS3DF 0x101c629c
+// GLOBAL: LS3DF11 0x101c339c
 static int load_queue_out;
 
 // GLOBAL: LS3DF 0x101c62a0
+// GLOBAL: LS3DF11 0x101c33a0
 static int load_queue_put;
 
 // GLOBAL: LS3DF 0x101c62a4
+// GLOBAL: LS3DF11 0x101c33a4
 static int load_queue_len;
 
 // GLOBAL: LS3DF 0x101c62a8
+// GLOBAL: LS3DF11 0x101c33a8
 static int pools_memory[3];
 
 void UnloadManagedTextures();
 
 // FUNCTION: LS3DF 0x1007a610
+// FUNCTION: LS3DF11 0x10077480
 void ReleaseManagedTextures()
 {
     UnloadManagedTextures();
@@ -2018,6 +2055,7 @@ void ReleaseManagedTextures()
 // Creates the pools' textures up to their budgets
 // Open: VC6's pointer into pool_textures is on res_size in the original, on used_size in ours.
 // FUNCTION: LS3DF 0x1007a710
+// FUNCTION: LS3DF11 0x10077580
 void RestoreManagedTextures(uint flags)
 {
     ReleaseManagedTextures();
@@ -2048,6 +2086,7 @@ void RestoreManagedTextures(uint flags)
 
 // Whether a managed texture is loaded; queues it for the thread if it isn't
 // FUNCTION: LS3DF 0x1007a910
+// FUNCTION: LS3DF11 0x10077780
 bool ITexture::Request()
 {
     if (!(m_Flags & ITC_MANAGED))
@@ -2073,6 +2112,7 @@ bool ITexture::Request()
 // Open: the skip loop's texture path reloads the queue's length before the shared advance of the out index in the
 // original, after it in ours, and the length at the end is in edx in the original, ecx in ours.
 // FUNCTION: LS3DF 0x1007a9b0
+// FUNCTION: LS3DF11 0x10077820
 DWORD WINAPI RenderThreadProc(void *param)
 {
     while (m_RenderThreadRunning) {
@@ -2170,6 +2210,7 @@ DWORD WINAPI RenderThreadProc(void *param)
 
 // Creates the record of a managed texture
 // FUNCTION: LS3DF 0x1007ad20
+// FUNCTION: LS3DF11 0x10077b90
 bool AddTextureToTextureManager(ITexture *texture, const char *name, uint flags)
 {
     char file[256];
@@ -2211,6 +2252,7 @@ bool AddTextureToTextureManager(ITexture *texture, const char *name, uint flags)
 
 // Deletes the record of a managed texture and takes it out of the queue and the pools
 // FUNCTION: LS3DF 0x1007aee0
+// FUNCTION: LS3DF11 0x10077d50
 bool RemoveTextureFromTextureManager(ITexture *texture)
 {
     EnterCriticalSection(&m_FrameSection);
@@ -2243,6 +2285,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
 
 // Takes the pools' textures from their owners (I3D code calls it)
 // FUNCTION: LS3DF 0x1007afe0
+// FUNCTION: LS3DF11 0x10077e50
 void UnloadManagedTextures()
 {
     EnterCriticalSection(&m_FrameSection);

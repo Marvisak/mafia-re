@@ -15,6 +15,7 @@
 // UpdateWMatrix(), nor GetWorldDir's body written out changes it; GetDir's written out inlines both, but with a local
 // instead of the return value the branches end differently.
 // FUNCTION: LS3DF 0x100201f0
+// FUNCTION: LS3DF11 0x1001fd20
 I3D_light::I3D_light()
 {
     diffuse = S_vector(1.0f, 1.0f, 1.0f);
@@ -51,6 +52,7 @@ I3D_light::I3D_light()
 }
 
 // FUNCTION: LS3DF 0x10020760
+// FUNCTION: LS3DF11 0x10020290
 I3D_light::~I3D_light()
 {
     I3D_sector **p = &sectors[0];
@@ -61,6 +63,7 @@ I3D_light::~I3D_light()
 // The fog types are their sectors' fog_light (UpdateV): a light becoming one or ceasing to be one is taken out of its
 // sectors and put back
 // FUNCTION: LS3DF 0x10020800
+// FUNCTION: LS3DF11 0x10020330
 void I3D_light::SetLightType(I3D_LIGHTTYPE type)
 {
     if (ltype == type)
@@ -88,6 +91,7 @@ void I3D_light::SetLightType(I3D_LIGHTTYPE type)
 }
 
 // FUNCTION: LS3DF 0x10020930
+// FUNCTION: LS3DF11 0x10020460
 void I3D_light::SetDiffuse(const S_vector &c)
 {
     diffuse = c;
@@ -98,6 +102,7 @@ void I3D_light::SetDiffuse(const S_vector &c)
 }
 
 // FUNCTION: LS3DF 0x100209e0
+// FUNCTION: LS3DF11 0x10020510
 void I3D_light::SetDiffuse(float r, float g, float b)
 {
     diffuse.x = r;
@@ -110,6 +115,7 @@ void I3D_light::SetDiffuse(float r, float g, float b)
 }
 
 // FUNCTION: LS3DF 0x10020a90
+// FUNCTION: LS3DF11 0x100205c0
 void I3D_light::SetDiffusePower(float p)
 {
     power = p;
@@ -121,6 +127,7 @@ void I3D_light::SetDiffusePower(float p)
 
 // The fog types' ranges are in percent
 // FUNCTION: LS3DF 0x10020b20
+// FUNCTION: LS3DF11 0x10020650
 void I3D_light::SetRange(float near1, float far1)
 {
     near_range = near1;
@@ -142,6 +149,7 @@ void I3D_light::SetRange(float near1, float far1)
 }
 
 // FUNCTION: LS3DF 0x10020c30
+// FUNCTION: LS3DF11 0x10020760
 void I3D_light::SetCone(float inner, float outer)
 {
     cone_in = inner;
@@ -165,6 +173,7 @@ void I3D_light::SetCone(float inner, float outer)
 // and with them after the GetWorldDir calls VC6 leaves the Normalize calls in those out of line (with them only in the
 // first loop, it orders the directional light's sum of squares differently).
 // FUNCTION: LS3DF 0x10020d10
+// FUNCTION: LS3DF11 0x10020840
 void I3D_light::UpdateV()
 {
     update_count++;
@@ -229,6 +238,7 @@ void I3D_light::UpdateV()
 }
 
 // FUNCTION: LS3DF 0x10021400
+// FUNCTION: LS3DF11 0x10020f30
 void I3D_light::SetOn(bool on)
 {
     if (on) {
@@ -244,6 +254,7 @@ void I3D_light::SetOn(bool on)
 }
 
 // FUNCTION: LS3DF 0x10021440
+// FUNCTION: LS3DF11 0x10020f70
 void I3D_light::SetMode(uint m)
 {
     if (mode == m)
@@ -255,6 +266,7 @@ void I3D_light::SetMode(uint m)
 }
 
 // FUNCTION: LS3DF 0x10021490
+// FUNCTION: LS3DF11 0x10020fc0
 LS3D_RESULT I3D_light::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -275,6 +287,7 @@ LS3D_RESULT I3D_light::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10021530
+// FUNCTION: LS3DF11 0x10021060
 void I3D_light::LoadImage()
 {
     I3D_frame::LoadImage();

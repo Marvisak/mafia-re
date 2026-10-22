@@ -19,12 +19,14 @@
 #define SLERP_DELTA 0.0001
 
 // FUNCTION: LS3DF 0x1002cda0
+// FUNCTION: LS3DF11 0x1002c0a0
 float __cdecl RandFloat()
 {
     return rand() * (1.0f / RAND_MAX);
 }
 
 // FUNCTION: LS3DF 0x1002cdc0
+// FUNCTION: LS3DF11 0x1002c0c0
 S_matrix __stdcall RotateXMatrix(float angle)
 {
     S_matrix m;
@@ -39,6 +41,7 @@ S_matrix __stdcall RotateXMatrix(float angle)
 }
 
 // FUNCTION: LS3DF 0x1002ce10
+// FUNCTION: LS3DF11 0x1002c110
 S_matrix __stdcall RotateYMatrix(float angle)
 {
     S_matrix m;
@@ -53,6 +56,7 @@ S_matrix __stdcall RotateYMatrix(float angle)
 }
 
 // FUNCTION: LS3DF 0x1002ce60
+// FUNCTION: LS3DF11 0x1002c160
 S_matrix __stdcall RotateZMatrix(float angle)
 {
     S_matrix m;
@@ -67,6 +71,7 @@ S_matrix __stdcall RotateZMatrix(float angle)
 }
 
 // FUNCTION: LS3DF 0x1002ceb0
+// FUNCTION: LS3DF11 0x1002c1b0
 float S_vector2::AngleTo(const S_vector2 &v) const
 {
     float f = (float)sqrt(v.Square() * Square());
@@ -76,6 +81,7 @@ float S_vector2::AngleTo(const S_vector2 &v) const
 }
 
 // FUNCTION: LS3DF 0x1002cf20
+// FUNCTION: LS3DF11 0x1002c220
 void S_matrix::Identity()
 {
     *this = IdentityMatrix;
@@ -83,6 +89,7 @@ void S_matrix::Identity()
 
 // The rotation part only: the position is rotated too, not moved
 // FUNCTION: LS3DF 0x1002cf40
+// FUNCTION: LS3DF11 0x1002c240
 S_matrix S_matrix::RotateByMatrix(const S_matrix &mat) const
 {
     S_matrix r;
@@ -208,6 +215,7 @@ S_matrix S_matrix::RotateByMatrix(const S_matrix &mat) const
 
 // Sets the matrix to the inverse of mat, an affine matrix; a singular one gives the identity
 // FUNCTION: LS3DF 0x1002d0b0
+// FUNCTION: LS3DF11 0x1002c3b0
 bool S_matrix::Inverse(const S_matrix &mat)
 {
     m[0][0] = mat.m[1][1] * mat.m[2][2] - mat.m[2][1] * mat.m[1][2];
@@ -367,6 +375,7 @@ S_matrix &S_matrix::Make(const S_matrix &m1, const S_matrix &m2)
 }
 
 // FUNCTION: LS3DF 0x1002d220
+// FUNCTION: LS3DF11 0x1002c520
 S_matrix &S_matrix::operator*=(const S_matrix &mat)
 {
     S_matrix tmp;
@@ -376,6 +385,7 @@ S_matrix &S_matrix::operator*=(const S_matrix &mat)
 }
 
 // FUNCTION: LS3DF 0x1002d3a0
+// FUNCTION: LS3DF11 0x1002c6a0
 S_matrix S_matrix::operator*(const S_matrix &mat) const
 {
     S_matrix rtn;
@@ -384,6 +394,7 @@ S_matrix S_matrix::operator*(const S_matrix &mat) const
 }
 
 // FUNCTION: LS3DF 0x1002d520
+// FUNCTION: LS3DF11 0x1002c820
 S_matrix S_matrix::Mult4X4(const S_matrix &mat) const
 {
     S_matrix ret;
@@ -393,6 +404,7 @@ S_matrix S_matrix::Mult4X4(const S_matrix &mat) const
 
 // The full 4x4 product a * b
 // FUNCTION: LS3DF 0x1002d780
+// FUNCTION: LS3DF11 0x1002ca80
 S_matrix &S_matrix::Make4X4(const S_matrix &m1, const S_matrix &m2)
 {
     __asm {
@@ -613,6 +625,7 @@ S_matrix &S_matrix::Make4X4(const S_matrix &m1, const S_matrix &m2)
 
 // A rotation that turns the z axis into dir
 // FUNCTION: LS3DF 0x1002d9d0
+// FUNCTION: LS3DF11 0x1002ccd0
 void S_matrix::SetDir(const S_vector &dir)
 {
     Identity();
@@ -635,6 +648,7 @@ void S_matrix::SetDir(const S_vector &dir)
 
 // The rotation part only: the z axis along dir, the y axis towards up
 // FUNCTION: LS3DF 0x1002dcf0
+// FUNCTION: LS3DF11 0x1002cff0
 void S_matrix::SetDir3(const S_vector &dir, const S_vector &up)
 {
     (*this)(2).SetNormalized(dir);
@@ -652,6 +666,7 @@ void S_matrix::SetDir3(const S_vector &dir, const S_vector &up)
 }
 
 // FUNCTION: LS3DF 0x1002e030
+// FUNCTION: LS3DF11 0x1002d330
 void S_matrix::SetDir(const S_vector &dir, const S_vector &up)
 {
     SetDir3(dir, up);
@@ -665,6 +680,7 @@ void S_matrix::SetDir(const S_vector &dir, const S_vector &up)
 }
 
 // FUNCTION: LS3DF 0x1002e070
+// FUNCTION: LS3DF11 0x1002d370
 void S_matrix::SetRot3(const S_quat &q)
 {
     if (fabs(q.s) >= QUAT_ONE_LIMIT) {
@@ -697,6 +713,7 @@ void S_matrix::SetRot3(const S_quat &q)
 }
 
 // FUNCTION: LS3DF 0x1002e1c0
+// FUNCTION: LS3DF11 0x1002d4c0
 void S_matrix::SetRot(const S_quat &q)
 {
     SetRot3(q);
@@ -711,6 +728,7 @@ void S_matrix::SetRot(const S_quat &q)
 
 // The rotation of mat without its scale
 // FUNCTION: LS3DF 0x1002e1f0
+// FUNCTION: LS3DF11 0x1002d4f0
 void S_matrix::SetRot(const S_matrix &mat)
 {
     (*this)(0) = mat(0);
@@ -747,12 +765,14 @@ void S_matrix::SetRot(const S_matrix &mat)
 }
 
 // FUNCTION: LS3DF 0x1002e3a0
+// FUNCTION: LS3DF11 0x1002d6a0
 S_vector S_matrix::GetScale() const
 {
     return S_vector((*this)(0).Magnitude(), (*this)(1).Magnitude(), (*this)(2).Magnitude());
 }
 
 // FUNCTION: LS3DF 0x1002e510
+// FUNCTION: LS3DF11 0x1002d810
 S_vector S_matrix::GetScale2() const
 {
     return S_vector((*this)(0).Square(), (*this)(1).Square(), (*this)(2).Square());
@@ -760,6 +780,7 @@ S_vector S_matrix::GetScale2() const
 
 // The mean scale
 // FUNCTION: LS3DF 0x1002e580
+// FUNCTION: LS3DF11 0x1002d880
 float S_matrix::GetUScale() const
 {
     return ((*this)(0).Magnitude() + (*this)(1).Magnitude() + (*this)(2).Magnitude()) * (1.0f / 3.0f);
@@ -767,6 +788,7 @@ float S_matrix::GetUScale() const
 
 // The cosine of half the angle
 // FUNCTION: LS3DF 0x1002e710
+// FUNCTION: LS3DF11 0x1002da10
 float S_vector::CosAngleTo(const S_vector &v) const
 {
     float c = Dot(v) / sqrt(Square() * v.Square());
@@ -774,6 +796,7 @@ float S_vector::CosAngleTo(const S_vector &v) const
 }
 
 // FUNCTION: LS3DF 0x1002e7a0
+// FUNCTION: LS3DF11 0x1002daa0
 float S_vector::AngleTo(const S_vector &v) const
 {
     float f = Magnitude() * v.Magnitude();
@@ -784,6 +807,7 @@ float S_vector::AngleTo(const S_vector &v) const
 }
 
 // FUNCTION: LS3DF 0x1002e920
+// FUNCTION: LS3DF11 0x1002dc20
 S_vector &S_vector::operator*=(const S_matrix &m)
 {
     float fx = x * m.m[0][0] + y * m.m[1][0] + z * m.m[2][0] + m.m[3][0];
@@ -797,6 +821,7 @@ S_vector &S_vector::operator*=(const S_matrix &m)
 }
 
 // FUNCTION: LS3DF 0x1002e980
+// FUNCTION: LS3DF11 0x1002dc80
 S_vector S_vector::operator*(const S_matrix &m) const
 {
     S_vector rtn;
@@ -839,6 +864,7 @@ S_vector S_vector::operator*(const S_matrix &m) const
 }
 
 // FUNCTION: LS3DF 0x1002ea10
+// FUNCTION: LS3DF11 0x1002dd10
 S_vector S_vector::RotateByMatrix(const S_matrix &m) const
 {
     S_vector rtn;
@@ -879,6 +905,7 @@ S_vector S_vector::RotateByMatrix(const S_matrix &m) const
 
 // RotateByMatrix with each axis of m normalized
 // FUNCTION: LS3DF 0x1002eab0
+// FUNCTION: LS3DF11 0x1002ddb0
 S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
 {
     S_vector rtn;
@@ -927,6 +954,7 @@ S_vector S_vector::RotateByNormMatrix(const S_matrix &m) const
 }
 
 // FUNCTION: LS3DF 0x1002ec00
+// FUNCTION: LS3DF11 0x1002df00
 S_matrix S_quat::RotationMatrix() const
 {
     S_matrix m;
@@ -968,6 +996,7 @@ S_matrix S_quat::RotationMatrix() const
 
 // The rotated z axis, the third row of RotationMatrix
 // FUNCTION: LS3DF 0x1002ed60
+// FUNCTION: LS3DF11 0x1002e060
 S_vector S_quat::GetDir() const
 {
     if (fabs(s) >= 1.0)
@@ -985,6 +1014,7 @@ S_vector S_quat::GetDir() const
 }
 
 // FUNCTION: LS3DF 0x1002ee00
+// FUNCTION: LS3DF11 0x1002e100
 void S_quat::Make(const S_vector &axis, float angle)
 {
     s = (float)cos(angle * 0.5f);
@@ -1020,6 +1050,7 @@ void S_quat::Make(const S_vector &axis, float angle)
 // term order of d1.Dot(d2) and of the Cross and Dot test, and two swapped stack slots (Magnitude's sq and the
 // assembly helper's argument).
 // FUNCTION: LS3DF 0x1002eef0
+// FUNCTION: LS3DF11 0x1002e1f0
 void S_quat::Make(const S_matrix &m)
 {
     S_vector scale = m.GetScale();
@@ -1131,6 +1162,7 @@ void S_quat::Make(const S_matrix &m)
 
 // A rotation that turns the z axis into dir, then rolls around it
 // FUNCTION: LS3DF 0x1002fb50
+// FUNCTION: LS3DF11 0x1002ee50
 void S_quat::SetDir(const S_vector &dir, float roll)
 {
     S_matrix m;
@@ -1141,6 +1173,7 @@ void S_quat::SetDir(const S_vector &dir, float roll)
 }
 
 // FUNCTION: LS3DF 0x1002fd70
+// FUNCTION: LS3DF11 0x1002f070
 void S_quat::Inverse(S_vector &axis, float &angle) const
 {
     axis = v;
@@ -1154,6 +1187,7 @@ void S_quat::Inverse(S_vector &axis, float &angle) const
 }
 
 // FUNCTION: LS3DF 0x1002fee0
+// FUNCTION: LS3DF11 0x1002f1e0
 S_quat S_quat::Slerp(const S_quat &q, float t, bool shorten) const
 {
     float to1[4];
@@ -1190,6 +1224,7 @@ S_quat S_quat::Slerp(const S_quat &q, float t, bool shorten) const
 }
 
 // FUNCTION: LS3DF 0x10030040
+// FUNCTION: LS3DF11 0x1002f340
 S_quat S_quat::RotateByMatrix(const S_matrix &m) const
 {
     S_quat q;
@@ -1198,6 +1233,7 @@ S_quat S_quat::RotateByMatrix(const S_matrix &m) const
 }
 
 // FUNCTION: LS3DF 0x10030140
+// FUNCTION: LS3DF11 0x1002f440
 void S_quat::Normalize()
 {
     float sq = s * s + v.x * v.x + v.y * v.y + v.z * v.z;
@@ -1223,6 +1259,7 @@ void S_quat::Normalize()
 // The line where the two planes meet: a point on it and its direction. Graphics Gems' method, which Insanity3D has
 // with these names and the squares of the direction in a vector: three float locals compile differently.
 // FUNCTION: LS3DF 0x10030290
+// FUNCTION: LS3DF11 0x1002f590
 bool S_plane::IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const
 {
     xdir = normal.Cross(pl.normal);
@@ -1260,6 +1297,7 @@ bool S_plane::IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir)
 
 // The closest points of two lines (p1 + u1 * dir1, p2 + u2 * dir2; Insanity3D has the same algorithm and names)
 // FUNCTION: LS3DF 0x10030440
+// FUNCTION: LS3DF11 0x1002f740
 bool __stdcall LineLineIntersect(const S_vector &p1, const S_vector &dir1, const S_vector &p2, const S_vector &dir2,
     float &u1, float &u2)
 {

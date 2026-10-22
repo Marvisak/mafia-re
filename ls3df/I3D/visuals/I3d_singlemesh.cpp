@@ -16,11 +16,14 @@
 
 // DBuild's search for the joints (PS2 names)
 // GLOBAL: LS3DF 0x101b4f80
+// GLOBAL: LS3DF11 0x101b20a0
 static int jointu;
 // GLOBAL: LS3DF 0x101b4f88
+// GLOBAL: LS3DF11 0x101b20a8
 static I3D_joint *pJoint[64];
 
 // FUNCTION: LS3DF 0x10054240
+// FUNCTION: LS3DF11 0x10051fc0
 I3D_singlemesh::I3D_singlemesh()
 {
     num_joints = 0;
@@ -31,6 +34,7 @@ I3D_singlemesh::I3D_singlemesh()
 }
 
 // FUNCTION: LS3DF 0x100542b0
+// FUNCTION: LS3DF11 0x10052030
 I3D_singlemesh::~I3D_singlemesh()
 {
     int i;
@@ -45,6 +49,7 @@ I3D_singlemesh::~I3D_singlemesh()
 }
 
 // FUNCTION: LS3DF 0x10054370
+// FUNCTION: LS3DF11 0x100520f0
 void I3D_singlemesh::UpdateVertices()
 {
     I3D_object::UpdateVertices();
@@ -52,6 +57,7 @@ void I3D_singlemesh::UpdateVertices()
 }
 
 // FUNCTION: LS3DF 0x10054390
+// FUNCTION: LS3DF11 0x10052110
 void I3D_singlemesh::UpdateVertices(int index)
 {
     I3D_object::UpdateVertices(index);
@@ -59,6 +65,7 @@ void I3D_singlemesh::UpdateVertices(int index)
 }
 
 // FUNCTION: LS3DF 0x100543b0
+// FUNCTION: LS3DF11 0x10052130
 const I3D_bbox *I3D_singlemesh::GetJointBBox(int index) const
 {
     if (index >= num_joints)
@@ -82,6 +89,7 @@ void I3D_singlemesh::SetSpace(bool world)
 
 // The copy's lods share sm's levels: a lod for each of sm's
 // FUNCTION: LS3DF 0x10054400
+// FUNCTION: LS3DF11 0x10052180
 LS3D_RESULT I3D_singlemesh::DuplicateSinglemeshDef(I3D_singlemesh *sm)
 {
     for (int i = 0; i < 10; i++) {
@@ -105,6 +113,7 @@ LS3D_RESULT I3D_singlemesh::DuplicateSinglemeshDef(I3D_singlemesh *sm)
 // and both proxy tests share. Written out in each case, VC6 hoists their shared push above the proxy tests and keeps
 // three copies.
 // FUNCTION: LS3DF 0x100544d0
+// FUNCTION: LS3DF11 0x10052250
 LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -194,6 +203,7 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x100547e0
+// FUNCTION: LS3DF11 0x10052560
 void I3D_singlemesh::UpdateBoundProc()
 {
     if (bvol_joints_changed != joints_changed)
@@ -205,6 +215,7 @@ void I3D_singlemesh::UpdateBoundProc()
 // The first level's box, grown by each joint's box where the joint is now. A moved corner goes into a local, which
 // Absorb reads from its slot; passed as the temporary, it is read through the returned pointer.
 // FUNCTION: LS3DF 0x10054810
+// FUNCTION: LS3DF11 0x10052590
 void I3D_singlemesh::UpdateBVolumeProc()
 {
     bvol_joints_changed = joints_changed;
@@ -254,6 +265,7 @@ void I3D_singlemesh::UpdateBVolumeProc()
 static void findJoint(I3D_frame *frm);
 
 // FUNCTION: LS3DF 0x10054c20
+// FUNCTION: LS3DF11 0x100529a0
 bool I3D_singlemesh::DBuild()
 {
     int i;
@@ -297,6 +309,7 @@ bool I3D_singlemesh::DBuild()
 // The joints below frm into pJoint, as many as it holds. VC6 inlines the first level into DBuild and puts the copy
 // right after it.
 // FUNCTION: LS3DF 0x10054d80
+// FUNCTION: LS3DF11 0x10052b00
 static void findJoint(I3D_frame *frm)
 {
     for (I3D_frame *f = frm->child; f; f = f->next) {
@@ -310,6 +323,7 @@ static void findJoint(I3D_frame *frm)
 }
 
 // FUNCTION: LS3DF 0x10054dd0
+// FUNCTION: LS3DF11 0x10052b50
 I3D_joint *I3D_singlemesh::GetVertexJoint(int vertex, int lod_index)
 {
     SMeshLod *l = (SMeshLod *)lods[lod_index];
@@ -326,6 +340,7 @@ I3D_joint *I3D_singlemesh::GetVertexJoint(int vertex, int lod_index)
 }
 
 // FUNCTION: LS3DF 0x10054e30
+// FUNCTION: LS3DF11 0x10052bb0
 const S_clip_sm_vertex *I3D_singlemesh::GetVertexPos(int lod_index)
 {
     I3D_mesh_level *level = mesh->levels[lod_index];
@@ -352,6 +367,7 @@ const S_clip_sm_vertex *I3D_singlemesh::GetVertexPos(int lod_index)
 // post-decrement loop of post-increments; a counter of its own is a little more source, which inlines the second
 // Lock's push_back), and jp stepped before info (the loop's last register).
 // FUNCTION: LS3DF 0x10054f60
+// FUNCTION: LS3DF11 0x10052c40
 void I3D_singlemesh::UpdateLodVertices(int lod_index)
 {
     if (!joints && !(vis_flags & VISF_PROXY))
@@ -420,6 +436,7 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
 
 // Both walk a local copy of dst; walking dst itself moves their registers
 // FUNCTION: LS3DF 0x10055640
+// FUNCTION: LS3DF11 0x10053440
 void I3D_singlemesh::CopyRigidPositions(uchar *dst, uint stride, int lod_index)
 {
     I3D_singlemesh *sm = this;
@@ -450,6 +467,7 @@ void I3D_singlemesh::CopyRigidPositions(uchar *dst, uint stride, int lod_index)
 }
 
 // FUNCTION: LS3DF 0x100557c0
+// FUNCTION: LS3DF11 0x10053510
 void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 {
     I3D_singlemesh *sm = this;
@@ -492,6 +510,7 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 // same), and swaps which of num_transparent++ and the push_back's size increment are a read-modify-write; the stack
 // slots of some temporaries follow.
 // FUNCTION: LS3DF 0x10055930
+// FUNCTION: LS3DF11 0x100535d0
 void I3D_singlemesh::m_AddFGroups()
 {
     if (!mesh)
@@ -701,6 +720,7 @@ void I3D_singlemesh::m_AddFGroups()
 // joint's part and its weights. A lod without joints is deleted. The lod is tested before it is assigned (eax, then
 // copied into esi).
 // FUNCTION: LS3DF 0x10056860
+// FUNCTION: LS3DF11 0x10054200
 void I3D_singlemesh::LoadImage()
 {
     I3D_object::LoadImage();
@@ -767,6 +787,7 @@ void I3D_singlemesh::LoadImage()
 
 // Inline, so that its copy comes after the scalar deleting destructor that calls it (I3D.h)
 // FUNCTION: LS3DF 0x10056af0
+// FUNCTION: LS3DF11 0x10054490
 inline SMeshLod::~SMeshLod()
 {
     if (def)

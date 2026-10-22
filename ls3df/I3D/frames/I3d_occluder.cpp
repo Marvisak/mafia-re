@@ -32,22 +32,27 @@ struct TRISIDE2 {
 // OCCL_UpdateOcclLists' sector and the last occluder of its list (PS2 names, static there too), and POIS_EnumProc's
 // sector (PC only; the name is a guess, chosen for the original's .bss order, see tools/bsshash.py)
 // GLOBAL: LS3DF 0x101b43bc
+// GLOBAL: LS3DF11 0x101b14dc
 static I3D_sector *PO_pSector;
 
 // GLOBAL: LS3DF 0x101b43c0
+// GLOBAL: LS3DF11 0x101b14e0
 static I3D_sector *pPOISector;
 
 // Nothing references it (PC only; the name is a guess, chosen for its place in .bss). An unreferenced static would get
 // no space: VC6 leaves it out.
 // GLOBAL: LS3DF 0x101b43c4
+// GLOBAL: LS3DF11 0x101b14e4
 int OccludedVisuals;
 
 // GLOBAL: LS3DF 0x101b43c8
+// GLOBAL: LS3DF11 0x101b14e8
 static I3D_occluder *pLastOccl;
 
 // The flags after the pointers, as PS2 has them: set first, VC6 changes them in memory, where the original loads and
 // stores them
 // FUNCTION: LS3DF 0x1003a430
+// FUNCTION: LS3DF11 0x10038970
 I3D_occluder::I3D_occluder()
 {
     num_side_planes = 0;
@@ -77,6 +82,7 @@ I3D_occluder::I3D_occluder()
 }
 
 // FUNCTION: LS3DF 0x1003a520
+// FUNCTION: LS3DF11 0x10038a60
 I3D_occluder::~I3D_occluder()
 {
     if (face_flags)
@@ -104,6 +110,7 @@ I3D_occluder::~I3D_occluder()
 
 // Moves the occluder from its scene's ring of occluders into the other scene's
 // FUNCTION: LS3DF 0x1003a650
+// FUNCTION: LS3DF11 0x10038b90
 void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 {
     if (scene && prev_in_scene) {
@@ -140,6 +147,7 @@ void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 // The occluder goes into the scene of its new parent: the scene that owns the parent, or the one of the sector the
 // parent is in
 // FUNCTION: LS3DF 0x1003a770
+// FUNCTION: LS3DF11 0x10038cb0
 LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
 {
     if (frame == parent)
@@ -181,6 +189,7 @@ LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
 // radius, the box loop, the transform loop or the plane (ComputePlane called on a named plane inlines the Dot but sums
 // the normal's squares in another order) adds that much.
 // FUNCTION: LS3DF 0x1003a800
+// FUNCTION: LS3DF11 0x10038d40
 void I3D_occluder::UpdateV()
 {
     if (!num_verts)
@@ -223,6 +232,7 @@ void I3D_occluder::UpdateV()
 
 // The other occluder's faces are built into this one
 // FUNCTION: LS3DF 0x1003ac00
+// FUNCTION: LS3DF11 0x10039140
 LS3D_RESULT I3D_occluder::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -236,6 +246,7 @@ LS3D_RESULT I3D_occluder::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1003ac60
+// FUNCTION: LS3DF11 0x100391a0
 LS3D_RESULT I3D_occluder::Build(const S_vector *vp, uint nv, const ushort *fp, uint nf, uint stride)
 {
     if (verts)
@@ -267,6 +278,7 @@ LS3D_RESULT I3D_occluder::Build(const S_vector *vp, uint nv, const ushort *fp, u
 // leaves the third Add's Add_r out of line, as the original's. The node's fields go into locals in the order PS2 reads
 // them, which puts VC6's walking pointer on next.
 // FUNCTION: LS3DF 0x1003ad90
+// FUNCTION: LS3DF11 0x100392d0
 LS3D_RESULT I3D_occluder::Build()
 {
     XSBTree<TRISIDE2> tree(num_faces * 3);
@@ -328,6 +340,7 @@ LS3D_RESULT I3D_occluder::Build()
 // position read into a reference before the plane gives the first loop's order but steps the plane pointer after the
 // call.
 // FUNCTION: LS3DF 0x1003b130
+// FUNCTION: LS3DF11 0x10039670
 void I3D_occluder::UpdateShadow()
 {
     occl_flags &= ~(OCCLF_ACTIVE | OCCLF_PORTAL);
@@ -563,6 +576,7 @@ inline void ProcessOccludersInSector(I3D_sector *sct)
 
 // Adds the occluders below frm to PO_pSector's list, without going into cameras and other sectors
 // FUNCTION: LS3DF 0x1003bec0
+// FUNCTION: LS3DF11 0x1003a400
 void UOL_EnumProc(I3D_frame *frm)
 {
     for (I3D_frame *f = frm->child; f; f = f->next) {
@@ -581,6 +595,7 @@ void UOL_EnumProc(I3D_frame *frm)
 }
 
 // FUNCTION: LS3DF 0x1003bf30
+// FUNCTION: LS3DF11 0x1003a470
 void OCCL_UpdateOcclLists(I3D_scene *scene)
 {
     if (!scene->occluders_changed)
@@ -600,6 +615,7 @@ void OCCL_UpdateOcclLists(I3D_scene *scene)
 
 // The rendering's: the occluders hide the visuals of the sectors on (RS_USE_OCCLUSION)
 // FUNCTION: LS3DF 0x1003c070
+// FUNCTION: LS3DF11 0x1003a5b0
 void ProcessOccluders(I3D_scene *scene)
 {
     if (!renderState[RS_USE_OCCLUSION] || !scene)
@@ -623,6 +639,7 @@ void ProcessOccluders(I3D_scene *scene)
 // plane product of the second copy's. Of the variable choices of the four loops, the Dot spellings of the portal tests
 // and TestVertListW's (1024 combinations), none gives both copies; each best one leaves two products swapped.
 // FUNCTION: LS3DF 0x1003c610
+// FUNCTION: LS3DF11 0x1003ab50
 void OCCL_PrepareSector2(I3D_sector *sct)
 {
     I3D_occluder *o;
@@ -680,6 +697,7 @@ void OCCL_PrepareSector2(I3D_sector *sct)
 
 // The counts, the vertices and the faces
 // FUNCTION: LS3DF 0x1003c9b0
+// FUNCTION: LS3DF11 0x1003aef0
 void I3D_occluder::LoadImage()
 {
     I3D_frame::LoadImage();

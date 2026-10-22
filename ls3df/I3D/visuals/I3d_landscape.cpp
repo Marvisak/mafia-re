@@ -25,43 +25,53 @@
 // m_TriTreePool, gViewPos and gMaxNode in that order after the header's zero vector, and the three set to zero follow
 // in declaration order.
 // GLOBAL: LS3DF 0x101b42d0
+// GLOBAL: LS3DF11 0x101b13f0
 S_vector gViewPos;
 
 // The patches' texture coordinates: the base texture over a patch, the detail texture 40 times (the name is a guess)
 // GLOBAL: LS3DF 0x100a710c
+// GLOBAL: LS3DF11 0x100a410c
 float gLandTexScale = 1.0f / PATCH_SIZE;
 
 // LandTex0.tga to LandTex3.tga, then LandDetail.bmp, the detail texture
 // GLOBAL: LS3DF 0x100c0078
+// GLOBAL: LS3DF11 0x100bd198
 ITexture *gLandTextures[5];
 
 // The deepest node a patch would split to at its distance (Tessellate's; nothing reads it)
 // GLOBAL: LS3DF 0x101b42dc
+// GLOBAL: LS3DF11 0x101b13fc
 int gMaxNode;
 
 // The vertex buffer all patches draw from, locked by each patch's Render, and its vertices
 // GLOBAL: LS3DF 0x101b42e0
+// GLOBAL: LS3DF11 0x101b1400
 IDirect3DVertexBuffer8 *gLandVB = NULL;
 
 // GLOBAL: LS3DF 0x101b42e4
+// GLOBAL: LS3DF11 0x101b1404
 LVERTEX2 *gLandVerts = NULL;
 
 // GLOBAL: LS3DF 0x101b42e8
+// GLOBAL: LS3DF11 0x101b1408
 int gNumLandVerts = 0;
 
 // FUNCTION: LS3DF 0x1001ef70
+// FUNCTION: LS3DF11 0x1001ea90
 I3D_landpatch::I3D_landpatch()
 {
     visual_type = I3D_VISUAL_LANDPATCH;
 }
 
 // FUNCTION: LS3DF 0x1001efc0
+// FUNCTION: LS3DF11 0x1001eae0
 I3D_landpatch::~I3D_landpatch()
 {
 }
 
 // A triangle's split: its base neighbor is split first unless the two form a diamond, so that the mesh has no cracks
 // FUNCTION: LS3DF 0x1001efe0
+// FUNCTION: LS3DF11 0x1001eb00
 void I3D_landpatch::Split(TriTreeNode *tri)
 {
     if (tri->LeftChild)
@@ -110,6 +120,7 @@ void I3D_landpatch::Split(TriTreeNode *tri)
 
 // Splits every triangle down to node 0x800, two levels below the variance trees
 // FUNCTION: LS3DF 0x1001f140
+// FUNCTION: LS3DF11 0x1001ec60
 void I3D_landpatch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX,
     int apexY, int node)
 {
@@ -124,6 +135,7 @@ void I3D_landpatch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int
 
 // The leaves into the locked vertex buffer, a triangle each, white, with the map's heights for y
 // FUNCTION: LS3DF 0x1001f1e0
+// FUNCTION: LS3DF11 0x1001ed00
 void I3D_landpatch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY)
 {
     if (tri->LeftChild) {
@@ -171,6 +183,7 @@ void I3D_landpatch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rig
 // A triangle's variance is how far the map at its hypotenuse's middle is from the edge's interpolated height, the
 // largest of its own and its children's down to 8 units; the trees keep it plus one
 // FUNCTION: LS3DF 0x1001f570
+// FUNCTION: LS3DF11 0x1001f090
 uchar I3D_landpatch::RecursComputeVariance(int leftX, int leftY, uchar leftZ, int rightX, int rightY, uchar rightZ,
     int apexX, int apexY, uchar apexZ, int node)
 {
@@ -197,6 +210,7 @@ uchar I3D_landpatch::RecursComputeVariance(int leftX, int leftY, uchar leftZ, in
 // two-vector constructor keeps two), the sphere's center is a local computed before the box is copied, and the
 // position is stored member by member (the frame's SetPos takes a vector, which goes through a temporary).
 // FUNCTION: LS3DF 0x1001f690
+// FUNCTION: LS3DF11 0x1001f1b0
 void I3D_landpatch::Init(int heightX, int heightY, int worldX, int worldY, uchar *hMap)
 {
     m_BaseLeft.RightNeighbor = m_BaseLeft.LeftNeighbor = m_BaseRight.RightNeighbor = m_BaseRight.LeftNeighbor =
@@ -240,6 +254,7 @@ void I3D_landpatch::Init(int heightX, int heightY, int worldX, int worldY, uchar
 }
 
 // FUNCTION: LS3DF 0x1001f8e0
+// FUNCTION: LS3DF11 0x1001f400
 void I3D_landpatch::Reset()
 {
     m_BaseLeft.LeftChild = m_BaseLeft.RightChild = m_BaseRight.LeftChild = m_BaseLeft.LeftChild = NULL;
@@ -249,6 +264,7 @@ void I3D_landpatch::Reset()
 }
 
 // FUNCTION: LS3DF 0x1001f920
+// FUNCTION: LS3DF11 0x1001f440
 void I3D_landpatch::ComputeVariance()
 {
     m_CurrentVariance = m_VarianceLeft;
@@ -262,6 +278,7 @@ void I3D_landpatch::ComputeVariance()
 
 // The PC's measure of the distance first: from the camera to the bound sphere, along the ground, into gMaxNode
 // FUNCTION: LS3DF 0x1001f9b0
+// FUNCTION: LS3DF11 0x1001f4d0
 void I3D_landpatch::Tessellate()
 {
     const I3D_bvolume &bvol = GetWBoundVolume();
@@ -284,6 +301,7 @@ void I3D_landpatch::Tessellate()
 
 // The patch's triangles through the shared vertex buffer, with the frame's matrix and the patch's texture
 // FUNCTION: LS3DF 0x1001fac0
+// FUNCTION: LS3DF11 0x1001f5e0
 void I3D_landpatch::Render()
 {
     gNumLandVerts = 0;
@@ -303,9 +321,11 @@ void I3D_landpatch::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 
 // The tree nodes of all landscapes, and the first free one, which each frame's Reset frees all of
 // GLOBAL: LS3DF 0x100c0074
+// GLOBAL: LS3DF11 0x100bd194
 int m_NextTriNode;
 
 // GLOBAL: LS3DF 0x100c0090
+// GLOBAL: LS3DF11 0x100bd1b0
 TriTreeNode m_TriTreePool[POOL_SIZE];
 
 // Inlined into Split, its only caller
@@ -319,6 +339,7 @@ TriTreeNode *I3D_landscape::AllocateTri()
 }
 
 // FUNCTION: LS3DF 0x1001fbb0
+// FUNCTION: LS3DF11 0x1001f6e0
 I3D_landscape::I3D_landscape()
 {
     type = FRAME_LANDSCAPE;
@@ -328,6 +349,7 @@ I3D_landscape::I3D_landscape()
 }
 
 // FUNCTION: LS3DF 0x1001fcc0
+// FUNCTION: LS3DF11 0x1001f7f0
 I3D_landscape::~I3D_landscape()
 {
     pI3DDriver->landscapes.remove(this);
@@ -340,6 +362,7 @@ I3D_landscape::~I3D_landscape()
 // textures are loaded but nothing gives them to the patches, except the detail texture, which Render sets. The patch
 // number written out (not a counter of its own) is what VC6 keeps in ebx and tests for the outer loop.
 // FUNCTION: LS3DF 0x1001fd90
+// FUNCTION: LS3DF11 0x1001f8c0
 void I3D_landscape::Init(const char *name, uint size)
 {
     uchar *map;
@@ -383,6 +406,7 @@ void I3D_landscape::Init(const char *name, uint size)
 // The demo's, with the camera's position for its view cone, and the patches rendered in the last frame for its visible
 // ones
 // FUNCTION: LS3DF 0x1001ff30
+// FUNCTION: LS3DF11 0x1001fa60
 void I3D_landscape::Reset()
 {
     m_NextTriNode = 0;
@@ -416,6 +440,7 @@ void I3D_landscape::Reset()
 }
 
 // FUNCTION: LS3DF 0x10020010
+// FUNCTION: LS3DF11 0x1001fb40
 void I3D_landscape::Tessellate()
 {
     int nCount;
@@ -429,6 +454,7 @@ void I3D_landscape::Tessellate()
 // The render states for all patches: the vertex format with two texture coordinates, the detail texture modulating
 // in the second stage, and the patch textures clamped
 // FUNCTION: LS3DF 0x10020040
+// FUNCTION: LS3DF11 0x1001fb70
 void I3D_landscape::Render()
 {
     SetCullState(D3DCULL_CCW);

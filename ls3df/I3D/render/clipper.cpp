@@ -14,106 +14,140 @@
 
 // Constructed, so its $E comes first; the order of the file's .bss is clipper.h's
 // GLOBAL: LS3DF 0x100aef58
+// GLOBAL: LS3DF11 0x100ac078
 S_vector clip_center_t;
 
 // GLOBAL: LS3DF 0x100aef30
+// GLOBAL: LS3DF11 0x100ac050
 bool clip_backfaces;
 
 // GLOBAL: LS3DF 0x100aef34
+// GLOBAL: LS3DF11 0x100ac054
 int num_clip_faces;
 
 // GLOBAL: LS3DF 0x100aef38
+// GLOBAL: LS3DF11 0x100ac058
 int clip_verts_max;
 
 // GLOBAL: LS3DF 0x100aef3c
+// GLOBAL: LS3DF11 0x100ac05c
 bool clip_is_ortho;
 
 // GLOBAL: LS3DF 0x100aef40
+// GLOBAL: LS3DF11 0x100ac060
 int clip_added_transp;
 
 // GLOBAL: LS3DF 0x100aef44
+// GLOBAL: LS3DF11 0x100ac064
 S_clip_vertex *clip_vert_end;
 
 // GLOBAL: LS3DF 0x100aef48
+// GLOBAL: LS3DF11 0x100ac068
 int clip_faces_alloc;
 
 // GLOBAL: LS3DF 0x100aef4c
+// GLOBAL: LS3DF11 0x100ac06c
 int clip_fg_blend;
 
 // GLOBAL: LS3DF 0x100aef50
+// GLOBAL: LS3DF11 0x100ac070
 float clip_spread;
 
 // GLOBAL: LS3DF 0x100aef54
+// GLOBAL: LS3DF11 0x100ac074
 I3D_triface *clip_next_face;
 
 // GLOBAL: LS3DF 0x100aef64
+// GLOBAL: LS3DF11 0x100ac084
 S_vector *clip_results;
 
 // GLOBAL: LS3DF 0x100aef68
+// GLOBAL: LS3DF11 0x100ac088
 uint clip_with_alpha;
 
 // GLOBAL: LS3DF 0x100aef78
+// GLOBAL: LS3DF11 0x100ac098
 float clip_inv_reverse;
 
 // GLOBAL: LS3DF 0x100aef7c
+// GLOBAL: LS3DF11 0x100ac09c
 float clip_rev_factor;
 
 // GLOBAL: LS3DF 0x100aef80
+// GLOBAL: LS3DF11 0x100ac0a0
 const S_matrix *clip_world;
 
 // GLOBAL: LS3DF 0x100aef88
+// GLOBAL: LS3DF11 0x100ac0a8
 ushort clip_poly_buf2[512];
 
 // GLOBAL: LS3DF 0x100af388
+// GLOBAL: LS3DF11 0x100ac4a8
 I3D_triface *clip_faces;
 
 // GLOBAL: LS3DF 0x100af38c
+// GLOBAL: LS3DF11 0x100ac4ac
 int clip_result_alloc;
 
 // GLOBAL: LS3DF 0x100af390
+// GLOBAL: LS3DF11 0x100ac4b0
 int clip_poly_num;
 
 // GLOBAL: LS3DF 0x100af394
+// GLOBAL: LS3DF11 0x100ac4b4
 float clip_lift;
 
 // GLOBAL: LS3DF 0x100af398
+// GLOBAL: LS3DF11 0x100ac4b8
 int clip_vertices_size;
 
 // GLOBAL: LS3DF 0x100af39c
+// GLOBAL: LS3DF11 0x100ac4bc
 float clip_ratio_y;
 
 // GLOBAL: LS3DF 0x100af3a0
+// GLOBAL: LS3DF11 0x100ac4c0
 float clip_ratio_x;
 
 // GLOBAL: LS3DF 0x100af3a4
+// GLOBAL: LS3DF11 0x100ac4c4
 const S_matrix *clip_matrix = NULL;
 
 // GLOBAL: LS3DF 0x100af3a8
+// GLOBAL: LS3DF11 0x100ac4c8
 S_clip_vertex *clip_verts = NULL;
 
 // GLOBAL: LS3DF 0x100af3ac
+// GLOBAL: LS3DF11 0x100ac4cc
 I3D_triface *clip_faces_t = NULL;
 
 // GLOBAL: LS3DF 0x100af3b0
+// GLOBAL: LS3DF11 0x100ac4d0
 I3D_triface *clip_next_face_t = NULL;
 
 // GLOBAL: LS3DF 0x100af3b4
+// GLOBAL: LS3DF11 0x100ac4d4
 int num_clip_faces_t = 0;
 
 // GLOBAL: LS3DF 0x100af3b8
+// GLOBAL: LS3DF11 0x100ac4d8
 int clip_added_faces = 0;
 
 // GLOBAL: LS3DF 0x100af3bc
+// GLOBAL: LS3DF11 0x100ac4dc
 int num_clip_results = 0;
 
 // GLOBAL: LS3DF 0x100af3c0
+// GLOBAL: LS3DF11 0x100ac4e0
 int clip_two_sided = 0;
 
 // GLOBAL: LS3DF 0x100af3c4
+// GLOBAL: LS3DF11 0x100ac4e4
 int num_clip_results_t = 0;
 
 // The parameters of the next clipping: m takes world space into clip space, world is the projector's matrix
 // FUNCTION: LS3DF 0x10001010
+// FUNCTION: LS3DF11 0x10001010
 void SetClipParams(const S_matrix &m, const S_matrix &world, bool ortho, float offset, float expand, float reverse)
 {
     clip_matrix = &m;
@@ -134,6 +168,7 @@ void SetClipParams(const S_matrix &m, const S_matrix &world, bool ortho, float o
 
 // Empties the result before the meshes are clipped
 // FUNCTION: LS3DF 0x100010c0
+// FUNCTION: LS3DF11 0x100010c0
 void ResetClipArrays()
 {
     num_clip_results = 0;
@@ -145,6 +180,7 @@ void ResetClipArrays()
 
 // Room for a mesh of vertNum vertices and faceNum faces: the vertices aren't kept, the faces are
 // FUNCTION: LS3DF 0x100010f0
+// FUNCTION: LS3DF11 0x100010f0
 bool ReserveClipArrays(int vertNum, int faceNum)
 {
     if (clip_vertices_size < 65000) {
@@ -202,6 +238,7 @@ bool ReserveClipArrays(int vertNum, int faceNum)
 
 // The face block isn't freed, in the original too
 // FUNCTION: LS3DF 0x10001370
+// FUNCTION: LS3DF11 0x10001370
 void FreeClipArrays()
 {
     delete[] clip_verts;

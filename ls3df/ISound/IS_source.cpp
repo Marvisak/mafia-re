@@ -22,6 +22,7 @@ struct S_fmt_chunk {
 };
 
 // FUNCTION: LS3DF 0x1007d430
+// FUNCTION: LS3DF11 0x1007a260
 ISND_source::ISND_source() : lpDSB8(NULL)
 {
     ref = 1;
@@ -29,6 +30,7 @@ ISND_source::ISND_source() : lpDSB8(NULL)
 }
 
 // FUNCTION: LS3DF 0x1007d480
+// FUNCTION: LS3DF11 0x1007a2b0
 ISND_source::~ISND_source()
 {
     Close();
@@ -36,6 +38,7 @@ ISND_source::~ISND_source()
 }
 
 // FUNCTION: LS3DF 0x1007d550
+// FUNCTION: LS3DF11 0x1007a380
 int ISND_source::Release()
 {
     if (--ref < 0) {
@@ -50,6 +53,7 @@ int ISND_source::Release()
 }
 
 // FUNCTION: LS3DF 0x1007d590
+// FUNCTION: LS3DF11 0x1007a3c0
 LS3D_RESULT ISND_source::Open(const char *name, uint flags)
 {
     Close();
@@ -136,6 +140,7 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1007d890
+// FUNCTION: LS3DF11 0x1007a6c0
 void ISND_source::Close()
 {
     if (lpDSB8) {
@@ -147,6 +152,7 @@ void ISND_source::Close()
 }
 
 // FUNCTION: LS3DF 0x1007d8c0
+// FUNCTION: LS3DF11 0x1007a6f0
 bool ISND_source::IsOpen() const
 {
     return wf.size > 0 ? true : false;
@@ -154,6 +160,7 @@ bool ISND_source::IsOpen() const
 
 // In milliseconds
 // FUNCTION: LS3DF 0x1007d8d0
+// FUNCTION: LS3DF11 0x1007a700
 uint ISND_source::GetPlayTime() const
 {
     if (!wf.size)
@@ -162,6 +169,7 @@ uint ISND_source::GetPlayTime() const
 }
 
 // FUNCTION: LS3DF 0x1007d910
+// FUNCTION: LS3DF11 0x1007a740
 LS3D_RESULT ISND_source::GetFormat(S_wave_format *wf1)
 {
     *wf1 = wf;
@@ -169,6 +177,7 @@ LS3D_RESULT ISND_source::GetFormat(S_wave_format *wf1)
 }
 
 // FUNCTION: LS3DF 0x1007d940
+// FUNCTION: LS3DF11 0x1007a770
 LS3D_RESULT ISND_source::Lock(void **data)
 {
     if (FAILED(lpDSB8->Lock(0, 0, &save_lock_ptr1, &save_lick_size1, NULL, NULL, DSBLOCK_ENTIREBUFFER)))
@@ -178,6 +187,7 @@ LS3D_RESULT ISND_source::Lock(void **data)
 }
 
 // FUNCTION: LS3DF 0x1007d980
+// FUNCTION: LS3DF11 0x1007a7b0
 LS3D_RESULT ISND_source::Unlock()
 {
     return SUCCEEDED(lpDSB8->Unlock(save_lock_ptr1, save_lick_size1, NULL, 0)) ? I3D_OK : I3DERR_GENERIC;

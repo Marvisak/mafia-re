@@ -21,6 +21,7 @@
 #include <math.h>
 
 // FUNCTION: LS3DF 0x10041800
+// FUNCTION: LS3DF11 0x1003f880
 I3D_portal::I3D_portal()
 {
     num_verts = 0;
@@ -38,6 +39,7 @@ I3D_portal::I3D_portal()
 
 // It leaves the scene's ring through AddToSceneRing with its own scene, which does nothing: PS2's does the same
 // FUNCTION: LS3DF 0x10041850
+// FUNCTION: LS3DF11 0x1003f8d0
 I3D_portal::~I3D_portal()
 {
     portalVersion++;
@@ -50,6 +52,7 @@ I3D_portal::~I3D_portal()
 
 // Moves the portal from its scene's ring of portals into the other scene's
 // FUNCTION: LS3DF 0x10041890
+// FUNCTION: LS3DF11 0x1003f910
 void I3D_portal::AddToSceneRing(I3D_scene *new_scene)
 {
     if (scene == new_scene)
@@ -82,6 +85,7 @@ void I3D_portal::AddToSceneRing(I3D_scene *new_scene)
 }
 
 // FUNCTION: LS3DF 0x10041980
+// FUNCTION: LS3DF11 0x1003fa00
 void I3D_portal::SetOn(bool on)
 {
     if (on)
@@ -97,6 +101,7 @@ void I3D_portal::SetOn(bool on)
 }
 
 // FUNCTION: LS3DF 0x100419d0
+// FUNCTION: LS3DF11 0x1003fa50
 bool I3D_portal::IsOn() const
 {
     return portal_flags & PORTALF_ON ? true : false;
@@ -105,6 +110,7 @@ bool I3D_portal::IsOn() const
 // The vertices in world space, the box's center and the sphere around it, and the plane (its normal out of the sector),
 // through S_plane's three-point constructor: the original's normal and d are one temporary, copied into the member.
 // FUNCTION: LS3DF 0x100419e0
+// FUNCTION: LS3DF11 0x1003fa60
 void I3D_portal::UpdatePortal()
 {
     S_vector bmin(1e6f, 1e6f, 1e6f);
@@ -146,28 +152,36 @@ void I3D_portal::UpdatePortal()
 // is VC6's hash order of these names (tools/bsshash.py); the zero-initialized ones (CTP_pSector, pTopSct,
 // SctLookStckStop) follow all the others.
 // GLOBAL: LS3DF 0x101b45a4
+// GLOBAL: LS3DF11 0x101b16c4
 static S_vector CTP_VFnormals[5];
 
 // GLOBAL: LS3DF 0x101b43f0
+// GLOBAL: LS3DF11 0x101b1510
 static float CTP_VFds[5];
 
 // GLOBAL: LS3DF 0x101b43ec
+// GLOBAL: LS3DF11 0x101b150c
 static float CTP_Near;
 
 // GLOBAL: LS3DF 0x101b440c
+// GLOBAL: LS3DF11 0x101b152c
 static float CTP_Far;
 
 // GLOBAL: LS3DF 0x101b4408
+// GLOBAL: LS3DF11 0x101b1528
 static I3D_portal *CTP_pPortalW;
 
 // GLOBAL: LS3DF 0x101b45a0
+// GLOBAL: LS3DF11 0x101b16c0
 static uint CTP_SectFlg;
 
 // GLOBAL: LS3DF 0x101b4404
+// GLOBAL: LS3DF11 0x101b1524
 static bool CTP_PartlyOffPortal;
 
 // Zero-initialized, so after the others in .bss
 // GLOBAL: LS3DF 0x101b45e0
+// GLOBAL: LS3DF11 0x101b1700
 static I3D_sector *CTP_pSector = NULL;
 
 // The frames of the sector's hierarchy against the view: their spheres against the near and far distances and the
@@ -193,6 +207,7 @@ static I3D_sector *CTP_pSector = NULL;
 // -0x70, -0x98 and -0xa4, the planes at -0x5c, -0x4c, -0x3c and -0x8c (the fourth's x and y stay on the x87 stack
 // through the loop).
 // FUNCTION: LS3DF 0x10041df0
+// FUNCTION: LS3DF11 0x1003fe70
 void CTP_EnumProcFirst(I3D_frame *root)
 {
     for (I3D_frame *frm = root->child; frm; frm = frm->next) {
@@ -726,6 +741,7 @@ void CTP_EnumProcFirst(I3D_frame *root)
 // frame are only walked through. Through a portal that is small on the screen or out of its range, only the children
 // of the frames the sectors' own hierarchies hold are walked.
 // FUNCTION: LS3DF 0x10043000
+// FUNCTION: LS3DF11 0x10041080
 void CTP_EnumProc(I3D_frame *root)
 {
     if (!CTP_pPortalW)
@@ -1219,6 +1235,7 @@ void CTP_EnumProc(I3D_frame *root)
 // accessors, a pointer, a helper taking the corners by reference), and the operators for the corners starve the
 // planes instead.
 // FUNCTION: LS3DF 0x100437f0
+// FUNCTION: LS3DF11 0x10041870
 void CullThruPortal(I3D_frame *frm, I3D_portal *portal, uint flags)
 {
     I3D_camera *cam = pCurrentCamera;
@@ -1364,6 +1381,7 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p);
 // ours edi); no order of the copy's pointers, spelling of the wrap test, of the steps or of the declarations moves
 // them.
 // FUNCTION: LS3DF 0x10044600
+// FUNCTION: LS3DF11 0x10042680
 void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
 {
     S_vector pv[16];
@@ -1525,19 +1543,23 @@ all:
 // The stack of the sectors the walk is in (PS2 names): a sector reached again through a portal without a twin marks
 // those it went through since (SCTF_UNKNOWN_80)
 // GLOBAL: LS3DF 0x101b4410
+// GLOBAL: LS3DF11 0x101b1530
 static I3D_sector *SctLookStck[100];
 
 // GLOBAL: LS3DF 0x101b45e4
+// GLOBAL: LS3DF11 0x101b1704
 static I3D_sector **pTopSct = NULL;
 
 // The stack ran over (nothing reads it)
 // GLOBAL: LS3DF 0x101b45e8
+// GLOBAL: LS3DF11 0x101b1708
 static bool SctLookStckStop = false;
 
 // The walk into a sector through portal p (the camera's own sector without one): its frames culled to what p lets the
 // camera see, then on through those of its portals (and of the other sectors' portals into it) the camera looks
 // out through, unless the sector is on the walk's stack already. Through a portal the camera is near enough to.
 // FUNCTION: LS3DF 0x10044da0
+// FUNCTION: LS3DF11 0x10042e20
 void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
 {
     if (!(sct->frm_flags & FRMFLAGS_ON) || (p && !(p->portal_flags & PORTALF_ON)))
@@ -1622,6 +1644,7 @@ void ParsePortalsInSector_Begin(I3D_sector *sct)
 // - The centers are scaled component by component (through operator*= VC6 doesn't let the last product consume the
 //   reciprocal), and the second portal's count and vertices are taken before its center is zeroed.
 // FUNCTION: LS3DF 0x100450a0
+// FUNCTION: LS3DF11 0x10043120
 void UpdatePortalInterconnection(I3D_scene *scene)
 {
     I3D_portal *p = scene->portals;
@@ -1749,6 +1772,7 @@ void ReportBadPortals(I3D_scene *scene)
 // the camera's sector out through the portals the camera sees, and the scene's backdrop, omni and near sectors with
 // their own views
 // FUNCTION: LS3DF 0x10045700
+// FUNCTION: LS3DF11 0x10043780
 void ProcessPortals(I3D_scene *scene)
 {
     if (!scene)
@@ -1795,6 +1819,7 @@ void ProcessPortals(I3D_scene *scene)
 // The vertex count (a byte), then the flags and the rest up to the vertices (0x1c bytes; PS2's own layout has 0x20),
 // and the vertices
 // FUNCTION: LS3DF 0x100458f0
+// FUNCTION: LS3DF11 0x10043970
 void I3D_portal::LoadImage()
 {
     num_verts = 0;

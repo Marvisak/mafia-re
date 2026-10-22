@@ -9,6 +9,7 @@
 // random). PS2 keeps the frames in C_lists, the PC in std::vectors, so its own header: only I3d_material.cpp and the
 // files that create one (I3d_driver.cpp) or convert one (I3d_mesh.cpp) include it. The member names are guesses.
 // VTABLE: LS3DF 0x1009bef0
+// VTABLE: LS3DF11 0x10098ef0
 class I3D_anim_material : public I3D_material {
 public:
     I3D_anim_material();
@@ -41,29 +42,38 @@ public:
 };
 
 // SYNTHETIC: LS3DF 0x1002b430
+// SYNTHETIC: LS3DF11 0x1002a730
 // I3D_anim_material::`scalar deleting destructor'
 
 // std::vector's out-of-line functions for the frames, at the end of I3d_material.cpp
 // TEMPLATE: LS3DF 0x1002c8c0
+// TEMPLATE: LS3DF11 0x1002bbc0
 // ??1?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x1002c8e0
+// TEMPLATE: LS3DF11 0x1002bbe0
 // ?size@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: LS3DF 0x1002c900
+// TEMPLATE: LS3DF11 0x1002bc00
 // ?insert@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@QAEPAPAVITexture@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: LS3DF 0x1002caa0
+// TEMPLATE: LS3DF11 0x1002bda0
 // ?erase@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@QAEPAPAVITexture@@PAPAV3@0@Z
 
 // TEMPLATE: LS3DF 0x1002cad0
+// TEMPLATE: LS3DF11 0x1002bdd0
 // ?insert@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@QAEXPAPAVITexture@@IABQAV3@@Z
 
 // TEMPLATE: LS3DF 0x1002ccf0
+// TEMPLATE: LS3DF11 0x1002bff0
 // ?_Ucopy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEPAPAVITexture@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: LS3DF 0x1002cd20
+// TEMPLATE: LS3DF11 0x1002c020
 // ?_Ufill@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@IABQAV3@@Z
 
 // TEMPLATE: LS3DF 0x1002cd50
+// TEMPLATE: LS3DF11 0x1002c050
 // ?copy@std@@YIPAPAVITexture@@PAPAV2@00@Z

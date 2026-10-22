@@ -11,6 +11,7 @@
 
 // Its assert is Insanity3D's, the default of SetupBlendInternal's switch (I3D.h has the helpers' asserts)
 // FUNCTION: LS3DF 0x1000ab40
+// FUNCTION: LS3DF11 0x1000a7d0
 inline void SetBlendState(uint state)
 {
     if (m_CurrBlendState == state)
@@ -43,6 +44,7 @@ inline void SetBlendState(uint state)
 }
 
 // FUNCTION: LS3DF 0x1000ae50
+// FUNCTION: LS3DF11 0x1000aae0
 inline void SetVertexFormat(uint format)
 {
     assert(m_pD3DDevice8);
@@ -77,6 +79,7 @@ inline void SetVertexFormat(uint format)
 // The second texture stage's color op (the name is a guess). The rendering calls it out of line; the copy the linker
 // keeps is in an I3D file not written yet.
 // FUNCTION: LS3DF 0x10029f30
+// FUNCTION: LS3DF11 0x100295c0
 inline void SetColorOp1(uint op)
 {
     assert(m_pD3DDevice8);
@@ -89,6 +92,7 @@ inline void SetColorOp1(uint op)
 // D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; the name is a guess). The
 // weather renderer calls it out of line; the copy the linker keeps is in an I3D file not written yet.
 // FUNCTION: LS3DF 0x10029ef0
+// FUNCTION: LS3DF11 0x10029580
 inline void SetCullState(uint cull)
 {
     assert(m_pD3DDevice8);
@@ -104,6 +108,7 @@ inline void SetCullState(uint cull)
 // D3DRS_CLIPPING (Insanity3D has the same helper, commented out, under this name). Two calls, as IGraph::SetState's
 // DXS_CLIPPING: the copy the linker kept is the mirrors' file's.
 // FUNCTION: LS3DF 0x100333d0
+// FUNCTION: LS3DF11 0x100323a0
 inline void SetClipping(uint clip)
 {
     assert(m_pD3DDevice8);
@@ -124,6 +129,7 @@ extern uint m_CurrZBias;
 // SetVertexFormat, as the original's doesn't; written out, it does. The copy the linker keeps is render.cpp's, after
 // its functions.
 // FUNCTION: LS3DF 0x100659f0
+// FUNCTION: LS3DF11 0x10062cd0
 inline void SetZBias(int bias)
 {
     assert(m_pD3DDevice8);
@@ -141,6 +147,7 @@ extern float m_CurrFogEnd;
 // The fog render states, set where they differ from IGraph's (PC only, the name is a guess): linear from start to end
 // (type 0), or exponential (1) or squared (2) with start as the density
 // FUNCTION: LS3DF 0x1004e390
+// FUNCTION: LS3DF11 0x1004c220
 inline void SetFog(uint state, uint type, float start, float end, uint color)
 {
     if (m_CurrFogState != state) {

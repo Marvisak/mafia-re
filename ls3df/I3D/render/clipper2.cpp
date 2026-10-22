@@ -46,14 +46,17 @@
 
 // The vertices of the mesh being clipped and the clipping's
 // GLOBAL: LS3DF 0x100af7c8
+// GLOBAL: LS3DF11 0x100ac8e8
 int clip_vert_count;
 
 // The polygon, every other plane
 // GLOBAL: LS3DF 0x100af3c8
+// GLOBAL: LS3DF11 0x100ac4e8
 ushort clip_poly_buf1[512];
 
 // The faces of an orthogonal volume, in the unit box
 // FUNCTION: LS3DF 0x100013e0
+// FUNCTION: LS3DF11 0x100013e0
 void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
 {
     int first_vert = clip_vert_count;
@@ -471,6 +474,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
 // The faces of a perspective volume, in the frustum. The edges are split where they span more depth than
 // RsNonOrthoTessellation, and the polygon is triangulated from its nearest vertex.
 // FUNCTION: LS3DF 0x10002530
+// FUNCTION: LS3DF11 0x10002530
 bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
 {
     int first_vert = clip_vert_count;

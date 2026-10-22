@@ -13,79 +13,104 @@
 #include "IGraph/IGraph.h"
 
 // GLOBAL: LS3DF 0x100af82c
+// GLOBAL: LS3DF11 0x100ac94c
 static S_vector normala;                // the normal of the face hit, in the visual's space
 
 // GLOBAL: LS3DF 0x100af8a0
+// GLOBAL: LS3DF11 0x100ac9c0
 static S_vector lineBase;               // the ray's start
 
 // GLOBAL: LS3DF 0x100af8c0
+// GLOBAL: LS3DF11 0x100ac9e0
 static S_vector lineDir;                // its direction, normalized
 
 // GLOBAL: LS3DF 0x100af854
+// GLOBAL: LS3DF11 0x100ac974
 static uint colFlags;
 
 // The callbacks and the frames to leave out, zero-initialized, so after the other globals in .bss
 // GLOBAL: LS3DF 0x100af8d4
+// GLOBAL: LS3DF11 0x100ac9f4
 static I3D_COLLISION_CALLBACK *lpCallbackGeo = NULL;
 
 // GLOBAL: LS3DF 0x100af8d8
+// GLOBAL: LS3DF11 0x100ac9f8
 static I3D_TEXEL_CALLBACK *lpCallbackGeoTex = NULL;
 
 // GLOBAL: LS3DF 0x100af824
+// GLOBAL: LS3DF11 0x100ac944
 static int cbResult;                    // the callback's last answer (COLL_ENUMRET)
 
 // GLOBAL: LS3DF 0x100af8cc
+// GLOBAL: LS3DF11 0x100ac9ec
 static void *cbContext;
 
 // GLOBAL: LS3DF 0x100af89c
+// GLOBAL: LS3DF11 0x100ac9bc
 static float vzdalenost2;               // the nearest hit's distance, squared (Czech "distance")
 
 // GLOBAL: LS3DF 0x100af84c
+// GLOBAL: LS3DF11 0x100ac96c
 static I3D_frame *lpNearestObj;
 
 // GLOBAL: LS3DF 0x100af888
+// GLOBAL: LS3DF11 0x100ac9a8
 static S_vector *GetNormal;             // where the normal goes, NULL if it isn't wanted
 
 // GLOBAL: LS3DF 0x100af8ac
+// GLOBAL: LS3DF11 0x100ac9cc
 static const I3D_scene *pThisScene;
 
 // GLOBAL: LS3DF 0x100af8dc
+// GLOBAL: LS3DF11 0x100ac9fc
 static I3D_frame *pWFrame = NULL;       // a frame left out
 
 // GLOBAL: LS3DF 0x100af8e0
+// GLOBAL: LS3DF11 0x100aca00
 static I3D_frame *pWSubTree = NULL;     // a subtree left out
 
 // GLOBAL: LS3DF 0x100af8e4
+// GLOBAL: LS3DF11 0x100aca04
 static I3D_frame *pSFrame = NULL;       // the only frame tested
 
 // GLOBAL: LS3DF 0x100af898
+// GLOBAL: LS3DF11 0x100ac9b8
 static int specLod;                     // the level of detail to test pSFrame at
 
 // GLOBAL: LS3DF 0x100af844
+// GLOBAL: LS3DF11 0x100ac964
 static int colLod;                      // the level of detail to test the others at
 
 // GLOBAL: LS3DF 0x100af828
+// GLOBAL: LS3DF11 0x100ac948
 static bool breakTests;
 
 // GLOBAL: LS3DF 0x100af870
+// GLOBAL: LS3DF11 0x100ac990
 static int v0;
 
 // GLOBAL: LS3DF 0x100af874
+// GLOBAL: LS3DF11 0x100ac994
 static int v1;
 
 // GLOBAL: LS3DF 0x100af878
+// GLOBAL: LS3DF11 0x100ac998
 static int v2;                          // the face hit's vertices
 
 // GLOBAL: LS3DF 0x100af850
+// GLOBAL: LS3DF11 0x100ac970
 static I3D_face_group *pFGroupC;        // and its group
 
 // GLOBAL: LS3DF 0x100af8bc
+// GLOBAL: LS3DF11 0x100ac9dc
 static float lineSize;                  // the ray's length
 
 // GLOBAL: LS3DF 0x100af848
+// GLOBAL: LS3DF11 0x100ac968
 static float lineSize2;                 // squared
 
 // GLOBAL: LS3DF 0x100af8d0
+// GLOBAL: LS3DF11 0x100ac9f0
 static float radiusA;                   // the moving sphere's
 
 // The ray from base along dir against a box in the same space (the name is a guess; PS2 inlines it too): 0 from inside
@@ -724,6 +749,7 @@ inline bool LineIntersectSphere(const I3D_bsphere &bs)
 // Not matching yet: in the box's tests VC6 loads lineDir.y and lineDir.x before w.z (the original w.z first); no order
 // of the products' operands, terms or tests and no (void) reference moves them (the term order of t does change code).
 // FUNCTION: LS3DF 0x1000e370
+// FUNCTION: LS3DF11 0x1000df10
 static void testSubtree(I3D_frame *frm)
 {
     if (frm == pWSubTree)
@@ -769,6 +795,7 @@ static void testSubtree(I3D_frame *frm)
 // it keeps the test's load). The texel's index is written in each branch: through a local VC6 swaps the registers of
 // x and the height (ebx and ebp).
 // FUNCTION: LS3DF 0x10011300
+// FUNCTION: LS3DF11 0x10010e20
 static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_frame *frm, void *context, void *texel)
 {
     S_texel_info *ti = (S_texel_info *)texel;
@@ -858,6 +885,7 @@ I3D_frame *I3D_scene::TestColGeo(const S_vector &from, const S_vector &dir, uint
 
 // TestColGeo with the hit's point instead of its distance, and no frame left out
 // FUNCTION: LS3DF 0x10011430
+// FUNCTION: LS3DF11 0x10010f50
 I3D_frame *I3D_scene::TestColGeo1(const S_vector &from, const S_vector &dir, uint flags, S_vector *pos,
     S_vector *normal, I3D_COLLISION_CALLBACK *cb, void *cb_context, I3D_TEXEL_CALLBACK *texel_cb, int lod) const
 {
@@ -913,6 +941,7 @@ I3D_frame *I3D_scene::TestColGeo1(const S_vector &from, const S_vector &dir, uin
 // ours fits with the guard's $S17 and these parameter types: the original's function had more blocks before the
 // static, or other numbers before the guard.
 // FUNCTION: LS3DF 0x100118e0
+// FUNCTION: LS3DF11 0x10011400
 I3D_frame *I3D_scene::TestColHierarchy(const S_vector &from, const S_vector &dir, I3D_frame *root, I3D_COLLISION &col,
     uint flags, I3D_frame *frm, int lod, I3D_COLLISION_CALLBACK *cb) const
 {
@@ -970,18 +999,22 @@ I3D_frame *I3D_scene::TestColHierarchy(const S_vector &from, const S_vector &dir
 
 // The box of the sphere's move
 // GLOBAL: LS3DF 0x100af858
+// GLOBAL: LS3DF11 0x100ac978
 static I3D_bbox sphBox;
 
 // The move's end
 // GLOBAL: LS3DF 0x100af8b0
+// GLOBAL: LS3DF11 0x100ac9d0
 static S_vector lineDest;
 
 // The nearest hit's point
 // GLOBAL: LS3DF 0x100af88c
+// GLOBAL: LS3DF11 0x100ac9ac
 static S_vector colPointSph;
 
 // A hit's point (Czech "collision point")
 // GLOBAL: LS3DF 0x100af87c
+// GLOBAL: LS3DF11 0x100ac99c
 static S_vector kolBod;
 
 // Whether two boxes overlap (the name is a guess; PS2 inlines it). Written out in TestColSphereVisual, VC6 inlines
@@ -1329,6 +1362,7 @@ done:
 // source in this function (as dead code, 18 or 19 if (0) frm = frm; give 100%). Not found: case labels, a type local,
 // the box test written out (too much), GetVisualType (too little).
 // FUNCTION: LS3DF 0x10012140
+// FUNCTION: LS3DF11 0x10011c60
 static void sphTestSubtree(I3D_frame *frm)
 {
     if (frm == pWSubTree)
@@ -1413,6 +1447,7 @@ I3D_frame *I3D_scene::TestColSphere(const S_vector &from, const S_vector &dir, f
 
 // The box of the move is the boxes of the sphere at both ends
 // FUNCTION: LS3DF 0x10014aa0
+// FUNCTION: LS3DF11 0x100145c0
 I3D_frame *I3D_scene::TestColSphereHierarchy(const S_vector &from, const S_vector &dir, float radius, I3D_frame *root,
     uint flags, S_vector *pos, I3D_frame *frm, I3D_COLLISION_CALLBACK *cb) const
 {
@@ -1448,6 +1483,7 @@ I3D_frame *I3D_scene::TestColSphereHierarchy(const S_vector &from, const S_vecto
 // TestColSphereHierarchy's code, is the call whose out-of-line copy the linker kept (0x100152a0).
 // Not matching yet: one sum's operand order in lineDest + lineDir * radius (the allocator's live-range ids).
 // FUNCTION: LS3DF 0x10014e50
+// FUNCTION: LS3DF11 0x10014970
 I3D_frame *I3D_scene::TestColSphereVisual(const S_vector &from, const S_vector &dir, float radius, I3D_visual *vis,
     uint flags, S_vector *pos) const
 {
@@ -1494,6 +1530,7 @@ I3D_frame *I3D_scene::TestColSphereVisual(const S_vector &from, const S_vector &
 // The relative move's quadratic: the fraction of the moves at which the spheres are radius1 + radius2 apart, the
 // smaller root if it is within the moves
 // FUNCTION: LS3DF 0x100153b0
+// FUNCTION: LS3DF11 0x10014ed0
 float I3D_scene::SphereToSphereD(float radius1, const S_vector &from1, const S_vector &to1, float radius2,
     const S_vector &from2, const S_vector &to2) const
 {

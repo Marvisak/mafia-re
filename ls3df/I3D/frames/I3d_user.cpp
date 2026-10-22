@@ -3,6 +3,7 @@
 #include "I3D/I3D.h"
 
 // FUNCTION: LS3DF 0x1005a140
+// FUNCTION: LS3DF11 0x10057800
 I3D_user::I3D_user()
 {
     type = FRAME_USER;
@@ -11,11 +12,13 @@ I3D_user::I3D_user()
 
 // Declared, though empty: VC6's implicit destructor wouldn't set the vtable again
 // FUNCTION: LS3DF 0x1005a190
+// FUNCTION: LS3DF11 0x10057850
 I3D_user::~I3D_user()
 {
 }
 
 // FUNCTION: LS3DF 0x1005a1a0
+// FUNCTION: LS3DF11 0x10057860
 LS3D_RESULT I3D_user::Duplicate(I3D_frame *frame)
 {
     if (!frame)

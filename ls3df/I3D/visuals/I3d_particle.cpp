@@ -30,7 +30,9 @@
 // in ParticleElementsList (PARTF_RENDERER), sorted, a group of one sort_group with one draw from a buffer of its own,
 // their meshes transformed into it (PARTF_MESH) or quads
 // VTABLE: LS3DF 0x1009c4c8 I3D_frame
+// VTABLE: LS3DF11 0x100994c8 I3D_frame
 // VTABLE: LS3DF 0x1009c4b8 I3D_void_interface
+// VTABLE: LS3DF11 0x100994b8 I3D_void_interface
 class I3D_part_renderer : public I3D_visual {
 public:
     I3D_part_renderer();
@@ -47,9 +49,11 @@ public:
 };
 
 // GLOBAL: LS3DF 0x101b43d8
+// GLOBAL: LS3DF11 0x101b14f8
 I3D_visual *pParticleVisual = NULL;
 
 // FUNCTION: LS3DF 0x1003cbb0
+// FUNCTION: LS3DF11 0x1003b0f0
 LS3D_RESULT InitParticle()
 {
     pParticleVisual = new I3D_part_renderer;
@@ -57,6 +61,7 @@ LS3D_RESULT InitParticle()
 }
 
 // FUNCTION: LS3DF 0x1003cc70
+// FUNCTION: LS3DF11 0x1003b1b0
 void CloseParticle()
 {
     if (pParticleVisual)
@@ -74,6 +79,7 @@ I3D_part_renderer::I3D_part_renderer()
 }
 
 // FUNCTION: LS3DF 0x1003cca0
+// FUNCTION: LS3DF11 0x1003b1e0
 I3D_part_renderer::~I3D_part_renderer()
 {
     cVBMan.m_Free(mesh_vb);
@@ -86,6 +92,7 @@ I3D_part_renderer::~I3D_part_renderer()
 // each other in the sorted order, transparent at their mean distance. The last one alone is opaque with PARTF_OPAQUE
 // while not faded, else transparent; its branch returns, so its push_back isn't merged with the other one's.
 // FUNCTION: LS3DF 0x1003cd40
+// FUNCTION: LS3DF11 0x1003b290
 void I3D_part_renderer::m_AddFGroups()
 {
     int i = ParticleElementsList.visuals.size();
@@ -150,6 +157,7 @@ void I3D_part_renderer::m_AddFGroups()
 // faces, transformed, in the group's first particle's flags) or a quad for each, untransformed, with the first face
 // group's material, depth writes off when blended
 // FUNCTION: LS3DF 0x1003d0e0
+// FUNCTION: LS3DF11 0x1003b630
 void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
     int first = h->first;
@@ -304,6 +312,7 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 }
 
 // FUNCTION: LS3DF 0x1003de50
+// FUNCTION: LS3DF11 0x1003c140
 I3D_emitor::I3D_emitor() : elements(0x20)
 {
     type = FRAME_EMITOR;
@@ -320,6 +329,7 @@ I3D_emitor::I3D_emitor() : elements(0x20)
 }
 
 // FUNCTION: LS3DF 0x1003df20
+// FUNCTION: LS3DF11 0x1003c210
 I3D_emitor::~I3D_emitor()
 {
     I3D_part_element **p = &elements[0];
@@ -330,6 +340,7 @@ I3D_emitor::~I3D_emitor()
 }
 
 // FUNCTION: LS3DF 0x1003dfc0
+// FUNCTION: LS3DF11 0x1003c2b0
 void I3D_emitor::SetMesh(I3D_mesh_object *m)
 {
     if (m == mesh)
@@ -344,6 +355,7 @@ void I3D_emitor::SetMesh(I3D_mesh_object *m)
 // The floats come as their bits. The cases are in the order of the members (the jump table's targets), not of the
 // values.
 // FUNCTION: LS3DF 0x1003dff0
+// FUNCTION: LS3DF11 0x1003c2e0
 LS3D_RESULT I3D_emitor::SetParam(PARTICLE_PARAM param, uint value)
 {
     if (param >= PP_LAST) {
@@ -490,6 +502,7 @@ LS3D_RESULT I3D_emitor::SetParam(PARTICLE_PARAM param, uint value)
 // The floats as their bits, the colors as pointers to them, the bytes through a local in memory (read back as a
 // dword, masked). The cases are in SetParam's order; PP_UNUSED_27 gives PP_BILLBOARD's.
 // FUNCTION: LS3DF 0x1003e660
+// FUNCTION: LS3DF11 0x1003c950
 uint I3D_emitor::GetParam(PARTICLE_PARAM param) const
 {
     if (param >= PP_LAST) {
@@ -573,6 +586,7 @@ uint I3D_emitor::GetParam(PARTICLE_PARAM param) const
 
 // In the members' order but the billboards' axis and mode; VC6 moves the 0.1 stores and the velocities first
 // FUNCTION: LS3DF 0x1003e930
+// FUNCTION: LS3DF11 0x1003cc20
 void I3D_emitor::Reset()
 {
     p_emit_time = 100;
@@ -608,6 +622,7 @@ void I3D_emitor::Reset()
 
 // Switched on, it starts again. The frame's SetOn written out, then a test VC6 can't fold into it.
 // FUNCTION: LS3DF 0x1003eac0
+// FUNCTION: LS3DF11 0x1003cdb0
 void I3D_emitor::SetOn(bool on)
 {
     if (on)
@@ -623,6 +638,7 @@ void I3D_emitor::SetOn(bool on)
 
 // A move looks for its sector again
 // FUNCTION: LS3DF 0x1003eb10
+// FUNCTION: LS3DF11 0x1003ce00
 void I3D_emitor::UpdateV()
 {
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
@@ -632,6 +648,7 @@ void I3D_emitor::UpdateV()
 // Creates the particles due: each in the box around the emitter, with its parameters, in the emitter's sector (or the
 // scene's omni sector) and its scene's tick list, then ticked for the time since it was due
 // FUNCTION: LS3DF 0x1003eb30
+// FUNCTION: LS3DF11 0x1003ce20
 void I3D_emitor::Tick(int t)
 {
     if (!(frm_flags & FRMFLAGS_ON))
@@ -738,6 +755,7 @@ void I3D_emitor::Tick(int t)
 }
 
 // FUNCTION: LS3DF 0x1003f6b0
+// FUNCTION: LS3DF11 0x1003d9a0
 LS3D_RESULT I3D_emitor::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -796,6 +814,7 @@ LS3D_RESULT I3D_emitor::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1003f910
+// FUNCTION: LS3DF11 0x1003dc00
 void I3D_emitor::KillElements()
 {
     I3D_part_element **p = &elements[0];
@@ -809,6 +828,7 @@ void I3D_emitor::KillElements()
 
 // A particle that dies takes itself out of the list, which moves the last one into its place
 // FUNCTION: LS3DF 0x1003f960
+// FUNCTION: LS3DF11 0x1003dc50
 void I3D_emitor::TickElements(int t)
 {
     I3D_part_element **p = &elements[0];
@@ -826,6 +846,7 @@ void I3D_emitor::TickElements(int t)
 }
 
 // FUNCTION: LS3DF 0x1003f9b0
+// FUNCTION: LS3DF11 0x1003dca0
 void I3D_emitor::SetElementsOn(bool on)
 {
     I3D_part_element **p = &elements[0];
@@ -834,6 +855,7 @@ void I3D_emitor::SetElementsOn(bool on)
 }
 
 // FUNCTION: LS3DF 0x1003f9f0
+// FUNCTION: LS3DF11 0x1003dce0
 void I3D_emitor::LoadImage()
 {
     I3D_frame::LoadImage();
@@ -844,6 +866,7 @@ void I3D_emitor::LoadImage()
 }
 
 // FUNCTION: LS3DF 0x1003fa20
+// FUNCTION: LS3DF11 0x1003dd10
 I3D_part_element::I3D_part_element()
 {
     visual_type = I3D_VISUAL_PART_ELEMENT;
@@ -869,6 +892,7 @@ I3D_part_element::I3D_part_element()
 }
 
 // FUNCTION: LS3DF 0x1003fc00
+// FUNCTION: LS3DF11 0x1003def0
 I3D_part_element::~I3D_part_element()
 {
     if (emitor)
@@ -876,6 +900,7 @@ I3D_part_element::~I3D_part_element()
 }
 
 // FUNCTION: LS3DF 0x1003fca0
+// FUNCTION: LS3DF11 0x1003df90
 LS3D_RESULT I3D_part_element::Duplicate(I3D_frame *frame)
 {
     LS3D_RESULT r = I3D_part_base::Duplicate(frame);
@@ -915,6 +940,7 @@ LS3D_RESULT I3D_part_element::Duplicate(I3D_frame *frame)
 // products, which VC6 does once into a temporary; the speed's step is a double product (fld speed; fimul dt), which
 // a float product would take from that temporary.
 // FUNCTION: LS3DF 0x1003fe40
+// FUNCTION: LS3DF11 0x1003e130
 void I3D_part_element::Tick(int time)
 {
     if (!(frm_flags & FRMFLAGS_ON))
@@ -989,6 +1015,7 @@ void I3D_part_element::Tick(int time)
 }
 
 // FUNCTION: LS3DF 0x100406c0
+// FUNCTION: LS3DF11 0x1003e9b0
 I3D_part_base::I3D_part_base()
 {
     visual_type = I3D_VISUAL_PART_BASE;
@@ -1003,6 +1030,7 @@ I3D_part_base::I3D_part_base()
 
 // The mesh as the object's, without the billboard's
 // FUNCTION: LS3DF 0x10040770
+// FUNCTION: LS3DF11 0x1003ea60
 LS3D_RESULT I3D_part_base::Duplicate(I3D_frame *frame)
 {
     LS3D_RESULT r = I3D_object::Duplicate(frame);
@@ -1033,6 +1061,7 @@ LS3D_RESULT I3D_part_base::Duplicate(I3D_frame *frame)
 // GetMaterial (as the single meshes'): the inline call pending after the first Lock keeps its push_back out of line,
 // as the original has it.
 // FUNCTION: LS3DF 0x10040820
+// FUNCTION: LS3DF11 0x1003eb10
 void I3D_part_base::m_AddFGroups()
 {
     if (!mesh)
@@ -1193,6 +1222,7 @@ void I3D_part_base::m_AddFGroups()
 // PARTF_ALPHA, else added) without depth writes; untextured, transparent while faded. Both cull modes go through
 // SetCullState: the proxy's written out leaves the inline budget for one more SetAlphaState than the original has.
 // FUNCTION: LS3DF 0x10041320
+// FUNCTION: LS3DF11 0x1003f410
 void I3D_part_base::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
     I3D_face_group *fg = h->fg;

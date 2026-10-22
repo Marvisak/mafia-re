@@ -5,6 +5,7 @@
 
 // The members before the box are zeroed before the vtable is set: they are initialized, the others assigned
 // FUNCTION: LS3DF 0x1005a7a0
+// FUNCTION: LS3DF11 0x10057e50
 I3D_volume::I3D_volume() :
     volume_type(0),
     unknown_144(0),
@@ -19,11 +20,13 @@ I3D_volume::I3D_volume() :
 }
 
 // FUNCTION: LS3DF 0x1005a840
+// FUNCTION: LS3DF11 0x10057ef0
 I3D_volume::~I3D_volume()
 {
 }
 
 // FUNCTION: LS3DF 0x1005a850
+// FUNCTION: LS3DF11 0x10057f00
 uint I3D_volume::GetVolumeType() const
 {
     return volume_type;
@@ -34,6 +37,7 @@ uint I3D_volume::GetVolumeType() const
 // UpdateMatrix scales (its copy at 0x10056e60), ours inlines them, so the original had less budget left here. Empty
 // inline calls after UpdateMatrix leave five of them out of line, but never the first branch's first row.
 // FUNCTION: LS3DF 0x1005a860
+// FUNCTION: LS3DF11 0x10057f10
 void I3D_volume::UpdateV()
 {
     if (frm_flags & FRMFLAGS_UPDATE) {

@@ -15,6 +15,7 @@
 #include <new>
 
 // FUNCTION: LS3DF 0x100051a0
+// FUNCTION: LS3DF11 0x100051a0
 I3D_area::I3D_area()
 {
     type = FRAME_AREA;
@@ -34,6 +35,7 @@ I3D_area::I3D_area()
 
 // Takes the area out of its sounds and its scene. The sounds go through DeleteSound, which VC6 inlines here.
 // FUNCTION: LS3DF 0x100052b0
+// FUNCTION: LS3DF11 0x100052a0
 I3D_area::~I3D_area()
 {
     for (int i = sounds.size(); i--; )
@@ -48,6 +50,7 @@ I3D_area::~I3D_area()
 
 // Moves the area from its scene's ring of areas into the other scene's
 // FUNCTION: LS3DF 0x10005440
+// FUNCTION: LS3DF11 0x10005430
 void I3D_area::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 {
     if (scene && prev_in_scene) {
@@ -83,6 +86,7 @@ void I3D_area::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 // The area goes into the scene of its new parent: the scene that owns the parent, or the one of the sector the parent
 // is in. The owner is tested as it is, then copied: a local tested instead swaps eax and ecx.
 // FUNCTION: LS3DF 0x10005550
+// FUNCTION: LS3DF11 0x10005540
 LS3D_RESULT I3D_area::LinkTo(I3D_frame *frame, uint flags)
 {
     if (frame == parent)
@@ -111,6 +115,7 @@ LS3D_RESULT I3D_area::LinkTo(I3D_frame *frame, uint flags)
 // stores the null normal's -1 or 1 as integer constants (S_plane::NormalizeNormal), where Normalize's would go through
 // the FPU.
 // FUNCTION: LS3DF 0x100055d0
+// FUNCTION: LS3DF11 0x100055c0
 void I3D_area::UpdateV()
 {
     if (!num_verts)
@@ -132,6 +137,7 @@ void I3D_area::UpdateV()
 // The other area's faces are built into this one. Two returns of the result, as PS2's: with the call in an if block,
 // VC6 saves only esi before the test of frame.
 // FUNCTION: LS3DF 0x10005820
+// FUNCTION: LS3DF11 0x10005810
 LS3D_RESULT I3D_area::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -147,6 +153,7 @@ LS3D_RESULT I3D_area::Duplicate(I3D_frame *frame)
 // Copies the faces and the vertices, which are stride bytes apart. The vertices are read through a pointer of their
 // own, which VC6 loads before the loop's guard.
 // FUNCTION: LS3DF 0x10005880
+// FUNCTION: LS3DF11 0x10005870
 LS3D_RESULT I3D_area::Build(const S_vector *vp, uint nv, const ushort *fp, uint nf, uint stride)
 {
     delete[] verts;
@@ -174,6 +181,7 @@ LS3D_RESULT I3D_area::Build(const S_vector *vp, uint nv, const ushort *fp, uint 
 }
 
 // FUNCTION: LS3DF 0x100059d0
+// FUNCTION: LS3DF11 0x100059c0
 bool I3D_area::CheckPoint(const S_vector &pos)
 {
     int i = num_faces;
@@ -187,6 +195,7 @@ bool I3D_area::CheckPoint(const S_vector &pos)
 
 // A sound knows its areas as it knows its sectors
 // FUNCTION: LS3DF 0x10005a30
+// FUNCTION: LS3DF11 0x10005a20
 void I3D_area::AddSound(I3D_sound *sound)
 {
     unknown_164 = -1;
@@ -199,6 +208,7 @@ void I3D_area::AddSound(I3D_sound *sound)
 }
 
 // FUNCTION: LS3DF 0x10005b90
+// FUNCTION: LS3DF11 0x10005b80
 LS3D_RESULT I3D_area::DeleteSound(I3D_sound *sound)
 {
     unknown_164 = -1;
@@ -211,6 +221,7 @@ LS3D_RESULT I3D_area::DeleteSound(I3D_sound *sound)
 
 // The areas aren't saved or loaded ("nepodporovany typ": unsupported type)
 // FUNCTION: LS3DF 0x10005ca0
+// FUNCTION: LS3DF11 0x10005c90
 void I3D_area::SaveImage()
 {
     dbgPrintf("** nepodporovany typ:%s  SaveImage()  %s", pI3DDriver->FrameType2String(type), GetName());

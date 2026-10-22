@@ -4,6 +4,7 @@
 #include "I3D/I3D.h"
 
 // FUNCTION: LS3DF 0x1005a200
+// FUNCTION: LS3DF11 0x100578c0
 I3D_visual::I3D_visual()
 {
     type = FRAME_VISUAL;
@@ -19,11 +20,13 @@ I3D_visual::I3D_visual()
 
 // Empty, but declared: the implicit destructor wouldn't set the vtables again
 // FUNCTION: LS3DF 0x1005a370
+// FUNCTION: LS3DF11 0x10057a30
 I3D_visual::~I3D_visual()
 {
 }
 
 // FUNCTION: LS3DF 0x1005a390
+// FUNCTION: LS3DF11 0x10057a50
 void I3D_visual::UpdateV()
 {
     if (!(vis_flags & VISF_WORLD_SPACE) && frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
@@ -33,6 +36,7 @@ void I3D_visual::UpdateV()
 // Two early returns before one print: an if/else with a print in each branch gives the same code with this and world
 // in each other's registers
 // FUNCTION: LS3DF 0x1005a3c0
+// FUNCTION: LS3DF11 0x10057a80
 void I3D_visual::SetSpace(bool world)
 {
     if (vis_flags & VISF_WORLD_SPACE) {
@@ -47,6 +51,7 @@ void I3D_visual::SetSpace(bool world)
 }
 
 // FUNCTION: LS3DF 0x1005a410
+// FUNCTION: LS3DF11 0x10057ad0
 void I3D_visual::SetShadowMode(SHADOW_MODE mode)
 {
     switch (mode) {
@@ -63,6 +68,7 @@ void I3D_visual::SetShadowMode(SHADOW_MODE mode)
 }
 
 // FUNCTION: LS3DF 0x1005a460
+// FUNCTION: LS3DF11 0x10057b20
 SHADOW_MODE I3D_visual::GetShadowMode() const
 {
     if (vis_flags & VISF_SHADOW_2)
@@ -71,6 +77,7 @@ SHADOW_MODE I3D_visual::GetShadowMode() const
 }
 
 // FUNCTION: LS3DF 0x1005a480
+// FUNCTION: LS3DF11 0x10057b40
 void I3D_visual::SetProjectorMode(SHADOW_MODE mode)
 {
     switch (mode) {
@@ -87,6 +94,7 @@ void I3D_visual::SetProjectorMode(SHADOW_MODE mode)
 }
 
 // FUNCTION: LS3DF 0x1005a4d0
+// FUNCTION: LS3DF11 0x10057b90
 SHADOW_MODE I3D_visual::GetProjectorMode() const
 {
     if (vis_flags & VISF_PROJECTOR_2)
@@ -102,6 +110,7 @@ void I3D_visual::UpdateBoundProc()
 
 // The visual's box in world space, and the sphere around it: I3D_frame::UpdateHRBoundVolW's code
 // FUNCTION: LS3DF 0x1005a510
+// FUNCTION: LS3DF11 0x10057bb0
 void I3D_visual::UpdateWBoundProc()
 {
     vis_flags |= VISF_WBOUND_VALID;
@@ -125,6 +134,7 @@ void I3D_visual::UpdateWBoundProc()
 }
 
 // FUNCTION: LS3DF 0x1005a730
+// FUNCTION: LS3DF11 0x10057dd0
 void I3D_visual::SetBoundVolume(const I3D_bvolume &bvol)
 {
     vis_bound = bvol;
@@ -143,12 +153,14 @@ int I3D_void_interface::NumRegions() const
 }
 
 // FUNCTION: LS3DF 0x1005a760
+// FUNCTION: LS3DF11 0x10057e10
 LS3D_RESULT I3D_void_interface::SetWeight(int region, int level, float weight)
 {
     return I3DERR_GENERIC;
 }
 
 // FUNCTION: LS3DF 0x1005a770
+// FUNCTION: LS3DF11 0x10057e20
 float I3D_void_interface::GetWeight(int region, int level) const
 {
     return 0.0f;

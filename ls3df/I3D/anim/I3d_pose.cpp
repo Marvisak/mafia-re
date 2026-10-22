@@ -8,6 +8,7 @@
 #include <string.h>
 
 // FUNCTION: LS3DF 0x10045930
+// FUNCTION: LS3DF11 0x100439b0
 I3D_pose::I3D_pose()
 {
     ref = 1;
@@ -25,6 +26,7 @@ I3D_pose::~I3D_pose()
 }
 
 // FUNCTION: LS3DF 0x10045980
+// FUNCTION: LS3DF11 0x10043a00
 int I3D_pose::Release()
 {
     if (--ref < 0) {
@@ -39,12 +41,14 @@ int I3D_pose::Release()
 }
 
 // FUNCTION: LS3DF 0x100459d0
+// FUNCTION: LS3DF11 0x10043a50
 void I3D_pose::Clear()
 {
     pose_flags = 0;
 }
 
 // FUNCTION: LS3DF 0x100459e0
+// FUNCTION: LS3DF11 0x10043a60
 void I3D_pose::SetRot(const S_quat *q)
 {
     if (q) {
@@ -55,6 +59,7 @@ void I3D_pose::SetRot(const S_quat *q)
 }
 
 // FUNCTION: LS3DF 0x10045a30
+// FUNCTION: LS3DF11 0x10043ab0
 void I3D_pose::SetRotAbs(const S_quat *q)
 {
     if (q) {
@@ -65,6 +70,7 @@ void I3D_pose::SetRotAbs(const S_quat *q)
 }
 
 // FUNCTION: LS3DF 0x10045a80
+// FUNCTION: LS3DF11 0x10043b00
 void I3D_pose::SetDir(const S_vector *dir, float roll)
 {
     if (dir) {
@@ -76,6 +82,7 @@ void I3D_pose::SetDir(const S_vector *dir, float roll)
 
 // Leaves POSEF_ROT as it is, unlike the others (PS2's too)
 // FUNCTION: LS3DF 0x10045ac0
+// FUNCTION: LS3DF11 0x10043b40
 void I3D_pose::SetDir(const S_vector &dir, float roll)
 {
     rot.SetDir(dir, roll);
@@ -83,6 +90,7 @@ void I3D_pose::SetDir(const S_vector &dir, float roll)
 }
 
 // FUNCTION: LS3DF 0x10045ae0
+// FUNCTION: LS3DF11 0x10043b60
 void I3D_pose::SetDirAbs(const S_vector &dir, float roll)
 {
     rot.SetDir(dir, roll);
@@ -90,6 +98,7 @@ void I3D_pose::SetDirAbs(const S_vector &dir, float roll)
 }
 
 // FUNCTION: LS3DF 0x10045b10
+// FUNCTION: LS3DF11 0x10043b90
 void I3D_pose::SetPos(const S_vector *p)
 {
     if (p) {
@@ -100,6 +109,7 @@ void I3D_pose::SetPos(const S_vector *p)
 }
 
 // FUNCTION: LS3DF 0x10045b50
+// FUNCTION: LS3DF11 0x10043bd0
 void I3D_pose::SetScale(const S_vector *s)
 {
     if (s) {
@@ -124,6 +134,7 @@ void I3D_pose::SetName(const char *n)
 }
 
 // FUNCTION: LS3DF 0x10045b90
+// FUNCTION: LS3DF11 0x10043c10
 I3D_pose_set::I3D_pose_set()
 {
     ref = 1;
@@ -131,6 +142,7 @@ I3D_pose_set::I3D_pose_set()
 
 // The file doesn't include <new>: the original sets the EH state to -1 before the list's destructor frees the array
 // FUNCTION: LS3DF 0x10045bc0
+// FUNCTION: LS3DF11 0x10043c40
 I3D_pose_set::~I3D_pose_set()
 {
     I3D_pose **p = &poses[0];
@@ -139,6 +151,7 @@ I3D_pose_set::~I3D_pose_set()
 }
 
 // FUNCTION: LS3DF 0x10045c40
+// FUNCTION: LS3DF11 0x10043cc0
 int I3D_pose_set::Release()
 {
     if (--ref < 0) {
@@ -154,6 +167,7 @@ int I3D_pose_set::Release()
 
 // The pose's GetName written out: through the inline function VC6 loads the pose into eax, not edx
 // FUNCTION: LS3DF 0x10045c80
+// FUNCTION: LS3DF11 0x10043d00
 const char *I3D_pose_set::GetFrameName(int index) const
 {
     if (index >= poses.size())
@@ -162,6 +176,7 @@ const char *I3D_pose_set::GetFrameName(int index) const
 }
 
 // FUNCTION: LS3DF 0x10045cb0
+// FUNCTION: LS3DF11 0x10043d30
 void I3D_pose_set::AddPose(I3D_pose *pose, const char *frame_name)
 {
     pose->SetName(frame_name);
@@ -170,6 +185,7 @@ void I3D_pose_set::AddPose(I3D_pose *pose, const char *frame_name)
 }
 
 // FUNCTION: LS3DF 0x10045d80
+// FUNCTION: LS3DF11 0x10043e00
 LS3D_RESULT I3D_pose_set::DeletePose(I3D_pose *pose)
 {
     if (poses.remove(pose)) {

@@ -10,6 +10,7 @@
 #include "I3D/I3D.h"
 
 // FUNCTION: LS3DF 0x10056e80
+// FUNCTION: LS3DF11 0x10054540
 I3D_singlemorph::I3D_singlemorph()
 {
     visual_type = I3D_VISUAL_SINGLEMORPH;
@@ -18,23 +19,27 @@ I3D_singlemorph::I3D_singlemorph()
 // Empty, but defined here: the original's comes right after the constructor's scalar deleting destructor, as the
 // morph's
 // FUNCTION: LS3DF 0x10056f10
+// FUNCTION: LS3DF11 0x100545d0
 I3D_singlemorph::~I3D_singlemorph()
 {
 }
 
 // FUNCTION: LS3DF 0x10056f70
+// FUNCTION: LS3DF11 0x10054630
 int I3D_singlemorph::NumLevels() const
 {
     return m_numLevels;
 }
 
 // FUNCTION: LS3DF 0x10056f80
+// FUNCTION: LS3DF11 0x10054640
 int I3D_singlemorph::NumRegions() const
 {
     return m_numRegions;
 }
 
 // FUNCTION: LS3DF 0x10056f90
+// FUNCTION: LS3DF11 0x10054650
 LS3D_RESULT I3D_singlemorph::SetWeight(int region, int level, float weight)
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels) {
@@ -53,6 +58,7 @@ LS3D_RESULT I3D_singlemorph::SetWeight(int region, int level, float weight)
 }
 
 // FUNCTION: LS3DF 0x10057030
+// FUNCTION: LS3DF11 0x100546f0
 float I3D_singlemorph::GetWeight(int region, int level) const
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels)
@@ -63,6 +69,7 @@ float I3D_singlemorph::GetWeight(int region, int level) const
 }
 
 // FUNCTION: LS3DF 0x100570b0
+// FUNCTION: LS3DF11 0x10054770
 void I3D_singlemorph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     I3D_object::SetMesh(m, keep_lods);
@@ -77,6 +84,7 @@ void I3D_singlemorph::SetMesh(I3D_mesh_object *m, bool keep_lods)
 // that mesh; from an emitter, its particles' mesh. A proxy takes the objects' case through a goto, as the single
 // mesh's.
 // FUNCTION: LS3DF 0x10057100
+// FUNCTION: LS3DF11 0x100547c0
 LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -221,12 +229,14 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10057580
+// FUNCTION: LS3DF11 0x10054c40
 void I3D_singlemorph::UpdateBoundProc()
 {
     I3D_singlemesh::UpdateBoundProc();
 }
 
 // FUNCTION: LS3DF 0x10057590
+// FUNCTION: LS3DF11 0x10054c50
 void I3D_singlemorph::UpdateLodVertices(int lod_index)
 {
     if (m_Flags & MORPHF_DIRTY) {
@@ -238,6 +248,7 @@ void I3D_singlemorph::UpdateLodVertices(int lod_index)
 
 // The single mesh's, then the levels, unless the single mesh's failed
 // FUNCTION: LS3DF 0x100575d0
+// FUNCTION: LS3DF11 0x10054c90
 void I3D_singlemorph::LoadImage()
 {
     m_Flags &= ~MORPHF_UNKNOWN_4;

@@ -6,6 +6,7 @@
 
 // The bone matrix's diagonal is a chain, stored from the right
 // FUNCTION: LS3DF 0x1001ed30
+// FUNCTION: LS3DF11 0x1001e850
 I3D_joint::I3D_joint()
 {
     type = FRAME_JOINT;
@@ -19,6 +20,7 @@ I3D_joint::I3D_joint()
 
 // The joint leaves its single mesh's list. The index is read once, before the stores (PS2's too).
 // FUNCTION: LS3DF 0x1001ede0
+// FUNCTION: LS3DF11 0x1001e900
 I3D_joint::~I3D_joint()
 {
     I3D_singlemesh *sm = singlemesh;
@@ -33,6 +35,7 @@ I3D_joint::~I3D_joint()
 // A moved joint's matrices are to be computed again, and its single mesh's vertices and bound volume. The first two
 // stores go through a local, the others read the member again (PS2's do the same).
 // FUNCTION: LS3DF 0x1001ee30
+// FUNCTION: LS3DF11 0x1001e950
 void I3D_joint::UpdateV()
 {
     if (!(frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
@@ -51,6 +54,7 @@ void I3D_joint::UpdateV()
 }
 
 // FUNCTION: LS3DF 0x1001eeb0
+// FUNCTION: LS3DF11 0x1001e9d0
 LS3D_RESULT I3D_joint::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -66,6 +70,7 @@ LS3D_RESULT I3D_joint::Duplicate(I3D_frame *frame)
 
 // The bone matrix and the index, in one read
 // FUNCTION: LS3DF 0x1001ef10
+// FUNCTION: LS3DF11 0x1001ea30
 void I3D_joint::LoadImage()
 {
     I3D_frame::LoadImage();

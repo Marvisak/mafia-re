@@ -17,15 +17,19 @@
 
 // The 4ds loader's state, which the frames' LoadImage functions read from and set: the error, the file and its name
 // GLOBAL: LS3DF 0x101c3be4
+// GLOBAL: LS3DF11 0x101c0cf4
 LS3D_RESULT ImageErrFlg;
 
 // GLOBAL: LS3DF 0x101c3bfc
+// GLOBAL: LS3DF11 0x101c0d0c
 int LoadImageHandle;
 
 // GLOBAL: LS3DF 0x101c3c04
+// GLOBAL: LS3DF11 0x101c0d14
 const char *ImageFileName;
 
 // GLOBAL: LS3DF 0x101c3c08
+// GLOBAL: LS3DF11 0x101c0d18
 C_list<I3D_target *> LoadTargetList;
 
 // A .6ds file's counts (PC only, the names are guesses), read at once: its vertices, its faces' indices and its parts.
@@ -37,10 +41,12 @@ struct S_shadow_info {
 };
 
 // GLOBAL: LS3DF 0x101c3be8
+// GLOBAL: LS3DF11 0x101c0cf8
 static S_shadow_info ShadowInfo;
 
 // The visuals' types by their index in the file (PC only, the name is a guess; PS2's types are the indices)
 // GLOBAL: LS3DF 0x100a915c
+// GLOBAL: LS3DF11 0x100a62c4
 static I3D_VISUAL_TYPE VisualTypes[] = {
     I3D_VISUAL_OBJECT, I3D_VISUAL_LIT_OBJECT, I3D_VISUAL_SINGLEMESH, I3D_VISUAL_SINGLEMORPH, I3D_VISUAL_BILLBOARD,
     I3D_VISUAL_MORPH, I3D_VISUAL_LENSF, I3D_VISUAL_PROJECTOR, I3D_VISUAL_MIRROR,
@@ -51,6 +57,7 @@ static I3D_VISUAL_TYPE VisualTypes[] = {
 // the materials are released, the meshes keep them. PS2's also builds the single meshes; the PC's never compares the
 // timestamp.
 // FUNCTION: LS3DF 0x10060cb0
+// FUNCTION: LS3DF11 0x1005df90
 LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
 {
     LoadFramu = 0;
@@ -202,6 +209,7 @@ LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
 // distance, vertices (0xffff: texture coordinates for the first level's vertices) and face groups. Errors set
 // ImageErrFlg and return NULL; a bad material ends the level's face groups.
 // FUNCTION: LS3DF 0x10061120
+// FUNCTION: LS3DF11 0x1005e400
 I3D_mesh_object *LoadMeshImage()
 {
     int index = 0;
@@ -289,6 +297,7 @@ I3D_mesh_object *LoadMeshImage()
 // Loads a .6ds file into a shadow's geometry: the vertices, the faces' indices, then each part's counts and the name of
 // its frame (PC only, the name is its message's). With a time the file's timestamp has to be that one.
 // FUNCTION: LS3DF 0x10061450
+// FUNCTION: LS3DF11 0x1005e730
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time)
 {
     if (!file_name || !*file_name)

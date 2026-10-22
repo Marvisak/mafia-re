@@ -10,12 +10,15 @@
 // Zero-initialized globals follow the ones VC6's hash places (the zero vector), in declaration order
 
 // GLOBAL: LS3DF 0x101c62dc
+// GLOBAL: LS3DF11 0x101c33dc
 bool ISndIsInit = false;
 
 // GLOBAL: LS3DF 0x101c62e0
+// GLOBAL: LS3DF11 0x101c33e0
 int MaxHWChannels = 0;
 
 // FUNCTION: LS3DF 0x1007b690
+// FUNCTION: LS3DF11 0x100784d0
 ISND_driver::ISND_driver()
 {
     ref = 1;
@@ -35,6 +38,7 @@ ISND_driver::ISND_driver()
 }
 
 // FUNCTION: LS3DF 0x1007b6e0
+// FUNCTION: LS3DF11 0x10078520
 ISND_driver::~ISND_driver()
 {
     if (ISndIsInit)
@@ -42,12 +46,14 @@ ISND_driver::~ISND_driver()
 }
 
 // FUNCTION: LS3DF 0x1007b730
+// FUNCTION: LS3DF11 0x10078570
 bool ISND_driver::IsInit() const
 {
     return ISndIsInit;
 }
 
 // FUNCTION: LS3DF 0x1007b740
+// FUNCTION: LS3DF11 0x10078580
 void ISND_driver::Close()
 {
     if (sources.size() > 0) {
@@ -87,6 +93,7 @@ void ISND_driver::Close()
 }
 
 // FUNCTION: LS3DF 0x1007b810
+// FUNCTION: LS3DF11 0x10078650
 LS3D_RESULT ISND_driver::InitBuffer(int mix_freq, int num_chan, int bps)
 {
     WAVEFORMATEX format;
@@ -102,6 +109,7 @@ LS3D_RESULT ISND_driver::InitBuffer(int mix_freq, int num_chan, int bps)
 }
 
 // FUNCTION: LS3DF 0x1007b8a0
+// FUNCTION: LS3DF11 0x100786e0
 LS3D_RESULT ISND_driver::SetVolume(float vol)
 {
     if (ISndIsInit && !IsAbsMrgZero(vol - volume)) {
@@ -123,12 +131,14 @@ LS3D_RESULT ISND_driver::GetCaps(uint *caps) const
 }
 
 // FUNCTION: LS3DF 0x1007b960
+// FUNCTION: LS3DF11 0x10078790
 ISND_source *ISND_driver::CreateSource()
 {
     return new ISND_source;
 }
 
 // FUNCTION: LS3DF 0x1007b9c0
+// FUNCTION: LS3DF11 0x100787f0
 LS3D_RESULT ISND_driver::CreateSource(ISND_source **source)
 {
     if (!source)
@@ -138,12 +148,14 @@ LS3D_RESULT ISND_driver::CreateSource(ISND_source **source)
 }
 
 // FUNCTION: LS3DF 0x1007ba00
+// FUNCTION: LS3DF11 0x10078830
 ISND_sound *ISND_driver::CreateSound()
 {
     return new ISND_sound;
 }
 
 // FUNCTION: LS3DF 0x1007ba60
+// FUNCTION: LS3DF11 0x10078890
 LS3D_RESULT ISND_driver::CreateSound(ISND_sound **sound)
 {
     if (!sound)
@@ -153,12 +165,14 @@ LS3D_RESULT ISND_driver::CreateSound(ISND_sound **sound)
 }
 
 // FUNCTION: LS3DF 0x1007baa0
+// FUNCTION: LS3DF11 0x100788d0
 ISND_3Dsound *ISND_driver::Create3DSound()
 {
     return new ISND_3Dsound;
 }
 
 // FUNCTION: LS3DF 0x1007bb00
+// FUNCTION: LS3DF11 0x10078930
 LS3D_RESULT ISND_driver::Create3DSound(ISND_3Dsound **sound)
 {
     if (!sound)
@@ -168,6 +182,7 @@ LS3D_RESULT ISND_driver::Create3DSound(ISND_3Dsound **sound)
 }
 
 // FUNCTION: LS3DF 0x1007bb40
+// FUNCTION: LS3DF11 0x10078970
 ISND_3Dlistener *ISND_driver::CreateListener()
 {
     ISND_3Dlistener *listener = new ISND_3Dlistener;
@@ -179,6 +194,7 @@ ISND_3Dlistener *ISND_driver::CreateListener()
 }
 
 // FUNCTION: LS3DF 0x1007bbd0
+// FUNCTION: LS3DF11 0x10078a00
 LS3D_RESULT ISND_driver::CreateListener(ISND_3Dlistener **listener)
 {
     if (!listener)
@@ -190,6 +206,7 @@ LS3D_RESULT ISND_driver::CreateListener(ISND_3Dlistener **listener)
 // Gets the IKsPropertySet of a small hardware 3D buffer and checks for EAX 3.0. When ds_property already exists, the
 // original releases the two buffer pointers without having set them.
 // FUNCTION: LS3DF 0x1007bc10
+// FUNCTION: LS3DF11 0x10078a40
 int ISND_driver::InitEAX()
 {
     if (!lpDS8)
@@ -252,6 +269,7 @@ int ISND_driver::InitEAX()
 }
 
 // FUNCTION: LS3DF 0x1007be20
+// FUNCTION: LS3DF11 0x10078c50
 bool ISND_driver::InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, uint flags)
 {
     create_flags = flags;
@@ -362,6 +380,7 @@ bool ISND_driver::InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, ui
 }
 
 // FUNCTION: LS3DF 0x1007c1f0
+// FUNCTION: LS3DF11 0x10079020
 LS3D_RESULT ISND_driver::Init(void *hwnd, int mix_freq, int num_chan, int bps, uint flags)
 {
     if (!InitDSound(hwnd, mix_freq, num_chan, bps, flags))
@@ -373,6 +392,7 @@ LS3D_RESULT ISND_driver::Init(void *hwnd, int mix_freq, int num_chan, int bps, u
 }
 
 // FUNCTION: LS3DF 0x1007c240
+// FUNCTION: LS3DF11 0x10079070
 LS3D_RESULT ISND_driver::Init(ISND_INIT *init)
 {
     if (!init)

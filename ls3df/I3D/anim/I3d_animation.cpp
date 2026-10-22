@@ -24,6 +24,7 @@ static inline void SkipTrack(const ushort *&p, int size)
 }
 
 // FUNCTION: LS3DF 0x10004890
+// FUNCTION: LS3DF11 0x10004890
 I3D_animation_set::I3D_animation_set()
 {
     ref = 1;
@@ -44,6 +45,7 @@ void I3D_animation_set::Close()
 }
 
 // FUNCTION: LS3DF 0x100048b0
+// FUNCTION: LS3DF11 0x100048b0
 int I3D_animation_set::Release()
 {
     if (--ref < 0) {
@@ -60,6 +62,7 @@ int I3D_animation_set::Release()
 // Loads the file and turns the offsets in it into addresses: the frames' names and keys, then the string notes'.
 // Its tracks are skipped with an int count, which VC6 widens once (movzx); SkipTrack's ushort is widened at each use.
 // FUNCTION: LS3DF 0x10004900
+// FUNCTION: LS3DF11 0x10004900
 LS3D_RESULT I3D_animation_set::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
@@ -107,6 +110,7 @@ LS3D_RESULT I3D_animation_set::Open(const char *file_name, uint flags, I3D_LOAD_
 }
 
 // FUNCTION: LS3DF 0x10004a00
+// FUNCTION: LS3DF11 0x10004a00
 int I3D_animation_set::NumAnimations() const
 {
     if (!data)
@@ -116,6 +120,7 @@ int I3D_animation_set::NumAnimations() const
 
 // In ms
 // FUNCTION: LS3DF 0x10004a20
+// FUNCTION: LS3DF11 0x10004a20
 int I3D_animation_set::GetEndTime() const
 {
     if (!data)
@@ -125,6 +130,7 @@ int I3D_animation_set::GetEndTime() const
 
 // The name of the index-th frame
 // FUNCTION: LS3DF 0x10004a40
+// FUNCTION: LS3DF11 0x10004a40
 const char *I3D_animation_set::GetAnimLink(int index) const
 {
     if (!data)
@@ -135,6 +141,7 @@ const char *I3D_animation_set::GetAnimLink(int index) const
 }
 
 // FUNCTION: LS3DF 0x10004a70
+// FUNCTION: LS3DF11 0x10004a70
 const S_frame_anim *I3D_animation_set::GetAnims() const
 {
     if (!data)
@@ -144,6 +151,7 @@ const S_frame_anim *I3D_animation_set::GetAnims() const
 
 // The index of the frame's animation, -1 if it has none
 // FUNCTION: LS3DF 0x10004a80
+// FUNCTION: LS3DF11 0x10004a80
 int I3D_animation_set::GetAnimIndex(const char *frame_name) const
 {
     if (!data)
@@ -157,6 +165,7 @@ int I3D_animation_set::GetAnimIndex(const char *frame_name) const
 }
 
 // FUNCTION: LS3DF 0x10004af0
+// FUNCTION: LS3DF11 0x10004af0
 int I3D_animation_set::NumRotKeys(uint link) const
 {
     if (data) {
@@ -171,6 +180,7 @@ int I3D_animation_set::NumRotKeys(uint link) const
 }
 
 // FUNCTION: LS3DF 0x10004b30
+// FUNCTION: LS3DF11 0x10004b30
 LS3D_RESULT I3D_animation_set::GetRotKey(uint link, uint key, int &time, S_quat &rot) const
 {
     if (!data)
@@ -198,6 +208,7 @@ LS3D_RESULT I3D_animation_set::GetRotKey(uint link, uint key, int &time, S_quat 
 }
 
 // FUNCTION: LS3DF 0x10004bf0
+// FUNCTION: LS3DF11 0x10004bf0
 int I3D_animation_set::NumPosKeys(uint link) const
 {
     if (data) {
@@ -217,6 +228,7 @@ int I3D_animation_set::NumPosKeys(uint link) const
 }
 
 // FUNCTION: LS3DF 0x10004c50
+// FUNCTION: LS3DF11 0x10004c50
 LS3D_RESULT I3D_animation_set::GetPosKey(uint link, uint key, int &time, S_vector &pos) const
 {
     if (!data)
@@ -247,6 +259,7 @@ LS3D_RESULT I3D_animation_set::GetPosKey(uint link, uint key, int &time, S_vecto
 }
 
 // FUNCTION: LS3DF 0x10004d30
+// FUNCTION: LS3DF11 0x10004d30
 int I3D_animation_set::NumSclKeys(uint link) const
 {
     if (data) {
@@ -268,6 +281,7 @@ int I3D_animation_set::NumSclKeys(uint link) const
 }
 
 // FUNCTION: LS3DF 0x10004db0
+// FUNCTION: LS3DF11 0x10004db0
 LS3D_RESULT I3D_animation_set::GetSclKey(uint link, uint key, int &time, S_vector &scale) const
 {
     if (!data)
@@ -301,6 +315,7 @@ LS3D_RESULT I3D_animation_set::GetSclKey(uint link, uint key, int &time, S_vecto
 
 // The number of the frame's note keys; is_note, if given, tells whether they are notes (or string notes)
 // FUNCTION: LS3DF 0x10004ea0
+// FUNCTION: LS3DF11 0x10004ea0
 int I3D_animation_set::NumNoteKeys(uint link, int *is_note) const
 {
     if (data) {
@@ -327,6 +342,7 @@ int I3D_animation_set::NumNoteKeys(uint link, int *is_note) const
 
 // The key index message is GetSclKey's, in the original too
 // FUNCTION: LS3DF 0x10004f50
+// FUNCTION: LS3DF11 0x10004f50
 LS3D_RESULT I3D_animation_set::GetNoteKey(uint link, uint key, int &time, short &note) const
 {
     if (!data)
@@ -360,6 +376,7 @@ LS3D_RESULT I3D_animation_set::GetNoteKey(uint link, uint key, int &time, short 
 
 // The key index message is GetSclKey's
 // FUNCTION: LS3DF 0x10005050
+// FUNCTION: LS3DF11 0x10005050
 LS3D_RESULT I3D_animation_set::GetNoteKeyStr(uint link, uint key, int &time, const char *&note) const
 {
     if (!data)

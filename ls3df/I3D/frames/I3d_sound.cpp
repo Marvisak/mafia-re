@@ -30,6 +30,7 @@ inline float I3D_sound::GetRangeVolume(float dist) const
 }
 
 // FUNCTION: LS3DF 0x10057650
+// FUNCTION: LS3DF11 0x10054d10
 I3D_sound::I3D_sound()
 {
     type = FRAME_SOUND;
@@ -69,6 +70,7 @@ I3D_sound::I3D_sound()
 }
 
 // FUNCTION: LS3DF 0x100577e0
+// FUNCTION: LS3DF11 0x10054ea0
 I3D_sound::~I3D_sound()
 {
     SetOn(false);
@@ -89,6 +91,7 @@ I3D_sound::~I3D_sound()
 // Opens the file's source, which the sound driver's sources share, and a voice for it. A source without a 3D buffer
 // (a stereo one) can only be ambient.
 // FUNCTION: LS3DF 0x10057940
+// FUNCTION: LS3DF11 0x10055000
 LS3D_RESULT I3D_sound::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     if (!pISndDriver->IsInit())
@@ -155,6 +158,7 @@ LS3D_RESULT I3D_sound::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC 
 }
 
 // FUNCTION: LS3DF 0x10057c40
+// FUNCTION: LS3DF11 0x10055300
 bool I3D_sound::IsPlaying(bool real) const
 {
     if (!voice)
@@ -181,6 +185,7 @@ bool I3D_sound::IsPlaying(bool real) const
 }
 
 // FUNCTION: LS3DF 0x10057d30
+// FUNCTION: LS3DF11 0x100553f0
 void I3D_sound::SetSoundType(I3D_SOUNDTYPE type)
 {
     if (snd_type == type)
@@ -201,6 +206,7 @@ void I3D_sound::SetSoundType(I3D_SOUNDTYPE type)
 }
 
 // FUNCTION: LS3DF 0x10057dd0
+// FUNCTION: LS3DF11 0x10055490
 void I3D_sound::SetRange(float near_range, float far_range, float mid, float mid_vol)
 {
     if (IsAbsMrgZero(range_n - near_range) && IsAbsMrgZero(range_f - far_range) && IsAbsMrgZero(range_mid - mid) &&
@@ -215,6 +221,7 @@ void I3D_sound::SetRange(float near_range, float far_range, float mid, float mid
 
 // The angles are at most PI
 // FUNCTION: LS3DF 0x10057eb0
+// FUNCTION: LS3DF11 0x10055570
 void I3D_sound::SetCone(float in_angle, float out_angle)
 {
     if (IsAbsMrgZero(cone_in - in_angle) && IsAbsMrgZero(cone_out - out_angle))
@@ -231,6 +238,7 @@ void I3D_sound::SetCone(float in_angle, float out_angle)
 }
 
 // FUNCTION: LS3DF 0x10057f90
+// FUNCTION: LS3DF11 0x10055650
 void I3D_sound::SetOutVol(float vol)
 {
     if (IsAbsMrgZero(volume_out - vol))
@@ -240,6 +248,7 @@ void I3D_sound::SetOutVol(float vol)
 }
 
 // FUNCTION: LS3DF 0x10057fd0
+// FUNCTION: LS3DF11 0x10055690
 void I3D_sound::SetVolume(float vol)
 {
     if (IsAbsMrgZero(volume - vol))
@@ -249,6 +258,7 @@ void I3D_sound::SetVolume(float vol)
 }
 
 // FUNCTION: LS3DF 0x10058010
+// FUNCTION: LS3DF11 0x100556d0
 void I3D_sound::SetLoop(bool loop)
 {
     this->loop = loop;
@@ -261,6 +271,7 @@ void I3D_sound::SetLoop(bool loop)
 }
 
 // FUNCTION: LS3DF 0x10058060
+// FUNCTION: LS3DF11 0x10055720
 LS3D_RESULT I3D_sound::SetCurrTime(uint time)
 {
     if (!voice)
@@ -276,6 +287,7 @@ LS3D_RESULT I3D_sound::SetCurrTime(uint time)
 }
 
 // FUNCTION: LS3DF 0x100580e0
+// FUNCTION: LS3DF11 0x100557a0
 void I3D_sound::SetFrequency(float freq)
 {
     if (IsAbsMrgZero(frequency - freq))
@@ -285,6 +297,7 @@ void I3D_sound::SetFrequency(float freq)
 }
 
 // FUNCTION: LS3DF 0x10058120
+// FUNCTION: LS3DF11 0x100557e0
 void I3D_sound::SetVelocity(const S_vector &v)
 {
     if (IsAbsMrgZero(velocity.x - v.x) && IsAbsMrgZero(velocity.y - v.y) && IsAbsMrgZero(velocity.z - v.z))
@@ -294,6 +307,7 @@ void I3D_sound::SetVelocity(const S_vector &v)
 }
 
 // FUNCTION: LS3DF 0x100581d0
+// FUNCTION: LS3DF11 0x10055890
 void I3D_sound::GetRange(float &near_range, float &far_range, float &mid, float &mid_vol) const
 {
     near_range = range_n;
@@ -303,6 +317,7 @@ void I3D_sound::GetRange(float &near_range, float &far_range, float &mid, float 
 }
 
 // FUNCTION: LS3DF 0x10058210
+// FUNCTION: LS3DF11 0x100558d0
 void I3D_sound::GetCone(float &in_angle, float &out_angle) const
 {
     in_angle = cone_in;
@@ -310,6 +325,7 @@ void I3D_sound::GetCone(float &in_angle, float &out_angle) const
 }
 
 // FUNCTION: LS3DF 0x10058230
+// FUNCTION: LS3DF11 0x100558f0
 uint I3D_sound::GetCurrTime() const
 {
     if (!voice)
@@ -318,6 +334,7 @@ uint I3D_sound::GetCurrTime() const
 }
 
 // FUNCTION: LS3DF 0x10058250
+// FUNCTION: LS3DF11 0x10055910
 uint I3D_sound::GetPlayTime() const
 {
     if (!voice)
@@ -328,6 +345,7 @@ uint I3D_sound::GetPlayTime() const
 // Switching on plays the sound if the camera is in one of its sectors and one of its areas is active, from where it
 // would be by now if it paused; update gives the voice its parameters at once.
 // FUNCTION: LS3DF 0x10058280
+// FUNCTION: LS3DF11 0x10055940
 void I3D_sound::SetOn(bool on, bool update)
 {
     I3D_frame::SetOn(on);
@@ -414,6 +432,7 @@ inline void I3D_sound::m_Pause()
 }
 
 // FUNCTION: LS3DF 0x10058530
+// FUNCTION: LS3DF11 0x10055bf0
 void I3D_sound::ForceUpdate()
 {
     m_UpdateSound();
@@ -430,6 +449,7 @@ void I3D_sound::ForceUpdate()
 //   bytes shorter, which moves the padding before the jump table. Double operands load it first, but then multiply
 //   the time as a double (fild qword); no spelling found has both.
 // FUNCTION: LS3DF 0x10058540
+// FUNCTION: LS3DF11 0x10055c00
 void I3D_sound::m_UpdateSound()
 {
     if (state == SOUNDSTATE_STOP || !(frm_flags & FRMFLAGS_ON) || !pCurrentCamera || !voice)
@@ -590,6 +610,7 @@ void I3D_sound::m_UpdateSound()
 // Takes the other sound's file and parameters. The state it takes is the low byte of the other's flags, which PS2's
 // does too.
 // FUNCTION: LS3DF 0x10059250
+// FUNCTION: LS3DF11 0x10056910
 LS3D_RESULT I3D_sound::Duplicate(I3D_frame *frame)
 {
     if (type == frame->type) {
@@ -616,6 +637,7 @@ LS3D_RESULT I3D_sound::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10059360
+// FUNCTION: LS3DF11 0x10056a20
 void I3D_sound::m_SetState(uchar new_state)
 {
     state = new_state;

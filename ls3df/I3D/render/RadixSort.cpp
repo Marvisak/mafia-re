@@ -13,22 +13,28 @@
 
 // The counts of each byte value of the keys, by byte (PS2 names)
 // GLOBAL: LS3DF 0x101c4430
+// GLOBAL: LS3DF11 0x101c1540
 static uint count0[256];
 
 // GLOBAL: LS3DF 0x101c3c30
+// GLOBAL: LS3DF11 0x101c0d40
 static uint count1[256];
 
 // GLOBAL: LS3DF 0x101c4030
+// GLOBAL: LS3DF11 0x101c1140
 static uint count2[256];
 
 // GLOBAL: LS3DF 0x101c4830
+// GLOBAL: LS3DF11 0x101c1940
 static uint count3[256];
 
 // The second buffer the passes sort into, kept for the next sort, and its size in bytes (PS2 names)
 // GLOBAL: LS3DF 0x101c4c30
+// GLOBAL: LS3DF11 0x101c1d40
 sort_entry_32 *GlobalStorage = NULL;
 
 // GLOBAL: LS3DF 0x101c4c34
+// GLOBAL: LS3DF11 0x101c1d44
 uint GlobalStorageSize = 0;
 
 // Counts each byte value of the keys, from the last entry down
@@ -187,6 +193,7 @@ void sort_3_b(sort_entry_32 *dst, sort_entry_32 *src, uint *indx, uint num)
 // slots, as the original does. The last byte's test is the signed sort's (128 and 127), though its
 // pass sorts it unsigned, as the others: PS2's has both, and so has H&D's, whose last pass flips the sign bit.
 // FUNCTION: LS3DF 0x100619b0
+// FUNCTION: LS3DF11 0x1005ec20
 void RadixSort32(sort_entry_32 *data, int num)
 {
     if (!num)

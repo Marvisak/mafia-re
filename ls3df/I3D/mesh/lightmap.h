@@ -67,30 +67,39 @@ public:
 // The destructor lightmap.cpp's thunk registers for its list of textures: the seventh $E5 in link order, after the
 // target file's
 // SYNTHETIC: LS3DF 0x1005d040
+// SYNTHETIC: LS3DF11 0x1005a2b0
 // $E5
 
 // TEXBL_STRUCT's constructor and destructor, out of line for the vector constructor and destructor iterators
 // SYNTHETIC: LS3DF 0x1005da50
+// SYNTHETIC: LS3DF11 0x1005acc0
 // TEXBL_STRUCT::TEXBL_STRUCT
 
 // SYNTHETIC: LS3DF 0x1005da70
+// SYNTHETIC: LS3DF11 0x1005ace0
 // TEXBL_STRUCT::~TEXBL_STRUCT
 
 // The lists' out-of-line templates, at the file's end
 // TEMPLATE: LS3DF 0x1005fc90
+// TEMPLATE: LS3DF11 0x1005cf00
 // C_list<TEXBL_STRUCT>::~C_list<TEXBL_STRUCT>
 
 // TEMPLATE: LS3DF 0x1005fcd0
+// TEMPLATE: LS3DF11 0x1005cf40
 // ?push_back@?$C_list@UTEXBL_STRUCT@@@@QAEXABUTEXBL_STRUCT@@@Z
 
 // SYNTHETIC: LS3DF 0x1005ff70
+// SYNTHETIC: LS3DF11 0x1005d1e0
 // TEXBL_STRUCT::`vector deleting destructor'
 
 // SYNTHETIC: LS3DF 0x1005ffd0
+// SYNTHETIC: LS3DF11 0x1005d240
 // TEXBL_STRUCT::operator=
 
 // TEMPLATE: LS3DF 0x100600d0
+// TEMPLATE: LS3DF11 0x1005d340
 // C_list<OFFSET_STRUCT>::operator=
 
 // TEMPLATE: LS3DF 0x10060190
+// TEMPLATE: LS3DF11 0x1005d400
 // ?push_back@?$C_list@UTEXBL_STRUCT@@@@QAEAAUTEXBL_STRUCT@@XZ

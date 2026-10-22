@@ -3,23 +3,27 @@
 #include "ISound/ISound.h"
 
 // FUNCTION: LS3DF 0x1007b370
+// FUNCTION: LS3DF11 0x100781b0
 ISND_3Dsound::ISND_3Dsound() : is3d_init(false), lpDSB3D8(NULL)
 {
 }
 
 // FUNCTION: LS3DF 0x1007b3b0
+// FUNCTION: LS3DF11 0x100781f0
 ISND_3Dsound::~ISND_3Dsound()
 {
     Close();
 }
 
 // FUNCTION: LS3DF 0x1007b420
+// FUNCTION: LS3DF11 0x10078260
 bool ISND_3Dsound::Is3DInit() const
 {
     return is3d_init;
 }
 
 // FUNCTION: LS3DF 0x1007b430
+// FUNCTION: LS3DF11 0x10078270
 LS3D_RESULT ISND_3Dsound::SetPos(const S_vector &pos)
 {
     if (lpDSB3D8 && FAILED(lpDSB3D8->SetPosition(pos.x, pos.y, pos.z, DS3D_IMMEDIATE)))
@@ -28,6 +32,7 @@ LS3D_RESULT ISND_3Dsound::SetPos(const S_vector &pos)
 }
 
 // FUNCTION: LS3DF 0x1007b470
+// FUNCTION: LS3DF11 0x100782b0
 LS3D_RESULT ISND_3Dsound::SetDir(const S_vector &dir)
 {
     if (lpDSB3D8 && FAILED(lpDSB3D8->SetConeOrientation(dir.x, dir.y, dir.z, DS3D_IMMEDIATE)))
@@ -36,6 +41,7 @@ LS3D_RESULT ISND_3Dsound::SetDir(const S_vector &dir)
 }
 
 // FUNCTION: LS3DF 0x1007b4b0
+// FUNCTION: LS3DF11 0x100782f0
 LS3D_RESULT ISND_3Dsound::SetVelocity(const S_vector &velocity)
 {
     if (lpDSB3D8 && FAILED(lpDSB3D8->SetVelocity(velocity.x, velocity.y, velocity.z, DS3D_IMMEDIATE)))
@@ -44,6 +50,7 @@ LS3D_RESULT ISND_3Dsound::SetVelocity(const S_vector &velocity)
 }
 
 // FUNCTION: LS3DF 0x1007b4f0
+// FUNCTION: LS3DF11 0x10078330
 LS3D_RESULT ISND_3Dsound::SetDistances(float min, float max)
 {
     if (lpDSB3D8) {
@@ -59,6 +66,7 @@ LS3D_RESULT ISND_3Dsound::SetDistances(float min, float max)
 // folds into one product; the original's factor (57.295784f) is that quotient with pi as 3.1415926f, not the
 // engine's PI (3.1415927f).
 // FUNCTION: LS3DF 0x1007b540
+// FUNCTION: LS3DF11 0x10078380
 LS3D_RESULT ISND_3Dsound::SetCone(float in_angle, float out_angle)
 {
     if (lpDSB3D8
@@ -69,6 +77,7 @@ LS3D_RESULT ISND_3Dsound::SetCone(float in_angle, float out_angle)
 }
 
 // FUNCTION: LS3DF 0x1007b590
+// FUNCTION: LS3DF11 0x100783d0
 LS3D_RESULT ISND_3Dsound::SetOutVolume(float out_vol)
 {
     if (lpDSB3D8
@@ -78,6 +87,7 @@ LS3D_RESULT ISND_3Dsound::SetOutVolume(float out_vol)
 }
 
 // FUNCTION: LS3DF 0x1007b5d0
+// FUNCTION: LS3DF11 0x10078410
 LS3D_RESULT ISND_3Dsound::Open(ISND_source *source, uint flags)
 {
     Close();
@@ -91,6 +101,7 @@ LS3D_RESULT ISND_3Dsound::Open(ISND_source *source, uint flags)
 }
 
 // FUNCTION: LS3DF 0x1007b630
+// FUNCTION: LS3DF11 0x10078470
 LS3D_RESULT ISND_3Dsound::Close()
 {
     is3d_init = false;

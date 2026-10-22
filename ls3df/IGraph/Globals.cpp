@@ -20,25 +20,31 @@
 
 // The log file, log.txt in the executable's folder, set by the first function that writes to it
 // GLOBAL: LS3DF 0x101c5048
+// GLOBAL: LS3DF11 0x101c2148
 static char log_name[256];
 
 // QueryPerformanceFrequency's ticks per 1/16 of a microsecond, for the engine's timer
 // GLOBAL: LS3DF 0x101c51a0
+// GLOBAL: LS3DF11 0x101c22a0
 ulong timer_frequency;
 
 // VC6 lays out zero-initialized globals in declaration order, after the ones its .bss hash places (StaticInstance).
 // Hashed, pGlobalIGraph would come first.
 
 // GLOBAL: LS3DF 0x101c5293
+// GLOBAL: LS3DF11 0x101c2393
 bool disableLog = false;
 
 // GLOBAL: LS3DF 0x101c5294
+// GLOBAL: LS3DF11 0x101c2394
 IGraph *pGlobalIGraph = NULL;
 
 // GLOBAL: LS3DF 0x101c5298
+// GLOBAL: LS3DF11 0x101c2398
 I3D_driver *pI3DDriver = NULL;
 
 // GLOBAL: LS3DF 0x101c529c
+// GLOBAL: LS3DF11 0x101c239c
 ISND_driver *pISndDriver = NULL;
 
 void dbgClear();
@@ -49,10 +55,15 @@ void dbgClear();
 class BreBre {
 public:
     // FUNCTION: LS3DF 0x1006b450
+    // FUNCTION: LS3DF11 0x100684e0
     BreBre()
     {
         dbgClear();
+#if ENGINE_VERSION >= 395
         dbgPrintf("LS3D Engine V3.95.1\t\t\t%s    GetVer:%d\n", "Jun 24 2003", ENGINE_VERSION);
+#else
+        dbgPrintf("LS3D Engine V3.93.4\t\t\t%s    GetVer:%d\n", "Feb  4 2003", ENGINE_VERSION);
+#endif
         QueryPerformanceFrequency((LARGE_INTEGER *)&timer_frequency);
         timer_frequency = (timer_frequency << 4) / 1000000;
         if (!timer_frequency)
@@ -74,15 +85,18 @@ public:
 };
 
 // GLOBAL: LS3DF 0x101c5292
+// GLOBAL: LS3DF11 0x101c2392
 static BreBre StaticInstance;
 
 // FUNCTION: LS3DF 0x1006b6d0
+// FUNCTION: LS3DF11 0x10068760
 int __cdecl GetEngineVersion()
 {
     return ENGINE_VERSION;
 }
 
 // FUNCTION: LS3DF 0x1006b6e0
+// FUNCTION: LS3DF11 0x10068770
 bool __cdecl TEV(const char *title, int engine_version)
 {
     if (engine_version == ENGINE_VERSION)
@@ -94,24 +108,28 @@ bool __cdecl TEV(const char *title, int engine_version)
 }
 
 // FUNCTION: LS3DF 0x1006b740
+// FUNCTION: LS3DF11 0x100687d0
 IGraph *__cdecl GetIGraph()
 {
     return pGlobalIGraph;
 }
 
 // FUNCTION: LS3DF 0x1006b750
+// FUNCTION: LS3DF11 0x100687e0
 ISND_driver *__cdecl ISndGetDriver()
 {
     return pISndDriver;
 }
 
 // FUNCTION: LS3DF 0x1006b760
+// FUNCTION: LS3DF11 0x100687f0
 I3D_driver *__cdecl I3DGetDriver()
 {
     return pI3DDriver;
 }
 
 // FUNCTION: LS3DF 0x1006b770
+// FUNCTION: LS3DF11 0x10068800
 const char *__cdecl I3DGetResultMessage(LS3D_RESULT result)
 {
     switch (result) {
@@ -161,6 +179,7 @@ const char *__cdecl I3DGetResultMessage(LS3D_RESULT result)
         return "Some limit of engine is exceeded";
     }
     // GLOBAL: LS3DF 0x101c5148
+    // GLOBAL: LS3DF11 0x101c2248
     static char str[64];
     sprintf(str, "Unknown result:0x%x", result);
     return str;
@@ -196,6 +215,7 @@ void dbgClear()
 }
 
 // FUNCTION: LS3DF 0x1006b890
+// FUNCTION: LS3DF11 0x10068920
 int __cdecl dbgPrintf(const char *format, ...)
 {
     if (disableLog)
@@ -212,6 +232,7 @@ int __cdecl dbgPrintf(const char *format, ...)
 
 // dbgPrintf without the line break
 // FUNCTION: LS3DF 0x1006b980
+// FUNCTION: LS3DF11 0x10068a10
 int __cdecl dbgPrintf1(const char *format, ...)
 {
     if (disableLog)
@@ -226,6 +247,7 @@ int __cdecl dbgPrintf1(const char *format, ...)
 }
 
 // FUNCTION: LS3DF 0x1006ba70
+// FUNCTION: LS3DF11 0x10068b00
 void dbgPrintGuid(const void *guid)
 {
     if (disableLog || !guid)
@@ -241,12 +263,15 @@ void dbgPrintGuid(const void *guid)
 }
 
 // GLOBAL: LS3DF 0x101c51a8
+// GLOBAL: LS3DF11 0x101c22a8
 I3D_bbox UnitBBox(S_vector(-1.0f, -1.0f, -1.0f), S_vector(1.0f, 1.0f, 1.0f));
 
 // FUNCTION: LS3DF 0x1006bc00
+// FUNCTION: LS3DF11 0x10068c90
 const S_vector *BBoxVertices(const I3D_bbox &bbox)
 {
     // GLOBAL: LS3DF 0x101c5230
+    // GLOBAL: LS3DF11 0x101c2330
     static S_vector v[8];
     S_vector *p = v;
     for (int i = 0; i < 2; i++) {
@@ -265,13 +290,16 @@ const S_vector *BBoxVertices(const I3D_bbox &bbox)
 }
 
 // GLOBAL: LS3DF 0x101c5188
+// GLOBAL: LS3DF11 0x101c2288
 S_vector UnitVector(1.0f, 1.0f, 1.0f);
 
 // GLOBAL: LS3DF 0x101c5194
+// GLOBAL: LS3DF11 0x101c2294
 S_vector ZeroVector(0.0f, 0.0f, 0.0f);
 
 // Hands an error to the application's handler and exits on a fatal one
 // FUNCTION: LS3DF 0x1006bce0
+// FUNCTION: LS3DF11 0x10068d70
 void ErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message)
 {
     if (m_InitDesc.error_handler)

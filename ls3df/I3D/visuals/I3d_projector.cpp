@@ -27,29 +27,37 @@ extern int RsZBiasProjector;
 // see tools/bsshash.py): its flags, the projector's box in world space, its sector and that sector's group bits, and
 // where the next receiver goes. receiver_count counts ShadowReceivers for ProcessShadow too.
 // GLOBAL: LS3DF 0x101b45f8
+// GLOBAL: LS3DF11 0x101b1718
 static uint projection_mode;
 
 // GLOBAL: LS3DF 0x101b4608
+// GLOBAL: LS3DF11 0x101b1728
 static int receiver_count;
 
 // GLOBAL: LS3DF 0x101b460c
+// GLOBAL: LS3DF11 0x101b172c
 static const I3D_bbox *projection_bbox;
 
 // GLOBAL: LS3DF 0x101b4610
+// GLOBAL: LS3DF11 0x101b1730
 static I3D_sector *projection_sector;
 
 // GLOBAL: LS3DF 0x101b4624
+// GLOBAL: LS3DF11 0x101b1744
 static I3D_visual **projection_rp;
 
 // GLOBAL: LS3DF 0x101b4628
+// GLOBAL: LS3DF11 0x101b1748
 static uint projection_bits;
 
 // The visuals a projector or shadow falls on (PC only; the name is a guess)
 // GLOBAL: LS3DF 0x101b4630
+// GLOBAL: LS3DF11 0x101b1750
 I3D_visual *ShadowReceivers[512];
 
 // PS2's order, the PC's members after the bound volume
 // FUNCTION: LS3DF 0x10045e30
+// FUNCTION: LS3DF11 0x10043eb0
 I3D_projector::I3D_projector()
 {
     visual_type = I3D_VISUAL_PROJECTOR;
@@ -83,6 +91,7 @@ I3D_projector::I3D_projector()
 }
 
 // FUNCTION: LS3DF 0x10046000
+// FUNCTION: LS3DF11 0x10044080
 I3D_projector::~I3D_projector()
 {
     if (texture)
@@ -98,6 +107,7 @@ I3D_projector::~I3D_projector()
 
 // A projector takes another's settings; a mesh visual's first face group gives it its material
 // FUNCTION: LS3DF 0x100460c0
+// FUNCTION: LS3DF11 0x10044150
 LS3D_RESULT I3D_projector::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -143,6 +153,7 @@ LS3D_RESULT I3D_projector::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10046240
+// FUNCTION: LS3DF11 0x100442d0
 void I3D_projector::SetTexture(ITexture *tex)
 {
     if (texture != tex) {
@@ -155,6 +166,7 @@ void I3D_projector::SetTexture(ITexture *tex)
 }
 
 // FUNCTION: LS3DF 0x10046270
+// FUNCTION: LS3DF11 0x10044300
 void I3D_projector::SetMaterial(I3D_material *mat)
 {
     if (material != mat) {
@@ -167,6 +179,7 @@ void I3D_projector::SetMaterial(I3D_material *mat)
 }
 
 // FUNCTION: LS3DF 0x100462a0
+// FUNCTION: LS3DF11 0x10044330
 void I3D_projector::SetOrthogonal(bool b)
 {
     orthogonal = b;
@@ -175,6 +188,7 @@ void I3D_projector::SetOrthogonal(bool b)
 }
 
 // FUNCTION: LS3DF 0x100462c0
+// FUNCTION: LS3DF11 0x10044350
 void I3D_projector::SetColor(const S_vector &c)
 {
     color = c;
@@ -196,6 +210,7 @@ void I3D_projector::SetColor(const S_vector &c)
 
 // Only a negative alpha is clamped (the original's too)
 // FUNCTION: LS3DF 0x100463a0
+// FUNCTION: LS3DF11 0x10044430
 void I3D_projector::SetAlpha(float a)
 {
     alpha = a;
@@ -206,6 +221,7 @@ void I3D_projector::SetAlpha(float a)
 }
 
 // FUNCTION: LS3DF 0x100463f0
+// FUNCTION: LS3DF11 0x10044480
 void I3D_projector::SetReverseFactor(float f)
 {
     reverse_factor = f;
@@ -218,6 +234,7 @@ void I3D_projector::SetReverseFactor(float f)
 }
 
 // FUNCTION: LS3DF 0x10046460
+// FUNCTION: LS3DF11 0x100444f0
 void I3D_projector::SetMode(PROJECTOR_MODE m)
 {
     mode = m;
@@ -226,6 +243,7 @@ void I3D_projector::SetMode(PROJECTOR_MODE m)
 }
 
 // FUNCTION: LS3DF 0x10046480
+// FUNCTION: LS3DF11 0x10044510
 void I3D_projector::SetProjectorLock(I3D_LOCK lock)
 {
     projector_lock = lock;
@@ -235,6 +253,7 @@ void I3D_projector::SetProjectorLock(I3D_LOCK lock)
 
 // I3D_visual's, and a move looks for the sector again
 // FUNCTION: LS3DF 0x100464a0
+// FUNCTION: LS3DF11 0x10044530
 void I3D_projector::UpdateV()
 {
     if (!(vis_flags & VISF_WORLD_SPACE) && frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
@@ -247,6 +266,7 @@ void I3D_projector::UpdateV()
 // distance from the camera's near plane. Both take the texture in rfg[0], so the transparent ones' has none, which
 // tells m_RenderFGroup which faces it renders.
 // FUNCTION: LS3DF 0x100464d0
+// FUNCTION: LS3DF11 0x10044560
 void I3D_projector::AddFGroups()
 {
     if (num_faces) {
@@ -270,11 +290,13 @@ void I3D_projector::AddFGroups()
 // The projectors whose receivers the rendering clips this frame (PC only; the name is a guess, chosen for the
 // original's .bss order)
 // GLOBAL: LS3DF 0x101b4614
+// GLOBAL: LS3DF11 0x101b1734
 C_list<I3D_projector *> ProjectorsToRender;
 
 // A projector that is on, has a texture, is in a sector and near enough to the camera is queued; with its receivers'
 // faces kept in the buffers it queues them at once
 // FUNCTION: LS3DF 0x10046780
+// FUNCTION: LS3DF11 0x10044810
 void I3D_projector::m_AddFGroups()
 {
     if (!(frm_flags & FRMFLAGS_ON))
@@ -310,6 +332,7 @@ void I3D_projector::m_AddFGroups()
 
 // What the rendering calls once the visuals are queued (render.cpp; PC only, the name is a guess), as ProcessShadows
 // FUNCTION: LS3DF 0x10046930
+// FUNCTION: LS3DF11 0x100449c0
 void ProcessProjectors()
 {
     I3D_projector **pp = &ProjectorsToRender[0];
@@ -329,6 +352,7 @@ void ProcessProjectors()
 // managers' buffers. Close to the projector a perspective projection's coordinates are those of the side the vertex
 // is on, both stored in u (the original's too). The added projections aren't lifted from the faces.
 // FUNCTION: LS3DF 0x10046960
+// FUNCTION: LS3DF11 0x100449f0
 void I3D_projector::ProcessRecList()
 {
     ResetClipArrays();
@@ -666,6 +690,7 @@ void I3D_projector::ProcessRecList()
 // or one of its group, and whose boxes meet the projector's. Their faces are clipped again when they or the projector
 // changed, then queued.
 // FUNCTION: LS3DF 0x10048060
+// FUNCTION: LS3DF11 0x10045fb0
 void I3D_projector::ProcessShadow()
 {
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
@@ -730,6 +755,7 @@ void I3D_projector::ProcessShadow()
 }
 
 // FUNCTION: LS3DF 0x100482c0
+// FUNCTION: LS3DF11 0x10046210
 void I3D_projector::MakeProjection(uint flags, I3D_frame *frame)
 {
     if (!sector) {
@@ -776,6 +802,7 @@ void I3D_projector::MakeProjection(uint flags, I3D_frame *frame)
 // projector's, in the hierarchies whose boxes do. Other sectors only of the projector's group. A full list is reported
 // for each further receiver, and the search goes on (the original's too).
 // FUNCTION: LS3DF 0x100483e0
+// FUNCTION: LS3DF11 0x10046330
 void I3D_projector::CollectReceivers(I3D_frame *frm)
 {
     if (!frm->IsOn())
@@ -832,6 +859,7 @@ children:
 // (help's texture set, see AddFGroups) or the transparent ones after them. From the buffers the transparent faces' base
 // vertex is moved by the opaque faces' indices (the original's too).
 // FUNCTION: LS3DF 0x100485f0
+// FUNCTION: LS3DF11 0x10046540
 void I3D_projector::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 {
     if (!num_verts)
@@ -877,6 +905,7 @@ void I3D_projector::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 
 // The projector's part of the 4ds file: the orthogonal flag, the mode and the material
 // FUNCTION: LS3DF 0x10048960
+// FUNCTION: LS3DF11 0x100468b0
 void I3D_projector::LoadImage()
 {
     I3D_frame::LoadImage();

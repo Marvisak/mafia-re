@@ -9,6 +9,7 @@
 // Reads a .5ds file's data into a new buffer, which the animation set keeps (I3D_animation_set::data). With a time the
 // file's timestamp has to be that one. PS2's checks version 122 and ignores the timestamp's comparison.
 // FUNCTION: LS3DF 0x10061800
+// FUNCTION: LS3DF11 0x1005ea70
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time)
 {
     if (!file_name)

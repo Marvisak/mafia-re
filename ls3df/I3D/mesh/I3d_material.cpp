@@ -22,6 +22,7 @@
 extern int driverTickTime;
 
 // FUNCTION: LS3DF 0x1002ade0
+// FUNCTION: LS3DF11 0x1002a0d0
 I3D_material::I3D_material()
 {
     ref = 1;
@@ -35,6 +36,7 @@ I3D_material::I3D_material()
 }
 
 // FUNCTION: LS3DF 0x1002aec0
+// FUNCTION: LS3DF11 0x1002a1b0
 I3D_material::~I3D_material()
 {
     if (texture)
@@ -44,6 +46,7 @@ I3D_material::~I3D_material()
 }
 
 // FUNCTION: LS3DF 0x1002aef0
+// FUNCTION: LS3DF11 0x1002a1e0
 int I3D_material::Release()
 {
     if (--ref < 0) {
@@ -58,6 +61,7 @@ int I3D_material::Release()
 }
 
 // FUNCTION: LS3DF 0x1002af20
+// FUNCTION: LS3DF11 0x1002a210
 LS3D_RESULT I3D_material::SetAmbient(const S_vector &color)
 {
     ambient = color;
@@ -65,6 +69,7 @@ LS3D_RESULT I3D_material::SetAmbient(const S_vector &color)
 }
 
 // FUNCTION: LS3DF 0x1002af40
+// FUNCTION: LS3DF11 0x1002a230
 LS3D_RESULT I3D_material::SetDiffuse(const S_vector &color)
 {
     diffuse = color;
@@ -72,6 +77,7 @@ LS3D_RESULT I3D_material::SetDiffuse(const S_vector &color)
 }
 
 // FUNCTION: LS3DF 0x1002af60
+// FUNCTION: LS3DF11 0x1002a250
 LS3D_RESULT I3D_material::SetEmissive(const S_vector &color)
 {
     emissive = color;
@@ -79,6 +85,7 @@ LS3D_RESULT I3D_material::SetEmissive(const S_vector &color)
 }
 
 // FUNCTION: LS3DF 0x1002af80
+// FUNCTION: LS3DF11 0x1002a270
 LS3D_RESULT I3D_material::SetAlpha(float a)
 {
     alpha = a;
@@ -87,6 +94,7 @@ LS3D_RESULT I3D_material::SetAlpha(float a)
 
 // The texture's alpha decides how the material is drawn: a color key alone is tested, with mipmaps blended
 // FUNCTION: LS3DF 0x1002af90
+// FUNCTION: LS3DF11 0x1002a280
 LS3D_RESULT I3D_material::SetTexture(ITexture *tex)
 {
     if (tex != texture) {
@@ -111,6 +119,7 @@ LS3D_RESULT I3D_material::SetTexture(ITexture *tex)
 }
 
 // FUNCTION: LS3DF 0x1002b000
+// FUNCTION: LS3DF11 0x1002a2f0
 LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex)
 {
     if (tex != env_texture) {
@@ -127,6 +136,7 @@ LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex)
 }
 
 // FUNCTION: LS3DF 0x1002b040
+// FUNCTION: LS3DF11 0x1002a330
 LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex, uint blend, uint mode, float a)
 {
     if (tex != env_texture) {
@@ -145,6 +155,7 @@ LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex, uint blend, uint mode, fl
 }
 
 // FUNCTION: LS3DF 0x1002b0b0
+// FUNCTION: LS3DF11 0x1002a3a0
 LS3D_RESULT I3D_material::Duplicate(I3D_material *mat)
 {
     if (!mat)
@@ -161,6 +172,7 @@ LS3D_RESULT I3D_material::Duplicate(I3D_material *mat)
 }
 
 // FUNCTION: LS3DF 0x1002b120
+// FUNCTION: LS3DF11 0x1002a410
 LS3D_RESULT I3D_material::Set2Sided()
 {
     flags |= MATF_TWO_SIDED;
@@ -168,6 +180,7 @@ LS3D_RESULT I3D_material::Set2Sided()
 }
 
 // FUNCTION: LS3DF 0x1002b130
+// FUNCTION: LS3DF11 0x1002a420
 LS3D_RESULT I3D_material::SetEnvType(uint type)
 {
     flags = (flags & ~MATF_ENVMAP_BLEND) | (type << 8);
@@ -175,6 +188,7 @@ LS3D_RESULT I3D_material::SetEnvType(uint type)
 }
 
 // FUNCTION: LS3DF 0x1002b150
+// FUNCTION: LS3DF11 0x1002a440
 LS3D_RESULT I3D_material::SetEnvMode(uint mode)
 {
     flags = (flags & ~MATF_ENVMAP_MODE) | (mode << 12);
@@ -182,6 +196,7 @@ LS3D_RESULT I3D_material::SetEnvMode(uint mode)
 }
 
 // FUNCTION: LS3DF 0x1002b170
+// FUNCTION: LS3DF11 0x1002a460
 LS3D_RESULT I3D_material::SetEnvScale(uint scale)
 {
     flags = (flags & ~MATF_ENVMAP_SCALE) | scale;
@@ -196,6 +211,7 @@ LS3D_RESULT I3D_material::SetEnvAlpha(float a)
 
 // The first frame of each is NULL until LoadImage or Duplicate sets them
 // FUNCTION: LS3DF 0x1002b190
+// FUNCTION: LS3DF11 0x1002a490
 I3D_anim_material::I3D_anim_material()
 {
     textures.push_back(NULL);
@@ -214,6 +230,7 @@ I3D_anim_material::I3D_anim_material()
 }
 
 // FUNCTION: LS3DF 0x1002b450
+// FUNCTION: LS3DF11 0x1002a750
 I3D_anim_material::~I3D_anim_material()
 {
     int i;
@@ -234,6 +251,7 @@ I3D_anim_material::~I3D_anim_material()
 // The texture of the frame the time since the last change has reached. The random frame's branch ends in its own copy
 // of the last two statements: VC6 copied the join into it, a return there gives other code.
 // FUNCTION: LS3DF 0x1002b580
+// FUNCTION: LS3DF11 0x1002a880
 void I3D_anim_material::UpdateTexture()
 {
     if (textures.size() < 2 || !frame_delay) {
@@ -268,6 +286,7 @@ void I3D_anim_material::UpdateTexture()
 }
 
 // FUNCTION: LS3DF 0x1002b6d0
+// FUNCTION: LS3DF11 0x1002a9d0
 void I3D_anim_material::UpdateEnvTexture()
 {
     if (env_textures.size() < 2 || !env_frame_delay) {
@@ -307,6 +326,7 @@ void I3D_anim_material::UpdateEnvTexture()
 // little more source (four calls of an empty inline function there give the original's code, as a probe); inline
 // setters for the timing fields come close, a release helper for the frames doesn't.
 // FUNCTION: LS3DF 0x1002b830
+// FUNCTION: LS3DF11 0x1002ab30
 LS3D_RESULT I3D_anim_material::Duplicate(I3D_material *mat)
 {
     int i;
@@ -375,6 +395,7 @@ LS3D_RESULT I3D_anim_material::Duplicate(I3D_material *mat)
 }
 
 // FUNCTION: LS3DF 0x1002bc50
+// FUNCTION: LS3DF11 0x1002af50
 bool I3D_anim_material::SetCurrentFrame(int f)
 {
     if (f >= (int)textures.size())
@@ -391,6 +412,7 @@ bool I3D_anim_material::SetCurrentFrame(int f)
 }
 
 // FUNCTION: LS3DF 0x1002bcd0
+// FUNCTION: LS3DF11 0x1002afd0
 bool I3D_anim_material::SetEnvCurrentFrame(int f)
 {
     if (f > (int)env_textures.size() || !env_textures.size())
@@ -448,6 +470,7 @@ static inline uint GetTextureFlags(const uint &flags)
 // The colors (env_alpha too with an environment map), then each texture's name: a length byte and the characters.
 // A color-keyed or additive material, or one whose image has alpha, has no alpha image name.
 // FUNCTION: LS3DF 0x1002bd50
+// FUNCTION: LS3DF11 0x1002b050
 void I3D_material::LoadImage()
 {
     char name[256], alpha_name[256];
@@ -498,6 +521,7 @@ void I3D_material::LoadImage()
 // numbers its images: the two characters before the extension's six (".tga" and two digits) become 00, 01 and so on.
 // The environment frames get the texture's flags as they are (the single environment map gets ENV_TEXTURE_FLAGS).
 // FUNCTION: LS3DF 0x1002c000
+// FUNCTION: LS3DF11 0x1002b300
 void I3D_anim_material::LoadImage()
 {
     char alpha_name[256], name[256], env_name[256];

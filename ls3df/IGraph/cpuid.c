@@ -24,6 +24,7 @@ typedef struct {
 
 // Whether the CPU has the cpuid instruction
 // FUNCTION: LS3DF 0x1006ad40
+// FUNCTION: LS3DF11 0x10067dd0
 BOOL IsCPUID()
 {
     __try {
@@ -39,6 +40,7 @@ BOOL IsCPUID()
 
 // The model's name: "Unknown" for a model of a known family, nothing for an unknown family
 // FUNCTION: LS3DF 0x1006adc0
+// FUNCTION: LS3DF11 0x10067e50
 void map_mname(int family, int model, const char *v_name, char *m_name)
 {
     if (!strncmp("AuthenticAMD", v_name, 12)) {
@@ -158,6 +160,7 @@ void map_mname(int family, int model, const char *v_name, char *m_name)
 
 // Returns the features and, with pinfo, fills it in
 // FUNCTION: LS3DF 0x1006b2a0
+// FUNCTION: LS3DF11 0x10068330
 int _cpuid(_p_info *pinfo)
 {
     DWORD dwStandard = 0;
@@ -238,6 +241,7 @@ no_extended:
 // The CPU's clock in MHz: the time stamp counter's count over a second, read after cpuid has serialized the
 // instructions before it (PC only, names guessed)
 // FUNCTION: LS3DF 0x1006b3b0
+// FUNCTION: LS3DF11 0x10068440
 int GetCPUSpeed()
 {
     DWORD start = 0, end = 0;

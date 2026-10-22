@@ -9,9 +9,11 @@
 
 // Every target (PS2 name)
 // GLOBAL: LS3DF 0x101b50b8
+// GLOBAL: LS3DF11 0x101b21d8
 C_list<I3D_target *> globalTargetList;
 
 // FUNCTION: LS3DF 0x10059490
+// FUNCTION: LS3DF11 0x10056b50
 I3D_target::I3D_target()
 {
     type = FRAME_TARGET;
@@ -20,6 +22,7 @@ I3D_target::I3D_target()
 }
 
 // FUNCTION: LS3DF 0x100595b0
+// FUNCTION: LS3DF11 0x10056c70
 I3D_target::~I3D_target()
 {
     I3D_frame **p = &frames[0];
@@ -29,6 +32,7 @@ I3D_target::~I3D_target()
 }
 
 // FUNCTION: LS3DF 0x10059680
+// FUNCTION: LS3DF11 0x10056d40
 LS3D_RESULT I3D_target::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -41,6 +45,7 @@ LS3D_RESULT I3D_target::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x100596d0
+// FUNCTION: LS3DF11 0x10056d90
 void I3D_target::SetTargetFlags(uint flags)
 {
     target_flags = flags;
@@ -49,6 +54,7 @@ void I3D_target::SetTargetFlags(uint flags)
 
 // A frame in another target's list leaves it first
 // FUNCTION: LS3DF 0x100596f0
+// FUNCTION: LS3DF11 0x10056db0
 void I3D_target::AddToTarget(I3D_frame *frame)
 {
     if (frame == this)
@@ -60,6 +66,7 @@ void I3D_target::AddToTarget(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x100597f0
+// FUNCTION: LS3DF11 0x10056eb0
 LS3D_RESULT I3D_target::DeleteFromTarget(I3D_frame *frame)
 {
     if (frames.remove(frame)) {
@@ -71,6 +78,7 @@ LS3D_RESULT I3D_target::DeleteFromTarget(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10059880
+// FUNCTION: LS3DF11 0x10056f40
 I3D_target *I3D_target::GetTarget(I3D_frame *frame)
 {
     I3D_target **tp = &globalTargetList[0];
@@ -86,6 +94,7 @@ I3D_target *I3D_target::GetTarget(I3D_frame *frame)
 
 // The same search: PS2's doesn't call GetTarget either, and both builds pass the list's element
 // FUNCTION: LS3DF 0x100598d0
+// FUNCTION: LS3DF11 0x10056f90
 void I3D_target::DeleteFromAnyTarget(I3D_frame *frame)
 {
     I3D_target **tp = &globalTargetList[0];
@@ -102,6 +111,7 @@ void I3D_target::DeleteFromAnyTarget(I3D_frame *frame)
 
 // A target that is on and moved updates its frames after the frames' update (I3D_frame::Update)
 // FUNCTION: LS3DF 0x10059920
+// FUNCTION: LS3DF11 0x10056fe0
 void I3D_target::UpdateV()
 {
     if ((frm_flags & FRMFLAGS_ON) && (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
@@ -116,6 +126,7 @@ void I3D_target::UpdateV()
 // UpdateV), ours calls it. 64 dead statements (if (0) target_flags = 0;) at the top give the original's code exactly,
 // 48 don't; so does a forced inline Normalize (see I3d_math.h), or leaving out the inline calls after GetWorldDir.
 // FUNCTION: LS3DF 0x100599b0
+// FUNCTION: LS3DF11 0x10057070
 void I3D_target::UpdateFrames()
 {
     if (!frames.size())
@@ -157,6 +168,7 @@ void I3D_target::UpdateFrames()
 // The frames are read as their 1-based indices in the file, which the loader turns into the frames once they are all
 // loaded (LoadTargetList)
 // FUNCTION: LS3DF 0x10059f10
+// FUNCTION: LS3DF11 0x100575d0
 void I3D_target::LoadImage()
 {
     I3D_frame::LoadImage();

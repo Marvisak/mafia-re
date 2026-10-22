@@ -42,6 +42,10 @@ if (NOT MSVC_VERSION EQUAL 1500)
     add_subdirectory(rw_data)
     add_subdirectory(ijoy)
     add_subdirectory(ls3df)
+    # Patch 1.1's LS3DF.dll, from the same sources (ls3df/CMakeLists.txt)
+    set(LS3DF_1_1 ON)
+    add_subdirectory(ls3df ls3df_1_1)
+    unset(LS3DF_1_1)
     add_subdirectory(game)
 endif()
 add_subdirectory(setup)
@@ -63,6 +67,9 @@ targets:
   LS3DF:
     path: $<TARGET_FILE:ls3df>
     pdb: $<TARGET_PDB_FILE:ls3df>
+  LS3DF11:
+    path: $<TARGET_FILE:ls3df_1_1>
+    pdb: $<TARGET_PDB_FILE:ls3df_1_1>
   GAME:
     path: $<TARGET_FILE:game>
     pdb: $<TARGET_PDB_FILE:game>

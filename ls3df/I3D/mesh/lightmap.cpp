@@ -39,6 +39,7 @@ struct TEXBL_STRUCT {
 
 // The textures with room left, sorted by their free area, the smallest first (PS2's static)
 // GLOBAL: LS3DF 0x101b5128
+// GLOBAL: LS3DF11 0x101b2238
 static C_list<TEXBL_STRUCT> GlobalRemainTexBlList(3);
 
 // Frees the list, adding the memory it held to mem. PS2's, which calls it; on PC nothing does, and the linker drops it.
@@ -67,6 +68,7 @@ void FreeTexBlList(int *mem)
 // PS2's ((sx + 2) * 16 first): VC6 then keeps the element count across new[] and multiplies again, where n * sizeof
 // in any spelling keeps n * 12.
 // FUNCTION: LS3DF 0x1005d090
+// FUNCTION: LS3DF11 0x1005a300
 bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
 {
     if (sx == 3 && sy == 3)
@@ -152,6 +154,7 @@ bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
 }
 
 // FUNCTION: LS3DF 0x1005d520
+// FUNCTION: LS3DF11 0x1005a790
 LightMap::LightMap() : m_OffsetList(10), m_OrderList(64)
 {
     m_pTexture = NULL;
@@ -166,6 +169,7 @@ LightMap::LightMap() : m_OffsetList(10), m_OrderList(64)
 // original also inlines the vector destructor of push_back's grow, which two dead statements more (if (0) area = 0;)
 // give exactly, anywhere before it; no source for them is known.
 // FUNCTION: LS3DF 0x1005d550
+// FUNCTION: LS3DF11 0x1005a7c0
 LightMap::~LightMap()
 {
     if (m_pTexture) {
@@ -219,6 +223,7 @@ LightMap::~LightMap()
 
 // Adds a free rectangle (its size in right and bottom), sorted by its area; one less than 3 texels wide or high is lost
 // FUNCTION: LS3DF 0x1005da90
+// FUNCTION: LS3DF11 0x1005ad00
 bool LightMap::m_AddRectToRectList(TEXBL_STRUCT *tb, RECT *rc)
 {
     if (rc->right < 3 || rc->bottom < 3) {
@@ -266,6 +271,7 @@ bool LightMap::m_AddRectToRectList(TEXBL_STRUCT *tb, RECT *rc)
 
 // Sorts a free rectangle again after it shrank, or drops it
 // FUNCTION: LS3DF 0x1005dbb0
+// FUNCTION: LS3DF11 0x1005ae20
 bool LightMap::m_ReplaceRectFromRectList(TEXBL_STRUCT *tb, RECT_STRUCT *r)
 {
     if (r->prev)
@@ -341,6 +347,7 @@ void LightMap::m_EraseRectList(TEXBL_STRUCT *tb)
 
 // Appends copies of src's free rectangles to dst's
 // FUNCTION: LS3DF 0x1005dca0
+// FUNCTION: LS3DF11 0x1005af10
 bool LightMap::m_DuplicateRectList(TEXBL_STRUCT *src, TEXBL_STRUCT *dst)
 {
     for (RECT_STRUCT *r = src->first; r; r = r->next) {
@@ -372,6 +379,7 @@ bool LightMap::m_DuplicateRectList(TEXBL_STRUCT *src, TEXBL_STRUCT *dst)
 // push_back's registers; each split subtracts from the new rectangle's bottom in both branches (PS2's order), which VC6
 // hoists but which keeps its adds in memory (add dword ptr [nr.top], sx): written once before the if, it loads them.
 // FUNCTION: LS3DF 0x1005dd40
+// FUNCTION: LS3DF11 0x1005afb0
 int LightMap::m_AddTexture(TEXBL_STRUCT *tb, RECTANGLE_INFO *ri)
 {
     int sx = ri->tex_sx;
@@ -519,6 +527,7 @@ void LightMap::m_FillLineWord(ushort **src, ushort **dst, int num, uint pitch)
 
 // Copies RGB texels to BGR ones, pitch bytes apart
 // FUNCTION: LS3DF 0x1005e330
+// FUNCTION: LS3DF11 0x1005b5a0
 void LightMap::m_FillLineRGB(uchar **src, uchar **dst, int num, uint pitch)
 {
     for (int i = 0; i < num; i++) {
@@ -552,6 +561,7 @@ void LightMap::m_FillLineRGB(uchar **src, uchar **r, uchar **g, uchar **b, int n
 
 // Scales a rectangle's texels to sx by sy into dst
 // FUNCTION: LS3DF 0x1005e3a0
+// FUNCTION: LS3DF11 0x1005b610
 bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 {
     pGlobalIGraph->ResizeImage(ri->sx, ri->sy, ri->sx * 3, ri->data, sx, sy, sx * 3, dst, 3, 1);
@@ -577,6 +587,7 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // inlines it); dead statements anywhere don't; no source for the difference is known. The frame's slot order and
 // registers differ all through.
 // FUNCTION: LS3DF 0x1005e3f0
+// FUNCTION: LS3DF11 0x1005b660
 bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem)
 {
     m_OrderList.reset();

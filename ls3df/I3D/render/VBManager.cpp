@@ -11,6 +11,7 @@
 extern IDirect3DDevice8 *m_pD3DDevice8;
 
 // GLOBAL: LS3DF 0x101c5014
+// GLOBAL: LS3DF11 0x101c2124
 C_VBManager cVBMan;
 
 // Out of line, where C_VBManager::m_Alloc calls it: it is just over VC6's /Ob2 limit for functions not declared
@@ -41,6 +42,7 @@ C_VBuffer::C_VBuffer()
 // 4 dead statements at the start or the end gives it too; zero-cost inline calls, Unlock() for the if (data) block and
 // the loops' spellings don't.
 // FUNCTION: LS3DF 0x10068af0
+// FUNCTION: LS3DF11 0x10065c80
 C_VBuffer::~C_VBuffer()
 {
     S_VB_block **p = &used_blocks[0];
@@ -70,6 +72,7 @@ C_VBuffer::~C_VBuffer()
 // software, and locks it. Out of video memory it evicts managed resources and tries again, then tries the managed
 // pool.
 // FUNCTION: LS3DF 0x10068cf0
+// FUNCTION: LS3DF11 0x10065e80
 bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FORMAT format)
 {
     this->fvf = fvf;
@@ -109,6 +112,7 @@ bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FOR
 
 // Gives out count vertices from the smallest free block that has room, and returns the first one's index, or -1
 // FUNCTION: LS3DF 0x10068f10
+// FUNCTION: LS3DF11 0x10066080
 int C_VBuffer::m_Alloc(uint count, COMPLETE_VB_STRUCT *owner)
 {
     std::multiset<S_VB_block *, S_VB_block_less>::iterator it;
@@ -132,6 +136,7 @@ int C_VBuffer::m_Alloc(uint count, COMPLETE_VB_STRUCT *owner)
 // Takes back the block that starts at index, joined with the free blocks next to it, and deletes the buffer if
 // nothing is given out any more
 // FUNCTION: LS3DF 0x100690d0
+// FUNCTION: LS3DF11 0x10066220
 bool C_VBuffer::m_Free(uint index)
 {
     S_VB_block **p = &used_blocks[0];
@@ -181,6 +186,7 @@ bool C_VBuffer::m_Free(uint index)
 }
 
 // FUNCTION: LS3DF 0x100692b0
+// FUNCTION: LS3DF11 0x100663e0
 C_VBManager::C_VBManager()
 {
     locked_buffers.reserve(256);
@@ -199,6 +205,7 @@ C_VBManager::~C_VBManager()
 // Gives out count vertices of a buffer of the format and usage, from the first that has room, or from a new one,
 // which is the only way if exclusive is set
 // FUNCTION: LS3DF 0x100695e0
+// FUNCTION: LS3DF11 0x100666e0
 bool C_VBManager::m_Alloc(uint fvf, uint usage, uint stride, uint count, COMPLETE_VB_STRUCT &vb, VERTEX_FORMAT format,
     bool exclusive)
 {
@@ -237,6 +244,7 @@ void C_VBManager::m_Free(COMPLETE_VB_STRUCT &vb)
 }
 
 // FUNCTION: LS3DF 0x100697e0
+// FUNCTION: LS3DF11 0x10066980
 void C_VBManager::m_UnlockAllVBuffers()
 {
     C_VBuffer **p = &locked_buffers[0];
@@ -250,6 +258,7 @@ void C_VBManager::m_UnlockAllVBuffers()
 
 // Deletes the buffer if it has nothing given out, or without one every buffer that has nothing given out
 // FUNCTION: LS3DF 0x10069820
+// FUNCTION: LS3DF11 0x100669f0
 void C_VBManager::m_FreeAllUnusedVBuffers(C_VBuffer *buffer)
 {
     std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it, it1;
@@ -276,6 +285,7 @@ void C_VBManager::m_FreeAllUnusedVBuffers(C_VBuffer *buffer)
 }
 
 // FUNCTION: LS3DF 0x100698e0
+// FUNCTION: LS3DF11 0x10066ab0
 void C_VBManager::m_FreeAllVBuffers()
 {
     std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it;
@@ -292,6 +302,7 @@ restart:
 
 // Deletes the buffers in the default pool, which a reset device loses
 // FUNCTION: LS3DF 0x10069950
+// FUNCTION: LS3DF11 0x10066b20
 void C_VBManager::m_FreeAllVRAMVBuffers()
 {
     std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it;

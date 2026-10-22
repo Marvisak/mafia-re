@@ -1,0 +1,4 @@
+# The size of patch 1.1's original functions reccmp gets wrong (see sizes.csv).
+address|size
+# IGraph::SetAppName: jmp [SetWindowTextA], then its other exit
+0x100698b0|139

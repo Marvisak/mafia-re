@@ -28,9 +28,11 @@ extern int RsZBiasShadow;
 
 // Every shadow (PS2 name)
 // GLOBAL: LS3DF 0x101b4f4c
+// GLOBAL: LS3DF11 0x101b206c
 C_list<I3D_shadow *> globalShadowList;
 
 // FUNCTION: LS3DF 0x10050950
+// FUNCTION: LS3DF11 0x1004e7d0
 I3D_shadow::I3D_shadow()
 {
     type = FRAME_SHADOW;
@@ -72,6 +74,7 @@ I3D_shadow::I3D_shadow()
 }
 
 // FUNCTION: LS3DF 0x10050b90
+// FUNCTION: LS3DF11 0x1004ea10
 I3D_shadow::~I3D_shadow()
 {
     Close();
@@ -84,6 +87,7 @@ I3D_shadow::~I3D_shadow()
 
 // A copy shares the original's geometry; SetTo gives it its frames
 // FUNCTION: LS3DF 0x10050c60
+// FUNCTION: LS3DF11 0x1004eae0
 LS3D_RESULT I3D_shadow::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -119,18 +123,23 @@ struct S_shadow_match {
 // names are chosen for the original's .bss order (see tools/bsshash.py); the counts are zero-initialized, which puts
 // them last, in their order.
 // GLOBAL: LS3DF 0x101b4f5c
+// GLOBAL: LS3DF11 0x101b207c
 static S_shadow_part *SetToParts;
 
 // GLOBAL: LS3DF 0x101b4f60
+// GLOBAL: LS3DF11 0x101b2080
 static C_list<S_shadow_match> FoundFrames;
 
 // GLOBAL: LS3DF 0x101b4f70
+// GLOBAL: LS3DF11 0x101b2090
 static int SetToNumFaces = 0;
 
 // GLOBAL: LS3DF 0x101b4f74
+// GLOBAL: LS3DF11 0x101b2094
 static int SetToNumParts = 0;
 
 // GLOBAL: LS3DF 0x101b4f78
+// GLOBAL: LS3DF11 0x101b2098
 static int SetToNumVerts = 0;
 
 static inline void FindParts(I3D_frame *frame);
@@ -138,6 +147,7 @@ static inline void FindParts(I3D_frame *frame);
 // Takes the geometry's parts whose frames are found under frame: their vertices, and their faces with the indices
 // moved by the vertices before them. NULL leaves the scene. The vertices' 2D points aren't freed (the original's too).
 // FUNCTION: LS3DF 0x10050d80
+// FUNCTION: LS3DF11 0x1004ec00
 void I3D_shadow::SetTo(I3D_frame *frame)
 {
     if (!frame && scene)
@@ -224,6 +234,7 @@ void I3D_shadow::SetTo(I3D_frame *frame)
 // the name. Recursive: SetTo has its first level inlined, the copy follows SetTo. Defined after SetTo, as its marker's
 // address is; VC6 inlines a static inline function defined after its caller too. The loop steps p before i.
 // FUNCTION: LS3DF 0x10051260
+// FUNCTION: LS3DF11 0x1004f0e0
 static inline void FindParts(I3D_frame *frame)
 {
     for (I3D_frame *frm = frame->child; frm; frm = frm->next) {
@@ -245,6 +256,7 @@ static inline void FindParts(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x100513d0
+// FUNCTION: LS3DF11 0x1004f250
 LS3D_RESULT I3D_shadow::LinkTo(I3D_frame *frame, uint flags)
 {
     SetTo(frame);
@@ -252,6 +264,7 @@ LS3D_RESULT I3D_shadow::LinkTo(I3D_frame *frame, uint flags)
 }
 
 // FUNCTION: LS3DF 0x10051400
+// FUNCTION: LS3DF11 0x1004f280
 void I3D_shadow::SetShadowLock(I3D_LOCK lock)
 {
     shadow_lock = lock;
@@ -262,6 +275,7 @@ void I3D_shadow::SetShadowLock(I3D_LOCK lock)
 // A shadow under a sector joins the sector's scene. The original's search isn't rotated: a while (true) whose sector
 // case returns inside the loop gives that (a for, while or goto loop with a break is rotated).
 // FUNCTION: LS3DF 0x10051430
+// FUNCTION: LS3DF11 0x1004f2b0
 void I3D_shadow::UpdateV()
 {
     if (scene)
@@ -281,6 +295,7 @@ void I3D_shadow::UpdateV()
 }
 
 // FUNCTION: LS3DF 0x10051480
+// FUNCTION: LS3DF11 0x1004f300
 void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
 {
     I3D_shadow **sp = &globalShadowList[0];
@@ -298,6 +313,7 @@ void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
 // Releases the geometry and the texture. The world space vertices' pointer stays (the original's too). The definition
 // is released through its inline Release, which decrements the count in a register and tests that.
 // FUNCTION: LS3DF 0x100514e0
+// FUNCTION: LS3DF11 0x1004f360
 void I3D_shadow::Close()
 {
     S_shadow_frame *sf = frames;
@@ -329,6 +345,7 @@ void I3D_shadow::Close()
 }
 
 // FUNCTION: LS3DF 0x100515e0
+// FUNCTION: LS3DF11 0x1004f460
 LS3D_RESULT I3D_shadow::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
@@ -344,6 +361,7 @@ LS3D_RESULT I3D_shadow::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb,
 }
 
 // FUNCTION: LS3DF 0x10051800
+// FUNCTION: LS3DF11 0x1004f680
 void I3D_shadow::SetRange(float r)
 {
     if (r > 0.0f)
@@ -353,6 +371,7 @@ void I3D_shadow::SetRange(float r)
 }
 
 // FUNCTION: LS3DF 0x10051840
+// FUNCTION: LS3DF11 0x1004f6c0
 LS3D_RESULT I3D_shadow::SetMaxTextureDistance(float d)
 {
     if (d < 0.0f || d > 32.0f)
@@ -365,6 +384,7 @@ LS3D_RESULT I3D_shadow::SetMaxTextureDistance(float d)
 }
 
 // FUNCTION: LS3DF 0x100518b0
+// FUNCTION: LS3DF11 0x1004f730
 void I3D_shadow::SetColor(const S_vector &c)
 {
     color = c;
@@ -385,6 +405,7 @@ void I3D_shadow::SetColor(const S_vector &c)
 }
 
 // FUNCTION: LS3DF 0x10051980
+// FUNCTION: LS3DF11 0x1004f800
 void I3D_shadow::SetReverseFactor(float f)
 {
     reverse_factor = f;
@@ -396,6 +417,7 @@ void I3D_shadow::SetReverseFactor(float f)
 }
 
 // FUNCTION: LS3DF 0x100519e0
+// FUNCTION: LS3DF11 0x1004f860
 void I3D_shadow::SetOrthogonal(bool b)
 {
     orthogonal = b;
@@ -406,6 +428,7 @@ void I3D_shadow::SetOrthogonal(bool b)
 
 // The powers of two from 4 up to 128 that hold the sizes. Both are computed from x (the original's too).
 // FUNCTION: LS3DF 0x10051a20
+// FUNCTION: LS3DF11 0x1004f8a0
 LS3D_RESULT I3D_shadow::SetTextureSize(int x, int y)
 {
     if (x > 128 || y > 128)
@@ -429,6 +452,7 @@ LS3D_RESULT I3D_shadow::SetTextureSize(int x, int y)
 // part is skipped without moving on in the vertices (the original's too). The pointers step in the loop's increment,
 // after the copy.
 // FUNCTION: LS3DF 0x10051ab0
+// FUNCTION: LS3DF11 0x1004f930
 bool I3D_shadow::UpdateVertices()
 {
     if (!def)
@@ -474,6 +498,7 @@ bool I3D_shadow::UpdateVertices()
 // immediates, not its zero register); the points' first values stored through the member, before the walking pointers
 // are set.
 // FUNCTION: LS3DF 0x10051c00
+// FUNCTION: LS3DF11 0x1004fa80
 bool I3D_shadow::UpdateLight()
 {
     if (shadow_lock >= I3DLOCK_LIGHT && shd_flags & SHDF_LIGHT_VALID)
@@ -658,6 +683,7 @@ bool I3D_shadow::UpdateLight()
 
 // Renders the points into the texture, created first, unless it is up to date or locked
 // FUNCTION: LS3DF 0x100529c0
+// FUNCTION: LS3DF11 0x10050840
 bool I3D_shadow::RenderTexture()
 {
     if (shd_flags & SHDF_TEXTURE_VALID) {
@@ -685,6 +711,7 @@ bool I3D_shadow::RenderTexture()
 // sector, once its vertices, light and texture are ready; otherwise the visual leaves it. The original has the failure
 // inline after the last step's test, which the earlier tests jump into.
 // FUNCTION: LS3DF 0x10052a90
+// FUNCTION: LS3DF11 0x10050910
 void I3D_shadow::Prepare()
 {
     if (!parent) {
@@ -732,6 +759,7 @@ hide:
 }
 
 // FUNCTION: LS3DF 0x10052c70
+// FUNCTION: LS3DF11 0x10050af0
 ShadowDef::~ShadowDef()
 {
     S_shadow_part *p = &parts[0];
@@ -740,6 +768,7 @@ ShadowDef::~ShadowDef()
 }
 
 // FUNCTION: LS3DF 0x10052ce0
+// FUNCTION: LS3DF11 0x10050b60
 I3D_shadow_visual::I3D_shadow_visual()
 {
     verts = NULL;
@@ -771,6 +800,7 @@ I3D_shadow_visual::I3D_shadow_visual()
 }
 
 // FUNCTION: LS3DF 0x10052e90
+// FUNCTION: LS3DF11 0x10050d10
 I3D_shadow_visual::~I3D_shadow_visual()
 {
     delete[] verts;
@@ -782,10 +812,12 @@ I3D_shadow_visual::~I3D_shadow_visual()
 // The shadows' visuals whose receivers ProcessShadows clips this frame (PC only; the name is a guess, chosen for the
 // original's .bss order)
 // GLOBAL: LS3DF 0x101b4f3c
+// GLOBAL: LS3DF11 0x101b205c
 C_list<I3D_shadow_visual *> ShadowVisualQueue;
 
 // The receivers kept in the buffers (I3DLOCK_RECEIVERS) are queued at once; otherwise ProcessShadows clips them first
 // FUNCTION: LS3DF 0x10052f80
+// FUNCTION: LS3DF11 0x10050e00
 void I3D_shadow_visual::m_AddFGroups()
 {
     if (shadow->shadow_lock == I3DLOCK_RECEIVERS && shadow->shd_flags & SHDF_RECEIVERS_VALID) {
@@ -804,6 +836,7 @@ void I3D_shadow_visual::m_AddFGroups()
 // Queues the opaque and the transparent receivers' faces for m_RenderFGroup. Both take the texture in rfg, so the
 // transparent ones' has none, which tells m_RenderFGroup which faces it renders.
 // FUNCTION: LS3DF 0x10053060
+// FUNCTION: LS3DF11 0x10050ee0
 void I3D_shadow_visual::AddFGroups()
 {
     if (!num_verts)
@@ -827,6 +860,7 @@ void I3D_shadow_visual::AddFGroups()
 // What the rendering calls once the visuals are queued (render.cpp; PC only, the name is a guess). A do-while under
 // the count's test: the original saves edi before the test, where a for or while loop over the count tests first.
 // FUNCTION: LS3DF 0x10053250
+// FUNCTION: LS3DF11 0x100510d0
 void ProcessShadows()
 {
     I3D_shadow_visual **vp = &ShadowVisualQueue[0];
@@ -850,6 +884,7 @@ void ProcessShadows()
 // I3D_object::GetMeshLOD; the lift through I3DIntAsFloat; the buffer's failure jumping into the system memory one; the
 // two empty results as copies, joined for the flags.
 // FUNCTION: LS3DF 0x10053280
+// FUNCTION: LS3DF11 0x10051100
 void I3D_shadow_visual::ProcessShadow()
 {
     Update();
@@ -1080,6 +1115,7 @@ oom:
 // transparent faces' base vertex is moved by the opaque faces' indices (the original's too). SetStreamSource is in
 // both branches: VC6 pushes its arguments before the test.
 // FUNCTION: LS3DF 0x10053ee0
+// FUNCTION: LS3DF11 0x10051c30
 void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
 {
     SetColorOp(D3DTOP_MODULATE);

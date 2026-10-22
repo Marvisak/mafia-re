@@ -13,6 +13,7 @@
 #include <mmsystem.h>
 
 // FUNCTION: LS3DF 0x10005db0
+// FUNCTION: LS3DF11 0x10005da0
 I3D_billboard::I3D_billboard()
 {
     rot_axis = 2;
@@ -24,6 +25,7 @@ I3D_billboard::I3D_billboard()
 // Empty, but defined here: the original's comes right after the constructor's scalar deleting destructor, where an
 // inline one, in the precompiled header, would be deferred (/YX)
 // FUNCTION: LS3DF 0x10005e10
+// FUNCTION: LS3DF11 0x10005e00
 I3D_billboard::~I3D_billboard()
 {
 }
@@ -34,6 +36,7 @@ void I3D_billboard::SetSpace(bool world)
 
 // The mesh's box made a cube around the mesh's extremes (the vertices turn), and its sphere
 // FUNCTION: LS3DF 0x10005e40
+// FUNCTION: LS3DF11 0x10005e20
 void I3D_billboard::UpdateBoundProc()
 {
     vis_flags |= VISF_BOUND_VALID;
@@ -56,6 +59,7 @@ void I3D_billboard::UpdateBoundProc()
 }
 
 // FUNCTION: LS3DF 0x10005f40
+// FUNCTION: LS3DF11 0x10005f20
 void I3D_billboard::SetMesh(I3D_mesh_object *m, bool keep_lods)
 {
     I3D_object::SetMesh(m, keep_lods);
@@ -63,6 +67,7 @@ void I3D_billboard::SetMesh(I3D_mesh_object *m, bool keep_lods)
 }
 
 // FUNCTION: LS3DF 0x10005f60
+// FUNCTION: LS3DF11 0x10005f40
 LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -109,6 +114,7 @@ LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
 // sum in two cases, a factor order in mode 1 and in the inlined UpdateMatrix of mode 3. 64 combinations of the square
 // roots' term orders and e's initialization (constructor or assignment) don't do better.
 // FUNCTION: LS3DF 0x10006090
+// FUNCTION: LS3DF11 0x10006070
 void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 {
     switch (axis_mode) {
@@ -332,6 +338,7 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 // lod::Create call's argument loads (the original loads level->num_vertices before the constant pushes and tests the
 // flags in memory) and lod_index read twice where the original copies it.
 // FUNCTION: LS3DF 0x100073c0
+// FUNCTION: LS3DF11 0x100073a0
 void I3D_billboard::m_AddFGroups()
 {
     if (!mesh)
@@ -544,6 +551,7 @@ void I3D_billboard::m_AddFGroups()
 // The multipass switch calls cases 4 and 5's SetColorOp out of line as the original does only with the render-state
 // helpers' asserts (I3D.h).
 // FUNCTION: LS3DF 0x100083b0
+// FUNCTION: LS3DF11 0x10008030
 void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
     I3D_face_group *fg = h->fg;
@@ -803,6 +811,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 
 // The axis and the mode's low byte (5 bytes): an axis out of range gives axis 0 in mode 2, a mode out of range mode 1
 // FUNCTION: LS3DF 0x100094d0
+// FUNCTION: LS3DF11 0x10009150
 void I3D_billboard::LoadImage()
 {
     I3D_object::LoadImage();
@@ -816,6 +825,7 @@ void I3D_billboard::LoadImage()
 }
 
 // FUNCTION: LS3DF 0x10009520
+// FUNCTION: LS3DF11 0x100091a0
 I3D_lensflare::I3D_lensflare()
 {
     visual_type = I3D_VISUAL_LENSF;
@@ -838,6 +848,7 @@ I3D_lensflare::I3D_lensflare()
 }
 
 // FUNCTION: LS3DF 0x10009630
+// FUNCTION: LS3DF11 0x100092b0
 I3D_lensflare::~I3D_lensflare()
 {
     int i = glows.size();
@@ -852,6 +863,7 @@ I3D_lensflare::~I3D_lensflare()
 }
 
 // FUNCTION: LS3DF 0x100096e0
+// FUNCTION: LS3DF11 0x10009370
 LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -906,6 +918,7 @@ LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)
 // no spelling of the else branch or of Normalize moved it), the loop's visibility * size operand order and the order
 // of some stores (the single glow's first vertex color first).
 // FUNCTION: LS3DF 0x10009890
+// FUNCTION: LS3DF11 0x10009520
 void I3D_lensflare::Draw(bool test)
 {
     S_vector pos = GetMatrix()(3);
@@ -1124,6 +1137,7 @@ void I3D_lensflare::Draw(bool test)
 
 // The glows (their places and materials) and a small box
 // FUNCTION: LS3DF 0x1000ac90
+// FUNCTION: LS3DF11 0x1000a920
 void I3D_lensflare::LoadImage()
 {
     I3D_frame::LoadImage();

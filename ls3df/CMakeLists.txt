@@ -2,11 +2,20 @@ cmake_minimum_required(VERSION 3.25)
 
 project(ls3df)
 
+# The engine of patch 1.2 (ENGINE_VERSION 395, ls3df.h) as target ls3df. The top-level CMakeLists.txt adds this
+# directory a second time with LS3DF_1_1 set, for patch 1.1's (393) as target ls3df_1_1: the sources keep 1.1's
+# differences behind ENGINE_VERSION. Both have the same objects, libraries, imports and Rich header.
+if (LS3DF_1_1)
+    set(engine ls3df_1_1)
+else()
+    set(engine ls3df)
+endif()
+
 # The engine. The original has 61 C++ objects and one C object of its own, the sources in the original's order, by file
 # name within each group. The top folders follow C:\MyProjects\engine8, where the original was built: I3D and IGraph
 # are in its __FILE__ strings, the sound files' folder is named here. I3D's subfolders are ours: the original's I3D was
 # flat (C:\MyProjects\engine8\I3D\IBManager.cpp).
-add_library(ls3df SHARED
+add_library(${engine} SHARED
     I3D/render/clipper.cpp
     I3D/render/clipper2.cpp
     I3D/render/clipping.cpp
@@ -70,18 +79,18 @@ add_library(ls3df SHARED
     ISound/IS_source.cpp
 )
 # The export directory names the DLL
-set_target_properties(ls3df PROPERTIES OUTPUT_NAME LS3DF)
+set_target_properties(${engine} PROPERTIES OUTPUT_NAME LS3DF)
 # Every file includes ls3df.h, and a header from another folder by its folder (I3D/I3D.h)
-target_include_directories(ls3df PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${engine} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The DirectX 8.1 SDK: its d3d8.lib, dinput8.lib and dsound.lib import objects (Implib700 9210) and its dxguid.lib
 # and dinput8.lib data objects (Utc13 9178) are in the Rich header. Its headers come before the compiler's own, which
 # are DirectX 6's. The SDK ships an old basetsd.h, so newer compilers need the Windows SDK's headers first.
 if (MSVC_VERSION GREATER 1500)
-    target_include_directories(ls3df PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
+    target_include_directories(${engine} PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
 endif()
-target_include_directories(ls3df PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
-target_link_directories(ls3df PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/lib)
+target_include_directories(${engine} PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
+target_link_directories(${engine} PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/lib)
 
 # S3's S3TC library, which ITexture.cpp's CompressTexture calls. The original links it prebuilt, compiled by S3 with VC6
 # SP3 (the Rich header's Utc12_C 8447 x2), so the build links the same objects, cut out of the original; newer linkers
@@ -100,19 +109,19 @@ if (MSVC_VERSION EQUAL 1200)
     # /G6 - Pentium Pro scheduling: npad alignment inside functions and imul by constants
     # /Ob2 - inline any suitable function, not only inline ones: ISND_3Dlistener::Release inlines the destructor, a
     #        plain function of the same file (I3D code calls it out of line)
-    target_compile_options(ls3df PRIVATE /MT /GX /G6 /Ob2)
+    target_compile_options(${engine} PRIVATE /MT /GX /G6 /Ob2)
     # NDEBUG - a VC6 release configuration: the render-state helpers' asserts compile to nothing but count for the
     #          inline budget (I3D.h)
-    target_compile_definitions(ls3df PRIVATE NDEBUG)
+    target_compile_definitions(${engine} PRIVATE NDEBUG)
     # /Gr is a per-file option: IShow.cpp is __cdecl by default (/Gd), as its helpers take their arguments on the stack,
     # and so do vorbisfile's callbacks, which libvorbis' header declares without a calling convention
-    get_target_property(ls3df_sources ls3df SOURCES)
+    get_target_property(ls3df_sources ${engine} SOURCES)
     list(REMOVE_ITEM ls3df_sources IGraph/IShow.cpp)
     set_source_files_properties(${ls3df_sources} PROPERTIES COMPILE_OPTIONS /Gr)
     set_source_files_properties(IGraph/IShow.cpp PROPERTIES COMPILE_OPTIONS /Gd)
     # /YX - automatic precompiled headers, the default of a VC6 DLL project. They decide where the engine header's zero
     #       vector's $E and the out-of-line copies of the headers' inline functions go (see tools/autopch.py).
-    set_target_properties(ls3df PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
+    set_target_properties(${engine} PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
     # Except clipper2.cpp, which used clipper.cpp's precompiled header (/Yu): the original's object has no $E for the
     # zero vector, and the vector isn't in its .bss. clipper.cpp creates it (/Yc), which gives its own object the
     # layout /YX does.
@@ -129,14 +138,41 @@ if (MSVC_VERSION EQUAL 1200)
     # dxguid's GUIDs, S3TC's literals, eaxguid's GUIDs, then strmiids'. oleaut32 is for the base classes' wxutil object,
     # whose BSTR helpers nothing calls: /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't
     # import OLEAUT32.
-    target_link_libraries(ls3df PRIVATE kernel32 user32 gdi32 ole32 oleaut32 d3d8 dxerr8 dinput8 dxguid ${s3tc}
+    target_link_libraries(${engine} PRIVATE kernel32 user32 gdi32 ole32 oleaut32 d3d8 dxerr8 dinput8 dxguid ${s3tc}
         ${eaxguid} dsound winmm strmiids strmbase vorbisfile)
-    # The original's link time (2003-06-24), in the PE header and the export directory
-    postlink(ls3df --timestamp 0x3ef851b2)
+    # The original's link time (2003-06-24; 1.1's 2003-02-04), in the PE header and the export directory
+    if (LS3DF_1_1)
+        postlink(${engine} --timestamp 0x3e3ff12d)
+    else()
+        postlink(${engine} --timestamp 0x3ef851b2)
+    endif()
 else()
     # dxerr8.lib uses the CRT's old swprintf
-    target_link_libraries(ls3df PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8
+    target_link_libraries(${engine} PRIVATE user32 winmm ole32 oleaut32 d3d8 dsound dinput8 ${s3tc} ${eaxguid} dxguid dxerr8
         strmiids strmbase vorbisfile legacy_stdio_definitions)
+endif()
+
+if (LS3DF_1_1)
+    target_compile_definitions(${engine} PRIVATE ENGINE_VERSION=393)
+endif()
+
+# rw_data.lib, which dta.h names, is our rw_data target's import library, and binkw32.lib, which IShow.cpp names, the
+# binkw32 target's
+add_dependencies(${engine} rw_data binkw32)
+target_link_directories(${engine} PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data> $<TARGET_LINKER_FILE_DIR:binkw32>)
+
+vc6_header_dependencies(${engine})
+
+# IShow.cpp includes the base classes' streams.h (below)
+set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
+if (NOT MSVC_VERSION EQUAL 1200)
+    # A declaration without a type in the 2001 code (ctlutil.h's operator=)
+    set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY COMPILE_OPTIONS /wd4430)
+endif()
+
+# The libraries below are built once, with patch 1.2's engine
+if (LS3DF_1_1)
+    return()
 endif()
 
 # The import libraries of binkw32.dll and vorbisfile.dll, which nobody has, from DLLs of stubs with their exports
@@ -144,13 +180,6 @@ foreach(dll binkw32 vorbisfile)
     add_library(${dll} SHARED imports/${dll}.c)
     target_link_options(${dll} PRIVATE /NOENTRY /NODEFAULTLIB)
 endforeach()
-
-# rw_data.lib, which dta.h names, is our rw_data target's import library, and binkw32.lib, which IShow.cpp names, the
-# binkw32 target's
-add_dependencies(ls3df rw_data binkw32)
-target_link_directories(ls3df PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data> $<TARGET_LINKER_FILE_DIR:binkw32>)
-
-vc6_header_dependencies(ls3df)
 
 # DirectShow's base classes, which IShow.cpp's texture renderer derives from: the DirectX 8.1 SDK's
 # samples\Multimedia\DirectShow\BaseClasses, unchanged, built as its own project builds its release STRMBASE.lib. The
@@ -170,8 +199,6 @@ if (MSVC_VERSION GREATER 1500)
     target_include_directories(strmbase PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
 endif()
 target_include_directories(strmbase PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
-# IShow.cpp includes its streams.h
-set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
 if (MSVC_VERSION EQUAL 1200)
     # The project's release settings (/O2 comes from cmake/vc6-flags.cmake; /Gi and /FD change nothing in the code)
     target_compile_options(strmbase PRIVATE /MT /W3 /GX)
@@ -199,5 +226,4 @@ else()
     # The 2001 code: VC6's for scope (outputq.cpp) and a declaration without a type (ctlutil.h's operator=, which
     # IShow.cpp gets through streams.h too)
     target_compile_options(strmbase PRIVATE /Zc:forScope- /wd4430)
-    set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY COMPILE_OPTIONS /wd4430)
 endif()

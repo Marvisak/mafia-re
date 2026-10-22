@@ -19,6 +19,7 @@ static inline uint MakeColor(float a, const S_vector &color)
 }
 
 // FUNCTION: LS3DF 0x10031820
+// FUNCTION: LS3DF11 0x100307f0
 I3D_mirror::I3D_mirror()
 {
     visual_type = I3D_VISUAL_MIRROR;
@@ -35,6 +36,7 @@ I3D_mirror::I3D_mirror()
 }
 
 // FUNCTION: LS3DF 0x10031910
+// FUNCTION: LS3DF11 0x100308e0
 I3D_mirror::~I3D_mirror()
 {
     if (scene)
@@ -50,6 +52,7 @@ I3D_mirror::~I3D_mirror()
 
 // Each component is clamped to 0 to 1
 // FUNCTION: LS3DF 0x100319f0
+// FUNCTION: LS3DF11 0x100309c0
 void I3D_mirror::SetColor(const S_vector &c)
 {
     color = c;
@@ -69,6 +72,7 @@ void I3D_mirror::SetColor(const S_vector &c)
 
 // The copies are released, but stay in the list
 // FUNCTION: LS3DF 0x10031ab0
+// FUNCTION: LS3DF11 0x10030a80
 LS3D_RESULT I3D_mirror::Duplicate(I3D_frame *frame)
 {
     if (!frame || frame == this)
@@ -110,6 +114,7 @@ LS3D_RESULT I3D_mirror::Duplicate(I3D_frame *frame)
 // leaves the nested reserve out of line and inlines SetCullState and SetClipping, the reverse of the original. The cull
 // mode is an if/else of two calls, which VC6 merges into one call of a constant chosen by a branch.
 // FUNCTION: LS3DF 0x10031c70
+// FUNCTION: LS3DF11 0x10030c40
 void I3D_mirror::Draw(const S_vector &c, uint flags)
 {
     if (!verts || !faces)
@@ -148,6 +153,7 @@ void I3D_mirror::Draw(const S_vector &c, uint flags)
 // The mirror goes into the scene of the sector its new parent is in. The search is a while (true) whose test of the
 // type has an else: a loop over the parents VC6 rotates, putting the test of frm at the bottom.
 // FUNCTION: LS3DF 0x10032000
+// FUNCTION: LS3DF11 0x10030fd0
 LS3D_RESULT I3D_mirror::LinkTo(I3D_frame *frame, uint flags)
 {
     if (scene)
@@ -170,6 +176,7 @@ LS3D_RESULT I3D_mirror::LinkTo(I3D_frame *frame, uint flags)
 
 // A move makes the copies take their matrices again
 // FUNCTION: LS3DF 0x10032060
+// FUNCTION: LS3DF11 0x10031030
 void I3D_mirror::UpdateV()
 {
     if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
@@ -196,6 +203,7 @@ void I3D_mirror::UpdateV()
 
 // The copies of visuals that are gone from the scene (no other reference, or no parent) are released
 // FUNCTION: LS3DF 0x100320f0
+// FUNCTION: LS3DF11 0x100310c0
 void I3D_mirror::Tick(int time)
 {
     I3D_visual **p = &copies[0];
@@ -218,6 +226,7 @@ void I3D_mirror::Tick(int time)
 // inlines GetWorldDir's Normalize, ours calls it. A forced inline Normalize gives the original's code exactly, and so do
 // 40 dead statements (if (0) mirror_flags = 0;) at the top, 20 don't (see I3d_math.h).
 // FUNCTION: LS3DF 0x100321b0
+// FUNCTION: LS3DF11 0x10031180
 void I3D_mirror::UpdateVisibility()
 {
     if (render_number != RenderNumber) {
@@ -240,14 +249,17 @@ void I3D_mirror::UpdateVisibility()
 
 // What PrepareReflection finds: the visuals in the mirror's view box (the names are guesses)
 // GLOBAL: LS3DF 0x101b433c
+// GLOBAL: LS3DF11 0x101b145c
 C_list<I3D_visual *> MirroredVisualList;
 
 // GLOBAL: LS3DF 0x101b4358
+// GLOBAL: LS3DF11 0x101b1478
 I3D_mirror *pCurrentMirror;
 
 // Only the frames whose bound sphere touches the view box's are searched, and only objects are taken: those whose box
 // isn't wholly outside the view box
 // FUNCTION: LS3DF 0x10032500
+// FUNCTION: LS3DF11 0x100314d0
 void I3D_mirror::CollectVisuals(I3D_frame *frm)
 {
     if (!(frm->frm_flags & (FRMFLAGS_ON | FRMFLAGS_TICK)))
@@ -298,6 +310,7 @@ void I3D_mirror::CollectVisuals(I3D_frame *frm)
 // Not matching yet: Normalize's inline budget, as in UpdateVisibility; with a forced inline Normalize this is the
 // original's code exactly.
 // FUNCTION: LS3DF 0x10032730
+// FUNCTION: LS3DF11 0x10031700
 int I3D_mirror::PrepareReflection()
 {
     if (!(mirror_flags & MIRF_PREPARED)) {
@@ -409,6 +422,7 @@ int I3D_mirror::PrepareReflection()
 }
 
 // FUNCTION: LS3DF 0x100331b0
+// FUNCTION: LS3DF11 0x10032180
 void I3D_mirror::SetViewBox(const I3D_bbox &bbox, const S_matrix &m)
 {
     view_box = m;
@@ -420,6 +434,7 @@ void I3D_mirror::SetViewBox(const I3D_bbox &bbox, const S_matrix &m)
 }
 
 // FUNCTION: LS3DF 0x100332e0
+// FUNCTION: LS3DF11 0x100322b0
 void I3D_mirror::LoadImage()
 {
     I3D_frame::LoadImage();

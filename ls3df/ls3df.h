@@ -8,8 +8,11 @@
 #include <new.h>
 #include <types.h>
 
-// What GetEngineVersion returns and TEV checks the game's version against
+// What GetEngineVersion returns and TEV checks the game's version against: 395 in patch 1.2's engine, 393 in patch
+// 1.1's, which the ls3df_1_1 target defines (ls3df/CMakeLists.txt). The sources keep 1.1's differences behind it.
+#ifndef ENGINE_VERSION
 #define ENGINE_VERSION 395
+#endif
 
 // The result of most engine functions (PS2 name). The values' names are guesses from I3DGetResultMessage's texts, and
 // Insanity3D's I3D2.h has the same names for NOFILE and OUTOFMEM (the same values) and for GENERIC to UNSUPPORTED
@@ -322,9 +325,11 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
+// TEMPLATE: LS3DF11 0x10005d10
 // ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
+// TEMPLATE: LS3DF11 0x1004e730
 // ?find@?$C_list@PAVI3D_sound@@@@QBE_NABQAVI3D_sound@@@Z
 
 // The engine's reference-counted string (PS2 C_str). An empty string has no buffer and converts to the address of
@@ -338,6 +343,7 @@ class C_str {
         char data[1];
 
         // FUNCTION: LS3DF 0x1006fe20
+        // FUNCTION: LS3DF11 0x1006ceb0
         C_rep(const char *s, int len) : ref(1), size(len)
         {
             memcpy(data, s, len);
@@ -345,6 +351,7 @@ class C_str {
         }
 
         // FUNCTION: LS3DF 0x1006fe60
+        // FUNCTION: LS3DF11 0x1006cef0
         C_rep(const char *s1, const char *s2, int len1, int len2) : ref(1), size(len1 + len2)
         {
             memcpy(data, s1, len1);
@@ -359,6 +366,7 @@ class C_str {
 
         // The buffer was allocated as a char array (PS2 frees it with delete[]; delete this gives the same code)
         // FUNCTION: LS3DF 0x1006fec0
+        // FUNCTION: LS3DF11 0x1006cf50
         void Release()
         {
             if (!--ref)
@@ -374,6 +382,7 @@ class C_str {
         }
 
         // FUNCTION: LS3DF 0x1006fed0
+        // FUNCTION: LS3DF11 0x1006cf60
         static void operator delete(void *p, int)
         {
             delete[] (char *)p;
@@ -400,6 +409,7 @@ public:
     }
 
     // FUNCTION: LS3DF 0x1006fee0
+    // FUNCTION: LS3DF11 0x1006cf70
     ~C_str()
     {
         if (rep)
@@ -417,6 +427,7 @@ public:
     }
 
     // FUNCTION: LS3DF 0x1006ff00
+    // FUNCTION: LS3DF11 0x1006cf90
     C_str &operator=(const char *cp)
     {
         // NULL first, as in Insanity3D: PS2's order (the string's case first, NULL in an else) gives other code
@@ -445,6 +456,7 @@ public:
     }
 
     // FUNCTION: LS3DF 0x1006ff80
+    // FUNCTION: LS3DF11 0x1006d010
     C_str operator+(const char *cp) const
     {
         if (!rep)
@@ -458,6 +470,7 @@ public:
     // A character to change: the buffer is made the string's own first. The length for new is an accessor's value,
     // which the unwinding keeps for the delete (IGraph::CreateITexture); rep->size would be read again there.
     // FUNCTION: LS3DF 0x10070100
+    // FUNCTION: LS3DF11 0x1006d190
     char &operator[](int pos)
     {
         if (rep->ref != 1) {
@@ -525,16 +538,23 @@ void dbgPrintGuid(const void *guid);
 // a name with our functions of that name in address order (with an "Ambiguous match" warning for each): the first
 // three are the seventh $E13, the sixth $E18 (both after Globals.cpp's) and the fourth $E23 (after render.cpp's).
 // SYNTHETIC: LS3DF 0x1006bd70
+// SYNTHETIC: LS3DF11 0x10068e00
 // $E13
 // SYNTHETIC: LS3DF 0x1006bdb0
+// SYNTHETIC: LS3DF11 0x10068e40
 // $E18
 // SYNTHETIC: LS3DF 0x1006be10
+// SYNTHETIC: LS3DF11 0x10068ea0
 // $E23
 // SYNTHETIC: LS3DF 0x1006be60
+// SYNTHETIC: LS3DF11 0x10068ef0
 // $E28
 // SYNTHETIC: LS3DF 0x1006beb0
+// SYNTHETIC: LS3DF11 0x10068f40
 // $E33
 // SYNTHETIC: LS3DF 0x1006bf00
+// SYNTHETIC: LS3DF11 0x10068f90
 // $E38
 // SYNTHETIC: LS3DF 0x1006bf50
+// SYNTHETIC: LS3DF11 0x10068fe0
 // $E43

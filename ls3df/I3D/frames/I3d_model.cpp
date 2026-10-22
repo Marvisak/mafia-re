@@ -10,6 +10,7 @@
 #include <new>
 
 // FUNCTION: LS3DF 0x10033410
+// FUNCTION: LS3DF11 0x100323e0
 I3D_model::I3D_model()
 {
     file_name = NULL;
@@ -18,12 +19,14 @@ I3D_model::I3D_model()
 }
 
 // FUNCTION: LS3DF 0x10033480
+// FUNCTION: LS3DF11 0x10032450
 I3D_model::~I3D_model()
 {
     Close();
 }
 
 // FUNCTION: LS3DF 0x10033500
+// FUNCTION: LS3DF11 0x100324d0
 void I3D_model::Close()
 {
     delete ipol_set;
@@ -45,6 +48,7 @@ void I3D_model::Close()
 
 // Named frames go into the fast find tree under the model's name (SetName), not their own
 // FUNCTION: LS3DF 0x100335a0
+// FUNCTION: LS3DF11 0x10032570
 LS3D_RESULT I3D_model::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
@@ -69,6 +73,7 @@ LS3D_RESULT I3D_model::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, 
 }
 
 // FUNCTION: LS3DF 0x10033680
+// FUNCTION: LS3DF11 0x10032660
 void I3D_model::AddFrame(I3D_frame *frame)
 {
     frame->ref++;
@@ -78,6 +83,7 @@ void I3D_model::AddFrame(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10033720
+// FUNCTION: LS3DF11 0x10032700
 LS3D_RESULT I3D_model::DeleteFrame(I3D_frame *frame)
 {
     if (frames.remove(frame)) {
@@ -90,6 +96,7 @@ LS3D_RESULT I3D_model::DeleteFrame(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x100337b0
+// FUNCTION: LS3DF11 0x100327b0
 LS3D_RESULT I3D_model::SetAnimation(I3D_animation_set *set, uint index, float blend, uint options)
 {
     if (!ipol_set) {
@@ -103,6 +110,7 @@ LS3D_RESULT I3D_model::SetAnimation(I3D_animation_set *set, uint index, float bl
 }
 
 // FUNCTION: LS3DF 0x10033860
+// FUNCTION: LS3DF11 0x10032870
 I3D_animation_set *I3D_model::GetAnimationSet(uint index) const
 {
     if (index >= 8)
@@ -113,6 +121,7 @@ I3D_animation_set *I3D_model::GetAnimationSet(uint index) const
 }
 
 // FUNCTION: LS3DF 0x10033890
+// FUNCTION: LS3DF11 0x100328a0
 void I3D_model::StopAnimation(uint index)
 {
     if (index >= 8)
@@ -123,6 +132,7 @@ void I3D_model::StopAnimation(uint index)
 }
 
 // FUNCTION: LS3DF 0x100338c0
+// FUNCTION: LS3DF11 0x100328d0
 void I3D_model::StartAnimation(uint index)
 {
     if (index >= 8)
@@ -133,6 +143,7 @@ void I3D_model::StartAnimation(uint index)
 }
 
 // FUNCTION: LS3DF 0x100338f0
+// FUNCTION: LS3DF11 0x10032900
 LS3D_RESULT I3D_model::SetAnimBlend(uint index, float blend)
 {
     if (index >= 8)
@@ -151,6 +162,7 @@ LS3D_RESULT I3D_model::SetAnimBlend(uint index, float blend)
 }
 
 // FUNCTION: LS3DF 0x10033970
+// FUNCTION: LS3DF11 0x10032980
 float I3D_model::GetAnimBlend(uint index) const
 {
     if (index >= 8)
@@ -161,6 +173,7 @@ float I3D_model::GetAnimBlend(uint index) const
 }
 
 // FUNCTION: LS3DF 0x100339b0
+// FUNCTION: LS3DF11 0x100329c0
 LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
 {
     if (index >= 8)
@@ -175,6 +188,7 @@ LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
 }
 
 // FUNCTION: LS3DF 0x100339f0
+// FUNCTION: LS3DF11 0x10032a00
 int I3D_model::GetAnimTime(uint index) const
 {
     if (index >= 8)
@@ -185,6 +199,7 @@ int I3D_model::GetAnimTime(uint index) const
 }
 
 // FUNCTION: LS3DF 0x10033a20
+// FUNCTION: LS3DF11 0x10032a30
 LS3D_RESULT I3D_model::SetAnimOptions(uint index, uint options)
 {
     if (index >= 8)
@@ -197,6 +212,7 @@ LS3D_RESULT I3D_model::SetAnimOptions(uint index, uint options)
 }
 
 // FUNCTION: LS3DF 0x10033a60
+// FUNCTION: LS3DF11 0x10032a70
 uint I3D_model::GetAnimOptions(uint index) const
 {
     if (index >= 8)
@@ -207,6 +223,7 @@ uint I3D_model::GetAnimOptions(uint index) const
 }
 
 // FUNCTION: LS3DF 0x10033a90
+// FUNCTION: LS3DF11 0x10032aa0
 bool I3D_model::AnimIsOn(uint index) const
 {
     if (index >= 8)
@@ -217,6 +234,7 @@ bool I3D_model::AnimIsOn(uint index) const
 }
 
 // FUNCTION: LS3DF 0x10033ac0
+// FUNCTION: LS3DF11 0x10032ad0
 LS3D_RESULT I3D_model::SetName()
 {
     I3D_frame **p = &frames[0];
@@ -238,6 +256,7 @@ LS3D_RESULT I3D_model::SetName()
 }
 
 // FUNCTION: LS3DF 0x10033b30
+// FUNCTION: LS3DF11 0x10032b40
 LS3D_RESULT I3D_model::SetName(const char *new_name)
 {
     LS3D_RESULT r = I3D_frame::SetName(new_name);
@@ -249,22 +268,28 @@ LS3D_RESULT I3D_model::SetName(const char *new_name)
 // The duplication's state: the copies of the frames that had a target with their targets, the copies of the shadows,
 // the model the copies go into and the one copied
 // GLOBAL: LS3DF 0x101b4368
+// GLOBAL: LS3DF11 0x101b1488
 static C_list<TARGET_ITEM> DuplTargetList;
 
 // GLOBAL: LS3DF 0x101b4378
+// GLOBAL: LS3DF11 0x101b1498
 TARGET_ITEM DuplTargetItem;
 
 // GLOBAL: LS3DF 0x101b4380
+// GLOBAL: LS3DF11 0x101b14a0
 static C_list<I3D_shadow *> DuplShadowList;
 
 // GLOBAL: LS3DF 0x101b4390
+// GLOBAL: LS3DF11 0x101b14b0
 static I3D_model *pSrcOwner;
 
 // GLOBAL: LS3DF 0x101b4394
+// GLOBAL: LS3DF11 0x101b14b4
 static I3D_model *pDuplOwner;
 
 // Copies src's children under dst, and theirs under the copies; a model's own models aren't copied
 // FUNCTION: LS3DF 0x10033bf0
+// FUNCTION: LS3DF11 0x10032c00
 LS3D_RESULT duplicateChildren(I3D_frame *dst, I3D_frame *src)
 {
     for (I3D_frame *frm = src->child; frm; frm = frm->next) {
@@ -306,6 +331,7 @@ LS3D_RESULT duplicateChildren(I3D_frame *dst, I3D_frame *src)
 // The copies of the frames that had a target get the copy of that target, found by its name, and the shadows are set
 // to their parents again
 // FUNCTION: LS3DF 0x10033e10
+// FUNCTION: LS3DF11 0x10032e50
 LS3D_RESULT I3D_model::DuplicateHierarchy(I3D_model *model)
 {
     if (!model)
@@ -353,6 +379,7 @@ LS3D_RESULT I3D_model::DuplicateHierarchy(I3D_model *model)
 }
 
 // FUNCTION: LS3DF 0x10033fd0
+// FUNCTION: LS3DF11 0x10033050
 LS3D_RESULT I3D_model::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -366,6 +393,7 @@ LS3D_RESULT I3D_model::Duplicate(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10034010
+// FUNCTION: LS3DF11 0x10033090
 void I3D_model::Tick(int time)
 {
     if (ipol_set && ipol_set->interpolators.size()) {
@@ -375,6 +403,7 @@ void I3D_model::Tick(int time)
 }
 
 // FUNCTION: LS3DF 0x10034040
+// FUNCTION: LS3DF11 0x100330c0
 void I3D_model::Tick(const int *times)
 {
     if (ipol_set) {
@@ -384,6 +413,7 @@ void I3D_model::Tick(const int *times)
 }
 
 // FUNCTION: LS3DF 0x10034070
+// FUNCTION: LS3DF11 0x100330f0
 void I3D_model::ResetAllPoses()
 {
     if (ipol_set)
@@ -391,6 +421,7 @@ void I3D_model::ResetAllPoses()
 }
 
 // FUNCTION: LS3DF 0x10034090
+// FUNCTION: LS3DF11 0x10033110
 int I3D_model::NumInterpolators() const
 {
     if (!ipol_set)
@@ -399,6 +430,7 @@ int I3D_model::NumInterpolators() const
 }
 
 // FUNCTION: LS3DF 0x100340b0
+// FUNCTION: LS3DF11 0x10033130
 I3D_interpolator **I3D_model::GetInterpolators() const
 {
     if (!ipol_set)
@@ -407,6 +439,7 @@ I3D_interpolator **I3D_model::GetInterpolators() const
 }
 
 // FUNCTION: LS3DF 0x100340d0
+// FUNCTION: LS3DF11 0x10033150
 LS3D_RESULT I3D_model::SetPose(I3D_pose_set *set)
 {
     if (!ipol_set) {
@@ -420,6 +453,7 @@ LS3D_RESULT I3D_model::SetPose(I3D_pose_set *set)
 }
 
 // FUNCTION: LS3DF 0x10034170
+// FUNCTION: LS3DF11 0x100331f0
 LS3D_RESULT I3D_model::SetPose(I3D_frame *frame, I3D_pose *pose)
 {
     if (!ipol_set) {
@@ -433,6 +467,7 @@ LS3D_RESULT I3D_model::SetPose(I3D_frame *frame, I3D_pose *pose)
 }
 
 // FUNCTION: LS3DF 0x10034210
+// FUNCTION: LS3DF11 0x10033290
 LS3D_RESULT I3D_model::SetPose(const char *frame_name, I3D_pose *pose)
 {
     if (!ipol_set) {
@@ -446,6 +481,7 @@ LS3D_RESULT I3D_model::SetPose(const char *frame_name, I3D_pose *pose)
 }
 
 // FUNCTION: LS3DF 0x100342b0
+// FUNCTION: LS3DF11 0x10033330
 LS3D_RESULT I3D_model::SetPoseBlend(float blend)
 {
     if (!ipol_set)
@@ -455,6 +491,7 @@ LS3D_RESULT I3D_model::SetPoseBlend(float blend)
 }
 
 // FUNCTION: LS3DF 0x100342e0
+// FUNCTION: LS3DF11 0x10033360
 LS3D_RESULT I3D_model::SetPoseBlend(float blend, I3D_pose_set *set)
 {
     if (!ipol_set)
@@ -463,6 +500,7 @@ LS3D_RESULT I3D_model::SetPoseBlend(float blend, I3D_pose_set *set)
 }
 
 // FUNCTION: LS3DF 0x10034310
+// FUNCTION: LS3DF11 0x10033390
 float I3D_model::GetPoseBlend() const
 {
     if (!ipol_set)

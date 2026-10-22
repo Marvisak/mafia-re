@@ -39,41 +39,52 @@ extern I3D_sector *pPrevLastCameraSector;
 
 // The sectors near the camera, and the weather regions near it
 // GLOBAL: LS3DF 0x101b4e4c
+// GLOBAL: LS3DF11 0x101b1f6c
 C_list<I3D_sector *> WSNearSectorList;
 
 // GLOBAL: LS3DF 0x101b4e60
+// GLOBAL: LS3DF11 0x101b1f80
 C_list<DUMMY_STRUCT *> WSNearDummyList;
 
 // The sound environment outside every sector: m_UpdateSoundProperties blends from it without a previous sector
 // GLOBAL: LS3DF 0x101b4e78
+// GLOBAL: LS3DF11 0x101b1f98
 S_sector_sound_properties InitialSoundProp;
 
 // SetSpace's parameter, for sceneSS
 // GLOBAL: LS3DF 0x101b4e5c
+// GLOBAL: LS3DF11 0x101b1f7c
 bool SetSpaceParam;
 
 // The weather system's state the scenes share. VC6 lays out zero-initialized globals in declaration order after the
 // ones its hash places, and these come in PS2's .sbss order: the particles' vertex buffer, the scene whose colors it
 // holds, the number of particles it has room for, the scenes, the particles in it and their texture.
 // GLOBAL: LS3DF 0x101b4efc
+// GLOBAL: LS3DF11 0x101b201c
 COMPLETE_VB_STRUCT WSComplVBStr = {NULL, NULL, 0};
 
 // GLOBAL: LS3DF 0x101b4f08
+// GLOBAL: LS3DF11 0x101b2028
 I3D_scene *WSLastScene = NULL;
 
 // GLOBAL: LS3DF 0x101b4f0c
+// GLOBAL: LS3DF11 0x101b202c
 int MaxWECnt = 0;
 
 // GLOBAL: LS3DF 0x101b4f10
+// GLOBAL: LS3DF11 0x101b2030
 int WSRefCnt = 0;
 
 // GLOBAL: LS3DF 0x101b4f14
+// GLOBAL: LS3DF11 0x101b2034
 uint CurrentWECnt = 0;
 
 // GLOBAL: LS3DF 0x101b4f18
+// GLOBAL: LS3DF11 0x101b2038
 ITexture *pSnowTexture = NULL;
 
 // FUNCTION: LS3DF 0x10048ab0
+// FUNCTION: LS3DF11 0x10046a00
 I3D_scene::I3D_scene()
 {
     type = FRAME_SCENE;
@@ -135,6 +146,7 @@ I3D_scene::I3D_scene()
 }
 
 // FUNCTION: LS3DF 0x10048ed0
+// FUNCTION: LS3DF11 0x10046e20
 I3D_scene::~I3D_scene()
 {
     Close();
@@ -167,6 +179,7 @@ I3D_scene::~I3D_scene()
 }
 
 // FUNCTION: LS3DF 0x10049120
+// FUNCTION: LS3DF11 0x10047080
 SCN_CALLBACK *I3D_scene::SetCallback(SCN_CALLBACK *cb, uint flags)
 {
     if (!cb)
@@ -179,6 +192,7 @@ SCN_CALLBACK *I3D_scene::SetCallback(SCN_CALLBACK *cb, uint flags)
 }
 
 // FUNCTION: LS3DF 0x10049160
+// FUNCTION: LS3DF11 0x100470c0
 LS3D_RESULT I3D_scene::Render()
 {
     return pI3DDriver->Render(this);
@@ -186,6 +200,7 @@ LS3D_RESULT I3D_scene::Render()
 
 // The primary sector's frames, then the other sectors' the flags ask for
 // FUNCTION: LS3DF 0x10049180
+// FUNCTION: LS3DF11 0x100470e0
 LS3D_RESULT I3D_scene::EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const
 {
     LS3D_RESULT ret = primary_sector->EnumFrames(proc, user, flags, mask);
@@ -207,6 +222,7 @@ LS3D_RESULT I3D_scene::EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, con
 }
 
 // FUNCTION: LS3DF 0x10049210
+// FUNCTION: LS3DF11 0x10047170
 I3D_frame *I3D_scene::FindFrame(const char *name, uint flags) const
 {
     I3D_frame *frm = primary_sector->GetChildFrame(name, flags);
@@ -232,6 +248,7 @@ I3D_frame *I3D_scene::FindFrame(const char *name, uint flags) const
 
 // The scene takes a reference; an emitter is ticked
 // FUNCTION: LS3DF 0x10049290
+// FUNCTION: LS3DF11 0x100471f0
 void I3D_scene::AddFrame(I3D_frame *frame)
 {
     if (frame->m_pOwner == frame)
@@ -252,6 +269,7 @@ void I3D_scene::AddFrame(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10049400
+// FUNCTION: LS3DF11 0x10047360
 LS3D_RESULT I3D_scene::DeleteFrame(I3D_frame *frame)
 {
     if (owned_frames.remove(frame)) {
@@ -268,6 +286,7 @@ LS3D_RESULT I3D_scene::DeleteFrame(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10049520
+// FUNCTION: LS3DF11 0x10047480
 void I3D_scene::SetGlobalColor(const S_vector &color)
 {
     int i = primary_sector->lights.size();
@@ -279,6 +298,7 @@ void I3D_scene::SetGlobalColor(const S_vector &color)
 // The lights' brightness at pos: the colors' luminance, faded over a point light's range and a spot's cone, the ambient
 // lights' added in; with I3D_LIGHTNESS_TESTCOL only the lights a ray from pos reaches
 // FUNCTION: LS3DF 0x10049560
+// FUNCTION: LS3DF11 0x100474c0
 float I3D_scene::GetLightness(const S_vector &pos, I3D_sector *sector, uint flags, I3D_frame *frame)
 {
     if (!sector) {
@@ -345,6 +365,7 @@ float I3D_scene::GetLightness(const S_vector &pos, I3D_sector *sector, uint flag
 }
 
 // FUNCTION: LS3DF 0x100499a0
+// FUNCTION: LS3DF11 0x10047900
 void I3D_scene::SetActiveCamera(I3D_camera *cam)
 {
     if (current_camera == cam)
@@ -364,6 +385,7 @@ void I3D_scene::SetActiveCamera(I3D_camera *cam)
 
 // The world position and direction of a ray through the screen point, from the active camera
 // FUNCTION: LS3DF 0x10049a30
+// FUNCTION: LS3DF11 0x10047990
 LS3D_RESULT I3D_scene::UnmapScreenPoint(int x, int y, S_vector &pos, S_vector &dir) const
 {
     if (!current_camera)
@@ -391,6 +413,7 @@ LS3D_RESULT I3D_scene::UnmapScreenPoint(int x, int y, S_vector &pos, S_vector &d
 
 // The points on the screen, with 1 / w
 // FUNCTION: LS3DF 0x10049e60
+// FUNCTION: LS3DF11 0x10047dc0
 LS3D_RESULT I3D_scene::TransformPoints(const S_vector *in, S_vector4 *out, uint num) const
 {
     if (!current_camera)
@@ -417,6 +440,7 @@ LS3D_RESULT I3D_scene::TransformPoints(const S_vector *in, S_vector4 *out, uint 
 // C_list::push_back_unique: its search reads the count into a register of its own, which the inlined push_back's
 // test reuses; the search written out here (loop forms, a count local, a flag, find()) reloads it
 // FUNCTION: LS3DF 0x10049f90
+// FUNCTION: LS3DF11 0x10047ef0
 void I3D_scene::AddTickFrame(I3D_frame *frame)
 {
     tick_frames.push_back_unique(frame);
@@ -424,6 +448,7 @@ void I3D_scene::AddTickFrame(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1004a050
+// FUNCTION: LS3DF11 0x10047fb0
 LS3D_RESULT I3D_scene::DeleteTickFrame(I3D_frame *frame)
 {
     if (tick_frames.remove(frame)) {
@@ -435,6 +460,7 @@ LS3D_RESULT I3D_scene::DeleteTickFrame(I3D_frame *frame)
 
 // A frame may take itself out of the list when it is ticked
 // FUNCTION: LS3DF 0x1004a0e0
+// FUNCTION: LS3DF11 0x10048040
 void I3D_scene::Tick(int time)
 {
     for (int i = 0; i < tick_frames.size(); i++) {
@@ -448,6 +474,7 @@ void I3D_scene::Tick(int time)
 }
 
 // FUNCTION: LS3DF 0x1004a140
+// FUNCTION: LS3DF11 0x100480a0
 I3D_sector *I3D_scene::CreateSector()
 {
     I3D_sector *sct = new I3D_sector;
@@ -458,6 +485,7 @@ I3D_sector *I3D_scene::CreateSector()
 }
 
 // FUNCTION: LS3DF 0x1004a1d0
+// FUNCTION: LS3DF11 0x10048130
 I3D_sector *I3D_scene::GetSector(const S_vector &pos, I3D_sector *hint) const
 {
     if (hint && !(hint->sct_flags & SCTF_PRIMARY) && hint->CheckPoint(pos))
@@ -471,6 +499,7 @@ I3D_sector *I3D_scene::GetSector(const S_vector &pos, I3D_sector *hint) const
 }
 
 // FUNCTION: LS3DF 0x1004a240
+// FUNCTION: LS3DF11 0x100481a0
 I3D_sector *I3D_scene::GetSector(const S_vector &pos, I3D_sector **list, int num) const
 {
     while (num--) {
@@ -482,6 +511,7 @@ I3D_sector *I3D_scene::GetSector(const S_vector &pos, I3D_sector **list, int num
 
 // Links the frame to the sector at pos, unless it is in the backdrop or omni sector
 // FUNCTION: LS3DF 0x1004a280
+// FUNCTION: LS3DF11 0x100481e0
 LS3D_RESULT I3D_scene::SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) const
 {
     I3D_frame *frm;
@@ -501,6 +531,7 @@ LS3D_RESULT I3D_scene::SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) 
 }
 
 // FUNCTION: LS3DF 0x1004a300
+// FUNCTION: LS3DF11 0x10048260
 LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, void *context)
 {
     Close();
@@ -514,6 +545,7 @@ LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC 
 }
 
 // FUNCTION: LS3DF 0x1004a390
+// FUNCTION: LS3DF11 0x100482f0
 void I3D_scene::Close()
 {
     UnloadManagedTextures();
@@ -558,6 +590,7 @@ void I3D_scene::Close()
 }
 
 // FUNCTION: LS3DF 0x1004a5a0
+// FUNCTION: LS3DF11 0x10048500
 void I3D_scene::AddShadow(I3D_shadow *shadow)
 {
     if (shadow->scene == this)
@@ -567,6 +600,7 @@ void I3D_scene::AddShadow(I3D_shadow *shadow)
 }
 
 // FUNCTION: LS3DF 0x1004a640
+// FUNCTION: LS3DF11 0x100485a0
 LS3D_RESULT I3D_scene::DeleteShadow(I3D_shadow *shadow)
 {
     if (shadows.remove(shadow)) {
@@ -578,6 +612,7 @@ LS3D_RESULT I3D_scene::DeleteShadow(I3D_shadow *shadow)
 }
 
 // FUNCTION: LS3DF 0x1004a6f0
+// FUNCTION: LS3DF11 0x10048650
 void I3D_scene::AddMirror(I3D_mirror *mirror)
 {
     if (mirror->scene == this)
@@ -587,6 +622,7 @@ void I3D_scene::AddMirror(I3D_mirror *mirror)
 }
 
 // FUNCTION: LS3DF 0x1004a790
+// FUNCTION: LS3DF11 0x100486f0
 LS3D_RESULT I3D_scene::DeleteMirror(I3D_mirror *mirror)
 {
     if (mirrors.remove(mirror)) {
@@ -598,6 +634,7 @@ LS3D_RESULT I3D_scene::DeleteMirror(I3D_mirror *mirror)
 }
 
 // FUNCTION: LS3DF 0x1004a840
+// FUNCTION: LS3DF11 0x100487a0
 void I3D_scene::SetBackdropRange(float near1, float far1)
 {
     backdrop_ncp = near1;
@@ -605,10 +642,12 @@ void I3D_scene::SetBackdropRange(float near1, float far1)
 }
 
 // FUNCTION: LS3DF 0x1004a880
+// FUNCTION: LS3DF11 0x100487e0
 void I3D_scene::MakeReadySectors()
 {
     struct EnumHelp {
         // FUNCTION: LS3DF 0x1004a8c0
+        // FUNCTION: LS3DF11 0x10048820
         static I3DENUMRET __stdcall I3D_EnumProc(I3D_frame *frm, uint context)
         {
             ((I3D_sector *)frm)->MakeReady();
@@ -627,6 +666,7 @@ void I3D_scene::MakeReadySectors()
 static void sceneSS(I3D_frame *frm);
 
 // FUNCTION: LS3DF 0x1004a8d0
+// FUNCTION: LS3DF11 0x10048830
 void I3D_scene::SetSpace(bool world)
 {
     SetSpaceParam = world;
@@ -635,6 +675,7 @@ void I3D_scene::SetSpace(bool world)
 
 // The objects and lightmapped objects of the hierarchy, not into models and volumes
 // FUNCTION: LS3DF 0x1004a950
+// FUNCTION: LS3DF11 0x100488b0
 static void sceneSS(I3D_frame *frm)
 {
     if (frm->frm_flags & (FRMFLAGS_TARGET | 0x10000000))
@@ -650,6 +691,7 @@ static void sceneSS(I3D_frame *frm)
 }
 
 // FUNCTION: LS3DF 0x1004a9c0
+// FUNCTION: LS3DF11 0x10048920
 LS3D_RESULT I3D_scene::SetViewport(uint x, uint y, uint sx, uint sy)
 {
     viewport.left = x;
@@ -664,6 +706,7 @@ LS3D_RESULT I3D_scene::SetViewport(uint x, uint y, uint sx, uint sy)
 }
 
 // FUNCTION: LS3DF 0x1004aa50
+// FUNCTION: LS3DF11 0x100489b0
 void I3D_scene::SetViewProjMatrix(const S_matrix &m)
 {
     m_view_proj_screen = m;
@@ -676,6 +719,7 @@ void I3D_scene::SetViewProjMatrix(const S_matrix &m)
 // Gives the listener the sound environment of the sector, blended from the previous sector's, as EAX 3.0 listener
 // properties: at most every 100 ms while blending
 // FUNCTION: LS3DF 0x1004aaa0
+// FUNCTION: LS3DF11 0x10048a00
 void I3D_scene::m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sector, float blend)
 {
     if (!listener)
@@ -809,6 +853,7 @@ void I3D_scene::m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sec
 }
 
 // FUNCTION: LS3DF 0x1004b0f0
+// FUNCTION: LS3DF11 0x10049050
 LS3D_RESULT I3D_scene::SetAnimation(I3D_animation_set *set, uint index, float blend, uint options)
 {
     if (index >= 8)
@@ -824,6 +869,7 @@ LS3D_RESULT I3D_scene::SetAnimation(I3D_animation_set *set, uint index, float bl
 }
 
 // FUNCTION: LS3DF 0x1004b1b0
+// FUNCTION: LS3DF11 0x10049110
 I3D_animation_set *I3D_scene::GetAnimationSet(uint index) const
 {
     if (index >= 8)
@@ -834,6 +880,7 @@ I3D_animation_set *I3D_scene::GetAnimationSet(uint index) const
 }
 
 // FUNCTION: LS3DF 0x1004b1e0
+// FUNCTION: LS3DF11 0x10049140
 void I3D_scene::StopAnimation(uint index)
 {
     if (index >= 8)
@@ -844,6 +891,7 @@ void I3D_scene::StopAnimation(uint index)
 }
 
 // FUNCTION: LS3DF 0x1004b210
+// FUNCTION: LS3DF11 0x10049170
 LS3D_RESULT I3D_scene::SetAnimBlend(uint index, float blend)
 {
     if (index >= 8)
@@ -862,6 +910,7 @@ LS3D_RESULT I3D_scene::SetAnimBlend(uint index, float blend)
 }
 
 // FUNCTION: LS3DF 0x1004b290
+// FUNCTION: LS3DF11 0x100491f0
 float I3D_scene::GetAnimBlend(uint index) const
 {
     if (index >= 8)
@@ -872,6 +921,7 @@ float I3D_scene::GetAnimBlend(uint index) const
 }
 
 // FUNCTION: LS3DF 0x1004b2d0
+// FUNCTION: LS3DF11 0x10049230
 LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
 {
     if (index >= 8)
@@ -886,6 +936,7 @@ LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
 }
 
 // FUNCTION: LS3DF 0x1004b310
+// FUNCTION: LS3DF11 0x10049270
 int I3D_scene::GetAnimTime(uint index) const
 {
     if (index >= 8)
@@ -896,6 +947,7 @@ int I3D_scene::GetAnimTime(uint index) const
 }
 
 // FUNCTION: LS3DF 0x1004b340
+// FUNCTION: LS3DF11 0x100492a0
 bool I3D_scene::AnimIsOn(uint index) const
 {
     if (index >= 8)
@@ -906,6 +958,7 @@ bool I3D_scene::AnimIsOn(uint index) const
 }
 
 // FUNCTION: LS3DF 0x1004b370
+// FUNCTION: LS3DF11 0x100492d0
 int I3D_scene::NumInterpolators() const
 {
     if (!ipol_set)
@@ -914,6 +967,7 @@ int I3D_scene::NumInterpolators() const
 }
 
 // FUNCTION: LS3DF 0x1004b390
+// FUNCTION: LS3DF11 0x100492f0
 I3D_interpolator **I3D_scene::GetInterpolators() const
 {
     if (!ipol_set)
@@ -923,6 +977,7 @@ I3D_interpolator **I3D_scene::GetInterpolators() const
 
 // Rain, or snow with WSF_SNOW; the other flags but WSF_ON are reset
 // FUNCTION: LS3DF 0x1004b3b0
+// FUNCTION: LS3DF11 0x10049310
 void I3D_scene::WeatherSystemReset()
 {
     uint on = ws_flags & WSF_ON;
@@ -963,6 +1018,7 @@ void I3D_scene::WeatherSystemReset()
 // with about 4 statements' more cost before the center (a probe, no source found) the original's code with the
 // stack slots of the vectors left. The constructor written out breaks the area's UpdateV, though.
 // FUNCTION: LS3DF 0x1004b510
+// FUNCTION: LS3DF11 0x10049470
 void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 {
     S_matrix m = dummy->GetMatrix();
@@ -991,6 +1047,7 @@ void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 }
 
 // FUNCTION: LS3DF 0x1004bbc0
+// FUNCTION: LS3DF11 0x10049b20
 void I3D_scene::WeatherSystemAddDummy(I3D_dummy *dummy)
 {
     if (dummy->frm_flags & FRMFLAGS_WEATHER)
@@ -1006,6 +1063,7 @@ void I3D_scene::WeatherSystemAddDummy(I3D_dummy *dummy)
 }
 
 // FUNCTION: LS3DF 0x1004bc30
+// FUNCTION: LS3DF11 0x10049b90
 void I3D_scene::WeatherSystemDelDummy(I3D_dummy *dummy)
 {
     for (int i = ws_dummies.size(); i--; ) {
@@ -1018,12 +1076,14 @@ void I3D_scene::WeatherSystemDelDummy(I3D_dummy *dummy)
 }
 
 // FUNCTION: LS3DF 0x1004bcc0
+// FUNCTION: LS3DF11 0x10049c20
 int I3D_scene::WeatherSystemGetDummyCnt()
 {
     return ws_dummies.size();
 }
 
 // FUNCTION: LS3DF 0x1004bcd0
+// FUNCTION: LS3DF11 0x10049c30
 DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 {
     return &ws_dummies[0];
@@ -1039,6 +1099,7 @@ DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 // give the original's instructions with other pops; a local, the other order, S_vector2's Magnitude, this-> or a
 // helper don't.
 // FUNCTION: LS3DF 0x1004bce0
+// FUNCTION: LS3DF11 0x10049c40
 void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
 {
     int update;
@@ -1198,6 +1259,7 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
 
 // The floats are returned as their bits
 // FUNCTION: LS3DF 0x1004c4d0
+// FUNCTION: LS3DF11 0x1004a390
 uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
 {
     switch (param) {
@@ -1256,6 +1318,7 @@ uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
 // vertex buffer lock's early return computes the vertex's address apart (the index in ecx); the corners' pushes are
 // scheduled differently.
 // FUNCTION: LS3DF 0x1004c660
+// FUNCTION: LS3DF11 0x1004a520
 void I3D_scene::m_UpdateWeatherSystem()
 {
     if (!(ws_flags & WSF_ON) || !(primary_sector->sct_flags & 1) || !ws_count) {
@@ -1506,6 +1569,7 @@ void I3D_scene::m_UpdateWeatherSystem()
 
 // The particles m_UpdateWeatherSystem wrote, in the primary sector's fog, untextured rain or textured snow
 // FUNCTION: LS3DF 0x1004ddd0
+// FUNCTION: LS3DF11 0x1004bc60
 void I3D_scene::m_RenderWeatherSystem()
 {
     if (!CurrentWECnt || !(ws_flags & WSF_ON))
@@ -1550,6 +1614,7 @@ void I3D_scene::m_RenderWeatherSystem()
 
 // Whether the frame's bounding sphere is inside the camera's view
 // FUNCTION: LS3DF 0x1004e550
+// FUNCTION: LS3DF11 0x1004c3e0
 bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
 {
     if (!frame || !cam)

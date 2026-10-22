@@ -32,20 +32,24 @@ void FreeClipArrays();
 // .data
 
 // GLOBAL: LS3DF 0x100a69d8
+// GLOBAL: LS3DF11 0x100a39d8
 uint ZBufferEnable = D3DZB_TRUE;
 
 // The shadow texture rasterizer's buffer (PC only, names guessed)
 static uchar shadow_mem[0x10000];
 
 // GLOBAL: LS3DF 0x100a69dc
+// GLOBAL: LS3DF11 0x100a39dc
 uchar *shadow_buffer = shadow_mem;
 
 // Nothing references it (PC only)
 // GLOBAL: LS3DF 0x100a69e0
+// GLOBAL: LS3DF11 0x100a39e0
 int unknown_100a69e0[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 // DrawSphere's lines: the three circles of VolumeBall
 // GLOBAL: LS3DF 0x100a6a00
+// GLOBAL: LS3DF11 0x100a3a00
 ushort VolumeBallIndx[96] = {
     0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8,
     8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 0,
@@ -58,81 +62,103 @@ ushort VolumeBallIndx[96] = {
 // .bss
 
 // GLOBAL: LS3DF 0x100bfca0
+// GLOBAL: LS3DF11 0x100bcdc0
 int renderState[RS_LAST];
 
 // GLOBAL: LS3DF 0x100c0009
+// GLOBAL: LS3DF11 0x100bd129
 bool I3DIsInit;
 
 // GLOBAL: LS3DF 0x100afb84
+// GLOBAL: LS3DF11 0x100acca4
 uint volumeStats[8];
 
 // GLOBAL: LS3DF 0x100bffc4
+// GLOBAL: LS3DF11 0x100bd0e4
 int driverTickTime;
 
 // GLOBAL: LS3DF 0x100af928
+// GLOBAL: LS3DF11 0x100aca48
 float RsNonOrthoTessellation;
 
 // GLOBAL: LS3DF 0x100afba8
+// GLOBAL: LS3DF11 0x100accc8
 int RsZBiasShadow;
 
 // GLOBAL: LS3DF 0x100bfc70
+// GLOBAL: LS3DF11 0x100bcd90
 int RsZBiasProjector;
 
 // RS_LOD_SCALE / 100 (PC only, the name is a guess; Insanity3D's driver keeps it as lod_scale)
 // GLOBAL: LS3DF 0x100afb70
+// GLOBAL: LS3DF11 0x100acc90
 float LODScale;
 
 // The fast find tree's root and the parent FindFrameFast_ came from
 // GLOBAL: LS3DF 0x100bfc68
+// GLOBAL: LS3DF11 0x100bcd88
 I3D_frame *pFFRoot;
 
 // GLOBAL: LS3DF 0x100afba4
+// GLOBAL: LS3DF11 0x100accc4
 I3D_frame *pFFLastUp_;
 
 // OptimalizeFastFindData's list of the frames in name order
 // GLOBAL: LS3DF 0x100bfc6c
+// GLOBAL: LS3DF11 0x100bcd8c
 I3D_frame **OFFD_pFrameList;
 
 // GLOBAL: LS3DF 0x100bfc9c
+// GLOBAL: LS3DF11 0x100bcdbc
 int OFFD_ListSize;
 
 // GLOBAL: LS3DF 0x100bfd9c
+// GLOBAL: LS3DF11 0x100bcebc
 int OFFD_ListUsed;
 
 // The frame counter, which render.cpp counts and the frames compare
 // GLOBAL: LS3DF 0x100afc24
+// GLOBAL: LS3DF11 0x100acd44
 uint RenderNumber;
 
 // GLOBAL: LS3DF 0x100bfda0
+// GLOBAL: LS3DF11 0x100bcec0
 uint RenderNumberMinus1;
 
 // The texts' font, LS3DF's bitmap 125
 // GLOBAL: LS3DF 0x100c000c
+// GLOBAL: LS3DF11 0x100bd12c
 static I3D_material *pFontMat;
 
 // The shadow rasterizer's spans: the leftmost and rightmost pixel of each row (PC only, the name is a guess)
 // GLOBAL: LS3DF 0x100bfda8
+// GLOBAL: LS3DF11 0x100bcec8
 static uchar shadow_spans[256][2];
 
 // The globals with dynamic initializers, in the order the original constructs them (.CRT$XCU)
 
 // GetIcon's materials (the name is a guess; Insanity3D's driver keeps them as icon_materials)
 // GLOBAL: LS3DF 0x100bffb0
+// GLOBAL: LS3DF11 0x100bd0d0
 C_list<I3D_material *> IconMaterialList;
 
 // GLOBAL: LS3DF 0x100bfc78
+// GLOBAL: LS3DF11 0x100bcd98
 C_list<TLVERTEX> TLVertList;
 
 // GLOBAL: LS3DF 0x100afb74
+// GLOBAL: LS3DF11 0x100acc94
 C_list<LVERTEX> LVertList;
 
 // FUNCTION: LS3DF 0x10015620
+// FUNCTION: LS3DF11 0x10015140
 I3D_driver::I3D_driver()
 {
     unknown_58 = 0;
 }
 
 // FUNCTION: LS3DF 0x10015670
+// FUNCTION: LS3DF11 0x10015190
 I3D_driver::~I3D_driver()
 {
     if (I3DIsInit)
@@ -141,18 +167,21 @@ I3D_driver::~I3D_driver()
 }
 
 // FUNCTION: LS3DF 0x10015730
+// FUNCTION: LS3DF11 0x10015250
 void I3D_driver::Tick(int time)
 {
     driverTickTime += time;
 }
 
 // FUNCTION: LS3DF 0x10015750
+// FUNCTION: LS3DF11 0x10015270
 int I3D_driver::GetTickTime() const
 {
     return driverTickTime;
 }
 
 // FUNCTION: LS3DF 0x10015760
+// FUNCTION: LS3DF11 0x10015280
 LS3D_RESULT I3D_driver::Init(uint flags)
 {
     init_flags = flags;
@@ -211,6 +240,7 @@ LS3D_RESULT I3D_driver::Init(uint flags)
 }
 
 // FUNCTION: LS3DF 0x10015930
+// FUNCTION: LS3DF11 0x10015450
 LS3D_RESULT I3D_driver::Close()
 {
     closeRender();
@@ -231,6 +261,7 @@ LS3D_RESULT I3D_driver::Close()
 }
 
 // FUNCTION: LS3DF 0x100159b0
+// FUNCTION: LS3DF11 0x100154d0
 LS3D_RESULT I3D_driver::GetStats(I3DSTATSINDEX index, void *data)
 {
     if (!data)
@@ -257,6 +288,7 @@ LS3D_RESULT I3D_driver::GetStats(I3DSTATSINDEX index, void *data)
 }
 
 // FUNCTION: LS3DF 0x10015a20
+// FUNCTION: LS3DF11 0x10015540
 LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
 {
     if (state >= RS_LAST) {
@@ -356,6 +388,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
 }
 
 // FUNCTION: LS3DF 0x10015e50
+// FUNCTION: LS3DF11 0x10015970
 int I3D_driver::GetState(I3D_RENDERSTATE state) const
 {
     if (state >= RS_LAST) {
@@ -396,6 +429,7 @@ static inline void ScanEdge(int xs, int ys, int xe, int ye)
 // while walking an edge), which an __asm block then fills: alpha 15 in a 16-bit texture, or 255 in SW's 8-bit buffer
 // of 256 bytes a row.
 // FUNCTION: LS3DF 0x10015e80
+// FUNCTION: LS3DF11 0x100159a0
 void I3D_driver::DrawShadowTriangles(const int *verts, const ushort *indx, uint num_faces, void *dst, int pitch)
 {
     for (uint i = num_faces; i; i--, indx += 3) {
@@ -466,6 +500,7 @@ void I3D_driver::DrawShadowTriangles(const int *verts, const ushort *indx, uint 
 }
 
 // FUNCTION: LS3DF 0x100160d0
+// FUNCTION: LS3DF11 0x10015bf0
 void I3D_driver::DrawShadowTrianglesSW(const int *verts, const ushort *indx, uint num_faces)
 {
     for (uint i = num_faces; i; i--, indx += 3) {
@@ -531,6 +566,7 @@ void I3D_driver::DrawShadowTrianglesSW(const int *verts, const ushort *indx, uin
 // Renders a shadow's triangles (verts: x, y pairs, inside box) into its texture's alpha: through the 16-bit
 // rasterizer, or with RS_SHADOW_SW at twice the size into shadow_buffer, then averaged down 2x2 into 4-bit alpha
 // FUNCTION: LS3DF 0x10016310
+// FUNCTION: LS3DF11 0x10015e30
 LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, const ushort *indx, uint num_faces,
     ITexture *texture, const float *box)
 {
@@ -652,6 +688,7 @@ LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, 
 }
 
 // FUNCTION: LS3DF 0x10016600
+// FUNCTION: LS3DF11 0x10016120
 I3D_material *I3D_driver::GetIcon(uint res_id)
 {
     HMODULE module = GetModuleHandleA("LS3DF.dll");
@@ -686,6 +723,7 @@ static inline uint MakeColor(float a, const S_vector &color)
 }
 
 // FUNCTION: LS3DF 0x100166c0
+// FUNCTION: LS3DF11 0x100161e0
 void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alpha)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -713,6 +751,7 @@ void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alph
 }
 
 // FUNCTION: LS3DF 0x100168f0
+// FUNCTION: LS3DF11 0x10016410
 void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -742,6 +781,7 @@ void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
 }
 
 // FUNCTION: LS3DF 0x10016b20
+// FUNCTION: LS3DF11 0x10016640
 void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vector &color, uint alpha)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -773,6 +813,7 @@ void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vect
 }
 
 // FUNCTION: LS3DF 0x10016d70
+// FUNCTION: LS3DF11 0x10016890
 void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint alpha)
 {
@@ -820,6 +861,7 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
 // statements' worth before it, which no spelling of its list's sizing gives); the other draws take up to eight
 // ((void)0) unchanged. PS2's DrawTriangles has the same statements in the same order (no clipping, which is PC only).
 // FUNCTION: LS3DF 0x10016ff0
+// FUNCTION: LS3DF11 0x10016b10
 LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const ushort *indx, uint num_indx,
     const S_vector &color, uint vstride, uint flags, const I3D_text_coor *tx)
 {
@@ -921,6 +963,7 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
 }
 
 // FUNCTION: LS3DF 0x10017580
+// FUNCTION: LS3DF11 0x100170a0
 void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector &color, int num_segments,
     uint alpha)
 {
@@ -967,6 +1010,7 @@ void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector
 // ours lacks (spellings of the block tried: a reference to the matrix, assignment, UpdateWMatrix and the member, the
 // global tested directly, an if around the rest).
 // FUNCTION: LS3DF 0x10017890
+// FUNCTION: LS3DF11 0x100173b0
 void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, float size)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -1047,6 +1091,7 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
 // and 3 2 1 (v[4] and v[5] copy v[2] and v[1]). The four specular stores come after the four vertices: written with
 // each vertex, VC6 schedules them early and the loop's registers differ.
 // FUNCTION: LS3DF 0x10017d40
+// FUNCTION: LS3DF11 0x10017860
 void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float size)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -1140,6 +1185,7 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
 // the color written out gives; written out, though, the budget lets the second branch inline its SetBlendState(1) (see
 // DrawText).
 // FUNCTION: LS3DF 0x100182f0
+// FUNCTION: LS3DF11 0x10017e10
 void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size)
 {
     SetFog(FALSE, 0, 0.0f, 0.0f, 0);
@@ -1205,6 +1251,7 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
 }
 
 // FUNCTION: LS3DF 0x100186a0
+// FUNCTION: LS3DF11 0x100181c0
 void I3D_driver::DrawBox(const I3D_bbox &bbox, const S_vector *line_color, const S_vector *fill_color, ushort alpha)
 {
     ushort line_indx[24] = {0, 1, 0, 2, 0, 4, 1, 3, 1, 5, 2, 3, 2, 6, 3, 7, 4, 5, 4, 6, 5, 7, 6, 7};
@@ -1224,6 +1271,7 @@ void I3D_driver::DrawBox(const I3D_bbox &bbox, const S_vector *line_color, const
 
 // A unit sphere's three circles, DrawSphere's lines
 // GLOBAL: LS3DF 0x100af930
+// GLOBAL: LS3DF11 0x100aca50
 static S_vector VolumeBall[48] = {
     S_vector(1.0f, 0.0f, 0.0f), S_vector(.92f, .39f, 0.0f), S_vector(.71f, .71f, 0.0f), S_vector(.39f, .92f, 0.0f),
     S_vector(0.0f, 1.0f, 0.0f), S_vector(-.39f, .92f, 0.0f), S_vector(-.71f, .71f, 0.0f), S_vector(-.92f, .39f, 0.0f),
@@ -1243,6 +1291,7 @@ static S_vector VolumeBall[48] = {
 };
 
 // FUNCTION: LS3DF 0x10018cc0
+// FUNCTION: LS3DF11 0x100187e0
 void I3D_driver::DrawSphere(const S_matrix &matrix, const I3D_bsphere &bsphere, const S_vector &color, ushort alpha)
 {
     if (bsphere.radius <= 0.0f)
@@ -1257,6 +1306,7 @@ void I3D_driver::DrawSphere(const S_matrix &matrix, const I3D_bsphere &bsphere, 
 }
 
 // FUNCTION: LS3DF 0x10018d80
+// FUNCTION: LS3DF11 0x100188a0
 I3D_visual *I3D_driver::CreateVisual(I3D_VISUAL_TYPE type)
 {
     I3D_visual *visual;
@@ -1307,6 +1357,7 @@ I3D_visual *I3D_driver::CreateVisual(I3D_VISUAL_TYPE type)
 }
 
 // FUNCTION: LS3DF 0x10019090
+// FUNCTION: LS3DF11 0x10018bb0
 I3D_material *I3D_driver::CreateMaterial()
 {
     I3D_material *mat = new I3D_material;
@@ -1316,6 +1367,7 @@ I3D_material *I3D_driver::CreateMaterial()
 }
 
 // FUNCTION: LS3DF 0x10019100
+// FUNCTION: LS3DF11 0x10018c20
 I3D_anim_material *I3D_driver::CreateAnimMaterial()
 {
     I3D_anim_material *mat = new I3D_anim_material;
@@ -1325,48 +1377,56 @@ I3D_anim_material *I3D_driver::CreateAnimMaterial()
 }
 
 // FUNCTION: LS3DF 0x10019180
+// FUNCTION: LS3DF11 0x10018ca0
 I3D_triface *I3D_driver::CreateTrifaceArray(int num)
 {
     return new I3D_triface[num];
 }
 
 // FUNCTION: LS3DF 0x100191a0
+// FUNCTION: LS3DF11 0x10018cc0
 I3D_face_group *I3D_driver::CreateFaceGroup()
 {
     return new I3D_face_group;
 }
 
 // FUNCTION: LS3DF 0x10019200
+// FUNCTION: LS3DF11 0x10018d20
 I3D_mesh_level *I3D_driver::CreateMeshLevel()
 {
     return new I3D_mesh_level;
 }
 
 // FUNCTION: LS3DF 0x10019260
+// FUNCTION: LS3DF11 0x10018d80
 I3D_mesh_object *I3D_driver::CreateMesh()
 {
     return new I3D_mesh_object;
 }
 
 // FUNCTION: LS3DF 0x100192c0
+// FUNCTION: LS3DF11 0x10018de0
 I3D_animation_set *I3D_driver::CreateAnimationSet()
 {
     return new I3D_animation_set;
 }
 
 // FUNCTION: LS3DF 0x10019320
+// FUNCTION: LS3DF11 0x10018e40
 I3D_pose *I3D_driver::CreatePose()
 {
     return new I3D_pose;
 }
 
 // FUNCTION: LS3DF 0x10019380
+// FUNCTION: LS3DF11 0x10018ea0
 I3D_pose_set *I3D_driver::CreatePoseSet()
 {
     return new I3D_pose_set;
 }
 
 // FUNCTION: LS3DF 0x100193e0
+// FUNCTION: LS3DF11 0x10018f00
 I3D_frame *I3D_driver::CreateFrame(I3D_FRAME_TYPE type)
 {
     I3D_frame *frame;
@@ -1437,6 +1497,7 @@ I3D_frame *I3D_driver::CreateFrame(I3D_FRAME_TYPE type)
 }
 
 // FUNCTION: LS3DF 0x10019880
+// FUNCTION: LS3DF11 0x100193a0
 LS3D_RESULT I3D_driver::EnumVisualTypes(I3D_ENUMVISUALPROC *proc, bool all) const
 {
     if (!proc)
@@ -1463,6 +1524,7 @@ LS3D_RESULT I3D_driver::EnumVisualTypes(I3D_ENUMVISUALPROC *proc, bool all) cons
         return #x;
 
 // FUNCTION: LS3DF 0x10019930
+// FUNCTION: LS3DF11 0x10019450
 const char *FrameType2StringFunc(I3D_FRAME_TYPE type)
 {
     switch (type) {
@@ -1490,12 +1552,14 @@ const char *FrameType2StringFunc(I3D_FRAME_TYPE type)
 }
 
 // FUNCTION: LS3DF 0x10019a10
+// FUNCTION: LS3DF11 0x10019530
 const char *I3D_driver::FrameType2String(I3D_FRAME_TYPE type) const
 {
     return FrameType2StringFunc(type);
 }
 
 // FUNCTION: LS3DF 0x10019a20
+// FUNCTION: LS3DF11 0x10019540
 const char *I3D_driver::VisualType2String(I3D_VISUAL_TYPE type) const
 {
     switch (type) {
@@ -1524,6 +1588,7 @@ const char *I3D_driver::VisualType2String(I3D_VISUAL_TYPE type) const
 // they follow it (VC6 loads it once, into eax), and test the compare's result a third time (the original's dead test
 // that loops back to the compare). Unlike PS2's, this one goes on past a sector of another scene.
 // FUNCTION: LS3DF 0x10019b10
+// FUNCTION: LS3DF11 0x10019630
 I3D_frame *I3D_driver::FindFrameFast(I3D_scene *scene, const char *name) const
 {
     if (!pFFRoot)
@@ -1555,6 +1620,7 @@ I3D_frame *I3D_driver::FindFrameFast(I3D_scene *scene, const char *name) const
 }
 
 // FUNCTION: LS3DF 0x10019c10
+// FUNCTION: LS3DF11 0x10019730
 I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
 {
     pFFLastUp_ = NULL;
@@ -1592,6 +1658,7 @@ I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x10019d30
+// FUNCTION: LS3DF11 0x10019850
 void I3D_driver::OptimalizeFastFindData()
 {
     OFFD_ListSize = pFFRoot->OFFD_CountFrames();
@@ -1608,6 +1675,7 @@ void I3D_driver::OptimalizeFastFindData()
 }
 
 // FUNCTION: LS3DF 0x10019dc0
+// FUNCTION: LS3DF11 0x100198e0
 void I3D_driver::OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int num)
 {
     if (!num)
@@ -1640,10 +1708,12 @@ void I3D_driver::OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int 
 }
 
 // FUNCTION: LS3DF 0x10019fd0
+// FUNCTION: LS3DF11 0x10019af0
 LS3D_RESULT I3D_driver::EnumFFTree(I3D_ENUMPROC *proc, uint context) const
 {
     struct _hlp {
         // FUNCTION: LS3DF 0x1001a050
+        // FUNCTION: LS3DF11 0x10019b70
         I3DENUMRET enumSubtree(I3D_ENUMPROC *proc, uint context, I3D_frame *frm)
         {
             I3DENUMRET er;
@@ -1667,6 +1737,7 @@ LS3D_RESULT I3D_driver::EnumFFTree(I3D_ENUMPROC *proc, uint context) const
 }
 
 // FUNCTION: LS3DF 0x1001a0a0
+// FUNCTION: LS3DF11 0x10019bc0
 void I3D_driver::DeleteFromSceneTickList(I3D_frame *frame)
 {
     for (int i = scenes.size(); i--; ) {
@@ -1676,12 +1747,14 @@ void I3D_driver::DeleteFromSceneTickList(I3D_frame *frame)
 }
 
 // FUNCTION: LS3DF 0x1001a0e0
+// FUNCTION: LS3DF11 0x10019c00
 void I3D_driver::DeleteFromAllShadows(I3D_frame *frame)
 {
     I3D_shadow::DeleteFromAnyShadow(frame);
 }
 
 // FUNCTION: LS3DF 0x1001a0f0
+// FUNCTION: LS3DF11 0x10019c10
 void I3D_driver::DeleteFromAllTargets(I3D_frame *frame)
 {
     I3D_target::DeleteFromAnyTarget(frame);
@@ -1696,4 +1769,5 @@ void I3D_driver::m_RecomputeUsedVRAM()
 // The other files' globals
 
 // GLOBAL: LS3DF 0x100a93f0
+// GLOBAL: LS3DF11 0x100a6558
 bool RecomputeAllGeometry;

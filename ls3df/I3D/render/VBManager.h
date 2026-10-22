@@ -98,6 +98,7 @@ extern C_VBManager cVBMan;
 
 // The destructor its initializer's thunk registers: the third $E9 in link order, after IBManager.cpp's
 // SYNTHETIC: LS3DF 0x100688a0
+// SYNTHETIC: LS3DF11 0x10065b80
 // $E9
 
 // A buffer locked read-only is locked again for writing
@@ -119,6 +120,7 @@ inline uchar *C_VBuffer::Lock(int index, uint lock_flags)
 }
 
 // FUNCTION: LS3DF 0x1000b060
+// FUNCTION: LS3DF11 0x1000ac40
 inline void C_VBuffer::Unlock()
 {
     if (data) {
@@ -138,57 +140,73 @@ inline void C_VBuffer::Unlock()
 // ??1?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x100693f0
+// TEMPLATE: LS3DF11 0x100665f0
 // ??1?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF 0x100699d0
+// TEMPLATE: LS3DF11 0x100670f0
 // ?erase@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@QAE?AViterator@12@V312@@Z
 
 // TEMPLATE: LS3DF 0x10069e00
+// TEMPLATE: LS3DF11 0x10067500
 // ?erase@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@QAE?AViterator@12@V312@0@Z
 
 // TEMPLATE: LS3DF 0x10069ed0
+// TEMPLATE: LS3DF11 0x100675d0
 // ?_Inc@const_iterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x10069f20
 // ?insert@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAE?AU?$pair@Viterator@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multisedc50274a
 
 // TEMPLATE: LS3DF 0x1006a160
+// TEMPLATE: LS3DF11 0x10066c60
 // ?erase@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAE?AViterator@12@V312@@Z
 
 // TEMPLATE: LS3DF 0x1006a570
+// TEMPLATE: LS3DF11 0x10067070
 // ?_Inc@const_iterator@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x1006a5c0
+// TEMPLATE: LS3DF11 0x10067620
 // ?_Erase@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@IAEXPAU_Node@12@@Z
 
 // TEMPLATE: LS3DF 0x1006a600
+// TEMPLATE: LS3DF11 0x10067a20
 // ?_Insert@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@IAE?AViterator@12@PAU_Node@12@0ABQAVC_VBuffer@@@Z
 
 // TEMPLATE: LS3DF 0x1006a870
+// TEMPLATE: LS3DF11 0x10067c90
 // ?_Min@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@KIPAU_Node@12@PAU312@@Z
 
 // TEMPLATE: LS3DF 0x1006a890
+// TEMPLATE: LS3DF11 0x100679e0
 // ?_Erase@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAEXPAU_Node@12@@Z
 
 // TEMPLATE: LS3DF 0x1006a8d0
+// TEMPLATE: LS3DF11 0x100676f0
 // ?_Insert@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAE?AViterator@12@PAU_Node@12@0ABQAUS_VB_block@@@Z
 
 // TEMPLATE: LS3DF 0x1006ab40
 // ?_Lrotate@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAEXPAU_Node@12@@Z
 
 // TEMPLATE: LS3DF 0x1006aba0
+// TEMPLATE: LS3DF11 0x10067960
 // ?_Min@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@KIPAU_Node@12@PAU312@@Z
 
 // TEMPLATE: LS3DF 0x1006abc0
+// TEMPLATE: LS3DF11 0x10067980
 // ?_Rrotate@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAEXPAU_Node@12@@Z
 
 // TEMPLATE: LS3DF 0x1006ac20
+// TEMPLATE: LS3DF11 0x10067cb0
 // ??Eiterator@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAE?AV012@H@Z
 
 // TEMPLATE: LS3DF 0x1006ac80
+// TEMPLATE: LS3DF11 0x10067d70
 // ?_Dec@const_iterator@?$_Tree@PAVC_VBuffer@@PAV1@U_Kfn@?$multiset@PAVC_VBuffer@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@std@@@std@@US_VBuffer_less@@V?$allocator@PAVC_VBuffer@@@4@@std@@QAEXXZ
 
 // TEMPLATE: LS3DF 0x1006ace0
+// TEMPLATE: LS3DF11 0x10067d10
 // ?_Dec@const_iterator@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@QAEXXZ
 
 // The trees' empty node and its reference count, after cVBMan in .bss
@@ -196,10 +214,17 @@ inline void C_VBuffer::Unlock()
 // std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Nilrefs
 
 // GLOBAL: LS3DF 0x101c5038
+// GLOBAL: LS3DF11 0x101c2138
 // std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Nil
 
 // GLOBAL: LS3DF 0x101c503c
+// GLOBAL: LS3DF11 0x101c213c
 // std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Nilrefs
 
 // GLOBAL: LS3DF 0x101c5040
+// GLOBAL: LS3DF11 0x101c2140
 // std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Nil
+
+// 1.1's C_VBuffer constructor comes after VBManager.cpp's templates, out of the file's order
+// FUNCTION: LS3DF11 0x10067660
+// C_VBuffer::C_VBuffer

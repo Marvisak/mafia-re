@@ -11,6 +11,7 @@
 #include <string.h>
 
 // FUNCTION: LS3DF 0x10030560
+// FUNCTION: LS3DF11 0x1002f860
 I3D_face_group::I3D_face_group()
 {
     next = NULL;
@@ -20,6 +21,7 @@ I3D_face_group::I3D_face_group()
 }
 
 // FUNCTION: LS3DF 0x10030580
+// FUNCTION: LS3DF11 0x1002f880
 void I3D_face_group::SetMaterial(I3D_material *mat)
 {
     if (mat != material) {
@@ -32,6 +34,7 @@ void I3D_face_group::SetMaterial(I3D_material *mat)
 }
 
 // FUNCTION: LS3DF 0x100305b0
+// FUNCTION: LS3DF11 0x1002f8b0
 void I3D_face_group::SetFaces(const I3D_triface *faces, int num)
 {
     if (!faces) {
@@ -46,6 +49,7 @@ void I3D_face_group::SetFaces(const I3D_triface *faces, int num)
 }
 
 // FUNCTION: LS3DF 0x10030610
+// FUNCTION: LS3DF11 0x1002f920
 I3D_triface *I3D_face_group::CreateFaces(int num)
 {
     cIBMan.m_Free(ib);
@@ -61,6 +65,7 @@ I3D_triface *I3D_face_group::CreateFaces(int num)
 }
 
 // FUNCTION: LS3DF 0x10030690
+// FUNCTION: LS3DF11 0x1002f9a0
 I3D_triface *I3D_face_group::GetFaces()
 {
     if (!num_faces)
@@ -69,12 +74,14 @@ I3D_triface *I3D_face_group::GetFaces()
 }
 
 // FUNCTION: LS3DF 0x10030780
+// FUNCTION: LS3DF11 0x1002f9f0
 void I3D_face_group::UnlockFaces()
 {
     ib.buffer->Unlock();
 }
 
 // FUNCTION: LS3DF 0x10030800
+// FUNCTION: LS3DF11 0x1002fa10
 LS3D_RESULT I3D_face_group::Duplicate(I3D_face_group *fg)
 {
     I3D_triface *faces = CreateFaces(fg->num_faces);
@@ -85,6 +92,7 @@ LS3D_RESULT I3D_face_group::Duplicate(I3D_face_group *fg)
 }
 
 // FUNCTION: LS3DF 0x10030860
+// FUNCTION: LS3DF11 0x1002fa70
 LS3D_RESULT I3D_face_group::DetachMaterial()
 {
     if (material && material->ref >= 2) {
@@ -117,6 +125,7 @@ inline I3D_face_group::~I3D_face_group()
 }
 
 // FUNCTION: LS3DF 0x10030900
+// FUNCTION: LS3DF11 0x1002fb10
 I3D_mesh_level::I3D_mesh_level()
 {
     ref = 1;
@@ -141,6 +150,7 @@ I3D_mesh_level::~I3D_mesh_level()
 }
 
 // FUNCTION: LS3DF 0x100309b0
+// FUNCTION: LS3DF11 0x1002fbc0
 int I3D_mesh_level::Release()
 {
     if (--ref)
@@ -150,6 +160,7 @@ int I3D_mesh_level::Release()
 }
 
 // FUNCTION: LS3DF 0x10030a50
+// FUNCTION: LS3DF11 0x1002fc60
 void I3D_mesh_level::UpdateBBox()
 {
     const I3D_vertex *v = LockVertices(0);
@@ -166,6 +177,7 @@ void I3D_mesh_level::UpdateBBox()
 }
 
 // FUNCTION: LS3DF 0x10030b40
+// FUNCTION: LS3DF11 0x1002fd50
 LS3D_RESULT I3D_mesh_level::SetVertexMesh(const I3D_vertex *verts, int num)
 {
     cVBMan.m_Free(vb);
@@ -190,6 +202,7 @@ LS3D_RESULT I3D_mesh_level::SetVertexMesh(const I3D_vertex *verts, int num)
 }
 
 // FUNCTION: LS3DF 0x10030d00
+// FUNCTION: LS3DF11 0x1002fe70
 I3D_vertex *I3D_mesh_level::CreateVertexMesh(int num)
 {
     cVBMan.m_Free(vb);
@@ -213,6 +226,7 @@ I3D_vertex *I3D_mesh_level::CreateVertexMesh(int num)
 
 // The original sets the read-only flag into a variable it never initialised (it lives in the dead this slot)
 // FUNCTION: LS3DF 0x10030e80
+// FUNCTION: LS3DF11 0x1002ff60
 I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
 {
     if (!vb.vb)
@@ -226,6 +240,7 @@ I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
 }
 
 // FUNCTION: LS3DF 0x10030f90
+// FUNCTION: LS3DF11 0x1002ffa0
 void I3D_mesh_level::UnlockVertices()
 {
     if (vb.vb)
@@ -235,6 +250,7 @@ void I3D_mesh_level::UnlockVertices()
 // The face groups are deleted, but the chain is cleared only without a level: the original's (AddFGroup then appends
 // to the deleted chain)
 // FUNCTION: LS3DF 0x10031000
+// FUNCTION: LS3DF11 0x1002ffc0
 LS3D_RESULT I3D_mesh_level::Duplicate(I3D_mesh_level *level)
 {
     if (level == this)
@@ -270,6 +286,7 @@ LS3D_RESULT I3D_mesh_level::Duplicate(I3D_mesh_level *level)
 }
 
 // FUNCTION: LS3DF 0x10031180
+// FUNCTION: LS3DF11 0x10030150
 I3D_face_group *I3D_mesh_level::GetFGroup(int index)
 {
     if ((uint)index >= num_fgroups) {
@@ -283,6 +300,7 @@ I3D_face_group *I3D_mesh_level::GetFGroup(int index)
 }
 
 // FUNCTION: LS3DF 0x100311c0
+// FUNCTION: LS3DF11 0x10030190
 int I3D_mesh_level::NumFaces() const
 {
     int num = 0;
@@ -292,6 +310,7 @@ int I3D_mesh_level::NumFaces() const
 }
 
 // FUNCTION: LS3DF 0x100311e0
+// FUNCTION: LS3DF11 0x100301b0
 LS3D_RESULT I3D_mesh_level::GetStats(I3D_mesh_stats &stats)
 {
     stats.size = sizeof(I3D_mesh_level);
@@ -304,6 +323,7 @@ LS3D_RESULT I3D_mesh_level::GetStats(I3D_mesh_stats &stats)
 }
 
 // FUNCTION: LS3DF 0x10031220
+// FUNCTION: LS3DF11 0x100301f0
 void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
 {
     if (!fg)
@@ -339,6 +359,7 @@ void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
 }
 
 // FUNCTION: LS3DF 0x10031320
+// FUNCTION: LS3DF11 0x100302f0
 I3D_mesh_object::I3D_mesh_object()
 {
     num_lods = 0;
@@ -361,6 +382,7 @@ I3D_mesh_object::~I3D_mesh_object()
 }
 
 // FUNCTION: LS3DF 0x100313a0
+// FUNCTION: LS3DF11 0x10030370
 int I3D_mesh_object::Release()
 {
     if (--ref)
@@ -370,12 +392,14 @@ int I3D_mesh_object::Release()
 }
 
 // FUNCTION: LS3DF 0x100313f0
+// FUNCTION: LS3DF11 0x100303c0
 I3D_mesh_level *I3D_mesh_object::GetLOD(int index) const
 {
     return levels[index];
 }
 
 // FUNCTION: LS3DF 0x10031400
+// FUNCTION: LS3DF11 0x100303d0
 void I3D_mesh_object::UpdateBoundVolume()
 {
     bvol.bbox.Invalidate();
@@ -402,6 +426,7 @@ void I3D_mesh_object::UpdateBoundVolume()
 }
 
 // FUNCTION: LS3DF 0x10031550
+// FUNCTION: LS3DF11 0x10030520
 LS3D_RESULT I3D_mesh_object::SetLOD(I3D_mesh_level *level, int index)
 {
     if (index >= 10) {
@@ -425,6 +450,7 @@ LS3D_RESULT I3D_mesh_object::SetLOD(I3D_mesh_level *level, int index)
 }
 
 // FUNCTION: LS3DF 0x100315e0
+// FUNCTION: LS3DF11 0x100305b0
 LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
 {
     if (mesh == this)
@@ -462,6 +488,7 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
 }
 
 // FUNCTION: LS3DF 0x10031700
+// FUNCTION: LS3DF11 0x100306d0
 LS3D_RESULT I3D_mesh_object::DetachMaterials()
 {
     for (int i = 0; i < 10; i++) {
@@ -477,6 +504,7 @@ LS3D_RESULT I3D_mesh_object::DetachMaterials()
 }
 
 // FUNCTION: LS3DF 0x10031750
+// FUNCTION: LS3DF11 0x10030720
 bool I3D_mesh_object::IsCompatible(I3D_mesh_object *mesh)
 {
     if (num_lods != mesh->num_lods)
@@ -492,6 +520,7 @@ bool I3D_mesh_object::IsCompatible(I3D_mesh_object *mesh)
 }
 
 // FUNCTION: LS3DF 0x100317a0
+// FUNCTION: LS3DF11 0x10030770
 LS3D_RESULT I3D_mesh_object::GetStats(I3D_mesh_stats &stats)
 {
     stats.size = sizeof(I3D_mesh_object);

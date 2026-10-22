@@ -6,10 +6,12 @@
 
 // The IShow objects with a stream open, which the callback looks through
 // GLOBAL: LS3DF 0x101c5db8
+// GLOBAL: LS3DF11 0x101c2eb8
 C_list<IShow *> stream_shows;
 
 // The driver tells the end of a stream (event 1)
 // FUNCTION: LS3DF 0x100758e0
+// FUNCTION: LS3DF11 0x10072770
 static void __stdcall StreamCallback(int stream, int event)
 {
     switch (event) {
@@ -24,6 +26,7 @@ static void __stdcall StreamCallback(int stream, int event)
 }
 
 // FUNCTION: LS3DF 0x10075920
+// FUNCTION: LS3DF11 0x100727b0
 LS3D_RESULT IShow::OpenStream(const char *name, int unused)
 {
     CloseStream();
@@ -52,6 +55,7 @@ LS3D_RESULT IShow::OpenStream(const char *name, int unused)
 }
 
 // FUNCTION: LS3DF 0x10075a20
+// FUNCTION: LS3DF11 0x100728b0
 void IShow::CloseStream()
 {
     m_StreamPaused = false;
@@ -70,6 +74,7 @@ void IShow::CloseStream()
 }
 
 // FUNCTION: LS3DF 0x10075ad0
+// FUNCTION: LS3DF11 0x10072960
 LS3D_RESULT IShow::PlayStream(bool loop)
 {
     if (m_StreamPaused) {
@@ -82,12 +87,14 @@ LS3D_RESULT IShow::PlayStream(bool loop)
 }
 
 // FUNCTION: LS3DF 0x10075b30
+// FUNCTION: LS3DF11 0x100729c0
 LS3D_RESULT IShow::StopStream()
 {
     return FAILED(pISndDriver->streams->Stop(m_Stream)) ? I3DERR_GENERIC : I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10075b60
+// FUNCTION: LS3DF11 0x100729f0
 LS3D_RESULT IShow::PauseStream()
 {
     if (FAILED(pISndDriver->streams->Pause(m_Stream)))
@@ -97,12 +104,14 @@ LS3D_RESULT IShow::PauseStream()
 }
 
 // FUNCTION: LS3DF 0x10075b90
+// FUNCTION: LS3DF11 0x10072a20
 LS3D_RESULT IShow::SetStreamVolume(int volume)
 {
     return FAILED(pISndDriver->streams->SetVolume(m_Stream, 0, volume)) ? I3DERR_GENERIC : I3D_OK;
 }
 
 // FUNCTION: LS3DF 0x10075bc0
+// FUNCTION: LS3DF11 0x10072a50
 LS3D_RESULT IShow::SetStreamPan(int pan)
 {
     return FAILED(pISndDriver->streams->SetPan(m_Stream, 0, pan)) ? I3DERR_GENERIC : I3D_OK;

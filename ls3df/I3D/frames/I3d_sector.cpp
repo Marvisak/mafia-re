@@ -14,14 +14,17 @@
 // file counts portalVersion). Uninitialized, so .bss has them in their hash buckets' order, after the header's zero
 // vector.
 // GLOBAL: LS3DF 0x101b4f28
+// GLOBAL: LS3DF11 0x101b2048
 int portalVersion;
 
 // GLOBAL: LS3DF 0x101b4f2c
+// GLOBAL: LS3DF11 0x101b204c
 int sectorVersion;
 
 // The listener's defaults: EAX 3.0's generic environment, scaled as the members are, without the room, and half a
 // second to blend into it. PS2's only clears the struct and sets the blend time.
 // FUNCTION: LS3DF 0x1004e9b0
+// FUNCTION: LS3DF11 0x1004c810
 void S_sector_sound_properties::SetupDefaults()
 {
     memset(this, 0, sizeof(S_sector_sound_properties));
@@ -54,6 +57,7 @@ void S_sector_sound_properties::SetupDefaults()
 // Open: a few instructions are scheduled otherwise: t1's subtraction before the flag's load, and the copies' stores
 // among the multiplications.
 // FUNCTION: LS3DF 0x1004ea50
+// FUNCTION: LS3DF11 0x1004c8b0
 void S_sector_sound_properties::MakeBlend(const S_sector_sound_properties &a, const S_sector_sound_properties &b,
     float t, bool all)
 {
@@ -93,6 +97,7 @@ void S_sector_sound_properties::MakeBlend(const S_sector_sound_properties &a, co
 }
 
 // FUNCTION: LS3DF 0x1004ed30
+// FUNCTION: LS3DF11 0x1004cb90
 I3D_sector::I3D_sector()
 {
     type = FRAME_SECTOR;
@@ -123,6 +128,7 @@ I3D_sector::I3D_sector()
 // Takes the sector out of its lights, sounds and portals. The sounds go through DeleteSound, which VC6 inlines here
 // with its find and remove calls out of line, and PS2's Clear is written out (no counts or pointers set back).
 // FUNCTION: LS3DF 0x1004ee80
+// FUNCTION: LS3DF11 0x1004cce0
 I3D_sector::~I3D_sector()
 {
     sectorVersion++;
@@ -159,6 +165,7 @@ I3D_sector::~I3D_sector()
 
 // A sector's name starts with "sector "
 // FUNCTION: LS3DF 0x1004f230
+// FUNCTION: LS3DF11 0x1004d090
 LS3D_RESULT I3D_sector::SetName(const char *new_name)
 {
     static char name[64] = "sector ";
@@ -170,6 +177,7 @@ LS3D_RESULT I3D_sector::SetName(const char *new_name)
 
 // Moves the sector from its scene's ring of sectors into the other scene's, with its occluder and portals
 // FUNCTION: LS3DF 0x1004f260
+// FUNCTION: LS3DF11 0x1004d0c0
 void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 {
     if (scene == new_scene)
@@ -211,6 +219,7 @@ void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 
 // A fog light that is on becomes the sector's fog light. PS2 also marks the sector for an ambient light.
 // FUNCTION: LS3DF 0x1004f3d0
+// FUNCTION: LS3DF11 0x1004d230
 void I3D_sector::AddLight(I3D_light *light)
 {
     if (lights.find(light))
@@ -232,6 +241,7 @@ void I3D_sector::AddLight(I3D_light *light)
 
 // A fog light taken out gives the place to another fog light that is on
 // FUNCTION: LS3DF 0x1004f550
+// FUNCTION: LS3DF11 0x1004d3b0
 LS3D_RESULT I3D_sector::DeleteLight(I3D_light *light)
 {
     if (!lights.find(light))
@@ -261,6 +271,7 @@ LS3D_RESULT I3D_sector::DeleteLight(I3D_light *light)
 
 // PS2's also puts a sector without a scene into the scene of the sector it is in
 // FUNCTION: LS3DF 0x1004f6d0
+// FUNCTION: LS3DF11 0x1004d530
 void I3D_sector::UpdateV()
 {
     UpdateCHPlanesW();
@@ -278,6 +289,7 @@ void I3D_sector::UpdateV()
 // original stores them as integers; written as if/else statements they do here, but that breaks Normalize's other
 // callers (the light's UpdateV, S_quat::Inverse, GetLightness).
 // FUNCTION: LS3DF 0x1004f710
+// FUNCTION: LS3DF11 0x1004d570
 void I3D_sector::UpdateCHPlanesW()
 {
     if (!(sct_flags & SCTF_PREPARED))
@@ -322,6 +334,7 @@ void I3D_sector::UpdateCHPlanesW()
 // Prepares the sector once: its hull's planes, and the occluder of the hull where it is to have one. The occluder's
 // failure is an else, with UpdateV once at the end: a return of its own makes VC6 save ebp before the first test.
 // FUNCTION: LS3DF 0x1004fb40
+// FUNCTION: LS3DF11 0x1004d9a0
 void I3D_sector::MakeReady()
 {
     if (sct_flags & SCTF_PREPARED)
@@ -360,6 +373,7 @@ void I3D_sector::MakeReady()
 // The box through a reference and IsValid, and the count before the planes: otherwise VC6 sums the plane's dot product
 // in another order
 // FUNCTION: LS3DF 0x1004fcc0
+// FUNCTION: LS3DF11 0x1004db20
 bool I3D_sector::CheckPoint(const S_vector &pos)
 {
     if (!(frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
@@ -386,6 +400,7 @@ bool I3D_sector::CheckPoint(const S_vector &pos)
 // bound with the value), and takes a pan as a vector, which it shortens to 1 at most (through a reciprocal of its own:
 // with operator*= VC6 sums the squares in another order).
 // FUNCTION: LS3DF 0x1004fdb0
+// FUNCTION: LS3DF11 0x1004dc10
 LS3D_RESULT I3D_sector::SetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index, uint data)
 {
     if (index >= SSD_LAST)
@@ -458,6 +473,7 @@ LS3D_RESULT I3D_sector::SetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index, uint dat
 
 // A pan's address
 // FUNCTION: LS3DF 0x10050140
+// FUNCTION: LS3DF11 0x1004dfa0
 uint I3D_sector::GetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index) const
 {
     switch (index) {
@@ -471,6 +487,7 @@ uint I3D_sector::GetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index) const
 
 // A sound that is on plays on in the sector
 // FUNCTION: LS3DF 0x10050180
+// FUNCTION: LS3DF11 0x1004dfe0
 void I3D_sector::AddSound(I3D_sound *sound)
 {
     if (sounds.find(sound))
@@ -483,6 +500,7 @@ void I3D_sector::AddSound(I3D_sound *sound)
 }
 
 // FUNCTION: LS3DF 0x100502f0
+// FUNCTION: LS3DF11 0x1004e150
 LS3D_RESULT I3D_sector::DeleteSound(I3D_sound *sound)
 {
     if (!sounds.find(sound))
@@ -497,6 +515,7 @@ LS3D_RESULT I3D_sector::DeleteSound(I3D_sound *sound)
 // Copies the hull, which a prepared sector can't take any more (the message: "explain to dlouhy@..."). PS2's copies the
 // portals too.
 // FUNCTION: LS3DF 0x10050430
+// FUNCTION: LS3DF11 0x1004e290
 LS3D_RESULT I3D_sector::Duplicate(I3D_frame *frame)
 {
     if (!frame)
@@ -548,6 +567,7 @@ LS3D_RESULT I3D_sector::Duplicate(I3D_frame *frame)
 // The flags, group bits, the hull, the box and the portals. PS2's reads the box into the sector and makes the planes'
 // array here. The failures have a message each (VC6 merges their ends).
 // FUNCTION: LS3DF 0x100505c0
+// FUNCTION: LS3DF11 0x1004e420
 void I3D_sector::LoadImage()
 {
     I3D_frame::LoadImage();
