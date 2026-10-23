@@ -12,8 +12,9 @@
 // Not matching yet:
 // - SetTo keeps the vertex base in memory (add [esp + 0x10], eax), where the original loads it into edi after the
 //   vertex copy and stores it with the loop's counters.
-// - UpdateLight: its frame (0xd0 bytes, so sorted) has several locals elsewhere, and the spot light's squares, its
-//   dot product and SetNormalized's reciprocal are scheduled differently on the FPU.
+// - UpdateLight: the spot light's squares and its dot product are scheduled differently on the FPU (the original
+//   stores d.z and sums y, z, x). Its frame (0xd0 bytes, so sorted) is the original's since SetNormalized's
+//   reciprocal is one variable with the squares' sum (I3d_math.h).
 // - The visual's constructor finishes copying the zero vector later, so its stores of 1 take eax, not ecx.
 #include "I3D/I3D.h"
 #include "I3D/render/IBManager.h"

@@ -64,7 +64,9 @@ struct S_vector {
     }
 
     // Sets the vector to v normalized (the name is a guess). The out-of-line copy the linker kept is in collision code.
-    // The sum is written out, as in Magnitude: through Dot, the math's callers leave that call out of line.
+    // The sum is written out, as in Magnitude: through Dot, the math's callers leave that call out of line. The
+    // reciprocal goes into sq, one variable: as two, the inlined copies' locals weigh less and take other frame slots
+    // (I3D_shadow::UpdateLight's).
     // FUNCTION: LS3DF 0x10014970
     // FUNCTION: LS3DF11 0x10014490
     void SetNormalized(const S_vector &v)
@@ -88,10 +90,10 @@ struct S_vector {
                 y = v.y < 0.0f ? -1.0f : 1.0f;
             return;
         }
-        float f = 1.0f / (float)sqrt(sq);
-        x = v.x * f;
-        y = v.y * f;
-        z = v.z * f;
+        sq = 1.0f / (float)sqrt(sq);
+        x = v.x * sq;
+        y = v.y * sq;
+        z = v.z * sq;
     }
 
     // FUNCTION: LS3DF 0x1002e360
