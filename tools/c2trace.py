@@ -33,8 +33,9 @@ With --vars only the passes that create or free those variables' ranges are show
 that decides their relative order. --regs prints instead the ranges the colouring kept, with the register each got and
 three of the range's counters, by offset (+0x24, +0x40, +0x44; not identified yet: +0x40 grows with the references and
 their loop depth, +0x44 with the range's place in the function). Only the global allocator's ranges are there: the
-code generator gives short-lived temporaries (a load feeding one push) their registers later. --edited compiles another file in place of the source, from a temporary directory
-with the source's folder on the include path, and the source's command line. A source several targets compile needs
+code generator gives short-lived temporaries (a load feeding one push) their registers later. --edited compiles
+another file in place of the source, from a temporary directory with the source's folder on the include path, and the
+source's command line. A source several targets compile needs
 --target-dir, the target's folder in the build tree (`ls3df_1_1` for patch 1.1's engine). Build the vc6 preset first.
 Only the 13.00.9044 C2.DLL is traced; plain SP5's (12.00.8966, LS3DF's DirectShow base classes) has other addresses.
 """
