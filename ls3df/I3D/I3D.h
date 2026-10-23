@@ -3853,6 +3853,14 @@ public:
 // GLOBAL: LS3DF11 0x101b1f7e
 // $S26
 
+// The guard of I3D_scene::m_UpdateWeatherSystem's static LastUpdateTime (I3d_scene.cpp), as our PDB names it; 1.1's
+// one higher, as bigBox's
+// GLOBAL: LS3DF 0x101b4e5d
+// $S28
+
+// GLOBAL: LS3DF11 0x101b1f7d
+// $S29
+
 // SYNTHETIC: LS3DF 0x100165e0
 // SYNTHETIC: LS3DF11 0x10016100
 // $E25

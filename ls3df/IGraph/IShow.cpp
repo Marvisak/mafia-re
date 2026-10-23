@@ -1070,7 +1070,8 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
 
 // Builds the DirectShow graph for an AVI file: its source filter connected to the texture renderer (the DirectX SDK
 // sample's InitDShowTextureRenderer, which also ran the graph), then, if the AVI Splitter that brings in has a pin with
-// an audio type, DirectShow's sound renderer connected to it
+// an audio type, DirectShow's sound renderer connected to it. The wide literals have STRING markers: reccmp reads the
+// original's as narrow strings otherwise.
 // FUNCTION: LS3DF 0x10074f40
 // FUNCTION: LS3DF11 0x10071da0
 HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
@@ -1102,20 +1103,28 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
     m_pTextureRenderer->m_pShow = this;
 
     pFTR = m_pTextureRenderer;
+    // STRING: LS3DF 0x100aac54
+    // STRING: LS3DF11 0x100a7d74
     if (FAILED(hr = m_pGraphBuilder->AddFilter(pFTR, L"TEXTURERENDERER"))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not add renderer filter to graph!  hr=0x%x", hr);
         return hr;
     }
 
+    // STRING: LS3DF 0x100aabe8
+    // STRING: LS3DF11 0x100a7d08
     if (FAILED(hr = m_pGraphBuilder->AddSourceFilter(name, L"SOURCE", &pFSrc))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not create source filter to graph!  hr=0x%x", hr);
         return hr;
     }
 
+    // STRING: LS3DF 0x100aab80
+    // STRING: LS3DF11 0x100a7ca0
     if (FAILED(hr = pFTR->FindPin(L"In", &pFTRPinIn))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find input pin!  hr=0x%x", hr);
         return hr;
     }
+    // STRING: LS3DF 0x100aab20
+    // STRING: LS3DF11 0x100a7c40
     if (FAILED(hr = pFSrc->FindPin(L"Output", &pFSrcPinOut))) {
         dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find output pin!  hr=0x%x", hr);
         return hr;
@@ -1175,8 +1184,12 @@ HRESULT IShow::m_CreateCTextureRenderer(const WCHAR *name)
             CoCreateInstance(CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter,
                 (void **)&m_pTextureRenderer->m_pSoundRenderer);
             if (m_pTextureRenderer->m_pSoundRenderer) {
+                // STRING: LS3DF 0x100aaab4
+                // STRING: LS3DF11 0x100a7bd4
                 hr = m_pGraphBuilder->AddFilter(m_pTextureRenderer->m_pSoundRenderer, L"SOUNDRENDERER");
                 IPin *pSndPinIn;
+                // STRING: LS3DF 0x100aaa7c
+                // STRING: LS3DF11 0x100a7b9c
                 if (FAILED(hr = m_pTextureRenderer->m_pSoundRenderer->FindPin(L"Audio Input pin (rendered)",
                         &pSndPinIn))) {
                     dbgPrintf("IShow::m_CreateCTextureRenderer() - ERROR! Could not find audio input pin!  hr=0x%x",
