@@ -535,9 +535,9 @@ public:
 // in-class void functions (renbase.cpp's, with I3D_visual::m_AddFGroups), which our 1.2 link keeps from this file.
 // By name: the names our PDB keeps for the groups' copies (tools/foldfix.py).
 // LIBRARY: LS3DF11 0x100726c0
-// ?OnStartStreaming@CBaseRenderer@@UAEJXZ
+// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
 // LIBRARY: LS3DF11 0x100726e0
-// ?OnWaitStart@CBaseRenderer@@UAEXXZ
+// ?OnWaitEnd@CBaseRenderer@@UAEXXZ
 // LIBRARY: LS3DF 0x10088970
 // ?OnWaitStart@CBaseRenderer@@UAEXXZ
 
@@ -642,6 +642,11 @@ public:
     virtual bool __stdcall SaveToTGA(const char *name);
     virtual bool __stdcall Request();
 
+    D3DFORMAT GetFormat() const
+    {
+        return m_Format;
+    }
+
 private:
     bool m_TryPresavedDXT(const char *name, const char *alpha_name, int dxt, FILETIME *time, FILETIME *alpha_time);
     bool m_TryPresaved_555_565(const char *name, FILETIME *time);
@@ -703,10 +708,10 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// ??1?$C_list@PAVITexture@@@@QAE@XZ
+// ??1?$C_list@PAUS_VB_block@@@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x1004e760
-// ??1?$C_list@G@@QAE@XZ
+// ??1?$C_list@UOFFSET_STRUCT@@@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after

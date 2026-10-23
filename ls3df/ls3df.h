@@ -115,12 +115,11 @@ public:
         return *this;
     }
 
+    // Through clear(), which costs its callers less inline budget than the statements written out: LightMap's
+    // m_CreateLM then calls its candidates' vector deleting destructor out of line, as the original
     ~C_list()
     {
-        delete[] array;
-        array = NULL;
-        used_size = 0;
-        res_size = 0;
+        clear();
     }
 
     int size() const
@@ -325,10 +324,10 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
+// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
 
 // TEMPLATE: LS3DF11 0x10005d10
-// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
+// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // TEMPLATE: LS3DF11 0x1004e730

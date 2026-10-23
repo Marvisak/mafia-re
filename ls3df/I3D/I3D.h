@@ -1590,13 +1590,13 @@ public:
 // ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF11 0x10051f90
-// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF 0x1004e990
 // ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF11 0x10051fb0
-// ?Duplicate@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
+// ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // FUNCTION: LS3DF11 0x1004c800
@@ -2273,7 +2273,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_sound@@UAEXXZ
+// ?LoadImage@I3D_area@@UAEXXZ
 
 // FUNCTION: LS3DF11 0x10005cd0
 // ?LoadImage@I3D_area@@UAEXXZ
@@ -2718,7 +2718,7 @@ public:
 // ?SetSpace@I3D_billboard@@UAGX_N@Z
 
 // FUNCTION: LS3DF11 0x10009360
-// ?SetSpace@I3D_billboard@@UAGX_N@Z
+// ?SetSpace@I3D_morph@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -3825,7 +3825,7 @@ public:
 // CBaseRenderer::OnRenderEnd, I3D_driver::m_RecomputeUsedVRAM and others), where 1.2's kept the base classes'
 // (0x10087ec0): by the name our PDB keeps, which crtannotate then leaves out of library_strmbase_1_1.h
 // FUNCTION: LS3DF11 0x1001f6d0
-// ?OnRenderEnd@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?m_RenderFGroup@I3D_landpatch@@UAEXPAURENDER_FG_HELP_STRUCT@@@Z
 
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
@@ -4592,7 +4592,7 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
+// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF11 0x1005d600
 // ?reserve@?$C_list@US_vector@@@@QAEXH@Z

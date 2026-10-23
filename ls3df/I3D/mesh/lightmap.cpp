@@ -580,12 +580,10 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // members are set in PS2's order (which gives the original's stores), m_AddTexture's results are a switch (PS2 tests
 // 1 first, the original 0x80000001: VC6 compares by value), each 3x3 branch computes its stride first, from tex_sx, as
 // PS2 does, and a failed fit ends its loop through used_size, which VC6 reads as a word (size() reads a dword).
-// Not matching yet: push_back's store of the size (ls3df.h) and the inline budget: the original calls the candidates'
-// vector deleting destructor out of line at all six failing returns in their scope, ours inlines it at each, and with
-// the original's push_back ours inlines one assignment more in the insertion. 25 or more calls of an empty inline
-// function before Unlock fix the returns (then the candidates' push_back calls it out of line, where the original
-// inlines it); dead statements anywhere don't; no source for the difference is known. The frame's slot order and
-// registers differ all through.
+// The copy loop reads the texture's format through GetFormat(), and C_list's destructor is clear() (ls3df.h): with
+// both the out-of-line calls are the original's, the candidates' vector deleting destructor at all six failing
+// returns in their scope and their push_back's grow inlined.
+// Not matching yet: the frame's slot order and the registers, all through.
 // FUNCTION: LS3DF 0x1005e3f0
 // FUNCTION: LS3DF11 0x1005b660
 bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *mem)
@@ -774,7 +772,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     for (i = 0; i < m_OrderList.size(); i++) {
         RECTANGLE_INFO &r = ri[m_OrderList[i]];
         OFFSET_STRUCT off = best->offsets[i];
-        switch (m_pTexture->m_Format) {
+        switch (m_pTexture->GetFormat()) {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
         case D3DFMT_A1R5G5B5: {
@@ -790,7 +788,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                 uchar cg = c >> 8;
                 uchar cb = c;
                 ushort col;
-                if (m_pTexture->m_Format == D3DFMT_R5G6B5)
+                if (m_pTexture->GetFormat() == D3DFMT_R5G6B5)
                     col = (cb >> 3) | (cr >> 3) << 11 | (cg >> 2) << 5;
                 else
                     col = (cb >> 3) | (cr >> 3) << 10 | 0x8000 | (cg >> 3) << 5;

@@ -276,7 +276,7 @@ inline void C_VBManager::m_Free(COMPLETE_VB_STRUCT &vb)
 // ?_Init@?$_Tree@PAUS_VB_block@@PAU1@U_Kfn@?$multiset@PAUS_VB_block@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@std@@@std@@US_VB_block_less@@V?$allocator@PAUS_VB_block@@@4@@std@@IAEXXZ
 
 // TEMPLATE: LS3DF11 0x10066ba0
-// ??1?$list@PAUS_VB_block@@V?$allocator@PAUS_VB_block@@@std@@@std@@QAE@XZ
+// ??1?$list@PAUS_IB_block@@V?$allocator@PAUS_IB_block@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x10066bf0
 // ?erase@?$list@PAUS_VB_block@@V?$allocator@PAUS_VB_block@@@std@@@std@@QAE?AViterator@12@V312@@Z
