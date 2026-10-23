@@ -531,12 +531,15 @@ public:
 // ?Release@CBaseVideoRenderer@@WNI@AGKXZ
 
 // Copies of the base classes' empty in-class functions, which 1.1's linker kept from this file and 1.2's from others
-// (OnReceiveFirstSample's, 0x100726d0 between them, is in the scene's group, I3D.h). By name: the names our PDB keeps
-// for the groups' copies (tools/foldfix.py).
+// (OnReceiveFirstSample's, 0x100726d0 between them, is in the scene's group, I3D.h), and 1.2's copy of the empty
+// in-class void functions (renbase.cpp's, with I3D_visual::m_AddFGroups), which our 1.2 link keeps from this file.
+// By name: the names our PDB keeps for the groups' copies (tools/foldfix.py).
 // LIBRARY: LS3DF11 0x100726c0
-// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
+// ?OnStartStreaming@CBaseRenderer@@UAEJXZ
 // LIBRARY: LS3DF11 0x100726e0
-// ?SaveImage@I3D_frame@@UAEXXZ
+// ?OnWaitStart@CBaseRenderer@@UAEXXZ
+// LIBRARY: LS3DF 0x10088970
+// ?PrepareRender@CBaseRenderer@@UAEXXZ
 
 // DECLARE_IUNKNOWN's members themselves (renbase.h)
 // LIBRARY: LS3DF 0x10075860
@@ -700,10 +703,10 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// ??1?$C_list@PAVI3D_light@@@@QAE@XZ
+// ??1?$C_list@PAUS_VB_block@@@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x1004e760
-// ??1?$C_list@URECTANGLE_INFO@@@@QAE@XZ
+// ??1?$C_list@G@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after

@@ -345,7 +345,7 @@ public:
 // until i3d_collision.cpp, from I3d_projector.cpp to render.cpp and since I3d_portal.cpp), so the marker is by the name
 // our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x1007b950
-// ?Run@CBasePin@@UAEJ_J@Z
+// ?GetCaps@ISND_driver@@UBG?AW4LS3D_RESULT@@PAI@Z
 
 // PS2 names
 extern bool ISndIsInit;

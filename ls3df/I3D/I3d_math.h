@@ -384,10 +384,10 @@ struct S_plane {
 // from clipping.cpp's CheckClipFaces to I3d_pose.cpp, from I3d_singlemesh.cpp to I3d_occluder.cpp and in
 // I3d_particle.cpp, the lit object file's VERTEX_STRUCT's since I3d_lit_object.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0VERTEX_STRUCT@@QAE@XZ
+// ??0S_plane@@QAE@XZ
 
 // FUNCTION: LS3DF11 0x1004c7f0
-// ??0S_plane@@QAE@XZ
+// ??0VERTEX_STRUCT@@QAE@XZ
 
 LS3D_EXPORT float __cdecl RandFloat();
 I3D_MATH_API S_matrix __stdcall RotateXMatrix(float angle);

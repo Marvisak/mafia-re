@@ -941,6 +941,11 @@ void I3D_frame::DiscardHRBoundVol()
     }
 }
 
+// Empty for a frame of no other type, folded with the other out-of-line empty functions (I3D.h)
+void I3D_frame::UpdateV()
+{
+}
+
 // FUNCTION: LS3DF 0x1001cc50
 // FUNCTION: LS3DF11 0x1001c770
 void I3D_frame::UpdateHRBoundVol()
@@ -1019,6 +1024,11 @@ void I3D_frame::UpdateHRBoundVolW()
         m_HRBoundVolW.bsphere.radius = 0.0f;
     }
     m_FrmFlags |= FRMFLAGS_HR_BOUND_W_VALID;
+}
+
+// Empty, as UpdateV
+void I3D_frame::SaveImage()
+{
 }
 
 // FUNCTION: LS3DF 0x1001d1c0

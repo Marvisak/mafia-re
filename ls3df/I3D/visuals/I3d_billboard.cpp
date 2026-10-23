@@ -881,6 +881,11 @@ I3D_lensflare::~I3D_lensflare()
     }
 }
 
+// A lens flare stays in its space (PS2 has the empty override); folded with the billboard's SetSpace
+void I3D_lensflare::SetSpace(bool world)
+{
+}
+
 // FUNCTION: LS3DF 0x100096e0
 // FUNCTION: LS3DF11 0x10009370
 LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)

@@ -291,13 +291,12 @@ public:
     virtual I3D_frame *__stdcall FindChildFrame(const char *frame_name, uint flags) const;
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
     virtual ~I3D_frame();
-    // Empty: the linker folds them with other empty functions, and the original's slots point at the base classes'
-    // copy (CBaseVideoRenderer::OnWaitEnd, 0x10088540, defined out of class in renbase.cpp), where ours point at the
-    // first object's in-class copy (I3d_billboard.cpp's). Defined out of class here (with I3D_visual::m_AddFGroups),
-    // they fold with that copy's group, but our linker then keeps I3d_visual.cpp's copy, neither the first object's
-    // nor the last's: which copy LINK keeps isn't understood yet (2026-10-22).
-    virtual void UpdateV() {}
-    virtual void SaveImage() {}
+    // Empty, defined out of class (I3d_frame.cpp, as PS2's): the original's slots point at the base classes' copy of
+    // the out-of-line empty functions (CBaseVideoRenderer::OnWaitEnd, 0x10088540, renbase.cpp), and LINK folds a
+    // function only with others of its kind. I3D_visual::m_AddFGroups is the in-class kind. Which copy of a group
+    // survives follows LINK's qsort of all the live functions, not their link order.
+    virtual void UpdateV();
+    virtual void SaveImage();
     virtual void LoadImage();
 
 private:
@@ -1582,13 +1581,13 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?UpdateEnvTexture@I3D_material@@UAGXXZ
+// ?Update@I3D_scene@@UAGXXZ
 
 // FUNCTION: LS3DF11 0x100726d0
-// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+// ?UpdateTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
+// ?vfunc_66@I3D_scene@@UAGXII@Z
 
 // FUNCTION: LS3DF11 0x10051f90
 // ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
@@ -2277,7 +2276,7 @@ public:
 // ?LoadImage@I3D_area@@UAEXXZ
 
 // FUNCTION: LS3DF11 0x10005cd0
-// ?LoadImage@I3D_sound@@UAEXXZ
+// ?LoadImage@I3D_area@@UAEXXZ
 
 // A part of a shadow's geometry (PC only, 0xc bytes; the names are guesses): the vertices and faces that the frame of
 // its name, under the frame the shadow is set to, moves
@@ -2716,7 +2715,7 @@ public:
 // I3d_projector.cpp, from I3d_occluder.cpp to I3d_particle.cpp and since I3d_lit_object.cpp, the billboard's from
 // Load.cpp to lightmap.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_morph@@UAGX_N@Z
+// ?SetSpace@I3D_lensflare@@UAGX_N@Z
 
 // FUNCTION: LS3DF11 0x10009360
 // ?SetSpace@I3D_billboard@@UAGX_N@Z
@@ -2738,6 +2737,7 @@ public:
     I3D_lensflare();
     ~I3D_lensflare();
 
+    virtual void __stdcall SetSpace(bool world);
     virtual LS3D_RESULT __stdcall Duplicate(I3D_frame *frame);
     virtual void LoadImage();
     virtual void __stdcall Draw(bool test);
@@ -3939,7 +3939,7 @@ struct TLVERTEX2 {
 // I3D files written later (0x10041700; 1.1's after BuildAllVBuffers, 0x10062c10, and 1.1 has no list of vertex
 // buffers)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
+// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
 
 // TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
@@ -3953,7 +3953,7 @@ struct TLVERTEX2 {
 // ?SetOn@I3D_scene@@UAGX_N@Z
 
 // FUNCTION: LS3DF11 0x10051fa0
-// ?Tick@I3D_frame@@UAGXH@Z
+// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
