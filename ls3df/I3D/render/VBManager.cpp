@@ -22,7 +22,9 @@ C_VBManager cVBMan;
 C_VBuffer::C_VBuffer()
 {
     data = NULL;
+#if ENGINE_VERSION >= 395
     flags = 0;
+#endif
     fvf = 0;
     usage = 0;
     vb = NULL;
@@ -30,9 +32,11 @@ C_VBuffer::C_VBuffer()
     num_free = num_vertices;
     pool = D3DPOOL_MANAGED;
     vertex_format = VF_LVERTEX;
+#if ENGINE_VERSION >= 395
     lock_index = -1;
     used_blocks.SetGrowSize(256);
     used_blocks.reserve(256);
+#endif
 }
 
 // Clears the COMPLETE_VB_STRUCT of every block still given out
@@ -45,6 +49,7 @@ C_VBuffer::C_VBuffer()
 // FUNCTION: LS3DF11 0x10065c80
 C_VBuffer::~C_VBuffer()
 {
+#if ENGINE_VERSION >= 395
     S_VB_block **p = &used_blocks[0];
     for (int i = used_blocks.size(); i--; p++) {
         memset((*p)->owner, 0, sizeof(COMPLETE_VB_STRUCT));
@@ -62,6 +67,19 @@ C_VBuffer::~C_VBuffer()
         cVBMan.locked_buffers.erase(lock_index);
         lock_index = -1;
     }
+#else
+    // Both loops with ++, the free blocks' as a for: it++ or the while inline _Inc's _Min and leave the inlined
+    // ~multiset's erase out of line
+    std::list<S_VB_block *>::iterator i;
+    for (i = used_blocks.begin(); i != used_blocks.end(); ++i) {
+        memset((*i)->owner, 0, sizeof(COMPLETE_VB_STRUCT));
+        delete *i;
+    }
+    std::multiset<S_VB_block *, S_VB_block_less>::iterator it;
+    for (it = free_blocks.begin(); it != free_blocks.end(); ++it)
+        delete *it;
+    Unlock();
+#endif
     if (vb)
         vb->Release();
     if (pI3DDriver)
@@ -94,19 +112,30 @@ bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FOR
             pool = D3DPOOL_MANAGED;
             hr = m_pD3DDevice8->CreateVertexBuffer(num_vertices * stride, this->usage, this->fvf, pool, &vb);
             if (FAILED(hr)) {
+#if ENGINE_VERSION >= 395
                 dbgPrintf("!! Error detected: %s, File: %s, Line: %i !!, Bytes allocated: %i", DXGetErrorString8(hr),
                     "C:\\MyProjects\\engine8\\I3D\\VBManager.cpp", 134, num_vertices * stride);
                 vb = NULL;
                 ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+#else
+                // 1.1 neither gives the size nor stops the game
+                dbgPrintf("!! Error detected: %s, File: %s, Line: %i !!", DXGetErrorString8(hr),
+                    "C:\\MyProjects\\engine8\\I3D\\VBManager.cpp", 125);
+                vb = NULL;
+#endif
                 return false;
             }
         }
     }
     pI3DDriver->m_RecomputeUsedVRAM();
     free_blocks.insert(new S_VB_block(NULL, 0, num_vertices));
+#if ENGINE_VERSION >= 395
     vb->Lock(0, 0, &data, this->usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0);
     lock_index = cVBMan.locked_buffers.size();
     cVBMan.locked_buffers.push_back(this);
+#else
+    vb->Lock(0, 0, &data, (this->usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0) | D3DLOCK_NOSYSLOCK);
+#endif
     return true;
 }
 
@@ -115,8 +144,10 @@ bool C_VBuffer::m_Init(uint fvf, uint usage, uint stride, uint count, VERTEX_FOR
 // FUNCTION: LS3DF11 0x10066080
 int C_VBuffer::m_Alloc(uint count, COMPLETE_VB_STRUCT *owner)
 {
+    // ++it: with 1.1's std::list of used blocks, it++ leaves the insertion's pair constructor out of line (1.2 compiles
+    // both alike)
     std::multiset<S_VB_block *, S_VB_block_less>::iterator it;
-    for (it = free_blocks.begin(); it != free_blocks.end(); it++) {
+    for (it = free_blocks.begin(); it != free_blocks.end(); ++it) {
         S_VB_block *block = *it;
         int rest = block->size - count;
         if (rest >= 0) {
@@ -139,9 +170,15 @@ int C_VBuffer::m_Alloc(uint count, COMPLETE_VB_STRUCT *owner)
 // FUNCTION: LS3DF11 0x10066220
 bool C_VBuffer::m_Free(uint index)
 {
+#if ENGINE_VERSION >= 395
     S_VB_block **p = &used_blocks[0];
     for (int i = 0; i < used_blocks.size(); i++, p++) {
         S_VB_block *block = *p;
+#else
+    std::list<S_VB_block *>::iterator i;
+    for (i = used_blocks.begin(); i != used_blocks.end(); ++i) {
+        S_VB_block *block = *i;
+#endif
         if (block->index == index) {
             num_free += block->size;
             used_blocks.erase(i);
@@ -189,11 +226,14 @@ bool C_VBuffer::m_Free(uint index)
 // FUNCTION: LS3DF11 0x100663e0
 C_VBManager::C_VBManager()
 {
+#if ENGINE_VERSION >= 395
     locked_buffers.reserve(256);
     locked_buffers.SetGrowSize(256);
+#endif
 }
 
 // FUNCTION: LS3DF 0x100694e0
+// FUNCTION: LS3DF11 0x10066490
 C_VBManager::~C_VBManager()
 {
     std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it;
@@ -211,7 +251,7 @@ bool C_VBManager::m_Alloc(uint fvf, uint usage, uint stride, uint count, COMPLET
 {
     if (!exclusive) {
         std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it;
-        for (it = buffers.begin(); it != buffers.end(); it++) {
+        for (it = buffers.begin(); it != buffers.end(); ++it) {
             C_VBuffer *buffer = *it;
             if (buffer->fvf == fvf && buffer->usage == usage && buffer->num_free >= count) {
                 int base = buffer->m_Alloc(count, &vb);
@@ -236,17 +276,21 @@ bool C_VBManager::m_Alloc(uint fvf, uint usage, uint stride, uint count, COMPLET
     return true;
 }
 
+#if ENGINE_VERSION >= 395
+// 1.1's is inline (VBManager.h)
 // FUNCTION: LS3DF 0x100697c0
 void C_VBManager::m_Free(COMPLETE_VB_STRUCT &vb)
 {
     if (vb.buffer)
         vb.buffer->m_Free(vb.base);
 }
+#endif
 
 // FUNCTION: LS3DF 0x100697e0
 // FUNCTION: LS3DF11 0x10066980
 void C_VBManager::m_UnlockAllVBuffers()
 {
+#if ENGINE_VERSION >= 395
     C_VBuffer **p = &locked_buffers[0];
     for (int i = locked_buffers.size(); i--; p++) {
         (*p)->vb->Unlock();
@@ -254,6 +298,11 @@ void C_VBManager::m_UnlockAllVBuffers()
         (*p)->lock_index = -1;
     }
     locked_buffers.reset();
+#else
+    std::multiset<C_VBuffer *, S_VBuffer_less>::iterator it;
+    for (it = buffers.begin(); it != buffers.end(); it++)
+        (*it)->Unlock();
+#endif
 }
 
 // Deletes the buffer if it has nothing given out, or without one every buffer that has nothing given out

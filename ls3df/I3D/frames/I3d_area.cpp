@@ -18,7 +18,7 @@
 // FUNCTION: LS3DF11 0x100051a0
 I3D_area::I3D_area()
 {
-    type = FRAME_AREA;
+    m_Type = FRAME_AREA;
     next_in_scene = NULL;
     prev_in_scene = NULL;
     num_verts = 0;
@@ -28,7 +28,7 @@ I3D_area::I3D_area()
     faces = NULL;
     planes = NULL;
     scene = NULL;
-    frm_flags |= FRMFLAGS_HR_AREAS;
+    m_FrmFlags |= FRMFLAGS_HR_AREAS;
     unknown_164 = 0;
     switch_fade_time = 500;
 }
@@ -89,7 +89,7 @@ void I3D_area::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 // FUNCTION: LS3DF11 0x10005540
 LS3D_RESULT I3D_area::LinkTo(I3D_frame *frame, uint flags)
 {
-    if (frame == parent)
+    if (frame == m_pParent)
         return I3D_OK;
     AddToRemoveFromSceneRing(NULL);
     if (frame) {
@@ -102,7 +102,7 @@ LS3D_RESULT I3D_area::LinkTo(I3D_frame *frame, uint flags)
                 if (f->GetType() == FRAME_SECTOR)
                     scn = ((I3D_sector *)f)->scene;
                 else
-                    f = f->parent;
+                    f = f->m_pParent;
             }
         }
         AddToRemoveFromSceneRing(scn);
@@ -224,11 +224,11 @@ LS3D_RESULT I3D_area::DeleteSound(I3D_sound *sound)
 // FUNCTION: LS3DF11 0x10005c90
 void I3D_area::SaveImage()
 {
-    dbgPrintf("** nepodporovany typ:%s  SaveImage()  %s", pI3DDriver->FrameType2String(type), GetName());
+    dbgPrintf("** nepodporovany typ:%s  SaveImage()  %s", pI3DDriver->FrameType2String(m_Type), GetName());
 }
 
 // Folded with I3D_sound::LoadImage, so the marker is in I3D.h, by name
 void I3D_area::LoadImage()
 {
-    dbgPrintf("** nepodporovany typ:%s  LoadImage()  %s", pI3DDriver->FrameType2String(type), GetName());
+    dbgPrintf("** nepodporovany typ:%s  LoadImage()  %s", pI3DDriver->FrameType2String(m_Type), GetName());
 }

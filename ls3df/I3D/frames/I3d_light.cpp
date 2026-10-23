@@ -19,7 +19,7 @@
 I3D_light::I3D_light()
 {
     diffuse = S_vector(1.0f, 1.0f, 1.0f);
-    type = FRAME_LIGHT;
+    m_Type = FRAME_LIGHT;
     ltype = I3DLIGHT_DIRECTIONAL;
     power = 1.0f;
     near_range = 1.0f;
@@ -31,9 +31,9 @@ I3D_light::I3D_light()
     mode = 0xff6b;
     w_pos = S_vector(0.0f, 0.0f, 0.0f);
     w_dir = GetDir();
-    range_n = near_range * world_scale;
+    range_n = near_range * m_WorldScale;
     color = S_vector(1.0f, 1.0f, 1.0f);
-    range_f = far_range * world_scale;
+    range_f = far_range * m_WorldScale;
     range_f_2 = range_f * range_f;
     range_delta = range_f - range_n;
     outer_cos = (float)cos(cone_out * .5);
@@ -44,9 +44,9 @@ I3D_light::I3D_light()
     else
         cone_scale = 0.0f;
     // PrepareLights adds it to the key of the lights it lit with
-    update_count = rand();
+    m_UpdateCount = rand();
     cone_radius = far_range / (2.0f * sin((PI - cone_out * .5f) * .5f));
-    bsphere.radius = cone_radius * world_scale;
+    bsphere.radius = cone_radius * m_WorldScale;
     bsphere.pos = GetWorldPos() + GetWorldDir() * bsphere.radius;
     Update();
 }
@@ -68,7 +68,7 @@ void I3D_light::SetLightType(I3D_LIGHTTYPE type)
 {
     if (ltype == type)
         return;
-    update_count++;
+    m_UpdateCount++;
     if (ltype != I3DLIGHT_FOG && ltype != I3DLIGHT_POINTAMBIENT && ltype != I3DLIGHT_POINTFOG) {
         ltype = type;
         if (type != I3DLIGHT_FOG && type != I3DLIGHT_POINTAMBIENT && type != I3DLIGHT_POINTFOG) {
@@ -98,7 +98,7 @@ void I3D_light::SetDiffuse(const S_vector &c)
     color = diffuse * power;
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
 }
 
 // FUNCTION: LS3DF 0x100209e0
@@ -111,7 +111,7 @@ void I3D_light::SetDiffuse(float r, float g, float b)
     color = diffuse * power;
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
 }
 
 // FUNCTION: LS3DF 0x10020a90
@@ -122,7 +122,7 @@ void I3D_light::SetDiffusePower(float p)
     color = diffuse * power;
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
 }
 
 // The fog types' ranges are in percent
@@ -133,8 +133,8 @@ void I3D_light::SetRange(float near1, float far1)
     near_range = near1;
     far_range = far1 > near1 ? far1 : near1;
     if (ltype != I3DLIGHT_FOG && ltype != I3DLIGHT_POINTAMBIENT && ltype != I3DLIGHT_POINTFOG) {
-        range_n = near_range * world_scale;
-        range_f = far_range * world_scale;
+        range_n = near_range * m_WorldScale;
+        range_f = far_range * m_WorldScale;
         range_f_2 = range_f * range_f;
         range_delta = range_f - range_n;
     } else {
@@ -143,7 +143,7 @@ void I3D_light::SetRange(float near1, float far1)
     }
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
     if (ltype == I3DLIGHT_SPOT)
         cone_radius = far_range / (2.0f * sin((PI - cone_out * .5f) * .5f));
 }
@@ -163,7 +163,7 @@ void I3D_light::SetCone(float inner, float outer)
         cone_scale = 0.0f;
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
     if (ltype == I3DLIGHT_SPOT)
         cone_radius = far_range / (2.0f * sin((PI - cone_out * .5f) * .5f));
 }
@@ -176,14 +176,14 @@ void I3D_light::SetCone(float inner, float outer)
 // FUNCTION: LS3DF11 0x10020840
 void I3D_light::UpdateV()
 {
-    update_count++;
+    m_UpdateCount++;
     for (int i = 0; i < sectors.used_size; i++)
         sectors.array[i]->lights_changed++;
     switch (ltype) {
     case I3DLIGHT_POINT:
         w_pos = GetWorldPos();
-        range_n = near_range * world_scale;
-        range_f = far_range * world_scale;
+        range_n = near_range * m_WorldScale;
+        range_f = far_range * m_WorldScale;
         range_f_2 = range_f * range_f;
         range_delta = range_f - range_n;
         break;
@@ -191,8 +191,8 @@ void I3D_light::UpdateV()
         {
             w_pos = GetWorldPos();
             w_dir = GetWorldDir();
-            range_n = near_range * world_scale;
-            range_f = far_range * world_scale;
+            range_n = near_range * m_WorldScale;
+            range_f = far_range * m_WorldScale;
             range_f_2 = range_f * range_f;
             range_delta = range_f - range_n;
             outer_cos = (float)cos(cone_out * .5);
@@ -202,7 +202,7 @@ void I3D_light::UpdateV()
                 cone_scale = 1.0f / d;
             else
                 cone_scale = 0.0f;
-            bsphere.radius = cone_radius * world_scale;
+            bsphere.radius = cone_radius * m_WorldScale;
             bsphere.pos = GetWorldPos() + GetWorldDir() * bsphere.radius;
         }
         break;
@@ -214,7 +214,7 @@ void I3D_light::UpdateV()
     case I3DLIGHT_POINTFOG:
         range_n = near_range * .01;
         range_f = far_range * .01;
-        if (frm_flags & FRMFLAGS_ON) {
+        if (m_FrmFlags & FRMFLAGS_ON) {
             for (int i = 0; i < sectors.used_size; i++)
                 sectors.array[i]->fog_light = this;
         } else {
@@ -224,7 +224,7 @@ void I3D_light::UpdateV()
                     s->fog_light = NULL;
                     I3D_light **lp = s->lights.array;
                     for (int j = s->lights.used_size; j--; lp++) {
-                        if (((*lp)->frm_flags & FRMFLAGS_ON) && ((*lp)->ltype == I3DLIGHT_FOG ||
+                        if (((*lp)->m_FrmFlags & FRMFLAGS_ON) && ((*lp)->ltype == I3DLIGHT_FOG ||
                             (*lp)->ltype == I3DLIGHT_POINTAMBIENT || (*lp)->ltype == I3DLIGHT_POINTFOG)) {
                             s->fog_light = *lp;
                             break;
@@ -242,13 +242,13 @@ void I3D_light::UpdateV()
 void I3D_light::SetOn(bool on)
 {
     if (on) {
-        if (frm_flags & FRMFLAGS_ON)
+        if (m_FrmFlags & FRMFLAGS_ON)
             return;
-        frm_flags |= FRMFLAGS_ON;
+        m_FrmFlags |= FRMFLAGS_ON;
     } else {
-        if (!(frm_flags & FRMFLAGS_ON))
+        if (!(m_FrmFlags & FRMFLAGS_ON))
             return;
-        frm_flags &= ~FRMFLAGS_ON;
+        m_FrmFlags &= ~FRMFLAGS_ON;
     }
     UpdateV();
 }
@@ -262,7 +262,7 @@ void I3D_light::SetMode(uint m)
     mode = m;
     for (int i = sectors.size(); i--; )
         sectors[i]->lights_changed++;
-    update_count++;
+    m_UpdateCount++;
 }
 
 // FUNCTION: LS3DF 0x10021490

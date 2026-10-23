@@ -45,7 +45,7 @@ I3D_mirror::~I3D_mirror()
     delete[] faces;
     I3D_visual **p = &copies[0];
     for (int i = copies.size(); i--; p++) {
-        ((I3D_frame *)(*p)->user_data)->Release();
+        ((I3D_frame *)(*p)->m_UserData)->Release();
         (*p)->Release();
     }
 }
@@ -79,7 +79,7 @@ LS3D_RESULT I3D_mirror::Duplicate(I3D_frame *frame)
         return I3DERR_INVALIDPARAMS;
     I3D_visual **p = &copies[0];
     for (int i = copies.size(); i--; p++) {
-        ((I3D_frame *)(*p)->user_data)->Release();
+        ((I3D_frame *)(*p)->m_UserData)->Release();
         (*p)->Release();
     }
     delete[] verts;
@@ -162,8 +162,8 @@ LS3D_RESULT I3D_mirror::LinkTo(I3D_frame *frame, uint flags)
     while (true) {
         if (!frm)
             break;
-        if (frm->type != FRAME_SECTOR)
-            frm = frm->parent;
+        if (frm->m_Type != FRAME_SECTOR)
+            frm = frm->m_pParent;
         else {
             ((I3D_sector *)frm)->scene->AddMirror(this);
             break;
@@ -179,20 +179,20 @@ LS3D_RESULT I3D_mirror::LinkTo(I3D_frame *frame, uint flags)
 // FUNCTION: LS3DF11 0x10031030
 void I3D_mirror::UpdateV()
 {
-    if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
+    if (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
         vis_flags &= ~(VISF_WBOUND_VALID | VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
         mirror_flags &= ~MIRF_PREPARED;
         I3D_visual **p = &copies[0];
         for (int i = copies.size(); i--; p++)
-            (*p)->update_count = -1;
+            (*p)->m_UpdateCount = -1;
     }
     if (!scene) {
-        I3D_frame *frm = parent;
+        I3D_frame *frm = m_pParent;
         while (true) {
             if (!frm)
                 break;
-            if (frm->type != FRAME_SECTOR)
-                frm = frm->parent;
+            if (frm->m_Type != FRAME_SECTOR)
+                frm = frm->m_pParent;
             else {
                 ((I3D_sector *)frm)->scene->AddMirror(this);
                 break;
@@ -208,8 +208,8 @@ void I3D_mirror::Tick(int time)
 {
     I3D_visual **p = &copies[0];
     for (int i = copies.size(); i--; ) {
-        I3D_frame *frm = (I3D_frame *)(*p)->user_data;
-        if (frm->ref >= 2 && frm->parent)
+        I3D_frame *frm = (I3D_frame *)(*p)->m_UserData;
+        if (frm->m_RefCount >= 2 && frm->m_pParent)
             p++;
         else {
             frm->Release();
@@ -229,7 +229,7 @@ void I3D_mirror::Tick(int time)
 // FUNCTION: LS3DF11 0x10031180
 void I3D_mirror::UpdateVisibility()
 {
-    if (render_number != RenderNumber) {
+    if (m_RenderNumber != RenderNumber) {
         mirror_flags &= ~MIRF_VISIBLE;
         return;
     }
@@ -262,15 +262,15 @@ I3D_mirror *pCurrentMirror;
 // FUNCTION: LS3DF11 0x100314d0
 void I3D_mirror::CollectVisuals(I3D_frame *frm)
 {
-    if (!(frm->frm_flags & (FRMFLAGS_ON | FRMFLAGS_TICK)))
+    if (!(frm->m_FrmFlags & (FRMFLAGS_ON | FRMFLAGS_TICK)))
         return;
-    if (!(frm->frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+    if (!(frm->m_FrmFlags & FRMFLAGS_HR_BOUND_W_VALID))
         frm->UpdateHRBoundVolW();
-    S_vector d = frm->bound_w.bsphere.pos - pCurrentMirror->bsphere.pos;
-    float r = pCurrentMirror->bsphere.radius + frm->bound_w.bsphere.radius;
+    S_vector d = frm->m_HRBoundVolW.bsphere.pos - pCurrentMirror->bsphere.pos;
+    float r = pCurrentMirror->bsphere.radius + frm->m_HRBoundVolW.bsphere.radius;
     if (d.Square() > r * r)
         return;
-    if (frm->type == FRAME_VISUAL) {
+    if (frm->m_Type == FRAME_VISUAL) {
         I3D_visual *vis = (I3D_visual *)frm;
         if (!(vis->vis_flags & (VISF_PROXY | VISF_UNKNOWN_20)) && vis->vis_flags & VISF_UNKNOWN_800) {
             if (!(vis->vis_flags & VISF_BOUND_VALID))
@@ -297,7 +297,7 @@ void I3D_mirror::CollectVisuals(I3D_frame *frm)
                 MirroredVisualList.push_back(vis);
         }
     }
-    for (I3D_frame *f = frm->child; f; f = f->next)
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext)
         CollectVisuals(f);
 }
 
@@ -389,7 +389,7 @@ int I3D_mirror::PrepareReflection()
         I3D_visual *vis = NULL;
         I3D_visual **pc = &copies[0];
         for (int j = copies.size(); j--; pc++) {
-            if ((I3D_frame *)(*pc)->user_data == *p) {
+            if ((I3D_frame *)(*pc)->m_UserData == *p) {
                 vis = *pc;
                 break;
             }
@@ -399,22 +399,22 @@ int I3D_mirror::PrepareReflection()
             copies.push_back(vis);
             vis->vis_flags = VISF_PROXY;
             vis->Duplicate(*p);
-            vis->user_data = (uint)*p;
-            (*p)->ref++;
+            vis->m_UserData = (uint)*p;
+            (*p)->m_RefCount++;
             vis->vis_flags = (vis->vis_flags & ~VISF_WORLD_SPACE) | VISF_PROXY;
-            vis->frm_flags |= FRMFLAGS_CLIP;
+            vis->m_FrmFlags |= FRMFLAGS_CLIP;
             vis->SetCallback(NULL, FRMFLAGS_CALLBACK_MASK);
         }
-        if (vis->update_count != (*p)->update_count) {
+        if (vis->m_UpdateCount != (*p)->m_UpdateCount) {
             vis->SetLocalMatrix((*p)->GetRenderMatrix() * mirror_matrix);
             vis->Update();
             vis->SetBoundVolume((*p)->GetBoundVolume());
-            vis->update_count = (*p)->update_count;
+            vis->m_UpdateCount = (*p)->m_UpdateCount;
         }
         if (vis->vis_flags & VISF_UNKNOWN_800)
             ((I3D_object *)vis)->transparency = ((I3D_object *)*p)->transparency;
         vis->m_AddFGroups();
-        vis->render_number = RenderNumber;
+        vis->m_RenderNumber = RenderNumber;
     }
     if (!copies.size())
         mirror_flags &= ~MIRF_REFLECT;

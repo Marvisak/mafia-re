@@ -1,20 +1,19 @@
-// The particles (PS2 I3d_particle.cpp), at 0x1003cbb0-0x10041800 in the original: the particles' renderer with
-// InitParticle and CloseParticle, the emitter (I3D_emitor) from its constructor, the header's zero vector's $E
-// (0x1003eaa0) after its Reset, the rest of the emitter, then the particles (I3D_part_element, then I3D_part_base),
-// each from its constructor, and the out-of-line template and in-class functions. PS2's file has an emitter of
-// another design (PS2's I3D_emitor draws its own elements, the Xbox build's too), so the PC's names are guesses but
-// I3D_emitor, SetParam, GetParam, Reset and KillElements.
+// The particles (PS2 I3d_particle.cpp), at 0x1003cbb0-0x10041800 in the original (1.1: 0x1003b0f0-0x1003f880, without
+// the pointer lists' push_back): the particles' renderer with InitParticle and CloseParticle, the emitter (I3D_emitor)
+// from its constructor, the header's zero vector's $E (0x1003eaa0) after its Reset, the rest of the emitter, then the
+// particles (I3D_part_element, then I3D_part_base), each from its constructor, and the out-of-line template and
+// in-class functions. PS2's file has an emitter of another design (PS2's I3D_emitor draws its own elements, the Xbox
+// build's too), so the PC's names are guesses but I3D_emitor, SetParam, GetParam, Reset and KillElements.
+// 1.1's code is 1.2's but for the buffers' locking (VBManager.h, IBManager.h). The renderer's m_RenderFGroup (the
+// zero-initialized locals first, the quad indices counted down) and the particles' m_AddFGroups (ProcessVertices in
+// each clip branch, lv first) are spelled as 1.1's original shows them, which gives 1.2's too.
 //
 // Not matching yet:
-// - The renderer's m_RenderFGroup: registers and stack slots all through (the original keeps this in esi and spills
-//   it, ours in edi), the instructions otherwise the same.
 // - The emitter's Tick: the scale's QUAT_VALID test (the original reads the flags' byte into al ahead of the FPU's
-//   pop) and life_max's two loads, in the other order (no spelling of the sum moves them).
+//   pop) and life_max's two loads, in the other order (no spelling of the sum moves them). 1.1's differ the same way.
 // - The element's Tick: the scale's copy (one store scheduled after the QUAT_VALID test in the original, as in the
-//   emitter's Tick, so most likely SetScale's or S_vector's spelling in the headers) and the color's reciprocal, which
-//   the original stores and multiplies in from memory for all three components (no spelling of the sum moved it).
-// - The particles' m_AddFGroups: two stack slots (lod_index and num_verts) swapped, and l reloaded once more in the
-//   original.
+//   emitter's Tick, so most likely SetScale's or S_vector's spelling in the headers). 1.1's original is 1.2's.
+// - The particles' m_AddFGroups in 1.2: l reloaded once more in the original.
 // - SetSector and GetSector, in the class: ours come after the element's Tick, the original's at the file's end (its
 //   headers had more inline code before them, see tools/autopch.py). The pointer lists' push_back the original keeps
 //   is this file's (0x10041700), ours another's.
@@ -160,13 +159,14 @@ void I3D_part_renderer::m_AddFGroups()
 // FUNCTION: LS3DF11 0x1003b630
 void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 {
+    // Declared first, their zero gets esi from the function's start
+    ushort num_verts = 0;
+    LVERTEX *verts = NULL;
+    int num_faces = 0;
     int first = h->first;
     uint num = h->num;
     int last = first - num + 1;
     uint flags = ((I3D_part_base *)ParticleElementsList.visuals[ParticleElementsList.sort[first]].vis)->part_flags;
-    ushort num_verts = 0;
-    LVERTEX *verts = NULL;
-    int num_faces = 0;
     if (flags & PARTF_MESH) {
         if (!mesh_vb.vb && !cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1,
                 D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING | D3DUSAGE_WRITEONLY, sizeof(LVERTEX), 0x2000, mesh_vb,
@@ -174,8 +174,8 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             return;
         if (!mesh_ib.ib && !cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING, 0x3000, mesh_ib))
             return;
-        verts = (LVERTEX *)mesh_vb.buffer->Lock(mesh_vb.base, 0);
-        ushort *indices = (ushort *)mesh_ib.buffer->Lock(mesh_ib.base, 0);
+        verts = (LVERTEX *)mesh_vb.buffer->Lock(mesh_vb.base, BUFFER_LOCK_FLAGS);
+        ushort *indices = (ushort *)mesh_ib.buffer->Lock(mesh_ib.base, BUFFER_LOCK_FLAGS);
         for (int i = first; i >= last; i--) {
             I3D_part_base *part = (I3D_part_base *)ParticleElementsList.visuals[ParticleElementsList.sort[i]].vis;
             I3D_mesh_level *level = part->mesh->levels[0];
@@ -233,21 +233,25 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
         if (!quad_ib.ib) {
             if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, 0x3000, quad_ib))
                 return;
-            ushort *indices = (ushort *)quad_ib.buffer->Lock(quad_ib.base, 0);
-            for (int k = 0; k < 0x800; k++) {
-                int base = k * 4;
-                indices[0] = base + 2;
-                indices[1] = base;
-                indices[2] = base + 3;
-                indices[3] = base + 1;
-                indices[4] = base;
-                indices[5] = base + 2;
-                indices += 6;
+            ushort *indices = (ushort *)quad_ib.buffer->Lock(quad_ib.base, BUFFER_LOCK_FLAGS);
+            // Counted down, the vertex and the index with counters of their own (the original's loop walks the
+            // indices from the third, its count in a stack slot)
+            ushort base = 0;
+            int n = 0;
+            for (int k = 0x800; k; k--) {
+                indices[n] = base + 2;
+                indices[n + 1] = base;
+                indices[n + 2] = base + 3;
+                indices[n + 3] = base + 1;
+                indices[n + 4] = base;
+                indices[n + 5] = base + 2;
+                n += 6;
+                base += 4;
             }
             quad_ib.buffer->Unlock();
         }
         if (!verts)
-            verts = (LVERTEX *)quad_vb.buffer->Lock(quad_vb.base, 0);
+            verts = (LVERTEX *)quad_vb.buffer->Lock(quad_vb.base, BUFFER_LOCK_FLAGS);
         for (int i = first; i >= last; i--) {
             I3D_part_base *part = (I3D_part_base *)ParticleElementsList.visuals[ParticleElementsList.sort[i]].vis;
             S_matrix m;
@@ -315,7 +319,7 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
 // FUNCTION: LS3DF11 0x1003c140
 I3D_emitor::I3D_emitor() : elements(0x20)
 {
-    type = FRAME_EMITOR;
+    m_Type = FRAME_EMITOR;
     mesh = NULL;
     Reset();
     time = 0;
@@ -630,9 +634,9 @@ void I3D_emitor::Reset()
 void I3D_emitor::SetOn(bool on)
 {
     if (on)
-        frm_flags |= FRMFLAGS_ON;
+        m_FrmFlags |= FRMFLAGS_ON;
     else
-        frm_flags &= ~FRMFLAGS_ON;
+        m_FrmFlags &= ~FRMFLAGS_ON;
     if (on == true) {
         num_emitted = 0;
         emit_time = 0;
@@ -645,7 +649,7 @@ void I3D_emitor::SetOn(bool on)
 // FUNCTION: LS3DF11 0x1003ce00
 void I3D_emitor::UpdateV()
 {
-    if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
+    if (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
         sector = NULL;
 }
 
@@ -655,7 +659,7 @@ void I3D_emitor::UpdateV()
 // FUNCTION: LS3DF11 0x1003ce20
 void I3D_emitor::Tick(int t)
 {
-    if (!(frm_flags & FRMFLAGS_ON))
+    if (!(m_FrmFlags & FRMFLAGS_ON))
         return;
     time += t;
     while (time >= emit_time) {
@@ -666,8 +670,8 @@ void I3D_emitor::Tick(int t)
             return;
         }
         if (!sector) {
-            for (I3D_frame *frm = parent; frm; frm = frm->parent) {
-                if (frm->type == FRAME_SECTOR) {
+            for (I3D_frame *frm = m_pParent; frm; frm = frm->m_pParent) {
+                if (frm->m_Type == FRAME_SECTOR) {
                     sector = (I3D_sector *)frm;
                     break;
                 }
@@ -765,7 +769,7 @@ LS3D_RESULT I3D_emitor::Duplicate(I3D_frame *frame)
     if (!frame || frame == this)
         return I3DERR_INVALIDPARAMS;
     I3D_frame::Duplicate(frame);
-    if (frame->type == FRAME_EMITOR) {
+    if (frame->m_Type == FRAME_EMITOR) {
         I3D_emitor *e = (I3D_emitor *)frame;
         SetMesh(e->mesh);
         p_emit_time = e->p_emit_time;
@@ -799,7 +803,7 @@ LS3D_RESULT I3D_emitor::Duplicate(I3D_frame *frame)
         p_omni_sector = e->p_omni_sector;
         return I3D_OK;
     }
-    if (frame->type != FRAME_VISUAL)
+    if (frame->m_Type != FRAME_VISUAL)
         return I3D_OK;
     p_billboard = false;
     switch (((I3D_visual *)frame)->GetVisualType()) {
@@ -910,7 +914,7 @@ LS3D_RESULT I3D_part_element::Duplicate(I3D_frame *frame)
     LS3D_RESULT r = I3D_part_base::Duplicate(frame);
     if (r < I3D_OK)
         return r;
-    if (frame->type == FRAME_VISUAL && ((I3D_visual *)frame)->GetVisualType() == I3D_VISUAL_PART_ELEMENT) {
+    if (frame->m_Type == FRAME_VISUAL && ((I3D_visual *)frame)->GetVisualType() == I3D_VISUAL_PART_ELEMENT) {
         I3D_part_element *e = (I3D_part_element *)frame;
         life = e->life;
         life_max = e->life_max;
@@ -947,7 +951,7 @@ LS3D_RESULT I3D_part_element::Duplicate(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x1003e130
 void I3D_part_element::Tick(int time)
 {
-    if (!(frm_flags & FRMFLAGS_ON))
+    if (!(m_FrmFlags & FRMFLAGS_ON))
         return;
     age += time;
     if ((uint)age >= life) {
@@ -978,13 +982,13 @@ void I3D_part_element::Tick(int time)
         }
         S_quat q;
         q.Make(S_vector(0.0f, 0.0f, 1.0f), dt * rot_speed);
-        if (!(frm_flags & FRMFLAGS_QUAT_VALID)) {
-            frm_flags |= FRMFLAGS_QUAT_VALID;
-            rot.Make(f_matrix);
+        if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID)) {
+            m_FrmFlags |= FRMFLAGS_QUAT_VALID;
+            m_Rot.Make(m_LocalMatrix);
         }
-        rot = rot * q;
-        rot.Normalize();
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        m_Rot = m_Rot * q;
+        m_Rot.Normalize();
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
         SetScale(GetScale() * (float)(dt * grow + 1.0));
 
@@ -1013,7 +1017,7 @@ void I3D_part_element::Tick(int time)
         } else
             f = (float)age / life_max;
         S_vector d = dir * f + dir_prev * (1.0f - f);
-        SetPos(f_matrix(3) + d * (float)(dt * .001 * speed));
+        SetPos(m_LocalMatrix(3) + d * (float)(dt * .001 * speed));
     }
     Update();
 }
@@ -1041,7 +1045,7 @@ LS3D_RESULT I3D_part_base::Duplicate(I3D_frame *frame)
     if (r < I3D_OK)
         return r;
     sector = NULL;
-    if (frame->type == FRAME_VISUAL) {
+    if (frame->m_Type == FRAME_VISUAL) {
         switch (((I3D_visual *)frame)->GetVisualType()) {
         case I3D_VISUAL_PART_BASE:
         case I3D_VISUAL_PART_ELEMENT: {
@@ -1071,22 +1075,22 @@ void I3D_part_base::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_part_base *vis = (I3D_part_base *)user_data;
+        I3D_part_base *vis = (I3D_part_base *)m_UserData;
         part_flags = vis->part_flags;
         if (vis->GetSector())
             AddFGHlpStruct.sector = vis->GetSector();
         else {
-            I3D_frame *frm = vis->parent;
+            I3D_frame *frm = vis->m_pParent;
             while (true) {
                 if (!frm) {
                     AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                     break;
                 }
-                if (frm->type == FRAME_SECTOR) {
+                if (frm->m_Type == FRAME_SECTOR) {
                     AddFGHlpStruct.sector = (I3D_sector *)frm;
                     break;
                 }
-                frm = frm->parent;
+                frm = frm->m_pParent;
             }
         }
         int first = AddFGHlpStruct.fgroups.size();
@@ -1106,7 +1110,7 @@ void I3D_part_base::m_AddFGroups()
     int num_verts = level->num_vertices;
     if (!num_verts)
         return;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     lod *l = lods[lod_index];
     if (!l || l->dirty || !l->vb.vb) {
         if (!l) {
@@ -1132,7 +1136,7 @@ void I3D_part_base::m_AddFGroups()
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
             f += mesh->levels[lod_index - 1]->lod_dist;
-        float s = RSLodQuality * world_scale;
+        float s = RSLodQuality * m_WorldScale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
             d = 1.0f;
@@ -1141,14 +1145,14 @@ void I3D_part_base::m_AddFGroups()
         SetFade(1.0f);
 
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
+    uchar *lv = NULL;                   // first, it is zeroed ahead of the u_ofs compare
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
-    uchar *lv = NULL;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
         l->SetUV(1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
     const S_matrix *m;
@@ -1161,7 +1165,7 @@ void I3D_part_base::m_AddFGroups()
     if (vis_flags & VISF_COLOR_CHANGED || moved || l->alpha_dirty) {
         l->alpha_dirty = false;
         vis_flags &= ~VISF_COLOR_CHANGED;
-        lv = l->vb.buffer->Lock(base, 0);
+        lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         uint c = PART_COLOR(this);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             LVERTEX *v = (LVERTEX *)lv;
@@ -1178,32 +1182,34 @@ void I3D_part_base::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
-        if (frm_flags & FRMFLAGS_CLIP) {
+    if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
+        if (m_FrmFlags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, m);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(TRUE);
+            // In each branch: the TRUE one keeps its own SetRenderState call (1.1's original shows it)
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         } else {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, m);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(FALSE);
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         }
-        m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX), num_verts,
                 AddFGHlpStruct.sector->fog_light, 0);
         }
     }
 
     RENDER_FG_HELP_STRUCT h;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.vis = this;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
     h.sector = sector ? sector : AddFGHlpStruct.sector;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->GetNext()) {
         I3D_material *mat = fg->GetMaterial();
@@ -1234,7 +1240,7 @@ void I3D_part_base::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     lod *l;
     int num_verts;
     if (vis_flags & VISF_PROXY) {
-        I3D_object *obj = (I3D_object *)user_data;
+        I3D_object *obj = (I3D_object *)m_UserData;
         l = obj->lods[obj->cur_lod];
         SetCullState(D3DCULL_NONE);
         num_verts = mesh->levels[obj->cur_lod]->num_vertices;

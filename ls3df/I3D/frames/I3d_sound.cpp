@@ -33,7 +33,7 @@ inline float I3D_sound::GetRangeVolume(float dist) const
 // FUNCTION: LS3DF11 0x10054d10
 I3D_sound::I3D_sound()
 {
-    type = FRAME_SOUND;
+    m_Type = FRAME_SOUND;
     snd_flags = SOUNDF_POS | SOUNDF_DIR | SOUNDF_RANGE | SOUNDF_VOLUME | SOUNDF_SCALE | SOUNDF_VELOCITY;
     m_SetState(SOUNDSTATE_STOP);
     unknown_14c = 0;
@@ -149,7 +149,7 @@ LS3D_RESULT I3D_sound::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC 
                 "ambient type!", snd_src ? snd_src->GetFileName() : "???");
         SetSoundType(I3DSOUND_AMBIENT);
     }
-    if (frm_flags & FRMFLAGS_ON)
+    if (m_FrmFlags & FRMFLAGS_ON)
         SetOn(true);
     SetCurrTime(0);
     snd_flags = SOUNDF_POS | SOUNDF_DIR | SOUNDF_RANGE | SOUNDF_VOLUME | SOUNDF_OUTVOL | SOUNDF_FREQUENCY |
@@ -266,7 +266,7 @@ void I3D_sound::SetLoop(bool loop)
         open_flags |= ISND_LOOP;
     else
         open_flags &= ~ISND_LOOP;
-    if (frm_flags & FRMFLAGS_ON)
+    if (m_FrmFlags & FRMFLAGS_ON)
         SetOn(true);
 }
 
@@ -452,7 +452,7 @@ void I3D_sound::ForceUpdate()
 // FUNCTION: LS3DF11 0x10055c00
 void I3D_sound::m_UpdateSound()
 {
-    if (state == SOUNDSTATE_STOP || !(frm_flags & FRMFLAGS_ON) || !pCurrentCamera || !voice)
+    if (state == SOUNDSTATE_STOP || !(m_FrmFlags & FRMFLAGS_ON) || !pCurrentCamera || !voice)
         return;
     if (state == SOUNDSTATE_NOCAMERA)
         SetOn(true);
@@ -484,8 +484,8 @@ void I3D_sound::m_UpdateSound()
         return;
     }
     if (snd_flags & (SOUNDF_RANGE | SOUNDF_SCALE)) {
-        scaled_range_n = range_n * world_scale;
-        scaled_range_f = range_f * world_scale;
+        scaled_range_n = range_n * m_WorldScale;
+        scaled_range_f = range_f * m_WorldScale;
         scaled_range_f_2 = scaled_range_f * scaled_range_f;
         if (scaled_range_n >= scaled_range_f - MRG_ZERO)
             scaled_range_n = scaled_range_f - MRG_ZERO;
@@ -613,7 +613,7 @@ void I3D_sound::m_UpdateSound()
 // FUNCTION: LS3DF11 0x10056910
 LS3D_RESULT I3D_sound::Duplicate(I3D_frame *frame)
 {
-    if (type == frame->type) {
+    if (m_Type == frame->m_Type) {
         I3D_sound *snd = (I3D_sound *)frame;
         SetOn(false);
         if (voice)
@@ -647,5 +647,5 @@ void I3D_sound::m_SetState(uchar new_state)
 // copy the original's vtable points at.
 void I3D_sound::LoadImage()
 {
-    dbgPrintf("** nepodporovany typ:%s  LoadImage()  %s", pI3DDriver->FrameType2String(type), GetName());
+    dbgPrintf("** nepodporovany typ:%s  LoadImage()  %s", pI3DDriver->FrameType2String(m_Type), GetName());
 }

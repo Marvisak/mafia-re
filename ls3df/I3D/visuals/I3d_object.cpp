@@ -1,6 +1,8 @@
 // The objects (PS2 I3d_object.cpp), at 0x100367b0-0x1003a430 in the original: I3D_object close to PS2's order, with the
 // PC's lods (each level's own vertex buffer) after Duplicate. Its marker $E (0x10039260) comes before m_RenderFGroup.
 // Names are the PS2 build's unless noted.
+// Patch 1.1's (0x10035510-0x10038970, $E 0x100377a0) differs only in the buffers' locks; the constructor's memset and
+// lod::Create's switch on the flags are spelled as 1.1's original shows them, which 1.2's compiles alike or matches.
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"
@@ -17,8 +19,8 @@ I3D_object::I3D_object()
     transparency = 1.0f;
     fade = 1.0f;
     visual_type = I3D_VISUAL_OBJECT;
-    for (int i = 0; i < 10; i++)
-        lods[i] = NULL;
+    // memset, not a loop: xor eax, eax before the lea edi (1.1's original showed it, 1.2's has it too)
+    memset(lods, 0, sizeof(lods));
 }
 
 // FUNCTION: LS3DF 0x10036840
@@ -184,7 +186,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
     if (m_HardwareCaps & HWCAPS_HWTL) {
         switch (format) {
         case 1: {
-            LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (!uv || !num)
                 break;
             while (num--) {
@@ -196,7 +198,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
             break;
         }
         case 2: {
-            LVERTEX2 *v = (LVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX2 *v = (LVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (!uv || !num)
                 break;
             while (num--) {
@@ -211,7 +213,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
     } else {
         switch (format) {
         case 1: {
-            TLVERTEX *v = (TLVERTEX *)vb.buffer->Lock(vb.base, 0);
+            TLVERTEX *v = (TLVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (!uv || !num)
                 break;
             while (num--) {
@@ -223,7 +225,7 @@ void lod::SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, floa
             break;
         }
         case 2: {
-            TLVERTEX2 *v = (TLVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+            TLVERTEX2 *v = (TLVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (!uv || !num)
                 break;
             while (num--) {
@@ -253,7 +255,10 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
     uint vf;
     if (m_HardwareCaps & HWCAPS_HWTL) {
         if (!vb.vb) {
-            switch (format) {
+            // flags & 7 again, not format: it keeps 1.1's flags in ebp through the hardware branch and this in its
+            // stack slot (one or two of the four switches so, any of them; three or four don't). 1.2 compiles both
+            // alike.
+            switch (flags & 7) {
             case 1:
                 fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1;
                 stride = sizeof(LVERTEX);
@@ -279,7 +284,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
         }
         switch (format) {
         case 4: {
-            LVERTEX2 *verts = (LVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX2 *verts = (LVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (flags & 0x100) {
                 LVERTEX2 *v = verts;
                 for (uint n = num; n; n--) {
@@ -311,7 +316,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
             break;
         }
         case 2: {
-            LVERTEX2 *verts = (LVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX2 *verts = (LVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (flags & 0x100) {
                 LVERTEX2 *v = verts;
                 for (uint n = num; n; n--) {
@@ -343,7 +348,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
             break;
         }
         case 1: {
-            LVERTEX *verts = (LVERTEX *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX *verts = (LVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (flags & 0x100) {
                 LVERTEX *v = verts;
                 for (uint n = num; n; n--) {
@@ -391,7 +396,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
         }
         switch (format) {
         case 2: {
-            TLVERTEX2 *verts = (TLVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+            TLVERTEX2 *verts = (TLVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (uv) {
                 TLVERTEX2 *v = verts;
                 for (uint n = num; n; n--) {
@@ -420,7 +425,7 @@ bool lod::Create(uint flags, uint num, const S_vector *pos, uint pos_stride, con
             break;
         }
         case 1: {
-            TLVERTEX *verts = (TLVERTEX *)vb.buffer->Lock(vb.base, 0);
+            TLVERTEX *verts = (TLVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             if (uv) {
                 TLVERTEX *v = verts;
                 for (uint n = num; n; n--) {
@@ -573,7 +578,7 @@ uchar *I3D_object::LockVertices(int index, uint flags)
     lod *l = lods[index];
     if (!l)
         return NULL;
-    return l->vb.buffer->Lock(l->vb.base, 0);
+    return l->vb.buffer->Lock(l->vb.base, BUFFER_LOCK_FLAGS);
 }
 
 // Queues the face groups of the level of detail the distance picks, after bringing its lod up to date: created with
@@ -592,18 +597,18 @@ void I3D_object::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_visual *vis = (I3D_visual *)user_data;
-        I3D_frame *frm = vis->parent;
+        I3D_visual *vis = (I3D_visual *)m_UserData;
+        I3D_frame *frm = vis->m_pParent;
         while (true) {
             if (!frm) {
                 AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                 break;
             }
-            if (frm->type == FRAME_SECTOR) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 AddFGHlpStruct.sector = (I3D_sector *)frm;
                 break;
             }
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         int first = AddFGHlpStruct.fgroups.size();
         vis->m_AddFGroups();
@@ -620,7 +625,7 @@ void I3D_object::m_AddFGroups()
     int num_verts = level->num_vertices;
     if (!num_verts)
         return;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     lod *l = lods[lod_index];
     bool created = false;
     if (!l || l->dirty || !l->vb.vb) {
@@ -650,7 +655,7 @@ void I3D_object::m_AddFGroups()
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
             f += mesh->levels[lod_index - 1]->lod_dist * 0.5f;
-        float s = RSLodQuality * world_scale;
+        float s = RSLodQuality * m_WorldScale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
             d = 1.0f;
@@ -659,9 +664,9 @@ void I3D_object::m_AddFGroups()
         SetFade(1.0f);
 
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
     int base = l->vb.base;
@@ -669,7 +674,7 @@ void I3D_object::m_AddFGroups()
     uchar *lv = NULL;
     if (vis_flags & VISF_LOD_CHANGED) {
         vis_flags &= ~VISF_LOD_CHANGED;
-        lv = l->vb.buffer->Lock(base, 0);
+        lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         const I3D_text_coor *uv;
         uint uv_stride;
         if (cur_lod > 0) {
@@ -725,7 +730,7 @@ void I3D_object::m_AddFGroups()
         l->lights_changed = AddFGHlpStruct.sector->lights_changed;
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)verts,
@@ -744,7 +749,7 @@ void I3D_object::m_AddFGroups()
     }
     if (l->alpha_dirty) {
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
@@ -759,12 +764,12 @@ void I3D_object::m_AddFGroups()
     }
 
     if (level->GetFlags() & MESHF_ENVMAP && ((level->GetFlags() & MESHF_ENVMAP_MODE) < 2 || created)) {
-        if (render_number != RenderNumberMinus1 || moved || renderCameraChanged ||
+        if (m_RenderNumber != RenderNumberMinus1 || moved || renderCameraChanged ||
                 !IsAbsMrgZero(mesh->env_u_ofs - l->env_u_ofs) || !IsAbsMrgZero(mesh->env_v_ofs - l->env_v_ofs)) {
             l->env_u_ofs = mesh->env_u_ofs;
             l->env_v_ofs = mesh->env_v_ofs;
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
@@ -776,8 +781,8 @@ void I3D_object::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
-        if (frm_flags & FRMFLAGS_CLIP) {
+    if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
+        if (m_FrmFlags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
             level->vb.buffer->Unlock();
@@ -794,7 +799,7 @@ void I3D_object::m_AddFGroups()
         }
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (level->GetFlags() & MESHF_ENVMAP)
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
                     AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
@@ -805,7 +810,7 @@ void I3D_object::m_AddFGroups()
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.sector = AddFGHlpStruct.sector;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
@@ -857,7 +862,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     lod *l;
     int num_verts;
     if (vis_flags & VISF_PROXY) {
-        I3D_object *obj = (I3D_object *)user_data;
+        I3D_object *obj = (I3D_object *)m_UserData;
         if (mat && mat->flags & MATF_LOD0) {
             l = obj->lods[0];
             num_verts = mesh->levels[0]->num_vertices;
@@ -1078,7 +1083,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetAlphaState(1);
             SetBlendState(0);
             const I3D_triface *faces = fg->GetFaces();
-            uchar *v = buffer->Lock(base, 0);
+            uchar *v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
                 SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
             else
@@ -1087,7 +1092,7 @@ void I3D_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             buffer->Unlock();
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
             faces = fg->GetFaces();
-            v = buffer->Lock(base, 0);
+            v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
                 SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
             else

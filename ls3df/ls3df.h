@@ -325,8 +325,10 @@ public:
 // the original keeps remove's from the areas' file, find's from the sectors' (I3D_sector::~I3D_sector calls both). The
 // names are the ones our PDB keeps (tools/foldfix.py).
 // TEMPLATE: LS3DF 0x10005d20
-// TEMPLATE: LS3DF11 0x10005d10
 // ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
+
+// TEMPLATE: LS3DF11 0x10005d10
+// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // TEMPLATE: LS3DF11 0x1004e730
@@ -537,24 +539,33 @@ void dbgPrintGuid(const void *guid);
 // m_UncachedTextureList's and m_MapsList's. VC6 numbers these functions per file, and reccmp pairs the annotations of
 // a name with our functions of that name in address order (with an "Ambiguous match" warning for each): the first
 // three are the seventh $E13, the sixth $E18 (both after Globals.cpp's) and the fourth $E23 (after render.cpp's).
+// 1.1's are numbered one higher: the buffer headers' <list> takes a number (tools/enames.py keeps LS3DF11's current).
 // SYNTHETIC: LS3DF 0x1006bd70
-// SYNTHETIC: LS3DF11 0x10068e00
 // $E13
+// SYNTHETIC: LS3DF11 0x10068e00
+// $E14
 // SYNTHETIC: LS3DF 0x1006bdb0
-// SYNTHETIC: LS3DF11 0x10068e40
 // $E18
+// SYNTHETIC: LS3DF11 0x10068e40
+// $E19
 // SYNTHETIC: LS3DF 0x1006be10
-// SYNTHETIC: LS3DF11 0x10068ea0
 // $E23
+// SYNTHETIC: LS3DF11 0x10068ea0
+// $E24
 // SYNTHETIC: LS3DF 0x1006be60
-// SYNTHETIC: LS3DF11 0x10068ef0
 // $E28
+// SYNTHETIC: LS3DF11 0x10068ef0
+// $E29
 // SYNTHETIC: LS3DF 0x1006beb0
-// SYNTHETIC: LS3DF11 0x10068f40
 // $E33
+// SYNTHETIC: LS3DF11 0x10068f40
+// $E34
 // SYNTHETIC: LS3DF 0x1006bf00
-// SYNTHETIC: LS3DF11 0x10068f90
 // $E38
+// SYNTHETIC: LS3DF11 0x10068f90
+// $E39
 // SYNTHETIC: LS3DF 0x1006bf50
-// SYNTHETIC: LS3DF11 0x10068fe0
 // $E43
+
+// SYNTHETIC: LS3DF11 0x10068fe0
+// $E44

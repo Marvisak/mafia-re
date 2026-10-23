@@ -3,7 +3,8 @@
 // m_AddFGroups, ProcessProjectors and ProcessRecList, the header's zero vector's $E (0x10048040) after it, then
 // ProcessShadow, MakeProjection with CollectReceivers, m_RenderFGroup and LoadImage (PS2's is after the setters). The
 // shadows' visual (I3d_shadow.cpp) is a copy of the receivers' code, which shares their array with it. Names are PS2's
-// unless noted.
+// unless noted. Patch 1.1's (0x10043eb0-0x10046950) differs only in the buffer managers' frees and locks (their
+// headers).
 //
 // Not matching yet: ProcessRecList inlines C_list::push_back into the vertex buffer's Lock, as the original does, only
 // with about 11 more statements' worth of source anywhere in the function (dead code measures it; the alpha in more
@@ -113,7 +114,7 @@ LS3D_RESULT I3D_projector::Duplicate(I3D_frame *frame)
     if (!frame || frame == this)
         return I3DERR_INVALIDPARAMS;
     I3D_frame::Duplicate(frame);
-    if (frame->type != FRAME_VISUAL)
+    if (frame->m_Type != FRAME_VISUAL)
         return I3D_OK;
     switch (((I3D_visual *)frame)->visual_type) {
     case I3D_VISUAL_PROJECTOR: {
@@ -256,7 +257,7 @@ void I3D_projector::SetProjectorLock(I3D_LOCK lock)
 // FUNCTION: LS3DF11 0x10044530
 void I3D_projector::UpdateV()
 {
-    if (!(vis_flags & VISF_WORLD_SPACE) && frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
+    if (!(vis_flags & VISF_WORLD_SPACE) && m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
         vis_flags &= ~(VISF_WBOUND_VALID | VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
         sector = NULL;
     }
@@ -299,18 +300,18 @@ C_list<I3D_projector *> ProjectorsToRender;
 // FUNCTION: LS3DF11 0x10044810
 void I3D_projector::m_AddFGroups()
 {
-    if (!(frm_flags & FRMFLAGS_ON))
+    if (!(m_FrmFlags & FRMFLAGS_ON))
         return;
     if (!texture && (!material || !material->GetTexture()))
         return;
     if (!sector) {
-        I3D_frame *frm = parent;
+        I3D_frame *frm = m_pParent;
         while (true) {
             if (!frm)
                 return;
-            if (frm->type == FRAME_SECTOR)
+            if (frm->m_Type == FRAME_SECTOR)
                 break;
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         sector = (I3D_sector *)frm;
     }
@@ -436,7 +437,7 @@ void I3D_projector::ProcessRecList()
                 return;
             }
         }
-        v = (S_shadow_vertex *)vb.buffer->Lock(vb.base, 0);
+        v = (S_shadow_vertex *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
     } else {
         if (vb.buffer) {
             cVBMan.m_Free(vb);
@@ -644,7 +645,7 @@ void I3D_projector::ProcessRecList()
                 return;
             }
         }
-        f = (ushort *)ib.buffer->Lock(ib.base, 0);
+        f = (ushort *)ib.buffer->Lock(ib.base, BUFFER_LOCK_FLAGS);
     } else {
         if (faces_alloc < num_clip_faces + num_clip_faces_t) {
             delete[] faces;
@@ -693,8 +694,8 @@ void I3D_projector::ProcessRecList()
 // FUNCTION: LS3DF11 0x10045fb0
 void I3D_projector::ProcessShadow()
 {
-    if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
-        update_count++;
+    if (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
+        m_UpdateCount++;
     if (projector_lock)
         proj_flags |= PROJF_RECEIVERS_VALID;
     receiver_count = 0;
@@ -741,13 +742,13 @@ void I3D_projector::ProcessShadow()
     int count = 0;
     rp = ShadowReceivers;
     for (i = receiver_count; i--; rp++)
-        count += (*rp)->update_count + ((I3D_object *)*rp)->GetMeshLOD();
-    if (receivers_update == update_count && receiver_count == num_receivers && count == receivers_count) {
+        count += (*rp)->m_UpdateCount + ((I3D_object *)*rp)->GetMeshLOD();
+    if (receivers_update == m_UpdateCount && receiver_count == num_receivers && count == receivers_count) {
         if (num_verts)
             AddFGroups();
         return;
     }
-    receivers_update = update_count;
+    receivers_update = m_UpdateCount;
     num_receivers = receiver_count;
     receivers_count = count;
     ProcessRecList();
@@ -759,13 +760,13 @@ void I3D_projector::ProcessShadow()
 void I3D_projector::MakeProjection(uint flags, I3D_frame *frame)
 {
     if (!sector) {
-        I3D_frame *frm = parent;
+        I3D_frame *frm = m_pParent;
         while (true) {
             if (!frm)
                 return;
-            if (frm->type == FRAME_SECTOR)
+            if (frm->m_Type == FRAME_SECTOR)
                 break;
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         sector = (I3D_sector *)frm;
     }
@@ -811,7 +812,7 @@ void I3D_projector::CollectReceivers(I3D_frame *frm)
     if (hb.min.x > projection_bbox->max.x || hb.min.y > projection_bbox->max.y || hb.min.z > projection_bbox->max.z ||
         hb.max.x < projection_bbox->min.x || hb.max.y < projection_bbox->min.y || hb.max.z < projection_bbox->min.z)
         return;
-    switch (frm->type) {
+    switch (frm->m_Type) {
     case FRAME_VISUAL: {
         I3D_visual *vis = (I3D_visual *)frm;
         switch (vis->visual_type) {
@@ -851,7 +852,7 @@ void I3D_projector::CollectReceivers(I3D_frame *frm)
 children:
     if (projection_mode & PROJF_NO_CHILDREN)
         return;
-    for (I3D_frame *f = frm->child; f; f = f->next)
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext)
         CollectReceivers(f);
 }
 

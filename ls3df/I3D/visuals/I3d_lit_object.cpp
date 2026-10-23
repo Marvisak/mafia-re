@@ -16,6 +16,10 @@
 // after m_RenderFGroup, and the render state helpers in render.h's order; the original has SetCullState, SetColorOp1
 // and litLod's right before ~litLod, and GetRenderMatrix at the end (the original's headers had more inline code
 // before them, see tools/autopch.py).
+// Patch 1.1's file (0x100210a0-0x1002a0d0) has 1.2's code; only the buffers' inline functions differ (VBManager.h,
+// IBManager.h: the locks, Unlock, m_Free). Its copy of the material's alpha accessor (0x10029b00) comes right after
+// litLod::Create, where 1.2's is with the face group's at the end, and its linker kept this file's copy of the grow
+// size 2 list constructor (0x1002a020, IGraph.h).
 #include "I3D/I3D.h"
 #include "I3D/mesh/lightmap.h"
 #include "I3D/render/render.h"
@@ -226,7 +230,7 @@ int I3D_lit_object::GetRectInfoFlags(int lod_index, int index, int flags)
     litLod *l = levels[index].lods[lod_index];
     if (!l)
         return -1;
-    l->m_IB.buffer->Lock(l->m_IB.base, 0);
+    l->m_IB.buffer->Lock(l->m_IB.base, BUFFER_LOCK_FLAGS);
     return 0;
 }
 
@@ -337,9 +341,9 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
         cb(CBM_PROGRESS, I3DFloatAsInt(0.0f), 0, context);
     S_lit_level &level = levels[active_level];
     level.resolution = resolution;
-    I3D_frame *frm = parent;
-    while (frm->type != FRAME_SECTOR)
-        frm = frm->parent;
+    I3D_frame *frm = m_pParent;
+    while (frm->m_Type != FRAME_SECTOR)
+        frm = frm->m_pParent;
     LightingSetSector((I3D_sector *)frm);
     int last_time = GetMSCount();
     float faces_done = 0.0f;
@@ -1348,7 +1352,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
                         return I3DERR_OUTOFMEM;
                     }
-                    ushort *indx = (ushort *)l->m_IB.buffer->Lock(l->m_IB.base, 0);
+                    ushort *indx = (ushort *)l->m_IB.buffer->Lock(l->m_IB.base, BUFFER_LOCK_FLAGS);
                     if (!dtaRead(handle, indx, num_indices * sizeof(ushort))) {
                         dbgPrintf("!! Error reading data   I3D_lit_object::read()  this:0x%x %s  handle:0x%x", this,
                             GetName(), handle);
@@ -1449,6 +1453,8 @@ LS3D_RESULT I3D_lit_object::SetMode(uint mode)
     return I3D_OK;
 }
 
+// The levels copied through references, which step their pointers in the original's order (indexed, VC6 advances the
+// source's first)
 // FUNCTION: LS3DF 0x100275d0
 // FUNCTION: LS3DF11 0x10026fb0
 LS3D_RESULT I3D_lit_object::Duplicate(I3D_frame *frame)
@@ -1466,9 +1472,10 @@ LS3D_RESULT I3D_lit_object::Duplicate(I3D_frame *frame)
     switch (obj->visual_type) {
     case I3D_VISUAL_LIT_OBJECT: {
         for (int i = 0; i < 6; i++) {
-            levels[i].mode = obj->levels[i].mode;
-            levels[i].resolution = obj->levels[i].resolution;
-            levels[i].angle = obj->levels[i].angle;
+            S_lit_level &d = levels[i], &s = obj->levels[i];
+            d.mode = s.mode;
+            d.resolution = s.resolution;
+            d.angle = s.angle;
         }
     }
     case I3D_VISUAL_OBJECT:
@@ -1545,18 +1552,18 @@ void I3D_lit_object::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_visual *vis = (I3D_visual *)user_data;
-        I3D_frame *frm = vis->parent;
+        I3D_visual *vis = (I3D_visual *)m_UserData;
+        I3D_frame *frm = vis->m_pParent;
         while (true) {
             if (!frm) {
                 AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                 break;
             }
-            if (frm->type == FRAME_SECTOR) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 AddFGHlpStruct.sector = (I3D_sector *)frm;
                 break;
             }
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         int first = AddFGHlpStruct.fgroups.size();
         vis->m_AddFGroups();
@@ -1594,17 +1601,17 @@ void I3D_lit_object::m_AddFGroups()
         l->light_key = (uint)-1;
     }
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
     uchar *lv = NULL;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
     RENDER_FG_HELP_STRUCT h;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.sector = AddFGHlpStruct.sector;
     h.vis = this;
 
@@ -1613,9 +1620,9 @@ void I3D_lit_object::m_AddFGroups()
         // the texture factor's color
         if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
             l->SetUV(2, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
-        if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) &&
+        if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) &&
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
-            if (frm_flags & FRMFLAGS_CLIP) {
+            if (m_FrmFlags & FRMFLAGS_CLIP) {
                 m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
                 level->vb.buffer->Unlock();
@@ -1632,7 +1639,7 @@ void I3D_lit_object::m_AddFGroups()
             }
             if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
                 if (!lv)
-                    lv = l->vb.buffer->Lock(base, 0);
+                    lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->specular + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
                     num_verts, AddFGHlpStruct.sector->fog_light, 0);
             }
@@ -1673,9 +1680,9 @@ void I3D_lit_object::m_AddFGroups()
         h.env_texture = NULL;
         if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
             l->SetUV(1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
-        if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) &&
+        if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) &&
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
-            if (frm_flags & FRMFLAGS_CLIP) {
+            if (m_FrmFlags & FRMFLAGS_CLIP) {
                 m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
                 level->vb.buffer->Unlock();
@@ -1692,7 +1699,7 @@ void I3D_lit_object::m_AddFGroups()
             }
             if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
                 if (!lv)
-                    lv = l->vb.buffer->Lock(base, 0);
+                    lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX),
                     num_verts, AddFGHlpStruct.sector->fog_light, 0);
             }
@@ -1710,7 +1717,7 @@ void I3D_lit_object::m_AddFGroups()
             if (!(m_HardwareCaps & (HWCAPS_HWTL | HWCAPS_SINGLEPASS)))
                 fog = 1;
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             static C_list<uint> colors;
             colors.reserve(level->num_vertices);
             lods[cur_lod] = lit.lods[cur_lod];
@@ -1732,10 +1739,10 @@ void I3D_lit_object::m_AddFGroups()
             }
             lods[cur_lod] = NULL;
         }
-        if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) &&
+        if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) &&
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
             fog = 1;
-            if (frm_flags & FRMFLAGS_CLIP) {
+            if (m_FrmFlags & FRMFLAGS_CLIP) {
                 m_pD3DDevice8->SetStreamSource(0, l->m_PosVB.vb, l->m_PosVB.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
                 l->m_PosVB.buffer->Unlock();
@@ -1753,7 +1760,7 @@ void I3D_lit_object::m_AddFGroups()
         }
         if (fog && !(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_SINGLEPASS)
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->specular + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
                     num_verts, AddFGHlpStruct.sector->fog_light, 0);
@@ -1808,7 +1815,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     S_lit_level *lit;
     int lod_index;
     if (vis_flags & VISF_PROXY) {
-        I3D_lit_object *obj = (I3D_lit_object *)user_data;
+        I3D_lit_object *obj = (I3D_lit_object *)m_UserData;
         lit = &obj->levels[obj->active_level];
         lod_index = obj->cur_lod;
     } else {
@@ -2104,7 +2111,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
         cVBMan.m_Free(m_PosVB);
         memset(&m_PosVB, 0, sizeof(m_PosVB));
     }
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!m_numLVertices) {
         lod::Create(0x502, level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex),
             NULL, 0, mesh->u_ofs, mesh->v_ofs);
@@ -2113,7 +2120,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
                 sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs))
             return false;
         if (m_HardwareCaps & HWCAPS_HWTL) {
-            LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, 0);
+            LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             uint *c = m_pColors;
             for (int i = m_numLVertices; i; i--) {
                 v->color = *c;
@@ -2121,7 +2128,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
                 v++;
             }
         } else {
-            TLVERTEX *v = (TLVERTEX *)vb.buffer->Lock(vb.base, 0);
+            TLVERTEX *v = (TLVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             uint *c = m_pColors;
             if (m_ProblemFlags & 4) {
                 for (int i = m_numLVertices; i; i--) {
@@ -2152,7 +2159,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
         if (!lod::Create(0x404, m_numLVertices, NULL, 0, m_pLitUV, sizeof(I3D_text_coor), m_pUV,
                 sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs))
             return false;
-        LVERTEX2 *v = (LVERTEX2 *)vb.buffer->Lock(vb.base, 0);
+        LVERTEX2 *v = (LVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
         for (int i = 0; i < m_numLVertices; i++) {
             *(S_vector *)&v->x = verts[m_pVI[i].vertex].pos;
             v++;
@@ -2165,7 +2172,7 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
                 return false;
             }
         }
-        S_vector *pos = (S_vector *)m_PosVB.buffer->Lock(m_PosVB.base, 0);
+        S_vector *pos = (S_vector *)m_PosVB.buffer->Lock(m_PosVB.base, BUFFER_LOCK_FLAGS);
         for (int i = m_numLVertices; i--; )
             pos[i] = verts[m_pVI[i].vertex].pos;
         lod::Create(0x502, m_numLVertices, pos, sizeof(S_vector), m_pLitUV, sizeof(I3D_text_coor), m_pUV,
@@ -2235,7 +2242,7 @@ bool litLod::postProcess(I3D_mesh_level *level, bool loaded)
         uv++;
     }
     if (!loaded) {
-        ushort *indx = (ushort *)m_IB.buffer->Lock(m_IB.base, 0);
+        ushort *indx = (ushort *)m_IB.buffer->Lock(m_IB.base, BUFFER_LOCK_FLAGS);
         int fg_index = 0;
         for (I3D_face_group *fg = level->fgroups; fg; fg_index++, fg = fg->next) {
             ushort *rects = m_pPIndex[fg_index];

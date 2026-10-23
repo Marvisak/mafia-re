@@ -29,67 +29,67 @@ int OFFD_NumFrames;
 // FUNCTION: LS3DF11 0x1001a310
 I3D_frame::I3D_frame()
 {
-    ref = 1;
-    type = FRAME_NULL;
-    parent = NULL;
-    child = NULL;
-    prev = NULL;
-    next = NULL;
-    num_children = 0;
-    f_matrix.Identity();
-    matrix.Identity();
-    update_count = 0;
-    scale = S_vector(1.0f, 1.0f, 1.0f);
-    rot.Identity();
-    world_scale = 1.0f;
+    m_RefCount = 1;
+    m_Type = FRAME_NULL;
+    m_pParent = NULL;
+    m_pChild = NULL;
+    m_pPrev = NULL;
+    m_pNext = NULL;
+    m_numChildren = 0;
+    m_LocalMatrix.Identity();
+    m_Matrix.Identity();
+    m_UpdateCount = 0;
+    m_Scale = S_vector(1.0f, 1.0f, 1.0f);
+    m_Rot.Identity();
+    m_WorldScale = 1.0f;
     m_pOwner = NULL;
-    callback = NULL;
-    user_data = 0;
-    name = NULL;
-    orig_name = NULL;
-    property = NULL;
-    bound.bbox.Invalidate();
-    bound.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
-    bound.bsphere.radius = 0.0f;
-    bound_w.bbox.Invalidate();
-    bound_w.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
-    bound_w.bsphere.radius = 0.0f;
-    frm_flags = FRMFLAGS_UPDATE | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID | FRMFLAGS_QUAT_VALID | FRMFLAGS_ROT_VALID |
+    m_pCallback = NULL;
+    m_UserData = 0;
+    m_pName = NULL;
+    m_pOrigName = NULL;
+    m_pProperty = NULL;
+    m_HRBoundVol.bbox.Invalidate();
+    m_HRBoundVol.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
+    m_HRBoundVol.bsphere.radius = 0.0f;
+    m_HRBoundVolW.bbox.Invalidate();
+    m_HRBoundVolW.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
+    m_HRBoundVolW.bsphere.radius = 0.0f;
+    m_FrmFlags = FRMFLAGS_UPDATE | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID | FRMFLAGS_QUAT_VALID | FRMFLAGS_ROT_VALID |
         FRMFLAGS_ON;
-    next_visual = NULL;
-    ff_left = NULL;
-    ff_right = NULL;
-    render_number = -1;
+    m_pNextVisual = NULL;
+    m_pFFLeft = NULL;
+    m_pFFRight = NULL;
+    m_RenderNumber = -1;
 }
 
 // FUNCTION: LS3DF 0x1001a9a0
 // FUNCTION: LS3DF11 0x1001a4c0
 I3D_frame::~I3D_frame()
 {
-    if (frm_flags & FRMFLAGS_FFTREE)
+    if (m_FrmFlags & FRMFLAGS_FFTREE)
         RemoveFromFFTree();
     DeleteFromOwner();
-    if (frm_flags & FRMFLAGS_TARGET)
+    if (m_FrmFlags & FRMFLAGS_TARGET)
         I3D_target::DeleteFromAnyTarget(this);
-    if (frm_flags & FRMFLAGS_SHADOW)
+    if (m_FrmFlags & FRMFLAGS_SHADOW)
         I3D_shadow::DeleteFromAnyShadow(this);
-    if (frm_flags & FRMFLAGS_TICK)
+    if (m_FrmFlags & FRMFLAGS_TICK)
         pI3DDriver->DeleteFromSceneTickList(this);
-    if (parent)
-        parent->RemoveChild(this);
-    for (I3D_frame *frm = child; frm; ) {
-        if (frm->parent != this) {
+    if (m_pParent)
+        m_pParent->RemoveChild(this);
+    for (I3D_frame *frm = m_pChild; frm; ) {
+        if (frm->m_pParent != this) {
             dbgPrintf("!! Bad child in list  I3D_frame destructor  this:0x%x\t%s   child:0x%x", this, GetName(), frm);
             break;
         }
-        I3D_frame *frm_next = frm->next;
-        if (frm->type == FRAME_SHADOW)
+        I3D_frame *frm_next = frm->m_pNext;
+        if (frm->m_Type == FRAME_SHADOW)
             ((I3D_shadow *)frm)->SetTo(NULL);
         RemoveChild(frm);
         frm = frm_next;
     }
-    delete[] property;
-    delete[] name;
+    delete[] m_pProperty;
+    delete[] m_pName;
     lastDestroyedFrame = this;
 }
 
@@ -97,8 +97,8 @@ I3D_frame::~I3D_frame()
 // FUNCTION: LS3DF11 0x1001a600
 uint I3D_frame::Release()
 {
-    if (--ref > 0)
-        return ref;
+    if (--m_RefCount > 0)
+        return m_RefCount;
     delete this;
     return 0;
 }
@@ -109,7 +109,7 @@ void I3D_frame::DeleteFromOwner()
 {
     if (!m_pOwner)
         return;
-    switch (m_pOwner->type) {
+    switch (m_pOwner->m_Type) {
     case FRAME_MODEL:
         ((I3D_model *)m_pOwner)->DeleteFrame(this);
         break;
@@ -118,7 +118,7 @@ void I3D_frame::DeleteFromOwner()
         break;
     default:
         dbgPrintf("!! Invalid owner type:%d  m_pOwner:0x%x  this:0x%x  %s  I3D_frame::DeleteFromOwner()",
-            m_pOwner->type, m_pOwner, this, GetName());
+            m_pOwner->m_Type, m_pOwner, this, GetName());
     }
 }
 
@@ -168,19 +168,19 @@ void I3D_frame::SetDir(const S_vector &dir, float roll)
 // FUNCTION: LS3DF11 0x1001ab60
 void I3D_frame::SetWorldDir(const S_vector &dir, float roll)
 {
-    if (!parent) {
+    if (!m_pParent) {
         SetDir(dir, roll);
         return;
     }
     S_matrix m_inv;
-    m_inv.Inverse(parent->GetMatrix());
+    m_inv.Inverse(m_pParent->GetMatrix());
     S_matrix m;
     m.SetDir(dir);
     if (fabs(roll) > MRG_ZERO)
         m = RotateZMatrix(roll) * m;
     m = m * m_inv;
-    f_matrix.SetDir3(m(2), m(1));
-    frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
+    m_LocalMatrix.SetDir3(m(2), m(1));
+    m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
         FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
 }
 
@@ -188,11 +188,11 @@ void I3D_frame::SetWorldDir(const S_vector &dir, float roll)
 // FUNCTION: LS3DF11 0x1001ac80
 void I3D_frame::SetWorldPos(const S_vector &pos)
 {
-    if (!parent)
+    if (!m_pParent)
         SetPos(pos);
     else {
         S_matrix m_inv;
-        m_inv.Inverse(parent->GetMatrix());
+        m_inv.Inverse(m_pParent->GetMatrix());
         SetPos(pos * m_inv);
     }
 }
@@ -201,20 +201,20 @@ void I3D_frame::SetWorldPos(const S_vector &pos)
 // FUNCTION: LS3DF11 0x1001ad50
 void I3D_frame::SetWorldPosDir(const S_vector &pos, const S_vector &dir, float roll)
 {
-    if (!parent) {
+    if (!m_pParent) {
         SetDir(dir, roll);
         SetPos(pos);
         return;
     }
     S_matrix m_inv;
-    m_inv.Inverse(parent->GetMatrix());
+    m_inv.Inverse(m_pParent->GetMatrix());
     S_matrix m;
     m.SetDir(dir);
     if (fabs(roll) > MRG_ZERO)
         m = RotateZMatrix(roll) * m;
     m = m * m_inv;
-    f_matrix.SetDir3(m(2), m(1));
-    frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
+    m_LocalMatrix.SetDir3(m(2), m(1));
+    m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
         FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
     // pos isn't used (the original's bug): row 3 is SetDir's, moved by the parent's inverse
     SetPos(m(3));
@@ -226,10 +226,10 @@ void I3D_frame::SetCallback(I3D_CALLBACK *cb, uint flags)
 {
     flags &= FRMFLAGS_CALLBACK_MASK;
     if (!cb)
-        frm_flags &= ~flags;
+        m_FrmFlags &= ~flags;
     else {
-        callback = cb;
-        frm_flags |= flags;
+        m_pCallback = cb;
+        m_FrmFlags |= flags;
     }
 }
 
@@ -238,41 +238,41 @@ void I3D_frame::SetCallback(I3D_CALLBACK *cb, uint flags)
 void I3D_frame::SetOn(bool on)
 {
     if (on)
-        frm_flags |= FRMFLAGS_ON;
+        m_FrmFlags |= FRMFLAGS_ON;
     else
-        frm_flags &= ~FRMFLAGS_ON;
+        m_FrmFlags &= ~FRMFLAGS_ON;
 }
 
 // FUNCTION: LS3DF 0x1001b430
 // FUNCTION: LS3DF11 0x1001af50
 void I3D_frame::RemoveFromFFTree()
 {
-    frm_flags &= ~FRMFLAGS_FFTREE;
-    if (!name)
+    m_FrmFlags &= ~FRMFLAGS_FFTREE;
+    if (!m_pName)
         return;
-    if (pI3DDriver->FindFrameFast_(name, this) == this) {
+    if (pI3DDriver->FindFrameFast_(m_pName, this) == this) {
         I3D_frame *up = pFFLastUp_;
         I3D_frame **link;
         if (this == pFFRoot)
             link = &pFFRoot;
-        else if (up->ff_left == this)
-            link = &up->ff_left;
+        else if (up->m_pFFLeft == this)
+            link = &up->m_pFFLeft;
         else
-            link = &up->ff_right;
-        if (ff_right) {
-            *link = ff_right;
-            if (ff_left) {
-                I3D_frame *frm = ff_right;
-                while (frm->ff_left)
-                    frm = frm->ff_left;
-                frm->ff_left = ff_left;
+            link = &up->m_pFFRight;
+        if (m_pFFRight) {
+            *link = m_pFFRight;
+            if (m_pFFLeft) {
+                I3D_frame *frm = m_pFFRight;
+                while (frm->m_pFFLeft)
+                    frm = frm->m_pFFLeft;
+                frm->m_pFFLeft = m_pFFLeft;
             }
         } else
-            *link = ff_left;
+            *link = m_pFFLeft;
     } else
-        dbgPrintf(" !! RemoveFromFFTree error! Can not remove frame %s !! ", name);
-    ff_left = NULL;
-    ff_right = NULL;
+        dbgPrintf(" !! RemoveFromFFTree error! Can not remove frame %s !! ", m_pName);
+    m_pFFLeft = NULL;
+    m_pFFRight = NULL;
 }
 
 // FUNCTION: LS3DF 0x1001b500
@@ -286,29 +286,29 @@ void I3D_frame::AddToFFTree()
     } else {
         I3D_frame *frm = pFFRoot;
         for (;;) {
-            int cmp = strcmp(name, frm->name);
+            int cmp = strcmp(m_pName, frm->m_pName);
             if (cmp < 0) {
-                if (!frm->ff_left) {
-                    frm->ff_left = this;
+                if (!frm->m_pFFLeft) {
+                    frm->m_pFFLeft = this;
                     break;
                 }
-                frm = frm->ff_left;
+                frm = frm->m_pFFLeft;
             } else if (!cmp) {
-                while (frm->ff_right && !strcmp(name, frm->ff_right->name))
-                    frm = frm->ff_right;
-                ff_right = frm->ff_right;
-                frm->ff_right = this;
+                while (frm->m_pFFRight && !strcmp(m_pName, frm->m_pFFRight->m_pName))
+                    frm = frm->m_pFFRight;
+                m_pFFRight = frm->m_pFFRight;
+                frm->m_pFFRight = this;
                 break;
             } else {
-                if (!frm->ff_right) {
-                    frm->ff_right = this;
+                if (!frm->m_pFFRight) {
+                    frm->m_pFFRight = this;
                     break;
                 }
-                frm = frm->ff_right;
+                frm = frm->m_pFFRight;
             }
         }
     }
-    frm_flags |= FRMFLAGS_FFTREE;
+    m_FrmFlags |= FRMFLAGS_FFTREE;
 }
 
 // The fast find tree's counts and list. VC6 inlines OFFD_CountFrames_ one level into OFFD_CountFrames, and turns the
@@ -318,10 +318,10 @@ void I3D_frame::AddToFFTree()
 int I3D_frame::OFFD_CountFrames()
 {
     OFFD_NumFrames = 1;
-    if (ff_left)
-        ff_left->OFFD_CountFrames_();
-    if (ff_right)
-        ff_right->OFFD_CountFrames_();
+    if (m_pFFLeft)
+        m_pFFLeft->OFFD_CountFrames_();
+    if (m_pFFRight)
+        m_pFFRight->OFFD_CountFrames_();
     return OFFD_NumFrames;
 }
 
@@ -329,48 +329,48 @@ int I3D_frame::OFFD_CountFrames()
 // FUNCTION: LS3DF11 0x1001b1a0
 void I3D_frame::OFFD_CountFrames_()
 {
-    if (ff_left)
-        ff_left->OFFD_CountFrames_();
+    if (m_pFFLeft)
+        m_pFFLeft->OFFD_CountFrames_();
     OFFD_NumFrames++;
-    if (ff_right)
-        ff_right->OFFD_CountFrames_();
+    if (m_pFFRight)
+        m_pFFRight->OFFD_CountFrames_();
 }
 
 // FUNCTION: LS3DF 0x1001b6b0
 // FUNCTION: LS3DF11 0x1001b1d0
 void I3D_frame::AlphabeticalListOfFrames_()
 {
-    if (ff_left)
-        ff_left->AlphabeticalListOfFrames_();
+    if (m_pFFLeft)
+        m_pFFLeft->AlphabeticalListOfFrames_();
     OFFD_pFrameList[OFFD_ListUsed++] = this;
-    if (ff_right)
-        ff_right->AlphabeticalListOfFrames_();
+    if (m_pFFRight)
+        m_pFFRight->AlphabeticalListOfFrames_();
 }
 
 // FUNCTION: LS3DF 0x1001b6f0
 // FUNCTION: LS3DF11 0x1001b210
 LS3D_RESULT I3D_frame::SetName(const char *new_name)
 {
-    if (name == new_name)
+    if (m_pName == new_name)
         return I3D_OK;
-    if (name && new_name && !strcmp(name, new_name))
+    if (m_pName && new_name && !strcmp(m_pName, new_name))
         return I3D_OK;
-    if (frm_flags & FRMFLAGS_FFTREE)
+    if (m_FrmFlags & FRMFLAGS_FFTREE)
         RemoveFromFFTree();
-    delete[] name;
+    delete[] m_pName;
     if (!new_name) {
-        name = NULL;
-        orig_name = NULL;
+        m_pName = NULL;
+        m_pOrigName = NULL;
         return I3D_OK;
     }
-    name = new char[strlen(new_name) + 1];
-    if (!name) {
+    m_pName = new char[strlen(new_name) + 1];
+    if (!m_pName) {
         dbgPrintf("!! Out of memory  I3D_frame::SetName()");
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
         return I3DERR_OUTOFMEM;
     }
-    strcpy(name, new_name);
-    orig_name = name;
+    strcpy(m_pName, new_name);
+    m_pOrigName = m_pName;
     if (renderState[RS_FAST_FIND])
         AddToFFTree();
     return I3D_OK;
@@ -380,20 +380,20 @@ LS3D_RESULT I3D_frame::SetName(const char *new_name)
 // FUNCTION: LS3DF11 0x1001b320
 LS3D_RESULT I3D_frame::SetModelName(const char *model_name)
 {
-    if (!orig_name)
-        orig_name = "";
-    char *full_name = new char[strlen(model_name) + strlen(orig_name) + 2];
+    if (!m_pOrigName)
+        m_pOrigName = "";
+    char *full_name = new char[strlen(model_name) + strlen(m_pOrigName) + 2];
     if (!full_name) {
         dbgPrintf("!! Out of memory  I3D_frame::SetModelName()");
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
         return I3DERR_OUTOFMEM;
     }
-    sprintf(full_name, "%s.%s", model_name, orig_name);
-    if (frm_flags & FRMFLAGS_FFTREE)
+    sprintf(full_name, "%s.%s", model_name, m_pOrigName);
+    if (m_FrmFlags & FRMFLAGS_FFTREE)
         RemoveFromFFTree();
-    delete[] name;
-    name = full_name;
-    orig_name = &full_name[strlen(model_name) + 1];
+    delete[] m_pName;
+    m_pName = full_name;
+    m_pOrigName = &full_name[strlen(model_name) + 1];
     if (renderState[RS_FAST_FIND])
         AddToFFTree();
     return I3D_OK;
@@ -403,26 +403,26 @@ LS3D_RESULT I3D_frame::SetModelName(const char *model_name)
 // FUNCTION: LS3DF11 0x1001b410
 LS3D_RESULT I3D_frame::ResetModelName()
 {
-    if (orig_name == name)
+    if (m_pOrigName == m_pName)
         return I3D_OK;
-    if (frm_flags & FRMFLAGS_FFTREE)
+    if (m_FrmFlags & FRMFLAGS_FFTREE)
         RemoveFromFFTree();
-    if (!orig_name) {
-        delete[] name;
-        name = NULL;
+    if (!m_pOrigName) {
+        delete[] m_pName;
+        m_pName = NULL;
         return I3D_OK;
     }
-    int len = strlen(orig_name) + 1;
+    int len = strlen(m_pOrigName) + 1;
     char *new_name = new char[len];
     if (!new_name) {
         dbgPrintf("!! Out of memory  I3D_frame::ResetModelName()");
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
         return I3DERR_OUTOFMEM;
     }
-    memcpy(new_name, orig_name, len);
-    delete[] name;
-    name = new_name;
-    orig_name = new_name;
+    memcpy(new_name, m_pOrigName, len);
+    delete[] m_pName;
+    m_pName = new_name;
+    m_pOrigName = new_name;
     if (renderState[RS_FAST_FIND])
         AddToFFTree();
     return I3D_OK;
@@ -461,14 +461,14 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
         }
     };
 
-    if (frame == parent)
+    if (frame == m_pParent)
         return I3D_OK;
-    I3D_frame *old_parent = parent;
+    I3D_frame *old_parent = m_pParent;
     uint keep_world = flags & I3DLINK_UPDMATRIX;
     if (keep_world)
         UpdateWMatrix();
-    if (parent) {
-        I3D_frame *frm = parent;
+    if (m_pParent) {
+        I3D_frame *frm = m_pParent;
         frm->RemoveChild(this);
         if (flags & 2)
             frm->DiscardHRBoundVol();
@@ -484,68 +484,68 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
         } else
             m = GetMatrix();
         SetPos(m(3));
-        scale = m.GetScale();
-        if (!(frm_flags & FRMFLAGS_QUAT_VALID))
-            rot.Make(f_matrix);
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        m_Scale = m.GetScale();
+        if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID))
+            m_Rot.Make(m_LocalMatrix);
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
-        f_matrix.SetDir3(m(2), m(1));
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
+        m_LocalMatrix.SetDir3(m(2), m(1));
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
     } else
-        frm_flags = (frm_flags & ~FRMFLAGS_WMAT_VALID) | FRMFLAGS_UPDATE;
+        m_FrmFlags = (m_FrmFlags & ~FRMFLAGS_WMAT_VALID) | FRMFLAGS_UPDATE;
     if (flags & 4)
         Update();
     else if (flags & 2)
         DiscardHRBoundVol();
 
-    uint hr_flags = frm_flags & (FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
+    uint hr_flags = m_FrmFlags & (FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
     if (hr_flags) {
         I3D_frame *frm;
-        for (frm = frame; frm; frm = frm->parent)
-            frm->frm_flags |= hr_flags;
-        for (frm = old_parent; frm; frm = frm->parent) {
-            switch (frm->type) {
+        for (frm = frame; frm; frm = frm->m_pParent)
+            frm->m_FrmFlags |= hr_flags;
+        for (frm = old_parent; frm; frm = frm->m_pParent) {
+            switch (frm->m_Type) {
             case FRAME_SECTOR:
-                frm->frm_flags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_OCCLUDERS);
+                frm->m_FrmFlags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_OCCLUDERS);
                 break;
             case FRAME_OCCLUDER:
-                frm->frm_flags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_SECTORS);
+                frm->m_FrmFlags &= ~(FRMFLAGS_HR_AREAS | FRMFLAGS_HR_SECTORS);
                 break;
             case FRAME_AREA:
-                frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS);
+                frm->m_FrmFlags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS);
                 break;
             default:
-                frm->frm_flags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
+                frm->m_FrmFlags &= ~(FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
             }
             // The children's flags back: the mask is 0 (& for |), so only the walk and a store of the same flags stay,
             // in PS2's code too
             uint f = 0;
-            for (I3D_frame *c = frm->child; c; c = c->next)
-                f |= c->frm_flags & FRMFLAGS_HR_SECTORS & FRMFLAGS_HR_OCCLUDERS & FRMFLAGS_HR_AREAS;
-            frm->frm_flags |= f;
+            for (I3D_frame *c = frm->m_pChild; c; c = c->m_pNext)
+                f |= c->m_FrmFlags & FRMFLAGS_HR_SECTORS & FRMFLAGS_HR_OCCLUDERS & FRMFLAGS_HR_AREAS;
+            frm->m_FrmFlags |= f;
         }
         I3D_scene *old_scene = NULL, *new_scene = NULL;
-        for (frm = old_parent; frm; frm = frm->parent) {
-            if (frm->type == FRAME_SECTOR) {
+        for (frm = old_parent; frm; frm = frm->m_pParent) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 old_scene = ((I3D_sector *)frm)->scene;
                 break;
             }
         }
-        for (frm = frame; frm; frm = frm->parent) {
-            if (frm->type == FRAME_SECTOR) {
+        for (frm = frame; frm; frm = frm->m_pParent) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 new_scene = ((I3D_sector *)frm)->scene;
                 break;
             }
         }
         if (old_scene != new_scene) {
-            if (type == FRAME_SECTOR)
+            if (m_Type == FRAME_SECTOR)
                 ((I3D_sector *)this)->AddToRemoveFromSceneRing(new_scene);
             EnumFrames(EnumHelp::I3D_EnumProc, (uint)new_scene, ENUMF_SECTOR, NULL);
-            if (type == FRAME_OCCLUDER)
+            if (m_Type == FRAME_OCCLUDER)
                 ((I3D_occluder *)this)->AddToRemoveFromSceneRing(new_scene);
             EnumFrames(EnumHelp1::I3D_EnumProc, (uint)new_scene, ENUMF_OCCLUDER, NULL);
-            if (type == FRAME_AREA)
+            if (m_Type == FRAME_AREA)
                 ((I3D_area *)this)->AddToRemoveFromSceneRing(new_scene);
             EnumFrames(EnumHelp2::I3D_EnumProc, (uint)new_scene, ENUMF_AREA, NULL);
         }
@@ -557,20 +557,20 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
 // FUNCTION: LS3DF11 0x1001b9c0
 I3D_frame *I3D_frame::AddChild(I3D_frame *frame)
 {
-    frm_flags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
-    if (!child) {
-        child = frame;
-        frame->next = NULL;
-        frame->prev = NULL;
-        frame->parent = this;
-        num_children = 1;
+    m_FrmFlags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
+    if (!m_pChild) {
+        m_pChild = frame;
+        frame->m_pNext = NULL;
+        frame->m_pPrev = NULL;
+        frame->m_pParent = this;
+        m_numChildren = 1;
     } else {
-        frame->next = child;
-        frame->prev = NULL;
-        child->prev = frame;
-        child = frame;
-        frame->parent = this;
-        num_children++;
+        frame->m_pNext = m_pChild;
+        frame->m_pPrev = NULL;
+        m_pChild->m_pPrev = frame;
+        m_pChild = frame;
+        frame->m_pParent = this;
+        m_numChildren++;
     }
     return frame;
 }
@@ -579,28 +579,28 @@ I3D_frame *I3D_frame::AddChild(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x1001ba40
 I3D_frame *I3D_frame::RemoveChild(I3D_frame *frame)
 {
-    if (frame->parent != this)
+    if (frame->m_pParent != this)
         return frame;
-    num_children--;
-    if (frame->prev) {
-        frame->prev->next = frame->next;
-        if (frame->next) {
-            frame->next->prev = frame->prev;
-            frame->next = NULL;
+    m_numChildren--;
+    if (frame->m_pPrev) {
+        frame->m_pPrev->m_pNext = frame->m_pNext;
+        if (frame->m_pNext) {
+            frame->m_pNext->m_pPrev = frame->m_pPrev;
+            frame->m_pNext = NULL;
         }
-        frame->prev = NULL;
-    } else if (frame->next) {
-        child = frame->next;
-        frame->next->prev = NULL;
-        frame->next = NULL;
+        frame->m_pPrev = NULL;
+    } else if (frame->m_pNext) {
+        m_pChild = frame->m_pNext;
+        frame->m_pNext->m_pPrev = NULL;
+        frame->m_pNext = NULL;
     } else {
-        child = NULL;
-        num_children = 0;
+        m_pChild = NULL;
+        m_numChildren = 0;
     }
-    frame->prev = NULL;
-    frame->next = NULL;
-    frame->parent = NULL;
-    frm_flags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
+    frame->m_pPrev = NULL;
+    frame->m_pNext = NULL;
+    frame->m_pParent = NULL;
+    m_FrmFlags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
     return frame;
 }
 
@@ -608,8 +608,8 @@ I3D_frame *I3D_frame::RemoveChild(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x1001baf0
 I3D_frame *I3D_frame::GetChild(int index) const
 {
-    if (index < num_children) {
-        for (I3D_frame *frm = child; frm; frm = frm->next) {
+    if (index < m_numChildren) {
+        for (I3D_frame *frm = m_pChild; frm; frm = frm->m_pNext) {
             if (!index--)
                 return frm;
         }
@@ -629,7 +629,7 @@ LS3D_RESULT I3D_frame::EnumSubtree(I3D_ENUMPROC *proc, uint user, uint flags, co
 {
     uint type_flags = flags & ENUMF_ALL;
     if (type_flags != ENUMF_ALL) {
-        switch (type) {
+        switch (m_Type) {
         case FRAME_VISUAL: type_flags &= ENUMF_VISUAL; break;
         case FRAME_LIGHT: type_flags &= ENUMF_LIGHT; break;
         case FRAME_CAMERA: type_flags &= ENUMF_CAMERA; break;
@@ -649,25 +649,25 @@ LS3D_RESULT I3D_frame::EnumSubtree(I3D_ENUMPROC *proc, uint user, uint flags, co
             goto children;
     }
     if (mask) {
-        if (!orig_name)
+        if (!m_pOrigName)
             goto children;
         if (!(flags & ENUMF_WILDMASK)) {
             if (flags & ENUMF_CASESENS) {
-                if (strcmp(mask, orig_name))
+                if (strcmp(mask, m_pOrigName))
                     goto children;
-            } else if (stricmp(mask, orig_name))
+            } else if (stricmp(mask, m_pOrigName))
                 goto children;
         } else if (flags & ENUMF_CASESENS) {
-            int len = min(strlen(mask), strlen(orig_name)) + 1;
-            for (const char *cp = mask, *cp1 = orig_name; len--; cp++, cp1++) {
+            int len = min(strlen(mask), strlen(m_pOrigName)) + 1;
+            for (const char *cp = mask, *cp1 = m_pOrigName; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
                 if (*cp != '?' && *cp != *cp1)
                     goto children;
             }
         } else {
-            int len = min(strlen(mask), strlen(orig_name)) + 1;
-            for (const char *cp = mask, *cp1 = orig_name; len--; cp++, cp1++) {
+            int len = min(strlen(mask), strlen(m_pOrigName)) + 1;
+            for (const char *cp = mask, *cp1 = m_pOrigName; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
                 if (*cp != '?' && I3Dtoupper(*cp) != I3Dtoupper(*cp1))
@@ -684,8 +684,8 @@ LS3D_RESULT I3D_frame::EnumSubtree(I3D_ENUMPROC *proc, uint user, uint flags, co
     }
 children:
     if (lastDestroyedFrame != this) {
-        for (I3D_frame *frm = child; frm; ) {
-            I3D_frame *frm_next = frm->next;
+        for (I3D_frame *frm = m_pChild; frm; ) {
+            I3D_frame *frm_next = frm->m_pNext;
             if (frm->EnumSubtree(proc, user, flags, mask) == I3DERR_CANCELED)
                 return I3DERR_CANCELED;
             frm = frm_next;
@@ -698,10 +698,10 @@ children:
 // FUNCTION: LS3DF11 0x1001bdc0
 LS3D_RESULT I3D_frame::EnumFrames(I3D_ENUMPROC *proc, uint user, uint flags, const char *mask) const
 {
-    if (child) {
+    if (m_pChild) {
         lastDestroyedFrame = NULL;
-        for (I3D_frame *frm = child; frm; ) {
-            I3D_frame *frm_next = frm->next;
+        for (I3D_frame *frm = m_pChild; frm; ) {
+            I3D_frame *frm_next = frm->m_pNext;
             if (frm->EnumSubtree(proc, user, flags, mask) == I3DERR_CANCELED)
                 return I3DERR_CANCELED;
             frm = frm_next;
@@ -735,7 +735,7 @@ I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
     uint type_flags = flags & ENUMF_ALL;
     uint ok;
     if (type_flags != ENUMF_ALL) {
-        switch (type) {
+        switch (m_Type) {
         case FRAME_VISUAL: ok = type_flags & ENUMF_VISUAL; break;
         case FRAME_LIGHT: ok = type_flags & ENUMF_LIGHT; break;
         case FRAME_CAMERA: ok = type_flags & ENUMF_CAMERA; break;
@@ -753,17 +753,17 @@ I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
     } else
         ok = 1;
     if (ok && frame_name) {
-        if (!name)
+        if (!m_pName)
             ok = 0;
         else if (!(flags & ENUMF_WILDMASK)) {
             if (flags & ENUMF_CASESENS) {
-                if (strcmp(frame_name, name))
+                if (strcmp(frame_name, m_pName))
                     ok = 0;
-            } else if (stricmp(frame_name, name))
+            } else if (stricmp(frame_name, m_pName))
                 ok = 0;
         } else if (flags & ENUMF_CASESENS) {
-            int len = min(strlen(frame_name), strlen(name)) + 1;
-            for (const char *cp = frame_name, *cp1 = name; len--; cp++, cp1++) {
+            int len = min(strlen(frame_name), strlen(m_pName)) + 1;
+            for (const char *cp = frame_name, *cp1 = m_pName; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
                 if (*cp != '?' && *cp != *cp1) {
@@ -772,8 +772,8 @@ I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
                 }
             }
         } else {
-            int len = min(strlen(frame_name), strlen(name)) + 1;
-            for (const char *cp = frame_name, *cp1 = name; len--; cp++, cp1++) {
+            int len = min(strlen(frame_name), strlen(m_pName)) + 1;
+            for (const char *cp = frame_name, *cp1 = m_pName; len--; cp++, cp1++) {
                 if (*cp == '*')
                     break;
                 if (*cp != '?' && toupper(*cp) != toupper(*cp1)) {
@@ -785,7 +785,7 @@ I3D_frame *I3D_frame::GetChildFrame(const char *frame_name, uint flags)
     }
     if (ok)
         return this;
-    for (I3D_frame *frm = child; frm; frm = frm->next) {
+    for (I3D_frame *frm = m_pChild; frm; frm = frm->m_pNext) {
         I3D_frame *found = frm->GetChildFrame(frame_name, flags);
         if (found)
             return found;
@@ -799,31 +799,31 @@ LS3D_RESULT I3D_frame::Duplicate(I3D_frame *frame)
 {
     if (!frame)
         return I3DERR_INVALIDPARAMS;
-    if (frm_flags & FRMFLAGS_FFTREE)
+    if (m_FrmFlags & FRMFLAGS_FFTREE)
         RemoveFromFFTree();
-    delete[] name;
-    uint flags = frm_flags;
-    memcpy(&f_matrix, &frame->f_matrix, sizeof(S_matrix) + sizeof(S_vector) + sizeof(S_quat));
-    frm_flags = (frame->frm_flags & 0xfa73e9f) | (flags & (FRMFLAGS_TICK | FRMFLAGS_SHADOW | FRMFLAGS_TARGET)) |
+    delete[] m_pName;
+    uint flags = m_FrmFlags;
+    memcpy(&m_LocalMatrix, &frame->m_LocalMatrix, sizeof(S_matrix) + sizeof(S_vector) + sizeof(S_quat));
+    m_FrmFlags = (frame->m_FrmFlags & 0xfa73e9f) | (flags & (FRMFLAGS_TICK | FRMFLAGS_SHADOW | FRMFLAGS_TARGET)) |
         FRMFLAGS_UPDATE;
-    callback = frame->callback;
-    update_count++;
-    SetProperty(frame->property);
-    if (!frame->name) {
-        name = NULL;
-        orig_name = NULL;
+    m_pCallback = frame->m_pCallback;
+    m_UpdateCount++;
+    SetProperty(frame->m_pProperty);
+    if (!frame->m_pName) {
+        m_pName = NULL;
+        m_pOrigName = NULL;
     } else {
-        name = new char[strlen(frame->name) + 1];
-        if (!name) {
-            orig_name = NULL;
+        m_pName = new char[strlen(frame->m_pName) + 1];
+        if (!m_pName) {
+            m_pOrigName = NULL;
             dbgPrintf("!! Out of memory  I3D_frame::Duplicate()");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return I3DERR_OUTOFMEM;
         }
-        strcpy(name, frame->name);
+        strcpy(m_pName, frame->m_pName);
         if (renderState[RS_FAST_FIND])
             AddToFFTree();
-        orig_name = frame->orig_name - frame->name + name;
+        m_pOrigName = frame->m_pOrigName - frame->m_pName + m_pName;
     }
     return I3D_OK;
 }
@@ -832,20 +832,20 @@ LS3D_RESULT I3D_frame::Duplicate(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x1001c220
 LS3D_RESULT I3D_frame::SetProperty(const char *prop)
 {
-    delete[] property;
+    delete[] m_pProperty;
     if (!prop) {
-        property = NULL;
+        m_pProperty = NULL;
         return I3D_OK;
     }
     int len = strlen(prop);
     if (!len) {
-        property = NULL;
+        m_pProperty = NULL;
         return I3D_OK;
     }
-    property = new char[len + 1];
-    if (!property)
+    m_pProperty = new char[len + 1];
+    if (!m_pProperty)
         return I3DERR_OUTOFMEM;
-    strcpy(property, prop);
+    strcpy(m_pProperty, prop);
     return I3D_OK;
 }
 
@@ -864,15 +864,15 @@ C_list<I3D_target *> UpdateTargetList;
 void I3D_frame::UpdateWMatrixProc()
 {
     UpdateMatrix();
-    if (parent) {
-        parent->UpdateWMatrix();
-        matrix = f_matrix * parent->matrix;
-        world_scale = (scale.x + scale.y + scale.z) * parent->world_scale * (1.0f / 3.0f);
+    if (m_pParent) {
+        m_pParent->UpdateWMatrix();
+        m_Matrix = m_LocalMatrix * m_pParent->m_Matrix;
+        m_WorldScale = (m_Scale.x + m_Scale.y + m_Scale.z) * m_pParent->m_WorldScale * (1.0f / 3.0f);
     } else {
-        matrix = f_matrix;
-        world_scale = (scale.x + scale.y + scale.z) * (1.0f / 3.0f);
+        m_Matrix = m_LocalMatrix;
+        m_WorldScale = (m_Scale.x + m_Scale.y + m_Scale.z) * (1.0f / 3.0f);
     }
-    frm_flags |= FRMFLAGS_WMAT_VALID;
+    m_FrmFlags |= FRMFLAGS_WMAT_VALID;
 }
 
 #pragma auto_inline(on)
@@ -883,20 +883,20 @@ void I3D_frame::UpdateWMatrixProc()
 // FUNCTION: LS3DF11 0x1001c4c0
 inline void I3D_frame::UpdateChildren()
 {
-    uint changed = frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
+    uint changed = m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
     if (changed) {
-        update_count++;
-        if (type == FRAME_VISUAL && !(((I3D_visual *)this)->vis_flags & VISF_WORLD_SPACE))
+        m_UpdateCount++;
+        if (m_Type == FRAME_VISUAL && !(((I3D_visual *)this)->vis_flags & VISF_WORLD_SPACE))
             ((I3D_visual *)this)->vis_flags &= ~VISF_WBOUND_VALID;
     }
-    for (I3D_frame *frm = child; frm; frm = frm->next) {
+    for (I3D_frame *frm = m_pChild; frm; frm = frm->m_pNext) {
         if (changed)
-            frm->frm_flags = (frm->frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_CHANGED;
+            frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_CHANGED;
         frm->UpdateChildren();
         frm->UpdateV();
-        if (frm->frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
-            frm->frm_flags &= ~(FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
-            frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID)) | FRMFLAGS_CHANGED;
+        if (frm->m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)) {
+            frm->m_FrmFlags &= ~(FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
+            m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID)) | FRMFLAGS_CHANGED;
         }
     }
 }
@@ -908,10 +908,10 @@ void I3D_frame::Update()
     UpdateChildren();
     UpdateV();
     DiscardHRBoundVol();
-    if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED) && type == FRAME_VISUAL &&
+    if (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED) && m_Type == FRAME_VISUAL &&
         !(((I3D_visual *)this)->vis_flags & VISF_WORLD_SPACE))
         ((I3D_visual *)this)->vis_flags &= ~VISF_WBOUND_VALID;
-    frm_flags &= ~(FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
+    m_FrmFlags &= ~(FRMFLAGS_UPDATE | FRMFLAGS_CHANGED);
     if (UpdateTargetList.size()) {
         static bool updating;
         if (!updating) {
@@ -929,15 +929,15 @@ void I3D_frame::Update()
 // FUNCTION: LS3DF11 0x1001c720
 void I3D_frame::DiscardHRBoundVol()
 {
-    if (type == FRAME_SECTOR)
+    if (m_Type == FRAME_SECTOR)
         return;
-    frm_flags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
-    for (I3D_frame *frm = parent; frm; frm = frm->parent) {
-        if (!(frm->frm_flags & FRMFLAGS_HR_BOUND_VALID))
+    m_FrmFlags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
+    for (I3D_frame *frm = m_pParent; frm; frm = frm->m_pParent) {
+        if (!(frm->m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
             break;
-        if (frm->type == FRAME_SECTOR)
+        if (frm->m_Type == FRAME_SECTOR)
             break;
-        frm->frm_flags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
+        frm->m_FrmFlags &= ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID);
     }
 }
 
@@ -945,39 +945,39 @@ void I3D_frame::DiscardHRBoundVol()
 // FUNCTION: LS3DF11 0x1001c770
 void I3D_frame::UpdateHRBoundVol()
 {
-    if (type == FRAME_SECTOR) {
-        frm_flags |= FRMFLAGS_HR_BOUND_VALID;
+    if (m_Type == FRAME_SECTOR) {
+        m_FrmFlags |= FRMFLAGS_HR_BOUND_VALID;
         return;
     }
-    if (type == FRAME_VISUAL) {
+    if (m_Type == FRAME_VISUAL) {
         I3D_visual *vis = (I3D_visual *)this;
         if (!(vis->vis_flags & VISF_BOUND_VALID))
             vis->UpdateBoundProc();
-        bound.bbox = vis->vis_bound.bbox;
+        m_HRBoundVol.bbox = vis->vis_bound.bbox;
     } else
-        bound.bbox.Invalidate();
-    for (I3D_frame *frm = child; frm; frm = frm->next) {
-        if (frm->type == FRAME_VOLUME)
+        m_HRBoundVol.bbox.Invalidate();
+    for (I3D_frame *frm = m_pChild; frm; frm = frm->m_pNext) {
+        if (frm->m_Type == FRAME_VOLUME)
             continue;
-        if (!(frm->frm_flags & FRMFLAGS_ON))
+        if (!(frm->m_FrmFlags & FRMFLAGS_ON))
             continue;
-        if (!(frm->frm_flags & FRMFLAGS_HR_BOUND_VALID))
+        if (!(frm->m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
             frm->UpdateHRBoundVol();
-        if (frm->bound.bbox.IsValid()) {
-            const S_vector *v = BBoxVertices(frm->bound.bbox);
+        if (frm->m_HRBoundVol.bbox.IsValid()) {
+            const S_vector *v = BBoxVertices(frm->m_HRBoundVol.bbox);
             // UpdateMatrix stays out of line: a call inside an inline function gets only a share of the budget
             const S_matrix &m = frm->GetLocalMatrix();
             for (int i = 8; i--; v++)
-                bound.bbox.Absorb(*v * m);
+                m_HRBoundVol.bbox.Absorb(*v * m);
         }
     }
-    if (bound.bbox.IsValid()) {
-        S_vector half = (bound.bbox.max - bound.bbox.min) * 0.5f;
-        bound.bsphere.pos = bound.bbox.min + half;
-        bound.bsphere.radius = (float)sqrt(half.Square());
+    if (m_HRBoundVol.bbox.IsValid()) {
+        S_vector half = (m_HRBoundVol.bbox.max - m_HRBoundVol.bbox.min) * 0.5f;
+        m_HRBoundVol.bsphere.pos = m_HRBoundVol.bbox.min + half;
+        m_HRBoundVol.bsphere.radius = (float)sqrt(half.Square());
     } else
-        bound.bsphere.radius = 0.0f;
-    frm_flags |= FRMFLAGS_HR_BOUND_VALID;
+        m_HRBoundVol.bsphere.radius = 0.0f;
+    m_FrmFlags |= FRMFLAGS_HR_BOUND_VALID;
 }
 
 // The local bound volume of a box (PC only, the name is a guess)
@@ -986,68 +986,68 @@ void I3D_frame::UpdateHRBoundVol()
 void I3D_frame::SetBoundVolume(const I3D_bbox &bbox)
 {
     if (bbox.min.x <= bbox.max.x) {
-        bound.bbox = bbox;
+        m_HRBoundVol.bbox = bbox;
         S_vector half = (bbox.max - bbox.min) * 0.5f;
-        bound.bsphere.pos = bbox.min + half;
-        bound.bsphere.radius = (float)sqrt(half.Square());
+        m_HRBoundVol.bsphere.pos = bbox.min + half;
+        m_HRBoundVol.bsphere.radius = (float)sqrt(half.Square());
     } else {
-        bound.bbox.Invalidate();
-        bound.bsphere.radius = 0.0f;
+        m_HRBoundVol.bbox.Invalidate();
+        m_HRBoundVol.bsphere.radius = 0.0f;
     }
-    frm_flags = (frm_flags & ~FRMFLAGS_HR_BOUND_W_VALID) | FRMFLAGS_HR_BOUND_VALID;
+    m_FrmFlags = (m_FrmFlags & ~FRMFLAGS_HR_BOUND_W_VALID) | FRMFLAGS_HR_BOUND_VALID;
 }
 
 // FUNCTION: LS3DF 0x1001cf90
 // FUNCTION: LS3DF11 0x1001cab0
 void I3D_frame::UpdateHRBoundVolW()
 {
-    if (!(frm_flags & FRMFLAGS_HR_BOUND_VALID))
+    if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
         UpdateHRBoundVol();
-    bound_w.bbox.Invalidate();
-    if (bound.bbox.min.x <= bound.bbox.max.x) {
-        const S_vector *v = BBoxVertices(bound.bbox);
-        bound_w.bbox.min = bound_w.bbox.max = *v * GetMatrix();
+    m_HRBoundVolW.bbox.Invalidate();
+    if (m_HRBoundVol.bbox.min.x <= m_HRBoundVol.bbox.max.x) {
+        const S_vector *v = BBoxVertices(m_HRBoundVol.bbox);
+        m_HRBoundVolW.bbox.min = m_HRBoundVolW.bbox.max = *v * GetMatrix();
         for (int i = 7; i--; ) {
             v++;
-            bound_w.bbox.Absorb(*v * GetMatrix());
+            m_HRBoundVolW.bbox.Absorb(*v * GetMatrix());
         }
-        S_vector half = (bound_w.bbox.max - bound_w.bbox.min) * 0.5f;
-        bound_w.bsphere.pos = bound_w.bbox.min + half;
-        bound_w.bsphere.radius = (float)sqrt(half.Square());
+        S_vector half = (m_HRBoundVolW.bbox.max - m_HRBoundVolW.bbox.min) * 0.5f;
+        m_HRBoundVolW.bsphere.pos = m_HRBoundVolW.bbox.min + half;
+        m_HRBoundVolW.bsphere.radius = (float)sqrt(half.Square());
     } else {
-        bound_w.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
-        bound_w.bsphere.radius = 0.0f;
+        m_HRBoundVolW.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
+        m_HRBoundVolW.bsphere.radius = 0.0f;
     }
-    frm_flags |= FRMFLAGS_HR_BOUND_W_VALID;
+    m_FrmFlags |= FRMFLAGS_HR_BOUND_W_VALID;
 }
 
 // FUNCTION: LS3DF 0x1001d1c0
 // FUNCTION: LS3DF11 0x1001cce0
 void I3D_frame::LoadImage()
 {
-    dtaRead(LoadImageHandle, &f_matrix(3), sizeof(S_vector));
-    dtaRead(LoadImageHandle, &scale, 0x1d);
+    dtaRead(LoadImageHandle, &m_LocalMatrix(3), sizeof(S_vector));
+    dtaRead(LoadImageHandle, &m_Scale, 0x1d);
     int len = 0;
     dtaRead(LoadImageHandle, &len, 1);
     if (len) {
-        name = new char[len + 1];
-        if (!name)
+        m_pName = new char[len + 1];
+        if (!m_pName)
             goto fail;
-        orig_name = name;
-        dtaRead(LoadImageHandle, name, len);
-        name[len] = 0;
+        m_pOrigName = m_pName;
+        dtaRead(LoadImageHandle, m_pName, len);
+        m_pName[len] = 0;
         if (renderState[RS_FAST_FIND])
             AddToFFTree();
     }
     dtaRead(LoadImageHandle, &len, 1);
     if (len) {
-        property = new char[len + 1];
-        if (!property)
+        m_pProperty = new char[len + 1];
+        if (!m_pProperty)
             goto fail;
-        dtaRead(LoadImageHandle, property, len);
-        property[len] = 0;
+        dtaRead(LoadImageHandle, m_pProperty, len);
+        m_pProperty[len] = 0;
     }
-    frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID | FRMFLAGS_WMAT_VALID |
+    m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID | FRMFLAGS_WMAT_VALID |
         FRMFLAGS_MAT_VALID | FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     return;
 fail:

@@ -420,7 +420,9 @@ public:
 
     virtual int __stdcall GetRegionCnt();
     virtual S_show_region *__stdcall GetRegions();
+#if ENGINE_VERSION >= 395
     virtual LS3D_RESULT __stdcall ProcessBinkFrame();
+#endif
     virtual LS3D_RESULT __stdcall RenderCurrentFrame();
     virtual LS3D_RESULT __stdcall RenderVideoUntilKeyPressOrEnd();
 
@@ -484,9 +486,11 @@ public:
     IDirectSoundNotify *m_pDSNotify;    // 0x6c
     IDirectSoundBuffer8 *m_pDSBuffer8;  // 0x70
     int m_NotifyCount;                  // 0x74, notifications since the buffer was filled from its start
-    int m_WritePos;                     // 0x78, how far the buffer is filled
+    int m_WritePos;                     // 0x78, how far the buffer is filled (1.1 only clears it)
     int m_BufferSize;                   // 0x7c
-    bool m_Filling;                     // 0x80, m_FillBuffer runs
+#if ENGINE_VERSION >= 395
+    bool m_Filling;                     // 0x80, m_FillBuffer runs (not in 1.1: the next two 4 lower, 0x88 bytes)
+#endif
     OggVorbis_File *m_pVorbisFile;      // 0x84
     int m_DtaHandle;                    // 0x88, the Ogg file
 };
@@ -525,6 +529,14 @@ public:
 // LIBRARY: LS3DF 0x100757f0
 // LIBRARY: LS3DF11 0x10072650
 // ?Release@CBaseVideoRenderer@@WNI@AGKXZ
+
+// Copies of the base classes' empty in-class functions, which 1.1's linker kept from this file and 1.2's from others
+// (OnReceiveFirstSample's, 0x100726d0 between them, is in the scene's group, I3D.h). By name: the names our PDB keeps
+// for the groups' copies (tools/foldfix.py).
+// LIBRARY: LS3DF11 0x100726c0
+// ?OnStopStreaming@CBaseRenderer@@UAEJXZ
+// LIBRARY: LS3DF11 0x100726e0
+// ?SaveImage@I3D_frame@@UAEXXZ
 
 // DECLARE_IUNKNOWN's members themselves (renbase.h)
 // LIBRARY: LS3DF 0x10075860
@@ -688,8 +700,10 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// TEMPLATE: LS3DF11 0x1004e760
 // ??1?$C_list@UDUMMY_STRUCT@@@@QAE@XZ
+
+// TEMPLATE: LS3DF11 0x1004e760
+// ??1?$C_list@URECTANGLE_INFO@@@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after

@@ -7,7 +7,7 @@
 // FUNCTION: LS3DF11 0x100578c0
 I3D_visual::I3D_visual()
 {
-    type = FRAME_VISUAL;
+    m_Type = FRAME_VISUAL;
     inv_matrix.Identity();
     vis_bound.bbox.Invalidate();
     vis_bound.bsphere.pos = S_vector(0.0f, 0.0f, 0.0f);
@@ -29,7 +29,7 @@ I3D_visual::~I3D_visual()
 // FUNCTION: LS3DF11 0x10057a50
 void I3D_visual::UpdateV()
 {
-    if (!(vis_flags & VISF_WORLD_SPACE) && frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
+    if (!(vis_flags & VISF_WORLD_SPACE) && m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
         vis_flags &= ~(VISF_WBOUND_VALID | VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
 }
 

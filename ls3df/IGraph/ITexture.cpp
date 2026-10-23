@@ -1,9 +1,11 @@
-// Textures (PS2 ITexture.cpp), at 0x10075c10-0x1007b053 in the original. Create loads a TGA or BMP image (and an
-// optional alpha image), converts it to the texture's format level by level, compressing it to DXT through S3's
-// S3TC library where asked, and saves the result next to the image to load it faster the next time. PC only: the
-// texture manager at the end of the file, which loads ITC_MANAGED textures from those saved files on a thread of
-// its own into a few pools of default pool textures. The header's zero vector has its $E after Create
-// (0x10078170), as in IGraph.cpp (see tools/autopch.py).
+// Textures (PS2 ITexture.cpp), at 0x10075c10-0x1007b053 in the original (1.1: 0x10072aa0-0x10077eaa). Create loads
+// a TGA or BMP image (and an optional alpha image), converts it to the texture's format level by level, compressing
+// it to DXT through S3's S3TC library where asked, and saves the result next to the image to load it faster the next
+// time. PC only: the texture manager at the end of the file, which loads ITC_MANAGED textures from those saved files
+// on a thread of its own into a few pools of default pool textures. The header's zero vector has its $E after Create
+// (0x10078170, 1.1 0x10074fe0), as in IGraph.cpp (see tools/autopch.py).
+// 1.1 locks every surface with D3DLOCK_NOSYSLOCK too, Create has no ITC_ANYSIZE, and the loading thread's skip
+// loop advances the out index once after its if.
 #include "IGraph/IGraph.h"
 #include "S3TC/s3_intrf.h"
 #include "dta.h"
@@ -75,6 +77,13 @@ static const short DXTCurrentVersion = 9;
 // GLOBAL: LS3DF 0x1009d8d2
 // GLOBAL: LS3DF11 0x1009a8d2
 static const short TEXCurrentVersion = 1;
+
+// The flags of every surface lock: 1.1 locks with D3DLOCK_NOSYSLOCK too
+#if ENGINE_VERSION >= 395
+#define LOCK_FLAGS 0
+#else
+#define LOCK_FLAGS D3DLOCK_NOSYSLOCK
+#endif
 
 bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void **palette, BITMAPINFOHEADER *bmi,
     bool from_memory, FILETIME *time, int handle);
@@ -293,7 +302,11 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             m_Width = sx;
         if (sy > 0)
             m_Height = sy;
+#if ENGINE_VERSION >= 395
         if (!(m_Flags & ITC_ANYSIZE)) {
+#else
+        {
+#endif
             ushort w = m_Width, h = m_Height;
             if (m_Flags & ITC_HALF) {
                 w >>= 1;
@@ -318,7 +331,9 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             w >>= 1;
             h >>= 1;
         }
+#if ENGINE_VERSION >= 395
         if (!(m_Flags & ITC_ANYSIZE))
+#endif
             TEXTURE_SIZE(w, h);
     }
 
@@ -857,7 +872,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 return I3D_OK;
             }
             D3DLOCKED_RECT lr;
-            if (FAILED(surface->LockRect(&lr, NULL, 0))) {
+            if (FAILED(surface->LockRect(&lr, NULL, LOCK_FLAGS))) {
                 dtaClose(handle);
                 dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
                 return I3D_OK;
@@ -917,7 +932,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
                 return I3D_OK;
             }
             D3DLOCKED_RECT lr;
-            if (FAILED(surface->LockRect(&lr, NULL, 0))) {
+            if (FAILED(surface->LockRect(&lr, NULL, LOCK_FLAGS))) {
                 dtaClose(handle);
                 dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
                 return I3D_OK;
@@ -991,7 +1006,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
                     surface->GetDesc(&desc);
                     m_MemSize += desc.Size;
                     D3DLOCKED_RECT lr;
-                    surface->LockRect(&lr, NULL, 0);
+                    surface->LockRect(&lr, NULL, LOCK_FLAGS);
                     dtaRead(handle, lr.pBits, desc.Size);
                     surface->UnlockRect();
                     surface->Release();
@@ -1056,7 +1071,7 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
                     surface->GetDesc(&desc);
                     m_MemSize += desc.Size;
                     D3DLOCKED_RECT lr;
-                    surface->LockRect(&lr, NULL, 0);
+                    surface->LockRect(&lr, NULL, LOCK_FLAGS);
                     dtaRead(handle, lr.pBits, desc.Size);
                     surface->UnlockRect();
                     surface->Release();
@@ -1118,7 +1133,7 @@ void *ITexture::Lock(RECT *rect, uint &pitch, ushort level)
         return NULL;
     m_pD3DTexture8->GetSurfaceLevel(level, &m_pLockSurface);
     D3DLOCKED_RECT lr;
-    m_pLockSurface->LockRect(&lr, rect, D3DLOCK_NO_DIRTY_UPDATE);
+    m_pLockSurface->LockRect(&lr, rect, D3DLOCK_NO_DIRTY_UPDATE | LOCK_FLAGS);
     pitch = lr.Pitch;
     return lr.pBits;
 }
@@ -1623,7 +1638,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     D3DSURFACE_DESC desc;
     surface->GetDesc(&desc);
     D3DLOCKED_RECT lr;
-    surface->LockRect(&lr, NULL, 0);
+    surface->LockRect(&lr, NULL, LOCK_FLAGS);
     switch (desc.Format) {
     case D3DFMT_A4R4G4B4: {
         uchar *dst = (uchar *)lr.pBits;
@@ -1926,10 +1941,10 @@ bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect
     if (FAILED(src->GetDesc(&desc)))
         return false;
     D3DLOCKED_RECT src_lr;
-    if (FAILED(src->LockRect(&src_lr, NULL, D3DLOCK_READONLY)))
+    if (FAILED(src->LockRect(&src_lr, NULL, D3DLOCK_READONLY | LOCK_FLAGS)))
         return false;
     D3DLOCKED_RECT dst_lr;
-    if (FAILED(dst->LockRect(&dst_lr, NULL, 0)))
+    if (FAILED(dst->LockRect(&dst_lr, NULL, LOCK_FLAGS)))
         return false;
     DDSURFACEDESC src_desc, dst_desc;
     src_desc.dwSize = sizeof(src_desc);
@@ -2110,7 +2125,7 @@ bool ITexture::Request()
 
 // The loading thread (IGraph::Init starts it)
 // Open: the skip loop's texture path reloads the queue's length before the shared advance of the out index in the
-// original, after it in ours, and the length at the end is in edx in the original, ecx in ours.
+// original, after it in ours, and the length at the end is in edx in the original, ecx in ours (1.1: only that).
 // FUNCTION: LS3DF 0x1007a9b0
 // FUNCTION: LS3DF11 0x10077820
 DWORD WINAPI RenderThreadProc(void *param)
@@ -2121,10 +2136,11 @@ DWORD WINAPI RenderThreadProc(void *param)
             ITexture *texture;
             // Skip the textures nobody asked for since the last frame. The out index advanced in both branches (VC6
             // merges them) gives the original's registers for texture and the pool's list (pool * 16); written once
-            // after the if, the instructions are the original's but those two swap ebx and ebp, which declarations,
-            // first appearances and the grow path's form don't move.
+            // after the if, as 1.1 has it, the instructions are the same but those two swap ebx and ebp (1.1's
+            // registers), which declarations, first appearances and the grow path's form don't move.
             while (load_queue_len > 0) {
                 texture = load_queue[load_queue_out];
+#if ENGINE_VERSION >= 395
                 if (texture) {
                     if (texture->m_pManaged->last_frame + 1 >= (uint)m_FrameCounter)
                         break;
@@ -2133,6 +2149,15 @@ DWORD WINAPI RenderThreadProc(void *param)
                         load_queue_out = 0;
                 } else if (++load_queue_out >= 256)
                     load_queue_out = 0;
+#else
+                if (texture) {
+                    if (texture->m_pManaged->last_frame + 1 >= (uint)m_FrameCounter)
+                        break;
+                    texture->m_Flags &= ~ITC_QUEUED;
+                }
+                if (++load_queue_out >= 256)
+                    load_queue_out = 0;
+#endif
                 load_queue_len--;
             }
             if (!load_queue_len) {
@@ -2183,7 +2208,7 @@ DWORD WINAPI RenderThreadProc(void *param)
             slot = &pool_textures[pool][oldest];
         load:
             D3DLOCKED_RECT lr;
-            sysmem_textures[pool].surface->LockRect(&lr, NULL, 0);
+            sysmem_textures[pool].surface->LockRect(&lr, NULL, LOCK_FLAGS);
             texture->m_Width = (ushort)slot->desc.Width;
             texture->m_Height = (ushort)slot->desc.Height;
             int handle = dtaOpen(managed->file_name, false);

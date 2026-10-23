@@ -246,9 +246,9 @@ static void testVisual(I3D_visual *vis)
                 m.Identity();
                 m.SetDir3(-lineDir, S_vector(0.0f, 1.0f, 0.0f));
                 S_vector r1 = m(1);
-                m(0) *= vis->scale.x;
-                m(1) = m(2) * vis->scale.y;
-                m(2) = r1 * vis->scale.z;
+                m(0) *= vis->m_Scale.x;
+                m(1) = m(2) * vis->m_Scale.y;
+                m(2) = r1 * vis->m_Scale.z;
                 m(3) = vis->GetMatrix()(3);
                 bill_matrix = m;
                 S_matrix tmp = m;
@@ -469,7 +469,8 @@ static void testVisual(I3D_visual *vis)
                         } else if (fg->material->texture) {
                             // The texel: the point's coordinates from the level's vertices, through where the line
                             // from vert0 through it meets the opposite edge. The coordinates are vectors with a zero z.
-                            const I3D_vertex *uv_verts = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+                            const I3D_vertex *uv_verts =
+                                (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
                             S_vector uv0(uv_verts[faces->vi[0]].tex.u, uv_verts[faces->vi[0]].tex.v, 0.0f);
                             S_vector uv1(uv_verts[faces->vi[1]].tex.u, uv_verts[faces->vi[1]].tex.v, 0.0f);
                             S_vector uv2(uv_verts[faces->vi[2]].tex.u, uv_verts[faces->vi[2]].tex.v, 0.0f);
@@ -593,7 +594,8 @@ static void testVisual(I3D_visual *vis)
                         } else if (fg->material->texture) {
                             // The texel: the point's coordinates from the level's vertices, through where the line
                             // from vert0 through it meets the opposite edge. The coordinates are vectors with a zero z.
-                            const I3D_vertex *uv_verts = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+                            const I3D_vertex *uv_verts =
+                                (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
                             S_vector uv0(uv_verts[faces->vi[0]].tex.u, uv_verts[faces->vi[0]].tex.v, 0.0f);
                             S_vector uv1(uv_verts[faces->vi[1]].tex.u, uv_verts[faces->vi[1]].tex.v, 0.0f);
                             S_vector uv2(uv_verts[faces->vi[2]].tex.u, uv_verts[faces->vi[2]].tex.v, 0.0f);
@@ -754,7 +756,7 @@ static void testSubtree(I3D_frame *frm)
 {
     if (frm == pWSubTree)
         return;
-    if (!(frm->frm_flags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
+    if (!(frm->m_FrmFlags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
         return;
     const I3D_bbox &bb = frm->GetHRBoundVolumeW().bbox;
     if (bb.IsValid()) {
@@ -780,7 +782,7 @@ static void testSubtree(I3D_frame *frm)
             }
         }
     }
-    for (I3D_frame *f = frm->child; f; f = f->next) {
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext) {
         if (breakTests)
             break;
         if (cbResult == COLL_ACCEPT_STOP)
@@ -1067,9 +1069,9 @@ static void sphTestVisual(I3D_visual *vis)
                 m.Identity();
                 m.SetDir3(-lineDir, S_vector(0.0f, 1.0f, 0.0f));
                 S_vector r1 = m(1);
-                m(0) *= vis->scale.x;
-                m(1) = m(2) * vis->scale.y;
-                m(2) = r1 * vis->scale.z;
+                m(0) *= vis->m_Scale.x;
+                m(1) = m(2) * vis->m_Scale.y;
+                m(2) = r1 * vis->m_Scale.z;
                 m(3) = vis->GetMatrix()(3);
                 break;
             }
@@ -1367,7 +1369,7 @@ static void sphTestSubtree(I3D_frame *frm)
 {
     if (frm == pWSubTree)
         return;
-    if (!(frm->frm_flags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
+    if (!(frm->m_FrmFlags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
         return;
     const I3D_bsphere &bs = frm->GetHRBoundVolumeW().bsphere;
     if (bs.radius > 0.0f) {
@@ -1395,7 +1397,7 @@ static void sphTestSubtree(I3D_frame *frm)
             }
         }
     }
-    for (I3D_frame *f = frm->child; f; f = f->next) {
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext) {
         if (breakTests)
             break;
         if (cbResult == COLL_ACCEPT_STOP)
@@ -1503,7 +1505,7 @@ I3D_frame *I3D_scene::TestColSphereVisual(const S_vector &from, const S_vector &
     cbResult = COLL_ACCEPT;
     cbContext = NULL;
     pThisScene = this;
-    if (!(vis->frm_flags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
+    if (!(vis->m_FrmFlags & FRMFLAGS_ON) && !(colFlags & COLF_HIDDEN))
         return NULL;
     const I3D_bvolume &bv = vis->GetWBoundVolume();
     if (BoxIntersect(sphBox, bv.bbox) && SphereIntersect(bv.bsphere) &&

@@ -1,6 +1,8 @@
-// The scene (PS2 I3d_scene.cpp), at 0x10048a00-0x1004e9b0 in the original: I3D_scene in PS2's order, with the PC's
-// shadow and mirror lists after Close. After the last function come the copies of the C_list functions of the weather's
-// structures, and of the scene's inline functions, the linker kept. Names are the PS2 build's unless noted.
+// The scene (PS2 I3d_scene.cpp), at 0x10048a00-0x1004e9b0 in the original (1.1's 0x10046950-0x1004c810): I3D_scene in
+// PS2's order, with the PC's shadow and mirror lists after Close. After the last function come the copies of the C_list
+// functions of the weather's structures, and of the scene's inline functions, the linker kept. Names are the PS2
+// build's unless noted. 1.1's SetAnimTime leaves last_time; its weather's vertex buffer has 1.1's own Lock and m_Free
+// (VBManager.h).
 // - /YX (tools/autopch.py): the header's zero vector has its $E after SetBackdropRange (0x1004a860), ours after
 //   DeleteShadow, and the copies of the class's in-class functions come at the file's end, ours after GetAnimBlend: the
 //   original's headers have more inline code before them.
@@ -87,7 +89,7 @@ ITexture *pSnowTexture = NULL;
 // FUNCTION: LS3DF11 0x10046a00
 I3D_scene::I3D_scene()
 {
-    type = FRAME_SCENE;
+    m_Type = FRAME_SCENE;
     ipol_set = NULL;
     cb_flags = 0;
     callback = NULL;
@@ -109,7 +111,7 @@ I3D_scene::I3D_scene()
     areas = NULL;
     areas_changed = false;
     listener = NULL;
-    frm_flags |= FRMFLAGS_LOCKED;
+    m_FrmFlags |= FRMFLAGS_LOCKED;
 
     static I3D_bbox bigBox(S_vector(-10000.0f, -10000.0f, -10000.0f), S_vector(10000.0f, 10000.0f, 10000.0f));
 
@@ -117,24 +119,24 @@ I3D_scene::I3D_scene()
     primary_sector->I3D_frame::SetName("Primary sector");
     primary_sector->scene = this;
     primary_sector->sct_flags |= SCTF_PRIMARY;
-    primary_sector->frm_flags |= FRMFLAGS_LOCKED;
+    primary_sector->m_FrmFlags |= FRMFLAGS_LOCKED;
     primary_sector->SetBoundVolume(bigBox);
     backdrop_sector = (I3D_sector *)pI3DDriver->CreateFrame(FRAME_SECTOR);
     backdrop_sector->I3D_frame::SetName("Backdrop sector");
     backdrop_sector->scene = this;
     backdrop_sector->sct_flags |= SCTF_BACKDROP;
-    backdrop_sector->frm_flags |= FRMFLAGS_LOCKED;
+    backdrop_sector->m_FrmFlags |= FRMFLAGS_LOCKED;
     backdrop_sector->SetBoundVolume(bigBox);
     omni_sector = (I3D_sector *)pI3DDriver->CreateFrame(FRAME_SECTOR);
     omni_sector->I3D_frame::SetName("Omni sector");
     omni_sector->scene = this;
     omni_sector->sct_flags |= SCTF_OMNI;
-    omni_sector->frm_flags |= FRMFLAGS_LOCKED;
+    omni_sector->m_FrmFlags |= FRMFLAGS_LOCKED;
     near_sector = (I3D_sector *)pI3DDriver->CreateFrame(FRAME_SECTOR);
     near_sector->I3D_frame::SetName("Near sector");
     near_sector->scene = this;
     near_sector->sct_flags |= SCTF_NEAR;
-    near_sector->frm_flags |= FRMFLAGS_LOCKED;
+    near_sector->m_FrmFlags |= FRMFLAGS_LOCKED;
     SetRect(&viewport, 0, 0, pGlobalIGraph->Scrn_sx(), pGlobalIGraph->Scrn_sy());
 
     WSRefCnt++;
@@ -253,7 +255,7 @@ void I3D_scene::AddFrame(I3D_frame *frame)
 {
     if (frame->m_pOwner == frame)
         return;
-    frame->ref++;
+    frame->m_RefCount++;
     frame->DeleteFromOwner();
     frame->m_pOwner = this;
     owned_frames.push_back(frame);
@@ -265,7 +267,7 @@ void I3D_scene::AddFrame(I3D_frame *frame)
             return;
     }
     tick_frames.push_back(frame);
-    frame->frm_flags |= FRMFLAGS_TICK;
+    frame->m_FrmFlags |= FRMFLAGS_TICK;
 }
 
 // FUNCTION: LS3DF 0x10049400
@@ -274,11 +276,11 @@ LS3D_RESULT I3D_scene::DeleteFrame(I3D_frame *frame)
 {
     if (owned_frames.remove(frame)) {
         frame->m_pOwner = NULL;
-        if (frame->frm_flags & FRMFLAGS_TICK) {
-            frame->frm_flags &= ~FRMFLAGS_TICK;
+        if (frame->m_FrmFlags & FRMFLAGS_TICK) {
+            frame->m_FrmFlags &= ~FRMFLAGS_TICK;
             tick_frames.remove(frame);
         }
-        if (frame->ref > 0)
+        if (frame->m_RefCount > 0)
             frame->Release();
         return I3D_OK;
     }
@@ -311,7 +313,7 @@ float I3D_scene::GetLightness(const S_vector &pos, I3D_sector *sector, uint flag
     I3D_light **lights = &sector->lights[0];
     for (int i = sector->lights.size(); i--; ) {
         I3D_light *lt = lights[i];
-        if (!(lt->frm_flags & FRMFLAGS_ON))
+        if (!(lt->m_FrmFlags & FRMFLAGS_ON))
             continue;
         if (!(lt->mode & I3DLIGHTMODE_LIGHTNESS))
             continue;
@@ -377,7 +379,7 @@ void I3D_scene::SetActiveCamera(I3D_camera *cam)
     }
     current_camera = cam;
     if (cam) {
-        cam->ref++;
+        cam->m_RefCount++;
         current_camera->scene = this;
         current_camera->sector = GetSector(current_camera->GetMatrix()(3), NULL);
     }
@@ -444,7 +446,7 @@ LS3D_RESULT I3D_scene::TransformPoints(const S_vector *in, S_vector4 *out, uint 
 void I3D_scene::AddTickFrame(I3D_frame *frame)
 {
     tick_frames.push_back_unique(frame);
-    frame->frm_flags |= FRMFLAGS_TICK;
+    frame->m_FrmFlags |= FRMFLAGS_TICK;
 }
 
 // FUNCTION: LS3DF 0x1004a050
@@ -452,7 +454,7 @@ void I3D_scene::AddTickFrame(I3D_frame *frame)
 LS3D_RESULT I3D_scene::DeleteTickFrame(I3D_frame *frame)
 {
     if (tick_frames.remove(frame)) {
-        frame->frm_flags &= ~FRMFLAGS_TICK;
+        frame->m_FrmFlags &= ~FRMFLAGS_TICK;
         return I3D_OK;
     }
     return I3DERR_OBJECTNOTFOUND;
@@ -515,7 +517,7 @@ I3D_sector *I3D_scene::GetSector(const S_vector &pos, I3D_sector **list, int num
 LS3D_RESULT I3D_scene::SetFrameSectorPos(I3D_frame *frame, const S_vector &pos) const
 {
     I3D_frame *frm;
-    for (frm = frame->parent; frm; frm = frm->parent) {
+    for (frm = frame->m_pParent; frm; frm = frm->m_pParent) {
         if (frm->GetType() == FRAME_SECTOR) {
             if (((I3D_sector *)frm)->sct_flags & SCTF_BACKDROP)
                 return I3D_OK;
@@ -549,10 +551,10 @@ LS3D_RESULT I3D_scene::Open(const char *file_name, uint flags, I3D_LOAD_CB_PROC 
 void I3D_scene::Close()
 {
     UnloadManagedTextures();
-    primary_sector->next_visual = NULL;
-    backdrop_sector->next_visual = NULL;
-    omni_sector->next_visual = NULL;
-    near_sector->next_visual = NULL;
+    primary_sector->m_pNextVisual = NULL;
+    backdrop_sector->m_pNextVisual = NULL;
+    omni_sector->m_pNextVisual = NULL;
+    near_sector->m_pNextVisual = NULL;
     CurrentActiveAreaList.clear();
     for (int i = primary_sector->sounds.size(); i--; )
         primary_sector->DeleteSound(primary_sector->sounds[0]);
@@ -678,7 +680,7 @@ void I3D_scene::SetSpace(bool world)
 // FUNCTION: LS3DF11 0x100488b0
 static void sceneSS(I3D_frame *frm)
 {
-    if (frm->frm_flags & (FRMFLAGS_TARGET | 0x10000000))
+    if (frm->m_FrmFlags & (FRMFLAGS_TARGET | 0x10000000))
         return;
     I3D_FRAME_TYPE type = frm->GetType();
     if (type == FRAME_VOLUME || type == FRAME_MODEL)
@@ -686,7 +688,7 @@ static void sceneSS(I3D_frame *frm)
     if ((type == FRAME_VISUAL && ((I3D_visual *)frm)->visual_type == I3D_VISUAL_OBJECT) ||
         ((I3D_visual *)frm)->visual_type == I3D_VISUAL_LIT_OBJECT)
         ((I3D_visual *)frm)->SetSpace(SetSpaceParam);
-    for (I3D_frame *f = frm->child; f; f = f->next)
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext)
         sceneSS(f);
 }
 
@@ -930,7 +932,9 @@ LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
     if (!ips)
         return I3DERR_OBJECTNOTFOUND;
     ips->anims[index].time = time;
+#if ENGINE_VERSION >= 395
     ips->anims[index].last_time = time;
+#endif
     ips->changed = true;
     return I3D_OK;
 }
@@ -975,7 +979,8 @@ I3D_interpolator **I3D_scene::GetInterpolators() const
     return &ipol_set->interpolators[0];
 }
 
-// Rain, or snow with WSF_SNOW; the other flags but WSF_ON are reset
+// Rain, or snow with WSF_SNOW; the other flags but WSF_ON are reset. Open in 1.1: the list's reset is scheduled one
+// FPU instruction later (its place in the source and the sqrt's spellings don't move it).
 // FUNCTION: LS3DF 0x1004b3b0
 // FUNCTION: LS3DF11 0x10049310
 void I3D_scene::WeatherSystemReset()
@@ -1023,7 +1028,7 @@ void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 {
     S_matrix m = dummy->GetMatrix();
     ds->dummy = dummy;
-    ds->update_count = dummy->update_count;
+    ds->update_count = dummy->m_UpdateCount;
     const I3D_bbox &bb = dummy->bbox;
     S_vector v_max = bb.max * m;
     S_vector v_min = bb.min * m;
@@ -1050,7 +1055,7 @@ void m_PrepareDummyStruct(DUMMY_STRUCT *ds, I3D_dummy *dummy)
 // FUNCTION: LS3DF11 0x10049b20
 void I3D_scene::WeatherSystemAddDummy(I3D_dummy *dummy)
 {
-    if (dummy->frm_flags & FRMFLAGS_WEATHER)
+    if (dummy->m_FrmFlags & FRMFLAGS_WEATHER)
         return;
     for (int i = ws_dummies.size(); i--; ) {
         if (ws_dummies[i].dummy == dummy)
@@ -1059,7 +1064,7 @@ void I3D_scene::WeatherSystemAddDummy(I3D_dummy *dummy)
     DUMMY_STRUCT ds;
     m_PrepareDummyStruct(&ds, dummy);
     ws_dummies.push_back(ds);
-    dummy->frm_flags |= FRMFLAGS_WEATHER;
+    dummy->m_FrmFlags |= FRMFLAGS_WEATHER;
 }
 
 // FUNCTION: LS3DF 0x1004bc30
@@ -1072,7 +1077,7 @@ void I3D_scene::WeatherSystemDelDummy(I3D_dummy *dummy)
             break;
         }
     }
-    dummy->frm_flags &= ~FRMFLAGS_WEATHER;
+    dummy->m_FrmFlags &= ~FRMFLAGS_WEATHER;
 }
 
 // FUNCTION: LS3DF 0x1004bcc0
@@ -1097,7 +1102,9 @@ DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 // I3DIntAsFloat's slot, squared through fld st(0)), and the two cases differ in order, so they aren't merged; ours
 // multiplies the new one from memory and merges the two. The sums done in double ((double)x * x + (double)y * y)
 // give the original's instructions with other pops; a local, the other order, S_vector2's Magnitude, this-> or a
-// helper don't.
+// helper don't. 1.1 has the cases mirrored (the other range squared first), the double sums the same effect; and
+// its inlined Lock keeps the buffer in eax where it is locked already and copies it to ebp for the call (ours: in ebp
+// throughout).
 // FUNCTION: LS3DF 0x1004bce0
 // FUNCTION: LS3DF11 0x10049c40
 void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
@@ -1236,7 +1243,7 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
                 color = ws_color;
                 color_2 = ws_color_2;
             }
-            WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, 0);
+            WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, BUFFER_LOCK_FLAGS);
             for (uint i = ws_count; i--; v += 12) {
                 v[0].color = color_2;
                 v[1].color = color_2;
@@ -1316,7 +1323,8 @@ uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
 // Open: the rain's blend computes ws_dir * (1 - t) first in the original, with both factors on the FPU stack, which
 // dir * t + ws_dir * (1 - t) gives (and PS2's call order agrees), but that form moves most of the frame's slots; the
 // vertex buffer lock's early return computes the vertex's address apart (the index in ecx); the corners' pushes are
-// scheduled differently.
+// scheduled differently. 1.1: its frame puts the slot of v (shared with earlier float temporaries) above d's and j's,
+// ours below; v's register and reloads follow.
 // FUNCTION: LS3DF 0x1004c660
 // FUNCTION: LS3DF11 0x1004a520
 void I3D_scene::m_UpdateWeatherSystem()
@@ -1397,7 +1405,7 @@ void I3D_scene::m_UpdateWeatherSystem()
             ws_elements.push_back(e);
         }
     }
-    WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, 0);
+    WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, BUFFER_LOCK_FLAGS);
     if (WSLastScene != this) {
         uint color, color_2;
         if (m_ProblemFlags & 4) {
@@ -1474,9 +1482,9 @@ void I3D_scene::m_UpdateWeatherSystem()
         WSNearSectorList.reserve(num_sectors);
         I3D_sector *sct = sectors;
         for (int i = num_sectors; i--; sct = sct->next_in_scene) {
-            if (!(sct->frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+            if (!(sct->m_FrmFlags & FRMFLAGS_HR_BOUND_W_VALID))
                 sct->UpdateHRBoundVolW();
-            I3D_bsphere bs = sct->bound_w.bsphere;
+            I3D_bsphere bs = sct->m_HRBoundVolW.bsphere;
             if ((cam_pos - bs.pos).Square() < (bs.radius + ws_range) * (bs.radius + ws_range))
                 WSNearSectorList.push_back(sct);
         }
@@ -1518,7 +1526,7 @@ void I3D_scene::m_UpdateWeatherSystem()
             int j;
             for (j = ws_dummies.size(); j--; ) {
                 DUMMY_STRUCT &ds = ws_dummies[j];
-                if (ds.update_count != ds.dummy->update_count)
+                if (ds.update_count != ds.dummy->m_UpdateCount)
                     m_PrepareDummyStruct(&ds, ds.dummy);
                 if ((ds.center - pos).Square() > ds.radius_2 && (ds.center - pos2).Square() > ds.radius_2)
                     continue;
@@ -1612,7 +1620,9 @@ void I3D_scene::m_RenderWeatherSystem()
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 }
 
-// Whether the frame's bounding sphere is inside the camera's view
+// Whether the frame's bounding sphere is inside the camera's view. Open in 1.1: the products' order in its sums (the
+// near plane's x term pos first, the side planes' x, y, z). The order moves with changes elsewhere (1.1's VBManager.h
+// changed it, parentheses and the locals' order then matter or don't), so 1.1's other header differences come first.
 // FUNCTION: LS3DF 0x1004e550
 // FUNCTION: LS3DF11 0x1004c3e0
 bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
@@ -1623,9 +1633,9 @@ bool I3D_scene::TestVisibility(I3D_frame *frame, I3D_camera *cam)
     if (frame->GetType() == FRAME_VISUAL)
         bvol = &((I3D_visual *)frame)->GetWBoundVolume();
     else {
-        if (!(frame->frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+        if (!(frame->m_FrmFlags & FRMFLAGS_HR_BOUND_W_VALID))
             frame->UpdateHRBoundVolW();
-        bvol = &frame->bound_w;
+        bvol = &frame->m_HRBoundVolW;
     }
     const S_vector &pos = bvol->bsphere.pos;
     float r = bvol->bsphere.radius;

@@ -72,9 +72,9 @@ I3D_occluder::I3D_occluder()
     edge_faces = NULL;
     planes = NULL;
     scene = NULL;
-    frm_flags |= FRMFLAGS_HR_OCCLUDERS;
-    frm_flags |= FRMFLAGS_UNKNOWN_8000000;
-    type = FRAME_OCCLUDER;
+    m_FrmFlags |= FRMFLAGS_HR_OCCLUDERS;
+    m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
+    m_Type = FRAME_OCCLUDER;
     center = ZeroSVector;
     radius = 0.0f;
     radius_2 = 0.0f;
@@ -150,7 +150,7 @@ void I3D_occluder::AddToRemoveFromSceneRing(I3D_scene *new_scene)
 // FUNCTION: LS3DF11 0x10038cb0
 LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
 {
-    if (frame == parent)
+    if (frame == m_pParent)
         return I3D_OK;
     AddToRemoveFromSceneRing(NULL);
     if (frame) {
@@ -159,7 +159,7 @@ LS3D_RESULT I3D_occluder::LinkTo(I3D_frame *frame, uint flags)
             scn = (I3D_scene *)frame->m_pOwner;
         else {
             scn = NULL;
-            for (I3D_frame *f = frame; f; f = f->parent) {
+            for (I3D_frame *f = frame; f; f = f->m_pParent) {
                 if (f->GetType() == FRAME_SECTOR) {
                     scn = ((I3D_sector *)f)->scene;
                     break;
@@ -348,7 +348,7 @@ void I3D_occluder::UpdateShadow()
         return;
     if (!scene) {
         I3D_scene *scn = NULL;
-        for (I3D_frame *f = parent; f; f = f->parent) {
+        for (I3D_frame *f = m_pParent; f; f = f->m_pParent) {
             if (f->GetType() == FRAME_SECTOR) {
                 scn = ((I3D_sector *)f)->scene;
                 break;
@@ -360,9 +360,9 @@ void I3D_occluder::UpdateShadow()
             dbgPrintf("!! Occluder not in scene  i3d_occluder::UpdateShadow() this:0x%x  %s", this, GetName());
         return;
     }
-    if (!(frm_flags & FRMFLAGS_UNKNOWN_10000) || !(frm_flags & FRMFLAGS_ON))
+    if (!(m_FrmFlags & FRMFLAGS_UNKNOWN_10000) || !(m_FrmFlags & FRMFLAGS_ON))
         return;
-    if (parent && !(parent->frm_flags & FRMFLAGS_ON))
+    if (m_pParent && !(m_pParent->m_FrmFlags & FRMFLAGS_ON))
         return;
 
     S_vector v;
@@ -520,9 +520,9 @@ static void POIS_EnumProc(I3D_frame *frm)
 {
     if (!pPOISector->occluders)
         return;
-    for (I3D_frame *f = frm; f; f = f->next_visual) {
+    for (I3D_frame *f = frm; f; f = f->m_pNextVisual) {
         int rn = RenderNumber - 1;
-        if (f->render_number != RenderNumber)
+        if (f->m_RenderNumber != RenderNumber)
             continue;
         bool vis = true;
         for (I3D_occluder *o = pPOISector->occluders; o; o = o->next_in_sector) {
@@ -558,7 +558,7 @@ static void POIS_EnumProc(I3D_frame *frm)
             }
         }
         if (!vis)
-            f->render_number = rn;
+            f->m_RenderNumber = rn;
     }
 }
 
@@ -579,10 +579,10 @@ inline void ProcessOccludersInSector(I3D_sector *sct)
 // FUNCTION: LS3DF11 0x1003a400
 void UOL_EnumProc(I3D_frame *frm)
 {
-    for (I3D_frame *f = frm->child; f; f = f->next) {
-        if (f->type == FRAME_CAMERA || f->type == FRAME_SECTOR)
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext) {
+        if (f->m_Type == FRAME_CAMERA || f->m_Type == FRAME_SECTOR)
             continue;
-        if (f->type == FRAME_OCCLUDER) {
+        if (f->m_Type == FRAME_OCCLUDER) {
             if (!PO_pSector->occluders)
                 PO_pSector->occluders = (I3D_occluder *)f;
             else

@@ -24,15 +24,19 @@ C_IBManager cIBMan;
 C_IBuffer::C_IBuffer()
 {
     data = NULL;
+#if ENGINE_VERSION >= 395
     flags = 0;
+#endif
     usage = 0;
     ib = NULL;
     num_indices = 0;
     num_free = 0;
     pool = D3DPOOL_MANAGED;
+#if ENGINE_VERSION >= 395
     lock_index = -1;
     used_blocks.SetGrowSize(256);
     used_blocks.reserve(256);
+#endif
 }
 
 // Clears the COMPLETE_IB_STRUCT of every block still given out
@@ -45,6 +49,7 @@ C_IBuffer::C_IBuffer()
 // FUNCTION: LS3DF11 0x100582a0
 C_IBuffer::~C_IBuffer()
 {
+#if ENGINE_VERSION >= 395
     S_IB_block **p = &used_blocks[0];
     for (int i = used_blocks.size(); i--; p++) {
         memset((*p)->owner, 0, sizeof(COMPLETE_IB_STRUCT));
@@ -66,6 +71,18 @@ C_IBuffer::~C_IBuffer()
         cIBMan.locked_buffers.erase(lock_index);
         lock_index = -1;
     }
+#else
+    // As VBManager.cpp's
+    std::list<S_IB_block *>::iterator i;
+    for (i = used_blocks.begin(); i != used_blocks.end(); ++i) {
+        memset((*i)->owner, 0, sizeof(COMPLETE_IB_STRUCT));
+        delete *i;
+    }
+    std::multiset<S_IB_block *, S_IB_block_less>::iterator it;
+    for (it = free_blocks.begin(); it != free_blocks.end(); ++it)
+        delete *it;
+    Unlock();
+#endif
     if (ib)
         ib->Release();
     if (pI3DDriver)
@@ -79,10 +96,9 @@ C_IBuffer::~C_IBuffer()
 bool C_IBuffer::m_Init(uint usage, uint count)
 {
     this->usage = usage;
-    if (count < 0x10000)
-        count = 0x10000;
-    num_indices = count;
-    num_free = count;
+    uint num = max(0x10000, count);
+    num_indices = num;
+    num_free = num;
     if (!(usage & D3DUSAGE_DYNAMIC) && (usage & D3DUSAGE_SOFTWAREPROCESSING))
         pool = D3DPOOL_MANAGED;
     else
@@ -95,18 +111,28 @@ bool C_IBuffer::m_Init(uint usage, uint count)
             pool = D3DPOOL_MANAGED;
             hr = m_pD3DDevice8->CreateIndexBuffer(num_indices * 2, this->usage, D3DFMT_INDEX16, pool, &ib);
             if (FAILED(hr)) {
+#if ENGINE_VERSION >= 395
                 DX_ERROR(hr, 129);
                 ib = NULL;
                 ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+#else
+                // 1.1 doesn't stop the game
+                DX_ERROR(hr, 119);
+                ib = NULL;
+#endif
                 return false;
             }
         }
     }
     free_blocks.insert(new S_IB_block(NULL, 0, num_indices));
     pI3DDriver->m_RecomputeUsedVRAM();
+#if ENGINE_VERSION >= 395
     ib->Lock(0, 0, &data, this->usage & D3DUSAGE_DYNAMIC ? D3DLOCK_DISCARD : 0);
     lock_index = cIBMan.locked_buffers.size();
     cIBMan.locked_buffers.push_back(this);
+#else
+    ib->Lock(0, 0, &data, D3DLOCK_NOSYSLOCK);
+#endif
     return true;
 }
 
@@ -115,8 +141,10 @@ bool C_IBuffer::m_Init(uint usage, uint count)
 // FUNCTION: LS3DF11 0x10058670
 int C_IBuffer::m_Alloc(uint count, COMPLETE_IB_STRUCT *owner)
 {
+    // ++it: with 1.1's std::list of used blocks, it++ leaves the insertion's pair constructor out of line (1.2 compiles
+    // both alike)
     std::multiset<S_IB_block *, S_IB_block_less>::iterator it;
-    for (it = free_blocks.begin(); it != free_blocks.end(); it++) {
+    for (it = free_blocks.begin(); it != free_blocks.end(); ++it) {
         S_IB_block *block = *it;
         int rest = block->size - count;
         if (rest >= 0) {
@@ -138,9 +166,15 @@ int C_IBuffer::m_Alloc(uint count, COMPLETE_IB_STRUCT *owner)
 // FUNCTION: LS3DF11 0x10058810
 bool C_IBuffer::m_Free(uint index)
 {
+#if ENGINE_VERSION >= 395
     S_IB_block **p = &used_blocks[0];
     for (int i = 0; i < used_blocks.size(); i++, p++) {
         S_IB_block *block = *p;
+#else
+    std::list<S_IB_block *>::iterator i;
+    for (i = used_blocks.begin(); i != used_blocks.end(); ++i) {
+        S_IB_block *block = *i;
+#endif
         if (block->index == index) {
             num_free += block->size;
             used_blocks.erase(i);
@@ -187,11 +221,14 @@ bool C_IBuffer::m_Free(uint index)
 // FUNCTION: LS3DF11 0x100589c0
 C_IBManager::C_IBManager()
 {
+#if ENGINE_VERSION >= 395
     locked_buffers.reserve(256);
     locked_buffers.SetGrowSize(256);
+#endif
 }
 
 // FUNCTION: LS3DF 0x1005b5c0
+// FUNCTION: LS3DF11 0x10058a70
 C_IBManager::~C_IBManager()
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
@@ -206,7 +243,12 @@ C_IBManager::~C_IBManager()
 bool C_IBManager::m_Alloc(uint usage, uint count, COMPLETE_IB_STRUCT &ib)
 {
     std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
+#if ENGINE_VERSION >= 395
     for (it = buffers.begin(); it != buffers.end(); it++) {
+#else
+    // ++it in 1.1, it++ in 1.2: each gives its original's inlining (the other does neither)
+    for (it = buffers.begin(); it != buffers.end(); ++it) {
+#endif
         C_IBuffer *buffer = *it;
         if (buffer->usage == usage && buffer->num_free >= count) {
             int base = buffer->m_Alloc(count, &ib);
@@ -230,17 +272,21 @@ bool C_IBManager::m_Alloc(uint usage, uint count, COMPLETE_IB_STRUCT &ib)
     return true;
 }
 
+#if ENGINE_VERSION >= 395
+// 1.1's is inline (IBManager.h)
 // FUNCTION: LS3DF 0x1005b940
 void C_IBManager::m_Free(COMPLETE_IB_STRUCT &ib)
 {
     if (ib.buffer)
         ib.buffer->m_Free(ib.base);
 }
+#endif
 
 // FUNCTION: LS3DF 0x1005b960
 // FUNCTION: LS3DF11 0x10058f30
 void C_IBManager::m_UnlockAllIBuffers()
 {
+#if ENGINE_VERSION >= 395
     C_IBuffer **p = &locked_buffers[0];
     for (int i = locked_buffers.size(); i--; p++) {
         (*p)->ib->Unlock();
@@ -252,6 +298,11 @@ void C_IBManager::m_UnlockAllIBuffers()
         (*p)->lock_index = -1;
     }
     locked_buffers.reset();
+#else
+    std::multiset<C_IBuffer *, S_IBuffer_less>::iterator it;
+    for (it = buffers.begin(); it != buffers.end(); it++)
+        (*it)->Unlock();
+#endif
 }
 
 // Deletes the buffers that have nothing given out

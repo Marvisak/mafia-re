@@ -2,6 +2,8 @@
 // DirectX SDK's texture renderer, other files through DirectShow's own rendering, and, PC only, Ogg Vorbis files,
 // decoded on a thread of their own into a DirectSound buffer. A movie is split into textures no larger than the card
 // allows (the regions), which RenderCurrentFrame draws.
+// 1.1's (0x10070430-0x10072720) has no ProcessBinkFrame, a smaller Ogg buffer that each notification refills behind
+// itself (1.2 fills up to the play position, guarded by m_Filling), and Stop doesn't rewind Bink and DirectShow movies.
 // Unlike the engine's other files, this one is compiled without /Gr: its helpers are __cdecl, and so are vorbisfile's
 // functions and callbacks, which libvorbis' header declares without a calling convention.
 // The file ends with the texture renderer's adjustor thunks, the header's zero vector's $E (0x10075800), IShow's inline
@@ -78,9 +80,15 @@ public:
     D3DFORMAT m_TextureFormat;          // 0x174, the regions' textures', from CreateRegions
 };
 
+#if ENGINE_VERSION >= 395
 // The Ogg Vorbis sound buffer: 11 notifications, one every 0xc000 bytes
 #define OGG_BUFFER_SIZE 0x84000
 #define OGG_NOTIFY_COUNT 11
+#else
+// 1.1's: 22 notifications, one every 0x4000 bytes, each refilling the part that has just played
+#define OGG_BUFFER_SIZE 0x58000
+#define OGG_NOTIFY_COUNT 22
+#endif
 
 DWORD WINAPI OggThreadProc(void *param);
 static size_t read_func(void *ptr, size_t size, size_t nmemb, void *datasource);
@@ -88,8 +96,8 @@ static int seek_func(void *datasource, ogg_int64_t offset, int whence);
 static int close_func(void *datasource);
 static long tell_func(void *datasource);
 
+#if ENGINE_VERSION >= 395
 // FUNCTION: LS3DF 0x100733a0
-// FUNCTION: LS3DF11 0x10070430
 IShow::IShow() : m_RegionList(1)
 {
     m_RefCount = 1;
@@ -122,6 +130,41 @@ IShow::IShow() : m_RegionList(1)
     SetRect(NULL);
     m_DecodedFrameNum = 0;
 }
+#else
+// 1.1's sets the stream's and the Ogg file's members after SetRect
+// FUNCTION: LS3DF11 0x10070430
+IShow::IShow() : m_RegionList(1)
+{
+    m_RefCount = 1;
+    m_Init = false;
+    m_pGraphBuilder = NULL;
+    m_pMediaControl = NULL;
+    m_pMediaSeeking = NULL;
+    m_pBasicAudio = NULL;
+    m_pMediaEvent = NULL;
+    m_pBink = NULL;
+    memset(&m_Rect, 0, sizeof(m_Rect));
+    m_Volume = 1.0f;
+    m_Flags = 0;
+    m_pTextureRenderer = NULL;
+    SetRect(NULL);
+    m_Stream = -1;
+    m_DtaHandle = -1;
+    m_DecodedFrameNum = 0;
+    m_StreamInit = false;
+    m_StreamPaused = false;
+    m_StreamDone = false;
+    m_ThreadID = 0;
+    m_Thread = NULL;
+    m_Event = NULL;
+    m_NotifyCount = 0;
+    m_pDSBuffer8 = NULL;
+    m_pDSNotify = NULL;
+    m_WritePos = 0;
+    m_BufferSize = 0;
+    m_pVorbisFile = NULL;
+}
+#endif
 
 // FUNCTION: LS3DF 0x100734c0
 // FUNCTION: LS3DF11 0x10070550
@@ -164,12 +207,12 @@ int IShow::Release()
     return m_RefCount;
 }
 
+#if ENGINE_VERSION >= 395
 // Decodes the Ogg file into the sound buffer: all of it at the start, else from where it was filled up to the play
 // position, wrapping around at the end. Past the file's end the buffer is filled with silence.
 // play is declared at the top with the other address-taken locals: declared in its block, it takes the dead
 // parameter's slot, where the original gives it one of its own and a spilled copy the parameter's.
 // FUNCTION: LS3DF 0x100735d0
-// FUNCTION: LS3DF11 0x10070660
 void IShow::m_FillBuffer(bool first)
 {
     while (m_Filling)
@@ -248,6 +291,55 @@ void IShow::m_FillBuffer(bool first)
 done:
     m_Filling = false;
 }
+#else
+// 1.1's: all of the buffer at the start, else the part the notification just played (ptr takes the dead parameter's
+// slot)
+// FUNCTION: LS3DF11 0x10070660
+void IShow::m_FillBuffer(bool first)
+{
+    char *ptr;
+    DWORD size;
+    int bitstream;
+    if (first) {
+        if (SUCCEEDED(m_pDSBuffer8->Lock(0, 0, (void **)&ptr, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER))) {
+            char *buffer = ptr;
+            int left = size;
+            while (left > 0) {
+                int n = ov_read(m_pVorbisFile, ptr, min(left, 0x1000), 0, 2, 1, &bitstream);
+                ptr += n;
+                left -= n;
+                if (n <= 0) {
+                    memset(ptr, 0, left);
+                    m_Flags |= ISHOW_EOF;
+                    break;
+                }
+            }
+            m_pDSBuffer8->Unlock(buffer, size, NULL, 0);
+        }
+    } else {
+        if (SUCCEEDED(m_pDSBuffer8->Lock(m_NotifyCount * (OGG_BUFFER_SIZE / OGG_NOTIFY_COUNT),
+                OGG_BUFFER_SIZE / OGG_NOTIFY_COUNT, (void **)&ptr, &size, NULL, NULL, 0))) {
+            char *buffer = ptr;
+            if (m_Flags & ISHOW_EOF)
+                memset(ptr, 0, size);
+            else {
+                int left = size;
+                while (left > 0) {
+                    int n = ov_read(m_pVorbisFile, ptr, min(left, 0x1000), 0, 2, 1, &bitstream);
+                    ptr += n;
+                    left -= n;
+                    if (n <= 0) {
+                        memset(ptr, 0, left);
+                        m_Flags |= ISHOW_EOF;
+                        break;
+                    }
+                }
+            }
+            m_pDSBuffer8->Unlock(buffer, size, NULL, 0);
+        }
+    }
+}
+#endif
 
 // Copies the Bink video's frame into the regions' textures
 // FUNCTION: LS3DF 0x100738a0
@@ -394,7 +486,12 @@ LS3D_RESULT IShow::Open(const char *name, uint open_flags)
             memset(&desc, 0, sizeof(desc));
             m_BufferSize = OGG_BUFFER_SIZE;
             desc.dwSize = sizeof(desc);
+#if ENGINE_VERSION >= 395
             desc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME;
+#else
+            // 1.1's buffer is in software and never asks for the play position
+            desc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_LOCSOFTWARE | DSBCAPS_CTRLVOLUME;
+#endif
             desc.dwBufferBytes = m_BufferSize;
             desc.lpwfxFormat = (WAVEFORMATEX *)&format;
             IDirectSoundBuffer *buffer;
@@ -417,7 +514,9 @@ LS3D_RESULT IShow::Open(const char *name, uint open_flags)
             m_Flags |= ISHOW_FILLED;
             m_pDSBuffer8->SetCurrentPosition(0);
             m_NotifyCount = 0;
+#if ENGINE_VERSION >= 395
             m_WritePos = 0;
+#endif
             m_Thread = CreateThread(NULL, 0, OggThreadProc, this, 0, &m_ThreadID);
             m_Flags |= ISHOW_OGG;
         } else
@@ -518,7 +617,9 @@ void IShow::Close()
         delete m_pVorbisFile;
         m_pVorbisFile = NULL;
     }
+#if ENGINE_VERSION >= 395
     m_DecodedFrameNum = 0;
+#endif
     m_Init = false;
 }
 
@@ -562,7 +663,9 @@ LS3D_RESULT IShow::Stop()
         return I3DERR_NOTINITIALIZED;
     if (m_pBink) {
         m_Flags &= ~(ISHOW_PLAYING | ISHOW_PAUSED);
+#if ENGINE_VERSION >= 395
         SetCurrentPos(0);
+#endif
         return I3D_OK;
     }
     if (m_Flags & ISHOW_OGG) {
@@ -570,11 +673,15 @@ LS3D_RESULT IShow::Stop()
         m_pDSBuffer8->SetCurrentPosition(0);
         m_Flags &= ~(ISHOW_EOF | ISHOW_PLAYING | ISHOW_PAUSED | ISHOW_FILLED);
         m_NotifyCount = 0;
+#if ENGINE_VERSION >= 395
         m_WritePos = 0;
+#endif
         return I3D_OK;
     }
     m_pMediaControl->Stop();
+#if ENGINE_VERSION >= 395
     SetCurrentPos(0);
+#endif
     m_DecodedFrameNum = 0;
     return I3D_OK;
 }
@@ -675,8 +782,8 @@ LS3D_RESULT IShow::GetRect(RECT *rc)
     return I3D_OK;
 }
 
+#if ENGINE_VERSION >= 395
 // FUNCTION: LS3DF 0x10074680
-// FUNCTION: LS3DF11 0x10071570
 LS3D_RESULT IShow::GetVideoRect(RECT *rc)
 {
     if (!m_Init)
@@ -696,6 +803,20 @@ LS3D_RESULT IShow::GetVideoRect(RECT *rc)
     rc->bottom = m_pTextureRenderer->m_lVidHeight;
     return I3D_OK;
 }
+#else
+// 1.1's knows only the texture renderer's size
+// FUNCTION: LS3DF11 0x10071570
+LS3D_RESULT IShow::GetVideoRect(RECT *rc)
+{
+    if (!m_Init || !m_pTextureRenderer)
+        return I3DERR_NOTINITIALIZED;
+    rc->left = 0;
+    rc->top = 0;
+    rc->right = m_pTextureRenderer->m_lVidWidth;
+    rc->bottom = m_pTextureRenderer->m_lVidHeight;
+    return I3D_OK;
+}
+#endif
 
 // 0 while it plays, 1 once it has stopped or ended, 2 while paused, -1 if nothing is open
 // FUNCTION: LS3DF 0x10074700
@@ -821,7 +942,8 @@ S_show_region *IShow::GetRegions()
     return &m_RegionList[0];
 }
 
-// Decodes the Bink video's next frame into the textures when it is time for it
+#if ENGINE_VERSION >= 395
+// Decodes the Bink video's next frame into the textures when it is time for it (not in 1.1)
 // FUNCTION: LS3DF 0x10074b10
 LS3D_RESULT IShow::ProcessBinkFrame()
 {
@@ -837,6 +959,7 @@ LS3D_RESULT IShow::ProcessBinkFrame()
     }
     return I3D_OK;
 }
+#endif
 
 // FUNCTION: LS3DF 0x10074b70
 // FUNCTION: LS3DF11 0x100719d0

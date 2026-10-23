@@ -16,7 +16,7 @@ C_list<I3D_target *> globalTargetList;
 // FUNCTION: LS3DF11 0x10056b50
 I3D_target::I3D_target()
 {
-    type = FRAME_TARGET;
+    m_Type = FRAME_TARGET;
     globalTargetList.push_back(this);
     target_flags = TARGETF_LOOKAT;
 }
@@ -27,7 +27,7 @@ I3D_target::~I3D_target()
 {
     I3D_frame **p = &frames[0];
     for (int i = frames.size(); i--; p++)
-        (*p)->frm_flags &= ~FRMFLAGS_TARGET;
+        (*p)->m_FrmFlags &= ~FRMFLAGS_TARGET;
     globalTargetList.remove(this);
 }
 
@@ -59,10 +59,10 @@ void I3D_target::AddToTarget(I3D_frame *frame)
 {
     if (frame == this)
         return;
-    if (frame->frm_flags & FRMFLAGS_TARGET)
+    if (frame->m_FrmFlags & FRMFLAGS_TARGET)
         DeleteFromAnyTarget(frame);
     frames.push_back(frame);
-    frame->frm_flags |= FRMFLAGS_TARGET;
+    frame->m_FrmFlags |= FRMFLAGS_TARGET;
 }
 
 // FUNCTION: LS3DF 0x100597f0
@@ -71,7 +71,7 @@ LS3D_RESULT I3D_target::DeleteFromTarget(I3D_frame *frame)
 {
     if (frames.remove(frame)) {
         if (frame)
-            frame->frm_flags &= ~FRMFLAGS_TARGET;
+            frame->m_FrmFlags &= ~FRMFLAGS_TARGET;
         return I3D_OK;
     }
     return I3DERR_OBJECTNOTFOUND;
@@ -114,7 +114,7 @@ void I3D_target::DeleteFromAnyTarget(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x10056fe0
 void I3D_target::UpdateV()
 {
-    if ((frm_flags & FRMFLAGS_ON) && (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
+    if ((m_FrmFlags & FRMFLAGS_ON) && (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
         UpdateTargetList.push_back(this);
 }
 
@@ -145,8 +145,8 @@ void I3D_target::UpdateFrames()
                 (*p)->Update();
             }
         } else if (target_flags & (TARGETF_ROT | TARGETF_POS | TARGETF_SCALE)) {
-            if ((*p)->parent) {
-                S_matrix m = (*p)->parent->GetMatrix();
+            if ((*p)->m_pParent) {
+                S_matrix m = (*p)->m_pParent->GetMatrix();
                 m.Inverse(S_matrix(m));
                 m = GetMatrix() * m;
                 if (target_flags & TARGETF_POS)
@@ -155,8 +155,8 @@ void I3D_target::UpdateFrames()
                     (*p)->SetScale(m.GetScale());
                 if (target_flags & TARGETF_ROT) {
                     I3D_frame *frm = *p;
-                    frm->f_matrix.SetDir3(m(2), m(1));
-                    frm->frm_flags = (frm->frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID |
+                    frm->m_LocalMatrix.SetDir3(m(2), m(1));
+                    frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID |
                         FRMFLAGS_QUAT_VALID | FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
                 }
             } else

@@ -1,6 +1,8 @@
-// The models (PS2 I3d_model.cpp), at 0x10033410-0x10034350 in the original: I3D_model in PS2's order. The duplication's
-// globals are defined before duplicateChildren, where their $Es are (0x10033b50-0x10033bef). The header's zero vector
-// has its $E at the end (0x10034330). Names are the PS2 build's unless noted.
+// The models (PS2 I3d_model.cpp), at 0x10033410-0x10034350 in the original (1.1's 0x100323e0-0x100333d0): I3D_model in
+// PS2's order. The duplication's globals are defined before duplicateChildren, where their $Es are
+// (0x10033b50-0x10033bef). The header's zero vector has its $E at the end (0x10034330). Names are the PS2 build's
+// unless noted. 1.1 prints its errors with dbgPrintf (out of memory, a frame or target not found, a failed
+// duplicate), where 1.2 is silent, and its SetAnimTime leaves last_time.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 
@@ -15,7 +17,7 @@ I3D_model::I3D_model()
 {
     file_name = NULL;
     ipol_set = NULL;
-    type = FRAME_MODEL;
+    m_Type = FRAME_MODEL;
 }
 
 // FUNCTION: LS3DF 0x10033480
@@ -61,6 +63,9 @@ LS3D_RESULT I3D_model::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, 
         return r;
     int *ref = (int *)new char[strlen(name) + 1 + sizeof(int)];
     if (!ref) {
+#if ENGINE_VERSION < 395
+        dbgPrintf("!! Out of memory  I3D_model::Open()");
+#endif
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
         return I3DERR_OUTOFMEM;
     }
@@ -76,7 +81,7 @@ LS3D_RESULT I3D_model::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb, 
 // FUNCTION: LS3DF11 0x10032660
 void I3D_model::AddFrame(I3D_frame *frame)
 {
-    frame->ref++;
+    frame->m_RefCount++;
     frame->DeleteFromOwner();
     frames.push_back(frame);
     frame->m_pOwner = this;
@@ -88,10 +93,13 @@ LS3D_RESULT I3D_model::DeleteFrame(I3D_frame *frame)
 {
     if (frames.remove(frame)) {
         frame->m_pOwner = NULL;
-        if (frame->ref > 0)
+        if (frame->m_RefCount > 0)
             frame->Release();
         return I3D_OK;
     }
+#if ENGINE_VERSION < 395
+    dbgPrintf("!! frame not found in the list  pFrame:0x%x  %s   I3D_model::DeleteFrame()", frame, frame->GetName());
+#endif
     return I3DERR_OBJECTNOTFOUND;
 }
 
@@ -102,6 +110,9 @@ LS3D_RESULT I3D_model::SetAnimation(I3D_animation_set *set, uint index, float bl
     if (!ipol_set) {
         ipol_set = new I3D_IPolSet(this);
         if (!ipol_set) {
+#if ENGINE_VERSION < 395
+            dbgPrintf("!! Out of memory  I3D_model::SetAnimation()");
+#endif
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return I3DERR_OUTOFMEM;
         }
@@ -182,7 +193,9 @@ LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
     if (!ips)
         return I3DERR_OBJECTNOTFOUND;
     ips->anims[index].time = time;
+#if ENGINE_VERSION >= 395
     ips->anims[index].last_time = time;
+#endif
     ips->changed = true;
     return I3D_OK;
 }
@@ -292,7 +305,7 @@ static I3D_model *pDuplOwner;
 // FUNCTION: LS3DF11 0x10032c00
 LS3D_RESULT duplicateChildren(I3D_frame *dst, I3D_frame *src)
 {
-    for (I3D_frame *frm = src->child; frm; frm = frm->next) {
+    for (I3D_frame *frm = src->m_pChild; frm; frm = frm->m_pNext) {
         I3D_frame *dup;
         I3D_FRAME_TYPE t = frm->GetType();
         if (t == FRAME_VISUAL)
@@ -301,12 +314,20 @@ LS3D_RESULT duplicateChildren(I3D_frame *dst, I3D_frame *src)
             dup = pI3DDriver->CreateFrame(t);
         else
             continue;
-        if (!dup)
+        if (!dup) {
+#if ENGINE_VERSION < 395
+            dbgPrintf("!! Out of memory  I3D_model::Duplicate()");
+#endif
             return I3DERR_OUTOFMEM;
+        }
         LS3D_RESULT r = dup->Duplicate(frm);
-        if (r < 0)
+        if (r < 0) {
+#if ENGINE_VERSION < 395
+            dbgPrintf("!! Error duplicating frame:0x%x %s  I3D_model::Duplicate()", frm, frm->GetName());
+#endif
             return r;
-        if (frm->frm_flags & FRMFLAGS_TARGET) {
+        }
+        if (frm->m_FrmFlags & FRMFLAGS_TARGET) {
             DuplTargetItem.target = I3D_target::GetTarget(frm);
             DuplTargetItem.frame = dup;
             DuplTargetList.push_back(DuplTargetItem);
@@ -364,13 +385,21 @@ LS3D_RESULT I3D_model::DuplicateHierarchy(I3D_model *model)
                 break;
             }
         }
+#if ENGINE_VERSION >= 395
         if (frm)
             ((I3D_target *)frm)->AddToTarget(ti->frame);
+#else
+        if (!frm)
+            dbgPrintf("!! Target:%s not found for %s  I3D_model::Duplicate(%s)", target_name, ti->frame->GetName(),
+                model->GetName());
+        else
+            ((I3D_target *)frm)->AddToTarget(ti->frame);
+#endif
     }
     I3D_shadow **sp = &DuplShadowList[0];
     for (i = DuplShadowList.size(); i--; sp++) {
-        if ((*sp)->parent)
-            (*sp)->SetTo((*sp)->parent);
+        if ((*sp)->m_pParent)
+            (*sp)->SetTo((*sp)->m_pParent);
     }
     Update();
     if (model->ipol_set)
@@ -445,7 +474,11 @@ LS3D_RESULT I3D_model::SetPose(I3D_pose_set *set)
     if (!ipol_set) {
         ipol_set = new I3D_IPolSet(this);
         if (!ipol_set) {
+#if ENGINE_VERSION >= 395
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+#else
+            dbgPrintf("!! Out of memory  I3D_model::SetPose()");
+#endif
             return I3DERR_OUTOFMEM;
         }
     }
@@ -459,7 +492,11 @@ LS3D_RESULT I3D_model::SetPose(I3D_frame *frame, I3D_pose *pose)
     if (!ipol_set) {
         ipol_set = new I3D_IPolSet(this);
         if (!ipol_set) {
+#if ENGINE_VERSION >= 395
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+#else
+            dbgPrintf("!! Out of memory  I3D_model::SetPose()");
+#endif
             return I3DERR_OUTOFMEM;
         }
     }
@@ -473,7 +510,11 @@ LS3D_RESULT I3D_model::SetPose(const char *frame_name, I3D_pose *pose)
     if (!ipol_set) {
         ipol_set = new I3D_IPolSet(this);
         if (!ipol_set) {
+#if ENGINE_VERSION >= 395
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
+#else
+            dbgPrintf("!! Out of memory  I3D_model::SetPose()");
+#endif
             return I3DERR_OUTOFMEM;
         }
     }

@@ -50,6 +50,14 @@ struct COMPLETE_VB_STRUCT {
     int base;                           // the block's first vertex
 };
 
+// The flags the engine's locks of its vertex and index buffers pass where they need none: 1.1's callers pass
+// D3DLOCK_NOSYSLOCK (its out-of-line C_VBuffer::Lock takes the flags from them), 1.2's nothing
+#if ENGINE_VERSION >= 395
+#define BUFFER_LOCK_FLAGS 0
+#else
+#define BUFFER_LOCK_FLAGS D3DLOCK_NOSYSLOCK
+#endif
+
 // The frame types (the names are FrameType2String's)
 enum I3D_FRAME_TYPE {
     FRAME_NULL,
@@ -198,15 +206,15 @@ inline float I3DIntAsFloat(int i)
     return *(float *)&i;
 }
 
-// I3D_frame::frm_flags (names mostly guessed)
+// I3D_frame::m_FrmFlags (names mostly guessed)
 #define FRMFLAGS_ON 0x1                 // visible (SetOn)
-#define FRMFLAGS_ROT_VALID 0x4          // rot holds the local matrix's rotation
-#define FRMFLAGS_QUAT_VALID 0x8         // rot holds the rotation the local matrix was made from
+#define FRMFLAGS_ROT_VALID 0x4          // m_Rot holds the local matrix's rotation
+#define FRMFLAGS_QUAT_VALID 0x8         // m_Rot holds the rotation the local matrix was made from
 #define FRMFLAGS_MAT_VALID 0x10         // the local matrix is up to date
 #define FRMFLAGS_WMAT_VALID 0x20        // the world matrix is up to date
-#define FRMFLAGS_HR_BOUND_VALID 0x40    // bound (the hierarchy's bound volume) is up to date
+#define FRMFLAGS_HR_BOUND_VALID 0x40    // m_HRBoundVol (the hierarchy's bound volume) is up to date
 #define FRMFLAGS_LOCKED 0x80            // the position doesn't change (SetPos)
-#define FRMFLAGS_HR_BOUND_W_VALID 0x100 // bound_w is up to date
+#define FRMFLAGS_HR_BOUND_W_VALID 0x100 // m_HRBoundVolW is up to date
 #define FRMFLAGS_CALLBACK_MASK 0x1e00   // the messages the callback gets
 #define FRMFLAGS_CHANGED 0x2000         // moved since the last Update
 #define FRMFLAGS_TARGET 0x4000          // a target's frame (I3D_target::DeleteFromAnyTarget)
@@ -256,8 +264,10 @@ struct I3D_bvolume {
 };
 
 // The base of the scene graph's nodes (PS2 I3D_frame, 0x140 bytes on PC, vtable 0x1009b9b8). The game reaches its
-// members through the class's inline functions. Member names are Insanity3D's where the roles agree (ref, user_data,
-// frm_flags, matrix, f_matrix, name, parent, type), m_pOwner DeleteFromOwner's message's, the others are guesses.
+// members through the class's inline functions. Member names: m_pOwner is DeleteFromOwner's message's, and the others
+// follow it (m_, p for pointers, mixed case), after the roles Insanity3D's frame gives them where they agree (ref,
+// user_data, frm_flags, matrix, f_matrix, name, parent, type), the accessors' (GetLocalMatrix, GetScale,
+// GetOrigName) and the exported UpdateHRBoundVol and UpdateHRBoundVolW.
 // VTABLE: LS3DF 0x1009b9b8
 // VTABLE: LS3DF11 0x100989b8
 class I3D_frame {
@@ -309,19 +319,19 @@ public:
     // FUNCTION: LS3DF11 0x1001a200
     void UpdateMatrix()
     {
-        if (!(frm_flags & FRMFLAGS_MAT_VALID)) {
-            frm_flags |= FRMFLAGS_MAT_VALID | FRMFLAGS_ROT_VALID;
-            f_matrix.SetRot3(rot);
-            f_matrix(0) *= scale.x;
-            f_matrix(1) *= scale.y;
-            f_matrix(2) *= scale.z;
-        } else if (!(frm_flags & FRMFLAGS_ROT_VALID)) {
-            if (!(frm_flags & FRMFLAGS_QUAT_VALID))
-                rot.Make(f_matrix);
-            frm_flags |= FRMFLAGS_ROT_VALID | FRMFLAGS_QUAT_VALID;
-            f_matrix(0) *= scale.x;
-            f_matrix(1) *= scale.y;
-            f_matrix(2) *= scale.z;
+        if (!(m_FrmFlags & FRMFLAGS_MAT_VALID)) {
+            m_FrmFlags |= FRMFLAGS_MAT_VALID | FRMFLAGS_ROT_VALID;
+            m_LocalMatrix.SetRot3(m_Rot);
+            m_LocalMatrix(0) *= m_Scale.x;
+            m_LocalMatrix(1) *= m_Scale.y;
+            m_LocalMatrix(2) *= m_Scale.z;
+        } else if (!(m_FrmFlags & FRMFLAGS_ROT_VALID)) {
+            if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID))
+                m_Rot.Make(m_LocalMatrix);
+            m_FrmFlags |= FRMFLAGS_ROT_VALID | FRMFLAGS_QUAT_VALID;
+            m_LocalMatrix(0) *= m_Scale.x;
+            m_LocalMatrix(1) *= m_Scale.y;
+            m_LocalMatrix(2) *= m_Scale.z;
         }
     }
 
@@ -329,40 +339,40 @@ public:
     const S_matrix &GetLocalMatrix()
     {
         UpdateMatrix();
-        return f_matrix;
+        return m_LocalMatrix;
     }
 
     // Insanity3D's name
     void SetRot(const S_quat &q)
     {
-        rot = q;
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        m_Rot = q;
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
 
     // Insanity3D's name
     void SetPos(const S_vector &pos)
     {
-        if (frm_flags & FRMFLAGS_LOCKED)
+        if (m_FrmFlags & FRMFLAGS_LOCKED)
             return;
-        f_matrix(3) = pos;
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
+        m_LocalMatrix(3) = pos;
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
     }
 
     // The scale, by reference (the game's out-of-line copy is at 0x47aec0 in Game.exe)
     const S_vector &GetScale() const
     {
-        return scale;
+        return m_Scale;
     }
 
     // Sets the scale; the matrix is made again from it and the rotation, which is taken from the matrix first if it
     // isn't up to date (the game inlines it too)
     void SetScale(const S_vector &s)
     {
-        scale = s;
-        if (!(frm_flags & FRMFLAGS_QUAT_VALID))
-            rot.Make(f_matrix);
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        m_Scale = s;
+        if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID))
+            m_Rot.Make(m_LocalMatrix);
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
 
@@ -370,23 +380,23 @@ public:
     // it, at 0x10059e99, 0x1004fc29 and 0x100330c9)
     void SetLocalMatrix(const S_matrix &m)
     {
-        f_matrix = m;
-        scale = f_matrix.GetScale();
-        frm_flags = (frm_flags & ~(FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID |
-            FRMFLAGS_ROT_VALID;
+        m_LocalMatrix = m;
+        m_Scale = m_LocalMatrix.GetScale();
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID)) | FRMFLAGS_UPDATE |
+            FRMFLAGS_MAT_VALID | FRMFLAGS_ROT_VALID;
     }
 
     // PS2 name
     void UpdateWMatrix()
     {
-        if (!(frm_flags & FRMFLAGS_WMAT_VALID))
+        if (!(m_FrmFlags & FRMFLAGS_WMAT_VALID))
             UpdateWMatrixProc();
     }
 
     const S_matrix &GetMatrix()
     {
         UpdateWMatrix();
-        return matrix;
+        return m_Matrix;
     }
 
     // The scale in world space: the frame's own at the top of the hierarchy, else the world matrix's (the name is a
@@ -394,8 +404,8 @@ public:
     // pointer to either and copies after (the collision tests' billboards in mode 2).
     S_vector GetWorldScale()
     {
-        if (!parent)
-            return scale;
+        if (!m_pParent)
+            return m_Scale;
         return GetMatrix().GetScale();
     }
 
@@ -403,16 +413,16 @@ public:
     // GetWBoundVolume; the collision tests, free functions, reach the private UpdateHRBoundVolW through it)
     const I3D_bvolume &GetHRBoundVolumeW()
     {
-        if (!(frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+        if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_W_VALID))
             UpdateHRBoundVolW();
-        return bound_w;
+        return m_HRBoundVolW;
     }
 
     // Whether the frame is on (the name is a guess; the projectors' CollectReceivers reads the flags through it, so VC6
     // loads them again for the bound volume's test after it)
     bool IsOn() const
     {
-        return frm_flags & FRMFLAGS_ON;
+        return m_FrmFlags & FRMFLAGS_ON;
     }
 
     // PS2 name
@@ -425,13 +435,13 @@ public:
     // copy is at 0x47a890 in Game.exe)
     S_vector GetDir()
     {
-        if (!(frm_flags & FRMFLAGS_MAT_VALID)) {
-            frm_flags |= FRMFLAGS_MAT_VALID;
-            rot.Normalize();
-            f_matrix.SetRot3(rot);
-            return f_matrix(2);
+        if (!(m_FrmFlags & FRMFLAGS_MAT_VALID)) {
+            m_FrmFlags |= FRMFLAGS_MAT_VALID;
+            m_Rot.Normalize();
+            m_LocalMatrix.SetRot3(m_Rot);
+            return m_LocalMatrix(2);
         }
-        S_vector dir = f_matrix(2);
+        S_vector dir = m_LocalMatrix(2);
         dir.Normalize();
         return dir;
     }
@@ -446,30 +456,30 @@ public:
 
     const char *GetName() const
     {
-        return name ? name : "";
+        return m_pName ? m_pName : "";
     }
 
     // The name without the model's (Insanity3D's name)
     const char *GetOrigName() const
     {
-        return orig_name ? orig_name : "";
+        return m_pOrigName ? m_pOrigName : "";
     }
 
     // Insanity3D's name. The single meshes' proxies reach their visual through it; written as the member, VC6 inlines
     // more of I3D_singlemesh::UpdateLodVertices' calls than the original.
     uint GetData() const
     {
-        return user_data;
+        return m_UserData;
     }
 
     I3D_FRAME_TYPE GetType() const
     {
-        return type;
+        return m_Type;
     }
 
     int NumChildren() const
     {
-        return num_children;
+        return m_numChildren;
     }
 
     void DeleteFromOwner();
@@ -495,31 +505,31 @@ private:
     void OFFD_CountFrames_();
 
 public:
-    int ref;                            // 0x04
-    uint user_data;                     // 0x08
-    char *property;                     // 0x0c, SetProperty's
-    S_matrix matrix;                    // 0x10, the world matrix
-    S_matrix f_matrix;                  // 0x50, the local one
-    S_vector scale;                     // 0x90
-    S_quat rot;                         // 0x9c
-    uint frm_flags;                     // 0xac, FRMFLAGS_*
-    I3D_bvolume bound;                  // 0xb0, the hierarchy's, in local space
-    I3D_bvolume bound_w;                // 0xd8, in world space
-    char *name;                         // 0x100, "model.frame" in a model
-    const char *orig_name;              // 0x104, the frame's own name, inside name
-    I3D_CALLBACK *callback;             // 0x108
+    int m_RefCount;                     // 0x04
+    uint m_UserData;                    // 0x08
+    char *m_pProperty;                  // 0x0c, SetProperty's
+    S_matrix m_Matrix;                  // 0x10, the world matrix
+    S_matrix m_LocalMatrix;             // 0x50, the local one
+    S_vector m_Scale;                   // 0x90
+    S_quat m_Rot;                       // 0x9c
+    uint m_FrmFlags;                    // 0xac, FRMFLAGS_*
+    I3D_bvolume m_HRBoundVol;           // 0xb0, the hierarchy's, in local space
+    I3D_bvolume m_HRBoundVolW;          // 0xd8, in world space
+    char *m_pName;                      // 0x100, "model.frame" in a model
+    const char *m_pOrigName;            // 0x104, the frame's own name, inside m_pName
+    I3D_CALLBACK *m_pCallback;          // 0x108
     I3D_frame *m_pOwner;                // 0x10c, the model or scene the frame is in
-    I3D_FRAME_TYPE type;                // 0x110
-    float world_scale;                  // 0x114
-    uint update_count;                  // 0x118, counts the updates that moved it
-    int num_children;                   // 0x11c
-    I3D_frame *parent;                  // 0x120
-    I3D_frame *child;                   // 0x124, the first child
-    I3D_frame *prev, *next;             // 0x128, the siblings
-    I3D_visual *next_visual;            // 0x130, a sector's visuals to render, linked from the sector's own (the
+    I3D_FRAME_TYPE m_Type;              // 0x110
+    float m_WorldScale;                 // 0x114
+    uint m_UpdateCount;                 // 0x118, counts the updates that moved it
+    int m_numChildren;                  // 0x11c
+    I3D_frame *m_pParent;               // 0x120
+    I3D_frame *m_pChild;                // 0x124, the first child
+    I3D_frame *m_pPrev, *m_pNext;       // 0x128, the siblings
+    I3D_visual *m_pNextVisual;          // 0x130, a sector's visuals to render, linked from the sector's own (the
                                         // rendering's; the name is a guess)
-    I3D_frame *ff_left, *ff_right;      // 0x134, the fast find tree (PS2 0x114, 0x118)
-    int render_number;                  // 0x13c, the driver's RenderNumber when the frame was last rendered, -1
+    I3D_frame *m_pFFLeft, *m_pFFRight;  // 0x134, the fast find tree (PS2 0x114, 0x118)
+    int m_RenderNumber;                 // 0x13c, the driver's RenderNumber when the frame was last rendered, -1
 };
 
 // SYNTHETIC: LS3DF 0x1001a980
@@ -814,7 +824,7 @@ public:
     I3D_occluder *occluders;            // 0x228, the occluders in it, linked through their next_in_sector
                                         // (OCCL_UpdateOcclLists)
     I3D_occluder *occluder;             // 0x22c, made of the hull by MakeReady (SCTF_OCCLUDER)
-    I3D_frame *last_visual;             // 0x230, the last of its visuals to render (next_visual), the sector itself
+    I3D_frame *last_visual;             // 0x230, the last of its visuals to render (m_pNextVisual), the sector itself
                                         // while there are none (the portals' CullThruPortal_First)
 };
 
@@ -1423,36 +1433,55 @@ public:
 // for its static retNormal (it has nothing to destroy), and the empty initializers of sphBox, lineDest, colPointSph and
 // kolBod. An empty initializer uses no global, so reccmp can pair it only by name.
 // SYNTHETIC: LS3DF 0x1000de70
-// SYNTHETIC: LS3DF11 0x1000da10
 // $E9
 
+// SYNTHETIC: LS3DF11 0x1000da10
+// $E10
+
 // SYNTHETIC: LS3DF 0x1000de80
-// SYNTHETIC: LS3DF11 0x1000da20
 // $E12
 
+// SYNTHETIC: LS3DF11 0x1000da20
+// $E13
+
 // SYNTHETIC: LS3DF 0x1000de90
-// SYNTHETIC: LS3DF11 0x1000da30
 // $E15
 
+// SYNTHETIC: LS3DF11 0x1000da30
+// $E16
+
 // SYNTHETIC: LS3DF 0x10011d10
-// SYNTHETIC: LS3DF11 0x10011830
 // $E18
 
+// SYNTHETIC: LS3DF11 0x10011830
+// $E19
+
 // SYNTHETIC: LS3DF 0x10011d20
-// SYNTHETIC: LS3DF11 0x10011840
 // $E20
 
+// SYNTHETIC: LS3DF11 0x10011840
+// $E21
+
 // SYNTHETIC: LS3DF 0x10011d30
-// SYNTHETIC: LS3DF11 0x10011850
 // $E23
 
+// SYNTHETIC: LS3DF11 0x10011850
+// $E24
+
 // SYNTHETIC: LS3DF 0x10011d40
-// SYNTHETIC: LS3DF11 0x10011860
 // $E26
 
+// SYNTHETIC: LS3DF11 0x100183c0
+// $E27
+
+// SYNTHETIC: LS3DF11 0x10011860
+// $E27
+
 // SYNTHETIC: LS3DF 0x10011d50
-// SYNTHETIC: LS3DF11 0x10011870
 // $E29
+
+// SYNTHETIC: LS3DF11 0x10011870
+// $E30
 
 // The collision file's functions whose markers would be out of address order there: its static helpers are defined
 // before their callers, as PS2 has them (the zero vector's $E comes due before TestColGeo only so), and VC6 emits each
@@ -1483,47 +1512,65 @@ public:
 // every file's up to the last one that needs it is annotated: the scene's are the third $E13 in link order (after the
 // lit objects' and the projector file's) and the second $E18 (after the collision file's).
 // SYNTHETIC: LS3DF 0x10048a30
-// SYNTHETIC: LS3DF11 0x10046980
 // $E13
 
+// SYNTHETIC: LS3DF11 0x10046980
+// $E14
+
 // SYNTHETIC: LS3DF 0x10048a80
-// SYNTHETIC: LS3DF11 0x100469d0
 // $E18
+
+// SYNTHETIC: LS3DF11 0x100469d0
+// $E19
 
 // The scene's empty initializer, the second $E23 in link order, after the collision file's
 // SYNTHETIC: LS3DF 0x10048aa0
-// SYNTHETIC: LS3DF11 0x100469f0
 // $E23
+
+// SYNTHETIC: LS3DF11 0x100469f0
+// $E24
 
 // The destructor the constructor's static bigBox registers (it has nothing to destroy): the second $E26 in link order,
 // after the collision file's
 // SYNTHETIC: LS3DF 0x10048ea0
-// SYNTHETIC: LS3DF11 0x10046df0
 // $E26
 
+// SYNTHETIC: LS3DF11 0x10046df0
+// $E27
+
 // SYNTHETIC: LS3DF 0x1004ddc0
-// SYNTHETIC: LS3DF11 0x1004bc50
 // $E29
+
+// SYNTHETIC: LS3DF11 0x1004bc50
+// $E30
 
 // The destructors render.cpp's thunks register for CurrentActiveAreaList, SoundsForDeactivation, AddFGHlpStruct and
 // ParticleElementsList: the fifth $E13 in link order (after the lit objects', the projector file's, the scene's and the
 // shadows', before Globals.cpp's), the fourth $E18 (after the collision file's, the scene's and the shadows'), the
 // third $E23 (after the collision file's and the scene's) and the first $E28 (before IGraph.cpp's)
 // SYNTHETIC: LS3DF 0x10061d00
-// SYNTHETIC: LS3DF11 0x1005ef70
 // $E13
 
+// SYNTHETIC: LS3DF11 0x1005ef70
+// $E14
+
 // SYNTHETIC: LS3DF 0x10061d50
-// SYNTHETIC: LS3DF11 0x1005efc0
 // $E18
 
+// SYNTHETIC: LS3DF11 0x1005efc0
+// $E19
+
 // SYNTHETIC: LS3DF 0x10061d90
-// SYNTHETIC: LS3DF11 0x1005f000
 // $E23
 
+// SYNTHETIC: LS3DF11 0x1005f000
+// $E24
+
 // SYNTHETIC: LS3DF 0x10061df0
-// SYNTHETIC: LS3DF11 0x1005f060
 // $E28
+
+// SYNTHETIC: LS3DF11 0x1005f060
+// $E29
 
 // The in-class functions' copies: Update, SetDir, SetName and LinkTo. The original has them at the end of the scene's
 // file, ours come earlier (the headers have less inline code before them than the original's, see autopch.py). All but
@@ -1535,16 +1582,22 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// FUNCTION: LS3DF11 0x100726d0
 // ?UpdateEnvTexture@I3D_material@@UAGXXZ
 
+// FUNCTION: LS3DF11 0x100726d0
+// ?OnReceiveFirstSample@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+
 // FUNCTION: LS3DF 0x1004e980
-// FUNCTION: LS3DF11 0x10051f90
 // ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
+// FUNCTION: LS3DF11 0x10051f90
+// ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
+
 // FUNCTION: LS3DF 0x1004e990
-// FUNCTION: LS3DF11 0x10051fb0
 // ?SetName@I3D_scene@@UAG?AW4LS3D_RESULT@@PBD@Z
+
+// FUNCTION: LS3DF11 0x10051fb0
+// ?Duplicate@I3D_shadow_visual@@UAG?AW4LS3D_RESULT@@PAVI3D_frame@@@Z
 
 // FUNCTION: LS3DF 0x1004e9a0
 // FUNCTION: LS3DF11 0x1004c800
@@ -2372,16 +2425,22 @@ public:
 // reccmp pairs the annotations of one name with our functions of that name in address order: the shadow file's $E13
 // comes between the scene's and Globals.cpp's (I3d_math.h), its $E18 after the collision file's and the scene's.
 // SYNTHETIC: LS3DF 0x10050930
-// SYNTHETIC: LS3DF11 0x1004e7b0
 // $E13
 
+// SYNTHETIC: LS3DF11 0x1004e7b0
+// $E14
+
 // SYNTHETIC: LS3DF 0x10050d60
-// SYNTHETIC: LS3DF11 0x1004ebe0
 // $E18
 
+// SYNTHETIC: LS3DF11 0x1004ebe0
+// $E19
+
 // SYNTHETIC: LS3DF 0x10052f60
-// SYNTHETIC: LS3DF11 0x10050de0
 // $E24
+
+// SYNTHETIC: LS3DF11 0x10050de0
+// $E25
 
 // The weights of a visual's levels and regions (PS2 I3D_void_interface; the parameters' names are the morph's
 // messages'). The visuals derive from it, the morphs implement it. Its functions are I3d_visual.cpp's; NumLevels' and
@@ -2419,7 +2478,7 @@ enum SHADOW_MODE {
 #define VISF_UNKNOWN_1000 0x1000        // the collision tests leave it out with COLF_UNKNOWN_4000000
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
 #define VISF_PROJECTOR_2 0x4000         // projector mode 2
-#define VISF_PROXY 0x10000              // renders the face groups of the visual in user_data (the name is a guess)
+#define VISF_PROXY 0x10000              // renders the face groups of the visual in m_UserData (the name is a guess)
 #define VISF_BOUND_VALID 0x20000        // vis_bound is up to date (UpdateBoundProc)
 #define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
 #define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
@@ -2655,8 +2714,10 @@ public:
 // I3d_projector.cpp, from I3d_occluder.cpp to I3d_particle.cpp and since I3d_lit_object.cpp, the billboard's from
 // Load.cpp to lightmap.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// FUNCTION: LS3DF11 0x10009360
 // ?SetSpace@I3D_morph@@UAGX_N@Z
+
+// FUNCTION: LS3DF11 0x10009360
+// ?SetSpace@I3D_billboard@@UAGX_N@Z
 
 // A glow of a lens flare (PS2 GLOW_STRUCT; the PC's is 8 bytes)
 struct GLOW_STRUCT {
@@ -2857,8 +2918,10 @@ public:
 // The destructor m_AddFGroups registers for its static list of PrepareLights' colors (0x101b42f8, in a block, so not
 // in the PDB): the first $E13 in link order (see the scene's)
 // SYNTHETIC: LS3DF 0x10028d20
-// SYNTHETIC: LS3DF11 0x100283b0
 // $E13
+
+// SYNTHETIC: LS3DF11 0x100283b0
+// $E14
 
 // The constructor of Construct's lists of the faces in each rectangle, out of line for the vector constructor iterator
 // TEMPLATE: LS3DF 0x1002ad30
@@ -2999,20 +3062,23 @@ public:
 // I3D_joint::GetJointMatrix: its local matrix times its parents' up to the single mesh's level (the first visual,
 // sector or model), or up to a parent joint whose own is up to date. Here, after SMeshLod: the single meshes' file has
 // the out-of-line copy, which the precompiled header defers to the end of the file, after SMeshLod's scalar deleting
-// destructor and destructor, as in the original, only if the header has it after that class.
-// Not matching yet: the original's copy calls S_vector::operator*= out of line for four of the first UpdateMatrix's
-// row scalings and inlines the loop's, ours inlines almost all of the first. Five empty inline calls after the first
-// UpdateMatrix (a probe) give the original's calls, so the original had that many more inline calls pending there;
-// no source for them is known. The callers that inline the function don't change with them.
+// destructor and destructor, as in the original, only if the header has it after that class. The local matrix through
+// GetLocalMatrix, one inline level deeper than the loop's UpdateMatrix: the copy then calls S_vector::operator*= out of
+// line for four of the first UpdateMatrix's row scalings and inlines the loop's, as the original.
+// 1.1 has no copy: the single mesh's UpdateLodVertices inlines both its calls, each keeping its first UpdateMatrix out
+// of line and inlining the loop's, with the parents' types read as the member (in 1.2 that inlines the copy away).
 // FUNCTION: LS3DF 0x10056ba0
 inline const S_matrix &I3D_joint::GetJointMatrix()
 {
     if (!(joint_flags & JOINTF_JMAT_VALID)) {
         joint_flags |= JOINTF_JMAT_VALID;
-        UpdateMatrix();
-        joint_matrix = f_matrix;
-        for (I3D_frame *frm = parent; frm; frm = frm->parent) {
+        joint_matrix = GetLocalMatrix();
+        for (I3D_frame *frm = m_pParent; frm; frm = frm->m_pParent) {
+#if ENGINE_VERSION >= 395
             switch (frm->GetType()) {
+#else
+            switch (frm->m_Type) {
+#endif
             case FRAME_VISUAL:
             case FRAME_SECTOR:
             case FRAME_MODEL:
@@ -3024,7 +3090,7 @@ inline const S_matrix &I3D_joint::GetJointMatrix()
                 }
             default:
                 frm->UpdateMatrix();
-                joint_matrix = joint_matrix * frm->f_matrix;
+                joint_matrix = joint_matrix * frm->m_LocalMatrix;
             }
         }
     }
@@ -3279,7 +3345,7 @@ struct TriTreeNode {
 
 // A square of the landscape (the demo's Patch, 0x620 bytes; I3D_VISUAL_LANDPATCH): a visual whose leaves the
 // landscape's Render draws. The virtual functions after the visual's are the demo's, in its order. The PC's has no
-// visibility flag (the landscape tests render_number) and no SetVisibility.
+// visibility flag (the landscape tests m_RenderNumber) and no SetVisibility.
 // VTABLE: LS3DF 0x1009bb48 I3D_frame
 // VTABLE: LS3DF11 0x10098b48 I3D_frame
 // VTABLE: LS3DF 0x1009bb38 I3D_void_interface
@@ -3394,7 +3460,7 @@ public:
 
 // A mirror (PS2 I3D_mirror, 0x2ec bytes on PC; I3d_mirror.cpp): its faces, which the rendering draws in its color, or,
 // near the camera, as a window into the scene reflected in the mirror's plane. It reflects the visuals in its view box,
-// a box in its local space: for each it keeps a copy, a visual of the same type with VISF_PROXY whose user_data is the
+// a box in its local space: for each it keeps a copy, a visual of the same type with VISF_PROXY whose m_UserData is the
 // visual, placed by mirror_matrix. PS2's has only the box, the color and the faces (in an index buffer, with a GetFaces
 // the PC lacks), and of these functions LoadImage and, not virtual, SetColor and SetViewBox. Member names are guesses.
 // VTABLE: LS3DF 0x1009c0a0 I3D_frame
@@ -3753,6 +3819,12 @@ public:
 // classes' again), so after a new file or function rerun crtannotate and move such markers here or back. None is needed
 // now; the names are the ones our PDB keeps (tools/foldfix.py).
 
+// 1.1's linker kept I3d_landscape.cpp's copy of the empty `ret 4` group (I3D_landpatch::m_RenderFGroup, folded with
+// CBaseRenderer::OnRenderEnd, I3D_driver::m_RecomputeUsedVRAM and others), where 1.2's kept the base classes'
+// (0x10087ec0): by the name our PDB keeps, which crtannotate then leaves out of library_strmbase_1_1.h
+// FUNCTION: LS3DF11 0x1001f6d0
+// ?OnRenderEnd@CBaseRenderer@@UAEXPAUIMediaSample@@@Z
+
 // The function-local statics of I3d_driver.cpp: VC6 puts a function's static into the PDB as a module-level symbol
 // with its plain name, where reccmp doesn't look for one, so by-name markers match them. FrameType2StringFunc's
 // buffer comes first, VisualType2String's second.
@@ -3771,10 +3843,13 @@ public:
 // GLOBAL: LS3DF11 0x100bd0e0
 // $S24
 
-// The guard of I3D_scene's constructor's static bigBox (I3d_scene.cpp), the only $S25 among our function statics
+// The guard of I3D_scene's constructor's static bigBox (I3d_scene.cpp), the only $S25 among our function statics; in
+// 1.1 the only $S26 (the buffer headers' <list> takes a number in the file)
 // GLOBAL: LS3DF 0x101b4e5e
-// GLOBAL: LS3DF11 0x101b1f7e
 // $S25
+
+// GLOBAL: LS3DF11 0x101b1f7e
+// $S26
 
 // SYNTHETIC: LS3DF 0x100165e0
 // SYNTHETIC: LS3DF11 0x10016100
@@ -3851,10 +3926,13 @@ struct TLVERTEX2 {
 // C_list<LVERTEX>::reserve
 
 // The pointer lists' push_back, one copy for every pointer type the linker folded; the original keeps it among
-// I3D files written later (0x10041700)
+// I3D files written later (0x10041700; 1.1's after BuildAllVBuffers, 0x10062c10, and 1.1 has no list of vertex
+// buffers)
 // TEMPLATE: LS3DF 0x10041700
-// TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
+
+// TEMPLATE: LS3DF11 0x10062c10
+// ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
 
 // The frame's empty Tick, folded with the other empty functions of its shape (29 vtables' slots; our PDB names the
 // copy after the scene's SetOn, from I3d_singlemesh.cpp to I3d_singlemorph.cpp after Tick itself, in I3d_shadow.cpp
@@ -3862,8 +3940,10 @@ struct TLVERTEX2 {
 // I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and from Load.cpp to lightmap.cpp after
 // the shadow visual's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// FUNCTION: LS3DF11 0x10051fa0
 // ?SetOn@I3D_scene@@UAGX_N@Z
+
+// FUNCTION: LS3DF11 0x10051fa0
+// ?Tick@I3D_frame@@UAGXH@Z
 
 // The 3D driver (PS2 I3d_driver.cpp), 0x5c bytes, created by Globals.cpp's BreBre. Its virtual functions are in
 // PS2's order; the PC lacks PS2's DeleteReleasedObjects, SetLightness, SetTransparency, GetHRBbox and GetHRBboxEx,
@@ -4424,8 +4504,10 @@ public:
 // The destructor the projector file's thunk registers for ProjectorsToRender, the second $E13 in link order (see the
 // scene's)
 // SYNTHETIC: LS3DF 0x10046760
-// SYNTHETIC: LS3DF11 0x100447f0
 // $E13
+
+// SYNTHETIC: LS3DF11 0x100447f0
+// $E14
 
 // The shadows' visuals whose receivers the rendering has to clip this frame and what it calls for them (I3d_shadow.cpp),
 // the same for the projectors, and the visuals a projector or shadow falls on (I3d_projector.cpp; the names are guesses)
@@ -4465,7 +4547,7 @@ extern I3D_visual *pParticleVisual;
 void OCCL_UpdateOcclLists(I3D_scene *scene);
 void OCCL_PrepareSector2(I3D_sector *sector);
 
-// I3d_driver.cpp: counts the frames rendered (a frame's render_number is its value when the frame was last rendered),
+// I3d_driver.cpp: counts the frames rendered (a frame's m_RenderNumber is its value when the frame was last rendered),
 // and its previous value
 extern uint RenderNumber;
 extern uint RenderNumberMinus1;
@@ -4500,8 +4582,10 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// TEMPLATE: LS3DF11 0x1005d600
 // ?reserve@?$C_list@US_vector@@@@QAEXH@Z
+
+// TEMPLATE: LS3DF11 0x1005d600
+// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);

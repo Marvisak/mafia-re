@@ -1597,22 +1597,22 @@ I3D_frame *I3D_driver::FindFrameFast(I3D_scene *scene, const char *name) const
     for (;;) {
         int cmp = strcmp(name, frm->GetName());
         if (cmp < 0) {
-            if (!frm->ff_left)
+            if (!frm->m_pFFLeft)
                 return NULL;
-            frm = frm->ff_left;
+            frm = frm->m_pFFLeft;
         } else if (cmp > 0) {
-            if (!frm->ff_right)
+            if (!frm->m_pFFRight)
                 return NULL;
-            frm = frm->ff_right;
+            frm = frm->m_pFFRight;
         } else if (!cmp) {
             do {
-                for (I3D_frame *f = frm; f; f = f->parent) {
+                for (I3D_frame *f = frm; f; f = f->m_pParent) {
                     if (f->GetType() == FRAME_SECTOR && ((I3D_sector *)f)->scene == scene)
                         return frm;
                 }
-                if (!frm->ff_right)
+                if (!frm->m_pFFRight)
                     return NULL;
-                frm = frm->ff_right;
+                frm = frm->m_pFFRight;
             } while (!strcmp(name, frm->GetName()));
             return NULL;
         }
@@ -1630,26 +1630,26 @@ I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
     for (;;) {
         int cmp = strcmp(name, frm->GetName());
         if (cmp < 0) {
-            if (!frm->ff_left)
+            if (!frm->m_pFFLeft)
                 return NULL;
             pFFLastUp_ = frm;
-            frm = frm->ff_left;
+            frm = frm->m_pFFLeft;
         } else if (cmp > 0) {
-            if (!frm->ff_right)
+            if (!frm->m_pFFRight)
                 return NULL;
             pFFLastUp_ = frm;
-            frm = frm->ff_right;
+            frm = frm->m_pFFRight;
         } else if (!cmp) {
             // A while (true): its first test returns, so VC6 keeps it at the top
             while (true) {
                 if (frm == frame)
                     return frm;
-                if (!frm->ff_right) {
+                if (!frm->m_pFFRight) {
                     pFFLastUp_ = NULL;
                     return NULL;
                 }
                 pFFLastUp_ = frm;
-                frm = frm->ff_right;
+                frm = frm->m_pFFRight;
                 if (strcmp(name, frm->GetName()))
                     return NULL;
             }
@@ -1693,18 +1693,18 @@ void I3D_driver::OFFD_RebuildBranchOfFFTree_(I3D_frame **branch, int first, int 
     for (; half + n < num; n++) {
         if (strcmp(OFFD_pFrameList[first + half]->GetName(), OFFD_pFrameList[first + half + n]->GetName()))
             break;
-        (*last)->ff_left = NULL;
-        last = &(*last)->ff_right;
+        (*last)->m_pFFLeft = NULL;
+        last = &(*last)->m_pFFRight;
         *last = OFFD_pFrameList[first + half + n];
     }
     if (half > 0)
-        OFFD_RebuildBranchOfFFTree_(&(*branch)->ff_left, first, half);
+        OFFD_RebuildBranchOfFFTree_(&(*branch)->m_pFFLeft, first, half);
     else
-        (*branch)->ff_left = NULL;
+        (*branch)->m_pFFLeft = NULL;
     if (half + n < num)
-        OFFD_RebuildBranchOfFFTree_(&(*last)->ff_right, first + half + n, num - half - n);
+        OFFD_RebuildBranchOfFFTree_(&(*last)->m_pFFRight, first + half + n, num - half - n);
     else
-        (*last)->ff_right = NULL;
+        (*last)->m_pFFRight = NULL;
 }
 
 // FUNCTION: LS3DF 0x10019fd0
@@ -1717,16 +1717,16 @@ LS3D_RESULT I3D_driver::EnumFFTree(I3D_ENUMPROC *proc, uint context) const
         I3DENUMRET enumSubtree(I3D_ENUMPROC *proc, uint context, I3D_frame *frm)
         {
             I3DENUMRET er;
-            if (frm->ff_left) {
-                er = enumSubtree(proc, context, frm->ff_left);
+            if (frm->m_pFFLeft) {
+                er = enumSubtree(proc, context, frm->m_pFFLeft);
                 if (er)
                     return er;
             }
             er = proc(frm, context);
             if (er)
                 return er;
-            if (frm->ff_right)
-                return enumSubtree(proc, context, frm->ff_right);
+            if (frm->m_pFFRight)
+                return enumSubtree(proc, context, frm->m_pFFRight);
             return er;
         }
     } hlp;

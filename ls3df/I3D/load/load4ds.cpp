@@ -192,7 +192,7 @@ LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
                     (*pt)->DeleteFromTarget(NULL);
                 } else {
                     *pf = LoadFramy[index - 1];
-                    LoadFramy[index - 1]->frm_flags |= FRMFLAGS_TARGET;
+                    LoadFramy[index - 1]->m_FrmFlags |= FRMFLAGS_TARGET;
                     pf++;
                 }
             }

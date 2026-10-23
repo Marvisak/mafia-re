@@ -9,7 +9,7 @@
 // FUNCTION: LS3DF11 0x1001e850
 I3D_joint::I3D_joint()
 {
-    type = FRAME_JOINT;
+    m_Type = FRAME_JOINT;
     bone_matrix.Identity();
     bone_matrix(0, 0) = bone_matrix(1, 1) = bone_matrix(2, 2) = 0.01f;
     matrix_184 = bone_matrix;
@@ -38,10 +38,10 @@ I3D_joint::~I3D_joint()
 // FUNCTION: LS3DF11 0x1001e950
 void I3D_joint::UpdateV()
 {
-    if (!(frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
+    if (!(m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED)))
         return;
     joint_flags &= ~(JOINTF_UNKNOWN_4 | JOINTF_UNKNOWN_8 | JOINTF_JMAT_VALID);
-    if (!(frm_flags & FRMFLAGS_UPDATE))
+    if (!(m_FrmFlags & FRMFLAGS_UPDATE))
         return;
     I3D_singlemesh *sm = singlemesh;
     if (!sm)
@@ -49,7 +49,7 @@ void I3D_joint::UpdateV()
     sm->joints_changed++;
     sm->vis_flags &= ~(VISF_BOUND_VALID | VISF_WBOUND_VALID);
     singlemesh->DiscardHRBoundVol();
-    singlemesh->frm_flags = (singlemesh->frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID)) |
+    singlemesh->m_FrmFlags = (singlemesh->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_HR_BOUND_VALID)) |
         FRMFLAGS_UPDATE;
 }
 

@@ -6,7 +6,8 @@
 // identity matrix of its own: the visuals' queue sits among the shadow's globals in .bss (0x101b4f3c, between the zero
 // vector and globalShadowList, as VC6's hash orders them), where a second object's globals couldn't be, and the
 // visual's constructor copies the file's zero vector. The receivers' code is the projectors' (I3d_projector.cpp), two
-// of their messages included. Names are PS2's unless noted.
+// of their messages included. Names are PS2's unless noted. Patch 1.1's (0x1004e780-0x10051f90) differs only in the
+// buffer managers' frees and locks (their headers).
 //
 // Not matching yet:
 // - SetTo keeps the vertex base in memory (add [esp + 0x10], eax), where the original loads it into edi after the
@@ -35,7 +36,7 @@ C_list<I3D_shadow *> globalShadowList;
 // FUNCTION: LS3DF11 0x1004e7d0
 I3D_shadow::I3D_shadow()
 {
-    type = FRAME_SHADOW;
+    m_Type = FRAME_SHADOW;
     orthogonal = true;
     def = NULL;
     scene = NULL;
@@ -152,13 +153,13 @@ void I3D_shadow::SetTo(I3D_frame *frame)
 {
     if (!frame && scene)
         scene->DeleteShadow(this);
-    if (visual && visual->parent)
+    if (visual && visual->m_pParent)
         visual->LinkTo(NULL, 0);
     S_shadow_frame *sf = frames;
     int i;
     for (i = num_frames; i--; sf++) {
         if (sf->frame)
-            sf->frame->frm_flags &= ~FRMFLAGS_SHADOW;
+            sf->frame->m_FrmFlags &= ~FRMFLAGS_SHADOW;
     }
     delete[] frames;
     frames = NULL;
@@ -226,7 +227,7 @@ void I3D_shadow::SetTo(I3D_frame *frame)
         base += n;
         sf->num_verts = n;
         sf->frame = m->frame;
-        m->frame->frm_flags |= FRMFLAGS_SHADOW;
+        m->frame->m_FrmFlags |= FRMFLAGS_SHADOW;
     }
 }
 
@@ -237,8 +238,8 @@ void I3D_shadow::SetTo(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x1004f0e0
 static inline void FindParts(I3D_frame *frame)
 {
-    for (I3D_frame *frm = frame->child; frm; frm = frm->next) {
-        if (!(frm->frm_flags & FRMFLAGS_ON))
+    for (I3D_frame *frm = frame->m_pChild; frm; frm = frm->m_pNext) {
+        if (!(frm->m_FrmFlags & FRMFLAGS_ON))
             continue;
         S_shadow_part *p = SetToParts;
         for (int i = 0; i < SetToNumParts; p++, i++) {
@@ -280,17 +281,17 @@ void I3D_shadow::UpdateV()
 {
     if (scene)
         return;
-    I3D_frame *frm = parent;
+    I3D_frame *frm = m_pParent;
     while (true) {
         if (!frm)
             return;
-        if (frm->type == FRAME_SECTOR) {
+        if (frm->m_Type == FRAME_SECTOR) {
             ((I3D_sector *)frm)->scene->AddShadow(this);
             shd_flags = 0;
             lights_count = -1;
             return;
         }
-        frm = frm->parent;
+        frm = frm->m_pParent;
     }
 }
 
@@ -303,7 +304,7 @@ void I3D_shadow::DeleteFromAnyShadow(I3D_frame *frame)
         S_shadow_frame *sf = (*sp)->frames;
         for (int j = (*sp)->num_frames; j--; sf++) {
             if (sf->frame && sf->frame == frame) {
-                sf->frame->frm_flags &= ~FRMFLAGS_SHADOW;
+                sf->frame->m_FrmFlags &= ~FRMFLAGS_SHADOW;
                 sf->frame = NULL;
             }
         }
@@ -319,7 +320,7 @@ void I3D_shadow::Close()
     S_shadow_frame *sf = frames;
     for (int i = num_frames; i--; sf++) {
         if (sf->frame)
-            sf->frame->frm_flags &= ~FRMFLAGS_SHADOW;
+            sf->frame->m_FrmFlags &= ~FRMFLAGS_SHADOW;
     }
     delete[] frames;
     frames = NULL;
@@ -355,8 +356,8 @@ LS3D_RESULT I3D_shadow::Open(const char *name, uint flags, I3D_LOAD_CB_PROC *cb,
     LS3D_RESULT r = LoadShadow(name, flags, cb, context, def);
     if (r < 0)
         return r;
-    if (parent)
-        SetTo(parent);
+    if (m_pParent)
+        SetTo(m_pParent);
     return I3D_OK;
 }
 
@@ -470,7 +471,7 @@ bool I3D_shadow::UpdateVertices()
     int i;
     for (i = num_frames; i--; sf++) {
         if (sf->frame)
-            count += sf->frame->update_count;
+            count += sf->frame->m_UpdateCount;
     }
     if (verts_count == count)
         return true;
@@ -503,16 +504,16 @@ bool I3D_shadow::UpdateLight()
 {
     if (shadow_lock >= I3DLOCK_LIGHT && shd_flags & SHDF_LIGHT_VALID)
         return true;
-    I3D_frame *frm = parent;
+    I3D_frame *frm = m_pParent;
     while (true) {
         if (!frm)
             break;
-        if (frm->type == FRAME_SECTOR) {
+        if (frm->m_Type == FRAME_SECTOR) {
             if (sector != frm) {
                 sector = (I3D_sector *)frm;
                 lights_count = -1;
             }
-            int count = sector->lights_changed + update_count;
+            int count = sector->lights_changed + m_UpdateCount;
             if (count != lights_count) {
                 lights_count = count;
                 shd_flags &= ~SHDF_LIGHT_VALID;
@@ -523,7 +524,7 @@ bool I3D_shadow::UpdateLight()
                 float best = 0.0f, second = 0.0f, sum = 0.0f;
                 I3D_light *light = NULL;
                 for (int i = sector->lights.size(); i--; lp++) {
-                    if (!((*lp)->mode & I3DLIGHTMODE_DYNAMIC_SHADOW) || !((*lp)->frm_flags & FRMFLAGS_ON))
+                    if (!((*lp)->mode & I3DLIGHTMODE_DYNAMIC_SHADOW) || !((*lp)->m_FrmFlags & FRMFLAGS_ON))
                         continue;
                     float f;
                     switch ((*lp)->ltype) {
@@ -531,7 +532,7 @@ bool I3D_shadow::UpdateLight()
                         sum += (*lp)->color.x + (*lp)->color.y + (*lp)->color.z;
                         continue;
                     case I3DLIGHT_SPOT: {
-                        S_vector d = matrix(3) - (*lp)->GetWorldPos();
+                        S_vector d = m_Matrix(3) - (*lp)->GetWorldPos();
                         float dist_2 = d.Square();
                         if ((*lp)->range_f_2 <= dist_2)
                             continue;
@@ -550,7 +551,7 @@ bool I3D_shadow::UpdateLight()
                             f *= (cos - (*lp)->outer_cos) * (*lp)->cone_scale;
                     } break;
                     case I3DLIGHT_POINT: {
-                        S_vector d = (*lp)->GetWorldPos() - matrix(3);
+                        S_vector d = (*lp)->GetWorldPos() - m_Matrix(3);
                         float dist_2 = d.x * d.x + d.y * d.y + d.z * d.z;
                         if ((*lp)->range_f_2 <= dist_2)
                             continue;
@@ -563,7 +564,7 @@ bool I3D_shadow::UpdateLight()
                         f = (*lp)->color.x + (*lp)->color.y + (*lp)->color.z;
                         break;
                     case I3DLIGHT_UNKNOWN_8: {
-                        S_vector d = (*lp)->GetWorldPos() - matrix(3);
+                        S_vector d = (*lp)->GetWorldPos() - m_Matrix(3);
                         float dist_2 = d.x * d.x + d.y * d.y + d.z * d.z;
                         if ((*lp)->range_f_2 <= dist_2)
                             continue;
@@ -618,7 +619,7 @@ bool I3D_shadow::UpdateLight()
                 if (light->ltype == I3DLIGHT_DIRECTIONAL)
                     dir = light->GetWorldDir();
                 else
-                    dir.SetNormalized(matrix(3) - light->GetWorldPos());
+                    dir.SetNormalized(m_Matrix(3) - light->GetWorldPos());
                 if (!IsMrgZeroLess(fabs(dir.x - light_dir.x) + fabs(dir.y - light_dir.y) +
                     fabs(dir.z - light_dir.z))) {
                     light_dir = dir;
@@ -659,8 +660,8 @@ bool I3D_shadow::UpdateLight()
             if (IsAbsMrgZero(bbox.max.x - bbox.min.x) || IsAbsMrgZero(bbox.max.y - bbox.min.y))
                 break;
             // The box reaches towards the light at most max_texture_distance from the shadow's position
-            float z = matrix.m[3][0] * light_matrix.m[0][2] + matrix.m[3][1] * light_matrix.m[1][2] +
-                matrix.m[3][2] * light_matrix.m[2][2];
+            float z = m_Matrix.m[3][0] * light_matrix.m[0][2] + m_Matrix.m[3][1] * light_matrix.m[1][2] +
+                m_Matrix.m[3][2] * light_matrix.m[2][2];
             float dz = bbox.min.z - z;
             if (fabs(dz) > max_texture_distance)
                 bbox.min.z = (dz > 0.0f ? max_texture_distance : -max_texture_distance) + z;
@@ -674,7 +675,7 @@ bool I3D_shadow::UpdateLight()
             visual->UpdateV();
             return shd_flags & SHDF_NONE ? false : true;
         }
-        frm = frm->parent;
+        frm = frm->m_pParent;
     }
     opacity = 0.0f;
     shd_flags |= SHDF_NONE | SHDF_LIGHT_VALID | SHDF_OPACITY_CHANGED | SHDF_DIR_CHANGED;
@@ -714,16 +715,16 @@ bool I3D_shadow::RenderTexture()
 // FUNCTION: LS3DF11 0x10050910
 void I3D_shadow::Prepare()
 {
-    if (!parent) {
+    if (!m_pParent) {
         if (scene)
             scene->DeleteShadow(this);
-        if (visual && visual->parent)
+        if (visual && visual->m_pParent)
             visual->LinkTo(NULL, 0);
         shd_flags = 0;
         return;
     }
-    if (!(frm_flags & FRMFLAGS_ON) || !(parent->frm_flags & FRMFLAGS_ON)) {
-        if (visual && visual->parent)
+    if (!(m_FrmFlags & FRMFLAGS_ON) || !(m_pParent->m_FrmFlags & FRMFLAGS_ON)) {
+        if (visual && visual->m_pParent)
             visual->LinkTo(NULL, 0);
         shd_flags = 0;
         return;
@@ -749,12 +750,12 @@ void I3D_shadow::Prepare()
         goto hide;
     if (!RenderTexture()) {
 hide:
-        if (visual && visual->parent)
+        if (visual && visual->m_pParent)
             visual->LinkTo(NULL, 0);
         shd_flags &= ~SHDF_RECEIVERS_VALID;
         return;
     }
-    if (!visual->parent)
+    if (!visual->m_pParent)
         visual->LinkTo(scene->omni_sector, 0);
 }
 
@@ -919,10 +920,10 @@ void I3D_shadow_visual::ProcessShadow()
         if (bb.min.x > bvol.bbox.max.x || bb.min.y > bvol.bbox.max.y || bb.min.z > bvol.bbox.max.z ||
             bb.max.x < bvol.bbox.min.x || bb.max.y < bvol.bbox.min.y || bb.max.z < bvol.bbox.min.z)
             continue;
-        for (I3D_frame *frm = last; frm; frm = frm->parent) {
-            if (frm == shadow->parent)
+        for (I3D_frame *frm = last; frm; frm = frm->m_pParent) {
+            if (frm == shadow->m_pParent)
                 goto next;
-            if (frm->type == FRAME_MODEL || frm->type == FRAME_SECTOR)
+            if (frm->m_Type == FRAME_MODEL || frm->m_Type == FRAME_SECTOR)
                 break;
         }
         *rp++ = last;
@@ -940,7 +941,7 @@ void I3D_shadow_visual::ProcessShadow()
         int count = 0;
         rp = ShadowReceivers;
         for (i = num; i--; rp++)
-            count += (*rp)->update_count + ((I3D_object *)*rp)->GetMeshLOD();
+            count += (*rp)->m_UpdateCount + ((I3D_object *)*rp)->GetMeshLOD();
         if (num != num_receivers || count != receivers_count) {
             num_receivers = num;
             receivers_count = count;
@@ -1029,7 +1030,7 @@ void I3D_shadow_visual::ProcessShadow()
                         goto oom;
                     }
                 }
-                v = (S_shadow_vertex *)vb.buffer->Lock(vb.base, 0);
+                v = (S_shadow_vertex *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             } else {
                 if (vb.buffer) {
                     cVBMan.m_Free(vb);
@@ -1077,7 +1078,7 @@ oom:
                         return;
                     }
                 }
-                f = (ushort *)ib.buffer->Lock(ib.base, 0);
+                f = (ushort *)ib.buffer->Lock(ib.base, BUFFER_LOCK_FLAGS);
             } else {
                 if (faces_alloc < num_clip_faces + num_clip_faces_t) {
                     delete[] faces;

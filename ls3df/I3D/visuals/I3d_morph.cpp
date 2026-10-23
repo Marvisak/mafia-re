@@ -2,6 +2,7 @@
 // BogusConstructor), then I3D_morph, then MorphDef's and morph_region's functions, in PS2's order, with the PC's second
 // UpdateMorphLod. The header's zero vector has its $E after m_AddFGroups (0x10036520). Names are the PS2 build's
 // unless noted.
+// Patch 1.1's (0x100333d0-0x10035510, $E 0x10035280) differs only in the buffers' locks.
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"
@@ -108,7 +109,7 @@ void morphBase::UpdateMorphLod(int lod, I3D_mesh_object *mesh)
     I3D_mesh_level *level = mesh->GetLOD(lod);
     if (!level)
         return;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     const float *w = m_pNormWeights;
     for (int i = m_numRegions; i--; r++) {
         const ushort *ind = r->indices;
@@ -153,7 +154,7 @@ void morphBase::UpdateMorphLod(void *pos_out, uint stride, int lod, I3D_mesh_obj
     I3D_mesh_level *level = mesh->GetLOD(lod);
     if (!level)
         return;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     const float *w = m_pNormWeights;
     for (int i = m_numRegions; i--; r++) {
         const ushort *ind = r->indices;
@@ -317,7 +318,7 @@ int I3D_morph::NumRegions() const
 LS3D_RESULT I3D_morph::SetWeight(int region, int level, float weight)
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels) {
-        update_count++;
+        m_UpdateCount++;
         SetWeightB(region, level, weight);
         // Both branches the same, as PS2's (VC6 merges them after loading the flags; Duplicate has it too)
         if (!(vis_flags & VISF_WORLD_SPACE))
@@ -439,7 +440,8 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
 // the rest of ours, without which that Lock's push_back is inlined (an empty inline call anywhere after it does the
 // same).
 // Not matching yet: the loop's alpha * fade * transparency loads fade first (the original alpha, as I3D_object's),
-// whichever way the product is written.
+// whichever way the product is written, and the copy loop of the inlined fgroups push_back has one lea's registers
+// swapped (1.2's address of the new array, 1.1's of the old one; no code-identical spelling tried moved it).
 // FUNCTION: LS3DF 0x100354f0
 // FUNCTION: LS3DF11 0x10034510
 void I3D_morph::m_AddFGroups()
@@ -447,18 +449,18 @@ void I3D_morph::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_visual *vis = (I3D_visual *)user_data;
-        I3D_frame *frm = vis->parent;
+        I3D_visual *vis = (I3D_visual *)m_UserData;
+        I3D_frame *frm = vis->m_pParent;
         while (true) {
             if (!frm) {
                 AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                 break;
             }
-            if (frm->type == FRAME_SECTOR) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 AddFGHlpStruct.sector = (I3D_sector *)frm;
                 break;
             }
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         int first = AddFGHlpStruct.fgroups.size();
         vis->m_AddFGroups();
@@ -486,7 +488,7 @@ void I3D_morph::m_AddFGroups()
         }
         lods[lod_index] = l;
     }
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!l->vb.vb) {
         if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
                 sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
@@ -501,7 +503,7 @@ void I3D_morph::m_AddFGroups()
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
             f += mesh->levels[lod_index - 1]->lod_dist;
-        float s = RSLodQuality * world_scale;
+        float s = RSLodQuality * m_WorldScale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
             d = 1.0f;
@@ -510,9 +512,9 @@ void I3D_morph::m_AddFGroups()
         SetFade(1.0f);
 
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
     uchar *lv = NULL;
@@ -523,7 +525,7 @@ void I3D_morph::m_AddFGroups()
             mesh->u_ofs, mesh->v_ofs);
 
     if (moved) {
-        lv = l->vb.buffer->Lock(base, 0);
+        lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 UpdateMorphLod(lv, sizeof(LVERTEX2), lod_index, mesh);
@@ -540,7 +542,7 @@ void I3D_morph::m_AddFGroups()
         l->lights_changed = AddFGHlpStruct.sector->lights_changed;
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)verts,
@@ -559,7 +561,7 @@ void I3D_morph::m_AddFGroups()
     }
     if (l->alpha_dirty) {
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
@@ -574,12 +576,12 @@ void I3D_morph::m_AddFGroups()
     }
 
     if (level->GetFlags() & MESHF_ENVMAP) {
-        if (render_number != RenderNumberMinus1 || moved || renderCameraChanged ||
+        if (m_RenderNumber != RenderNumberMinus1 || moved || renderCameraChanged ||
                 !IsAbsMrgZero(mesh->env_u_ofs - l->env_u_ofs) || !IsAbsMrgZero(mesh->env_v_ofs - l->env_v_ofs)) {
             l->env_u_ofs = mesh->env_u_ofs;
             l->env_v_ofs = mesh->env_v_ofs;
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
@@ -591,8 +593,8 @@ void I3D_morph::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
-        if (frm_flags & FRMFLAGS_CLIP) {
+    if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
+        if (m_FrmFlags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
             level->vb.buffer->Unlock();
@@ -609,7 +611,7 @@ void I3D_morph::m_AddFGroups()
         }
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (level->GetFlags() & MESHF_ENVMAP)
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
                     AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
@@ -620,7 +622,7 @@ void I3D_morph::m_AddFGroups()
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.sector = AddFGHlpStruct.sector;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {

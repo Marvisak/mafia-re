@@ -100,7 +100,7 @@ void S_sector_sound_properties::MakeBlend(const S_sector_sound_properties &a, co
 // FUNCTION: LS3DF11 0x1004cb90
 I3D_sector::I3D_sector()
 {
-    type = FRAME_SECTOR;
+    m_Type = FRAME_SECTOR;
     scene = NULL;
     num_verts = 0;
     verts = NULL;
@@ -116,11 +116,11 @@ I3D_sector::I3D_sector()
     next_in_scene = NULL;
     occluders = NULL;
     occluder = NULL;
-    frm_flags |= FRMFLAGS_HR_SECTORS;
+    m_FrmFlags |= FRMFLAGS_HR_SECTORS;
     unknown_1e8 = 0;
     unknown_1ec = 0;
     sound_props.SetupDefaults();
-    frm_flags |= FRMFLAGS_UNKNOWN_8000000;
+    m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
     group_bits = 0;
     sectorVersion++;
 }
@@ -209,7 +209,7 @@ void I3D_sector::AddToRemoveFromSceneRing(I3D_scene *new_scene)
         }
         new_scene->num_sectors++;
         scene->portal_version = 0;
-        if (occluder && occluder->parent == this)
+        if (occluder && occluder->m_pParent == this)
             occluder->LinkTo(scene->primary_sector, I3DLINK_UPDMATRIX);
     }
     sectorVersion++;
@@ -229,7 +229,7 @@ void I3D_sector::AddLight(I3D_light *light)
     case I3DLIGHT_POINTAMBIENT:
     case I3DLIGHT_POINTFOG:
         num_fog_lights++;
-        if (light->frm_flags & FRMFLAGS_ON)
+        if (light->m_FrmFlags & FRMFLAGS_ON)
             fog_light = light;
         break;
     }
@@ -254,7 +254,7 @@ LS3D_RESULT I3D_sector::DeleteLight(I3D_light *light)
         fog_light = NULL;
         if (num_fog_lights) {
             for (int i = 0; i < lights.size(); i++) {
-                if ((lights[i]->frm_flags & FRMFLAGS_ON) && (lights[i]->ltype == I3DLIGHT_FOG ||
+                if ((lights[i]->m_FrmFlags & FRMFLAGS_ON) && (lights[i]->ltype == I3DLIGHT_FOG ||
                     lights[i]->ltype == I3DLIGHT_POINTAMBIENT || lights[i]->ltype == I3DLIGHT_POINTFOG)) {
                     fog_light = lights[i];
                     break;
@@ -302,9 +302,9 @@ void I3D_sector::UpdateCHPlanesW()
     UpdateWMatrix();
     for (; i; i--) {
         S_vector v0, v1, v2;
-        v0 = verts[*fc++] * matrix;
-        v1 = verts[*fc++] * matrix;
-        v2 = verts[*fc++] * matrix;
+        v0 = verts[*fc++] * m_Matrix;
+        v1 = verts[*fc++] * m_Matrix;
+        v2 = verts[*fc++] * m_Matrix;
         S_plane pl;
         pl.normal.GetNormal(v0, v1, v2);
         pl.normal.Normalize();
@@ -376,9 +376,9 @@ void I3D_sector::MakeReady()
 // FUNCTION: LS3DF11 0x1004db20
 bool I3D_sector::CheckPoint(const S_vector &pos)
 {
-    if (!(frm_flags & FRMFLAGS_HR_BOUND_W_VALID))
+    if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_W_VALID))
         UpdateHRBoundVolW();
-    const I3D_bbox &bb = bound_w.bbox;
+    const I3D_bbox &bb = m_HRBoundVolW.bbox;
     if (!bb.IsValid())
         return false;
     if (bb.min.x > pos.x || bb.max.x < pos.x)
@@ -495,7 +495,7 @@ void I3D_sector::AddSound(I3D_sound *sound)
     sounds.push_back(sound);
     if (!sound->sectors.find(this))
         sound->sectors.push_back(this);
-    if (sound->frm_flags & FRMFLAGS_ON)
+    if (sound->m_FrmFlags & FRMFLAGS_ON)
         sound->SetOn(true);
 }
 

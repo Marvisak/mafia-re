@@ -125,13 +125,13 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
             return 0;
         if (level->lod_dist <= 0.0f)
             return 0;
-        float s = RSLodQuality * obj->world_scale;
+        float s = RSLodQuality * obj->m_WorldScale;
         if (dist_2 / (s * s) > level->lod_dist)
             lod = 1;
         else
             lod = 0;
     } else {
-        float s = RSLodQuality * obj->world_scale;
+        float s = RSLodQuality * obj->m_WorldScale;
         float d = dist_2 / (s * s);
         num--;
         bool found = false;
@@ -149,8 +149,8 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
         }
     }
 
-    if (lod != obj->cur_lod && obj->frm_flags & LS3D_CALLBACK_LOD)
-        obj->callback(obj, LS3D_CALLBACK_LOD, obj->cur_lod, lod);
+    if (lod != obj->cur_lod && obj->m_FrmFlags & LS3D_CALLBACK_LOD)
+        obj->m_pCallback(obj, LS3D_CALLBACK_LOD, obj->cur_lod, lod);
     if (obj->vis_flags & VISF_UNKNOWN_10) {
         int last = mesh->num_lods - 1;
         if (lod <= last) {
@@ -204,8 +204,8 @@ static void VisualProc(I3D_visual *vis);
 inline void AddSectorFGroups(I3D_sector *sct)
 {
     AddFGHlpStruct.sector = sct == pCurrentScene->near_sector ? pCurrentCamera->sector : sct;
-    for (I3D_visual *vis = sct->next_visual; vis; vis = vis->next_visual) {
-        if (vis->render_number == RenderNumber)
+    for (I3D_visual *vis = sct->m_pNextVisual; vis; vis = vis->m_pNextVisual) {
+        if (vis->m_RenderNumber == RenderNumber)
             VisualProc(vis);
     }
 }
@@ -239,8 +239,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
     }
     rendering = true;
     pCurrentScene = scene;
-    RenderNumberMinus1 = scene->render_number;
-    RenderNumber = ++scene->render_number;
+    RenderNumberMinus1 = scene->m_RenderNumber;
+    RenderNumber = ++scene->m_RenderNumber;
     pCurrentCamera = scene->current_camera;
     if (!pCurrentCamera) {
         uint clear = renderState[RS_CLEAR] != 0;
@@ -304,12 +304,12 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
     *(int *)&RSLodQuality = renderState[RS_LOD_QUALITY];
     RSLodQuality *= FOVDistCorrection;
     // The camera moved, or its sector did
-    renderCameraChanged = pCurrentCamera->update_count != pCurrentCamera->unknown_3fc ||
-        pCurrentCamera->sector->update_count != pCurrentCamera->unknown_400 || RecomputeAllGeometry;
+    renderCameraChanged = pCurrentCamera->m_UpdateCount != pCurrentCamera->unknown_3fc ||
+        pCurrentCamera->sector->m_UpdateCount != pCurrentCamera->unknown_400 || RecomputeAllGeometry;
     RecomputeAllGeometry = false;
     if (renderCameraChanged) {
-        pCurrentCamera->unknown_3fc = pCurrentCamera->update_count;
-        pCurrentCamera->unknown_400 = pCurrentCamera->sector->update_count;
+        pCurrentCamera->unknown_3fc = pCurrentCamera->m_UpdateCount;
+        pCurrentCamera->unknown_400 = pCurrentCamera->sector->m_UpdateCount;
         if (!renderCB && scene->listener) {
             scene->listener->SetPos(pCurrentCamera->GetWorldPos());
             scene->listener->SetDir(pCurrentCamera->GetMatrix()(2), pCurrentCamera->GetMatrix()(1));
@@ -325,8 +325,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             I3D_area *area = scene->areas;
             int i = scene->num_areas;
             while (i--) {
-                if (renderCameraChanged || area->update_count != area->unknown_164) {
-                    area->unknown_164 = area->update_count;
+                if (renderCameraChanged || area->m_UpdateCount != area->unknown_164) {
+                    area->unknown_164 = area->m_UpdateCount;
                     if (area->CheckPoint(cam_pos))
                         CurrentActiveAreaList.push_back_unique(area);
                     else {
@@ -427,9 +427,9 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         int i;
         for (i = sounds.size(); i--; ) {
             I3D_sound *snd = sounds[i];
-            if (snd->frm_flags & FRMFLAGS_ON && snd->state != SOUNDSTATE_STOP) {
-                if (snd->update_count != snd->unknown_14c) {
-                    snd->update_count = snd->unknown_14c;
+            if (snd->m_FrmFlags & FRMFLAGS_ON && snd->state != SOUNDSTATE_STOP) {
+                if (snd->m_UpdateCount != snd->unknown_14c) {
+                    snd->m_UpdateCount = snd->unknown_14c;
                     snd->snd_flags |= SOUNDF_POS | SOUNDF_DIR | SOUNDF_SCALE;
                     snd->m_UpdateSound();
                 } else if (renderCameraChanged || snd->fade_sector || snd->snd_flags > 0)
@@ -656,7 +656,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         }
 
         // The near sector, in front of everything, with the near projection
-        if (scene->near_sector->child && renderState[RS_DRAWVISUALS]) {
+        if (scene->near_sector->m_pChild && renderState[RS_DRAWVISUALS]) {
             AddFGHlpStruct.Clear();
             ParticleElementsList.Clear();
             m_pD3DDevice8->Clear(0, NULL, m_HardwareCaps & HWCAPS_STENCIL ? D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL :
@@ -733,9 +733,9 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 static void VisualProc(I3D_visual *vis)
 {
     if (vis->m_pOwner)
-        vis->m_pOwner->render_number = RenderNumber;
+        vis->m_pOwner->m_RenderNumber = RenderNumber;
     if (m_ProblemFlags & 2)
-        vis->frm_flags |= FRMFLAGS_CLIP;
+        vis->m_FrmFlags |= FRMFLAGS_CLIP;
     switch (vis->GetVisualType()) {
     case I3D_VISUAL_PART_BASE:
     case I3D_VISUAL_PART_ELEMENT: {
@@ -759,7 +759,7 @@ static void VisualProc(I3D_visual *vis)
     case I3D_VISUAL_LENSF: {
         I3D_lensflare *lf = (I3D_lensflare *)vis;
         if (!AddFGHlpStruct.scene->lensflares.find(lf)) {
-            lf->ref++;
+            lf->m_RefCount++;
             AddFGHlpStruct.scene->lensflares.push_back(lf);
             lf->last_check_col_time = 0;
             lf->last_update = timeGetTime();
@@ -775,9 +775,9 @@ static void VisualProc(I3D_visual *vis)
 // FUNCTION: LS3DF11 0x100629e0
 void NextFFrameProc(I3D_frame *frm)
 {
-    for (; frm; frm = frm->next) {
-        if (frm->frm_flags & FRMFLAGS_ON) {
-            if (frm->type == FRAME_VISUAL) {
+    for (; frm; frm = frm->m_pNext) {
+        if (frm->m_FrmFlags & FRMFLAGS_ON) {
+            if (frm->m_Type == FRAME_VISUAL) {
                 I3D_visual *vis = (I3D_visual *)frm;
                 if (vis->vis_flags & VISF_UNKNOWN_800 && ((I3D_object *)vis)->mesh) {
                     I3D_mesh_object *mesh = ((I3D_object *)vis)->mesh;
@@ -787,7 +787,7 @@ void NextFFrameProc(I3D_frame *frm)
                         num = mesh->num_lods;
                     for (int i = 0; i < num; i++) {
                         AddFGHlpStruct.cam_pos = vis->GetWBoundVolume().bsphere.pos;
-                        RSLodQuality = 1.0f / vis->world_scale;
+                        RSLodQuality = 1.0f / vis->m_WorldScale;
                         float d = (float)sqrt(sqrt(((I3D_object *)vis)->mesh->GetLOD(i)->lod_dist));
                         AddFGHlpStruct.cam_pos.z += (d + prev) * .5f;
                         vis->m_AddFGroups();
@@ -795,12 +795,12 @@ void NextFFrameProc(I3D_frame *frm)
                     }
                 } else {
                     AddFGHlpStruct.cam_pos = vis->GetWBoundVolume().bsphere.pos;
-                    RSLodQuality = 1.0f / vis->world_scale;
+                    RSLodQuality = 1.0f / vis->m_WorldScale;
                     vis->m_AddFGroups();
                 }
                 AddFGHlpStruct.fgroups.reset();
             }
-            NextFFrameProc(frm->child);
+            NextFFrameProc(frm->m_pChild);
         }
     }
 }
@@ -816,10 +816,10 @@ void I3D_driver::BuildAllVBuffers(I3D_scene *scene)
     AddFGHlpStruct.scene = scene;
     AddFGHlpStruct.sector = (I3D_sector *)frm;
     AddFGHlpStruct.camera = scene->current_camera;
-    NextFFrameProc(scene->primary_sector->child);
-    NextFFrameProc(scene->omni_sector->child);
-    NextFFrameProc(scene->backdrop_sector->child);
-    NextFFrameProc(scene->near_sector->child);
+    NextFFrameProc(scene->primary_sector->m_pChild);
+    NextFFrameProc(scene->omni_sector->m_pChild);
+    NextFFrameProc(scene->backdrop_sector->m_pChild);
+    NextFFrameProc(scene->near_sector->m_pChild);
     frm->Release();
     AddFGHlpStruct.Clear();
 }

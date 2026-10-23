@@ -3,11 +3,17 @@
 // before m_AddFGroups. The header's zero vector has its $E after m_AddFGroups (0x10056840); after it LoadImage, the
 // lod's scalar deleting destructor and destructor, then the out-of-line I3D_joint::GetJointMatrix and
 // S_vector::operator*=. Names are the PS2 build's unless noted.
+// 1.1's (0x10051fc0-0x10054540): the same functions, without a copy of GetJointMatrix (UpdateLodVertices inlines both
+// its calls) and with S_vector::operator*='s right after UpdateLodVertices, its first caller there; its $E is at
+// 0x100541e0. 1.1's buffers lock without flags (VBManager.h).
 //
 // Still open: m_AddFGroups' face group loop (see there); GetJointMatrix's copy (I3D.h); and in UpdateBVolumeProc the
 // operands of the sphere center's x sum, which come the other way round (the allocator's live-range ids: every
 // spelling of the sum compiles the same). Our linker keeps this file's copy of the empty SetSpace, which it folds with
-// the billboard's and the morphs', where the original keeps the billboard file's (I3D.h).
+// the billboard's and the morphs', where the original keeps the billboard file's (I3D.h). In 1.1 ours has
+// S_vector::operator*= after CopyMovedPositions: the file's source up to UpdateLodVertices' end is short by about 16
+// statements for /YX (SMeshDef's functions and GetJointMatrix defined here, not in I3D.h, give the original's place,
+// but then other files' deferred copies move: the billboard's SetAlphaState, the particles' SetSector).
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"
@@ -312,7 +318,7 @@ bool I3D_singlemesh::DBuild()
 // FUNCTION: LS3DF11 0x10052b00
 static void findJoint(I3D_frame *frm)
 {
-    for (I3D_frame *f = frm->child; f; f = f->next) {
+    for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext) {
         if (f->GetType() == FRAME_JOINT) {
             if (jointu >= 64)
                 break;
@@ -356,7 +362,7 @@ const S_clip_sm_vertex *I3D_singlemesh::GetVertexPos(int lod_index)
     C_VBuffer *buffer = l->vb_skin.buffer;
     if (!buffer)
         return NULL;
-    return (const S_clip_sm_vertex *)buffer->Lock(l->vb_skin.base, 0);
+    return (const S_clip_sm_vertex *)buffer->Lock(l->vb_skin.base, BUFFER_LOCK_FLAGS);
 }
 
 // Each joint's vertices through its matrix, the blended ones through both joints'. The lod's buffer is made at the
@@ -366,6 +372,8 @@ const S_clip_sm_vertex *I3D_singlemesh::GetVertexPos(int lod_index)
 // inline call pending between the second and the third Lock), the rigid copy counting num_rigid itself down (a
 // post-decrement loop of post-increments; a counter of its own is a little more source, which inlines the second
 // Lock's push_back), and jp stepped before info (the loop's last register).
+// 1.1's Lock has no push_back: its shape comes from 1.1's GetJointMatrix (I3D.h), the proxy's visual read as m_UserData
+// and the rigid copy counting a counter of its own down (the original's registers and operand orders, no other code).
 // FUNCTION: LS3DF 0x10054f60
 // FUNCTION: LS3DF11 0x10052c40
 void I3D_singlemesh::UpdateLodVertices(int lod_index)
@@ -393,20 +401,31 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
         int num_rigid = def->num_rigid;
         if (num_rigid) {
             int first = level->num_vertices - num_rigid;
-            const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base + first, 0);
-            S_clip_sm_vertex *dst = (S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base + first, 0);
+            const I3D_vertex *src =
+                (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base + first, BUFFER_LOCK_FLAGS);
+            S_clip_sm_vertex *dst =
+                (S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base + first, BUFFER_LOCK_FLAGS);
+#if ENGINE_VERSION >= 395
             while (num_rigid--)
                 *dst++ = *(const S_clip_sm_vertex *)src++;
+#else
+            for (int k = num_rigid; k; k--)
+                *dst++ = *(const S_clip_sm_vertex *)src++;
+#endif
         }
     }
     if (vis_flags & VISF_PROXY) {
+#if ENGINE_VERSION >= 395
         ((I3D_singlemesh *)GetData())->UpdateLodVertices(lod_index);
+#else
+        ((I3D_singlemesh *)m_UserData)->UpdateLodVertices(lod_index);
+#endif
         return;
     }
     SM_INFO *info = def->info;
     I3D_joint **jp = joints;
-    S_clip_sm_vertex *dst = (S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, 0);
-    const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    S_clip_sm_vertex *dst = (S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, BUFFER_LOCK_FLAGS);
+    const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     __declspec(align(16)) S_matrix m, mn, m2, mn2;
     for (int i = num_joints; i; i--, jp++, info++) {
         if (info->m_vertNum || info->num_verts) {
@@ -441,7 +460,7 @@ void I3D_singlemesh::CopyRigidPositions(uchar *dst, uint stride, int lod_index)
 {
     I3D_singlemesh *sm = this;
     while (sm->vis_flags & VISF_PROXY)
-        sm = (I3D_singlemesh *)sm->user_data;
+        sm = (I3D_singlemesh *)sm->m_UserData;
     if (!sm->joints)
         sm->DBuild();
     SMeshLod *l = (SMeshLod *)sm->lods[lod_index];
@@ -457,7 +476,7 @@ void I3D_singlemesh::CopyRigidPositions(uchar *dst, uint stride, int lod_index)
     if (!level)
         return;
     int first = level->num_vertices - num;
-    const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base + first, 0);
+    const I3D_vertex *src = (const I3D_vertex *)level->vb.buffer->Lock(level->vb.base + first, BUFFER_LOCK_FLAGS);
     uchar *p = dst + first * stride;
     for (int i = num; i; i--) {
         *(S_vector *)p = src->pos;
@@ -472,7 +491,7 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 {
     I3D_singlemesh *sm = this;
     while (sm->vis_flags & VISF_PROXY)
-        sm = (I3D_singlemesh *)sm->user_data;
+        sm = (I3D_singlemesh *)sm->m_UserData;
     if (!sm->joints)
         sm->DBuild();
     SMeshLod *l = (SMeshLod *)sm->lods[lod_index];
@@ -487,7 +506,7 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
     int num = level->num_vertices - def->num_rigid;
     if (num <= 0)
         return;
-    const S_clip_sm_vertex *src = (const S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, 0);
+    const S_clip_sm_vertex *src = (const S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, BUFFER_LOCK_FLAGS);
     uchar *p = dst;
     for (int i = num; i; i--) {
         *(S_vector *)p = src->pos;
@@ -508,7 +527,8 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 // Not matching yet: the face group loop keeps fg in edx and reloads it after the texture updates, ours reloads it
 // at the loop's top; the original loads the material's alpha before fade (every spelling of the product compiles the
 // same), and swaps which of num_transparent++ and the push_back's size increment are a read-modify-write; the stack
-// slots of some temporaries follow.
+// slots of some temporaries follow. 1.1's differs the same way; there, without the Locks' push_back, the flags and the
+// face group read through the accessors or as the members compile alike.
 // FUNCTION: LS3DF 0x10055930
 // FUNCTION: LS3DF11 0x100535d0
 void I3D_singlemesh::m_AddFGroups()
@@ -516,18 +536,18 @@ void I3D_singlemesh::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_visual *vis = (I3D_visual *)user_data;
-        I3D_frame *frm = vis->parent;
+        I3D_visual *vis = (I3D_visual *)m_UserData;
+        I3D_frame *frm = vis->m_pParent;
         while (true) {
             if (!frm) {
                 AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                 break;
             }
-            if (frm->type == FRAME_SECTOR) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 AddFGHlpStruct.sector = (I3D_sector *)frm;
                 break;
             }
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         int first = AddFGHlpStruct.fgroups.size();
         vis->m_AddFGroups();
@@ -551,7 +571,7 @@ void I3D_singlemesh::m_AddFGroups()
         l->dirty = false;
         joints_changed++;
     }
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!l->vb.vb) {
         if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x400, level->num_vertices, NULL, 0, &verts->tex,
                 sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
@@ -567,7 +587,7 @@ void I3D_singlemesh::m_AddFGroups()
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
             f += mesh->levels[lod_index - 1]->lod_dist;
-        float s = RSLodQuality * world_scale;
+        float s = RSLodQuality * m_WorldScale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
             d = 1.0f;
@@ -576,23 +596,23 @@ void I3D_singlemesh::m_AddFGroups()
         SetFade(1.0f);
 
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
     uchar *lv = NULL;
     if (vis_flags & VISF_PROXY)
-        joints_changed = ((I3D_singlemesh *)user_data)->joints_changed;
+        joints_changed = ((I3D_singlemesh *)m_UserData)->joints_changed;
     if (l->joints_changed != joints_changed) {
         UpdateLodVertices(lod_index);
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
         moved = true;
     }
     if (moved) {
-        lv = l->vb.buffer->Lock(base, 0);
+        lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL)
             CopyRigidPositions(lv, level->GetFlags() & MESHF_ENVMAP ? sizeof(LVERTEX2) : sizeof(LVERTEX), lod_index);
         else
@@ -604,13 +624,13 @@ void I3D_singlemesh::m_AddFGroups()
     }
     if (!l->vb_skin.buffer)
         return;
-    const S_clip_sm_vertex *sv = (const S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, 0);
+    const S_clip_sm_vertex *sv = (const S_clip_sm_vertex *)l->vb_skin.buffer->Lock(l->vb_skin.base, BUFFER_LOCK_FLAGS);
 
     if (moved || l->lights_changed != AddFGHlpStruct.sector->lights_changed) {
         l->lights_changed = AddFGHlpStruct.sector->lights_changed;
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 PrepareLights((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, (const uchar *)sv,
@@ -629,7 +649,7 @@ void I3D_singlemesh::m_AddFGroups()
     }
     if (l->alpha_dirty) {
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->mesh_flags & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
@@ -643,10 +663,10 @@ void I3D_singlemesh::m_AddFGroups()
         }
     }
 
-    if (renderCameraChanged || render_number != RenderNumberMinus1 || moved) {
+    if (renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) {
         if (level->mesh_flags & MESHF_ENVMAP) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), sv, sizeof(S_clip_sm_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, GetMatrix(), level->env_scale, l->env_u_ofs, l->env_v_ofs,
@@ -657,7 +677,7 @@ void I3D_singlemesh::m_AddFGroups()
                     level->GetFlags() & MESHF_ENVMAP_MODE, NULL);
         }
         if (!(m_HardwareCaps & HWCAPS_HWTL)) {
-            if (frm_flags & FRMFLAGS_CLIP) {
+            if (m_FrmFlags & FRMFLAGS_CLIP) {
                 m_pD3DDevice8->SetStreamSource(0, l->vb_skin.vb, l->vb_skin.buffer->stride);
                 m_pD3DDevice8->SetTransform(D3DTS_WORLD, &GetRenderMatrix());
                 l->vb_skin.buffer->Unlock();
@@ -673,7 +693,7 @@ void I3D_singlemesh::m_AddFGroups()
             m_pD3DDevice8->ProcessVertices(l->vb_skin.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
             if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
                 if (!lv)
-                    lv = l->vb.buffer->Lock(base, 0);
+                    lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
                 if (level->GetFlags() & MESHF_ENVMAP)
                     FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2),
                         num_verts, AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
@@ -686,7 +706,7 @@ void I3D_singlemesh::m_AddFGroups()
 
     RENDER_FG_HELP_STRUCT h;
     h.sector = AddFGHlpStruct.sector;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->GetNext()) {
         I3D_material *mat = fg->GetMaterial();

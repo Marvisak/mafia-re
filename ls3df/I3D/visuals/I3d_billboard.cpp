@@ -5,6 +5,7 @@
 // only with SetBlendState between SetAlphaState and SetColorOp in the header the driver sees, and the driver then
 // inlines it into its draws whatever its size (16 dead statements didn't stop it); ours also come due earlier (after
 // the billboard's m_RenderFGroup, in the original after Draw), the headers' inline content again (see autopch.py).
+// Patch 1.1's (0x10005da0-0x1000ac60) differs in m_AddFGroups's ProcessVertices and in the buffers' locks.
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"
@@ -12,13 +13,14 @@
 #include "dta.h"
 #include <mmsystem.h>
 
+// The type first, as in the other visuals' constructors: only that order gives the original's stores
 // FUNCTION: LS3DF 0x10005db0
 // FUNCTION: LS3DF11 0x10005da0
 I3D_billboard::I3D_billboard()
 {
+    visual_type = I3D_VISUAL_BILLBOARD;
     rot_axis = 2;
     axis_mode = 0;
-    visual_type = I3D_VISUAL_BILLBOARD;
     env_dummy = NULL;
 }
 
@@ -336,7 +338,8 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 // 0x20 in two arms, as the original's); the help structure is filled in the original's store order.
 // Not matching yet: the stack slots (this, lod_index, num_verts and the Lock's push_back temporary sit elsewhere), the
 // lod::Create call's argument loads (the original loads level->num_vertices before the constant pushes and tests the
-// flags in memory) and lod_index read twice where the original copies it.
+// flags in memory) and lod_index read twice where the original copies it. 1.1's original has ours in those two places
+// (and its slots), so 1.2's source changed there.
 // FUNCTION: LS3DF 0x100073c0
 // FUNCTION: LS3DF11 0x100073a0
 void I3D_billboard::m_AddFGroups()
@@ -344,20 +347,20 @@ void I3D_billboard::m_AddFGroups()
     if (!mesh)
         return;
     if (vis_flags & VISF_PROXY) {
-        I3D_billboard *vis = (I3D_billboard *)user_data;
+        I3D_billboard *vis = (I3D_billboard *)m_UserData;
         rot_axis = vis->rot_axis;
         axis_mode = vis->axis_mode;
-        I3D_frame *frm = vis->parent;
+        I3D_frame *frm = vis->m_pParent;
         while (true) {
             if (!frm) {
                 AddFGHlpStruct.sector = pCurrentScene->primary_sector;
                 break;
             }
-            if (frm->type == FRAME_SECTOR) {
+            if (frm->m_Type == FRAME_SECTOR) {
                 AddFGHlpStruct.sector = (I3D_sector *)frm;
                 break;
             }
-            frm = frm->parent;
+            frm = frm->m_pParent;
         }
         int first = AddFGHlpStruct.fgroups.size();
         vis->m_AddFGroups();
@@ -375,7 +378,7 @@ void I3D_billboard::m_AddFGroups()
     int num_verts = level->num_vertices;
     if (!num_verts)
         return;
-    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, 0);
+    I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     lod *l = lods[lod_index];
     if (!l || l->dirty || !l->vb.vb) {
         if (!l) {
@@ -401,7 +404,7 @@ void I3D_billboard::m_AddFGroups()
         float f = level->lod_dist * 0.5f;
         if (mesh->num_lods > 1)
             f += mesh->levels[lod_index - 1]->lod_dist;
-        float s = RSLodQuality * world_scale;
+        float s = RSLodQuality * m_WorldScale;
         float d = 1.0f - (dist_2 / (s * s) - f) / (level->lod_dist - f);
         if (d > 1.0f)
             d = 1.0f;
@@ -410,9 +413,9 @@ void I3D_billboard::m_AddFGroups()
         SetFade(1.0f);
 
     bool moved;
-    if (l->update_count != update_count) {
+    if (l->update_count != m_UpdateCount) {
         moved = true;
-        l->update_count = update_count;
+        l->update_count = m_UpdateCount;
     } else
         moved = false;
     uchar *lv = NULL;
@@ -427,7 +430,7 @@ void I3D_billboard::m_AddFGroups()
         l->lights_changed = AddFGHlpStruct.sector->lights_changed;
         LightingSetSector(AddFGHlpStruct.sector);
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         S_matrix m = g_matrix;
         m.Inverse(S_matrix(m));
         if (m_HardwareCaps & HWCAPS_HWTL) {
@@ -448,7 +451,7 @@ void I3D_billboard::m_AddFGroups()
     }
     if (l->alpha_dirty) {
         if (!lv)
-            lv = l->vb.buffer->Lock(base, 0);
+            lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
         if (m_HardwareCaps & HWCAPS_HWTL) {
             if (level->GetFlags() & MESHF_ENVMAP)
                 SetVertexAlpha((uchar *)&((LVERTEX2 *)lv)->color, sizeof(LVERTEX2), level, this, l);
@@ -463,17 +466,17 @@ void I3D_billboard::m_AddFGroups()
     }
 
     if (level->GetFlags() & MESHF_ENVMAP) {
-        if ((level->GetFlags() & MESHF_ENVMAP_MODE) == 5 && !env_dummy && parent) {
-            env_dummy = parent->GetChild(0);
-            while (env_dummy && env_dummy->type != FRAME_DUMMY)
-                env_dummy = env_dummy->next;
+        if ((level->GetFlags() & MESHF_ENVMAP_MODE) == 5 && !env_dummy && m_pParent) {
+            env_dummy = m_pParent->GetChild(0);
+            while (env_dummy && env_dummy->m_Type != FRAME_DUMMY)
+                env_dummy = env_dummy->m_pNext;
         }
-        if (render_number != RenderNumberMinus1 || moved || renderCameraChanged ||
+        if (m_RenderNumber != RenderNumberMinus1 || moved || renderCameraChanged ||
                 !IsAbsMrgZero(mesh->env_u_ofs - l->env_u_ofs) || !IsAbsMrgZero(mesh->env_v_ofs - l->env_v_ofs)) {
             l->env_u_ofs = mesh->env_u_ofs;
             l->env_v_ofs = mesh->env_v_ofs;
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_HWTL)
                 EnvProcess(&((LVERTEX2 *)lv)->u2, sizeof(LVERTEX2), verts, sizeof(I3D_vertex), num_verts,
                     AddFGHlpStruct.cam_pos, g_matrix, level->env_scale, l->env_u_ofs, l->env_v_ofs,
@@ -485,24 +488,33 @@ void I3D_billboard::m_AddFGroups()
         }
     }
 
-    if ((renderCameraChanged || render_number != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
-        if (frm_flags & FRMFLAGS_CLIP) {
+    if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) && !(m_HardwareCaps & HWCAPS_HWTL)) {
+        if (m_FrmFlags & FRMFLAGS_CLIP) {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(TRUE);
+#if ENGINE_VERSION < 395
+            // 1.1 calls it in each branch: VC6 merges the two, but their references weigh in the frame (dest's slot)
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
+#endif
         } else {
             m_pD3DDevice8->SetStreamSource(0, level->vb.vb, level->vb.buffer->stride);
             m_pD3DDevice8->SetTransform(D3DTS_WORLD, &g_matrix);
             level->vb.buffer->Unlock();
             SetVertexFormat(VF_VERTEX);
             SetClipping(FALSE);
+#if ENGINE_VERSION < 395
+            m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
+#endif
         }
+#if ENGINE_VERSION >= 395
         m_pD3DDevice8->ProcessVertices(level->vb.base, base, num_verts, dest, D3DPV_DONOTCOPYDATA);
+#endif
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
-                lv = l->vb.buffer->Lock(base, 0);
+                lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (level->GetFlags() & MESHF_ENVMAP)
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
                     AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
@@ -513,7 +525,7 @@ void I3D_billboard::m_AddFGroups()
     }
 
     RENDER_FG_HELP_STRUCT h;
-    h.clip = frm_flags & FRMFLAGS_CLIP;
+    h.clip = m_FrmFlags & FRMFLAGS_CLIP;
     h.vis = this;
     h.sector = AddFGHlpStruct.sector;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
@@ -549,7 +561,8 @@ void I3D_billboard::m_AddFGroups()
 // test, but spends the inline budget the original spent). The fog pass calls SwapVertexBytes in each branch of the
 // stride: the original pushes 0x28 or 0x20 in two arms where the conditional expression gives sete/lea.
 // The multipass switch calls cases 4 and 5's SetColorOp out of line as the original does only with the render-state
-// helpers' asserts (I3D.h).
+// helpers' asserts (I3D.h). 1.1's fog pass locks with D3DLOCK_NOSYSLOCK, which its out-of-line Lock takes as an
+// argument; the constant also gives the texture factor of the single pass's first blend switch 1.1's registers.
 // FUNCTION: LS3DF 0x100083b0
 // FUNCTION: LS3DF11 0x10008030
 void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
@@ -559,7 +572,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     lod *l;
     int num_verts;
     if (vis_flags & VISF_PROXY) {
-        I3D_object *obj = (I3D_object *)user_data;
+        I3D_object *obj = (I3D_object *)m_UserData;
         l = obj->lods[obj->cur_lod];
         SetCullState(D3DCULL_NONE);
         num_verts = mesh->levels[obj->cur_lod]->num_vertices;
@@ -778,7 +791,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetAlphaState(1);
             SetBlendState(0);
             const I3D_triface *faces = fg->GetFaces();
-            uchar *v = buffer->Lock(base, 0);
+            uchar *v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
                 SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
             else
@@ -787,7 +800,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             buffer->Unlock();
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
             faces = fg->GetFaces();
-            v = buffer->Lock(base, 0);
+            v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
                 SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
             else
@@ -947,7 +960,7 @@ void I3D_lensflare::Draw(bool test)
             last_check_col_time = time;
             target_visibility = 1.0f;
             if (pCurrentScene->TestColGeo(cam_pos, dir, 0x61030000, NULL, NULL, NULL, &target_color, TexelCallback,
-                    parent, 0) && IsMrgZeroLess(target_color.Dot(target_color)))
+                    m_pParent, 0) && IsMrgZeroLess(target_color.Dot(target_color)))
                 target_visibility = 0.0f;
         }
     } else

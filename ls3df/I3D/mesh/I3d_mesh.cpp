@@ -1,6 +1,7 @@
 // The meshes (PS2 I3d_mesh.cpp), at 0x10030560-0x10031820 in the original: I3D_face_group, I3D_mesh_level and
 // I3D_mesh_object, each in PS2's order with the PC's additions. The header's zero vector has its $E at the end
-// (0x10031800). Names are the PS2 build's unless noted.
+// (0x10031800). Names are the PS2 build's unless noted. 1.1's is at 0x1002f860-0x100307f0, its $E at 0x100307d0; only
+// the vertex locking differs.
 #include "I3D/I3D.h"
 #include "I3D/mesh/I3d_material.h"
 #include "I3D/render/IBManager.h"
@@ -70,7 +71,7 @@ I3D_triface *I3D_face_group::GetFaces()
 {
     if (!num_faces)
         return NULL;
-    return (I3D_triface *)ib.buffer->Lock(ib.base, 0);
+    return (I3D_triface *)ib.buffer->Lock(ib.base, BUFFER_LOCK_FLAGS);
 }
 
 // FUNCTION: LS3DF 0x10030780
@@ -195,7 +196,7 @@ LS3D_RESULT I3D_mesh_level::SetVertexMesh(const I3D_vertex *verts, int num)
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
         return I3DERR_OUTOFMEM;
     }
-    memcpy(vb.buffer->Lock(vb.base, 0), verts, num * sizeof(I3D_vertex));
+    memcpy(vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS), verts, num * sizeof(I3D_vertex));
     num_vertices = num;
     UpdateBBox();
     return I3D_OK;
@@ -221,12 +222,12 @@ I3D_vertex *I3D_mesh_level::CreateVertexMesh(int num)
         return NULL;
     }
     num_vertices = num;
-    return (I3D_vertex *)vb.buffer->Lock(vb.base, 0);
+    return (I3D_vertex *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
 }
 
+#if ENGINE_VERSION >= 395
 // The original sets the read-only flag into a variable it never initialised (it lives in the dead this slot)
 // FUNCTION: LS3DF 0x10030e80
-// FUNCTION: LS3DF11 0x1002ff60
 I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
 {
     if (!vb.vb)
@@ -238,12 +239,25 @@ I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
         lock_flags = 0;
     return (I3D_vertex *)vb.buffer->Lock(vb.base, lock_flags);
 }
+#else
+// 1.1's tests the vertex count and ignores the flags
+// FUNCTION: LS3DF11 0x1002ff60
+I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
+{
+    if (!num_vertices)
+        return NULL;
+    return (I3D_vertex *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
+}
+#endif
 
+// 1.1's doesn't test the buffer
 // FUNCTION: LS3DF 0x10030f90
 // FUNCTION: LS3DF11 0x1002ffa0
 void I3D_mesh_level::UnlockVertices()
 {
+#if ENGINE_VERSION >= 395
     if (vb.vb)
+#endif
         vb.buffer->Unlock();
 }
 

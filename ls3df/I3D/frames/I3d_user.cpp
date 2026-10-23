@@ -6,7 +6,7 @@
 // FUNCTION: LS3DF11 0x10057800
 I3D_user::I3D_user()
 {
-    type = FRAME_USER;
+    m_Type = FRAME_USER;
     add_data = 0;
 }
 

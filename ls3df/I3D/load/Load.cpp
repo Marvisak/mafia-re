@@ -134,9 +134,9 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     LS3D_RESULT r = LoadImage(name, NULL);
     m_DisableSleeping = false;
     I3D_frame **frm = LoadFramy;
-    if (root->type == FRAME_MODEL) {
+    if (root->m_Type == FRAME_MODEL) {
         while (LoadFramu--) {
-            if (!(*frm)->parent)
+            if (!(*frm)->m_pParent)
                 (*frm)->LinkTo(root, 0);
             ((I3D_model *)root)->AddFrame(*frm);
             (*frm)->Release();
@@ -145,7 +145,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     } else {
         I3D_scene *scene = ((I3D_sector *)root)->scene;
         while (LoadFramu--) {
-            if (!(*frm)->parent)
+            if (!(*frm)->m_pParent)
                 (*frm)->LinkTo(root, 0);
             scene->AddFrame(*frm);
             (*frm)->Release();
@@ -187,14 +187,14 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
         r = set->Open(file_name, flags, NULL, NULL);
         if (r == I3D_OK) {
             set->options = 2;
-            if (root->type == FRAME_MODEL)
+            if (root->m_Type == FRAME_MODEL)
                 ((I3D_model *)root)->SetAnimation(set, 0, 1.0f, 0);
             else
                 ((I3D_sector *)root)->scene->SetAnimation(set, 0, 1.0f, 0);
         }
         set->Release();
     }
-    root->frm_flags = (root->frm_flags & ~FRMFLAGS_HR_BOUND_W_VALID) | FRMFLAGS_UPDATE;
+    root->m_FrmFlags = (root->m_FrmFlags & ~FRMFLAGS_HR_BOUND_W_VALID) | FRMFLAGS_UPDATE;
     root->Update();
     if (LoadCBflags & I3DLOAD_PROGRESS) {
         progress = 1.0f;

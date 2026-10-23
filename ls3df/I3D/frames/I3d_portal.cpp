@@ -194,7 +194,7 @@ static I3D_sector *CTP_pSector = NULL;
 // - The occluders' view plane goes through an S_frustum local: the original's frame has its 0x50 bytes at
 //   [ebp - 0x114], of which only normal[0] and d[0] are used.
 // - The occluders' part is a block of its own: its vectors share the frame with the loop's (pos with cpos, the box with
-//   two corners), which `if (root->type != FRAME_SECTOR) return;` before function-scope locals doesn't give. Their
+//   two corners), which `if (root->m_Type != FRAME_SECTOR) return;` before function-scope locals doesn't give. Their
 //   distance to the view plane is written out (it loads the center's components first, through Dot the plane's), the
 //   range test is a `>` (test ah, 0x41; jne) around the rest.
 // Open: the planes' inline budget. The original inlines GetNormal in all four planes, leaving its operator- calls
@@ -210,14 +210,14 @@ static I3D_sector *CTP_pSector = NULL;
 // FUNCTION: LS3DF11 0x1003fe70
 void CTP_EnumProcFirst(I3D_frame *root)
 {
-    for (I3D_frame *frm = root->child; frm; frm = frm->next) {
-        frm->frm_flags &= ~(FRMFLAGS_CLIP | FRMFLAGS_UNKNOWN_10000);
-        if ((frm->frm_flags & FRMFLAGS_UNKNOWN_8000000) || !(frm->frm_flags & FRMFLAGS_ON))
+    for (I3D_frame *frm = root->m_pChild; frm; frm = frm->m_pNext) {
+        frm->m_FrmFlags &= ~(FRMFLAGS_CLIP | FRMFLAGS_UNKNOWN_10000);
+        if ((frm->m_FrmFlags & FRMFLAGS_UNKNOWN_8000000) || !(frm->m_FrmFlags & FRMFLAGS_ON))
             continue;
         S_vector pos = frm->GetHRBoundVolumeW().bsphere.pos;
-        float r = frm->bound_w.bsphere.radius;
+        float r = frm->m_HRBoundVolW.bsphere.radius;
         float d = CTP_VFnormals[0].x * pos.x + CTP_VFnormals[0].y * pos.y + CTP_VFnormals[0].z * pos.z + CTP_VFds[0];
-        if (frm->type == FRAME_VISUAL) {
+        if (frm->m_Type == FRAME_VISUAL) {
             float f = d + 10000.0f;
             if (f < 0.0f)
                 ((I3D_object *)frm)->sort_dist = 0.0f;
@@ -227,11 +227,11 @@ void CTP_EnumProcFirst(I3D_frame *root)
         if (d + r < CTP_Near)
             continue;
         if (d - CTP_Near <= r)
-            frm->frm_flags |= FRMFLAGS_CLIP;
+            frm->m_FrmFlags |= FRMFLAGS_CLIP;
         if (d - r > CTP_Far)
             continue;
         if (CTP_Far - d <= r)
-            frm->frm_flags |= FRMFLAGS_CLIP;
+            frm->m_FrmFlags |= FRMFLAGS_CLIP;
         if (!CTP_pPortalW) {
             float d1 = CTP_VFnormals[1].x * pos.x + CTP_VFnormals[1].y * pos.y + CTP_VFnormals[1].z * pos.z +
                 CTP_VFds[1];
@@ -693,19 +693,19 @@ void CTP_EnumProcFirst(I3D_frame *root)
                 if (pos.Dot((const S_vector &)*vfn[4]) + *vfd[4] < r)
                     clip |= FRMFLAGS_CLIP;
             }
-            frm->frm_flags |= clip;
-            frm->render_number = RenderNumber;
-            if (frm->type == FRAME_VISUAL) {
-                CTP_pSector->last_visual->next_visual = (I3D_visual *)frm;
-                frm->next_visual = NULL;
+            frm->m_FrmFlags |= clip;
+            frm->m_RenderNumber = RenderNumber;
+            if (frm->m_Type == FRAME_VISUAL) {
+                CTP_pSector->last_visual->m_pNextVisual = (I3D_visual *)frm;
+                frm->m_pNextVisual = NULL;
                 CTP_pSector->last_visual = frm;
             }
         } else
-            frm->frm_flags |= FRMFLAGS_UNKNOWN_10000;
-        if (frm->child)
+            frm->m_FrmFlags |= FRMFLAGS_UNKNOWN_10000;
+        if (frm->m_pChild)
             CTP_EnumProcFirst(frm);
     }
-    if (root->type == FRAME_SECTOR) {
+    if (root->m_Type == FRAME_SECTOR) {
         // The sector's occluders in front of the camera, between its planes and the corners of the near plane (the
         // camera's own view, through any portal)
         I3D_camera *cam = pCurrentCamera;
@@ -731,7 +731,7 @@ void CTP_EnumProcFirst(I3D_frame *root)
                 float nr = -o->radius;
                 if (pl1.normal.Dot(c) + pl1.d > nr && pl2.normal.Dot(c) + pl2.d > nr &&
                     pl3.normal.Dot(c) + pl3.d > nr && pl4.normal.Dot(c) + pl4.d > nr)
-                    o->frm_flags |= FRMFLAGS_UNKNOWN_10000;
+                    o->m_FrmFlags |= FRMFLAGS_UNKNOWN_10000;
             }
         }
     }
@@ -746,12 +746,12 @@ void CTP_EnumProc(I3D_frame *root)
 {
     if (!CTP_pPortalW)
         return;
-    for (I3D_frame *frm = root->child; frm; frm = frm->next) {
-        if (frm->render_number != RenderNumber) {
-            if (!(frm->frm_flags & FRMFLAGS_UNKNOWN_10000))
+    for (I3D_frame *frm = root->m_pChild; frm; frm = frm->m_pNext) {
+        if (frm->m_RenderNumber != RenderNumber) {
+            if (!(frm->m_FrmFlags & FRMFLAGS_UNKNOWN_10000))
                 continue;
             S_vector pos = frm->GetHRBoundVolumeW().bsphere.pos;
-            float r = frm->bound_w.bsphere.radius;
+            float r = frm->m_HRBoundVolW.bsphere.radius;
             float d1 = CTP_VFnormals[1].x * pos.x + CTP_VFnormals[1].y * pos.y + CTP_VFnormals[1].z * pos.z +
                 CTP_VFds[1];
             if (!(d1 > -r))
@@ -1205,16 +1205,16 @@ void CTP_EnumProc(I3D_frame *root)
                 if (pos.Dot((const S_vector &)*vfn[4]) + *vfd[4] < r)
                     clip |= FRMFLAGS_CLIP;
             }
-            frm->frm_flags |= clip;
-            frm->render_number = RenderNumber;
-            if (frm->type == FRAME_VISUAL) {
-                CTP_pSector->last_visual->next_visual = (I3D_visual *)frm;
-                frm->next_visual = NULL;
+            frm->m_FrmFlags |= clip;
+            frm->m_RenderNumber = RenderNumber;
+            if (frm->m_Type == FRAME_VISUAL) {
+                CTP_pSector->last_visual->m_pNextVisual = (I3D_visual *)frm;
+                frm->m_pNextVisual = NULL;
                 CTP_pSector->last_visual = frm;
             }
         }
-        if (frm->child && (!CTP_PartlyOffPortal || (frm->parent->type == FRAME_SECTOR &&
-            !(((I3D_sector *)frm->parent)->sct_flags & SCTF_UNKNOWN_100))))
+        if (frm->m_pChild && (!CTP_PartlyOffPortal || (frm->m_pParent->m_Type == FRAME_SECTOR &&
+            !(((I3D_sector *)frm->m_pParent)->sct_flags & SCTF_UNKNOWN_100))))
             CTP_EnumProc(frm);
     }
 }
@@ -1562,7 +1562,7 @@ static bool SctLookStckStop = false;
 // FUNCTION: LS3DF11 0x10042e20
 void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
 {
-    if (!(sct->frm_flags & FRMFLAGS_ON) || (p && !(p->portal_flags & PORTALF_ON)))
+    if (!(sct->m_FrmFlags & FRMFLAGS_ON) || (p && !(p->portal_flags & PORTALF_ON)))
         return;
     if (p) {
         S_vector d = p->center - pCurrentCamera->GetWorldPos();
@@ -1602,7 +1602,7 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
     else
         SctLookStckStop = true;
     if (!(sct->sct_flags & SCTF_CULLED)) {
-        sct->next_visual = NULL;
+        sct->m_pNextVisual = NULL;
         CullThruPortal_First(sct, p, 0);
         OCCL_PrepareSector2(sct);
     } else {
@@ -1802,10 +1802,10 @@ void ProcessPortals(I3D_scene *scene)
         s->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
         s = s->next_in_scene;
     }
-    scene->primary_sector->next_visual = NULL;
-    scene->backdrop_sector->next_visual = NULL;
-    scene->omni_sector->next_visual = NULL;
-    scene->near_sector->next_visual = NULL;
+    scene->primary_sector->m_pNextVisual = NULL;
+    scene->backdrop_sector->m_pNextVisual = NULL;
+    scene->omni_sector->m_pNextVisual = NULL;
+    scene->near_sector->m_pNextVisual = NULL;
     scene->primary_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
     ParsePortalsInSector_Begin(cam_sector);
     scene->backdrop_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);

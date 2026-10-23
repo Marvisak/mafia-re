@@ -431,14 +431,14 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
     I3D_light **lp = &pCurrentSector->lights[0];
     for (; i--; lp++) {
         pTempLight = *lp;
-        if (!(pTempLight->mode & mode) || !(pTempLight->frm_flags & FRMFLAGS_ON))
+        if (!(pTempLight->mode & mode) || !(pTempLight->m_FrmFlags & FRMFLAGS_ON))
             continue;
         if (IsAbsMrgZero(pTempLight->power))
             continue;
         switch (pTempLight->ltype) {
         case I3DLIGHT_AMBIENT:
             TempAmbient += pTempLight->color * obj->lightness;
-            key += pTempLight->update_count;
+            key += pTempLight->m_UpdateCount;
             break;
         case I3DLIGHT_SPOT: {
             S_vector d = bpos - pTempLight->bsphere.pos;
@@ -516,7 +516,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
 
     if (GlobalLightCount > 0) {
         for (uint j = GlobalLightCount; j--; )
-            key += TempLightList[j].light->update_count;
+            key += TempLightList[j].light->m_UpdateCount;
         key *= GlobalLightCount;
     }
     uint *cached = obj->vis_flags & VISF_UNKNOWN_10 ? &obj->lods[0]->light_key : &obj->lods[obj->cur_lod]->light_key;
@@ -703,7 +703,7 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
     S_vector color, dir, from;
     I3D_light **lp = &pCurrentSector->lights[0];
     for (int n = pCurrentSector->lights.size(); n--; lp++) {
-        if (!((*lp)->mode & I3DLIGHTMODE_LIGHTMAP) || !((*lp)->frm_flags & FRMFLAGS_ON))
+        if (!((*lp)->mode & I3DLIGHTMODE_LIGHTMAP) || !((*lp)->m_FrmFlags & FRMFLAGS_ON))
             continue;
         if (IsAbsMrgZero((*lp)->power))
             continue;

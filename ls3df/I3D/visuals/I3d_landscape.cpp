@@ -244,12 +244,12 @@ void I3D_landpatch::Init(int heightX, int heightY, int worldX, int worldY, uchar
     vis_bound.bsphere.radius = S_vector(PATCH_SIZE / 2, half, PATCH_SIZE / 2).Magnitude();
     if (!(vis_flags & VISF_WORLD_SPACE))
         vis_flags &= ~VISF_WBOUND_VALID;
-    frm_flags &= ~(FRMFLAGS_HR_BOUND_VALID | FRMFLAGS_HR_BOUND_W_VALID);
-    if (!(frm_flags & FRMFLAGS_LOCKED)) {
-        f_matrix.m[3][0] = (float)m_WorldX;
-        f_matrix.m[3][1] = 0.0f;
-        f_matrix.m[3][2] = (float)m_WorldY;
-        frm_flags = (frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
+    m_FrmFlags &= ~(FRMFLAGS_HR_BOUND_VALID | FRMFLAGS_HR_BOUND_W_VALID);
+    if (!(m_FrmFlags & FRMFLAGS_LOCKED)) {
+        m_LocalMatrix.m[3][0] = (float)m_WorldX;
+        m_LocalMatrix.m[3][1] = 0.0f;
+        m_LocalMatrix.m[3][2] = (float)m_WorldY;
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
     }
 }
 
@@ -342,7 +342,7 @@ TriTreeNode *I3D_landscape::AllocateTri()
 // FUNCTION: LS3DF11 0x1001f6e0
 I3D_landscape::I3D_landscape()
 {
-    type = FRAME_LANDSCAPE;
+    m_Type = FRAME_LANDSCAPE;
     C_list<I3D_landscape *> &l = pI3DDriver->landscapes;
     if (!l.find(this))
         l.push_back(this);
@@ -417,7 +417,7 @@ void I3D_landscape::Reset()
             patch->Reset();
             if (patch->isDirty())
                 patch->ComputeVariance();
-            if (RenderNumber == patch->render_number) {
+            if (RenderNumber == patch->m_RenderNumber) {
                 if (X > 0)
                     patch->GetBaseLeft()->LeftNeighbor = m_Patches[Y][X - 1].GetBaseRight();
                 else
@@ -446,7 +446,7 @@ void I3D_landscape::Tessellate()
     int nCount;
     I3D_landpatch *patch = &m_Patches[0][0];
     for (nCount = 0; nCount < NUM_PATCHES_PER_SIDE * NUM_PATCHES_PER_SIDE; nCount++, patch++) {
-        if (RenderNumber == patch->render_number)
+        if (RenderNumber == patch->m_RenderNumber)
             patch->Tessellate();
     }
 }
@@ -469,7 +469,7 @@ void I3D_landscape::Render()
     int nCount;
     I3D_landpatch *patch = &m_Patches[0][0];
     for (nCount = 0; nCount < NUM_PATCHES_PER_SIDE * NUM_PATCHES_PER_SIDE; nCount++, patch++) {
-        if (RenderNumber == patch->render_number)
+        if (RenderNumber == patch->m_RenderNumber)
             patch->Render();
     }
 

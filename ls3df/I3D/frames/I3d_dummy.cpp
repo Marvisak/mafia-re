@@ -9,7 +9,7 @@
 // FUNCTION: LS3DF11 0x10019d00
 I3D_dummy::I3D_dummy()
 {
-    type = FRAME_DUMMY;
+    m_Type = FRAME_DUMMY;
     bbox.Invalidate();
     dummy_flags = 0;
 }
@@ -18,7 +18,7 @@ I3D_dummy::I3D_dummy()
 // FUNCTION: LS3DF11 0x10019d80
 I3D_dummy::~I3D_dummy()
 {
-    if (frm_flags & FRMFLAGS_WEATHER) {
+    if (m_FrmFlags & FRMFLAGS_WEATHER) {
         for (int i = pI3DDriver->scenes.size(); i--; )
             pI3DDriver->scenes[i]->WeatherSystemDelDummy(this);
     }
@@ -39,7 +39,7 @@ LS3D_RESULT I3D_dummy::Duplicate(I3D_frame *frame)
 // FUNCTION: LS3DF11 0x10019e50
 void I3D_dummy::UpdateV()
 {
-    if (frm_flags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
+    if (m_FrmFlags & (FRMFLAGS_UPDATE | FRMFLAGS_CHANGED))
         dummy_flags &= ~DUMMYF_INV_MAT_VALID;
 }
 

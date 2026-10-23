@@ -281,9 +281,9 @@ void I3D_interpolator::Update()
         if (num_rot > 1)
             rot.Normalize();
         I3D_frame *frm = frame;
-        frm->rot = rot;
-        frm->rot.Normalize();
-        frm->frm_flags = (frm->frm_flags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        frm->m_Rot = rot;
+        frm->m_Rot.Normalize();
+        frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
     if (num_scale)
@@ -291,7 +291,7 @@ void I3D_interpolator::Update()
 
     // The note keys after the last update's time up to this one's, in keys, or past an end when the time went around.
     // Played backwards, only the latter: the tests are the forward ones.
-    if (!(frame->frm_flags & (LS3D_CALLBACK_NOTE | LS3D_CALLBACK_NOTE_STRING)) || !frame->callback)
+    if (!(frame->m_FrmFlags & (LS3D_CALLBACK_NOTE | LS3D_CALLBACK_NOTE_STRING)) || !frame->m_pCallback)
         return;
     for (i = 0; i < 8; i++) {
         if (!(keys[i].flags & (ANIMF_NOTE | ANIMF_NOTE_STRING)))
@@ -303,7 +303,7 @@ void I3D_interpolator::Update()
         if (t == t_last)
             continue;
         if (keys[i].flags & ANIMF_NOTE_STRING) {
-            if (!(frame->frm_flags & LS3D_CALLBACK_NOTE_STRING))
+            if (!(frame->m_FrmFlags & LS3D_CALLBACK_NOTE_STRING))
                 continue;
             const ushort *times = keys[i].note;
             int n = keys[i].num_note;
@@ -312,10 +312,10 @@ void I3D_interpolator::Update()
             for (int j = 0; j < n; j++, times++) {
                 ushort kt = *times;
                 if (wrap ? kt > t_last || kt <= t : kt > t_last && kt <= t)
-                    frame->callback(frame, LS3D_CALLBACK_NOTE_STRING, (uint)notes[j], kt * 40);
+                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE_STRING, (uint)notes[j], kt * 40);
             }
         } else {
-            if (!(frame->frm_flags & LS3D_CALLBACK_NOTE))
+            if (!(frame->m_FrmFlags & LS3D_CALLBACK_NOTE))
                 continue;
             const ushort *times = keys[i].note;
             int n = keys[i].num_note;
@@ -324,7 +324,7 @@ void I3D_interpolator::Update()
             for (int j = 0; j < n; j++, times++) {
                 ushort kt = *times;
                 if (wrap ? kt > t_last || kt <= t : kt > t_last && kt <= t)
-                    frame->callback(frame, LS3D_CALLBACK_NOTE, notes[j], kt * 40);
+                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE, notes[j], kt * 40);
             }
         }
     }
@@ -407,8 +407,8 @@ void I3D_IPolSet::Tick(const int *times)
         p = &interpolators[0];
         for (int k = interpolators.size(); k--; p++) {
             I3D_frame *frm = (*p)->frame;
-            if (frm && (frm->frm_flags & LS3D_CALLBACK_ANIM_END)) {
-                frm->callback(frm, LS3D_CALLBACK_ANIM_END, i, 0);
+            if (frm && (frm->m_FrmFlags & LS3D_CALLBACK_ANIM_END)) {
+                frm->m_pCallback(frm, LS3D_CALLBACK_ANIM_END, i, 0);
                 break;
             }
         }
@@ -455,8 +455,8 @@ void I3D_IPolSet::Tick(int time)
         p = &interpolators[0];
         for (int k = interpolators.size(); k--; p++) {
             I3D_frame *frm = (*p)->frame;
-            if (frm && (frm->frm_flags & LS3D_CALLBACK_ANIM_END)) {
-                frm->callback(frm, LS3D_CALLBACK_ANIM_END, i, 0);
+            if (frm && (frm->m_FrmFlags & LS3D_CALLBACK_ANIM_END)) {
+                frm->m_pCallback(frm, LS3D_CALLBACK_ANIM_END, i, 0);
                 break;
             }
         }
@@ -695,7 +695,7 @@ I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(I3D_frame *frm)
     }
     interpolators.push_back(ip);
     ip->frame = frm;
-    frm->frm_flags |= FRMFLAGS_INTERPOLATOR;
+    frm->m_FrmFlags |= FRMFLAGS_INTERPOLATOR;
     return ip;
 }
 
@@ -720,6 +720,6 @@ I3D_interpolator *I3D_IPolSet::GetFrameInterpolator(const char *frame_name)
     }
     interpolators.push_back(ip);
     ip->frame = frm;
-    frm->frm_flags |= FRMFLAGS_INTERPOLATOR;
+    frm->m_FrmFlags |= FRMFLAGS_INTERPOLATOR;
     return ip;
 }

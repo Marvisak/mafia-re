@@ -8,7 +8,7 @@
 // FUNCTION: LS3DF11 0x1000ac60
 I3D_camera::I3D_camera()
 {
-    type = FRAME_CAMERA;
+    m_Type = FRAME_CAMERA;
     fov_a = near_fov_a = PI / 4;
     ncp = 1.0f;
     fcp = 1000.0f;
@@ -25,7 +25,7 @@ I3D_camera::I3D_camera()
     ncp_y = ncp;
     near_ncp_x = near_ncp;
     near_ncp_y = near_ncp;
-    frm_flags |= FRMFLAGS_UNKNOWN_8000000;
+    m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
     UpdateProjMatrix();
     m_view.Identity();
     m_view_proj = m_proj;
@@ -69,7 +69,7 @@ LS3D_RESULT I3D_camera::Duplicate(I3D_frame *frame)
         unknown_400 = 0;
         ncp_x = cam->ncp_x;
         ncp_y = cam->ncp_y;
-        frm_flags |= FRMFLAGS_UNKNOWN_8000000;
+        m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
         m_view.Identity();
         view_inv.Identity();
         m_proj = cam->m_proj;
@@ -150,7 +150,7 @@ void I3D_camera::UpdateProjMatrix()
         near_ncp_x = near_ncp / w;
         near_ncp_y = near_ncp / h;
     }
-    update_count++;
+    m_UpdateCount++;
 }
 
 // The setters report a bad value with the value they take instead (a field of view below 0.01 or from PI on is clamped,
@@ -248,7 +248,7 @@ void I3D_camera::UpdateSector()
 {
     if (scene) {
         UpdateWMatrix();
-        sector = scene->GetSector(matrix(3), sector);
+        sector = scene->GetSector(m_Matrix(3), sector);
     } else {
         sector = NULL;
         UpdateWMatrix();
@@ -280,16 +280,16 @@ void I3D_camera::UpdateV()
 {
     UpdateSector();
     m_view.Identity();
-    m_view.m[0][0] = matrix.m[0][0];
-    m_view.m[0][1] = matrix.m[1][0];
-    m_view.m[0][2] = matrix.m[2][0];
-    m_view.m[1][0] = matrix.m[0][1];
-    m_view.m[1][1] = matrix.m[1][1];
-    m_view.m[1][2] = matrix.m[2][1];
-    m_view.m[2][0] = matrix.m[0][2];
-    m_view.m[2][1] = matrix.m[1][2];
-    m_view.m[2][2] = matrix.m[2][2];
-    m_view(3) = -matrix(3) * m_view;
+    m_view.m[0][0] = m_Matrix.m[0][0];
+    m_view.m[0][1] = m_Matrix.m[1][0];
+    m_view.m[0][2] = m_Matrix.m[2][0];
+    m_view.m[1][0] = m_Matrix.m[0][1];
+    m_view.m[1][1] = m_Matrix.m[1][1];
+    m_view.m[1][2] = m_Matrix.m[2][1];
+    m_view.m[2][0] = m_Matrix.m[0][2];
+    m_view.m[2][1] = m_Matrix.m[1][2];
+    m_view.m[2][2] = m_Matrix.m[2][2];
+    m_view(3) = -m_Matrix(3) * m_view;
     view_inv.Inverse(m_view);
     m_view_proj.Make4X4(m_view, m_proj);
     m_bd_view = m_view;
@@ -298,18 +298,18 @@ void I3D_camera::UpdateV()
     m_bd_view_inv = view_inv;
     m_bd_view_inv(3).Zero();
     m_near_view_proj.Make4X4(m_view, m_near_proj);
-    frustums[0].normal[0] = (const D3DVECTOR &)matrix(2);
-    frustums[0].d[0] = -matrix(2).Dot(matrix(3));
+    frustums[0].normal[0] = (const D3DVECTOR &)m_Matrix(2);
+    frustums[0].d[0] = -m_Matrix(2).Dot(m_Matrix(3));
     S_vector c0, c1, c2, c3;
     if (orthogonal) {
         float x = 1.0f / ortho_scale;
         float y = x / aspect_ratio;
-        c0 = S_vector(-x, y, 0.0f) * matrix;
-        c1 = S_vector(-x, -y, 0.0f) * matrix;
-        c2 = S_vector(x, y, 0.0f) * matrix;
-        c3 = S_vector(x, -y, 0.0f) * matrix;
-        S_vector v4 = S_vector(-x, -y, 1.0f) * matrix;
-        S_vector v5 = S_vector(x, y, 1.0f) * matrix;
+        c0 = S_vector(-x, y, 0.0f) * m_Matrix;
+        c1 = S_vector(-x, -y, 0.0f) * m_Matrix;
+        c2 = S_vector(x, y, 0.0f) * m_Matrix;
+        c3 = S_vector(x, -y, 0.0f) * m_Matrix;
+        S_vector v4 = S_vector(-x, -y, 1.0f) * m_Matrix;
+        S_vector v5 = S_vector(x, y, 1.0f) * m_Matrix;
         S_plane pl;
         pl = S_plane(v4, c0, c1);
         frustums[0].normal[1] = (const D3DVECTOR &)pl.normal;
@@ -323,7 +323,7 @@ void I3D_camera::UpdateV()
         pl = S_plane(v4, c1, c3);
         frustums[0].normal[4] = (const D3DVECTOR &)pl.normal;
         frustums[0].d[4] = pl.d;
-        frustums[1].normal[0] = (const D3DVECTOR &)matrix(2);
+        frustums[1].normal[0] = (const D3DVECTOR &)m_Matrix(2);
         frustums[1].d[0] = 0.0f;
         pl = S_plane(v4, c0, c1);
         frustums[1].normal[1] = (const D3DVECTOR &)pl.normal;
@@ -340,12 +340,12 @@ void I3D_camera::UpdateV()
         memcpy(frustums[2].normal, frustums[0].normal, sizeof(frustums[0].normal));
         memcpy(frustums[2].d, frustums[0].d, sizeof(frustums[0].d));
     } else {
-        const S_vector &pos = matrix(3);
+        const S_vector &pos = m_Matrix(3);
         S_plane pl;
-        c0 = S_vector(-ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
-        c1 = S_vector(-ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
-        c2 = S_vector(ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * matrix;
-        c3 = S_vector(ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * matrix;
+        c0 = S_vector(-ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * m_Matrix;
+        c1 = S_vector(-ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * m_Matrix;
+        c2 = S_vector(ncp_x * 100.0f, ncp_y * 100.0f, ncp * 100.0f) * m_Matrix;
+        c3 = S_vector(ncp_x * 100.0f, -ncp_y * 100.0f, ncp * 100.0f) * m_Matrix;
         pl = S_plane(pos, c0, c1);
         frustums[0].normal[1] = (const D3DVECTOR &)pl.normal;
         frustums[0].d[1] = pl.d;
@@ -358,7 +358,7 @@ void I3D_camera::UpdateV()
         pl = S_plane(pos, c1, c3);
         frustums[0].normal[4] = (const D3DVECTOR &)pl.normal;
         frustums[0].d[4] = pl.d;
-        frustums[1].normal[0] = (const D3DVECTOR &)matrix(2);
+        frustums[1].normal[0] = (const D3DVECTOR &)m_Matrix(2);
         frustums[1].d[0] = 0.0f;
         pl = S_plane(pos, c0, c1);
         frustums[1].normal[1] = (const D3DVECTOR &)pl.normal;
@@ -374,10 +374,10 @@ void I3D_camera::UpdateV()
         frustums[1].d[4] = pl.d;
         frustums[2].normal[0] = frustums[0].normal[0];
         frustums[2].d[0] = frustums[0].d[0];
-        S_vector nc0 = S_vector(-near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-        S_vector nc1 = S_vector(-near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-        S_vector nc2 = S_vector(near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
-        S_vector nc3 = S_vector(near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * matrix;
+        S_vector nc0 = S_vector(-near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * m_Matrix;
+        S_vector nc1 = S_vector(-near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * m_Matrix;
+        S_vector nc2 = S_vector(near_ncp_x * 100.0f, near_ncp_y * 100.0f, near_ncp * 100.0f) * m_Matrix;
+        S_vector nc3 = S_vector(near_ncp_x * 100.0f, -near_ncp_y * 100.0f, near_ncp * 100.0f) * m_Matrix;
         pl = S_plane(pos, nc0, nc1);
         frustums[2].normal[1] = (const D3DVECTOR &)pl.normal;
         frustums[2].d[1] = pl.d;

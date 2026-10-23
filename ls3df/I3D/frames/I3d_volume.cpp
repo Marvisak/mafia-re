@@ -13,7 +13,7 @@ I3D_volume::I3D_volume() :
     unknown_14c(0),
     unknown_150(0)
 {
-    type = FRAME_VOLUME;
+    m_Type = FRAME_VOLUME;
     bbox.Invalidate();
     unknown_16c = 0;
     unknown_170 = 0;
@@ -40,7 +40,7 @@ uint I3D_volume::GetVolumeType() const
 // FUNCTION: LS3DF11 0x10057f10
 void I3D_volume::UpdateV()
 {
-    if (frm_flags & FRMFLAGS_UPDATE) {
+    if (m_FrmFlags & FRMFLAGS_UPDATE) {
         switch (volume_type) {
         case 1:
             SetScale(S_vector(1.0f, 1.0f, 1.0f));
@@ -48,11 +48,11 @@ void I3D_volume::UpdateV()
             break;
         case 5:
         case 6:
-            SetScale(S_vector(scale.x, scale.x, scale.x));
+            SetScale(S_vector(m_Scale.x, m_Scale.x, m_Scale.x));
             break;
         case 4:
             {
-                S_vector s = scale;
+                S_vector s = m_Scale;
                 s.y = 1.0f;
                 SetScale(s);
             }
@@ -60,6 +60,6 @@ void I3D_volume::UpdateV()
         }
     }
     UpdateMatrix();
-    matrix = f_matrix;
-    frm_flags |= FRMFLAGS_WMAT_VALID;
+    m_Matrix = m_LocalMatrix;
+    m_FrmFlags |= FRMFLAGS_WMAT_VALID;
 }
