@@ -115,6 +115,8 @@ LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
 // ours; writing them the other way round changes nothing there but reorders the rest of the function), e.Normalize's
 // sum in two cases, a factor order in mode 1 and in the inlined UpdateMatrix of mode 3. 64 combinations of the square
 // roots' term orders and e's initialization (constructor or assignment) don't do better.
+// The elements are read as m[r][c], not through S_matrix's const accessor, whose asserts would cost the inline budget
+// and leave more of the function's calls out of line than the original's (the same code otherwise).
 // FUNCTION: LS3DF 0x10006090
 // FUNCTION: LS3DF11 0x10006070
 void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
@@ -130,18 +132,18 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
             S_vector e((float)sqrt(v.z * v.z + v.x * v.x), v.y, 0.0f);
             e.Normalize();
             const S_matrix &mat = GetRenderMatrix();
-            (*m)(0, 0) = e.y * mat(1, 0) + (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.x;
-            (*m)(0, 1) = e.y * mat(1, 1) + (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.x;
-            (*m)(0, 2) = e.y * mat(1, 2) + (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.x;
-            (*m)(0, 3) = e.y * mat(1, 3) + (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.x;
-            (*m)(1, 0) = e.x * mat(1, 0) - (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.y;
-            (*m)(1, 1) = e.x * mat(1, 1) - (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.y;
-            (*m)(1, 2) = e.x * mat(1, 2) - (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.y;
-            (*m)(1, 3) = e.x * mat(1, 3) - (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.y;
-            (*m)(2, 0) = a.x * mat(2, 0) - a.z * mat(0, 0);
-            (*m)(2, 1) = a.x * mat(2, 1) - a.z * mat(0, 1);
-            (*m)(2, 2) = a.x * mat(2, 2) - a.z * mat(0, 2);
-            (*m)(2, 3) = a.x * mat(2, 3) - a.z * mat(0, 3);
+            m->m[0][0] = e.y * mat.m[1][0] + (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.x;
+            m->m[0][1] = e.y * mat.m[1][1] + (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.x;
+            m->m[0][2] = e.y * mat.m[1][2] + (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.x;
+            m->m[0][3] = e.y * mat.m[1][3] + (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.x;
+            m->m[1][0] = e.x * mat.m[1][0] - (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.y;
+            m->m[1][1] = e.x * mat.m[1][1] - (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.y;
+            m->m[1][2] = e.x * mat.m[1][2] - (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.y;
+            m->m[1][3] = e.x * mat.m[1][3] - (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.y;
+            m->m[2][0] = a.x * mat.m[2][0] - a.z * mat.m[0][0];
+            m->m[2][1] = a.x * mat.m[2][1] - a.z * mat.m[0][1];
+            m->m[2][2] = a.x * mat.m[2][2] - a.z * mat.m[0][2];
+            m->m[2][3] = a.x * mat.m[2][3] - a.z * mat.m[0][3];
             __asm {
                 pushf
                 cld
@@ -164,18 +166,18 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
             a.y = 0.0f;
             a.Normalize();
             const S_matrix &mat = GetRenderMatrix();
-            (*m)(0, 0) = (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.y - e.x * mat(1, 0);
-            (*m)(0, 1) = (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.y - e.x * mat(1, 1);
-            (*m)(0, 2) = (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.y - e.x * mat(1, 2);
-            (*m)(0, 3) = (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.y - e.x * mat(1, 3);
-            (*m)(1, 0) = (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.x + e.y * mat(1, 0);
-            (*m)(1, 1) = (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.x + e.y * mat(1, 1);
-            (*m)(1, 2) = (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.x + e.y * mat(1, 2);
-            (*m)(1, 3) = (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.x + e.y * mat(1, 3);
-            (*m)(2, 0) = a.x * mat(2, 0) - a.z * mat(0, 0);
-            (*m)(2, 1) = a.x * mat(2, 1) - a.z * mat(0, 1);
-            (*m)(2, 2) = a.x * mat(2, 2) - a.z * mat(0, 2);
-            (*m)(2, 3) = a.x * mat(2, 3) - a.z * mat(0, 3);
+            m->m[0][0] = (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.y - e.x * mat.m[1][0];
+            m->m[0][1] = (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.y - e.x * mat.m[1][1];
+            m->m[0][2] = (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.y - e.x * mat.m[1][2];
+            m->m[0][3] = (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.y - e.x * mat.m[1][3];
+            m->m[1][0] = (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.x + e.y * mat.m[1][0];
+            m->m[1][1] = (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.x + e.y * mat.m[1][1];
+            m->m[1][2] = (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.x + e.y * mat.m[1][2];
+            m->m[1][3] = (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.x + e.y * mat.m[1][3];
+            m->m[2][0] = a.x * mat.m[2][0] - a.z * mat.m[0][0];
+            m->m[2][1] = a.x * mat.m[2][1] - a.z * mat.m[0][1];
+            m->m[2][2] = a.x * mat.m[2][2] - a.z * mat.m[0][2];
+            m->m[2][3] = a.x * mat.m[2][3] - a.z * mat.m[0][3];
             __asm {
                 pushf
                 cld
@@ -197,18 +199,18 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
             S_vector e((float)sqrt(v.z * v.z + v.x * v.x), v.y, 0.0f);
             e.Normalize();
             const S_matrix &mat = GetRenderMatrix();
-            (*m)(0, 0) = a.x * mat(2, 0) - a.z * mat(0, 0);
-            (*m)(0, 1) = a.x * mat(2, 1) - a.z * mat(0, 1);
-            (*m)(0, 2) = a.x * mat(2, 2) - a.z * mat(0, 2);
-            (*m)(0, 3) = a.x * mat(2, 3) - a.z * mat(0, 3);
-            (*m)(1, 0) = e.x * mat(1, 0) - (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.y;
-            (*m)(1, 1) = e.x * mat(1, 1) - (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.y;
-            (*m)(1, 2) = e.x * mat(1, 2) - (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.y;
-            (*m)(1, 3) = e.x * mat(1, 3) - (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.y;
-            (*m)(2, 0) = -(e.y * mat(1, 0)) - (a.x * mat(0, 0) + a.z * mat(2, 0)) * e.x;
-            (*m)(2, 1) = -(e.y * mat(1, 1)) - (a.x * mat(0, 1) + a.z * mat(2, 1)) * e.x;
-            (*m)(2, 2) = -(e.y * mat(1, 2)) - (a.x * mat(0, 2) + a.z * mat(2, 2)) * e.x;
-            (*m)(2, 3) = -(e.y * mat(1, 3)) - (a.x * mat(0, 3) + a.z * mat(2, 3)) * e.x;
+            m->m[0][0] = a.x * mat.m[2][0] - a.z * mat.m[0][0];
+            m->m[0][1] = a.x * mat.m[2][1] - a.z * mat.m[0][1];
+            m->m[0][2] = a.x * mat.m[2][2] - a.z * mat.m[0][2];
+            m->m[0][3] = a.x * mat.m[2][3] - a.z * mat.m[0][3];
+            m->m[1][0] = e.x * mat.m[1][0] - (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.y;
+            m->m[1][1] = e.x * mat.m[1][1] - (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.y;
+            m->m[1][2] = e.x * mat.m[1][2] - (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.y;
+            m->m[1][3] = e.x * mat.m[1][3] - (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.y;
+            m->m[2][0] = -(e.y * mat.m[1][0]) - (a.x * mat.m[0][0] + a.z * mat.m[2][0]) * e.x;
+            m->m[2][1] = -(e.y * mat.m[1][1]) - (a.x * mat.m[0][1] + a.z * mat.m[2][1]) * e.x;
+            m->m[2][2] = -(e.y * mat.m[1][2]) - (a.x * mat.m[0][2] + a.z * mat.m[2][2]) * e.x;
+            m->m[2][3] = -(e.y * mat.m[1][3]) - (a.x * mat.m[0][3] + a.z * mat.m[2][3]) * e.x;
             __asm {
                 pushf
                 cld
@@ -245,14 +247,14 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
                 rep movsd
                 popf
             }
-            (*m)(1, 0) = d.y * mat(2, 0) - d.z * mat(1, 0);
-            (*m)(1, 1) = d.y * mat(2, 1) - d.z * mat(1, 1);
-            (*m)(1, 2) = d.y * mat(2, 2) - d.z * mat(1, 2);
-            (*m)(1, 3) = d.y * mat(2, 3) - d.z * mat(1, 3);
-            (*m)(2, 0) = -(d.y * mat(1, 0)) - d.z * mat(2, 0);
-            (*m)(2, 1) = -(d.y * mat(1, 1)) - d.z * mat(2, 1);
-            (*m)(2, 2) = -(d.y * mat(1, 2)) - d.z * mat(2, 2);
-            (*m)(2, 3) = -(d.y * mat(1, 3)) - d.z * mat(2, 3);
+            m->m[1][0] = d.y * mat.m[2][0] - d.z * mat.m[1][0];
+            m->m[1][1] = d.y * mat.m[2][1] - d.z * mat.m[1][1];
+            m->m[1][2] = d.y * mat.m[2][2] - d.z * mat.m[1][2];
+            m->m[1][3] = d.y * mat.m[2][3] - d.z * mat.m[1][3];
+            m->m[2][0] = -(d.y * mat.m[1][0]) - d.z * mat.m[2][0];
+            m->m[2][1] = -(d.y * mat.m[1][1]) - d.z * mat.m[2][1];
+            m->m[2][2] = -(d.y * mat.m[1][2]) - d.z * mat.m[2][2];
+            m->m[2][3] = -(d.y * mat.m[1][3]) - d.z * mat.m[2][3];
             break;
         }
         case 1: {
@@ -261,10 +263,10 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
                 cam_pos.x * inv(0, 2) + cam_pos.y * inv(1, 2) + cam_pos.z * inv(2, 2) + inv(3, 2));
             a.Normalize();
             const S_matrix &mat = GetRenderMatrix();
-            (*m)(0, 0) = a.x * mat(2, 0) - a.z * mat(0, 0);
-            (*m)(0, 1) = a.x * mat(2, 1) - a.z * mat(0, 1);
-            (*m)(0, 2) = a.x * mat(2, 2) - a.z * mat(0, 2);
-            (*m)(0, 3) = a.x * mat(2, 3) - a.z * mat(0, 3);
+            m->m[0][0] = a.x * mat.m[2][0] - a.z * mat.m[0][0];
+            m->m[0][1] = a.x * mat.m[2][1] - a.z * mat.m[0][1];
+            m->m[0][2] = a.x * mat.m[2][2] - a.z * mat.m[0][2];
+            m->m[0][3] = a.x * mat.m[2][3] - a.z * mat.m[0][3];
             __asm {
                 pushf
                 cld
@@ -280,10 +282,10 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
                 rep movsd
                 popf
             }
-            (*m)(2, 0) = -(a.x * mat(0, 0)) - a.z * mat(2, 0);
-            (*m)(2, 1) = -(a.x * mat(0, 1)) - a.z * mat(2, 1);
-            (*m)(2, 2) = -(a.x * mat(0, 2)) - a.z * mat(2, 2);
-            (*m)(2, 3) = -(a.x * mat(0, 3)) - a.z * mat(2, 3);
+            m->m[2][0] = -(a.x * mat.m[0][0]) - a.z * mat.m[2][0];
+            m->m[2][1] = -(a.x * mat.m[0][1]) - a.z * mat.m[2][1];
+            m->m[2][2] = -(a.x * mat.m[0][2]) - a.z * mat.m[2][2];
+            m->m[2][3] = -(a.x * mat.m[0][3]) - a.z * mat.m[2][3];
             break;
         }
         case 2: {
@@ -292,14 +294,14 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
                 cam_pos.x * inv(0, 1) + cam_pos.y * inv(1, 1) + cam_pos.z * inv(2, 1) + inv(3, 1), 0.0f);
             d.Normalize();
             const S_matrix &mat = GetRenderMatrix();
-            (*m)(0, 0) = d.y * mat(0, 0) - d.x * mat(1, 0);
-            (*m)(0, 1) = d.y * mat(0, 1) - d.x * mat(1, 1);
-            (*m)(0, 2) = d.y * mat(0, 2) - d.x * mat(1, 2);
-            (*m)(0, 3) = d.y * mat(0, 3) - d.x * mat(1, 3);
-            (*m)(1, 0) = d.x * mat(0, 0) + d.y * mat(1, 0);
-            (*m)(1, 1) = d.x * mat(0, 1) + d.y * mat(1, 1);
-            (*m)(1, 2) = d.x * mat(0, 2) + d.y * mat(1, 2);
-            (*m)(1, 3) = d.x * mat(0, 3) + d.y * mat(1, 3);
+            m->m[0][0] = d.y * mat.m[0][0] - d.x * mat.m[1][0];
+            m->m[0][1] = d.y * mat.m[0][1] - d.x * mat.m[1][1];
+            m->m[0][2] = d.y * mat.m[0][2] - d.x * mat.m[1][2];
+            m->m[0][3] = d.y * mat.m[0][3] - d.x * mat.m[1][3];
+            m->m[1][0] = d.x * mat.m[0][0] + d.y * mat.m[1][0];
+            m->m[1][1] = d.x * mat.m[0][1] + d.y * mat.m[1][1];
+            m->m[1][2] = d.x * mat.m[0][2] + d.y * mat.m[1][2];
+            m->m[1][3] = d.x * mat.m[0][3] + d.y * mat.m[1][3];
             __asm {
                 pushf
                 cld

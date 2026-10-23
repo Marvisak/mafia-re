@@ -2,6 +2,7 @@
 
 #include "ls3df.h"
 
+#include <assert.h>
 #include <d3d8types.h>
 
 // The engine's math types (PS2 file I3d_math.cpp). LS3DF exports their out-of-line members one by one, __stdcall
@@ -292,8 +293,15 @@ struct S_matrix : D3DMATRIX {
         return m[r][c];
     }
 
+    // Its asserts compile to nothing (NDEBUG) but count for the inline budget: without them S_quat::Make(const S_matrix
+    // &) has budget left to inline its last product, S_quat::operator*, which the original calls (its only out-of-line
+    // caller). The condition is a guess; the non-const accessor without them keeps the earlier decisions.
     const float &operator()(int r, int c) const
     {
+        assert(r >= 0);
+        assert(r < 4);
+        assert(c >= 0);
+        assert(c < 4);
         return m[r][c];
     }
 
@@ -384,7 +392,7 @@ struct S_plane {
 // from clipping.cpp's CheckClipFaces to I3d_pose.cpp, from I3d_singlemesh.cpp to I3d_occluder.cpp and in
 // I3d_particle.cpp, the lit object file's VERTEX_STRUCT's since I3d_lit_object.cpp)
 // FUNCTION: LS3DF 0x1004e960
-// ??0S_plane@@QAE@XZ
+// ??0VERTEX_STRUCT@@QAE@XZ
 
 // FUNCTION: LS3DF11 0x1004c7f0
 // ??0VERTEX_STRUCT@@QAE@XZ

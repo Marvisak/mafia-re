@@ -13,7 +13,9 @@
 // the billboard's and the morphs', where the original keeps the billboard file's (I3D.h). In 1.1 ours has
 // S_vector::operator*= after CopyMovedPositions: the file's source up to UpdateLodVertices' end is short by about 16
 // statements for /YX (SMeshDef's functions and GetJointMatrix defined here, not in I3D.h, give the original's place,
-// but then other files' deferred copies move: the billboard's SetAlphaState, the particles' SetSector).
+// but then other files' deferred copies move: the billboard's SetAlphaState, the particles' SetSector). 1.1's
+// UpdateLodVertices loads two slots in the other order (100%*) since the matrix's element accessor has its asserts
+// (I3d_math.h); 1.2's is unchanged.
 #include "I3D/I3D.h"
 #include "I3D/render/render.h"
 #include "I3D/render/VBManager.h"

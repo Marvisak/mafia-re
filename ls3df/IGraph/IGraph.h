@@ -539,7 +539,7 @@ public:
 // LIBRARY: LS3DF11 0x100726e0
 // ?OnWaitStart@CBaseRenderer@@UAEXXZ
 // LIBRARY: LS3DF 0x10088970
-// ?PrepareRender@CBaseRenderer@@UAEXXZ
+// ?OnWaitStart@CBaseRenderer@@UAEXXZ
 
 // DECLARE_IUNKNOWN's members themselves (renbase.h)
 // LIBRARY: LS3DF 0x10075860
@@ -703,7 +703,7 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// ??1?$C_list@PAUS_VB_block@@@@QAE@XZ
+// ??1?$C_list@PAVITexture@@@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x1004e760
 // ??1?$C_list@G@@QAE@XZ

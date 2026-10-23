@@ -281,7 +281,7 @@
 // ?AddRef@CBaseInputPin@@W3AGKXZ
 
 // LIBRARY: LS3DF11 0x10086020
-// ?Release@CBaseInputPin@@W3AGKXZ
+// ?Release@CBaseFilter@@W3AGKXZ
 
 // LIBRARY: LS3DF11 0x10086030
 // ?QueryInterface@CBaseInputPin@@WIM@AGJABU_GUID@@PAPAX@Z

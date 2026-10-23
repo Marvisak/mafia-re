@@ -1581,13 +1581,13 @@ public:
 // I3d_occluder.cpp and since I3d_particle.cpp, UpdateTexture's in render.cpp), and SetDir's and SetName's are scene
 // functions of their shape or the shadow visual's (its SetCallback and Duplicate).
 // FUNCTION: LS3DF 0x1004e970
-// ?Update@I3D_scene@@UAGXXZ
+// ?UpdateTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF11 0x100726d0
 // ?UpdateTexture@I3D_material@@UAGXXZ
 
 // FUNCTION: LS3DF 0x1004e980
-// ?vfunc_66@I3D_scene@@UAGXII@Z
+// ?SetDir@I3D_scene@@UAGXABUS_vector@@M@Z
 
 // FUNCTION: LS3DF11 0x10051f90
 // ?SetCallback@I3D_shadow_visual@@UAGXP6GIPAVI3D_frame@@W4LS3D_CALLBACK_MESSAGE@@II@ZI@Z
@@ -2273,7 +2273,7 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
-// ?LoadImage@I3D_area@@UAEXXZ
+// ?LoadImage@I3D_sound@@UAEXXZ
 
 // FUNCTION: LS3DF11 0x10005cd0
 // ?LoadImage@I3D_area@@UAEXXZ
@@ -2715,7 +2715,7 @@ public:
 // I3d_projector.cpp, from I3d_occluder.cpp to I3d_particle.cpp and since I3d_lit_object.cpp, the billboard's from
 // Load.cpp to lightmap.cpp, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005e30
-// ?SetSpace@I3D_lensflare@@UAGX_N@Z
+// ?SetSpace@I3D_billboard@@UAGX_N@Z
 
 // FUNCTION: LS3DF11 0x10009360
 // ?SetSpace@I3D_billboard@@UAGX_N@Z
@@ -3939,7 +3939,7 @@ struct TLVERTEX2 {
 // I3D files written later (0x10041700; 1.1's after BuildAllVBuffers, 0x10062c10, and 1.1 has no list of vertex
 // buffers)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
+// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
 
 // TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
@@ -3950,7 +3950,7 @@ struct TLVERTEX2 {
 // I3d_occluder.cpp and I3d_particle.cpp after Tick itself, in I3d_portal.cpp and from Load.cpp to lightmap.cpp after
 // the shadow visual's SetOn); the original keeps the area file's copy
 // FUNCTION: LS3DF 0x10005240
-// ?SetOn@I3D_scene@@UAGX_N@Z
+// ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
 
 // FUNCTION: LS3DF11 0x10051fa0
 // ?_Destroy@?$vector@PAVITexture@@V?$allocator@PAVITexture@@@std@@@std@@IAEXPAPAVITexture@@0@Z
@@ -4592,10 +4592,10 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
+// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF11 0x1005d600
-// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
+// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);
