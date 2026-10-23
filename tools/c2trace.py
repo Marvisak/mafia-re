@@ -15,6 +15,9 @@ launchers included) under a small debugger, with breakpoints in C2.DLL:
 - `0x10706400`: a live range created; `esi` is the range, `+0x1c` its id, `[esi]` its symbol, whose name is at
   `[[sym] + 0x18]` and frame offset at `+0x24` (once the frame is laid out).
 - `0x107068f2`: a live range freed (`ecx`).
+- `0x1070cc09` (with --regs): the colouring is done (`color.c`'s driver at `0x1073122d` calls it before freeing its
+  arenas). Every live range left is in the table at `0x107ac5b8` (1024 buckets by id, chained through `+0x2c`), and
+  `+0x10` points to its register's descriptor in the array at `0x107c4a98` (0x58 bytes each, in x86 encoding order).
 
 It groups the events into passes, runs of creations or frees from one call site: `build` is the first build (the
 function's constants and global addresses get theirs first, as `const`), `rebuild` the rebuild of a region's ranges
@@ -27,7 +30,10 @@ ranges are compiler temporaries, shown by their frame offset.
     .venv/Scripts/python tools/c2trace.py rw_data/rw_data.cpp dtaRead --edited my.cpp  # an edited copy instead
 
 With --vars only the passes that create or free those variables' ranges are shown, and only their ids: the history
-that decides their relative order. --edited compiles another file in place of the source, from a temporary directory
+that decides their relative order. --regs prints instead the ranges the colouring kept, with the register each got and
+three of the range's counters, by offset (+0x24, +0x40, +0x44; not identified yet: +0x40 grows with the references and
+their loop depth, +0x44 with the range's place in the function). Only the global allocator's ranges are there: the
+code generator gives short-lived temporaries (a load feeding one push) their registers later. --edited compiles another file in place of the source, from a temporary directory
 with the source's folder on the include path, and the source's command line. A source several targets compile needs
 --target-dir, the target's folder in the build tree (`ls3df_1_1` for patch 1.1's engine). Build the vc6 preset first.
 Only the 13.00.9044 C2.DLL is traced; plain SP5's (12.00.8966, LS3DF's DirectShow base classes) has other addresses.
@@ -52,7 +58,9 @@ import variants  # noqa: E402
 REPO = variants.REPO
 C2_REFERENCE = REPO / "3rdparty" / "msvc600_sp5_vcpp" / "VC98" / "Bin" / "C2.DLL"
 C2_BASE = 0x10700000
-BP_RESET, BP_CREATE, BP_FREE = 0x1071BE68, 0x10706400, 0x107068F2
+BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED = 0x1071BE68, 0x10706400, 0x107068F2, 0x1070CC09
+WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A98, 0x58
+REGS = ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
 SITES = {0x1072EA39: "const", 0x107305D6: "build", 0x10744A54: "rebuild", 0x10744488: "rebuild"}
 
 # --- a minimal debugger: int3 breakpoints in 32-bit processes, followed into child processes ---------------------
@@ -250,7 +258,8 @@ def debug(cmdline, cwd, env, breakpoints, dll_matches, output):
 
 class Trace:
     def __init__(self):
-        self.functions = []      # [name, [events]]; an event is (kind, id, symbol name or label, site)
+        self.functions = []      # [name, [events], [ranges]]; an event is (kind, id, symbol name or label, site), a
+                                 # range left after the colouring (id, symbol, register, +0x24, +0x40, +0x44)
 
     def symbol(self, mem, sym):
         name = mem.cstr(mem.u32(mem.u32(sym) + 0x18)) if sym else None
@@ -263,7 +272,7 @@ class Trace:
         return f"temp{off:+d}" if off else "temp"
 
     def on_reset(self, ctx, mem):
-        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", []])
+        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", [], []])
 
     def on_create(self, ctx, mem):
         if self.functions:
@@ -276,6 +285,24 @@ class Trace:
             web = ctx.Ecx
             site = mem.u32(ctx.Esp)
             self.functions[-1][1].append(("free", mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), site))
+
+    def on_coloured(self, ctx, mem):
+        if not self.functions:
+            return
+        base = ctx.Eip - (BP_COLOURED - C2_BASE)
+        table = mem.read(base + WEB_TABLE - C2_BASE, 4096)
+        descriptors = base + REG_DESCRIPTORS - C2_BASE
+        ranges = self.functions[-1][2]
+        ranges.clear()
+        for bucket in struct.unpack("<1024I", table):
+            web = bucket
+            while web:
+                fields = struct.unpack("<18I", mem.read(web, 0x48))
+                n, rest = divmod(fields[4] - descriptors, REG_DESCRIPTOR_SIZE)
+                reg = REGS[n] if fields[4] >= descriptors and not rest and n < len(REGS) else "-"
+                ranges.append((fields[7], self.symbol(mem, fields[0]), reg, fields[9], fields[16], fields[17]))
+                web = fields[11]
+        ranges.sort()
 
 
 def command(source: Path, edited: Path | None, work: Path, target_dir: str) -> str:
@@ -304,6 +331,7 @@ def main():
     ap.add_argument("source", help="the source file, as the vc6 build compiles it")
     ap.add_argument("function", nargs="?", help="(part of) the function's decorated name; omitted: list them")
     ap.add_argument("--vars", help="comma-separated variable names: show only their ranges' history")
+    ap.add_argument("--regs", action="store_true", help="the ranges left after the colouring, with their registers")
     ap.add_argument("--edited", help="compile this file in place of the source")
     ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
                     "the build tree whose command line to use (ls3df_1_1, setup_czech)")
@@ -319,9 +347,11 @@ def main():
         return p.name.lower() == "c2.dll" and hashlib.sha256(p.read_bytes()).digest() == reference
 
     trace = Trace()
+    breakpoints = {BP_RESET: trace.on_reset, BP_CREATE: trace.on_create, BP_FREE: trace.on_free}
+    if args.regs:
+        breakpoints[BP_COLOURED] = trace.on_coloured
     with open(work / "cl.txt", "w+") as output:
-        traced = debug(cmd, str(variants.BUILD), variants.preset_env("vc6"),
-                       {BP_RESET: trace.on_reset, BP_CREATE: trace.on_create, BP_FREE: trace.on_free}, is_c2, output)
+        traced = debug(cmd, str(variants.BUILD), variants.preset_env("vc6"), breakpoints, is_c2, output)
         output.seek(0)
         log = output.read()
     compiled = (work / "trace.obj").exists()
@@ -332,18 +362,25 @@ def main():
         sys.exit(f"{args.source} isn't compiled with the 13.00.9044 C2.DLL")
 
     if not args.function:
-        for name, events in trace.functions:
+        for name, events, _ in trace.functions:
             if events:
                 print(f"{sum(1 for e in events if e[0] == 'new'):5d} ranges  {name}")
         return
-    found = [(n, e) for n, e in trace.functions if args.function in n]
+    found = [f for f in trace.functions if args.function in f[0]]
     if not found:
         sys.exit(f"no function matching {args.function!r}; run without one for the list")
-    name, events = max(found, key=lambda f: len(f[1]))
+    name, events, ranges = max(found, key=lambda f: len(f[1]))
+    want = {v.strip() for v in args.vars.split(",")} if args.vars else None
+    if args.regs:
+        print(f"{name}: {len(ranges)} ranges after the colouring")
+        print("  id  variable                  reg    +0x24  +0x40  +0x44")
+        for wid, sym, reg, f24, f40, f44 in ranges:
+            if not want or sym in want:
+                print(f"{wid:4d}  {sym:24s}  {reg:5s} {f24:6d} {f40:6d} {f44:6d}")
+        return
     news = [e for e in events if e[0] == "new"]
     print(f"{name}: {len(news)} ranges created, {len(events) - len(news)} freed, ids up to "
           f"{max((e[1] for e in news), default=0)}")
-    want = {v.strip() for v in args.vars.split(",")} if args.vars else None
     for i, ((kind, label), items) in enumerate(passes(events)):
         if want:
             items = [(w, n) for w, n in items if n in want]
