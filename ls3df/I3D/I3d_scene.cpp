@@ -711,7 +711,7 @@ void I3D_scene::SetViewProjMatrix(const S_matrix &m)
 {
     m_view_proj_screen = m;
     for (int i = 0; i < 4; i++) {
-        m_view_proj_screen.m[i][0] = viewport_size_half[0] * m.m[i][0];
+        m_view_proj_screen.m[i][0] = m.m[i][0] * viewport_size_half[0];
         m_view_proj_screen.m[i][1] = m.m[i][1] * viewport_size_half[1];
     }
 }

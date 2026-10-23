@@ -134,17 +134,19 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
         float s = RSLodQuality * obj->world_scale;
         float d = dist_2 / (s * s);
         num--;
+        bool found = false;
         for (lod = 0; lod < num; lod++) {
             I3D_mesh_level *level = mesh->levels[lod];
-            if (level && d <= level->lod_dist)
-                goto found;
+            if (level && d <= level->lod_dist) {
+                found = true;
+                break;
+            }
         }
-        {
+        if (!found) {
             I3D_mesh_level *level = mesh->levels[lod];
             if (level && level->lod_dist > 0.0f && d > level->lod_dist)
                 lod = num + 1;
         }
-    found:;
     }
 
     if (lod != obj->cur_lod && obj->frm_flags & LS3D_CALLBACK_LOD)

@@ -434,8 +434,7 @@ LS3D_RESULT ISND_sound::SetVolumeLOG(int volume)
     if ((flags & ISND_NOVOLUME) || !lpDSB8)
         return I3DERR_GENERIC;
     // The driver's attenuation. Without the cast to float, VC6 folds the two minus signs into an add.
-    float attenuation = (float)(log(pISndDriver->volume) * -866.0);
-    volume -= (int)attenuation;
+    volume -= (int)(float)(log(pISndDriver->volume) * -866.0);
     if (volume < DSBVOLUME_MIN)
         volume = DSBVOLUME_MIN;
     else if (volume > DSBVOLUME_MAX)

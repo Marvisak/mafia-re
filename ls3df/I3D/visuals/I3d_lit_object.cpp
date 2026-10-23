@@ -1282,7 +1282,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                                     return I3DERR_FILECORRUPTED;
                                 }
                                 if (!m) {
-                                    if (sx == 3 && sy == sx) {
+                                    if (sx == 3 && sy == 3) {
                                         dbgPrintf("!! LM size 1x1   I3D_lit_object::Load()  this:0x%x %s  handle:0x%x",
                                             this, GetName(), handle);
                                         delete l;
@@ -2166,10 +2166,8 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
             }
         }
         S_vector *pos = (S_vector *)m_PosVB.buffer->Lock(m_PosVB.base, 0);
-        for (int i = m_numLVertices; i; ) {
-            i--;
+        for (int i = m_numLVertices; i--; )
             pos[i] = verts[m_pVI[i].vertex].pos;
-        }
         lod::Create(0x502, m_numLVertices, pos, sizeof(S_vector), m_pLitUV, sizeof(I3D_text_coor), m_pUV,
             sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs);
     }

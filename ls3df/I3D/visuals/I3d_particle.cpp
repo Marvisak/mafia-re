@@ -323,8 +323,7 @@ I3D_emitor::I3D_emitor() : elements(0x20)
     num_emitted = 0;
     sector = NULL;
     I3D_driver *drv = pI3DDriver;
-    ushort n = drv->unknown_58;
-    drv->unknown_58 = n + 1;
+    ushort n = drv->unknown_58++;
     id = n;
 }
 
@@ -499,8 +498,16 @@ LS3D_RESULT I3D_emitor::SetParam(PARTICLE_PARAM param, uint value)
     return I3D_OK;
 }
 
-// The floats as their bits, the colors as pointers to them, the bytes through a local in memory (read back as a
-// dword, masked). The cases are in SetParam's order; PP_UNUSED_27 gives PP_BILLBOARD's.
+// A byte parameter as an int, the way I3DFloatAsInt gives a float's (I3D.h): copied to a local and read back as a
+// dword, masked. The original stores the byte to the stack and reloads it; a plain return gives movzx.
+inline uint I3DByteAsInt(const uchar &b)
+{
+    uchar t = b;
+    return *(uint *)&t & 0xff;
+}
+
+// The floats as their bits, the colors as pointers to them, the bytes through I3DByteAsInt. The cases are in
+// SetParam's order; PP_UNUSED_27 gives PP_BILLBOARD's.
 // FUNCTION: LS3DF 0x1003e660
 // FUNCTION: LS3DF11 0x1003c950
 uint I3D_emitor::GetParam(PARTICLE_PARAM param) const
@@ -509,7 +516,6 @@ uint I3D_emitor::GetParam(PARTICLE_PARAM param) const
         dbgPrintf("!! Invalid index:%u  I3D_emitor::GetParam()", param);
         return 0;
     }
-    uchar b;
     switch (param) {
     case PP_EMIT_TIME:
         return p_emit_time;
@@ -554,11 +560,9 @@ uint I3D_emitor::GetParam(PARTICLE_PARAM param) const
     case PP_MAX_PARTICLES:
         return p_max_particles;
     case PP_VELOCITY_WORLD:
-        b = p_velocity_world;
-        return *(uint *)&b & 0xff;
+        return I3DByteAsInt(p_velocity_world);
     case PP_VELOCITY_END_WORLD:
-        b = p_velocity_end_world;
-        return *(uint *)&b & 0xff;
+        return I3DByteAsInt(p_velocity_end_world);
     case PP_ROT_SPEED_1:
         return I3DFloatAsInt(p_rot_speed_1);
     case PP_ROT_SPEED_2:

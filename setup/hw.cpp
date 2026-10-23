@@ -86,8 +86,8 @@ int GetTotalVRAM(GUID *guid)
 
     // In place, and an empty for, as in the Czech setup
     vram /= 0x100000;
-    int size;
-    for (size = 1; vram > (uint)size; size <<= 1)
+    uint size;
+    for (size = 1; vram > size; size <<= 1)
     {
     }
     return size;

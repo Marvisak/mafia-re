@@ -804,8 +804,8 @@ static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_f
         ITexture *texture = mat->texture;
         float u = ti->u;
         float v = ti->v;
-        uint x = min((uint)(int)(texture->m_Width * u), (uint)(texture->m_Width - 1));
-        uint y = min((uint)(int)(texture->m_Height * v), (uint)(texture->m_Height - 1));
+        uint x = min((uint)(texture->m_Width * u), (uint)(texture->m_Width - 1));
+        uint y = min((uint)(texture->m_Height * v), (uint)(texture->m_Height - 1));
         float a;
         if (mat->flags & MATF_ADD_MODE) {
             const uchar *p = &texture->m_pPixels[(y * texture->m_Width + x) * 4];

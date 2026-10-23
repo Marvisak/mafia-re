@@ -480,25 +480,23 @@ void I3D_object::SetSpace(bool world)
             vis_flags = (vis_flags & ~VISF_WBOUND_VALID) | VISF_WORLD_SPACE;
             return;
         }
-        {
-            DetachMesh();
-            I3D_mesh_object *ms = mesh;
-            S_matrix m = GetRenderMatrix();
-            for (uint i = 0; i < ms->num_lods; i++) {
-                I3D_mesh_level *level = ms->GetLOD(i);
-                if (!level)
-                    continue;
-                I3D_vertex *v = level->LockVertices(0);
-                for (int n = level->num_vertices; n; n--, v++) {
-                    v->pos *= m;
-                    v->normal = v->normal.RotateByMatrix(m);
-                    v->normal.Normalize();
-                }
-                UpdateVertices(i);
-                level->UpdateBBox();
+        DetachMesh();
+        I3D_mesh_object *ms = mesh;
+        S_matrix m = GetRenderMatrix();
+        for (uint i = 0; i < ms->num_lods; i++) {
+            I3D_mesh_level *level = ms->GetLOD(i);
+            if (!level)
+                continue;
+            I3D_vertex *v = level->LockVertices(0);
+            for (int n = level->num_vertices; n; n--, v++) {
+                v->pos *= m;
+                v->normal = v->normal.RotateByMatrix(m);
+                v->normal.Normalize();
             }
-            ms->UpdateBoundVolume();
+            UpdateVertices(i);
+            level->UpdateBBox();
         }
+        ms->UpdateBoundVolume();
         vis_flags = (vis_flags & ~VISF_WBOUND_VALID) | VISF_WORLD_SPACE;
     }
 }

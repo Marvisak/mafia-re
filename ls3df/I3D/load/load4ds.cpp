@@ -241,15 +241,14 @@ I3D_mesh_object *LoadMeshImage()
         dtaRead(LoadImageHandle, &num_vertices, 2);
         if (num_vertices == 0xffff) {
             // An older level's m_pUV, which the PC's level has its vertex buffer's pointer in place of
-            I3D_text_coor *&uv = (I3D_text_coor *&)level->vb.buffer;
             num_vertices = mesh->levels[0]->num_vertices;
-            uv = new I3D_text_coor[num_vertices];
-            if (!uv) {
+            level->vb.buffer = (C_VBuffer *)new I3D_text_coor[num_vertices];
+            if (!level->vb.buffer) {
                 dbgPrintf("!! m_pUV not created  LoadMeshImage()  %s", ImageFileName);
                 ImageErrFlg = I3DERR_OUTOFMEM;
                 return NULL;
             }
-            dtaRead(LoadImageHandle, uv, num_vertices * sizeof(I3D_text_coor));
+            dtaRead(LoadImageHandle, level->vb.buffer, num_vertices * sizeof(I3D_text_coor));
         } else if (num_vertices) {
             I3D_vertex *verts = level->CreateVertexMesh(num_vertices);
             dtaRead(LoadImageHandle, verts, num_vertices * sizeof(I3D_vertex));

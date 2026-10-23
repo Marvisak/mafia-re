@@ -2283,7 +2283,7 @@ inline short Swap16(short x)
     return ((x & 0xff) << 8) | ((x >> 8) & 0xff);
 }
 
-inline uint Swap32(const int &x)
+inline uint Swap32(int x)
 {
     return ((uint)x >> 24) | ((x >> 8) & 0xff00) | ((x & 0xff00) << 8) | (x << 24);
 }
@@ -2502,8 +2502,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
             dbgPrintf("!!IGraph::SaveShot() - WARNING! Converting poor quality 16bit frame buffer to 32bit RLA !");
         }
         for (int y = 0; y < sy; y++) {
-            int pos = ftell(f);
-            offsets[y] = Swap32(pos);
+            offsets[y] = Swap32(ftell(f));
             int x;
             switch (desc.Format) {
             case D3DFMT_X1R5G5B5:
@@ -2595,7 +2594,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
         }
         header.width = (short)desc.Width;
         header.height = (short)desc.Height;
-        if ((flags & 1)) {
+        if (flags & 1) {
             if ((flags & 0x100000) && z_buffer) {
                 m_pD3DDevice8->GetDepthStencilSurface(&depth);
                 if (FAILED(depth->LockRect(&depth_locked, rect, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK))) {
@@ -3349,8 +3348,7 @@ bool IGraph::ResizeImage(int sx, int sy, uint pitch, uchar *src, int dst_sx, int
                 float fy1 = (y + 1) * y_ratio;
                 int iy0 = (int)fy0 + 1;
                 int iy1 = (int)fy1;
-                float r = 0, g = 0, b = 0, weight = 0;
-                float a = 0;
+                float r = 0, g = 0, b = 0, a = 0, weight = 0;
                 float wy0, wy1;
                 if (iy0 > iy1) {
                     wy0 = fy1 - fy0;

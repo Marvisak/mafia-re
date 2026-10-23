@@ -9,8 +9,9 @@
 // vertices then move along the face's normal (clip_lift) and away from the polygon's center (clip_spread). The
 // orthogonal planes' copies of the near and far plane code are written out, as the original's differ: all but one
 // compute y twice where z is constant. Both functions' spread step sets n.z where d.z is meant, in the original too.
-// Shapes the original needs: the near plane's t as (0.0f - a->pos.z) / ... (VC6 makes -a->pos.z / ... into
-// -(a->pos.z / ...)); the cull's threshold on the left of its compare.
+// Shapes the original needs: the near plane's t as (0.0f - a->pos.z) / ..., like the far plane's (1.0f - a->pos.z)
+// (VC6 makes -a->pos.z / ... into -(a->pos.z / ...); (-a->pos.z) / ... compiles the same as 0.0f -); the cull's
+// threshold on the left of its compare.
 // - Each pass's edge code reaches the a-inside case's two vertex blocks by goto: an edge leaving through one plane
 //   jumps to the block of that plane, an edge crossing both writes its first vertex inline and jumps to the other's.
 //   The original has only those four blocks per pass, and nothing short of a join explains it: Persp's both-planes
@@ -148,6 +149,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_count++;
                             goto near_vertex;
                         } else if (b->clip & CLIP_FAR) {
+                            // both beyond the far plane: no vertex
                         } else
                             goto far_vertex;
                     } else {
@@ -264,6 +266,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_count++;
                             goto left_vertex;
                         } else if (b->clip & CLIP_RIGHT) {
+                            // both beyond the right plane: no vertex
                         } else
                             goto right_vertex;
                     } else {
@@ -358,6 +361,7 @@ void ClipFacesOrtho(const I3D_triface *faces, int num_faces)
                             clip_vert_count++;
                             goto bottom_vertex;
                         } else if (b->clip & CLIP_TOP) {
+                            // both beyond the top plane: no vertex
                         } else
                             goto top_vertex;
                     } else {
@@ -562,6 +566,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_count++;
                         goto near_vertex;
                     } else if (b->clip & CLIP_FAR) {
+                        // both beyond the far plane: no vertex
                     } else
                         goto far_vertex;
                 } else {
@@ -678,6 +683,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_count++;
                         goto left_vertex;
                     } else if (b->clip & CLIP_RIGHT) {
+                        // both beyond the right plane: no vertex
                     } else
                         goto right_vertex;
                 } else {
@@ -774,6 +780,7 @@ bool ClipFacesPersp(const I3D_triface *faces, int num_faces)
                         clip_vert_count++;
                         goto bottom_vertex;
                     } else if (b->clip & CLIP_TOP) {
+                        // both beyond the top plane: no vertex
                     } else
                         goto top_vertex;
                 } else {

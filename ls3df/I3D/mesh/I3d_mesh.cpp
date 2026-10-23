@@ -208,7 +208,7 @@ I3D_vertex *I3D_mesh_level::CreateVertexMesh(int num)
     cVBMan.m_Free(vb);
     memset(&vb, 0, sizeof(vb));
     if (!num) {
-        num_vertices = num;
+        num_vertices = 0;
         bbox.Invalidate();
         return NULL;
     }

@@ -1723,7 +1723,7 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
         {
             if (wav_header->channel_count == 2)
             {
-                for (int i = 4; i != 0; --i)
+                for (int i = 4; i--; )
                 {
                     dest[decompressed_size++] = buffer[position++];
                 }
@@ -1773,7 +1773,7 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
             }
             else
             {
-                for (int i = 2; i != 0; --i)
+                for (int i = 2; i--; )
                 {
                     dest[decompressed_size++] = buffer[position++];
                 }
