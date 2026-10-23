@@ -137,7 +137,11 @@ if (MSVC_VERSION EQUAL 1200)
     # S3TC, dsound's thunk, the base classes, then vorbisfile's thunks; its constant data dinput8's data formats,
     # dxguid's GUIDs, S3TC's literals, eaxguid's GUIDs, then strmiids'. oleaut32 is for the base classes' wxutil object,
     # whose BSTR helpers nothing calls: /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't
-    # import OLEAUT32.
+    # import OLEAUT32. The base classes come before winmm: the hint/name entries list the imports in the order LINK
+    # pulls them, and the original has the base classes' timeSetEvent, timeKillEvent, timeBeginPeriod and
+    # timeEndPeriod right after the engine's timeGetTime (after winmm, LINK pulls them last). Each DLL's IAT order is
+    # then the qsort of the msvcrt.dll LINK runs on, as IJoy's: VC6's, which Windows 2000's msvcrt.dll has, gives the
+    # original's whole import table in both builds, the current one doesn't.
     target_link_libraries(${engine} PRIVATE kernel32 user32 gdi32 ole32 oleaut32 d3d8 dxerr8 dinput8 dxguid ${s3tc}
         ${eaxguid} dsound strmbase winmm strmiids vorbisfile)
     # The original's link time (2003-06-24; 1.1's 2003-02-04), in the PE header and the export directory
