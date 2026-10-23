@@ -539,7 +539,7 @@ public:
 // LIBRARY: LS3DF11 0x100726e0
 // ?OnWaitEnd@CBaseRenderer@@UAEXXZ
 // LIBRARY: LS3DF 0x10088970
-// ?OnWaitStart@CBaseRenderer@@UAEXXZ
+// ?PrepareRender@CBaseRenderer@@UAEXXZ
 
 // DECLARE_IUNKNOWN's members themselves (renbase.h)
 // LIBRARY: LS3DF 0x10075860

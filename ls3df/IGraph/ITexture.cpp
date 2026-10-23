@@ -837,7 +837,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             strncat(file, m_pAlphaName, alpha_len);
         }
         char num[20];
-        _itoa(m_Levels, num, 10);
+        itoa(m_Levels, num, 10);
         file[len] = '_';
         strcat(file, num);
         if (m_Flags & ITC_HALF)
@@ -896,7 +896,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         int len = strlen(name) - 4;
         strncpy(file, name, len);
         char num[20];
-        _itoa(m_Levels, num, 10);
+        itoa(m_Levels, num, 10);
         file[len] = '_';
         strcat(file, num);
         if (m_Flags & ITC_HALF)
@@ -970,7 +970,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
         strncat(file, alpha_name, alpha_len);
     }
     char num[20];
-    _itoa(m_Levels, num, 10);
+    itoa(m_Levels, num, 10);
     file[len] = '_';
     strcat(file, num);
     if (m_Flags & ITC_HALF)
@@ -1036,7 +1036,7 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
     int len = strlen(name) - 4;
     strncpy(file, name, len);
     char num[20];
-    _itoa(m_Levels, num, 10);
+    itoa(m_Levels, num, 10);
     file[len] = '_';
     strcat(file, num);
     if (m_Flags & ITC_HALF)

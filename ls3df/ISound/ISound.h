@@ -237,7 +237,7 @@ public:
 // copy; which one our linker keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py
 // updates it).
 // FUNCTION: LS3DF 0x1007b180
-// ?SetDistanceFactor@ISND_3Dlistener@@UAG?AW4LS3D_RESULT@@M@Z
+// ?SetEnvAlpha@I3D_material@@UAG?AW4LS3D_RESULT@@M@Z
 
 // FUNCTION: LS3DF11 0x1002a480
 // ?SetEnvAlpha@I3D_material@@UAG?AW4LS3D_RESULT@@M@Z

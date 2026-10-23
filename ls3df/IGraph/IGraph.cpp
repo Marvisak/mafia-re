@@ -579,7 +579,7 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
             return I3DERR_INVALIDPARAMS;
         for (int i = m_CachedTextureList.size(); i; ) {
             ITexture *t = m_CachedTextureList[--i];
-            if (t->m_CreateFlags == flags && !_strcmpi(t->m_pName, name) && (!(flags & 4) || !_strcmpi(t->m_pAlphaName,
+            if (t->m_CreateFlags == flags && !strcmpi(t->m_pName, name) && (!(flags & 4) || !strcmpi(t->m_pAlphaName,
                     alpha_name))) {
                 t->m_RefCount++;
                 *texture = t;

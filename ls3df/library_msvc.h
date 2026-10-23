@@ -32,7 +32,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: LS3DF 0x1008d57b
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: LS3DF 0x1008d582
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -935,7 +935,7 @@
 // _$I10_OUTPUT
 
 // LIBRARY: LS3DF 0x100987a3 SYMBOL
-// __itoa
+// _itoa
 
 // LIBRARY: LS3DF 0x10098830 SYMBOL
 // __strcmpi
