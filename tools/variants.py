@@ -26,9 +26,14 @@ one exit path of a function. SYMBOL = "?name@@..." names our function in the obj
 symbol for it (a static function). The spec runs as Python, with REPO (the repository path) defined, so it can build
 its variants in loops. The unchanged source is always scored as "base".
 
-Edited files are compiled from a temporary directory: SOURCE itself, and other files through an include directory
-placed before the project's, so an edited header must be reached through the include path (or SOURCE's folder),
-not through a path relative to another header. `__FILE__` changes accordingly.
+Each variant is compiled with TARGET's command line for SOURCE: setup's files, which every setup target compiles,
+take the line of TARGET's own build (SETUP10's, SETUPCZ's, ...).
+
+Edited files are compiled from a temporary directory, which mirrors SOURCE's folder and each include directory that
+has an edited file (each such mirror an include directory right before the one it mirrors): the edited files, the
+headers that reach one of them by a quoted include relative to themselves (an edited ijoy.h, through joy.h), and
+forwarding headers for those files' other quoted includes. So every include finds what it finds in the build (setup's
+"settings.h" is setup/settings.h, its <settings.h> common/settings.h). `__FILE__` changes accordingly.
 
 Our side comes from the object file: the function's COMDAT section, its relocations (relocated operands compare as
 ADDR, the original's addresses likewise) and the names its calls go to. Build the vc6 preset (for the command
@@ -47,10 +52,12 @@ scores). Rebuild that tree, or pass a private one built from the current source 
 
 import argparse
 import difflib
+import functools
 import json
 import logging
 import os
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -72,6 +79,11 @@ IMAGE_REL_I386_REL32 = 0x14
 SENTINEL = 0x7E000000           # written into relocated fields of our code before disassembly
 ADDR_RE = re.compile(r"0x7e[0-9a-f]{6}")
 MD = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+# externals the CRT defines as absolute symbols: an EH frame's fs:[0] is a relocation to __except_list (exsup.asm)
+CRT_ABSOLUTE = {"__except_list": 0}
+INCLUDE_RE = re.compile(r"\s[-/]I\s*(\S+)")
+QUOTED_INCLUDE_RE = re.compile(r'^[ \t]*#[ \t]*include[ \t]*"([^"]+)"', re.M)
+HEADER_SUFFIXES = {".h", ".hpp", ".hxx", ".inl"}
 
 # operator codes of MSVC decorated names, for short call names
 OPERATORS = {"0": "{ctor}", "1": "{dtor}", "4": "operator=", "D": "operator*", "G": "operator-", "H": "operator+",
@@ -113,16 +125,21 @@ def preset_env(name: str) -> dict:
     return out
 
 
-def compile_command(source: Path) -> str:
-    """The vc6 build's command line for one source file, from build.ninja through ninja -t commands."""
+def compile_command(source: Path, target_dir: Path) -> str:
+    """The vc6 build's command line for one source file, from build.ninja through ninja -t commands. A source that
+    several targets compile (setup's) takes the line whose object is in target_dir, the target's binary folder
+    relative to the build tree; one compiled once for two targets (LS3DF's base classes) takes its only line."""
     ninja_file = (BUILD / "build.ninja").read_text()
     want = str(source).lower()
-    for m in re.finditer(r"^build (\S+\.obj): CXX_COMPILER\S* (\S+)", ninja_file, re.M):
-        if m.group(2).replace("$:", ":").lower() == want:
-            obj = m.group(1).replace("$:", ":")
-            break
-    else:
+    objs = [m.group(1).replace("$:", ":")
+            for m in re.finditer(r"^build (\S+\.obj): CXX_COMPILER\S* (\S+)", ninja_file, re.M)
+            if m.group(2).replace("$:", ":").lower() == want]
+    if not objs:
         sys.exit(f"{source} isn't compiled by {BUILD} (configure the vc6 preset)")
+    prefix = str(target_dir).lower() + "\\"
+    obj = next((o for o in objs if o.lower().startswith(prefix)), objs[0] if len(objs) == 1 else None)
+    if obj is None:
+        sys.exit(f"{source} isn't compiled into {target_dir} by {BUILD}, only into: " + ", ".join(objs))
     ninja = REPO / ".venv" / "Scripts" / "ninja.exe"
     r = subprocess.run([str(ninja), "-C", str(BUILD), "-t", "commands", "-s", obj], capture_output=True, text=True)
     if r.returncode:
@@ -131,19 +148,20 @@ def compile_command(source: Path) -> str:
 
 
 def include_dirs(cmd: str) -> list[Path]:
-    return [Path(d) for d in re.findall(r"(?:^|\s)[-/]I\s*(\S+)", cmd)]
+    return [Path(m.group(1)) for m in INCLUDE_RE.finditer(cmd)]
 
 
 # --- our side: the function in the object file -----------------------------------------------------------------
 
 def read_function(obj: Path, symbol: str):
     """Code of one function from a COFF object (its own COMDAT section, /O2 implies /Gy), with the relocated
-    fields patched to SENTINEL + addend, and the names of the REL32 targets by offset."""
+    fields patched to SENTINEL + addend (an absolute symbol's value + addend, also CRT_ABSOLUTE's), and the names
+    of the REL32 targets by offset."""
     data = obj.read_bytes()
     _, _, _, symtab, nsyms, opt, _ = struct.unpack_from("<HHIIIHH", data, 0)
     strtab = symtab + nsyms * 18
 
-    names, found, i = {}, None, 0
+    names, absolute, found, i = {}, {}, None, 0
     while i < nsyms:
         raw_name, value, secnum, _, _, naux = struct.unpack_from("<8sIhHBB", data, symtab + i * 18)
         if raw_name[:4] == b"\0\0\0\0":
@@ -152,6 +170,10 @@ def read_function(obj: Path, symbol: str):
         else:
             name = raw_name.rstrip(b"\0").decode("latin-1")
         names[i] = name
+        if secnum == -1:    # IMAGE_SYM_ABSOLUTE
+            absolute[i] = value
+        elif name in CRT_ABSOLUTE:
+            absolute[i] = CRT_ABSOLUTE[name]
         if name == symbol and secnum > 0:
             found = (secnum, value)
         i += 1 + naux
@@ -165,7 +187,7 @@ def read_function(obj: Path, symbol: str):
         off, si, typ = struct.unpack_from("<IIH", data, relocs + k * 10)
         if typ == IMAGE_REL_I386_DIR32:
             addend = struct.unpack_from("<I", code, off)[0]
-            struct.pack_into("<I", code, off, (SENTINEL + addend) & 0xFFFFFFFF)
+            struct.pack_into("<I", code, off, (absolute.get(si, SENTINEL) + addend) & 0xFFFFFFFF)
         if typ in (IMAGE_REL_I386_DIR32, IMAGE_REL_I386_REL32):
             targets[off - value] = names.get(si, f"sym{si}")
     return bytes(code[value:]), targets
@@ -218,33 +240,76 @@ def apply_edits(source: Path, edits):
     return texts, None
 
 
+@functools.lru_cache(maxsize=None)
+def headers_under(root: Path) -> tuple:
+    return tuple(p.resolve() for p in root.rglob("*") if p.suffix.lower() in HEADER_SUFFIXES and p.is_file())
+
+
+@functools.lru_cache(maxsize=None)
+def quoted_includes(path: Path) -> tuple:
+    return tuple(QUOTED_INCLUDE_RE.findall(path.read_text(errors="replace")))
+
+
+def mirror(root: Path, out: Path, placed: dict):
+    """Writes the files of placed (real path -> text) that are under root into out, each at its path relative to root,
+    with every unedited header under root that reaches one of them by a quoted include relative to itself (and the
+    headers that reach those, and so on), and a forwarding header for each other quoted include of theirs that finds a
+    file next to it. A quoted include in out then finds what it finds in the build."""
+    placed = {p: t for p, t in placed.items() if root in p.parents}
+    if not placed:
+        return
+    changed = True
+    while changed:
+        changed = False
+        for h in headers_under(root):
+            if h not in placed and any((h.parent / n).resolve() in placed for n in quoted_includes(h)):
+                placed[h] = None    # copied as it is
+                changed = True
+    out_root = out.resolve()
+    for real, text in placed.items():
+        dest = out / real.relative_to(root)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if text is None:
+            shutil.copyfile(real, dest)
+        else:
+            dest.write_text(text)
+    for real, text in placed.items():
+        dest_dir = (out / real.relative_to(root)).parent
+        for name in quoted_includes(real) if text is None else QUOTED_INCLUDE_RE.findall(text):
+            target = (real.parent / name).resolve()
+            fwd = (dest_dir / name).resolve()
+            if target.is_file() and out_root in fwd.parents and not fwd.exists():
+                fwd.parent.mkdir(parents=True, exist_ok=True)
+                fwd.write_text(f'#include "{target}"\n')
+
+
 def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, options: dict):
     work = Path(tempfile.mkdtemp(prefix="variant"))
-    inc = work / "inc"
     src = work / source.name
-    src.write_text(texts.get(source) or source.read_text())
-    dirs = [source.parent] + include_dirs(cmd)
-    for path, text in texts.items():
-        if path == source:
-            continue
-        placed = False
-        for d in dirs:
-            try:
-                rel = path.relative_to(d)
-            except ValueError:
-                continue
-            (inc / rel).parent.mkdir(parents=True, exist_ok=True)
-            (inc / rel).write_text(text)
-            placed = True
-        if not placed:
+    placed = {p.resolve(): t for p, t in texts.items()}
+    placed.setdefault(source, source.read_text())
+    # SOURCE's folder is mirrored next to the copy, where quoted includes find its files and angle brackets don't (setup's
+    # "settings.h" is setup/settings.h, its <settings.h> common/settings.h); each include directory with an edited file
+    # gets a mirror of its own, an include directory right before it
+    dirs = [d.resolve() for d in include_dirs(cmd)]
+    mirror(source.parent, work, placed)
+    headers = {p: t for p, t in placed.items() if p != source}
+    for k, d in enumerate(dirs):
+        mirror(d, work / f"inc{k}", headers)
+    for path in headers:
+        if source.parent not in path.parents and not any(d in path.parents for d in dirs):
             return None, None, f"{path} isn't under an include directory"
     obj = work / "v.obj"
     c = re.sub(r"/Fo\S+", lambda _: f"/Fo{obj}", cmd)
     c = re.sub(r"/Fd\S+", lambda _: f"/Fd{work}\\", c)
     c = re.sub(re.escape(str(source)) + r"\s*$", "", c, flags=re.I)
-    first_i = re.search(r"\s[-/]I", c)
-    at = first_i.start() if first_i else len(c)
-    c = c[:at] + f' -I"{inc}"' + c[at:] + f' -I"{source.parent}" {options.get("flags", "")} "{src}"'
+    mirrors = iter(work / f"inc{k}" for k in range(len(dirs)))
+
+    def with_mirror(m):
+        inc = next(mirrors)
+        return (f' -I"{inc}"' if inc.exists() else "") + m.group(0)
+
+    c = INCLUDE_RE.sub(with_mirror, c) + f' -I"{source.parent}" {options.get("flags", "")} "{src}"'
     if "cl" in options:
         c = re.sub(r"^\S*CL\.EXE", lambda _: str(REPO / options["cl"]), c, flags=re.I)
     r = subprocess.run(c, env=env, cwd=BUILD, capture_output=True, text=True)
@@ -274,7 +339,9 @@ def main():
     source = (REPO / spec["SOURCE"]).resolve()
 
     logging.basicConfig(level=logging.ERROR)
-    compare = Compare.from_target(RecCmpProject.from_directory(Path(args.pdb_build)).get(spec["TARGET"]))
+    pdb_build = Path(args.pdb_build).resolve()
+    target = RecCmpProject.from_directory(pdb_build).get(spec["TARGET"])
+    compare = Compare.from_target(target)
     sys.path.insert(0, str(REPO / "tools"))
     from funcdiff import find_match
     match = find_match(compare, spec["FUNCTION"])
@@ -290,7 +357,7 @@ def main():
     is_addr = compare.orig_bin.is_valid_vaddr
     orig_norm = normalize(orig, is_addr, args.mask)
 
-    cmd = compile_command(source)
+    cmd = compile_command(source, target.recompiled_path.resolve().parent.relative_to(pdb_build))
     env = preset_env("vc6")
     variants = [("base", [])] + list(spec["VARIANTS"])
     if args.show:
