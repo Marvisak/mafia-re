@@ -2274,6 +2274,8 @@ public:
 // LoadImage is folded with I3D_sound's, the same code. The original keeps the area file's copy; which one our linker
 // keeps changes with the link, so the marker is by the name our PDB keeps (tools/foldfix.py updates it).
 // FUNCTION: LS3DF 0x10005ce0
+// ?LoadImage@I3D_area@@UAEXXZ
+
 // FUNCTION: LS3DF11 0x10005cd0
 // ?LoadImage@I3D_sound@@UAEXXZ
 

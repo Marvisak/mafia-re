@@ -700,7 +700,7 @@ DWORD WINAPI RenderThreadProc(void *param);
 // (another list's, not known yet). The marker names the decorated symbol our PDB keeps for the copy, which changes
 // with the link (tools/foldfix.py re-points it).
 // TEMPLATE: LS3DF 0x10034350
-// ??1?$C_list@UDUMMY_STRUCT@@@@QAE@XZ
+// ??1?$C_list@PAVI3D_light@@@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x1004e760
 // ??1?$C_list@URECTANGLE_INFO@@@@QAE@XZ

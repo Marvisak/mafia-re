@@ -213,11 +213,13 @@ LS3D_RESULT ITexture::Reload()
 // given, or an empty one (ITC_EMPTY). sx and sy override the image's size, levels the number of mipmap levels.
 // SrcBMPPitchAdder is unsigned and halved after i in the 16-bit case: the original stores it back there (dead), and
 // level_sy is declared first (the original loads m_Height first).
-// Open: mostly the register allocation and the frame. The original keeps the zero of dxt and dxt_format in ecx for the
-// format choice (cmp esi, ecx; format in esi, stored once after the choice) and level in edi at the level loop's top
-// (push edi for its zeros); its mipmap filter walks the source from bytes 1 (upper pixels) and 2 (lower), ours from
-// 3 and 2, and reads the first byte of three pixels at their use. Alpha case 1 with src++ after the store gives the
-// original's order there but moves registers all through the function.
+// The DXT formats are tested before they are assigned: an assignment in the condition stores format in each branch,
+// where the original keeps it in esi and the zero of dxt and dxt_format in ecx (cmp esi, ecx).
+// Open: mostly the register allocation and the frame. The TrueColor test still stores format in its branch; the
+// original keeps level in edi at the level loop's top (push edi for its zeros); its mipmap filter walks the source
+// from bytes 1 (upper pixels) and 2 (lower), ours from 3 and 2, and reads the first byte of three pixels at their use.
+// Alpha case 1 with src++ after the store gives the original's order there but moves registers all through the
+// function.
 // FUNCTION: LS3DF 0x10075f50
 // FUNCTION: LS3DF11 0x10072de0
 LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flags, ushort sx, ushort sy,
@@ -418,27 +420,31 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
     if (!(m_Flags & ITC_TRUECOLOR) || (format = m_TrueColorTexturePixelFormat) == 0) {
         m_Flags &= ~ITC_TRUECOLOR;
         if ((m_Flags & (ITC_ALPHA | ITC_USE_ALPHA)) && !(m_Flags & ITC_COLORKEY)) {
-            if (m_Flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
+            if (m_Flags & ITC_DXT && m_DXTAlphaTexturePixelFormat) {
+                format = m_DXTAlphaTexturePixelFormat;
                 dxt = 3;
                 dxt_format = m_AlphaTexturePixelFormat;
             } else
                 format = m_AlphaTexturePixelFormat;
         } else if (m_Flags & ITC_COLORKEY) {
             if (!(m_Flags & ITC_MIPMAP)) {
-                if (m_Flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
+                if (m_Flags & ITC_DXT && m_DXTTexturePixelFormat) {
+                    format = m_DXTTexturePixelFormat;
                     dxt = 2;
                     dxt_format = m_Alpha1TexturePixelFormat;
                 } else
                     format = m_Alpha1TexturePixelFormat;
             } else {
-                if (m_Flags & ITC_DXT && (format = m_DXTAlphaTexturePixelFormat) != 0) {
+                if (m_Flags & ITC_DXT && m_DXTAlphaTexturePixelFormat) {
+                    format = m_DXTAlphaTexturePixelFormat;
                     dxt = 3;
                     dxt_format = m_AlphaTexturePixelFormat;
                 } else
                     format = m_AlphaTexturePixelFormat;
             }
         } else {
-            if (m_Flags & ITC_DXT && (format = m_DXTTexturePixelFormat) != 0) {
+            if (m_Flags & ITC_DXT && m_DXTTexturePixelFormat) {
+                format = m_DXTTexturePixelFormat;
                 dxt = 1;
                 dxt_format = m_Alpha1TexturePixelFormat;
             } else

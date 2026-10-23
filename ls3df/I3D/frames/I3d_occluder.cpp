@@ -11,7 +11,6 @@
 //   functions.
 // - CullOcclsEachOther (and its copy inlined in ProcessOccluders): VC6 keeps a different one of its two floats on the
 //   x87 stack (see the function).
-// - POIS_EnumProc: a jump target, see the function.
 #include "I3D/I3D.h"
 #include "I3D/frames/XSBTree.h"
 #include "dta.h"
@@ -512,10 +511,10 @@ static void CullOcclsEachOther(I3D_sector *sct)
 // The visuals to render from frm on, along their chain, that an occluder of pPOISector hides aren't rendered: their
 // render number goes back. A sphere is visible past an occluder when it reaches in front of a face plane (if it
 // reaches past depth_plane) or of a side plane. The tests are written out, as PS2's (no Dot), and the render number to
-// go back to is read before the test, as the original keeps it in a register.
-// Open: the original sets vis again on a face plane's hit, where ours jumps on with it set. A face hit that jumps into
-// the side planes' hit (goto) gives the original's code exactly, but costs less: ProcessOccluders then inlines this
-// function in its first sector loop, which one more statement's worth of source (dead code) here prevents.
+// go back to is read before the test, as the original keeps it in a register. One vis for both loops, set false before
+// each test and true on a hit, as PS2's: the original's face hit jumps into the side planes' hit (vis = true). A flag
+// of the face planes' own jumps past it; a goto into the side planes' hit gives the same code but costs less source,
+// and ProcessOccluders then inlines this function in its first sector loop.
 static void POIS_EnumProc(I3D_frame *frm)
 {
     if (!pPOISector->occluders)
@@ -535,17 +534,18 @@ static void POIS_EnumProc(I3D_frame *frm)
                 const S_plane *p;
                 int i;
                 const S_plane &dp = o->depth_plane;
-                bool face_hit = false;
+                vis = false;
                 if (!(dp.d + dp.normal.x * pos.x + dp.normal.y * pos.y + dp.normal.z * pos.z > r)) {
+                    vis = false;
                     p = o->face_planes;
                     for (i = o->num_face_planes; i--; p++) {
                         if (p->d + p->normal.x * pos.x + p->normal.y * pos.y + p->normal.z * pos.z < r) {
-                            face_hit = true;
+                            vis = true;
                             break;
                         }
                     }
                 }
-                if (!face_hit) {
+                if (!vis) {
                     vis = false;
                     p = o->side_planes;
                     for (i = o->num_side_planes; i--; p++) {

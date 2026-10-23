@@ -2,11 +2,10 @@
 // from its constructor, with the PC's UpdateLodVertices where PS2 has GetVertexPos and m_AddFGroups (the PC's are the
 // single mesh's). The header's zero vector has its $E last (0x10057630). Names are the PS2 build's unless noted.
 //
-// Still open: SetWeight's and Duplicate's joints_changed++, which the original increments with one inc on memory and
-// ours with a load, an inc and a store that VC6 schedules around the next statement's. An inline function that
-// reaches the counter through an address (a reference or a pointer parameter, or a member function with a local
-// reference) gives the original's code in both; a plain member function or any spelling of the statement doesn't.
-// The original's source for it isn't known.
+// SetWeight and Duplicate increment joints_changed with one inc on memory. Written as a statement on the member, VC6
+// loads, increments and stores it, scheduled around the next statement's; reached through an address (a local
+// reference, or an inline function's reference or pointer parameter) it stays an inc on memory. The original's exact
+// spelling isn't known: the joint's sm->joints_changed++ gives it in SetWeight only.
 #include "I3D/I3D.h"
 
 // FUNCTION: LS3DF 0x10056e80
@@ -43,7 +42,8 @@ int I3D_singlemorph::NumRegions() const
 LS3D_RESULT I3D_singlemorph::SetWeight(int region, int level, float weight)
 {
     if (region >= 0 && region < m_numRegions && level >= 0 && level < m_numLevels) {
-        joints_changed++;
+        uint &changed = joints_changed;
+        changed++;
         // Both branches the same, as the morph's
         if (!(vis_flags & VISF_WORLD_SPACE))
             vis_flags &= ~VISF_WBOUND_VALID;
@@ -94,7 +94,8 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
     else
         vis_flags &= ~VISF_WBOUND_VALID;
     I3D_frame::Duplicate(frame);
-    joints_changed++;
+    uint &changed = joints_changed;
+    changed++;
     m_Flags &= ~(MORPHF_LOADED | MORPHF_UNKNOWN_4);
     if (frame->GetType() != FRAME_VISUAL) {
         if (frame->GetType() == FRAME_EMITOR) {

@@ -438,10 +438,10 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
 // base and dest (the order of their stores).
 // The loop reads the material through GetMaterial(): the original has one more inline call after the alpha Lock than
 // the rest of ours, without which that Lock's push_back is inlined (an empty inline call anywhere after it does the
-// same).
-// Not matching yet: the loop's alpha * fade * transparency loads fade first (the original alpha, as I3D_object's),
-// whichever way the product is written, and the copy loop of the inlined fgroups push_back has one lea's registers
-// swapped (1.2's address of the new array, 1.1's of the old one; no code-identical spelling tried moved it).
+// same). The distance's sum is written out, as the object's, which also gives the loop's alpha * fade * transparency
+// the original's order (alpha loaded first).
+// Not matching yet: the copy loop of the inlined fgroups push_back has one lea's registers swapped (1.2's address of
+// the new array, 1.1's of the old one; no code-identical spelling tried moved it).
 // FUNCTION: LS3DF 0x100354f0
 // FUNCTION: LS3DF11 0x10034510
 void I3D_morph::m_AddFGroups()
@@ -469,7 +469,8 @@ void I3D_morph::m_AddFGroups()
         return;
     }
     const I3D_bvolume &bvol = GetWBoundVolume();
-    float dist_2 = (bvol.bsphere.pos - AddFGHlpStruct.cam_pos).Square();
+    S_vector d = bvol.bsphere.pos - AddFGHlpStruct.cam_pos;
+    float dist_2 = d.x * d.x + d.y * d.y + d.z * d.z;
     int lod_index = GetObjectLOD(this, dist_2);
     I3D_mesh_level *level = mesh->levels[lod_index];
     if (!level || !level->fgroups)

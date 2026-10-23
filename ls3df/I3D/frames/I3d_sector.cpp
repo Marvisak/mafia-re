@@ -280,14 +280,11 @@ void I3D_sector::UpdateV()
         (*it)->UpdatePortal();
 }
 
-// The planes of the hull's faces in world space, each once, facing out.
-// Open: the inline budget. The original calls GetNormal out of line and inlines Normalize after it, as in the camera's
-// first frustums; ours inlines GetNormal, with its operator- calls out of line. No budget gives that pair: our Normalize
-// costs more than GetNormal, so padding inlines GetNormal first (also through Insanity3D's S_plane::ComputePlane).
-// GetNormal alone nested in an inline function of its own (a plane constructor taking the three points) gives the
-// original's calls, and then Normalize's null-vector branches store y's and z's constants through the FPU, where the
-// original stores them as integers; written as if/else statements they do here, but that breaks Normalize's other
-// callers (the light's UpdateV, S_quat::Inverse, GetLightness).
+// The planes of the hull's faces in world space, each once, facing out. Each plane is ComputePlane's: the original
+// calls GetNormal out of line, nested in it, and normalizes through NormalizeNormal (y's and z's null-normal constants
+// stored as integers); written out here, GetNormal is inlined with its operator- calls out of line.
+// Not matching yet: NormalizeNormal's last product (the original keeps z on the FPU stack, fmul st(1), ours multiplies
+// from memory), one movzx scheduled earlier and the order of push_back's copy of pl.
 // FUNCTION: LS3DF 0x1004f710
 // FUNCTION: LS3DF11 0x1004d570
 void I3D_sector::UpdateCHPlanesW()
@@ -306,9 +303,7 @@ void I3D_sector::UpdateCHPlanesW()
         v1 = verts[*fc++] * m_Matrix;
         v2 = verts[*fc++] * m_Matrix;
         S_plane pl;
-        pl.normal.GetNormal(v0, v1, v2);
-        pl.normal.Normalize();
-        pl.d = -pl.normal.Dot(v0);
+        pl.ComputePlane(v0, v1, v2);
         bool add = true;
         for (S_plane *p = list.begin(); p < list.end(); p++) {
             if (fabs(p->d - pl.d) < .001 && fabs(p->normal.x - pl.normal.x) < .001 &&

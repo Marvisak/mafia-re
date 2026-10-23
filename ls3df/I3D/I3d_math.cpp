@@ -213,7 +213,10 @@ S_matrix S_matrix::RotateByMatrix(const S_matrix &mat) const
     return r;
 }
 
-// Sets the matrix to the inverse of mat, an affine matrix; a singular one gives the identity
+// Sets the matrix to the inverse of mat, an affine matrix; a singular one gives the identity. m[3][1] sums its last two
+// terms first, which gives the original's term order there.
+// Not matching yet: m[3][1]'s inner pair and m[3][2] load their factors the other way round (the original loads the
+// member of this it has just stored first); no factor swap or grouping moves them.
 // FUNCTION: LS3DF 0x1002d0b0
 // FUNCTION: LS3DF11 0x1002c3b0
 bool S_matrix::Inverse(const S_matrix &mat)
@@ -240,7 +243,7 @@ bool S_matrix::Inverse(const S_matrix &mat)
     m[2][2] = (mat.m[1][1] * mat.m[0][0] - mat.m[1][0] * mat.m[0][1]) * det;
     m[2][3] = 0.0f;
     m[3][0] = -(mat.m[3][0] * m[0][0] + mat.m[3][1] * m[1][0] + mat.m[3][2] * m[2][0]);
-    m[3][1] = -(mat.m[3][0] * m[0][1] + mat.m[3][1] * m[1][1] + mat.m[3][2] * m[2][1]);
+    m[3][1] = -(mat.m[3][0] * m[0][1] + (mat.m[3][1] * m[1][1] + mat.m[3][2] * m[2][1]));
     m[3][2] = -(mat.m[3][0] * m[0][2] + mat.m[3][1] * m[1][2] + mat.m[3][2] * m[2][2]);
     m[3][3] = 1.0f;
     return true;

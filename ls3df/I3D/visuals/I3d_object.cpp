@@ -586,10 +586,9 @@ uchar *I3D_object::LockVertices(int index, uint flags)
 // map and, without hardware T&L, transformed and fogged. ProcessVertices is in both clipping branches and FogProcess
 // called in each branch of the stride (the original pushes 0x28 and 0x20 in two arms, tail-merged): the copies' extra
 // references to num_verts give the original's stack slots. The help struct's clip is assigned first, as the original
-// stores it.
-// Not matching yet: the distance's squares come out x, z, y, the original's z, y, x. That is the sum written out
-// (S_vector d = ...; d.x * d.x + d.y * d.y + d.z * d.z), but its source then leaves the alpha Lock's push_back inline
-// and the four PrepareLights calls unmerged; Dot and a GetWBoundVolume() without the reference give Square()'s order.
+// stores it. The distance's sum is written out (the original squares z, y, x; Square() and Dot give x, z, y), and the
+// loop reads the material through GetMaterial(), as the morph's: without that inline call the written-out sum leaves
+// the alpha Lock's push_back inline and the four PrepareLights calls unmerged.
 // FUNCTION: LS3DF 0x10038020
 // FUNCTION: LS3DF11 0x10036830
 void I3D_object::m_AddFGroups()
@@ -617,7 +616,8 @@ void I3D_object::m_AddFGroups()
         return;
     }
     const I3D_bvolume &bvol = GetWBoundVolume();
-    float dist_2 = (bvol.bsphere.pos - AddFGHlpStruct.cam_pos).Square();
+    S_vector d = bvol.bsphere.pos - AddFGHlpStruct.cam_pos;
+    float dist_2 = d.x * d.x + d.y * d.y + d.z * d.z;
     int lod_index = GetObjectLOD(this, dist_2);
     I3D_mesh_level *level = mesh->levels[lod_index];
     if (!level || !level->fgroups)
@@ -814,7 +814,7 @@ void I3D_object::m_AddFGroups()
     h.sector = AddFGHlpStruct.sector;
     h.vis = this;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
-        I3D_material *mat = fg->material;
+        I3D_material *mat = fg->GetMaterial();
         h.fg = fg;
         if (mat && mat->flags & MATF_TEXTURE) {
             if (vis_flags & VISF_UNKNOWN_10)

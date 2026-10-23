@@ -336,10 +336,11 @@ void I3D_billboard::ProductBillMatrix(S_vector &cam_pos, S_matrix *m)
 // too; a mode 5 environment map maps into the parent's first dummy child. The fade adds the previous level's whole
 // distance (fadd without the fmul by 0.5), and FogProcess is called in each branch of the stride (push 0x28 and push
 // 0x20 in two arms, as the original's); the help structure is filled in the original's store order.
-// Not matching yet: the stack slots (this, lod_index, num_verts and the Lock's push_back temporary sit elsewhere), the
-// lod::Create call's argument loads (the original loads level->num_vertices before the constant pushes and tests the
-// flags in memory) and lod_index read twice where the original copies it. 1.1's original has ours in those two places
-// (and its slots), so 1.2's source changed there.
+// 1.2's lod::Create gets num_verts, where 1.1's reads level->num_vertices again (as ours there): that gives 1.2's flag
+// test in memory and lod_index copied, not read twice.
+// Not matching yet: the stack slots (this, lod_index, num_verts and the Lock's push_back temporary sit elsewhere), and
+// the count argument: the original loads it from [level + 8] before the constant pushes, ours from num_verts' slot,
+// so 1.2's argument is still another spelling.
 // FUNCTION: LS3DF 0x100073c0
 // FUNCTION: LS3DF11 0x100073a0
 void I3D_billboard::m_AddFGroups()
@@ -389,8 +390,13 @@ void I3D_billboard::m_AddFGroups()
                 return;
             }
         }
+#if ENGINE_VERSION >= 395
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, num_verts, &verts->pos,
+                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+#else
         if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
                 sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+#endif
             dbgPrintf("!! Out of memory    renderObject()");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return;

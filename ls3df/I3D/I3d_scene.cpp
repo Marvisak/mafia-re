@@ -1098,13 +1098,13 @@ DUMMY_STRUCT *I3D_scene::WeatherSystemGetDumies()
 // modulate by 2), a new size, speed or kind gives every particle its shape again. The mode is a switch (dec, je,
 // dec, je), the color test's plain branch is the else (out of line) and the alpha is taken first, as in
 // m_UpdateWeatherSystem: with these this and the other registers are the original's.
-// Not matching yet: the ranges' sqrt. The original keeps both ranges on the FPU stack (the new one read back from
-// I3DIntAsFloat's slot, squared through fld st(0)), and the two cases differ in order, so they aren't merged; ours
-// multiplies the new one from memory and merges the two. The sums done in double ((double)x * x + (double)y * y)
-// give the original's instructions with other pops; a local, the other order, S_vector2's Magnitude, this-> or a
-// helper don't. 1.1 has the cases mirrored (the other range squared first), the double sums the same effect; and
-// its inlined Lock keeps the buffer in eax where it is locked already and copies it to ebp for the call (ours: in ebp
-// throughout).
+// The ranges' sqrt sums in double ((double)x * x + (double)y * y): the original keeps both ranges on the FPU stack (the
+// new one read back from I3DIntAsFloat's slot, squared through fld st(0)), and the two cases don't merge; float sums
+// multiply the new one from memory and merge the two, and so do a local, the other order, S_vector2's Magnitude,
+// this-> or a helper.
+// Not matching yet: the double sums' pops come out elsewhere. 1.1 has the cases mirrored (the other range squared
+// first), the double sums the same effect; and its inlined Lock keeps the buffer in eax where it is locked already and
+// copies it to ebp for the call (ours: in ebp throughout).
 // FUNCTION: LS3DF 0x1004bce0
 // FUNCTION: LS3DF11 0x10049c40
 void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
@@ -1146,11 +1146,11 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
         break;
     case WS_PARAM_RANGE_X:
         ws_range_x = I3DIntAsFloat(value);
-        ws_range = (float)sqrt(ws_range_x * ws_range_x + ws_range_y * ws_range_y);
+        ws_range = (float)sqrt((double)ws_range_x * ws_range_x + (double)ws_range_y * ws_range_y);
         return;
     case WS_PARAM_RANGE_Y:
         ws_range_y = I3DIntAsFloat(value);
-        ws_range = (float)sqrt(ws_range_x * ws_range_x + ws_range_y * ws_range_y);
+        ws_range = (float)sqrt((double)ws_range_x * ws_range_x + (double)ws_range_y * ws_range_y);
         return;
     case WS_PARAM_SPEED:
         ws_speed = I3DIntAsFloat(value) * .5f;
