@@ -507,15 +507,21 @@ def main() -> None:
     csv = out.with_suffix(".csv")
     # A copy the original kept in the target's own code, which our build kept in the library (LS3DF11's folded
     # I3D_part_base::`scalar deleting destructor', which our build kept as CRendererInputPin's), is annotated there
-    claimed = set()
+    # and so is one the target annotates by name at another address (LS3DF11's folded CBaseRenderer::OnRenderEnd,
+    # whose original copy is I3d_landscape.cpp's, where the bytes would also fit the end of a base class function)
+    claimed, claimed_names = set(), set()
     for root in target.source_paths:
         for path in Path(root).rglob("*"):
             if path.suffix in (".h", ".cpp", ".c") and path.resolve() != out.resolve():
-                for m in OWN_MARKER.finditer(path.read_text(encoding="latin-1")):
+                text = path.read_text(encoding="latin-1")
+                for m in OWN_MARKER.finditer(text):
                     if m.group(2) == args.target:
                         claimed.add(int(m.group(3), 16))
-    skipped = [(addr, name) for addr, name in functions if addr in claimed]
-    functions = [(addr, name) for addr, name in functions if addr not in claimed]
+                for m in re.finditer(rf"//\s*(?:FUNCTION|TEMPLATE|SYNTHETIC|STUB):\s*{args.target}\s+0x[0-9a-fA-F]+\s*\n"
+                                     r"(?://\s*[A-Z]+:.*\n)*//\s*(\?\S+)", text.replace("\r\n", "\n")):
+                    claimed_names.add(m.group(1))
+    skipped = [(addr, name) for addr, name in functions if addr in claimed or name in claimed_names]
+    functions = [(addr, name) for addr, name in functions if addr not in claimed and name not in claimed_names]
     if args.library:
         text = LIBRARY_HEADER.format(name=Path(target.original_path).name, library=args.library)
     else:

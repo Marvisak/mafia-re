@@ -28,7 +28,8 @@ ranges are compiler temporaries, shown by their frame offset.
 
 With --vars only the passes that create or free those variables' ranges are shown, and only their ids: the history
 that decides their relative order. --edited compiles another file in place of the source, from a temporary directory
-with the source's folder on the include path, and the source's command line. Build the vc6 preset first.
+with the source's folder on the include path, and the source's command line. A source several targets compile needs
+--target-dir, the target's folder in the build tree (`ls3df_1_1` for patch 1.1's engine). Build the vc6 preset first.
 Only the 13.00.9044 C2.DLL is traced; plain SP5's (12.00.8966, LS3DF's DirectShow base classes) has other addresses.
 """
 
@@ -277,8 +278,8 @@ class Trace:
             self.functions[-1][1].append(("free", mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), site))
 
 
-def command(source: Path, edited: Path | None, work: Path) -> str:
-    cmd = variants.compile_command(source)
+def command(source: Path, edited: Path | None, work: Path, target_dir: str) -> str:
+    cmd = variants.compile_command(source, Path(target_dir))
     cmd = re.sub(r"/Fo\S+", lambda _: f"/Fo{work / 'trace.obj'}", cmd)
     cmd = re.sub(r"/Fd\S+", lambda _: f"/Fd{work}\\", cmd)
     if edited:
@@ -304,11 +305,13 @@ def main():
     ap.add_argument("function", nargs="?", help="(part of) the function's decorated name; omitted: list them")
     ap.add_argument("--vars", help="comma-separated variable names: show only their ranges' history")
     ap.add_argument("--edited", help="compile this file in place of the source")
+    ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
+                    "the build tree whose command line to use (ls3df_1_1, setup_czech)")
     args = ap.parse_args()
 
     source = (REPO / args.source).resolve()
     work = Path(tempfile.mkdtemp(prefix="c2trace"))
-    cmd = command(source, Path(args.edited).resolve() if args.edited else None, work)
+    cmd = command(source, Path(args.edited).resolve() if args.edited else None, work, args.target_dir)
     reference = hashlib.sha256(C2_REFERENCE.read_bytes()).digest()
 
     def is_c2(path):
