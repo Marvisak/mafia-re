@@ -139,7 +139,7 @@ if (MSVC_VERSION EQUAL 1200)
     # whose BSTR helpers nothing calls: /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't
     # import OLEAUT32.
     target_link_libraries(${engine} PRIVATE kernel32 user32 gdi32 ole32 oleaut32 d3d8 dxerr8 dinput8 dxguid ${s3tc}
-        ${eaxguid} dsound winmm strmiids strmbase vorbisfile)
+        ${eaxguid} dsound strmbase winmm strmiids vorbisfile)
     # The original's link time (2003-06-24; 1.1's 2003-02-04), in the PE header and the export directory
     if (LS3DF_1_1)
         postlink(${engine} --timestamp 0x3e3ff12d)
