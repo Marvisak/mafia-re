@@ -112,7 +112,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 74 | `5605c0–56488c` | 0x42cc | | |
 | 75 | `564890–56615c` | 0x18cc | | |
 | 76 | `566160–5661ec` | 0x8c | `WinMain.cpp` (our name) | only `WinMain` (`566160`): sets the working directory to the executable's folder and calls `main`; written |
-| 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | the startup's Windows helpers: the CD check (`566440`, which Steam's no-CD patch replaces) and the loop around it (`5663d0`, "Please insert MAFIA CD 1"), the search of the drives C: to Z: for `\MafiaGame\<file>` (`5662e0`), a `LoadString` wrapper (`5662a0`) and the window's icon (`5662c0`); the loop stubbed (`WaitForCD`, our name) |
+| 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | the startup's Windows helpers: the CD check (`566440`, which Steam's no-CD patch replaces; `a1.dta` in `\MafiaDE`, `\MafiaEN`, `\MafiaSP`, `\MafiaFR`, `\MafiaIT` or the root's `\MafiaGame`), its file test (`566410`) and the loop around it (`5663d0`, "Please insert MAFIA CD 1", also called by `C_mission::Open`), the search of the drives C: to Z: for `\MafiaGame\<file>` (`5662e0`), a `LoadString` wrapper (`5662a0`), the window's icon (`5662c0`) and a message box through IGraph's window (`5661f0`); written: the CD check, its file test and the loop (`CheckCD`, `FileExists`, `WaitForCD`, our names) |
 | 78 | `566f40–5674ec` | 0x5ac | | |
 | 79 | `5674f0–567cec` | 0x7fc | | |
 | 80 | `567cf0–56ad9c` | 0x30ac | | |

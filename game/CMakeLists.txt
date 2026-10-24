@@ -40,7 +40,8 @@ if (MSVC_VERSION EQUAL 1200)
     # /Gr - __fastcall: free functions take their first two arguments in ecx and edx (InitSystem); main stays __cdecl
     #       (VC6 compiles main __cdecl under any convention), WinMain is WINAPI
     # /GB, the default: the code has lea [x+x*n] chains and no npad inside functions, which /G6 (LS3DF's) gives
-    # Not settled yet: /Ob1 (/O2's default) or /Ob2 (LS3DF's), and /YX (see docs/game-files.md)
+    # /Ob1, /O2's default: CheckCD calls FileExists, defined right before it, out of line, where /Ob2 (LS3DF's) inlines
+    # it at all six calls. Not settled yet: /YX (see docs/game-files.md)
     target_compile_options(game PRIVATE /ML /GX /Gr)
     # The original's import directory lists KERNEL32, USER32, ADVAPI32, WINMM, LS3DF, IJoy and rw_data, in the order LINK
     # searched them. Its code has LS3DF's thunks right after the game code (0x60fc30), then libcp's objects, then IJoy's and

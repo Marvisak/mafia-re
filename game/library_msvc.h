@@ -68,6 +68,9 @@
 // LIBRARY: GAME 0x6106a5 SYMBOL
 // __NLG_Dispatch
 
+// LIBRARY: GAME 0x6106aa SYMBOL
+// _sprintf
+
 // LIBRARY: GAME 0x6106fc
 // ??2@YAPAXI@Z
 
@@ -104,6 +107,9 @@
 // LIBRARY: GAME 0x611470 SYMBOL
 // _strncpy
 
+// LIBRARY: GAME 0x61174c SYMBOL
+// _fclose
+
 // LIBRARY: GAME 0x611ad5 SYMBOL
 // _strtol
 
@@ -118,6 +124,9 @@
 
 // LIBRARY: GAME 0x611d52 SYMBOL
 // __exit
+
+// LIBRARY: GAME 0x612310 SYMBOL
+// __aulldiv
 
 // LIBRARY: GAME 0x6123b4 SYMBOL
 // _WinMainCRTStartup
@@ -170,6 +179,12 @@
 // LIBRARY: GAME 0x6136b2
 // ?_inconsistency@@YAXXZ
 
+// LIBRARY: GAME 0x613708 SYMBOL
+// __flsbuf
+
+// LIBRARY: GAME 0x61381d SYMBOL
+// __output
+
 // LIBRARY: GAME 0x614027 SYMBOL
 // __setdefaultprecision
 
@@ -220,6 +235,24 @@
 
 // LIBRARY: GAME 0x615471 SYMBOL
 // __seh_longjmp_unwind@4
+
+// LIBRARY: GAME 0x6160ed SYMBOL
+// __close
+
+// LIBRARY: GAME 0x6161a0 SYMBOL
+// __freebuf
+
+// LIBRARY: GAME 0x6161cb SYMBOL
+// _fflush
+
+// LIBRARY: GAME 0x616206 SYMBOL
+// __flush
+
+// LIBRARY: GAME 0x616262 SYMBOL
+// __flushall
+
+// LIBRARY: GAME 0x6162d8 SYMBOL
+// __write
 
 // LIBRARY: GAME 0x616ac8 SYMBOL
 // _toupper
@@ -332,6 +365,27 @@
 // LIBRARY: GAME 0x618e33 SYMBOL
 // _abort
 
+// LIBRARY: GAME 0x618e4a SYMBOL
+// __lseek
+
+// LIBRARY: GAME 0x618ee4 SYMBOL
+// __getbuf
+
+// LIBRARY: GAME 0x618f28 SYMBOL
+// __isatty
+
+// LIBRARY: GAME 0x618f4e SYMBOL
+// ___initstdio
+
+// LIBRARY: GAME 0x618ff3 SYMBOL
+// ___endstdio
+
+// LIBRARY: GAME 0x619007 SYMBOL
+// _wctomb
+
+// LIBRARY: GAME 0x619070 SYMBOL
+// __aullrem
+
 // LIBRARY: GAME 0x6190e5 SYMBOL
 // __control87
 
@@ -398,6 +452,15 @@
 // LIBRARY: GAME 0x619b80 SYMBOL
 // ___strgtold12
 
+// LIBRARY: GAME 0x61a230 SYMBOL
+// __free_osfhnd
+
+// LIBRARY: GAME 0x61a2aa SYMBOL
+// __get_osfhandle
+
+// LIBRARY: GAME 0x61a2e7 SYMBOL
+// __commit
+
 // LIBRARY: GAME 0x61b97d SYMBOL
 // __ismbblead
 
@@ -415,6 +478,9 @@
 
 // LIBRARY: GAME 0x61bf9a SYMBOL
 // _calloc
+
+// LIBRARY: GAME 0x61c04b SYMBOL
+// __fcloseall
 
 // LIBRARY: GAME 0x61c0a3 SYMBOL
 // ___addl
@@ -470,6 +536,9 @@
 // LIBRARY: GAME 0x61d672 SYMBOL
 // __cenvarg
 
+// GLOBAL: GAME 0x627c28
+// ___lookuptable
+
 // GLOBAL: GAME 0x62e000
 // ___xc_a
 
@@ -509,6 +578,12 @@
 // GLOBAL: GAME 0x63a294
 // ?__pInconsistency@@3P6AXXZA
 
+// GLOBAL: GAME 0x63a298
+// ___nullstring
+
+// GLOBAL: GAME 0x63a29c
+// ___wnullstring
+
 // GLOBAL: GAME 0x63a2a0
 // __cfltcvt_tab
 
@@ -539,6 +614,9 @@
 // GLOBAL: GAME 0x63a894
 // __fpecode
 
+// GLOBAL: GAME 0x63a898
+// ___badioinfo
+
 // GLOBAL: GAME 0x63a8a0
 // __amblksiz
 
@@ -547,6 +625,9 @@
 
 // GLOBAL: GAME 0x63c95c
 // ___old_sbh_threshold
+
+// GLOBAL: GAME 0x63c960
+// __iob
 
 // GLOBAL: GAME 0x63cf88
 // __pow10pos
@@ -635,6 +716,9 @@
 // GLOBAL: GAME 0x6d891c
 // __newmode
 
+// GLOBAL: GAME 0x6d8920
+// __cflush
+
 // GLOBAL: GAME 0x6d8a4c
 // ___mbcodepage
 
@@ -652,6 +736,12 @@
 
 // GLOBAL: GAME 0x6d8c64
 // ___mblcid
+
+// GLOBAL: GAME 0x6d8c68
+// ___piob
+
+// GLOBAL: GAME 0x6d9c80
+// __nstream
 
 // GLOBAL: GAME 0x6d9c84
 // ___sbh_sizeHeaderList
@@ -700,9 +790,6 @@
 
 // GLOBAL: GAME 0x6d9dd4
 // ___onexitbegin
-
-// STRING: GAME 0x627cb0
-// "IsProcessorFeaturePresent"
 
 // STRING: GAME 0x627ccc
 // "KERNEL32"
