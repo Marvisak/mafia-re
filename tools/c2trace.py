@@ -25,6 +25,12 @@ launchers included) under a small debugger, with breakpoints in C2.DLL:
   subtract the range's own (`+0x38`, move-related ranges' registers with weights), and a tie goes to the first in the
   class's list (`0x107b6888` for the integer registers: eax, ecx, edx, esi, edi, ebx, ebp). The allowed registers are
   the bit vector at `+0x20` (sorted chunks of base, next, 32-bit mask).
+- `0x10767401` and `0x1076741d` (with --x87): which floats stay on the FPU stack is decided before, and apart from the
+  colouring, which takes only the integer registers. `0x1076697d` scores each candidate (a definition earns 2 times its
+  block's frequency, a use nothing, an edge leaving the candidate's region costs the successor block's frequency) and
+  calls the filter at `0x10767401`, whose loop sees each candidate at `0x1076741d` (`ebx`, its score at `+0xc`) and
+  drops those at 0 or less. The best one left is kept on the stack, the ones interfering with it are split and go
+  through the filter again.
 
 The ranges are coloured in the order of a work list (`0x10732af5`, sorted by `0x10708a6e`): by the priority at `+0xc`
 descending, then by `+0x44` descending, a full tie in the order the range table is walked (by id) with the later one
@@ -45,9 +51,9 @@ ranges are compiler temporaries, shown by their frame offset.
 With --vars only the passes that create or free those variables' ranges are shown, and only their ids: the history
 that decides their relative order. --regs prints instead the ranges the colouring kept, with the register each got,
 their priority and their weights; --colouring the colouring's decisions in the order it makes them, each with the
-registers the range may take, their costs and its preferences. Only the global allocator's ranges are there: the code
-generator gives short-lived temporaries (a load feeding one push) their registers later, the next scratch register
-after the last one it used. --edited compiles
+registers the range may take, their costs and its preferences; --x87 each pass of the FPU stack's filter, with every
+candidate's score. Only the global allocator's ranges are there: the code generator gives short-lived temporaries (a
+load feeding one push) their registers later, the next scratch register after the last one it used. --edited compiles
 another file in place of the source, from a temporary directory with the source's folder on the include path, and the
 source's command line. A source several targets compile needs
 --target-dir, the target's folder in the build tree (`ls3df_1_1` for patch 1.1's engine). Build the vc6 preset first.
@@ -74,6 +80,7 @@ REPO = variants.REPO
 C2_REFERENCE = REPO / "3rdparty" / "msvc600_sp5_vcpp" / "VC98" / "Bin" / "C2.DLL"
 C2_BASE = 0x10700000
 BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED, BP_ASSIGNED = 0x1071BE68, 0x10706400, 0x107068F2, 0x1070CC09, 0x10709A9C
+BP_X87_FILTER, BP_X87_CANDIDATE = 0x10767401, 0x1076741D
 WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A40, 0x58
 REG_COSTS, CLASS_REGISTERS = 0x107AC480, 0x107B690C
 REGS = ("-", "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
@@ -274,9 +281,10 @@ def debug(cmdline, cwd, env, breakpoints, dll_matches, output):
 
 class Trace:
     def __init__(self):
-        # [name, [events], [ranges], [decisions]]: an event is (kind, id, symbol name or label, site), a range left
-        # after the colouring (id, symbol, register, priority, weight, references, +0x44), a decision (id, symbol,
-        # priority, weight, register, class, allowed registers, costs, preferences)
+        # [name, [events], [ranges], [decisions], [filter passes]]: an event is (kind, id, symbol name or label,
+        # site), a range left after the colouring (id, symbol, register, priority, weight, references, +0x44), a
+        # decision (id, symbol, priority, weight, register, class, allowed registers, costs, preferences), a pass of the
+        # FPU stack's filter a list of candidates (id, symbol, score)
         self.functions = []
 
     def symbol(self, mem, sym):
@@ -290,7 +298,7 @@ class Trace:
         return f"temp{off:+d}" if off else "temp"
 
     def on_reset(self, ctx, mem):
-        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", [], [], []])
+        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", [], [], [], []])
 
     def on_create(self, ctx, mem):
         if self.functions:
@@ -351,6 +359,15 @@ class Trace:
         self.functions[-1][3].append((mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), mem.i32(web + 0xc),
                                       mem.i32(web + 0x40), reg, cls, [r for r in regs if r in allowed], costs, prefs))
 
+    def on_x87_filter(self, ctx, mem):
+        if self.functions:
+            self.functions[-1][4].append([])
+
+    def on_x87_candidate(self, ctx, mem):
+        if self.functions and self.functions[-1][4]:
+            web = ctx.Ebx
+            self.functions[-1][4][-1].append((mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), mem.i32(web + 0xc)))
+
 
 def command(source: Path, edited: Path | None, work: Path, target_dir: str) -> str:
     cmd = variants.compile_command(source, Path(target_dir))
@@ -380,6 +397,7 @@ def main():
     ap.add_argument("--vars", help="comma-separated variable names: show only their ranges' history")
     ap.add_argument("--regs", action="store_true", help="the ranges left after the colouring, with their registers")
     ap.add_argument("--colouring", action="store_true", help="the colouring's decisions, in the order it makes them")
+    ap.add_argument("--x87", action="store_true", help="the FPU stack's candidates, with their scores, pass by pass")
     ap.add_argument("--edited", help="compile this file in place of the source")
     ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
                     "the build tree whose command line to use (ls3df_1_1, setup_czech)")
@@ -400,6 +418,9 @@ def main():
         breakpoints[BP_COLOURED] = trace.on_coloured
     if args.colouring:
         breakpoints[BP_ASSIGNED] = trace.on_assigned
+    if args.x87:
+        breakpoints[BP_X87_FILTER] = trace.on_x87_filter
+        breakpoints[BP_X87_CANDIDATE] = trace.on_x87_candidate
     with open(work / "cl.txt", "w+") as output:
         traced = debug(cmd, str(variants.BUILD), variants.preset_env("vc6"), breakpoints, is_c2, output)
         output.seek(0)
@@ -412,14 +433,14 @@ def main():
         sys.exit(f"{args.source} isn't compiled with the 13.00.9044 C2.DLL")
 
     if not args.function:
-        for name, events, _, _ in trace.functions:
+        for name, events, *_ in trace.functions:
             if events:
                 print(f"{sum(1 for e in events if e[0] == 'new'):5d} ranges  {name}")
         return
     found = [f for f in trace.functions if args.function in f[0]]
     if not found:
         sys.exit(f"no function matching {args.function!r}; run without one for the list")
-    name, events, ranges, decisions = max(found, key=lambda f: len(f[1]))
+    name, events, ranges, decisions, filters = max(found, key=lambda f: len(f[1]))
     want = {v.strip() for v in args.vars.split(",")} if args.vars else None
     if args.regs:
         print(f"{name}: {len(ranges)} ranges after the colouring")
@@ -444,6 +465,13 @@ def main():
             if prefs:
                 line += "  prefers " + " ".join(f"{rn(r)}:{w}" for r, w in prefs)
             print(line)
+        return
+    if args.x87:
+        print(f"{name}: {len(filters)} passes of the FPU stack's filter (a score above 0 stays a candidate)")
+        for i, candidates in enumerate(filters):
+            shown = [c for c in candidates if not want or c[1] in want]
+            if shown:
+                print(f"{i:4d}  " + "  ".join(f"{wid}:{sym} {score}" for wid, sym, score in shown))
         return
     news = [e for e in events if e[0] == "new"]
     print(f"{name}: {len(news)} ranges created, {len(events) - len(news)} freed, ids up to "
