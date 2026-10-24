@@ -382,7 +382,8 @@ LS3D_RESULT I3D_frame::SetModelName(const char *model_name)
 {
     if (!m_pOrigName)
         m_pOrigName = "";
-    char *full_name = new char[strlen(model_name) + strlen(m_pOrigName) + 2];
+    int len = strlen(model_name) + strlen(m_pOrigName) + 2;
+    char *full_name = new char[len];
     if (!full_name) {
         dbgPrintf("!! Out of memory  I3D_frame::SetModelName()");
         ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);

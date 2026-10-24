@@ -393,9 +393,9 @@ red_ok:
 // made before the branch, which takes mode's stack slot as in the original (and the assembly's t dst's). The clamps
 // store 0xff first. The spot light's square is written out (Square() squares x first, the original z). The key's loop
 // indexes the list: a pointer walked down keeps a guard of its own inside the > 0 test.
-// Not matching yet: the point light's GetMatrix tests the flags through ecx and copies the light to esi after, ours
-// copies first (GetWorldPos, a matrix or light local, UpdateWMatrix and matrix, the position written into the sum, a
-// cast didn't change it). TempColor's guard (0x101c4d74) has no marker: i3d_collision.cpp's object has a $S10 too, so
+// The point light updates its matrix through pTempLight and reads it through a copy made before: the original tests
+// the flags through the light's own register and copies it after (GetMatrix, GetWorldPos, a matrix local, the update
+// through the copy and the read through the light copy first). TempColor's guard (0x101c4d74) has no marker: i3d_collision.cpp's object has a $S10 too, so
 // a by-name one pairs only with both annotated.
 // FUNCTION: LS3DF 0x10065a70
 // FUNCTION: LS3DF11 0x10062d50
@@ -469,7 +469,9 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
             break;
         }
         case I3DLIGHT_POINT: {
-            const S_vector &lpos = pTempLight->GetMatrix()(3);
+            I3D_light *lt = pTempLight;
+            pTempLight->UpdateWMatrix();
+            const S_vector &lpos = lt->m_Matrix(3);
             float dist_2 = (bpos - lpos).Square();
             float r = bradius + pTempLight->range_f;
             if (!(r * r <= dist_2)) {
