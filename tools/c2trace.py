@@ -32,6 +32,20 @@ launchers included) under a small debugger, with breakpoints in C2.DLL:
   drops those at 0 or less. The best one left is kept on the stack, the ones interfering with it are split and go
   through the filter again.
 
+What-ifs change the allocator's data while it runs, to see whether a decision is the one that matters before looking
+for source that gives it: --set NAME=PRIORITY overwrites the priority of every range of a variable (`id:N` one range)
+when the colouring's work list is built (`0x10731402`); --fill LINE takes every integer register out of the blocks that
+hold code of that source line when the splitter forms its regions (`0x10743bda`, their used registers at `+0x54`; a
+block whose set is still empty can't be filled; C2 counts an instruction's line, at `+0x10`, from the line of its
+function's name, which the tool finds in the source by the decorated name); --simple splits every range one at a time
+instead of by regions (the splitter takes regions only for 3 ranges or more and a count at `0x107ad5b8` of 100 or
+more, set below it). --score ADDRESS then scores the traced function against the original at that address, as
+tools/variants.py does (--target names the reccmp target if --target-dir doesn't). They combine with each other and
+with --regs, --colouring and --x87:
+
+    .venv/Scripts/python tools/c2trace.py ls3df/I3D/visuals/I3d_singlemesh.cpp m_AddFGroups --target-dir ls3df \\
+        --set fg=200 --fill 715 --score 0x10055930
+
 The ranges are coloured in the order of a work list (`0x10732af5`, sorted by `0x10708a6e`): by the priority at `+0xc`
 descending, then by `+0x44` descending, a full tie in the order the range table is walked (by id) with the later one
 first. `0x10707a0b` computes the priority per basic block: a range referenced in the block gains its references there
@@ -81,6 +95,10 @@ C2_REFERENCE = REPO / "3rdparty" / "msvc600_sp5_vcpp" / "VC98" / "Bin" / "C2.DLL
 C2_BASE = 0x10700000
 BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED, BP_ASSIGNED = 0x1071BE68, 0x10706400, 0x107068F2, 0x1070CC09, 0x10709A9C
 BP_X87_FILTER, BP_X87_CANDIDATE = 0x10767401, 0x1076741D
+BP_WORKLIST, BP_SPLIT_REGIONS, BP_POP = 0x10731402, 0x10743BDA, 0x107314F7
+SPLIT_GATE, ALL_INTEGER_REGISTERS = 0x107AD5B8, 0b111011110          # eax to edi but esp, by register number
+TARGETS = {"ls3df": "LS3DF", "ls3df_1_1": "LS3DF11", "ijoy": "IJOY", "rw_data": "RWDATA", "setup": "SETUP",
+           "setup_1_0": "SETUP10", "setup_polish": "SETUPPL", "setup_czech": "SETUPCZ", "game": "GAME"}
 WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A40, 0x58
 REG_COSTS, CLASS_REGISTERS = 0x107AC480, 0x107B690C
 REGS = ("-", "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
@@ -369,6 +387,123 @@ class Trace:
             self.functions[-1][4][-1].append((mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), mem.i32(web + 0xc)))
 
 
+class WhatIf:
+    """Changes the allocator's data for one function: priorities, full blocks, the split's kind."""
+
+    def __init__(self, trace, function, priorities, lines, simple, text):
+        self.trace, self.function = trace, function
+        self.priorities, self.source_lines, self.simple = priorities, lines, simple
+        self.text, self.lines, self.start = text, None, 0
+        self.done, self.gate = [], None
+
+    def active(self):
+        return self.trace.functions and self.function in self.trace.functions[-1][0]
+
+    def relative_lines(self):
+        """C2 numbers an instruction's line from the line of its function's name, so --fill's source lines are
+        counted from the function's definition, found in the source by its decorated name."""
+        body = self.trace.functions[-1][0][1:].split("@@")[0]     # name@Class... or ?0Class for a constructor
+        special, body = (body[:2], body[2:]) if body.startswith("?") else (None, body)
+        parts = body.split("@")
+        if special in ("?0", "?1"):
+            parts = [("~" if special == "?1" else "") + parts[0]] + parts
+        elif special:
+            self.done.append(f"--fill can't place {self.trace.functions[-1][0]} in the source")
+            return set()
+        name = "::".join(reversed(parts))
+        pattern = re.compile(r"(^|[\s*&])" + re.escape(name) + r"\s*\(")
+        for number, line in enumerate(self.text.splitlines(), 1):
+            if pattern.search(line) and not line.rstrip().endswith(";"):
+                self.done.append(f"{name} defined at line {number}")
+                self.start = number
+                return {n - number for n in self.source_lines}
+        self.done.append(f"{name}'s definition not found in the source")
+        return set()
+
+    def on_worklist(self, ctx, mem):
+        if not self.active():
+            return
+        base = ctx.Eip - (BP_WORKLIST - C2_BASE)
+        for bucket in struct.unpack("<1024I", mem.read(base + WEB_TABLE - C2_BASE, 4096)):
+            web = bucket
+            while web:
+                wid, sym = mem.u32(web + 0x1c), self.trace.symbol(mem, mem.u32(web))
+                value = self.priorities.get(f"id:{wid}", self.priorities.get(sym))
+                if value is not None:
+                    self.done.append(f"{wid}:{sym} priority {mem.i32(web + 0xc)} -> {value}")
+                    mem.write(web + 0xc, struct.pack("<i", value))
+                web = mem.u32(web + 0x2c)
+
+    @staticmethod
+    def block_lines(mem, block):
+        lines, insn, end = set(), mem.u32(block + 0x1c), mem.u32(block + 0x20)
+        for _ in range(4000):
+            if not insn or insn == end:
+                break
+            if mem.read(insn + 9, 1)[0] & 1 and mem.u32(insn + 0x10) & 0xffff:
+                lines.add(mem.u32(insn + 0x10) & 0xffff)
+            insn = mem.u32(insn)
+        return lines
+
+    def on_split_regions(self, ctx, mem):
+        if not self.active():
+            return
+        if self.simple:
+            gate = ctx.Eip - (BP_SPLIT_REGIONS - C2_BASE) + SPLIT_GATE - C2_BASE
+            if self.gate is None:
+                self.gate = (gate, mem.read(gate, 4))
+            mem.write(gate, struct.pack("<i", 0))
+            self.done.append("a split made one range at a time")
+        if not self.source_lines:
+            return
+        if self.lines is None:
+            self.lines = self.relative_lines()
+        block = mem.u32(mem.u32(ctx.Ecx + 8))
+        while block:
+            lines = self.block_lines(mem, block)
+            if lines & self.lines:
+                shown = ",".join(str(n + self.start) for n in sorted(lines))
+                chunk = mem.u32(mem.u32(block + 0x54)) if mem.u32(block + 0x54) else 0
+                if chunk and mem.u32(chunk) == 0:
+                    mem.write(chunk + 8, struct.pack("<I", mem.u32(chunk + 8) | ALL_INTEGER_REGISTERS))
+                    self.done.append(f"block of lines {shown} filled")
+                else:
+                    self.done.append(f"block of lines {shown} left (no register used yet)")
+            block = mem.u32(block)
+
+    def on_pop(self, ctx, mem):
+        if self.gate:
+            mem.write(*self.gate)
+            self.gate = None
+
+
+def score(obj: Path, target: str, address: str, decorated: str) -> str:
+    """The traced object's function against the original, as tools/variants.py scores a variant."""
+    import difflib
+    import logging
+    from funcdiff import find_match
+    from reccmp.compare import Compare
+    from reccmp.project.detect import RecCmpProject
+    from reccmp.types import ImageId
+    logging.basicConfig(level=logging.ERROR)
+    compare = Compare.from_target(RecCmpProject.from_directory(variants.PDB_BUILD).get(target))
+    match = find_match(compare, address)
+    size = match.size(ImageId.ORIG) or match.max_size(ImageId.ORIG)
+    orig, _ = variants.disasm(compare.orig_bin.read(match.orig_addr, size), match.orig_addr)
+    symbol = match.get("symbol") or decorated            # a static function has no public symbol in the PDB
+    code, calls = variants.read_function(obj, symbol)
+    if code is None:
+        return f"{symbol} is not in the object"
+    ours, _ = variants.disasm(code, 0, calls)
+    for insns in (orig, ours):
+        while insns and insns[-1][0] in ("nop", "int3"):
+            insns.pop()
+    a = variants.normalize(orig, compare.orig_bin.is_valid_vaddr, "")
+    b = variants.normalize(ours, lambda x: False, "")
+    ratio = difflib.SequenceMatcher(None, a, b, autojunk=False).ratio()
+    return f"{ratio * 100:.2f}% against {match.best_name()} (0x{match.orig_addr:x}), {len(b)} instructions"
+
+
 def command(source: Path, edited: Path | None, work: Path, target_dir: str) -> str:
     cmd = variants.compile_command(source, Path(target_dir))
     cmd = re.sub(r"/Fo\S+", lambda _: f"/Fo{work / 'trace.obj'}", cmd)
@@ -398,6 +533,14 @@ def main():
     ap.add_argument("--regs", action="store_true", help="the ranges left after the colouring, with their registers")
     ap.add_argument("--colouring", action="store_true", help="the colouring's decisions, in the order it makes them")
     ap.add_argument("--x87", action="store_true", help="the FPU stack's candidates, with their scores, pass by pass")
+    ap.add_argument("--set", action="append", default=[], metavar="NAME=PRIORITY",
+                    help="what-if: a variable's ranges' priority in the colouring (id:N one range; not the x87 "
+                    "candidates); repeatable")
+    ap.add_argument("--fill", action="append", type=int, default=[], metavar="LINE",
+                    help="what-if: no free register in the blocks of this source line when the splitter runs")
+    ap.add_argument("--simple", action="store_true", help="what-if: split ranges one at a time, never by regions")
+    ap.add_argument("--score", metavar="ADDRESS", help="score the traced function against the original's at ADDRESS")
+    ap.add_argument("--target", help="the reccmp target for --score (default: from --target-dir)")
     ap.add_argument("--edited", help="compile this file in place of the source")
     ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
                     "the build tree whose command line to use (ls3df_1_1, setup_czech)")
@@ -412,8 +555,23 @@ def main():
         p = Path(path.removeprefix("\\\\?\\"))
         return p.name.lower() == "c2.dll" and hashlib.sha256(p.read_bytes()).digest() == reference
 
+    whatif_wanted = args.set or args.fill or args.simple
+    if (whatif_wanted or args.score) and not args.function:
+        sys.exit("what-ifs and --score need the function")
+    if args.score and not (args.target or TARGETS.get(args.target_dir)):
+        sys.exit("--score needs --target (or a --target-dir it knows)")
     trace = Trace()
     breakpoints = {BP_RESET: trace.on_reset, BP_CREATE: trace.on_create, BP_FREE: trace.on_free}
+    if whatif_wanted:
+        try:
+            priorities = {k: int(v) for k, v in (a.split("=", 1) for a in args.set)}
+        except ValueError:
+            sys.exit("--set takes NAME=PRIORITY")
+        whatif = WhatIf(trace, args.function, priorities, args.fill, args.simple,
+                        Path(args.edited or source).read_text(errors="replace"))
+        breakpoints[BP_WORKLIST] = whatif.on_worklist
+        breakpoints[BP_SPLIT_REGIONS] = whatif.on_split_regions
+        breakpoints[BP_POP] = whatif.on_pop
     if args.regs:
         breakpoints[BP_COLOURED] = trace.on_coloured
     if args.colouring:
@@ -426,11 +584,25 @@ def main():
         output.seek(0)
         log = output.read()
     compiled = (work / "trace.obj").exists()
+    chosen = max((f for f in trace.functions if args.function and args.function in f[0]), key=lambda f: len(f[1]),
+                 default=None)
+    scored = score(work / "trace.obj", args.target or TARGETS[args.target_dir], args.score, chosen[0]) \
+        if compiled and traced and args.score and chosen else None
     shutil.rmtree(work, ignore_errors=True)
     if not compiled:
         sys.exit(f"the compile failed:\n{cmd}\n{log}")
     if not traced:
         sys.exit(f"{args.source} isn't compiled with the 13.00.9044 C2.DLL")
+    if whatif_wanted:
+        counts = {}
+        for change in whatif.done:
+            counts[change] = counts.get(change, 0) + 1
+        print("what-if: " + ("; ".join(c + (f" (x{n})" if n > 1 else "") for c, n in counts.items()) or
+                             "nothing matched"))
+    if scored:
+        print(scored)
+    if (whatif_wanted or scored) and not (args.regs or args.colouring or args.x87 or args.vars):
+        return
 
     if not args.function:
         for name, events, *_ in trace.functions:
