@@ -32,8 +32,9 @@ take the line of TARGET's own build (SETUP10's, SETUPCZ's, ...).
 Edited files are compiled from a temporary directory, which mirrors SOURCE's folder and each include directory that
 has an edited file (each such mirror an include directory right before the one it mirrors): the edited files, the
 headers that reach one of them by a quoted include relative to themselves (an edited ijoy.h, through joy.h), and
-forwarding headers for those files' other quoted includes. So every include finds what it finds in the build (setup's
-"settings.h" is setup/settings.h, its <settings.h> common/settings.h). `__FILE__` changes accordingly.
+forwarding headers for those files' other quoted includes. So every include finds what it finds in the build (a quoted
+include the including file's neighbours first, an angle-bracket one only the include path). `__FILE__` changes
+accordingly.
 
 Our side comes from the object file: the function's COMDAT section, its relocations (relocated operands compare as
 ADDR, the original's addresses likewise) and the names its calls go to. Build the vc6 preset (for the command
@@ -289,9 +290,8 @@ def compile_object(cmd: str, env: dict, source: Path, texts: dict, options: dict
     src = work / source.name
     placed = {p.resolve(): t for p, t in texts.items()}
     placed.setdefault(source, source.read_text())
-    # SOURCE's folder is mirrored next to the copy, where quoted includes find its files and angle brackets don't (setup's
-    # "settings.h" is setup/settings.h, its <settings.h> common/settings.h); each include directory with an edited file
-    # gets a mirror of its own, an include directory right before it
+    # SOURCE's folder is mirrored next to the copy, where quoted includes find its files and angle brackets don't; each
+    # include directory with an edited file gets a mirror of its own, an include directory right before it
     dirs = [d.resolve() for d in include_dirs(cmd)]
     mirror(source.parent, work, placed)
     headers = {p: t for p, t in placed.items() if p != source}

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "types.h"
 
 #define SETTINGS_MAGIC 0x14
@@ -32,7 +34,8 @@ struct S_settings
     int language;
     bool w_buffer;
 
-    // These values are just initialized but never actually set
+    // The game's options, which setup only initializes: the game hands them to its mission's options at its start and
+    // saves them back when the player quits (main). The first is the engine's level of detail quality (RS_LOD_QUALITY).
     float unk;
     float unk2;
     int unk3;
@@ -42,8 +45,10 @@ struct S_settings
 
     // The defaults, in declaration order. setup.exe 1.2 constructs its global S_settings and every local
     // copy with them: the global has a dynamic initializer, and no InitSettings function exists (each local
-    // gets one set of default stores, never a second).
+    // gets one set of default stores, never a second). Game.exe's main calls an out-of-line copy (for LoadSettings'
+    // buffer), and Main.cpp's global gets the stores inlined in its dynamic initializer.
     // FUNCTION: SETUPSTEAM 0x401000
+    // FUNCTION: GAME 0x5bf520
     S_settings()
     {
         magic = SETTINGS_MAGIC;

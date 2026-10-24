@@ -14,7 +14,7 @@
 // Czech setup's frames. The optimized builds don't depend on them.
 #include "main.h"
 #include "hw.h"
-#include "settings.h"
+#include <settings_registry.h>
 #include "res/resource.h"
 
 #include "commctrl.h"

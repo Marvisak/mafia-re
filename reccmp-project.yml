@@ -66,6 +66,8 @@ targets:
       - common
     hash:
       sha256: e960397f87a6a2549e9e126a512a6e53d51d17be77af0c13d26ba3640907866d
+    data_sources:
+      - game/library_msvc.csv
   SETUPSTEAM:
     filename: setup.steam.exe
     source_root:

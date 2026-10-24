@@ -5,10 +5,21 @@ project(game)
 # The game. The original has 118 C++ objects of its own (the Rich header's Utc12_2_CPP 9044); 116 of them end with the
 # initializer of std::ctype<unsigned short>::id, which every file that includes <string> gets, and those mark the files
 # in the code (docs/game-files.md). The sources in the original's order; most of them aren't written yet, as the game is
-# written in the order it runs.
+# written in the order it runs, and some only hold stubs of what the written code calls.
 add_executable(game WIN32
+    Mission.cpp
+    g_m_race.cpp
+    racing.cpp
     WinMain.cpp
+    Winstuff.cpp
+    game.cpp
     Main.cpp
+    g_colls.cpp
+    g_m_carc.cpp
+    g_m_start.cpp
+    g_menu.cpp
+    g_indicators.cpp
+    g_loadsave.cpp
     res/game.rc
 )
 # The resources and the version information name the executable
