@@ -34,14 +34,16 @@ struct S_settings
     int language;
     bool w_buffer;
 
-    // The game's options, which setup only initializes: the game hands them to its mission's options at its start and
-    // saves them back when the player quits (main). The first is the engine's level of detail quality (RS_LOD_QUALITY).
-    float unk;
-    float unk2;
-    int unk3;
-    int unk4;
-    int unk5;
-    int unk6;
+    // The game's video options, which setup only initializes: the game hands them to its mission's options at its start
+    // and saves them back when the player quits (main). Named after the game's Audio & Video menu (tables\menu\
+    // optionsa.mnu, and the texts of textdb_en.def), whose choices the ints are: Low, Medium and High, and for the
+    // shadows Very Low, Low, Medium, High, Very High and Highest.
+    float level_of_detail;          // the engine's RS_LOD_QUALITY, 0.4 to 2
+    float draw_distance;            // the part of the scene's camera range, 0.3 to 1
+    int game_effects;               // "In Game Effects"
+    int game_sounds;                // "In Game Sounds"
+    int shadows;
+    int particles;
 
     // The defaults, in declaration order. setup.exe 1.2 constructs its global S_settings and every local
     // copy with them: the global has a dynamic initializer, and no InitSettings function exists (each local
@@ -75,12 +77,12 @@ struct S_settings
         sound_type = 1;
         language = 0;
         w_buffer = true;
-        unk = 1.0;
-        unk2 = 1.0;
-        unk3 = 2;
-        unk4 = 2;
-        unk5 = 3;
-        unk6 = 2;
+        level_of_detail = 1.0;
+        draw_distance = 1.0;
+        game_effects = 2;
+        game_sounds = 2;
+        shadows = 3;
+        particles = 2;
     }
 };
 #pragma pack(pop)

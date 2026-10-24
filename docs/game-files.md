@@ -95,7 +95,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 57 | `53e4b0–53ef4c` | 0xa9c | | |
 | 58 | `53ef50–53ef7c` | 0x2c | | |
 | 59 | `53ef80–53efac` | 0x2c | | |
-| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545ad0`, PS2's shape) and the setters of its options at `+0x90` (`545b20`–`545cb0`); stubs of what `main` calls |
+| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545a30`) and `RestoreSettings` (`545ad0`), both PS2's shapes, and the setters of its video options at `+0x90` (`545b20`–`545cb0`); stubs of what `main` calls |
 | 61 | `549140–549e9c` | 0xd5c | `g_m_race.cpp`? | `ExecuteRacingMenu` (`549b80`), and the copy of `GM_Menu::OnKey` the menus' vtables point to (`5498f0`, most likely a folded one); stub of `ExecuteRacingMenu` |
 | 62 | `549ea0–549ecc` | 0x2c | | |
 | 63 | `549ed0–549efc` | 0x2c | | |

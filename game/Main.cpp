@@ -87,12 +87,12 @@ int main(HINSTANCE hInstance)
     if (!ok)
         goto end;
 
-    act_mission->options.SetLodQuality(setting.unk);
-    act_mission->options.SetUnknown4(setting.unk2);
-    act_mission->options.SetUnknownC(setting.unk3);
-    act_mission->options.SetUnknown10(setting.unk4);
-    act_mission->options.SetUnknown14(setting.unk5);
-    act_mission->options.SetUnknown18(setting.unk6);
+    act_mission->options.SetLevelOfDetail(setting.level_of_detail);
+    act_mission->options.SetDrawDistance(setting.draw_distance);
+    act_mission->options.SetGameEffects(setting.game_effects);
+    act_mission->options.SetGameSounds(setting.game_sounds);
+    act_mission->options.SetShadows(setting.shadows);
+    act_mission->options.SetParticles(setting.particles);
     _is_intro_ = false;
     act_mission->game->Init();
 
@@ -335,12 +335,12 @@ int main(HINSTANCE hInstance)
     } while (restart);
 
     act_mission->Close();
-    setting.unk = act_mission->options.GetLodQuality();
-    setting.unk2 = act_mission->options.GetUnknown4();
-    setting.unk3 = act_mission->options.unknown_c;
-    setting.unk4 = act_mission->options.unknown_10;
-    setting.unk5 = act_mission->options.GetUnknown14();
-    setting.unk6 = act_mission->options.unknown_18;
+    setting.level_of_detail = act_mission->options.GetLevelOfDetail();
+    setting.draw_distance = act_mission->options.GetDrawDistance();
+    setting.game_effects = act_mission->options.game_effects;
+    setting.game_sounds = act_mission->options.game_sounds;
+    setting.shadows = act_mission->options.GetShadows();
+    setting.particles = act_mission->options.particles;
     SaveSettings(setting);
     CloseSystem();
 end:

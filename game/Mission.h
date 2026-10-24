@@ -4,30 +4,33 @@
 
 class C_game;
 
-// The game's options (the struct's and the members' names are ours, but for the first, which feeds the engine's
-// RS_LOD_QUALITY). main hands each the value setup.exe saved, through a setter that clamps it, and saves them back when
-// the player quits. PS2's C_mission has the floats at 0xcc0, without methods.
+// The game's video options (the struct's name is ours), the controls of the Audio & Video menu (tables\menu\
+// optionsa.mnu), which give the members their names. main hands each the value setup.exe saved, through a setter that
+// clamps it, and saves them back when the player quits. PS2's C_mission has its draw distance and far range at 0xcc0,
+// without methods.
 struct S_mission_options
 {
-    float lod_quality;                  // 0x0, 0.4 to 2
-    float unknown_4;                    // 0x4, 0.3 to 1
-    float unknown_8;                    // 0x8, the camera's far range (C_mission::UpdateSettings)
-    int unknown_c;                      // 0xc, 0 to 2
-    int unknown_10;                     // 0x10, 0 to 2
-    int unknown_14;                     // 0x14, one of 0, 1, 3, 6, 9 and 15, set and read by its index
-    int unknown_18;                     // 0x18, 0 to 2
+    float level_of_detail;              // 0x0, 0.4 to 2: the engine's RS_LOD_QUALITY
+    float draw_distance;                // 0x4, 0.3 to 1: the part of far_range the camera sees
+    float far_range;                    // 0x8, the scene's camera range, which Open stores
+    int game_effects;                   // 0xc, "In Game Effects": Low, Medium or High (0 to 2)
+    int game_sounds;                    // 0x10, "In Game Sounds": Low, Medium or High
+    int shadows;                        // 0x14, 0, 1, 3, 6, 9 or 15 for the menu's Very Low to Highest
+    int particles;                      // 0x18, Low, Medium or High
 
-    void SetLodQuality(float quality);
-    void SetUnknown4(float value);
-    void SetUnknownC(int value);
-    void SetUnknown10(int value);
-    void SetUnknown14(int index);
-    int GetUnknown14();
+    void SetLevelOfDetail(float level);
+    void SetDrawDistance(float distance);
+    void SetGameEffects(int level);
+    void SetGameSounds(int level);
+    // By the menu's choice, 0 to 5
+    void SetShadows(int index);
+    // The menu's choice; the game's code compares it too
+    int GetShadows();
     // Inline: main copies the floats into the settings through the FPU (fld, fstp), where the members read directly
     // are copied with integer moves
-    float GetLodQuality() const { return lod_quality; }
-    float GetUnknown4() const { return unknown_4; }
-    void SetUnknown18(int value);
+    float GetLevelOfDetail() const { return level_of_detail; }
+    float GetDrawDistance() const { return draw_distance; }
+    void SetParticles(int level);
 };
 
 // The loaded mission (PS2 Mission.cpp): its scene, actors and game. Only what main uses so far.
