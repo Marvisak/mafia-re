@@ -7,11 +7,12 @@
 
 #pragma auto_inline(off)
 
+// Passes, unlike the other stubs: failing it would end every run at main's third call
 // STUB: GAME 0x5663d0
 bool WaitForCD()
 {
     dbgPrintf("STUB: WaitForCD");
-    return false;
+    return true;
 }
 
 #pragma auto_inline(on)

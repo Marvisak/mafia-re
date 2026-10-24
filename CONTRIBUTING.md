@@ -75,10 +75,21 @@ folder, so copy `build/vc6/game/Game.exe` into the game's folder (Steam's is `st
 another name and start it there. It is the unpatched 1.2 executable, so it needs what that one does, where Steam's
 patched copy doesn't:
 
-- The game's CD: a folder `MafiaGame` with `a1.dta` in it at the root of some drive. A `subst` drive will do.
-- All of the game's archives. Steam's install lacks `a0.dta` and `ab.dta`, which are on the third CD.
+- The game's CD: a folder `MafiaGame` with `a1.dta` in it at the root of some drive. The first CD's image mounted, or
+  a `subst` drive, will do.
+- All of the game's archives, in the game's folder. Steam's install lacks `a0.dta` and `ab.dta`, which are on the third
+  CD.
 - The settings the 1.2 setup (`Patch\setup.exe` in the patch) saves. Steam's setup saves them where only Steam's
   `Game.exe` looks.
+
+`tools/rungame.py` sets all of that up in `build/run`, without changing the game's install (hard links to its big
+files, copies of the rest), builds the game, runs it there and prints `log.txt`, where the stubs of what isn't written
+yet log their names. `--orig` runs the original instead, to compare:
+
+```bash
+.venv/Scripts/python tools/rungame.py --cd3 MAFIA_CD_3.iso --cd1 MAFIA_CD_1.iso   # the first time
+.venv/Scripts/python tools/rungame.py                                             # after that
+```
 
 ## Debug Symbols
 
