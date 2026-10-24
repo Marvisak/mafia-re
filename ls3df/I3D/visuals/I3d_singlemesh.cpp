@@ -525,7 +525,10 @@ void I3D_singlemesh::CopyMovedPositions(uchar *dst, uint stride, int lod_index)
 // GetMaterial, as in the particles' m_AddFGroups (one of the last two would do; written as the members, both Locks
 // inline it).
 // Not matching yet: the face group loop keeps fg in edx and reloads it after the texture updates, ours reloads it
-// at the loop's top; the original loads the material's alpha before fade (every spelling of the product compiles the
+// at the loop's top and reads it from its slot at the latch. fg runs out of callee-saved registers and VC6 splits it
+// by regions; the original's has the four call blocks out of the loop body's region and the latch in it, which ours
+// gives with the loop head's block using esi and edi as well when fg is split (tools/c2trace.py --use 714=esi,edi,
+// 97.58%), and no spelling of the loop tried does. The original loads the material's alpha before fade (every spelling of the product compiles the
 // same), and swaps which of num_transparent++ and the push_back's size increment are a read-modify-write; the stack
 // slots of some temporaries follow. 1.1's differs the same way; there, without the Locks' push_back, the flags and the
 // face group read through the accessors or as the members compile alike.

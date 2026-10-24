@@ -46,7 +46,7 @@ function against the original at that address, as tools/variants.py does (--targ
 --target-dir doesn't; --show prints the diff). They combine with each other and with --regs, --colouring and --x87:
 
     .venv/Scripts/python tools/c2trace.py ls3df/I3D/visuals/I3d_singlemesh.cpp m_AddFGroups --target-dir ls3df \\
-        --use 700=esi,edi --score 0x10055930
+        --use 714=esi,edi --score 0x10055930
 
 The ranges are coloured in the order of a work list (`0x10732af5`, sorted by `0x10708a6e`): by the priority at `+0xc`
 descending, then by `+0x44` descending, a full tie in the order the range table is walked (by id) with the later one
