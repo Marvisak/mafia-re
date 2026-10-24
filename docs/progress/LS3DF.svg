@@ -17,7 +17,7 @@
 <text x="24" y="38" font-size="18" font-weight="600">LS3DF.dll</text>
 <text x="376" y="38" font-size="18" font-weight="600" text-anchor="end">98.67%</text>
 <rect class="track" x="24" y="50" width="352" height="8" rx="4"/>
-<rect class="bar" x="24" y="50" width="347.32" height="8" rx="4"/>
+<rect class="bar" x="24" y="50" width="347.33" height="8" rx="4"/>
 <text class="muted" x="24" y="86" font-size="13">Implemented</text>
 <text x="376" y="86" font-size="13" text-anchor="end">99.27% (1,351 / 1,361)</text>
 <text class="muted" x="24" y="106" font-size="13">Accuracy</text>

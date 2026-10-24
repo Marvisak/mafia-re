@@ -9,10 +9,12 @@
 // each clip branch, lv first) are spelled as 1.1's original shows them, which gives 1.2's too.
 //
 // Not matching yet:
-// - The emitter's Tick: the scale's QUAT_VALID test (the original reads the flags' byte into al ahead of the FPU's
-//   pop) and life_max's two loads, in the other order (no spelling of the sum moves them). 1.1's differ the same way.
-// - The element's Tick: the scale's copy (one store scheduled after the QUAT_VALID test in the original, as in the
-//   emitter's Tick, so most likely SetScale's or S_vector's spelling in the headers). 1.1's original is 1.2's.
+// - The emitter's Tick: life_max's two loads, in the other order. With both in memory VC6 loads first the operand read
+//   later in the function, and the life's sum before reads the random part first (no spelling of the two lines, of the
+//   same code, moves them). Its scale is a vector constructed of the products, which reads the flags' byte into al
+//   ahead of the FPU's pop as the original does (s * sc tests the flags after). 1.1's differ the same way.
+// - The element's Tick: the scale's copy (one store scheduled after the QUAT_VALID test in the original; the emitter's
+//   constructed vector, a reference or a local don't move it). 1.1's original is 1.2's.
 // - The particles' m_AddFGroups in 1.2: l reloaded once more in the original.
 // - SetSector and GetSector, in the class: ours come after the element's Tick, the original's at the file's end (its
 //   headers had more inline code before them, see tools/autopch.py). The pointer lists' push_back the original keeps
@@ -699,7 +701,7 @@ void I3D_emitor::Tick(int t)
         e->part_flags |= part_flags & (PARTF_OPAQUE | PARTF_ALPHA | 4);
         float sc = p_scale;
         S_vector s = GetScale();
-        e->SetScale(s * sc);
+        e->SetScale(S_vector(s.x * sc, s.y * sc, s.z * sc));
         S_vector pos = GetWorldPos();
         pos.x += RandFloat() * p_pos_rnd + (-p_pos_rnd) * .5;
         pos.y += RandFloat() * p_pos_rnd + (-p_pos_rnd) * .5;
