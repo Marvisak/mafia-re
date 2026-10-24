@@ -34,17 +34,19 @@ launchers included) under a small debugger, with breakpoints in C2.DLL:
 
 What-ifs change the allocator's data while it runs, to see whether a decision is the one that matters before looking
 for source that gives it: --set NAME=PRIORITY overwrites the priority of every range of a variable (`id:N` one range)
-when the colouring's work list is built (`0x10731402`); --fill LINE takes every integer register out of the blocks that
-hold code of that source line when the splitter forms its regions (`0x10743bda`, their used registers at `+0x54`; a
-block whose set is still empty can't be filled; C2 counts an instruction's line, at `+0x10`, from the line of its
-function's name, which the tool finds in the source by the decorated name); --simple splits every range one at a time
-instead of by regions (the splitter takes regions only for 3 ranges or more and a count at `0x107ad5b8` of 100 or
-more, set below it). --score ADDRESS then scores the traced function against the original at that address, as
-tools/variants.py does (--target names the reccmp target if --target-dir doesn't). They combine with each other and
-with --regs, --colouring and --x87:
+when the colouring's work list is built (`0x10731402`). Three change the registers each block uses when the splitter
+forms its regions (`0x10743bda`, the used registers at a block's `+0x54`): --fill LINES takes every integer register
+out of the blocks with code of those source lines, --fill-calls LINES out of the blocks within them that use a call's
+eax, ecx and edx, --use LINES=REGS adds registers to the blocks within them (`-esi,edi` takes them out). LINES are
+source lines (735 or 711-737, comma-separated): C2 counts an instruction's line, at `+0x10`, from the line of its
+function's name, which the tool finds in the source by the decorated name; a block that uses no register yet can't be
+changed. --simple splits every range one at a time instead of by regions (the splitter takes regions only for 3
+ranges or more and a count at `0x107ad5b8` of 100 or more, set below it). --score ADDRESS then scores the traced
+function against the original at that address, as tools/variants.py does (--target names the reccmp target if
+--target-dir doesn't; --show prints the diff). They combine with each other and with --regs, --colouring and --x87:
 
     .venv/Scripts/python tools/c2trace.py ls3df/I3D/visuals/I3d_singlemesh.cpp m_AddFGroups --target-dir ls3df \\
-        --set fg=200 --fill 715 --score 0x10055930
+        --use 700=esi,edi --score 0x10055930
 
 The ranges are coloured in the order of a work list (`0x10732af5`, sorted by `0x10708a6e`): by the priority at `+0xc`
 descending, then by `+0x44` descending, a full tie in the order the range table is walked (by id) with the later one
@@ -97,6 +99,7 @@ BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED, BP_ASSIGNED = 0x1071BE68, 0x10706400,
 BP_X87_FILTER, BP_X87_CANDIDATE = 0x10767401, 0x1076741D
 BP_WORKLIST, BP_SPLIT_REGIONS, BP_POP = 0x10731402, 0x10743BDA, 0x107314F7
 SPLIT_GATE, ALL_INTEGER_REGISTERS = 0x107AD5B8, 0b111011110          # eax to edi but esp, by register number
+CALL_CLOBBERED = 0b1110                                               # eax, ecx, edx
 TARGETS = {"ls3df": "LS3DF", "ls3df_1_1": "LS3DF11", "ijoy": "IJOY", "rw_data": "RWDATA", "setup": "SETUP",
            "setup_1_0": "SETUP10", "setup_polish": "SETUPPL", "setup_czech": "SETUPCZ", "game": "GAME"}
 WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A40, 0x58
@@ -387,38 +390,44 @@ class Trace:
             self.functions[-1][4][-1].append((mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), mem.i32(web + 0xc)))
 
 
-class WhatIf:
-    """Changes the allocator's data for one function: priorities, full blocks, the split's kind."""
+def register_names(mask):
+    return ",".join(REGS[n] for n in range(1, len(REGS)) if mask >> n & 1) or "none"
 
-    def __init__(self, trace, function, priorities, lines, simple, text):
+
+class WhatIf:
+    """Changes the allocator's data for one function: priorities, the registers blocks use when the splitter forms its
+    regions, and the split's kind. A block rule is (kind, source lines, register mask): "fill" applies to every block
+    with code of one of the lines, "calls" to the blocks within the lines that use a call's eax, ecx and edx, "use" to
+    the blocks within the lines; a negative mask takes its registers out instead of adding them."""
+
+    def __init__(self, trace, function, priorities, rules, simple, text):
         self.trace, self.function = trace, function
-        self.priorities, self.source_lines, self.simple = priorities, lines, simple
-        self.text, self.lines, self.start = text, None, 0
+        self.priorities, self.rules, self.simple = priorities, rules, simple
+        self.text, self.start, self.relative = text, 0, None
         self.done, self.gate = [], None
 
     def active(self):
         return self.trace.functions and self.function in self.trace.functions[-1][0]
 
-    def relative_lines(self):
-        """C2 numbers an instruction's line from the line of its function's name, so --fill's source lines are
-        counted from the function's definition, found in the source by its decorated name."""
+    def function_start(self):
+        """C2 numbers an instruction's line from the line of its function's name, which this finds in the source by
+        the decorated name (0 if it can't)."""
         body = self.trace.functions[-1][0][1:].split("@@")[0]     # name@Class... or ?0Class for a constructor
         special, body = (body[:2], body[2:]) if body.startswith("?") else (None, body)
         parts = body.split("@")
         if special in ("?0", "?1"):
             parts = [("~" if special == "?1" else "") + parts[0]] + parts
         elif special:
-            self.done.append(f"--fill can't place {self.trace.functions[-1][0]} in the source")
-            return set()
+            self.done.append(f"can't place {self.trace.functions[-1][0]} in the source")
+            return 0
         name = "::".join(reversed(parts))
         pattern = re.compile(r"(^|[\s*&])" + re.escape(name) + r"\s*\(")
         for number, line in enumerate(self.text.splitlines(), 1):
             if pattern.search(line) and not line.rstrip().endswith(";"):
                 self.done.append(f"{name} defined at line {number}")
-                self.start = number
-                return {n - number for n in self.source_lines}
+                return number
         self.done.append(f"{name}'s definition not found in the source")
-        return set()
+        return 0
 
     def on_worklist(self, ctx, mem):
         if not self.active():
@@ -454,21 +463,32 @@ class WhatIf:
                 self.gate = (gate, mem.read(gate, 4))
             mem.write(gate, struct.pack("<i", 0))
             self.done.append("a split made one range at a time")
-        if not self.source_lines:
+        if not self.rules:
             return
-        if self.lines is None:
-            self.lines = self.relative_lines()
+        if self.relative is None:
+            self.start = self.function_start()
+            self.relative = [(kind, {n - self.start for n in lines}, mask)
+                             for kind, lines, mask in self.rules] if self.start else []
         block = mem.u32(mem.u32(ctx.Ecx + 8))
         while block:
             lines = self.block_lines(mem, block)
-            if lines & self.lines:
+            vector = mem.u32(block + 0x54)
+            chunk = mem.u32(vector) if vector else 0
+            first = chunk and mem.u32(chunk) == 0             # the chunk of registers 0 to 31
+            used = mem.u32(chunk + 8) if first else 0
+            for kind, wanted, mask in self.relative:
+                if not lines or not (lines & wanted if kind == "fill" else lines <= wanted):
+                    continue
+                if kind == "calls" and used & CALL_CLOBBERED != CALL_CLOBBERED:
+                    continue
                 shown = ",".join(str(n + self.start) for n in sorted(lines))
-                chunk = mem.u32(mem.u32(block + 0x54)) if mem.u32(block + 0x54) else 0
-                if chunk and mem.u32(chunk) == 0:
-                    mem.write(chunk + 8, struct.pack("<I", mem.u32(chunk + 8) | ALL_INTEGER_REGISTERS))
-                    self.done.append(f"block of lines {shown} filled")
-                else:
+                if not first:
                     self.done.append(f"block of lines {shown} left (no register used yet)")
+                    continue
+                new = used & ~-mask if mask < 0 else used | mask
+                mem.write(chunk + 8, struct.pack("<I", new))
+                self.done.append(f"block of lines {shown} uses {register_names(used)} -> {register_names(new)}")
+                used = new
             block = mem.u32(block)
 
     def on_pop(self, ctx, mem):
@@ -477,8 +497,20 @@ class WhatIf:
             self.gate = None
 
 
-def score(obj: Path, target: str, address: str, decorated: str) -> str:
-    """The traced object's function against the original, as tools/variants.py scores a variant."""
+def line_set(text: str) -> set:
+    """Source lines written 735 or 711-737, comma-separated."""
+    return {n for part in text.split(",") for a, _, b in [part.partition("-")] for n in range(int(a), int(b or a) + 1)}
+
+
+def register_mask(text: str) -> int:
+    """esi,edi as a mask by register number; -esi,edi negative (registers to take out)."""
+    mask = sum(1 << REGS.index(r) for r in text.lstrip("-").split(","))
+    return -mask if text.startswith("-") else mask
+
+
+def score(obj: Path, target: str, address: str, decorated: str, show: bool = False) -> str:
+    """The traced object's function against the original, as tools/variants.py scores a variant (show: print the
+    diff too)."""
     import difflib
     import logging
     from funcdiff import find_match
@@ -501,6 +533,8 @@ def score(obj: Path, target: str, address: str, decorated: str) -> str:
     a = variants.normalize(orig, compare.orig_bin.is_valid_vaddr, "")
     b = variants.normalize(ours, lambda x: False, "")
     ratio = difflib.SequenceMatcher(None, a, b, autojunk=False).ratio()
+    if show:
+        print("\n".join(difflib.unified_diff(a, b, "orig", "traced", n=1, lineterm="")))
     return f"{ratio * 100:.2f}% against {match.best_name()} (0x{match.orig_addr:x}), {len(b)} instructions"
 
 
@@ -536,10 +570,18 @@ def main():
     ap.add_argument("--set", action="append", default=[], metavar="NAME=PRIORITY",
                     help="what-if: a variable's ranges' priority in the colouring (id:N one range; not the x87 "
                     "candidates); repeatable")
-    ap.add_argument("--fill", action="append", type=int, default=[], metavar="LINE",
-                    help="what-if: no free register in the blocks of this source line when the splitter runs")
+    ap.add_argument("--fill", action="append", default=[], metavar="LINES",
+                    help="what-if: no free register in the blocks with code of these source lines (735 or 711-737, "
+                    "comma-separated) when the splitter runs; repeatable")
+    ap.add_argument("--fill-calls", action="append", default=[], metavar="LINES",
+                    help="what-if: no free register in the blocks within these source lines that use a call's eax, "
+                    "ecx and edx; repeatable")
+    ap.add_argument("--use", action="append", default=[], metavar="LINES=REGS",
+                    help="what-if: the blocks within these source lines also use these registers (esi,edi; -esi,edi "
+                    "takes them out) when the splitter runs; repeatable")
     ap.add_argument("--simple", action="store_true", help="what-if: split ranges one at a time, never by regions")
     ap.add_argument("--score", metavar="ADDRESS", help="score the traced function against the original's at ADDRESS")
+    ap.add_argument("--show", action="store_true", help="with --score: print the diff against the original")
     ap.add_argument("--target", help="the reccmp target for --score (default: from --target-dir)")
     ap.add_argument("--edited", help="compile this file in place of the source")
     ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
@@ -555,7 +597,7 @@ def main():
         p = Path(path.removeprefix("\\\\?\\"))
         return p.name.lower() == "c2.dll" and hashlib.sha256(p.read_bytes()).digest() == reference
 
-    whatif_wanted = args.set or args.fill or args.simple
+    whatif_wanted = args.set or args.fill or args.fill_calls or args.use or args.simple
     if (whatif_wanted or args.score) and not args.function:
         sys.exit("what-ifs and --score need the function")
     if args.score and not (args.target or TARGETS.get(args.target_dir)):
@@ -565,9 +607,13 @@ def main():
     if whatif_wanted:
         try:
             priorities = {k: int(v) for k, v in (a.split("=", 1) for a in args.set)}
+            rules = [("fill", line_set(a), ALL_INTEGER_REGISTERS) for a in args.fill]
+            rules += [("calls", line_set(a), ALL_INTEGER_REGISTERS) for a in args.fill_calls]
+            rules += [("use", line_set(lines), register_mask(regs))
+                      for lines, _, regs in (a.partition("=") for a in args.use)]
         except ValueError:
-            sys.exit("--set takes NAME=PRIORITY")
-        whatif = WhatIf(trace, args.function, priorities, args.fill, args.simple,
+            sys.exit("--set takes NAME=PRIORITY, --fill and --fill-calls LINES, --use LINES=REGS (735,711-737=esi,edi)")
+        whatif = WhatIf(trace, args.function, priorities, rules, args.simple,
                         Path(args.edited or source).read_text(errors="replace"))
         breakpoints[BP_WORKLIST] = whatif.on_worklist
         breakpoints[BP_SPLIT_REGIONS] = whatif.on_split_regions
@@ -586,7 +632,7 @@ def main():
     compiled = (work / "trace.obj").exists()
     chosen = max((f for f in trace.functions if args.function and args.function in f[0]), key=lambda f: len(f[1]),
                  default=None)
-    scored = score(work / "trace.obj", args.target or TARGETS[args.target_dir], args.score, chosen[0]) \
+    scored = score(work / "trace.obj", args.target or TARGETS[args.target_dir], args.score, chosen[0], args.show) \
         if compiled and traced and args.score and chosen else None
     shutil.rmtree(work, ignore_errors=True)
     if not compiled:
