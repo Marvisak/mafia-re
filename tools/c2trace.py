@@ -17,7 +17,20 @@ launchers included) under a small debugger, with breakpoints in C2.DLL:
 - `0x107068f2`: a live range freed (`ecx`).
 - `0x1070cc09` (with --regs): the colouring is done (`color.c`'s driver at `0x1073122d` calls it before freeing its
   arenas). Every live range left is in the table at `0x107ac5b8` (1024 buckets by id, chained through `+0x2c`), and
-  `+0x10` points to its register's descriptor in the array at `0x107c4a98` (0x58 bytes each, in x86 encoding order).
+  `+0x10` points to its register's descriptor (0x58 bytes each from `0x107c4a40`, numbered 1 to 8: eax, ecx, edx, ebx,
+  esp, ebp, esi, edi).
+- `0x10709a9c` (with --colouring): `0x10709937` has just given one range its register (`ebp` the range, `edi` the
+  register's number, `ebx` its class), the cheapest of the ones it may take: the costs at `0x107ac480` (by register)
+  add each uncoloured neighbour's preference weights (and 100 times its weight for a neighbour's last register) and
+  subtract the range's own (`+0x38`, move-related ranges' registers with weights), and a tie goes to the first in the
+  class's list (`0x107b6888` for the integer registers: eax, ecx, edx, esi, edi, ebx, ebp). The allowed registers are
+  the bit vector at `+0x20` (sorted chunks of base, next, 32-bit mask).
+
+The ranges are coloured in the order of a work list (`0x10732af5`, sorted by `0x10708a6e`): by the priority at `+0xc`
+descending, then by `+0x44` descending, a full tie in the order the range table is walked (by id) with the later one
+first. `0x10707a0b` computes the priority per basic block: a range referenced in the block gains its references there
+times the block's pressure (the ranges live in it) times its frequency (2 to the loop depth), one live there without a
+reference loses the pressure times the frequency. `+0x40` is the frequency-weighted references, `+0x24` their count.
 
 It groups the events into passes, runs of creations or frees from one call site: `build` is the first build (the
 function's constants and global addresses get theirs first, as `const`), `rebuild` the rebuild of a region's ranges
@@ -30,10 +43,11 @@ ranges are compiler temporaries, shown by their frame offset.
     .venv/Scripts/python tools/c2trace.py rw_data/rw_data.cpp dtaRead --edited my.cpp  # an edited copy instead
 
 With --vars only the passes that create or free those variables' ranges are shown, and only their ids: the history
-that decides their relative order. --regs prints instead the ranges the colouring kept, with the register each got and
-three of the range's counters, by offset (+0x24, +0x40, +0x44; not identified yet: +0x40 grows with the references and
-their loop depth, +0x44 with the range's place in the function). Only the global allocator's ranges are there: the
-code generator gives short-lived temporaries (a load feeding one push) their registers later. --edited compiles
+that decides their relative order. --regs prints instead the ranges the colouring kept, with the register each got,
+their priority and their weights; --colouring the colouring's decisions in the order it makes them, each with the
+registers the range may take, their costs and its preferences. Only the global allocator's ranges are there: the code
+generator gives short-lived temporaries (a load feeding one push) their registers later, the next scratch register
+after the last one it used. --edited compiles
 another file in place of the source, from a temporary directory with the source's folder on the include path, and the
 source's command line. A source several targets compile needs
 --target-dir, the target's folder in the build tree (`ls3df_1_1` for patch 1.1's engine). Build the vc6 preset first.
@@ -59,9 +73,10 @@ import variants  # noqa: E402
 REPO = variants.REPO
 C2_REFERENCE = REPO / "3rdparty" / "msvc600_sp5_vcpp" / "VC98" / "Bin" / "C2.DLL"
 C2_BASE = 0x10700000
-BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED = 0x1071BE68, 0x10706400, 0x107068F2, 0x1070CC09
-WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A98, 0x58
-REGS = ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
+BP_RESET, BP_CREATE, BP_FREE, BP_COLOURED, BP_ASSIGNED = 0x1071BE68, 0x10706400, 0x107068F2, 0x1070CC09, 0x10709A9C
+WEB_TABLE, REG_DESCRIPTORS, REG_DESCRIPTOR_SIZE = 0x107AC5B8, 0x107C4A40, 0x58
+REG_COSTS, CLASS_REGISTERS = 0x107AC480, 0x107B690C
+REGS = ("-", "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
 SITES = {0x1072EA39: "const", 0x107305D6: "build", 0x10744A54: "rebuild", 0x10744488: "rebuild"}
 
 # --- a minimal debugger: int3 breakpoints in 32-bit processes, followed into child processes ---------------------
@@ -259,8 +274,10 @@ def debug(cmdline, cwd, env, breakpoints, dll_matches, output):
 
 class Trace:
     def __init__(self):
-        self.functions = []      # [name, [events], [ranges]]; an event is (kind, id, symbol name or label, site), a
-                                 # range left after the colouring (id, symbol, register, +0x24, +0x40, +0x44)
+        # [name, [events], [ranges], [decisions]]: an event is (kind, id, symbol name or label, site), a range left
+        # after the colouring (id, symbol, register, priority, weight, references, +0x44), a decision (id, symbol,
+        # priority, weight, register, class, allowed registers, costs, preferences)
+        self.functions = []
 
     def symbol(self, mem, sym):
         name = mem.cstr(mem.u32(mem.u32(sym) + 0x18)) if sym else None
@@ -273,7 +290,7 @@ class Trace:
         return f"temp{off:+d}" if off else "temp"
 
     def on_reset(self, ctx, mem):
-        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", [], []])
+        self.functions.append([mem.cstr(mem.u32(mem.u32(ctx.Esi) + 0x18)) or "?", [], [], []])
 
     def on_create(self, ctx, mem):
         if self.functions:
@@ -298,12 +315,41 @@ class Trace:
         for bucket in struct.unpack("<1024I", table):
             web = bucket
             while web:
-                fields = struct.unpack("<18I", mem.read(web, 0x48))
-                n, rest = divmod(fields[4] - descriptors, REG_DESCRIPTOR_SIZE)
-                reg = REGS[n] if fields[4] >= descriptors and not rest and n < len(REGS) else "-"
-                ranges.append((fields[7], self.symbol(mem, fields[0]), reg, fields[9], fields[16], fields[17]))
-                web = fields[11]
+                fields = struct.unpack("<18i", mem.read(web, 0x48))
+                n, rest = divmod((fields[4] & 0xffffffff) - descriptors, REG_DESCRIPTOR_SIZE)
+                reg = REGS[n] if fields[4] and not rest and 0 < n < len(REGS) else "-"
+                ranges.append((fields[7], self.symbol(mem, fields[0] & 0xffffffff), reg, fields[3], fields[16],
+                               fields[9], fields[17]))
+                web = fields[11] & 0xffffffff
         ranges.sort()
+
+    @staticmethod
+    def bits(mem, field):
+        vector = mem.u32(field)
+        out, chunk = [], mem.u32(vector) if vector else 0
+        while chunk:
+            first, mask = mem.u32(chunk), mem.u32(chunk + 8)
+            out += [first + k for k in range(32) if mask >> k & 1]
+            chunk = mem.u32(chunk + 4)
+        return out
+
+    def on_assigned(self, ctx, mem):
+        if not self.functions:
+            return
+        base = ctx.Eip - (BP_ASSIGNED - C2_BASE)
+        web, reg, cls = ctx.Ebp, ctx.Edi, ctx.Ebx
+        regs = []
+        listed = mem.u32(base + CLASS_REGISTERS - C2_BASE + 4 * cls)
+        while r := mem.u32(listed + 4 * len(regs)):
+            regs.append(r)
+        allowed = set(self.bits(mem, web + 0x20))
+        costs = {r: mem.i32(base + REG_COSTS - C2_BASE + 4 * r) for r in regs}
+        prefs, p = [], mem.u32(web + 0x38)
+        while p:
+            prefs.append((mem.u32(mem.u32(p + 4) + 0x1c), mem.i32(p + 8)))
+            p = mem.u32(p)
+        self.functions[-1][3].append((mem.u32(web + 0x1c), self.symbol(mem, mem.u32(web)), mem.i32(web + 0xc),
+                                      mem.i32(web + 0x40), reg, cls, [r for r in regs if r in allowed], costs, prefs))
 
 
 def command(source: Path, edited: Path | None, work: Path, target_dir: str) -> str:
@@ -333,6 +379,7 @@ def main():
     ap.add_argument("function", nargs="?", help="(part of) the function's decorated name; omitted: list them")
     ap.add_argument("--vars", help="comma-separated variable names: show only their ranges' history")
     ap.add_argument("--regs", action="store_true", help="the ranges left after the colouring, with their registers")
+    ap.add_argument("--colouring", action="store_true", help="the colouring's decisions, in the order it makes them")
     ap.add_argument("--edited", help="compile this file in place of the source")
     ap.add_argument("--target-dir", default="", help="for a source several targets compile, the target's folder in "
                     "the build tree whose command line to use (ls3df_1_1, setup_czech)")
@@ -351,6 +398,8 @@ def main():
     breakpoints = {BP_RESET: trace.on_reset, BP_CREATE: trace.on_create, BP_FREE: trace.on_free}
     if args.regs:
         breakpoints[BP_COLOURED] = trace.on_coloured
+    if args.colouring:
+        breakpoints[BP_ASSIGNED] = trace.on_assigned
     with open(work / "cl.txt", "w+") as output:
         traced = debug(cmd, str(variants.BUILD), variants.preset_env("vc6"), breakpoints, is_c2, output)
         output.seek(0)
@@ -363,21 +412,38 @@ def main():
         sys.exit(f"{args.source} isn't compiled with the 13.00.9044 C2.DLL")
 
     if not args.function:
-        for name, events, _ in trace.functions:
+        for name, events, _, _ in trace.functions:
             if events:
                 print(f"{sum(1 for e in events if e[0] == 'new'):5d} ranges  {name}")
         return
     found = [f for f in trace.functions if args.function in f[0]]
     if not found:
         sys.exit(f"no function matching {args.function!r}; run without one for the list")
-    name, events, ranges = max(found, key=lambda f: len(f[1]))
+    name, events, ranges, decisions = max(found, key=lambda f: len(f[1]))
     want = {v.strip() for v in args.vars.split(",")} if args.vars else None
     if args.regs:
         print(f"{name}: {len(ranges)} ranges after the colouring")
-        print("  id  variable                  reg    +0x24  +0x40  +0x44")
-        for wid, sym, reg, f24, f40, f44 in ranges:
+        print("  id  variable                  reg   priority weight   refs  +0x44")
+        for wid, sym, reg, prio, weight, refs, f44 in ranges:
             if not want or sym in want:
-                print(f"{wid:4d}  {sym:24s}  {reg:5s} {f24:6d} {f40:6d} {f44:6d}")
+                print(f"{wid:4d}  {sym:24s}  {reg:5s} {prio:6d} {weight:6d} {refs:6d} {f44:6d}")
+        return
+    if args.colouring:
+        print(f"{name}: {len(decisions)} decisions, in order (class 0 is the integer registers)")
+        for wid, sym, prio, weight, reg, cls, allowed, costs, prefs in decisions:
+            if want and sym not in want:
+                continue
+
+            def rn(r):
+                return REGS[r] if cls == 0 and r < len(REGS) else str(r)
+
+            line = (f"{wid:4d}  {sym:24s} priority {prio:5d} weight {weight:4d}  -> {rn(reg):4s}"
+                    + (f" (class {cls})" if cls else "") + f"  may take {','.join(rn(r) for r in allowed)}")
+            if any(costs.values()):
+                line += "  costs " + " ".join(f"{rn(r)}={c}" for r, c in costs.items() if c)
+            if prefs:
+                line += "  prefers " + " ".join(f"{rn(r)}:{w}" for r, w in prefs)
+            print(line)
         return
     news = [e for e in events if e[0] == "new"]
     print(f"{name}: {len(news)} ranges created, {len(events) - len(news)} freed, ids up to "
