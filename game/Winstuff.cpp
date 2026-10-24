@@ -8,21 +8,20 @@
 
 #include "IGraph/IGraph.h"
 
-// The call at the loop's top: VC6 keeps a while (true) that leaves through a return unrotated, where a
+// The call at the loop's top: a do-while (or a while (true) leaving through returns) isn't rotated, where a
 // while (!CheckCD()) gets a second call at the bottom
 // FUNCTION: GAME 0x5663d0
 bool WaitForCD()
 {
-    while (true)
+    do
     {
         if (CheckCD())
             return true;
         if (igraph)
             igraph->Present();
         // STRING: GAME 0x63669c
-        if (MessageBox(NULL, "Please insert MAFIA CD 1", NULL, MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
-            return false;
-    }
+    } while (MessageBox(NULL, "Please insert MAFIA CD 1", NULL, MB_RETRYCANCEL | MB_ICONERROR) != IDCANCEL);
+    return false;
 }
 
 // FUNCTION: GAME 0x566410
@@ -52,7 +51,7 @@ bool CheckCD()
         path[0] = drive;
         GetDriveType(path);
         if (GetVolumeInformation(path, volume, sizeof(volume), &serial, &max_length, &flags, file_system,
-                sizeof(file_system)))
+                                 sizeof(file_system)))
         {
             // STRING: GAME 0x636750
             sprintf(path, "%c:\\MafiaDE\\MafiaGame\\a1.dta", (char)drive);
