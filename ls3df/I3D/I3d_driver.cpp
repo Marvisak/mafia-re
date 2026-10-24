@@ -1640,7 +1640,8 @@ I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
             pFFLastUp_ = frm;
             frm = frm->m_pFFRight;
         } else if (!cmp) {
-            do {
+            // A while (true): its first test returns, so VC6 keeps it at the top
+            while (true) {
                 if (frm == frame)
                     return frm;
                 if (!frm->m_pFFRight) {
@@ -1649,8 +1650,9 @@ I3D_frame *I3D_driver::FindFrameFast_(const char *name, I3D_frame *frame)
                 }
                 pFFLastUp_ = frm;
                 frm = frm->m_pFFRight;
-            } while (!strcmp(name, frm->GetName()));
-            return NULL;
+                if (strcmp(name, frm->GetName()))
+                    return NULL;
+            }
         }
     }
 }
