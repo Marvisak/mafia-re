@@ -132,7 +132,7 @@ def compile_command(source: Path, target_dir: Path) -> str:
     ninja_file = (BUILD / "build.ninja").read_text()
     want = str(source).lower()
     objs = [m.group(1).replace("$:", ":")
-            for m in re.finditer(r"^build (\S+\.obj): CXX_COMPILER\S* (\S+)", ninja_file, re.M)
+            for m in re.finditer(r"^build (\S+\.obj): C(?:XX)?_COMPILER\S* (\S+)", ninja_file, re.M)
             if m.group(2).replace("$:", ":").lower() == want]
     if not objs:
         sys.exit(f"{source} isn't compiled by {BUILD} (configure the vc6 preset)")
@@ -283,8 +283,9 @@ def mirror(root: Path, out: Path, placed: dict):
                 fwd.write_text(f'#include "{target}"\n')
 
 
-def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, options: dict):
-    work = Path(tempfile.mkdtemp(prefix="variant"))
+def compile_object(cmd: str, env: dict, source: Path, texts: dict, options: dict, work: Path):
+    """Compiles SOURCE with the edited texts (real path -> text) into work/v.obj with the build's command line cmd.
+    Returns the object's path, or None and the compiler's output."""
     src = work / source.name
     placed = {p.resolve(): t for p, t in texts.items()}
     placed.setdefault(source, source.read_text())
@@ -298,7 +299,7 @@ def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, o
         mirror(d, work / f"inc{k}", headers)
     for path in headers:
         if source.parent not in path.parents and not any(d in path.parents for d in dirs):
-            return None, None, f"{path} isn't under an include directory"
+            return None, f"{path} isn't under an include directory"
     obj = work / "v.obj"
     c = re.sub(r"/Fo\S+", lambda _: f"/Fo{obj}", cmd)
     c = re.sub(r"/Fd\S+", lambda _: f"/Fd{work}\\", c)
@@ -314,7 +315,14 @@ def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, o
         c = re.sub(r"^\S*CL\.EXE", lambda _: str(REPO / options["cl"]), c, flags=re.I)
     r = subprocess.run(c, env=env, cwd=BUILD, capture_output=True, text=True)
     if r.returncode or not obj.exists():
-        return None, None, (r.stdout + r.stderr)[-1500:]
+        return None, (r.stdout + r.stderr)[-1500:]
+    return obj, None
+
+
+def build_variant(cmd: str, env: dict, source: Path, texts: dict, symbol: str, options: dict):
+    obj, error = compile_object(cmd, env, source, texts, options, Path(tempfile.mkdtemp(prefix="variant")))
+    if obj is None:
+        return None, None, error
     code, calls = read_function(obj, symbol)
     if code is None:
         return None, None, f"{symbol} isn't in the object (inlined everywhere, or renamed?)"
