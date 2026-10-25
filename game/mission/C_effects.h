@@ -361,7 +361,7 @@ public:
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
 // SYNTHETIC: GAME 0x44beb0
-// ??1C_effect_subpart@@UAE@XZ
+// ??1C_effect_item@@UAE@XZ
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -376,7 +376,7 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAXV?$allocator@PAX@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original

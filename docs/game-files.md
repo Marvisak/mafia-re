@@ -85,7 +85,7 @@ folders: `game/` sorts them into folders of its own, which `game/CMakeLists.txt`
 | 43 | `4d34b0–4df99c` | 0xc4ec | | |
 | 44 | `4df9a0–4eac6c` | 0xb2cc | | |
 | 45 | `4eac70–4efb3c` | 0x4ecc | | |
-| 46 | `4efb40–4f1b4c` | 0x200c | `controls.cpp` (our name) | the player's controls, Main.cpp's `controls` (`647c30`, PC only, names ours): its constructor (`4efb40`) and `Init` (`4efde0`), which takes IGraph and the joysticks; stub |
+| 46 | `4efb40–4f1b4c` | 0x200c | `controls.cpp` (our name) | the player's controls, Main.cpp's `controls` (`647c30`, PC only, names ours): its constructor (`4efb40`), destructor (`4efbd0`), `Close` (`4efc80`), the mouse's scale (`4efdb0`), `Init` (`4efde0`), which takes IGraph and the joysticks, then `Update` (`4f0620`, which the menus run) and the bindings' functions; the joysticks' vector's `_Ucopy`, `_Ufill` and `_Construct` at the end (`4f1a80`–`4f1b13`). Written: the constructor, the destructor, `Close` and `Init` |
 | 47 | `4f1b50–4f5dbc` | 0x426c | | |
 | 48 | `4f5dc0–4f6a2c` | 0xc6c | `console.cpp`? | the console's font (editfont.bmp, fnt_matrix.bin), PS2 console.cpp's functions in PS2's order: the consoles' vector's initializer and destructor first (`4f5dc0`–`4f5e1f`, PS2 `_consoles`, `646b28`), most likely `ConsoleReg` (`4f6590`), `ConsoleUnReg` (`4f67a0`) and `ConsoleRender` (`4f6850`), then `CreateFontTexture` (`4f6920`), `ConsolesInit` (`4f6980`, a tail call of it), which InitSystem calls, and `ConsolesDone` (`4f6990`), which CloseSystem calls; the text drawing before them (`4f6040`) reads the font's characters (`fnt_matrix`, `645728`); `.bss`: `fnt_matrix`, `_consoles`, `fonty` (`646b38`). Written: `CreateFontTexture`, `ConsolesInit`, `ConsolesDone` |
 | 49 | `4f6a30–4f6a5c` | 0x2c | | |

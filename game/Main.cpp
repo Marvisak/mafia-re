@@ -120,7 +120,7 @@ C_rw_data *RW_data[NUM_ARCHIVES];
 // The joysticks InitJoy found (PS2's is a vector<C_Joy *>)
 // GLOBAL: GAME 0x647c1c
 std::vector<IJoy *> joy;
-// The original's has a dynamic initializer (0x5bd450)
+// Constructed by its dynamic initializer (0x5bd450)
 // GLOBAL: GAME 0x647c30
 C_controls controls;
 // The original's three have dynamic initializers
