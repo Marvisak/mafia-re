@@ -1,5 +1,5 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the constructor,
-// the destructor, Init and UnInit; the rest of what main and InitSystem call is stubs.
+// the destructor, Init, UnInit and the video options' methods; the rest of what main and InitSystem call is stubs.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -115,53 +115,80 @@ int C_mission::Open(const char *name, bool, uint, bool)
     return 1;
 }
 
-// STUB: GAME 0x545b20
+#pragma auto_inline(on)
+
+// An else if on the parameter: the lower bound's branch returns at once, and the upper bound compares the parameter, where
+// SetDrawDistance's reads the member back
+// FUNCTION: GAME 0x545b20
 void S_mission_options::SetLevelOfDetail(float level)
 {
-    StubLog("S_mission_options::SetLevelOfDetail");
     level_of_detail = level;
+    if (level < 0.4f)
+        level_of_detail = 0.4f;
+    else if (level > 2.0f)
+        level_of_detail = 2.0f;
 }
 
-// STUB: GAME 0x545b60
+// FUNCTION: GAME 0x545b60
 void S_mission_options::SetDrawDistance(float distance)
 {
-    StubLog("S_mission_options::SetDrawDistance");
     draw_distance = distance;
+    if (draw_distance < 0.3f)
+        draw_distance = 0.3f;
+    if (draw_distance > 1.0f)
+        draw_distance = 1.0f;
 }
 
-// STUB: GAME 0x545ba0
+// FUNCTION: GAME 0x545ba0
 void S_mission_options::SetGameEffects(int level)
 {
-    StubLog("S_mission_options::SetGameEffects");
     game_effects = level;
+    if (game_effects < 0)
+        game_effects = 0;
+    if (game_effects > 2)
+        game_effects = 2;
 }
 
-// STUB: GAME 0x545bd0
+// FUNCTION: GAME 0x545bd0
 void S_mission_options::SetGameSounds(int level)
 {
-    StubLog("S_mission_options::SetGameSounds");
     game_sounds = level;
+    if (game_sounds < 0)
+        game_sounds = 0;
+    if (game_sounds > 2)
+        game_sounds = 2;
 }
 
-// STUB: GAME 0x545c00
+// FUNCTION: GAME 0x545c00
 void S_mission_options::SetShadows(int index)
 {
-    StubLog("S_mission_options::SetShadows");
+    int levels[6] = {0, 1, 3, 6, 9, 15};
     shadows = index;
+    if (shadows < 0)
+        shadows = 0;
+    if (shadows > 5)
+        shadows = 5;
+    shadows = levels[shadows];
 }
 
-// STUB: GAME 0x545c60
+// FUNCTION: GAME 0x545c60
 int S_mission_options::GetShadows()
 {
-    StubLog("S_mission_options::GetShadows");
-    return shadows;
+    int levels[6] = {0, 1, 3, 6, 9, 15};
+    for (int i = 0; i < 6; i++)
+    {
+        if (shadows == levels[i])
+            return i;
+    }
+    return 2;
 }
 
-// STUB: GAME 0x545cb0
+// FUNCTION: GAME 0x545cb0
 void S_mission_options::SetParticles(int level)
 {
-    StubLog("S_mission_options::SetParticles");
     particles = level;
+    if (particles < 0)
+        particles = 0;
+    if (particles > 2)
+        particles = 2;
 }
-
-#pragma auto_inline(on)

@@ -1,3 +1,6 @@
 address|type|size
 0x623238|float|4
+0x623240|float|4
+0x6233e4|float|4
+0x6236c0|float|4
 0x625408|float|4
