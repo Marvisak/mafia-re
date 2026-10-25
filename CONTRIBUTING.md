@@ -14,7 +14,7 @@ Each binary is built with its original toolchain:
 
 - `rw_data.dll`, `LS3DF.dll`, `Game.exe` and `setup.exe`: Visual C++ 6.0 Service Pack 5 with the Processor Pack. Not Service Pack 6, its compiler and runtime library produce different code.
 - `IJoy.dll`: the original Visual C++ 6.0 release (compiler front end, linker and runtime library) with the Processor Pack's code generator. The build copies that mix of compiler files into the build tree and runs it through `tools/clswap.py`.
-- `LS3DF.dll` was compiled with the compiler's automatic precompiled headers (`/YX`), which decide where some functions end up in each object. The build runs the compiler through `tools/autopch.py`, which gives every source file a precompiled header of its own.
+- `LS3DF.dll` and `Game.exe` were compiled with the compiler's automatic precompiled headers (`/YX`), which decide where some functions end up in each object. The build runs the compiler through `tools/autopch.py`, which gives every source file a precompiled header of its own.
 - `LS3DF.dll` also contains DirectShow's base classes, the DirectX 8.1 SDK's sample code in `ls3df/BaseClasses/`, unchanged. They were built as a library of their own, by their own project's settings, with Service Pack 5's code generator without the Processor Pack.
 - `setup.exe` also needs the headers and libraries of the DirectX 8.0 SDK, `IJoy.dll` and `LS3DF.dll` those of the DirectX 8.1 SDK.
 
@@ -70,10 +70,9 @@ So most of C++ features everybody is used to and comfortable with are off the ta
 
 ## Running the rebuilt Game.exe
 
-`Game.exe` is written in the order the game runs, so a build can be tried in the game itself. It works from its own
-folder, so copy `build/vc6/game/Game.exe` into the game's folder (Steam's is `steamapps\common\Mafia\Mafia`) under
-another name and start it there. It is the unpatched 1.2 executable, so it needs what that one does, where Steam's
-patched copy doesn't:
+A build of `Game.exe` can be tried in the game itself. It works from its own folder, so copy `build/vc6/game/Game.exe`
+into the game's folder (Steam's is `steamapps\common\Mafia\Mafia`) under another name and start it there. It is the
+unpatched 1.2 executable, so it needs what that one does, where Steam's patched copy doesn't:
 
 - The game's CD: a folder `MafiaGame` with `a1.dta` in it at the root of some drive. The first CD's image mounted, or
   a `subst` drive, will do.
@@ -93,7 +92,7 @@ yet log their names. `--orig` runs the original instead, to compare:
 
 ## Debug Symbols
 
-The USA PS2 version was compiled with debug symbols enabled, but sadly only very basic debug symbols so only the function names and global variable names are known. This is still an incredible help so I very highly recommend using them. The game wasn't compiled with RTTI so this makes finding methods much easier.
+The USA PS2 version was compiled with debug symbols enabled, but sadly only very basic debug symbols so only the function names, the global variable names and the source files' names (`__sinit_<file>.cpp`, which `Game.exe`'s files are named after) are known. This is still an incredible help so I very highly recommend using them. The game wasn't compiled with RTTI so this makes finding methods much easier.
 
 Most of the function names are written in English and those are fairly descriptive, but a big chunk of the names are written in Czech language - while those are absolutely hilarious if you understand the language, they are also absolutely unrelated to what the function does, but you should still keep the original names where possible.
 
@@ -101,4 +100,4 @@ Most of the function names are written in English and those are fairly descripti
 
 Ideally the goal is to mirror the coding style of the original source code, which is a bit of a problem because the game doesn't respect any. You can find basically every single naming convention in here, so use the original's names wherever something shows them: the PS2 symbols first, then the original's own messages (`"!! m_RefCount  ITexture this:0x%x"`), then Insanity3D. Even the engine mixes conventions. Its core has snake case members (Insanity3D's, and messages like `m_numRectangles:%d < pVI->rect:%d`, whose `rect` has no prefix at all), while the parts written for Mafia (lightmaps, morphs, `IShow`, `ITexture`, IGraph's globals) use `m_` names with `p` for pointers but no other type prefix (`m_numRegions`, `m_RefCount`). A class whose own messages show such a name gets the style for all its members: `I3D_frame`'s `m_pOwner` (in `DeleteFromOwner`'s message) gave its others `m_pParent`, `m_FrmFlags`, `m_LocalMatrix`. So there is no Hungarian notation to follow everywhere: a name nothing shows is a guess in the style of the names around it.
 
-Use C-style casts (`(uint)x`, `(LPARAM)buffer`), not `static_cast` and friends: the later engine of the same lineage, [Insanity3D](https://github.com/mice777/Insanity3D), uses them almost everywhere. Name an engine header after its module, in the casing of the original's source files (`I3D/I3d_math.h` next to `I3d_math.cpp`, `IGraph/IGraph.h` next to `IGraph.cpp`), and include it by its folder (`#include "I3D/I3D.h"`).
+Use C-style casts (`(uint)x`, `(LPARAM)buffer`), not `static_cast` and friends: the later engine of the same lineage, [Insanity3D](https://github.com/mice777/Insanity3D), uses them almost everywhere. Name an engine header after its module, in the casing of the original's source files (`I3D/I3d_math.h` next to `I3d_math.cpp`, `IGraph/IGraph.h` next to `IGraph.cpp`), and include it by its folder (`#include "I3D/I3D.h"`). A game header goes with its file and is included from `game/` the same way (`#include "ui/g_menu.h"`).
