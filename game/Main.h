@@ -40,10 +40,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVC_effect_part@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@0@Z
+// ?_Destroy@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@IAEXPAPAVC_effect_part@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@IAEPAPAVC_effect_part@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEPAHPBH0PAH@Z
 
 // TEMPLATE: GAME 0x59e6d0
 // ?_Ufill@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@IAEXPAPAVC_effect@@IABQAV3@@Z

@@ -1,5 +1,6 @@
 // The game's tools (PS2 tools.cpp, which has C_sound_table; the PC's file is most likely the one at 0x55cfa0-0x56040c,
-// docs/game-files.md). Written so far: PlayLogo; the rest is what InitSystem and CloseSystem need to link.
+// docs/game-files.md). Written so far: PlayLogo, and the sound table's constructor, destructor, FreeTables and
+// LoadTables, which InitSystem and CloseSystem call; its virtual functions, which the vtable needs, are stubs.
 
 #include "tools.h"
 #include "Winstuff.h"
@@ -9,8 +10,13 @@
 #include <string.h>
 
 #include "IGraph/IGraph.h"
+#include "rw_data.h"
 
-// The original's has a dynamic initializer (0x55d430)
+// Open: the original has it right after sound_table, where its bucket (169; sound_table's is 788) would put it before
+// (tools/bsshash.py)
+// GLOBAL: GAME 0x646f6c
+std::vector<S_sound_group> sound_group;
+
 // GLOBAL: GAME 0x646f50
 C_sound_table sound_table;
 
@@ -87,19 +93,159 @@ bool PlayLogo(const char *name, float sx, float sy)
     return true;
 }
 
-#pragma auto_inline(off)
-
-// The original deletes the seven buffers of each table entry (0xd0 bytes) and clears the list, as PS2's
-// STUB: GAME 0x55ee60
-void C_sound_table::FreeTables()
+// FUNCTION: GAME 0x55edd0
+C_sound_table::C_sound_table()
 {
-    StubLog("C_sound_table::FreeTables");
+    next_group_id = 0;
+    next_sound_id = 0;
 }
 
-// STUB: GAME 0x55f390
+// FUNCTION: GAME 0x55ee00
+C_sound_table::~C_sound_table()
+{
+    FreeTables();
+}
+
+// The sounds from the last one, as PS2's
+// FUNCTION: GAME 0x55ee60
+void C_sound_table::FreeTables()
+{
+    for (int i = tables.size(); i--;)
+    {
+        delete[] tables[i].name;
+        delete[] tables[i].file_names[0];
+        delete[] tables[i].file_names[1];
+        delete[] tables[i].file_names[2];
+        delete[] tables[i].file_names[3];
+        delete[] tables[i].file_names[4];
+        delete[] tables[i].file_names[5];
+    }
+    tables.clear();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x55ef30
+void C_sound_table::AddGroup(const char *name)
+{
+    StubLog("C_sound_table::AddGroup %s", name);
+}
+
+// STUB: GAME 0x55ef80
+void C_sound_table::DelGroup(int index)
+{
+    StubLog("C_sound_table::DelGroup %d", index);
+}
+
+// STUB: GAME 0x55f080
+void C_sound_table::AddSound(const char *name, uint group)
+{
+    StubLog("C_sound_table::AddSound %s", name);
+}
+
+// STUB: GAME 0x55f120
+void C_sound_table::DelSound(uint id)
+{
+    StubLog("C_sound_table::DelSound %u", id);
+}
+
+// STUB: GAME 0x55f210
+C_sound_table::S_sound_table *C_sound_table::GetTableFromIDX(uint id)
+{
+    StubLog("C_sound_table::GetTableFromIDX %u", id);
+    return NULL;
+}
+
+// STUB: GAME 0x55f270
+void C_sound_table::SetFileName(S_sound_table *table, int index, const char *file_name)
+{
+    StubLog("C_sound_table::SetFileName");
+}
+
+// STUB: GAME 0x55f2d0
+void C_sound_table::OptimalizeTable(S_sound_table *table)
+{
+    StubLog("C_sound_table::OptimalizeTable");
+}
+
+#pragma auto_inline(on)
+
+// Version 2 only. The file has the two counters, the groups and the sounds, each with its name, which the game skips
+// (only the editor needs them), its files and its parameters.
+// FUNCTION: GAME 0x55f390
 void C_sound_table::LoadTables(const char *name)
 {
-    StubLog("C_sound_table::LoadTables %s", name);
+    int h = dtaOpen(name, false);
+    if (h == -1)
+        return;
+    int version;
+    dtaRead(h, &version, 4);
+    if (version != 2)
+    {
+        dtaClose(h);
+        return;
+    }
+    dtaRead(h, &next_group_id, 4);
+    dtaRead(h, &next_sound_id, 4);
+    int num;
+    dtaRead(h, &num, 4);
+    sound_group.clear();
+    if (num)
+        dtaSeek(h, num * sizeof(S_sound_group), 1);
+    tables.clear();
+    dtaRead(h, &num, 4);
+    for (int i = 0; i < num; i++)
+    {
+        S_sound_table t;
+        memset(&t, 0, sizeof(t));
+        tables.push_back(t);
+        memset(&tables.back(), 0, sizeof(S_sound_table));
+        tables.back().visible = true;
+        int len;
+        dtaRead(h, &len, 4);
+        if (len)
+            dtaSeek(h, len, 1);
+        dtaRead(h, &tables.back().id, 4);
+        dtaRead(h, &tables.back().group, 4);
+        dtaRead(h, &tables.back().num_files, 1);
+        dtaRead(h, &tables.back().num_params, 1);
+        for (int j = 0; j < tables.back().num_files; j++)
+        {
+            dtaRead(h, &len, 4);
+            if (len)
+            {
+                tables.back().file_names[j] = new char[len + 1];
+                dtaRead(h, tables.back().file_names[j], len);
+                tables.back().file_names[j][len] = 0;
+            }
+            dtaRead(h, &tables.back().file_probability[j], 4);
+        }
+        if (tables.back().num_params > 0)
+            dtaRead(h, tables.back().params, tables.back().num_params * sizeof(S_sound_param));
+    }
+    dtaClose(h);
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x55f5e0
+void C_sound_table::SaveTables(const char *name)
+{
+    StubLog("C_sound_table::SaveTables %s", name);
+}
+
+// The original's jumps to ConstructSound (0x55f820), which sets the sound up from its table
+// STUB: GAME 0x55fa00
+bool C_sound_table::TestConstructSound(I3D_sound *sound, uint id)
+{
+    StubLog("C_sound_table::TestConstructSound %u", id);
+    return false;
+}
+
+// STUB: GAME 0x55fa10
+void C_sound_table::ClearInvisibleFlag()
+{
+    StubLog("C_sound_table::ClearInvisibleFlag");
 }
 
 #pragma auto_inline(on)

@@ -111,7 +111,7 @@ folders: `game/` sorts them into folders of its own, which `game/CMakeLists.txt`
 | 69 | `559980–559ccc` | 0x34c | | |
 | 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | `C_roads` (PS2 road_web.cpp): its constructor first, the destructor (`559d00`), then its virtual functions (`559d40`, `55a210`, `55a620`, `55c890`); written: the constructor and the destructor; stubs of the others |
 | 71 | `55cf40–55cf9c` | 0x5c | | |
-| 72 | `55cfa0–56040c` | 0x346c | `tools.cpp`? | `C_sound_table` (PS2 tools.cpp): `sound_table` (`646f50`), `FreeTables` (`55ee60`) and `LoadTables` (`55f390`); the logo videos (`55d460`, PC only, `PlayLogo`, our name); stubs |
+| 72 | `55cfa0–56040c` | 0x346c | `tools.cpp`? | `C_sound_table` (PS2 tools.cpp): `sound_group` (`646f6c`) and `sound_table` (`646f50`), whose initializers (`55d3c0`, `55d420`) follow those of other globals (`55cfa0–55d3b0`), its constructor (`55edd0`), the destructor (`55ee00`), `FreeTables` (`55ee60`), its virtual functions in PS2's order with `LoadTables` (`55f390`) among them, `ConstructSound` (`55f820`); the logo videos (`55d460`, PC only, `PlayLogo`, our name); written: `PlayLogo`, the constructor, the destructor, `FreeTables` and `LoadTables`; stubs of the virtual functions |
 | 73 | `560410–5605bc` | 0x1ac | `tshift.cpp` | PS2's file, after tools.cpp as on PS2: `S_tshift_elem::Tick` (`560410`), `C_tshift`'s constructor (`5604f0`) and `C_tshift::Tick` (`560510`); the destructor, which PS2 has before `Tick`, is the linker's folded copy at `412000`; written: the constructor and the destructor |
 | 74 | `5605c0–56488c` | 0x42cc | | |
 | 75 | `564890–56615c` | 0x18cc | | |
