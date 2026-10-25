@@ -5,6 +5,11 @@
 // std::ctype<unsigned short>::id that <string> brings (docs/game-files.md)
 #include <string>
 
+// The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
+// the other empty functions of its kind (the web nodes' connections' destructor)
+// SYNTHETIC: GAME 0x404990
+// ?id@?$ctype@G@std@@$E
+
 #include <settings.h>
 
 class IGraph;
@@ -35,7 +40,7 @@ extern bool _is_intro_;
 // std::_Construct
 
 // TEMPLATE: GAME 0x4d2040
-// std::vector<S_vector,std::allocator<S_vector> >::_Destroy
+// std::vector<C_actor *,std::allocator<C_actor *> >::_Destroy
 
 // TEMPLATE: GAME 0x563cc0
 // std::vector<IJoy *,std::allocator<IJoy *> >::_Ucopy

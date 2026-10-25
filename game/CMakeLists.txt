@@ -11,14 +11,18 @@ add_executable(game WIN32
     C_animations.cpp
     C_car.cpp
     C_ff_manager.cpp
+    C_effects.cpp
     C_program.cpp
     C_Vehicle.cpp
     controls.cpp
     console.cpp
     Mission.cpp
     g_m_race.cpp
+    pathweb.cpp
     racing.cpp
+    road_web.cpp
     tools.cpp
+    tshift.cpp
     WinMain.cpp
     Winstuff.cpp
     game.cpp

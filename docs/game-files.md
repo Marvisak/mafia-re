@@ -60,7 +60,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 22 | `446030–446f1c` | 0xeec | | |
 | 23 | `446f20–44856c` | 0x164c | | |
 | 24 | `448570–448efc` | 0x98c | | |
-| 25 | `448f00–44b4cc` | 0x25cc | | |
+| 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (our name) | the effects of `tables\effects.tbl` (PC only, "Effects.bin" in its messages; PS2's mission has a particle manager instead), `C_mission`'s `+0x6c` (names ours): the constructor (`449080`), the destructor (`449100`), `Load` (`449380`), `Clear` (`44a350`), and the copy of a vector's destructor the linker kept for every vector of a type without one (`44b220`); written: the constructor, the destructor, `Clear`; `Load` stubbed |
 | 26 | `44b4d0–44c51c` | 0x104c | | |
 | 27 | `44c520–459e8c` | 0xd96c | | |
 | 28 | `459e90–460a1c` | 0x6b8c | | |
@@ -95,20 +95,20 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 57 | `53e4b0–53ef4c` | 0xa9c | | |
 | 58 | `53ef50–53ef7c` | 0x2c | | |
 | 59 | `53ef80–53efac` | 0x2c | | |
-| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): its constructor (`53f010`) and destructor (`53f110`) for Main.cpp's `main_mission` (`647df8`), `Init` (`53f230`, the scene, the game and the mission's objects), `UnInit` (`53f3b0`, which CloseSystem and the destructor call), `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545a30`) and `RestoreSettings` (`545ad0`), both PS2's shapes, and the setters of its video options at `+0x90` (`545b20`–`545cb0`); stubs of what `main` and InitSystem call (`Init` creates only the scene) |
+| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): its constructor (`53f010`) and destructor (`53f110`) for Main.cpp's `main_mission` (`647df8`), `Init` (`53f230`, the scene, the game and the mission's objects), `UnInit` (`53f3b0`, which CloseSystem and the destructor call), `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545a30`) and `RestoreSettings` (`545ad0`), both PS2's shapes, and the setters of its video options at `+0x90` (`545b20`–`545cb0`); the copies of `C_game`'s inline constructor (`5472f0`) and destructor (`547a60`), which `Init` and `UnInit` call, and of the caches' items' `erase` (`548330`, `UnInit`'s); written: the constructor, the destructor, `Init` and `UnInit`; stubs of the rest of what `main` and InitSystem call, and of `C_game`'s constructor and destructor in `game.cpp` |
 | 61 | `549140–549e9c` | 0xd5c | `g_m_race.cpp`? | `ExecuteRacingMenu` (`549b80`), and the copy of `GM_Menu::OnKey` the menus' vtables point to (`5498f0`, most likely a folded one); stub of `ExecuteRacingMenu` |
 | 62 | `549ea0–549ecc` | 0x2c | | |
 | 63 | `549ed0–549efc` | 0x2c | | |
 | 64 | `549f00–549f2c` | 0x2c | | |
 | 65 | `549f30–549f5c` | 0x2c | | |
 | 66 | `549f60–549f8c` | 0x2c | | |
-| 67 | `549f90–54d31c` | 0x338c | | |
+| 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | PS2's file, which comes after Mission.cpp as this one does: `C_web_node`'s destructor first, then `C_web_path`'s destructor (`54a1e0`) and its virtual functions (`54a3b0`–`54cba0`), PS2's in PS2's order; written: the two destructors and the three empty virtual functions, whose vtable entries are folded copies elsewhere; stubs of the others |
 | 68 | `54d320–55997c` | 0xc65c | `racing.cpp`? | `C_racing`'s constructor (`551830`) and destructor (`551a70`); stubs |
 | 69 | `559980–559ccc` | 0x34c | | |
-| 70 | `559cd0–55cf3c` | 0x326c | | |
+| 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | `C_roads` (PS2 road_web.cpp): its constructor first, the destructor (`559d00`), then its virtual functions (`559d40`, `55a210`, `55a620`, `55c890`); written: the constructor and the destructor; stubs of the others |
 | 71 | `55cf40–55cf9c` | 0x5c | | |
 | 72 | `55cfa0–56040c` | 0x346c | `tools.cpp`? | `C_sound_table` (PS2 tools.cpp): `sound_table` (`646f50`), `FreeTables` (`55ee60`) and `LoadTables` (`55f390`); the logo videos (`55d460`, PC only, `PlayLogo`, our name); stubs |
-| 73 | `560410–5605bc` | 0x1ac | | |
+| 73 | `560410–5605bc` | 0x1ac | `tshift.cpp` | PS2's file, after tools.cpp as on PS2: `S_tshift_elem::Tick` (`560410`), `C_tshift`'s constructor (`5604f0`) and `C_tshift::Tick` (`560510`); the destructor, which PS2 has before `Tick`, is the linker's folded copy at `412000`; written: the constructor and the destructor |
 | 74 | `5605c0–56488c` | 0x42cc | | |
 | 75 | `564890–56615c` | 0x18cc | | |
 | 76 | `566160–5661ec` | 0x8c | `WinMain.cpp` (our name) | only `WinMain` (`566160`): sets the working directory to the executable's folder and calls `main`; written |
@@ -124,7 +124,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 86 | `596200–59641c` | 0x21c | | |
 | 87 | `596420–5983dc` | 0x1fbc | | |
 | 88 | `5983e0–5a075c` | 0x837c | | |
-| 89 | `5a0760–5bcc0c` | 0x1c4ac | `game.cpp`? | `C_game::Init` (`5a0810`, 0x314c bytes; PS2's takes two bools); stub |
+| 89 | `5a0760–5bcc0c` | 0x1c4ac | `game.cpp`? | `C_game::Init` (`5a0810`, 0x314c bytes; PS2's takes two bools); stubs of it and of the constructor and destructor, whose copies are in Mission.cpp's range |
 | 90 | `5bcc10–5bcdfc` | 0x1ec | | |
 | 91 | `5bce00–5c25ac` | 0x57ac | `Main.cpp` | PS2's file: the global caches' constructors and destructors first, then most likely `GameLoopSingle` (`5be750`, which `main` runs after loading each mission), `main` (`5bebe0`), the out-of-line copy of `common/settings.h`'s `S_settings` constructor (`5bf520`), `InitSystem` (`5bf5a0`) and `InitErrorMessageBox` (`5bfec0`), which are static and so follow their first caller, `CloseSystem` (`5c0080`), then the cache templates (the items' assignment `5c2540`) and the tracks' scalar deleting destructor (`5c2520`). Between `GameLoopSingle` and `main` the copy of the in-game menu's inline `OnBeforeCreate` (`5beaf0`, "gamemenu"), the video memory overflow callback (`5beb00`, which saves the settings) and a `bool` function that returns false (`5bebd0`, which `GM_MainMenu::OnBeforeCreate` tests); after `main` and its jump table `GM_Carcyclopedia::OnBeforeCreate`'s copy (`5bf510`). Before `GameLoopSingle` the PC's joystick setup and shutdown (`5bd5f0`, `5bd870`, `InitJoy` and `CloseJoy`, our names) and the scene's callback (`5bd8d0`, which draws the HUD and the menus after the frame). `.bss`: `ff_manager` (`647b28`), `RW_data` (`647be4`, the 14 archives, whose names are the table at `637890`), `joy` (`647c1c`), `controls` (`647c30`), the three caches (`647d80`–`647dd0`), `main_mission` (`647df8`), the drivers (`647ed8`, `647edc`), `igraph`, `setting`, the joystick base (`647f24`). Written: `main`, `InitSystem`, `InitErrorMessageBox`, `CloseSystem`, `InitJoy`, `CloseJoy` and IGraph's error handler (`5beb00`); `SceneCallback` and `GameLoopSingle` stubbed |
 | 92 | `5c25b0–5c283c` | 0x28c | | |

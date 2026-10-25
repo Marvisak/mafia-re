@@ -51,7 +51,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -130,6 +130,12 @@
 
 // LIBRARY: GAME 0x610dd0 SYMBOL
 // _memmove
+
+// LIBRARY: GAME 0x611187
+// ??_M@YGXPAXIHP6EX0@Z@Z
+
+// LIBRARY: GAME 0x611207
+// ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z
 
 // LIBRARY: GAME 0x611470 SYMBOL
 // _strncpy

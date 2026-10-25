@@ -73,3 +73,11 @@ extern C_I3D_anim_cache anim_cache;
 
 // TEMPLATE: GAME 0x409260
 // ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU23@00@Z
+
+// The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
+// kept Mission.cpp's copy.
+// Open: its inlined copy loop walks the destination and reads the source's name relative to it, ours walks the
+// source's name. The out-of-line copy, assignment and destructor match, and an explicit assignment, copy constructor
+// or destructor of S_itm, or erase called directly, compile alike.
+// TEMPLATE: GAME 0x548330
+// std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::erase

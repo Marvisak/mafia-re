@@ -1,42 +1,106 @@
-// The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Not written yet: only what main
-// and InitSystem need to link.
+// The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the constructor,
+// the destructor, Init and UnInit; the rest of what main and InitSystem call is stubs.
 
 #include "Mission.h"
+#include "game.h"
+#include "tshift.h"
+#include "pathweb.h"
+#include "road_web.h"
+#include "C_effects.h"
+#include "I3D_cache.h"
 #include "stub.h"
 
 #include "I3D/I3D.h"
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x53f010
-C_mission::C_mission()
+// The stores come in the members' order, the vectors' among them: an initializer list
+// FUNCTION: GAME 0x53f010
+C_mission::C_mission() :
+    unknown_0(0),
+    unknown_4(0),
+    unknown_c(false),
+    scene(NULL),
+    tshift(NULL),
+    unknown_68(NULL)
 {
-    StubLog("C_mission::C_mission");
 }
 
-// STUB: GAME 0x53f110
+// FUNCTION: GAME 0x53f110
 C_mission::~C_mission()
 {
-    StubLog("C_mission::~C_mission");
+    UnInit();
 }
 
-// Creates only the scene, which InitSystem gives its callback. The original also creates the mission's C_tshift,
-// C_web_path(50) and C_roads (PS2's names), an object of 0x38 bytes and the game, and clears a vector at 0x84.
-// STUB: GAME 0x53f230
+// PS2's also creates the game's members inline (its C_game constructor is inlined), and clears a flag (0xd4c) the PC's
+// mission doesn't have
+// FUNCTION: GAME 0x53f230
 void C_mission::Init(I3D_driver *driver)
 {
-    StubLog("C_mission::Init");
-    if (!scene)
-        scene = (I3D_scene *)driver->CreateFrame(FRAME_SCENE);
+    if (scene)
+        return;
+    scene = (I3D_scene *)driver->CreateFrame(FRAME_SCENE);
+    if (!tshift)
+        tshift = new C_tshift;
+    if (!web_path)
+        web_path = new C_web_path(50);
+    if (!roads)
+        roads = new C_roads;
+    if (!effects)
+        effects = new C_effects;
+    t_transparent.clear();
+    if (!game)
+    {
+        game = new C_game;
+        game->mission = this;
+    }
 }
 
-// The original clears the three caches (their inline Clear, as CloseSystem), closes the mission, deletes what Init
-// created and releases the scene. Its destructor calls it too.
-// STUB: GAME 0x53f3b0
+// The caches' Clear inlined, as in CloseSystem. PS2's also deletes the arrays at its 0x60.
+// FUNCTION: GAME 0x53f3b0
 void C_mission::UnInit()
 {
-    StubLog("C_mission::UnInit");
+    sound_cache.Clear();
+    model_cache.Clear();
+    anim_cache.Clear();
+    Close();
+    if (tshift)
+    {
+        delete tshift;
+        tshift = NULL;
+    }
+    if (web_path)
+    {
+        delete web_path;
+        web_path = NULL;
+    }
+    if (roads)
+    {
+        delete roads;
+        roads = NULL;
+    }
+    if (effects)
+    {
+        delete effects;
+        effects = NULL;
+    }
+    if (game)
+    {
+        delete game;
+        game = NULL;
+    }
+    if (scene)
+    {
+        Close();
+        scene->Release();
+        scene = NULL;
+    }
+    if (unknown_68)
+    {
+        delete[] unknown_68;
+        unknown_68 = NULL;
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5405e0
 void C_mission::Close()
