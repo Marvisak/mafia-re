@@ -9,7 +9,10 @@ class C_mission;
 class C_game
 {
 public:
-    uchar unknown_0[0x44];              // 0x0
+    uchar unknown_0[0x40];              // 0x0
+    // While set, G_LoadSaveClass::LanguageSelect(-1) keeps the loaded texts (PS2 0x58)
+    bool unknown_40;                    // 0x40
+    uchar unknown_41[3];                // 0x41
     C_mission *mission;                 // 0x44, the mission that created it (PS2 0x5c)
     uchar unknown_48[0x36ac - 0x48];    // 0x48
 

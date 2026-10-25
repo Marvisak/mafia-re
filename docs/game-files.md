@@ -150,9 +150,9 @@ folders: `game/` sorts them into folders of its own, which `game/CMakeLists.txt`
 | 108 | `5e8d10–5ece6c` | 0x415c | `g_menu.cpp` | `GM_Menu` (PS2 g_menu.cpp): its constructor (`5ea1f0`) and `ExecuteMenu` (`5eba40`); stubs |
 | 109 | `5ece70–5f4b5c` | 0x7cec | | |
 | 110 | `5f4b60–5f6a1c` | 0x1ebc | | |
-| 111 | `5f6a20–604e5c` | 0xe43c | `g_indicators.cpp` | `G_IndicatorsClass` (PS2 g_indicators.cpp): ends with its PC-only Parhelia method (`604a80`); `mafiaIndicators` is `6bf980`; stub |
-| 112 | `604e60–60f5bc` | 0xa75c | `g_loadsave.cpp` | `G_LoadSaveClass` (PS2 g_loadsave.cpp): `Init` (`604ee0`), `Close` (`605030`), `ProfileChange` (`605070`), `SaveGameNewGame` (`605ff0`), `SaveGameLoad` (`606150`), `LanguageSelect` (`607360`), `ExecuteCredits` (`60e710`, `tables\credits.def`), `FreerideSetup` (`60e9d0`), `FreerideSetupAfter` (`60eef0`, Tommy and his car); `mafiaLoadSave` is `6d4628`; stubs |
+| 111 | `5f6a20–604e5c` | 0xe43c | `g_indicators.cpp` | `G_IndicatorsClass` (PS2 g_indicators.cpp): `LanguageSelect` (`5f7000`, `tables\lang_xx.def` into `language_primary`, `6c42c0`, and `lang_cz.def` into `language_credits`, `6c4088`); ends with its PC-only Parhelia method (`604a80`); `mafiaIndicators` is `6bf980`; stub |
+| 112 | `604e60–60f5bc` | 0xa75c | `g_loadsave.cpp` | `G_LoadSaveClass` (PS2 g_loadsave.cpp): `Init` (`604ee0`), `Close` (`605030`), `ProfileChange` (`605070`), `SaveGameNewGame` (`605ff0`), `SaveGameLoad` (`606150`), `LanguageSelect` (`607360`, `tables\textdb_xx.def`), `ExecuteCredits` (`60e710`, `tables\credits.def`), `FreerideSetup` (`60e9d0`), `FreerideSetupAfter` (`60eef0`, Tommy and his car); `mafiaLoadSave` is `6d4628`; stubs |
 | 113 | `60f5c0–60f82c` | 0x26c | | |
 | 114 | `60f830–60f89c` | 0x6c | | |
 | 115 | `60f8a0–60f9fc` | 0x15c | | |
-| 116 | `60fa00–60fc2c` | 0x22c | | |
+| 116 | `60fa00–60fc2c` | 0x22c | `g_textdb.cpp` | `G_TextDatabase` (PS2 g_textdb.cpp): `textDatabase`'s initializer, the constructor (`60fa40`), the destructor, `LoadDatabase` (`60fa60`), `Unload` (`60fb10`), `GetText` (`60fb40`), `GetTextOrNULL` (`60fba0`); `textDatabase` is `6d8714` |
