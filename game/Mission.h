@@ -3,6 +3,8 @@
 #include "Main.h"
 
 class C_game;
+class I3D_driver;
+class I3D_scene;
 
 // The game's video options (the struct's name is ours), the controls of the Audio & Video menu (tables\menu\
 // optionsa.mnu), which give the members their names. main hands each the value setup.exe saved, through a setter that
@@ -33,11 +35,13 @@ struct S_mission_options
     void SetParticles(int level);
 };
 
-// The loaded mission (PS2 Mission.cpp): its scene, actors and game. Only what main uses so far.
+// The loaded mission (PS2 Mission.cpp): its scene, actors and game. Only what main and InitSystem use so far.
 class C_mission
 {
 public:
-    uchar unknown_0[0x24];
+    uchar unknown_0[0x10];
+    I3D_scene *scene;                   // 0x10
+    uchar unknown_14[0x10];
     C_game *game;                       // 0x24 (PS2 0x20)
     uchar unknown_28[0x48];
     int unknown_70;                     // 0x70, cleared after each mission is opened (PS2 0xca0)
@@ -45,6 +49,11 @@ public:
     uchar unknown_78[0x18];
     S_mission_options options;          // 0x90 (PS2 0xcc0)
 
+    C_mission();
+    ~C_mission();
+
+    // Creates the scene and the objects that live as long as the game (the game among them), once
+    void Init(I3D_driver *driver);
     // Opens the mission of that name, a folder in missions\; 0 if it succeeds
     int Open(const char *name, bool, uint, bool);
     void Close();
@@ -57,4 +66,6 @@ public:
     }
 };
 
+// The mission (PS2 main_mission, Main.cpp's), which act_mission points to
+extern C_mission main_mission;
 extern C_mission *act_mission;

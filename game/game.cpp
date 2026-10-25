@@ -3,14 +3,14 @@
 
 #include "game.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5a0810
 void C_game::Init()
 {
-    dbgPrintf("STUB: C_game::Init");
+    StubLog("C_game::Init");
 }
 
 #pragma auto_inline(on)

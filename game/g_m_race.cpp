@@ -3,14 +3,14 @@
 
 #include "racing.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x549b80
 void ExecuteRacingMenu()
 {
-    dbgPrintf("STUB: ExecuteRacingMenu");
+    StubLog("ExecuteRacingMenu");
 }
 
 #pragma auto_inline(on)

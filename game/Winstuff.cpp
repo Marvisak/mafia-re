@@ -1,12 +1,66 @@
 // The startup's Windows helpers, the file at 0x5661f0-0x566f3c (docs/game-files.md); the name is a guess, PS2's
-// Winstuff.cpp, which has no functions left. Written so far: the CD check (WaitForCD, FileExists, CheckCD), whose
-// names are ours. CheckCD's "X:\" is the literal of the drive search before it (0x5662e0), not written yet.
+// Winstuff.cpp, which has no functions left. Written so far: what InitSystem calls (LoadResString, SetWindowIcon,
+// FindGameFile) and the CD check (WaitForCD, FileExists, CheckCD), all names ours. The caches' AddDir that follow are
+// stubs.
 
 #include "Winstuff.h"
+#include "I3D_cache.h"
+#include "stub.h"
 
 #include <stdio.h>
 
 #include "IGraph/IGraph.h"
+
+// FUNCTION: GAME 0x5662a0
+int LoadResString(HINSTANCE hinstance, uint id, char *buffer, int size)
+{
+    return LoadString(hinstance, id, buffer, size);
+}
+
+// FUNCTION: GAME 0x5662c0
+void SetWindowIcon(HINSTANCE hinstance, HWND hwnd)
+{
+    HICON icon = LoadIcon(hinstance, MAKEINTRESOURCE(1));
+    if (icon)
+        SetClassLong(hwnd, GCL_HICON, (LONG)icon);
+}
+
+// The drive's type is asked for and not used, as in CheckCD
+// FUNCTION: GAME 0x5662e0
+bool FindGameFile(const char *name, char *path)
+{
+    strcpy(path, name);
+    HANDLE file = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        CloseHandle(file);
+        return true;
+    }
+    for (int drive = 'C'; drive < 'Z' + 1; drive++)
+    {
+        char file_system[128];
+        char volume[128];
+        DWORD serial, max_length, flags;
+        // STRING: GAME 0x636698
+        strcpy(path, "X:\\");
+        path[0] = drive;
+        GetDriveType(path);
+        if (GetVolumeInformation(path, volume, sizeof(volume), &serial, &max_length, &flags, file_system,
+                sizeof(file_system)))
+        {
+            // STRING: GAME 0x636688
+            sprintf(path, "X:\\MafiaGame\\%s", name);
+            path[0] = drive;
+            file = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+            if (file != INVALID_HANDLE_VALUE)
+            {
+                CloseHandle(file);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 // The call at the loop's top: VC6 keeps a while (true) that leaves through a return unrotated, where a
 // while (!CheckCD()) gets a second call at the bottom
@@ -47,7 +101,6 @@ bool CheckCD()
         char file_system[128];
         char volume[128];
         DWORD serial, max_length, flags;
-        // STRING: GAME 0x636698
         strcpy(path, "X:\\");
         path[0] = drive;
         GetDriveType(path);
@@ -78,3 +131,26 @@ bool CheckCD()
     }
     return false;
 }
+
+// The caches' AddDir (I3D_cache.h) lie at this file's end, after the CD check, though InitSystem is their only caller
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5665a0
+template<> void C_I3D_cache<I3D_model>::AddDir(const char *dir)
+{
+    StubLog("C_I3D_cache<I3D_model>::AddDir %s", dir);
+}
+
+// STUB: GAME 0x5667e0
+template<> void C_I3D_cache<I3D_sound>::AddDir(const char *dir)
+{
+    StubLog("C_I3D_cache<I3D_sound>::AddDir %s", dir);
+}
+
+// STUB: GAME 0x566990
+template<> void C_I3D_cache<I3D_animation_set>::AddDir(const char *dir)
+{
+    StubLog("C_I3D_cache<I3D_animation_set>::AddDir %s", dir);
+}
+
+#pragma auto_inline(on)

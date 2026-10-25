@@ -3,7 +3,7 @@
 
 #include "g_colls.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 // GLOBAL: GAME 0x647f48
 g_collision gifCollision;
@@ -13,7 +13,7 @@ g_collision gifCollision;
 // STUB: GAME 0x5c2b70
 bool g_collision::LoadCollision(const char *name, bool)
 {
-    dbgPrintf("STUB: g_collision::LoadCollision %s", name);
+    StubLog("g_collision::LoadCollision %s", name);
     return false;
 }
 

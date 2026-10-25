@@ -28,3 +28,17 @@ extern S_settings setting;
 extern C_actor *NewMissionActors[2];
 // Set while the intro mission runs
 extern bool _is_intro_;
+
+// The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
+// other vectors of pointers'; the original kept earlier files' copies
+// TEMPLATE: GAME 0x499050
+// std::_Construct
+
+// TEMPLATE: GAME 0x4d2040
+// std::vector<IJoy *,std::allocator<IJoy *> >::_Destroy
+
+// TEMPLATE: GAME 0x563cc0
+// std::vector<IJoy *,std::allocator<IJoy *> >::_Ucopy
+
+// TEMPLATE: GAME 0x59e6d0
+// std::vector<IJoy *,std::allocator<IJoy *> >::_Ufill

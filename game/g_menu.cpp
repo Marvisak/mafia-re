@@ -3,7 +3,7 @@
 
 #include "g_menu.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 #pragma auto_inline(off)
 
@@ -11,21 +11,21 @@
 // STUB: GAME 0x5498f0
 int GM_Menu::OnKey(uchar key, uint)
 {
-    dbgPrintf("STUB: GM_Menu::OnKey");
+    StubLog("GM_Menu::OnKey");
     return 0;
 }
 
 // STUB: GAME 0x5ea1f0
 GM_Menu::GM_Menu()
 {
-    dbgPrintf("STUB: GM_Menu::GM_Menu");
+    StubLog("GM_Menu::GM_Menu");
     flags = 0x10000;
 }
 
 // STUB: GAME 0x5eba40
 int GM_Menu::ExecuteMenu(GM_Menu *menu, bool, bool)
 {
-    dbgPrintf("STUB: GM_Menu::ExecuteMenu %s", menu->OnBeforeCreate());
+    StubLog("GM_Menu::ExecuteMenu %s", menu->OnBeforeCreate());
     // The main menu's quit
     return 0x18;
 }

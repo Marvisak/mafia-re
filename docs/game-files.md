@@ -38,13 +38,13 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | --- | --- | --- | --- | --- |
 | 1 | `401000–40102c` | 0x2c | `__mem_dbg__.cpp`? | no code, only the marker. If the PC's files are in PS2's alphabetical order, this is the first one, the memory debugger a release build compiles out |
 | 2 | `401030–404cdc` | 0x3cac | | |
-| 3 | `404ce0–40938c` | 0x46ac | | |
+| 3 | `404ce0–40938c` | 0x46ac | `C_actor.cpp`? | `InitAnimIndex` (`4086b0`, PS2 C_actor.cpp's), which InitSystem calls; stub |
 | 4 | `409390–40df6c` | 0x4bdc | | |
 | 5 | `40df70–411bdc` | 0x3c6c | | |
 | 6 | `411be0–41234c` | 0x76c | | |
 | 7 | `412350–413d8c` | 0x1a3c | | |
 | 8 | `413d90–41bb4c` | 0x7dbc | | |
-| 9 | `41bb50–42e23c` | 0x126ec | | |
+| 9 | `41bb50–42e23c` | 0x126ec | `C_car.cpp`? | `C_car`'s tables (PS2's names): `LoadMaterials` (`41c7f0`), `LoadParticles` (`41ca80`), `LoadTyres` (`41d480`), which InitSystem calls; most of the uses of the force feedback (`647b28`); stubs |
 | 10 | `42e240–4307cc` | 0x258c | | |
 | 11 | `4307d0–430b9c` | 0x3cc | | |
 | 12 | `430ba0–43286c` | 0x1ccc | | |
@@ -54,7 +54,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 16 | `43bd90–4435ac` | 0x781c | | |
 | 17 | `4435b0–443a2c` | 0x47c | | |
 | 18 | `443a30–44442c` | 0x9fc | | |
-| 19 | `444430–44525c` | 0xe2c | | |
+| 19 | `444430–44525c` | 0xe2c | `C_ff_manager.cpp`? | the force feedback, Main.cpp's `ff_manager` (`647b28`), most likely PS2's C_ff_manager (the cars call its methods; PS2's file sits between the cars' and the scripts' as this one does): its constructor (`444630`) and `Reset` (`4446a0`, our name), which InitSystem calls; written: `Reset` |
 | 20 | `445260–44584c` | 0x5ec | | |
 | 21 | `445850–44602c` | 0x7dc | | |
 | 22 | `446030–446f1c` | 0xeec | | |
@@ -65,7 +65,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 27 | `44c520–459e8c` | 0xd96c | | |
 | 28 | `459e90–460a1c` | 0x6b8c | | |
 | 29 | `460a20–460a4c` | 0x2c | | |
-| 30 | `460a50–47c31c` | 0x1b8cc | | |
+| 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | the scripts (the script language's strings, PS2 C_program.cpp, which is 30th of PS2's files too): `LoadPatchFile` (`460f20`, PC only, our name), which loads patch1.bin to a4.bin for InitSystem; stub |
 | 31 | `47c320–47c53c` | 0x21c | | |
 | 32 | `47c540–48192c` | 0x53ec | | |
 | 33 | `481930–48268c` | 0xd5c | | |
@@ -81,9 +81,9 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 43 | `4d34b0–4df99c` | 0xc4ec | | |
 | 44 | `4df9a0–4eac6c` | 0xb2cc | | |
 | 45 | `4eac70–4efb3c` | 0x4ecc | | |
-| 46 | `4efb40–4f1b4c` | 0x200c | | |
+| 46 | `4efb40–4f1b4c` | 0x200c | `controls.cpp` (our name) | the player's controls, Main.cpp's `controls` (`647c30`, PC only, names ours): its constructor (`4efb40`) and `Init` (`4efde0`), which takes IGraph and the joysticks; stub |
 | 47 | `4f1b50–4f5dbc` | 0x426c | | |
-| 48 | `4f5dc0–4f6a2c` | 0xc6c | | |
+| 48 | `4f5dc0–4f6a2c` | 0xc6c | `console.cpp`? | the console's font (editfont.bmp, fnt_matrix.bin): `ConsolesInit` (`4f6980`, PS2's, a tail call of CreateFontTexture), which InitSystem calls; stub |
 | 49 | `4f6a30–4f6a5c` | 0x2c | | |
 | 50 | `4f6a60–4f802c` | 0x15cc | | |
 | 51 | `4f8030–4f848c` | 0x45c | | |
@@ -95,7 +95,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 57 | `53e4b0–53ef4c` | 0xa9c | | |
 | 58 | `53ef50–53ef7c` | 0x2c | | |
 | 59 | `53ef80–53efac` | 0x2c | | |
-| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545a30`) and `RestoreSettings` (`545ad0`), both PS2's shapes, and the setters of its video options at `+0x90` (`545b20`–`545cb0`); stubs of what `main` calls |
+| 60 | `53efb0–54913c` | 0xa18c | `Mission.cpp`? | `C_mission` (PS2 Mission.cpp): its constructor (`53f010`) and destructor (`53f110`) for Main.cpp's `main_mission` (`647df8`), `Init` (`53f230`, the scene, the game and the mission's objects), `Close` (`5405e0`), `Open` (`5409d0`), `UpdateSettings` (`545a30`) and `RestoreSettings` (`545ad0`), both PS2's shapes, and the setters of its video options at `+0x90` (`545b20`–`545cb0`); stubs of what `main` and InitSystem call (`Init` creates only the scene) |
 | 61 | `549140–549e9c` | 0xd5c | `g_m_race.cpp`? | `ExecuteRacingMenu` (`549b80`), and the copy of `GM_Menu::OnKey` the menus' vtables point to (`5498f0`, most likely a folded one); stub of `ExecuteRacingMenu` |
 | 62 | `549ea0–549ecc` | 0x2c | | |
 | 63 | `549ed0–549efc` | 0x2c | | |
@@ -107,12 +107,12 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 69 | `559980–559ccc` | 0x34c | | |
 | 70 | `559cd0–55cf3c` | 0x326c | | |
 | 71 | `55cf40–55cf9c` | 0x5c | | |
-| 72 | `55cfa0–56040c` | 0x346c | | |
+| 72 | `55cfa0–56040c` | 0x346c | `tools.cpp`? | `C_sound_table` (PS2 tools.cpp): `sound_table` (`646f50`) and `LoadTables` (`55f390`); the logo videos (`55d460`, PC only, `PlayLogo`, our name); stubs |
 | 73 | `560410–5605bc` | 0x1ac | | |
 | 74 | `5605c0–56488c` | 0x42cc | | |
 | 75 | `564890–56615c` | 0x18cc | | |
 | 76 | `566160–5661ec` | 0x8c | `WinMain.cpp` (our name) | only `WinMain` (`566160`): sets the working directory to the executable's folder and calls `main`; written |
-| 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | the startup's Windows helpers: the CD check (`566440`, which Steam's no-CD patch replaces; `a1.dta` in `\MafiaDE`, `\MafiaEN`, `\MafiaSP`, `\MafiaFR`, `\MafiaIT` or the root's `\MafiaGame`), its file test (`566410`) and the loop around it (`5663d0`, "Please insert MAFIA CD 1", also called by `C_mission::Open`), the search of the drives C: to Z: for `\MafiaGame\<file>` (`5662e0`), a `LoadString` wrapper (`5662a0`), the window's icon (`5662c0`) and a message box through IGraph's window (`5661f0`); written: the CD check, its file test and the loop (`CheckCD`, `FileExists`, `WaitForCD`, our names) |
+| 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | the startup's Windows helpers: the CD check (`566440`, which Steam's no-CD patch replaces; `a1.dta` in `\MafiaDE`, `\MafiaEN`, `\MafiaSP`, `\MafiaFR`, `\MafiaIT` or the root's `\MafiaGame`), its file test (`566410`) and the loop around it (`5663d0`, "Please insert MAFIA CD 1", also called by `C_mission::Open`), the search of the drives C: to Z: for `\MafiaGame\<file>` (`5662e0`), a `LoadString` wrapper (`5662a0`), the window's icon (`5662c0`) and a message box through IGraph's window (`5661f0`), then the three caches' `AddDir` (`5665a0`, `5667e0`, `566990`, PS2's `C_I3D_cache<T>`, whose only caller is InitSystem); written: the CD check, its file test and the loop (`CheckCD`, `FileExists`, `WaitForCD`), the drive search, the `LoadString` wrapper and the icon (`FindGameFile`, `LoadResString`, `SetWindowIcon`), all names ours; the `AddDir`s are stubs |
 | 78 | `566f40–5674ec` | 0x5ac | | |
 | 79 | `5674f0–567cec` | 0x7fc | | |
 | 80 | `567cf0–56ad9c` | 0x30ac | | |
@@ -126,7 +126,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 88 | `5983e0–5a075c` | 0x837c | | |
 | 89 | `5a0760–5bcc0c` | 0x1c4ac | `game.cpp`? | `C_game::Init` (`5a0810`, 0x314c bytes; PS2's takes two bools); stub |
 | 90 | `5bcc10–5bcdfc` | 0x1ec | | |
-| 91 | `5bce00–5c25ac` | 0x57ac | `Main.cpp` | PS2's file: the global caches' constructors and destructors first, then most likely `GameLoopSingle` (`5be750`, which `main` runs after loading each mission), `main` (`5bebe0`), the out-of-line copy of `common/settings.h`'s `S_settings` constructor (`5bf520`), `InitSystem` (`5bf5a0`) and `InitErrorMessageBox` (`5bfec0`), which are static and so follow their first caller, `CloseSystem` (`5c0080`), then the cache templates. Between `GameLoopSingle` and `main` the copy of the in-game menu's inline `OnBeforeCreate` (`5beaf0`, "gamemenu"), the video memory overflow callback (`5beb00`, which saves the settings) and a `bool` function that returns false (`5bebd0`, which `GM_MainMenu::OnBeforeCreate` tests); after `main` and its jump table `GM_Carcyclopedia::OnBeforeCreate`'s copy (`5bf510`). `main` written (matches); `InitSystem`, `CloseSystem` and `GameLoopSingle` stubbed |
+| 91 | `5bce00–5c25ac` | 0x57ac | `Main.cpp` | PS2's file: the global caches' constructors and destructors first, then most likely `GameLoopSingle` (`5be750`, which `main` runs after loading each mission), `main` (`5bebe0`), the out-of-line copy of `common/settings.h`'s `S_settings` constructor (`5bf520`), `InitSystem` (`5bf5a0`) and `InitErrorMessageBox` (`5bfec0`), which are static and so follow their first caller, `CloseSystem` (`5c0080`), then the cache templates. Between `GameLoopSingle` and `main` the copy of the in-game menu's inline `OnBeforeCreate` (`5beaf0`, "gamemenu"), the video memory overflow callback (`5beb00`, which saves the settings) and a `bool` function that returns false (`5bebd0`, which `GM_MainMenu::OnBeforeCreate` tests); after `main` and its jump table `GM_Carcyclopedia::OnBeforeCreate`'s copy (`5bf510`). Before `GameLoopSingle` the PC's joystick setup (`5bd5f0`, `InitJoy`, our name) and the scene's callback (`5bd8d0`, which draws the HUD and the menus after the frame). `.bss`: `ff_manager` (`647b28`), `RW_data` (`647be4`, the 14 archives, whose names are the table at `637890`), `joy` (`647c1c`), `controls` (`647c30`), the three caches (`647d80`–`647dd0`), `main_mission` (`647df8`), the drivers (`647ed8`, `647edc`), `igraph`, `setting`, the joystick base (`647f24`). Written: `main`, `InitSystem`, `InitErrorMessageBox`, `InitJoy` and IGraph's error handler (`5beb00`); `SceneCallback`, `CloseSystem` and `GameLoopSingle` stubbed |
 | 92 | `5c25b0–5c283c` | 0x28c | | |
 | 93 | `5c2840–5c503c` | 0x27fc | `g_colls.cpp`? | `g_collision::LoadCollision` (`5c2b70`); its `.bss` most likely holds `gifCollision` (`647f48`); stub |
 | 94 | `5c5040–5c9e6c` | 0x4e2c | | |
@@ -147,7 +147,7 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 109 | `5ece70–5f4b5c` | 0x7cec | | |
 | 110 | `5f4b60–5f6a1c` | 0x1ebc | | |
 | 111 | `5f6a20–604e5c` | 0xe43c | `g_indicators.cpp` | `G_IndicatorsClass` (PS2 g_indicators.cpp): ends with its PC-only Parhelia method (`604a80`); `mafiaIndicators` is `6bf980`; stub |
-| 112 | `604e60–60f5bc` | 0xa75c | `g_loadsave.cpp` | `G_LoadSaveClass` (PS2 g_loadsave.cpp): `ProfileChange` (`605070`), `SaveGameNewGame` (`605ff0`), `SaveGameLoad` (`606150`), `ExecuteCredits` (`60e710`, `tables\credits.def`), `FreerideSetup` (`60e9d0`), `FreerideSetupAfter` (`60eef0`, Tommy and his car); `mafiaLoadSave` is `6d4628`; stubs |
+| 112 | `604e60–60f5bc` | 0xa75c | `g_loadsave.cpp` | `G_LoadSaveClass` (PS2 g_loadsave.cpp): `Init` (`604ee0`), `ProfileChange` (`605070`), `SaveGameNewGame` (`605ff0`), `SaveGameLoad` (`606150`), `LanguageSelect` (`607360`), `ExecuteCredits` (`60e710`, `tables\credits.def`), `FreerideSetup` (`60e9d0`), `FreerideSetupAfter` (`60eef0`, Tommy and his car); `mafiaLoadSave` is `6d4628`; stubs |
 | 113 | `60f5c0–60f82c` | 0x26c | | |
 | 114 | `60f830–60f89c` | 0x6c | | |
 | 115 | `60f8a0–60f9fc` | 0x15c | | |

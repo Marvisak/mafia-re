@@ -3,7 +3,7 @@
 
 #include "racing.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 // GLOBAL: GAME 0x646dbc
 C_racing *CRacing;
@@ -13,13 +13,13 @@ C_racing *CRacing;
 // STUB: GAME 0x551830
 C_racing::C_racing()
 {
-    dbgPrintf("STUB: C_racing::C_racing");
+    StubLog("C_racing::C_racing");
 }
 
 // STUB: GAME 0x551a70
 C_racing::~C_racing()
 {
-    dbgPrintf("STUB: C_racing::~C_racing");
+    StubLog("C_racing::~C_racing");
 }
 
 #pragma auto_inline(on)

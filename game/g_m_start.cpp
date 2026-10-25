@@ -3,35 +3,35 @@
 
 #include "g_m_start.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5e0670
 const char *GM_MainMenu::OnBeforeCreate()
 {
-    dbgPrintf("STUB: GM_MainMenu::OnBeforeCreate");
+    StubLog("GM_MainMenu::OnBeforeCreate");
     return "mainmenu";
 }
 
 // STUB: GAME 0x5e0690
 int GM_MainMenu::OnCreate()
 {
-    dbgPrintf("STUB: GM_MainMenu::OnCreate");
+    StubLog("GM_MainMenu::OnCreate");
     return 0;
 }
 
 // STUB: GAME 0x5e06e0
 int GM_MainMenu::OnClick(uint id)
 {
-    dbgPrintf("STUB: GM_MainMenu::OnClick");
+    StubLog("GM_MainMenu::OnClick");
     return 0;
 }
 
 // STUB: GAME 0x5e4a50
 int GM_MainMenu::OnChange(GM_Component *, GM_Component *)
 {
-    dbgPrintf("STUB: GM_MainMenu::OnChange");
+    StubLog("GM_MainMenu::OnChange");
     return 0;
 }
 

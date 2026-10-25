@@ -3,49 +3,49 @@
 
 #include "g_m_carc.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5d7680
 int GM_Carcyclopedia::OnCreate()
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnCreate");
+    StubLog("GM_Carcyclopedia::OnCreate");
     return 0;
 }
 
 // STUB: GAME 0x5d7ae0
 int GM_Carcyclopedia::OnClose()
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnClose");
+    StubLog("GM_Carcyclopedia::OnClose");
     return 0;
 }
 
 // STUB: GAME 0x5d7b10
 int GM_Carcyclopedia::OnTick(uint time)
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnTick");
+    StubLog("GM_Carcyclopedia::OnTick");
     return 0;
 }
 
 // STUB: GAME 0x5d80c0
 int GM_Carcyclopedia::OnKey(uchar key, uint)
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnKey");
+    StubLog("GM_Carcyclopedia::OnKey");
     return 0;
 }
 
 // STUB: GAME 0x5d8400
 int GM_Carcyclopedia::OnClick(uint id)
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnClick");
+    StubLog("GM_Carcyclopedia::OnClick");
     return 0;
 }
 
 // STUB: GAME 0x5d8450
 int GM_Carcyclopedia::OnMouse(int x, int y, int z, uint, uint)
 {
-    dbgPrintf("STUB: GM_Carcyclopedia::OnMouse");
+    StubLog("GM_Carcyclopedia::OnMouse");
     return 0;
 }
 

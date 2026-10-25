@@ -3,7 +3,7 @@
 
 #include "g_indicators.h"
 
-#include "ls3df.h"
+#include "stub.h"
 
 // GLOBAL: GAME 0x6bf980
 G_IndicatorsClass mafiaIndicators;
@@ -13,7 +13,7 @@ G_IndicatorsClass mafiaIndicators;
 // STUB: GAME 0x604a80
 void G_IndicatorsClass::ParheliaSetCenter(bool center)
 {
-    dbgPrintf("STUB: G_IndicatorsClass::ParheliaSetCenter");
+    StubLog("G_IndicatorsClass::ParheliaSetCenter");
 }
 
 #pragma auto_inline(on)

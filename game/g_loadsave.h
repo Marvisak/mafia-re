@@ -6,6 +6,8 @@
 class G_LoadSaveClass
 {
 public:
+    // Sets up the profiles and the saved games at the start; false is fatal
+    bool Init();
     // The player chose another profile; true to restart the menu with it
     bool ProfileChange();
     void SaveGameNewGame();
@@ -16,6 +18,8 @@ public:
     void FreerideSetup();
     // Finds Tommy and his car in the free ride's mission
     void FreerideSetupAfter();
+    // The game's language, two lowercase letters as a multicharacter constant ('en')
+    void LanguageSelect(uint language);
 };
 
 extern G_LoadSaveClass mafiaLoadSave;

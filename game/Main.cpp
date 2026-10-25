@@ -1,8 +1,10 @@
 // The game's start and its main loop: PS2's Main.cpp (main, InitSystem, CloseSystem, GameLoopSingle,
-// InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main; InitSystem,
-// CloseSystem and GameLoopSingle are stubs.
+// InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem and
+// InitErrorMessageBox, and the PC's InitJoy and GraphErrorHandler; SceneCallback, CloseSystem and GameLoopSingle are
+// stubs.
 // Open: the engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
-// the original's files don't have (docs/game-files.md).
+// the original's files don't have (docs/game-files.md). The .bss names: PS2's isound, driver and the caches' don't give
+// the original's order (driver, isound, igraph, setting), so at least those had other names on the PC.
 
 #include "Main.h"
 #include "Mission.h"
@@ -14,19 +16,93 @@
 #include "g_indicators.h"
 #include "g_colls.h"
 #include "Winstuff.h"
+#include "I3D_cache.h"
+#include "C_actor.h"
+#include "C_car.h"
+#include "C_ff_manager.h"
+#include "C_program.h"
+#include "controls.h"
+#include "console.h"
+#include "tools.h"
 
 #include <settings_registry.h>
 #include <process.h>
+#include <stdio.h>
+#include <vector>
 
 #include "IGraph/IGraph.h"
+#include "I3D/I3D.h"
+#include "ISound/ISound.h"
+#include "ijoy.h"
+#include "rw_data.h"
+#include "stub.h"
 
-// The original's points to the mission object at 0x647df8, in .bss
+// GLOBAL: GAME 0x647df8
+C_mission main_mission;
 // GLOBAL: GAME 0x63788c
-C_mission *act_mission;
+C_mission *act_mission = &main_mission;
+// The game's archives, in the order InitSystem opens them and gives them their keys. a1.dta can stay on the first CD.
+// GLOBAL: GAME 0x637890
+const char *dta_names[14] = {
+    // STRING: GAME 0x637930
+    "a8.dta",
+    // STRING: GAME 0x637928
+    "b8.dta",
+    // STRING: GAME 0x637920
+    "a2.dta",
+    // STRING: GAME 0x637918
+    "a6.dta",
+    // STRING: GAME 0x637910
+    "a0.dta",
+    // STRING: GAME 0x637908
+    "a1.dta",
+    // STRING: GAME 0x637900
+    "a3.dta",
+    // STRING: GAME 0x6378f8
+    "ac.dta",
+    // STRING: GAME 0x6378f0
+    "a4.dta",
+    // STRING: GAME 0x6378e8
+    "aa.dta",
+    // STRING: GAME 0x6378e0
+    "a5.dta",
+    // STRING: GAME 0x6378d8
+    "a7.dta",
+    // STRING: GAME 0x6378d0
+    "a9.dta",
+    // STRING: GAME 0x6378c8
+    "ab.dta",
+};
+// The original's has a dynamic initializer (0x5bd590)
+// GLOBAL: GAME 0x647b28
+C_ff_manager ff_manager;
+// PS2's has 12 archives
+// GLOBAL: GAME 0x647be4
+C_rw_data *RW_data[14];
+// The joysticks InitJoy found (PS2's is a vector<C_Joy *>)
+// GLOBAL: GAME 0x647c1c
+std::vector<IJoy *> joy;
+// The original's has a dynamic initializer (0x5bd450)
+// GLOBAL: GAME 0x647c30
+C_controls controls;
+// The original's three have dynamic initializers
+// GLOBAL: GAME 0x647d80
+C_I3D_anim_cache anim_cache;
+// GLOBAL: GAME 0x647da8
+C_I3D_sound_cache sound_cache;
+// GLOBAL: GAME 0x647dd0
+C_I3D_model_cache model_cache;
+// GLOBAL: GAME 0x647ed8
+I3D_driver *driver;
+// GLOBAL: GAME 0x647edc
+ISND_driver *isound;
 // GLOBAL: GAME 0x647ee0
 IGraph *igraph;
 // GLOBAL: GAME 0x647ee4
 S_settings setting;
+// The name is ours
+// GLOBAL: GAME 0x647f24
+IJoyBase *joy_base;
 // PS2's is initialized data
 // GLOBAL: GAME 0x647f28
 C_actor *NewMissionActors[2] = {NULL, NULL};
@@ -34,16 +110,71 @@ C_actor *NewMissionActors[2] = {NULL, NULL};
 bool _is_intro_ = false;
 
 static bool InitSystem(void *hinstance, bool &fatal);
+static void InitErrorMessageBox(LS3D_RESULT result, int base);
+
+// The joysticks (PC only, the name is ours): every device IJoy finds, with force feedback reset and turned on. Its y
+// axis is inverted only when CreateJoy fails, which leaves the joystick NULL: CreateJoy returns true on success.
+// FUNCTION: GAME 0x5bd5f0
+void InitJoy(HINSTANCE hinstance)
+{
+    if (!CreateJoyBase(&joy_base, hinstance, igraph->GetMainHWND(), NULL, 0))
+        return;
+    int count = joy_base->NumDevices();
+    for (int i = 0; i < count; i++)
+    {
+        IJoy *j;
+        if (!joy_base->CreateJoy(&j, i, 1))
+            j->SetAxisMode(1, JOY_AXIS_INVERT);
+        joy.push_back(j);
+        j->SendFFCommand(JOY_FF_RESET);
+        j->SendFFCommand(JOY_FF_STOP_ALL);
+        j->SendFFCommand(JOY_FF_SET_ACTUATORS_OFF);
+        j->SendFFCommand(JOY_FF_SET_ACTUATORS_ON);
+    }
+}
 
 #pragma auto_inline(off)
+
+// The scene's callback (PC only, the name is ours), after the scene and after the whole frame: at the end of the frame
+// it draws the HUD and the active menu (0x6bd890) over it. The stub logs its first call only.
+// STUB: GAME 0x5bd8d0
+uint __stdcall SceneCallback(SCN_CALLBACK_MESSAGE message, uint param1, uint param2)
+{
+    static bool logged = false;
+    if (!logged)
+    {
+        StubLog("SceneCallback");
+        logged = true;
+    }
+    return 0;
+}
 
 // STUB: GAME 0x5be750
 void GameLoopSingle()
 {
-    dbgPrintf("STUB: GameLoopSingle");
+    StubLog("GameLoopSingle");
 }
 
 #pragma auto_inline(on)
+
+// IGraph's error handler (PC only, the name is ours). Out of video memory, the game saves the settings without true
+// color textures for the next start, says so and quits.
+// FUNCTION: GAME 0x5beb00
+void __cdecl GraphErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const char *message)
+{
+    if (result == I3DERR_OUTOFMEM)
+    {
+        setting.texture_true_color = false;
+        SaveSettings(setting);
+        igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+        igraph->Present();
+        // STRING: GAME 0x637948
+        MessageBox(igraph ? igraph->GetMainHWND() : NULL, "error: #8888\r\nVideo memory overflow...", NULL,
+            MB_ICONERROR);
+        igraph->Close();
+        exit(0);
+    }
+}
 
 // The loop runs the main menu, then what the player chose, until they quit or choose another profile; a new profile
 // restarts it. Each choice that plays a mission opens it, loads its collisions and runs it, and the menu's mission is
@@ -347,20 +478,381 @@ end:
     return 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5bf5a0
+// Starts the engine and loads what the game needs throughout: the archives and their keys, the version check, IGraph,
+// the sound, I3D, the mission's scene, the input, the caches' folders, the tables, the language and the logo videos.
+// False after a message box if something is missing. Once it got that far, fatal is set if the profiles can't be set
+// up; main reads it also after a failure, when it isn't set.
+// The version check and the language are blocks of their own: the language's buffer shares the version's stack slots.
+// Open: from the fatal store on, the code generator's registers are one step on in the rotation from the original's
+// (edx and cl for its ecx and al), and so are those of the version check's failure, which VC6 generates last. A
+// temporary of ours the original doesn't have, most likely in the language's block: initializing the buffer with {0}
+// moves it the other way.
+// FUNCTION: GAME 0x5bf5a0
 static bool InitSystem(void *hinstance, bool &fatal)
 {
-    dbgPrintf("STUB: InitSystem");
-    fatal = false;
-    return false;
+    dtaSetDtaFirstForce();
+    // Unsigned: the loops that count up compare the byte offset VC6 walks with jb
+    uint i;
+    for (i = 0; i < 14; i++)
+        RW_data[i] = dtaCreate(dta_names[i]);
+    char text[512];
+    if (!RW_data[5] && FindGameFile("a1.dta", text))
+        RW_data[5] = dtaCreate(text);
+    // Every archive but b8.dta has to be there
+    for (i = 14; i--;)
+    {
+        if (!RW_data[i] && i != 1)
+        {
+            // STRING: GAME 0x637c3c
+            sprintf(text, "error: #3075\r\nFile  \"%s\"  not found...", dta_names[i]);
+            MessageBox(NULL, text, "Init error", MB_ICONERROR);
+            return false;
+        }
+    }
+
+    if (RW_data[0])
+        RW_data[0]->UnlockPack(0xec45d8ce6a63fa71i64);
+    if (RW_data[1])
+        RW_data[1]->UnlockPack(0xb60f823f79e21cdbi64);
+    if (RW_data[2])
+        RW_data[2]->UnlockPack(0xb6399e191417d340i64);
+    if (RW_data[3])
+        RW_data[3]->UnlockPack(0x5055da68728e2db9i64);
+    if (RW_data[4])
+        RW_data[4]->UnlockPack(0xec48fe177f3d9b74i64);
+    if (RW_data[5])
+        RW_data[5]->UnlockPack(0x0900210ee7375f59i64);
+    if (RW_data[6])
+        RW_data[6]->UnlockPack(0x771f3888a94b8d3ci64);
+    if (RW_data[7])
+        RW_data[7]->UnlockPack(0x771f3888a94b8d3ci64);
+    if (RW_data[8])
+        RW_data[8]->UnlockPack(0x771f3888a94b8d3ci64);
+    if (RW_data[9])
+        RW_data[9]->UnlockPack(0x67da216ed4ad90c6i64);
+    if (RW_data[10])
+        RW_data[10]->UnlockPack(0xea3404204f4bb0c6i64);
+    if (RW_data[11])
+        RW_data[11]->UnlockPack(0xe266fe62f4f03a72i64);
+    if (RW_data[12])
+        RW_data[12]->UnlockPack(0x5b763446959d1117i64);
+    if (RW_data[13])
+        RW_data[13]->UnlockPack(0xec48fe177f3d9b74i64);
+
+    // The data's version against the patch's, two letters each
+    {
+        char version[2] = {'?', '?'};
+        char patch_version[2] = {'?', '?'};
+        // STRING: GAME 0x637ca8
+        int file = dtaOpen("tables\\version.txt", false);
+        if (file != -1)
+        {
+            dtaRead(file, version, 2);
+            dtaClose(file);
+        }
+        // STRING: GAME 0x637c94
+        file = dtaOpen("patch\\version.txt", false);
+        if (file != -1)
+        {
+            dtaRead(file, patch_version, 2);
+            dtaClose(file);
+        }
+        if (patch_version[0] != version[0] || patch_version[1] != version[1])
+        {
+            for (i = 0; i < 14; i++)
+            {
+                if (RW_data[i])
+                {
+                    RW_data[i]->Release();
+                    RW_data[i] = NULL;
+                }
+            }
+            // STRING: GAME 0x637b78
+            sprintf(text, "error: #7453\r\nMaster data:\t'%c%c'\n\rPatch data:\t'%c%c'", version[0], version[1],
+                patch_version[0], patch_version[1]);
+            MessageBox(NULL, text, "Init error", MB_ICONERROR);
+            return false;
+        }
+    }
+
+    // The window at 50, 50 and a child window the size of the screen mode to render into
+    IGRAPH_INIT_DESC desc;
+    memset(&desc, 0, sizeof(desc));
+    desc.adapter = setting.adapter;
+    desc.hinstance = (HINSTANCE)hinstance;
+    desc.error_handler = GraphErrorHandler;
+    SetRect((RECT *)&desc.x, 50, 50, setting.width, setting.height);
+    SetRect(&desc.child_rect, 0, 0, setting.width, setting.height);
+    // IGRAPH_HWTL is set either way. VC6 evaluates the last five terms in the reverse of their order here (the original
+    // evaluates the clipping's first); bpp is assigned after the flags, whose computation loads it last.
+    desc.flags = (setting.multipass_rendering ? IGRAPH_MULTIPASS : 0) |
+        (setting.antialiasing == 4 ? IGRAPH_FSAA4 : 0) | (setting.antialiasing == 2 ? IGRAPH_FSAA2 : 0) |
+        (setting.vsync ? IGRAPH_VSYNC : 0) | (setting.suspend_when_inactive ? IGRAPH_SLEEP : 0) |
+        (setting.triple_buffering ? IGRAPH_TRIPLE_BUFFER : 0) | (setting.fullscreen ? IGRAPH_FULLSCREEN : 0) |
+        (setting.hardware_transform ? IGRAPH_HWTL : 0) | (setting.clip_always ? IGRAPH_CLIP_ALWAYS : 0) |
+        IGRAPH_NO_DEBUG_KEYS | IGRAPH_CHILD_WINDOW | IGRAPH_HWTL;
+    desc.bpp = setting.bit_depth;
+    desc.refresh_rate = setting.refresh_rate;
+    igraph = GetIGraph();
+    if (!igraph)
+    {
+        // STRING: GAME 0x637c64
+        MessageBox(NULL, "error: #4103\r\nIGraph not found...", "Init error", MB_ICONERROR);
+        return false;
+    }
+    LS3D_RESULT result = igraph->Init(&desc);
+    if (result != I3D_OK)
+    {
+        InitErrorMessageBox(result, 4200);
+        return false;
+    }
+    char name[128];
+    LoadResString((HINSTANCE)hinstance, 3, name, 127);
+    igraph->SetAppName(name);
+    igraph->ResetRenderProps();
+    igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    igraph->Present();
+    igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    igraph->Present();
+    igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    igraph->Present();
+    SetWindowIcon((HINSTANCE)hinstance, igraph->GetMainHWND());
+
+    // A sound failure leaves the game without sound
+    if (!setting.disable_sound)
+    {
+        uint speakers = 0;
+        switch (setting.sound_type)
+        {
+        case 0:
+            speakers = ISNDINIT_HEADPHONES;
+            break;
+        case 1:
+            speakers = ISNDINIT_STEREO;
+            break;
+        case 2:
+            speakers = ISNDINIT_QUAD;
+            break;
+        case 3:
+            speakers = ISNDINIT_SURROUND;
+            break;
+        }
+        isound = ISndGetDriver();
+        // 2 isn't one the driver tests. VC6 evaluates the first two terms the other way round.
+        result = isound->Init(igraph->GetMainHWND(), 22050, 2, 16,
+            (setting.disable_eax ? ISNDINIT_NOEAX : 0) | (setting.software_mixing_only ? ISNDINIT_NOHWCHANNELS : 0) |
+            speakers | 2);
+        if (result < I3D_OK)
+        {
+            InitErrorMessageBox(result, 8810);
+            isound = NULL;
+        }
+    }
+
+    driver = I3DGetDriver();
+    result = driver->Init(0);
+    if (result < I3D_OK)
+    {
+        InitErrorMessageBox(result, 5630);
+        return false;
+    }
+    // States 13, 44 to 47, 17 and 25 aren't named yet
+    driver->SetState(RS_FAST_FIND, true);
+    driver->SetState((I3D_RENDERSTATE)13, true);
+    driver->SetState(RS_FOG, true);
+    driver->SetState(RS_ZBIAS_PROJECTOR, 8);
+    driver->SetState(RS_ZBIAS_SHADOW, 8);
+    driver->SetState(RS_USESHADOWS, true);
+    driver->SetState((I3D_RENDERSTATE)44, false);
+    driver->SetState((I3D_RENDERSTATE)45, false);
+    driver->SetState((I3D_RENDERSTATE)46, false);
+    driver->SetState((I3D_RENDERSTATE)47, false);
+    driver->SetState(RS_USE_OCCLUSION, true);
+    driver->SetState((I3D_RENDERSTATE)17, setting.texture_true_color);
+    driver->SetState(RS_LOD_COARSER, setting.texture_low_detail);
+    driver->SetState((I3D_RENDERSTATE)25, setting.texture_compressed);
+    driver->SetState(RS_LMTRUECOLOR, setting.lightmap_true_color);
+    driver->SetState(RS_MIPMAP, 2);
+    igraph->SetState(DXS_ALPHAREF, 200);
+    driver->SetState(RS_LOD_COARSER, setting.texture_low_detail);
+    act_mission->Init(driver);
+    act_mission->scene->SetCallback(SceneCallback, 1 << SCN_CALLBACK_POST_SCENE | 1 << SCN_CALLBACK_POST_RENDER);
+    igraph->KeyboardInit(1);
+    igraph->MouseInit(1);
+    ShowCursor(FALSE);
+    InitJoy((HINSTANCE)hinstance);
+    controls.Init(igraph, joy.begin(), joy.size());
+    ff_manager.Reset();
+
+    // STRING: GAME 0x637c34
+    igraph->AddMapsDir("Maps", false);
+    // STRING: GAME 0x637c2c
+    model_cache.AddDir("Models");
+    // STRING: GAME 0x637c24
+    sound_cache.AddDir("Sounds");
+    // STRING: GAME 0x637c1c
+    anim_cache.AddDir("Anims");
+    ConsolesInit();
+    C_car::LoadTyres();
+    C_car::LoadMaterials();
+    C_car::LoadParticles();
+    // STRING: GAME 0x637c0c
+    LoadPatchFile("patch\\a1.bin");
+    // STRING: GAME 0x637bfc
+    LoadPatchFile("patch\\a2.bin");
+    // STRING: GAME 0x637bec
+    LoadPatchFile("patch\\a3.bin");
+    // STRING: GAME 0x637bdc
+    LoadPatchFile("patch\\a4.bin");
+    InitAnimIndex();
+    // STRING: GAME 0x637bc8
+    sound_table.LoadTables("tables\\sounds.dat");
+
+    // The language is the data's version, two letters: their swapped bytes make the multicharacter constant. The
+    // uppercase test subtracts 0x20 where lowercasing adds it.
+    {
+        int file = dtaOpen("tables\\version.txt", false);
+        if (file != -1)
+        {
+            char language[4] = {0, 0, 0, 0};
+            if (dtaRead(file, language, 2) == 2)
+            {
+                if (language[0] >= 'A' && language[0] <= 'Z')
+                    language[0] -= 0x20;
+                if (language[1] >= 'A' && language[1] <= 'Z')
+                    language[1] -= 0x20;
+                language[2] = language[0];
+                language[0] = language[1];
+                language[1] = language[2];
+                language[2] = 0;
+                mafiaLoadSave.LanguageSelect(*(uint *)language);
+            }
+            else
+                mafiaLoadSave.LanguageSelect('en');
+            dtaClose(file);
+        }
+        else
+            mafiaLoadSave.LanguageSelect('en');
+    }
+
+    // STRING: GAME 0x637bc0
+    PlayLogo("logo1", 800.0f, 600.0f);
+    // STRING: GAME 0x637bb8
+    PlayLogo("logo3", 800.0f, 600.0f);
+    // STRING: GAME 0x637bb0
+    PlayLogo("logo2", 704.0f, 400.0f);
+    fatal = !mafiaLoadSave.Init();
+    return true;
 }
+
+// The message box of an engine error at the start: the error's text and a number, the error code's low word plus the
+// caller's base. The unknown error's format has no %.
+// FUNCTION: GAME 0x5bfec0
+static void InitErrorMessageBox(LS3D_RESULT result, int base)
+{
+    char text[128];
+    int code = (result & 0xffff) + base;
+    switch (result)
+    {
+    case I3DERR_NOFILE:
+        // STRING: GAME 0x637f40
+        sprintf(text, "error: #%i\r\nNo file...", code);
+        break;
+    case I3DERR_OUTOFMEM:
+        // STRING: GAME 0x637f20
+        sprintf(text, "error: #%i\r\nOut of memory...", code);
+        break;
+    case I3DERR_BADTEXTUREFORMAT:
+        // STRING: GAME 0x637efc
+        sprintf(text, "error: #%i\r\nBad texture format...", code);
+        break;
+    case I3DERR_BADTEXTURE:
+        // STRING: GAME 0x637ee0
+        sprintf(text, "error: #%i\r\nBad texture...", code);
+        break;
+    case I3DERR_GENERIC:
+        // STRING: GAME 0x637ec8
+        sprintf(text, "error: #%i\r\nGeneric...", code);
+        break;
+    case I3DERR_OBJECTNOTFOUND:
+        // STRING: GAME 0x637ea8
+        sprintf(text, "error: #%i\r\nObject not found...", code);
+        break;
+    case I3DERR_INVALIDPARAMS:
+        // STRING: GAME 0x637e88
+        sprintf(text, "error: #%i\r\nInvalid param...", code);
+        break;
+    case I3DERR_NOTLOADED:
+        // STRING: GAME 0x637e6c
+        sprintf(text, "error: #%i\r\nNot loaded...", code);
+        break;
+    case I3DERR_NOTINITIALIZED:
+        // STRING: GAME 0x637e4c
+        sprintf(text, "error: #%i\r\nNot initialized...", code);
+        break;
+    case I3DERR_FILECORRUPTED:
+        // STRING: GAME 0x637e2c
+        sprintf(text, "error: #%i\r\nFile corupted...", code);
+        break;
+    case I3DERR_NOFILE1:
+        // STRING: GAME 0x637e10
+        sprintf(text, "error: #%i\r\nNo file 1...", code);
+        break;
+    case I3DERR_CYCLICLINK:
+        // STRING: GAME 0x637df4
+        sprintf(text, "error: #%i\r\nCyclic link...", code);
+        break;
+    case I3DERR_CANCELED:
+        // STRING: GAME 0x637ddc
+        sprintf(text, "error: #%i\r\nCanceled...", code);
+        break;
+    case I3DERR_UNSUPPORTED:
+        // STRING: GAME 0x637dc0
+        sprintf(text, "error: #%i\r\nUnsupported...", code);
+        break;
+    case I3DERR_NO3DHARDWARE:
+        // STRING: GAME 0x637da0
+        sprintf(text, "error: #%i\r\nNo 3D hardware...", code);
+        break;
+    case I3DERR_BUFFERLOST:
+        // STRING: GAME 0x637d84
+        sprintf(text, "error: #%i\r\nBuffer lost...", code);
+        break;
+    case I3DERR_USERBREAK:
+        // STRING: GAME 0x637d68
+        sprintf(text, "error: #%i\r\nUser break...", code);
+        break;
+    case I3DERR_FILESYSTEM:
+        // STRING: GAME 0x637d44
+        sprintf(text, "error: #%i\r\nFile system error...", code);
+        break;
+    case I3DERR_BADVERSION:
+        // STRING: GAME 0x637d24
+        sprintf(text, "error: #%i\r\nBad file version...", code);
+        break;
+    case I3DERR_BADTIMESTAMP:
+        // STRING: GAME 0x637d04
+        sprintf(text, "error: #%i\r\nBad file time...", code);
+        break;
+    case I3DERR_LIMITEXCEEDED:
+        // STRING: GAME 0x637ce8
+        sprintf(text, "error: #%i\r\nOut of limit...", code);
+        break;
+    default:
+        // STRING: GAME 0x637cbc
+        sprintf(text, "error: 0x08X\r\nUnknown graph init error...", result);
+        break;
+    }
+    // STRING: GAME 0x637c88
+    MessageBox(NULL, text, "Init error", MB_ICONERROR);
+}
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5c0080
 void CloseSystem()
 {
-    dbgPrintf("STUB: CloseSystem");
+    StubLog("CloseSystem");
 }
 
 #pragma auto_inline(on)
