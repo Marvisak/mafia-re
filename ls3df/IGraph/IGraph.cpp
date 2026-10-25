@@ -1,6 +1,8 @@
 // The graphics interface (PS2 IGraph.cpp): the window, Direct3D 8, DirectInput 8 and the timer, at
 // 0x1006bd40-0x10073398 in the original. The file defines all of IGraph's globals; the header's zero vector has its
-// $E in the middle (0x1006deb0, after WindowProc; ours comes before it: see tools/autopch.py).
+// $E in the middle (0x1006deb0, after WindowProc; ours comes before it: see tools/autopch.py). The copies of C_str's
+// inline functions (common/C_str.h) come after Init's SortModesCallback (from 0x1006fe20), ours earlier: the
+// constructor after GetMainHWND, Release after GetAppName, operator[] after ResetRenderProps.
 //
 // The .bss: VC6's hash (tools/bsshash.py) puts the PS2 names at their PC addresses, so the PC's names are the PS2
 // ones where a PS2 name fits; the PC-only globals' names are guesses. The globals initialized to zero follow, in

@@ -47,14 +47,18 @@ targets:
       sha256: 4e7441a927ccc7e7609c11ff6f829bf236c98360e392201611b348300a31fc2d
   LS3DF:
     filename: LS3DF.dll
-    source_root: ls3df
+    source_root:
+      - ls3df
+      - common
     hash:
       sha256: e211c85009440d6c032f2074d79184f074a9a046574648745c2594b4cef178a6
     data_sources:
       - ls3df/sizes.csv
   LS3DF11:
     filename: LS3DF.1.1.dll
-    source_root: ls3df
+    source_root:
+      - ls3df
+      - common
     hash:
       sha256: fca408b2d123d6de7b9b144041a19f7e1acdc3727def04b1965eed9d542e5f3e
     data_sources:

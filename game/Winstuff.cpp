@@ -1,11 +1,9 @@
 // The startup's Windows helpers, the file at 0x5661f0-0x566f3c (docs/game-files.md); the name is a guess, PS2's
 // Winstuff.cpp, which has no functions left. Written so far: what InitSystem calls (LoadResString, SetWindowIcon,
-// FindGameFile) and the CD check (WaitForCD, FileExists, CheckCD), all names ours. The caches' AddDir that follow are
-// stubs.
+// FindGameFile) and the CD check (WaitForCD, FileExists, CheckCD), all names ours, and the caches' AddDir that follow.
 
 #include "Winstuff.h"
 #include "I3D_cache.h"
-#include "stub.h"
 
 #include <stdio.h>
 
@@ -132,25 +130,12 @@ bool CheckCD()
     return false;
 }
 
-// The caches' AddDir (I3D_cache.h) lie at this file's end, after the CD check, though InitSystem is their only caller
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5665a0
-template<> void C_I3D_cache<I3D_model>::AddDir(const char *dir)
+// The caches' AddDir (I3D_cache.h) lie at this file's end, after the CD check, with the C_str helpers they are the first
+// to need, though InitSystem is their only caller: something here called them, which the linker dropped. This stand-in,
+// which the linker drops too, has VC6 compile them here (it ignores explicit instantiations of member functions).
+void AddCacheDirs(const char *dir)
 {
-    StubLog("C_I3D_cache<I3D_model>::AddDir %s", dir);
+    model_cache.AddDir(dir);
+    sound_cache.AddDir(dir);
+    anim_cache.AddDir(dir);
 }
-
-// STUB: GAME 0x5667e0
-template<> void C_I3D_cache<I3D_sound>::AddDir(const char *dir)
-{
-    StubLog("C_I3D_cache<I3D_sound>::AddDir %s", dir);
-}
-
-// STUB: GAME 0x566990
-template<> void C_I3D_cache<I3D_animation_set>::AddDir(const char *dir)
-{
-    StubLog("C_I3D_cache<I3D_animation_set>::AddDir %s", dir);
-}
-
-#pragma auto_inline(on)

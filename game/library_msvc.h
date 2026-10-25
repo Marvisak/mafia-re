@@ -119,6 +119,9 @@
 // LIBRARY: GAME 0x610760 SYMBOL
 // _strrchr
 
+// LIBRARY: GAME 0x61097d SYMBOL
+// __vsnprintf
+
 // LIBRARY: GAME 0x6109d0 SYMBOL
 // __ftol
 

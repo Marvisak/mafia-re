@@ -3,9 +3,9 @@
 // functions of the weather's structures, and of the scene's inline functions, the linker kept. Names are the PS2
 // build's unless noted. 1.1's SetAnimTime leaves last_time; its weather's vertex buffer has 1.1's own Lock and m_Free
 // (VBManager.h).
-// - /YX (tools/autopch.py): the header's zero vector has its $E after SetBackdropRange (0x1004a860), ours after
-//   DeleteShadow, and the copies of the class's in-class functions come at the file's end, ours after GetAnimBlend: the
-//   original's headers have more inline code before them.
+// - /YX (tools/autopch.py): the header's zero vector has its $E after SetBackdropRange (0x1004a860), ours after Close,
+//   and the copies of the class's in-class functions come at the file's end, ours after GetAnimBlend: the original's
+//   headers have more inline code before them.
 // - .bss: the function-local statics' names are guesses that don't hash into the original's order (see I3D.h).
 #include "I3D/I3D.h"
 #include "I3D/render/IBManager.h"

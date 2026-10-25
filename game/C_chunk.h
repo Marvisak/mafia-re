@@ -202,9 +202,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QBEIXZ
-
-// The engine's C_str::operator=(const char *) (ls3df.h), which ReadString calls out of line: the original kept the copy
-// of the range at 0x401030 (docs/game-files.md)
-// LIBRARY: GAME 0x4033d0
-// ??4C_str@@QAEAAV0@PBD@Z
+// ?size@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QBEIXZ
