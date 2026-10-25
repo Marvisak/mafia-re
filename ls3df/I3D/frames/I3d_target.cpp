@@ -2,7 +2,7 @@
 // in PS2's order, the destructor after the constructor. The header's zero vector has its $E at the end (0x1005a120).
 // Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // <new> declares operator delete throw(), so VC6 sets no EH state before the frame list's destructor in the target's
 #include <new>

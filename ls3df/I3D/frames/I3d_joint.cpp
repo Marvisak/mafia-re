@@ -2,7 +2,7 @@
 // the destructor after the constructor. The header's zero vector has its $E at the end (0x1001ef40). Names are the PS2
 // build's unless noted.
 #include "I3D/I3D.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // The bone matrix's diagonal is a chain, stored from the right
 // FUNCTION: LS3DF 0x1001ed30

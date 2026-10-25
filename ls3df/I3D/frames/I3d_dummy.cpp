@@ -3,7 +3,7 @@
 // after it comes the copy of the frame's inline UpdateMatrix the linker kept (see tools/autopch.py). Names are the PS2
 // build's unless noted.
 #include "I3D/I3D.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // FUNCTION: LS3DF 0x1001a1e0
 // FUNCTION: LS3DF11 0x10019d00

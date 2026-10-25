@@ -5,7 +5,7 @@
 // loader: load4ds.cpp's LoadImage and LoadShadowImage, Load5ds.cpp's LoadAnimation5ds.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
-#include "dta.h"
+#include "rw_data.h"
 
 #include <mmsystem.h>
 #include <string.h>

@@ -2,7 +2,7 @@
 // header's zero vector's $E (0x10061970). Load.cpp's LoadAnimation calls it. Names are the PS2 build's.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
-#include "dta.h"
+#include "rw_data.h"
 
 #include <string.h>
 

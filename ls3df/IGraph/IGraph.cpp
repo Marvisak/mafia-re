@@ -10,7 +10,7 @@
 #include "I3D/render/IBManager.h"
 #include "I3D/render/VBManager.h"
 #include "ISound/ISound.h"
-#include "dta.h"
+#include "rw_data.h"
 
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
@@ -1749,7 +1749,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     }
 
     // What the card can't do, by its caps and by its make
-    if (m_InitDesc.flags & 0x8000)
+    if (m_InitDesc.flags & IGRAPH_CLIP_ALWAYS)
         m_ProblemFlags |= 2;
     if (caps.MaxSimultaneousTextures < 2) {
         m_ProblemFlags |= 0xe;
@@ -2741,7 +2741,7 @@ void IGraph::KeyboardClose()
 }
 
 // Reads the keys, acquiring the keyboard again if it was lost. Ctrl+Alt+Shift+F12 switches the frame rate on or off
-// (and F11 another switch) unless the game sets 0x10000.
+// (and F11 another switch) unless the game sets IGRAPH_NO_DEBUG_KEYS.
 // FUNCTION: LS3DF 0x100717f0
 // FUNCTION: LS3DF11 0x1006e880
 LS3D_RESULT IGraph::UpdateKeyboardData()
@@ -2757,7 +2757,7 @@ LS3D_RESULT IGraph::UpdateKeyboardData()
             memset(m_KeyboardData, 0, sizeof(m_KeyboardData));
             return I3D_OK;
         }
-    } else if (!(m_InitDesc.flags & 0x10000) && (m_KeyboardData[DIK_LSHIFT] & 0x80) &&
+    } else if (!(m_InitDesc.flags & IGRAPH_NO_DEBUG_KEYS) && (m_KeyboardData[DIK_LSHIFT] & 0x80) &&
             (m_KeyboardData[DIK_LMENU] & 0x80) && (m_KeyboardData[DIK_LCONTROL] & 0x80)) {
         if ((m_KeyboardData[DIK_F12] & 0x80) && !(m_OldKeyboardData[DIK_F12] & 0x80))
             m_ShowFPS = !m_ShowFPS;

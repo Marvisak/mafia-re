@@ -165,6 +165,8 @@ enum {
     IGRAPH_FSAA2 = 0x1000,              // full scene antialiasing with 2 samples
     IGRAPH_FSAA4 = 0x2000,              // with 4 samples
     IGRAPH_MULTIPASS = 0x4000,          // one texture per pass (Init sets it for cards that need it)
+    IGRAPH_CLIP_ALWAYS = 0x8000,        // every visual is clipped (setup's "clip always")
+    IGRAPH_NO_DEBUG_KEYS = 0x10000,     // Ctrl+Alt+Shift+F12 and F11 switch nothing
     IGRAPH_RENDER_THREAD = 0x100000,    // Present counts frames for a thread the engine suspends while sleeping
 };
 

@@ -3,7 +3,7 @@
 // EnumFrames (see tools/autopch.py). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
-#include "dta.h"
+#include "rw_data.h"
 
 #include <ctype.h>
 #include <stdio.h>

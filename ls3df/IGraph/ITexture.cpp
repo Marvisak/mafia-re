@@ -8,7 +8,7 @@
 // loop advances the out index once after its if.
 #include "IGraph/IGraph.h"
 #include "S3TC/s3_intrf.h"
-#include "dta.h"
+#include "rw_data.h"
 
 #include <stdlib.h>
 

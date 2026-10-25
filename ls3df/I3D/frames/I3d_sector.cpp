@@ -5,7 +5,7 @@
 // Open: the original's .data has two 4-byte items of this file that nothing references and ours lacks, an int 1 after
 // SetName's buffer (0x100a8720) and a zero among Duplicate's messages (0x100a883c, where an empty string would go).
 #include "I3D/I3D.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // <new> declares operator delete throw(), so VC6 sets no EH state before the lists' destructors in the sector's
 #include <new>

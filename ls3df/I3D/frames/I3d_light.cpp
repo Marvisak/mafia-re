@@ -2,7 +2,7 @@
 // specular, ambient and attenuation setters and SetFogRange. The header's zero vector has its $E at the end
 // (0x10021550). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // <new> declares operator delete throw(), so VC6 sets no EH state before the sector list's destructor in the light's
 #include <new>

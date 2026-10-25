@@ -1,6 +1,6 @@
 // The whole DLL is a single translation unit (PS2: __sinit_rw_data.cpp), the functions are in the same order as in the binary.
 // The binary was compiled with /Gz, so every free function is __stdcall.
-#include "rw_data.h"
+#include "rw_data_inter.h"
 
 // VC6 lays out the uninitialized globals by the hash bucket of their names (tools/bsshash.py):
 // v_file_h 144, C_l_d 231, C_m_p 259, v_handle 373, unreferenced_buffer 727. dta_first_force is zero-initialized,
@@ -37,7 +37,7 @@ static inline int GetFirstIndex(int handle_index, uint hash);
 static inline int Decompression(uchar *buffer, uchar *dest, uint len);
 
 // FUNCTION: RWDATA 0x10001170
-LPC_rw_data_inter EXPORT dtaCreate(const char *file_name)
+LPC_rw_data EXPORT dtaCreate(const char *file_name)
 {
     C_m_p.Lock();
     bool is_valid_dta_file = false;
@@ -646,7 +646,7 @@ bool EXPORT dtaDelete(const char *file_name)
 // the same instructions can still swap two reloads. tools/framelayout.py models VC6's slot rules and predicts this
 // frame from a /FAs listing.
 // FUNCTION: RWDATA 0x100025c0
-uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
+uint EXPORT dtaRead(int handle, void *buffer, uint len)
 {
     C_m_p.Lock();
     // Four separate checks, as in the PS2 build. Written as `a || b`, the failure block becomes a jump target and VC6
@@ -957,7 +957,7 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
 
                 if (file_buffer[0] == 1)
                 {
-                    block_size = Decompression(file_buffer, buffer + result, compressed_block_size);
+                    block_size = Decompression(file_buffer, (uchar *)buffer + result, compressed_block_size);
                 }
                 else if (file_buffer[0] >= 8)
                 {
@@ -965,11 +965,11 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     {
                         DeCrypt(file_buffer + 1, sizeof(S_WAVHEADER), v_file_h[handle].key);
                     }
-                    block_size = WavDecompression(file_buffer, buffer + result, compressed_block_size, v_file_h[handle].wav_header);
+                    block_size = WavDecompression(file_buffer, (uchar *)buffer + result, compressed_block_size, v_file_h[handle].wav_header);
                 }
                 else
                 {
-                    memcpy(buffer + result, file_buffer + 1, compressed_block_size - 1);
+                    memcpy((uchar *)buffer + result, file_buffer + 1, compressed_block_size - 1);
                     block_size = compressed_block_size - 1;
                 }
 
@@ -1034,7 +1034,7 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     block_size = compressed_block_size - 1;
                 }
 
-                memcpy(buffer + result, block_content, remaining_bytes);
+                memcpy((uchar *)buffer + result, block_content, remaining_bytes);
                 file_pointer += remaining_bytes;
                 block_file_pointer = remaining_bytes;
                 result += remaining_bytes;
@@ -1112,7 +1112,7 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
             // More than one block left: read straight into the caller's buffer, otherwise go through the block cache
             if (len >= block_size)
             {
-                if (!ReadFile(file, buffer + result, len, &bytes_read, NULL))
+                if (!ReadFile(file, (uchar *)buffer + result, len, &bytes_read, NULL))
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -1139,7 +1139,7 @@ uint EXPORT dtaRead(int handle, uchar *buffer, uint len)
                     return -1;
                 }
 
-                memcpy(buffer + result, block_content, len);
+                memcpy((uchar *)buffer + result, block_content, len);
                 result += len;
                 file_pointer += len;
                 block_file_pointer = len;
@@ -1452,7 +1452,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
 }
 
 // FUNCTION: RWDATA 0x10003f50
-int EXPORT dtaWrite(int handle, const uchar *buffer, uint len)
+int EXPORT dtaWrite(int handle, const void *buffer, uint len)
 {
     C_m_p.Lock();
     if (handle >= v_file_h.size())
@@ -1511,7 +1511,7 @@ int EXPORT dtaWrite(int handle, const uchar *buffer, uint len)
 }
 
 // FUNCTION: RWDATA 0x10004040
-bool EXPORT dtaGetTime(int handle, ulong *time, bool force_check_from_file)
+bool EXPORT dtaGetTime(int handle, FILETIME *time, bool force_check_from_file)
 {
     C_m_p.Lock();
 
@@ -1531,12 +1531,12 @@ bool EXPORT dtaGetTime(int handle, ulong *time, bool force_check_from_file)
     {
         // Creation and last access time, unused. An array: two separate locals get the opposite stack slots
         FILETIME file_times[2];
-        bool success = GetFileTime(v_file_h[handle].file, &file_times[0], &file_times[1], (LPFILETIME)time) != 0;
+        bool success = GetFileTime(v_file_h[handle].file, &file_times[0], &file_times[1], time) != 0;
         C_m_p.Unlock();
         return success;
     }
 
-    *time = v_file_h[handle].timestamp;
+    *(ulong *)time = v_file_h[handle].timestamp;
     C_m_p.Unlock();
     return true;
 }

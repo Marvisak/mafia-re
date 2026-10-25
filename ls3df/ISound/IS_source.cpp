@@ -2,7 +2,7 @@
 // DirectSound buffer, which the sounds playing it duplicate. After the last function comes the header's zero vector
 // (see IS_driver.cpp).
 #include "ISound/ISound.h"
-#include "dta.h"
+#include "rw_data.h"
 
 // The chunks of a WAV file
 struct S_riff_header {

@@ -80,8 +80,8 @@ add_library(${engine} SHARED
 )
 # The export directory names the DLL
 set_target_properties(${engine} PROPERTIES OUTPUT_NAME LS3DF)
-# Every file includes ls3df.h, and a header from another folder by its folder (I3D/I3D.h)
-target_include_directories(${engine} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Every file includes ls3df.h, and a header from another folder by its folder (I3D/I3D.h); rw_data.h is rw_data's own
+target_include_directories(${engine} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/rw_data)
 
 # The DirectX 8.1 SDK: its d3d8.lib, dinput8.lib and dsound.lib import objects (Implib700 9210) and its dxguid.lib
 # and dinput8.lib data objects (Utc13 9178) are in the Rich header. Its headers come before the compiler's own, which
@@ -133,7 +133,7 @@ if (MSVC_VERSION EQUAL 1200)
 
     # The original's order. Its import directory lists the libraries in the order they were searched: KERNEL32, USER32,
     # GDI32, ole32, d3d8, DINPUT8, DSOUND, WINMM and vorbisfile from the command line, then rw_data and binkw32, which
-    # dta.h and IShow.cpp ask for. Its code after the engine has d3d8's thunk, dxerr8, dinput8's thunk and data formats,
+    # rw_data.h and IShow.cpp ask for. Its code after the engine has d3d8's thunk, dxerr8, dinput8's thunk and data formats,
     # S3TC, dsound's thunk, the base classes, then vorbisfile's thunks; its constant data dinput8's data formats,
     # dxguid's GUIDs, S3TC's literals, eaxguid's GUIDs, then strmiids'. oleaut32 is for the base classes' wxutil object,
     # whose BSTR helpers nothing calls: /OPT:REF drops them and the import (LNK4089), as in the original, which doesn't
@@ -160,12 +160,12 @@ if (LS3DF_1_1)
     target_compile_definitions(${engine} PRIVATE ENGINE_VERSION=393)
 endif()
 
-# rw_data.lib, which dta.h names, is our rw_data target's import library, and binkw32.lib, which IShow.cpp names, the
+# rw_data.lib, which rw_data.h names, is our rw_data target's import library, and binkw32.lib, which IShow.cpp names, the
 # binkw32 target's
 add_dependencies(${engine} rw_data binkw32)
 target_link_directories(${engine} PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data> $<TARGET_LINKER_FILE_DIR:binkw32>)
 
-vc6_header_dependencies(${engine})
+vc6_header_dependencies(${engine} ${CMAKE_SOURCE_DIR}/rw_data)
 
 # IShow.cpp includes the base classes' streams.h (below)
 set_property(SOURCE IGraph/IShow.cpp APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/BaseClasses)
