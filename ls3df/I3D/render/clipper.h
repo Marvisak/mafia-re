@@ -26,6 +26,13 @@ struct S_clip_vertex {
 #define CLIP_NEAR 0x10                  // z < 0
 #define CLIP_FAR 0x20                   // z > 1
 
+// The clipper's arrays (ReserveClipArrays, ClipFacegroups; the names are guesses): 512 to 65000 vertices, and 128 to
+// 32000 faces in each of the two lists
+#define CLIP_MIN_VERTICES 512
+#define CLIP_MAX_VERTICES 65000
+#define CLIP_MIN_FACES 128
+#define CLIP_MAX_FACES 32000
+
 // A single mesh's or single morph's vertex (I3D.h)
 struct S_clip_sm_vertex;
 

@@ -66,6 +66,7 @@ void G_LoadSaveClass::LanguageSelect(uint language)
     char name[32];
     // STRING: GAME 0x639640
     strcpy(name, "tables\\textdb_xx.def");
+    // Its two letters in place of the "xx"
     name[14] = language >> 8;
     name[15] = language;
     textDatabase.LoadDatabase(name);

@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "IGraph/IGraph.h"
+#include "res/resource.h"
 
 // FUNCTION: GAME 0x5662a0
 int LoadResString(HINSTANCE hinstance, uint id, char *buffer, int size)
@@ -18,7 +19,7 @@ int LoadResString(HINSTANCE hinstance, uint id, char *buffer, int size)
 // FUNCTION: GAME 0x5662c0
 void SetWindowIcon(HINSTANCE hinstance, HWND hwnd)
 {
-    HICON icon = LoadIcon(hinstance, MAKEINTRESOURCE(1));
+    HICON icon = LoadIcon(hinstance, MAKEINTRESOURCE(IDI_MAFIA));
     if (icon)
         SetClassLong(hwnd, GCL_HICON, (LONG)icon);
 }

@@ -149,6 +149,23 @@ typedef void __cdecl t_error_handler(LS3D_RESULT result, E_SEVERITY severity, co
 #define SKEY_SHIFT 1
 #define SKEY_CTRL 4
 #define SKEY_ALT 8
+// And the left and right keys' own bits (the names are guesses)
+#define SKEY_LSHIFT 0x20
+#define SKEY_RSHIFT 0x40
+#define SKEY_LCTRL 0x80
+#define SKEY_RCTRL 0x100
+#define SKEY_LALT 0x200
+#define SKEY_RALT 0x400
+
+// IGraph::KeyboardInit's flags (the names are guesses)
+#define KBINIT_EXCLUSIVE 0x1            // DISCL_EXCLUSIVE
+#define KBINIT_WINMESSAGES 0x2          // ReadKey's keys come from the window messages (ProcessWinMessages)
+
+// The mouse's modes, which IGraph::MouseInit sets and m_MouseMode keeps (the names are guesses)
+#define MOUSEMODE_NONE (-1)             // none set (not initialized, or closed); MouseInit(MOUSEMODE_NONE) only
+                                        // returns the current mode
+#define MOUSEMODE_CURSOR 0              // the cursor's position, not exclusive
+#define MOUSEMODE_EXCLUSIVE 1           // relative movement, exclusive
 
 // IGRAPH_INIT_DESC::flags (names guessed)
 enum {
@@ -186,10 +203,10 @@ struct IGRAPH_INIT_DESC {
 
 // The render states IGraph::SetState and GetState keep (PS2 type DX_STATE; the value names are guesses)
 enum DX_STATE {
-    DXS_ALPHA,                          // 0 none, 1 blend and test, 2 blend and test (ref 0), 3 test (the alpha ref)
-    DXS_BLEND,                          // 0 alpha, 1 additive alpha, 2 additive, 3 multiply, 4 multiply by source
+    DXS_ALPHA,                          // ALPHASTATE_* (ls3df.h)
+    DXS_BLEND,                          // BLENDSTATE_* (ls3df.h)
     DXS_CLIPPING,
-    DXS_CULL,                           // a D3DCULL, or 3 for IGraph's own cull mode
+    DXS_CULL,                           // a D3DCULL, D3DCULL_CCW standing for m_CullMode (which the mirrors flip)
     DXS_COLOROP,                        // D3DTOP of stages 0, 1, 2
     DXS_COLOROP1,
     DXS_COLOROP2,
@@ -241,7 +258,7 @@ struct LS3DGAMMARAMP {
 struct S_tga_header {
     char id_length;
     char color_map_type;
-    char type;
+    char type;                          // TGA_TYPE_*
     short cm_index;
     short cm_length;
     char cm_entry_size;
@@ -257,6 +274,19 @@ enum {
     UL_TGA_LR = 0x10,                   // the rows run right to left
     UL_TGA_BT = 0x20,                   // the first row is the top one
 };
+
+// S_tga_header::type: the only one the engine writes (SaveShot, ITexture's SaveToTGA)
+#define TGA_TYPE_TRUECOLOR 2            // uncompressed true color
+
+// The image files GetImageInfo and ITexture.cpp's LoadImage read, by the extension's first letter (the names are
+// guesses)
+#define IMAGE_BMP 0
+#define IMAGE_TGA 1
+
+// IGraph::SaveShot's flags (the names are guesses)
+#define SAVESHOT_MEMORY 0x1             // the frame copied bottom-up to the memory name points to, no file
+#define SAVESHOT_24BIT 0x20000          // with SAVESHOT_MEMORY: as 24 bits
+#define SAVESHOT_DEPTH 0x100000         // the depth too: an RLA file of the same name, or into z_buffer
 
 // VTABLE: LS3DF 0x1009d500
 // VTABLE: LS3DF11 0x1009a500
@@ -364,6 +394,12 @@ enum {
     ISHOW_EOF = 0x40000000,             // the Ogg file is decoded to its end
     ISHOW_OGG = 0x80000000,             // an Ogg Vorbis file, played through DirectSound
 };
+
+// What IShow::GetEvent returns (the names are guesses)
+#define ISHOW_EVENT_NONE (-1)           // nothing is open
+#define ISHOW_EVENT_PLAYING 0
+#define ISHOW_EVENT_STOPPED 1           // stopped or at its end
+#define ISHOW_EVENT_PAUSED 2
 
 // A part of the movie in a texture of its own: the movie is split into textures no larger than the card allows. The
 // vertices are a triangle strip in screen coordinates (name guessed).

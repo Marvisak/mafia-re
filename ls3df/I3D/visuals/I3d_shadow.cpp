@@ -846,14 +846,14 @@ void I3D_shadow_visual::AddFGroups()
     if (num_faces) {
         rfg.sector = shadow->sector;
         rfg.texture = shadow->texture;
-        rfg.sort_value = 0xbfffffff;
+        rfg.sort_value = PRIM_SORT_ALPHA | PRIM_SORT_DIST_MASK; // the farthest: before every transparent group
         AddFGHlpStruct.fgroups.push_back(rfg);
         AddFGHlpStruct.num_transparent++;
     }
     if (num_faces_t) {
         rfg_t.sector = shadow->sector;
         rfg.texture = shadow->texture;
-        rfg_t.sort_value = (FloatToInt(1.0f) & 0x3fffffff) | 0x80000000;
+        rfg_t.sort_value = (FloatToInt(1.0f) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
         AddFGHlpStruct.fgroups.push_back(rfg_t);
         AddFGHlpStruct.num_transparent++;
     }
@@ -928,8 +928,8 @@ void I3D_shadow_visual::ProcessShadow()
                 break;
         }
         *rp++ = last;
-        if (++num >= 512) {
-            dbgPrintf("!! Maximum shadow receivers reached:%d", 512);
+        if (++num >= MAX_SHADOW_RECEIVERS) {
+            dbgPrintf("!! Maximum shadow receivers reached:%d", MAX_SHADOW_RECEIVERS);
             break;
         }
     next:;
@@ -956,12 +956,14 @@ void I3D_shadow_visual::ProcessShadow()
         }
         const S_matrix &inv = GetInvMatrix();
         ResetClipArrays();
-        float lift = I3DIntAsFloat(renderState[61]);
+        float lift = I3DIntAsFloat(renderState[RS_LIFT_SHADOW]);
         SetClipParams(inv, GetRenderMatrix(), shadow->orthogonal, lift, lift, shadow->reverse_factor);
         rp = ShadowReceivers;
         for (i = num; i--; rp++) {
             const S_vector *corners = BBoxVertices((*rp)->GetBoundVolume().bbox);
             S_matrix m = (*rp)->GetMatrix() * inv;
+            // A bit for each of the volume's planes (x at 1 and -1, y at 1 and -1, z at 0 and 1) that a corner is
+            // inside of: 0x3f, no plane has the whole box outside
             uint clip = 0;
             for (int j = 8; j--; corners++) {
                 S_vector v = *corners * m;
@@ -1123,10 +1125,10 @@ void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     SetColorOp(D3DTOP_MODULATE);
     SetColorOp1(D3DTOP_DISABLE);
     SetAlphaOp(D3DTOP_MODULATE);
-    SetAlphaState(1);
-    SetBlendState(0);
+    SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     SetCullState(D3DCULL_CCW);
-    SetClipping(1);
+    SetClipping(TRUE);
     m_pD3DDevice8->SetTexture(0, shadow->texture->m_pD3DTexture8);
     pGlobalIGraph->SetWorldMatrix(GetMatrix());
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
@@ -1134,7 +1136,7 @@ void I3D_shadow_visual::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     SetZBias(RsZBiasShadow);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
     if (shadow->shadow_lock == I3DLOCK_RECEIVERS) {
-        SetVertexFormat(0);
+        SetVertexFormat(VF_LVERTEX);
         if (help->texture) {
             m_pD3DDevice8->SetStreamSource(0, vb.vb, sizeof(S_shadow_vertex));
             m_pD3DDevice8->SetIndices(ib.ib, vb.base);

@@ -66,7 +66,7 @@ inline bool SaveSettings(S_settings &settings)
 {
     HKEY registry_key;
     DWORD action;
-    if (RegCreateKeyExA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", NULL, NULL, NULL, SETTINGS_ACCESS, NULL, &registry_key, &action) != ERROR_SUCCESS)
+    if (RegCreateKeyExA(SETTINGS_ROOT, "Software\\Illusion Softworks\\Mafia", NULL, NULL, REG_OPTION_NON_VOLATILE, SETTINGS_ACCESS, NULL, &registry_key, &action) != ERROR_SUCCESS)
     {
         return false;
     }

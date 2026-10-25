@@ -8,22 +8,13 @@
 #endif
 
 // The vertex buffers (PS2 VBManager.cpp), the same design as IBManager.h's index buffers, with buffers per vertex
-// format and usage. PS2 names the classes, COMPLETE_VB_STRUCT, VERTEX_FORMAT and C_VBManager's functions.
+// format and usage. PS2 names the classes, COMPLETE_VB_STRUCT, VERTEX_FORMAT (ls3df.h) and C_VBManager's functions.
 // 1.1's buffers keep their blocks in a std::list and no list of the locked buffers: a buffer stays locked until
 // C_VBManager::m_UnlockAllVBuffers unlocks every buffer, always with D3DLOCK_NOSYSLOCK.
 
 // The bytes a buffer holds at least (Insanity3D's name for the same constant of its buffer manager, which computes
 // the size the same way)
 #define RB_MANAGER_MEM_SIZE 0x20000
-
-// A vertex buffer's format (PS2 type; the names are guesses, 2 and 3 aren't known)
-enum VERTEX_FORMAT {
-    VF_LVERTEX,                         // LVERTEX: IGraph's, the objects' lods with hardware T&L
-    VF_LVERTEX2,                        // LVERTEX2
-    VF_TLVERTEX = 4,                    // TLVERTEX: the objects' lods without hardware T&L
-    VF_TLVERTEX2,                       // TLVERTEX2
-    VF_VERTEX,                          // I3D_vertex: the meshes'
-};
 
 // A block of a C_VBuffer, free or given out
 struct S_VB_block {

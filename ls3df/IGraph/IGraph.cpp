@@ -102,7 +102,7 @@ D3DFORMAT m_AlphaTexturePixelFormat;
 
 // GLOBAL: LS3DF 0x101c5468
 // GLOBAL: LS3DF11 0x101c2568
-int m_MouseMode;
+int m_MouseMode;                        // MOUSEMODE_*
 
 // GLOBAL: LS3DF 0x101c546c
 // GLOBAL: LS3DF11 0x101c256c
@@ -120,7 +120,7 @@ static uint m_KBLastKey;
 // GLOBAL: LS3DF11 0x101c257c
 IDirect3D8 *m_pD3D8;
 
-// What DrawPrimitiveList set last: 0 IGraph's vertex shader, 4 transformed vertices
+// What DrawPrimitiveList or SetVertexFormat (render.h) set last, a VERTEX_FORMAT
 // GLOBAL: LS3DF 0x101c5480
 // GLOBAL: LS3DF11 0x101c2580
 uint m_CurrVertexFormat;
@@ -148,6 +148,10 @@ float m_CurrFogEnd;
 // GLOBAL: LS3DF 0x101c55ac
 // GLOBAL: LS3DF11 0x101c26ac
 IDirectInput8A *m_pDI8;
+
+// The sizes of IGraph's dynamic buffers (PC only, names guessed): vertices, and indices for faces of three
+#define IGRAPH_VB_SIZE 15000
+#define IGRAPH_IB_SIZE 45000
 
 // IGraph's part of a dynamic vertex buffer, for DrawIndexedPrimitiveList (PC only)
 // GLOBAL: LS3DF 0x101c55b0
@@ -243,7 +247,7 @@ uint m_CurrColorOp2;
 // GLOBAL: LS3DF11 0x101c2a68
 float m_CurrFogStart;
 
-// What Init found the hardware lacks (the bits aren't known yet)
+// What Init found the hardware lacks or gets wrong (PROBLEM_*, I3D/I3D.h)
 // GLOBAL: LS3DF 0x101c5970
 // GLOBAL: LS3DF11 0x101c2a70
 uint m_ProblemFlags;
@@ -405,7 +409,7 @@ D3DDEVTYPE m_DeviceType = D3DDEVTYPE_HAL;
 
 // GLOBAL: LS3DF 0x100a9950
 // GLOBAL: LS3DF11 0x100a6a70
-uint m_CurrZFunc = 1;
+uint m_CurrZFunc = ZFUNC_LESSEQUAL;
 
 // The frames presented, counted for the game's render thread (PC only)
 // GLOBAL: LS3DF 0x100a9954
@@ -522,7 +526,7 @@ IGraph::IGraph()
     m_MouseInitIsOK = false;
     m_MousePos.y = 0;
     m_MousePos.x = 0;
-    m_MouseMode = -1;
+    m_MouseMode = MOUSEMODE_NONE;
     m_LeftHandedMouse = false;
     m_VBPos = 0;
     m_IBPos = 0;
@@ -575,14 +579,14 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
 {
     *texture = NULL;
     if (alpha_name && *alpha_name)
-        flags |= 4;
-    if (!(flags & 0x200001)) {
+        flags |= ITC_USE_ALPHA;
+    if (!(flags & (ITC_UNCACHED | ITC_FROM_MEMORY))) {
         if (!name || !*name)
             return I3DERR_INVALIDPARAMS;
         for (int i = m_CachedTextureList.size(); i; ) {
             ITexture *t = m_CachedTextureList[--i];
-            if (t->m_CreateFlags == flags && !strcmpi(t->m_pName, name) && (!(flags & 4) || !strcmpi(t->m_pAlphaName,
-                    alpha_name))) {
+            if (t->m_CreateFlags == flags && !strcmpi(t->m_pName, name) && (!(flags & ITC_USE_ALPHA) ||
+                    !strcmpi(t->m_pAlphaName, alpha_name))) {
                 t->m_RefCount++;
                 *texture = t;
                 return I3D_OK;
@@ -593,7 +597,7 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
     if (!tex)
         return I3DERR_OUTOFMEM;
     C_str full_name;
-    if (name && !(flags & 1)) {
+    if (name && !(flags & ITC_FROM_MEMORY)) {
         full_name = FindMapFile(&m_MapsList, name);
         if (!full_name.Size()) {
             full_name = "Maps\\";
@@ -609,11 +613,11 @@ LS3D_RESULT IGraph::CreateITexture(const char *name, const char *alpha_name, uin
         }
     }
     const char *alpha;
-    if ((flags & 4) && full_alpha_name.Size() > 0)
+    if ((flags & ITC_USE_ALPHA) && full_alpha_name.Size() > 0)
         alpha = &full_alpha_name[0];
     else
         alpha = NULL;
-    LS3D_RESULT result = tex->Create(!(flags & 1) ? &full_name[0] : name, alpha, flags, 0, 0, 0);
+    LS3D_RESULT result = tex->Create(!(flags & ITC_FROM_MEMORY) ? &full_name[0] : name, alpha, flags, 0, 0, 0);
     if (result < 0) {
         tex->Release();
         *texture = NULL;
@@ -709,6 +713,7 @@ void IGraph::ProcessWinMessages()
             if (IsDialogMessageA((HWND)m_DlgHWndList[i], &msg))
                 break;
         }
+        // lParam's bit 31, the transition state, is set when the key is released
         if (msg.message == WM_CHAR && !(msg.lParam & 0x80000000)) {
             for (int j = 1; j < 32; j++) {
                 if (!m_KeyBuffer[j]) {
@@ -717,46 +722,48 @@ void IGraph::ProcessWinMessages()
                 }
             }
         }
-        if (m_KBInitFlags & 2) {
+        if (m_KBInitFlags & KBINIT_WINMESSAGES) {
             if (msg.message == WM_KEYDOWN) {
                 switch (msg.wParam) {
                 case VK_LEFT:
-                    m_KBLastKey = 0xcb;
+                    m_KBLastKey = DIK_LEFT;
                     m_KBLastChar1 = 0;
                     break;
                 case VK_RIGHT:
-                    m_KBLastKey = 0xcd;
+                    m_KBLastKey = DIK_RIGHT;
                     m_KBLastChar1 = 0;
                     break;
                 case VK_UP:
-                    m_KBLastKey = 0xc8;
+                    m_KBLastKey = DIK_UP;
                     m_KBLastChar1 = 0;
                     break;
                 case VK_DOWN:
-                    m_KBLastKey = 0xd0;
+                    m_KBLastKey = DIK_DOWN;
                     m_KBLastChar1 = 0;
                     break;
                 }
             } else if (msg.message == WM_CHAR && !(msg.lParam & 0x80000000)) {
                 switch (msg.wParam) {
-                case 8:
-                    m_KBLastKey = 0xe;
-                    m_KBLastChar1 = 8;
+                case '\b':
+                    m_KBLastKey = DIK_BACK;
+                    m_KBLastChar1 = '\b';
                     break;
-                case 9:
-                    m_KBLastKey = 0xf;
-                    m_KBLastChar1 = 9;
+                case '\t':
+                    m_KBLastKey = DIK_TAB;
+                    m_KBLastChar1 = '\t';
                     break;
-                case 0x1b:
-                    m_KBLastKey = 1;
-                    m_KBLastChar1 = 0x1b;
+                case '\x1b':
+                    m_KBLastKey = DIK_ESCAPE;
+                    m_KBLastChar1 = '\x1b';
                     break;
                 default:
                     int vk = VkKeyScanA((char)msg.wParam);
+                    // -1: no key types the character
                     if ((vk & 0xffff) == 0xffff) {
                         m_KBLastKey = 0;
                         m_KBLastChar1 = 0;
                     } else {
+                        // 0: the virtual key's scan code, which is its DIK_* code
                         m_KBLastKey = MapVirtualKeyA(vk & 0xff, 0);
                         m_KBLastChar1 = msg.wParam;
                     }
@@ -775,9 +782,9 @@ void IGraph::ProcessWinMessages()
 void IGraph::Clear(uint color, float z, uint flags)
 {
     uint d3d_flags = 0;
-    if (flags & 1)
+    if (flags & D3DCLEAR_TARGET)
         d3d_flags = D3DCLEAR_TARGET;
-    if (flags & 2)
+    if (flags & D3DCLEAR_ZBUFFER)
         d3d_flags |= D3DCLEAR_ZBUFFER;
     if (m_HardwareCaps & HWCAPS_STENCIL)
         d3d_flags |= D3DCLEAR_STENCIL;
@@ -789,25 +796,25 @@ void IGraph::Clear(uint color, float z, uint flags)
 void IGraph::ResetRenderProps()
 {
     m_pD3DDevice8->ApplyStateBlock(m_StateBlock);
-    m_CurrCullState = 3;
-    m_CullMode = 3;
+    m_CurrCullState = D3DCULL_CCW;
+    m_CullMode = D3DCULL_CCW;
     m_CurrFogState = 0;
     m_CurrFogType = 0;
     m_CurrFogEnd = 300.0f;
     m_CurrFogStart = 0;
     m_CurrFogColor = 0xffffffff;
     m_CurrClipState = 1;
-    m_CurrAlphaState = 0;
-    m_CurrBlendState = 0;
-    m_CurrColorOp = 4;
-    m_CurrAlphaOp = 4;
-    m_CurrColorOp1 = 1;
-    m_CurrColorOp2 = 1;
+    m_CurrAlphaState = ALPHASTATE_NONE;
+    m_CurrBlendState = BLENDSTATE_ALPHA;
+    m_CurrColorOp = D3DTOP_MODULATE;
+    m_CurrAlphaOp = D3DTOP_MODULATE;
+    m_CurrColorOp1 = D3DTOP_DISABLE;
+    m_CurrColorOp2 = D3DTOP_DISABLE;
     m_CurrZBias = 0;
-    m_CurrZFunc = 1;
-    m_CurrAddressU = 1;
-    m_CurrAddressV = 1;
-    m_CurrVertexFormat = 0;
+    m_CurrZFunc = ZFUNC_LESSEQUAL;
+    m_CurrAddressU = D3DTADDRESS_WRAP;
+    m_CurrAddressV = D3DTADDRESS_WRAP;
+    m_CurrVertexFormat = VF_LVERTEX;
 }
 
 // FUNCTION: LS3DF 0x1006cd40
@@ -820,21 +827,21 @@ void IGraph::SetState(DX_STATE state, uint value)
             break;
         m_CurrAlphaState = value;
         switch (value) {
-        case 0:
+        case ALPHASTATE_NONE:
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
             break;
-        case 1:
+        case ALPHASTATE_BLEND:
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
             break;
-        case 3:
+        case ALPHASTATE_TEST:
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
             break;
-        case 2:
+        case ALPHASTATE_BLEND_ALL:
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
             m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
@@ -846,23 +853,23 @@ void IGraph::SetState(DX_STATE state, uint value)
             break;
         m_CurrBlendState = value;
         switch (value) {
-        case 0:
+        case BLENDSTATE_ALPHA:
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
             break;
-        case 1:
+        case BLENDSTATE_ADD_ALPHA:
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
             break;
-        case 2:
+        case BLENDSTATE_ADD:
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
             break;
-        case 3:
+        case BLENDSTATE_MODULATE:
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
             break;
-        case 4:
+        case BLENDSTATE_MODULATE2X:
             m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
             m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
             break;
@@ -881,7 +888,7 @@ void IGraph::SetState(DX_STATE state, uint value)
         if (m_CurrCullState == value)
             break;
         m_CurrCullState = value;
-        if (value == 3)
+        if (value == D3DCULL_CCW)
             m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, m_CullMode);
         else
             m_pD3DDevice8->SetRenderState(D3DRS_CULLMODE, value);
@@ -1113,17 +1120,17 @@ LS3D_RESULT IGraph::DrawPrimitiveList(PRIMITIVE_TYPE type, uint num_prims, const
     switch (stream) {
     case LS3D_STREAM_LVERTEX:
         if (m_CurrVertexFormat) {
-            m_CurrVertexFormat = 0;
+            m_CurrVertexFormat = VF_LVERTEX;
             m_pD3DDevice8->SetVertexShader(m_LVertexVS);
         }
-        stride = 0x18;
+        stride = 0x18;                  // LVERTEX
         break;
     case LS3D_STREAM_TLVERTEX:
-        if (m_CurrVertexFormat != 4) {
-            m_CurrVertexFormat = 4;
+        if (m_CurrVertexFormat != VF_TLVERTEX) {
+            m_CurrVertexFormat = VF_TLVERTEX;
             m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
         }
-        stride = 0x20;
+        stride = 0x20;                  // LS3D_TLVERTEX
         break;
     default:
         return I3DERR_INVALIDPARAMS;
@@ -1170,8 +1177,9 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
     switch (stream) {
     case LS3D_STREAM_LVERTEX:
         if (m_HardwareCaps & HWCAPS_HWTL) {
+            // The LVERTEXs' 24 bytes each, 16-bit indices
             BYTE *vb_data, *ib_data;
-            if (m_VBPos + num_verts < 15000)
+            if (m_VBPos + num_verts < IGRAPH_VB_SIZE)
                 m_VB.vb->Lock((m_VBPos + m_VB.base) * 0x18, num_verts * 0x18, &vb_data, D3DLOCK_NOOVERWRITE);
             else {
                 m_VB.vb->Lock(m_VB.base * 0x18, num_verts * 0x18, &vb_data, D3DLOCK_DISCARD);
@@ -1179,7 +1187,7 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
             }
             memcpy(vb_data, verts, num_verts * 0x18);
             m_VB.vb->Unlock();
-            if (m_IBPos + num_prims * 3 < 45000)
+            if (m_IBPos + num_prims * 3 < IGRAPH_IB_SIZE)
                 m_IB.ib->Lock((m_IB.base + m_IBPos) * 2, num_prims * 3 * 2, &ib_data, D3DLOCK_NOOVERWRITE);
             else {
                 m_IB.ib->Lock(m_IB.base * 2, num_prims * 3 * 2, &ib_data, D3DLOCK_DISCARD);
@@ -1188,30 +1196,30 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
             memcpy(ib_data, indices, num_prims * 3 * 2);
             m_IB.ib->Unlock();
             if (m_CurrVertexFormat) {
-                m_CurrVertexFormat = 0;
+                m_CurrVertexFormat = VF_LVERTEX;
                 m_pD3DDevice8->SetVertexShader(m_LVertexVS);
             }
             m_pD3DDevice8->SetStreamSource(0, m_VB.vb, 0x18);
             m_pD3DDevice8->SetIndices(m_IB.ib, m_VB.base + m_VBPos);
             m_pD3DDevice8->DrawIndexedPrimitive(d3d_type, 0, num_verts, m_IB.base + m_IBPos, num_prims);
-            if (m_VBPos + num_verts < 15000)
+            if (m_VBPos + num_verts < IGRAPH_VB_SIZE)
                 m_VBPos += num_verts;
-            if (m_IBPos + num_prims * 3 < 45000)
+            if (m_IBPos + num_prims * 3 < IGRAPH_IB_SIZE)
                 m_IBPos += num_prims * 3;
             return I3D_OK;
         }
         if (m_CurrVertexFormat) {
-            m_CurrVertexFormat = 0;
+            m_CurrVertexFormat = VF_LVERTEX;
             m_pD3DDevice8->SetVertexShader(m_LVertexVS);
         }
-        stride = 0x18;
+        stride = 0x18;                  // LVERTEX
         break;
     case LS3D_STREAM_TLVERTEX:
-        if (m_CurrVertexFormat != 4) {
-            m_CurrVertexFormat = 4;
+        if (m_CurrVertexFormat != VF_TLVERTEX) {
+            m_CurrVertexFormat = VF_TLVERTEX;
             m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
         }
-        stride = 0x20;
+        stride = 0x20;                  // LS3D_TLVERTEX
         break;
     default:
         return I3DERR_INVALIDPARAMS;
@@ -1223,7 +1231,7 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
 // Gives the I3D driver its render states again, after the device lost them
 static inline void RestoreRenderStates()
 {
-    for (int i = 0; i < 63; i++) {
+    for (int i = 0; i < RS_LAST; i++) {
         int value = renderState[i];
         renderState[i] = -1;
         pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
@@ -1302,10 +1310,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return 0;
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
+        // lParam's bit 29, the context code: Alt is down
         if (wparam == VK_F10 || (lparam & 0x20000000))
             return 1;
         break;
     case WM_SYSCOMMAND:
+        // The system uses the low four bits
         if ((wparam & 0xfff0) == SC_SCREENSAVE || (wparam & 0xfff0) == SC_MONITORPOWER)
             return 1;
         break;
@@ -1437,9 +1447,9 @@ LS3D_RESULT ResetDevice(bool reset)
         }
         if ((m_HardwareCaps & HWCAPS_HWTL) && !m_VB.vb) {
             if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                    15000, m_VB, VF_LVERTEX, false))
+                    IGRAPH_VB_SIZE, m_VB, VF_LVERTEX, false))
                 dbgPrintf("Error creating Global Vertex Buffer !");
-            if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
+            if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, IGRAPH_IB_SIZE, m_IB))
                 dbgPrintf("Error creating Global Index Buffer !");
         }
         if (m_pD3DDevice8)
@@ -1547,6 +1557,12 @@ static inline BOOL IsTextureFormatOk(D3DFORMAT texture_format, D3DFORMAT adapter
         D3DRTYPE_TEXTURE, texture_format));
 }
 
+// The PCI vendor ids Init knows cards of
+#define VENDOR_ATI 0x1002
+#define VENDOR_MATROX 0x102b
+#define VENDOR_3DFX 0x121a
+#define VENDOR_S3 0x5333
+
 // Creates the window and the device after Close, logs the system, and finds the formats to use
 // FUNCTION: LS3DF 0x1006e790
 // FUNCTION: LS3DF11 0x1006b820
@@ -1600,6 +1616,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         int menu = 0;
         if (m_InitDesc.flags & IGRAPH_MENU) {
             if (!m_InitDesc.menu) {
+                // Menu 123 is LS3DF's own, but this DLL isn't "LS3D.DLL": the module handle is NULL
                 HMODULE module = GetModuleHandleA("LS3D.DLL");
                 m_InitDesc.menu = LoadMenuA(module, MAKEINTRESOURCE(123));
             }
@@ -1752,37 +1769,40 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
 
     // What the card can't do, by its caps and by its make
     if (m_InitDesc.flags & IGRAPH_CLIP_ALWAYS)
-        m_ProblemFlags |= 2;
+        m_ProblemFlags |= PROBLEM_CLIP_ALWAYS;
     if (caps.MaxSimultaneousTextures < 2) {
-        m_ProblemFlags |= 0xe;
+        m_ProblemFlags |= PROBLEM_CLIP_ALWAYS | PROBLEM_NO_MODULATE2X | PROBLEM_NO_DXT;
         m_InitDesc.flags |= IGRAPH_MULTIPASS;
     }
+    // Textures up to 256 wide: 3dfx's cards up to the Voodoo3
     if (caps.MaxTextureWidth == 256) {
-        m_ProblemFlags |= 0xc;
+        m_ProblemFlags |= PROBLEM_NO_MODULATE2X | PROBLEM_NO_DXT;
         m_InitDesc.flags |= IGRAPH_MULTIPASS;
     }
-    if (id.VendorId == 0x121a) {
-        // 3dfx
+    if (id.VendorId == VENDOR_3DFX) {
+        // The VSA-100: Voodoo4 and Voodoo5
         if (id.DeviceId == 9)
-            m_ProblemFlags |= 8;
-    } else if (id.VendorId == 0x5333) {
-        // S3
+            m_ProblemFlags |= PROBLEM_NO_DXT;
+    } else if (id.VendorId == VENDOR_S3) {
+        // Savage4, Savage/MX
         if (id.DeviceId == 0x8a22 || id.DeviceId == 0x8c10) {
-            m_ProblemFlags |= 0x3c;
+            m_ProblemFlags |= PROBLEM_NO_MODULATE2X | PROBLEM_NO_DXT | PROBLEM_NO_BLENDFACTORALPHA |
+                PROBLEM_NO_BLENDCURRENTALPHA;
             m_InitDesc.flags |= IGRAPH_MULTIPASS;
         }
-    } else if (id.VendorId == 0x102b) {
-        // Matrox
+    } else if (id.VendorId == VENDOR_MATROX) {
+        // G200 AGP and PCI, G100 PCI and AGP, Millennium II AGP and PCI, Mystique, Millennium
         if (id.DeviceId == 0x521 || id.DeviceId == 0x520 || id.DeviceId == 0x1000 || id.DeviceId == 0x1001 ||
                 id.DeviceId == 0x51f || id.DeviceId == 0x51b || id.DeviceId == 0x51a || id.DeviceId == 0x519) {
-            m_ProblemFlags |= 0x8e;
+            m_ProblemFlags |= PROBLEM_CLIP_ALWAYS | PROBLEM_NO_MODULATE2X | PROBLEM_NO_DXT | PROBLEM_NO_FOG;
             m_InitDesc.flags |= IGRAPH_MULTIPASS;
         }
+        // G550
         if (id.DeviceId == 0x2527)
-            m_ProblemFlags |= 2;
-    } else if (id.VendorId == 0x1002) {
-        // ATI
-        m_ProblemFlags |= 0x102;
+            m_ProblemFlags |= PROBLEM_CLIP_ALWAYS;
+    } else if (id.VendorId == VENDOR_ATI) {
+        // Every card
+        m_ProblemFlags |= PROBLEM_CLIP_ALWAYS | PROBLEM_ZBIAS_SCALE;
     }
     if ((m_InitDesc.flags & IGRAPH_HWTL) && (caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT)) {
         m_HardwareCaps |= HWCAPS_HWTL;
@@ -1799,18 +1819,18 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
             "Forcing software transformations !\n");
         m_HardwareCaps &= ~HWCAPS_HWTL;
     }
-    if ((caps.TextureOpCaps & D3DTEXOPCAPS_MODULATE2X) && !(m_ProblemFlags & 4))
+    if ((caps.TextureOpCaps & D3DTEXOPCAPS_MODULATE2X) && !(m_ProblemFlags & PROBLEM_NO_MODULATE2X))
         m_Modulate2X = D3DTOP_MODULATE2X;
     else {
         m_Modulate2X = D3DTOP_MODULATE;
         vertex_light_mult = 255.0f;
     }
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_BLENDCURRENTALPHA))
-        m_ProblemFlags |= 0x20;
+        m_ProblemFlags |= PROBLEM_NO_BLENDCURRENTALPHA;
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_BLENDFACTORALPHA))
-        m_ProblemFlags |= 0x10;
+        m_ProblemFlags |= PROBLEM_NO_BLENDFACTORALPHA;
     if (!(caps.TextureOpCaps & D3DTEXOPCAPS_ADD))
-        m_ProblemFlags |= 0x40;
+        m_ProblemFlags |= PROBLEM_NO_ADD;
     m_MaxTextureWidth = caps.MaxTextureWidth;
     m_MaxTextureHeight = caps.MaxTextureHeight;
 
@@ -2003,7 +2023,7 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     }
     if (IsTextureFormatOk(D3DFMT_A8R8G8B8, mode.Format))
         m_TrueColorTexturePixelFormat = D3DFMT_A8R8G8B8;
-    if (!(m_ProblemFlags & 8)) {
+    if (!(m_ProblemFlags & PROBLEM_NO_DXT)) {
         if (IsTextureFormatOk(D3DFMT_DXT1, mode.Format)) {
             m_HardwareCaps |= HWCAPS_DXT;
             m_DXTTexturePixelFormat = D3DFMT_DXT1;
@@ -2036,9 +2056,9 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
     ResetRenderProps();
     if (m_HardwareCaps & HWCAPS_HWTL) {
         if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1, D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0x18,
-                15000, m_VB, VF_LVERTEX, false))
+                IGRAPH_VB_SIZE, m_VB, VF_LVERTEX, false))
             dbgPrintf("Error creating Global Vertex Buffer !");
-        if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 45000, m_IB))
+        if (!cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, IGRAPH_IB_SIZE, m_IB))
             dbgPrintf("Error creating Global Index Buffer !");
     }
     if (caps.Caps2 & D3DCAPS2_FULLSCREENGAMMA) {
@@ -2058,9 +2078,9 @@ LS3D_RESULT IGraph::Init(IGRAPH_INIT_DESC *desc)
         m_RenderThread = CreateThread(NULL, 0, RenderThreadProc, NULL, 0, &m_RenderThreadID);
         SetThreadPriority(m_RenderThread, THREAD_PRIORITY_NORMAL);
     }
-    Clear(0, 1.0f, 3);
+    Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
     Present();
-    Clear(0, 1.0f, 3);
+    Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
     Present();
     m_InitIsOK = true;
     return I3D_OK;
@@ -2157,7 +2177,7 @@ void IGraph::Close()
     memset(&m_D3DViewPort8, 0, sizeof(m_D3DViewPort8));
     m_HardwareCaps = 0;
     m_ProblemFlags = 0;
-    m_Modulate2X = 4;
+    m_Modulate2X = D3DTOP_MODULATE;
     m_MaxTextureWidth = 0;
     m_MaxTextureHeight = 0;
     if (m_pDI8) {
@@ -2211,12 +2231,6 @@ D3DFORMAT IGraph::GetD3DFormat()
     return m_D3DPresentParams.BackBufferFormat;
 }
 
-// The image types GetImageInfo knows, by the extension's first letter (names guessed)
-enum {
-    IMAGE_BMP,
-    IMAGE_TGA,
-};
-
 // Reads an image's size and depth from its header. With a handle the file stays open, at its start, for the caller to
 // read. With flags & 1 nothing is read.
 // FUNCTION: LS3DF 0x10070540
@@ -2236,7 +2250,7 @@ LS3D_RESULT IGraph::GetImageInfo(const char *name, ushort &sx, ushort &sy, uchar
     else
         return I3DERR_BADTEXTUREFORMAT;
     int h = dtaOpen(name, false);
-    if (h == -1)
+    if (h == DTA_INVALID_HANDLE)
         return I3DERR_NOFILE;
     switch (type) {
     case IMAGE_BMP: {
@@ -2379,15 +2393,15 @@ short EncodeRLAChannel(const uint *src, uchar *dst, int count, uint mask, int sh
     return len;
 }
 
-// Saves the frame (or the part rect's right and bottom give) as a TGA file, as deep as the back buffer is. With flags
-// 0x100000 it saves the depth instead, as an RLA file of the same name (.rla): the colors and the depth as floats. With
-// flags 1 nothing is written to a file: the frame is copied bottom-up to the memory name points to (as 24 bits with
-// 0x20000) and with 0x100000 the depth to z_buffer.
+// Saves the frame (or the part rect's right and bottom give) as a TGA file, as deep as the back buffer is. With
+// SAVESHOT_DEPTH it saves the depth instead, as an RLA file of the same name (.rla): the colors and the depth as floats.
+// With SAVESHOT_MEMORY nothing is written to a file: the frame is copied bottom-up to the memory name points to (as 24
+// bits with SAVESHOT_24BIT) and with SAVESHOT_DEPTH the depth to z_buffer.
 // FUNCTION: LS3DF 0x10070890
 // FUNCTION: LS3DF11 0x1006d920
 bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
 {
-    if (!(flags & 1) && !strstr(name, ".TGA") && !strstr(name, ".tga"))
+    if (!(flags & SAVESHOT_MEMORY) && !strstr(name, ".TGA") && !strstr(name, ".tga"))
         dbgPrintf("!!IGraph::SaveShot() - WARNING! File extension isn't .TGA !! %s", name);
     IDirect3DSurface8 *render_target = NULL;
     IDirect3DSurface8 *surface = NULL;
@@ -2425,7 +2439,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
         return false;
     }
     D3DLOCKED_RECT depth_locked;
-    if ((flags & 0x100000) && !(flags & 1)) {
+    if ((flags & SAVESHOT_DEPTH) && !(flags & SAVESHOT_MEMORY)) {
         m_pD3DDevice8->GetDepthStencilSurface(&depth);
         if (FAILED(depth->LockRect(&depth_locked, rect, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK))) {
             dbgPrintf("!!IGraph::SaveShot() - ERROR! Z-buffer pixel format isn't LOCKABLE !!");
@@ -2462,7 +2476,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
         header.frame = Swap16(1);
         header.num_chan = Swap16(3);
         header.chan_bits = Swap16(8);
-        header.revision = Swap16(-2);
+        header.revision = Swap16(-2);         // 0xfffe, the RLA format's current revision
         header.window.right = Swap16(sx - 1);
         header.active_window.right = header.window.right;
         header.window.top = Swap16(sy - 1);
@@ -2579,7 +2593,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
     } else {
         S_tga_header header;
         memset(&header, 0, sizeof(header));
-        header.type = 2;
+        header.type = TGA_TYPE_TRUECOLOR;
         switch (desc.Format) {
         case D3DFMT_R5G6B5:
         case D3DFMT_X1R5G5B5:
@@ -2596,8 +2610,8 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
         }
         header.width = (short)desc.Width;
         header.height = (short)desc.Height;
-        if (flags & 1) {
-            if ((flags & 0x100000) && z_buffer) {
+        if (flags & SAVESHOT_MEMORY) {
+            if ((flags & SAVESHOT_DEPTH) && z_buffer) {
                 m_pD3DDevice8->GetDepthStencilSurface(&depth);
                 if (FAILED(depth->LockRect(&depth_locked, rect, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK))) {
                     dbgPrintf("!!IGraph::SaveShot() - ERROR! Z-buffer pixel format isn't LOCKABLE !!");
@@ -2613,7 +2627,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
                 depth->Release();
             }
             locked.pBits = (BYTE *)locked.pBits + (header.height - 1) * locked.Pitch;
-            if ((flags & 0x20000) && desc.Format != D3DFMT_R8G8B8) {
+            if ((flags & SAVESHOT_24BIT) && desc.Format != D3DFMT_R8G8B8) {
                 for (int y = header.height; y; y--) {
                     int x;
                     switch (desc.Format) {
@@ -2663,6 +2677,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
             }
             fwrite(&header, sizeof(header), 1, f);
             locked.pBits = (BYTE *)locked.pBits + (header.height - 1) * locked.Pitch;
+            // A TGA's 16-bit pixels are X1R5G5B5
             if (desc.Format == D3DFMT_R5G6B5) {
                 for (int y = header.height; y; y--) {
                     for (int x = header.width; x--; ) {
@@ -2687,7 +2702,7 @@ bool IGraph::SaveShot(const char *name, RECT *rect, uint flags, void *z_buffer)
     return true;
 }
 
-// Flags 1: exclusive, 2: the keys come from the window messages (ProcessWinMessages)
+// KBINIT_* flags
 // FUNCTION: LS3DF 0x100716a0
 // FUNCTION: LS3DF11 0x1006e730
 LS3D_RESULT IGraph::KeyboardInit(uint flags)
@@ -2704,7 +2719,7 @@ LS3D_RESULT IGraph::KeyboardInit(uint flags)
         DX_ERROR(hr, 3789);
         return I3DERR_GENERIC;
     }
-    if (m_KBInitFlags & 1)
+    if (m_KBInitFlags & KBINIT_EXCLUSIVE)
         hr = m_pDIKeyboard8->SetCooperativeLevel(m_MainHWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
     else
         hr = m_pDIKeyboard8->SetCooperativeLevel(m_MainHWnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
@@ -2792,7 +2807,7 @@ void IGraph::ClearCharBuffer()
 // FUNCTION: LS3DF11 0x1006e9f0
 uint IGraph::ReadKey()
 {
-    if (m_KBInitFlags & 2) {
+    if (m_KBInitFlags & KBINIT_WINMESSAGES) {
         uint key = m_KBLastKey;
         m_KBLastKey = 0;
         m_KBLastChar = m_KBLastChar1;
@@ -2879,7 +2894,7 @@ bool IGraph::KeyAlt()
     return false;
 }
 
-// SKEY_*; left and right shift 0x20 and 0x40, control 0x80 and 0x100, alt 0x200 and 0x400
+// SKEY_*, with the left and right keys' own bits
 // FUNCTION: LS3DF 0x10071b50
 // FUNCTION: LS3DF11 0x1006ebe0
 uint IGraph::GetShiftKeys(bool update)
@@ -2890,23 +2905,23 @@ uint IGraph::GetShiftKeys(bool update)
     if (KeyShift()) {
         keys = SKEY_SHIFT;
         if (m_KeyboardData[DIK_LSHIFT] & 0x80)
-            keys |= 0x20;
+            keys |= SKEY_LSHIFT;
         if (m_KeyboardData[DIK_RSHIFT] & 0x80)
-            keys |= 0x40;
+            keys |= SKEY_RSHIFT;
     }
     if (KeyCtrl()) {
         keys |= SKEY_CTRL;
         if (m_KeyboardData[DIK_LCONTROL] & 0x80)
-            keys |= 0x80;
+            keys |= SKEY_LCTRL;
         if (m_KeyboardData[DIK_RCONTROL] & 0x80)
-            keys |= 0x100;
+            keys |= SKEY_RCTRL;
     }
     if (KeyAlt()) {
         keys |= SKEY_ALT;
         if (m_KeyboardData[DIK_LMENU] & 0x80)
-            keys |= 0x200;
+            keys |= SKEY_LALT;
         if (m_KeyboardData[DIK_RMENU] & 0x80)
-            keys |= 0x400;
+            keys |= SKEY_RALT;
     }
     return keys;
 }
@@ -2938,15 +2953,14 @@ const char *IGraph::GetKeyName(int key)
     return m_pDIKeyboard8->GetProperty(DIPROP_KEYNAME, &m_KeyName.diph) ? NULL : (const char *)m_KeyName.wsz;
 }
 
-// Mode 0: the cursor, 1: relative movement (exclusive), -1: only tells the current mode. Switching from the cursor to
-// relative movement waits for the buttons to be released.
+// MOUSEMODE_*. Switching from the cursor to relative movement waits for the buttons to be released.
 // FUNCTION: LS3DF 0x10071ca0
 // FUNCTION: LS3DF11 0x1006ed30
 LS3D_RESULT IGraph::MouseInit(int mode)
 {
-    if (mode == -1)
+    if (mode == MOUSEMODE_NONE)
         return (LS3D_RESULT)m_MouseMode;
-    if (m_pDIMouse8 && !m_MouseMode && mode == 1) {
+    if (m_pDIMouse8 && !m_MouseMode && mode == MOUSEMODE_EXCLUSIVE) {
         do {
             ProcessWinMessages();
             UpdateMouseData();
@@ -2997,7 +3011,7 @@ void IGraph::MouseClose()
         m_pDIMouse8 = NULL;
     }
     // Before the memset: VC6 schedules the mode's store among the memset's
-    m_MouseMode = -1;
+    m_MouseMode = MOUSEMODE_NONE;
     memset(&m_MouseData, 0, sizeof(m_MouseData));
     m_MouseInitIsOK = false;
 }
@@ -3016,6 +3030,7 @@ LS3D_RESULT IGraph::UpdateMouseData()
             return I3DERR_GENERIC;
         }
     }
+    // No wheel, the third axis
     if (m_MouseCaps.dwAxes < 3)
         m_MouseData.lZ = 0;
     if (!m_MouseMode) {
@@ -3304,6 +3319,7 @@ bool IGraph::SetGammaRamp(LS3DGAMMARAMP *ramp, uint flags)
 {
     if (!(m_HardwareCaps & HWCAPS_GAMMA))
         return false;
+    // D3DSGR_CALIBRATE when flags is set
     m_pD3DDevice8->SetGammaRamp(flags != 0, (const D3DGAMMARAMP *)ramp);
     return true;
 }

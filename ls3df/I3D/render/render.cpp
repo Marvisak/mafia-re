@@ -154,7 +154,7 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
     if (obj->vis_flags & VISF_UNKNOWN_10) {
         int last = mesh->num_lods - 1;
         if (lod <= last) {
-            if (renderState[RS_LOD_COARSER] && lod < last)
+            if (renderState[RS_TEXTURELOWDETAIL] && lod < last)
                 lod++;
             ITexture *tex = mesh->levels[lod]->fgroups->material->GetTexture();
             if (tex && !tex->Request()) {
@@ -214,9 +214,9 @@ inline void AddSectorFGroups(I3D_sector *sct)
 // the mirrors' reflections, the sectors, the landscapes, the particles, the near sector and the lens flares, each
 // pass sorting the face groups queued by the visuals (AddFGHlpStruct) and drawing them (m_DrawAllSortedFG). The
 // scene's callback is told of the stages in its cb_flags.
-// The lens flares' setup calls SetBlendState(1) out of line and inlines SetClipping(TRUE) and the erase after it, and
-// the post-render callback calls SetAlphaOp out of line, as the original does, only with the render-state helpers'
-// asserts (I3D.h) and the fog colors packed flat in m_DrawAllSortedFG.
+// The lens flares' setup calls SetBlendState(BLENDSTATE_ADD_ALPHA) out of line and inlines SetClipping(TRUE) and the
+// erase after it, and the post-render callback calls SetAlphaOp out of line, as the original does, only with the
+// render-state helpers' asserts (I3D.h) and the fog colors packed flat in m_DrawAllSortedFG.
 // FUNCTION: LS3DF 0x10062030
 // FUNCTION: LS3DF11 0x1005f2a0
 LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
@@ -243,6 +243,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
     RenderNumber = ++scene->m_RenderNumber;
     pCurrentCamera = scene->current_camera;
     if (!pCurrentCamera) {
+        // Clear's flags: RS_CLEAR's 1 is D3DCLEAR_TARGET
         uint clear = renderState[RS_CLEAR] != 0;
         pGlobalIGraph->ResetRenderProps();
         if (renderState[RS_CLEAR_ZBUFFER])
@@ -508,14 +509,14 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             AddFGHlpStruct.sort.Sort();
             cVBMan.m_UnlockAllVBuffers();
             cIBMan.m_UnlockAllIBuffers();
-            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, FALSE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
             m_DrawAllSortedFG();
             AddFGHlpStruct.Clear();
             ParticleElementsList.Clear();
         }
         if (renderState[RS_USEZB]) {
             if (pCurrentCamera->orthogonal)
-                m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, TRUE);
+                m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
             else
                 m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
         }
@@ -559,6 +560,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
                 I3D_mirror **pm2 = &scene->mirrors[0];
                 for (int j = scene->mirrors.size(); j--; pm2++) {
                     if ((*pm2)->mirror_flags & MIRF_VISIBLE) {
+                        // A reflecting mirror's faces almost transparent (alpha 1, with the alpha reference 0): the
+                        // reflection stays, the depth is the mirror's
                         if ((*pm2)->mirror_flags & MIRF_REFLECT)
                             (*pm2)->Draw(ZeroSVector, 0xfe);
                         else
@@ -566,7 +569,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
                     }
                 }
                 m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
-                SetAlphaState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
             }
         }
     }
@@ -578,7 +581,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
     m_pD3DDevice8->SetTransform(D3DTS_PROJECTION, &pCurrentCamera->m_proj);
     if (renderState[RS_USEZB]) {
         if (pCurrentCamera->orthogonal)
-            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, TRUE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
         else
             m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, ZBufferEnable);
     }
@@ -606,16 +609,18 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             case I3DLIGHT_FOG: {
                 float end = pCurrentCamera->fcp * fog->range_f;
                 float start = end * fog->range_n;
-                SetFog(TRUE, 0, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                SetFog(TRUE, FOGTYPE_LINEAR, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                     FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
             } break;
             case I3DLIGHT_POINTAMBIENT:
-                SetFog(TRUE, 1, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
-                    FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
+                SetFog(TRUE, FOGTYPE_EXP, fog->near_range, 0.0f,
+                    0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 | FloatToInt(fog->diffuse.y * 255.0f) << 8 |
+                    FloatToInt(fog->diffuse.z * 255.0f));
                 break;
             case I3DLIGHT_POINTFOG:
-                SetFog(TRUE, 2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
-                    FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
+                SetFog(TRUE, FOGTYPE_EXP2, fog->near_range, 0.0f,
+                    0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 | FloatToInt(fog->diffuse.y * 255.0f) << 8 |
+                    FloatToInt(fog->diffuse.z * 255.0f));
                 break;
             }
         }
@@ -642,8 +647,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         SetAlphaOp(D3DTOP_MODULATE);
         SetColorOp(D3DTOP_MODULATE);
         SetColorOp1(D3DTOP_DISABLE);
-        SetAlphaState(1);
-        SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+        SetBlendState(BLENDSTATE_ALPHA);
         SetClipping(TRUE);
         if (scene->cb_flags & 1 << SCN_CALLBACK_POST_SCENE) {
             I3D_camera *cam = pCurrentCamera;
@@ -681,19 +686,19 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
 
         // The lens flares the visuals met, which fade out once they aren't met again
         if (scene->lensflares.size()) {
-            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, FALSE);
+            m_pD3DDevice8->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
             SetColorOp(D3DTOP_MODULATE);
             SetAlphaOp(D3DTOP_MODULATE);
             SetColorOp1(D3DTOP_DISABLE);
-            SetAlphaState(1);
-            SetBlendState(1);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ADD_ALPHA);
             SetFog(FALSE, 0, 0.0f, 0.0f, 0);
             SetClipping(TRUE);
             for (int i = 0; i < scene->lensflares.size(); i++) {
                 I3D_lensflare *lf = scene->lensflares[i];
-                if (lf->unknown_224 & 1) {
+                if (lf->lf_flags & LFF_MET) {
                     lf->Draw(true);
-                    lf->unknown_224 &= ~1;
+                    lf->lf_flags &= ~LFF_MET;
                 } else {
                     lf->Draw(false);
                     if (IsAbsMrgZero(lf->visibility)) {
@@ -710,8 +715,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             SetAlphaOp(D3DTOP_MODULATE);
             SetColorOp(D3DTOP_MODULATE);
             SetColorOp1(D3DTOP_DISABLE);
-            SetAlphaState(1);
-            SetBlendState(0);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ALPHA);
             SetClipping(TRUE);
             SetFog(FALSE, 0, 0.0f, 0.0f, 0);
             renderCB = true;
@@ -734,17 +739,17 @@ static void VisualProc(I3D_visual *vis)
 {
     if (vis->m_pOwner)
         vis->m_pOwner->m_RenderNumber = RenderNumber;
-    if (m_ProblemFlags & 2)
+    if (m_ProblemFlags & PROBLEM_CLIP_ALWAYS)
         vis->m_FrmFlags |= FRMFLAGS_CLIP;
     switch (vis->GetVisualType()) {
     case I3D_VISUAL_PART_BASE:
     case I3D_VISUAL_PART_ELEMENT: {
         I3D_part_base *part = (I3D_part_base *)vis;
-        if (part->part_flags & 0x600) {
+        if (part->part_flags & PARTF_RENDERER) {
             S_particle_item item;
             item.vis = vis;
             item.sort_value = (uint)part->sort_group << 16;
-            if (part->part_flags & 3)
+            if (part->part_flags & PARTF_ALPHA_MASK)
                 item.sort_value |= FloatToInt(part->sort_dist);
             ParticleElementsList.visuals.push_back(item);
         } else
@@ -764,7 +769,7 @@ static void VisualProc(I3D_visual *vis)
             lf->last_check_col_time = 0;
             lf->last_update = timeGetTime();
         }
-        lf->unknown_224 |= 1;
+        lf->lf_flags |= LFF_MET;
     } break;
     }
 }
@@ -779,7 +784,7 @@ void NextFFrameProc(I3D_frame *frm)
         if (frm->m_FrmFlags & FRMFLAGS_ON) {
             if (frm->m_Type == FRAME_VISUAL) {
                 I3D_visual *vis = (I3D_visual *)frm;
-                if (vis->vis_flags & VISF_UNKNOWN_800 && ((I3D_object *)vis)->mesh) {
+                if (vis->vis_flags & VISF_OBJECT && ((I3D_object *)vis)->mesh) {
                     I3D_mesh_object *mesh = ((I3D_object *)vis)->mesh;
                     float prev = 0.0f;
                     int num = 1;
@@ -835,20 +840,22 @@ inline void I3D_driver::m_DrawAllSortedFG()
         // neither
         if (rfg->sector) {
             I3D_light *fog = rfg->sector->fog_light;
-            if (fog && renderState[RS_FOG] && !(rfg->vis->vis_flags & 0x8000)) {
+            if (fog && renderState[RS_FOG] && !(rfg->vis->vis_flags & VISF_NO_FOG)) {
                 switch (fog->ltype) {
                 case I3DLIGHT_FOG: {
                     float end = pCurrentCamera->fcp * fog->range_f;
                     float start = end * fog->range_n;
-                    SetFog(TRUE, 0, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_LINEAR, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                 } break;
                 case I3DLIGHT_POINTAMBIENT:
-                    SetFog(TRUE, 1, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_EXP, fog->near_range, 0.0f,
+                        0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                     break;
                 case I3DLIGHT_POINTFOG:
-                    SetFog(TRUE, 2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_EXP2, fog->near_range, 0.0f,
+                        0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                     break;
                 }
@@ -860,7 +867,7 @@ inline void I3D_driver::m_DrawAllSortedFG()
             SetClipping(TRUE);
         else
             SetClipping(FALSE);
-        SetZBias(rfg->vis->vis_flags & 0x100 ? 2 : 0);
+        SetZBias(rfg->vis->vis_flags & VISF_ZBIAS ? 2 : 0);
         rfg->vis->m_RenderFGroup(rfg);
     }
     if (GlobalDrawWeather && !renderCB)
@@ -869,20 +876,22 @@ inline void I3D_driver::m_DrawAllSortedFG()
         for (int j = AddFGHlpStruct.fgroups.size() - 1; j >= AddFGHlpStruct.num_opaque; j--) {
             RENDER_FG_HELP_STRUCT *rfg = &AddFGHlpStruct.fgroups[AddFGHlpStruct.sort[j]];
             I3D_light *fog = rfg->sector->fog_light;
-            if (fog && renderState[RS_FOG] && !(rfg->vis->vis_flags & 0x8000)) {
+            if (fog && renderState[RS_FOG] && !(rfg->vis->vis_flags & VISF_NO_FOG)) {
                 switch (fog->ltype) {
                 case I3DLIGHT_FOG: {
                     float end = pCurrentCamera->fcp * fog->range_f;
                     float start = end * fog->range_n;
-                    SetFog(TRUE, 0, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_LINEAR, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                 } break;
                 case I3DLIGHT_POINTAMBIENT:
-                    SetFog(TRUE, 1, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_EXP, fog->near_range, 0.0f,
+                        0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                     break;
                 case I3DLIGHT_POINTFOG:
-                    SetFog(TRUE, 2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+                    SetFog(TRUE, FOGTYPE_EXP2, fog->near_range, 0.0f,
+                        0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                         FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
                     break;
                 }
@@ -892,7 +901,7 @@ inline void I3D_driver::m_DrawAllSortedFG()
                 SetClipping(TRUE);
             else
                 SetClipping(FALSE);
-            SetZBias(rfg->vis->vis_flags & 0x100 ? 2 : 0);
+            SetZBias(rfg->vis->vis_flags & VISF_ZBIAS ? 2 : 0);
             rfg->vis->m_RenderFGroup(rfg);
         }
     }

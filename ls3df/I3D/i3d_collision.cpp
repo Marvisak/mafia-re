@@ -459,6 +459,9 @@ static void testVisual(I3D_visual *vis)
                     }
                     if (lpCallbackGeoTex) {
                         S_vector pos;           // never set
+                        // No texel test without a material, or for an opaque one without a texture to read or
+                        // with an unblended texture (flags up to MATF_TWO_SIDED: none of the bits above it,
+                        // MATF_CKEY_ALPHA, MATF_TXT_ALPHA and MATF_ADD_MODE)
                         if (!fg->material ||
                             (!fg->material->texture || !fg->material->texture->m_pPixels) &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f) ||
@@ -497,11 +500,11 @@ static void testVisual(I3D_visual *vis)
                                         ti.v += 1.0f;
                                     ti.mat = fg->material;
                                     switch (lpCallbackGeoTex(pos, t, vis, cbContext, &ti)) {
-                                    case 0:
+                                    case TEXEL_OPAQUE:
                                         if (AcceptHit(vis))
                                             return;
                                         break;
-                                    case 2:
+                                    case TEXEL_TRANSPARENT:
                                         faces++;
                                         continue;
                                     }
@@ -511,11 +514,11 @@ static void testVisual(I3D_visual *vis)
                             S_texel_info ti;
                             ti.mat = fg->material;
                             switch (lpCallbackGeoTex(pos, t, vis, cbContext, &ti)) {
-                            case 0:
+                            case TEXEL_OPAQUE:
                                 if (AcceptHit(vis))
                                     return;
                                 break;
-                            case 2:
+                            case TEXEL_TRANSPARENT:
                                 faces++;
                                 continue;
                             }
@@ -584,6 +587,9 @@ static void testVisual(I3D_visual *vis)
                     }
                     if (lpCallbackGeoTex) {
                         S_vector pos;           // never set
+                        // No texel test without a material, or for an opaque one without a texture to read or
+                        // with an unblended texture (flags up to MATF_TWO_SIDED: none of the bits above it,
+                        // MATF_CKEY_ALPHA, MATF_TXT_ALPHA and MATF_ADD_MODE)
                         if (!fg->material ||
                             (!fg->material->texture || !fg->material->texture->m_pPixels) &&
                                 IsAbsMrgZero(fg->material->alpha - 1.0f) ||
@@ -622,11 +628,11 @@ static void testVisual(I3D_visual *vis)
                                         ti.v += 1.0f;
                                     ti.mat = fg->material;
                                     switch (lpCallbackGeoTex(pos, t, vis, cbContext, &ti)) {
-                                    case 0:
+                                    case TEXEL_OPAQUE:
                                         if (AcceptHit(vis))
                                             return;
                                         break;
-                                    case 2:
+                                    case TEXEL_TRANSPARENT:
                                         faces++;
                                         continue;
                                     }
@@ -636,11 +642,11 @@ static void testVisual(I3D_visual *vis)
                             S_texel_info ti;
                             ti.mat = fg->material;
                             switch (lpCallbackGeoTex(pos, t, vis, cbContext, &ti)) {
-                            case 0:
+                            case TEXEL_OPAQUE:
                                 if (AcceptHit(vis))
                                     return;
                                 break;
-                            case 2:
+                            case TEXEL_TRANSPARENT:
                                 faces++;
                                 continue;
                             }
@@ -791,11 +797,12 @@ static void testSubtree(I3D_frame *frm)
     }
 }
 
-// The texel callback without one of the caller's: 2 for a transparent texel (alpha below 0.1), 1 else. It takes the
-// alpha as T&l.cpp's TexelCallback does, the color's channels in a vector. The texture is tested through the material
-// and read through a local, as there: VC6 then loads the pixels again after the __ftol calls (with the local tested,
-// it keeps the test's load). The texel's index is written in each branch: through a local VC6 swaps the registers of
-// x and the height (ebx and ebp).
+// The texel callback without one of the caller's: TEXEL_TRANSPARENT for a transparent texel (alpha below 0.1),
+// TEXEL_PARTIAL else. It takes the alpha as T&l.cpp's TexelCallback does (an additive material's from the color's
+// brightness, the channels weighted 0.3, 0.6 and 0.1), the color's channels in a vector. The texture is tested through
+// the material and read through a local, as there: VC6 then loads the pixels again after the __ftol calls (with the
+// local tested, it keeps the test's load). The texel's index is written in each branch: through a local VC6 swaps the
+// registers of x and the height (ebx and ebp).
 // FUNCTION: LS3DF 0x10011300
 // FUNCTION: LS3DF11 0x10010e20
 static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_frame *frm, void *context, void *texel)
@@ -819,10 +826,10 @@ static int __stdcall DefaultTexelCallback(const S_vector &pos, float dist, I3D_f
         } else
             a = texture->m_pPixels[(y * texture->m_Width + x) * 4] * (1.0f / 255.0f);
         if (a * mat->alpha < 0.1)
-            return 2;
+            return TEXEL_TRANSPARENT;
     } else if (mat->alpha < 0.1f)
-        return 2;
-    return 1;
+        return TEXEL_TRANSPARENT;
+    return TEXEL_PARTIAL;
 }
 
 I3D_frame *I3D_scene::TestColGeo(const S_vector &from, const S_vector &dir, uint flags, float *dist, S_vector *normal,

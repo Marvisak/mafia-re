@@ -233,7 +233,7 @@ I3D_vertex *I3D_mesh_level::LockVertices(uint flags)
     if (!vb.vb)
         return NULL;
     uint lock_flags;
-    if (flags & 1)
+    if (flags & I3DMESHLOCK_READONLY)
         lock_flags |= D3DLOCK_READONLY;
     else
         lock_flags = 0;
@@ -349,8 +349,9 @@ void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
             mesh_flags |= MESHF_KEEP_DIFFUSE;
         if (fg->material->flags & MATF_ENVMAP) {
             mesh_flags |= MESHF_ENVMAP;
-            mesh_flags = (mesh_flags & ~MESHF_ENVMAP_MODE) | ((fg->material->flags >> 12) & MESHF_ENVMAP_MODE);
-            env_scale = (float)(sqrt(2.0) * 2) / (fg->material->flags & 0xff);
+            mesh_flags = (mesh_flags & ~MESHF_ENVMAP_MODE) |
+                ((fg->material->flags >> MATF_ENVMAP_MODE_SHIFT) & MESHF_ENVMAP_MODE);
+            env_scale = (float)(sqrt(2.0) * 2) / (fg->material->flags & MATF_ENVMAP_SCALE);
         }
     }
     if (!fgroups) {
@@ -360,7 +361,9 @@ void I3D_mesh_level::AddFGroup(I3D_face_group *fg, bool last)
         return;
     }
     num_fgroups++;
-    if (fg->material && (fg->material->flags > 0x10000000 || fg->material->alpha < 1.0) || last) {
+    // A range test: above MATF_TWO_SIDED means MATF_CKEY_ALPHA, MATF_TXT_ALPHA or MATF_ADD_MODE, or two-sided with any
+    // lower bit (the environment scale is 1 by default). Those and the translucent ones go to the end.
+    if (fg->material && (fg->material->flags > MATF_TWO_SIDED || fg->material->alpha < 1.0) || last) {
         I3D_face_group *p = fgroups;
         while (p->next)
             p = p->next;
@@ -443,7 +446,7 @@ void I3D_mesh_object::UpdateBoundVolume()
 // FUNCTION: LS3DF11 0x10030520
 LS3D_RESULT I3D_mesh_object::SetLOD(I3D_mesh_level *level, int index)
 {
-    if (index >= 10) {
+    if (index >= I3D_MAX_LODS) {
         dbgPrintf("!!  Invalid index %d  I3D_mesh_object::SetLOD()", index);
         return I3DERR_INVALIDPARAMS;
     }
@@ -470,7 +473,7 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
     if (mesh == this)
         return I3D_OK;
     int i;
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < I3D_MAX_LODS; i++) {
         if (levels[i])
             levels[i]->Release();
     }
@@ -483,7 +486,7 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
         u_ofs = v_ofs = 0;
         return I3D_OK;
     }
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < I3D_MAX_LODS; i++) {
         if (mesh->levels[i]) {
             I3D_mesh_level *level = pI3DDriver->CreateMeshLevel();
             if (!level) {
@@ -505,7 +508,7 @@ LS3D_RESULT I3D_mesh_object::Duplicate(I3D_mesh_object *mesh)
 // FUNCTION: LS3DF11 0x100306d0
 LS3D_RESULT I3D_mesh_object::DetachMaterials()
 {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < I3D_MAX_LODS; i++) {
         if (levels[i]) {
             for (I3D_face_group *fg = levels[i]->fgroups; fg; fg = fg->next) {
                 LS3D_RESULT r = fg->DetachMaterial();
@@ -523,7 +526,7 @@ bool I3D_mesh_object::IsCompatible(I3D_mesh_object *mesh)
 {
     if (num_lods != mesh->num_lods)
         return false;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < I3D_MAX_LODS; i++) {
         if (!levels[i]) {
             if (mesh->levels[i])
                 return false;

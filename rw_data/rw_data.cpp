@@ -75,7 +75,7 @@ C_rw_data_inter::C_rw_data_inter(const char *file_name, bool &is_valid)
         return;
     }
 
-    if (magic == 0x30445349) // "ISD0"
+    if (magic == DTA_MAGIC)
     {
         S_HANDLE handle;
         handle.file = file;
@@ -95,7 +95,7 @@ bool C_rw_data_inter::UnlockPack(__int64 key)
 {
     C_m_p.Lock();
 
-    key ^= ((ulong)0x34985762 << 32) | 0x39475694;
+    key ^= DTA_KEY_MASK;
     if (SetFilePointer(file, 4, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
     {
         C_m_p.Unlock();
@@ -226,7 +226,7 @@ int EXPORT dtaOpen(const char *file_name, bool force_dta)
     if (force_dta || dta_first_force)
     {
         handle = OpenFromDTA(file_name);
-        if (handle == -1)
+        if (handle == DTA_INVALID_HANDLE)
         {
             handle = OpenFromFileSystem(file_name);
         }
@@ -234,7 +234,7 @@ int EXPORT dtaOpen(const char *file_name, bool force_dta)
     else
     {
         handle = OpenFromFileSystem(file_name);
-        if (handle == -1)
+        if (handle == DTA_INVALID_HANDLE)
         {
             handle = OpenFromDTA(file_name);
         }
@@ -287,12 +287,12 @@ static int __stdcall OpenFromDTA(const char *file_name)
                 }
 
                 int str_index = 0;
-                if (v_handle[h].file_table[j].file_name_length > 16)
+                if (v_handle[h].file_table[j].file_name_length > DTA_TABLE_NAME_LENGTH)
                 {
-                    str_index = v_handle[h].file_table[j].file_name_length - 16;
+                    str_index = v_handle[h].file_table[j].file_name_length - DTA_TABLE_NAME_LENGTH;
                 }
 
-                if (strncmp(v_handle[h].file_table[j].file_name, &file_name_upper[str_index], 16) != 0)
+                if (strncmp(v_handle[h].file_table[j].file_name, &file_name_upper[str_index], DTA_TABLE_NAME_LENGTH) != 0)
                 {
                     continue;
                 }
@@ -311,11 +311,11 @@ static int __stdcall OpenFromDTA(const char *file_name)
                 DeCrypt((uchar *)&file_header, sizeof(S_FILEHEADER), v_handle[h].key);
 
                 char full_file_name[MAX_PATH];
-                if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & 0x7FFF, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & 0x7FFF))
+                if (!ReadFile(v_handle[h].file, full_file_name, file_header.name_length_flags & DTA_NAME_LENGTH_MASK, &bytes_read, NULL) || bytes_read != (file_header.name_length_flags & DTA_NAME_LENGTH_MASK))
                 {
                     return result;
                 }
-                DeCrypt((uchar *)full_file_name, file_header.name_length_flags & 0x7FFF, v_handle[h].key);
+                DeCrypt((uchar *)full_file_name, file_header.name_length_flags & DTA_NAME_LENGTH_MASK, v_handle[h].key);
 
                 full_file_name[bytes_read] = '\0';
                 strupr(full_file_name);
@@ -339,13 +339,13 @@ static int __stdcall OpenFromDTA(const char *file_name)
                 file_handle.current_block = 0;
                 file_handle.flags = 0;
                 file_handle.timestamp = file_header.timestamp;
-                file_handle.block_size = 0x8000;
-                if (file_handle.size < 0x8000)
+                file_handle.block_size = DTA_BLOCK_SIZE;
+                if (file_handle.size < DTA_BLOCK_SIZE)
                 {
                     file_handle.block_size = file_handle.size;
                 }
                 file_handle.key = v_handle[h].key;
-                file_handle.encrypted = (file_header.name_length_flags & 0x8000) != 0;
+                file_handle.encrypted = (file_header.name_length_flags & DTA_ENCRYPTED) != 0;
 
                 if (!ReadFile(file_handle.file, &file_handle.compressed_block_size, 4, &bytes_read, NULL) || bytes_read != 4)
                 {
@@ -365,7 +365,7 @@ static int __stdcall OpenFromDTA(const char *file_name)
                     DeCrypt(buffer, 1, file_handle.key);
                 }
 
-                if (buffer[0] >= 8)
+                if (buffer[0] >= DTA_BLOCK_WAV)
                 {
                     file_handle.wav_header = new S_WAVHEADER;
                     if (!file_handle.wav_header)
@@ -391,7 +391,7 @@ static int __stdcall OpenFromDTA(const char *file_name)
                     memcpy(file_handle.wav_header, buffer + 1, sizeof(S_WAVHEADER));
                 }
 
-                file_handle.block_content = new uchar[0x8000];
+                file_handle.block_content = new uchar[DTA_BLOCK_SIZE];
                 if (!file_handle.block_content)
                 {
                     if (file_handle.wav_header)
@@ -456,12 +456,12 @@ static inline int OpenFromFileSystem(const char *file_name)
         file_handle.current_block = 0;
         file_handle.flags = DTA_FROM_FILESYSTEM;
         file_handle.wav_header = NULL;
-        file_handle.block_size = 0x8000;
-        if (file_handle.size < 0x8000)
+        file_handle.block_size = DTA_BLOCK_SIZE;
+        if (file_handle.size < DTA_BLOCK_SIZE)
         {
             file_handle.block_size = file_handle.size;
         }
-        file_handle.block_content = new uchar[0x8000];
+        file_handle.block_content = new uchar[DTA_BLOCK_SIZE];
         if (!file_handle.block_content)
         {
             return -1;
@@ -591,11 +591,12 @@ bool EXPORT dtaClose(int handle)
                 {
                     char file_name[512];
                     strcpy(file_name, v_file_h[handle].tmp_file_name);
+                    // Without the ".tmp" dtaOpenWrite appended
                     file_name[strlen(file_name) - 4] = '\0';
                     if (!DeleteFileA(file_name))
                     {
                         DWORD file_attributes = GetFileAttributesA(file_name);
-                        if (file_attributes != -1)
+                        if (file_attributes != INVALID_FILE_ATTRIBUTES)
                         {
                             file_attributes &= ~FILE_ATTRIBUTE_READONLY;
                             SetFileAttributesA(file_name, file_attributes);
@@ -698,15 +699,15 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
     }
 
     DWORD bytes_read;
-    uchar file_buffer[0x8001];
+    uchar file_buffer[DTA_BLOCK_SIZE + 1];
     if (!(v_file_h[handle].flags & DTA_FROM_FILESYSTEM))
     {
-        uint fp_block = file_pointer >> 15;
+        uint fp_block = file_pointer >> DTA_BLOCK_SHIFT;
         if (fp_block > current_block)
         {
             while (current_block != fp_block)
             {
-                block_start_file_pointer += compressed_block_size + 4;
+                block_start_file_pointer += compressed_block_size + DTA_BLOCK_HEADER_SIZE;
                 current_block++;
                 if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                 {
@@ -728,7 +729,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                 compressed_block_size &= 0xFFFF;
             }
 
-            block_file_pointer = file_pointer - (current_block << 15);
+            block_file_pointer = file_pointer - (current_block << DTA_BLOCK_SHIFT);
             v_file_h[handle].is_block_in_memory = false;
         }
         else if (fp_block < current_block)
@@ -761,7 +762,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                 compressed_block_size &= 0xFFFF;
                 while (current_block != fp_block)
                 {
-                    block_start_file_pointer += compressed_block_size + 4;
+                    block_start_file_pointer += compressed_block_size + DTA_BLOCK_HEADER_SIZE;
                     current_block++;
                     if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                     {
@@ -787,7 +788,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             {
                 while (current_block != fp_block)
                 {
-                    block_start_file_pointer -= previous_compressed_block_size + 4;
+                    block_start_file_pointer -= previous_compressed_block_size + DTA_BLOCK_HEADER_SIZE;
                     current_block--;
                     if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                     {
@@ -810,13 +811,13 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                 }
             }
 
-            block_file_pointer = file_pointer - (current_block << 15);
+            block_file_pointer = file_pointer - (current_block << DTA_BLOCK_SHIFT);
             v_file_h[handle].is_block_in_memory = false;
         }
 
         if (!v_file_h[handle].is_block_in_memory)
         {
-            if (SetFilePointer(file, block_start_file_pointer + data_offset + 4, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+            if (SetFilePointer(file, block_start_file_pointer + data_offset + DTA_BLOCK_HEADER_SIZE, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
                 return -1;
@@ -837,13 +838,13 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                 DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
             }
 
-            if (file_buffer[0] == 1)
+            if (file_buffer[0] == DTA_BLOCK_COMPRESSED)
             {
                 block_size = Decompression(file_buffer, block_content, compressed_block_size);
             }
             // In all three copies the WAV case comes first: the original has it inline after `cmp 8; jb`, the plain copy
             // out of line (the PS2 build tests `< 8` first)
-            else if (file_buffer[0] >= 8)
+            else if (file_buffer[0] >= DTA_BLOCK_WAV)
             {
                 if (!current_block && !encrypted)
                 {
@@ -874,7 +875,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             {
                 // Advanced in this order here (the seek loops above advance current_block second too, the one after
                 // the whole-blocks loop doesn't): the other order gives the compare and the loads other registers
-                block_start_file_pointer += compressed_block_size + 4;
+                block_start_file_pointer += compressed_block_size + DTA_BLOCK_HEADER_SIZE;
                 current_block++;
                 if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
                 {
@@ -905,7 +906,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             block_file_pointer = 0;
             result = remaining_block_size;
             len -= remaining_block_size;
-            block_start_file_pointer += compressed_block_size + 4;
+            block_start_file_pointer += compressed_block_size + DTA_BLOCK_HEADER_SIZE;
             if (SetFilePointer(file, block_start_file_pointer + data_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
@@ -915,9 +916,9 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             // The count of whole blocks reuses the seek's block number (size, dead here too, lays out the same): the
             // original's stack slot for it holds fp_block, size and the first and third copies' flags, which a
             // variable of its own doesn't weigh enough to join
-            fp_block = len / 0x8000;
-            // Not len % 0x8000, which gives an `and`; the original has shr/shl/sub like this (PS2 and Xbox agree)
-            uint remaining_bytes = len - fp_block * 0x8000;
+            fp_block = len / DTA_BLOCK_SIZE;
+            // Not len % DTA_BLOCK_SIZE, which gives an `and`; the original has shr/shl/sub like this (PS2 and Xbox agree)
+            uint remaining_bytes = len - fp_block * DTA_BLOCK_SIZE;
 
             // Whole blocks are decoded straight into the caller's buffer
             for (uint i = 0; i < fp_block; i++)
@@ -955,11 +956,11 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                     DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
                 }
 
-                if (file_buffer[0] == 1)
+                if (file_buffer[0] == DTA_BLOCK_COMPRESSED)
                 {
                     block_size = Decompression(file_buffer, (uchar *)buffer + result, compressed_block_size);
                 }
-                else if (file_buffer[0] >= 8)
+                else if (file_buffer[0] >= DTA_BLOCK_WAV)
                 {
                     if (!current_block && !encrypted)
                     {
@@ -975,7 +976,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
 
                 result += block_size;
                 file_pointer += block_size;
-                block_start_file_pointer += compressed_block_size + 4;
+                block_start_file_pointer += compressed_block_size + DTA_BLOCK_HEADER_SIZE;
             }
 
             if (!ReadFile(file, &compressed_block_size, 4, &bytes_read, NULL))
@@ -1016,11 +1017,11 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
                     DeCrypt(file_buffer, compressed_block_size, v_file_h[handle].key);
                 }
 
-                if (file_buffer[0] == 1)
+                if (file_buffer[0] == DTA_BLOCK_COMPRESSED)
                 {
                     block_size = Decompression(file_buffer, block_content, compressed_block_size);
                 }
-                else if (file_buffer[0] >= 8)
+                else if (file_buffer[0] >= DTA_BLOCK_WAV)
                 {
                     if (!current_block && !encrypted)
                     {
@@ -1049,7 +1050,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
     {
         if (!v_file_h[handle].is_block_in_memory || block_start_file_pointer > file_pointer || block_size + block_start_file_pointer < file_pointer)
         {
-            block_start_file_pointer = file_pointer / 0x8000 * 0x8000;
+            block_start_file_pointer = file_pointer / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
             if (SetFilePointer(file, block_start_file_pointer, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
             {
                 C_m_p.Unlock();
@@ -1060,7 +1061,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             // into block_size's before the clamp (the Xbox build has the same shape). Assigning block_size and clamping it
             // with an `if` stores it twice, and a ternary without the local moves registers all over the function.
             uint to_read = size - block_start_file_pointer;
-            block_size = to_read < 0x8000 ? to_read : 0x8000;
+            block_size = to_read < DTA_BLOCK_SIZE ? to_read : DTA_BLOCK_SIZE;
 
             if (!ReadFile(file, block_content, block_size, &bytes_read, NULL))
             {
@@ -1107,7 +1108,7 @@ uint EXPORT dtaRead(int handle, void *buffer, uint len)
             }
 
             uint to_read = size - block_start_file_pointer;
-            block_size = to_read < 0x8000 ? to_read : 0x8000;
+            block_size = to_read < DTA_BLOCK_SIZE ? to_read : DTA_BLOCK_SIZE;
 
             // More than one block left: read straight into the caller's buffer, otherwise go through the block cache
             if (len >= block_size)
@@ -1182,18 +1183,18 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
     {
         switch (move_method)
         {
-        case 0:
+        case FILE_BEGIN:
             if (distance_to_move < 0 || (uint)distance_to_move > v_file_h[handle].size)
             {
                 C_m_p.Unlock();
                 return -1;
             }
             v_file_h[handle].file_pointer = distance_to_move;
-            // Spelled out: % 0x8000 compiles to a different instruction sequence
-            v_file_h[handle].block_file_pointer = distance_to_move - distance_to_move / 0x8000 * 0x8000;
+            // Spelled out: % DTA_BLOCK_SIZE compiles to a different instruction sequence
+            v_file_h[handle].block_file_pointer = distance_to_move - distance_to_move / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
             C_m_p.Unlock();
             return distance_to_move;
-        case 1:
+        case FILE_CURRENT:
         {
             int new_file_pointer = v_file_h[handle].file_pointer + distance_to_move;
             if ((uint)new_file_pointer > v_file_h[handle].size || new_file_pointer < 0)
@@ -1204,7 +1205,7 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
             v_file_h[handle].file_pointer += distance_to_move;
             break;
         }
-        case 2:
+        case FILE_END:
             if (distance_to_move > 1)
             {
                 C_m_p.Unlock();
@@ -1227,27 +1228,27 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
         // Falls through to the next method when SetFilePointer fails, this is what the original does
         switch (move_method)
         {
-        case 0:
+        case FILE_BEGIN:
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_BEGIN);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
                 C_m_p.Unlock();
                 return v_file_h[handle].file_pointer;
             }
-        case 1:
+        case FILE_CURRENT:
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_CURRENT);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
                 C_m_p.Unlock();
                 return v_file_h[handle].file_pointer;
             }
-        case 2:
+        case FILE_END:
             v_file_h[handle].file_pointer = SetFilePointer(v_file_h[handle].file, distance_to_move, NULL, FILE_END);
             if (v_file_h[handle].file_pointer != INVALID_SET_FILE_POINTER)
             {
-                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+                v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
                 C_m_p.Unlock();
                 return v_file_h[handle].file_pointer;
             }
@@ -1257,7 +1258,7 @@ int EXPORT dtaSeek(int handle, int distance_to_move, int move_method)
         }
     }
 
-    v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / 0x8000 * 0x8000;
+    v_file_h[handle].block_file_pointer = v_file_h[handle].file_pointer - v_file_h[handle].file_pointer / DTA_BLOCK_SIZE * DTA_BLOCK_SIZE;
     C_m_p.Unlock();
     return v_file_h[handle].file_pointer;
 }
@@ -1339,7 +1340,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
             if (flags & DTA_CHANGE_ATTRIBUTES)
             {
                 DWORD attributes = GetFileAttributesA(tmp_file_name);
-                if (attributes == -1)
+                if (attributes == INVALID_FILE_ATTRIBUTES)
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -1368,7 +1369,7 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
             if (flags & DTA_CHANGE_ATTRIBUTES)
             {
                 DWORD attributes = GetFileAttributesA(file_name);
-                if (attributes == -1)
+                if (attributes == INVALID_FILE_ATTRIBUTES)
                 {
                     C_m_p.Unlock();
                     return -1;
@@ -1414,8 +1415,8 @@ int EXPORT dtaOpenWrite(const char *file_name, uint flags)
         strcpy(file_handle.tmp_file_name, tmp_file_name);
     }
     file_handle.wav_header = NULL;
-    file_handle.block_size = 0x8000;
-    file_handle.block_content = new uchar[0x8000];
+    file_handle.block_size = DTA_BLOCK_SIZE;
+    file_handle.block_content = new uchar[DTA_BLOCK_SIZE];
     if (!file_handle.block_content)
     {
         C_m_p.Unlock();
@@ -1682,7 +1683,8 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
     short value;
     short value2;
 
-    // An if chain, not a switch: VC6 turns the switch into a jump table
+    // The DPCM block types 8, 12, ..., 32 pick wav_table's tables 0 to 6. An if chain, not a switch: VC6 turns the switch
+    // into a jump table
     if (buffer[0] == 12)
     {
         dpcm_type = 1;
@@ -1743,6 +1745,7 @@ int __stdcall WavDecompression(uchar *buffer, uchar *dest, uint len, S_WAVHEADER
                         short *right = (short *)&dest[decompressed_size];
                         decompressed_size += 2;
 
+                        // A DPCM byte: the step's index in the low 7 bits, its sign in bit 7.
                         // No local for the byte: VC6 loads buffer[position] once anyway, and an extra variable
                         // changes the order of the stack slots (VC6 orders them by use count)
                         uchar idx = buffer[position] & 0x7F;

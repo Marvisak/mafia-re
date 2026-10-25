@@ -61,7 +61,7 @@ LS3D_RESULT ISND_source::Open(const char *name, uint flags)
         return I3DERR_NOTINITIALIZED;
     open_flags = flags;
     int h = dtaOpen(name, false);
-    if (h == -1) {
+    if (h == DTA_INVALID_HANDLE) {
         dbgPrintf("ERROR!! IS_source::Open() - File not found ! %s", name);
         return I3DERR_NOFILE;
     }

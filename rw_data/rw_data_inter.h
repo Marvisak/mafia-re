@@ -14,6 +14,9 @@
 #ifndef INVALID_SET_FILE_POINTER
 #define INVALID_SET_FILE_POINTER ((DWORD)-1)
 #endif
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
 
 // The typo is in the original (PS2 symbol __ct__25C_multithrerad_protectionFv)
 class C_multithrerad_protection
@@ -76,6 +79,11 @@ private:
     bool dump_memory_leaks;
 };
 
+// An archive's first dword, "ISD0"
+#define DTA_MAGIC 0x30445349
+// UnlockPack decrypts the file table with the game's key xored with this
+#define DTA_KEY_MASK (((ulong)0x34985762 << 32) | 0x39475694)
+
 struct S_DTAHEADER
 {
     uint file_count;
@@ -83,6 +91,10 @@ struct S_DTAHEADER
     uint file_table_size;
     uint unk;
 };
+
+// How much of each file's name the file table keeps: its last characters (OpenFromDTA compares those, then the full
+// name in the file's header)
+#define DTA_TABLE_NAME_LENGTH 16
 
 // The file table is sorted by hash, OpenFromDTA does a binary search on the whole 32 bit value
 struct S_FILES_IN
@@ -98,7 +110,7 @@ struct S_FILES_IN
     };
     uint header_offset;
     uint data_offset;
-    char file_name[16];
+    char file_name[DTA_TABLE_NAME_LENGTH];
 };
 
 struct S_FILEHEADER
@@ -108,9 +120,23 @@ struct S_FILEHEADER
     ulong timestamp;
     uint size;
     uint block_count;
-    uint name_length_flags; // low 15 bits = name length, bit 15 = encrypted
+    uint name_length_flags; // DTA_NAME_LENGTH_MASK, DTA_ENCRYPTED
     uint unk3;
 };
+
+// S_FILEHEADER::name_length_flags
+#define DTA_NAME_LENGTH_MASK 0x7FFF
+#define DTA_ENCRYPTED 0x8000            // the file's blocks are encrypted with the archive's key
+
+// A file in an archive is stored in blocks of DTA_BLOCK_SIZE bytes (the last one shorter), each after a dword that
+// holds its compressed size in the low word and the previous block's in the high word, and each starting with its
+// type byte. The names are guesses.
+#define DTA_BLOCK_SIZE 0x8000
+#define DTA_BLOCK_SHIFT 15              // 1 << DTA_BLOCK_SHIFT == DTA_BLOCK_SIZE
+#define DTA_BLOCK_HEADER_SIZE 4         // the dword with the sizes
+// The block types; any other is stored as it is
+#define DTA_BLOCK_COMPRESSED 1          // Decompression
+#define DTA_BLOCK_WAV 8                 // and up, in steps of 4 to 32: DPCM sound with a WAV header first (WavDecompression)
 
 struct S_HANDLE
 {

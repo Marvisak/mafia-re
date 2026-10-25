@@ -78,7 +78,7 @@ LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
     }
     int version = 0;
     dtaRead(LoadImageHandle, &version, 2);
-    if (version != 29) {
+    if (version != I3D_4DS_VERSION) {
         dtaClose(LoadImageHandle);
         return I3DERR_BADVERSION;
     }
@@ -142,11 +142,12 @@ LS3D_RESULT LoadImage(const char *file_name, const FILETIME *time)
                     ImageErrFlg = I3DERR_GENERIC;
                     break;
                 }
+                // The file's flags word, vis_flags' low half
                 dtaRead(LoadImageHandle, &vis->vis_flags, 2);
                 vis->vis_flags &= ~(VISF_UNKNOWN_80000 | VISF_INV_MAT_VALID);
                 frm = vis;
             } else {
-                if (type >= 0x12) {
+                if (type >= FRAME_LAST) {
                     ImageErrFlg = I3DERR_FILECORRUPTED;
                     break;
                 }
@@ -313,7 +314,7 @@ LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIM
     }
     int version = 0;
     dtaRead(LoadImageHandle, &version, 2);
-    if (version != 2) {
+    if (version != I3D_6DS_VERSION) {
         dtaClose(LoadImageHandle);
         return I3DERR_BADVERSION;
     }
@@ -339,6 +340,7 @@ LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIM
         def->parts.used_size = ShadowInfo.num_parts;
         S_shadow_part *part = &def->parts[0];
         while (ShadowInfo.num_parts--) {
+            // num_verts and num_faces
             dtaRead(LoadImageHandle, &part->num_verts, 8);
             int len = 0;
             dtaRead(LoadImageHandle, &len, 1);

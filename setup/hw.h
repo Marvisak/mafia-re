@@ -19,9 +19,13 @@ struct S_adapter_mode
     uint flags;
 };
 
+// The most modes LoadAdapterModes keeps in adapter_modes
+#define MAX_ADAPTER_MODES 256
+
 int GetTotalVRAM(GUID *guid);
 bool LoadAdapterRefreshRates();
 bool LoadAdapterModes();
+// adapter: the resolution box's entry, or -1 for the settings' resolution
 bool LoadAdapterData(int adapter);
 bool LoadD3D8();
 void FreeD3D8();

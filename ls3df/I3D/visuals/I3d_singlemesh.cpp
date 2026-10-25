@@ -20,13 +20,15 @@
 #include "IGraph/IGraph.h"
 #include "rw_data.h"
 
+#define MAX_JOINTS 64                   // the joints DBuild's search takes at most (the name is a guess)
+
 // DBuild's search for the joints (PS2 names)
 // GLOBAL: LS3DF 0x101b4f80
 // GLOBAL: LS3DF11 0x101b20a0
 static int jointu;
 // GLOBAL: LS3DF 0x101b4f88
 // GLOBAL: LS3DF11 0x101b20a8
-static I3D_joint *pJoint[64];
+static I3D_joint *pJoint[MAX_JOINTS];
 
 // FUNCTION: LS3DF 0x10054240
 // FUNCTION: LS3DF11 0x10051fc0
@@ -35,6 +37,7 @@ I3D_singlemesh::I3D_singlemesh()
     num_joints = 0;
     joints = NULL;
     visual_type = I3D_VISUAL_SINGLEMESH;
+    // counts no update reaches, each its own, so that the first compares differ
     joints_changed = (uint)-300;
     bvol_joints_changed = (uint)-400;
 }
@@ -49,7 +52,7 @@ I3D_singlemesh::~I3D_singlemesh()
             joints[i]->singlemesh = NULL;
     }
     delete[] joints;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < I3D_MAX_LODS; i++)
         delete lods[i];
     memset(lods, 0, sizeof(lods));
 }
@@ -98,7 +101,7 @@ void I3D_singlemesh::SetSpace(bool world)
 // FUNCTION: LS3DF11 0x10052180
 LS3D_RESULT I3D_singlemesh::DuplicateSinglemeshDef(I3D_singlemesh *sm)
 {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < I3D_MAX_LODS; i++) {
         if (!sm->lods[i])
             continue;
         SMeshLod *l = new SMeshLod;
@@ -137,7 +140,7 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
             delete[] joints;
             joints = NULL;
             num_joints = 0;
-            for (i = 0; i < 10; i++)
+            for (i = 0; i < I3D_MAX_LODS; i++)
                 delete lods[i];
             memset(lods, 0, sizeof(lods));
             SetMesh(((I3D_emitor *)frame)->mesh, true);
@@ -152,7 +155,7 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
     delete[] joints;
     joints = NULL;
     num_joints = 0;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < I3D_MAX_LODS; i++)
         delete lods[i];
     memset(lods, 0, sizeof(lods));
     {
@@ -198,7 +201,7 @@ LS3D_RESULT I3D_singlemesh::Duplicate(I3D_frame *frame)
         default:
             return I3DERR_GENERIC;
         }
-        vis_flags = sm->vis_flags & 0x2ffd0;
+        vis_flags = sm->vis_flags & VISF_DUPLICATE_MASK;
         vis_bound = sm->vis_bound;
         if (sm->vis_flags & VISF_WORLD_SPACE)
             vis_bound_w = sm->GetWBoundVolume();
@@ -320,7 +323,7 @@ static void findJoint(I3D_frame *frm)
 {
     for (I3D_frame *f = frm->m_pChild; f; f = f->m_pNext) {
         if (f->GetType() == FRAME_JOINT) {
-            if (jointu >= 64)
+            if (jointu >= MAX_JOINTS)
                 break;
             pJoint[jointu++] = (I3D_joint *)f;
         }
@@ -383,6 +386,7 @@ void I3D_singlemesh::UpdateLodVertices(int lod_index)
     SMeshLod *l = (SMeshLod *)lods[lod_index];
     if (!l)
         return;
+    // counts no update reaches, as the constructor's
     l->lights_changed = (uint)-700;
     l->update_count = (uint)-600;
     l->joints_changed = joints_changed;
@@ -576,8 +580,8 @@ void I3D_singlemesh::m_AddFGroups()
     }
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!l->vb.vb) {
-        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x400, level->num_vertices, NULL, 0, &verts->tex,
-                sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1) | LODC_STATIC, level->num_vertices,
+                NULL, 0, &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return;
         }
@@ -726,13 +730,13 @@ void I3D_singlemesh::m_AddFGroups()
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
-            h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+            h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK) | PRIM_SORT_CKEY_ALPHA;
             else
-                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);

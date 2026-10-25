@@ -403,20 +403,20 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
         // STRING: SETUPCZ 0x40e0a4
         // STRING: SETUPPL 0x40e088
         int item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"English");
-        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 0);
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, LANGUAGE_ENGLISH);
         // The typo is in the binary
         // STRING: SETUP 0x40e080
         // STRING: SETUP10 0x40d0b4
         // STRING: SETUPCZ 0x40e09c
         // STRING: SETUPPL 0x40e080
         item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Deutch");
-        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 2);
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, LANGUAGE_GERMAN);
         // STRING: SETUP 0x40e078
         // STRING: SETUP10 0x40d0ac
         // STRING: SETUPCZ 0x40e094
         // STRING: SETUPPL 0x40e078
         item = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_ADDSTRING, NULL, (LPARAM)"Cesky");
-        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, 1);
+        SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_SETITEMDATA, item, LANGUAGE_CZECH);
 
         int language_count = SendMessageA(GetDlgItem(hWnd, IDC_COMBO_LANGUAGE), CB_GETCOUNT, NULL, NULL);
         for (int i = 0; i < language_count; i++)
@@ -597,11 +597,11 @@ INT_PTR __stdcall DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             settings.multipass_rendering = false;
             settings.suspend_when_inactive = true;
             settings.clip_always = false;
-            settings.antialiasing = 0;
+            settings.antialiasing = D3DMULTISAMPLE_NONE;
             settings.fullscreen = true;
             settings.hardware_transform = true;
             settings.vsync = false;
-            settings.refresh_rate = 0;
+            settings.refresh_rate = D3DPRESENT_RATE_DEFAULT;
             settings.disable_sound = false;
             settings.software_mixing_only = false;
             if (dialog_state.vram_size <= 8)

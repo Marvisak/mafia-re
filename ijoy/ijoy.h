@@ -42,6 +42,19 @@ enum {
     JOY_ASPECT_VELOCITY = 4,
 };
 
+// The axes IJoy's methods take, in DIJOYSTATE2's order, JOY_SLIDER1 the last
+enum {
+    JOY_X,
+    JOY_Y,
+    JOY_Z,
+    JOY_RX,
+    JOY_RY,
+    JOY_RZ,
+    JOY_SLIDER0,
+    JOY_SLIDER1,
+    JOY_NUM_AXES,
+};
+
 // The state IJoy::Update computes. The axes are scaled to -1..1 (0..1 with JOY_AXIS_POSITIVE), the POVs are angles
 // in radians.
 struct S_joy_state {
@@ -59,6 +72,7 @@ enum {
     JOY_AXIS_INVERT = 2,
     JOY_AXIS_POSITIVE = 4,      // 0..1 instead of -1..1
     JOY_AXIS_RAW = 8,           // DIPROPCALIBRATIONMODE_RAW, not scaled
+    JOY_AXIS_MODES = 0xf,       // all of them: SetAxisMode refuses other bits, GetAxisMode returns these
 };
 
 // IJoy::Update
@@ -143,6 +157,11 @@ struct S_joy_condition {
 enum {
     JOY_EFFECT_PLAYING = 1,
     JOY_EFFECT_EMULATED = 2,
+};
+
+// IJoyBase::CreateJoy's flags
+enum {
+    JOY_BACKGROUND = 1,         // DISCL_BACKGROUND: the device is read while the window is inactive too
 };
 
 // VTABLE: IJOY 0x1000d0d0
@@ -236,7 +255,12 @@ public:
     virtual bool GetStatus(uint *status) = 0;
 };
 
+// CreateJoyBase's flags
+enum {
+    JOY_BASE_LEAK_REPORT = 1,   // report the objects not released when the DLL is unloaded
+};
+
 // hinstance and hwnd must not be NULL. direct_input is a DirectInput object to share (it gets an AddRef), or NULL to
-// have the JoyBase create its own. Bit 0 of flags turns on the report of objects not released.
+// have the JoyBase create its own. flags are JOY_BASE_*.
 extern "C" bool EXPORT CreateJoyBase(IJoyBase **joy_base, HINSTANCE hinstance, HWND hwnd, IDirectInput7A *direct_input,
     uint flags);

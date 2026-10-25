@@ -48,7 +48,7 @@ LS3D_RESULT I3D_interpolator::ClearAnimation(uint index)
 // more than a conditional expression, which the blended pose's quaternion product needs.
 static inline ushort KeyTime(int time)
 {
-    return time / 40;
+    return time / ANIM_TIME_UNIT;
 }
 
 static inline const void *KeyValues(const ushort *times, int n)
@@ -85,7 +85,7 @@ void I3D_interpolator::Update()
     int i;
 
     int num_pos = 0;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (keys[i].flags & ANIMF_POS) {
             if (!(ipol_set->anims[i].blend <= 0.0f) && ipol_set->anims[i].on) {
                 S_vector v_ipol;
@@ -131,7 +131,7 @@ void I3D_interpolator::Update()
     }
 
     int num_rot = 0;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (ipol_set->anims[i].on && (keys[i].flags & ANIMF_ROT) && !(ipol_set->anims[i].blend <= 0.0f)) {
             S_quat q_ipol;
             ushort t = KeyTime(ipol_set->anims[i].time);
@@ -176,7 +176,7 @@ void I3D_interpolator::Update()
     }
 
     int num_scale = 0;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (keys[i].flags & ANIMF_SCALE) {
             if (!(ipol_set->anims[i].blend <= 0.0f) && ipol_set->anims[i].on) {
                 S_vector v_ipol;
@@ -293,7 +293,7 @@ void I3D_interpolator::Update()
     // Played backwards, only the latter: the tests are the forward ones.
     if (!(frame->m_FrmFlags & (LS3D_CALLBACK_NOTE | LS3D_CALLBACK_NOTE_STRING)) || !frame->m_pCallback)
         return;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (!(keys[i].flags & (ANIMF_NOTE | ANIMF_NOTE_STRING)))
             continue;
         if (!ipol_set->anims[i].on)
@@ -312,7 +312,7 @@ void I3D_interpolator::Update()
             for (int j = 0; j < n; j++, times++) {
                 ushort kt = *times;
                 if (wrap ? kt > t_last || kt <= t : kt > t_last && kt <= t)
-                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE_STRING, (uint)notes[j], kt * 40);
+                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE_STRING, (uint)notes[j], kt * ANIM_TIME_UNIT);
             }
         } else {
             if (!(frame->m_FrmFlags & LS3D_CALLBACK_NOTE))
@@ -324,7 +324,7 @@ void I3D_interpolator::Update()
             for (int j = 0; j < n; j++, times++) {
                 ushort kt = *times;
                 if (wrap ? kt > t_last || kt <= t : kt > t_last && kt <= t)
-                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE, notes[j], kt * 40);
+                    frame->m_pCallback(frame, LS3D_CALLBACK_NOTE, notes[j], kt * ANIM_TIME_UNIT);
             }
         }
     }
@@ -368,7 +368,7 @@ void I3D_IPolSet::Clear()
         delete ip;
     }
     interpolators.reset();
-    for (int j = 0; j < 8; j++) {
+    for (int j = 0; j < I3D_MAX_ANIMS; j++) {
         if (anims[j].set)
             anims[j].set->Release();
     }
@@ -383,7 +383,7 @@ void I3D_IPolSet::Clear()
 void I3D_IPolSet::Tick(const int *times)
 {
     int i;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (times[i]) {
             changed = true;
             if (anims[i].on) {
@@ -398,7 +398,7 @@ void I3D_IPolSet::Tick(const int *times)
     I3D_interpolator **p = &interpolators[0];
     for (int j = interpolators.size(); j--; p++)
         (*p)->Update();
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (!anims[i].on)
             continue;
         anims[i].last_time = anims[i].time;
@@ -433,7 +433,7 @@ void I3D_IPolSet::Tick(int time)
     int i;
     if (time) {
         changed = true;
-        for (i = 0; i < 8; i++) {
+        for (i = 0; i < I3D_MAX_ANIMS; i++) {
             if (anims[i].on) {
                 anims[i].time += time;
                 anims[i].delta = time;
@@ -446,7 +446,7 @@ void I3D_IPolSet::Tick(int time)
     I3D_interpolator **p = &interpolators[0];
     for (int j = interpolators.size(); j--; p++)
         (*p)->Update();
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < I3D_MAX_ANIMS; i++) {
         if (!anims[i].on)
             continue;
         anims[i].last_time = anims[i].time;
@@ -498,7 +498,8 @@ LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float 
         return I3D_OK;
     anims[index].on = true;
     anims[index].time = 0;
-    anims[index].last_time = -40;
+    // A key before the start, so the first update plays a note at 0
+    anims[index].last_time = -ANIM_TIME_UNIT;
     if (!options)
         options = set->options;
     anims[index].options = options;
@@ -527,7 +528,7 @@ LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float 
             if (k.flags & ANIMF_ROT) {
                 k.num_rot = *data++;
                 k.rot = data;
-                data += k.num_rot * 9;
+                data += k.num_rot * ANIM_ROT_KEY_WORDS;
                 if (!(k.num_rot & 1))
                     data++;
             } else
@@ -535,7 +536,7 @@ LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float 
             if (k.flags & ANIMF_POS) {
                 k.num_pos = *data++;
                 k.pos = data;
-                data += k.num_pos * 7;
+                data += k.num_pos * ANIM_VECTOR_KEY_WORDS;
                 if (!(k.num_pos & 1))
                     data++;
             } else
@@ -543,7 +544,7 @@ LS3D_RESULT I3D_IPolSet::SetAnimation(I3D_animation_set *set, uint index, float 
             if (k.flags & ANIMF_SCALE) {
                 k.num_scale = *data++;
                 k.scale = data;
-                data += k.num_scale * 7;
+                data += k.num_scale * ANIM_VECTOR_KEY_WORDS;
                 if (!(k.num_scale & 1))
                     data++;
             } else
@@ -665,7 +666,7 @@ void I3D_IPolSet::m_releaseUnusedInterpolators()
         if (ip->pose)
             continue;
         bool used = false;
-        for (int j = 8; j--; ) {
+        for (int j = I3D_MAX_ANIMS; j--; ) {
             if (anims[j].on)
                 used = true;
             else if (ip->keys[j].flags)

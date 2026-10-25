@@ -27,6 +27,12 @@
 
 #include <string.h>
 
+// The particles' renderer's buffers: quads of 4 vertices and 6 indices (the names are guesses; nothing checks a group
+// against them)
+#define PART_RENDER_QUADS 0x800
+#define PART_RENDER_VERTS 0x2000
+#define PART_RENDER_INDICES 0x3000
+
 // The particles' renderer (PC only, the name is a guess; pParticleVisual): renders the particles the rendering queued
 // in ParticleElementsList (PARTF_RENDERER), sorted, a group of one sort_group with one draw from a buffer of its own,
 // their meshes transformed into it (PARTF_MESH) or quads
@@ -107,7 +113,7 @@ void I3D_part_renderer::m_AddFGroups()
     if (j < 0)
         return;
     RENDER_FG_HELP_STRUCT h;
-    h.clip = 1;
+    h.clip = 1;                         // always clipped
     h.vis = this;
     do {
         I3D_part_base *part = (I3D_part_base *)ParticleElementsList.visuals[ParticleElementsList.sort[j]].vis;
@@ -128,17 +134,17 @@ void I3D_part_renderer::m_AddFGroups()
                 if (--j < 0)
                     break;
             }
-            h.sort_value = (FloatToInt(dist) / h.num & 0x3fffffff) | 0x80000000;
+            h.sort_value = (FloatToInt(dist) / h.num & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
             AddFGHlpStruct.num_transparent++;
             AddFGHlpStruct.fgroups.push_back(h);
         } else {
             if (part->part_flags & PARTF_OPAQUE && part->fade * part->transparency >= 1.0f) {
                 h.sort_value = 0;
                 if (h.texture)
-                    h.sort_value = h.texture->m_UID & 0x7fff;
+                    h.sort_value = h.texture->m_UID & PRIM_SORT_MAT_MASK;
                 AddFGHlpStruct.num_opaque++;
             } else {
-                h.sort_value = (FloatToInt(part->sort_dist) & 0x3fffffff) | 0x80000000;
+                h.sort_value = (FloatToInt(part->sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
                 AddFGHlpStruct.num_transparent++;
             }
             AddFGHlpStruct.fgroups.push_back(h);
@@ -171,10 +177,11 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     uint flags = ((I3D_part_base *)ParticleElementsList.visuals[ParticleElementsList.sort[first]].vis)->part_flags;
     if (flags & PARTF_MESH) {
         if (!mesh_vb.vb && !cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1,
-                D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING | D3DUSAGE_WRITEONLY, sizeof(LVERTEX), 0x2000, mesh_vb,
-                VF_LVERTEX, false))
+                D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING | D3DUSAGE_WRITEONLY, sizeof(LVERTEX),
+                PART_RENDER_VERTS, mesh_vb, VF_LVERTEX, false))
             return;
-        if (!mesh_ib.ib && !cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING, 0x3000, mesh_ib))
+        if (!mesh_ib.ib &&
+                !cIBMan.m_Alloc(D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING, PART_RENDER_INDICES, mesh_ib))
             return;
         verts = (LVERTEX *)mesh_vb.buffer->Lock(mesh_vb.base, BUFFER_LOCK_FLAGS);
         ushort *indices = (ushort *)mesh_ib.buffer->Lock(mesh_ib.base, BUFFER_LOCK_FLAGS);
@@ -215,12 +222,12 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     } else {
         if (!quad_vb.vb) {
             if (!cVBMan.m_Alloc(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1,
-                    D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING | D3DUSAGE_WRITEONLY, sizeof(LVERTEX), 0x2000,
-                    quad_vb, VF_LVERTEX, true))
+                    D3DUSAGE_DYNAMIC | D3DUSAGE_SOFTWAREPROCESSING | D3DUSAGE_WRITEONLY, sizeof(LVERTEX),
+                    PART_RENDER_VERTS, quad_vb, VF_LVERTEX, true))
                 return;
             verts = (LVERTEX *)quad_vb.buffer->Lock(quad_vb.base, D3DLOCK_DISCARD | D3DLOCK_NOSYSLOCK);
             LVERTEX *v = verts;
-            for (int k = 0x800; k; k--) {
+            for (int k = PART_RENDER_QUADS; k; k--) {
                 v[0].u = 0.0f;
                 v[0].v = 1.0f;
                 v[1].u = 1.0f;
@@ -233,14 +240,14 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             }
         }
         if (!quad_ib.ib) {
-            if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, 0x3000, quad_ib))
+            if (!cIBMan.m_Alloc(D3DUSAGE_SOFTWAREPROCESSING, PART_RENDER_INDICES, quad_ib))
                 return;
             ushort *indices = (ushort *)quad_ib.buffer->Lock(quad_ib.base, BUFFER_LOCK_FLAGS);
             // Counted down, the vertex and the index with counters of their own (the original's loop walks the
             // indices from the third, its count in a stack slot)
             ushort base = 0;
             int n = 0;
-            for (int k = 0x800; k; k--) {
+            for (int k = PART_RENDER_QUADS; k; k--) {
                 indices[n] = base + 2;
                 indices[n + 1] = base;
                 indices[n + 2] = base + 3;
@@ -282,19 +289,19 @@ void I3D_part_renderer::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
     I3D_material *mat = h->fg->material;
     int zwrite = 0;
     if (!mat) {
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
         m_pD3DDevice8->SetTexture(0, NULL);
     } else {
-        if (flags & 3) {
+        if (flags & PARTF_ALPHA_MASK) {
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
             zwrite = 1;
-            SetAlphaState(1);
-            SetBlendState(0);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ALPHA);
         } else {
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
             zwrite = 1;
-            SetAlphaState(1);
-            SetBlendState(1);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ADD_ALPHA);
         }
         if (h->texture)
             m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
@@ -627,7 +634,7 @@ void I3D_emitor::Reset()
     p_color = UnitVector;
     p_color_end = UnitVector;
     p_omni_sector = false;
-    part_flags = 0x104;
+    part_flags = PARTF_UNKNOWN_100 | PARTF_UNKNOWN_4;
 }
 
 // Switched on, it starts again. The frame's SetOn written out, then a test VC6 can't fold into it.
@@ -697,8 +704,8 @@ void I3D_emitor::Tick(int t)
             e->part_flags |= part_flags & PARTF_RENDERER;
             e->sort_group = id;
         }
-        e->part_flags &= ~(PARTF_OPAQUE | PARTF_ALPHA | 4);
-        e->part_flags |= part_flags & (PARTF_OPAQUE | PARTF_ALPHA | 4);
+        e->part_flags &= ~(PARTF_OPAQUE | PARTF_ALPHA | PARTF_UNKNOWN_4);
+        e->part_flags |= part_flags & (PARTF_OPAQUE | PARTF_ALPHA | PARTF_UNKNOWN_4);
         float sc = p_scale;
         S_vector s = GetScale();
         e->SetScale(S_vector(s.x * sc, s.y * sc, s.z * sc));
@@ -1034,8 +1041,8 @@ I3D_part_base::I3D_part_base()
     rot_axis = 0;
     axis_mode = 3;
     sector = NULL;
-    sort_group = 0xffff;
-    part_flags = PARTF_OPAQUE | 0x100;
+    sort_group = 0xffff;                // no emitter's (they number theirs from 0, I3D_driver::unknown_58)
+    part_flags = PARTF_OPAQUE | PARTF_UNKNOWN_100;
 }
 
 // The mesh as the object's, without the billboard's
@@ -1123,8 +1130,8 @@ void I3D_part_base::m_AddFGroups()
                 return;
             }
         }
-        if (!l->Create(1 | 0x300, level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex,
-                sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+        if (!l->Create(LODC_TEX1 | LODC_POSITIONS | LODC_SOFTWARE, level->num_vertices, &verts->pos,
+                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
             dbgPrintf("!! Out of memory    renderObject()");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
             return;
@@ -1156,7 +1163,7 @@ void I3D_part_base::m_AddFGroups()
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-        l->SetUV(1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
+        l->SetUV(LODC_TEX1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
     const S_matrix *m;
     if (billboard) {
         ProductBillMatrix(AddFGHlpStruct.cam_pos, &g_matrix);
@@ -1205,7 +1212,7 @@ void I3D_part_base::m_AddFGroups()
             if (!lv)
                 lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX), num_verts,
-                AddFGHlpStruct.sector->fog_light, 0);
+                AddFGHlpStruct.sector->fog_light, FOGPROC_FACTOR);
         }
     }
 
@@ -1220,10 +1227,10 @@ void I3D_part_base::m_AddFGroups()
         if (part_flags & PARTF_OPAQUE && fade * transparency >= 1.0f) {
             h.sort_value = 0;
             if (h.texture)
-                h.sort_value = h.texture->m_UID & 0x7fff;
+                h.sort_value = h.texture->m_UID & PRIM_SORT_MAT_MASK;
             AddFGHlpStruct.num_opaque++;
         } else {
-            h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+            h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
             AddFGHlpStruct.num_transparent++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -1260,24 +1267,24 @@ void I3D_part_base::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
         if (fade * transparency < 1.0f) {
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
             zwrite = 1;
-            SetAlphaState(1);
-            SetBlendState(0);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ALPHA);
         } else
-            SetAlphaState(0);
+            SetAlphaState(ALPHASTATE_NONE);
         m_pD3DDevice8->SetTexture(0, NULL);
     } else {
         if (part_flags & PARTF_OPAQUE && fade * transparency >= 1.0f)
-            SetAlphaState(0);
-        else if (part_flags & 3) {
+            SetAlphaState(ALPHASTATE_NONE);
+        else if (part_flags & PARTF_ALPHA_MASK) {
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
             zwrite = 1;
-            SetAlphaState(1);
-            SetBlendState(0);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ALPHA);
         } else {
             m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
             zwrite = 1;
-            SetAlphaState(1);
-            SetBlendState(1);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ADD_ALPHA);
         }
         if (h->texture)
             m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);

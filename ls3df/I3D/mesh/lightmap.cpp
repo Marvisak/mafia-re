@@ -2,7 +2,7 @@
 // room left, then LightMap in PS2's order (m_ConvertRGB, the constructor and destructor, the free rectangles' lists,
 // m_AddTexture, m_FillLineRGB, m_Resize and m_CreateLM), with the header's zero vector's $E (0x1005e380) in the middle,
 // as in I3d_math.cpp, and the lists' out-of-line templates at the end. Names are the PS2 build's unless noted.
-// LightMap packs a lit object level's lightmaps into a texture of 128 to 256 texels a side, shared with other levels'
+// LightMap packs a lit object level's lightmaps into a texture of 128 to 512 texels a side, shared with other levels'
 // while it has room: each texture's free room is a list of free rectangles, sorted by area, which m_AddTexture takes
 // the first fitting one of and splits.
 //
@@ -71,7 +71,7 @@ void FreeTexBlList(int *mem)
 // FUNCTION: LS3DF11 0x1005a300
 bool LightMap::m_ConvertRGB(ushort sx, ushort sy, void *src, void **dst)
 {
-    if (sx == 3 && sy == 3)
+    if (sx == LM_SINGLE_COLOR_SIZE && sy == LM_SINGLE_COLOR_SIZE)
         return true;
     D3DFORMAT fmt;
     if (renderState[RS_LMTRUECOLOR] && m_TrueColorTexturePixelFormat)
@@ -226,7 +226,7 @@ LightMap::~LightMap()
 // FUNCTION: LS3DF11 0x1005ad00
 bool LightMap::m_AddRectToRectList(TEXBL_STRUCT *tb, RECT *rc)
 {
-    if (rc->right < 3 || rc->bottom < 3) {
+    if (rc->right < LM_SINGLE_COLOR_SIZE || rc->bottom < LM_SINGLE_COLOR_SIZE) {
         tb->lost_area += rc->right * rc->bottom;
         return true;
     }
@@ -282,7 +282,7 @@ bool LightMap::m_ReplaceRectFromRectList(TEXBL_STRUCT *tb, RECT_STRUCT *r)
         r->next->prev = r->prev;
     else
         tb->last = r->prev;
-    if (r->rc.right < 3 || r->rc.bottom < 3) {
+    if (r->rc.right < LM_SINGLE_COLOR_SIZE || r->rc.bottom < LM_SINGLE_COLOR_SIZE) {
         tb->lost_area += r->area;
         delete r;
         return true;
@@ -578,8 +578,9 @@ bool LightMap::m_Resize(RECTANGLE_INFO *ri, int sx, int sy, uchar **dst)
 // From the original's code and PS2's: the copy loop reads each rectangle's offset into a local first (the original
 // copies x, y and rotated to the stack before the switch), the texture is created in the if block, the candidate's
 // members are set in PS2's order (which gives the original's stores), m_AddTexture's results are a switch (PS2 tests
-// 1 first, the original 0x80000001: VC6 compares by value), each 3x3 branch computes its stride first, from tex_sx, as
-// PS2 does, and a failed fit ends its loop through used_size, which VC6 reads as a word (size() reads a dword).
+// 1 first, the original 0x80000001: VC6 compares by value; m_AddTexture returns only 0 and 1 on PC), each 3x3 branch
+// computes its stride first, from tex_sx, as PS2 does, and a failed fit ends its loop through used_size, which VC6
+// reads as a word (size() reads a dword).
 // The copy loop reads the texture's format through GetFormat(), and C_list's destructor is clear() (ls3df.h): with
 // both the out-of-line calls are the original's, the candidates' vector deleting destructor at all six failing
 // returns in their scope and their push_back's grow inlined.
@@ -656,11 +657,11 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
 
     // Else a new one, the tightest that takes them all
     C_list<TEXBL_STRUCT> cands(3);
-    int max_sy = min(m_MaxTextureHeight, 512);
-    int max_sx = min(m_MaxTextureWidth, 512);
+    int max_sy = min(m_MaxTextureHeight, LM_TEXTURE_SIZE_MAX);
+    int max_sx = min(m_MaxTextureWidth, LM_TEXTURE_SIZE_MAX);
     while (!best) {
-        for (int sy = 128; sy <= max_sy; sy <<= 1) {
-            for (int sx = 128; sx <= max_sx; sx <<= 1) {
+        for (int sy = LM_TEXTURE_SIZE_MIN; sy <= max_sy; sy <<= 1) {
+            for (int sx = LM_TEXTURE_SIZE_MIN; sx <= max_sx; sx <<= 1) {
                 if (m_Area > sx * sy)
                     continue;
                 TEXBL_STRUCT t;
@@ -732,12 +733,14 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
             return false;
         }
         if (renderState[RS_LMTRUECOLOR] && m_TrueColorTexturePixelFormat) {
-            if (m_pTexture->Create(NULL, NULL, 0x88400, best->sx, best->sy, 0) < 0) {
+            if (m_pTexture->Create(NULL, NULL, ITC_MANAGED_DXT | ITC_EMPTY | ITC_TRUECOLOR,
+                    best->sx, best->sy, 0) < 0) {
                 m_EraseRectList(best);
                 return false;
             }
         } else {
-            if (m_pTexture->Create(NULL, NULL, 0x88008, best->sx, best->sy, 0) < 0) {
+            if (m_pTexture->Create(NULL, NULL, ITC_MANAGED_DXT | ITC_EMPTY | ITC_COLORKEY,
+                    best->sx, best->sy, 0) < 0) {
                 m_EraseRectList(best);
                 return false;
             }
@@ -779,7 +782,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
             ushort *src = (ushort *)r.tex_data;
             uint pitch2 = pitch >> 1;
             ushort *d = (ushort *)bits + off.y * pitch2 + off.x;
-            if (r.tex_sx == 3 && r.tex_sy == 3) {
+            if (r.tex_sx == LM_SINGLE_COLOR_SIZE && r.tex_sy == LM_SINGLE_COLOR_SIZE) {
                 int stride = pitch2 - r.tex_sx;
                 r.u = (float)off.x / best->sx;
                 r.v = (float)off.y / best->sy;
@@ -792,8 +795,8 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
                     col = (cb >> 3) | (cr >> 3) << 11 | (cg >> 2) << 5;
                 else
                     col = (cb >> 3) | (cr >> 3) << 10 | 0x8000 | (cg >> 3) << 5;
-                for (int y = 0; y < 3; y++) {
-                    for (int x = 0; x < 3; x++)
+                for (int y = 0; y < LM_SINGLE_COLOR_SIZE; y++) {
+                    for (int x = 0; x < LM_SINGLE_COLOR_SIZE; x++)
                         *d++ = col;
                     d += stride;
                 }
@@ -820,15 +823,15 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
         case D3DFMT_X8R8G8B8: {
             uchar *src = (uchar *)r.tex_data;
             uchar *d = bits + off.y * pitch + off.x * 4;
-            if (r.tex_sx == 3 && r.tex_sy == 3) {
+            if (r.tex_sx == LM_SINGLE_COLOR_SIZE && r.tex_sy == LM_SINGLE_COLOR_SIZE) {
                 int stride = pitch - r.tex_sx * 4;
                 r.u = (float)off.x / best->sx;
                 r.v = (float)off.y / best->sy;
                 uint c = (uint)r.data;
                 uchar cr = c >> 16;
                 uchar cg = c >> 8;
-                for (int y = 0; y < 3; y++) {
-                    for (int x = 0; x < 3; x++) {
+                for (int y = 0; y < LM_SINGLE_COLOR_SIZE; y++) {
+                    for (int x = 0; x < LM_SINGLE_COLOR_SIZE; x++) {
                         *d++ = (uchar)c;
                         *d++ = cg;
                         *d = cr;
@@ -860,15 +863,15 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
             uchar *d0 = bits + off.y * m_pTexture->m_Width + off.x;
             uchar *d1 = d0 + m_pTexture->m_Width * m_pTexture->m_Height;
             uchar *d2 = d0 + m_pTexture->m_Width * m_pTexture->m_Height * 2;
-            if (r.tex_sx == 3 && r.tex_sy == 3) {
+            if (r.tex_sx == LM_SINGLE_COLOR_SIZE && r.tex_sy == LM_SINGLE_COLOR_SIZE) {
                 int stride = best->sx - r.tex_sx;
                 r.u = (float)off.x / best->sx;
                 r.v = (float)off.y / best->sy;
                 uint c = (uint)r.data;
                 uchar cr = c >> 16;
                 uchar cg = c >> 8;
-                for (int y = 0; y < 3; y++) {
-                    for (int x = 0; x < 3; x++) {
+                for (int y = 0; y < LM_SINGLE_COLOR_SIZE; y++) {
+                    for (int x = 0; x < LM_SINGLE_COLOR_SIZE; x++) {
                         *d0++ = cr;
                         *d1++ = cg;
                         *d2++ = (uchar)c;
@@ -926,6 +929,7 @@ bool LightMap::m_CreateLM(ushort *indices, RECTANGLE_INFO *ri, int num, uint *me
     if (!inserted)
         GlobalRemainTexBlList.push_back(*best);
     for (i = 0; i < m_OrderList.size(); i++) {
+        // Larger than a single color's 3x3, so its data and tex_data were allocated
         if (ri[m_OrderList[i]].area > 9) {
             delete[] ri[m_OrderList[i]].data;
             ri[m_OrderList[i]].data = NULL;

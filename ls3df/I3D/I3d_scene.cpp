@@ -143,7 +143,7 @@ I3D_scene::I3D_scene()
     ws_flags = 0;
     WeatherSystemReset();
     if (!pSnowTexture)
-        pGlobalIGraph->CreateITexture("Snow.tga", NULL, 2, &pSnowTexture);
+        pGlobalIGraph->CreateITexture("Snow.tga", NULL, ITC_ALPHA, &pSnowTexture);
     InitialSoundProp.SetupDefaults();
 }
 
@@ -348,11 +348,11 @@ float I3D_scene::GetLightness(const S_vector &pos, I3D_sector *sector, uint flag
             continue;
         }
         if (flags & I3D_LIGHTNESS_TESTCOL) {
-            uint col_flags = 0x21000000;
+            uint col_flags = COLF_OMNI_SECTOR | COLF_FIRST_HIT;
             S_vector dir;
             if (lt->ltype == I3DLIGHT_DIRECTIONAL) {
                 dir = -lt->w_dir;
-                col_flags = 0x21040000;
+                col_flags = COLF_OMNI_SECTOR | COLF_INFINITE | COLF_FIRST_HIT;
             } else
                 dir = lt->w_pos - pos;
             if (TestColGeo(pos, dir, col_flags, NULL, NULL, NULL, NULL, NULL, frame, 0))
@@ -680,7 +680,7 @@ void I3D_scene::SetSpace(bool world)
 // FUNCTION: LS3DF11 0x100488b0
 static void sceneSS(I3D_frame *frm)
 {
-    if (frm->m_FrmFlags & (FRMFLAGS_TARGET | 0x10000000))
+    if (frm->m_FrmFlags & (FRMFLAGS_TARGET | FRMFLAGS_INTERPOLATOR))
         return;
     I3D_FRAME_TYPE type = frm->GetType();
     if (type == FRAME_VOLUME || type == FRAME_MODEL)
@@ -743,102 +743,102 @@ void I3D_scene::m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sec
             EAXLISTENERPROPERTIES p;
             p.ulEnvironment = EAX_ENVIRONMENT_UNDEFINED;
             p.ulFlags = EAXLISTENERFLAGS_DEFAULT;
-            p.flEnvironmentSize = 7.5f;
+            p.flEnvironmentSize = EAXLISTENER_DEFAULTENVIRONMENTSIZE;
             p.lRoomLF = (long)(props.room_lf * 10000.0f - 10000.0f);
-            if (p.lRoomLF < -10000)
-                p.lRoomLF = -10000;
-            else if (p.lRoomLF > 0)
-                p.lRoomLF = 0;
+            if (p.lRoomLF < EAXLISTENER_MINROOMLF)
+                p.lRoomLF = EAXLISTENER_MINROOMLF;
+            else if (p.lRoomLF > EAXLISTENER_MAXROOMLF)
+                p.lRoomLF = EAXLISTENER_MAXROOMLF;
             p.lRoomHF = (long)(props.room_hf * 10000.0f - 10000.0f);
-            if (p.lRoomHF < -10000)
-                p.lRoomHF = -10000;
-            else if (p.lRoomHF > 0)
-                p.lRoomHF = 0;
+            if (p.lRoomHF < EAXLISTENER_MINROOMHF)
+                p.lRoomHF = EAXLISTENER_MINROOMHF;
+            else if (p.lRoomHF > EAXLISTENER_MAXROOMHF)
+                p.lRoomHF = EAXLISTENER_MAXROOMHF;
             p.flDecayTime = props.decay_time * .001f;
-            if (p.flDecayTime < .1f)
-                p.flDecayTime = .1f;
-            else if (p.flDecayTime > 20.0f)
-                p.flDecayTime = 20.0f;
+            if (p.flDecayTime < EAXLISTENER_MINDECAYTIME)
+                p.flDecayTime = EAXLISTENER_MINDECAYTIME;
+            else if (p.flDecayTime > EAXLISTENER_MAXDECAYTIME)
+                p.flDecayTime = EAXLISTENER_MAXDECAYTIME;
             p.flDecayHFRatio = props.decay_hf_ratio * 1.9f + .1f;
-            if (p.flDecayHFRatio < .1f)
-                p.flDecayHFRatio = .1f;
-            else if (p.flDecayHFRatio > 2.0f)
-                p.flDecayHFRatio = 2.0f;
+            if (p.flDecayHFRatio < EAXLISTENER_MINDECAYHFRATIO)
+                p.flDecayHFRatio = EAXLISTENER_MINDECAYHFRATIO;
+            else if (p.flDecayHFRatio > EAXLISTENER_MAXDECAYHFRATIO)
+                p.flDecayHFRatio = EAXLISTENER_MAXDECAYHFRATIO;
             p.lReflections = (long)(props.reflections * 11000.0f - 10000.0f);
-            if (p.lReflections < -10000)
-                p.lReflections = -10000;
-            else if (p.lReflections > 1000)
-                p.lReflections = 1000;
+            if (p.lReflections < EAXLISTENER_MINREFLECTIONS)
+                p.lReflections = EAXLISTENER_MINREFLECTIONS;
+            else if (p.lReflections > EAXLISTENER_MAXREFLECTIONS)
+                p.lReflections = EAXLISTENER_MAXREFLECTIONS;
             p.flReflectionsDelay = props.reflections_delay * .001f;
-            if (p.flReflectionsDelay < 0.0f)
-                p.flReflectionsDelay = 0.0f;
-            else if (p.flReflectionsDelay > .3f)
-                p.flReflectionsDelay = .3f;
+            if (p.flReflectionsDelay < EAXLISTENER_MINREFLECTIONSDELAY)
+                p.flReflectionsDelay = EAXLISTENER_MINREFLECTIONSDELAY;
+            else if (p.flReflectionsDelay > EAXLISTENER_MAXREFLECTIONSDELAY)
+                p.flReflectionsDelay = EAXLISTENER_MAXREFLECTIONSDELAY;
             p.lReverb = (long)(props.reverb * 12000.0f - 10000.0f);
-            if (p.lReverb < -10000)
-                p.lReverb = -10000;
-            else if (p.lReverb > 2000)
-                p.lReverb = 2000;
+            if (p.lReverb < EAXLISTENER_MINREVERB)
+                p.lReverb = EAXLISTENER_MINREVERB;
+            else if (p.lReverb > EAXLISTENER_MAXREVERB)
+                p.lReverb = EAXLISTENER_MAXREVERB;
             p.flReverbDelay = props.reverb_delay * .001f;
-            if (p.flReverbDelay < 0.0f)
-                p.flReverbDelay = 0.0f;
-            else if (p.flReverbDelay > .1f)
-                p.flReverbDelay = .1f;
+            if (p.flReverbDelay < EAXLISTENER_MINREVERBDELAY)
+                p.flReverbDelay = EAXLISTENER_MINREVERBDELAY;
+            else if (p.flReverbDelay > EAXLISTENER_MAXREVERBDELAY)
+                p.flReverbDelay = EAXLISTENER_MAXREVERBDELAY;
             p.flEnvironmentDiffusion = props.environment_diffusion;
-            if (p.flEnvironmentDiffusion < 0.0f)
-                p.flEnvironmentDiffusion = 0.0f;
-            else if (p.flEnvironmentDiffusion > 1.0f)
-                p.flEnvironmentDiffusion = 1.0f;
+            if (p.flEnvironmentDiffusion < EAXLISTENER_MINENVIRONMENTDIFFUSION)
+                p.flEnvironmentDiffusion = EAXLISTENER_MINENVIRONMENTDIFFUSION;
+            else if (p.flEnvironmentDiffusion > EAXLISTENER_MAXENVIRONMENTDIFFUSION)
+                p.flEnvironmentDiffusion = EAXLISTENER_MAXENVIRONMENTDIFFUSION;
             p.flDecayLFRatio = props.decay_lf_ratio * 1.9f + .1f;
-            if (p.flDecayLFRatio < .1f)
-                p.flDecayLFRatio = .1f;
-            else if (p.flDecayLFRatio > 2.0f)
-                p.flDecayLFRatio = 2.0f;
+            if (p.flDecayLFRatio < EAXLISTENER_MINDECAYLFRATIO)
+                p.flDecayLFRatio = EAXLISTENER_MINDECAYLFRATIO;
+            else if (p.flDecayLFRatio > EAXLISTENER_MAXDECAYLFRATIO)
+                p.flDecayLFRatio = EAXLISTENER_MAXDECAYLFRATIO;
             p.lRoom = (long)(props.room * 10000.0f - 10000.0f);
-            if (p.lRoom < -10000)
-                p.lRoom = -10000;
-            else if (p.lRoom > 0)
-                p.lRoom = 0;
+            if (p.lRoom < EAXLISTENER_MINROOM)
+                p.lRoom = EAXLISTENER_MINROOM;
+            else if (p.lRoom > EAXLISTENER_MAXROOM)
+                p.lRoom = EAXLISTENER_MAXROOM;
             p.flEchoTime = props.echo_time * .001f;
-            if (p.flEchoTime < .075f)
-                p.flEchoTime = .075f;
-            else if (p.flEchoTime > .25f)
-                p.flEchoTime = .25f;
+            if (p.flEchoTime < EAXLISTENER_MINECHOTIME)
+                p.flEchoTime = EAXLISTENER_MINECHOTIME;
+            else if (p.flEchoTime > EAXLISTENER_MAXECHOTIME)
+                p.flEchoTime = EAXLISTENER_MAXECHOTIME;
             p.flEchoDepth = props.echo_depth;
-            if (p.flEchoDepth < 0.0f)
-                p.flEchoDepth = 0.0f;
-            else if (p.flEchoDepth > 1.0f)
-                p.flEchoDepth = 1.0f;
+            if (p.flEchoDepth < EAXLISTENER_MINECHODEPTH)
+                p.flEchoDepth = EAXLISTENER_MINECHODEPTH;
+            else if (p.flEchoDepth > EAXLISTENER_MAXECHODEPTH)
+                p.flEchoDepth = EAXLISTENER_MAXECHODEPTH;
             p.flModulationTime = props.modulation_time * .001f;
-            if (p.flModulationTime < .04f)
-                p.flModulationTime = .04f;
-            else if (p.flModulationTime > 4.0f)
-                p.flModulationTime = 4.0f;
+            if (p.flModulationTime < EAXLISTENER_MINMODULATIONTIME)
+                p.flModulationTime = EAXLISTENER_MINMODULATIONTIME;
+            else if (p.flModulationTime > EAXLISTENER_MAXMODULATIONTIME)
+                p.flModulationTime = EAXLISTENER_MAXMODULATIONTIME;
             p.flModulationDepth = props.modulation_depth;
-            if (p.flModulationDepth < 0.0f)
-                p.flModulationDepth = 0.0f;
-            else if (p.flModulationDepth > 1.0f)
-                p.flModulationDepth = 1.0f;
+            if (p.flModulationDepth < EAXLISTENER_MINMODULATIONDEPTH)
+                p.flModulationDepth = EAXLISTENER_MINMODULATIONDEPTH;
+            else if (p.flModulationDepth > EAXLISTENER_MAXMODULATIONDEPTH)
+                p.flModulationDepth = EAXLISTENER_MAXMODULATIONDEPTH;
             p.flRoomRolloffFactor = props.room_rolloff_factor * 10.0f;
-            if (p.flRoomRolloffFactor < 0.0f)
-                p.flRoomRolloffFactor = 0.0f;
-            else if (p.flRoomRolloffFactor > 10.0f)
-                p.flRoomRolloffFactor = 10.0f;
+            if (p.flRoomRolloffFactor < EAXLISTENER_MINROOMROLLOFFFACTOR)
+                p.flRoomRolloffFactor = EAXLISTENER_MINROOMROLLOFFFACTOR;
+            else if (p.flRoomRolloffFactor > EAXLISTENER_MAXROOMROLLOFFFACTOR)
+                p.flRoomRolloffFactor = EAXLISTENER_MAXROOMROLLOFFFACTOR;
             p.flAirAbsorptionHF = props.air_absorption_hf * 100.0f - 100.0f;
-            if (p.flAirAbsorptionHF < -100.0f)
-                p.flAirAbsorptionHF = -100.0f;
-            else if (p.flAirAbsorptionHF > 0.0f)
-                p.flAirAbsorptionHF = 0.0f;
+            if (p.flAirAbsorptionHF < EAXLISTENER_MINAIRABSORPTIONHF)
+                p.flAirAbsorptionHF = EAXLISTENER_MINAIRABSORPTIONHF;
+            else if (p.flAirAbsorptionHF > EAXLISTENER_MAXAIRABSORPTIONHF)
+                p.flAirAbsorptionHF = EAXLISTENER_MAXAIRABSORPTIONHF;
             p.flHFReference = props.hf_reference * 19000.0f + 1000.0f;
-            if (p.flHFReference < 1000.0f)
-                p.flHFReference = 1000.0f;
-            else if (p.flHFReference > 20000.0f)
-                p.flHFReference = 20000.0f;
+            if (p.flHFReference < EAXLISTENER_MINHFREFERENCE)
+                p.flHFReference = EAXLISTENER_MINHFREFERENCE;
+            else if (p.flHFReference > EAXLISTENER_MAXHFREFERENCE)
+                p.flHFReference = EAXLISTENER_MAXHFREFERENCE;
             p.flLFReference = props.lf_reference * 980.0f + 20.0f;
-            if (p.flLFReference < 20.0f)
-                p.flLFReference = 20.0f;
-            else if (p.flLFReference > 1000.0f)
-                p.flLFReference = 1000.0f;
+            if (p.flLFReference < EAXLISTENER_MINLFREFERENCE)
+                p.flLFReference = EAXLISTENER_MINLFREFERENCE;
+            else if (p.flLFReference > EAXLISTENER_MAXLFREFERENCE)
+                p.flLFReference = EAXLISTENER_MAXLFREFERENCE;
             p.vReflectionsPan.x = props.reflections_pan.x;
             p.vReflectionsPan.y = props.reflections_pan.y;
             p.vReflectionsPan.z = props.reflections_pan.z;
@@ -858,7 +858,7 @@ void I3D_scene::m_UpdateSoundProperties(I3D_sector *sector, I3D_sector *prev_sec
 // FUNCTION: LS3DF11 0x10049050
 LS3D_RESULT I3D_scene::SetAnimation(I3D_animation_set *set, uint index, float blend, uint options)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     if (!ipol_set) {
         ipol_set = new I3D_IPolSet(this);
@@ -874,7 +874,7 @@ LS3D_RESULT I3D_scene::SetAnimation(I3D_animation_set *set, uint index, float bl
 // FUNCTION: LS3DF11 0x10049110
 I3D_animation_set *I3D_scene::GetAnimationSet(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return NULL;
     if (!ipol_set)
         return NULL;
@@ -885,7 +885,7 @@ I3D_animation_set *I3D_scene::GetAnimationSet(uint index) const
 // FUNCTION: LS3DF11 0x10049140
 void I3D_scene::StopAnimation(uint index)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return;
     if (!ipol_set)
         return;
@@ -896,7 +896,7 @@ void I3D_scene::StopAnimation(uint index)
 // FUNCTION: LS3DF11 0x10049170
 LS3D_RESULT I3D_scene::SetAnimBlend(uint index, float blend)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     I3D_IPolSet *ips = ipol_set;
     if (!ips)
@@ -915,7 +915,7 @@ LS3D_RESULT I3D_scene::SetAnimBlend(uint index, float blend)
 // FUNCTION: LS3DF11 0x100491f0
 float I3D_scene::GetAnimBlend(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return 0.0f;
     if (!ipol_set)
         return 0.0f;
@@ -926,7 +926,7 @@ float I3D_scene::GetAnimBlend(uint index) const
 // FUNCTION: LS3DF11 0x10049230
 LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     I3D_IPolSet *ips = ipol_set;
     if (!ips)
@@ -943,7 +943,7 @@ LS3D_RESULT I3D_scene::SetAnimTime(uint index, int time)
 // FUNCTION: LS3DF11 0x10049270
 int I3D_scene::GetAnimTime(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return 0;
     if (!ipol_set)
         return 0;
@@ -954,7 +954,7 @@ int I3D_scene::GetAnimTime(uint index) const
 // FUNCTION: LS3DF11 0x100492a0
 bool I3D_scene::AnimIsOn(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return false;
     if (!ipol_set)
         return false;
@@ -997,7 +997,7 @@ void I3D_scene::WeatherSystemReset()
         ws_size = 1.5f;
         ws_speed = .03f;
     }
-    ws_flags |= on | WSF_FLAG_2 | WSF_FLAG_4;
+    ws_flags |= on | WSF_SECTOR_TEST | WSF_DUMMY_TEST;
     ws_range_x = 25.0f;
     ws_range_y = 12.0f;
     ws_count = 1000;
@@ -1117,17 +1117,17 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
         else
             ws_flags &= ~WSF_ON;
         return;
-    case WS_PARAM_FLAG_2:
+    case WS_PARAM_SECTOR_TEST:
         if (value)
-            ws_flags |= WSF_FLAG_2;
+            ws_flags |= WSF_SECTOR_TEST;
         else
-            ws_flags &= ~WSF_FLAG_2;
+            ws_flags &= ~WSF_SECTOR_TEST;
         return;
-    case WS_PARAM_FLAG_4:
+    case WS_PARAM_DUMMY_TEST:
         if (value)
-            ws_flags |= WSF_FLAG_4;
+            ws_flags |= WSF_DUMMY_TEST;
         else
-            ws_flags &= ~WSF_FLAG_4;
+            ws_flags &= ~WSF_DUMMY_TEST;
         return;
     case WS_PARAM_COLOR:
         update = 1;
@@ -1216,7 +1216,7 @@ void I3D_scene::SetWeatherSystemParam(WS_PARAM param, uint value)
     case 1:
         if (WSComplVBStr.vb) {
             uint color, color_2;
-            if (m_ProblemFlags & 4) {
+            if (m_ProblemFlags & PROBLEM_NO_MODULATE2X) {
                 uint a = ws_color & 0xff000000;
                 uint r = (ws_color >> 15) & 0x1fe;
                 if (r > 0xff)
@@ -1272,10 +1272,10 @@ uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
     switch (param) {
     case WS_PARAM_ON:
         return ws_flags & WSF_ON;
-    case WS_PARAM_FLAG_2:
-        return ws_flags & WSF_FLAG_2;
-    case WS_PARAM_FLAG_4:
-        return ws_flags & WSF_FLAG_4;
+    case WS_PARAM_SECTOR_TEST:
+        return ws_flags & WSF_SECTOR_TEST;
+    case WS_PARAM_DUMMY_TEST:
+        return ws_flags & WSF_DUMMY_TEST;
     case WS_PARAM_COLOR:
         return ws_color;
     case WS_PARAM_COLOR_2:
@@ -1329,7 +1329,7 @@ uint I3D_scene::GetWeatherSystemParam(WS_PARAM param)
 // FUNCTION: LS3DF11 0x1004a520
 void I3D_scene::m_UpdateWeatherSystem()
 {
-    if (!(ws_flags & WSF_ON) || !(primary_sector->sct_flags & 1) || !ws_count) {
+    if (!(ws_flags & WSF_ON) || !(primary_sector->sct_flags & SCTF_VISIBLE) || !ws_count) {
         CurrentWECnt = 0;
         return;
     }
@@ -1408,7 +1408,7 @@ void I3D_scene::m_UpdateWeatherSystem()
     WS_VERTEX *v = (WS_VERTEX *)WSComplVBStr.buffer->Lock(WSComplVBStr.base, BUFFER_LOCK_FLAGS);
     if (WSLastScene != this) {
         uint color, color_2;
-        if (m_ProblemFlags & 4) {
+        if (m_ProblemFlags & PROBLEM_NO_MODULATE2X) {
             uint a = ws_color & 0xff000000;
             uint r = (ws_color >> 15) & 0x1fe;
             if (r > 0xff)
@@ -1478,7 +1478,7 @@ void I3D_scene::m_UpdateWeatherSystem()
     }
     float density = ws_density;
     WSNearSectorList.reset();
-    if (ws_flags & WSF_FLAG_2) {
+    if (ws_flags & WSF_SECTOR_TEST) {
         WSNearSectorList.reserve(num_sectors);
         I3D_sector *sct = sectors;
         for (int i = num_sectors; i--; sct = sct->next_in_scene) {
@@ -1512,6 +1512,7 @@ void I3D_scene::m_UpdateWeatherSystem()
         if (cam_dir.Dot(d) <= cos_fov)
             continue;
         S_vector pos2 = pos + tail;
+        // A hidden particle's min_y above any position: it starts again at a random place next frame
         if (WSNearSectorList.size() > 0) {
             if (GetSector(pos, &WSNearSectorList[0], WSNearSectorList.size()) != primary_sector) {
                 e->min_y = 1e6f;
@@ -1522,7 +1523,7 @@ void I3D_scene::m_UpdateWeatherSystem()
                 continue;
             }
         }
-        if (ws_flags & WSF_FLAG_4) {
+        if (ws_flags & WSF_DUMMY_TEST) {
             int j;
             for (j = ws_dummies.size(); j--; ) {
                 DUMMY_STRUCT &ds = ws_dummies[j];
@@ -1588,15 +1589,15 @@ void I3D_scene::m_RenderWeatherSystem()
         case I3DLIGHT_FOG: {
             float end = pCurrentCamera->fcp * fog->range_f;
             float start = end * fog->range_n;
-            SetFog(TRUE, 0, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+            SetFog(TRUE, FOGTYPE_LINEAR, start, end, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                 FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
         } break;
         case I3DLIGHT_POINTAMBIENT:
-            SetFog(TRUE, 1, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+            SetFog(TRUE, FOGTYPE_EXP, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                 FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
             break;
         case I3DLIGHT_POINTFOG:
-            SetFog(TRUE, 2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
+            SetFog(TRUE, FOGTYPE_EXP2, fog->near_range, 0.0f, 0xff000000 | FloatToInt(fog->diffuse.x * 255.0f) << 16 |
                 FloatToInt(fog->diffuse.y * 255.0f) << 8 | FloatToInt(fog->diffuse.z * 255.0f));
             break;
         }
@@ -1605,8 +1606,8 @@ void I3D_scene::m_RenderWeatherSystem()
     SetAlphaOp(D3DTOP_MODULATE);
     SetColorOp1(D3DTOP_DISABLE);
     SetClipping(TRUE);
-    SetAlphaState(1);
-    SetBlendState(0);
+    SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     if (ws_flags & WSF_SNOW && pSnowTexture)
         m_pD3DDevice8->SetTexture(0, pSnowTexture->m_pD3DTexture8);
     else
@@ -1614,7 +1615,7 @@ void I3D_scene::m_RenderWeatherSystem()
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
     SetCullState(D3DCULL_NONE);
     pGlobalIGraph->SetWorldMatrix(IdentityMatrix);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     m_pD3DDevice8->SetStreamSource(0, WSComplVBStr.vb, sizeof(WS_VERTEX));
     m_pD3DDevice8->DrawPrimitive(D3DPT_TRIANGLELIST, WSComplVBStr.base, CurrentWECnt * 4);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);

@@ -30,7 +30,7 @@ I3D_area::I3D_area()
     scene = NULL;
     m_FrmFlags |= FRMFLAGS_HR_AREAS;
     unknown_164 = 0;
-    switch_fade_time = 500;
+    switch_fade_time = 500;             // ms
 }
 
 // Takes the area out of its sounds and its scene. The sounds go through DeleteSound, which VC6 inlines here.

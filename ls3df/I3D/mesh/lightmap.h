@@ -20,6 +20,13 @@ struct RECTANGLE_INFO {
     void *tex_data;                     // 0x18, the texels in the texture's format (m_ConvertRGB)
 };
 
+// A rectangle of 3x3 texels holds a single color (in data); a free rectangle narrower than that is lost
+#define LM_SINGLE_COLOR_SIZE 3
+
+// The lightmaps' textures: 128 to 512 texels a side, powers of two (m_CreateLM)
+#define LM_TEXTURE_SIZE_MIN 128
+#define LM_TEXTURE_SIZE_MAX 512
+
 // A free rectangle of a texture (PS2 RECT_STRUCT, 0x1c bytes), in its TEXBL_STRUCT's list, sorted by area
 struct RECT_STRUCT {
     int area;                           // 0x00

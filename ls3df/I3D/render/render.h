@@ -18,23 +18,23 @@ inline void SetBlendState(uint state)
         return;
     m_CurrBlendState = state;
     switch (state) {
-    case 0:
+    case BLENDSTATE_ALPHA:
         m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
         break;
-    case 1:
+    case BLENDSTATE_ADD_ALPHA:
         m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
         break;
-    case 2:
+    case BLENDSTATE_ADD:
         m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
         break;
-    case 3:
+    case BLENDSTATE_MODULATE:
         m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
         break;
-    case 4:
+    case BLENDSTATE_MODULATE2X:
         m_pD3DDevice8->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
         m_pD3DDevice8->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
         break;
@@ -52,10 +52,10 @@ inline void SetVertexFormat(uint format)
         return;
     m_CurrVertexFormat = format;
     switch (format) {
-    case 0:
+    case VF_LVERTEX:
         m_pD3DDevice8->SetVertexShader(m_LVertexVS);
         break;
-    case 1:
+    case VF_LVERTEX2:
         m_pD3DDevice8->SetVertexShader(m_LVertex2VS);
         break;
     case 2:
@@ -64,13 +64,13 @@ inline void SetVertexFormat(uint format)
     case 3:
         m_pD3DDevice8->SetVertexShader(D3DFVF_DIFFUSE | D3DFVF_TEX1);
         break;
-    case 4:
+    case VF_TLVERTEX:
         m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
         break;
-    case 5:
+    case VF_TLVERTEX2:
         m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2);
         break;
-    case 6:
+    case VF_VERTEX:
         m_pD3DDevice8->SetVertexShader(m_VertexVS);
         break;
     }
@@ -115,7 +115,7 @@ inline void SetClipping(uint clip)
     if (m_CurrClipState == clip)
         return;
     m_CurrClipState = clip;
-    if (clip == 1)
+    if (clip == TRUE)
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, TRUE);
     else
         m_pD3DDevice8->SetRenderState(D3DRS_CLIPPING, FALSE);
@@ -144,8 +144,14 @@ extern int m_CurrFogType;
 extern float m_CurrFogStart;
 extern float m_CurrFogEnd;
 
+// SetFog's types, m_CurrFogType (the names are guesses): D3DFOG_LINEAR, D3DFOG_EXP and D3DFOG_EXP2, whose own values
+// differ
+#define FOGTYPE_LINEAR 0                // from start to end
+#define FOGTYPE_EXP 1                   // start is the density
+#define FOGTYPE_EXP2 2
+
 // The fog render states, set where they differ from IGraph's (PC only, the name is a guess): linear from start to end
-// (type 0), or exponential (1) or squared (2) with start as the density
+// (FOGTYPE_LINEAR), or exponential or squared with start as the density
 // FUNCTION: LS3DF 0x1004e390
 // FUNCTION: LS3DF11 0x1004c220
 inline void SetFog(uint state, uint type, float start, float end, uint color)
@@ -163,22 +169,22 @@ inline void SetFog(uint state, uint type, float start, float end, uint color)
     if (m_CurrFogType != type) {
         m_CurrFogType = type;
         switch (type) {
-        case 0:
+        case FOGTYPE_LINEAR:
             m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
                 D3DFOG_LINEAR);
             break;
-        case 1:
+        case FOGTYPE_EXP:
             m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
                 D3DFOG_EXP);
             break;
-        case 2:
+        case FOGTYPE_EXP2:
             m_pD3DDevice8->SetRenderState(m_HardwareCaps & HWCAPS_TABLEFOG ? D3DRS_FOGTABLEMODE : D3DRS_FOGVERTEXMODE,
                 D3DFOG_EXP2);
             break;
         }
     }
     switch (m_CurrFogType) {
-    case 0:
+    case FOGTYPE_LINEAR:
         if (!IsAbsMrgZero(m_CurrFogEnd - end)) {
             m_CurrFogEnd = end;
             m_pD3DDevice8->SetRenderState(D3DRS_FOGEND, I3DFloatAsInt(end));
@@ -188,8 +194,8 @@ inline void SetFog(uint state, uint type, float start, float end, uint color)
             m_pD3DDevice8->SetRenderState(D3DRS_FOGSTART, I3DFloatAsInt(start));
         }
         break;
-    case 1:
-    case 2:
+    case FOGTYPE_EXP:
+    case FOGTYPE_EXP2:
         if (!IsAbsMrgZero(m_CurrFogStart - start)) {
             m_CurrFogStart = start;
             m_pD3DDevice8->SetRenderState(D3DRS_FOGDENSITY, I3DFloatAsInt(start));

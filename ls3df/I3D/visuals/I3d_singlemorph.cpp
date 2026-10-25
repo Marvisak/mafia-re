@@ -108,7 +108,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
             delete[] joints;
             joints = NULL;
             num_joints = 0;
-            for (i = 0; i < 10; i++)
+            for (i = 0; i < I3D_MAX_LODS; i++)
                 delete lods[i];
             memset(lods, 0, sizeof(lods));
             frame->UpdateV();
@@ -125,7 +125,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
     delete[] joints;
     joints = NULL;
     num_joints = 0;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < I3D_MAX_LODS; i++)
         delete lods[i];
     memset(lods, 0, sizeof(lods));
     frame->UpdateV();
@@ -219,7 +219,7 @@ LS3D_RESULT I3D_singlemorph::Duplicate(I3D_frame *frame)
         default:
             return I3DERR_GENERIC;
         }
-        vis_flags = sm->vis_flags & 0x2ffd0;
+        vis_flags = sm->vis_flags & VISF_DUPLICATE_MASK;
         vis_bound = sm->vis_bound;
         if (sm->vis_flags & VISF_WORLD_SPACE)
             vis_bound_w = sm->GetWBoundVolume();

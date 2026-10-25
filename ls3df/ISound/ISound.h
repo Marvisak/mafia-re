@@ -44,6 +44,8 @@ struct ISND_INIT {
 
 // ISND_driver::Init's flags; the last two are the driver's own, in create_flags
 enum {
+    ISNDINIT_VERBOSE = 0x2,             // Insanity3D's ISC_VERBOSE ("dump sound caps"): the game passes it, the driver
+                                        // doesn't test it
     ISNDINIT_NOEAX = 0x10,              // DirectSoundCreate8 instead of EAX Unified's COM object
     ISNDINIT_NOHWCHANNELS = 0x20,       // neither count the free hardware 3D channels nor look for EAX 3.0
     ISNDINIT_HEADPHONES = 0x400,
@@ -289,6 +291,9 @@ struct ISND_STREAM_FUNCS {
     HRESULT(__fastcall *Pause)(int stream);                                 // 0x38
     HRESULT(__fastcall *Resume)(int stream);                                // 0x3c
 };
+
+// The events of the stream callback (the name is a guess)
+#define ISND_STREAM_END 1               // the stream has ended
 
 // The DirectSound driver (PS2 IS_driver.cpp). The PS2 build declares the virtual functions in this order; MSVC groups
 // each name's overloads at the first one's slot in reverse order, which gives the original's vtable.

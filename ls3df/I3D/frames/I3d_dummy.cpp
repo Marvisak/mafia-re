@@ -49,7 +49,7 @@ void I3D_dummy::UpdateV()
 // FUNCTION: LS3DF11 0x10019e70
 void I3D_dummy::Normalize(uint mode)
 {
-    if (mode == 2) {
+    if (mode == I3DDUMMY_NORMALIZE_CENTER) {
         S_vector pos = (bbox.max + bbox.min) * 0.5f;
         SetPos(pos * GetLocalMatrix());
         S_vector size = (bbox.max - bbox.min) * 0.5f;

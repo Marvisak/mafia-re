@@ -48,7 +48,7 @@ public:
     bool write;                         // 0x18
     int file_size;                      // 0x1c, read files only (PS2's is the stack's first entry)
 
-    C_chunk() : open(false), handle(-1), write(false) {}
+    C_chunk() : open(false), handle(DTA_INVALID_HANDLE), write(false) {}
 
     // Opens a file for reading or writing; the only method that isn't inline (C_chunk.cpp)
     bool OpenFile(const char *name, bool for_write);
@@ -120,7 +120,7 @@ public:
                 while (stack.size())
                     Descend();
             dtaClose(handle);
-            handle = -1;
+            handle = DTA_INVALID_HANDLE;
             open = false;
             return true;
         }

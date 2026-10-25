@@ -358,6 +358,31 @@ enum {
     HWCAPS_SINGLEPASS = 0x80,           // not IGRAPH_MULTIPASS: the environment map blends in the texture's pass
 };
 
+// IGraph.cpp's m_CurrAlphaState, as IGraph::SetState's DXS_ALPHA and I3D.h's SetAlphaState set it (the names are
+// guesses). D3DRS_ALPHAFUNC is D3DCMP_GREATEREQUAL.
+#define ALPHASTATE_NONE 0               // neither blended nor tested
+#define ALPHASTATE_BLEND 1              // blended, and tested against 1: what has alpha 0 isn't drawn
+#define ALPHASTATE_BLEND_ALL 2          // blended, tested against 0
+#define ALPHASTATE_TEST 3               // not blended, tested against m_AlphaRef (the color keys)
+
+// m_CurrBlendState, as DXS_BLEND and render.h's SetBlendState set it: D3DRS_SRCBLEND and D3DRS_DESTBLEND (the names
+// are guesses; Insanity3D's I3D_BLENDMODE has these blends under other numbers)
+#define BLENDSTATE_ALPHA 0              // SRCALPHA, INVSRCALPHA
+#define BLENDSTATE_ADD_ALPHA 1          // SRCALPHA, ONE
+#define BLENDSTATE_ADD 2                // ONE, ONE
+#define BLENDSTATE_MODULATE 3           // DESTCOLOR, ZERO
+#define BLENDSTATE_MODULATE2X 4         // DESTCOLOR, SRCCOLOR
+
+// A vertex format (PS2 type, VBManager.cpp; the names are guesses, 2 and 3 aren't known): a vertex buffer's, and
+// m_CurrVertexFormat's, which IGraph's files and render.h's SetVertexFormat set
+enum VERTEX_FORMAT {
+    VF_LVERTEX,                         // LVERTEX: IGraph's, the objects' lods with hardware T&L
+    VF_LVERTEX2,                        // LVERTEX2
+    VF_TLVERTEX = 4,                    // TLVERTEX: the objects' lods without hardware T&L
+    VF_TLVERTEX2,                       // TLVERTEX2
+    VF_VERTEX,                          // I3D_vertex: the meshes'
+};
+
 // The undecorated exports are __cdecl, where the engine's default is __fastcall (/Gr): the original's calls of
 // I3DGetResultMessage clean up the stack. __declspec(dllexport) has to come before the return type: VC6 ignores it
 // after a '*' (C4518).

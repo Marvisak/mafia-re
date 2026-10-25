@@ -4,6 +4,7 @@
 
 #define IDD_MAIN 101
 
+// IDOK's and IDCANCEL's values, which make Enter and Esc press them
 #define IDC_BUTTON_SAVE 1
 #define IDC_BUTTON_EXIT 2
 #define IDC_COMBO_LANGUAGE 1000

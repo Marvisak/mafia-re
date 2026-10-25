@@ -260,7 +260,7 @@ int ISND_driver::InitEAX()
             && (support & KSPROPERTY_SUPPORT_GET) && (support & KSPROPERTY_SUPPORT_SET)) {
             create_flags |= ISNDINIT_EAX30;
             dbgPrintf("*** FULL EAX 3.0 available ***");
-            long room = -10000;
+            long room = EAXLISTENER_MINROOM;   // no room effect
             eax_property_set->Set(DSPROPSETID_EAX30_ListenerProperties, DSPROPERTY_EAXLISTENER_ROOM, NULL, 0, &room,
                 sizeof(room));
         }
@@ -332,7 +332,7 @@ bool ISND_driver::InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, ui
         EAXLISTENERPROPERTIES props;
         props.ulEnvironment = EAX_ENVIRONMENT_UNDEFINED;
         props.ulFlags = EAXLISTENERFLAGS_DEFAULT;
-        props.flEnvironmentSize = 7.5f;
+        props.flEnvironmentSize = EAXLISTENER_DEFAULTENVIRONMENTSIZE;
         props.lRoomLF = 0;
         props.lRoomHF = -100;
         props.flDecayTime = 1.49f;
@@ -343,7 +343,7 @@ bool ISND_driver::InitDSound(void *hwnd, int mix_freq, int num_chan, int bps, ui
         props.flReverbDelay = 0.011f;
         props.flEnvironmentDiffusion = 1.0f;
         props.flDecayLFRatio = 1.0f;
-        props.lRoom = -10000;
+        props.lRoom = EAXLISTENER_MINROOM;
         props.flEchoTime = 0.25f;
         props.flEchoDepth = 0.0f;
         props.flModulationTime = 0.25f;

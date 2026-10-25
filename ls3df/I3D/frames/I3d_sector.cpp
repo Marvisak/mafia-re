@@ -30,20 +30,20 @@ void S_sector_sound_properties::SetupDefaults()
     memset(this, 0, sizeof(S_sector_sound_properties));
     room_lf = 1.0f;                     // 0 mB
     room_hf = .99f;                     // -100 mB
-    decay_time = 1490;
+    decay_time = 1490;                  // 1.49 s
     decay_hf_ratio = .38421053f;        // 0.83
     reflections = .67254543f;           // -2602 mB
-    reflections_delay = 7;
+    reflections_delay = 7;              // 0.007 s
     reverb = .85f;                      // 200 mB
-    reverb_delay = 10;
+    reverb_delay = 10;                  // 0.011 s (0.011f times 1000, truncated)
     environment_diffusion = 1.0f;
     decay_lf_ratio = .47368422f;        // 1.0
     room = 0.0f;
     reflections_pan.Zero();
     reverb_pan.Zero();
-    echo_time = 250;
+    echo_time = 250;                    // 0.25 s
     echo_depth = 0.0f;
-    modulation_time = 250;
+    modulation_time = 250;              // 0.25 s
     modulation_depth = 0.0f;
     room_rolloff_factor = 0.0f;
     air_absorption_hf = .95f;           // -5 mB
@@ -120,7 +120,7 @@ I3D_sector::I3D_sector()
     unknown_1e8 = 0;
     unknown_1ec = 0;
     sound_props.SetupDefaults();
-    m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
+    m_FrmFlags |= FRMFLAGS_NO_CULL;
     group_bits = 0;
     sectorVersion++;
 }
@@ -171,7 +171,7 @@ LS3D_RESULT I3D_sector::SetName(const char *new_name)
     static char name[64] = "sector ";
     if (!new_name)
         return I3D_frame::SetName(new_name);
-    strncpy(name + 7, new_name, 54);
+    strncpy(name + 7, new_name, 54);    // after the 7 characters of "sector "
     return I3D_frame::SetName(name);
 }
 
@@ -417,6 +417,7 @@ LS3D_RESULT I3D_sector::SetSoundData(I3D_SECTOR_SOUND_DATA_INDEX index, uint dat
     case SSD_LF_REFERENCE:
         data = I3DFloatAsInt(Min(1.0f, Max(0.0f, I3DIntAsFloat(data))));
         break;
+    // The times in ms: EAX 3.0's ranges (EAXLISTENER_MIN*, MAX*, in s) times 1000, truncated (0.04f gives 39)
     case SSD_DECAY_TIME:
         data = Max(100, Min(20000, (int)data));
         break;

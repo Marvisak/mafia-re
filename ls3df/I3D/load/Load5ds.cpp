@@ -26,7 +26,7 @@ LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME 
     }
     int version = 0;
     dtaRead(h, &version, 2);
-    if (version != 20) {
+    if (version != I3D_5DS_VERSION) {
         dtaClose(h);
         return I3DERR_BADVERSION;
     }

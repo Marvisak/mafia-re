@@ -187,44 +187,45 @@ LS3D_RESULT I3D_driver::Init(uint flags)
     init_flags = flags;
     driverTickTime = 0;
     memset(renderState, 0, sizeof(renderState));
-    renderState[5] = 1;
-    renderState[6] = 1;
+    renderState[RS_CLEAR] = 1;
+    renderState[RS_CLEAR_ZBUFFER] = 1;
     renderState[RS_USEZB] = 1;
-    renderState[13] = 1;
-    renderState[18] = 1;
-    renderState[32] = 1;
-    renderState[26] = 1;
-    renderState[RS_MIPMAP] = 2;
+    renderState[RS_LOADMIPMAP] = 1;
+    renderState[RS_DRAWVISUALS] = 1;
+    renderState[RS_UNKNOWN_32] = 1;
+    renderState[RS_UNKNOWN_26] = 1;
+    renderState[RS_MIPMAP] = D3DTEXF_LINEAR;
     renderState[RS_LINEARFILTER] = 1;
-    renderState[1] = 1;
+    renderState[RS_UNKNOWN_1] = 1;
     renderState[RS_DITHER] = 1;
-    renderState[34] = 1;
-    renderState[35] = 1;
-    renderState[40] = 1;
-    renderState[16] = 1;
-    renderState[38] = -1;
+    renderState[RS_LMTRUECOLOR] = 1;
+    renderState[RS_LMDITHER] = 1;
+    renderState[RS_LM_AA_RATIO] = 1;
+    renderState[RS_TEXTUREDITHER] = 1;
+    renderState[RS_LOD_INDEX] = -1;
     renderState[RS_LOD_QUALITY] = I3DFloatAsInt(1.0f);
-    renderState[39] = 1;
-    if (!(m_ProblemFlags & 0x80))
+    renderState[RS_USE_OCCLUSION] = 1;
+    if (!(m_ProblemFlags & PROBLEM_NO_FOG))
         renderState[RS_FOG] = 1;
     renderState[RS_ENVMAP_SCALE] = I3DFloatAsInt(1.0f);
-    RsZBiasProjector = m_ProblemFlags & 0x100 ? 2 : 8;
-    renderState[60] = I3DFloatAsInt(0.001f);
-    renderState[25] = 1;
-    renderState[43] = 1;
-    renderState[45] = 1;
+    // 2 here and RsZBiasShadow's 1 below are SetState's (value + 3) / 4 of the defaults 8 and 3
+    RsZBiasProjector = m_ProblemFlags & PROBLEM_ZBIAS_SCALE ? 2 : 8;
+    renderState[RS_LIFT_PROJECTOR] = I3DFloatAsInt(0.001f);
+    renderState[RS_TEXTURECOMPRESS] = 1;
+    renderState[RS_USESHADOWS] = 1;
+    renderState[RS_UNKNOWN_45] = 1;
     renderState[RS_SHADOW_SW] = 1;
-    renderState[49] = 1;
+    renderState[RS_FAST_FIND] = 1;
     renderState[RS_LOD_SCALE] = 100;
     LODScale = 1.0f;
-    renderState[51] = 1;
+    renderState[RS_USEPROJECTORS] = 1;
     renderState[RS_NONORTHO_TESSELLATION] = 50;
     RsNonOrthoTessellation = 0.02f;
     renderState[RS_ZBIAS_PROJECTOR] = 8;
-    renderState[59] = 1;
+    renderState[RS_DRAWMIRRORS] = 1;
     renderState[RS_ZBIAS_SHADOW] = 3;
-    renderState[61] = I3DFloatAsInt(0.001f);
-    if (m_ProblemFlags & 0x100)
+    renderState[RS_LIFT_SHADOW] = I3DFloatAsInt(0.001f);
+    if (m_ProblemFlags & PROBLEM_ZBIAS_SCALE)
         RsZBiasShadow = 1;
     else
         RsZBiasShadow = 3;
@@ -234,7 +235,7 @@ LS3D_RESULT I3D_driver::Init(uint flags)
     pFFRoot = NULL;
     pFFLastUp_ = NULL;
     pFontMat = GetIcon(125);
-    if (!(m_InitDesc.flags & 0x40))
+    if (!(m_InitDesc.flags & IGRAPH_LOG))
         disableLog = true;
     return I3D_OK;
 }
@@ -311,15 +312,15 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         break;
     case RS_MIPMAP:
         switch (value) {
-        case 2:
+        case D3DTEXF_LINEAR:
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_LINEAR);
             m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_LINEAR);
             break;
-        case 1:
+        case D3DTEXF_POINT:
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_POINT);
             m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_POINT);
             break;
-        case 0:
+        case D3DTEXF_NONE:
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_NONE);
             m_pD3DDevice8->SetTextureStageState(1, D3DTSS_MIPFILTER, D3DTEXF_NONE);
             break;
@@ -355,7 +356,7 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
             RecomputeAllGeometry = true;
         break;
     case RS_FOG:
-        if (value && m_ProblemFlags & 0x80)
+        if (value && m_ProblemFlags & PROBLEM_NO_FOG)
             return I3D_OK;
         break;
     case RS_LOD_SCALE:
@@ -365,19 +366,19 @@ LS3D_RESULT I3D_driver::SetState(I3D_RENDERSTATE state, int value)
         RsNonOrthoTessellation = 1.0f / value;
         break;
     case RS_ZBIAS_SHADOW:
-        if (m_ProblemFlags & 0x100)
+        if (m_ProblemFlags & PROBLEM_ZBIAS_SCALE)
             RsZBiasShadow = (value + 3) / 4;
         else
             RsZBiasShadow = value;
         break;
     case RS_ZBIAS_PROJECTOR:
-        if (m_ProblemFlags & 0x100)
+        if (m_ProblemFlags & PROBLEM_ZBIAS_SCALE)
             RsZBiasProjector = (value + 3) / 4;
         else
             RsZBiasProjector = value;
         break;
     case RS_ENVMAP_SCALE:
-        if (value == 666) {
+        if (value == RS_ENVMAP_SCALE_FREE_VBUFFERS) {
             cVBMan.m_FreeAllVRAMVBuffers();
             return I3D_OK;
         }
@@ -618,6 +619,8 @@ LS3D_RESULT I3D_driver::RenderShadowTexture(const float *verts, uint num_verts, 
         DrawShadowTrianglesSW(&points[0], indx, num_faces);
         uchar *dst = (uchar *)texture->Lock(NULL, pitch, 0);
         int side = texture->m_Width;
+        // Each texel sums 2 x 2 bytes of the 256 x 256 buffer: after a row of side texels (2 * side bytes), on to the
+        // next two rows
         int skip = 0x200 - (side << 1);
         __asm {
             mov edi, dst
@@ -704,7 +707,7 @@ I3D_material *I3D_driver::GetIcon(uint res_id)
         return NULL;
     }
     ITexture *texture = pGlobalIGraph->CreateITexture();
-    texture->Create((const char *)data, NULL, 0x209, 0, 0, 0);
+    texture->Create((const char *)data, NULL, ITC_FROM_MEMORY | ITC_COLORKEY | ITC_DXT, 0, 0, 0);
     mat->SetTexture(texture);
     texture->Release();
     mat->flags |= MATF_TXT_ALPHA;
@@ -741,12 +744,12 @@ void I3D_driver::DrawPoint(const S_vector &pos, const S_vector &color, uint alph
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &v, sizeof(v));
 }
 
@@ -771,12 +774,12 @@ void I3D_driver::DrawPoint2D(int x, int y, const S_vector &color, uint alpha)
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(4);
+    SetVertexFormat(VF_TLVERTEX);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &v, sizeof(v));
 }
 
@@ -803,12 +806,12 @@ void I3D_driver::DrawLine(const S_vector &from, const S_vector &to, const S_vect
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_LINELIST, 1, v, sizeof(LVERTEX));
 }
 
@@ -827,12 +830,12 @@ void I3D_driver::DrawLines(const S_vector *verts, uint num_verts, const ushort *
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     LVertList.reserve(num_verts);
     LVertList.used_size = num_verts;
     LVERTEX *lv = &LVertList[0];
@@ -875,10 +878,10 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     uint no_cull = flags & I3DDRAW_NOCULL;
     if (no_cull)
         SetCullState(D3DCULL_NONE);
@@ -916,7 +919,7 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
             }
             m_pD3DDevice8->SetTexture(0, NULL);
         }
-        SetVertexFormat(0);
+        SetVertexFormat(VF_LVERTEX);
         m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
             &LVertList[0], sizeof(LVERTEX));
     } else {
@@ -953,7 +956,7 @@ LS3D_RESULT I3D_driver::DrawTriangles(const void *verts, uint num_verts, const u
             }
             m_pD3DDevice8->SetTexture(0, NULL);
         }
-        SetVertexFormat(4);
+        SetVertexFormat(VF_TLVERTEX);
         m_pD3DDevice8->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, num_verts, num_indx / 3, indx, D3DFMT_INDEX16,
             &TLVertList[0], sizeof(TLVERTEX));
     }
@@ -977,10 +980,10 @@ void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     S_matrix m = RotateZMatrix(PI * 2.0f / num_segments);
     num_segments++;
     TLVertList.reserve(num_segments);
@@ -998,7 +1001,7 @@ void I3D_driver::DrawCircle2D(const S_vector2 &pos, float radius, const S_vector
     }
     TLVertList[--num_segments] = TLVertList[0];
     m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(4);
+    SetVertexFormat(VF_TLVERTEX);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_LINESTRIP, num_segments, &TLVertList[0], sizeof(TLVERTEX));
 }
 
@@ -1032,16 +1035,16 @@ void I3D_driver::DrawText(const S_vector &pos, const char *text, uchar alpha, fl
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     ITexture *texture = mat->texture;
     if (texture)
         m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     float w = size * 16.0f;
     float h = size * 16.0f;
     float du = 16.0f / pFontMat->GetTexture()->m_Width;
@@ -1109,15 +1112,15 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else
-        SetAlphaState(1);
-    SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+    SetBlendState(BLENDSTATE_ALPHA);
     if (mat->texture)
         m_pD3DDevice8->SetTexture(0, mat->texture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(4);
+    SetVertexFormat(VF_TLVERTEX);
     float w = size * 16.0f;
     float h = size * 16.0f;
     float du = 16.0f / pFontMat->GetTexture()->m_Width;
@@ -1182,8 +1185,8 @@ void I3D_driver::DrawText2D(int x, int y, const char *text, uchar alpha, float s
 
 // The corners are computed where they are stored (with locals, VC6 computes both first). The texture is set in two
 // calls, which VC6 tail-merges into two pushes. Open (100%*): the original loads mat after the alpha's conversion, as
-// the color written out gives; written out, though, the budget lets the second branch inline its SetBlendState(1) (see
-// DrawText).
+// the color written out gives; written out, though, the budget lets the second branch inline its
+// SetBlendState(BLENDSTATE_ADD_ALPHA) (see DrawText).
 // FUNCTION: LS3DF 0x100182f0
 // FUNCTION: LS3DF11 0x10017e10
 void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha, float size)
@@ -1228,25 +1231,25 @@ void I3D_driver::DrawSprite(const S_vector &pos, I3D_material *mat, uchar alpha,
     v[3].u = .999f;
     v[3].v = .001f;
     if (mat->flags & MATF_ADD_MODE) {
-        SetAlphaState(1);
-        SetBlendState(1);
+        SetAlphaState(ALPHASTATE_BLEND);
+        SetBlendState(BLENDSTATE_ADD_ALPHA);
     } else if (mat->flags & MATF_TXT_ALPHA) {
-        SetAlphaState(1);
+        SetAlphaState(ALPHASTATE_BLEND);
         if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
-            SetBlendState(1);
+            SetBlendState(BLENDSTATE_ADD_ALPHA);
         else
-            SetBlendState(0);
+            SetBlendState(BLENDSTATE_ALPHA);
     } else if (mat->flags & MATF_CKEY_ALPHA) {
-        SetAlphaState(3);
-        SetBlendState(0);
+        SetAlphaState(ALPHASTATE_TEST);
+        SetBlendState(BLENDSTATE_ALPHA);
     } else
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     ITexture *texture = mat->texture;
     if (texture)
         m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
     else
         m_pD3DDevice8->SetTexture(0, NULL);
-    SetVertexFormat(0);
+    SetVertexFormat(VF_LVERTEX);
     m_pD3DDevice8->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(LVERTEX));
 }
 

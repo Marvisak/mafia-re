@@ -21,7 +21,7 @@ void G_IndicatorsClass::LanguageSelect(uint language)
 {
     // STRING: GAME 0x63920c
     char name[64] = "tables\\lang_en.def";
-    if (language)
+    if (language)                       // its two letters in place of the "en"
     {
         name[12] = language >> 8;
         name[13] = language;

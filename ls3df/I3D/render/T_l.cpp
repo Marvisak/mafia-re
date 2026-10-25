@@ -74,9 +74,12 @@ float HalfFloat = 0.5f;
 // GLOBAL: LS3DF11 0x100a65e4
 float OneFloat = 1.0f;
 
+// The lights PrepareLights keeps for an object, the strongest (the name is a guess)
+#define MAX_TEMP_LIGHTS 8
+
 // GLOBAL: LS3DF 0x101c4d80
 // GLOBAL: LS3DF11 0x101c1e90
-S_temp_light TempLightList[8];
+S_temp_light TempLightList[MAX_TEMP_LIGHTS];
 
 // The ambient lights' sum (the name is a guess)
 // GLOBAL: LS3DF 0x101c4d30
@@ -137,7 +140,7 @@ void LightingSetSector(I3D_sector *sector)
 // A slot of TempLightList for pTempLight, by TempLightEnergy: the next free one, or the first weaker light's, or -1
 static inline int GetTempLightIndex()
 {
-    if (GlobalLightCount < 8)
+    if (GlobalLightCount < MAX_TEMP_LIGHTS)
         return ++GlobalLightCount - 1;
     for (uint i = 0; i < GlobalLightCount; i++) {
         if (TempLightList[i].energy < TempLightEnergy)
@@ -635,31 +638,32 @@ int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *
             a = texel[0] * (1.0f / 255.0f);
         a *= mat->alpha;
         if (a < 0.1)
-            return 2;
+            return TEXEL_TRANSPARENT;
         if (a > 0.95)
-            return 0;
+            return TEXEL_OPAQUE;
         col *= (float)(1.0 - a);
         col += S_vector(col.x * c.x, col.y * c.y, col.z * c.z) * a;
     } else {
         S_vector c = mat->diffuse;
         float a = mat->alpha;
         if (a < 0.1)
-            return 2;
+            return TEXEL_TRANSPARENT;
         if (a > 0.95)
-            return 0;
+            return TEXEL_OPAQUE;
         col *= (float)(1.0 - a);
         col += S_vector(col.x * c.x, col.y * c.y, col.z * c.z) * a;
     }
-    return 1;
+    return TEXEL_PARTIAL;
 }
 
 // The light at a lightmap's texel (pos, with the normal) from the current sector's lightmap lights: the ambient lights'
 // sum, and the diffuse sum of the point, spot and directional lights, each by its angle to the normal and its range or
-// cone. For a light with I3DLIGHTMODE_SHADOW (with a scene and flags & 1) a ray from just off the surface to the light
-// (TestColGeo, its texels through TexelCallback) filters it, and the rays that hit a face from behind are counted: if
-// all did, the texel is inside the geometry, out is magenta and *inside true. Otherwise out is the material's emissive
-// color plus the sums times its ambient and diffuse colors (white for a texture without MATF_KEEP_DIFFUSE), scaled
-// down to a maximum of 2 and clamped at 0. x above 0 adds 0x2000000 to the ray's flags and passes frm to the test.
+// cone. For a light with I3DLIGHTMODE_SHADOW (with a scene and I3D_LIGHT_GEO_COLLISIONS) a ray from just off the
+// surface to the light (TestColGeo, its texels through TexelCallback) filters it, and the rays that hit a face from
+// behind are counted: if all did, the texel is inside the geometry, out is magenta and *inside true. Otherwise out is
+// the material's emissive color plus the sums times its ambient and diffuse colors (white for a texture without
+// MATF_KEEP_DIFFUSE), scaled down to a maximum of 2 and clamped at 0. x above 0 adds COLF_FRAME_LOD to the ray's flags
+// and passes frm to the test.
 // PS2 name and parameters, pos and normal by value on PC. PS2's (and the Xbox's, 0x2301e0) attenuates by factors,
 // doubles the lights and takes the material at the end; the shadow test is the same in all three. The cases are in the
 // original's order (its jump table's); the unused light types are listed, as their entries go to the loop's end where
@@ -709,9 +713,9 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
             continue;
         if (IsAbsMrgZero((*lp)->power))
             continue;
-        uint col_flags = 0x20130000;
+        uint col_flags = COLF_ACCEPT_ANY | COLF_COLORKEY | COLF_TWO_SIDED | COLF_OMNI_SECTOR;
         if (x > 0)
-            col_flags = 0x22130000;
+            col_flags = COLF_ACCEPT_ANY | COLF_COLORKEY | COLF_TWO_SIDED | COLF_FRAME_LOD | COLF_OMNI_SECTOR;
         I3D_light *lt = *lp;
         switch (lt->ltype) {
         case I3DLIGHT_AMBIENT:
@@ -774,7 +778,7 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
             color = lt->color * -dot;
             from = pos + normal * 0.0075f;
             dir = -ldir;
-            col_flags |= 0x40000;
+            col_flags |= COLF_INFINITE;
             break;
         }
         case I3DLIGHT_NULL:
@@ -783,7 +787,7 @@ void VertexLightingProcess(S_vector &out, S_vector pos, S_vector normal, I3D_mat
         case I3DLIGHT_POINTFOG:
             continue;
         }
-        if (scene && flags & 1 && lt->mode & I3DLIGHTMODE_SHADOW) {
+        if (scene && flags & I3D_LIGHT_GEO_COLLISIONS && lt->mode & I3DLIGHTMODE_SHADOW) {
             if (IsAbsMrgZero(color.Sum()))
                 continue;
             num_rays++;
@@ -843,7 +847,7 @@ void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, ui
     const S_matrix &m, float scale, float u_ofs, float v_ofs, int mode, I3D_frame *frm)
 {
     switch (mode) {
-    case 0: {
+    case ENVMODE_REFLECT_Z: {
         S_vector norm;
         float t;
         __asm {
@@ -993,7 +997,7 @@ sphere_z_end:
         }
         break;
     }
-    case 1: {
+    case ENVMODE_REFLECT_Y: {
         S_vector norm;
         float t;
         __asm {
@@ -1140,8 +1144,9 @@ sphere_y_end:
         }
         break;
     }
-    case 2: {
+    case ENVMODE_PROJECT_Y: {
         float f = *(float *)&renderState[RS_ENVMAP_SCALE];
+        // 1 / (2 * sqrt(2))
         float k = f * scale * 0.3535534f;
         while (count--) {
             const S_vector *v = (const S_vector *)src;
@@ -1153,7 +1158,7 @@ sphere_y_end:
         }
         break;
     }
-    case 3: {
+    case ENVMODE_PROJECT_X: {
         float f = *(float *)&renderState[RS_ENVMAP_SCALE];
         float k = f * scale * 0.3535534f;
         while (count--) {
@@ -1166,7 +1171,7 @@ sphere_y_end:
         }
         break;
     }
-    case 4: {
+    case ENVMODE_PROJECT_Z: {
         float f = *(float *)&renderState[RS_ENVMAP_SCALE];
         float k = f * scale * 0.3535534f;
         while (count--) {
@@ -1179,7 +1184,7 @@ sphere_y_end:
         }
         break;
     }
-    case 5: {
+    case ENVMODE_DUMMY: {
         if (!frm)
             break;
         I3D_dummy *dummy = (I3D_dummy *)frm;
@@ -1445,8 +1450,8 @@ blend_loop:
 }
 
 // The vertices' fog (the byte at dst) from their depth at src (z, or z / w for z below 1) and the fog light's ranges,
-// both scaled by the current camera's far clipping plane: 255 up to the near range and 0 from the far one on (mode 0),
-// or the other way round (mode 1). One stride steps both. (The name is a guess.)
+// both scaled by the current camera's far clipping plane: 255 up to the near range and 0 from the far one on
+// (FOGPROC_FACTOR), or the other way round (FOGPROC_ALPHA). One stride steps both. (The name is a guess.)
 // FUNCTION: LS3DF 0x100685d0
 // FUNCTION: LS3DF11 0x100658b0
 void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode)
@@ -1454,7 +1459,7 @@ void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light
     if (!light)
         return;
     switch (mode) {
-    case 0: {
+    case FOGPROC_FACTOR: {
         float range_f = pCurrentCamera->fcp * light->range_f;
         float range_n = range_f * light->range_n;
         float scale = 255.0f / (range_f - range_n);
@@ -1512,7 +1517,7 @@ fog_next:
         }
         break;
     }
-    case 1: {
+    case FOGPROC_ALPHA: {
         float range_f = pCurrentCamera->fcp * light->range_f;
         float range_n = range_f * light->range_n;
         float scale = 255.0f / (range_f - range_n);

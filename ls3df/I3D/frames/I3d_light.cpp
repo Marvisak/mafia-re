@@ -27,8 +27,7 @@ I3D_light::I3D_light()
     SetDir(S_vector(1.0f, -1.0f, 1.0f), 0.0f);
     cone_in = 20.0f * PI / 180.0f;
     cone_out = 40.0f * PI / 180.0f;
-    // Every mode but 0x4, 0x10 and 0x80
-    mode = 0xff6b;
+    mode = I3DLIGHTMODE_DEFAULT;
     w_pos = S_vector(0.0f, 0.0f, 0.0f);
     w_dir = GetDir();
     range_n = near_range * m_WorldScale;
@@ -291,5 +290,6 @@ LS3D_RESULT I3D_light::Duplicate(I3D_frame *frame)
 void I3D_light::LoadImage()
 {
     I3D_frame::LoadImage();
+    // The members from mode to cone_out
     dtaRead(LoadImageHandle, &mode, 0x28);
 }

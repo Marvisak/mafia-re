@@ -187,7 +187,7 @@ static I3D_sector *CTP_pSector = NULL;
 // The frames of the sector's hierarchy against the view: their spheres against the near and far distances and the
 // side planes, then the boxes of those that cross a side plane against it. A visual in the view goes onto the sector's
 // list of visuals to render, clipped where its sphere crosses a plane. Through a portal the frames are only marked here
-// (FRMFLAGS_UNKNOWN_10000), and CTP_EnumProc cuts them down to the portal's planes. Then the sector's occluders in the
+// (FRMFLAGS_IN_VIEW), and CTP_EnumProc cuts them down to the portal's planes. Then the sector's occluders in the
 // camera's own view are marked.
 // - The sums are written out (through Dot VC6 loads the vector's products the other way round), the side tests are
 //   > (their jne), and the radius is read from the frame again.
@@ -211,13 +211,14 @@ static I3D_sector *CTP_pSector = NULL;
 void CTP_EnumProcFirst(I3D_frame *root)
 {
     for (I3D_frame *frm = root->m_pChild; frm; frm = frm->m_pNext) {
-        frm->m_FrmFlags &= ~(FRMFLAGS_CLIP | FRMFLAGS_UNKNOWN_10000);
-        if ((frm->m_FrmFlags & FRMFLAGS_UNKNOWN_8000000) || !(frm->m_FrmFlags & FRMFLAGS_ON))
+        frm->m_FrmFlags &= ~(FRMFLAGS_CLIP | FRMFLAGS_IN_VIEW);
+        if ((frm->m_FrmFlags & FRMFLAGS_NO_CULL) || !(frm->m_FrmFlags & FRMFLAGS_ON))
             continue;
         S_vector pos = frm->GetHRBoundVolumeW().bsphere.pos;
         float r = frm->m_HRBoundVolW.bsphere.radius;
         float d = CTP_VFnormals[0].x * pos.x + CTP_VFnormals[0].y * pos.y + CTP_VFnormals[0].z * pos.z + CTP_VFds[0];
         if (frm->m_Type == FRAME_VISUAL) {
+            // The sort key: the depth from 10000 behind the view plane, times 1000, never below 0
             float f = d + 10000.0f;
             if (f < 0.0f)
                 ((I3D_object *)frm)->sort_dist = 0.0f;
@@ -673,16 +674,16 @@ void CTP_EnumProcFirst(I3D_frame *root)
                 const float (*vfd)[5];
                 switch (CTP_SectFlg) {
                 case SCTF_BACKDROP:
-                    vfn = &pCurrentCamera->frustums[1].normal;
-                    vfd = &pCurrentCamera->frustums[1].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].d;
                     break;
                 case SCTF_NEAR:
-                    vfn = &pCurrentCamera->frustums[2].normal;
-                    vfd = &pCurrentCamera->frustums[2].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_NEAR].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_NEAR].d;
                     break;
                 default:
-                    vfn = &pCurrentCamera->frustums[0].normal;
-                    vfd = &pCurrentCamera->frustums[0].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_VIEW].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_VIEW].d;
                 }
                 if (pos.Dot((const S_vector &)*vfn[1]) + *vfd[1] < r)
                     clip = FRMFLAGS_CLIP;
@@ -701,7 +702,7 @@ void CTP_EnumProcFirst(I3D_frame *root)
                 CTP_pSector->last_visual = frm;
             }
         } else
-            frm->m_FrmFlags |= FRMFLAGS_UNKNOWN_10000;
+            frm->m_FrmFlags |= FRMFLAGS_IN_VIEW;
         if (frm->m_pChild)
             CTP_EnumProcFirst(frm);
     }
@@ -718,8 +719,8 @@ void CTP_EnumProcFirst(I3D_frame *root)
         S_vector p3 = S_vector(x, -y, z) * pCurrentCamera->view_inv;
         S_vector cpos = pCurrentCamera->GetWorldPos();
         S_frustum vf;
-        vf.normal[0] = pCurrentCamera->frustums[0].normal[0];
-        vf.d[0] = pCurrentCamera->frustums[0].d[0];
+        vf.normal[0] = pCurrentCamera->frustums[CAMFRUSTUM_VIEW].normal[0];
+        vf.d[0] = pCurrentCamera->frustums[CAMFRUSTUM_VIEW].d[0];
         S_plane pl1(cpos, p0, p1);
         S_plane pl2(cpos, p3, p2);
         S_plane pl3(cpos, p2, p0);
@@ -731,7 +732,7 @@ void CTP_EnumProcFirst(I3D_frame *root)
                 float nr = -o->radius;
                 if (pl1.normal.Dot(c) + pl1.d > nr && pl2.normal.Dot(c) + pl2.d > nr &&
                     pl3.normal.Dot(c) + pl3.d > nr && pl4.normal.Dot(c) + pl4.d > nr)
-                    o->m_FrmFlags |= FRMFLAGS_UNKNOWN_10000;
+                    o->m_FrmFlags |= FRMFLAGS_IN_VIEW;
             }
         }
     }
@@ -748,7 +749,7 @@ void CTP_EnumProc(I3D_frame *root)
         return;
     for (I3D_frame *frm = root->m_pChild; frm; frm = frm->m_pNext) {
         if (frm->m_RenderNumber != RenderNumber) {
-            if (!(frm->m_FrmFlags & FRMFLAGS_UNKNOWN_10000))
+            if (!(frm->m_FrmFlags & FRMFLAGS_IN_VIEW))
                 continue;
             S_vector pos = frm->GetHRBoundVolumeW().bsphere.pos;
             float r = frm->m_HRBoundVolW.bsphere.radius;
@@ -1185,16 +1186,16 @@ void CTP_EnumProc(I3D_frame *root)
                 const float (*vfd)[5];
                 switch (CTP_SectFlg) {
                 case SCTF_BACKDROP:
-                    vfn = &pCurrentCamera->frustums[1].normal;
-                    vfd = &pCurrentCamera->frustums[1].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].d;
                     break;
                 case SCTF_NEAR:
-                    vfn = &pCurrentCamera->frustums[2].normal;
-                    vfd = &pCurrentCamera->frustums[2].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_NEAR].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_NEAR].d;
                     break;
                 default:
-                    vfn = &pCurrentCamera->frustums[0].normal;
-                    vfd = &pCurrentCamera->frustums[0].d;
+                    vfn = &pCurrentCamera->frustums[CAMFRUSTUM_VIEW].normal;
+                    vfd = &pCurrentCamera->frustums[CAMFRUSTUM_VIEW].d;
                 }
                 if (pos.Dot((const S_vector &)*vfn[1]) + *vfd[1] < r)
                     clip = FRMFLAGS_CLIP;
@@ -1268,27 +1269,28 @@ void CullThruPortal(I3D_frame *frm, I3D_portal *portal, uint flags)
         switch (flags) {
         case SCTF_BACKDROP:
             cpos = S_vector(0.0f, 0.0f, 0.0f);
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[1].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[1].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].d[0];
             CTP_Near = ((I3D_sector *)frm)->scene->backdrop_ncp;
             CTP_Far = ((I3D_sector *)frm)->scene->backdrop_fcp;
             break;
         case SCTF_NEAR:
             cpos = pCurrentCamera->GetWorldPos();
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[2].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[2].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_NEAR].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_NEAR].d[0];
             CTP_Near = pCurrentCamera->near_ncp;
             CTP_Far = pCurrentCamera->near_fcp;
             break;
         default:
             cpos = pCurrentCamera->GetWorldPos();
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[0].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[0].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_VIEW].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_VIEW].d[0];
             CTP_Near = pCurrentCamera->ncp;
             CTP_Far = pCurrentCamera->fcp;
         }
     } else {
-        // A portal of a few pixels lets the walk go on only into the sectors' own frames
+        // A portal of a few pixels (under 10 each way, 2 / width being one in the -1 to 1 box) lets the walk go on only
+        // into the sectors' own frames
         if (portal->clip_max.x - portal->clip_min.x < 10.0f * (2.0f / pGlobalIGraph->Scrn_sx()) &&
             portal->clip_max.y - portal->clip_min.y < 10.0f * (2.0f / pGlobalIGraph->Scrn_sy()))
             CTP_PartlyOffPortal = true;
@@ -1315,22 +1317,22 @@ void CullThruPortal(I3D_frame *frm, I3D_portal *portal, uint flags)
         switch (flags) {
         case SCTF_BACKDROP:
             cpos = S_vector(0.0f, 0.0f, 0.0f);
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[1].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[1].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_BACKDROP].d[0];
             CTP_Near = ((I3D_sector *)frm)->scene->backdrop_ncp;
             CTP_Far = ((I3D_sector *)frm)->scene->backdrop_fcp;
             break;
         case SCTF_NEAR:
             cpos = pCurrentCamera->GetWorldPos();
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[2].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[2].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_NEAR].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_NEAR].d[0];
             CTP_Near = pCurrentCamera->near_ncp;
             CTP_Far = pCurrentCamera->near_fcp;
             break;
         default:
             cpos = pCurrentCamera->GetWorldPos();
-            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[0].normal[0];
-            CTP_VFds[0] = pCurrentCamera->frustums[0].d[0];
+            CTP_VFnormals[0] = (const S_vector &)pCurrentCamera->frustums[CAMFRUSTUM_VIEW].normal[0];
+            CTP_VFds[0] = pCurrentCamera->frustums[CAMFRUSTUM_VIEW].d[0];
             CTP_Near = pCurrentCamera->ncp;
             CTP_Far = pCurrentCamera->fcp;
         }
@@ -1366,6 +1368,10 @@ void CullThruPortal_First(I3D_frame *frm, I3D_portal *portal, uint flags)
 }
 
 void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p);
+
+// The walk's screen box, -1 to 1, with a margin: a portal that reaches an edge, or the whole screen, gets this (the
+// name is a guess)
+#define PORTAL_CLIP_EDGE 1.01f
 
 // The portal's box on the screen, cut down to the parent's clip box, then the walk on through it into the sector it
 // leads to (out of, for a portal into the sector the walk is in). A portal partly behind the camera reaches the
@@ -1439,8 +1445,8 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
         }
         if (q->z <= 0.0f) {
             dbgPrintf("!! ParsePortal ERROR 2 !!");
-            p->clip_min = S_vector(-1.01f, -1.01f, 0.0f);
-            p->clip_max = S_vector(1.01f, 1.01f, 0.0f);
+            p->clip_min = S_vector(-PORTAL_CLIP_EDGE, -PORTAL_CLIP_EDGE, 0.0f);
+            p->clip_max = S_vector(PORTAL_CLIP_EDGE, PORTAL_CLIP_EDGE, 0.0f);
             ParsePortalsInSector(sct, p);
             return;
         }
@@ -1469,13 +1475,13 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
         q++;
         d2 -= *q;
         if (d1.x >= 0.0f || d2.x >= 0.0f)
-            p->rect_max.x = 1.01f;
+            p->rect_max.x = PORTAL_CLIP_EDGE;
         if (d1.x <= 0.0f || d2.x <= 0.0f)
-            p->rect_min.x = -1.01f;
+            p->rect_min.x = -PORTAL_CLIP_EDGE;
         if (d1.y >= 0.0f || d2.y >= 0.0f)
-            p->rect_max.y = 1.01f;
+            p->rect_max.y = PORTAL_CLIP_EDGE;
         if (d1.y <= 0.0f || d2.y <= 0.0f)
-            p->rect_min.y = -1.01f;
+            p->rect_min.y = -PORTAL_CLIP_EDGE;
     } else {
         int i = p->num_verts - 1;
         p->rect_min = pv[0];
@@ -1495,22 +1501,22 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
     if (!parent) {
         p->clip_min = p->rect_min;
         p->clip_max = p->rect_max;
-        if (p->clip_min.x < -1.01f)
-            p->clip_min.x = -1.01f;
-        if (p->clip_min.x > 1.01f)
-            p->clip_min.x = 1.01f;
-        if (p->clip_min.y < -1.01f)
-            p->clip_min.y = -1.01f;
-        if (p->clip_min.y > 1.01f)
-            p->clip_min.y = 1.01f;
-        if (p->clip_max.x < -1.01f)
-            p->clip_max.x = -1.01f;
-        if (p->clip_max.x > 1.01f)
-            p->clip_max.x = 1.01f;
-        if (p->clip_max.y < -1.01f)
-            p->clip_max.y = -1.01f;
-        if (p->clip_max.y > 1.01f)
-            p->clip_max.y = 1.01f;
+        if (p->clip_min.x < -PORTAL_CLIP_EDGE)
+            p->clip_min.x = -PORTAL_CLIP_EDGE;
+        if (p->clip_min.x > PORTAL_CLIP_EDGE)
+            p->clip_min.x = PORTAL_CLIP_EDGE;
+        if (p->clip_min.y < -PORTAL_CLIP_EDGE)
+            p->clip_min.y = -PORTAL_CLIP_EDGE;
+        if (p->clip_min.y > PORTAL_CLIP_EDGE)
+            p->clip_min.y = PORTAL_CLIP_EDGE;
+        if (p->clip_max.x < -PORTAL_CLIP_EDGE)
+            p->clip_max.x = -PORTAL_CLIP_EDGE;
+        if (p->clip_max.x > PORTAL_CLIP_EDGE)
+            p->clip_max.x = PORTAL_CLIP_EDGE;
+        if (p->clip_max.y < -PORTAL_CLIP_EDGE)
+            p->clip_max.y = -PORTAL_CLIP_EDGE;
+        if (p->clip_max.y > PORTAL_CLIP_EDGE)
+            p->clip_max.y = PORTAL_CLIP_EDGE;
         if (p->clip_min.x != p->clip_max.x && p->clip_min.y != p->clip_max.y)
             ParsePortalsInSector(sct, p);
     } else if (parent->clip_min.x <= p->rect_max.x && parent->clip_max.x >= p->rect_min.x &&
@@ -1535,16 +1541,18 @@ void ParsePortal(I3D_portal *parent, I3D_portal *p, bool in)
     }
     return;
 all:
-    p->clip_min = S_vector(-1.01f, -1.01f, 0.0f);
-    p->clip_max = S_vector(1.01f, 1.01f, 0.0f);
+    p->clip_min = S_vector(-PORTAL_CLIP_EDGE, -PORTAL_CLIP_EDGE, 0.0f);
+    p->clip_max = S_vector(PORTAL_CLIP_EDGE, PORTAL_CLIP_EDGE, 0.0f);
     ParsePortalsInSector(sct, p);
 }
+
+#define SCT_LOOK_STACK_SIZE 100         // the walk's stack of sectors (the name is a guess)
 
 // The stack of the sectors the walk is in (PS2 names): a sector reached again through a portal without a twin marks
 // those it went through since (SCTF_UNKNOWN_80)
 // GLOBAL: LS3DF 0x101b4410
 // GLOBAL: LS3DF11 0x101b1530
-static I3D_sector *SctLookStck[100];
+static I3D_sector *SctLookStck[SCT_LOOK_STACK_SIZE];
 
 // GLOBAL: LS3DF 0x101b45e4
 // GLOBAL: LS3DF11 0x101b1704
@@ -1583,7 +1591,7 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
         p->portal_flags |= PORTALF_PASSED;
         if (!p->twin && p->connect_sector == sct) {
             I3D_sector **s = pTopSct;
-            if (s < SctLookStck + 100) {
+            if (s < SctLookStck + SCT_LOOK_STACK_SIZE) {
                 while (s > SctLookStck) {
                     I3D_sector *t = *--s;
                     if (t == sct)
@@ -1597,7 +1605,7 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
         return;
     sct->sct_flags |= SCTF_VISIBLE;
     sct->sct_flags |= SCTF_IN_WALK;
-    if (pTopSct < SctLookStck + 100)
+    if (pTopSct < SctLookStck + SCT_LOOK_STACK_SIZE)
         *pTopSct++ = sct;
     else
         SctLookStckStop = true;

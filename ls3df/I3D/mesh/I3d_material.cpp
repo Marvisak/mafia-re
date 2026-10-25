@@ -26,7 +26,7 @@ extern int driverTickTime;
 I3D_material::I3D_material()
 {
     ref = 1;
-    flags = 1;
+    flags = 1;                          // an environment scale of 1 (MATF_ENVMAP_SCALE)
     texture = NULL;
     env_texture = NULL;
     ambient = diffuse = S_vector(1.0f, 1.0f, 1.0f);
@@ -148,7 +148,8 @@ LS3D_RESULT I3D_material::SetEnvTexture(ITexture *tex, uint blend, uint mode, fl
     }
     env_alpha = a;
     if (tex)
-        flags = (flags & ~(MATF_ENVMAP_BLEND | MATF_ENVMAP_MODE)) | (blend << 8) | (mode << 12) | MATF_ENVMAP;
+        flags = (flags & ~(MATF_ENVMAP_BLEND | MATF_ENVMAP_MODE)) | (blend << MATF_ENVMAP_BLEND_SHIFT) |
+            (mode << MATF_ENVMAP_MODE_SHIFT) | MATF_ENVMAP;
     else
         flags &= ~MATF_ENVMAP;
     return I3D_OK;
@@ -183,7 +184,7 @@ LS3D_RESULT I3D_material::Set2Sided()
 // FUNCTION: LS3DF11 0x1002a420
 LS3D_RESULT I3D_material::SetEnvType(uint type)
 {
-    flags = (flags & ~MATF_ENVMAP_BLEND) | (type << 8);
+    flags = (flags & ~MATF_ENVMAP_BLEND) | (type << MATF_ENVMAP_BLEND_SHIFT);
     return I3D_OK;
 }
 
@@ -191,7 +192,7 @@ LS3D_RESULT I3D_material::SetEnvType(uint type)
 // FUNCTION: LS3DF11 0x1002a440
 LS3D_RESULT I3D_material::SetEnvMode(uint mode)
 {
-    flags = (flags & ~MATF_ENVMAP_MODE) | (mode << 12);
+    flags = (flags & ~MATF_ENVMAP_MODE) | (mode << MATF_ENVMAP_MODE_SHIFT);
     return I3D_OK;
 }
 
@@ -436,15 +437,15 @@ bool I3D_anim_material::SetEnvCurrentFrame(int f)
 static inline uint GetTextureFlags(const uint &flags)
 {
     uint tflags = flags & MATF_LOD0 ? ITC_MANAGED : 0;
-    if (renderState[16])
+    if (renderState[RS_TEXTUREDITHER])
         tflags |= ITC_DITHER;
-    if (renderState[17] || flags & MATF_TRUECOLOR)
+    if (renderState[RS_TEXTURETRUECOLOR] || flags & MATF_TRUECOLOR)
         tflags |= ITC_TRUECOLOR;
-    else if (renderState[25] && !(flags & MATF_NO_DXT))
+    else if (renderState[RS_TEXTURECOMPRESS] && !(flags & MATF_NO_DXT))
         tflags |= ITC_DXT;
-    if (flags & MATF_MIPMAP && renderState[13])
+    if (flags & MATF_MIPMAP && renderState[RS_LOADMIPMAP])
         tflags |= ITC_MIPMAP;
-    if (renderState[RS_LOD_COARSER] && !(flags & MATF_FULL_SIZE))
+    if (renderState[RS_TEXTURELOWDETAIL] && !(flags & MATF_FULL_SIZE))
         tflags |= ITC_HALF;
     if (flags & MATF_KEEP_PIXELS)
         tflags |= ITC_KEEP_PIXELS;
@@ -465,7 +466,7 @@ static inline uint GetTextureFlags(const uint &flags)
 // An environment map's flags: no color key, alpha, dithering or kept pixels, mipmaps by the render state alone
 #define ENV_TEXTURE_FLAGS(tflags)                                                                                     \
     ((tflags & ~(ITC_KEEP_PIXELS | ITC_DITHER | ITC_MANAGED | ITC_COLORKEY | ITC_USE_ALPHA | ITC_ALPHA)) |           \
-        ITC_MANAGED_DXT | (renderState[13] ? ITC_MIPMAP : 0))
+        ITC_MANAGED_DXT | (renderState[RS_LOADMIPMAP] ? ITC_MIPMAP : 0))
 
 // The colors (env_alpha too with an environment map), then each texture's name: a length byte and the characters.
 // A color-keyed or additive material, or one whose image has alpha, has no alpha image name.
@@ -555,6 +556,7 @@ void I3D_anim_material::LoadImage()
     dtaRead(LoadImageHandle, &num_frames, 1);
     int env_num_frames = 0;
     dtaRead(LoadImageHandle, &env_num_frames, 1);
+    // loop_frame, frame_delay and the environment map's two
     dtaRead(LoadImageHandle, &loop_frame, 16);
     uint tflags = GetTextureFlags(flags);
     if ((tflags & (ITC_MIPMAP | ITC_COLORKEY)) == (ITC_MIPMAP | ITC_COLORKEY))

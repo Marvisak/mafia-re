@@ -183,15 +183,15 @@ void ResetClipArrays()
 // FUNCTION: LS3DF11 0x100010f0
 bool ReserveClipArrays(int vertNum, int faceNum)
 {
-    if (clip_vertices_size < 65000) {
+    if (clip_vertices_size < CLIP_MAX_VERTICES) {
         int num = vertNum + faceNum * 12;
         if (!clip_is_ortho && RsNonOrthoTessellation < 1.0f)
             num = (int)((1.0f / RsNonOrthoTessellation + 1.0f) * num);
-        if (num > 65000)
-            num = 65000;
+        if (num > CLIP_MAX_VERTICES)
+            num = CLIP_MAX_VERTICES;
         if (clip_vertices_size < num) {
-            if (num < 512)
-                num = 512;
+            if (num < CLIP_MIN_VERTICES)
+                num = CLIP_MIN_VERTICES;
             clip_vertices_size = num;
             delete[] clip_verts;
             clip_verts = new S_clip_vertex[num];
@@ -201,22 +201,23 @@ bool ReserveClipArrays(int vertNum, int faceNum)
                     faceNum);
                 return false;
             }
+            // Room left for the last face clipped: 15 vertices, times the edges' tessellation in perspective
             if (!clip_is_ortho && RsNonOrthoTessellation < 1.0f)
                 clip_verts_max = (int)(clip_vertices_size - (1.0f / RsNonOrthoTessellation + 1.0f) * 15.0f);
             else
                 clip_verts_max = clip_vertices_size - 15;
         }
     }
-    if (clip_faces_alloc < 32000) {
+    if (clip_faces_alloc < CLIP_MAX_FACES) {
         int num = faceNum * 8;
         if (!clip_is_ortho && RsNonOrthoTessellation < 1.0f)
             num = (int)((1.0f / RsNonOrthoTessellation + 1.0f) * num);
         num += num_clip_faces;
-        if (num > 32000)
-            num = 32000;
+        if (num > CLIP_MAX_FACES)
+            num = CLIP_MAX_FACES;
         if (clip_faces_alloc < num) {
-            if (num < 128)
-                num = 128;
+            if (num < CLIP_MIN_FACES)
+                num = CLIP_MIN_FACES;
             I3D_triface *faces = new I3D_triface[num * 2];
             if (!faces) {
                 dbgPrintf("!! Out of memory  ReserveClipArrays()  vertNum:%d  faceNum:%d  clipper.cpp", vertNum,

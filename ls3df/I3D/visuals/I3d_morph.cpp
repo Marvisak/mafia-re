@@ -421,7 +421,7 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
     default:
         return I3DERR_GENERIC;
     }
-    vis_flags = obj->vis_flags & 0x2ffd0;
+    vis_flags = obj->vis_flags & VISF_DUPLICATE_MASK;
     vis_bound = obj->vis_bound;
     if (obj->vis_flags & VISF_WORLD_SPACE)
         vis_bound_w = obj->GetWBoundVolume();
@@ -491,8 +491,9 @@ void I3D_morph::m_AddFGroups()
     }
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!l->vb.vb) {
-        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
-                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1) | LODC_POSITIONS | LODC_STATIC,
+                level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0,
+                mesh->u_ofs, mesh->v_ofs)) {
             dbgPrintf("!! Out of memory    renderObject()");
             return;
         }
@@ -522,8 +523,8 @@ void I3D_morph::m_AddFGroups()
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-        l->SetUV(level->GetFlags() & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
-            mesh->u_ofs, mesh->v_ofs);
+        l->SetUV(level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1, level->num_vertices, &verts->tex,
+            sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
 
     if (moved) {
         lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
@@ -641,13 +642,13 @@ void I3D_morph::m_AddFGroups()
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
-            h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+            h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK) | PRIM_SORT_CKEY_ALPHA;
             else
-                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);

@@ -12,9 +12,9 @@
 
 #include <string.h>
 
-// Steps p over a track of keys whose values are size words long: the count, the times, the values, the end aligned
-// to 4 bytes. With p a reference, VC6 adds the position track's values as [p + n*14 + 2], as the original; returning
-// the new pointer gives [n*14 + p + 2].
+// Steps p over a track of keys of size words each (the time and the value): the count, the times, the values, the end
+// aligned to 4 bytes. With p a reference, VC6 adds the position track's values as [p + n*14 + 2], as the original;
+// returning the new pointer gives [n*14 + p + 2].
 static inline void SkipTrack(const ushort *&p, int size)
 {
     ushort n = *p;
@@ -28,7 +28,7 @@ static inline void SkipTrack(const ushort *&p, int size)
 I3D_animation_set::I3D_animation_set()
 {
     ref = 1;
-    options = 1;
+    options = I3DANIMOP_ONCE;
     data = NULL;
 }
 
@@ -81,19 +81,19 @@ LS3D_RESULT I3D_animation_set::Open(const char *file_name, uint flags, I3D_LOAD_
         int n;
         if (key_flags & ANIMF_ROT) {
             n = *k;
-            k += n * 9 + 1;
+            k += n * ANIM_ROT_KEY_WORDS + 1;
             if (!(n & 1))
                 k++;
         }
         if (key_flags & ANIMF_POS) {
             n = *k;
-            k += n * 7 + 1;
+            k += n * ANIM_VECTOR_KEY_WORDS + 1;
             if (!(n & 1))
                 k++;
         }
         if (key_flags & ANIMF_SCALE) {
             n = *k;
-            k += n * 7 + 1;
+            k += n * ANIM_VECTOR_KEY_WORDS + 1;
             if (!(n & 1))
                 k++;
         }
@@ -125,7 +125,7 @@ int I3D_animation_set::GetEndTime() const
 {
     if (!data)
         return 0;
-    return data->end_time * 40;
+    return data->end_time * ANIM_TIME_UNIT;
 }
 
 // The name of the index-th frame
@@ -199,7 +199,7 @@ LS3D_RESULT I3D_animation_set::GetRotKey(uint link, uint key, int &time, S_quat 
         return I3DERR_INVALIDPARAMS;
     }
     k++;
-    time = k[key] * 40;
+    time = k[key] * ANIM_TIME_UNIT;
     k += n + key * 8;
     if (!(n & 1))
         k++;
@@ -218,7 +218,7 @@ int I3D_animation_set::NumPosKeys(uint link) const
             if (flags & ANIMF_POS) {
                 k += 2;
                 if (flags & ANIMF_ROT)
-                    SkipTrack(k, 9);
+                    SkipTrack(k, ANIM_ROT_KEY_WORDS);
                 return *k;
             }
         } else
@@ -243,14 +243,14 @@ LS3D_RESULT I3D_animation_set::GetPosKey(uint link, uint key, int &time, S_vecto
         return I3DERR_INVALIDPARAMS;
     k += 2;
     if (flags & ANIMF_ROT)
-        SkipTrack(k, 9);
+        SkipTrack(k, ANIM_ROT_KEY_WORDS);
     int n = *k;
     if (key >= n) {
         dbgPrintf("!! KeyIndex out of range  I3D_animation_set::GetPosKey()  this:0x%x  index:%d", this, key);
         return I3DERR_INVALIDPARAMS;
     }
     k++;
-    time = k[key] * 40;
+    time = k[key] * ANIM_TIME_UNIT;
     k += n + key * 6;
     if (!(n & 1))
         k++;
@@ -269,9 +269,9 @@ int I3D_animation_set::NumSclKeys(uint link) const
             if (flags & ANIMF_SCALE) {
                 k += 2;
                 if (flags & ANIMF_ROT)
-                    SkipTrack(k, 9);
+                    SkipTrack(k, ANIM_ROT_KEY_WORDS);
                 if (flags & ANIMF_POS)
-                    SkipTrack(k, 7);
+                    SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
                 return *k;
             }
         } else
@@ -296,16 +296,16 @@ LS3D_RESULT I3D_animation_set::GetSclKey(uint link, uint key, int &time, S_vecto
         return I3DERR_INVALIDPARAMS;
     k += 2;
     if (flags & ANIMF_ROT)
-        SkipTrack(k, 9);
+        SkipTrack(k, ANIM_ROT_KEY_WORDS);
     if (flags & ANIMF_POS)
-        SkipTrack(k, 7);
+        SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
     int n = *k;
     if (key >= n) {
         dbgPrintf("!! KeyIndex out of range  I3D_animation_set::GetSclKey()  this:0x%x  index:%d", this, key);
         return I3DERR_INVALIDPARAMS;
     }
     k++;
-    time = k[key] * 40;
+    time = k[key] * ANIM_TIME_UNIT;
     k += n + key * 6;
     if (!(n & 1))
         k++;
@@ -327,11 +327,11 @@ int I3D_animation_set::NumNoteKeys(uint link, int *is_note) const
                     *is_note = (flags & ANIMF_NOTE) != 0;
                 k += 2;
                 if (flags & ANIMF_ROT)
-                    SkipTrack(k, 9);
+                    SkipTrack(k, ANIM_ROT_KEY_WORDS);
                 if (flags & ANIMF_POS)
-                    SkipTrack(k, 7);
+                    SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
                 if (flags & ANIMF_SCALE)
-                    SkipTrack(k, 7);
+                    SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
                 return *k;
             }
         } else
@@ -357,18 +357,18 @@ LS3D_RESULT I3D_animation_set::GetNoteKey(uint link, uint key, int &time, short 
         return I3DERR_INVALIDPARAMS;
     k += 2;
     if (flags & ANIMF_ROT)
-        SkipTrack(k, 9);
+        SkipTrack(k, ANIM_ROT_KEY_WORDS);
     if (flags & ANIMF_POS)
-        SkipTrack(k, 7);
+        SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
     if (flags & ANIMF_SCALE)
-        SkipTrack(k, 7);
+        SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
     int n = *k;
     if (key >= n) {
         dbgPrintf("!! KeyIndex out of range  I3D_animation_set::GetSclKey()  this:0x%x  index:%d", this, key);
         return I3DERR_INVALIDPARAMS;
     }
     k++;
-    time = k[key] * 40;
+    time = k[key] * ANIM_TIME_UNIT;
     k += n + key;
     note = *k;
     return I3D_OK;
@@ -391,18 +391,18 @@ LS3D_RESULT I3D_animation_set::GetNoteKeyStr(uint link, uint key, int &time, con
         return I3DERR_INVALIDPARAMS;
     k += 2;
     if (flags & ANIMF_ROT)
-        SkipTrack(k, 9);
+        SkipTrack(k, ANIM_ROT_KEY_WORDS);
     if (flags & ANIMF_POS)
-        SkipTrack(k, 7);
+        SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
     if (flags & ANIMF_SCALE)
-        SkipTrack(k, 7);
+        SkipTrack(k, ANIM_VECTOR_KEY_WORDS);
     int n = *k;
     if (key >= n) {
         dbgPrintf("!! KeyIndex out of range  I3D_animation_set::GetSclKey()  this:0x%x  index:%d", this, key);
         return I3DERR_INVALIDPARAMS;
     }
     k++;
-    time = k[key] * 40;
+    time = k[key] * ANIM_TIME_UNIT;
     k += n + key * 2;
     if (!(n & 1))
         k++;

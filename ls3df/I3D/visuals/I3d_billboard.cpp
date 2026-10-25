@@ -81,7 +81,7 @@ LS3D_RESULT I3D_billboard::Duplicate(I3D_frame *frame)
         return I3D_OK;
     }
     I3D_billboard *bb = (I3D_billboard *)frame;
-    vis_flags = bb->vis_flags & 0x2ffd0;
+    vis_flags = bb->vis_flags & VISF_DUPLICATE_MASK;
     vis_bound = bb->vis_bound;
     if (bb->vis_flags & VISF_WORLD_SPACE)
         vis_bound_w = bb->GetWBoundVolume();
@@ -393,11 +393,13 @@ void I3D_billboard::m_AddFGroups()
             }
         }
 #if ENGINE_VERSION >= 395
-        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, num_verts, &verts->pos,
-                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1) | LODC_POSITIONS | LODC_STATIC,
+                num_verts, &verts->pos, sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs,
+                mesh->v_ofs)) {
 #else
-        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? 2 : 1) | 0x500, level->num_vertices, &verts->pos,
-                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs)) {
+        if (!l->Create((level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1) | LODC_POSITIONS | LODC_STATIC,
+                level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0,
+                mesh->u_ofs, mesh->v_ofs)) {
 #endif
             dbgPrintf("!! Out of memory    renderObject()");
             ErrorHandler(I3DERR_OUTOFMEM, ERR_FATAL, NULL);
@@ -430,8 +432,8 @@ void I3D_billboard::m_AddFGroups()
     int base = l->vb.base;
     IDirect3DVertexBuffer8 *dest = l->vb.vb;
     if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-        l->SetUV(level->GetFlags() & MESHF_ENVMAP ? 2 : 1, level->num_vertices, &verts->tex, sizeof(I3D_vertex),
-            mesh->u_ofs, mesh->v_ofs);
+        l->SetUV(level->GetFlags() & MESHF_ENVMAP ? LODC_TEX2 : LODC_TEX1, level->num_vertices, &verts->tex,
+            sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
     ProductBillMatrix(AddFGHlpStruct.cam_pos, &g_matrix);
 
     if (moved || renderCameraChanged || l->lights_changed != AddFGHlpStruct.sector->lights_changed) {
@@ -474,7 +476,7 @@ void I3D_billboard::m_AddFGroups()
     }
 
     if (level->GetFlags() & MESHF_ENVMAP) {
-        if ((level->GetFlags() & MESHF_ENVMAP_MODE) == 5 && !env_dummy && m_pParent) {
+        if ((level->GetFlags() & MESHF_ENVMAP_MODE) == ENVMODE_DUMMY && !env_dummy && m_pParent) {
             env_dummy = m_pParent->GetChild(0);
             while (env_dummy && env_dummy->m_Type != FRAME_DUMMY)
                 env_dummy = env_dummy->m_pNext;
@@ -523,6 +525,8 @@ void I3D_billboard::m_AddFGroups()
         if (!(m_HardwareCaps & HWCAPS_TABLEFOG)) {
             if (!lv)
                 lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
+            // Into the specular color's alpha, Direct3D's vertex fog; FOGPROC_ALPHA for the fog pass without
+            // HWCAPS_SINGLEPASS
             if (level->GetFlags() & MESHF_ENVMAP)
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX2), num_verts,
                     AddFGHlpStruct.sector->fog_light, !(m_HardwareCaps & HWCAPS_SINGLEPASS));
@@ -551,13 +555,13 @@ void I3D_billboard::m_AddFGroups()
             h.sort_value = 0;
             AddFGHlpStruct.num_opaque++;
         } else if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE) || mat->alpha * fade * transparency < 1.0f) {
-            h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+            h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
             AddFGHlpStruct.num_transparent++;
         } else {
             if (mat->flags & MATF_CKEY_ALPHA)
-                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
+                h.sort_value = ((h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK) | PRIM_SORT_CKEY_ALPHA;
             else
-                h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                h.sort_value = (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
             AddFGHlpStruct.num_opaque++;
         }
         AddFGHlpStruct.fgroups.push_back(h);
@@ -590,58 +594,60 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
         num_verts = mesh->levels[cur_lod]->num_vertices;
     }
     IDirect3DVertexBuffer8 *vb = l->vb.vb;
-    uint reset = 0;
+    uint reset = 0;                     // set back after the draw: 1 D3DTSS_TEXCOORDINDEX, 2 ADDRESSU, 4 ADDRESSV
     SetAlphaOp(D3DTOP_MODULATE);
     if (m_HardwareCaps & HWCAPS_SINGLEPASS) {
         if (!mat) {
             SetColorOp(m_Modulate2X);
             SetColorOp1(D3DTOP_DISABLE);
-            SetAlphaState(0);
+            SetAlphaState(ALPHASTATE_NONE);
             m_pD3DDevice8->SetTexture(0, NULL);
         } else {
             if (h->env_texture) {
                 if (h->texture) {
-                    switch ((mat->flags >> 8) & 7) {
-                    case 1:
+                    switch ((mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7) {
+                    case ENVBLEND_FACTOR:
                         SetColorOp1(D3DTOP_BLENDFACTORALPHA);
                         m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                         break;
-                    case 2:
+                    case ENVBLEND_ALPHA:
                         SetColorOp1(D3DTOP_BLENDCURRENTALPHA);
                         break;
-                    case 3:
+                    case ENVBLEND_MODULATE:
                         SetColorOp1(D3DTOP_MODULATE);
                         break;
-                    case 4:
+                    case ENVBLEND_MODULATE2X:
                         SetColorOp1(m_Modulate2X);
                         break;
-                    case 5:
+                    case ENVBLEND_ADD:
                         SetColorOp1(D3DTOP_ADD);
                         break;
                     default:
-                        dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
+                        dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!",
+                            (mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7);
                     }
                     m_pD3DDevice8->SetTexture(1, h->env_texture->m_pD3DTexture8);
                 } else {
-                    switch ((mat->flags >> 8) & 7) {
-                    case 1:
+                    switch ((mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7) {
+                    case ENVBLEND_FACTOR:
                         SetColorOp(D3DTOP_BLENDFACTORALPHA);
                         m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                         break;
-                    case 2:
+                    case ENVBLEND_ALPHA:
                         SetColorOp(D3DTOP_BLENDCURRENTALPHA);
                         break;
-                    case 3:
+                    case ENVBLEND_MODULATE:
                         SetColorOp(D3DTOP_MODULATE);
                         break;
-                    case 4:
+                    case ENVBLEND_MODULATE2X:
                         SetColorOp(m_Modulate2X);
                         break;
-                    case 5:
+                    case ENVBLEND_ADD:
                         SetColorOp(D3DTOP_ADD);
                         break;
                     default:
-                        dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
+                        dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!",
+                            (mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7);
                     }
                     m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
                     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
@@ -659,20 +665,20 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 reset |= 4;
             }
             if (mat->flags & MATF_ADD_MODE) {
-                SetAlphaState(1);
-                SetBlendState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_ADD_ALPHA);
             } else if (mat->flags & MATF_TXT_ALPHA || fade * transparency * mat->alpha < 1.0f) {
-                SetAlphaState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
                 if ((*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z) &&
                         *(int *)&mat->diffuse.x && *(int *)&mat->diffuse.y && *(int *)&mat->diffuse.z)
-                    SetBlendState(1);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 else
-                    SetBlendState(0);
+                    SetBlendState(BLENDSTATE_ALPHA);
             } else if (mat->flags & MATF_CKEY_ALPHA) {
-                SetAlphaState(3);
-                SetBlendState(0);
+                SetAlphaState(ALPHASTATE_TEST);
+                SetBlendState(BLENDSTATE_ALPHA);
             } else
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
@@ -697,7 +703,7 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
         if (!mat) {
             SetColorOp(m_Modulate2X);
-            SetAlphaState(0);
+            SetAlphaState(ALPHASTATE_NONE);
             m_pD3DDevice8->SetTexture(0, NULL);
         } else {
             if (mat->flags & MATF_ADDRESS_U_CLAMP) {
@@ -709,45 +715,49 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
                 reset |= 4;
             }
             if (mat->flags & MATF_ADD_MODE) {
-                SetAlphaState(1);
-                SetBlendState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_ADD_ALPHA);
             } else if (mat->flags & MATF_TXT_ALPHA || fade * transparency * mat->alpha < 1.0f) {
-                SetAlphaState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
                 if ((*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z) &&
                         *(int *)&mat->diffuse.x && *(int *)&mat->diffuse.y && *(int *)&mat->diffuse.z)
-                    SetBlendState(1);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 else
-                    SetBlendState(0);
+                    SetBlendState(BLENDSTATE_ALPHA);
             } else if (mat->flags & MATF_CKEY_ALPHA) {
-                SetAlphaState(3);
-                SetBlendState(0);
+                SetAlphaState(ALPHASTATE_TEST);
+                SetBlendState(BLENDSTATE_ALPHA);
             } else
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             if (h->texture) {
                 SetColorOp(m_Modulate2X);
                 m_pD3DDevice8->SetTexture(0, h->texture->m_pD3DTexture8);
-            } else if (h->env_texture && (!(m_ProblemFlags & 0x10) || (mat->flags & MATF_ENVMAP_BLEND) != 0x100) &&
-                    (!(m_ProblemFlags & 0x20) || (mat->flags & MATF_ENVMAP_BLEND) != 0x200) &&
-                    (!(m_ProblemFlags & 0x40) || (mat->flags & MATF_ENVMAP_BLEND) != 0x500)) {
-                switch ((mat->flags >> 8) & 7) {
-                case 1:
+            } else if (h->env_texture &&
+                    (!(m_ProblemFlags & PROBLEM_NO_BLENDFACTORALPHA) ||
+                        (mat->flags & MATF_ENVMAP_BLEND) != MATF_ENVBLEND_FACTOR) &&
+                    (!(m_ProblemFlags & PROBLEM_NO_BLENDCURRENTALPHA) ||
+                        (mat->flags & MATF_ENVMAP_BLEND) != MATF_ENVBLEND_ALPHA) &&
+                    (!(m_ProblemFlags & PROBLEM_NO_ADD) || (mat->flags & MATF_ENVMAP_BLEND) != MATF_ENVBLEND_ADD)) {
+                switch ((mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7) {
+                case ENVBLEND_FACTOR:
                     SetColorOp(D3DTOP_BLENDFACTORALPHA);
                     m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, (uchar)(mat->env_alpha * 255.0f) << 24);
                     break;
-                case 2:
+                case ENVBLEND_ALPHA:
                     SetColorOp(D3DTOP_BLENDCURRENTALPHA);
                     break;
-                case 3:
+                case ENVBLEND_MODULATE:
                     SetColorOp(D3DTOP_MODULATE);
                     break;
-                case 4:
+                case ENVBLEND_MODULATE2X:
                     SetColorOp(m_Modulate2X);
                     break;
-                case 5:
+                case ENVBLEND_ADD:
                     SetColorOp(D3DTOP_ADD);
                     break;
                 default:
-                    dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
+                    dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!",
+                        (mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7);
                 }
                 m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
@@ -766,22 +776,23 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
         m_pD3DDevice8->SetStreamSource(0, vb, buffer->stride);
         m_pD3DDevice8->SetIndices(fg->ib.ib, base);
         m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
-        if (h->env_texture && !(reset & 1) && (mat->flags & MATF_ENVMAP_BLEND) > 0x200) {
+        if (h->env_texture && !(reset & 1) && (mat->flags & MATF_ENVMAP_BLEND) > MATF_ENVBLEND_ALPHA) {
             // The environment map as a second pass
             m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_EQUAL);
-            SetAlphaState(1);
-            switch ((mat->flags >> 8) & 7) {
-            case 3:
-                SetBlendState(3);
+            SetAlphaState(ALPHASTATE_BLEND);
+            switch ((mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7) {
+            case ENVBLEND_MODULATE:
+                SetBlendState(BLENDSTATE_MODULATE);
                 break;
-            case 4:
-                SetBlendState(4);
+            case ENVBLEND_MODULATE2X:
+                SetBlendState(BLENDSTATE_MODULATE2X);
                 break;
-            case 5:
-                SetBlendState(2);
+            case ENVBLEND_ADD:
+                SetBlendState(BLENDSTATE_ADD);
                 break;
             default:
-                dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!", (mat->flags >> 8) & 7);
+                dbgPrintf("renderBillboard() - Undefined environment blend type: %i !!",
+                    (mat->flags >> MATF_ENVMAP_BLEND_SHIFT) & 7);
             }
             m_pD3DDevice8->SetTexture(0, h->env_texture->m_pD3DTexture8);
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
@@ -796,23 +807,23 @@ void I3D_billboard::m_RenderFGroup(RENDER_FG_HELP_STRUCT *h)
             SetColorOp(D3DTOP_SELECTARG2);
             m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, m_CurrFogColor);
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-            SetAlphaState(1);
-            SetBlendState(0);
+            SetAlphaState(ALPHASTATE_BLEND);
+            SetBlendState(BLENDSTATE_ALPHA);
             const I3D_triface *faces = fg->GetFaces();
             uchar *v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
-                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
+                SwapVertexBytes(v + TLV_DIFFUSE_ALPHA, v + TLV_FOG, sizeof(TLVERTEX2), faces, fg->num_faces, 0);
             else
-                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 0);
+                SwapVertexBytes(v + TLV_DIFFUSE_ALPHA, v + TLV_FOG, sizeof(TLVERTEX), faces, fg->num_faces, 0);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, fg->ib.base, fg->num_faces);
             faces = fg->GetFaces();
             v = buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (buffer->vertex_format == VF_TLVERTEX2)
-                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
+                SwapVertexBytes(v + TLV_DIFFUSE_ALPHA, v + TLV_FOG, sizeof(TLVERTEX2), faces, fg->num_faces, 1);
             else
-                SwapVertexBytes(v + 0x13, v + 0x17, sizeof(TLVERTEX), faces, fg->num_faces, 1);
+                SwapVertexBytes(v + TLV_DIFFUSE_ALPHA, v + TLV_FOG, sizeof(TLVERTEX), faces, fg->num_faces, 1);
             fg->UnlockFaces();
             buffer->Unlock();
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
@@ -850,7 +861,7 @@ void I3D_billboard::LoadImage()
 I3D_lensflare::I3D_lensflare()
 {
     visual_type = I3D_VISUAL_LENSF;
-    unknown_224 = 0;
+    lf_flags = 0;
     test_interval = 150;
     last_check_col_time = 0;
     last_update = 0;
@@ -911,7 +922,7 @@ LS3D_RESULT I3D_lensflare::Duplicate(I3D_frame *frame)
     near_dist = lf->near_dist;
     far_dist = lf->far_dist;
     glows = lf->glows;
-    vis_flags = lf->vis_flags & 0x2ffd0;
+    vis_flags = lf->vis_flags & VISF_DUPLICATE_MASK;
     vis_bound = lf->vis_bound;
     if (lf->vis_flags & VISF_WORLD_SPACE)
         vis_bound_w = lf->GetWBoundVolume();
@@ -962,6 +973,7 @@ void I3D_lensflare::Draw(bool test)
             return;
         }
     } else {
+        // Several glows: the occlusion ray along the frame's position, 1000 long (a single glow's ends at the flare)
         dir = pos;
         dir.Normalize();
         dir *= 1000.0f;
@@ -972,8 +984,9 @@ void I3D_lensflare::Draw(bool test)
             target_color = S_vector(1.0f, 1.0f, 1.0f);
             last_check_col_time = time;
             target_visibility = 1.0f;
-            if (pCurrentScene->TestColGeo(cam_pos, dir, 0x61030000, NULL, NULL, NULL, &target_color, TexelCallback,
-                    m_pParent, 0) && IsMrgZeroLess(target_color.Dot(target_color)))
+            if (pCurrentScene->TestColGeo(cam_pos, dir,
+                    COLF_NEAR_SECTOR | COLF_OMNI_SECTOR | COLF_FIRST_HIT | COLF_COLORKEY | COLF_ACCEPT_ANY, NULL, NULL,
+                    NULL, &target_color, TexelCallback, m_pParent, 0) && IsMrgZeroLess(target_color.Dot(target_color)))
                 target_visibility = 0.0f;
         }
     } else
@@ -1007,7 +1020,7 @@ void I3D_lensflare::Draw(bool test)
         S_vector p = GetWBoundVolume().bsphere.pos;
         I3D_material *mat = glows[0].mat;
         if (!mat->texture)
-            sx = sy = 64;
+            sx = sy = 64;               // a glow without a texture is 64 pixels
         else {
             sx = mat->texture->m_Width;
             sy = mat->texture->m_Height;
@@ -1089,7 +1102,7 @@ void I3D_lensflare::Draw(bool test)
         S_vector p = pos * glows[i].pos + center;
         I3D_material *mat = glows[i].mat;
         if (!mat->texture)
-            sx = sy = 64;
+            sx = sy = 64;               // a glow without a texture is 64 pixels
         else {
             sx = mat->texture->m_Width;
             sy = mat->texture->m_Height;

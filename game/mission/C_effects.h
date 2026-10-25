@@ -26,14 +26,21 @@
 #define CT_EFFECT_PART 0x65
 #define CT_EFFECT_SUBPART 0x66
 #define CT_EFFECT_NAME 0x67
+#define CT_EFFECT_MODEL 0x68            // the effect's model file
+#define CT_EFFECT_FRAME 0x69            // the part's frame of that model
 #define CT_EFFECT_PARAMS 0x6a
+
+// C_effect_item::type (the names are ours)
+#define EFFECT_ITEM_EFFECT 1
+#define EFFECT_ITEM_PART 2
+#define EFFECT_ITEM_SUBPART 3
 
 // What the table's effects, parts and subparts have in common, deleted through its virtual destructor
 // VTABLE: GAME 0x623eec
 class C_effect_item
 {
 public:
-    int type;                           // 0x4, 1 to 3: effect, part, subpart
+    int type;                           // 0x4, EFFECT_ITEM_*
     C_str name;                         // 0x8
 
     // FUNCTION: GAME 0x44be70
@@ -67,7 +74,7 @@ public:
 
     C_effect_subpart()
     {
-        type = 3;
+        type = EFFECT_ITEM_SUBPART;
         unknown_34 = 0;
         unknown_30 = 1000;
         unknown_c = S_vector(0.0f, 1.0f, 0.0f);
@@ -158,7 +165,7 @@ public:
     // FUNCTION: GAME 0x44b820
     C_effect_part()
     {
-        type = 2;
+        type = EFFECT_ITEM_PART;
         unknown_90 = 0.0f;
         unknown_20.Zero();
         unknown_2c.Zero();
@@ -217,7 +224,7 @@ public:
                 case CT_EFFECT_NAME:
                     chunk.ReadString(name);
                     break;
-                case 0x69:
+                case CT_EFFECT_FRAME:
                     chunk.ReadString(frame);
                     break;
                 case 0x6b:
@@ -273,7 +280,7 @@ public:
 
     C_effect()
     {
-        type = 1;
+        type = EFFECT_ITEM_EFFECT;
         unknown_1c.Zero();
         unknown_28.Zero();
         unknown_38 = unknown_39 = false;
@@ -310,7 +317,7 @@ public:
                 case CT_EFFECT_NAME:
                     chunk.ReadString(name);
                     break;
-                case 0x68:
+                case CT_EFFECT_MODEL:
                     chunk.ReadString(model);
                     break;
                 case 0x6e:

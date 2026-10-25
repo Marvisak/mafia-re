@@ -143,52 +143,52 @@ void S_mission_options::SetDrawDistance(float distance)
 void S_mission_options::SetGameEffects(int level)
 {
     game_effects = level;
-    if (game_effects < 0)
-        game_effects = 0;
-    if (game_effects > 2)
-        game_effects = 2;
+    if (game_effects < OPTION_LOW)
+        game_effects = OPTION_LOW;
+    if (game_effects > OPTION_HIGH)
+        game_effects = OPTION_HIGH;
 }
 
 // FUNCTION: GAME 0x545bd0
 void S_mission_options::SetGameSounds(int level)
 {
     game_sounds = level;
-    if (game_sounds < 0)
-        game_sounds = 0;
-    if (game_sounds > 2)
-        game_sounds = 2;
+    if (game_sounds < OPTION_LOW)
+        game_sounds = OPTION_LOW;
+    if (game_sounds > OPTION_HIGH)
+        game_sounds = OPTION_HIGH;
 }
 
 // FUNCTION: GAME 0x545c00
 void S_mission_options::SetShadows(int index)
 {
-    int levels[6] = {0, 1, 3, 6, 9, 15};
+    int levels[NUM_SHADOWS] = {0, 1, 3, 6, 9, 15};
     shadows = index;
-    if (shadows < 0)
-        shadows = 0;
-    if (shadows > 5)
-        shadows = 5;
+    if (shadows < SHADOWS_VERY_LOW)
+        shadows = SHADOWS_VERY_LOW;
+    if (shadows > SHADOWS_HIGHEST)
+        shadows = SHADOWS_HIGHEST;
     shadows = levels[shadows];
 }
 
 // FUNCTION: GAME 0x545c60
 int S_mission_options::GetShadows()
 {
-    int levels[6] = {0, 1, 3, 6, 9, 15};
-    for (int i = 0; i < 6; i++)
+    int levels[NUM_SHADOWS] = {0, 1, 3, 6, 9, 15};
+    for (int i = 0; i < NUM_SHADOWS; i++)
     {
         if (shadows == levels[i])
             return i;
     }
-    return 2;
+    return SHADOWS_MEDIUM;
 }
 
 // FUNCTION: GAME 0x545cb0
 void S_mission_options::SetParticles(int level)
 {
     particles = level;
-    if (particles < 0)
-        particles = 0;
-    if (particles > 2)
-        particles = 2;
+    if (particles < OPTION_LOW)
+        particles = OPTION_LOW;
+    if (particles > OPTION_HIGH)
+        particles = OPTION_HIGH;
 }

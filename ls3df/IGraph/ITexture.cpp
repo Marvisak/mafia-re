@@ -59,15 +59,18 @@ static LS3D_TLVERTEX draw_quad_colored[4] = {
     {0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff, 0, 1.0f, 1.0f},
 };
 
-// The texture manager's three pools: how much video memory each may take before its thread evicts the least recently
-// used texture of the pool, and the size of its textures (a managed texture's file name ends in its pool's number)
+// The texture manager's pools (the name is a guess); a managed texture's file name ends in its pool's number
+#define NUM_TEXTURE_POOLS 3
+
+// How much video memory each pool may take before its thread evicts the least recently used texture of the pool, and
+// the size of its textures
 // GLOBAL: LS3DF 0x100aae58
 // GLOBAL: LS3DF11 0x100a7f78
-static int pool_budgets[3] = {0x100000, 0x100000, 0x100000};
+static int pool_budgets[NUM_TEXTURE_POOLS] = {0x100000, 0x100000, 0x100000};
 
 // GLOBAL: LS3DF 0x100aae64
 // GLOBAL: LS3DF11 0x100a7f84
-static int pool_sizes[3] = {256, 128, 64};
+static int pool_sizes[NUM_TEXTURE_POOLS] = {256, 128, 64};
 
 // The versions of the presaved files (PS2 name for the DXT one)
 // GLOBAL: LS3DF 0x1009d8d0
@@ -77,6 +80,11 @@ static const short DXTCurrentVersion = 9;
 // GLOBAL: LS3DF 0x1009d8d2
 // GLOBAL: LS3DF11 0x1009a8d2
 static const short TEXCurrentVersion = 1;
+
+// The DXT types of Create and CompressTexture, also the presaved files' extension digit, .DX1 to .DX3 (names guessed)
+#define PRESAVED_DXT1 1                 // DXT1
+#define PRESAVED_DXT1_ALPHA 2           // DXT1 with 1-bit alpha: the color key
+#define PRESAVED_DXT3 3                 // DXT3: the alpha image or the image's own alpha
 
 // The flags of every surface lock: 1.1 locks with D3DLOCK_NOSYSLOCK too
 #if ENGINE_VERSION >= 395
@@ -277,13 +285,14 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             h >>= 1;
         }
         TEXTURE_SIZE(w, h);
-        if (!LoadImage(name, 0, 0, m_Flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, true, NULL, -1))
+        if (!LoadImage(name, 0, 0, m_Flags, &pSrcBMPPtr, (void **)&pSrcBMPPal, &SrcBMPInfo, true, NULL,
+                DTA_INVALID_HANDLE))
             return I3DERR_FILECORRUPTED;
         SrcBMPPitchAdder = SrcBMPInfo.biBitCount / 8 * SrcBMPInfo.biWidth + SrcBMPInfo.biXPelsPerMeter;
     } else if (name) {
         m_Flags = flags & ~ITC_EMPTY;
         m_FileName = name;
-        int handle = -1;
+        int handle = DTA_INVALID_HANDLE;
         LS3D_RESULT result = pGlobalIGraph->GetImageInfo(name, m_Width, m_Height, TempBPP, 0, &handle);
         if (result < 0)
             return result;
@@ -348,7 +357,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         if (alpha_name) {
             m_AlphaFileName = alpha_name;
             if (!LoadImage(alpha_name, SrcBMPInfo.biWidth, SrcBMPInfo.biHeight, m_Flags, &pSrcOptBMPPtr,
-                    &pSrcOptBMPPal, &SrcOptBMPInfo, false, &SrcOptBMPLastWriteTime, -1)) {
+                    &pSrcOptBMPPal, &SrcOptBMPInfo, false, &SrcOptBMPLastWriteTime,
+                    DTA_INVALID_HANDLE)) {
                 delete[] pSrcBMPPal;
                 delete[] pSrcBMPPtr;
                 return I3DERR_NOFILE1;
@@ -422,7 +432,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         if ((m_Flags & (ITC_ALPHA | ITC_USE_ALPHA)) && !(m_Flags & ITC_COLORKEY)) {
             if (m_Flags & ITC_DXT && m_DXTAlphaTexturePixelFormat) {
                 format = m_DXTAlphaTexturePixelFormat;
-                dxt = 3;
+                dxt = PRESAVED_DXT3;
                 dxt_format = m_AlphaTexturePixelFormat;
             } else
                 format = m_AlphaTexturePixelFormat;
@@ -430,14 +440,14 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             if (!(m_Flags & ITC_MIPMAP)) {
                 if (m_Flags & ITC_DXT && m_DXTTexturePixelFormat) {
                     format = m_DXTTexturePixelFormat;
-                    dxt = 2;
+                    dxt = PRESAVED_DXT1_ALPHA;
                     dxt_format = m_Alpha1TexturePixelFormat;
                 } else
                     format = m_Alpha1TexturePixelFormat;
             } else {
                 if (m_Flags & ITC_DXT && m_DXTAlphaTexturePixelFormat) {
                     format = m_DXTAlphaTexturePixelFormat;
-                    dxt = 3;
+                    dxt = PRESAVED_DXT3;
                     dxt_format = m_AlphaTexturePixelFormat;
                 } else
                     format = m_AlphaTexturePixelFormat;
@@ -445,7 +455,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         } else {
             if (m_Flags & ITC_DXT && m_DXTTexturePixelFormat) {
                 format = m_DXTTexturePixelFormat;
-                dxt = 1;
+                dxt = PRESAVED_DXT1;
                 dxt_format = m_Alpha1TexturePixelFormat;
             } else
                 format = m_TexturePixelFormat;
@@ -458,8 +468,8 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
 
     if (!(m_Flags & (ITC_EMPTY | ITC_KEEP_PIXELS | ITC_FROM_MEMORY))) {
         bool presaved = false;
-        if (dxt == 1)
-            presaved = m_TryPresavedDXT(name, NULL, 1, &SrcBMPLastWriteTime, NULL);
+        if (dxt == PRESAVED_DXT1)
+            presaved = m_TryPresavedDXT(name, NULL, PRESAVED_DXT1, &SrcBMPLastWriteTime, NULL);
         else if (dxt > 1)
             presaved = m_TryPresavedDXT(name, m_pAlphaName, dxt, &SrcBMPLastWriteTime, &SrcOptBMPLastWriteTime);
         else if (m_Format == D3DFMT_R5G6B5 || m_Format == D3DFMT_X1R5G5B5 ||
@@ -830,7 +840,7 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         memset(file, 0, 255);
         int len = strlen(name) - 4;
         strncpy(file, name, len);
-        if (m_pAlphaName && dxt == 3) {
+        if (m_pAlphaName && dxt == PRESAVED_DXT3) {
             strcat(file, "_");
             int alpha_len = strlen(m_pAlphaName) - 4;
             len += alpha_len + 1;
@@ -848,11 +858,12 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
         file[len + 1] = 'X';
         file[len + 2] = '0' + dxt;
         file[len + 3] = 0;
-        int handle = dtaOpenWrite(file, 0x10000);
-        if (handle == -1) {
+        int handle = dtaOpenWrite(file, DTA_CREATE_FILE);
+        if (handle == DTA_INVALID_HANDLE) {
             dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
             return I3D_OK;
         }
+        // The header: "DXT" and its 0, the version, the size, the image's time and for DXT3 the alpha image's
         dtaWrite(handle, "DXT", 4);
         dtaWrite(handle, &DXTCurrentVersion, 2);
         struct {
@@ -910,11 +921,12 @@ LS3D_RESULT ITexture::Create(const char *name, const char *alpha_name, uint flag
             file[len + 1] = '5';
         file[len + 2] = '5';
         file[len + 3] = 0;
-        int handle = dtaOpenWrite(file, 0x10000);
-        if (handle == -1) {
+        int handle = dtaOpenWrite(file, DTA_CREATE_FILE);
+        if (handle == DTA_INVALID_HANDLE) {
             dbgPrintf("ITexture::Create() - Can't create %s !!!", file);
             return I3D_OK;
         }
+        // The header: "TEX" and its 0, the version, the size and the image's time
         dtaWrite(handle, "TEX", 4);
         dtaWrite(handle, &TEXCurrentVersion, 2);
         struct {
@@ -963,7 +975,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
     memset(file, 0, 255);
     int len = strlen(name) - 4;
     strncpy(file, name, len);
-    if (alpha_name && dxt == 3) {
+    if (alpha_name && dxt == PRESAVED_DXT3) {
         strcat(file, "_");
         int alpha_len = strlen(alpha_name) - 4;
         len += alpha_len + 1;
@@ -982,7 +994,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
     file[len + 2] = '0' + dxt;
     file[len + 3] = 0;
     int handle = dtaOpen(file, false);
-    if (handle == -1)
+    if (handle == DTA_INVALID_HANDLE)
         return false;
     char header[5];
     header[4] = 0;
@@ -1000,7 +1012,7 @@ bool ITexture::m_TryPresavedDXT(const char *name, const char *alpha_name, int dx
             if (size.sx == m_Width && size.sy == m_Height) {
                 FILETIME file_time;
                 dtaRead(handle, &file_time, 8);
-                if (dxt == 3) {
+                if (dxt == PRESAVED_DXT3) {
                     FILETIME file_alpha_time;
                     dtaRead(handle, &file_alpha_time, 8);
                 }
@@ -1051,7 +1063,7 @@ bool ITexture::m_TryPresaved_555_565(const char *name, FILETIME *time)
     file[len + 2] = '5';
     file[len + 3] = 0;
     int handle = dtaOpen(file, false);
-    if (handle == -1)
+    if (handle == DTA_INVALID_HANDLE)
         return false;
     char header[5];
     header[4] = 0;
@@ -1168,8 +1180,8 @@ HRESULT ITexture::AddDirtyRect(const RECT *rect)
 LS3D_RESULT ITexture::Preload()
 {
     if (m_SceneBegun) {
-        if (m_CurrVertexFormat != 4) {
-            m_CurrVertexFormat = 4;
+        if (m_CurrVertexFormat != VF_TLVERTEX) {
+            m_CurrVertexFormat = VF_TLVERTEX;
             m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
         }
         m_pD3DDevice8->SetTexture(0, m_pD3DTexture8);
@@ -1177,8 +1189,8 @@ LS3D_RESULT ITexture::Preload()
         return I3D_OK;
     }
     m_pD3DDevice8->BeginScene();
-    if (m_CurrVertexFormat != 4) {
-        m_CurrVertexFormat = 4;
+    if (m_CurrVertexFormat != VF_TLVERTEX) {
+        m_CurrVertexFormat = VF_TLVERTEX;
         m_pD3DDevice8->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1);
     }
     m_pD3DDevice8->SetTexture(0, m_pD3DTexture8);
@@ -1348,7 +1360,7 @@ bool ITexture::SaveToTGA(const char *name)
     }
     S_tga_header header;
     memset(&header, 0, sizeof(header));
-    header.type = 2;
+    header.type = TGA_TYPE_TRUECOLOR;
     switch (m_Format) {
     case D3DFMT_A8R8G8B8:
     case D3DFMT_X8R8G8B8:
@@ -1367,7 +1379,7 @@ bool ITexture::SaveToTGA(const char *name)
     }
     header.width = m_Width;
     header.height = m_Height;
-    int handle = dtaOpenWrite(name, 0x10000);
+    int handle = dtaOpenWrite(name, DTA_CREATE_FILE);
     if (handle < 0) {
         dbgPrintf("!! ITexture::SaveToTGA() - Cannot create file %s", name);
         return false;
@@ -1435,7 +1447,7 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
     BITMAPFILEHEADER file_header;
     S_tga_header header;
     if (from_memory) {
-        type = 0;
+        type = IMAGE_BMP;
         memcpy(&info, mem, sizeof(info));
         mem += sizeof(info);
     } else {
@@ -1443,14 +1455,14 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
         while ((cp = strchr(ext + 1, '.')) != NULL)
             ext = cp;
         if (ext[1] == 't' || ext[1] == 'T')
-            type = 1;
+            type = IMAGE_TGA;
         else if (ext[1] == 'b' || ext[1] == 'B')
-            type = 0;
+            type = IMAGE_BMP;
         else
             return false;
-        if (handle == -1) {
+        if (handle == DTA_INVALID_HANDLE) {
             handle = dtaOpen(name, false);
-            if (handle == -1) {
+            if (handle == DTA_INVALID_HANDLE) {
                 dbgPrintf("LoadImage() - (%s) File not found !!", name);
                 return false;
             }
@@ -1458,7 +1470,7 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
         if (time)
             dtaGetTime(handle, time, false);
         switch (type) {
-        case 0: {
+        case IMAGE_BMP: {
             if ((int)dtaRead(handle, &file_header, sizeof(file_header)) <= 0) {
                 dtaClose(handle);
                 return false;
@@ -1469,13 +1481,13 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
             }
             break;
         }
-        case 1: {
+        case IMAGE_TGA: {
             if ((int)dtaRead(handle, &header, sizeof(header)) <= 0) {
                 dtaClose(handle);
                 return false;
             }
             if (header.id_length > 0)
-                dtaSeek(handle, header.id_length, 1);
+                dtaSeek(handle, header.id_length, FILE_CURRENT);
             if (header.desc & UL_TGA_LR)
                 dbgPrintf("!! Error. Right-to-left TGA detected, but not reversed !");
             if (header.desc & UL_TGA_BT)
@@ -1484,7 +1496,7 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
             info.biBitCount = header.bits_per_pixel;
             info.biClrImportant = 0;
             info.biClrUsed = 0;
-            info.biCompression = 0;
+            info.biCompression = BI_RGB;
             info.biHeight = header.height;
             info.biWidth = header.width;
             info.biXPelsPerMeter = header.bits_per_pixel / 8 * header.width;
@@ -1509,6 +1521,7 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
     if (!info.biClrUsed && info.biBitCount <= 8)
         info.biClrUsed = 1 << info.biBitCount;
     if (info.biClrUsed > 0) {
+        // 256 RGBQUADs
         pal = new uchar[0x400];
         if (!pal) {
             dtaClose(handle);
@@ -1520,7 +1533,7 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
             mem += info.biClrUsed * 4;
         } else {
             switch (type) {
-            case 0:
+            case IMAGE_BMP:
                 if (dtaRead(handle, pal, info.biClrUsed * 4) != info.biClrUsed * 4) {
                     dbgPrintf("LoadImage() - (%s) Error reading palette !!", name);
                     delete[] pal;
@@ -1528,7 +1541,8 @@ bool LoadImage(const char *name, uint sx, uint sy, uint flags, void **bits, void
                     return false;
                 }
                 break;
-            case 1:
+            case IMAGE_TGA:
+                // A TGA's palette entries are 3 bytes
                 for (int i = 0; i < (int)info.biClrUsed; i++) {
                     if (dtaRead(handle, pal + i * 4, 3) != 3) {
                         dbgPrintf("LoadImage() - (%s) Error reading palette !!", name);
@@ -1630,6 +1644,7 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
         int n = (sx + 2) * (sy + 1);
         // Bytes, by a shift: new S_vector4[n] shares n * 16 with the clearing below, which takes sy's register
         err = (S_vector4 *)new uchar[n << 4];
+        // Up to 1024x1024 cleared with memset, larger ones float by float
         if (sx <= 0x400 && sy <= 0x400)
             memset(err, 0, (sx + 2) * sizeof(S_vector4) * (sy + 1));
         else {
@@ -1937,11 +1952,12 @@ bool ITexture::m_Convert(uchar *src, IDirect3DSurface8 *surface, uint sx, uint s
     return true;
 }
 
-// Compresses a level, converted to dxt_format, to DXT1 (type 1, or 2 with 1-bit alpha) or DXT3 (type 3)
+// Compresses a level, converted to dxt_format, to the type's DXT format (PRESAVED_DXT*)
 // FUNCTION: LS3DF 0x1007a380
 // FUNCTION: LS3DF11 0x100771f0
 bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect3DSurface8 *dst)
 {
+    // S3TCencode's channel weights (R, G, B): linear luminance
     float weights[3] = {0.3086f, 0.6094f, 0.0820f};
     D3DSURFACE_DESC desc;
     if (FAILED(src->GetDesc(&desc)))
@@ -1962,9 +1978,10 @@ bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect
     src_desc.ddpfPixelFormat.dwSize = sizeof(src_desc.ddpfPixelFormat);
     DWORD encode = S3TC_ENCODE_RGB_FULL;
     switch (type) {
-    case 2:
+    case PRESAVED_DXT1_ALPHA:
         encode = S3TC_ENCODE_RGB_ALPHA_COMPARE;
-    case 1:
+    case PRESAVED_DXT1:
+        // A1R5G5B5
         src_desc.ddpfPixelFormat.dwRBitMask = 0x7c00;
         src_desc.ddpfPixelFormat.dwGBitMask = 0x3e0;
         src_desc.ddpfPixelFormat.dwBBitMask = 0x1f;
@@ -1972,8 +1989,9 @@ bool CompressTexture(const char *name, int type, IDirect3DSurface8 *src, IDirect
         src_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
         src_desc.ddpfPixelFormat.dwRGBBitCount = 16;
         break;
-    case 3:
+    case PRESAVED_DXT3:
         encode = S3TC_ENCODE_ALPHA_EXPLICIT;
+        // A4R4G4B4
         src_desc.ddpfPixelFormat.dwRBitMask = 0xf00;
         src_desc.ddpfPixelFormat.dwGBitMask = 0xf0;
         src_desc.ddpfPixelFormat.dwBBitMask = 0xf;
@@ -2016,9 +2034,12 @@ struct S_texture_slot {
     D3DSURFACE_DESC desc;
 };
 
+// The ring buffer of the textures waiting for the loading thread (the name is a guess)
+#define LOAD_QUEUE_SIZE 256
+
 // GLOBAL: LS3DF 0x101c5dc8
 // GLOBAL: LS3DF11 0x101c2ec8
-static ITexture *load_queue[256];
+static ITexture *load_queue[LOAD_QUEUE_SIZE];
 
 // GLOBAL: LS3DF 0x101c628c
 // GLOBAL: LS3DF11 0x101c338c
@@ -2026,11 +2047,11 @@ static C_list<S_managed_texture *> managed_textures(0x400);
 
 // GLOBAL: LS3DF 0x101c61c8
 // GLOBAL: LS3DF11 0x101c32c8
-static C_list<S_texture_slot> pool_textures[3];
+static C_list<S_texture_slot> pool_textures[NUM_TEXTURE_POOLS];
 
 // GLOBAL: LS3DF 0x101c6208
 // GLOBAL: LS3DF11 0x101c3308
-static S_texture_slot sysmem_textures[3];
+static S_texture_slot sysmem_textures[NUM_TEXTURE_POOLS];
 
 // GLOBAL: LS3DF 0x101c629c
 // GLOBAL: LS3DF11 0x101c339c
@@ -2046,7 +2067,7 @@ static int load_queue_len;
 
 // GLOBAL: LS3DF 0x101c62a8
 // GLOBAL: LS3DF11 0x101c33a8
-static int pools_memory[3];
+static int pools_memory[NUM_TEXTURE_POOLS];
 
 void UnloadManagedTextures();
 
@@ -2055,7 +2076,7 @@ void UnloadManagedTextures();
 void ReleaseManagedTextures()
 {
     UnloadManagedTextures();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUM_TEXTURE_POOLS; i++) {
         if (sysmem_textures[i].surface) {
             sysmem_textures[i].surface->Release();
             sysmem_textures[i].surface = NULL;
@@ -2085,7 +2106,7 @@ void RestoreManagedTextures(uint flags)
         format = m_DXTTexturePixelFormat;
     else
         format = m_TexturePixelFormat;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUM_TEXTURE_POOLS; i++) {
         pool_textures[i].SetGrowSize(0x400);
         m_pD3DDevice8->CreateTexture(pool_sizes[i], pool_sizes[i], 1, 0, format, D3DPOOL_SYSTEMMEM,
             &sysmem_textures[i].d3d_texture);
@@ -2118,9 +2139,9 @@ bool ITexture::Request()
         LeaveCriticalSection(&m_FrameSection);
         return true;
     }
-    if (!(m_Flags & ITC_QUEUED) && load_queue_len < 256) {
+    if (!(m_Flags & ITC_QUEUED) && load_queue_len < LOAD_QUEUE_SIZE) {
         load_queue[load_queue_put] = this;
-        if (++load_queue_put >= 256)
+        if (++load_queue_put >= LOAD_QUEUE_SIZE)
             load_queue_put = 0;
         load_queue_len++;
         m_Flags |= ITC_QUEUED;
@@ -2151,9 +2172,9 @@ DWORD WINAPI RenderThreadProc(void *param)
                     if (texture->m_pManaged->last_frame + 1 >= (uint)m_FrameCounter)
                         break;
                     texture->m_Flags &= ~ITC_QUEUED;
-                    if (++load_queue_out >= 256)
+                    if (++load_queue_out >= LOAD_QUEUE_SIZE)
                         load_queue_out = 0;
-                } else if (++load_queue_out >= 256)
+                } else if (++load_queue_out >= LOAD_QUEUE_SIZE)
                     load_queue_out = 0;
 #else
                 if (texture) {
@@ -2161,7 +2182,7 @@ DWORD WINAPI RenderThreadProc(void *param)
                         break;
                     texture->m_Flags &= ~ITC_QUEUED;
                 }
-                if (++load_queue_out >= 256)
+                if (++load_queue_out >= LOAD_QUEUE_SIZE)
                     load_queue_out = 0;
 #endif
                 load_queue_len--;
@@ -2219,7 +2240,7 @@ DWORD WINAPI RenderThreadProc(void *param)
             texture->m_Height = (ushort)slot->desc.Height;
             int handle = dtaOpen(managed->file_name, false);
             // After the header: "DXT", the version, the size and the image's time
-            dtaSeek(handle, 0x16, 1);
+            dtaSeek(handle, 0x16, FILE_CURRENT);
             dtaRead(handle, lr.pBits, slot->desc.Size);
             dtaClose(handle);
             sysmem_textures[pool].surface->UnlockRect();
@@ -2230,7 +2251,7 @@ DWORD WINAPI RenderThreadProc(void *param)
             texture->m_Flags &= ~ITC_QUEUED;
             texture->m_Flags |= ITC_LOADED;
             texture->Release();
-            if (++load_queue_out >= 256)
+            if (++load_queue_out >= LOAD_QUEUE_SIZE)
                 load_queue_out = 0;
             load_queue_len--;
             LeaveCriticalSection(&m_FrameSection);
@@ -2257,7 +2278,7 @@ bool AddTextureToTextureManager(ITexture *texture, const char *name, uint flags)
         managed->pool = name[len - 1] - '0';
         file[len] = 0;
         strncat(file, "_1.DX1", 7);
-        size = len + 7;
+        size = len + 7;                 // sizeof("_1.DX1")
     } else {
         len = strlen(name) - 4;
         strncpy(file, name, len);
@@ -2291,7 +2312,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
     for (int i = managed_textures.size(); i--; ) {
         if (managed_textures[i]->texture == texture) {
             if (load_queue_len > 0 && (texture->m_Flags & ITC_QUEUED)) {
-                for (int j = 256; j--; ) {
+                for (int j = LOAD_QUEUE_SIZE; j--; ) {
                     if (load_queue[j] == texture)
                         load_queue[j] = NULL;
                 }
@@ -2303,7 +2324,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
         }
     }
     if (texture->m_Flags & ITC_LOADED) {
-        for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < NUM_TEXTURE_POOLS; j++) {
             for (int k = pool_textures[j].size(); k--; ) {
                 if (pool_textures[j][k].texture == texture)
                     pool_textures[j][k].texture = NULL;
@@ -2321,7 +2342,7 @@ bool RemoveTextureFromTextureManager(ITexture *texture)
 void UnloadManagedTextures()
 {
     EnterCriticalSection(&m_FrameSection);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUM_TEXTURE_POOLS; i++) {
         for (int j = pool_textures[i].size(); j--; ) {
             if (pool_textures[i][j].texture) {
                 pool_textures[i][j].texture->m_Flags &= ~ITC_LOADED;

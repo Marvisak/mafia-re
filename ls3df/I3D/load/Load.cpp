@@ -73,9 +73,11 @@ void LoadProgress(float p)
         return;
     if (LoadCBflags & I3DLOAD_PROGRESS) {
         progress = lastProgress = p;
-        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 1, LoadCbContext);
+        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_STEP, LoadCbContext);
     }
 }
+
+#define LOAD_DEADLOCK_TIME 4000         // ms a loader waits for another load to end (the name is a guess)
 
 // Loads a .4ds file into root, a model or a scene's primary sector: the frames without a parent are linked to root, and
 // the model or the scene owns them. A file with animations gets the animation set of its .5ds file.
@@ -91,7 +93,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
         uint t = timeGetTime();
         do {
             pGlobalIGraph->ProcessWinMessages();
-            if (timeGetTime() - t > 4000) {
+            if (timeGetTime() - t > LOAD_DEADLOCK_TIME) {
                 dbgPrintf("!! Load deadlock. Terminating load...  %s", file_name);
                 return I3DERR_GENERIC;
             }
@@ -106,10 +108,11 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     lastProgress = 0.0f;
     if (LoadCBflags & I3DLOAD_PROGRESS) {
         progress = 0.0f;
-        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 0, LoadCbContext);
+        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_BEGIN, LoadCbContext);
     }
     LoadAnimCount = 0;
     LoadFramu = 0;
+    // The name cut at 269 characters, which leaves room for the extension
     char name[276];
     strncpy(name, file_name, 269);
     name[269] = 0;
@@ -124,7 +127,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
         dbgPrintf("!! Bad file name: %s  load.cpp  ?::Open()", file_name);
         if (LoadCBflags & I3DLOAD_PROGRESS) {
             progress = 1.0f;
-            pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 2, LoadCbContext);
+            pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_END, LoadCbContext);
         }
         loading = false;
         return I3DERR_INVALIDPARAMS;
@@ -168,7 +171,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     fail:
         if (LoadCBflags & I3DLOAD_PROGRESS) {
             progress = 1.0f;
-            pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 2, LoadCbContext);
+            pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_END, LoadCbContext);
         }
         loading = false;
         return r;
@@ -179,14 +182,14 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
             dbgPrintf(" !! Out of memory  load.cpp  ?::Open()  %s", file_name);
             if (LoadCBflags & I3DLOAD_PROGRESS) {
                 progress = 1.0f;
-                pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 2, LoadCbContext);
+                pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_END, LoadCbContext);
             }
             loading = false;
             return I3DERR_OUTOFMEM;
         }
         r = set->Open(file_name, flags, NULL, NULL);
         if (r == I3D_OK) {
-            set->options = 2;
+            set->options = I3DANIMOP_LOOP;
             if (root->m_Type == FRAME_MODEL)
                 ((I3D_model *)root)->SetAnimation(set, 0, 1.0f, 0);
             else
@@ -198,7 +201,7 @@ LS3D_RESULT LoadHierarchy(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
     root->Update();
     if (LoadCBflags & I3DLOAD_PROGRESS) {
         progress = 1.0f;
-        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, 2, LoadCbContext);
+        pLoadCallback(CBM_PROGRESS, *(uint *)&progress, LOAD_PROGRESS_END, LoadCbContext);
     }
     loading = false;
     return r;
@@ -218,7 +221,7 @@ LS3D_RESULT LoadAnimation(const char *file_name, uint flags, I3D_LOAD_CB_PROC *c
         uint t = timeGetTime();
         do {
             pGlobalIGraph->ProcessWinMessages();
-            if (timeGetTime() - t > 4000) {
+            if (timeGetTime() - t > LOAD_DEADLOCK_TIME) {
                 dbgPrintf("!! Load deadlock. Terminating anim. load...  %s", file_name);
                 return I3DERR_GENERIC;
             }
@@ -276,7 +279,7 @@ LS3D_RESULT LoadShadow(const char *file_name, uint flags, I3D_LOAD_CB_PROC *cb, 
         uint t = timeGetTime();
         do {
             pGlobalIGraph->ProcessWinMessages();
-            if (timeGetTime() - t > 4000) {
+            if (timeGetTime() - t > LOAD_DEADLOCK_TIME) {
                 dbgPrintf("!! Load deadlock. Terminating load...  %s", file_name);
                 return I3DERR_GENERIC;
             }

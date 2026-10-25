@@ -38,6 +38,7 @@
 #include "ijoy.h"
 #include "rw_data.h"
 #include "stub.h"
+#include "res/resource.h"
 
 // GLOBAL: GAME 0x647df8
 C_mission main_mission;
@@ -160,8 +161,8 @@ void InitJoy(HINSTANCE hinstance)
     for (int i = 0; i < count; i++)
     {
         IJoy *j;
-        if (!joy_base->CreateJoy(&j, i, 1))
-            j->SetAxisMode(1, JOY_AXIS_INVERT);
+        if (!joy_base->CreateJoy(&j, i, JOY_BACKGROUND))
+            j->SetAxisMode(JOY_Y, JOY_AXIS_INVERT);
         joy.push_back(j);
         j->SendFFCommand(JOY_FF_RESET);
         j->SendFFCommand(JOY_FF_STOP_ALL);
@@ -596,14 +597,14 @@ static bool InitSystem(void *hinstance, bool &fatal)
         char patch_version[2] = {'?', '?'};
         // STRING: GAME 0x637ca8
         int file = dtaOpen("tables\\version.txt", false);
-        if (file != -1)
+        if (file != DTA_INVALID_HANDLE)
         {
             dtaRead(file, version, 2);
             dtaClose(file);
         }
         // STRING: GAME 0x637c94
         file = dtaOpen("patch\\version.txt", false);
-        if (file != -1)
+        if (file != DTA_INVALID_HANDLE)
         {
             dtaRead(file, patch_version, 2);
             dtaClose(file);
@@ -637,7 +638,8 @@ static bool InitSystem(void *hinstance, bool &fatal)
     // IGRAPH_HWTL is set either way. VC6 evaluates the last five terms in the reverse of their order here (the original
     // evaluates the clipping's first); bpp is assigned after the flags, whose computation loads it last.
     desc.flags = (setting.multipass_rendering ? IGRAPH_MULTIPASS : 0) |
-        (setting.antialiasing == 4 ? IGRAPH_FSAA4 : 0) | (setting.antialiasing == 2 ? IGRAPH_FSAA2 : 0) |
+        (setting.antialiasing == D3DMULTISAMPLE_4_SAMPLES ? IGRAPH_FSAA4 : 0) |
+        (setting.antialiasing == D3DMULTISAMPLE_2_SAMPLES ? IGRAPH_FSAA2 : 0) |
         (setting.vsync ? IGRAPH_VSYNC : 0) | (setting.suspend_when_inactive ? IGRAPH_SLEEP : 0) |
         (setting.triple_buffering ? IGRAPH_TRIPLE_BUFFER : 0) | (setting.fullscreen ? IGRAPH_FULLSCREEN : 0) |
         (setting.hardware_transform ? IGRAPH_HWTL : 0) | (setting.clip_always ? IGRAPH_CLIP_ALWAYS : 0) |
@@ -658,7 +660,7 @@ static bool InitSystem(void *hinstance, bool &fatal)
         return false;
     }
     char name[128];
-    LoadResString((HINSTANCE)hinstance, 3, name, 127);
+    LoadResString((HINSTANCE)hinstance, IDS_APP_TITLE, name, 127);
     igraph->SetAppName(name);
     igraph->ResetRenderProps();
     igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
@@ -675,24 +677,24 @@ static bool InitSystem(void *hinstance, bool &fatal)
         uint speakers = 0;
         switch (setting.sound_type)
         {
-        case 0:
+        case SOUND_TYPE_HEADPHONES:
             speakers = ISNDINIT_HEADPHONES;
             break;
-        case 1:
+        case SOUND_TYPE_STEREO:
             speakers = ISNDINIT_STEREO;
             break;
-        case 2:
+        case SOUND_TYPE_QUAD:
             speakers = ISNDINIT_QUAD;
             break;
-        case 3:
+        case SOUND_TYPE_SURROUND:
             speakers = ISNDINIT_SURROUND;
             break;
         }
         isound = ISndGetDriver();
-        // 2 isn't one the driver tests. VC6 evaluates the first two terms the other way round.
+        // The driver doesn't test ISNDINIT_VERBOSE. VC6 evaluates the first two terms the other way round.
         result = isound->Init(igraph->GetMainHWND(), 22050, 2, 16,
             (setting.disable_eax ? ISNDINIT_NOEAX : 0) | (setting.software_mixing_only ? ISNDINIT_NOHWCHANNELS : 0) |
-            speakers | 2);
+            speakers | ISNDINIT_VERBOSE);
         if (result < I3D_OK)
         {
             InitErrorMessageBox(result, 8810);
@@ -707,29 +709,28 @@ static bool InitSystem(void *hinstance, bool &fatal)
         InitErrorMessageBox(result, 5630);
         return false;
     }
-    // States 13, 44 to 47, 17 and 25 aren't named yet
     driver->SetState(RS_FAST_FIND, true);
-    driver->SetState((I3D_RENDERSTATE)13, true);
+    driver->SetState(RS_LOADMIPMAP, true);
     driver->SetState(RS_FOG, true);
     driver->SetState(RS_ZBIAS_PROJECTOR, 8);
     driver->SetState(RS_ZBIAS_SHADOW, 8);
     driver->SetState(RS_USESHADOWS, true);
-    driver->SetState((I3D_RENDERSTATE)44, false);
-    driver->SetState((I3D_RENDERSTATE)45, false);
-    driver->SetState((I3D_RENDERSTATE)46, false);
-    driver->SetState((I3D_RENDERSTATE)47, false);
+    driver->SetState(RS_UNKNOWN_44, false);
+    driver->SetState(RS_UNKNOWN_45, false);
+    driver->SetState(RS_UNKNOWN_46, false);
+    driver->SetState(RS_UNKNOWN_47, false);
     driver->SetState(RS_USE_OCCLUSION, true);
-    driver->SetState((I3D_RENDERSTATE)17, setting.texture_true_color);
-    driver->SetState(RS_LOD_COARSER, setting.texture_low_detail);
-    driver->SetState((I3D_RENDERSTATE)25, setting.texture_compressed);
+    driver->SetState(RS_TEXTURETRUECOLOR, setting.texture_true_color);
+    driver->SetState(RS_TEXTURELOWDETAIL, setting.texture_low_detail);
+    driver->SetState(RS_TEXTURECOMPRESS, setting.texture_compressed);
     driver->SetState(RS_LMTRUECOLOR, setting.lightmap_true_color);
-    driver->SetState(RS_MIPMAP, 2);
+    driver->SetState(RS_MIPMAP, D3DTEXF_LINEAR);
     igraph->SetState(DXS_ALPHAREF, 200);
-    driver->SetState(RS_LOD_COARSER, setting.texture_low_detail);
+    driver->SetState(RS_TEXTURELOWDETAIL, setting.texture_low_detail);
     act_mission->Init(driver);
     act_mission->scene->SetCallback(SceneCallback, 1 << SCN_CALLBACK_POST_SCENE | 1 << SCN_CALLBACK_POST_RENDER);
-    igraph->KeyboardInit(1);
-    igraph->MouseInit(1);
+    igraph->KeyboardInit(KBINIT_EXCLUSIVE);
+    igraph->MouseInit(MOUSEMODE_EXCLUSIVE);
     ShowCursor(FALSE);
     InitJoy((HINSTANCE)hinstance);
     controls.Init(igraph, joy.begin(), joy.size());
@@ -763,7 +764,7 @@ static bool InitSystem(void *hinstance, bool &fatal)
     // uppercase test subtracts 0x20 where lowercasing adds it.
     {
         int file = dtaOpen("tables\\version.txt", false);
-        if (file != -1)
+        if (file != DTA_INVALID_HANDLE)
         {
             char language[4] = {0, 0, 0, 0};
             if (dtaRead(file, language, 2) == 2)
@@ -802,7 +803,7 @@ static bool InitSystem(void *hinstance, bool &fatal)
 static void InitErrorMessageBox(LS3D_RESULT result, int base)
 {
     char text[128];
-    int code = (result & 0xffff) + base;
+    int code = HRESULT_CODE(result) + base;
     switch (result)
     {
     case I3DERR_NOFILE:

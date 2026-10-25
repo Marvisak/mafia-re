@@ -72,7 +72,7 @@ I3D_occluder::I3D_occluder()
     planes = NULL;
     scene = NULL;
     m_FrmFlags |= FRMFLAGS_HR_OCCLUDERS;
-    m_FrmFlags |= FRMFLAGS_UNKNOWN_8000000;
+    m_FrmFlags |= FRMFLAGS_NO_CULL;
     m_Type = FRAME_OCCLUDER;
     center = ZeroSVector;
     radius = 0.0f;
@@ -359,7 +359,7 @@ void I3D_occluder::UpdateShadow()
             dbgPrintf("!! Occluder not in scene  i3d_occluder::UpdateShadow() this:0x%x  %s", this, GetName());
         return;
     }
-    if (!(m_FrmFlags & FRMFLAGS_UNKNOWN_10000) || !(m_FrmFlags & FRMFLAGS_ON))
+    if (!(m_FrmFlags & FRMFLAGS_IN_VIEW) || !(m_FrmFlags & FRMFLAGS_ON))
         return;
     if (m_pParent && !(m_pParent->m_FrmFlags & FRMFLAGS_ON))
         return;
@@ -370,9 +370,9 @@ void I3D_occluder::UpdateShadow()
     for (int i = num_faces; i--; ) {
         const S_plane &p = *pl++;
         if (p.normal.Dot(pCurrentCamera->GetWorldPos()) + p.d > 0.0f)
-            *ff++ |= 1;
+            *ff++ |= OCCLFF_FACING;
         else
-            *ff++ &= ~1;
+            *ff++ &= ~OCCLFF_FACING;
     }
 
     ushort *ef = edge_faces;
@@ -390,11 +390,11 @@ void I3D_occluder::UpdateShadow()
     depth_plane.d = -(pCurrentCamera->GetWorldPos().Dot(dp.normal) + dp.d);
 
     while (n--) {
-        if (face_flags[j] & 1) {
+        if (face_flags[j] & OCCLFF_FACING) {
             int k = ef - edge_faces;
             *fp++ = S_plane(verts_w[faces[k + 1]], verts_w[faces[k]], verts_w[faces[k + 2]]);
             num_face_planes++;
-            if (!(face_flags[*ef] & 1)) {
+            if (!(face_flags[*ef] & OCCLFF_FACING)) {
                 k = ef - edge_faces;
                 v = verts_w[faces[k + 1]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
@@ -404,7 +404,7 @@ void I3D_occluder::UpdateShadow()
                     depth_plane.d -= d;
             }
             ef++;
-            if (!(face_flags[*ef] & 1)) {
+            if (!(face_flags[*ef] & OCCLFF_FACING)) {
                 k = ef - edge_faces;
                 v = verts_w[faces[k + 1]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
@@ -414,7 +414,7 @@ void I3D_occluder::UpdateShadow()
                     depth_plane.d -= d;
             }
             ef++;
-            if (!(face_flags[*ef] & 1)) {
+            if (!(face_flags[*ef] & OCCLFF_FACING)) {
                 k = ef - edge_faces;
                 v = verts_w[faces[k - 2]];
                 *sp++ = S_plane(cpos, v, verts_w[faces[k]]);
@@ -427,7 +427,7 @@ void I3D_occluder::UpdateShadow()
         } else
             ef += 3;
         j++;
-        if (num_side_planes > 32 || num_face_planes > 32)
+        if (num_side_planes > OCCL_MAX_PLANES || num_face_planes > OCCL_MAX_PLANES)
             return;
     }
     if (num_side_planes)

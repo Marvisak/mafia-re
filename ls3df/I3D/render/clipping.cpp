@@ -176,15 +176,15 @@ static bool ClipFacegroups(I3D_face_group *fg)
         }
     }
     int num = index;
-    if (num > 65000) {
+    if (num > CLIP_MAX_VERTICES) {
         dbgPrintf("!! Too many result vertices:%d  ClipFacegroups()  clipper.cpp", num);
         num_clip_faces -= clip_added_faces;
         num_clip_faces_t -= clip_added_transp;
         return false;
     }
     if (clip_result_alloc < num) {
-        if (num < 512)
-            num = 512;
+        if (num < CLIP_MIN_VERTICES)
+            num = CLIP_MIN_VERTICES;
         S_vector *result = new S_vector[num];
         if (!result) {
             dbgPrintf("!! Out of memory  ClipFacegroups()  result vertices:%d  clipper.cpp", num);

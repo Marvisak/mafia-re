@@ -156,12 +156,12 @@ public:
     int num_effects;
     uint buttons_changed[4];
     bool pov_changed[4];
-    float dead_zone[8];
-    float saturation[8];
-    uint axis_mode[8];
-    float unused[8];                // only initialized
-    float half_range[8];            // half the device's range of an axis that can't be set to -10000..10000
-    float range_offset[8];
+    float dead_zone[JOY_NUM_AXES];
+    float saturation[JOY_NUM_AXES];
+    uint axis_mode[JOY_NUM_AXES];
+    float unused[JOY_NUM_AXES];     // only initialized
+    float half_range[JOY_NUM_AXES]; // half the device's range of an axis that can't be set to -10000..10000
+    float range_offset[JOY_NUM_AXES];
 
     C_joy(C_joy_base *base, S_device *info, S_enum_context *context, uint flags, bool *ok);
     ~C_joy();
@@ -240,11 +240,11 @@ public:
     DIRAMPFORCE ramp_force;
     DIPERIODIC periodic;
     DICONDITION condition[2];
-    uint axes[8];                   // set by SetAxes, for the next SetType
-    DWORD effect_axes[8];           // parameters.rgdwAxes
+    uint axes[JOY_NUM_AXES];        // set by SetAxes, for the next SetType
+    DWORD effect_axes[JOY_NUM_AXES]; // parameters.rgdwAxes
     uint num_axes;
     uint num_effect_axes;
-    LONG direction[8];
+    LONG direction[JOY_NUM_AXES];
 
     C_joy_effect(C_joy *owner, IDirectInputDevice7A *input_device, S_effect_info *info, int num_info, bool *ok);
     ~C_joy_effect();
@@ -286,21 +286,23 @@ public:
 // GLOBAL: IJOY 0x1000e920
 // conditions
 
-// Counts the objects and references of each class and reports those not released when the DLL is unloaded
-class C_leak_detector {
-public:
-    int refs[3];
-    int objects[3];
-    bool enabled;                   // CreateJoyBase's flags & 1
-
-    C_leak_detector();
-    ~C_leak_detector();
-};
-
+// The classes C_leak_detector counts
 enum {
     LEAK_JOY_BASE,
     LEAK_JOY,
     LEAK_EFFECT,
+    LEAK_NUM_CLASSES,
+};
+
+// Counts the objects and references of each class and reports those not released when the DLL is unloaded
+class C_leak_detector {
+public:
+    int refs[LEAK_NUM_CLASSES];
+    int objects[LEAK_NUM_CLASSES];
+    bool enabled;                   // CreateJoyBase's JOY_BASE_LEAK_REPORT
+
+    C_leak_detector();
+    ~C_leak_detector();
 };
 
 // SYNTHETIC: IJOY 0x10001020

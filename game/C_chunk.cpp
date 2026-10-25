@@ -17,7 +17,7 @@ bool C_chunk::OpenFile(const char *name, bool for_write)
         handle = dtaOpenWrite(name, 0);
     else
         handle = dtaOpen(name, false);
-    if (handle != -1)
+    if (handle != DTA_INVALID_HANDLE)
     {
         write = for_write;
         if (!for_write)

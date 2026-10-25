@@ -53,7 +53,7 @@ S_settings settings;
 // GLOBAL: SETUPCZ 0x410eb8
 // GLOBAL: SETUPPL 0x410eb8
 // GLOBAL: SETUPSTEAM 0x4053c0
-S_adapter_mode adapter_modes[256];
+S_adapter_mode adapter_modes[MAX_ADAPTER_MODES];
 
 // The numbers are in megabytes, the result is rounded up to a power of two
 // Requires DirectDraw7 which was already deprecated at the time
@@ -85,7 +85,7 @@ int GetTotalVRAM(GUID *guid)
     dd->Release();
 
     // In place, and an empty for, as in the Czech setup
-    vram /= 0x100000;
+    vram /= 0x100000;                       // in megabytes
     uint size;
     for (size = 1; vram > size; size <<= 1)
     {
@@ -120,7 +120,7 @@ bool LoadAdapterRefreshRates()
         SendMessageA(dialog_state.windows.refresh_rate, CB_RESETCONTENT, NULL, NULL);
         int item = SendMessageA(dialog_state.windows.refresh_rate, CB_INSERTSTRING, -1, (LPARAM)buffer);
 #endif
-        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, item, NULL);
+        SendMessageA(dialog_state.windows.refresh_rate, CB_SETITEMDATA, item, D3DPRESENT_RATE_DEFAULT);
     }
 
     if (!direct3d8)
@@ -173,7 +173,7 @@ bool LoadAdapterRefreshRates()
         {
             continue;
         }
-        if (display_mode.RefreshRate == 0)
+        if (display_mode.RefreshRate == D3DPRESENT_RATE_DEFAULT)
         {
             continue;
         }
@@ -194,7 +194,7 @@ bool LoadAdapterRefreshRates()
     SendMessageA(dialog_state.windows.refresh_rate, CB_SETCURSEL, selected, NULL);
     if (selected == 0)
     {
-        settings.refresh_rate = 0;
+        settings.refresh_rate = D3DPRESENT_RATE_DEFAULT;
     }
     return true;
 }
@@ -386,7 +386,7 @@ bool LoadAdapterModes()
 
         new_entry++;
         cached_modes++;
-        if (cached_modes >= 256)
+        if (cached_modes >= MAX_ADAPTER_MODES)
         {
             break;
         }
@@ -440,7 +440,7 @@ bool LoadAdapterData(int adapter)
 #else
     int sel = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)buffer);
 #endif
-    SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, sel, NULL);
+    SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, sel, D3DMULTISAMPLE_NONE);
     if (adapter == -1)
     {
         // Uses the adapter mode count as the bound, not the number of cached modes, this is what the original does
@@ -511,8 +511,8 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_2X_FULLSCREEN)
         {
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
-            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
-            if (settings.antialiasing == 2)
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, D3DMULTISAMPLE_2_SAMPLES);
+            if (settings.antialiasing == D3DMULTISAMPLE_2_SAMPLES)
             {
                 SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
@@ -520,8 +520,8 @@ bool LoadAdapterData(int adapter)
         if (adapter_data->flags & MULTISAMPLE_4X_FULLSCREEN)
         {
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
-            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
-            if (settings.antialiasing == 4)
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, D3DMULTISAMPLE_4_SAMPLES);
+            if (settings.antialiasing == D3DMULTISAMPLE_4_SAMPLES)
             {
                 SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
@@ -536,8 +536,8 @@ bool LoadAdapterData(int adapter)
             // STRING: SETUPCZ 0x40e194
             // STRING: SETUPPL 0x40e194
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 2x");
-            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 2);
-            if (settings.antialiasing == 2)
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, D3DMULTISAMPLE_2_SAMPLES);
+            if (settings.antialiasing == D3DMULTISAMPLE_2_SAMPLES)
             {
                 SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }
@@ -549,8 +549,8 @@ bool LoadAdapterData(int adapter)
             // STRING: SETUPCZ 0x40e190
             // STRING: SETUPPL 0x40e190
             int pos = SendMessageA(dialog_state.windows.antialiasing, CB_INSERTSTRING, -1, (LPARAM)" 4x");
-            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, 4);
-            if (settings.antialiasing == 4)
+            SendMessageA(dialog_state.windows.antialiasing, CB_SETITEMDATA, pos, D3DMULTISAMPLE_4_SAMPLES);
+            if (settings.antialiasing == D3DMULTISAMPLE_4_SAMPLES)
             {
                 SendMessageA(dialog_state.windows.antialiasing, CB_SETCURSEL, pos, NULL);
             }

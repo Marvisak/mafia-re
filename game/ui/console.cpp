@@ -30,7 +30,7 @@ void CreateFontTexture(ITexture **texture)
     memset(fnt_matrix, 0, sizeof(fnt_matrix));
     // STRING: GAME 0x634d04
     int file = dtaOpen("fnt_matrix.bin", false);
-    if (file == -1)
+    if (file == DTA_INVALID_HANDLE)
         return;
     dtaRead(file, fnt_matrix, sizeof(fnt_matrix));
     dtaClose(file);

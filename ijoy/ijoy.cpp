@@ -20,28 +20,28 @@ static inline uint AxisOffset(int axis)
 {
     uint offset;
     switch (axis) {
-    case 0:
+    case JOY_X:
         offset = DIJOFS_X;
         break;
-    case 1:
+    case JOY_Y:
         offset = DIJOFS_Y;
         break;
-    case 2:
+    case JOY_Z:
         offset = DIJOFS_Z;
         break;
-    case 3:
+    case JOY_RX:
         offset = DIJOFS_RX;
         break;
-    case 4:
+    case JOY_RY:
         offset = DIJOFS_RY;
         break;
-    case 5:
+    case JOY_RZ:
         offset = DIJOFS_RZ;
         break;
-    case 6:
+    case JOY_SLIDER0:
         offset = DIJOFS_SLIDER(0);
         break;
-    case 7:
+    case JOY_SLIDER1:
         offset = DIJOFS_SLIDER(1);
         break;
     }
@@ -75,7 +75,7 @@ bool EXPORT CreateJoyBase(IJoyBase **joy_base, HINSTANCE hinstance, HWND hwnd, I
     bool ok = false;
     *joy_base = NULL;
     if (hinstance && hwnd) {
-        if (flags & 1)
+        if (flags & JOY_BASE_LEAK_REPORT)
             leak_detector.enabled = true;
         C_joy_base *base = new C_joy_base(hinstance, hwnd, direct_input, &ok);
         *joy_base = base;
@@ -222,25 +222,25 @@ bool C_joy_base::GetDeviceInfo(S_joy_device_info *info, int device)
     info->type = 0;
     switch (GET_DIDEVICE_SUBTYPE(device_info->instance->dwDevType)) {
     case DIDEVTYPEJOYSTICK_UNKNOWN:
-        info->type = 1;
+        info->type = DIDEVTYPEJOYSTICK_UNKNOWN;
         break;
     case DIDEVTYPEJOYSTICK_TRADITIONAL:
-        info->type = 2;
+        info->type = DIDEVTYPEJOYSTICK_TRADITIONAL;
         break;
     case DIDEVTYPEJOYSTICK_FLIGHTSTICK:
-        info->type = 3;
+        info->type = DIDEVTYPEJOYSTICK_FLIGHTSTICK;
         break;
     case DIDEVTYPEJOYSTICK_GAMEPAD:
-        info->type = 4;
+        info->type = DIDEVTYPEJOYSTICK_GAMEPAD;
         break;
     case DIDEVTYPEJOYSTICK_RUDDER:
-        info->type = 5;
+        info->type = DIDEVTYPEJOYSTICK_RUDDER;
         break;
     case DIDEVTYPEJOYSTICK_WHEEL:
-        info->type = 6;
+        info->type = DIDEVTYPEJOYSTICK_WHEEL;
         break;
     case DIDEVTYPEJOYSTICK_HEADTRACKER:
-        info->type = 7;
+        info->type = DIDEVTYPEJOYSTICK_HEADTRACKER;
         break;
     }
     return true;
@@ -275,7 +275,7 @@ const char *C_joy_base::GetButtonName(int device, int button)
 // FUNCTION: IJOY 0x10001540
 const char *C_joy_base::GetAxisName(int device, int axis)
 {
-    if (!num_devices || device < 0 || device >= num_devices || axis < 0 || axis > 7)
+    if (!num_devices || device < 0 || device >= num_devices || axis < 0 || axis > JOY_SLIDER1)
         return NULL;
     S_device *device_info = enum_context.devices;
     for (int i = device; i > 0; i--)
@@ -294,7 +294,7 @@ const char *C_joy_base::GetAxisName(int device, int axis)
 bool C_joy_base::GetAxisInfo(int device, int axis, S_joy_axis_info *info)
 {
     memset(info, 0, sizeof(*info));
-    if (!num_devices || device < 0 || device >= num_devices || !info || axis < 0 || axis > 7)
+    if (!num_devices || device < 0 || device >= num_devices || !info || axis < 0 || axis > JOY_SLIDER1)
         return false;
     S_device *device_info = enum_context.devices;
     for (int i = device; i > 0; i--)
@@ -469,7 +469,7 @@ C_joy::C_joy(C_joy_base *base, S_device *info, S_enum_context *context, uint fla
     memset(&last_state, 0, sizeof(last_state));
     // One dword store, not memset: VC6 inlines a memset through a register
     *(uint *)pov_changed = 0x01010101;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < JOY_NUM_AXES; i++) {
         dead_zone[i] = 0;
         axis_mode[i] = 0;
         saturation[i] = 1.0f;
@@ -482,7 +482,7 @@ C_joy::C_joy(C_joy_base *base, S_device *info, S_enum_context *context, uint fla
             (void **)&device, NULL)))
         return;
     HRESULT result;
-    if (flags & 1)
+    if (flags & JOY_BACKGROUND)
         result = device->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND);
     else
         result = device->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
@@ -689,7 +689,7 @@ C_joy::C_joy(C_joy_base *base, S_device *info, S_enum_context *context, uint fla
         property.diph.dwHeaderSize = sizeof(DIPROPHEADER);
         property.diph.dwObj = 0;
         property.diph.dwHow = DIPH_DEVICE;
-        property.dwData = 10000;
+        property.dwData = DI_FFNOMINALMAX;
         if (FAILED(device->SetProperty(DIPROP_FFGAIN, &property.diph)))
             Sleep(0);
         Sleep(0);
@@ -735,7 +735,7 @@ bool C_joy::RunControlPanel()
 // FUNCTION: IJOY 0x10002490
 bool C_joy::SetDeadZone(int axis, float dead_zone)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return false;
     if (dead_zone < 0.0 || dead_zone > 1.0)
         return false;
@@ -746,7 +746,7 @@ bool C_joy::SetDeadZone(int axis, float dead_zone)
 // FUNCTION: IJOY 0x100024e0
 float C_joy::GetDeadZone(int axis)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return 0.0f;
     return dead_zone[axis];
 }
@@ -754,7 +754,7 @@ float C_joy::GetDeadZone(int axis)
 // FUNCTION: IJOY 0x10002500
 bool C_joy::SetDIDeadZone(int axis, float dead_zone)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return false;
     if (dead_zone < 0.0 || dead_zone > 1.0)
         return false;
@@ -772,7 +772,7 @@ bool C_joy::SetDIDeadZone(int axis, float dead_zone)
 // FUNCTION: IJOY 0x10002600
 float C_joy::GetDIDeadZone(int axis)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return 0.0f;
     uint offset = AxisOffset(axis);
     DIPROPDWORD property;
@@ -789,7 +789,7 @@ float C_joy::GetDIDeadZone(int axis)
 // FUNCTION: IJOY 0x100026e0
 bool C_joy::SetSaturation(int axis, float saturation)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return false;
     if (saturation < 0.0 || saturation > 1.0)
         return false;
@@ -800,7 +800,7 @@ bool C_joy::SetSaturation(int axis, float saturation)
 // FUNCTION: IJOY 0x10002730
 float C_joy::GetSaturation(int axis)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return 0.0f;
     return saturation[axis];
 }
@@ -808,7 +808,7 @@ float C_joy::GetSaturation(int axis)
 // FUNCTION: IJOY 0x10002750
 bool C_joy::SetDISaturation(int axis, float saturation)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return false;
     if (saturation < 0.0 || saturation > 1.0)
         return false;
@@ -826,7 +826,7 @@ bool C_joy::SetDISaturation(int axis, float saturation)
 // FUNCTION: IJOY 0x10002850
 float C_joy::GetDISaturation(int axis)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return 0.0f;
     uint offset = AxisOffset(axis);
     DIPROPDWORD property;
@@ -886,7 +886,7 @@ float C_joy::GetGain()
 // FUNCTION: IJOY 0x10002a90
 bool C_joy::SetAxisMode(int axis, uint mode)
 {
-    if (mode > 15 || axis < 0 || axis > 7)
+    if (mode > JOY_AXIS_MODES || axis < 0 || axis > JOY_SLIDER1)
         return false;
     uint raw = mode & JOY_AXIS_RAW;
     if (raw != (axis_mode[axis] & JOY_AXIS_RAW)) {
@@ -929,9 +929,9 @@ bool C_joy::SetAxisMode(int axis, uint mode)
 // FUNCTION: IJOY 0x10002c70
 uint C_joy::GetAxisMode(int axis)
 {
-    if (axis < 0 || axis > 7)
+    if (axis < 0 || axis > JOY_SLIDER1)
         return 0;
-    return axis_mode[axis] & 0xf;
+    return axis_mode[axis] & JOY_AXIS_MODES;
 }
 
 // FUNCTION: IJOY 0x10002c90
@@ -1156,6 +1156,7 @@ bool C_joy::Update(uint flags)
         if (pov_changed[0] && !state.pov_centered[0])
             pov_changed[0] = false;
         float last = state.pov[0];
+        // A centered POV reports 0xffff in the low word, the others hundredths of a degree
         state.pov_centered[0] = LOWORD(device_state.rgdwPOV[0]) == 0xffff;
         if (!state.pov_centered[0])
             state.pov[0] = (device_state.rgdwPOV[0] * PI) * (1.0f / 18000.0f);
@@ -1359,21 +1360,21 @@ uint C_joy::GetButtonsPressed(int group)
 float C_joy::GetAxis(int axis)
 {
     switch (axis) {
-    case 0:
+    case JOY_X:
         return state.x;
-    case 1:
+    case JOY_Y:
         return state.y;
-    case 2:
+    case JOY_Z:
         return state.z;
-    case 3:
+    case JOY_RX:
         return state.rx;
-    case 4:
+    case JOY_RY:
         return state.ry;
-    case 5:
+    case JOY_RZ:
         return state.rz;
-    case 6:
+    case JOY_SLIDER0:
         return state.slider[0];
-    case 7:
+    case JOY_SLIDER1:
         return state.slider[1];
     }
     return 0.0f;
@@ -1656,7 +1657,7 @@ C_joy_effect::C_joy_effect(C_joy *owner, IDirectInputDevice7A *input_device, S_e
     axes[0] = DIJOFS_X;
     axes[1] = DIJOFS_Y;
     num_axes = 2;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < JOY_NUM_AXES; i++)
         direction[i] = 0;
     type = JOY_EFFECT_NONE;
     joy->AddRef();
@@ -1703,33 +1704,33 @@ uint C_joy_effect::AddRef()
 // FUNCTION: IJOY 0x100046e0
 bool C_joy_effect::SetAxes(int num_axes, const uchar *axes)
 {
-    if (type == JOY_EFFECT_FILE || num_axes > 8 || num_axes < 0)
+    if (type == JOY_EFFECT_FILE || num_axes > JOY_NUM_AXES || num_axes < 0)
         return false;
     if (num_axes > 0) {
         for (int i = 0; i < num_axes; i++) {
             switch (axes[i]) {
-            case 0:
+            case JOY_X:
                 this->axes[i] = DIJOFS_X;
                 break;
-            case 1:
+            case JOY_Y:
                 this->axes[i] = DIJOFS_Y;
                 break;
-            case 2:
+            case JOY_Z:
                 this->axes[i] = DIJOFS_Z;
                 break;
-            case 3:
+            case JOY_RX:
                 this->axes[i] = DIJOFS_RX;
                 break;
-            case 4:
+            case JOY_RY:
                 this->axes[i] = DIJOFS_RY;
                 break;
-            case 5:
+            case JOY_RZ:
                 this->axes[i] = DIJOFS_RZ;
                 break;
-            case 6:
+            case JOY_SLIDER0:
                 this->axes[i] = DIJOFS_SLIDER(0);
                 break;
-            case 7:
+            case JOY_SLIDER1:
                 this->axes[i] = DIJOFS_SLIDER(1);
                 break;
             default:
@@ -1802,6 +1803,7 @@ bool C_joy_effect::SetType(int type, float direction, uint duration, float gain,
         axes[0] = DIJOFS_X;
         axes[1] = DIJOFS_Y;
         num_axes = 2;
+        // Radians to hundredths of a degree (DI_DEGREES)
         this->direction[0] = (LONG)((direction * 18000.0f) * (1.0f / PI));
         if (gain > 1.0f)
             gain = 1.0f;
@@ -1811,14 +1813,14 @@ bool C_joy_effect::SetType(int type, float direction, uint duration, float gain,
         condition[0].lOffset = 0;
         condition[0].lPositiveCoefficient = 0;
         condition[0].lNegativeCoefficient = 0;
-        condition[0].dwPositiveSaturation = 10000;
-        condition[0].dwNegativeSaturation = 10000;
+        condition[0].dwPositiveSaturation = DI_FFNOMINALMAX;
+        condition[0].dwNegativeSaturation = DI_FFNOMINALMAX;
         condition[0].lDeadBand = 0;
         condition[1].lOffset = 0;
         condition[1].lPositiveCoefficient = 0;
         condition[1].lNegativeCoefficient = 0;
-        condition[1].dwPositiveSaturation = 10000;
-        condition[1].dwNegativeSaturation = 10000;
+        condition[1].dwPositiveSaturation = DI_FFNOMINALMAX;
+        condition[1].dwNegativeSaturation = DI_FFNOMINALMAX;
         condition[1].lDeadBand = 0;
         ramp_force.lStart = 0;
         ramp_force.lEnd = 0;
@@ -1826,7 +1828,7 @@ bool C_joy_effect::SetType(int type, float direction, uint duration, float gain,
         periodic.dwMagnitude = 0;
         periodic.lOffset = 0;
         periodic.dwPhase = 0;
-        periodic.dwPeriod = 500000;
+        periodic.dwPeriod = 500000;          // half a second: DirectInput's times are microseconds
         envelope.dwSize = sizeof(DIENVELOPE);
         envelope.dwAttackLevel = 0;
         envelope.dwAttackTime = 500;
@@ -1960,6 +1962,7 @@ bool C_joy_effect::SetDirection(float direction, bool update)
         return false;
     if (type == JOY_EFFECT_NONE)
         return false;
+    // Radians to hundredths of a degree (DI_DEGREES)
     this->direction[0] = (LONG)((direction * 18000.0f) * (1.0f / PI));
     parameters.dwSize = sizeof(DIEFFECT);
     parameters.dwFlags = DIEFF_OBJECTOFFSETS | DIEFF_POLAR;
@@ -2171,7 +2174,7 @@ bool C_joy_effect::SetPeriodic(float magnitude, float offset, float invert, uint
         return false;
     uint phase = (uint)invert;
     if (phase)
-        phase = type == JOY_EFFECT_SINE ? 9000 : 18000;
+        phase = type == JOY_EFFECT_SINE ? 9000 : 18000; // 90 or 180 degrees, in hundredths
     if (magnitude > 1.0f)
         magnitude = 1.0f;
     else if (magnitude < 0.0f)
@@ -2468,7 +2471,7 @@ BOOL CALLBACK EnumEffectsInFileCallback(LPCDIFILEEFFECT file_effect, LPVOID cont
 // FUNCTION: IJOY 0x10005f80
 C_leak_detector::C_leak_detector()
 {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < LEAK_NUM_CLASSES; i++) {
         refs[i] = 0;
         objects[i] = 0;
     }

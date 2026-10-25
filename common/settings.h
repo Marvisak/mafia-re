@@ -4,6 +4,38 @@
 
 #define SETTINGS_MAGIC 0x14
 
+// S_settings::sound_type: setup's sound box, in its order (the names are ours)
+#define SOUND_TYPE_HEADPHONES 0
+#define SOUND_TYPE_STEREO 1
+#define SOUND_TYPE_QUAD 2
+#define SOUND_TYPE_SURROUND 3           // 5.1
+
+// S_settings::language: the item data of setup's language box (the names are ours). The game takes its language from
+// tables\version.txt instead.
+#define LANGUAGE_ENGLISH 0
+#define LANGUAGE_CZECH 1
+#define LANGUAGE_GERMAN 2
+
+// The game's options game_effects, game_sounds and particles: the Audio & Video menu's Low, Medium and High (the names
+// are ours)
+enum {
+    OPTION_LOW,
+    OPTION_MEDIUM,
+    OPTION_HIGH,
+};
+
+// S_settings::shadows: the menu's choices (the names are ours). S_mission_options::shadows holds the level each one
+// stands for (SetShadows).
+enum {
+    SHADOWS_VERY_LOW,
+    SHADOWS_LOW,
+    SHADOWS_MEDIUM,
+    SHADOWS_HIGH,
+    SHADOWS_VERY_HIGH,
+    SHADOWS_HIGHEST,
+    NUM_SHADOWS,
+};
+
 #pragma pack(push, 1)
 struct S_settings
 {
@@ -14,7 +46,7 @@ struct S_settings
     int height;
     int bit_depth;
     int refresh_rate;
-    char antialiasing;
+    char antialiasing;              // 0, or the D3DMULTISAMPLE_TYPE setup checked (2 or 4 samples)
     bool multipass_rendering;
     bool clip_always;
     bool fullscreen;
@@ -30,8 +62,8 @@ struct S_settings
     bool suspend_when_inactive;
     bool software_mixing_only;
     // Signed: both setups sign-extend it
-    char sound_type;
-    int language;
+    char sound_type;                // SOUND_TYPE_*
+    int language;                   // LANGUAGE_*
     bool w_buffer;
 
     // The game's video options, which setup only initializes: the game hands them to its mission's options at its start
@@ -40,10 +72,10 @@ struct S_settings
     // shadows Very Low, Low, Medium, High, Very High and Highest.
     float level_of_detail;          // the engine's RS_LOD_QUALITY, 0.4 to 2
     float draw_distance;            // the part of the scene's camera range, 0.3 to 1
-    int game_effects;               // "In Game Effects"
-    int game_sounds;                // "In Game Sounds"
-    int shadows;
-    int particles;
+    int game_effects;               // "In Game Effects", OPTION_*
+    int game_sounds;                // "In Game Sounds", OPTION_*
+    int shadows;                    // SHADOWS_*
+    int particles;                  // OPTION_*
 
     // The defaults, in declaration order. setup.exe 1.2 constructs its global S_settings and every local
     // copy with them: the global has a dynamic initializer, and no InitSettings function exists (each local
@@ -74,15 +106,15 @@ struct S_settings
         disable_eax = true;
         suspend_when_inactive = true;
         software_mixing_only = false;
-        sound_type = 1;
-        language = 0;
+        sound_type = SOUND_TYPE_STEREO;
+        language = LANGUAGE_ENGLISH;
         w_buffer = true;
         level_of_detail = 1.0;
         draw_distance = 1.0;
-        game_effects = 2;
-        game_sounds = 2;
-        shadows = 3;
-        particles = 2;
+        game_effects = OPTION_HIGH;
+        game_sounds = OPTION_HIGH;
+        shadows = SHADOWS_HIGH;
+        particles = OPTION_HIGH;
     }
 };
 #pragma pack(pop)

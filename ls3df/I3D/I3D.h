@@ -78,6 +78,7 @@ enum I3D_FRAME_TYPE {
     FRAME_SHADOW,
     FRAME_LANDSCAPE,                    // PC only
     FRAME_EMITOR,
+    FRAME_LAST,                         // the number of frame types: the 4ds loader refuses a type from here on
 };
 
 // The visual types, four-character codes (the names are VisualType2String's, LNDP has none). PS2's are 0 to 9.
@@ -97,11 +98,15 @@ enum I3D_VISUAL_TYPE {
     I3D_VISUAL_SHADOW = 0x00444853,     // SHD
 };
 
-// The driver's render states (PS2 type, 63 on PC). The names of most aren't known; the ones here are guesses, after
+// The driver's render states (PS2 type, 63 on PC; PS2's SetState takes 69, the same numbers up to 62). Every one is an
+// enumerator, as in the original most likely: with all 63, 1.1's UpdateLodVertices and the lit object's m_AddFGroups
+// compile to the original's code, where the 34 named ones alone don't (VC6's symbol numbering decides some of the
+// allocator's ties). The names of most aren't known: the RS_UNKNOWN_ ones are placeholders, the others guesses, after
 // Insanity3D's where the meaning agrees.
 enum I3D_RENDERSTATE {
     RS_LINEARFILTER = 0,                // the textures' minification and magnification filter
-    RS_MIPMAP = 2,                      // the mip filter: 0 none, 1 point, 2 linear
+    RS_UNKNOWN_1 = 1,                   // 1 by default; nothing reads it
+    RS_MIPMAP = 2,                      // the mip filter, a D3DTEXF: 0 none, 1 point, 2 linear
     RS_USEZB = 3,                       // the z-buffer
     RS_WBUFFER = 4,                     // a w-buffer where there is a z-buffer (ZBufferEnable)
     RS_CLEAR = 5,                       // the rendering clears the screen first
@@ -109,35 +114,79 @@ enum I3D_RENDERSTATE {
     RS_DITHER = 7,
     RS_MIPMAP_BIAS = 8,                 // the textures' mipmap LOD bias
     RS_WIREFRAME = 9,
+    RS_UNKNOWN_10 = 10,
+    RS_UNKNOWN_11 = 11,
+    RS_UNKNOWN_12 = 12,
+    RS_LOADMIPMAP = 13,                 // the textures get mipmaps when they are created: those of MATF_MIPMAP materials
+                                        // and the environment maps (Insanity3D's name, its number is 11)
+    RS_UNKNOWN_14 = 14,
+    RS_UNKNOWN_15 = 15,
+    RS_TEXTUREDITHER = 16,              // the textures are dithered when converted to 16 bits (ITC_DITHER; Insanity3D's
+                                        // name, its number is 17)
+    RS_TEXTURETRUECOLOR = 17,           // the textures in a true color format (ITC_TRUECOLOR, as MATF_TRUECOLOR; the
+                                        // name is a guess, after RS_LMTRUECOLOR)
     RS_DRAWVISUALS = 18,                // the rendering draws the sectors' visuals (Insanity3D's name, the same number);
                                         // setting it sets RecomputeAllGeometry
     RS_FOG = 19,                        // fog (Insanity3D's name, the same number); refused where the hardware
-                                        // lacks it (m_ProblemFlags 0x80)
+                                        // lacks it (PROBLEM_NO_FOG)
     RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
                                         // name, the same number)
-    RS_LOD_COARSER = 21,                // GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
+    RS_TEXTURELOWDETAIL = 21,           // the textures at half their size but for MATF_FULL_SIZE materials (ITC_HALF),
+                                        // and GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
+                                        // (Insanity3D's name, its number is 22)
+    RS_UNKNOWN_22 = 22,
+    RS_UNKNOWN_23 = 23,
+    RS_UNKNOWN_24 = 24,
+    RS_TEXTURECOMPRESS = 25,            // the textures compressed but for MATF_NO_DXT materials (ITC_DXT; Insanity3D's
+                                        // name, its number is 27)
+    RS_UNKNOWN_26 = 26,                 // 1 by default; nothing reads it
+    RS_UNKNOWN_27 = 27,
+    RS_UNKNOWN_28 = 28,
+    RS_UNKNOWN_29 = 29,
+    RS_UNKNOWN_30 = 30,
+    RS_UNKNOWN_31 = 31,
+    RS_UNKNOWN_32 = 32,                 // 1 by default; nothing reads it
+    RS_UNKNOWN_33 = 33,
     RS_LMTRUECOLOR = 34,                // the lightmaps' textures in the true color format, where there is one
                                         // (Insanity3D's name, its number is 35)
     RS_LMDITHER = 35,                   // the 16-bit lightmaps dithered (Insanity3D's name, its number is 36)
+    RS_UNKNOWN_36 = 36,
+    RS_UNKNOWN_37 = 37,
     RS_LOD_INDEX = 38,                  // -1 by default; the rendering copies it to ForceLodIndex, which nothing reads
                                         // (Insanity3D's name for its forced level of detail, -1 its default too)
     RS_USE_OCCLUSION = 39,              // the occluders hide what is behind them (Insanity3D's name for its own
                                         // state 47)
     RS_LM_AA_RATIO = 40,                // the lightmaps' samples per texel and axis (Construct; the name is a guess)
+    RS_UNKNOWN_41 = 41,
+    RS_UNKNOWN_42 = 42,
     RS_USESHADOWS = 43,                // the shadows are rendered (Insanity3D's name for its own state 13)
+    RS_UNKNOWN_44 = 44,                 // the game turns it off; nothing reads it
+    RS_UNKNOWN_45 = 45,                 // 1 by default, the game turns it off; nothing reads it
+    RS_UNKNOWN_46 = 46,                 // the game turns it off; nothing reads it
+    RS_UNKNOWN_47 = 47,                 // the game turns it off; nothing reads it
     RS_SHADOW_SW = 48,                  // shadow textures are filtered in software
     RS_FAST_FIND = 49,                  // named frames go into the driver's fast find tree (the name is a guess)
     RS_LOD_SCALE = 50,                  // in percent
     RS_USEPROJECTORS = 51,              // the projectors are rendered (the name is a guess, after RS_USESHADOWS)
+    RS_UNKNOWN_52 = 52,
     RS_NONORTHO_TESSELLATION = 53,      // RsNonOrthoTessellation, inverted
     RS_ZBIAS_PROJECTOR = 54,            // RsZBiasProjector
     RS_ZBIAS_SHADOW = 55,               // RsZBiasShadow
+    RS_UNKNOWN_56 = 56,
+    RS_UNKNOWN_57 = 57,
+    RS_UNKNOWN_58 = 58,
     RS_DRAWMIRRORS = 59,                // the mirrors render what they reflect (Insanity3D's name for its own
                                         // state 12); 1 by default
+    RS_LIFT_PROJECTOR = 60,             // a float, 0.001 by default: how far the projections' clipped faces are lifted
+                                        // and spread (SetClipParams; the name is a guess, after RS_ZBIAS_PROJECTOR)
+    RS_LIFT_SHADOW = 61,                // a float, 0.001 by default: the same for the shadows (the name is a guess)
     RS_ENVMAP_SCALE = 62,               // a float, 1.0 by default: the planar environment maps' scale (EnvProcess);
-                                        // 666 frees the vertex buffers in video memory instead
+                                        // RS_ENVMAP_SCALE_FREE_VBUFFERS frees the vertex buffers in video memory instead
     RS_LAST = 63,
 };
+
+// The value of RS_ENVMAP_SCALE that frees the vertex buffers in video memory and stores nothing (the name is a guess)
+#define RS_ENVMAP_SCALE_FREE_VBUFFERS 666
 
 // GetStats' index (PS2 type; the names are Insanity3D's, only the volume statistics exist)
 enum I3DSTATSINDEX {
@@ -219,7 +268,10 @@ inline float I3DIntAsFloat(int i)
 #define FRMFLAGS_CHANGED 0x2000         // moved since the last Update
 #define FRMFLAGS_TARGET 0x4000          // a target's frame (I3D_target::DeleteFromAnyTarget)
 #define FRMFLAGS_SHADOW 0x8000          // a shadow's frame (I3D_shadow::DeleteFromAnyShadow)
-#define FRMFLAGS_UNKNOWN_10000 0x10000  // an occluder hides nothing without it (I3D_occluder::UpdateShadow)
+#define FRMFLAGS_IN_VIEW 0x10000        // the portal walk's first pass found it in the view's depth range: a frame seen
+                                        // through a portal, which CTP_EnumProc then tests against the portal's planes,
+                                        // or an occluder in front of the camera; an occluder hides nothing without it
+                                        // (I3D_occluder::UpdateShadow; the name is a guess)
 // The hierarchy has areas, sectors, occluders: each of these frames has its own from its constructor on, and LinkTo
 // keeps it in a parent of the type
 #define FRMFLAGS_HR_AREAS 0x40000
@@ -227,11 +279,16 @@ inline float I3DIntAsFloat(int i)
 #define FRMFLAGS_HR_OCCLUDERS 0x100000
 #define FRMFLAGS_CLIP 0x200000          // has to be clipped (the name is a guess)
 #define FRMFLAGS_TICK 0x400000          // in its scene's tick list
-#define FRMFLAGS_UNKNOWN_8000000 0x8000000 // set by the camera's constructor and Duplicate
+#define FRMFLAGS_NO_CULL 0x8000000      // the portal walk's culling skips it and its children: set by the cameras',
+                                        // occluders' and sectors' constructors and the camera's Duplicate (the name is a
+                                        // guess)
 #define FRMFLAGS_INTERPOLATOR 0x10000000 // has an interpolator (I3D_IPolSet::GetFrameInterpolator)
 #define FRMFLAGS_FFTREE 0x20000000      // in the driver's fast find tree
 #define FRMFLAGS_UPDATE 0x40000000      // to update
 #define FRMFLAGS_WEATHER 0x80000000     // a dummy in a scene's weather system (I3D_scene::WeatherSystemAddDummy)
+// The flags Duplicate copies: all but the world matrix's and bound volumes' validity, the lists the frame is in (target,
+// shadow, tick, fast find tree, weather), the interpolator, the sector and occluder hierarchy bits and FRMFLAGS_UPDATE
+#define FRMFLAGS_DUPLICATE_MASK 0xfa73e9f
 
 // What a frame's callback is told (PS2 type; the names are guesses). SetCallback's flags are the messages to send.
 enum LS3D_CALLBACK_MESSAGE {
@@ -246,6 +303,10 @@ enum LS3D_CALLBACK_MESSAGE {
 
 // LinkTo's flags: the first is Insanity3D's I3DLINK_UPDMATRIX, the same value and role
 #define I3DLINK_UPDMATRIX 0x1           // keep the world matrix: the local one is made again against the new parent
+#define I3DLINK_DISCARD_BOUND 0x2       // the old parent's and the frame's hierarchy bound volumes are discarded (the
+                                        // name is a guess)
+#define I3DLINK_UPDATE 0x4              // the frame is updated at once, instead of I3DLINK_DISCARD_BOUND's discard (the
+                                        // name is a guess)
 
 // A frame's callback (PS2's parameters; the calling convention isn't confirmed)
 typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
@@ -256,6 +317,10 @@ typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE mess
 typedef void __stdcall I3D_LOAD_CB_PROC(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context);
 #define I3DLOAD_LOG 0x1                 // kept without a callback
 #define I3DLOAD_PROGRESS 0x2
+// CBM_PROGRESS' second parameter (Insanity3D's comment has the same values, without names)
+#define LOAD_PROGRESS_BEGIN 0
+#define LOAD_PROGRESS_STEP 1
+#define LOAD_PROGRESS_END 2
 
 // A bounding box and the sphere around it (PS2 I3D_bvolume)
 struct I3D_bvolume {
@@ -908,6 +973,10 @@ extern int sectorVersion;
 #define ANIMF_SCALE 0x8
 #define ANIMF_NOTE 0x10
 #define ANIMF_NOTE_STRING 0x20
+// The keys' layout (the names are guesses)
+#define ANIM_TIME_UNIT 40               // a key time's unit in ms (1/25 s)
+#define ANIM_ROT_KEY_WORDS 9            // a rotation key in its track, in words: the time and an S_quat
+#define ANIM_VECTOR_KEY_WORDS 7         // a position or scale key: the time and an S_vector
 
 // An animation set's animation of one frame (the name is a guess)
 struct S_frame_anim {
@@ -1052,7 +1121,11 @@ public:
 };
 
 // The animation options (PS2 type I3D_ANIMOPTIONS; the name is a guess)
+#define I3DANIMOP_ONCE 1                // stops at the end: the animation sets' default (any value but I3DANIMOP_LOOP)
 #define I3DANIMOP_LOOP 2                // starts again at the other end
+
+// The animations a model or a scene plays at once: the interpolator set's slots (the name is a guess)
+#define I3D_MAX_ANIMS 8
 
 // One of the interpolator set's animations (0x1c bytes; the names are guesses)
 struct S_ipol_anim {
@@ -1102,7 +1175,7 @@ public:
 
     I3D_pose *pose;                     // 0x04
     float pose_blend;                   // 0x08
-    S_anim_keys keys[8];                // 0x0c, by the set's animations
+    S_anim_keys keys[I3D_MAX_ANIMS];    // 0x0c, by the set's animations
     I3D_frame *frame;                   // 0xec
     I3D_IPolSet *ipol_set;              // 0xf0
 };
@@ -1137,7 +1210,7 @@ public:
 
     I3D_frame *frame;                   // the model or scene
     bool changed;                       // 0x04, an animation's blend or time was set
-    S_ipol_anim anims[8];               // 0x08
+    S_ipol_anim anims[I3D_MAX_ANIMS];   // 0x08
     C_list<I3D_interpolator *> interpolators; // 0xe8
 };
 
@@ -1163,8 +1236,8 @@ typedef uint __stdcall SCN_CALLBACK(SCN_CALLBACK_MESSAGE message, uint param1, u
 // colors, the density, size and speed, the area around the camera they fill, their count and the wind
 enum WS_PARAM {
     WS_PARAM_ON,                        // the weather system works
-    WS_PARAM_FLAG_2,
-    WS_PARAM_FLAG_4,
+    WS_PARAM_SECTOR_TEST,               // WSF_SECTOR_TEST
+    WS_PARAM_DUMMY_TEST,                // WSF_DUMMY_TEST
     WS_PARAM_COLOR,                     // ARGB
     WS_PARAM_COLOR_2,
     WS_PARAM_DENSITY,                   // per 1000
@@ -1183,8 +1256,8 @@ enum WS_PARAM {
 
 // The scene's weather flags (names guessed)
 #define WSF_ON 0x1
-#define WSF_FLAG_2 0x2
-#define WSF_FLAG_4 0x4
+#define WSF_SECTOR_TEST 0x2             // the particles outside the primary sector are hidden (m_UpdateWeatherSystem)
+#define WSF_DUMMY_TEST 0x4              // and those inside the weather dummies' boxes
 #define WSF_SNOW 0x40
 #define WSF_MODE_1 0x200
 #define WSF_MODE_2 0x400
@@ -1230,6 +1303,10 @@ typedef COLL_ENUMRET __stdcall I3D_COLLISION_CALLBACK(const S_vector &pos, float
 // the test's context and the texel (an S_texel_info). It answers 0 for an opaque texel, 2 for a transparent one, which
 // the ray passes, 1 else (PS2's parameters; T&l.cpp's TexelCallback)
 typedef int __stdcall I3D_TEXEL_CALLBACK(const S_vector &pos, float dist, I3D_frame *frm, void *context, void *texel);
+// What a texel callback answers (the names are guesses)
+#define TEXEL_OPAQUE 0                  // the hit counts at once
+#define TEXEL_PARTIAL 1                 // the hit counts as one without a texel test (TexelCallback filters the color)
+#define TEXEL_TRANSPARENT 2             // the ray passes the face
 
 // What a face's texel callback is given about the texel hit (the name is a guess)
 struct S_texel_info {
@@ -1643,6 +1720,9 @@ public:
 #define DUMMYF_INV_MAT_VALID 0x10       // PC only: inv_matrix is up to date (cleared when the frame moves or is
                                         // normalized; after Insanity3D's FRMFLAGS_INV_MAT_VALID)
 
+// I3D_dummy::Normalize's mode that keeps the box's center (the name is a guess)
+#define I3DDUMMY_NORMALIZE_CENTER 2
+
 // A frame with a box (PS2 I3D_dummy, 0x19c bytes on PC; I3d_dummy.cpp). The game marks places and regions with them,
 // and the scenes' weather system takes its regions from them.
 // VTABLE: LS3DF 0x1009b920
@@ -1700,8 +1780,12 @@ enum I3D_LIGHTTYPE {
 #define I3DLIGHTMODE_VERTEX 0x1
 #define I3DLIGHTMODE_LIGHTMAP 0x2
 #define I3DLIGHTMODE_DYNAMIC_SHADOW 0x8 // the shadows (I3D_shadow) take it (the name is a guess)
+#define I3DLIGHTMODE_DYNAMIC_LM 0x10    // lights the lit objects' lightmapped levels per vertex, over their lightmaps
+                                        // (I3D_lit_object::m_AddFGroups; Insanity3D's name for the same role, its value
+                                        // is 8)
 #define I3DLIGHTMODE_SHADOW 0x20        // the lightmaps test rays to the light (the name is a guess)
 #define I3DLIGHTMODE_LIGHTNESS 0x40     // taken by I3D_scene::GetLightness (the name is a guess)
+#define I3DLIGHTMODE_DEFAULT 0xff6b     // a new light's: every bit but 0x4, 0x10 and 0x80
 
 // A light (PS2 I3D_light, 0x1f0 bytes on PC; I3d_light.cpp). The PC's has only PS2's diffuse color and one power: its
 // virtual functions are PS2's in PS2's order without the specular, ambient and attenuation setters and SetFogRange
@@ -1765,6 +1849,11 @@ struct S_frustum {
     D3DVECTOR normal[5];
     float d[5];
 };
+
+// I3D_camera::frustums (the names are guesses)
+#define CAMFRUSTUM_VIEW 0
+#define CAMFRUSTUM_BACKDROP 1           // the scene's backdrop range
+#define CAMFRUSTUM_NEAR 2               // the near projection
 
 // A camera (PS2 I3D_camera, 0x4f4 bytes on PC; I3d_camera.cpp). Besides the view it projects the scene's backdrop (with
 // the scene's backdrop range) and things near the viewer (the near field of view and range, PS2's SetNearFOV and
@@ -2141,6 +2230,11 @@ public:
 // I3D_occluder::occl_flags (the names are guesses)
 #define OCCLF_ACTIVE 0x2                // UpdateShadow made its volume this frame, and nothing hides it
 #define OCCLF_PORTAL 0x4                // the camera is on both sides of its sector's portals: it hides no portal
+// UpdateShadow gives up past so many side or face planes; the arrays have room for one face's more (3 side planes, 1
+// face plane)
+#define OCCL_MAX_PLANES 32
+// I3D_occluder::face_flags
+#define OCCLFF_FACING 0x1               // the face faces the camera (UpdateShadow)
 
 // A convex body that hides what is behind it (PS2 I3D_occluder, 0x5ec bytes on PC; I3d_occluder.cpp). For the camera
 // UpdateShadow makes the volume it hides: the planes of the faces turned to the camera, the planes through the camera
@@ -2178,10 +2272,10 @@ public:
     ushort *edge_faces;                 // 0x15c, three for each face: the face across each edge (Build)
     uchar *edge_sides;                  // 0x160, and which of that face's edges it is
     S_plane *planes;                    // 0x164, one for each face, in world space (UpdateV)
-    ushort *face_flags;                 // 0x168, one for each face: 1 if it faces the camera
-    S_plane side_planes[35];            // 0x16c, through the camera and the silhouette's edges (UpdateShadow)
+    ushort *face_flags;                 // 0x168, one for each face: OCCLFF_*
+    S_plane side_planes[OCCL_MAX_PLANES + 3]; // 0x16c, through the camera and the silhouette's edges (UpdateShadow)
     int num_side_planes;                // 0x39c
-    S_plane face_planes[33];            // 0x3a0, of the faces turned to the camera
+    S_plane face_planes[OCCL_MAX_PLANES + 1]; // 0x3a0, of the faces turned to the camera
     int num_face_planes;                // 0x5b0
     S_plane depth_plane;                // 0x5b4, along the view, through the silhouette's farthest vertex
     uint occl_flags;                    // 0x5c4, OCCLF_*
@@ -2470,21 +2564,28 @@ enum SHADOW_MODE {
                                         // its lod's vertices
 #define VISF_UNKNOWN_10 0x10            // the level of detail follows the textures loaded, and the lighting takes
                                         // the first lod's cache, not the current one's
-#define VISF_UNKNOWN_20 0x20            // the mirrors don't reflect it
+#define VISF_NO_MIRROR 0x20             // the mirrors don't reflect it (I3D_mirror::CollectVisuals, its only test; the
+                                        // name is a guess)
 #define VISF_WORLD_SPACE 0x40          // the vertices are in world space (SetSpace): a move invalidates nothing
 #define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
+#define VISF_ZBIAS 0x100                // drawn with a z-bias of 2 (m_DrawAllSortedFG; the 4ds files' depth bias)
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
-#define VISF_UNKNOWN_800 0x800          // set by the objects' constructor, SetMesh and Duplicate
+#define VISF_OBJECT 0x800               // an I3D_object or derived (a mesh, lods, a transparency): set by its constructor,
+                                        // SetMesh and Duplicate, and the mirrors and the rendering cast to I3D_object on it
 #define VISF_UNKNOWN_1000 0x1000        // the collision tests leave it out with COLF_UNKNOWN_4000000
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
 #define VISF_PROJECTOR_2 0x4000         // projector mode 2
+#define VISF_NO_FOG 0x8000              // never fogged (m_DrawAllSortedFG; the 4ds files' "forbid fog")
 #define VISF_PROXY 0x10000              // renders the face groups of the visual in m_UserData (the name is a guess)
 #define VISF_BOUND_VALID 0x20000        // vis_bound is up to date (UpdateBoundProc)
 #define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
 #define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
 #define VISF_INV_MAT_VALID 0x100000     // inv_matrix is up to date
 #define VISF_LOD_CHANGED 0x2000000      // GetObjectLOD changed a VISF_UNKNOWN_10 visual's level
+// The flags the visuals' Duplicate copies: all but VISF_COLOR_CHANGED's nibble, VISF_NO_MIRROR, VISF_PROXY and the
+// validity bits from VISF_WBOUND_VALID up (VISF_BOUND_VALID stays: vis_bound is copied with it)
+#define VISF_DUPLICATE_MASK 0x2ffd0
 
 struct RENDER_FG_HELP_STRUCT;
 
@@ -2584,6 +2685,18 @@ public:
 // SYNTHETIC: LS3DF11 0x10057a10
 // I3D_visual::`scalar deleting destructor'
 
+// lod::Create's flags (PC only, the names are guesses). The low bits are the vertices' layout, which SetUV takes too.
+#define LODC_FORMAT 0x7
+#define LODC_TEX1 0x1                   // one pair of texture coordinates (LVERTEX, TLVERTEX)
+#define LODC_TEX2 0x2                   // two (LVERTEX2, TLVERTEX2): the environment map's or the lightmap's
+#define LODC_TEX2_HWTL 0x4              // two, with hardware T&L only (the lit objects' lightmaps)
+#define LODC_POSITIONS 0x100            // the positions copied in (with hardware T&L; else ProcessVertices writes them)
+#define LODC_SOFTWARE 0x200             // D3DUSAGE_SOFTWAREPROCESSING, with hardware T&L
+#define LODC_STATIC 0x400               // without D3DUSAGE_DYNAMIC
+
+// A mesh's levels of detail (I3D_mesh_object::levels, the objects' and lit objects' lods)
+#define I3D_MAX_LODS 10
+
 // An object's lighting state for one of its mesh's levels (PC only; the object file's "lod::Create()" names the
 // class): its own vertex buffer, which the object renders from
 // VTABLE: LS3DF 0x1009c3d8
@@ -2594,11 +2707,11 @@ public:
     virtual ~lod();
 
     // Copies the texture coordinates at uv (stride bytes apart, offset by u_ofs and v_ofs) into the vertices of format
-    // 1 or 2 (one or two coordinate pairs), as HWCAPS_HWTL lays them out (the name is a guess)
+    // LODC_TEX1 or LODC_TEX2 (one or two coordinate pairs), as HWCAPS_HWTL lays them out (the name is a guess)
     void SetUV(uint format, int num, const I3D_text_coor *uv, uint stride, float u_ofs, float v_ofs);
 
-    // Gives the lod a vertex buffer of the format (flags' low bits; 4 needs hardware T&L) if it has none, and fills in
-    // the positions (with flag 0x100, hardware T&L only) and texture coordinates given; false if out of memory
+    // Gives the lod a vertex buffer of the format (LODC_FORMAT) if it has none, and fills in the positions
+    // (LODC_POSITIONS) and texture coordinates given; false if out of memory
     bool Create(uint flags, uint num, const S_vector *pos, uint pos_stride, const I3D_text_coor *uv, uint uv_stride,
         const I3D_text_coor *uv2, uint uv2_stride, float u_ofs, float v_ofs);
 
@@ -2666,7 +2779,7 @@ public:
 
     float sort_dist;                    // 0x1dc, orders the transparent face groups (set by the rendering)
     I3D_mesh_object *mesh;              // 0x1e0
-    lod *lods[10];                      // 0x1e4, one per level of the mesh
+    lod *lods[I3D_MAX_LODS];            // 0x1e4, one per level of the mesh
     uint cur_lod;                       // 0x20c
     float lightness;                    // 0x210, scales the lights (PS2 SetLightness)
     float transparency;                 // 0x214, 1.0 opaque
@@ -2726,6 +2839,9 @@ struct GLOW_STRUCT {
     I3D_material *mat;
 };
 
+// I3D_lensflare::lf_flags (the name is a guess)
+#define LFF_MET 0x1                     // a visual met it this frame (VisualProc): Render tests what hides it, else fades it
+
 // A light's flare on the screen (PS2 I3D_lensflare, 0x27c bytes on PC; I3d_billboard.cpp): its glows, drawn by Draw
 // (PS2 name), which the scene calls for each lens flare after the rendering
 // VTABLE: LS3DF 0x1009b5c8 I3D_frame
@@ -2745,7 +2861,7 @@ public:
     // Names guessed from Draw's use
     float intensity;                    // 0x21c, scales the glows' alpha
     float size;                         // 0x220, scales the glows' textures' size in pixels
-    uint unknown_224;                   // 0x224
+    uint lf_flags;                      // 0x224, LFF_*
     uint test_interval;                 // 0x228, ms between the occlusion tests, 150
     uint last_check_col_time;           // 0x22c, timeGetTime() of the last one (Insanity3D's name)
     uint last_update;                   // 0x230, of the last fade step
@@ -2869,14 +2985,26 @@ public:
 // SYNTHETIC: LS3DF11 0x100295f0
 // litLod::`scalar deleting destructor'
 
+// S_lit_level::mode, a lighting's kind, which litLod::Create takes as its flags (the names are guesses)
+#define LITMODE_VERTEX 0x1              // colors per vertex
+#define LITMODE_LIGHTMAP 0x2            // lightmaps
+#define LITMODE_NUM_VERTS 0x4           // with colors per vertex: the file has their count first (Load)
+
 // One of a lit object's lightings (PC only, the names are guessed). PS2 has the same with three lods.
 struct S_lit_level {
     bool constructed;                   // 0x00, by Construct or Load
-    uint mode;                          // 0x04, 1 colors per vertex, 2 lightmaps
+    uint mode;                          // 0x04, LITMODE_*
     float resolution;                   // 0x08, Construct's, 5.0
     float angle;                        // 0x0c, 45.0
-    litLod *lods[10];                   // 0x10, one per level of the mesh
+    litLod *lods[I3D_MAX_LODS];         // 0x10, one per level of the mesh
 };
+
+// I3D_lit_object::Construct's flags (the first two are Insanity3D's light computation flags, the same values and roles;
+// the others' names are guesses)
+#define I3D_LIGHT_GEO_COLLISIONS 0x1    // the I3DLIGHTMODE_SHADOW lights are tested for occlusion (VertexLightingProcess)
+#define I3D_LIGHT_BLUR 0x4              // the lightmaps' rectangles are blurred
+#define I3D_LIGHT_ONE_RECT 0x10         // all the faces in one rectangle, on the plane of the color argument as a normal
+#define I3D_LIGHT_TEST_PATTERN 0x20     // a test pattern (borders, a checkerboard) instead of the lighting
 
 // A visual whose mesh is lit by lightmaps, or by colors per vertex (PS2 I3D_lit_object, 0x370 bytes on PC;
 // I3d_lit_object.cpp): it has six lightings, one of them active, which Construct computes from the scene's lights or
@@ -3234,7 +3362,11 @@ public:
 
 // I3D_part_base::part_flags (names guessed)
 #define PARTF_OPAQUE 0x1                // rendered opaque while not faded, else blended
-#define PARTF_ALPHA 0x2                 // with 3: blended by alpha (else added), sort_dist in the rendering's key
+#define PARTF_ALPHA 0x2                 // with PARTF_OPAQUE (PARTF_ALPHA_MASK): blended by alpha (else added), sort_dist
+                                        // in the rendering's key
+#define PARTF_ALPHA_MASK 0x3
+#define PARTF_UNKNOWN_4 0x4             // the emitter gives it to its particles with the blend bits; nothing tests it
+#define PARTF_UNKNOWN_100 0x100         // in the defaults (the base's constructor, the emitter's Reset); nothing tests it
 #define PARTF_MESH 0x200                // the particles' renderer draws the mesh, else a quad
 #define PARTF_RENDERER 0x600            // queued for the particles' renderer (VisualProc)
 
@@ -3523,7 +3655,7 @@ public:
 // I3D_material::flags (names guessed). The loader reads them from the file, and LoadImage makes the texture's
 // ITexture::Create flags from them (MATF_LOD0 to MATF_IMAGE_ALPHA).
 #define MATF_ENVMAP_SCALE 0xff          // with MATF_ENVMAP, divides its level's env_scale (SetEnvScale; 1 by default)
-#define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (1 to 5, I3D_object::m_RenderFGroup)
+#define MATF_ENVMAP_BLEND 0x700         // how the environment map is blended (ENVBLEND_*, I3D_object::m_RenderFGroup)
 #define MATF_LOD0 0x800                 // the objects render the face group from their first lod; its texture is the
                                         // texture manager's (ITC_MANAGED), cleared where there is none
 #define MATF_ENVMAP_MODE 0x7000         // with MATF_ENVMAP, a level's MESHF_ENVMAP_MODE value
@@ -3532,10 +3664,10 @@ public:
 #define MATF_ADDRESS_V_CLAMP 0x20000
 #define MATF_TEXTURE 0x40000            // texture is used; gives its level MESHF_TEXTURE
 #define MATF_ENVMAP 0x80000             // env_texture is used; gives its level MESHF_ENVMAP
-#define MATF_TRUECOLOR 0x100000         // ITC_TRUECOLOR (also with the driver's render state 17)
-#define MATF_NO_DXT 0x200000            // no ITC_DXT where render state 25 asks for it
-#define MATF_FULL_SIZE 0x400000         // no ITC_HALF where RS_LOD_COARSER asks for it
-#define MATF_MIPMAP 0x800000            // ITC_MIPMAP, with the driver's render state 13
+#define MATF_TRUECOLOR 0x100000         // ITC_TRUECOLOR (also with RS_TEXTURETRUECOLOR)
+#define MATF_NO_DXT 0x200000            // no ITC_DXT where RS_TEXTURECOMPRESS asks for it
+#define MATF_FULL_SIZE 0x400000         // no ITC_HALF where RS_TEXTURELOWDETAIL asks for it
+#define MATF_MIPMAP 0x800000            // ITC_MIPMAP, with RS_LOADMIPMAP
 #define MATF_IMAGE_ALPHA 0x1000000      // the alpha is the image's own (ITC_ALPHA), not a second image's
 #define MATF_ANIM_ALPHA 0x2000000       // an animated material's alpha images are numbered like its images
 #define MATF_ANIMATED 0x4000000         // UpdateTexture picks the frame
@@ -3546,6 +3678,22 @@ public:
 #define MATF_CKEY_ALPHA 0x20000000      // alpha tested against m_AlphaRef
 #define MATF_TXT_ALPHA 0x40000000       // the texture has alpha: blended (I3D_driver::GetIcon sets it)
 #define MATF_ADD_MODE 0x80000000        // blended additively
+
+// MATF_ENVMAP_BLEND's and MATF_ENVMAP_MODE's place
+#define MATF_ENVMAP_BLEND_SHIFT 8
+#define MATF_ENVMAP_MODE_SHIFT 12
+// MATF_ENVMAP_BLEND's values, as SetEnvTexture and SetEnvType take them (the names are guesses, after the color ops
+// they blend with; 3 to 5 take a second pass without HWCAPS_SINGLEPASS), and in place
+#define ENVBLEND_FACTOR 1               // by env_alpha (D3DTOP_BLENDFACTORALPHA)
+#define ENVBLEND_ALPHA 2                // by the texture's alpha (D3DTOP_BLENDCURRENTALPHA)
+#define ENVBLEND_MODULATE 3
+#define ENVBLEND_MODULATE2X 4           // m_Modulate2X
+#define ENVBLEND_ADD 5
+#define MATF_ENVBLEND_FACTOR 0x100
+#define MATF_ENVBLEND_ALPHA 0x200
+#define MATF_ENVBLEND_MODULATE 0x300
+#define MATF_ENVBLEND_MODULATE2X 0x400
+#define MATF_ENVBLEND_ADD 0x500
 
 // A material (PS2 I3D_material, 0x40 bytes on PC), reference counted. I3d_material.cpp; the animated one is in
 // I3D/I3d_material.h. Every function is virtual on PC, where PS2's set the colors directly. Names are PS2's unless
@@ -3724,6 +3872,18 @@ public:
 #define MESHF_TEXTURE 0x10              // a material has a texture
 #define MESHF_KEEP_DIFFUSE 0x20         // a material has MATF_KEEP_DIFFUSE
 
+// MESHF_ENVMAP_MODE's values, EnvProcess' modes (the names are guesses; the 4ds format's community names call 1, 2 and
+// 4 reflect along y, project along y and project along z)
+#define ENVMODE_REFLECT_Z 0             // a sphere map of the reflected view, around z, v flipped
+#define ENVMODE_REFLECT_Y 1             // around y
+#define ENVMODE_PROJECT_Y 2             // the world position's x and z, scaled by RS_ENVMAP_SCALE
+#define ENVMODE_PROJECT_X 3             // y and z
+#define ENVMODE_PROJECT_Z 4             // x and y
+#define ENVMODE_DUMMY 5                 // the position in a dummy's box (the billboard's env_dummy), clamped
+
+// I3D_mesh_level::LockVertices' flags
+#define I3DMESHLOCK_READONLY 0x1        // D3DLOCK_READONLY
+
 // A mesh level: a level of detail's vertices and face groups (0x44 bytes on PC), reference counted. Its destructor is
 // I3d_mesh.cpp's.
 // VTABLE: LS3DF 0x1009bffc
@@ -3734,7 +3894,7 @@ public:
     ~I3D_mesh_level();
 
     virtual int __stdcall Release();
-    // Bit 0 of flags locks for reading only
+    // I3DMESHLOCK_*
     virtual I3D_vertex *__stdcall LockVertices(uint flags);
     virtual void __stdcall UnlockVertices();
     virtual LS3D_RESULT __stdcall Duplicate(I3D_mesh_level *level);
@@ -3798,7 +3958,7 @@ public:
 
     int ref;                            // 0x04
     uint num_lods;                      // 0x08
-    I3D_mesh_level *levels[10];         // 0x0c
+    I3D_mesh_level *levels[I3D_MAX_LODS]; // 0x0c
     I3D_bvolume bvol;                   // 0x34
     float u_ofs, v_ofs;                 // 0x5c, added to the texture coordinates (lod::Create)
     float env_u_ofs, env_v_ofs;         // 0x64, to the environment map's (EnvProcess)
@@ -3926,6 +4086,11 @@ struct TLVERTEX2 {
     float u, v;
     float u2, v2;
 };
+
+// The bytes of a TLVERTEX or TLVERTEX2 the objects' fog pass swaps (SwapVertexBytes): the diffuse color's alpha and
+// the specular color's, which holds the vertex fog (FogProcess)
+#define TLV_DIFFUSE_ALPHA 0x13
+#define TLV_FOG 0x17
 
 // The draws' lists' reserve, out of line where VC6 didn't inline it, after I3d_driver.cpp's functions
 // TEMPLATE: LS3DF 0x1001a100
@@ -4061,14 +4226,25 @@ extern DWORD m_LVertex2VS;
 extern uint m_CurrClipState;
 extern uint m_CurrColorOp1;
 extern uint m_CurrFogState;
-// D3DRS_ZFUNC: 1 D3DCMP_LESSEQUAL, 0 D3DCMP_ALWAYS
+// D3DRS_ZFUNC as IGraph set it last
 extern uint m_CurrZFunc;
+#define ZFUNC_ALWAYS 0                  // D3DCMP_ALWAYS
+#define ZFUNC_LESSEQUAL 1               // D3DCMP_LESSEQUAL
 extern uint m_CurrFogColor;
 extern uint m_CullMode;
 // The color op that modulates by the texture: D3DTOP_MODULATE2X, or D3DTOP_MODULATE without it
 extern uint m_Modulate2X;
-// What Init found the hardware lacks (bit 0x10, 0x20, 0x40: the environment blends 1, 2 and 5 in one pass)
+// What IGraph::Init found the card lacks or gets wrong, by its caps and its make (the names are guesses)
 extern uint m_ProblemFlags;
+#define PROBLEM_CLIP_ALWAYS 0x2         // every visual is clipped (IGRAPH_CLIP_ALWAYS, single-texture cards, old Matrox
+                                        // cards, the G550, ATI's)
+#define PROBLEM_NO_MODULATE2X 0x4       // no D3DTOP_MODULATE2X: the vertex colors are doubled in software
+#define PROBLEM_NO_DXT 0x8              // no DXT textures, whatever the card claims
+#define PROBLEM_NO_BLENDFACTORALPHA 0x10 // no D3DTOP_BLENDFACTORALPHA: ENVBLEND_FACTOR isn't in one pass
+#define PROBLEM_NO_BLENDCURRENTALPHA 0x20 // no D3DTOP_BLENDCURRENTALPHA: ENVBLEND_ALPHA isn't
+#define PROBLEM_NO_ADD 0x40             // no D3DTOP_ADD: ENVBLEND_ADD isn't, and the lightmaps' second pass selects
+#define PROBLEM_NO_FOG 0x80             // RS_FOG stays off (old Matrox cards)
+#define PROBLEM_ZBIAS_SCALE 0x100       // the z biases are divided by 4, rounded up (ATI's cards)
 // What the device can do (HWCAPS_*, ls3df.h)
 extern uint m_HardwareCaps;
 
@@ -4094,21 +4270,21 @@ inline void SetAlphaState(uint state)
         return;
     m_CurrAlphaState = state;
     switch (state) {
-    case 0:
+    case ALPHASTATE_NONE:
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
         break;
-    case 1:
+    case ALPHASTATE_BLEND:
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 1);
         break;
-    case 3:
+    case ALPHASTATE_TEST:
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, m_AlphaRef);
         break;
-    case 2:
+    case ALPHASTATE_BLEND_ALL:
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHAREF, 0);
@@ -4174,6 +4350,9 @@ void EnvProcess(void *dst, uint dst_stride, const void *src, uint src_stride, ui
 void TransformVertices(void *dst, const void *src, uint count, const S_matrix &m, const S_matrix &mn);
 void TransformVerticesBlend(void *dst, const void *src, uint count, const S_matrix &m1, const S_matrix &mn1,
     const float *weights, const S_matrix &m2, const S_matrix &mn2);
+// FogProcess' modes (the names are guesses)
+#define FOGPROC_FACTOR 0                // 255 near to 0 far: Direct3D's vertex fog, into the specular alpha
+#define FOGPROC_ALPHA 1                 // 0 near to 255 far: the fog pass's alpha
 void FogProcess(uchar *dst, const float *src, uint stride, uint count, I3D_light *light, int mode);
 void SwapVertexBytes(uchar *a, uchar *b, uint stride, const I3D_triface *faces, uint num_faces, int restore);
 int __stdcall TexelCallback(const S_vector &pos, float f, I3D_frame *frm, void *color, void *context);
@@ -4196,11 +4375,19 @@ extern I3D_camera *pCurrentCamera;
 // render.cpp's: the camera's view and projection
 extern S_matrix *pViewProjMatrix;
 
+// RENDER_FG_HELP_STRUCT::sort_value (Insanity3D's PRIM_SORT_ prefix, its values differ). The queue sorts ascending:
+// the opaque face groups first, by texture, then the transparent ones, drawn from the last (the farthest first).
+#define PRIM_SORT_ALPHA 0x80000000      // transparent, by distance
+#define PRIM_SORT_CKEY_ALPHA 0x40000000 // opaque and color-keyed (MATF_CKEY_ALPHA): after the plain opaque ones
+#define PRIM_SORT_DIST_MASK 0x3fffffff  // the transparent ones' distance
+#define PRIM_SORT_MAT_MASK 0x7fff       // the opaque ones' texture uid (the lit objects' lightmap's above it, << 15)
+
 // A face group to render, as the visuals' m_AddFGroups queue them for their m_RenderFGroup (PS2 name, 0x20 bytes on PC)
 struct RENDER_FG_HELP_STRUCT {
     I3D_visual *vis;
-    uint sort_value;                    // 0x04, the transparent ones' 0x80000000 | the distance, else the texture's
-                                        // uid (0x40000000 | it for MATF_CKEY_ALPHA), 0 untextured (Insanity3D's name)
+    uint sort_value;                    // 0x04, PRIM_SORT_ALPHA | the distance for the transparent ones, else the
+                                        // texture's uid (PRIM_SORT_CKEY_ALPHA | it for MATF_CKEY_ALPHA), 0 untextured
+                                        // (Insanity3D's name)
     uint clip;                          // 0x08, the frame's FRMFLAGS_CLIP
     int first;                          // 0x0c, the particles' renderer's: its group's first entry in the sorted order
     I3D_face_group *fg;                 // 0x10
@@ -4524,7 +4711,9 @@ public:
 extern C_list<I3D_shadow_visual *> ShadowVisualQueue;
 void ProcessShadows();
 void ProcessProjectors();
-extern I3D_visual *ShadowReceivers[512];
+// The receivers a shadow or a projector takes at most
+#define MAX_SHADOW_RECEIVERS 512
+extern I3D_visual *ShadowReceivers[MAX_SHADOW_RECEIVERS];
 
 // render.cpp
 extern I3D_scene *pCurrentScene;
@@ -4561,6 +4750,11 @@ void OCCL_PrepareSector2(I3D_sector *sector);
 // and its previous value
 extern uint RenderNumber;
 extern uint RenderNumberMinus1;
+
+// The files' versions the loaders take
+#define I3D_4DS_VERSION 29
+#define I3D_5DS_VERSION 20
+#define I3D_6DS_VERSION 2
 
 // Load.cpp (PS2 names): the loaders of the Open functions, a hierarchy's (.4ds) into a model or a scene's primary
 // sector, an animation set's (.5ds) and a shadow's (.6ds); the progress the 4ds loader reports; and the frames and

@@ -471,7 +471,7 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
     if (m_pParent) {
         I3D_frame *frm = m_pParent;
         frm->RemoveChild(this);
-        if (flags & 2)
+        if (flags & I3DLINK_DISCARD_BOUND)
             frm->DiscardHRBoundVol();
     }
     if (frame)
@@ -495,9 +495,9 @@ LS3D_RESULT I3D_frame::LinkTo(I3D_frame *frame, uint flags)
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
     } else
         m_FrmFlags = (m_FrmFlags & ~FRMFLAGS_WMAT_VALID) | FRMFLAGS_UPDATE;
-    if (flags & 4)
+    if (flags & I3DLINK_UPDATE)
         Update();
-    else if (flags & 2)
+    else if (flags & I3DLINK_DISCARD_BOUND)
         DiscardHRBoundVol();
 
     uint hr_flags = m_FrmFlags & (FRMFLAGS_HR_SECTORS | FRMFLAGS_HR_OCCLUDERS | FRMFLAGS_HR_AREAS);
@@ -805,8 +805,8 @@ LS3D_RESULT I3D_frame::Duplicate(I3D_frame *frame)
     delete[] m_pName;
     uint flags = m_FrmFlags;
     memcpy(&m_LocalMatrix, &frame->m_LocalMatrix, sizeof(S_matrix) + sizeof(S_vector) + sizeof(S_quat));
-    m_FrmFlags = (frame->m_FrmFlags & 0xfa73e9f) | (flags & (FRMFLAGS_TICK | FRMFLAGS_SHADOW | FRMFLAGS_TARGET)) |
-        FRMFLAGS_UPDATE;
+    m_FrmFlags = (frame->m_FrmFlags & FRMFLAGS_DUPLICATE_MASK) |
+        (flags & (FRMFLAGS_TICK | FRMFLAGS_SHADOW | FRMFLAGS_TARGET)) | FRMFLAGS_UPDATE;
     m_pCallback = frame->m_pCallback;
     m_UpdateCount++;
     SetProperty(frame->m_pProperty);
@@ -1037,6 +1037,7 @@ void I3D_frame::SaveImage()
 void I3D_frame::LoadImage()
 {
     dtaRead(LoadImageHandle, &m_LocalMatrix(3), sizeof(S_vector));
+    // The scale, the rotation and the file's flags byte, which lands in m_FrmFlags' low byte
     dtaRead(LoadImageHandle, &m_Scale, 0x1d);
     int len = 0;
     dtaRead(LoadImageHandle, &len, 1);

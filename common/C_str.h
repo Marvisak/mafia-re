@@ -54,7 +54,7 @@ class C_str {
         // original's null path has a new-expression's own xor eax, eax.
         static void *operator new(size_t, int len)
         {
-            return new char[len + 9];
+            return new char[len + 9];      // the two counts, the string and its end
         }
 
         // FUNCTION: LS3DF 0x1006fed0

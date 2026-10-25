@@ -15,6 +15,9 @@ struct _FILETIME;
 #define DTA_CREATE_FILE 0x10000
 #define DTA_CHANGE_ATTRIBUTES 0x100000
 
+// What dtaOpen and dtaOpenWrite return when they fail (the name is a guess)
+#define DTA_INVALID_HANDLE -1
+
 // An archive dtaCreate opened, C_rw_data_inter. The vtable of the base class has 4 entries, 3 of them are _purecall.
 // VTABLE: RWDATA 0x1000b108
 class C_rw_data
@@ -46,6 +49,8 @@ extern "C"
     int EXPORT dtaOpenWrite(const char *file_name, uint flags);
     uint EXPORT dtaRead(int handle, void *buffer, uint len);
     int EXPORT dtaWrite(int handle, const void *buffer, uint len);
+    // move_method is SetFilePointer's: FILE_BEGIN, FILE_CURRENT or FILE_END (SEEK_SET, SEEK_CUR and SEEK_END have the
+    // same values)
     int EXPORT dtaSeek(int handle, int distance_to_move, int move_method);
     bool EXPORT dtaClose(int handle);
     bool EXPORT dtaDelete(const char *file_name);

@@ -124,7 +124,7 @@ LS3D_RESULT I3D_model::SetAnimation(I3D_animation_set *set, uint index, float bl
 // FUNCTION: LS3DF11 0x10032870
 I3D_animation_set *I3D_model::GetAnimationSet(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return NULL;
     if (!ipol_set)
         return NULL;
@@ -135,7 +135,7 @@ I3D_animation_set *I3D_model::GetAnimationSet(uint index) const
 // FUNCTION: LS3DF11 0x100328a0
 void I3D_model::StopAnimation(uint index)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return;
     if (!ipol_set)
         return;
@@ -146,7 +146,7 @@ void I3D_model::StopAnimation(uint index)
 // FUNCTION: LS3DF11 0x100328d0
 void I3D_model::StartAnimation(uint index)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return;
     if (!ipol_set)
         return;
@@ -157,7 +157,7 @@ void I3D_model::StartAnimation(uint index)
 // FUNCTION: LS3DF11 0x10032900
 LS3D_RESULT I3D_model::SetAnimBlend(uint index, float blend)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     I3D_IPolSet *ips = ipol_set;
     if (!ips)
@@ -176,7 +176,7 @@ LS3D_RESULT I3D_model::SetAnimBlend(uint index, float blend)
 // FUNCTION: LS3DF11 0x10032980
 float I3D_model::GetAnimBlend(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return 0.0f;
     if (!ipol_set)
         return 0.0f;
@@ -187,7 +187,7 @@ float I3D_model::GetAnimBlend(uint index) const
 // FUNCTION: LS3DF11 0x100329c0
 LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     I3D_IPolSet *ips = ipol_set;
     if (!ips)
@@ -204,7 +204,7 @@ LS3D_RESULT I3D_model::SetAnimTime(uint index, int time)
 // FUNCTION: LS3DF11 0x10032a00
 int I3D_model::GetAnimTime(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return 0;
     if (!ipol_set)
         return 0;
@@ -215,7 +215,7 @@ int I3D_model::GetAnimTime(uint index) const
 // FUNCTION: LS3DF11 0x10032a30
 LS3D_RESULT I3D_model::SetAnimOptions(uint index, uint options)
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return I3DERR_INVALIDPARAMS;
     I3D_IPolSet *ips = ipol_set;
     if (!ips)
@@ -228,7 +228,7 @@ LS3D_RESULT I3D_model::SetAnimOptions(uint index, uint options)
 // FUNCTION: LS3DF11 0x10032a70
 uint I3D_model::GetAnimOptions(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return 0;
     if (!ipol_set)
         return 0;
@@ -239,7 +239,7 @@ uint I3D_model::GetAnimOptions(uint index) const
 // FUNCTION: LS3DF11 0x10032aa0
 bool I3D_model::AnimIsOn(uint index) const
 {
-    if (index >= 8)
+    if (index >= I3D_MAX_ANIMS)
         return false;
     if (!ipol_set)
         return false;

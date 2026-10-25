@@ -9,13 +9,13 @@
 // GLOBAL: LS3DF11 0x101c2eb8
 C_list<IShow *> stream_shows;
 
-// The driver tells the end of a stream (event 1)
+// The driver tells the end of a stream (ISND_STREAM_END)
 // FUNCTION: LS3DF 0x100758e0
 // FUNCTION: LS3DF11 0x10072770
 static void __stdcall StreamCallback(int stream, int event)
 {
     switch (event) {
-    case 1:
+    case ISND_STREAM_END:
         for (int i = stream_shows.size(); i--;) {
             IShow *show = stream_shows[i];
             if (stream == show->m_Stream)

@@ -20,6 +20,9 @@
 
 #include <new>
 
+#define MAX_TESS_NODE 0x800             // the node the patches split to, two levels below the variance trees
+#define LAND_DETAIL_REPEAT 40           // the detail texture's repeats over a patch (the names are guesses)
+
 // The camera's position, which the patches' tessellation measures from (Reset's). Its $E is the file's first function.
 // The .bss names are guesses that give the original's order: VC6's hash buckets put m_NextTriNode, gLandTextures,
 // m_TriTreePool, gViewPos and gMaxNode in that order after the header's zero vector, and the three set to zero follow
@@ -127,7 +130,7 @@ void I3D_landpatch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int
     int centerX = (leftX + rightX) >> 1;
     int centerY = (leftY + rightY) >> 1;
     Split(tri);
-    if (tri->LeftChild && node < 0x800) {
+    if (tri->LeftChild && node < MAX_TESS_NODE) {
         RecursTessellate(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, node << 1);
         RecursTessellate(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, 1 + (node << 1));
     }
@@ -154,8 +157,8 @@ void I3D_landpatch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rig
         gLandVerts[gNumLandVerts].color = 0xffffffff;
         gLandVerts[gNumLandVerts].u = (float)leftX * gLandTexScale;
         gLandVerts[gNumLandVerts].v = (float)leftY * gLandTexScale;
-        gLandVerts[gNumLandVerts].u2 = (float)(leftX * 40) * gLandTexScale;
-        gLandVerts[gNumLandVerts].v2 = (float)(leftY * 40) * gLandTexScale;
+        gLandVerts[gNumLandVerts].u2 = (float)(leftX * LAND_DETAIL_REPEAT) * gLandTexScale;
+        gLandVerts[gNumLandVerts].v2 = (float)(leftY * LAND_DETAIL_REPEAT) * gLandTexScale;
         gNumLandVerts++;
 
         gLandVerts[gNumLandVerts].x = (float)rightX;
@@ -164,8 +167,8 @@ void I3D_landpatch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rig
         gLandVerts[gNumLandVerts].color = 0xffffffff;
         gLandVerts[gNumLandVerts].u = (float)rightX * gLandTexScale;
         gLandVerts[gNumLandVerts].v = (float)rightY * gLandTexScale;
-        gLandVerts[gNumLandVerts].u2 = (float)(rightX * 40) * gLandTexScale;
-        gLandVerts[gNumLandVerts].v2 = (float)(rightY * 40) * gLandTexScale;
+        gLandVerts[gNumLandVerts].u2 = (float)(rightX * LAND_DETAIL_REPEAT) * gLandTexScale;
+        gLandVerts[gNumLandVerts].v2 = (float)(rightY * LAND_DETAIL_REPEAT) * gLandTexScale;
         gNumLandVerts++;
 
         gLandVerts[gNumLandVerts].x = (float)apexX;
@@ -174,8 +177,8 @@ void I3D_landpatch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rig
         gLandVerts[gNumLandVerts].color = 0xffffffff;
         gLandVerts[gNumLandVerts].u = (float)apexX * gLandTexScale;
         gLandVerts[gNumLandVerts].v = (float)apexY * gLandTexScale;
-        gLandVerts[gNumLandVerts].u2 = (float)(apexX * 40) * gLandTexScale;
-        gLandVerts[gNumLandVerts].v2 = (float)(apexY * 40) * gLandTexScale;
+        gLandVerts[gNumLandVerts].u2 = (float)(apexX * LAND_DETAIL_REPEAT) * gLandTexScale;
+        gLandVerts[gNumLandVerts].v2 = (float)(apexY * LAND_DETAIL_REPEAT) * gLandTexScale;
         gNumLandVerts++;
     }
 }
@@ -458,10 +461,10 @@ void I3D_landscape::Tessellate()
 void I3D_landscape::Render()
 {
     SetCullState(D3DCULL_CCW);
-    SetVertexFormat(1);
+    SetVertexFormat(VF_LVERTEX2);
     m_pD3DDevice8->SetStreamSource(0, gLandVB, sizeof(LVERTEX2));
     m_pD3DDevice8->SetTexture(1, gLandTextures[4] ? gLandTextures[4]->m_pD3DTexture8 : NULL);
-    SetAlphaState(0);
+    SetAlphaState(ALPHASTATE_NONE);
     SetColorOp1(D3DTOP_MODULATE);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);

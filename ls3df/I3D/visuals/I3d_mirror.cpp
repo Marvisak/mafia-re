@@ -132,10 +132,10 @@ void I3D_mirror::Draw(const S_vector &c, uint flags)
     SetColorOp(D3DTOP_MODULATE);
     SetAlphaOp(D3DTOP_MODULATE);
     if (IsAbsMrgZero(a - 1.0))
-        SetAlphaState(0);
+        SetAlphaState(ALPHASTATE_NONE);
     else {
-        SetAlphaState(1);
-        SetBlendState(0);
+        SetAlphaState(ALPHASTATE_BLEND);
+        SetBlendState(BLENDSTATE_ALPHA);
     }
     if (flags & I3DDRAW_NOCULL)
         SetCullState(D3DCULL_NONE);
@@ -272,11 +272,13 @@ void I3D_mirror::CollectVisuals(I3D_frame *frm)
         return;
     if (frm->m_Type == FRAME_VISUAL) {
         I3D_visual *vis = (I3D_visual *)frm;
-        if (!(vis->vis_flags & (VISF_PROXY | VISF_UNKNOWN_20)) && vis->vis_flags & VISF_UNKNOWN_800) {
+        if (!(vis->vis_flags & (VISF_PROXY | VISF_NO_MIRROR)) && vis->vis_flags & VISF_OBJECT) {
             if (!(vis->vis_flags & VISF_BOUND_VALID))
                 vis->UpdateBoundProc();
             const S_vector *v = BBoxVertices(vis->vis_bound.bbox);
             S_matrix m = vis->GetMatrix() * pCurrentMirror->inv_view_box;
+            // A bit for each of the view box's planes (x, y and z at 1 and -1) that a corner is inside of: 0x3f, no
+            // plane has the whole box outside
             uint clip = 0;
             for (int i = 8; i--; v++) {
                 S_vector p = *v * m;
@@ -362,7 +364,7 @@ int I3D_mirror::PrepareReflection()
         v++;
     }
     if (m_CurrZFunc) {
-        m_CurrZFunc = 0;
+        m_CurrZFunc = ZFUNC_ALWAYS;
         m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
     }
     if (m_CurrFogState) {
@@ -370,7 +372,7 @@ int I3D_mirror::PrepareReflection()
         m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
     }
     SetColorOp(D3DTOP_MODULATE);
-    SetAlphaState(0);
+    SetAlphaState(ALPHASTATE_NONE);
     m_CullMode = D3DCULL_CCW;
     SetCullState(D3DCULL_NONE);
     SetCullState(D3DCULL_CCW);
@@ -379,8 +381,8 @@ int I3D_mirror::PrepareReflection()
     m_pD3DDevice8->SetTexture(0, NULL);
     pGlobalIGraph->DrawIndexedPrimitiveList(PT_TRIANGLELIST, num_verts, faces, num_faces, &LVertList[0],
         LS3D_STREAM_LVERTEX);
-    if (m_CurrZFunc != 1) {
-        m_CurrZFunc = 1;
+    if (m_CurrZFunc != ZFUNC_LESSEQUAL) {
+        m_CurrZFunc = ZFUNC_LESSEQUAL;
         m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
     }
 
@@ -411,7 +413,7 @@ int I3D_mirror::PrepareReflection()
             vis->SetBoundVolume((*p)->GetBoundVolume());
             vis->m_UpdateCount = (*p)->m_UpdateCount;
         }
-        if (vis->vis_flags & VISF_UNKNOWN_800)
+        if (vis->vis_flags & VISF_OBJECT)
             ((I3D_object *)vis)->transparency = ((I3D_object *)*p)->transparency;
         vis->m_AddFGroups();
         vis->m_RenderNumber = RenderNumber;

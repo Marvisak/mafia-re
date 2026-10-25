@@ -43,7 +43,7 @@ I3D_lit_object::I3D_lit_object()
     active_level = 0;
     for (int i = 0; i < 6; i++) {
         levels[i].constructed = false;
-        levels[i].mode = 2;
+        levels[i].mode = LITMODE_LIGHTMAP;
         levels[i].resolution = 5.0f;
         levels[i].angle = 45.0f;
         memset(levels[i].lods, 0, sizeof(levels[i].lods));
@@ -55,7 +55,7 @@ I3D_lit_object::I3D_lit_object()
 I3D_lit_object::~I3D_lit_object()
 {
     for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < I3D_MAX_LODS; j++) {
             delete levels[i].lods[j];
             levels[i].lods[j] = NULL;
         }
@@ -68,7 +68,7 @@ I3D_lit_object::~I3D_lit_object()
 void I3D_lit_object::SetActiveLevel(int index)
 {
     S_lit_level &level = levels[active_level];
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < I3D_MAX_LODS; i++) {
         if (level.lods[i]) {
             cVBMan.m_Free(level.lods[i]->vb);
             memset(&level.lods[i]->vb, 0, sizeof(level.lods[i]->vb));
@@ -89,7 +89,7 @@ void I3D_lit_object::SetActiveLevel(int index)
 void I3D_lit_object::UpdateVertices()
 {
     for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < I3D_MAX_LODS; j++) {
             if (levels[i].lods[j]) {
                 levels[i].lods[j]->dirty = true;
                 levels[i].lods[j]->lights_changed = (uint)-1;
@@ -176,14 +176,14 @@ void I3D_lit_object::UpdateLMFromRectInfos(int lod_index, int index)
         uchar *p = dst;
         p += y * pitch;
         p += x * 4;
-        if (ri->tex_sx == 3 && ri->tex_sy == 3) {
+        if (ri->tex_sx == LM_SINGLE_COLOR_SIZE && ri->tex_sy == LM_SINGLE_COLOR_SIZE) {
             uint skip = pitch - ri->tex_sx * 4;
             uint c = (uint)ri->data;
             uchar r = (uchar)(c >> 16);
             uchar g = (uchar)(c >> 8);
             uchar b = (uchar)c;
-            for (int j = 3; j--; ) {
-                for (int k = 3; k--; ) {
+            for (int j = LM_SINGLE_COLOR_SIZE; j--; ) {
+                for (int k = LM_SINGLE_COLOR_SIZE; k--; ) {
                     *p = b;
                     p++;
                     *p = g;
@@ -307,13 +307,20 @@ inline void T_swap(T &a, T &b)
     b = t;
 }
 
+// A lightmap rectangle's texels per side (the names are guesses)
+#define LM_RECT_MIN 4
+#define LM_RECT_MAX 256
+
 // Computes the active lighting: the lights of the object's sector and the scene's color on the faces, in lightmaps
-// of resolution texels per unit, or per vertex (the lighting's mode). cb gets CBM_PROGRESS.
+// of resolution texels per unit, or per vertex (the lighting's mode). cb gets CBM_PROGRESS, its second parameter
+// LOAD_PROGRESS_BEGIN, LOAD_PROGRESS_STEP with the progress, or one of Construct's own: 3 the fill, 4 the blur, 5 a
+// face grouped (the first parameter MAKELONG(faces left, the group's size)), 6 the rectangle search
+// (MAKELONG(vertices, those done)).
 // For the lightmaps, each level's faces are grouped into rectangles: from a free face, every free face that shares an
 // edge with one in the group and whose normal is within the lighting's angle of the first one's. The rectangle is the
 // smallest one around the group's vertices projected onto the plane of their mean normal. Its texels are lit at the
 // faces (or at the nearest one's nearest edge), the texels outside the faces filled from their neighbours, and the
-// rectangle is blurred (flags bit 2) or becomes a single color.
+// rectangle is blurred (I3D_LIGHT_BLUR) or becomes a single color.
 // Not matching yet: the original's inline budget runs out late in the lightmaps' branch. From there it calls out of
 // line what ours inlines: the lists' destructors at the branch's end (so the lists' addresses are taken, and VC6 reads
 // their sizes again after calls and keeps the copy loops of their reserve), and in the colors' branch every helper (the
@@ -338,7 +345,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
     }
     m_DisableSleeping = true;
     if (cb)
-        cb(CBM_PROGRESS, I3DFloatAsInt(0.0f), 0, context);
+        cb(CBM_PROGRESS, I3DFloatAsInt(0.0f), LOAD_PROGRESS_BEGIN, context);
     S_lit_level &level = levels[active_level];
     level.resolution = resolution;
     I3D_frame *frm = m_pParent;
@@ -363,7 +370,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                 return I3DERR_OUTOFMEM;
             }
         }
-        if (level.mode & 2) {
+        if (level.mode & LITMODE_LIGHTMAP) {
             C_list<RECTANGLE_INFO> rects;
             C_list<NEW_FACE_STRUCT> lists[100];         // each face group's faces with their rectangles
             C_list<FACE_STRUCT> faces;
@@ -372,7 +379,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
             C_list<LIT_VERTEX> lit_verts;
             S_matrix m = GetRenderMatrix();
             verts.reserve(ml->num_vertices);
-            I3D_vertex *vtx = ml->LockVertices(1);
+            I3D_vertex *vtx = ml->LockVertices(I3DMESHLOCK_READONLY);
             for (uint i = 0; i < ml->num_vertices; i++) {
                 VERTEX_STRUCT v;
                 v.pos = vtx[i].pos * m;
@@ -413,7 +420,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
             group.reserve(faces.size());
             for (;;) {
                 S_vector normal;
-                if (flags & 0x10) {
+                if (flags & I3D_LIGHT_ONE_RECT) {
                     // all the faces in one rectangle, lit along color
                     group.reset();
                     if (count > 0) {
@@ -524,9 +531,9 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                     S_vector size = best_bb.max - best_bb.min;
                     S_matrix rm = best_mat;
                     float fx = (size.x * level.resolution + 1.0f) / (lod_index + 1);
-                    float nx = max(4, min(256, (int)fx));
+                    float nx = max(LM_RECT_MIN, min(LM_RECT_MAX, (int)fx));
                     float fy = (size.y * level.resolution + 1.0f) / (lod_index + 1);
-                    float ny = max(4, min(256, (int)fy));
+                    float ny = max(LM_RECT_MIN, min(LM_RECT_MAX, (int)fy));
                     float du = .5f * (lod_index + 1) / level.resolution * (1.0f + fx / nx);
                     float dv = .5f * (lod_index + 1) / level.resolution * (1.0f + fy / ny);
                     best_bb.min.x -= du;
@@ -545,9 +552,9 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                     RECTANGLE_INFO rect;
                     memset(&rect, 0, sizeof(rect));
                     int isx = (int)((size.x * level.resolution + 1.0f) / (lod_index + 1));
-                    rect.tex_sx = max(4, min(256, isx));
+                    rect.tex_sx = max(LM_RECT_MIN, min(LM_RECT_MAX, isx));
                     int isy = (int)((size.y * level.resolution + 1.0f) / (lod_index + 1));
-                    rect.tex_sy = max(4, min(256, isy));
+                    rect.tex_sy = max(LM_RECT_MIN, min(LM_RECT_MAX, isy));
                     // the faces' vertices in the rectangle
                     for (j = 0; j < group.size(); j++) {
                         ushort *vi = faces[group[j]].face.vi;
@@ -577,10 +584,10 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                     float offset = .5 / aa - .5;
                     float step = 1.0 / aa;
                     if (cb)
-                        cb(CBM_PROGRESS, I3DFloatAsInt(progress), 1, context);
+                        cb(CBM_PROGRESS, I3DFloatAsInt(progress), LOAD_PROGRESS_STEP, context);
                     float pct = 100.0f / total;
                     float share = group.size() * pct;
-                    if (flags & 0x20) {
+                    if (flags & I3D_LIGHT_TEST_PATTERN) {
                         // a test pattern: borders and a checkerboard
                         int odd = 0;
                         for (int y = 0; y < sy; y++) {
@@ -779,6 +786,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                                     g = 0;
                                     b = 0xff;
                                 } else {
+                                    // the samples' mean, the lighting's 0 to 2 as a byte
                                     r = FloatToInt(col.x * 127.5 / (float)num);
                                     g = FloatToInt(col.y * 127.5 / (float)num);
                                     b = FloatToInt(col.z * 127.5 / (float)num);
@@ -788,9 +796,9 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                                 data[(y * sx + x) * 3 + 2] = b;
                                 if (cb) {
                                     int time = GetMSCount();
-                                    if (time - last_time >= 250) {
+                                    if (time - last_time >= 250) {     // the progress every 250 ms
                                         progress = (pct * faces_done + (float)(y * sx) / area * share) / 100.0;
-                                        cb(CBM_PROGRESS, I3DFloatAsInt(progress), 1, context);
+                                        cb(CBM_PROGRESS, I3DFloatAsInt(progress), LOAD_PROGRESS_STEP, context);
                                         last_time = time;
                                     }
                                 }
@@ -879,19 +887,20 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                             }
                         }
                         if (single) {
-                            rect.tex_sx = 3;
-                            rect.sx = 3;
-                            rect.tex_sy = 3;
-                            rect.sy = 3;
+                            rect.tex_sx = LM_SINGLE_COLOR_SIZE;
+                            rect.sx = LM_SINGLE_COLOR_SIZE;
+                            rect.tex_sy = LM_SINGLE_COLOR_SIZE;
+                            rect.sy = LM_SINGLE_COLOR_SIZE;
                             rect.area = 9;
                             delete[] data;
                             delete[] tmp;
+                            // the color itself, opaque; black where no face reached a texel (all magenta)
                             if (r0 == 0xff && !g0 && b0 == 0xff)
                                 rect.data = (uchar *)0xff000000;
                             else
                                 rect.data = (uchar *)(0xff000000 | (r0 << 8 | g0) << 8 | b0);
                         } else {
-                            if (flags & 4) {
+                            if (flags & I3D_LIGHT_BLUR) {
                                 // blurred, outside the faces too
                                 if (cb)
                                     cb(CBM_PROGRESS, 0, 4, context);
@@ -1064,7 +1073,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
             }
             C_list<VERTEX_STRUCT> verts;
             S_matrix m = GetRenderMatrix();
-            I3D_vertex *vtx = ml->LockVertices(1);
+            I3D_vertex *vtx = ml->LockVertices(I3DMESHLOCK_READONLY);
             for (uint i = 0; i < ml->num_vertices; i++) {
                 VERTEX_STRUCT v;
                 v.pos = vtx[i].pos * m;
@@ -1097,7 +1106,7 @@ LS3D_RESULT I3D_lit_object::Construct(I3D_scene *scene, S_vector &color, float r
                             int time = GetMSCount();
                             if (time - last_time >= 250) {
                                 progress = 100.0f / total * num / 100.0f;
-                                cb(CBM_PROGRESS, I3DFloatAsInt(progress), 1, context);
+                                cb(CBM_PROGRESS, I3DFloatAsInt(progress), LOAD_PROGRESS_STEP, context);
                                 last_time = time;
                             }
                         }
@@ -1119,7 +1128,7 @@ LS3D_RESULT I3D_lit_object::Destruct(uint flags)
 {
     levels[active_level].constructed = false;
     S_lit_level &level = levels[active_level];
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < I3D_MAX_LODS; i++) {
         delete level.lods[i];
         level.lods[i] = NULL;
     }
@@ -1127,9 +1136,10 @@ LS3D_RESULT I3D_lit_object::Destruct(uint flags)
 }
 
 // The header of a lighting in the file
+#define LM_VERSION 0x21                 // the lightings' format (the name is a guess)
 #pragma pack(push, 1)
 struct S_lm_header {
-    uchar version;                      // 0x21
+    uchar version;                      // LM_VERSION
     uchar mode;                         // S_lit_level's
     int num_lods;                       // the mesh's
     float resolution;
@@ -1176,7 +1186,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
             lev.mode = hdr.mode;
             lev.resolution = hdr.resolution;
             lev.angle = hdr.angle;
-            if (hdr.version != 0x21) {
+            if (hdr.version != LM_VERSION) {
                 dbgPrintf("!! bad lightmap version:%d   I3D_lit_object::Load()  this:0x%x %s", hdr.version, this,
                     GetName());
                 return I3DERR_INVALIDPARAMS;
@@ -1202,7 +1212,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                         return I3DERR_OUTOFMEM;
                     }
                 }
-                if (hdr.mode & 2) {
+                if (hdr.mode & LITMODE_LIGHTMAP) {
                     struct {
                         ushort num_rects;
                         ushort num_fgroups;
@@ -1238,10 +1248,10 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                             return I3DERR_FILECORRUPTED;
                         }
                         if (single) {
-                            ri->tex_sx = 3;
-                            ri->sx = 3;
-                            ri->tex_sy = 3;
-                            ri->sy = 3;
+                            ri->tex_sx = LM_SINGLE_COLOR_SIZE;
+                            ri->sx = LM_SINGLE_COLOR_SIZE;
+                            ri->tex_sy = LM_SINGLE_COLOR_SIZE;
+                            ri->sy = LM_SINGLE_COLOR_SIZE;
                             ri->area = 9;
                             if (dtaRead(handle, &ri->data, 4) != 4) {
                                 dbgPrintf("!! error reading data   I3D_lit_object::Load()  this:0x%x %s  "
@@ -1286,7 +1296,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                                     return I3DERR_FILECORRUPTED;
                                 }
                                 if (!m) {
-                                    if (sx == 3 && sy == 3) {
+                                    if (sx == LM_SINGLE_COLOR_SIZE && sy == LM_SINGLE_COLOR_SIZE) {
                                         dbgPrintf("!! LM size 1x1   I3D_lit_object::Load()  this:0x%x %s  handle:0x%x",
                                             this, GetName(), handle);
                                         delete l;
@@ -1403,7 +1413,7 @@ LS3D_RESULT I3D_lit_object::Load(int handle)
                         return I3DERR_GENERIC;
                     }
                 } else {
-                    if (lev.mode & 4) {
+                    if (lev.mode & LITMODE_NUM_VERTS) {
                         dtaRead(handle, &l->m_numLVertices, 4);
                         if (l->m_numLVertices != level->num_vertices) {
                             dbgPrintf("!! Different  num_verts:%d   mesh num_verts:%d   I3D_lit_object::Load()  %s",
@@ -1491,7 +1501,7 @@ LS3D_RESULT I3D_lit_object::Duplicate(I3D_frame *frame)
     SetMesh(obj->mesh, true);
     lightness = obj->lightness;
     transparency = obj->transparency;
-    vis_flags = obj->vis_flags & 0x2ffd0;
+    vis_flags = obj->vis_flags & VISF_DUPLICATE_MASK;
     vis_bound = obj->vis_bound;
     if (obj->vis_flags & VISF_WORLD_SPACE)
         vis_bound_w = obj->GetWBoundVolume();
@@ -1619,7 +1629,7 @@ void I3D_lit_object::m_AddFGroups()
         // Not lit yet: the level's vertices with two pairs of texture coordinates, which m_RenderFGroup renders in
         // the texture factor's color
         if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-            l->SetUV(2, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
+            l->SetUV(LODC_TEX2, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
         if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) &&
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
             if (m_FrmFlags & FRMFLAGS_CLIP) {
@@ -1641,7 +1651,7 @@ void I3D_lit_object::m_AddFGroups()
                 if (!lv)
                     lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->specular + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
-                    num_verts, AddFGHlpStruct.sector->fog_light, 0);
+                    num_verts, AddFGHlpStruct.sector->fog_light, FOGPROC_FACTOR);
             }
         }
         for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
@@ -1658,13 +1668,13 @@ void I3D_lit_object::m_AddFGroups()
             } else {
                 h.texture = mat->GetTexture();
                 if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE)) {
-                    h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+                    h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
                     AddFGHlpStruct.num_transparent++;
                 } else {
                     if (mat->flags & MATF_CKEY_ALPHA)
-                        h.sort_value = ((h.texture ? h.texture->m_UID : 0) & 0x7fff) | 0x40000000;
+                        h.sort_value = ((h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK) | PRIM_SORT_CKEY_ALPHA;
                     else
-                        h.sort_value = (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                        h.sort_value = (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
                     AddFGHlpStruct.num_opaque++;
                 }
             }
@@ -1675,11 +1685,11 @@ void I3D_lit_object::m_AddFGroups()
 
     num_verts = l->m_numLVertices;
     ushort lm_uid;
-    if (lit.mode & 1) {
+    if (lit.mode & LITMODE_VERTEX) {
         // Colors per vertex, which Create copied into the vertices
         h.env_texture = NULL;
         if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-            l->SetUV(1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
+            l->SetUV(LODC_TEX1, level->num_vertices, &verts->tex, sizeof(I3D_vertex), mesh->u_ofs, mesh->v_ofs);
         if ((renderCameraChanged || m_RenderNumber != RenderNumberMinus1 || moved) &&
                 !(m_HardwareCaps & HWCAPS_HWTL)) {
             if (m_FrmFlags & FRMFLAGS_CLIP) {
@@ -1701,7 +1711,7 @@ void I3D_lit_object::m_AddFGroups()
                 if (!lv)
                     lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
                 FogProcess((uchar *)&((TLVERTEX *)lv)->specular + 3, &((TLVERTEX *)lv)->z, sizeof(TLVERTEX),
-                    num_verts, AddFGHlpStruct.sector->fog_light, 0);
+                    num_verts, AddFGHlpStruct.sector->fog_light, FOGPROC_FACTOR);
             }
         }
         lm_uid = 0;
@@ -1709,7 +1719,7 @@ void I3D_lit_object::m_AddFGroups()
         // Lightmaps: the lit vertices, lit by the dynamic lights (PrepareLights' colors of the level's vertices),
         // transformed from their positions' buffer without hardware T&L
         if (!IsAbsMrgZero(mesh->u_ofs - l->u_ofs) || !IsAbsMrgZero(mesh->v_ofs - l->v_ofs))
-            l->SetUV(2, num_verts, l->m_pUV, sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs);
+            l->SetUV(LODC_TEX2, num_verts, l->m_pUV, sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs);
         int fog = 0;
         if (moved || l->lights_changed != AddFGHlpStruct.sector->lights_changed) {
             l->lights_changed = AddFGHlpStruct.sector->lights_changed;
@@ -1722,7 +1732,7 @@ void I3D_lit_object::m_AddFGroups()
             colors.reserve(level->num_vertices);
             lods[cur_lod] = lit.lods[cur_lod];
             if (PrepareLights((uchar *)&colors[0], sizeof(uint), level, (const uchar *)verts, sizeof(I3D_vertex),
-                    this, GetInvMatrix(), 0x10, moved, NULL)) {
+                    this, GetInvMatrix(), I3DLIGHTMODE_DYNAMIC_LM, moved, NULL)) {
                 if (m_HardwareCaps & HWCAPS_HWTL) {
                     LVERTEX2 *v = (LVERTEX2 *)lv;
                     for (int i = 0; i < num_verts; i++) {
@@ -1763,15 +1773,15 @@ void I3D_lit_object::m_AddFGroups()
                 lv = l->vb.buffer->Lock(base, BUFFER_LOCK_FLAGS);
             if (m_HardwareCaps & HWCAPS_SINGLEPASS)
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->specular + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
-                    num_verts, AddFGHlpStruct.sector->fog_light, 0);
+                    num_verts, AddFGHlpStruct.sector->fog_light, FOGPROC_FACTOR);
             else
                 FogProcess((uchar *)&((TLVERTEX2 *)lv)->color + 3, &((TLVERTEX2 *)lv)->z, sizeof(TLVERTEX2),
-                    num_verts, AddFGHlpStruct.sector->fog_light, 1);
+                    num_verts, AddFGHlpStruct.sector->fog_light, FOGPROC_ALPHA);
         }
         h.env_texture = l->m_pLM->m_pTexture;
         lm_uid = h.env_texture->m_UID;
     }
-    // The opaque face groups sort by the lightmap's texture, then by their own
+    // The opaque face groups sort by the lightmap's texture, then by their own (0x8000 << 15 is PRIM_SORT_CKEY_ALPHA)
     int first = 0;
     for (I3D_face_group *fg = level->fgroups; fg; fg = fg->next) {
         I3D_material *mat = fg->material;
@@ -1788,13 +1798,14 @@ void I3D_lit_object::m_AddFGroups()
         } else {
             h.texture = mat->GetTexture();
             if (mat->flags & (MATF_TXT_ALPHA | MATF_ADD_MODE)) {
-                h.sort_value = (FloatToInt(sort_dist) & 0x3fffffff) | 0x80000000;
+                h.sort_value = (FloatToInt(sort_dist) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
                 AddFGHlpStruct.num_transparent++;
             } else {
                 if (mat->flags & MATF_CKEY_ALPHA)
-                    h.sort_value = (lm_uid | 0x8000) << 15 | (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                    h.sort_value = (lm_uid | 0x8000) << 15 | (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
                 else
-                    h.sort_value = (lm_uid & 0x7fff) << 15 | (h.texture ? h.texture->m_UID : 0) & 0x7fff;
+                    h.sort_value = (lm_uid & PRIM_SORT_MAT_MASK) << 15 |
+                        (h.texture ? h.texture->m_UID : 0) & PRIM_SORT_MAT_MASK;
                 AddFGHlpStruct.num_opaque++;
             }
         }
@@ -1827,16 +1838,18 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     I3D_face_group *fg = help->fg;
     I3D_material *mat = fg->material;
     IDirect3DVertexBuffer8 *vb = l->vb.vb;
+    // Set back after the draw: 1 D3DTSS_TEXCOORDINDEX, 2 ADDRESSU, 4 ADDRESSV (stage 1 for the lightmaps), 8
+    // COLORARG2, 0x10 COLORARG1
     uint reset = 0;
     SetAlphaOp(D3DTOP_SELECTARG1);
     if (!lit->constructed) {
-        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, 0xff00ffff);
+        m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, 0xff00ffff);   // opaque cyan
         SetColorOp1(D3DTOP_DISABLE);
         SetColorOp(D3DTOP_MODULATE);
         if (!mat) {
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
             SetColorOp(D3DTOP_SELECTARG1);
-            SetAlphaState(0);
+            SetAlphaState(ALPHASTATE_NONE);
             m_pD3DDevice8->SetTexture(0, NULL);
             reset |= 0x10;
         } else {
@@ -1849,19 +1862,19 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 reset |= 4;
             }
             if (mat->flags & MATF_ADD_MODE) {
-                SetAlphaState(1);
-                SetBlendState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_ADD_ALPHA);
             } else if (mat->flags & MATF_TXT_ALPHA) {
-                SetAlphaState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
                 if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
-                    SetBlendState(1);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 else
-                    SetBlendState(0);
+                    SetBlendState(BLENDSTATE_ALPHA);
             } else if (mat->flags & MATF_CKEY_ALPHA) {
-                SetAlphaState(3);
-                SetBlendState(0);
+                SetAlphaState(ALPHASTATE_TEST);
+                SetBlendState(BLENDSTATE_ALPHA);
             } else
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (help->texture) {
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
@@ -1870,7 +1883,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             } else {
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
                 SetColorOp(D3DTOP_SELECTARG1);
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
                 m_pD3DDevice8->SetTexture(0, NULL);
                 reset |= 0x10;
             }
@@ -1889,12 +1902,12 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
         if (reset & 4)
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
-    } else if (lit->mode & 1) {
+    } else if (lit->mode & LITMODE_VERTEX) {
         SetColorOp1(D3DTOP_DISABLE);
         SetColorOp(m_Modulate2X);
         num_verts = l->m_numLVertices;
         if (!mat) {
-            SetAlphaState(0);
+            SetAlphaState(ALPHASTATE_NONE);
             m_pD3DDevice8->SetTexture(0, NULL);
         } else {
             if (mat->flags & MATF_ADDRESS_U_CLAMP) {
@@ -1906,19 +1919,19 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 reset |= 4;
             }
             if (mat->flags & MATF_ADD_MODE) {
-                SetAlphaState(1);
-                SetBlendState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_ADD_ALPHA);
             } else if (mat->flags & MATF_TXT_ALPHA) {
-                SetAlphaState(1);
+                SetAlphaState(ALPHASTATE_BLEND);
                 if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
-                    SetBlendState(1);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 else
-                    SetBlendState(0);
+                    SetBlendState(BLENDSTATE_ALPHA);
             } else if (mat->flags & MATF_CKEY_ALPHA) {
-                SetAlphaState(3);
-                SetBlendState(0);
+                SetAlphaState(ALPHASTATE_TEST);
+                SetBlendState(BLENDSTATE_ALPHA);
             } else
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
             if (help->texture)
                 m_pD3DDevice8->SetTexture(0, help->texture->m_pD3DTexture8);
@@ -1943,7 +1956,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             m_pD3DDevice8->SetTexture(0, help->env_texture->m_pD3DTexture8);
             if (!mat) {
                 SetColorOp1(D3DTOP_DISABLE);
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             } else {
                 if (mat->flags & MATF_ADDRESS_U_CLAMP) {
                     m_pD3DDevice8->SetTextureStageState(1, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
@@ -1954,19 +1967,19 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                     reset |= 4;
                 }
                 if (mat->flags & MATF_ADD_MODE) {
-                    SetAlphaState(1);
-                    SetBlendState(1);
+                    SetAlphaState(ALPHASTATE_BLEND);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 } else if (mat->flags & MATF_TXT_ALPHA) {
-                    SetAlphaState(1);
+                    SetAlphaState(ALPHASTATE_BLEND);
                     if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
-                        SetBlendState(1);
+                        SetBlendState(BLENDSTATE_ADD_ALPHA);
                     else
-                        SetBlendState(0);
+                        SetBlendState(BLENDSTATE_ALPHA);
                 } else if (mat->flags & MATF_CKEY_ALPHA) {
-                    SetAlphaState(3);
-                    SetBlendState(0);
+                    SetAlphaState(ALPHASTATE_TEST);
+                    SetBlendState(BLENDSTATE_ALPHA);
                 } else
-                    SetAlphaState(0);
+                    SetAlphaState(ALPHASTATE_NONE);
                 SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
                 if (help->texture) {
                     SetColorOp1(m_Modulate2X);
@@ -1990,7 +2003,7 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
             if (!mat) {
                 m_pD3DDevice8->SetTexture(0, NULL);
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             } else {
                 if (mat->flags & MATF_ADDRESS_U_CLAMP) {
                     m_pD3DDevice8->SetTextureStageState(1, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
@@ -2001,19 +2014,19 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                     reset |= 4;
                 }
                 if (mat->flags & MATF_ADD_MODE) {
-                    SetAlphaState(1);
-                    SetBlendState(1);
+                    SetAlphaState(ALPHASTATE_BLEND);
+                    SetBlendState(BLENDSTATE_ADD_ALPHA);
                 } else if (mat->flags & MATF_TXT_ALPHA) {
-                    SetAlphaState(1);
+                    SetAlphaState(ALPHASTATE_BLEND);
                     if (*(int *)&mat->emissive.x || *(int *)&mat->emissive.y || *(int *)&mat->emissive.z)
-                        SetBlendState(1);
+                        SetBlendState(BLENDSTATE_ADD_ALPHA);
                     else
-                        SetBlendState(0);
+                        SetBlendState(BLENDSTATE_ALPHA);
                 } else if (mat->flags & MATF_CKEY_ALPHA) {
-                    SetAlphaState(3);
-                    SetBlendState(0);
+                    SetAlphaState(ALPHASTATE_TEST);
+                    SetBlendState(BLENDSTATE_ALPHA);
                 } else
-                    SetAlphaState(0);
+                    SetAlphaState(ALPHASTATE_NONE);
                 SetCullState(mat->flags & MATF_TWO_SIDED ? D3DCULL_NONE : D3DCULL_CCW);
                 if (help->texture) {
                     m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 1);
@@ -2031,17 +2044,17 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                 fg->num_faces);
             m_pD3DDevice8->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
-            if (m_ProblemFlags & 0x40)
+            if (m_ProblemFlags & PROBLEM_NO_ADD)
                 SetColorOp(D3DTOP_SELECTARG1);
             else
                 SetColorOp(D3DTOP_ADD);
             if (reset & 1) {
-                SetAlphaState(1);
-                SetBlendState(4);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_MODULATE2X);
                 SetAlphaOp(D3DTOP_SELECTARG1);
                 m_pD3DDevice8->SetRenderState(D3DRS_ZFUNC, D3DCMP_EQUAL);
             } else
-                SetAlphaState(0);
+                SetAlphaState(ALPHASTATE_NONE);
             m_pD3DDevice8->SetTexture(0, help->env_texture->m_pD3DTexture8);
             m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                 fg->num_faces);
@@ -2053,8 +2066,8 @@ void I3D_lit_object::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
                 SetColorOp(D3DTOP_SELECTARG2);
                 m_pD3DDevice8->SetRenderState(D3DRS_TEXTUREFACTOR, m_CurrFogColor);
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-                SetAlphaState(1);
-                SetBlendState(0);
+                SetAlphaState(ALPHASTATE_BLEND);
+                SetBlendState(BLENDSTATE_ALPHA);
                 m_pD3DDevice8->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, num_verts, l->m_IB.base + help->first,
                     fg->num_faces);
                 m_pD3DDevice8->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
@@ -2085,7 +2098,7 @@ litLod::~litLod()
     m_pPIndex = NULL;
     RECTANGLE_INFO *ri = m_pRectangles;
     while (m_numRectangles--) {
-        if (ri->tex_sx > 3) {
+        if (ri->tex_sx > LM_SINGLE_COLOR_SIZE) {
             if (ri->data)
                 delete[] ri->data;
             if (ri->tex_data)
@@ -2107,17 +2120,17 @@ litLod::~litLod()
 // FUNCTION: LS3DF11 0x10029770
 bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
 {
-    if (flags & 2 && !dirty && m_PosVB.vb) {
+    if (flags & LITMODE_LIGHTMAP && !dirty && m_PosVB.vb) {
         cVBMan.m_Free(m_PosVB);
         memset(&m_PosVB, 0, sizeof(m_PosVB));
     }
     I3D_vertex *verts = (I3D_vertex *)level->vb.buffer->Lock(level->vb.base, BUFFER_LOCK_FLAGS);
     if (!m_numLVertices) {
-        lod::Create(0x502, level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex),
-            NULL, 0, mesh->u_ofs, mesh->v_ofs);
-    } else if (flags & 1) {
-        if (!lod::Create(0x501, level->num_vertices, &verts->pos, sizeof(I3D_vertex), &verts->tex,
-                sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs))
+        lod::Create(LODC_TEX2 | LODC_POSITIONS | LODC_STATIC, level->num_vertices, &verts->pos, sizeof(I3D_vertex),
+            &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs);
+    } else if (flags & LITMODE_VERTEX) {
+        if (!lod::Create(LODC_TEX1 | LODC_POSITIONS | LODC_STATIC, level->num_vertices, &verts->pos,
+                sizeof(I3D_vertex), &verts->tex, sizeof(I3D_vertex), NULL, 0, mesh->u_ofs, mesh->v_ofs))
             return false;
         if (m_HardwareCaps & HWCAPS_HWTL) {
             LVERTEX *v = (LVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
@@ -2130,7 +2143,8 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
         } else {
             TLVERTEX *v = (TLVERTEX *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
             uint *c = m_pColors;
-            if (m_ProblemFlags & 4) {
+            if (m_ProblemFlags & PROBLEM_NO_MODULATE2X) {
+                // the colors doubled here, saturated
                 for (int i = m_numLVertices; i; i--) {
                     uint col = *c;
                     uint a = col & 0xff000000;
@@ -2156,8 +2170,8 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
             }
         }
     } else if (m_HardwareCaps & HWCAPS_HWTL) {
-        if (!lod::Create(0x404, m_numLVertices, NULL, 0, m_pLitUV, sizeof(I3D_text_coor), m_pUV,
-                sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs))
+        if (!lod::Create(LODC_TEX2_HWTL | LODC_STATIC, m_numLVertices, NULL, 0, m_pLitUV, sizeof(I3D_text_coor),
+                m_pUV, sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs))
             return false;
         LVERTEX2 *v = (LVERTEX2 *)vb.buffer->Lock(vb.base, BUFFER_LOCK_FLAGS);
         for (int i = 0; i < m_numLVertices; i++) {
@@ -2175,8 +2189,8 @@ bool litLod::Create(I3D_mesh_level *level, I3D_mesh_object *mesh, uint flags)
         S_vector *pos = (S_vector *)m_PosVB.buffer->Lock(m_PosVB.base, BUFFER_LOCK_FLAGS);
         for (int i = m_numLVertices; i--; )
             pos[i] = verts[m_pVI[i].vertex].pos;
-        lod::Create(0x502, m_numLVertices, pos, sizeof(S_vector), m_pLitUV, sizeof(I3D_text_coor), m_pUV,
-            sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs);
+        lod::Create(LODC_TEX2 | LODC_POSITIONS | LODC_STATIC, m_numLVertices, pos, sizeof(S_vector), m_pLitUV,
+            sizeof(I3D_text_coor), m_pUV, sizeof(I3D_text_coor), mesh->u_ofs, mesh->v_ofs);
     }
     return true;
 }

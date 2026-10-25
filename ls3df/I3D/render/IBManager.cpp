@@ -89,8 +89,9 @@ C_IBuffer::~C_IBuffer()
         pI3DDriver->m_RecomputeUsedVRAM();
 }
 
-// Creates the buffer, at least 0x10000 indices, in the managed pool if it is static and processed in software, and
-// locks it. Out of video memory it evicts managed resources and tries again, then tries the managed pool.
+// Creates the buffer, at least 0x10000 indices (the 0x20000 bytes of VBManager.h's RB_MANAGER_MEM_SIZE), in the
+// managed pool if it is static and processed in software, and locks it. Out of video memory it evicts managed
+// resources and tries again, then tries the managed pool.
 // FUNCTION: LS3DF 0x1005ae00
 // FUNCTION: LS3DF11 0x100584a0
 bool C_IBuffer::m_Init(uint usage, uint count)
@@ -290,7 +291,7 @@ void C_IBManager::m_UnlockAllIBuffers()
     C_IBuffer **p = &locked_buffers[0];
     for (int i = locked_buffers.size(); i--; p++) {
         (*p)->ib->Unlock();
-        if (!((*p)->flags & 0x10)) {
+        if (!((*p)->flags & D3DLOCK_READONLY)) {
             (*p)->ib->Lock(0, 0, &(*p)->data, 0);
             (*p)->ib->Unlock();
         }

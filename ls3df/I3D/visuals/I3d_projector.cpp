@@ -54,7 +54,7 @@ static uint projection_bits;
 // The visuals a projector or shadow falls on (PC only; the name is a guess)
 // GLOBAL: LS3DF 0x101b4630
 // GLOBAL: LS3DF11 0x101b1750
-I3D_visual *ShadowReceivers[512];
+I3D_visual *ShadowReceivers[MAX_SHADOW_RECEIVERS];
 
 // PS2's order, the PC's members after the bound volume
 // FUNCTION: LS3DF 0x10045e30
@@ -273,16 +273,17 @@ void I3D_projector::AddFGroups()
     if (num_faces) {
         rfg[0].sector = AddFGHlpStruct.sector;
         rfg[0].texture = texture ? texture : material->GetTexture();
-        rfg[0].sort_value = 0xbfffffff;
+        rfg[0].sort_value = PRIM_SORT_ALPHA | PRIM_SORT_DIST_MASK; // the farthest: before every transparent group
         AddFGHlpStruct.fgroups.push_back(rfg[0]);
         AddFGHlpStruct.num_transparent++;
     }
     if (num_faces_t) {
         rfg[1].sector = AddFGHlpStruct.sector;
         rfg[0].texture = texture ? texture : material->GetTexture();
-        const S_frustum &f = pCurrentCamera->frustums[0];
+        // the center's distance along the view, in hundredths
+        const S_frustum &f = pCurrentCamera->frustums[CAMFRUSTUM_VIEW];
         rfg[1].sort_value = (FloatToInt((center_t.x * f.normal[0].x + center_t.y * f.normal[0].y + center_t.z *
-            f.normal[0].z + f.d[0]) * 100.0f) & 0x3fffffff) | 0x80000000;
+            f.normal[0].z + f.d[0]) * 100.0f) & PRIM_SORT_DIST_MASK) | PRIM_SORT_ALPHA;
         AddFGHlpStruct.fgroups.push_back(rfg[1]);
         AddFGHlpStruct.num_transparent++;
     }
@@ -357,7 +358,7 @@ void ProcessProjectors()
 void I3D_projector::ProcessRecList()
 {
     ResetClipArrays();
-    float lift = I3DIntAsFloat(renderState[60]);
+    float lift = I3DIntAsFloat(renderState[RS_LIFT_PROJECTOR]);
     if (mode != PROJECTOR_MODE_ADD && mode != PROJECTOR_MODE_ADD_FADE && mode != PROJECTOR_MODE_ADD_FADE_MID)
         SetClipParams(GetInvMatrix(), GetRenderMatrix(), orthogonal, lift, lift, reverse_factor);
     else
@@ -367,6 +368,8 @@ void I3D_projector::ProcessRecList()
     for (i = receiver_count; i--; rp++) {
         const S_vector *corners = BBoxVertices((*rp)->GetBoundVolume().bbox);
         S_matrix m = (*rp)->GetMatrix() * GetInvMatrix();
+        // A bit for each of the volume's planes (x at 1 and -1, y at 1 and -1, z at 0 and 1) that a corner is inside
+        // of: 0x3f, no plane has the whole box outside
         uint clip = 0;
         for (int j = 8; j--; corners++) {
             S_vector v = *corners * m;
@@ -730,8 +733,8 @@ void I3D_projector::ProcessShadow()
             bb.max.x < bvol.bbox.min.x || bb.max.y < bvol.bbox.min.y || bb.max.z < bvol.bbox.min.z)
             continue;
         *rp++ = last;
-        if (++receiver_count >= 512) {
-            dbgPrintf("!! Maximum projector receivers reached:%d", 512);
+        if (++receiver_count >= MAX_SHADOW_RECEIVERS) {
+            dbgPrintf("!! Maximum projector receivers reached:%d", MAX_SHADOW_RECEIVERS);
             break;
         }
     }
@@ -833,8 +836,8 @@ void I3D_projector::CollectReceivers(I3D_frame *frm)
             bb.max.y < projection_bbox->min.y || bb.max.z < projection_bbox->min.z)
             break;
         *projection_rp++ = vis;
-        if (++receiver_count >= 512)
-            dbgPrintf("!! Maximum projector receivers reached:%d", 512);
+        if (++receiver_count >= MAX_SHADOW_RECEIVERS)
+            dbgPrintf("!! Maximum projector receivers reached:%d", MAX_SHADOW_RECEIVERS);
     } break;
     case FRAME_SECTOR:
         if (frm != projection_sector) {
@@ -867,14 +870,14 @@ void I3D_projector::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
         return;
     SetColorOp(D3DTOP_MODULATE);
     SetColorOp1(D3DTOP_DISABLE);
-    SetAlphaState(1);
+    SetAlphaState(ALPHASTATE_BLEND);
     if (mode != PROJECTOR_MODE_ADD && mode != PROJECTOR_MODE_ADD_FADE && mode != PROJECTOR_MODE_ADD_FADE_MID) {
-        SetBlendState(0);
+        SetBlendState(BLENDSTATE_ALPHA);
         SetAlphaOp(D3DTOP_MODULATE);
     } else
-        SetBlendState(2);
+        SetBlendState(BLENDSTATE_ADD);
     SetCullState(D3DCULL_CCW);
-    SetClipping(1);
+    SetClipping(TRUE);
     if (texture)
         m_pD3DDevice8->SetTexture(0, texture->m_pD3DTexture8);
     else
@@ -883,7 +886,7 @@ void I3D_projector::m_RenderFGroup(RENDER_FG_HELP_STRUCT *help)
     SetZBias(RsZBiasProjector);
     m_pD3DDevice8->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
     if (proj_flags & PROJF_RECEIVERS_VALID) {
-        SetVertexFormat(0);
+        SetVertexFormat(VF_LVERTEX);
         if (help->texture) {
             m_pD3DDevice8->SetStreamSource(0, vb.vb, sizeof(S_shadow_vertex));
             m_pD3DDevice8->SetIndices(ib.ib, vb.base);

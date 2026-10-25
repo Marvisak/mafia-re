@@ -102,7 +102,7 @@ IShow::IShow() : m_RegionList(1)
 {
     m_RefCount = 1;
     m_Stream = -1;
-    m_DtaHandle = -1;
+    m_DtaHandle = DTA_INVALID_HANDLE;
     m_Init = false;
     m_pGraphBuilder = NULL;
     m_pMediaControl = NULL;
@@ -149,7 +149,7 @@ IShow::IShow() : m_RegionList(1)
     m_pTextureRenderer = NULL;
     SetRect(NULL);
     m_Stream = -1;
-    m_DtaHandle = -1;
+    m_DtaHandle = DTA_INVALID_HANDLE;
     m_DecodedFrameNum = 0;
     m_StreamInit = false;
     m_StreamPaused = false;
@@ -209,7 +209,8 @@ int IShow::Release()
 
 #if ENGINE_VERSION >= 395
 // Decodes the Ogg file into the sound buffer: all of it at the start, else from where it was filled up to the play
-// position, wrapping around at the end. Past the file's end the buffer is filled with silence.
+// position, wrapping around at the end. Past the file's end the buffer is filled with silence. Both versions' ov_read
+// asks for little endian (0), 16-bit (2), signed (1) samples, up to 4 KB at a time.
 // play is declared at the top with the other address-taken locals: declared in its block, it takes the dead
 // parameter's slot, where the original gives it one of its own and a spilled copy the parameter's.
 // FUNCTION: LS3DF 0x100735d0
@@ -473,7 +474,7 @@ LS3D_RESULT IShow::Open(const char *name, uint open_flags)
             ov_callbacks callbacks = {read_func, seek_func, close_func, tell_func};
             if (ov_open_callbacks(&m_DtaHandle, m_pVorbisFile, NULL, 0, callbacks) < 0)
                 return I3DERR_FILECORRUPTED;
-            vorbis_info *info = ov_info(m_pVorbisFile, -1);
+            vorbis_info *info = ov_info(m_pVorbisFile, -1);     // -1: the current bitstream
             PCMWAVEFORMAT format;
             memset(&format, 0, sizeof(format));
             format.wf.wFormatTag = WAVE_FORMAT_PCM;
@@ -611,7 +612,7 @@ void IShow::Close()
     }
     if (m_DtaHandle >= 0) {
         ov_clear(m_pVorbisFile);
-        m_DtaHandle = -1;
+        m_DtaHandle = DTA_INVALID_HANDLE;
     }
     if (m_pVorbisFile) {
         delete m_pVorbisFile;
@@ -762,7 +763,7 @@ void IShow::m_PrepareVerts()
 LS3D_RESULT IShow::SetRect(const RECT *rc)
 {
     HWND hwnd = m_InitDesc.flags & IGRAPH_CHILD_WINDOW ? m_ChildHWnd : m_MainHWnd;
-    RECT r = {0, 0, 640, 480};
+    RECT r = {0, 0, 640, 480};          // both branches overwrite it
     if (!rc)
         GetClientRect(hwnd, &r);
     else
@@ -818,22 +819,22 @@ LS3D_RESULT IShow::GetVideoRect(RECT *rc)
 }
 #endif
 
-// 0 while it plays, 1 once it has stopped or ended, 2 while paused, -1 if nothing is open
+// ISHOW_EVENT_*. DirectShow's EC_COMPLETE and EC_USERABORT stop the movie.
 // FUNCTION: LS3DF 0x10074700
 // FUNCTION: LS3DF11 0x100715c0
 int IShow::GetEvent()
 {
     if (!m_Init)
-        return -1;
+        return ISHOW_EVENT_NONE;
     if (m_pBink) {
         if (m_Flags & ISHOW_PLAYING)
-            return 0;
-        return m_Flags & ISHOW_PAUSED ? 2 : 1;
+            return ISHOW_EVENT_PLAYING;
+        return m_Flags & ISHOW_PAUSED ? ISHOW_EVENT_PAUSED : ISHOW_EVENT_STOPPED;
     }
     if (m_Flags & ISHOW_OGG) {
         if (m_Flags & ISHOW_PLAYING)
-            return 0;
-        return m_Flags & ISHOW_PAUSED ? 2 : 1;
+            return ISHOW_EVENT_PLAYING;
+        return m_Flags & ISHOW_PAUSED ? ISHOW_EVENT_PAUSED : ISHOW_EVENT_STOPPED;
     }
     long code;
     LONG_PTR param1, param2;
@@ -843,12 +844,12 @@ int IShow::GetEvent()
         case EC_COMPLETE:
         case EC_USERABORT:
             Stop();
-            return 1;
+            return ISHOW_EVENT_STOPPED;
         case EC_PAUSED:
-            return 2;
+            return ISHOW_EVENT_PAUSED;
         }
     }
-    return 0;
+    return ISHOW_EVENT_PLAYING;
 }
 
 // In milliseconds
@@ -878,6 +879,7 @@ LS3D_RESULT IShow::SetCurrentPos(uint pos)
         }
         return I3DERR_GENERIC;
     }
+    // Milliseconds to REFERENCE_TIME's 100 ns units
     LONGLONG time = pos * 10000;
     m_pMediaSeeking->SetPositions(&time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
     return I3D_OK;
@@ -899,7 +901,7 @@ LS3D_RESULT IShow::GetCurrentPos(uint *pos)
     }
     LONGLONG time;
     m_pMediaSeeking->GetCurrentPosition(&time);
-    *pos = (uint)(time / 10000);
+    *pos = (uint)(time / 10000);        // 100 ns units to milliseconds
     return I3D_OK;
 }
 
@@ -914,6 +916,7 @@ LS3D_RESULT IShow::SetVolume(float vol)
         vol = 0.0f;
     m_Volume = vol;
     if (m_pBink) {
+        // Track 0; 32768 is Bink's normal volume
         BinkSetVolume(m_pBink, 0, (S32)(vol * 32768.0f));
         return I3D_OK;
     }
@@ -987,8 +990,8 @@ LS3D_RESULT IShow::RenderCurrentFrame()
         m_CurrColorOp1 = D3DTOP_DISABLE;
         m_pD3DDevice8->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     }
-    if (m_CurrAlphaState != 0) {
-        m_CurrAlphaState = 0;
+    if (m_CurrAlphaState != ALPHASTATE_NONE) {
+        m_CurrAlphaState = ALPHASTATE_NONE;
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     }
@@ -1032,8 +1035,8 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
         m_CurrColorOp1 = D3DTOP_DISABLE;
         m_pD3DDevice8->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     }
-    if (m_CurrAlphaState != 0) {
-        m_CurrAlphaState = 0;
+    if (m_CurrAlphaState != ALPHASTATE_NONE) {
+        m_CurrAlphaState = ALPHASTATE_NONE;
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         m_pD3DDevice8->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     }
@@ -1042,7 +1045,7 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
         m_pD3DDevice8->SetRenderState(D3DRS_FOGENABLE, FALSE);
     }
     int frame = m_DecodedFrameNum - 1;
-    while (GetEvent() != 1) {
+    while (GetEvent() != ISHOW_EVENT_STOPPED) {
         pGlobalIGraph->ProcessWinMessages();
         pGlobalIGraph->UpdateKeyboardData();
         if (pGlobalIGraph->ReadKey()) {
@@ -1050,14 +1053,14 @@ LS3D_RESULT IShow::RenderVideoUntilKeyPressOrEnd()
             break;
         }
         if (m_pBink) {
-            pGlobalIGraph->Clear(0, 1.0f, 3);
+            pGlobalIGraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
             pGlobalIGraph->BeginScene();
             RenderCurrentFrame();
             pGlobalIGraph->EndScene();
             pGlobalIGraph->Present();
         } else if (frame != m_DecodedFrameNum) {
             frame = m_DecodedFrameNum;
-            pGlobalIGraph->Clear(0, 1.0f, 3);
+            pGlobalIGraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
             pGlobalIGraph->BeginScene();
             RenderCurrentFrame();
             pGlobalIGraph->EndScene();
