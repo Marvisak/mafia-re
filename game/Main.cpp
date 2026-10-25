@@ -41,9 +41,44 @@
 C_mission main_mission;
 // GLOBAL: GAME 0x63788c
 C_mission *act_mission = &main_mission;
-// The game's archives, in the order InitSystem opens them and gives them their keys. a1.dta can stay on the first CD.
+// The game's archives, in the order InitSystem opens them and gives them their keys: their places in dta_names and
+// RW_data. a1.dta can stay on the first CD. The names are ours.
+enum E_ARCHIVE {
+    ARCHIVE_A8,
+    ARCHIVE_B8,                         // the only one that may be missing
+    ARCHIVE_A2,
+    ARCHIVE_A6,
+    ARCHIVE_A0,
+    ARCHIVE_A1,
+    ARCHIVE_A3,
+    ARCHIVE_AC,
+    ARCHIVE_A4,
+    ARCHIVE_AA,
+    ARCHIVE_A5,
+    ARCHIVE_A7,
+    ARCHIVE_A9,
+    ARCHIVE_AB,
+    NUM_ARCHIVES,
+};
+
+// The keys InitSystem passes to UnlockPack. a3.dta, ac.dta and a4.dta share one, a0.dta and ab.dta another.
+const __int64 ARCHIVE_KEY_A8 = 0xec45d8ce6a63fa71i64;
+const __int64 ARCHIVE_KEY_B8 = 0xb60f823f79e21cdbi64;
+const __int64 ARCHIVE_KEY_A2 = 0xb6399e191417d340i64;
+const __int64 ARCHIVE_KEY_A6 = 0x5055da68728e2db9i64;
+const __int64 ARCHIVE_KEY_A0 = 0xec48fe177f3d9b74i64;
+const __int64 ARCHIVE_KEY_A1 = 0x0900210ee7375f59i64;
+const __int64 ARCHIVE_KEY_A3 = 0x771f3888a94b8d3ci64;
+const __int64 ARCHIVE_KEY_AC = 0x771f3888a94b8d3ci64;
+const __int64 ARCHIVE_KEY_A4 = 0x771f3888a94b8d3ci64;
+const __int64 ARCHIVE_KEY_AA = 0x67da216ed4ad90c6i64;
+const __int64 ARCHIVE_KEY_A5 = 0xea3404204f4bb0c6i64;
+const __int64 ARCHIVE_KEY_A7 = 0xe266fe62f4f03a72i64;
+const __int64 ARCHIVE_KEY_A9 = 0x5b763446959d1117i64;
+const __int64 ARCHIVE_KEY_AB = 0xec48fe177f3d9b74i64;
+
 // GLOBAL: GAME 0x637890
-const char *dta_names[14] = {
+const char *dta_names[NUM_ARCHIVES] = {
     // STRING: GAME 0x637930
     "a8.dta",
     // STRING: GAME 0x637928
@@ -78,7 +113,7 @@ const char *dta_names[14] = {
 C_ff_manager ff_manager;
 // PS2's has 12 archives
 // GLOBAL: GAME 0x647be4
-C_rw_data *RW_data[14];
+C_rw_data *RW_data[NUM_ARCHIVES];
 // The joysticks InitJoy found (PS2's is a vector<C_Joy *>)
 // GLOBAL: GAME 0x647c1c
 std::vector<IJoy *> joy;
@@ -493,15 +528,15 @@ static bool InitSystem(void *hinstance, bool &fatal)
     dtaSetDtaFirstForce();
     // Unsigned: the loops that count up compare the byte offset VC6 walks with jb
     uint i;
-    for (i = 0; i < 14; i++)
+    for (i = 0; i < NUM_ARCHIVES; i++)
         RW_data[i] = dtaCreate(dta_names[i]);
     char text[512];
-    if (!RW_data[5] && FindGameFile("a1.dta", text))
-        RW_data[5] = dtaCreate(text);
+    if (!RW_data[ARCHIVE_A1] && FindGameFile("a1.dta", text))
+        RW_data[ARCHIVE_A1] = dtaCreate(text);
     // Every archive but b8.dta has to be there
-    for (i = 14; i--;)
+    for (i = NUM_ARCHIVES; i--;)
     {
-        if (!RW_data[i] && i != 1)
+        if (!RW_data[i] && i != ARCHIVE_B8)
         {
             // STRING: GAME 0x637c3c
             sprintf(text, "error: #3075\r\nFile  \"%s\"  not found...", dta_names[i]);
@@ -510,34 +545,34 @@ static bool InitSystem(void *hinstance, bool &fatal)
         }
     }
 
-    if (RW_data[0])
-        RW_data[0]->UnlockPack(0xec45d8ce6a63fa71i64);
-    if (RW_data[1])
-        RW_data[1]->UnlockPack(0xb60f823f79e21cdbi64);
-    if (RW_data[2])
-        RW_data[2]->UnlockPack(0xb6399e191417d340i64);
-    if (RW_data[3])
-        RW_data[3]->UnlockPack(0x5055da68728e2db9i64);
-    if (RW_data[4])
-        RW_data[4]->UnlockPack(0xec48fe177f3d9b74i64);
-    if (RW_data[5])
-        RW_data[5]->UnlockPack(0x0900210ee7375f59i64);
-    if (RW_data[6])
-        RW_data[6]->UnlockPack(0x771f3888a94b8d3ci64);
-    if (RW_data[7])
-        RW_data[7]->UnlockPack(0x771f3888a94b8d3ci64);
-    if (RW_data[8])
-        RW_data[8]->UnlockPack(0x771f3888a94b8d3ci64);
-    if (RW_data[9])
-        RW_data[9]->UnlockPack(0x67da216ed4ad90c6i64);
-    if (RW_data[10])
-        RW_data[10]->UnlockPack(0xea3404204f4bb0c6i64);
-    if (RW_data[11])
-        RW_data[11]->UnlockPack(0xe266fe62f4f03a72i64);
-    if (RW_data[12])
-        RW_data[12]->UnlockPack(0x5b763446959d1117i64);
-    if (RW_data[13])
-        RW_data[13]->UnlockPack(0xec48fe177f3d9b74i64);
+    if (RW_data[ARCHIVE_A8])
+        RW_data[ARCHIVE_A8]->UnlockPack(ARCHIVE_KEY_A8);
+    if (RW_data[ARCHIVE_B8])
+        RW_data[ARCHIVE_B8]->UnlockPack(ARCHIVE_KEY_B8);
+    if (RW_data[ARCHIVE_A2])
+        RW_data[ARCHIVE_A2]->UnlockPack(ARCHIVE_KEY_A2);
+    if (RW_data[ARCHIVE_A6])
+        RW_data[ARCHIVE_A6]->UnlockPack(ARCHIVE_KEY_A6);
+    if (RW_data[ARCHIVE_A0])
+        RW_data[ARCHIVE_A0]->UnlockPack(ARCHIVE_KEY_A0);
+    if (RW_data[ARCHIVE_A1])
+        RW_data[ARCHIVE_A1]->UnlockPack(ARCHIVE_KEY_A1);
+    if (RW_data[ARCHIVE_A3])
+        RW_data[ARCHIVE_A3]->UnlockPack(ARCHIVE_KEY_A3);
+    if (RW_data[ARCHIVE_AC])
+        RW_data[ARCHIVE_AC]->UnlockPack(ARCHIVE_KEY_AC);
+    if (RW_data[ARCHIVE_A4])
+        RW_data[ARCHIVE_A4]->UnlockPack(ARCHIVE_KEY_A4);
+    if (RW_data[ARCHIVE_AA])
+        RW_data[ARCHIVE_AA]->UnlockPack(ARCHIVE_KEY_AA);
+    if (RW_data[ARCHIVE_A5])
+        RW_data[ARCHIVE_A5]->UnlockPack(ARCHIVE_KEY_A5);
+    if (RW_data[ARCHIVE_A7])
+        RW_data[ARCHIVE_A7]->UnlockPack(ARCHIVE_KEY_A7);
+    if (RW_data[ARCHIVE_A9])
+        RW_data[ARCHIVE_A9]->UnlockPack(ARCHIVE_KEY_A9);
+    if (RW_data[ARCHIVE_AB])
+        RW_data[ARCHIVE_AB]->UnlockPack(ARCHIVE_KEY_AB);
 
     // The data's version against the patch's, two letters each
     {
@@ -559,7 +594,7 @@ static bool InitSystem(void *hinstance, bool &fatal)
         }
         if (patch_version[0] != version[0] || patch_version[1] != version[1])
         {
-            for (i = 0; i < 14; i++)
+            for (i = 0; i < NUM_ARCHIVES; i++)
             {
                 if (RW_data[i])
                 {
