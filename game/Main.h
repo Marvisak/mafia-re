@@ -35,7 +35,7 @@ extern bool _is_intro_;
 // std::_Construct
 
 // TEMPLATE: GAME 0x4d2040
-// std::vector<IJoy *,std::allocator<IJoy *> >::_Destroy
+// std::vector<S_vector,std::allocator<S_vector> >::_Destroy
 
 // TEMPLATE: GAME 0x563cc0
 // std::vector<IJoy *,std::allocator<IJoy *> >::_Ucopy

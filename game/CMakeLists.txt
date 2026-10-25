@@ -8,9 +8,11 @@ project(game)
 # written in the order it runs, and some only hold stubs of what the written code calls.
 add_executable(game WIN32
     C_actor.cpp
+    C_animations.cpp
     C_car.cpp
     C_ff_manager.cpp
     C_program.cpp
+    C_Vehicle.cpp
     controls.cpp
     console.cpp
     Mission.cpp

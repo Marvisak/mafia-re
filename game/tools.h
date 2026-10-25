@@ -2,10 +2,12 @@
 
 #include "Main.h"
 
-// The game's sounds by number (PS2 C_sound_table, tools.cpp), from tables\sounds.dat. Only what InitSystem uses so far.
+// The game's sounds by number (PS2 C_sound_table, tools.cpp), from tables\sounds.dat. Only what InitSystem and
+// CloseSystem use so far.
 class C_sound_table
 {
 public:
+    void FreeTables();
     void LoadTables(const char *name);
 };
 

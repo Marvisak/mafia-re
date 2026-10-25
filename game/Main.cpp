@@ -1,7 +1,7 @@
 // The game's start and its main loop: PS2's Main.cpp (main, InitSystem, CloseSystem, GameLoopSingle,
-// InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem and
-// InitErrorMessageBox, and the PC's InitJoy and GraphErrorHandler; SceneCallback, CloseSystem and GameLoopSingle are
-// stubs.
+// InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem,
+// InitErrorMessageBox and CloseSystem, and the PC's InitJoy, CloseJoy and GraphErrorHandler; SceneCallback and
+// GameLoopSingle are stubs.
 // Open: the engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
 // the original's files don't have (docs/game-files.md). The .bss names: PS2's isound, driver and the caches' don't give
 // the original's order (driver, isound, igraph, setting), so at least those had other names on the PC.
@@ -18,7 +18,9 @@
 #include "Winstuff.h"
 #include "I3D_cache.h"
 #include "C_actor.h"
+#include "C_animations.h"
 #include "C_car.h"
+#include "C_Vehicle.h"
 #include "C_ff_manager.h"
 #include "C_program.h"
 #include "controls.h"
@@ -165,6 +167,20 @@ void InitJoy(HINSTANCE hinstance)
         j->SendFFCommand(JOY_FF_STOP_ALL);
         j->SendFFCommand(JOY_FF_SET_ACTUATORS_OFF);
         j->SendFFCommand(JOY_FF_SET_ACTUATORS_ON);
+    }
+}
+
+// Releases the joysticks and IJoy (PC only, the name is ours)
+// FUNCTION: GAME 0x5bd870
+void CloseJoy()
+{
+    for (int i = 0; i < joy.size(); i++)
+        joy[i]->Release();
+    joy.clear();
+    if (joy_base)
+    {
+        joy_base->Release();
+        joy_base = NULL;
     }
 }
 
@@ -882,12 +898,52 @@ static void InitErrorMessageBox(LS3D_RESULT result, int base)
     MessageBox(NULL, text, "Init error", MB_ICONERROR);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5c0080
+// Closes what InitSystem started, as PS2's: the profiles and the game's tables, the caches, the tracks, the engine's
+// drivers, the joysticks and the archives. The caches' Clear and the tracks' clear are inlined, and the inline budget
+// gives the original's mix: the first two caches copy inline and destroy out of line, the animation cache copies out of
+// line too, and the tracks are destroyed inline, each through its scalar deleting destructor with 0.
+// Open: the original restores ebx, which only the clears use, between the driver's load and its test; ours after the
+// test (100%*).
+// FUNCTION: GAME 0x5c0080
 void CloseSystem()
 {
-    StubLog("CloseSystem");
+    mafiaLoadSave.Close();
+    DoneAnimIndex();
+    C_Vehicle::CloseTyres();
+    C_Vehicle::CloseVehicleMaterials();
+    C_Vehicle::CloseParticles();
+    ConsolesDone();
+    act_mission->UnInit();
+    model_cache.Clear();
+    sound_cache.Clear();
+    anim_cache.Clear();
+    C_animations_machine_de_luxe::ClearTracks();
+    UnloadPatchFiles();
+    if (driver)
+    {
+        driver->Close();
+        driver = NULL;
+    }
+    ff_manager.Close();
+    CloseJoy();
+    if (isound)
+    {
+        isound->Close();
+        isound = NULL;
+    }
+    if (igraph)
+    {
+        igraph->Close();
+        igraph = NULL;
+    }
+    // Unsigned, as InitSystem's
+    for (uint i = 0; i < NUM_ARCHIVES; i++)
+    {
+        if (RW_data[i])
+        {
+            RW_data[i]->Release();
+            RW_data[i] = NULL;
+        }
+    }
+    sound_table.FreeTables();
 }
-
-#pragma auto_inline(on)

@@ -1,5 +1,5 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
-// docs/game-files.md). Not written yet: only what InitSystem needs to link.
+// docs/game-files.md). Not written yet: only what InitSystem and CloseSystem need to link.
 
 #include "C_actor.h"
 
@@ -11,6 +11,13 @@
 void InitAnimIndex()
 {
     StubLog("InitAnimIndex");
+}
+
+// The original deletes the index (0x63d2cc)
+// STUB: GAME 0x408750
+void DoneAnimIndex()
+{
+    StubLog("DoneAnimIndex");
 }
 
 #pragma auto_inline(on)

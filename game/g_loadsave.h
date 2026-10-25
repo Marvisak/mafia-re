@@ -8,6 +8,8 @@ class G_LoadSaveClass
 public:
     // Sets up the profiles and the saved games at the start; false is fatal
     bool Init();
+    // Saves the profile and frees the game's tables, at CloseSystem
+    void Close();
     // The player chose another profile; true to restart the menu with it
     bool ProfileChange();
     void SaveGameNewGame();

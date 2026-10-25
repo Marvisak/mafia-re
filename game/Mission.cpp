@@ -30,6 +30,14 @@ void C_mission::Init(I3D_driver *driver)
         scene = (I3D_scene *)driver->CreateFrame(FRAME_SCENE);
 }
 
+// The original clears the three caches (their inline Clear, as CloseSystem), closes the mission, deletes what Init
+// created and releases the scene. Its destructor calls it too.
+// STUB: GAME 0x53f3b0
+void C_mission::UnInit()
+{
+    StubLog("C_mission::UnInit");
+}
+
 // STUB: GAME 0x5405e0
 void C_mission::Close()
 {

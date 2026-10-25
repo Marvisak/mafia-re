@@ -1,5 +1,5 @@
 // The game's tools (PS2 tools.cpp, which has C_sound_table; the PC's file is most likely the one at 0x55cfa0-0x56040c,
-// docs/game-files.md). Written so far: PlayLogo; the rest is what InitSystem needs to link.
+// docs/game-files.md). Written so far: PlayLogo; the rest is what InitSystem and CloseSystem need to link.
 
 #include "tools.h"
 #include "Winstuff.h"
@@ -88,6 +88,13 @@ bool PlayLogo(const char *name, float sx, float sy)
 }
 
 #pragma auto_inline(off)
+
+// The original deletes the seven buffers of each table entry (0xd0 bytes) and clears the list, as PS2's
+// STUB: GAME 0x55ee60
+void C_sound_table::FreeTables()
+{
+    StubLog("C_sound_table::FreeTables");
+}
 
 // STUB: GAME 0x55f390
 void C_sound_table::LoadTables(const char *name)

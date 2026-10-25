@@ -54,6 +54,8 @@ public:
 
     // Creates the scene and the objects that live as long as the game (the game among them), once
     void Init(I3D_driver *driver);
+    // Undoes Init: CloseSystem calls it once
+    void UnInit();
     // Opens the mission of that name, a folder in missions\; 0 if it succeeds
     int Open(const char *name, bool, uint, bool);
     void Close();

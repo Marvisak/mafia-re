@@ -1,5 +1,5 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
-// docs/game-files.md). Not written yet: only what main and InitSystem need to link.
+// docs/game-files.md). Not written yet: only what main, InitSystem and CloseSystem need to link.
 
 #include "g_loadsave.h"
 
@@ -15,6 +15,14 @@ bool G_LoadSaveClass::Init()
 {
     StubLog("G_LoadSaveClass::Init");
     return true;
+}
+
+// The original saves the profile unless a flag (0x639320) is set, then frees the indicators, a list at 0x60f780, the
+// text database (0x6d8714) and the car database (0x6d4560), as PS2's
+// STUB: GAME 0x605030
+void G_LoadSaveClass::Close()
+{
+    StubLog("G_LoadSaveClass::Close");
 }
 
 // STUB: GAME 0x605070
