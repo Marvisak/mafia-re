@@ -6,9 +6,9 @@
 #include <string>
 
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
-// the other empty functions of its kind (the web nodes' connections' destructor)
+// the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1S_web_conn@@QAE@XZ
+// ?id@?$ctype@G@std@@$E
 
 #include <settings.h>
 
@@ -37,13 +37,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVIJoy@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAVC_effect@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Destroy
+// ?_Destroy@?$vector@US_prog_change@C_program@@V?$allocator@US_prog_change@C_program@@@std@@@std@@IAEXPAUS_prog_change@C_program@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// std::vector<IJoy *,std::allocator<IJoy *> >::_Ucopy
+// ?_Ucopy@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@IAEPAPAVC_effect_part@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// std::vector<IJoy *,std::allocator<IJoy *> >::_Ufill
+// ?_Ufill@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@IAEXPAPAVC_effect@@IABQAV3@@Z

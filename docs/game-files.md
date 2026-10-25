@@ -10,7 +10,9 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
   `std::ctype<unsigned short>::id`. VC6 gives each file that includes it a guarded initializer: it tests and sets a guard
   byte all files share (`0x6d8a48`, the COMDAT guard of a class template's static member), then jumps to a helper that
   registers the static's empty destructor helper (`0x404990`, a `ret`) with `atexit`. VC6 emits both after everything
-  else in a file, with or without precompiled headers, so the helper's `ret` closes the file's code.
+  else in a file, with or without precompiled headers, so the helper's `ret` closes the file's code, but for one
+  thing: under `/YX` the precompiled headers' inline functions that never came due in the file follow the marker
+  (file 25's, `44b4d0–44c0cf`, in range 26).
 - **Reading the table.** `.CRT$XCU` lists every dynamic initializer in link order. 116 of its entries are these markers,
   one per file, from `0x401000` to `0x60fc00`. The game code ends at `0x60fc30`, where LS3DF's import thunks begin.
   - **The C++ library's marker.** One more entry, `0x6101af`, tests the same guard. It is libcp's, the C++ library's: it
@@ -61,8 +63,8 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 22 | `446030–446f1c` | 0xeec | | |
 | 23 | `446f20–44856c` | 0x164c | | |
 | 24 | `448570–448efc` | 0x98c | | |
-| 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (our name) | the effects of `tables\effects.tbl` (PC only, "Effects.bin" in its messages; PS2's mission has a particle manager instead), `C_mission`'s `+0x6c` (names ours): the constructor (`449080`), the destructor (`449100`), `Load` (`449380`), `Clear` (`44a350`), and the copy of a vector's destructor the linker kept for every vector of a type without one (`44b220`); the first copies of the chunk stack's helpers, its allocator's copy constructor (`44b240`) and `insert` (`44b2a0`), which `Load` calls; written: the constructor, the destructor, `Clear`; `Load` stubbed |
-| 26 | `44b4d0–44c51c` | 0x104c | | |
+| 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (our name) | the effects of `tables\effects.tbl` (PC only, "Effects.bin" in its messages; PS2's mission has a particle manager instead), `C_mission`'s `+0x6c` (names ours): the constructor (`449080`), the destructor (`449100`), `Load` (`449380`), `Clear` (`44a350`), and the copy of a vector's destructor the linker kept for every vector of a type without one (`44b220`); the first copies of the chunk stack's helpers, its allocator's copy constructor (`44b240`) and `insert` (`44b2a0`), which `Load` calls; after the marker, in range 26, this file's copies of the precompiled headers' inline functions (`44b4d0–44c0cf`, the effects' classes, `game/C_effects.h`); written: the constructor, the destructor, `Load`, `Clear` and the classes `Load` reads |
+| 26 | `44b4d0–44c51c` | 0x104c | | starts at `44c0d0` or later: the code before it is file 25's, the copies of the precompiled headers' inline functions that never came due there, which `/YX` puts after a file's marker (the chunks' `RAscend`, `Size` and `ReadString`, the effects' classes; `game/C_effects.h`) |
 | 27 | `44c520–459e8c` | 0xd96c | | |
 | 28 | `459e90–460a1c` | 0x6b8c | | |
 | 29 | `460a20–460a4c` | 0x2c | | |

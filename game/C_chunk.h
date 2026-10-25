@@ -53,6 +53,13 @@ public:
     // Opens a file for reading or writing; the only method that isn't inline (C_chunk.cpp)
     bool OpenFile(const char *name, bool for_write);
 
+    // Opens a file for reading (Insanity3D's name). C_effects::Load opens its table through it: the call is one of the
+    // inline calls still to come for the chunk's constructor, which then leaves the stack's allocator copy out of line
+    bool ROpen(const char *name)
+    {
+        return OpenFile(name, false);
+    }
+
     // Leaves the current chunk: to its end when reading, writing its size into its header when writing. The chunk's
     // start is a local: VC6 reads back() again for each use
     // FUNCTION: GAME 0x404ce0
@@ -104,6 +111,7 @@ public:
     }
 
     // Closes the open chunks of a written file, then the file
+    // FUNCTION: GAME 0x411d40
     bool Close()
     {
         if (open)
@@ -119,20 +127,27 @@ public:
         return false;
     }
 
-    // Enters the next chunk: reads its header and returns its type
+    // Enters the next chunk: reads its header and returns its type. The read's success returns from a block of its own,
+    // so the copy (C_effects.cpp's) sends both failures to the return false after it.
+    // Open: the copy calls _Destroy out of line, which the original inlines with _Ufill and _Ucopy left out of line;
+    // no padding gives that mix
+    // FUNCTION: GAME 0x44b4d0
     bool RAscend(ushort &type)
     {
         if (!open)
             return false;
         S_chunk_header header;
-        if (dtaRead(handle, &header, sizeof(header)) != sizeof(header))
-            return false;
-        stack.push_back(dtaSeek(handle, 0, SEEK_CUR) + header.size - sizeof(header));
-        type = header.type;
-        return true;
+        if (dtaRead(handle, &header, sizeof(header)) == sizeof(header))
+        {
+            stack.push_back(dtaSeek(handle, 0, SEEK_CUR) + header.size - sizeof(header));
+            type = header.type;
+            return true;
+        }
+        return false;
     }
 
     // What is left of the current chunk
+    // FUNCTION: GAME 0x44b6a0
     int Size() const
     {
         if (!open)
@@ -142,9 +157,30 @@ public:
             return 0;
         return stack.back() - pos;
     }
+
+    // Reads the current chunk, at most 999 bytes of it, into a string and leaves the chunk (PC only, the name is
+    // Insanity3D's, whose ReadString also ascends into the chunk first). The bytes include the string's end. The
+    // chunk's end is read before the seek, so it's a local (stack.back() in the expression reads it after the call)
+    // FUNCTION: GAME 0x44b6d0
+    void ReadString(C_str &s)
+    {
+        if (open)
+        {
+            char buf[1000];
+            int end = stack.back();
+            Read(buf, Min(999, end - dtaSeek(handle, 0, SEEK_CUR)));
+            s = buf;
+            Descend();
+        }
+    }
 };
 
-// The stack's out-of-line functions
+// The stack's out-of-line functions: push_back's insert(P, x), which the parts' Load calls, and the insert(P, n, x)
+// it calls, which RAscend's copies call where they inline the first. The original kept insert(P, x) from the range at
+// 0x401030; it copies the value into a stack slot for the element's construction, which ours doesn't (open)
+// TEMPLATE: GAME 0x403740
+// ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEPAHPAHABH@Z
+
 // VTABLE: GAME 0x6233dc
 // class C_chunk_allocator<int>
 
@@ -154,11 +190,19 @@ public:
 // TEMPLATE: GAME 0x410c20
 // C_chunk_allocator<int>::deallocate
 
+// TEMPLATE: GAME 0x44b1f0
+// std::vector<int,C_chunk_allocator<int> >::~vector<int,C_chunk_allocator<int> >
+
 // SYNTHETIC: GAME 0x44b240
 // C_chunk_allocator<int>::C_chunk_allocator<int>
 
 // TEMPLATE: GAME 0x44b2a0
-// std::vector<int,C_chunk_allocator<int> >::insert
+// ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// std::vector<int,C_chunk_allocator<int> >::size
+// ?size@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QBEIXZ
+
+// The engine's C_str::operator=(const char *) (ls3df.h), which ReadString calls out of line: the original kept the copy
+// of the range at 0x401030 (docs/game-files.md)
+// LIBRARY: GAME 0x4033d0
+// ??4C_str@@QAEAAV0@PBD@Z

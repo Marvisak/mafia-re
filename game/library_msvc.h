@@ -60,7 +60,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
