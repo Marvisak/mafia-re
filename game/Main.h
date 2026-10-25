@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind (the web nodes' connections' destructor)
 // SYNTHETIC: GAME 0x404990
-// ?id@?$ctype@G@std@@$E
+// ??1S_web_conn@@QAE@XZ
 
 #include <settings.h>
 
