@@ -1,7 +1,7 @@
 // The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. Not
 // written yet: only what main needs to link.
 
-#include "g_colls.h"
+#include "collision/g_colls.h"
 
 #include "stub.h"
 

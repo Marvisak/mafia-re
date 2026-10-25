@@ -2,7 +2,7 @@
 // C_effects' constructor; the name is ours. Written so far: the constructor, the destructor, Load and Clear, which
 // C_mission's Init and UnInit run, and with Load the effects' classes (C_effects.h).
 
-#include "C_effects.h"
+#include "mission/C_effects.h"
 
 // FUNCTION: GAME 0x449080
 C_effects::C_effects()

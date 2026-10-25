@@ -4,7 +4,7 @@
 // ConsoleReg, ConsoleUnReg and ConsoleRender (most likely 0x4f6590, 0x4f67a0, 0x4f6850) and the text drawing
 // (0x4f6040).
 
-#include "console.h"
+#include "ui/console.h"
 
 #include <string.h>
 

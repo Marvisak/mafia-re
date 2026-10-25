@@ -1,7 +1,7 @@
 // The file at 0x549140-0x549e9c (docs/game-files.md), which has the championship's menu; the name is a guess, PS2's
 // g_m_race.cpp. Not written yet: only what main needs to link.
 
-#include "racing.h"
+#include "ui/racing.h"
 
 #include "stub.h"
 

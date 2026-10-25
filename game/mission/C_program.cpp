@@ -4,7 +4,7 @@
 // Open: the changes' destructor (0x460a90, registered by 0x460a80) tests and sets a guard byte (0x63d774) of its own,
 // as C_animations_machine_de_luxe::tracks' does.
 
-#include "C_program.h"
+#include "mission/C_program.h"
 
 #include "C_chunk.h"
 

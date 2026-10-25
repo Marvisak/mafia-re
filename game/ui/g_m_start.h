@@ -1,6 +1,6 @@
 #pragma once
 
-#include "g_menu.h"
+#include "ui/g_menu.h"
 
 // The main menu's choices, what ExecuteMenu returns for it. The names are ours.
 enum E_MAINMENU_RESULT {

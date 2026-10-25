@@ -1,7 +1,7 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
 // docs/game-files.md). Not written yet: only what main, InitSystem and CloseSystem need to link.
 
-#include "g_loadsave.h"
+#include "ui/g_loadsave.h"
 
 #include "stub.h"
 

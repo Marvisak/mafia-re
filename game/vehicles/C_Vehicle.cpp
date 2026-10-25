@@ -1,7 +1,7 @@
 // The vehicles (PS2 C_Vehicle.cpp, which frees the cars' tables; the PC's file is most likely the one at
 // 0x4bd650-0x4d34ac, which has the three, docs/game-files.md). Not written yet: only what CloseSystem needs to link.
 
-#include "C_Vehicle.h"
+#include "vehicles/C_Vehicle.h"
 
 #include "stub.h"
 

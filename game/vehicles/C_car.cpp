@@ -1,7 +1,7 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Not written
 // yet: only what InitSystem needs to link.
 
-#include "C_car.h"
+#include "vehicles/C_car.h"
 
 #include "stub.h"
 

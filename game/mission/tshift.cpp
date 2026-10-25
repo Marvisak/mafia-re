@@ -2,7 +2,7 @@
 // (0x560410), C_tshift's constructor and C_tshift::Tick (0x560510), PS2's order with its destructor between the last two.
 // Written so far: the constructor and the destructor, which C_mission's Init and UnInit call.
 
-#include "tshift.h"
+#include "mission/tshift.h"
 
 // FUNCTION: GAME 0x5604f0
 C_tshift::C_tshift()

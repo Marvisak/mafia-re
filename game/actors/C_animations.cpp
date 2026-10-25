@@ -3,7 +3,7 @@
 // what CloseSystem needs to link.
 // Open: the tracks' destructor (0x40dfb0, registered by 0x40dfa0) tests and sets a guard byte (0x63d2d4) of its own.
 
-#include "C_animations.h"
+#include "actors/C_animations.h"
 
 // GLOBAL: GAME 0x63d2d8
 std::vector<C_animations_machine_de_luxe::S_track> C_animations_machine_de_luxe::tracks;

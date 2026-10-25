@@ -1,7 +1,7 @@
 // The car encyclopedia (PS2 g_m_carc.cpp), the file at 0x5d7680-0x5d87dc (docs/game-files.md), which starts with its
 // OnCreate. Not written yet: only what main needs to link.
 
-#include "g_m_carc.h"
+#include "ui/g_m_carc.h"
 
 #include "stub.h"
 

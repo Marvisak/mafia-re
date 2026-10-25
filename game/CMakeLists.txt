@@ -4,41 +4,47 @@ project(game)
 
 # The game. The original has 118 C++ objects of its own (the Rich header's Utc12_2_CPP 9044); 116 of them end with the
 # initializer of std::ctype<unsigned short>::id, which every file that includes <string> gets, and those mark the files
-# in the code (docs/game-files.md). The sources in the original's order; most of them aren't written yet, as the game is
-# written in the order it runs, and some only hold stubs of what the written code calls.
+# in the code (docs/game-files.md). The sources in the original's order, across the folders; most of them aren't written
+# yet, as the game is written in the order it runs, and some only hold stubs of what the written code calls.
+# The folders are ours, as no binary records the original's paths: actors/ (C_actor and the actors' animations),
+# vehicles/ (the cars and their physics), ai/ (the walking paths' and the roads' webs), collision/, input/ (the controls
+# and the force feedback), mission/ (the mission and what it holds: the game, the scripts, the effects), ui/ (the menus,
+# the HUD, the saved games and the console); at the top the start (WinMain, main, Winstuff), the chunks, the caches and
+# the tools.
 add_executable(game WIN32
-    C_actor.cpp
-    C_animations.cpp
+    actors/C_actor.cpp
+    actors/C_animations.cpp
     C_chunk.cpp
-    C_car.cpp
-    C_ff_manager.cpp
-    C_effects.cpp
-    C_program.cpp
-    C_Vehicle.cpp
-    controls.cpp
-    console.cpp
-    Mission.cpp
-    g_m_race.cpp
-    pathweb.cpp
-    racing.cpp
-    road_web.cpp
+    vehicles/C_car.cpp
+    input/C_ff_manager.cpp
+    mission/C_effects.cpp
+    mission/C_program.cpp
+    vehicles/C_Vehicle.cpp
+    input/controls.cpp
+    ui/console.cpp
+    mission/Mission.cpp
+    ui/g_m_race.cpp
+    ai/pathweb.cpp
+    ui/racing.cpp
+    ai/road_web.cpp
     tools.cpp
-    tshift.cpp
+    mission/tshift.cpp
     WinMain.cpp
     Winstuff.cpp
-    game.cpp
+    mission/game.cpp
     Main.cpp
-    g_colls.cpp
-    g_m_carc.cpp
-    g_m_start.cpp
-    g_menu.cpp
-    g_indicators.cpp
-    g_loadsave.cpp
+    collision/g_colls.cpp
+    ui/g_m_carc.cpp
+    ui/g_m_start.cpp
+    ui/g_menu.cpp
+    ui/g_indicators.cpp
+    ui/g_loadsave.cpp
     res/game.rc
 )
 # The resources and the version information name the executable
 set_target_properties(game PROPERTIES OUTPUT_NAME Game)
-# A game file includes its own folder's headers, the engine's by their folder (I3D/I3D.h), and IJoy's and rw_data's own
+# A game file includes the game's headers by their folder (ui/g_menu.h; those at the top by name), the engine's by
+# theirs (I3D/I3D.h), and IJoy's and rw_data's own
 target_include_directories(game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/ls3df ${CMAKE_SOURCE_DIR}/ijoy
     ${CMAKE_SOURCE_DIR}/rw_data)
 # The engine's headers include the DirectX 8.1 SDK's, which come before the compiler's own (DirectX 6's). The SDK ships
@@ -63,7 +69,7 @@ if (MSVC_VERSION EQUAL 1200)
     target_compile_options(game PRIVATE /ML /GX /Gr)
     # /YX - automatic precompiled headers, the default of a VC6 project, as LS3DF's (tools/autopch.py): C_effects.cpp's
     #       copies of its headers' inline functions come after the end marker of its range, as /YX defers the inline
-    #       functions of the precompiled headers that never come due in a file (game/C_effects.h)
+    #       functions of the precompiled headers that never come due in a file (game/mission/C_effects.h)
     set_target_properties(game PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
     # The original's import directory lists KERNEL32, USER32, ADVAPI32, WINMM, LS3DF, IJoy and rw_data, in the order LINK
     # searched them. Its code has LS3DF's thunks right after the game code (0x60fc30), then libcp's objects, then IJoy's and

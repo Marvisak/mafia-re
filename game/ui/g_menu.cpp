@@ -1,7 +1,7 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Not written yet: only
 // what main needs to link.
 
-#include "g_menu.h"
+#include "ui/g_menu.h"
 
 #include "stub.h"
 

@@ -1,7 +1,7 @@
 // The main menu, the file at 0x5e0640-0x5e48ec (docs/game-files.md); the name is a guess, PS2's g_m_start.cpp. OnChange
 // (0x5e4a50) lies in the range of the next file but one. Not written yet: only what main needs to link.
 
-#include "g_m_start.h"
+#include "ui/g_m_start.h"
 
 #include "stub.h"
 

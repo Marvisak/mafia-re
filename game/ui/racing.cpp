@@ -1,7 +1,7 @@
 // The racing championship (PS2 racing.cpp; the PC's file is the one at 0x54d320-0x55997c, docs/game-files.md). Not
 // written yet: only what main needs to link.
 
-#include "racing.h"
+#include "ui/racing.h"
 
 #include "stub.h"
 

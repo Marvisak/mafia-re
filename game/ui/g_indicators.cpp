@@ -1,7 +1,7 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Not written yet:
 // only what main needs to link.
 
-#include "g_indicators.h"
+#include "ui/g_indicators.h"
 
 #include "stub.h"
 

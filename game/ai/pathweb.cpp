@@ -4,7 +4,7 @@
 // PS2's file has more (the pathfinding's help memory, AllocHelpMem and FreeHelpMem); the PC's functions are PS2's in
 // PS2's order, as far as they are there.
 
-#include "pathweb.h"
+#include "ai/pathweb.h"
 
 #include "stub.h"
 

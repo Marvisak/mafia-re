@@ -1,12 +1,12 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the constructor,
 // the destructor, Init and UnInit; the rest of what main and InitSystem call is stubs.
 
-#include "Mission.h"
-#include "game.h"
-#include "tshift.h"
-#include "pathweb.h"
-#include "road_web.h"
-#include "C_effects.h"
+#include "mission/Mission.h"
+#include "mission/game.h"
+#include "mission/tshift.h"
+#include "ai/pathweb.h"
+#include "ai/road_web.h"
+#include "mission/C_effects.h"
 #include "I3D_cache.h"
 #include "stub.h"
 
