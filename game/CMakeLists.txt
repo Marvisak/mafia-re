@@ -59,8 +59,12 @@ if (MSVC_VERSION EQUAL 1200)
     #       (VC6 compiles main __cdecl under any convention), WinMain is WINAPI
     # /GB, the default: the code has lea [x+x*n] chains and no npad inside functions, which /G6 (LS3DF's) gives
     # /Ob1, /O2's default: CheckCD calls FileExists, defined right before it, out of line, where /Ob2 (LS3DF's) inlines
-    # it at all six calls. Not settled yet: /YX (see docs/game-files.md)
+    # it at all six calls
     target_compile_options(game PRIVATE /ML /GX /Gr)
+    # /YX - automatic precompiled headers, the default of a VC6 project, as LS3DF's (tools/autopch.py): C_effects.cpp's
+    #       copies of its headers' inline functions come after the end marker of its range, as /YX defers the inline
+    #       functions of the precompiled headers that never come due in a file (game/C_effects.h)
+    set_target_properties(game PROPERTIES CXX_COMPILER_LAUNCHER "${MAFIA_PYTHON};${CMAKE_SOURCE_DIR}/tools/autopch.py")
     # The original's import directory lists KERNEL32, USER32, ADVAPI32, WINMM, LS3DF, IJoy and rw_data, in the order LINK
     # searched them. Its code has LS3DF's thunks right after the game code (0x60fc30), then libcp's objects, then IJoy's and
     # rw_data's thunks (0x6101f2), then LIBC's: so IJoy and rw_data were default libraries, asked for after libcp (which

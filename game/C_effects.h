@@ -15,10 +15,10 @@
 // The out-of-line copies of these classes and of C_chunk.h's methods (0x44b4d0-0x44c0cf) come after the end marker
 // of C_effects.cpp's range (docs/game-files.md), C_chunk.h's first, then these in this order, but they are that file's:
 // C_effects::Load is the first function to construct an effect, so the copy the linker kept of its vtable's scalar
-// deleting destructor (0x44bfd0) is C_effects.cpp's. That is /YX: compiled with it, C_effects.cpp's object has the
-// precompiled headers' inline functions that never came due after the marker, in the original's order (the subparts'
-// destructor and scalar deleting destructor where the original kept the base's folded copies). Ours come after their
-// first callers, as VC6 places them without precompiled headers (game/CMakeLists.txt has no /YX yet).
+// deleting destructor (0x44bfd0) is C_effects.cpp's. That is /YX, which defers the precompiled headers' inline
+// functions that never come due in a file to after its marker: ours, compiled with it, come in the original's order
+// (but for the copies the original kept from other files, and the linker's choice among the folded destructors of the
+// base and the subparts).
 
 // The table's chunks (the names are ours; the values are the same at every level). Each reader takes the parameters,
 // which every effect, part and subpart of the table has, in its switch's default
@@ -349,7 +349,7 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_item@@UAEPAXI@Z
+// ??_EC_effect_subpart@@UAEPAXI@Z
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -364,13 +364,13 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// std::vector<C_effect *,std::allocator<C_effect *> >::~vector<C_effect *,std::allocator<C_effect *> >
+// ??1?$vector@US_t_transparent@C_mission@@V?$allocator@US_t_transparent@C_mission@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QAEPAPAVC_effect_subpart@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
 // ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z

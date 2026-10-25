@@ -129,8 +129,9 @@ public:
 
     // Enters the next chunk: reads its header and returns its type. The read's success returns from a block of its own,
     // so the copy (C_effects.cpp's) sends both failures to the return false after it.
-    // Open: the copy calls _Destroy out of line, which the original inlines with _Ufill and _Ucopy left out of line;
-    // no padding gives that mix
+    // Open: the copy calls _Destroy out of line, which the original inlines with _Ufill and _Ucopy left out of line,
+    // and no padding gives that mix. Under /YX the stack's insert(P, x), C_effects.cpp's copy in ours, inlines it and
+    // the original's (an earlier file's) doesn't: which deferred copy inlines it seems to depend on the object
     // FUNCTION: GAME 0x44b4d0
     bool RAscend(ushort &type)
     {
@@ -177,7 +178,8 @@ public:
 
 // The stack's out-of-line functions: push_back's insert(P, x), which the parts' Load calls, and the insert(P, n, x)
 // it calls, which RAscend's copies call where they inline the first. The original kept insert(P, x) from the range at
-// 0x401030; it copies the value into a stack slot for the element's construction, which ours doesn't (open)
+// 0x401030, ours is C_effects.cpp's, which inlines _Destroy (see RAscend), and the original copies the value into a
+// stack slot for the element's construction
 // TEMPLATE: GAME 0x403740
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEPAHPAHABH@Z
 
@@ -200,7 +202,7 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QBEIXZ
+// ?size@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QBEIXZ
 
 // The engine's C_str::operator=(const char *) (ls3df.h), which ReadString calls out of line: the original kept the copy
 // of the range at 0x401030 (docs/game-files.md)
