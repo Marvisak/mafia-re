@@ -23,11 +23,20 @@
 // LIBRARY: GAME 0x6101f2 SYMBOL
 // _CreateJoyBase@20
 
+// LIBRARY: GAME 0x6101f8 SYMBOL
+// _dtaSeek@12
+
 // LIBRARY: GAME 0x6101fe SYMBOL
 // _dtaRead@12
 
+// LIBRARY: GAME 0x610204 SYMBOL
+// _dtaWrite@12
+
 // LIBRARY: GAME 0x61020a SYMBOL
 // _dtaOpen@8
+
+// LIBRARY: GAME 0x610210 SYMBOL
+// _dtaOpenWrite@8
 
 // LIBRARY: GAME 0x610216 SYMBOL
 // _dtaClose@4

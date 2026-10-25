@@ -21,7 +21,8 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
   template functions sit in the range of the first file that has them, since the linker keeps the first copy of a
   COMDAT. The file's other `$E`s (its own globals) come where it defines them, before its functions.
 - **Files without a marker.** The Rich header lists 118 objects of the game's own (`Utc12_2_CPP` 9044), so two files
-  don't include `<string>`. Their code lies inside one of the ranges below, and only its code can show where.
+  don't include `<string>`. Their code lies inside one of the ranges below, and only its code can show where. One is
+  most likely `C_chunk.cpp` (our name), the chunks' `OpenFile`, which opens range 6.
 - **Names.** The PS2 build (`SLUS_206.71`) names its files through `__sinit_<file>.cpp`. Its game files are in
   alphabetical order, case-insensitively, as a VC6 project lists them: `__mem_dbg__.cpp`, `_m_cache.cpp`, the `C_*`
   files, `console.cpp`, the `g_*` files, `game.cpp`, the `jp_ai_*` files, `Load_progress.cpp`, `Main.cpp`,
@@ -38,10 +39,10 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | --- | --- | --- | --- | --- |
 | 1 | `401000–40102c` | 0x2c | `__mem_dbg__.cpp`? | no code, only the marker. If the PC's files are in PS2's alphabetical order, this is the first one, the memory debugger a release build compiles out |
 | 2 | `401030–404cdc` | 0x3cac | | |
-| 3 | `404ce0–40938c` | 0x46ac | `C_actor.cpp`? | `InitAnimIndex` (`4086b0`, PS2 C_actor.cpp's), which InitSystem calls, and `DoneAnimIndex` (`408750`), which CloseSystem calls; the caches' item vector's `_Destroy` (`409230`) and `std::copy` (`409260`), the first copies; stubs |
+| 3 | `404ce0–40938c` | 0x46ac | `C_actor.cpp`? | `InitAnimIndex` (`4086b0`, PS2 C_actor.cpp's), which InitSystem calls, and `DoneAnimIndex` (`408750`), which CloseSystem calls; the caches' item vector's `_Destroy` (`409230`) and `std::copy` (`409260`), the first copies; at its start the first copies of the chunks' `Descend` (`404ce0`) and `Read` (`404d80`) (game/C_chunk.h); stubs |
 | 4 | `409390–40df6c` | 0x4bdc | | |
 | 5 | `40df70–411bdc` | 0x3c6c | `C_animations.cpp`? | `C_animations_machine_de_luxe::tracks` (`63d2d8`, PS2 C_animations.cpp's static member): its initializer starts the file (`40df80`) and most of its uses are here; the track's destructor (`40e470`) and assignment (`4116d0`), the cache items' destructor (`410c30`) and a cache's `Create` (`4104f0`), the first copies |
-| 6 | `411be0–41234c` | 0x76c | | |
+| 6 | `411be0–41234c` | 0x76c | `C_chunk.cpp` (our name), then another file | `C_chunk::OpenFile` (`411be0`), the chunks' one method that isn't inline (LoadPatchFile calls it where it inlines the others), so most likely in a file of its own without the marker; after it the first copies of the chunks' destructor (`411c50`) and `Close` (`411d40`); written: `OpenFile` |
 | 7 | `412350–413d8c` | 0x1a3c | | |
 | 8 | `413d90–41bb4c` | 0x7dbc | | |
 | 9 | `41bb50–42e23c` | 0x126ec | `C_car.cpp`? | `C_car`'s tables (PS2's names): `LoadMaterials` (`41c7f0`), `LoadParticles` (`41ca80`), `LoadTyres` (`41d480`), which InitSystem calls; most of the uses of the force feedback (`647b28`); stubs |
@@ -60,12 +61,12 @@ name is uncertain, the table says so. Addresses are in `target/Game.orig.exe`.
 | 22 | `446030–446f1c` | 0xeec | | |
 | 23 | `446f20–44856c` | 0x164c | | |
 | 24 | `448570–448efc` | 0x98c | | |
-| 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (our name) | the effects of `tables\effects.tbl` (PC only, "Effects.bin" in its messages; PS2's mission has a particle manager instead), `C_mission`'s `+0x6c` (names ours): the constructor (`449080`), the destructor (`449100`), `Load` (`449380`), `Clear` (`44a350`), and the copy of a vector's destructor the linker kept for every vector of a type without one (`44b220`); written: the constructor, the destructor, `Clear`; `Load` stubbed |
+| 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (our name) | the effects of `tables\effects.tbl` (PC only, "Effects.bin" in its messages; PS2's mission has a particle manager instead), `C_mission`'s `+0x6c` (names ours): the constructor (`449080`), the destructor (`449100`), `Load` (`449380`), `Clear` (`44a350`), and the copy of a vector's destructor the linker kept for every vector of a type without one (`44b220`); the first copies of the chunk stack's helpers, its allocator's copy constructor (`44b240`) and `insert` (`44b2a0`), which `Load` calls; written: the constructor, the destructor, `Clear`; `Load` stubbed |
 | 26 | `44b4d0–44c51c` | 0x104c | | |
 | 27 | `44c520–459e8c` | 0xd96c | | |
 | 28 | `459e90–460a1c` | 0x6b8c | | |
 | 29 | `460a20–460a4c` | 0x2c | | |
-| 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | the scripts (the script language's strings, PS2 C_program.cpp, which is 30th of PS2's files too): `LoadPatchFile` (`460f20`, PC only, our name), which loads patch\a1.bin to a4.bin for InitSystem, and what frees them (`461310`, `UnloadPatchFiles`, our name), which CloseSystem calls; stubs |
+| 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | the scripts (the script language's strings, PS2 C_program.cpp, which is 30th of PS2's files too): `C_program::change_progs` (`63d778`, PS2's static member, which PS2 never fills), whose initializer starts the file; `LoadPatchFile` (`460f20`, PC only, our name), which reads patch\a1.bin to a4.bin into it for InitSystem, its helper that decrypts each string (`461270`), and what frees them (`461310`, `UnloadPatchFiles`, our name), which CloseSystem calls; written: `LoadPatchFile`, its helper and `UnloadPatchFiles` |
 | 31 | `47c320–47c53c` | 0x21c | | |
 | 32 | `47c540–48192c` | 0x53ec | | |
 | 33 | `481930–48268c` | 0xd5c | | |

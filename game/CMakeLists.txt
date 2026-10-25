@@ -9,6 +9,7 @@ project(game)
 add_executable(game WIN32
     C_actor.cpp
     C_animations.cpp
+    C_chunk.cpp
     C_car.cpp
     C_ff_manager.cpp
     C_effects.cpp

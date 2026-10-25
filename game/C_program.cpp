@@ -1,23 +1,95 @@
 // The scripts (PS2 C_program.cpp; the PC's file is most likely the one at 0x460a50-0x47c31c, whose strings are the
-// script language's, docs/game-files.md). Not written yet: only what InitSystem and CloseSystem need to link.
+// script language's, docs/game-files.md, and which starts with the changes' initializer). Written so far: the patch's
+// changes, LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles. Not written: the scripts.
+// Open: the changes' destructor (0x460a90, registered by 0x460a80) tests and sets a guard byte (0x63d774) of its own,
+// as C_animations_machine_de_luxe::tracks' does.
 
 #include "C_program.h"
 
-#include "stub.h"
+#include "C_chunk.h"
 
-#pragma auto_inline(off)
+// GLOBAL: GAME 0x63d778
+std::vector<C_program::S_prog_change> C_program::change_progs;
 
-// STUB: GAME 0x460f20
+// The patch files' chunk of changes (the name is ours)
+#define CT_PROG_CHANGES 0x64
+
+static void ReadPatchString(C_chunk &chunk, char *s, int len, int index);
+
+// The changes' chunk holds the four strings of each change, each as its length and its bytes, or a zero length (1.2's
+// four files hold 23 changes, each with the mission, a frame's name and the script's source, no script name)
+// FUNCTION: GAME 0x460f20
 void LoadPatchFile(const char *name)
 {
-    StubLog("LoadPatchFile %s", name);
+    C_chunk chunk;
+    chunk.OpenFile(name, false);
+    ushort type;
+    if (chunk.RAscend(type) && type == CT_PROG_CHANGES)
+    {
+        for (int i = 0; chunk.Size(); i++)
+        {
+            C_program::S_prog_change change;
+            int len;
+            chunk.Read(&len, sizeof(len));
+            if (len)
+            {
+                change.mission = new char[len];
+                ReadPatchString(chunk, change.mission, len, i);
+            }
+            else
+                change.mission = NULL;
+            chunk.Read(&len, sizeof(len));
+            if (len)
+            {
+                change.program = new char[len];
+                ReadPatchString(chunk, change.program, len, i);
+            }
+            else
+                change.program = NULL;
+            chunk.Read(&len, sizeof(len));
+            if (len)
+            {
+                change.frame = new char[len];
+                ReadPatchString(chunk, change.frame, len, i);
+            }
+            else
+                change.frame = NULL;
+            chunk.Read(&len, sizeof(len));
+            if (len)
+            {
+                change.source = new char[len];
+                ReadPatchString(chunk, change.source, len, i);
+            }
+            else
+                change.source = NULL;
+            C_program::change_progs.push_back(change);
+        }
+    }
+    chunk.Descend();
+    chunk.Close();
 }
 
-// The original deletes the four buffers of each entry LoadPatchFile added (0x63d778, 16 bytes each) and clears the list
-// STUB: GAME 0x461310
+// Reads a string of len bytes, which the patch files store with each byte xored with a key that depends on the
+// change's index (PC only, the name is ours)
+// FUNCTION: GAME 0x461270
+static void ReadPatchString(C_chunk &chunk, char *s, int len, int index)
+{
+    int key = index % 13 + 0x85;
+    chunk.Read(s, len);
+    for (int i = 0; i < len; i++)
+        s[i] ^= key;
+}
+
+// The last change first
+// FUNCTION: GAME 0x461310
 void UnloadPatchFiles()
 {
-    StubLog("UnloadPatchFiles");
+    for (int i = C_program::change_progs.size(); i--;)
+    {
+        delete[] C_program::change_progs[i].mission;
+        delete[] C_program::change_progs[i].program;
+        delete[] C_program::change_progs[i].frame;
+        delete[] C_program::change_progs[i].source;
+    }
+    C_program::change_progs.clear();
 }
-
-#pragma auto_inline(on)
