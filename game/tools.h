@@ -11,5 +11,7 @@ public:
 
 extern C_sound_table sound_table;
 
-// Plays one of the logo videos at the start, in the size given for an 800x600 screen (PC only, the name is ours)
-void PlayLogo(const char *name, float sx, float sy);
+// Plays one of the logo videos at the start until a key is pressed or it ends: the name without its extension, and the
+// video's size on an 800x600 screen, whose ratio sets its height. False if no file was found or none opened. PC only,
+// the name is ours.
+bool PlayLogo(const char *name, float sx, float sy);
