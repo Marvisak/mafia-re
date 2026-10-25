@@ -421,9 +421,6 @@
 // GLOBAL: IJOY 0x1000e198
 // __cfltcvt_tab
 
-// GLOBAL: IJOY 0x1000e1b8
-// ___badioinfo
-
 // GLOBAL: IJOY 0x1000e250
 // ___sbh_threshold
 

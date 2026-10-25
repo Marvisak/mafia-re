@@ -337,9 +337,6 @@
 // GLOBAL: RWDATA 0x1000c7e4
 // ?__pInconsistency@@3P6AXXZA
 
-// GLOBAL: RWDATA 0x1000c7f0
-// ___badioinfo
-
 // GLOBAL: RWDATA 0x1000c888
 // ___old_small_block_heap
 
@@ -438,9 +435,6 @@
 
 // GLOBAL: RWDATA 0x10012e64
 // ___lc_codepage
-
-// GLOBAL: RWDATA 0x10012e68
-// ___lc_collate_cp
 
 // GLOBAL: RWDATA 0x10012e74
 // __pxcptinfoptrs

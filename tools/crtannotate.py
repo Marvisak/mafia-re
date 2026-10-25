@@ -8,10 +8,12 @@ previous offset and accepted when its bytes agree apart from pointer operands, a
 functions already found go to their original addresses. Those operands then say where the CRT's globals
 are in the original, so data addresses come from the original's own code, not from our map plus an offset:
 a pointer places the whole contribution of the object it points into (our PDB's section contributions),
-which both builds lay out the same, statics included. A source that isn't complete yet links only some
-of the original's CRT objects, so after a missing one the next function is further away: a function not
-found near the previous offset is looked for in the whole of the original's .text, and taken if it fits
-at exactly one place. Identical functions (_memcpy and _memmove, each in its own object) fit at several; the
+which both builds lay out the same, statics included. A pointer counts for the name before it only inside
+that name's object, and where the pointers into a contribution disagree, those exactly at a name decide
+(a biased table base, [eax + table - 0x20], can fall into whatever lies before the table in our build).
+A source that isn't complete yet links only some of the original's CRT objects, so after a missing one the
+next function is further away: a function not found near the previous offset is looked for in the whole
+of the original's .text, and taken if it fits at exactly one place. Identical functions (_memcpy and _memmove, each in its own object) fit at several; the
 functions reccmp already matches tell them apart, by which of those places the original calls where ours
 calls the twin, and the place left over is the last twin's.
 
@@ -338,6 +340,7 @@ def main() -> None:
     exact = defaultdict(lambda: defaultdict(int))
     inside = defaultdict(lambda: defaultdict(int))
     placed = defaultdict(lambda: defaultdict(int))  # contribution -> its original address -> votes
+    placed_exact = defaultdict(lambda: defaultdict(int))  # the same, from operands pointing exactly at a symbol
 
     in_orig = {}  # our address of a function found -> its original address
 
@@ -352,11 +355,16 @@ def main() -> None:
         in_orig[addr] = orig_addr
         for vx, vy in pointer_operands(ours, orig, addr, orig_addr, size):
             sym = max((s for s in data_symbols if s[0] <= vx), default=None)  # the operand may point into it
-            if sym:
-                (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
             c = contribution(vx)
+            own = contribution(sym[0]) if sym else None
+            # Not into another object's data: its unnamed statics after the last name before them (Game.exe's
+            # frame.obj's EH data after output.obj's "(null)") aren't that name's
+            if sym and (vx == sym[0] or c is None or own is None or c[2] == own[2]):
+                (exact if vx == sym[0] else inside)[sym][vy - (vx - sym[0])] += 1
             if c and in_library(c[2]):
                 placed[c][vy - (vx - c[0])] += 1
+                if sym and vx == sym[0]:
+                    placed_exact[c][vy - (vx - c[0])] += 1
 
     for k, (addr, name, obj) in enumerate(code_symbols):
         # Import thunks (MSVCRT:MSVCR90.dll) are left to the thunk search below, or to reccmp itself in a
@@ -475,7 +483,14 @@ def main() -> None:
             # build (__NMSG_WRITE's message table before _iob, ___initstdio's _iob before _pctype). The real
             # references outnumber those.
             best = max(cand, key=cand.get)
+            exact_at = {a + addr - c[0] for a in placed_exact.get(c, {})} if c in placed else set()
             if 2 * cand[best] > sum(cand.values()):
+                outvoted.append((name, best, dict(cand)))
+                cand = {best: cand[best]}
+            elif len(exact_at) == 1:
+                # Otherwise pointers exactly at a symbol outrank pointers into one: Game.exe's __output reads
+                # [eax + __lookuptable - 0x20], which can fall into the literal before the table
+                best = next(iter(exact_at))
                 outvoted.append((name, best, dict(cand)))
                 cand = {best: cand[best]}
         if len(cand) > 1:

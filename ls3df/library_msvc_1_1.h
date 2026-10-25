@@ -1042,17 +1042,11 @@
 // GLOBAL: LS3DF11 0x100a98b0
 // ___badioinfo
 
-// GLOBAL: LS3DF11 0x100a98d4
-// __amblksiz
-
 // GLOBAL: LS3DF11 0x100a9a40
 // __d_inf
 
 // GLOBAL: LS3DF11 0x100a9a50
 // __d_max
-
-// GLOBAL: LS3DF11 0x100a9a60
-// __d_mzero
 
 // GLOBAL: LS3DF11 0x100a9a80
 // ___old_small_block_heap
@@ -1138,9 +1132,6 @@
 // GLOBAL: LS3DF11 0x101c7b94
 // ___lc_codepage
 
-// GLOBAL: LS3DF11 0x101c7b98
-// ___lc_collate_cp
-
 // GLOBAL: LS3DF11 0x101c7ba0
 // __cflush
 
@@ -1155,9 +1146,6 @@
 
 // GLOBAL: LS3DF11 0x101c7cc4
 // ?_pnhHeap@@3P6AHI@ZA
-
-// GLOBAL: LS3DF11 0x101c7ce8
-// ___lc_id
 
 // GLOBAL: LS3DF11 0x101c7d34
 // __commode

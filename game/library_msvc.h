@@ -119,6 +119,9 @@
 // LIBRARY: GAME 0x610760 SYMBOL
 // _strrchr
 
+// LIBRARY: GAME 0x6107af SYMBOL
+// _qsort
+
 // LIBRARY: GAME 0x61097d SYMBOL
 // __vsnprintf
 
@@ -683,9 +686,6 @@
 // GLOBAL: GAME 0x63a4d0
 // ___decimal_point
 
-// GLOBAL: GAME 0x63a4d4
-// ___decimal_point_length
-
 // GLOBAL: GAME 0x63a810
 // __XcptActTab
 
@@ -703,9 +703,6 @@
 
 // GLOBAL: GAME 0x63a898
 // ___badioinfo
-
-// GLOBAL: GAME 0x63a8a0
-// __amblksiz
 
 // GLOBAL: GAME 0x63a938
 // ___old_small_block_heap

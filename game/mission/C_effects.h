@@ -369,13 +369,13 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_sound_table@C_sound_table@@V?$allocator@US_sound_table@C_sound_table@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAEPAPAVC_effect_part@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
 // ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z
