@@ -1,7 +1,8 @@
 // The scripts (PS2 C_program.cpp; the PC's file is most likely the one at 0x460a50-0x47c31c, whose strings are the
-// script language's, docs/game-files.md, and which starts with the changes' initializer). Written so far: the patch's
-// changes, LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles. Not written: the scripts; their
-// constructor, destructor and LoadSourceCode, which C_mission::OpenBin calls, are stubs.
+// script language's, docs/game-files.md, and which starts with the changes' initializer). Written so far: the
+// constructor, the destructor and LoadSourceCode, which C_mission::OpenBin and Close call, the patch's changes,
+// LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles. Not written: the rest of the scripts;
+// TryChangeProgramData, which LoadSourceCode calls, is a stub.
 // Open: the changes' destructor (0x460a90, registered by 0x460a80) tests and sets a guard byte (0x63d774) of its own,
 // as C_animations_machine_de_luxe::tracks' does.
 
@@ -13,27 +14,65 @@
 // GLOBAL: GAME 0x63d778
 std::vector<C_program::S_prog_change> C_program::change_progs;
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x460ad0
-C_program::C_program()
+// The vectors' allocators are copies of their default arguments' temporaries, an uninitialized byte each
+// FUNCTION: GAME 0x460ad0
+C_program::C_program() :
+    name(NULL),
+    source(NULL),
+    actor(NULL),
+    float_regs(NULL),
+    num_float_regs(0),
+    frame_regs(NULL),
+    num_frame_regs(0),
+    actor_regs(NULL),
+    num_actor_regs(0),
+    unknown_60(.5f)
 {
-    StubLog("C_program::C_program");
 }
 
-// STUB: GAME 0x460b40
+// FUNCTION: GAME 0x460b40
 C_program::~C_program()
 {
-    StubLog("C_program::~C_program");
+    if (name)
+        delete[] name;
+    if (source)
+        delete[] source;
 }
 
-// STUB: GAME 0x460c90
-void C_program::LoadSourceCode(C_chunk *chunk)
+// A byte nothing reads, then the name and the source, each as its length and its bytes, as PS2's
+// FUNCTION: GAME 0x460c90
+bool C_program::LoadSourceCode(C_chunk *chunk)
 {
-    StubLog("C_program::LoadSourceCode");
+    if (name)
+    {
+        delete[] name;
+        name = NULL;
+    }
+    if (source)
+    {
+        delete[] source;
+        source = NULL;
+    }
+    uchar unknown;
+    chunk->Read(&unknown, sizeof(unknown));
+    int len;
+    chunk->Read(&len, sizeof(len));
+    if (len)
+    {
+        name = new char[len + 1];
+        chunk->Read(name, len);
+        name[len] = 0;
+    }
+    chunk->Read(&len, sizeof(len));
+    if (len)
+    {
+        source = new char[len + 1];
+        chunk->Read(source, len);
+        source[len] = 0;
+    }
+    TryChangeProgramData();
+    return true;
 }
-
-#pragma auto_inline(on)
 
 // The patch files' chunk of changes (the name is ours)
 #define CT_PROG_CHANGES 0x64
@@ -117,3 +156,13 @@ void UnloadPatchFiles()
     }
     C_program::change_progs.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x461420
+void C_program::TryChangeProgramData()
+{
+    StubLog("C_program::TryChangeProgramData");
+}
+
+#pragma auto_inline(on)

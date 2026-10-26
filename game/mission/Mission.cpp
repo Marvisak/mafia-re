@@ -1,7 +1,7 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the names' order
 // of OpenBin's map, the constructor, the destructor, Init, UnInit, Close, ShowProgress, Open with its two helpers,
-// OpenBin with its frames' callback, and the video options' methods; the rest of what main and InitSystem call is
-// stubs, CreateActor and AddActor among them.
+// OpenBin with its frames' callback, CreateActor, and the video options' methods; the rest of what main and InitSystem
+// call is stubs, AddActor among them.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -13,7 +13,31 @@
 #include "mission/C_cutscene.h"
 #include "mission/m_cache.h"
 #include "actors/C_actor.h"
+#include "actors/C_actor_shot.h"
+#include "actors/C_bottle.h"
+#include "actors/C_box_new.h"
+#include "actors/C_bridge.h"
+#include "actors/c_clock.h"
+#include "actors/C_detector.h"
+#include "actors/C_dog.h"
+#include "actors/C_door.h"
+#include "actors/C_dyn_object.h"
+#include "actors/C_irenka.h"
+#include "actors/C_player.h"
+#include "actors/C_public_physics.h"
+#include "actors/C_pumper.h"
+#include "actors/C_scatter.h"
 #include "vehicles/C_Vehicle.h"
+#include "vehicles/C_airplane.h"
+#include "vehicles/C_car_ex.h"
+#include "vehicles/C_rail_generator.h"
+#include "vehicles/C_railway.h"
+#include "vehicles/C_trf_c.h"
+#include "vehicles/C_turnout.h"
+#include "vehicles/C_wagon.h"
+#include "ai/C_person_traffic.h"
+#include "ai/jp_ai_entity.h"
+#include "camera/c_racecam.h"
 #include "ui/g_loadsave.h"
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
@@ -130,17 +154,105 @@ void C_mission::UnInit()
     }
 }
 
-// Close's helpers where the original has them: Close has no unwinding, so a stub defined before it changes nothing. Before
-// them OpenBin's for the actors, which leave its code as it is here too.
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x53f7d0
+// An actor of the class for its type, NULL for a type without one; OpenBin initializes it with its frame. PS2's in the
+// same order, without the three PC only classes (C_dyn_object, C_seagull and C_scatter), and with its local: the NULL
+// is loaded before the switch, which the other types return, and VC6 copies the return into each case. The
+// constructors are other files', so each new has an unwind state of its own, in the cases' order.
+// FUNCTION: GAME 0x53f7d0
 C_actor *C_mission::CreateActor(int type)
 {
-    StubLog("C_mission::CreateActor %d", type);
-    return NULL;
+    C_actor *actor = NULL;
+    switch (type)
+    {
+    case ACTOR_DETECTOR:
+        actor = new C_detector;
+        break;
+    case ACTOR_PLAYER:
+        actor = new C_player;
+        break;
+    case ACTOR_CAR:
+        actor = new C_car;
+        break;
+    case ACTOR_CAR_EX:
+        actor = new C_car_ex;
+        break;
+    case ACTOR_BOTTLE:
+        actor = new C_bottle;
+        break;
+    case ACTOR_RAILWAY:
+        actor = new C_railway;
+        break;
+    case ACTOR_DYN_OBJECT:
+        actor = new C_dyn_object;
+        break;
+    case ACTOR_DOOR:
+        actor = new C_door;
+        break;
+    case ACTOR_TRAFFIC_CAR:
+        actor = new C_traffic_car;
+        break;
+    case ACTOR_ACTOR:
+        actor = new C_actor;
+        break;
+    case ACTOR_AIRPLANE:
+        actor = new C_airplane;
+        break;
+    case ACTOR_TRAFFIC_GENERATOR:
+        actor = new C_traffic_generator;
+        break;
+    case ACTOR_BRIDGE:
+        actor = new C_bridge;
+        break;
+    case ACTOR_DOG:
+        actor = new C_dog;
+        break;
+    case ACTOR_SEAGULL:
+        actor = new C_seagull;
+        break;
+    case ACTOR_TURNOUT:
+        actor = new C_turnout;
+        break;
+    case ACTOR_PUMPER:
+        actor = new C_pumper;
+        break;
+    case ACTOR_ENTITY:
+        actor = new C_entity;
+        break;
+    case ACTOR_RACECAM:
+        actor = new C_racecam;
+        break;
+    case ACTOR_SCATTER:
+        actor = new C_scatter;
+        break;
+    case ACTOR_WAGON:
+        actor = new C_wagon;
+        break;
+    case ACTOR_IRENKA:
+        actor = new C_irenka;
+        break;
+    case ACTOR_PUBLIC_PHYSICS:
+        actor = new C_public_physics;
+        break;
+    case ACTOR_ACTOR_SHOT:
+        actor = new C_actor_shot;
+        break;
+    case ACTOR_CLOCK:
+        actor = new C_clock;
+        break;
+    case ACTOR_BOX_NEW:
+        actor = new C_box_new;
+        break;
+    case ACTOR_RAIL_GENERATOR:
+        actor = new C_rail_generator;
+        break;
+    }
+    return actor;
 }
+
+// Close's helpers where the original has them: Close has no unwinding, so a stub defined before it changes nothing. Before
+// them OpenBin's AddActor, which leaves its code as it is here too.
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x53fea0
 void C_mission::AddActor(C_actor *actor, bool)

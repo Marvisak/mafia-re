@@ -1,7 +1,7 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set.
+// profiles set. The constructor, which C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -11,6 +11,8 @@
 #include <string.h>
 
 #include "rw_data.h"
+
+#include "stub.h"
 
 // Initialized data, in the order SetForceFeedback stores them
 // GLOBAL: GAME 0x6322dc
@@ -31,6 +33,16 @@ inline uint I3DBoolAsInt(const bool &b)
     bool t = b;
     return *(uint *)&t;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41bb80
+C_car::C_car()
+{
+    StubLog("C_car::C_car");
+}
+
+#pragma auto_inline(on)
 
 // Materials 1 to 4 (asphalt, paving, pavement, concrete), 9, 10 and 38 (rock, rails and brick wall) get the two flags.
 // Without the table (InitSystem runs before G_LoadSaveClass::Init loads it) one default material.

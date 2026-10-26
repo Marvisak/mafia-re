@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Main.h"
+#include "actors/C_actor.h"
 
 struct S_SRFC;
 
@@ -25,12 +25,15 @@ struct S_TSRFC
     S_TSRFC_CURVE curve[2];             // 0x0
 };
 
-// A car (PS2 C_car, C_car.cpp). Only what InitSystem and the profiles use so far: its tables, which InitSystem loads
-// once (C_game::Init loads them again, with the game's tables loaded), and which C_Vehicle keeps, and the force
-// feedback's scales.
-class C_car
+// A car (PS2 C_car, C_car.cpp), 0x221c bytes (PS2's 0x2490), an actor with a C_Vehicle at 0x70 (PS2's constructor
+// constructs both, the PC's stores a second vtable there, 0x6236b0). Only what InitSystem, the profiles and
+// C_mission::CreateActor use so far: its tables, which InitSystem loads once (C_game::Init loads them again, with the
+// game's tables loaded), and which C_Vehicle keeps, the force feedback's scales, and the constructor, a stub.
+class C_car : public C_actor
 {
 public:
+    C_car();
+
     // The profile's force feedback options, which the cars' effects scale by (PC only, the names are ours, after the
     // options), 1 until G_LoadSaveClass::Refresh sets them
     static float ff_volume;
@@ -48,4 +51,6 @@ public:
     static void ConvertTyres(S_TSRFC *src, S_SRFC *dst);
     // Sets the force feedback's scales (PC only, the name is ours)
     static void SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs);
+
+    uchar unknown_70[0x21ac];           // 0x70
 };

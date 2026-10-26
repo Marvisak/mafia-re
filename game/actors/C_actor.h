@@ -6,12 +6,46 @@
 
 class C_chunk;
 
-// The actors (PS2 C_actor). Only what the mission uses so far.
+// The actors' types (C_actor::type), which the mission's scene2.bin gives each actor and C_mission::CreateActor creates
+// a class for (the names are ours, after the classes; PS2's are the same values but for the three PC only classes)
+#define ACTOR_ACTOR 1
+#define ACTOR_PLAYER 2
+#define ACTOR_CAR 4
+#define ACTOR_DETECTOR 5
+#define ACTOR_DOOR 6
+#define ACTOR_RAILWAY 8
+#define ACTOR_DYN_OBJECT 9
+#define ACTOR_BOTTLE 0xa
+#define ACTOR_TRAFFIC_CAR 0xc
+#define ACTOR_TRAFFIC_GENERATOR 0x12
+#define ACTOR_BRIDGE 0x14
+#define ACTOR_DOG 0x15
+#define ACTOR_AIRPLANE 0x16
+#define ACTOR_SEAGULL 0x17
+#define ACTOR_TURNOUT 0x18
+#define ACTOR_PUMPER 0x19
+#define ACTOR_ENTITY 0x1b
+#define ACTOR_RACECAM 0x1c
+#define ACTOR_SCATTER 0x1d
+#define ACTOR_WAGON 0x1e
+#define ACTOR_IRENKA 0x1f
+#define ACTOR_PUBLIC_PHYSICS 0x20
+#define ACTOR_ACTOR_SHOT 0x21
+#define ACTOR_CLOCK 0x22
+#define ACTOR_BOX_NEW 0x23
+#define ACTOR_CAR_EX 0x24
+#define ACTOR_RAIL_GENERATOR 0x26
+
+// The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 16 come before the destructor, where PS2 has
 // AI, Update and NetDirect; from the destructor on the PC's are PS2's in PS2's order. The first 16 are placeholders.
+// Not written yet: the constructor and the virtual functions declared here, which the actors' classes need, are stubs
+// (C_actor.cpp).
 class C_actor
 {
 public:
+    C_actor();
+
     virtual void vfunc_0();
     virtual void vfunc_1();
     virtual void vfunc_2();
@@ -44,8 +78,11 @@ public:
         unknown_66 = true;
     }
 
-    uchar unknown_4[0x62];
+    uchar unknown_4[0xc];               // 0x4
+    int type;                           // 0x10, ACTOR_*, ACTOR_ACTOR from the constructor
+    uchar unknown_14[0x52];             // 0x14
     bool unknown_66;                    // 0x66
+    uchar unknown_67[9];                // 0x67
 
     // The actors that exist: the constructor counts up, the destructor down, and C_mission::Open clears it (PS2 name)
     static int global_refs;

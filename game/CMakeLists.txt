@@ -6,28 +6,47 @@ project(game)
 # initializer of std::ctype<unsigned short>::id, which every file that includes <string> gets, and those mark the files
 # in the code (docs/game-files.md). The sources in the original's order, across the folders; most of them aren't written
 # yet, as the game is written in the order it runs, and some only hold stubs of what the written code calls.
-# The folders are ours, as no binary records the original's paths: actors/ (C_actor, the actors' animations and blood),
-# vehicles/ (the cars, their physics and effects), ai/ (the walking paths' and the roads' webs, the police, the chases),
-# collision/, input/ (the controls and the force feedback), mission/ (the mission and what it holds: the game, the
-# scripts, the effects, rmorf.bin, the city's base blocks, the cutscenes), camera/ (the game's camera), ui/ (the menus, the HUD, the saved games and the
-# console); at the top the start (WinMain, main, Winstuff), the chunks, the caches and the tools.
+# The folders are ours, as no binary records the original's paths: actors/ (C_actor, the actors' animations and blood,
+# the humans, the animals and the objects), vehicles/ (the cars, their physics and effects, the plane, the rail
+# vehicles and their turnouts), ai/ (the walking paths' and the roads' webs, the police, the chases, the AI's humans,
+# the pedestrians), collision/, input/ (the controls and the force feedback), mission/ (the mission and what it holds:
+# the game, the scripts, the effects, rmorf.bin, the city's base blocks, the cutscenes), camera/ (the game's camera, the
+# race cameras), ui/ (the menus, the HUD, the saved games and the console); at the top the start (WinMain, main,
+# Winstuff), the chunks, the caches and the tools.
 add_executable(game WIN32
     mission/m_cache.cpp
     actors/C_actor.cpp
+    vehicles/C_airplane.cpp
     actors/C_animations.cpp
     C_chunk.cpp
     actors/C_blood.cpp
+    actors/C_bottle.cpp
+    actors/C_dyn_object.cpp
     vehicles/C_car.cpp
+    vehicles/C_car_ex.cpp
+    actors/C_detector.cpp
+    actors/C_dog.cpp
+    actors/C_door.cpp
     input/C_ff_manager.cpp
+    actors/C_irenka.cpp
     mission/C_effects.cpp
+    ai/C_person_traffic.cpp
+    actors/C_PhThings.cpp
     mission/C_program.cpp
+    actors/C_public_physics.cpp
+    actors/C_pumper.cpp
+    vehicles/C_railway.cpp
     mission/C_rmorf.cpp
     ai/C_shvestky.cpp
     ai/C_sledovacka.cpp
+    vehicles/C_trf_c.cpp
+    vehicles/C_turnout.cpp
     vehicles/C_Vehicle.cpp
     vehicles/C_Vehicle_sounds.cpp
     input/controls.cpp
+    vehicles/C_wagon.cpp
     ui/console.cpp
+    ai/jp_ai_entity.cpp
     mission/Mission.cpp
     ui/g_m_race.cpp
     ai/pathweb.cpp
@@ -37,6 +56,15 @@ add_executable(game WIN32
     mission/tshift.cpp
     WinMain.cpp
     Winstuff.cpp
+    actors/C_actor_shot.cpp
+    actors/C_box_new.cpp
+    actors/C_bridge.cpp
+    actors/c_clock.cpp
+    actors/C_human.cpp
+    actors/C_scatter.cpp
+    actors/C_player.cpp
+    camera/c_racecam.cpp
+    vehicles/C_rail_generator.cpp
     mission/C_cutscene.cpp
     mission/game.cpp
     ui/Load_progress.cpp

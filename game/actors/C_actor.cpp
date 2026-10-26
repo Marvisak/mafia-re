@@ -1,10 +1,16 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
 // frees. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything written yet.
+// The constructor and the virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
+// order; six of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
+// likely, or folded with another class's), and the empty ones aren't annotated (folded with the other empty functions
+// of their kinds).
 
 #include "actors/C_actor.h"
 
 #include <stdlib.h>
+
+#include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
 // bits with at most one bit above them for its set: the eight sets of breathing, running and walking, the corner
@@ -600,6 +606,65 @@ S_anim_index *_anim_index_ = NULL;
 // GLOBAL: GAME 0x63d2d0
 int _anim_index_count_ = 0;
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x404e00
+void C_actor::vfunc_9()
+{
+    StubLog("C_actor::vfunc_9");
+}
+
+// STUB: GAME 0x404f30
+void C_actor::vfunc_0()
+{
+    StubLog("C_actor::vfunc_0");
+}
+
+// STUB: GAME 0x404f40
+void C_actor::vfunc_1()
+{
+    StubLog("C_actor::vfunc_1");
+}
+
+// STUB: GAME 0x405010
+void C_actor::vfunc_2()
+{
+    StubLog("C_actor::vfunc_2");
+}
+
+// STUB: GAME 0x4054c0
+void C_actor::vfunc_3()
+{
+    StubLog("C_actor::vfunc_3");
+}
+
+// STUB: GAME 0x405a00
+void C_actor::vfunc_4()
+{
+    StubLog("C_actor::vfunc_4");
+}
+
+// STUB: GAME 0x405d20
+C_actor::C_actor()
+{
+    StubLog("C_actor::C_actor");
+}
+
+// STUB: GAME 0x405d90
+C_actor::~C_actor()
+{
+    StubLog("C_actor::~C_actor");
+}
+
+// STUB: GAME 0x405dd0
+bool C_actor::Init(I3D_frame *frame)
+{
+    StubLog("C_actor::Init");
+    return false;
+}
+
+#pragma auto_inline(on)
+
 // qsort's, by id
 // FUNCTION: GAME 0x408690
 int __cdecl compare_anim_index(const void *a, const void *b)
@@ -635,3 +700,82 @@ void DoneAnimIndex()
 {
     delete[] _anim_index_;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4091d0
+void C_actor::Release()
+{
+    StubLog("C_actor::Release");
+}
+
+// STUB: GAME 0x42cc20
+void C_actor::vfunc_5()
+{
+    StubLog("C_actor::vfunc_5");
+}
+
+// STUB: GAME 0x5c2650
+void C_actor::vfunc_11()
+{
+    StubLog("C_actor::vfunc_11");
+}
+
+// STUB: GAME 0x5c26a0
+void C_actor::vfunc_10()
+{
+    StubLog("C_actor::vfunc_10");
+}
+
+// STUB: GAME 0x5c27b0
+void C_actor::vfunc_6()
+{
+    StubLog("C_actor::vfunc_6");
+}
+
+// STUB: GAME 0x5c27d0
+void C_actor::vfunc_7()
+{
+    StubLog("C_actor::vfunc_7");
+}
+
+// STUB: GAME 0x5c27f0
+void C_actor::vfunc_8()
+{
+    StubLog("C_actor::vfunc_8");
+}
+
+// The vtable's 0x404990, a ret (Main.h)
+void C_actor::vfunc_12()
+{
+    StubLog("C_actor::vfunc_12");
+}
+
+// The vtable's 0x403db0, a ret 4, the next two too (VE_BreakageGlass.h)
+void C_actor::vfunc_13()
+{
+    StubLog("C_actor::vfunc_13");
+}
+
+void C_actor::vfunc_14()
+{
+    StubLog("C_actor::vfunc_14");
+}
+
+void C_actor::vfunc_15()
+{
+    StubLog("C_actor::vfunc_15");
+}
+
+// The vtable's 0x4aa490, which returns true (a mov al, 1 and a ret 4), as LoadData's
+void C_actor::SaveData(C_chunk *chunk)
+{
+    StubLog("C_actor::SaveData");
+}
+
+void C_actor::LoadData(C_chunk *chunk)
+{
+    StubLog("C_actor::LoadData");
+}
+
+#pragma auto_inline(on)

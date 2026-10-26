@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Main.h"
+#include "actors/C_actor.h"
 
 // The in-engine cutscenes (PC only, the names are ours: PS2 plays its cutscenes as videos, C_vid, which its
 // GameLoopSingle updates where the PC's ticks this object). Its Tick (0x599610) plays two tracks of keys, 0x40 and
@@ -17,3 +17,14 @@ public:
 
 // The one object
 extern C_cutscene cutscene;
+
+// The seagulls (PC only, the name is ours: they load racek.i3d, Czech for a seagull), 0x244 bytes. Their file is the
+// cutscenes': the constructor (0x59e7e0) is in its range, after Close. Only the constructor so far, which
+// C_mission::CreateActor calls for ACTOR_SEAGULL.
+class C_seagull : public C_actor
+{
+public:
+    C_seagull();
+
+    uchar unknown_70[0x1d4];            // 0x70
+};
