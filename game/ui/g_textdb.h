@@ -28,6 +28,8 @@ public:
     void Unload();
     // The text of an id, " " for an id it doesn't have
     char *GetText(uint id);
+    // The same, NULL for an id it doesn't have
+    char *GetTextOrNULL(uint id);
 };
 
 extern G_TextDatabase textDatabase;

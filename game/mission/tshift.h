@@ -53,7 +53,7 @@ public:
 
 // The constructor, folded with C_blood_manager's: the name our PDB keeps for the two changes with the build (foldfix)
 // FUNCTION: GAME 0x5604f0
-// ??0C_blood_manager@@QAE@XZ
+// ??0C_tshift@@QAE@XZ
 
 // The elements' erase, which C_mission::Close's inlined clear calls (Mission.cpp's copy)
 // TEMPLATE: GAME 0x547a10

@@ -342,7 +342,7 @@ extern C_I3D_anim_cache anim_cache;
 // ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
-// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
+// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU23@00@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -399,10 +399,10 @@ extern C_I3D_anim_cache anim_cache;
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
 // SYNTHETIC: GAME 0x403730
-// ??0S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
+// ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
 // ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z

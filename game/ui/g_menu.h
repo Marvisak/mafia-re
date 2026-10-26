@@ -120,8 +120,17 @@ public:
     // the mouse's cursor
     void Draw(uint flags);
     // A frame of the menu: the mouse's movement and buttons (the buttons released, pressed and down, 4 bits each), the
-    // key pressed or repeated, IGraph's shift keys and the frame's time
-    void Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time);
+    // key pressed or repeated, IGraph's shift keys and the frame's time. Closes a menu without components, ticks the
+    // menu and its components, gives the key or the mouse's click to the active component and else moves the
+    // activation (the arrows and Tab, or the mouse over a component), then clicks what was clicked; a closing menu is
+    // destroyed at the end, its parent active again, or without one ends ExecuteMenu with -1. Returns OnClick's result.
+    int Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time);
+    // Opens a menu over the active one (PS2's name): the active menu becomes its parent, which gets the id back in
+    // OnCreateChild and OnCloseChild, and the new one is created and active. Called on the menu, which it doesn't read.
+    void MenuOpen(GM_Menu *menu, uint id);
+    // Closes the menu with that code (PS2's name): tells the parent (OnCloseChild), then OnClose. Tick destroys it at
+    // the frame's end. PS2's ends ExecuteMenu with -1 here where the menu has no parent, the PC's Tick does.
+    void MenuClose(uint code);
     // Enables the component of that id, if the menu has one, with true (COMPF_ENABLED), and disables it with false:
     // PS2's name, and its code the same
     void SetDisabled(uint id, bool enabled);
@@ -140,8 +149,15 @@ public:
     void ActivateByIDOrNext(uint id);
     // The menu's component of that id, NULL for none
     GM_Component *FindComponentByID(uint id);
+    // Of the components that can be activated, the one with the highest id below id, or else the highest one
+    GM_Component *FindComponentByIDPrev(uint id);
     // Of the components that can be activated, the one with the lowest id above id, or else the lowest one
     GM_Component *FindComponentByIDNext(uint id);
+    // The component that can be activated before the one of that id in the menu's list, around from its end, NULL
+    // where no other can (PC only, the name is ours: the left arrow's and Shift+Tab's)
+    GM_Component *FindComponentPrev(uint id);
+    // The one after it, around from the list's start (PC only, the name is ours: the right arrow's and Tab's)
+    GM_Component *FindComponentNext(uint id);
     // Adds a copy of the component of that id, with the new id, right below it (PS2's name, Czech for "add a component
     // below"), and makes room for it: the component of grow_id (the window around) grows by its height, and those of
     // the other three ids (the items below) move down by it. An id of 0 is none.
@@ -161,9 +177,11 @@ public:
     GM_Component *root;
     GM_Component *active;               // 0xc, the active component, which has COMPF_ACTIVE (the name is ours)
     std::vector<GM_Component *> components; // 0x10, PS2's Destroy deletes them
-    bool unknown_20;                    // 0x20, Create plays the open sound while it is false
-    int unknown_24;                     // 0x24
-    int unknown_28;                     // 0x28, what Create passes to the parent's OnCreateChild
+    // 0x20, set by MenuClose, for Tick (the name is ours); Create plays the open sound while it is false
+    bool closing;
+    int close_code;                     // 0x24, MenuClose's, 0 again once Tick destroyed the menu (the name is ours)
+    // 0x28, MenuOpen's id, which the parent gets back in OnCreateChild and OnCloseChild (the name is ours)
+    uint open_id;
     uint flags;                         // 0x2c, MENUF_*
 
     // The screen relative to 800x600: x of the HUD's screen with Matrox Parhelia's two or three screens (PS2's relative
@@ -172,7 +190,8 @@ public:
     // The menu ExecuteMenu runs
     static GM_Menu *activeMenuWindow;
     // The mouse (PC only, the names are ours): Tick clamps its position to the screen and moves the cursor there while
-    // the mouse is in use, from a move of more than 10 pixels, a button or the wheel until a key moves the activation
+    // the mouse is in use, from a move of more than 10 pixels from the cursor, a button or the wheel until a key moves
+    // the activation
     static bool mouseInUse;
     static int cursorX, cursorY;
     static int mouseX, mouseY;

@@ -37,6 +37,25 @@ public:
     virtual int OnChange(GM_Component *, GM_Component *);
 };
 
+// A message with an OK button, "messagebox" (PC only: PS2's GM_QuestionBox is this one or the question by a flag, the
+// PC has a class for each; the name is ours, after its menu), 0x38 bytes. A key or a click closes it.
+// VTABLE: GAME 0x627524
+class GM_MessageBox : public GM_Menu
+{
+public:
+    // The message and the title, of the text database (no title for an id it doesn't have)
+    GM_MessageBox(uint text_id, uint title_id);
+
+    virtual const char *OnBeforeCreate();
+    // The texts, the window grown to fit the message
+    virtual int OnCreate();
+    virtual int OnKey(uchar key, uint);
+    virtual int OnClick(uint id);
+
+    char *text;                         // 0x30, item 0x82's (the names are ours)
+    char *title;                        // 0x34, the window's, NULL to keep the menu's
+};
+
 // The loading screen's progress bar (its menu's item 0x12c, a "pbar"; the name is ours)
 #define LOADPROGRESS_BAR 0x12c
 

@@ -8,6 +8,7 @@
 // SetDisabled set their bits with true, as PS2's.
 #define COMPF_VISIBLE 0x10              // drawn, with its children (BaseDraw); GM_Menu::SetHidden's
 #define COMPF_ENABLED 0x20              // GM_Menu::SetDisabled's
+#define COMPF_UNKNOWN_4000 0x4000       // the active component gets the mouse's clicks wherever the mouse is
 #define COMPF_UNKNOWN_8000 0x8000       // with the two above, the component can be activated
 #define COMPF_ACTIVE 0x80000000         // the menu's active component
 
@@ -16,7 +17,7 @@
 // of its own after Key, the mouse's (GM_Menu::Tick calls the three around it, GM_Menu's wrappers by id those from
 // SetTextID on). The return types of those nothing calls yet are guesses. PS2's has the members in the same order, 4
 // bytes lower (its vtable is at the end). Only what GM_Menu's written functions use so far; BaseDraw and BaseAfterMove
-// are in g_menu.cpp, as PS2's.
+// are in g_menu.cpp, as PS2's, and FindComponentAt after them.
 class GM_Component
 {
 public:
@@ -28,8 +29,8 @@ public:
     virtual void Draw(uint flags);
     virtual void AfterMove(uint flags);
     virtual void Tick(uint time);
-    virtual bool IsOverClientArea(int x, int y);
-    virtual bool IsOverActive(int x, int y);
+    virtual bool IsOverClientArea(float x, float y);
+    virtual bool IsOverActive(float x, float y);
     // The id of the item the key clicked, 0 for none
     virtual uint Key(uint shift_keys, uint key);
     // The mouse (PC only, the name is ours): the id of the item it clicked, 0 for none
@@ -59,6 +60,9 @@ public:
     void BaseDraw(uint draw_flags);
     // AfterMove of the component and its children
     void BaseAfterMove(uint draw_flags);
+    // The component under the point that can be activated, of the visible and enabled ones: the last child's first,
+    // the deepest first, and NULL for none (PC only, the name is ours: the mouse's)
+    GM_Component *FindComponentAt(float x, float y);
 
     // PS2's constructor sets them from the definition's item (GM_DesignStruct): the position and size scaled to the screen
     // (menuScreenScale), the position twice. The names are ours.

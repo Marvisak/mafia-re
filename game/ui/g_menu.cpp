@@ -1,7 +1,8 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs as far as the components (the constructor, the destructor and the resources, Create,
-// CreateCompsByDef, Destroy, Draw and the activation), SetCameraTargetID, the wrappers by id the loading screen and the
-// profiles' menu call, and PridejComponentPod; the components, Tick, TickCamera and the rest are stubs.
+// CreateCompsByDef, Destroy, Draw, Tick with MenuClose and the activation's searches), MenuOpen, SetCameraTargetID,
+// the wrappers by id the loading screen and the profiles' menu call, and PridejComponentPod; the components,
+// TickCamera and the rest are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
@@ -252,9 +253,26 @@ void GM_Component::BaseAfterMove(uint draw_flags)
         (*it)->BaseAfterMove(draw_flags);
 }
 
+// FUNCTION: GAME 0x5e9de0
+GM_Component *GM_Component::FindComponentAt(float x, float y)
+{
+    if (flags & COMPF_VISIBLE && flags & COMPF_ENABLED && IsOverClientArea(x, y))
+    {
+        for (std::vector<GM_Component *>::reverse_iterator it = children.rbegin(); it < children.rend(); it++)
+        {
+            GM_Component *found = (*it)->FindComponentAt(x, y);
+            if (found)
+                return found;
+        }
+        if (flags & COMPF_UNKNOWN_8000 && IsOverActive(x, y))
+            return this;
+    }
+    return NULL;
+}
+
 // PS2's loads the resources in ExecuteMenu
 // FUNCTION: GAME 0x5ea1f0
-GM_Menu::GM_Menu() : parent(NULL), root(NULL), active(NULL), unknown_20(false), unknown_24(0), unknown_28(0)
+GM_Menu::GM_Menu() : parent(NULL), root(NULL), active(NULL), closing(false), close_code(0), open_id(0)
 {
     flags = MENUF_UNKNOWN_10000;
     if (!menuCount)
@@ -280,13 +298,13 @@ void GM_Menu::Create()
     CreateCompsByDef(OnBeforeCreate());
     ActivateByIDOrNext(1);
     OnCreate();
-    if (!unknown_20 && menuSoundOpen)
+    if (!closing && menuSoundOpen)
     {
         menuSoundOpen->SetOn(false, true);
         menuSoundOpen->SetOn(true, true);
     }
     if (parent)
-        parent->OnCreateChild(this, unknown_28);
+        parent->OnCreateChild(this, open_id);
     OnChange(active, NULL);
 }
 
@@ -388,17 +406,149 @@ void GM_Menu::Draw(uint draw_flags)
     driver->SetState(RS_USEZB, true);
 }
 
-#pragma auto_inline(off)
-
-// Ends every menu with the main menu's quit, as the stub of ExecuteMenu did, so that a run goes through
-// STUB: GAME 0x5ea8c0
-void GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time)
+// PS2's has no mouse, asks MartinovaKlavesa for the key before the arrows and moves the activation with the up and down
+// arrows only (the keypad's too), and deletes a closing menu through its virtual destructor
+// FUNCTION: GAME 0x5ea8c0
+int GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time)
 {
-    StubLog("GM_Menu::Tick");
-    zz_globalReturnCode = 0x18;
+    uint clicked = 0;
+    int result = 0;
+    GM_Component *new_active = NULL;
+    if (!components.size())
+        MenuClose((uint)-1);
+    mouseX += mouse_rx;
+    mouseY += mouse_ry;
+    if (mouseX < 0)
+        mouseX = 0;
+    if (mouseX > igraph->Scrn_sx())
+        mouseX = igraph->Scrn_sx();
+    if (mouseY < 0)
+        mouseY = 0;
+    if (mouseY > igraph->Scrn_sy())
+        mouseY = igraph->Scrn_sy();
+    OnTick(time);
+    if (key)
+        OnKey(key, shift_keys);
+    OnMouse(mouseX, mouseY, mouse_rz, buttons, time);
+    for (std::vector<GM_Component *>::iterator it = components.begin(); it < components.end(); it++)
+        (*it)->Tick(time);
+    if (!mouseInUse)
+    {
+        if (abs(mouseX - cursorX) + abs(mouseY - cursorY) > 10)
+            mouseInUse = true;
+        if (buttons)
+            mouseInUse = true;
+        if (mouse_rz)
+            mouseInUse = true;
+    }
+    GM_Component *old_active = active;
+    uint active_id = old_active ? old_active->id : 0;
+    if (buttons || mouse_rz)
+    {
+        if (old_active && (old_active->flags & COMPF_UNKNOWN_4000 ||
+            old_active->IsOverActive((float)mouseX, (float)mouseY)))
+            clicked = active->Mouse(mouseX, mouseY, mouse_rz, buttons, time);
+    }
+    else
+    {
+        if (key)
+        {
+            if (old_active)
+                clicked = old_active->Key(shift_keys, key);
+            if (!clicked)
+                switch (key)
+                {
+                case DIK_LEFT:
+                    new_active = FindComponentPrev(active_id);
+                    break;
+                case DIK_TAB:
+                    if (shift_keys & SKEY_SHIFT)
+                        new_active = FindComponentPrev(active_id);
+                    else
+                        new_active = FindComponentNext(active_id);
+                    break;
+                case DIK_RIGHT:
+                    new_active = FindComponentNext(active_id);
+                    break;
+                case DIK_UP:
+                    new_active = FindComponentByIDPrev(active_id);
+                    break;
+                case DIK_DOWN:
+                    new_active = FindComponentByIDNext(active_id);
+                    break;
+                }
+            if (new_active && new_active != old_active)
+                mouseInUse = false;
+        }
+        if (mouseInUse && root)
+            new_active = root->FindComponentAt((float)mouseX, (float)mouseY);
+    }
+    if (!new_active)
+        new_active = old_active;
+    else
+        active = new_active;
+    if (old_active != new_active)
+    {
+        if (old_active)
+            old_active->flags &= ~COMPF_ACTIVE;
+        OnChange(new_active, old_active);
+        if (new_active)
+        {
+            if (menuSoundChange)
+            {
+                menuSoundChange->SetOn(false, true);
+                menuSoundChange->SetOn(true, true);
+            }
+            new_active->flags |= COMPF_ACTIVE;
+        }
+    }
+    if (clicked)
+        result = OnClick(clicked);
+    if (mouseInUse)
+    {
+        cursorX = mouseX;
+        cursorY = mouseY;
+    }
+    if (closing)
+    {
+        if (parent)
+        {
+            activeMenuWindow = parent;
+            closing = false;
+            close_code = 0;
+            Destroy();
+            if (menuSoundClose)
+            {
+                menuSoundClose->SetOn(false, true);
+                menuSoundClose->SetOn(true, true);
+            }
+        }
+        else if (!zz_globalReturnCode)
+            zz_globalReturnCode = -1;
+    }
+    return result;
 }
 
-#pragma auto_inline(on)
+// PS2's also resets the video player and a flag of its own
+// FUNCTION: GAME 0x5ead50
+void GM_Menu::MenuOpen(GM_Menu *menu, uint id)
+{
+    menu->parent = activeMenuWindow;
+    menu->open_id = id;
+    activeMenuWindow = menu;
+    menu->Create();
+}
+
+// MenuExchange (0x5ead80) comes before it, as PS2's
+// FUNCTION: GAME 0x5eae10
+void GM_Menu::MenuClose(uint code)
+{
+    if (parent)
+        parent->OnCloseChild(this, open_id, code);
+    close_code = code;
+    closing = true;
+    OnClose();
+}
 
 // FUNCTION: GAME 0x5eaed0
 void GM_Menu::SetDisabled(uint id, bool enabled)
@@ -486,6 +636,31 @@ GM_Component *GM_Menu::FindComponentByID(uint id)
     return NULL;
 }
 
+// FUNCTION: GAME 0x5eb320
+GM_Component *GM_Menu::FindComponentByIDPrev(uint id)
+{
+    GM_Component *found = NULL;
+    uint found_id = 0;
+    std::vector<GM_Component *>::iterator it;
+    for (it = components.begin(); it < components.end(); it++)
+        if ((*it)->id < id && (*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE &&
+            (*it)->flags & COMPF_UNKNOWN_8000 && (*it)->id > found_id)
+        {
+            found_id = (*it)->id;
+            found = *it;
+        }
+    if (found)
+        return found;
+    for (it = components.begin(); it < components.end(); it++)
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000 &&
+            (*it)->id > found_id)
+        {
+            found_id = (*it)->id;
+            found = *it;
+        }
+    return found;
+}
+
 // FUNCTION: GAME 0x5eb3c0
 GM_Component *GM_Menu::FindComponentByIDNext(uint id)
 {
@@ -509,6 +684,50 @@ GM_Component *GM_Menu::FindComponentByIDNext(uint id)
             found = *it;
         }
     return found;
+}
+
+// The search's first test can't fail: the loop starts one before where the search stopped
+// FUNCTION: GAME 0x5eb460
+GM_Component *GM_Menu::FindComponentPrev(uint id)
+{
+    if (!components.size())
+        return NULL;
+    std::vector<GM_Component *>::iterator it = components.end();
+    while (it > components.begin())
+        if ((*--it)->id == id)
+            break;
+    std::vector<GM_Component *>::iterator start = it;
+    for (it--; it != start; it--)
+    {
+        if (it < components.begin())
+            it = components.end() - 1;
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000)
+            return *it;
+    }
+    return NULL;
+}
+
+// FUNCTION: GAME 0x5eb4e0
+GM_Component *GM_Menu::FindComponentNext(uint id)
+{
+    if (!components.size())
+        return NULL;
+    std::vector<GM_Component *>::iterator it;
+    for (it = components.begin(); it < components.end(); it++)
+        if ((*it)->id == id)
+            break;
+    std::vector<GM_Component *>::iterator start = it;
+    for (it++; it != start; it++)
+    {
+        if (it < components.end())
+        {
+            if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000)
+                return *it;
+        }
+        else
+            it = components.begin() - 1;
+    }
+    return NULL;
 }
 
 inline GM_Component *G_GlobalFactory::MakeDup(GM_Component *component)

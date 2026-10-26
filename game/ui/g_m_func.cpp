@@ -1,11 +1,13 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
-// docs/game-files.md). OnChange (0x5e4a50) lies in the range of the next file but one. Then the loading screen
-// (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu's OnBeforeCreate, the loading
-// screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what
-// main and C_mission::Open need to link.
+// docs/game-files.md). OnChange (0x5e4a50) lies in the range of the next file but one. The PC's message box (from
+// 0x5e2170), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main
+// menu's OnBeforeCreate, the message box's OnBeforeCreate and constructor, the loading screen's constructor,
+// OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main,
+// C_mission::Open and the profiles' menu need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
+#include "ui/g_textdb.h"
 #include "mission/Mission.h"
 
 #include <string.h>
@@ -50,10 +52,13 @@ const char *GM_MainMenu::OnBeforeCreate()
 
 #pragma auto_inline(off)
 
+// Ends the main menu with its quit before its first frame, so that a run goes through: without the components the
+// menu has none, GM_Menu::Tick closes it with -1, and main would open it again forever
 // STUB: GAME 0x5e0690
 int GM_MainMenu::OnCreate()
 {
     StubLog("GM_MainMenu::OnCreate");
+    zz_globalReturnCode = MAINMENU_QUIT;
     return 0;
 }
 
@@ -61,6 +66,45 @@ int GM_MainMenu::OnCreate()
 int GM_MainMenu::OnClick(uint id)
 {
     StubLog("GM_MainMenu::OnClick");
+    return 0;
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e2170
+const char *GM_MessageBox::OnBeforeCreate()
+{
+    // STRING: GAME 0x6382d4
+    return "messagebox";
+}
+
+// FUNCTION: GAME 0x5e2180
+GM_MessageBox::GM_MessageBox(uint text_id, uint title_id)
+{
+    text = textDatabase.GetText(text_id);
+    title = textDatabase.GetTextOrNULL(title_id);
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e21f0
+int GM_MessageBox::OnCreate()
+{
+    StubLog("GM_MessageBox::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e22d0
+int GM_MessageBox::OnKey(uchar key, uint)
+{
+    StubLog("GM_MessageBox::OnKey");
+    return 0;
+}
+
+// STUB: GAME 0x5e22f0
+int GM_MessageBox::OnClick(uint id)
+{
+    StubLog("GM_MessageBox::OnClick");
     return 0;
 }
 
