@@ -69,8 +69,17 @@ struct S_VEH_PARTICLE
     S_vector velocity_end;              // 0x10, PP_VELOCITY_END
 };
 
-// The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp): so far the tables InitSystem loads
-// through C_car, which CloseSystem frees through this class, as PS2's, and the sounds' volume
+// A vehicle's wheel (the name is ours; PS2's C_Vehicle has them through pointers too). Only what the camera reads.
+struct S_wheel
+{
+    uchar unknown_0[0x7c];
+    S_vector unknown_7c;                // 0x7c, the camera "C In" tilts by their sum
+};
+
+// The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp), a base of C_car at 0x70 (the car
+// offsets in the members' comments): the tables InitSystem loads through C_car, which CloseSystem frees through this
+// class, as PS2's, the sounds' volume, and what the camera reads. The size is a guess: the constructor (0x4bd8f0)
+// sets members up to 0x2004, the car's own start at the car's 0x20b0 at the latest.
 class C_Vehicle
 {
 public:
@@ -104,6 +113,49 @@ public:
     static void CloseParticles();
     // Sets sound_volume (C_Vehicle_sounds.cpp; PC only, the name is ours)
     static void SetSoundVolume(float volume);
+
+    // The driver's head (PS2 name), where the camera "C In" sits
+    const S_vector &GetHeadPos();
+    // While it is set, the car cameras' faktorStability falls (PS2 name)
+    bool IsVehicleUnstable();
+    // One of the vehicle's two sizes (PS2 name)
+    const S_vector &GetVehicleSize(bool b);
+    // The velocity, by value (the name is a guess): the camera copies it before each use, as for the actors' vectors
+    S_vector GetVelocity() const
+    {
+        return velocity;
+    }
+
+    // Our names are guesses after the members' uses.
+    // The vtable's place: PS2's C_Vehicle has one (one virtual function), the PC's car stores its second vtable here
+    void *unknown_0;                    // 0x0 (car 0x70)
+    uchar unknown_4[0x154];             // 0x4
+    S_vector unknown_158;               // 0x158 (car 0x1c8), GetVehicleSize(false)'s
+    S_vector unknown_164;               // 0x164 (car 0x1d4), GetVehicleSize(true)'s
+    uchar unknown_170[0x34];            // 0x170
+    uint unknown_1a4;                   // 0x1a4 (car 0x214), flags: 8 while the vehicle is unstable
+    uchar unknown_1a8[0x12c];           // 0x1a8
+    S_vector head_pos;                  // 0x2d4 (car 0x344), the driver's head (GetHeadPos)
+    uchar unknown_2e0[0x6c];            // 0x2e0
+    I3D_frame *model_frame;             // 0x34c (car 0x3bc), the frame whose world matrix model_matrix is
+    uchar unknown_350[0x48];            // 0x350
+    S_vector unknown_398;               // 0x398 (car 0x408), the point the car cameras look at, the position most likely
+    uchar unknown_3a4[0x120];           // 0x3a4
+    int num_wheels;                     // 0x4c4 (car 0x534)
+    uchar unknown_4c8[0xd4];            // 0x4c8
+    float speed;                        // 0x59c (car 0x60c), most likely
+    uchar unknown_5a0[0x698];           // 0x5a0
+    S_wheel **wheels;                   // 0xc38 (car 0xca8)
+    uchar unknown_c3c[0x18];            // 0xc3c
+    S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
+    uchar unknown_c60[4];               // 0xc60
+    float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
+    uchar unknown_c68[0x80];            // 0xc68
+    S_matrix model_matrix;              // 0xce8 (car 0xd58), C_car::GetInvModelMatrix's
+    S_matrix inv_model_matrix;          // 0xd28 (car 0xd98)
+    uchar unknown_d68[0x1228];          // 0xd68
+    S_vector velocity;                  // 0x1f90 (car 0x2000), most likely
+    uchar unknown_1f9c[0xa4];           // 0x1f9c
 };
 
 // The tables' vector helpers the loaders and the Set functions call out of line: each push_back's insert(P, n, x) and the
@@ -122,7 +174,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -140,4 +192,4 @@ public:
 // ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

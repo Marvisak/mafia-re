@@ -97,6 +97,9 @@ public:
     // The controls' values, or with CONTROLS_PRESSED their values at the update each was pressed in (the name is ours):
     // the first one through values and the count, -1 while there are none
     int GetValues(float *&list, uint flags);
+    // One control's value, or with CONTROLS_PRESSED its value at the update it was pressed in, 0 for an index outside the
+    // table (the name is ours)
+    float GetValue(int index, uint flags);
     // Binds the control of that index (NULL unbinds it): defines its key with IGraph, counts the keys' and the mouse
     // buttons' users, sets a joystick axis's mode, and grows the tables to the index. False for a negative index, a key
     // with no free slot, or a joystick that isn't there.
@@ -125,4 +128,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@MV?$allocator@M@std@@@std@@QAEXPAMIABM@Z
+// ?insert@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEXPAPAVC_actor@@IABQAV3@@Z

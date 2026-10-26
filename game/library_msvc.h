@@ -11,6 +11,21 @@
 // LIBRARY: GAME 0x60fc36
 // ?Make@S_quat@@QAGXABUS_matrix@@@Z
 
+// LIBRARY: GAME 0x60fc3c
+// ?Normalize@S_quat@@QAGXXZ
+
+// LIBRARY: GAME 0x60fc5a
+// ?SetRot3@S_matrix@@QAGXABUS_quat@@@Z
+
+// LIBRARY: GAME 0x60fc66
+// ?RotateByMatrix@S_vector@@QBG?AU1@ABUS_matrix@@@Z
+
+// LIBRARY: GAME 0x60fc72
+// ?Inverse@S_matrix@@QAG_NABU1@@Z
+
+// LIBRARY: GAME 0x60fc90
+// ?SetDir3@S_matrix@@QAGXABUS_vector@@0@Z
+
 // LIBRARY: GAME 0x60fc9c SYMBOL
 // _I3DGetDriver
 
@@ -157,6 +172,12 @@
 
 // LIBRARY: GAME 0x611207
 // ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z
+
+// LIBRARY: GAME 0x611280 SYMBOL
+// __CIasin
+
+// LIBRARY: GAME 0x611294 SYMBOL
+// _asin
 
 // LIBRARY: GAME 0x611470 SYMBOL
 // _strncpy

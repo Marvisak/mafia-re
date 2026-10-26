@@ -1,6 +1,7 @@
 // The vehicles (PS2 C_Vehicle.cpp; the PC's file is most likely the one at 0x4bd650-0x4d34ac, whose first initializers
 // construct the tables, docs/game-files.md). Written so far: the tables C_car's loaders fill and CloseSystem frees, in
-// PS2's order (each table's Set before its Close).
+// PS2's order (each table's Set before its Close), and the accessors the camera calls (GetHeadPos, IsVehicleUnstable,
+// GetVehicleSize).
 // Open: the file starts with an empty initializer (0x4bd650) and has two more vectors after v_particle (0x63d890,
 // 0x63d880), most likely PS2's v_light_sector and v_sound_sector; the tables' destructors (0x4bd6a0 and on) test and set
 // a guard byte (0x63d9c0) as the tracks' do (actors/C_animations.cpp), and the .bss order isn't the buckets' of these
@@ -93,4 +94,22 @@ void C_Vehicle::CloseParticles()
         }
     }
     v_particle.clear();
+}
+
+// FUNCTION: GAME 0x4cc620
+const S_vector &C_Vehicle::GetHeadPos()
+{
+    return head_pos;
+}
+
+// FUNCTION: GAME 0x4cd5b0
+bool C_Vehicle::IsVehicleUnstable()
+{
+    return unknown_1a4 & 8 ? true : false;
+}
+
+// FUNCTION: GAME 0x4cd5c0
+const S_vector &C_Vehicle::GetVehicleSize(bool b)
+{
+    return b ? unknown_164 : unknown_158;
 }

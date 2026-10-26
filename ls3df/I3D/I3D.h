@@ -426,6 +426,22 @@ public:
         m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
     }
 
+    // The local position (Insanity3D's name; the game's cameras read it in place)
+    const S_vector &GetPos() const
+    {
+        return m_LocalMatrix(3);
+    }
+
+    // Turns the local matrix to dir, with up as the up vector (the name is Insanity3D's as far as we know, not checked
+    // against its source; the game's out-of-line copy is at 0x4609c0 in Game.exe, SetWorldDir sets the flags the same
+    // way)
+    void SetDir1(const S_vector &dir, const S_vector &up)
+    {
+        m_LocalMatrix.SetDir3(dir, up);
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_QUAT_VALID |
+            FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
+    }
+
     // The scale, by reference (the game's out-of-line copy is at 0x47aec0 in Game.exe)
     const S_vector &GetScale() const
     {

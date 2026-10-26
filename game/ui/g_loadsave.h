@@ -118,7 +118,11 @@ struct S_profile_settings
 {
     float steering_linearity;           // 0x0, "Nonlinear / Linear"
     float blood_level;                  // 0x4, "Level of Blood"
-    uchar unknown_8[0xc];
+    // The mouse camera's filter (G_Camera::Tick's CAMERA_P_MOUSE: each older movement weighs unknown_c to the power of
+    // unknown_8 times its age in hundredths of a second); nothing else reads them
+    float unknown_8;                    // 0x8
+    float unknown_c;                    // 0xc
+    uchar unknown_10[4];                // 0x10
     float aiming_sensitivity_x;         // 0x14
     float aiming_sensitivity_y;         // 0x18
     float aiming_speed_x;               // 0x1c, "Max Aiming Speed X"

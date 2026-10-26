@@ -101,6 +101,18 @@ public:
     static void AddActorToGlobal(C_actor *act);
     // Takes the actor from global_actors, the last one in its place (PS2 name)
     static void DelActorFromGlobal(C_actor *act);
+    // The frame's world position, or pos without a frame (PS2 name)
+    S_vector GetWorldPos();
+    // The position and the direction, by value (the names are ours): the camera copies them before each use, as an inline
+    // function returning a copy does, where a member read in place is used there
+    S_vector GetPos() const
+    {
+        return pos;
+    }
+    S_vector GetDir() const
+    {
+        return dir;
+    }
 
     int unknown_4;                      // 0x4
     int unknown_8;                      // 0x8, 0 from the constructor's body
@@ -111,7 +123,10 @@ public:
     int number;
     int unknown_1c;                     // 0x1c, 0 from Init
     bool unknown_20;                    // 0x20
-    uchar unknown_21[0x3f];             // 0x21
+    uchar unknown_21[3];                // 0x21
+    S_vector pos;                       // 0x24, the actor's position (the name is ours)
+    S_vector dir;                       // 0x30, its direction (the name is ours)
+    uchar unknown_3c[0x24];             // 0x3c
     int unknown_60;                     // 0x60
     uchar unknown_64[2];                // 0x64
     bool unknown_66;                    // 0x66

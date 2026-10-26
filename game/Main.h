@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1S_unknown_26c@C_game@@QAE@XZ
+// ?id@?$ctype@G@std@@$E
 
 #include <settings.h>
 
@@ -45,7 +45,7 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVC_effect_part@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAVC_program@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
 // ?_Destroy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@0@Z

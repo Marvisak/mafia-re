@@ -339,10 +339,10 @@ extern C_I3D_anim_cache anim_cache;
 // ??1S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
-// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0@Z
+// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
-// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU23@00@Z
+// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -394,18 +394,18 @@ extern C_I3D_anim_cache anim_cache;
 
 // The loader's callback, the three caches' folded into one
 // TEMPLATE: GAME 0x410c50
-// ?LoadCallback@?$C_I3D_cache@VI3D_sound@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
+// ?LoadCallback@?$C_I3D_cache@VI3D_model@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
 
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
 // SYNTHETIC: GAME 0x403730
-// ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
+// ??0S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
 // ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z

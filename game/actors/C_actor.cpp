@@ -778,6 +778,15 @@ void C_actor::DelActorFromGlobal(C_actor *act)
     }
 }
 
+// The frame's world position, or the actor's own without a frame (PS2 name)
+// FUNCTION: GAME 0x407fe0
+S_vector C_actor::GetWorldPos()
+{
+    if (frame)
+        return frame->GetWorldPos();
+    return pos;
+}
+
 // qsort's, by id
 // FUNCTION: GAME 0x408690
 int __cdecl compare_anim_index(const void *a, const void *b)

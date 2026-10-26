@@ -1,6 +1,7 @@
 #pragma once
 
 #include "actors/C_actor.h"
+#include "vehicles/C_Vehicle.h"
 
 struct S_SRFC;
 
@@ -29,7 +30,7 @@ struct S_TSRFC
 // constructs both, the PC's stores a second vtable there, 0x6236b0). Only what InitSystem, the profiles and
 // C_mission::CreateActor use so far: its tables, which InitSystem loads once (C_game::Init loads them again, with the
 // game's tables loaded), and which C_Vehicle keeps, the force feedback's scales, and the constructor, a stub.
-class C_car : public C_actor
+class C_car : public C_actor, public C_Vehicle
 {
 public:
     C_car();
@@ -52,5 +53,8 @@ public:
     // Sets the force feedback's scales (PC only, the name is ours)
     static void SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs);
 
-    uchar unknown_70[0x21ac];           // 0x70
+    // The model matrix's inverse, made from the frame's world matrix first with update (PS2 name)
+    const S_matrix &GetInvModelMatrix(bool update);
+
+    uchar unknown_20b0[0x16c];          // 0x20b0
 };

@@ -1,6 +1,6 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
 // constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
-// ClearControls, GetValues and SetControl; Update is a stub.
+// ClearControls, GetValues, GetValue and SetControl; Update is a stub.
 
 #include "input/controls.h"
 
@@ -94,6 +94,21 @@ int C_controls::GetValues(float *&list, uint flags)
         return -1;
     list = values.begin();
     return values.size();
+}
+
+// One control's value, or with CONTROLS_PRESSED its value at the update it was pressed in; 0 for an index outside the
+// table (the name is ours)
+// FUNCTION: GAME 0x4f0240
+float C_controls::GetValue(int index, uint flags)
+{
+    if (flags & CONTROLS_PRESSED)
+    {
+        if (index < pressed.size() && index >= 0)
+            return pressed[index];
+    }
+    else if (index < values.size() && index >= 0)
+        return values[index];
+    return 0.0f;
 }
 
 // FUNCTION: GAME 0x4f02b0

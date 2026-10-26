@@ -302,6 +302,19 @@ void C_car::ConvertTyres(S_TSRFC *src, S_SRFC *dst)
     dst->curve[1].unknown_28 = src->curve[1].unknown_20;
 }
 
+// PS2's order: the frame's world matrix into the model matrix, that into the inverse, inverted from a copy
+// FUNCTION: GAME 0x4293e0
+const S_matrix &C_car::GetInvModelMatrix(bool update)
+{
+    if (update)
+    {
+        model_matrix = model_frame->GetMatrix();
+        inv_model_matrix = model_matrix;
+        inv_model_matrix.Inverse(S_matrix(inv_model_matrix));
+    }
+    return inv_model_matrix;
+}
+
 // FUNCTION: GAME 0x42bb90
 void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs)
 {
