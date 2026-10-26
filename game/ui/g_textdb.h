@@ -26,6 +26,8 @@ public:
     bool LoadDatabase(char *name);
     // Frees the file, at CloseSystem
     void Unload();
+    // The text of an id, " " for an id it doesn't have
+    char *GetText(uint id);
 };
 
 extern G_TextDatabase textDatabase;

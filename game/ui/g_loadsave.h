@@ -48,6 +48,16 @@
 #define CTRL_CAMERA 0x3a
 #define CTRL_REPLACE_CAR 0x3b           // "Replace car (racing)"
 #define CTRL_SECONDARY 1
+// The player's controls come first, the car's from CTRL_ACCELERATE (the name is ours)
+#define NUM_PLAYER_CONTROLS CTRL_ACCELERATE
+
+// G_LoadSaveClass::Refresh's flags, which options it applies (the names are ours)
+#define REFRESH_SOUND 0x1               // the sound driver's volume and the cars', which depends on it
+#define REFRESH_MUSIC 0x2               // the videos' and the music's
+#define REFRESH_GAMMA 0x4
+#define REFRESH_FORCE_FEEDBACK 0x8
+#define REFRESH_CARS 0x20               // the cars' volume
+#define REFRESH_ALL 0xffffffff
 
 // The flags of G_LoadSaveClass::DefaultControls and DefaultSettings (the names are ours, after the controls menu's
 // pages, whose Reset to Defaults passes the page's flag to both): 0x80 clears the block first, the other bits choose
@@ -115,7 +125,7 @@ struct S_profile_settings
     float music_volume;                 // 0x24
     float car_volume;                   // 0x28, "Cars"
     float speech_volume;                // 0x2c
-    // 1 to 3 (the profile's load at 0x60e0fe resets others to 1): the camera G_Camera::Reset takes, the number of an
+    // 1 to 3 (Refresh resets others to 1): the camera G_Camera::Reset takes, the number of an
     // entry of the camera's cameraParams (where PS2's Reset takes 1)
     uint camera;                        // 0x30
     // The same for 7 to 15, 7 otherwise
@@ -167,7 +177,8 @@ public:
     uint key1;                          // 0x4
     uint key2;                          // 0x8
     uint magic;                         // 0xc, SetParams's, the file's kind (PROFILE_MAGIC)
-    uchar head[0x18];                   // 0x10, the file's first bytes, which OpenRead reads
+    // The file's first bytes, which OpenRead reads and OpenWrite writes: the magic, 0, 1, then zeros
+    uint head[6];                       // 0x10
     FILE *file;                         // 0x28
     bool unknown_2c;                    // 0x2c, Close returns whether this or unknown_2d is set
     bool unknown_2d;                    // 0x2d
@@ -180,8 +191,14 @@ public:
     void SetParams(uint magic, bool crypt, bool unknown);
     // Opens the file for reading and reads its head, with the keys reset
     bool OpenRead(char *name);
+    // Creates the file and writes its head, with the keys reset
+    bool OpenWrite(char *name);
     bool Close();
+    // Encrypts size bytes (whole dwords) in place, the keys running on, as Decrypt reverses it (PS2's is empty)
+    void Crypt(void *data, uint size);
     void Decrypt(void *data, uint size);
+    // Writes size bytes from adr, through an encrypted copy if crypt is set; returns what fwrite wrote
+    uint WriteAdr(void *adr, uint size);
     // Reads size bytes into adr, decrypted if crypt is set; returns what fread read
     uint ReadAdr(void *adr, uint size);
 };
@@ -243,6 +260,10 @@ public:
     void LanguageSelect(uint language);
     // One control's binding (PC only, the name is ours), which DefaultControls passes
     void SetBinding(int index, ushort device, ushort code, int joy, int half);
+    // Another control bound to the same key, button or axis (PC only, the name is ours), any half with any_half: among
+    // the player's controls for one of the player's, among the car's for the car's or when other is one of them; skips
+    // index and other. -1 for none, and for an unbound control.
+    int FindBinding(int index, S_control *control, bool any_half, int other);
     // The controls' defaults (PC only, the name is ours): DEFAULTS_CLEAR unbinds them first, DEFAULTS_PLAYER and
     // DEFAULTS_CAR choose the groups
     void DefaultControls(uint flags);
@@ -254,8 +275,13 @@ public:
     void RaceCarsDisable(uint cars);
     // Empties the garage (PC only, the name is ours; PS2's SaveGameNewGame clears its G_GarageClass instead)
     void GarageClear();
+    // Applies the options REFRESH_* chooses, and puts the cameras back in their ranges
+    void Refresh(uint flags);
     // Plays tables\credits.def
     void ExecuteCredits();
+    // The free ride's state (PS2's names)
+    void FreerideStoreA(uint a, uint b, float c, float d, float e);
+    void FreerideStoreB(uint state);
     void FreerideSetup();
     // Finds Tommy and his car in the free ride's mission
     void FreerideSetupAfter();

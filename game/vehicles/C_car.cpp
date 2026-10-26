@@ -1,6 +1,7 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
-// PS2's own), which the loaders hand to C_Vehicle in a local vector.
+// PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
+// profiles set.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -10,6 +11,18 @@
 #include <string.h>
 
 #include "rw_data.h"
+
+// Initialized data, in the order SetForceFeedback stores them
+// GLOBAL: GAME 0x6322dc
+float C_car::ff_volume = 1.0f;
+// GLOBAL: GAME 0x6322e0
+float C_car::ff_tire_grip = 1.0f;
+// GLOBAL: GAME 0x6322e4
+float C_car::ff_collisions = 1.0f;
+// GLOBAL: GAME 0x6322e8
+float C_car::ff_suspension = 1.0f;
+// GLOBAL: GAME 0x6322ec
+float C_car::ff_revs = 1.0f;
 
 // A bool parameter's bits, the way I3DFloatAsInt gives a float's (I3D.h): the original stores the byte to a slot of its
 // own for each call and pushes the whole dword. The name is ours.
@@ -275,4 +288,14 @@ void C_car::ConvertTyres(S_TSRFC *src, S_SRFC *dst)
     dst->curve[1].max_2 = src->curve[1].max_2;
     dst->curve[1].range_2 = dst->curve[1].max_2 - dst->curve[1].min_2;
     dst->curve[1].unknown_28 = src->curve[1].unknown_20;
+}
+
+// FUNCTION: GAME 0x42bb90
+void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs)
+{
+    ff_volume = volume;
+    ff_tire_grip = tire_grip;
+    ff_collisions = collisions;
+    ff_suspension = suspension;
+    ff_revs = revs;
 }

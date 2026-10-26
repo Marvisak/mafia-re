@@ -15,6 +15,7 @@
 #include <vector>
 
 class C_mission;
+class IShow;
 
 // A semaphore of the mission's traffic lights (PS2 S_semaphore, outside C_game; PS2's LoadSemaphores and
 // TickSemaphores), 0x14 bytes by the game's code; what it holds isn't known yet
@@ -78,9 +79,12 @@ public:
     {
         uchar unknown_0[0x10];
     };
+    // A video playing in the mission (the members' names are ours)
     struct S_i_show
     {
-        uchar unknown_0[0x14];
+        IShow *show;
+        uchar unknown_4[0xc];
+        float volume;                   // 0x10, its own, which the music's scales (PS2's IShowStoreVolume stores it)
     };
     struct S_i_show_fade
     {
@@ -276,6 +280,8 @@ public:
     void InventoryStackClear();
     void FloatStackClear();
     void CharacterStackClear();
+    // The videos' volumes from the profile's music volume (PS2's sets its one video's)
+    void IShowSetVolume();
 };
 
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies

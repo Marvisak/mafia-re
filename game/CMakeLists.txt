@@ -25,6 +25,7 @@ add_executable(game WIN32
     ai/C_shvestky.cpp
     ai/C_sledovacka.cpp
     vehicles/C_Vehicle.cpp
+    vehicles/C_Vehicle_sounds.cpp
     input/controls.cpp
     ui/console.cpp
     mission/Mission.cpp

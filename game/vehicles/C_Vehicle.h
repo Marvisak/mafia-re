@@ -69,13 +69,16 @@ struct S_VEH_PARTICLE
     S_vector velocity_end;              // 0x10, PP_VELOCITY_END
 };
 
-// The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp): so far the tables InitSystem loads through C_car, which
-// CloseSystem frees through this class, as PS2's
+// The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp): so far the tables InitSystem loads
+// through C_car, which CloseSystem frees through this class, as PS2's, and the sounds' volume
 class C_Vehicle
 {
 public:
     // The scene the vehicles are in, which C_mission::Open sets (PS2 name)
     static I3D_scene *scene;
+    // The vehicles' sounds' volume, the profile's for the cars relative to the sounds' (PC only, the name is ours): 1
+    // until G_LoadSaveClass::Refresh sets it
+    static float sound_volume;
     // The tyres, the "user" one first (PS2 name)
     static std::vector<S_TYRE> v_tyre;
     // The materials (PS2 name), and the index of each material's entry in it (PS2's is an int array)
@@ -93,6 +96,8 @@ public:
     static bool SetParticles(const std::vector<S_VEH_PARTICLE> *particles);
     // Unlinks and releases the emitters
     static void CloseParticles();
+    // Sets sound_volume (C_Vehicle_sounds.cpp; PC only, the name is ours)
+    static void SetSoundVolume(float volume);
 };
 
 // The tables' vector helpers the loaders and the Set functions call out of line: each push_back's insert(P, n, x) and the

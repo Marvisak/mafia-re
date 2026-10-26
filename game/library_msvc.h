@@ -63,7 +63,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -161,6 +161,9 @@
 // LIBRARY: GAME 0x61174c SYMBOL
 // _fclose
 
+// LIBRARY: GAME 0x6117a2 SYMBOL
+// _fwrite
+
 // LIBRARY: GAME 0x6118ac SYMBOL
 // __fsopen
 
@@ -187,6 +190,12 @@
 
 // LIBRARY: GAME 0x611d52 SYMBOL
 // __exit
+
+// LIBRARY: GAME 0x6120c0 SYMBOL
+// __CIpow
+
+// LIBRARY: GAME 0x6120d9 SYMBOL
+// _pow
 
 // LIBRARY: GAME 0x612310 SYMBOL
 // __aulldiv
@@ -299,6 +308,129 @@
 // LIBRARY: GAME 0x615471 SYMBOL
 // __seh_longjmp_unwind@4
 
+// LIBRARY: GAME 0x615490 SYMBOL
+// __trandisp1
+
+// LIBRARY: GAME 0x6154f7 SYMBOL
+// __trandisp2
+
+// LIBRARY: GAME 0x615583 SYMBOL
+// __rttospopde
+
+// LIBRARY: GAME 0x615588 SYMBOL
+// __rttospop
+
+// LIBRARY: GAME 0x61558a SYMBOL
+// __rtnospop
+
+// LIBRARY: GAME 0x61558c SYMBOL
+// __rttosnpop
+
+// LIBRARY: GAME 0x61558d SYMBOL
+// __rtnospopde
+
+// LIBRARY: GAME 0x615594 SYMBOL
+// __rtzeropop
+
+// LIBRARY: GAME 0x615596 SYMBOL
+// __rtzeronpop
+
+// LIBRARY: GAME 0x61559b SYMBOL
+// __rtonepop
+
+// LIBRARY: GAME 0x61559d SYMBOL
+// __rtonenpop
+
+// LIBRARY: GAME 0x6155a2 SYMBOL
+// __tosnan1
+
+// LIBRARY: GAME 0x6155cd SYMBOL
+// __nosnan2
+
+// LIBRARY: GAME 0x6155cf SYMBOL
+// __tosnan2
+
+// LIBRARY: GAME 0x6155f7 SYMBOL
+// __nan2
+
+// LIBRARY: GAME 0x615636 SYMBOL
+// __rtindfpop
+
+// LIBRARY: GAME 0x615638 SYMBOL
+// __rtindfnpop
+
+// LIBRARY: GAME 0x615649 SYMBOL
+// __rttosnpopde
+
+// LIBRARY: GAME 0x615653 SYMBOL
+// __rtchsifneg
+
+// LIBRARY: GAME 0x615660 SYMBOL
+// __startTwoArgErrorHandling
+
+// LIBRARY: GAME 0x615677 SYMBOL
+// __startOneArgErrorHandling
+
+// LIBRARY: GAME 0x6156c0 SYMBOL
+// __twoToTOS
+
+// LIBRARY: GAME 0x6156d5 SYMBOL
+// __load_CW
+
+// LIBRARY: GAME 0x6156ec SYMBOL
+// __convertTOStoQNaN
+
+// LIBRARY: GAME 0x615705 SYMBOL
+// __fload_withFB
+
+// LIBRARY: GAME 0x615748 SYMBOL
+// __checkTOS_withFB
+
+// LIBRARY: GAME 0x61575e SYMBOL
+// __fast_exit
+
+// LIBRARY: GAME 0x61576b SYMBOL
+// __math_exit
+
+// LIBRARY: GAME 0x615795 SYMBOL
+// __check_overflow_exit
+
+// LIBRARY: GAME 0x6157a9 SYMBOL
+// __check_range_exit
+
+// LIBRARY: GAME 0x615937 SYMBOL
+// __raise_exc
+
+// LIBRARY: GAME 0x615bea SYMBOL
+// __handle_exc
+
+// LIBRARY: GAME 0x615e89 SYMBOL
+// __set_errno
+
+// LIBRARY: GAME 0x615f01 SYMBOL
+// __frnd
+
+// LIBRARY: GAME 0x615f13 SYMBOL
+// __set_exp
+
+// LIBRARY: GAME 0x615f3c SYMBOL
+// __sptype
+
+// LIBRARY: GAME 0x615f96 SYMBOL
+// __decomp
+
+// LIBRARY: GAME 0x616057 SYMBOL
+// __statfp
+
+// LIBRARY: GAME 0x616065 SYMBOL
+// __clrfp
+
+// LIBRARY: GAME 0x616074 SYMBOL
+// __ctrlfp
+
+// LIBRARY: GAME 0x616097 SYMBOL
+// __set_statfp
+
 // LIBRARY: GAME 0x6160ed SYMBOL
 // __close
 
@@ -337,6 +469,33 @@
 
 // LIBRARY: GAME 0x616ac8 SYMBOL
 // _toupper
+
+// LIBRARY: GAME 0x616bb1
+// __fFEXP
+
+// LIBRARY: GAME 0x616c18 SYMBOL
+// __rtinfpopse
+
+// LIBRARY: GAME 0x616c1a SYMBOL
+// __rtinfnpopse
+
+// LIBRARY: GAME 0x616c2a SYMBOL
+// __fFLN
+
+// LIBRARY: GAME 0x616cdf SYMBOL
+// __rtinfpop
+
+// LIBRARY: GAME 0x616ce1 SYMBOL
+// __rtinfnpop
+
+// LIBRARY: GAME 0x616cfe SYMBOL
+// __ffexpm1
+
+// LIBRARY: GAME 0x616da7 SYMBOL
+// __powhlp
+
+// LIBRARY: GAME 0x616ed7 SYMBOL
+// __d_inttype
 
 // LIBRARY: GAME 0x616f3c SYMBOL
 // __dosmaperr
@@ -533,6 +692,9 @@
 // LIBRARY: GAME 0x619b80 SYMBOL
 // ___strgtold12
 
+// LIBRARY: GAME 0x61a051 SYMBOL
+// __87except
+
 // LIBRARY: GAME 0x61a124 SYMBOL
 // __alloc_osfhnd
 
@@ -550,6 +712,75 @@
 
 // LIBRARY: GAME 0x61a33e SYMBOL
 // __sopen
+
+// LIBRARY: GAME 0x61ab60 SYMBOL
+// _fdiv_main_routine
+
+// LIBRARY: GAME 0x61ac77 SYMBOL
+// __adj_fdiv_r
+
+// LIBRARY: GAME 0x61b116 SYMBOL
+// __fdivp_sti_st
+
+// LIBRARY: GAME 0x61b129 SYMBOL
+// __fdivrp_sti_st
+
+// LIBRARY: GAME 0x61b13c SYMBOL
+// __adj_fdiv_m32
+
+// LIBRARY: GAME 0x61b188 SYMBOL
+// __adj_fdiv_m64
+
+// LIBRARY: GAME 0x61b1d4 SYMBOL
+// __adj_fdiv_m16i
+
+// LIBRARY: GAME 0x61b208 SYMBOL
+// __adj_fdiv_m32i
+
+// LIBRARY: GAME 0x61b23c SYMBOL
+// __adj_fdivr_m32
+
+// LIBRARY: GAME 0x61b288 SYMBOL
+// __adj_fdivr_m64
+
+// LIBRARY: GAME 0x61b2d4 SYMBOL
+// __adj_fdivr_m16i
+
+// LIBRARY: GAME 0x61b308 SYMBOL
+// __adj_fdivr_m32i
+
+// LIBRARY: GAME 0x61b33c SYMBOL
+// __safe_fdiv
+
+// LIBRARY: GAME 0x61b351 SYMBOL
+// __safe_fdivr
+
+// LIBRARY: GAME 0x61b366 SYMBOL
+// __fprem_common
+
+// LIBRARY: GAME 0x61b56c SYMBOL
+// __adj_fprem
+
+// LIBRARY: GAME 0x61b61e SYMBOL
+// __fprem1_common
+
+// LIBRARY: GAME 0x61b824 SYMBOL
+// __adj_fprem1
+
+// LIBRARY: GAME 0x61b8d9 SYMBOL
+// __safe_fprem
+
+// LIBRARY: GAME 0x61b8df SYMBOL
+// __safe_fprem1
+
+// LIBRARY: GAME 0x61b8e5 SYMBOL
+// __adj_fpatan
+
+// LIBRARY: GAME 0x61b8e8 SYMBOL
+// __adj_fptan
+
+// LIBRARY: GAME 0x61b8eb SYMBOL
+// __fpclass
 
 // LIBRARY: GAME 0x61b97d SYMBOL
 // __ismbblead
@@ -635,6 +866,9 @@
 // GLOBAL: GAME 0x627c28
 // ___lookuptable
 
+// GLOBAL: GAME 0x627d1a
+// __pi_by_2_to_61
+
 // GLOBAL: GAME 0x62e000
 // ___xc_a
 
@@ -664,6 +898,9 @@
 
 // GLOBAL: GAME 0x63a1f0
 // __FPinit
+
+// GLOBAL: GAME 0x63a240
+// __half
 
 // GLOBAL: GAME 0x63a250
 // __aexit_rtn
@@ -695,6 +932,36 @@
 // GLOBAL: GAME 0x63a4d0
 // ___decimal_point
 
+// GLOBAL: GAME 0x63a4f0
+// __indefinite
+
+// GLOBAL: GAME 0x63a4fa
+// __piby2
+
+// GLOBAL: GAME 0x63a50c
+// __cpower
+
+// GLOBAL: GAME 0x63a5f8
+// __d_inf
+
+// GLOBAL: GAME 0x63a600
+// __d_ind
+
+// GLOBAL: GAME 0x63a608
+// __d_max
+
+// GLOBAL: GAME 0x63a618
+// __d_mzero
+
+// GLOBAL: GAME 0x63a640
+// __infinity
+
+// GLOBAL: GAME 0x63a64a
+// __minfinity
+
+// GLOBAL: GAME 0x63a654
+// __logemax
+
 // GLOBAL: GAME 0x63a810
 // __XcptActTab
 
@@ -722,11 +989,17 @@
 // GLOBAL: GAME 0x63c960
 // __iob
 
+// GLOBAL: GAME 0x63cc10
+// __matherr_flag
+
 // GLOBAL: GAME 0x63cf88
 // __pow10pos
 
 // GLOBAL: GAME 0x63d0e8
 // __pow10neg
+
+// GLOBAL: GAME 0x6d8720
+// ___fastflag
 
 // GLOBAL: GAME 0x6d8724
 // __adjust_fdiv

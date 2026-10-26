@@ -25,11 +25,20 @@ struct S_TSRFC
     S_TSRFC_CURVE curve[2];             // 0x0
 };
 
-// A car (PS2 C_car, C_car.cpp). Only what InitSystem uses so far: its tables, which InitSystem loads once (C_game::Init
-// loads them again, with the game's tables loaded), and which C_Vehicle keeps.
+// A car (PS2 C_car, C_car.cpp). Only what InitSystem and the profiles use so far: its tables, which InitSystem loads
+// once (C_game::Init loads them again, with the game's tables loaded), and which C_Vehicle keeps, and the force
+// feedback's scales.
 class C_car
 {
 public:
+    // The profile's force feedback options, which the cars' effects scale by (PC only, the names are ours, after the
+    // options), 1 until G_LoadSaveClass::Refresh sets them
+    static float ff_volume;
+    static float ff_tire_grip;
+    static float ff_collisions;
+    static float ff_suspension;
+    static float ff_revs;
+
     // From materialList, one default material without it
     static bool LoadMaterials();
     // An emitter for each of gameParticleTable's, one without an emitter without it
@@ -37,4 +46,6 @@ public:
     // From tables\tyres.bin
     static bool LoadTyres();
     static void ConvertTyres(S_TSRFC *src, S_SRFC *dst);
+    // Sets the force feedback's scales (PC only, the name is ours)
+    static void SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs);
 };

@@ -1,9 +1,9 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
 // docs/game-files.md), with the car database and the save files' G_Stream, as PS2's. Written so far: what InitSystem
 // and CloseSystem reach (Init, Close, the constructors and destructors, AllDefault, ProfileEnumFiles, ProfileEnumRelease,
-// SaveGameNewGame, the PC's controls and options defaults, ApplyControls, the car database's Init and Close, G_Stream's
-// reading, RaceCarsEnable, RaceCarsDisable and GarageClear) and LanguageSelect; the rest of what they and main call is
-// stubs.
+// ProfileLoad, ProfileSave, SaveGameNewGame, the PC's controls and options defaults, ApplyControls, FindBinding, the car
+// database's Init and Close, G_Stream's reading and writing, RaceCarsEnable, RaceCarsDisable, GarageClear, Refresh,
+// FreerideStoreA and FreerideStoreB) and LanguageSelect; the rest of what they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -11,12 +11,16 @@
 #include "ui/g_textdb.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
+#include "vehicles/C_car.h"
+#include "vehicles/C_Vehicle.h"
 #include "g_material.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "IGraph/IGraph.h"
+#include "ISound/ISound.h"
 #include "rw_data.h"
 #include "stub.h"
 
@@ -148,21 +152,89 @@ void G_LoadSaveClass::ProfileEnumRelease()
     profiles.clear();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x6057f0
+// The file: the head (the PC's version 1), the controls, the options and unknown_520, and nothing after them; anything
+// else leaves the defaults. Then the sniper mode's binding, the tests taking FindBinding's result as a bool, so that its
+// -1 counts as found: unless the first control shares the binding, it is cleared, or put on R if the first control has
+// R.
+// FUNCTION: GAME 0x6057f0
 void G_LoadSaveClass::ProfileLoad()
 {
-    StubLog("G_LoadSaveClass::ProfileLoad");
+    G_Stream stream;
+    uint number = profile.number;
+    stream.SetParams(PROFILE_MAGIC, true, false);
+    char name[128];
+    sprintf(name, "savegame\\mafia%03d.sav", number);
+    unknown_91 = true;
+    if (stream.OpenRead(name))
+    {
+        if (stream.ReadAdr(&profile, sizeof(profile)) == sizeof(profile))
+        {
+            profile.number = number;
+            if (profile.magic == PROFILE_MAGIC && profile.version == 1)
+            {
+                stream.ReadAdr(bindings, sizeof(bindings));
+                stream.ReadAdr(&settings, sizeof(settings));
+                if (stream.ReadAdr(unknown_520, sizeof(unknown_520)) == sizeof(unknown_520))
+                {
+                    uint end;
+                    if (!stream.ReadAdr(&end, sizeof(end)))
+                    {
+                        race_cars = profile.race_cars;
+                        unknown_1f0 = profile.unknown_44;
+                        unknown_9c = profile.unknown_48;
+                        unknown_91 = false;
+                        if (FindBinding(CTRL_SNIPER, &bindings[CTRL_SNIPER], false, NUM_CONTROLS))
+                        {
+                            S_control key;
+                            key.device = CONTROL_KEY;
+                            key.code = DIK_R;
+                            key.joy = 0;
+                            key.half = CONTROL_AXIS_FULL;
+                            if (mafiaLoadSave.FindBinding(CTRL_SNIPER, &key, false, -1))
+                                SetBinding(CTRL_SNIPER, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+                            else
+                                SetBinding(CTRL_SNIPER, CONTROL_KEY, DIK_R, 0, CONTROL_AXIS_FULL);
+                            ApplyControls();
+                        }
+                    }
+                }
+            }
+        }
+        stream.Close();
+    }
+    if (unknown_91)
+        AllDefault();
+    Refresh(REFRESH_ALL);
+    FreerideStoreA(1, 0, 1.0f, 1.0f, 1.0f);
+    FreerideStoreB(0);
+    unknown_1d4 = false;
 }
 
-// STUB: GAME 0x6059f0
+// PS2's sets the head before it opens the file, with the time it saves. The order of the head's stores: unknown_4c's
+// before unknown_44's (three other orders give the same code)
+// FUNCTION: GAME 0x6059f0
 void G_LoadSaveClass::ProfileSave()
 {
-    StubLog("G_LoadSaveClass::ProfileSave");
+    G_Stream stream;
+    stream.SetParams(PROFILE_MAGIC, true, false);
+    char name[128];
+    sprintf(name, "savegame\\mafia%03d.sav", profile.number);
+    if (stream.OpenWrite(name))
+    {
+        profile.magic = PROFILE_MAGIC;
+        profile.version = 1;
+        profile.unknown_c = 0;
+        profile.race_cars = race_cars;
+        profile.unknown_4c = 0;
+        profile.unknown_44 = unknown_1f0;
+        profile.unknown_48 = unknown_9c;
+        stream.WriteAdr(&profile, sizeof(profile));
+        stream.WriteAdr(bindings, sizeof(bindings));
+        stream.WriteAdr(&settings, sizeof(settings));
+        stream.WriteAdr(unknown_520, sizeof(unknown_520));
+        stream.Close();
+    }
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x605ff0
 void G_LoadSaveClass::SaveGameNewGame()
@@ -211,6 +283,32 @@ void G_LoadSaveClass::SetBinding(int index, ushort device, ushort code, int joy,
     bindings[index].code = code;
     bindings[index].joy = joy;
     bindings[index].half = half;
+}
+
+// FUNCTION: GAME 0x607460
+int G_LoadSaveClass::FindBinding(int index, S_control *control, bool any_half, int other)
+{
+    if (control->device == CONTROL_NONE && !control->code)
+        return -1;
+    if (index < NUM_PLAYER_CONTROLS)
+    {
+        for (int i = 0; i < NUM_PLAYER_CONTROLS; i++)
+        {
+            if (i != index && i != other && bindings[i].device == control->device && bindings[i].code == control->code
+                && bindings[i].joy == control->joy && (any_half || bindings[i].half == control->half))
+                return i;
+        }
+    }
+    if (index >= NUM_PLAYER_CONTROLS || other >= NUM_PLAYER_CONTROLS)
+    {
+        for (int i = NUM_PLAYER_CONTROLS; i < NUM_CONTROLS; i++)
+        {
+            if (i != index && i != other && bindings[i].device == control->device && bindings[i].code == control->code
+                && bindings[i].joy == control->joy && (any_half || bindings[i].half == control->half))
+                return i;
+        }
+    }
+    return -1;
 }
 
 // The player's defaults are the arrows and the right-hand keys first, WSAD and the left-hand ones second; the car's
@@ -436,6 +534,23 @@ bool G_Stream::OpenRead(char *name)
     return true;
 }
 
+// PS2's also keeps the head for its memory card
+// FUNCTION: GAME 0x60b100
+bool G_Stream::OpenWrite(char *name)
+{
+    key1 = STREAM_KEY1;
+    key2 = STREAM_KEY2;
+    memset(head, 0, sizeof(head));
+    head[0] = magic;
+    head[2] = 1;
+    // STRING: GAME 0x636180
+    file = fopen(name, "wb");
+    if (!file)
+        return false;
+    fwrite(head, 1, sizeof(head), file);
+    return true;
+}
+
 // FUNCTION: GAME 0x60b170
 bool G_Stream::Close()
 {
@@ -443,6 +558,19 @@ bool G_Stream::Close()
         fclose(file);
     file = NULL;
     return unknown_2d || unknown_2c ? true : false;
+}
+
+// FUNCTION: GAME 0x60b260
+void G_Stream::Crypt(void *data, uint size)
+{
+    uint *p = (uint *)data;
+    uint count = size / 4;
+    for (uint i = 0; i < count; i++)
+    {
+        key2 += p[i];
+        p[i] ^= key1;
+        key1 += key2;
+    }
 }
 
 // FUNCTION: GAME 0x60b2b0
@@ -456,6 +584,21 @@ void G_Stream::Decrypt(void *data, uint size)
         key2 += p[i];
         key1 += key2;
     }
+}
+
+// FUNCTION: GAME 0x60b2f0
+uint G_Stream::WriteAdr(void *adr, uint size)
+{
+    if (!size)
+        return 0;
+    if (!crypt)
+        return fwrite(adr, 1, size, file);
+    uchar *data = new uchar[size];
+    memcpy(data, adr, size);
+    Crypt(data, size);
+    uint written = fwrite(data, 1, size, file);
+    delete[] data;
+    return written;
 }
 
 // FUNCTION: GAME 0x60b380
@@ -496,6 +639,39 @@ void G_LoadSaveClass::GarageClear()
     }
 }
 
+// PS2's sets the sound driver's volume, the videos' and the screen's offset. The cars' volume is relative to the sounds',
+// the gamma ramp a power curve, steeper with more gamma.
+// FUNCTION: GAME 0x60dfe0
+void G_LoadSaveClass::Refresh(uint flags)
+{
+    if (flags & REFRESH_SOUND && isound)
+        isound->SetVolume(settings.sound_volume);
+    if (flags & REFRESH_MUSIC)
+        act_mission->game->IShowSetVolume();
+    if (flags & (REFRESH_SOUND | REFRESH_CARS))
+        C_Vehicle::SetSoundVolume(settings.car_volume / (settings.sound_volume + .01f));
+    if (flags & REFRESH_GAMMA)
+    {
+        LS3DGAMMARAMP ramp;
+        float exponent = 1.0f / (settings.gamma + settings.gamma + 1.0f);
+        for (int i = 0; i < 0x100; i++)
+        {
+            uint value = (uint)(pow(i * (1.0 / 255), exponent) * 255.0 + .5);
+            if (value > 0xff)
+                value = 0xff;
+            ramp.red[i] = ramp.green[i] = ramp.blue[i] = value << 8;
+        }
+        igraph->SetGammaRamp(&ramp, 0);
+    }
+    if (flags & REFRESH_FORCE_FEEDBACK)
+        C_car::SetForceFeedback(settings.ff_volume, settings.ff_tire_grip, settings.ff_collisions, settings.ff_suspension,
+            settings.ff_revs);
+    if (settings.camera < 1 || settings.camera >= 4)
+        settings.camera = 1;
+    if (settings.unknown_34 < 7 || settings.unknown_34 >= 0x10)
+        settings.unknown_34 = 7;
+}
+
 #pragma auto_inline(off)
 
 // STUB: GAME 0x60e710
@@ -503,6 +679,26 @@ void G_LoadSaveClass::ExecuteCredits()
 {
     StubLog("G_LoadSaveClass::ExecuteCredits");
 }
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x60e920
+void G_LoadSaveClass::FreerideStoreA(uint a, uint b, float c, float d, float e)
+{
+    freeride.unknown_0 = a;
+    freeride.unknown_4 = b;
+    freeride.unknown_c[0] = c;
+    freeride.unknown_c[1] = d;
+    freeride.unknown_c[2] = e;
+}
+
+// FUNCTION: GAME 0x60e960
+void G_LoadSaveClass::FreerideStoreB(uint state)
+{
+    freeride.state = state;
+}
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x60e9d0
 void G_LoadSaveClass::FreerideSetup()

@@ -8,12 +8,13 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ?id@?$ctype@G@std@@$E
+// ??1S_unknown_26c@C_game@@QAE@XZ
 
 #include <settings.h>
 
 class IGraph;
 class I3D_driver;
+class ISND_driver;
 class C_actor;
 
 // The game itself: loads the settings setup.exe saved, starts the engine and runs the main menu until the player quits.
@@ -29,6 +30,8 @@ void CloseSystem();
 extern IGraph *igraph;
 // The engine's 3D driver
 extern I3D_driver *driver;
+// The engine's sound driver, NULL if it didn't start
+extern ISND_driver *isound;
 // What setup.exe saved, read at the start and saved back with the game's options when the player quits. The name is ours,
 // chosen for Main.cpp's .bss, where it follows igraph: its bucket has to come after igraph's (tools/bsshash.py).
 extern S_settings setting;
@@ -40,13 +43,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVC_effect_subpart@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAVIJoy@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@MV?$allocator@M@std@@@std@@IAEXPAM0@Z
+// ?_Destroy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
 // ?_Ucopy@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEPAPAVIJoy@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@IAEXPAPAVC_effect_subpart@@IABQAV3@@Z
