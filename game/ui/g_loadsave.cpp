@@ -1,7 +1,7 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
 // docs/game-files.md), with the car database and the save files' G_Stream, as PS2's. Written so far: what InitSystem
 // and CloseSystem reach (Init, Close, the constructors and destructors, AllDefault, ProfileEnumFiles, ProfileEnumRelease,
-// ProfileLoad, ProfileSave, SaveGameNewGame, the PC's controls and options defaults, ApplyControls, FindBinding, the car
+// ProfileGetList, ProfileLoad, ProfileSave, SaveGameNewGame, the PC's controls and options defaults, ApplyControls, FindBinding, the car
 // database's Init and Close, G_Stream's reading and writing, RaceCarsEnable, RaceCarsDisable, GarageClear, Refresh,
 // FreerideStoreA and FreerideStoreB) and LanguageSelect; the rest of what they and main call is stubs.
 
@@ -150,6 +150,12 @@ std::vector<G_Profile_FileHead> *G_LoadSaveClass::ProfileEnumFiles()
 void G_LoadSaveClass::ProfileEnumRelease()
 {
     profiles.clear();
+}
+
+// FUNCTION: GAME 0x605560
+std::vector<G_Profile_FileHead> *G_LoadSaveClass::ProfileGetList()
+{
+    return &profiles;
 }
 
 // The file: the head (the PC's version 1), the controls, the options and unknown_520, and nothing after them; anything

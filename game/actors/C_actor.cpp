@@ -1,15 +1,17 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
-// frees. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything written yet.
-// The constructor and the virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
-// order; six of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
-// likely, or folded with another class's), and the empty ones aren't annotated (folded with the other empty functions
-// of their kinds).
+// frees, the constructor with global_actors and AddActorToGlobal, and Init, which C_mission::OpenBin calls for the
+// mission's actors. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
+// written yet. The destructor and the virtual functions, which the actors' classes need, are stubs, in the vtable's
+// addresses' order; six of those addresses lie in other files' ranges, where the linker kept a copy (inline functions
+// most likely, or folded with another class's), and the empty ones aren't annotated (folded with the other empty
+// functions of their kinds). Release (0x4091d0) is inline (C_actor.h), its copy after DoneAnimIndex.
 
 #include "actors/C_actor.h"
 
 #include <stdlib.h>
 
+#include "mission/Mission.h"
 #include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
@@ -644,11 +646,31 @@ void C_actor::vfunc_4()
     StubLog("C_actor::vfunc_4");
 }
 
-// STUB: GAME 0x405d20
-C_actor::C_actor()
+#pragma auto_inline(on)
+
+// Its initializer (0x405c20) comes before the constructor. PS2's posscoll_frame, a vector too (0x63d2a4), follows it
+// with its own (0x405ca0). Open: their destructors (0x405c60, 0x405ce0) test and set a guard byte (0x63d2b4) they share,
+// a bit each, as C_program::change_progs' does.
+// GLOBAL: GAME 0x63d2b8
+std::vector<C_actor *> C_actor::global_actors;
+
+// FUNCTION: GAME 0x405d20
+C_actor::C_actor() :
+    unknown_4(0),
+    ref(1),
+    type(ACTOR_ACTOR),
+    unknown_14(1),
+    unknown_20(false),
+    unknown_60(0),
+    unknown_66(false),
+    frame(NULL)
 {
-    StubLog("C_actor::C_actor");
+    unknown_8 = 0;
+    global_refs++;
+    AddActorToGlobal(this);
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x405d90
 C_actor::~C_actor()
@@ -656,14 +678,50 @@ C_actor::~C_actor()
     StubLog("C_actor::~C_actor");
 }
 
-// STUB: GAME 0x405dd0
-bool C_actor::Init(I3D_frame *frame)
+#pragma auto_inline(on)
+
+// The frame's user data cleared, though it may point to the actor already
+// FUNCTION: GAME 0x405dd0
+bool C_actor::Init(I3D_frame *frm)
 {
-    StubLog("C_actor::Init");
-    return false;
+    if (!frm)
+        return false;
+    C_actor **p = GetFrameActor(frm);
+    if (p && *p && *p != this)
+        return false;
+    frame = frm;
+    frame->m_UserData = 0;
+    C_mission *mission = act_mission;
+    number = ++mission->unknown_8;
+    own_frame = false;
+    if (frame)
+    {
+        // STRING: GAME 0x632240
+        I3D_frame *target = frame->FindChildFrame("targetE", ENUMF_TARGET);
+        if (target)
+            target->SetOn(false);
+        // STRING: GAME 0x632238
+        target = frame->FindChildFrame("targetN", ENUMF_TARGET);
+        if (target)
+            target->SetOn(false);
+    }
+    unknown_1c = 0;
+    return true;
 }
 
-#pragma auto_inline(on)
+// From the last one, which the actor most likely is if anything
+// FUNCTION: GAME 0x407d50
+void C_actor::AddActorToGlobal(C_actor *act)
+{
+    if (!act)
+        return;
+    for (int i = global_actors.size(); i--;)
+    {
+        if (global_actors[i] == act)
+            return;
+    }
+    global_actors.push_back(act);
+}
 
 // qsort's, by id
 // FUNCTION: GAME 0x408690
@@ -702,12 +760,6 @@ void DoneAnimIndex()
 }
 
 #pragma auto_inline(off)
-
-// STUB: GAME 0x4091d0
-void C_actor::Release()
-{
-    StubLog("C_actor::Release");
-}
 
 // STUB: GAME 0x42cc20
 void C_actor::vfunc_5()

@@ -104,7 +104,7 @@ public:
 
     int unknown_0;                      // 0x0
     int unknown_4;                      // 0x4
-    int unknown_8;                      // 0x8
+    int unknown_8;                      // 0x8, the actors C_actor::Init has numbered (C_actor::number)
     bool unknown_c;                     // 0xc, set while a mission is open: Close does nothing without it, and clears it
     I3D_scene *scene;                   // 0x10
     std::vector<S_anim_model> anim_models;  // 0x14

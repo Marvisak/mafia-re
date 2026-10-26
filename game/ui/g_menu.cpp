@@ -1,7 +1,7 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs as far as the components (the constructor, the destructor and the resources, Create,
-// CreateCompsByDef, Destroy, Draw and the activation), SetCameraTargetID, and the wrappers by id the loading screen
-// calls; the components, Tick, TickCamera and the rest are stubs.
+// CreateCompsByDef, Destroy, Draw and the activation), SetCameraTargetID, the wrappers by id the loading screen and the
+// profiles' menu call, and PridejComponentPod; the components, Tick, TickCamera and the rest are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
@@ -400,6 +400,19 @@ void GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint 
 
 #pragma auto_inline(on)
 
+// FUNCTION: GAME 0x5eaed0
+void GM_Menu::SetDisabled(uint id, bool enabled)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (enabled)
+    {
+        if (component)
+            component->flags |= COMPF_ENABLED;
+    }
+    else if (component)
+        component->flags &= ~COMPF_ENABLED;
+}
+
 // FUNCTION: GAME 0x5eaf20
 void GM_Menu::SetHidden(uint id, bool visible)
 {
@@ -419,6 +432,14 @@ void GM_Menu::SetTextID(uint id, uint text_id)
     GM_Component *component = FindComponentByID(id);
     if (component)
         component->SetTextID(text_id);
+}
+
+// FUNCTION: GAME 0x5eb010
+void GM_Menu::SetText(uint id, uchar *text)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetText(text);
 }
 
 // FUNCTION: GAME 0x5eb030
@@ -488,6 +509,54 @@ GM_Component *GM_Menu::FindComponentByIDNext(uint id)
             found = *it;
         }
     return found;
+}
+
+inline GM_Component *G_GlobalFactory::MakeDup(GM_Component *component)
+{
+    for (G_FactoryItem *item = first; item; item = item->next)
+        if (item->type == component->GetType())
+            return item->MakeDup(component);
+    return NULL;
+}
+
+// The window's component isn't tested for NULL, the others are (PS2 tests all four)
+// FUNCTION: GAME 0x5eb7d0
+void GM_Menu::PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_id1, uint move_id2, uint move_id3)
+{
+    GM_Component *src = FindComponentByID(id);
+    if (!src)
+        return;
+    GM_Component *dup = G_GlobalFactory::MakeDup(src);
+    if (!dup)
+        return;
+    components.push_back(dup);
+    dup->y = src->y + src->sy;
+    dup->id = new_id;
+    dup->AfterMove(0);
+    if (grow_id)
+    {
+        GM_Component *window = FindComponentByID(grow_id);
+        window->sy += dup->sy;
+    }
+    GM_Component *component;
+    if (move_id1)
+    {
+        component = FindComponentByID(move_id1);
+        if (component)
+            component->y += dup->sy;
+    }
+    if (move_id2)
+    {
+        component = FindComponentByID(move_id2);
+        if (component)
+            component->y += dup->sy;
+    }
+    if (move_id3)
+    {
+        component = FindComponentByID(move_id3);
+        if (component)
+            component->y += dup->sy;
+    }
 }
 
 // PS2's is the same loop without the mouse, the joysticks and the controls: it reads the controller, draws the menu

@@ -2,6 +2,8 @@
 
 #include "Main.h"
 
+#include <vector>
+
 #include "I3D/I3D.h"
 
 class C_chunk;
@@ -39,8 +41,9 @@ class C_chunk;
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 16 come before the destructor, where PS2 has
 // AI, Update and NetDirect; from the destructor on the PC's are PS2's in PS2's order. The first 16 are placeholders.
-// Not written yet: the constructor and the virtual functions declared here, which the actors' classes need, are stubs
-// (C_actor.cpp).
+// Not written yet: the destructor and the virtual functions declared here but Init and Release, which the actors'
+// classes need, are stubs (C_actor.cpp).
+// VTABLE: GAME 0x623248
 class C_actor
 {
 public:
@@ -63,10 +66,18 @@ public:
     virtual void vfunc_14();
     virtual void vfunc_15();
     virtual ~C_actor();
-    // Deletes the actor (PS2 name)
-    virtual void Release();
-    // Takes the actor's frame from the scene: false if it can't be the actor (PS2 name)
-    virtual bool Init(I3D_frame *frame);
+    // Releases a reference, and deletes the actor with the last one (PS2 name); the references left
+    // FUNCTION: GAME 0x4091d0
+    virtual ushort Release()
+    {
+        if (--ref)
+            return ref;
+        delete this;
+        return 0;
+    }
+    // Takes the actor's frame from the scene: false if it can't be the actor, where the frame has another one (PS2
+    // name). It gives the actor the mission's next number and turns the frame's targets off.
+    virtual bool Init(I3D_frame *frm);
     virtual void SaveData(C_chunk *chunk);
     // The actor's data of the mission's scene2.bin (PS2 name)
     virtual void LoadData(C_chunk *chunk);
@@ -78,14 +89,31 @@ public:
         unknown_66 = true;
     }
 
-    uchar unknown_4[0xc];               // 0x4
+    // Adds the actor to global_actors, unless it is there already (PS2 name)
+    static void AddActorToGlobal(C_actor *act);
+
+    int unknown_4;                      // 0x4
+    int unknown_8;                      // 0x8, 0 from the constructor's body
+    ushort ref;                         // 0xc, Release's references, 1 at first (the name is ours)
     int type;                           // 0x10, ACTOR_*, ACTOR_ACTOR from the constructor
-    uchar unknown_14[0x52];             // 0x14
+    int unknown_14;                     // 0x14, 1 at first
+    // 0x18, the mission's count of actors when Init took the actor's frame (C_mission::unknown_8; the name is ours)
+    int number;
+    int unknown_1c;                     // 0x1c, 0 from Init
+    bool unknown_20;                    // 0x20
+    uchar unknown_21[0x3f];             // 0x21
+    int unknown_60;                     // 0x60
+    uchar unknown_64[2];                // 0x64
     bool unknown_66;                    // 0x66
-    uchar unknown_67[9];                // 0x67
+    I3D_frame *frame;                   // 0x68, Init's (the name is ours)
+    // 0x6c, false from Init; the destructor releases the frame where it is set (the name is ours)
+    bool own_frame;
+    uchar unknown_6d[3];                // 0x6d
 
     // The actors that exist: the constructor counts up, the destructor down, and C_mission::Open clears it (PS2 name)
     static int global_refs;
+    // Every actor, which the constructor adds itself to (PS2 name, its gif::vector<C_actor *, 8>)
+    static std::vector<C_actor *> global_actors;
 };
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.

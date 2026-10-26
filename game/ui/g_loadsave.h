@@ -95,7 +95,7 @@ struct G_Profile_FileHead
     uint version;                       // 0x4, 1
     uint number;                        // 0x8, the file's
     uint unknown_c;                     // 0xc, 0 when saved
-    uchar unknown_10[0x34];
+    uchar name[0x34];                   // 0x10, the player's, which the profiles' menu shows
     uint unknown_44;                    // 0x44, G_LoadSaveClass::unknown_1f0 when saved
     uint unknown_48;                    // 0x48, G_LoadSaveClass::unknown_9c
     uint unknown_4c;                    // 0x4c, 0 when saved
@@ -251,6 +251,8 @@ public:
     std::vector<G_Profile_FileHead> *ProfileEnumFiles();
     // Forgets them
     void ProfileEnumRelease();
+    // The list ProfileEnumFiles read (PS2 name)
+    std::vector<G_Profile_FileHead> *ProfileGetList();
     // Reads the profile's file, which profile.number names, or takes the defaults
     void ProfileLoad();
     // Writes the profile's file

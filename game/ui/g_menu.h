@@ -71,6 +71,9 @@ public:
                 return item->Make(design, parent);
         return NULL;
     }
+    // A copy of the component, from the factory of its class, NULL where no factory has it (the name is ours; inline,
+    // g_menu.cpp)
+    static GM_Component *MakeDup(GM_Component *component);
 
     // The last one registered, the start of the list
     static G_FactoryItem *first;
@@ -119,11 +122,16 @@ public:
     // A frame of the menu: the mouse's movement and buttons (the buttons released, pressed and down, 4 bits each), the
     // key pressed or repeated, IGraph's shift keys and the frame's time
     void Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time);
+    // Enables the component of that id, if the menu has one, with true (COMPF_ENABLED), and disables it with false:
+    // PS2's name, and its code the same
+    void SetDisabled(uint id, bool enabled);
     // Shows the component of that id, if the menu has one, with true (COMPF_VISIBLE), and hides it with false: PS2's
     // name, and its code the same
     void SetHidden(uint id, bool visible);
     // Sets the text, of the text database, of the component of that id, if the menu has one
     void SetTextID(uint id, uint text_id);
+    // Sets the text of the component of that id, if the menu has one
+    void SetText(uint id, uchar *text);
     // Sets the string of the component of that id, if the menu has one
     void SetString(uint id, uchar *text);
     // Sets the value of the component of that id, if the menu has one
@@ -134,6 +142,10 @@ public:
     GM_Component *FindComponentByID(uint id);
     // Of the components that can be activated, the one with the lowest id above id, or else the lowest one
     GM_Component *FindComponentByIDNext(uint id);
+    // Adds a copy of the component of that id, with the new id, right below it (PS2's name, Czech for "add a component
+    // below"), and makes room for it: the component of grow_id (the window around) grows by its height, and those of
+    // the other three ids (the items below) move down by it. An id of 0 is none.
+    void PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_id1, uint move_id2, uint move_id3);
     // Runs the menu until one of its functions sets the result (zz_globalReturnCode), then destroys it and returns the
     // result. While it runs it ticks the mission, or only the game's camera; the HUD's flags are pushed and the menus'
     // set. PS2's has a fourth bool, which both calls in its main pass as false; neither build reads the third.

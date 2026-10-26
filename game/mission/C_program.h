@@ -41,9 +41,11 @@ public:
 
     // Reads the script from its chunk of the mission's scene2.bin (PS2 name)
     bool LoadSourceCode(C_chunk *chunk);
-    // Gives the script the source of the first of change_progs that names its mission, its name and its actor's frame
-    // (PS2 name). Not written yet.
+    // Gives the script the source of the last of change_progs that names its mission, its name and its actor's frame
+    // (PS2 name): a change without a name or a frame fits only a script without one
     void TryChangeProgramData();
+    // Replaces the source with a copy of src, NULL for none (PS2 name)
+    void SetSourceCode(char *src);
 
     char *name;                         // 0x4, what S_prog_change::program names (the names are ours)
     char *source;                       // 0x8
