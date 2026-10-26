@@ -81,6 +81,14 @@ public:
     virtual void SaveData(C_chunk *chunk);
     // The actor's data of the mission's scene2.bin (PS2 name)
     virtual void LoadData(C_chunk *chunk);
+    // PS2 names, the types PS2's; the save functions return true (mov al, 1)
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    // C_mission::FrmActBuff_ClearAll calls it before releasing a kept actor
+    virtual void GameDone();
 
     // C_mission::OpenBin sets it for the actors of the mission's file (PC only, the name is ours)
     // FUNCTION: GAME 0x547220

@@ -265,7 +265,10 @@ public:
     // original. Open: the original also inlines _Destroy (nothing left of it) in 0x2ee4's, 0x2afc's and 0x2aec's. Not
     // the element types (scalars, pointers, char's specialization, classes with destructors), padding (any amount
     // inlines 0x2adc's ~vector first), fewer pending inline calls (20 fewer flip the first three), a struct or base
-    // class around them, nor an earlier function inlining their clear() change only those three.
+    // class around them, nor an earlier function inlining their clear() change only those three. Open too: the EH state
+    // stores before some of the out-of-line ~vector calls, which the original has none of. They come and go with
+    // Mission.cpp's other functions (AddActor, DelActors and FrmActBuff_ClearAll added several), though the copy is
+    // compiled after them, at the object's end.
     // FUNCTION: GAME 0x547a60
     ~C_game()
     {

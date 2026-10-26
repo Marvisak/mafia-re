@@ -7,7 +7,9 @@
 
 // The script objects (PS2 C_detector, C_detector.cpp), an actor and its script: C_program is the second base (at 0x70,
 // PS2's 0x80, whose this adjustors PS2 names @128@), 0x128 bytes (PS2's 0x150). Only the constructor, the destructor,
-// Init and LoadData (a stub) so far, which C_mission::CreateActor and OpenBin call for ACTOR_DETECTOR.
+// Init and LoadData so far, which C_mission::CreateActor and OpenBin call for ACTOR_DETECTOR, and the vtable's
+// functions from DuplicateFrom to GameDone as stubs. PS2's save functions override C_program's too (its @128@
+// thunks), which doesn't declare them yet.
 // VTABLE: GAME 0x6239b0 C_actor
 // VTABLE: GAME 0x623a48 C_program
 class C_detector : public C_actor, public C_program
@@ -27,8 +29,14 @@ public:
     // The script runs for the actor itself
     virtual bool Init(I3D_frame *frm);
     virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
 
-    int unknown_d8;                     // 0xd8, 0 from Init (PS2 0x108)
+    int unknown_d8;                     // 0xd8, 0 from Init, then LoadData's (PS2 0x108)
     uchar unknown_dc[0x14];             // 0xdc
     int unknown_f0;                     // 0xf0
     int unknown_f4;                     // 0xf4

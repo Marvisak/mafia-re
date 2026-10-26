@@ -709,6 +709,43 @@ bool C_actor::Init(I3D_frame *frm)
     return true;
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x405fa0
+void C_actor::GameInit()
+{
+    StubLog("C_actor::GameInit");
+}
+
+// STUB: GAME 0x4063e0
+void C_actor::GameDone()
+{
+    StubLog("C_actor::GameDone");
+}
+
+// STUB: GAME 0x406770
+int C_actor::SaveGameGetSize()
+{
+    StubLog("C_actor::SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x406870
+bool C_actor::SaveGameSave(void **buf)
+{
+    StubLog("C_actor::SaveGameSave");
+    return false;
+}
+
+// STUB: GAME 0x406b00
+bool C_actor::SaveGameLoad(void **buf)
+{
+    StubLog("C_actor::SaveGameLoad");
+    return false;
+}
+
+#pragma auto_inline(on)
+
 // From the last one, which the actor most likely is if anything
 // FUNCTION: GAME 0x407d50
 void C_actor::AddActorToGlobal(C_actor *act)
@@ -765,6 +802,14 @@ void DoneAnimIndex()
 void C_actor::vfunc_5()
 {
     StubLog("C_actor::vfunc_5");
+}
+
+// An empty ret 4 of the out-of-line kind (0x403db0 is the inline one's), folded, in another file's range: C_clock's
+// DuplicateFrom jumps to it
+// STUB: GAME 0x4ab130
+void C_actor::DuplicateFrom(C_actor *act)
+{
+    StubLog("C_actor::DuplicateFrom");
 }
 
 // STUB: GAME 0x5c2650

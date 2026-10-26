@@ -11,6 +11,7 @@ class C_roads;
 class C_effects;
 class C_program;
 class I3D_driver;
+class I3D_frame;
 class I3D_scene;
 class I3D_model;
 class I3D_object;
@@ -85,13 +86,15 @@ public:
         short unknown_6;                // 0x6, the time AddTimeTransparentObject takes
     };
     // An actor or model kept between missions (PS2 C_mission::S_frame_actor_buffer, the FrmActBuff functions'), 0x10
-    // bytes
+    // bytes. PS2's StoreActor stores the actor, its frame, the frame's name and its flag, StoreModel no actor, the
+    // model, its name and false (the members' names are ours).
     struct S_frame_actor_buffer
     {
         C_actor *actor;                 // 0x0
-        int unknown_4;                  // 0x4
-        char *name;                     // 0x8, deleted with the entry
-        int unknown_c;                  // 0xc
+        I3D_frame *frame;               // 0x4, the actor's frame or the model
+        char *name;                     // 0x8, the file's name without its folders, deleted with the entry
+        // 0xc, StoreActor's flag: FrmActBuff_ClearAll releases the actor's frame too (a model's always)
+        bool release_frame;
     };
     // An actor's sound kept between missions (PS2 C_mission::S_actor_sound_buffer, FrmActBuff_StoreActorSound's), 0xc
     // bytes
@@ -148,8 +151,8 @@ public:
     int Open(const char *name, bool log, uint flags, bool progress);
     // A new actor of a type of the mission's scene2.bin, NULL for an unknown type (PS2 name)
     C_actor *CreateActor(int type);
-    // Adds the actor to the mission's (PS2 name)
-    void AddActor(C_actor *actor, bool);
+    // Adds the actor to the mission's, and with the flag to unknown_44 too, unless it is there already (PS2 name)
+    void AddActor(C_actor *actor, bool add_unknown_44);
     // Loads the mission's data from its folder (PS2 name), its scene2.bin: the scene's objects and camera, the actors,
     // the scripts, the webs. OPENBIN_*.
     int OpenBin(const char *dir, uint flags);
@@ -163,7 +166,8 @@ public:
     void Close();
     // A frame of the mission: its scene, actors, scripts and game
     void Tick(int time);
-    // PS2 names: Close's helpers
+    // PS2 names: Close's helpers. DelActors releases the actors and takes them from their frames, FrmActBuff_ClearAll
+    // releases what is kept between missions.
     void DelActors();
     void FrmActBuff_ClearAll();
     // The name is ours. main clears both members through one load of act_mission, so through a method: written out,

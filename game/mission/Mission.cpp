@@ -1,7 +1,7 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the names' order
-// of OpenBin's map, the constructor, the destructor, Init, UnInit, Close, ShowProgress, Open with its two helpers,
-// OpenBin with its frames' callback, CreateActor, and the video options' methods; the rest of what main and InitSystem
-// call is stubs, AddActor among them.
+// of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close,
+// ShowProgress, Open with its two helpers, OpenBin with its frames' callback, the video options' methods and
+// FrmActBuff_ClearAll; the rest of what main and InitSystem call is stubs, Tick among them.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -249,24 +249,53 @@ C_actor *C_mission::CreateActor(int type)
     return actor;
 }
 
-// Close's helpers where the original has them: Close has no unwinding, so a stub defined before it changes nothing. Before
-// them OpenBin's AddActor, which leaves its code as it is here too.
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x53fea0
-void C_mission::AddActor(C_actor *actor, bool)
+// Each list searched from its last actor, as AddActorToGlobal does, and PS2's second search through a flag
+// FUNCTION: GAME 0x53fea0
+void C_mission::AddActor(C_actor *actor, bool add_unknown_44)
 {
-    StubLog("C_mission::AddActor");
+    for (int i = actors.size(); i--;)
+    {
+        if (actor == actors[i])
+            return;
+    }
+    actors.push_back(actor);
+    if (add_unknown_44)
+    {
+        bool add = true;
+        for (int i = unknown_44.size(); i--;)
+        {
+            if (actor == unknown_44[i])
+            {
+                add = false;
+                break;
+            }
+        }
+        if (add)
+            unknown_44.push_back(actor);
+    }
 }
 
-// STUB: GAME 0x540240
+// From the last actor, as PS2's: each one's frame forgets it first, through a pointer to NULL, which SetFrameActor frees
+// FUNCTION: GAME 0x540240
 void C_mission::DelActors()
 {
-    StubLog("C_mission::DelActors");
+    for (int i = actors.size(); i--;)
+    {
+        I3D_frame *frm = actors[i]->frame;
+        if (frm)
+        {
+            C_actor **p = GetFrameActor(frm);
+            if (p && *p)
+            {
+                *p = NULL;
+                SetFrameActor(frm, p);
+            }
+        }
+        actors[i]->Release();
+    }
+    actors.clear();
+    unknown_44.clear();
 }
-
-#pragma auto_inline(on)
 
 // PS2's in another order (its caches after the scripts and the scene, its anim cache only down to a count of its own),
 // with PS2's own (its screen cleared, its second block cache, its frames' reference buffer, two arrays deleted) and
@@ -1519,12 +1548,31 @@ void S_mission_options::SetParticles(int level)
         particles = OPTION_HIGH;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x546b70
+// Each buffer from its last entry, as PS2's. An entry's name is deleted before the entry is read again: the original
+// reloads the array after the delete, then keeps the entry's address
+// FUNCTION: GAME 0x546b70
 void C_mission::FrmActBuff_ClearAll()
 {
-    StubLog("C_mission::FrmActBuff_ClearAll");
+    int i;
+    for (i = frame_actor_buffer.size(); i--;)
+    {
+        delete[] frame_actor_buffer[i].name;
+        S_frame_actor_buffer &b = frame_actor_buffer[i];
+        if (b.actor)
+        {
+            b.actor->GameDone();
+            b.actor->Release();
+            if (b.release_frame && b.frame)
+                b.frame->Release();
+        }
+        else if (b.frame)
+            b.frame->Release();
+    }
+    frame_actor_buffer.clear();
+    for (i = active_actors.size(); i--;)
+        active_actors[i]->GameDone();
+    active_actors.clear();
+    for (i = actor_sound_buffer.size(); i--;)
+        actor_sound_buffer[i].sound->Release();
+    actor_sound_buffer.clear();
 }
-
-#pragma auto_inline(on)
