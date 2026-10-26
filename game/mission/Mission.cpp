@@ -1,6 +1,6 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the constructor,
-// the destructor, Init, UnInit, Close and the video options' methods; the rest of what main and InitSystem call is
-// stubs.
+// the destructor, Init, UnInit, Close, Open with its two helpers and the video options' methods; the rest of what main
+// and InitSystem call is stubs, OpenBin among them.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -11,10 +11,26 @@
 #include "mission/C_program.h"
 #include "mission/C_cutscene.h"
 #include "mission/m_cache.h"
+#include "actors/C_actor.h"
+#include "vehicles/C_Vehicle.h"
+#include "ui/g_loadsave.h"
+#include "ui/g_m_func.h"
+#include "ui/Load_progress.h"
+#include "C_chunk.h"
+#include "C_fstr.h"
 #include "I3D_cache.h"
+#include "Winstuff.h"
 #include "stub.h"
 
+#include <string.h>
+
 #include "I3D/I3D.h"
+#include "ISound/ISound.h"
+
+// Whether the mission has a cache.bin: Open clears it, sets it to 1 when it finds the file and to 2 after OpenBin, and
+// the Tick reads it (PS2 name, the same values in PS2's Open)
+// GLOBAL: GAME 0x646db0
+int _can_show_progress_;
 
 // The stores come in the members' order, the vectors' among them: an initializer list
 // FUNCTION: GAME 0x53f010
@@ -24,7 +40,7 @@ C_mission::C_mission() :
     unknown_c(false),
     scene(NULL),
     tshift(NULL),
-    unknown_68(NULL)
+    mission_name(NULL)
 {
 }
 
@@ -97,10 +113,10 @@ void C_mission::UnInit()
         scene->Release();
         scene = NULL;
     }
-    if (unknown_68)
+    if (mission_name)
     {
-        delete[] unknown_68;
-        unknown_68 = NULL;
+        delete[] mission_name;
+        mission_name = NULL;
     }
 }
 
@@ -165,11 +181,126 @@ void C_mission::Tick(int time)
     StubLog("C_mission::Tick");
 }
 
-// STUB: GAME 0x5409d0
-int C_mission::Open(const char *name, bool, uint, bool)
+#pragma auto_inline(on)
+
+static void __stdcall __SceneErrFnc(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context);
+static void cbSectorBitFill(I3D_frame *frm);
+
+// Replaces a string with a copy of another (the name is ours). PS2's Open copies its two names with this code twice,
+// and as an inline call it gives Open the original's budget: its chunk destructors' calls out of line
+static inline void CopyString(char *&dst, const char *src)
 {
-    StubLog("C_mission::Open %s", name);
-    return 1;
+    if (dst)
+    {
+        delete[] dst;
+        dst = NULL;
+    }
+    dst = new char[strlen(src) + 1];
+    strcpy(dst, src);
+}
+
+// PS2's also copies the name into a buffer of its own first (with a prefix under a flag), opens its scripts' file
+// (OpenFQLFile), shows the loading screen itself (InitProgressScreen, whose code the PC's load callback has at the
+// load's start), reads the actors of a fourth file and the map after cache.bin's test; the PC's mutes the sound around
+// OpenBin. The chunk files are closed through the chunk's inline Close. The inline calls of CopyString, SetScene and
+// ROpen give the original's budget for the chunk's destructors: the one at the early return calls Close and the stack's
+// destructor out of line (the last ROpen is the inline call still to come there), the one at the end inlines both but
+// Descend. The scene in a local of its own gives the scratch registers' rotation from there on.
+// Open: the inlined strcpy addresses [ecx + edx] where ours has [edx + ecx]; no spelling of the copy moved it.
+// FUNCTION: GAME 0x5409d0
+int C_mission::Open(const char *name, bool log, uint flags, bool progress)
+{
+    game->ResetUnknown363c();
+    unknown_8 = 0;
+    Close();
+    unknown_78 = 0;
+    C_actor::global_refs = 0;
+    if (!WaitForCD())
+        return MISSION_OPEN_NO_CD;
+    C_Vehicle::SetScene(scene);
+    CopyString(mission_name, name);
+    if (progress && !mafiaLoadSave.progress)
+        mafiaLoadSave.progress = new GM_LoadProgress(0, .7f, NULL);
+    // STRING: GAME 0x6361f4
+    scene->Open(C_fstr("missions\\%s\\scene.i3d", name), (log ? I3DLOAD_LOG : 0) | I3DLOAD_PROGRESS | I3DLOAD_ERRORS,
+        __SceneErrFnc, NULL);
+    scene->WeatherSystemReset();
+    scene->SetWeatherSystemParam(WS_PARAM_ON, 0);
+    I3D_scene *act_scene = act_mission->scene;
+    cbSectorBitFill(act_scene->primary_sector);
+    C_chunk chunk;
+    // STRING: GAME 0x6361dc
+    if (chunk.ROpen(C_fstr("missions\\%s\\check.bin", name)))
+    {
+        web_path->LoadNodes(&chunk);
+        chunk.Close();
+    }
+    // STRING: GAME 0x6361c4
+    if (chunk.ROpen(C_fstr("missions\\%s\\road.bin", name)))
+    {
+        roads->LoadData(&chunk);
+        chunk.Close();
+    }
+    // STRING: GAME 0x6361a0
+    C_fstr dir("missions\\%s", name);
+    _can_show_progress_ = 0;
+    // STRING: GAME 0x6361ac
+    if (chunk.ROpen(C_fstr("missions\\%s\\cache.bin", name)))
+    {
+        chunk.Close();
+        _can_show_progress_ = 1;
+    }
+    if (isound)
+    {
+        isound->SetVolume(0.0f);
+        act_mission->scene->Render();
+    }
+    restore_volume = true;
+    int ret = OpenBin(dir, flags);
+    if (isound)
+        isound->SetVolume(mafiaLoadSave.settings.sound_volume);
+    if (_can_show_progress_ == 1)
+        _can_show_progress_ = 2;
+    if (ret)
+        return MISSION_OPEN_FAILED;
+    unknown_c = true;
+    if (chunk.ROpen(C_fstr("missions\\%s\\cache.bin", name)))
+    {
+        base_cache.Open(&chunk, scene);
+        chunk.Close();
+    }
+    cbLoadScene(CBM_MISSION_PROGRESS, I3DFloatAsInt(1.0f), LOAD_PROGRESS_END, NULL);
+    return MISSION_OPEN_OK;
+}
+
+// What the scene's loader reports goes to the loading screen, but for its errors and log (PS2 name; PS2's tests CBM_LOG
+// first). Defined before Open in PS2's order; VC6 puts a static function after its first caller either way.
+// FUNCTION: GAME 0x540fd0
+static void __stdcall __SceneErrFnc(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context)
+{
+    if (msg != CBM_ERROR && msg != CBM_LOG)
+        cbLoadScene(msg, prm1, prm2, context);
+}
+
+// Sets every group bit of the sectors in the hierarchy (PS2 C_mission::S_hlp::cbSectorBitFill, the static function of a
+// struct of Open's; PS2's Open has its first two levels inlined)
+// FUNCTION: GAME 0x540ff0
+static void cbSectorBitFill(I3D_frame *frm)
+{
+    if (frm->GetType() == FRAME_SECTOR)
+        ((I3D_sector *)frm)->SetGroupBits((uint)-1);
+    for (int i = frm->NumChildren(); i--;)
+        cbSectorBitFill(frm->GetChild(i));
+}
+
+#pragma auto_inline(off)
+
+// Succeeds, so that a run goes on to the menus
+// STUB: GAME 0x541030
+int C_mission::OpenBin(const char *dir, uint flags)
+{
+    StubLog("C_mission::OpenBin %s", dir);
+    return 0;
 }
 
 #pragma auto_inline(on)

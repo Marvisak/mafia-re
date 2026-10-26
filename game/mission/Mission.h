@@ -55,6 +55,11 @@ struct S_mission_options
     void SetParticles(int level);
 };
 
+// What C_mission::Open returns (the names are ours)
+#define MISSION_OPEN_OK 0
+#define MISSION_OPEN_FAILED 1           // OpenBin failed
+#define MISSION_OPEN_NO_CD 4            // the player cancelled WaitForCD
+
 // The loaded mission (PS2 Mission.cpp): its scene, actors and game, 0xdc bytes. PS2's has these members in the same
 // order (its offsets in the comments) and a few more, its particle manager (0x64) among them. Members without a name
 // are named by their offset.
@@ -108,12 +113,17 @@ public:
     // The scripts that run for the whole game (PS2 0x4c, the GlobalProgram functions')
     std::vector<C_program *> programs;  // 0x54
     int unknown_64;                     // 0x64 (PS2 0x58)
-    uchar *unknown_68;                  // 0x68 (PS2 0x5c), UnInit deletes it
+    // Open's copy of the mission's name, which UnInit deletes (the name is ours)
+    char *mission_name;                 // 0x68 (PS2 0x5c)
     // PC only: PS2 has its particle manager (0x64) in the mission
     C_effects *effects;                 // 0x6c
     int unknown_70;                     // 0x70, cleared after each mission is opened (PS2 0xca0)
     int unknown_74;                     // 0x74 (PS2 0xca4)
-    uchar unknown_78[8];                // 0x78
+    int unknown_78;                     // 0x78, cleared by Open (PS2 0xca8 the same)
+    // Set by Open, which mutes the sound while it loads: the first Tick with unknown_78 below 1 sets the profile's
+    // volume again and clears it (PC only, the name is ours)
+    bool restore_volume;                // 0x7c
+    uchar unknown_7d[3];
     std::vector<S_t_transparent> t_transparent;  // 0x80 (PS2 0xcb0)
     S_mission_options options;          // 0x90 (PS2 0xcbc)
     std::vector<S_frame_actor_buffer> frame_actor_buffer;  // 0xac (PS2 0xcd8)
@@ -127,8 +137,12 @@ public:
     void Init(I3D_driver *driver);
     // Undoes Init: CloseSystem calls it once, and the destructor
     void UnInit();
-    // Opens the mission of that name, a folder in missions\; 0 if it succeeds
-    int Open(const char *name, bool, uint, bool);
+    // Opens the mission of that name, a folder in missions\: its scene (log adds I3DLOAD_LOG), webs, cache and data
+    // (OpenBin, which takes flags), with mafiaLoadSave's loading screen, which progress creates if there is none.
+    // MISSION_OPEN_*.
+    int Open(const char *name, bool log, uint flags, bool progress);
+    // Loads the mission's data from its folder (PS2 name), the actors and the scripts; 0 if it succeeds
+    int OpenBin(const char *dir, uint flags);
     // Unloads the open mission: its game, actors, scripts and objects, the caches' contents and the scene's frames
     void Close();
     // A frame of the mission: its scene, actors, scripts and game

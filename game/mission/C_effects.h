@@ -382,10 +382,10 @@ public:
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAEPAPAVC_effect_part@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_DICE@@V?$allocator@US_DICE@@@std@@@std@@QAE@ABV?$allocator@US_DICE@@@1@@Z
+// ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

@@ -39,6 +39,7 @@ add_executable(game WIN32
     Winstuff.cpp
     mission/C_cutscene.cpp
     mission/game.cpp
+    ui/Load_progress.cpp
     Main.cpp
     collision/g_colls.cpp
     ui/g_m_carc.cpp

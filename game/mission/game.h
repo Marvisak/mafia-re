@@ -237,7 +237,10 @@ public:
     std::vector<uint> unknown_2fc4;     // 0x2fc4
     uchar unknown_2fd4[0x644];          // 0x2fd4
     std::vector<S_unknown_3618> unknown_3618;  // 0x3618
-    uchar unknown_3628[0x4c];           // 0x3628
+    uchar unknown_3628[0x14];           // 0x3628
+    bool unknown_363c;                  // 0x363c, set by C_mission::Open (PS2 0x1538 the same)
+    bool unknown_363d;                  // 0x363d, cleared by C_mission::Open (PS2 0x1539 the same)
+    uchar unknown_363e[0x36];           // 0x363e
     std::vector<uint> unknown_3674;     // 0x3674
     int unknown_3684;                   // 0x3684
     std::vector<S_unknown_3688> unknown_3688;  // 0x3688
@@ -282,6 +285,14 @@ public:
     void CharacterStackClear();
     // The videos' volumes from the profile's music volume (PS2's sets its one video's)
     void IShowSetVolume();
+
+    // The name is ours. C_mission::Open sets both through one load of its game, so through a method: written out, VC6
+    // reloads the pointer after the first store.
+    void ResetUnknown363c()
+    {
+        unknown_363c = true;
+        unknown_363d = false;
+    }
 };
 
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies

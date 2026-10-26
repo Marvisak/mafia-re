@@ -99,7 +99,7 @@ G_LoadSaveClass::G_LoadSaveClass()
     memset(unknown_520, 0, sizeof(unknown_520));
     memset(unknown_5bc, 0, sizeof(unknown_5bc));
     unknown_8c = 0;
-    unknown_5d4 = 0;
+    progress = NULL;
     unknown_91 = true;
 }
 

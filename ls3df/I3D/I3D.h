@@ -294,6 +294,8 @@ inline float I3DIntAsFloat(int i)
 enum LS3D_CALLBACK_MESSAGE {
     LS3D_CALLBACK_MESSAGE_0,
     CBM_PROGRESS = 8,                   // a loader's progress (I3D_LOAD_CB_PROC; Insanity3D's name, its value is 0)
+    CBM_ERROR = 0x10,                   // Insanity3D's next two, its 1 and 2: the game's scene loader ignores both, and
+    CBM_LOG = 0x20,                     // no loader of LS3DF's sends them
     LS3D_CALLBACK_NOTE = 0x200,         // an animation passed a note key: the note, its time in ms
                                         // (I3D_interpolator::Update)
     LS3D_CALLBACK_LOD = 0x400,          // a visual's level of detail changed: the old one, the new one (GetObjectLOD)
@@ -317,6 +319,7 @@ typedef uint __stdcall I3D_CALLBACK(I3D_frame *frame, LS3D_CALLBACK_MESSAGE mess
 typedef void __stdcall I3D_LOAD_CB_PROC(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context);
 #define I3DLOAD_LOG 0x1                 // kept without a callback
 #define I3DLOAD_PROGRESS 0x2
+#define I3DLOAD_ERRORS 0x4              // C_mission::Open passes it; no loader of LS3DF's tests it
 // CBM_PROGRESS' second parameter (Insanity3D's comment has the same values, without names)
 #define LOAD_PROGRESS_BEGIN 0
 #define LOAD_PROGRESS_STEP 1

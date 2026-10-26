@@ -1,6 +1,6 @@
 // The cars' road network (PS2 road_web.cpp; the PC's file is the one at 0x559cd0-0x55cf3c, which starts with the
 // constructor, docs/game-files.md). Written so far: the constructor and the destructor, which C_mission's Init and
-// UnInit call; the virtual functions, which the vtable needs, are stubs.
+// UnInit call; the virtual functions, which the vtable needs, and LoadData, which C_mission::Open calls, are stubs.
 
 #include "ai/road_web.h"
 
@@ -24,10 +24,16 @@ void C_roads::SaveData(C_chunk *chunk)
     StubLog("C_roads::SaveData");
 }
 
-// STUB: GAME 0x55a210
+// STUB: GAME 0x559e60
 void C_roads::LoadData(C_chunk *chunk)
 {
     StubLog("C_roads::LoadData");
+}
+
+// STUB: GAME 0x55a210
+void C_roads::MergeData(C_chunk *chunk)
+{
+    StubLog("C_roads::MergeData");
 }
 
 // STUB: GAME 0x55a620

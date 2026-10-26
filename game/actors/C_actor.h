@@ -2,6 +2,14 @@
 
 #include "Main.h"
 
+// The actors (PS2 C_actor). Only what the mission uses so far.
+class C_actor
+{
+public:
+    // The actors that exist: the constructor counts up, the destructor down, and C_mission::Open clears it (PS2 name)
+    static int global_refs;
+};
+
 // An animation's file and its id (the struct's name is ours)
 struct S_anim_file
 {

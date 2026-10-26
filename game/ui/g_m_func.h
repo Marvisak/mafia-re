@@ -36,3 +36,29 @@ public:
     virtual int OnClick(uint id);
     virtual int OnChange(GM_Component *, GM_Component *);
 };
+
+// The loading screen (PS2 GM_LoadProgress, g_m_func.cpp), 0x40 bytes: "loadprogress", whose bar the mission's opening
+// fills to mission_part and the game's Init the rest. C_mission::Open creates one into mafiaLoadSave.progress, the
+// load callback (cbLoadScene) one of its own without it. Only what those two use so far.
+// VTABLE: GAME 0x6275c0
+class GM_LoadProgress : public GM_Menu
+{
+public:
+    float mission_part;                 // 0x30, the bar's part the mission's opening fills (the name is ours)
+    int unknown_34;                     // 0x34
+    uint unknown_38;                    // 0x38
+    uchar *unknown_3c;                  // 0x3c
+
+    // The menus' screen scale too
+    GM_LoadProgress(uint, float mission_part, uchar *);
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    virtual int OnTick(uint time);
+    virtual int OnKey(uchar key, uint);
+
+    // The bar at progress (0 to 1) of the mission's opening
+    void SetProgressMissionOpen(float progress);
+    // Draws the screen and presents it
+    void Present();
+};

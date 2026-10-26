@@ -9,7 +9,8 @@ C_tshift::C_tshift()
 {
 }
 
-// The same code as C_blood_manager's destructor (actors/C_blood.cpp), whose copy the linker kept: the marker is there
+// The same code as C_blood_manager's destructor (actors/C_blood.cpp), whose copy the original kept: the marker is in
+// actors/C_blood.h
 C_tshift::~C_tshift()
 {
 }

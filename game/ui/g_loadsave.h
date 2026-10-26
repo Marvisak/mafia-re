@@ -82,6 +82,7 @@
 #define CURSOR_BOTH 2                   // "Crosshair + Center Point"
 
 class C_car;
+class GM_LoadProgress;
 
 // G_Profile_FileHead::magic (the name is ours)
 #define PROFILE_MAGIC 'Prof'
@@ -230,7 +231,9 @@ public:
     S_profile_settings settings;        // 0x4c4
     uchar unknown_520[0x9c];            // 0x520, which ProfileSave writes last (PS2's 0x2fc, as AllDefault clears it)
     uchar unknown_5bc[0x18];
-    uint unknown_5d4;                   // 0x5d4
+    // The loading screen C_mission::Open creates when asked to, which the load callback (cbLoadScene) fills and the
+    // game's Init then (PS2's 0x3d0; the name is ours)
+    GM_LoadProgress *progress;          // 0x5d4
 
     G_LoadSaveClass();
     ~G_LoadSaveClass();

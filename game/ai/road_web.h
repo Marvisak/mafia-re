@@ -39,11 +39,15 @@ public:
         links.clear();
     }
 
-    // PS2's three virtual functions in PS2's order, and LoadData, which isn't virtual on PS2, between the last two (the
-    // parameters each one's ret takes)
+    // Reads the mission's road.bin (PS2 name): not virtual, as PS2's, C_mission::Open calls it directly. It ends with
+    // the vtable's RecompileDistances.
+    void LoadData(C_chunk *chunk);
+
+    // PS2's three virtual functions in PS2's order, and a second reader between the last two, PC only (the parameters
+    // each one's ret takes). It reads what LoadData reads; the name is ours, after C_web_path's MergeNodes.
     virtual void SortNodesByX();
     virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual void MergeData(C_chunk *chunk);
     virtual void RecompileDistances();
 };
 

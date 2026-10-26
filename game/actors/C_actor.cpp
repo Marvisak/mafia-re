@@ -590,6 +590,10 @@ S_anim_file _anim_info_[] = {
     {NULL, 0xffff},
 };
 
+// The file's hashed global, before the zero-initialized ones
+// GLOBAL: GAME 0x63d2c8
+int C_actor::global_refs;
+
 // Zero-initialized, so they follow the file's hashed globals in this order (their buckets would put the count first)
 // GLOBAL: GAME 0x63d2cc
 S_anim_index *_anim_index_ = NULL;

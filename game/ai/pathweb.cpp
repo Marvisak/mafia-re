@@ -1,6 +1,7 @@
 // The walking paths' web (PS2 pathweb.cpp; the PC's file is the one at 0x549f90-0x54d31c, which starts with the node's
 // destructor, docs/game-files.md). Written so far: the node's and the path's destructors, which C_mission::UnInit
-// runs, and the three empty virtual functions; the other virtual functions, which the path's vtable needs, are stubs.
+// runs, and the three empty virtual functions; the other virtual functions, which the path's vtable needs, and
+// LoadNodes, which C_mission::Open calls, are stubs.
 // PS2's file has more (the pathfinding's help memory, AllocHelpMem and FreeHelpMem); the PC's functions are PS2's in
 // PS2's order, as far as they are there.
 
@@ -56,6 +57,13 @@ void C_web_path::CreateConnect(uint, uint)
 void C_web_path::ControlNodeConn(uint)
 {
     StubLog("C_web_path::ControlNodeConn");
+}
+
+// Before SaveNodes, where PS2's comes after it
+// STUB: GAME 0x54a8c0
+void C_web_path::LoadNodes(C_chunk *chunk)
+{
+    StubLog("C_web_path::LoadNodes");
 }
 
 #pragma auto_inline(on)

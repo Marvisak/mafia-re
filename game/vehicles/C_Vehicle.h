@@ -76,6 +76,12 @@ class C_Vehicle
 public:
     // The scene the vehicles are in, which C_mission::Open sets (PS2 name)
     static I3D_scene *scene;
+    // The name is ours. Open sets the scene through it: the inline call's cost, with the name copy's helper, gives the
+    // budget that leaves Open's chunk destructors' calls out of line as the original's
+    static void SetScene(I3D_scene *s)
+    {
+        scene = s;
+    }
     // The vehicles' sounds' volume, the profile's for the cars relative to the sounds' (PC only, the name is ours): 1
     // until G_LoadSaveClass::Refresh sets it
     static float sound_volume;

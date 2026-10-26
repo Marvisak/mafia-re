@@ -72,6 +72,9 @@ public:
         unknown_1c = false;
     }
 
+    // Reads the nodes of the mission's check.bin (PS2 name), which C_mission::Open calls directly, as PS2's
+    void LoadNodes(C_chunk *chunk);
+
     // PS2's virtual functions in PS2's order, but for RecompileDistance, which isn't virtual on the PC (its vtable has
     // 14 entries, the parameters each one's ret takes)
     virtual void AddNode(float x, float y, float z, ushort);
