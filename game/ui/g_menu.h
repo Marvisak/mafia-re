@@ -23,6 +23,53 @@ class ITexture;
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
 
+// An item of a menu's definition, tables\menu\<name>.mnu (PS2's name; the members' names are ours), 0x20 bytes: what a
+// component's constructor reads
+struct GM_DesignStruct
+{
+    uint id;                            // the component's id
+    uint type;                          // its factory's (G_FactoryItem::type), four letters ('pbar', 'upup')
+    float x, y, sx, sy;                 // 0x8, on a screen of 800x600 (menuScreenScale)
+    uint text_id;                       // 0x18, of the text database
+    uint flags;                         // 0x1c, the component's (COMPF_*)
+};
+
+// A component's factory (PS2's names; the members' names are ours): PS2's G_Factory<T> is one for each component's class,
+// a global the file's initializer registers
+struct G_FactoryItem
+{
+    // A component of the class, the parent's child
+    GM_Component *(*Make)(GM_DesignStruct *design, GM_Component *parent);
+    // A copy of a component of the class
+    GM_Component *(*MakeDup)(GM_Component *component);
+    uint type;                          // 0x8, the class's GetType
+    G_FactoryItem *next;                // 0xc
+};
+
+// The components' factories (PS2's names)
+class G_GlobalFactory
+{
+public:
+    void Register(G_FactoryItem *item)
+    {
+        item->next = first;
+        first = item;
+    }
+    // A component of that type, NULL where no factory has it (PS2's asserts there; the name is ours). The type is a
+    // parameter of its own: through the design, VC6 computes the design's address before the search, the original at
+    // the call.
+    static GM_Component *MakeComponent(uint type, GM_DesignStruct *design, GM_Component *parent)
+    {
+        for (G_FactoryItem *item = first; item; item = item->next)
+            if (item->type == type)
+                return item->Make(design, parent);
+        return NULL;
+    }
+
+    // The last one registered, the start of the list
+    static G_FactoryItem *first;
+};
+
 // A menu (PS2 g_menu.cpp), 0x30 bytes. The PC's has twelve virtual functions, PS2's in its order without the
 // destructor, Destroy and MartinovaKlavesa. The defaults are the base's vtable's: the empty ones are folded copies
 // (0x409220, 0x409210, 0x605020), OnBeforeExchange and OnExchange call the menu's own OnBeforeCreate and OnCreate,
@@ -63,6 +110,13 @@ public:
     // A frame of the menu: the mouse's movement and buttons (the buttons released, pressed and down, 4 bits each), the
     // key pressed or repeated, IGraph's shift keys and the frame's time
     void Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint key, uint shift_keys, uint time);
+    // Shows the component of that id, if the menu has one, with true (COMPF_VISIBLE), and hides it with false: PS2's
+    // name, and its code the same
+    void SetHidden(uint id, bool visible);
+    // Sets the text, of the text database, of the component of that id, if the menu has one
+    void SetTextID(uint id, uint text_id);
+    // Sets the string of the component of that id, if the menu has one
+    void SetString(uint id, uchar *text);
     // Sets the value of the component of that id, if the menu has one
     void SetFloat(uint id, float value);
     // Activates the component of that id, or else the next one that can be activated

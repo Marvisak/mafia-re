@@ -60,8 +60,17 @@ public:
     // AfterMove of the component and its children
     void BaseAfterMove(uint draw_flags);
 
+    // PS2's constructor sets them from the definition's item (GM_DesignStruct): the position and size scaled to the screen
+    // (menuScreenScale), the position twice. The names are ours.
     uint id;                            // 0x4, the item's id in the menu's definition
     uint flags;                         // 0x8, COMPF_*
-    uchar unknown_c[0x24];
+    uint text_id;                       // 0xc
+    uchar *text;                        // 0x10, the text database's text of text_id
+    float design_x, design_y;           // 0x14
+    float sx, sy;                       // 0x1c
+    // 0x24, where the component is drawn: CreateCompsByDef moves the root's by the left edge (levyOkraj), PS2's UtilCenterH
+    // and UtilCenterV center it in its parent
+    float x, y;
+    GM_Component *parent;               // 0x2c, NULL for the root
     std::vector<GM_Component *> children; // 0x30
 };

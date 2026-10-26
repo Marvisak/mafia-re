@@ -1,14 +1,41 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
 // docs/game-files.md). OnChange (0x5e4a50) lies in the range of the next file but one. Then the loading screen
 // (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu's OnBeforeCreate, the loading
-// screen's constructor, OnBeforeCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main and
-// C_mission::Open need to link.
+// screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what
+// main and C_mission::Open need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
+#include "mission/Mission.h"
+
+#include <string.h>
 
 #include "IGraph/IGraph.h"
+#include "rw_data.h"
 #include "stub.h"
+
+// The loading screen's items, tables\menu\loadprogress.mnu (the names are ours)
+#define LOADPROGRESS_SIDE 0x64          // the picture on the left, "loadbok.tga"
+#define LOADPROGRESS_MISSION_PICTURE 0x65
+#define LOADPROGRESS_LOGO 0x66          // "mafia.tga"
+#define LOADPROGRESS_MISSION_NAME 0xc8
+#define LOADPROGRESS_TITLE 0x190        // the constructor's text
+#define LOADPROGRESS_ABORT 0x191        // under it, "press <ESC> to Abort"
+// An 'R', a text and a second bar, which OnCreate hides
+#define LOADPROGRESS_UNKNOWN_1000 1000
+#define LOADPROGRESS_UNKNOWN_2000 2000
+#define LOADPROGRESS_UNKNOWN_3000 3000
+
+// The text database's "press <ESC> to Abort" (the name is ours)
+#define TEXT_PRESS_ESC_TO_ABORT 0x2ce
+
+// A mission's entry in tables\load.def (the names are ours), 0x44 bytes: its loading screen's picture and name
+struct S_load_def
+{
+    char mission[0x20];                 // the mission's folder, "mise01"
+    char picture[0x20];                 // 0x20, "M01.tga"
+    uint name_id;                       // 0x40, of the text database ("An Offer You Can't Refuse"), 0 for none
+};
 
 // PS2's is always "mainmenu", without Racing
 // FUNCTION: GAME 0x5e0670
@@ -42,10 +69,10 @@ int GM_MainMenu::OnClick(uint id)
 // The menus' scale, relative to 800x600 (the HUD's screen of Parhelia's two or three): the constants are quotients, the
 // reciprocals of the sizes
 // FUNCTION: GAME 0x5e3aa0
-GM_LoadProgress::GM_LoadProgress(uint unknown, float mission_part, uchar *unknown2) :
+GM_LoadProgress::GM_LoadProgress(uint title, float mission_part, uchar *mission_name) :
     mission_part(mission_part),
-    unknown_38(unknown),
-    unknown_3c(unknown2)
+    title(title),
+    mission_name(mission_name)
 {
     switch (parheliaIndex)
     {
@@ -68,16 +95,48 @@ const char *GM_LoadProgress::OnBeforeCreate()
     return "loadprogress";
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e3b90
+// PS2's loads the menus' resources, takes act_mission's name into the screen (without its folders), copies the entry's
+// picture into the screen, has pictures and texts of its own for three missions, and shows the hidden items. Open: the
+// original loads this (mov ecx, esi) for the mission name's SetTextID before it pushes the id, ours after; neither a reference
+// or local for the entry, an inline helper, other types nor other declarations moved it.
+// FUNCTION: GAME 0x5e3b90
 int GM_LoadProgress::OnCreate()
 {
-    StubLog("GM_LoadProgress::OnCreate");
+    if (title)
+    {
+        SetTextID(LOADPROGRESS_TITLE, title);
+        SetTextID(LOADPROGRESS_ABORT, TEXT_PRESS_ESC_TO_ABORT);
+    }
+    // STRING: GAME 0x638384
+    SetString(LOADPROGRESS_SIDE, (uchar *)"loadbok.tga");
+    // STRING: GAME 0x638378
+    SetString(LOADPROGRESS_LOGO, (uchar *)"mafia.tga");
+    S_load_def *defs = (S_load_def *)new char[8000];
+    // STRING: GAME 0x638368
+    int file = dtaOpen("tables\\load.def", false);
+    if (file >= 0)
+    {
+        int read = dtaRead(file, defs, 8000);
+        if (read > 0)
+        {
+            int count = read / sizeof(S_load_def);
+            for (int i = 0; i < count; i++)
+                if (!_stricmp(defs[i].mission, mission_name ? (char *)mission_name : act_mission->mission_name))
+                {
+                    SetString(LOADPROGRESS_MISSION_PICTURE, (uchar *)defs[i].picture);
+                    if (defs[i].name_id)
+                        SetTextID(LOADPROGRESS_MISSION_NAME, defs[i].name_id);
+                    break;
+                }
+        }
+        dtaClose(file);
+    }
+    delete[] (char *)defs;
+    SetHidden(LOADPROGRESS_UNKNOWN_1000, false);
+    SetHidden(LOADPROGRESS_UNKNOWN_2000, false);
+    SetHidden(LOADPROGRESS_UNKNOWN_3000, false);
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // Returns 0, as PS2's: the vtable's entry is a folded copy of another file's, apart from the base's in-class one
 // FUNCTION: GAME 0x5e4d50 FOLDED

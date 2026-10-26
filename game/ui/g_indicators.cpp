@@ -1,6 +1,6 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
-// the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, Create, Destroy, _SpocitejRafiku2,
-// ResolutionChanged and the menus' cursor; the rest of what main and the profiles call is stubs.
+// the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
+// _SpocitejRafiku2, ResolutionChanged and the menus' cursor; the rest of what main and the profiles call is stubs.
 
 #include "ui/g_indicators.h"
 #include "ui/g_textdb.h"
@@ -210,6 +210,12 @@ void G_IndicatorsClass::LanguageSelect(uint language)
         dtaRead(file, &language_credits, sizeof(language_credits));
         dtaClose(file);
     }
+}
+
+// FUNCTION: GAME 0x5f70d0
+uint G_IndicatorsClass::GetLanguage()
+{
+    return *(uint *)language_primary.language;
 }
 
 // PS2's loads the fonts first, after preloading the menus' textures, and the icons, which the PC leaves unloaded

@@ -695,6 +695,9 @@
 // LIBRARY: GAME 0x61a051 SYMBOL
 // __87except
 
+// LIBRARY: GAME 0x61a121 SYMBOL
+// __matherr
+
 // LIBRARY: GAME 0x61a124 SYMBOL
 // __alloc_osfhnd
 
@@ -838,6 +841,9 @@
 
 // LIBRARY: GAME 0x61cff0 SYMBOL
 // _RtlUnwind@16
+
+// LIBRARY: GAME 0x61d0b0 SYMBOL
+// __strcmpi
 
 // LIBRARY: GAME 0x61d13c SYMBOL
 // __chdir

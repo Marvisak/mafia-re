@@ -202,6 +202,8 @@ public:
     // Reads the language's tables\lang_<language>.def into language_primary ('en' for 0) and tables\lang_cz.def into
     // language_credits
     void LanguageSelect(uint language);
+    // language_primary's two letters, the first in the low byte (PC only, the name is ours)
+    uint GetLanguage();
     // Creates the HUD at the start (PS2's names, as Destroy's and ResolutionChanged's): the textures and the fonts;
     // G_LoadSaveClass::Init calls it
     void Create();

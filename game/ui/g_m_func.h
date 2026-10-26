@@ -49,13 +49,17 @@ class GM_LoadProgress : public GM_Menu
 public:
     float mission_part;                 // 0x30, the bar's part the mission's opening fills (the name is ours)
     int unknown_34;                     // 0x34
-    uint unknown_38;                    // 0x38
-    uchar *unknown_3c;                  // 0x3c
+    // 0x38, a title of the text database, which OnCreate shows with "press <ESC> to Abort", 0 for none (the name is
+    // ours)
+    uint title;
+    // 0x3c, the mission whose picture and name OnCreate shows, act_mission's while NULL (the name is ours)
+    uchar *mission_name;
 
     // The menus' screen scale too
-    GM_LoadProgress(uint, float mission_part, uchar *);
+    GM_LoadProgress(uint title, float mission_part, uchar *mission_name);
 
     virtual const char *OnBeforeCreate();
+    // The screen's items: the title, the two pictures, and the mission's picture and name from tables\load.def
     virtual int OnCreate();
     virtual int OnTick(uint time);
     virtual int OnKey(uchar key, uint);

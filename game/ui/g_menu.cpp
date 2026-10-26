@@ -1,6 +1,6 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
-// ExecuteMenu runs as far as the components (the constructor and the resources, Create, Draw and the activation), and
-// SetFloat, which the loading screen's bar calls; CreateCompsByDef, the components, Tick and the rest are stubs.
+// ExecuteMenu runs as far as the components (the constructor and the resources, Create, CreateCompsByDef, Draw and the
+// activation), and the wrappers by id the loading screen calls; the components, Tick and the rest are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
@@ -10,8 +10,11 @@
 #include "mission/Mission.h"
 #include "mission/game.h"
 
+#include <stdio.h>
+
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
+#include "rw_data.h"
 #include "stub.h"
 
 // Its initializer starts the file (0x5e8d10)
@@ -33,7 +36,8 @@ int GM_Menu::mouseY = 0;
 int GM_Menu::zz_globalReturnCode = 0;
 // GLOBAL: GAME 0x6bd8ac
 uint GM_Menu::zz_blinkTime = 0;
-// PS2's G_GlobalFactory::first, the components' factories, comes here (0x6bd8b0)
+// GLOBAL: GAME 0x6bd8b0
+G_FactoryItem *G_GlobalFactory::first = NULL;
 // GLOBAL: GAME 0x6bd8b4
 int GM_Menu::menuCount = 0;
 // GLOBAL: GAME 0x6bd8b8
@@ -186,14 +190,73 @@ void GM_Menu::Create()
     OnChange(active, NULL);
 }
 
-#pragma auto_inline(off)
+// The menu's header (the names are ours)
+struct S_menu_header
+{
+    char magic[4];                      // "Menu"
+    uint version;                       // 1
+    uint count;                         // 0x8, of the items
+    uint unknown_c;
+};
 
-// PS2's takes a char *
-// STUB: GAME 0x5ea370
+// PS2's takes a char *, and looks into the menus it preloaded first; the PC's looks for the language's menu first,
+// tables\menu\<name>_<language>.mnu
+// FUNCTION: GAME 0x5ea370
 void GM_Menu::CreateCompsByDef(const char *name)
 {
-    StubLog("GM_Menu::CreateCompsByDef %s", name);
+    char path[256];
+    S_menu_header header;
+    if (!name)
+        return;
+    int file = -1;
+    uint language = mafiaIndicators.GetLanguage();
+    if (language)
+    {
+        // STRING: GAME 0x6386d0
+        sprintf(path, "tables\\menu\\%s_%c%c.mnu", name, language & 0xff, (language >> 8) & 0xff);
+        file = dtaOpen(path, false);
+    }
+    if (file < 0)
+    {
+        // STRING: GAME 0x6386bc
+        sprintf(path, "tables\\menu\\%s.mnu", name);
+        file = dtaOpen(path, false);
+        if (file < 0)
+            return;
+    }
+    dtaRead(file, &header, sizeof(header));
+    GM_DesignStruct *design = new GM_DesignStruct[header.count];
+    dtaRead(file, design, header.count * sizeof(GM_DesignStruct));
+    dtaClose(file);
+    // The components after an 'upup' item are the root's children
+    GM_Component *component = NULL;
+    GM_Component *parent = NULL;
+    for (uint i = 0; i < header.count; i++)
+    {
+        if (design[i].type == 'upup')
+        {
+            if (parent)
+                while (parent->parent)
+                    parent = parent->parent;
+            continue;
+        }
+        component = G_GlobalFactory::MakeComponent(design[i].type, &design[i], parent);
+        if (!component)
+            continue;
+        components.push_back(component);
+        if (!root)
+        {
+            root = component;
+            parent = component;
+            component->x += levyOkraj.x;
+        }
+        if (component->CanBeParent())
+            parent = component;
+    }
+    delete[] design;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5ea690
 void GM_Menu::Destroy()
@@ -237,6 +300,35 @@ void GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint 
 }
 
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5eaf20
+void GM_Menu::SetHidden(uint id, bool visible)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (visible)
+    {
+        if (component)
+            component->flags |= COMPF_VISIBLE;
+    }
+    else if (component)
+        component->flags &= ~COMPF_VISIBLE;
+}
+
+// FUNCTION: GAME 0x5eafd0
+void GM_Menu::SetTextID(uint id, uint text_id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetTextID(text_id);
+}
+
+// FUNCTION: GAME 0x5eb030
+void GM_Menu::SetString(uint id, uchar *text)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetString(text);
+}
 
 // FUNCTION: GAME 0x5eb070
 void GM_Menu::SetFloat(uint id, float value)
