@@ -356,7 +356,7 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_item@@UAEPAXI@Z
+// ??_EC_effect_subpart@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
@@ -376,7 +376,7 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_unknown_0@C_game@@V?$allocator@US_unknown_0@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original

@@ -233,6 +233,9 @@ public:
     void BonusSetCount(int count);
     // Lays the HUD out for the screen's resolution: Parhelia's screens, the scale and the dials' vertices
     void ResolutionChanged();
+    // The mouse's cursor, which GM_Menu::Draw draws over the active menu: a square of 15 pixels from 1int.tga (PC only,
+    // the name is ours)
+    void DrawCursor(float x, float y);
     // PC only, the name is ours. Stores the flag at 0x46f4 and, with Matrox Parhelia's two or three screens
     // (parheliaIndex), confines the scene's viewport and camera to the middle one while it is set; main sets it around
     // the car encyclopedia.

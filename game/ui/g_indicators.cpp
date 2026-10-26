@@ -1,6 +1,6 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
-// the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, Create, Destroy, _SpocitejRafiku2
-// and ResolutionChanged; the rest of what main and the profiles call is stubs.
+// the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, Create, Destroy, _SpocitejRafiku2,
+// ResolutionChanged and the menus' cursor; the rest of what main and the profiles call is stubs.
 
 #include "ui/g_indicators.h"
 #include "ui/g_textdb.h"
@@ -758,6 +758,42 @@ inline void SetDiamondVertices(const S_vector2 &pos, const S_vector2 &size, floa
     verts[3].v = v1;
     verts[4] = verts[2];
     verts[5] = verts[1];
+}
+
+// FUNCTION: GAME 0x604770
+void G_IndicatorsClass::DrawCursor(float x, float y)
+{
+    TLVERTEX verts[4];
+    verts[0].x = x;
+    verts[0].y = y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = 0xffffffff;
+    verts[0].u = 20.0f / 256;
+    verts[0].v = 233.0f / 256;
+    verts[1].x = x + 15.0f;
+    verts[1].y = y;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = 0xffffffff;
+    verts[1].u = 88.0f / 256;
+    verts[1].v = 233.0f / 256;
+    verts[2].x = x;
+    verts[2].y = y + 15.0f;
+    verts[2].z = 0.0f;
+    verts[2].rhw = 1.0f;
+    verts[2].color = 0xffffffff;
+    verts[2].u = 20.0f / 256;
+    verts[2].v = 250.0f / 256;
+    verts[3].x = x + 15.0f;
+    verts[3].y = y + 15.0f;
+    verts[3].z = 0.0f;
+    verts[3].rhw = 1.0f;
+    verts[3].color = 0xffffffff;
+    verts[3].u = 88.0f / 256;
+    verts[3].v = 250.0f / 256;
+    igraph->SetTexture(texture_int);
+    igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
 }
 
 #pragma auto_inline(off)

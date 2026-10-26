@@ -1,7 +1,9 @@
-// The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: the
-// constructor and ExecuteMenu, which main and G_LoadSaveClass::Init run; what ExecuteMenu calls is stubs.
+// The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
+// ExecuteMenu runs as far as the components (the constructor and the resources, Create, Draw and the activation), and
+// SetFloat, which the loading screen's bar calls; CreateCompsByDef, the components, Tick and the rest are stubs.
 
 #include "ui/g_menu.h"
+#include "ui/g_m_comps.h"
 #include "ui/g_indicators.h"
 #include "ui/g_loadsave.h"
 #include "input/controls.h"
@@ -17,12 +19,41 @@
 S_vector2 GM_Menu::menuScreenScale(1.0f, 1.0f);
 // GLOBAL: GAME 0x6bd890
 GM_Menu *GM_Menu::activeMenuWindow = NULL;
+// GLOBAL: GAME 0x6bd894
+bool GM_Menu::mouseInUse = false;
+// GLOBAL: GAME 0x6bd898
+int GM_Menu::cursorX = 0;
+// GLOBAL: GAME 0x6bd89c
+int GM_Menu::cursorY = 0;
+// GLOBAL: GAME 0x6bd8a0
+int GM_Menu::mouseX = 0;
+// GLOBAL: GAME 0x6bd8a4
+int GM_Menu::mouseY = 0;
 // GLOBAL: GAME 0x6bd8a8
 int GM_Menu::zz_globalReturnCode = 0;
 // GLOBAL: GAME 0x6bd8ac
 uint GM_Menu::zz_blinkTime = 0;
+// PS2's G_GlobalFactory::first, the components' factories, comes here (0x6bd8b0)
 // GLOBAL: GAME 0x6bd8b4
 int GM_Menu::menuCount = 0;
+// GLOBAL: GAME 0x6bd8b8
+I3D_sound *GM_Menu::menuSoundOpen = NULL;
+// GLOBAL: GAME 0x6bd8bc
+I3D_sound *GM_Menu::menuSoundClose = NULL;
+// GLOBAL: GAME 0x6bd8c0
+I3D_sound *GM_Menu::menuSoundChange = NULL;
+// GLOBAL: GAME 0x6bd8c4
+ITexture *GM_Menu::textureMenuTop = NULL;
+// GLOBAL: GAME 0x6bd8c8
+ITexture *GM_Menu::textureMenuBottom = NULL;
+// GLOBAL: GAME 0x6bd8cc
+ITexture *GM_Menu::textureSponka = NULL;
+// GLOBAL: GAME 0x6bd8d0
+ITexture *GM_Menu::textureProgress = NULL;
+// GLOBAL: GAME 0x6bd8d4
+ITexture *GM_Menu::textureMemory = NULL;
+// GLOBAL: GAME 0x6bd8d8
+ITexture *GM_Menu::textureWait = NULL;
 // GLOBAL: GAME 0x6bd8dc
 uint GM_Menu::lastKameraTargetID = 0;
 
@@ -36,17 +67,100 @@ int GM_Menu::OnKey(uchar key, uint)
     return 0;
 }
 
-// STUB: GAME 0x5e9960
-void GM_Menu::LoadResources()
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e98a0
+void SetViewport(int x, int y, int sx, int sy)
 {
-    StubLog("GM_Menu::LoadResources");
+    LS3D_VIEWPORT viewport;
+    viewport.min_z = 0.0f;
+    viewport.max_z = 1.0f;
+    viewport.x = x < 0 ? 0 : x;
+    viewport.y = y < 0 ? 0 : y;
+    viewport.width = sx;
+    viewport.height = sy;
+    if (viewport.x + viewport.width > igraph->Scrn_sx())
+        viewport.width = igraph->Scrn_sx() - viewport.x;
+    if (viewport.y + viewport.height > igraph->Scrn_sy())
+        viewport.height = igraph->Scrn_sy() - viewport.y;
+    igraph->SetViewPort(&viewport);
+    driver->SetState(RS_USEZB, false);
 }
 
-#pragma auto_inline(on)
+// PS2's loads two more textures, its memory card's and its wait's, and no close sound
+// FUNCTION: GAME 0x5e9960
+void GM_Menu::LoadResources()
+{
+    if (!textureMenuTop)
+        // STRING: GAME 0x6386b0
+        igraph->CreateITexture("papir5a.tga", NULL, ITC_ALPHA, &textureMenuTop);
+    if (!textureMenuBottom)
+        // STRING: GAME 0x6386a4
+        igraph->CreateITexture("papir3.tga", NULL, ITC_ALPHA, &textureMenuBottom);
+    if (!textureSponka)
+        // STRING: GAME 0x638698
+        igraph->CreateITexture("sponka.tga", NULL, ITC_ALPHA, &textureSponka);
+    if (!textureProgress)
+        // STRING: GAME 0x63868c
+        igraph->CreateITexture("kulicky.tga", NULL, ITC_ALPHA, &textureProgress);
+    if (!menuSoundOpen)
+    {
+        menuSoundOpen = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+        menuSoundOpen->SetSoundType(I3DSOUND_AMBIENT);
+        // STRING: GAME 0x638678
+        menuSoundOpen->Open("sounds\\menuopen.wav", 0, NULL, NULL);
+        menuSoundOpen->SetOutVol(1.0f);
+        menuSoundOpen->SetVolume(1.0f);
+        menuSoundOpen->Update();
+        menuSoundOpen->SetOn(false);
+    }
+    if (!menuSoundClose)
+    {
+        menuSoundClose = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+        menuSoundClose->SetSoundType(I3DSOUND_AMBIENT);
+        // STRING: GAME 0x638660
+        menuSoundClose->Open("sounds\\menuclose.wav", 0, NULL, NULL);
+        menuSoundClose->SetOutVol(1.0f);
+        menuSoundClose->SetVolume(1.0f);
+        menuSoundClose->Update();
+        menuSoundClose->SetOn(false);
+    }
+    if (!menuSoundChange)
+    {
+        menuSoundChange = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+        menuSoundChange->SetSoundType(I3DSOUND_AMBIENT);
+        // STRING: GAME 0x638648
+        menuSoundChange->Open("sounds\\menuchange.wav", 0, NULL, NULL);
+        menuSoundChange->SetOutVol(1.0f);
+        menuSoundChange->SetVolume(1.0f);
+        menuSoundChange->Update();
+        menuSoundChange->SetOn(false);
+    }
+}
+
+// FUNCTION: GAME 0x5e9d60
+void GM_Component::BaseDraw(uint draw_flags)
+{
+    if (flags & COMPF_VISIBLE)
+    {
+        draw_flags &= flags | 0xff000000;
+        Draw(draw_flags);
+        for (std::vector<GM_Component *>::iterator it = children.begin(); it < children.end(); it++)
+            (*it)->BaseDraw(draw_flags);
+    }
+}
+
+// FUNCTION: GAME 0x5e9da0
+void GM_Component::BaseAfterMove(uint draw_flags)
+{
+    AfterMove(draw_flags);
+    for (std::vector<GM_Component *>::iterator it = children.begin(); it < children.end(); it++)
+        (*it)->BaseAfterMove(draw_flags);
+}
 
 // PS2's loads the resources in ExecuteMenu
 // FUNCTION: GAME 0x5ea1f0
-GM_Menu::GM_Menu() : parent(NULL), unknown_8(0), unknown_c(0), unknown_20(false), unknown_24(0), unknown_28(0)
+GM_Menu::GM_Menu() : parent(NULL), root(NULL), active(NULL), unknown_20(false), unknown_24(0), unknown_28(0)
 {
     flags = MENUF_UNKNOWN_10000;
     if (!menuCount)
@@ -54,12 +168,31 @@ GM_Menu::GM_Menu() : parent(NULL), unknown_8(0), unknown_c(0), unknown_20(false)
     menuCount++;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5ea2e0
+// PS2's frees the components' array
+// FUNCTION: GAME 0x5ea2e0
 void GM_Menu::Create()
 {
-    StubLog("GM_Menu::Create %s", OnBeforeCreate());
+    components.clear();
+    CreateCompsByDef(OnBeforeCreate());
+    ActivateByIDOrNext(1);
+    OnCreate();
+    if (!unknown_20 && menuSoundOpen)
+    {
+        menuSoundOpen->SetOn(false, true);
+        menuSoundOpen->SetOn(true, true);
+    }
+    if (parent)
+        parent->OnCreateChild(this, unknown_28);
+    OnChange(active, NULL);
+}
+
+#pragma auto_inline(off)
+
+// PS2's takes a char *
+// STUB: GAME 0x5ea370
+void GM_Menu::CreateCompsByDef(const char *name)
+{
+    StubLog("GM_Menu::CreateCompsByDef %s", name);
 }
 
 // STUB: GAME 0x5ea690
@@ -67,6 +200,33 @@ void GM_Menu::Destroy()
 {
     StubLog("GM_Menu::Destroy");
 }
+
+#pragma auto_inline(on)
+
+// PS2's draws the components only without the menu's flag 0x200000, and no cursor
+// FUNCTION: GAME 0x5ea7e0
+void GM_Menu::Draw(uint draw_flags)
+{
+    driver->SetState(RS_USEZB, false);
+    if (zz_blinkTime > 700)
+        draw_flags &= ~MENUDRAW_CURSOR;
+    if (parent && flags & MENUF_UNKNOWN_10000)
+        parent->Draw(draw_flags & ~MENUDRAW_UNKNOWN_40000000);
+    if (root)
+    {
+        SetViewport(0, 0, igraph->Scrn_sx(), igraph->Scrn_sy());
+        root->BaseAfterMove(draw_flags);
+        root->BaseDraw(draw_flags);
+    }
+    if (activeMenuWindow == this)
+    {
+        SetViewport(0, 0, igraph->Scrn_sx(), igraph->Scrn_sy());
+        mafiaIndicators.DrawCursor((float)cursorX, (float)cursorY);
+    }
+    driver->SetState(RS_USEZB, true);
+}
+
+#pragma auto_inline(off)
 
 // Ends every menu with the main menu's quit, as the stub of ExecuteMenu did, so that a run goes through
 // STUB: GAME 0x5ea8c0
@@ -77,6 +237,67 @@ void GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint 
 }
 
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5eb070
+void GM_Menu::SetFloat(uint id, float value)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetFloat(value);
+}
+
+// FUNCTION: GAME 0x5eb210
+void GM_Menu::ActivateByIDOrNext(uint id)
+{
+    if (active)
+        active->flags &= ~COMPF_ACTIVE;
+    active = FindComponentByID(id);
+    if (active)
+    {
+        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_UNKNOWN_8000)
+            active->flags |= COMPF_ACTIVE;
+        else
+            active = NULL;
+    }
+    if (!active)
+        active = FindComponentByIDNext(id);
+    if (active)
+        active->flags |= COMPF_ACTIVE;
+}
+
+// FUNCTION: GAME 0x5eb2f0
+GM_Component *GM_Menu::FindComponentByID(uint id)
+{
+    for (std::vector<GM_Component *>::iterator it = components.begin(); it < components.end(); it++)
+        if ((*it)->id == id)
+            return *it;
+    return NULL;
+}
+
+// FUNCTION: GAME 0x5eb3c0
+GM_Component *GM_Menu::FindComponentByIDNext(uint id)
+{
+    GM_Component *found = NULL;
+    uint found_id = (uint)-1;
+    std::vector<GM_Component *>::iterator it;
+    for (it = components.begin(); it < components.end(); it++)
+        if ((*it)->id > id && (*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE &&
+            (*it)->flags & COMPF_UNKNOWN_8000 && (*it)->id < found_id)
+        {
+            found_id = (*it)->id;
+            found = *it;
+        }
+    if (found)
+        return found;
+    for (it = components.begin(); it < components.end(); it++)
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000 &&
+            (*it)->id < found_id)
+        {
+            found_id = (*it)->id;
+            found = *it;
+        }
+    return found;
+}
 
 // PS2's is the same loop without the mouse, the joysticks and the controls: it reads the controller, draws the menu
 // itself and checks the CD's tray. The PC's draws it from the scene's callback (Main.cpp), after the frame.
@@ -108,7 +329,7 @@ int GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
         (mafiaIndicators.unknown_40a4 & (INDF_UNKNOWN_4000 | INDF_UNKNOWN_8000 | INDF_UNKNOWN_20000)) | INDF_MENU;
     SetCameraTargetID(0);
     zz_globalReturnCode = 0;
-    if (!menu->unknown_8)
+    if (!menu->root)
         menu->Create();
     activeMenuWindow = menu;
     while (!zz_globalReturnCode)

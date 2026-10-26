@@ -1,7 +1,8 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
 // docs/game-files.md). OnChange (0x5e4a50) lies in the range of the next file but one. Then the loading screen
 // (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu's OnBeforeCreate, the loading
-// screen's constructor, OnBeforeCreate and OnTick; the rest is stubs of what main and C_mission::Open need to link.
+// screen's constructor, OnBeforeCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main and
+// C_mission::Open need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
@@ -94,17 +95,28 @@ int GM_LoadProgress::OnKey(uchar key, uint)
     return 0;
 }
 
-// STUB: GAME 0x5e3d20
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e3d20
 void GM_LoadProgress::SetProgressMissionOpen(float progress)
 {
-    StubLog("GM_LoadProgress::SetProgressMissionOpen");
+    SetRawProgress(progress * mission_part);
 }
 
-// STUB: GAME 0x5e3d40
+// PS2's without ResetRenderProps
+// FUNCTION: GAME 0x5e3d40
 void GM_LoadProgress::Present()
 {
-    StubLog("GM_LoadProgress::Present");
+    igraph->ResetRenderProps();
+    igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    igraph->BeginScene();
+    igraph->SetState(DXS_ALPHA, ALPHASTATE_BLEND);
+    Draw(MENUDRAW_ALL);
+    igraph->EndScene();
+    igraph->Present();
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5e4a50
 int GM_MainMenu::OnChange(GM_Component *, GM_Component *)

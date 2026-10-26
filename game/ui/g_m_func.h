@@ -37,6 +37,9 @@ public:
     virtual int OnChange(GM_Component *, GM_Component *);
 };
 
+// The loading screen's progress bar (its menu's item 0x12c, a "pbar"; the name is ours)
+#define LOADPROGRESS_BAR 0x12c
+
 // The loading screen (PS2 GM_LoadProgress, g_m_func.cpp), 0x40 bytes: "loadprogress", whose bar the mission's opening
 // fills to mission_part and the game's Init the rest. C_mission::Open creates one into mafiaLoadSave.progress, the
 // load callback (cbLoadScene) one of its own without it. Only what those two use so far.
@@ -57,6 +60,8 @@ public:
     virtual int OnTick(uint time);
     virtual int OnKey(uchar key, uint);
 
+    // The bar at progress (0 to 1) of the whole loading (PS2's is out of line, the PC's callers inline it)
+    void SetRawProgress(float progress) { SetFloat(LOADPROGRESS_BAR, progress); }
     // The bar at progress (0 to 1) of the mission's opening
     void SetProgressMissionOpen(float progress);
     // Draws the screen and presents it
