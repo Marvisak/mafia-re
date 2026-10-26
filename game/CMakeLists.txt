@@ -9,9 +9,10 @@ project(game)
 # The folders are ours, as no binary records the original's paths: actors/ (C_actor, the actors' animations and blood),
 # vehicles/ (the cars, their physics and effects), ai/ (the walking paths' and the roads' webs, the police, the chases),
 # collision/, input/ (the controls and the force feedback), mission/ (the mission and what it holds: the game, the
-# scripts, the effects, rmorf.bin), camera/ (the game's camera), ui/ (the menus, the HUD, the saved games and the
+# scripts, the effects, rmorf.bin, the city's base blocks, the cutscenes), camera/ (the game's camera), ui/ (the menus, the HUD, the saved games and the
 # console); at the top the start (WinMain, main, Winstuff), the chunks, the caches and the tools.
 add_executable(game WIN32
+    mission/m_cache.cpp
     actors/C_actor.cpp
     actors/C_animations.cpp
     C_chunk.cpp
@@ -35,6 +36,7 @@ add_executable(game WIN32
     mission/tshift.cpp
     WinMain.cpp
     Winstuff.cpp
+    mission/C_cutscene.cpp
     mission/game.cpp
     Main.cpp
     collision/g_colls.cpp

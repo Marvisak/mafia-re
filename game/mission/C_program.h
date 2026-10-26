@@ -21,6 +21,10 @@ public:
 
     // What the patch's files replace, which LoadPatchFile fills (PS2 name; nothing fills PS2's)
     static std::vector<S_prog_change> change_progs;
+
+    // Virtual, the vtable's first function: C_mission::Close deletes its scripts through it (PS2's too). Not written
+    // yet; nothing constructs a script so far, so nothing needs the vtable.
+    virtual ~C_program();
 };
 
 // Loads one of the patch's script files, patch\a1.bin to a4.bin, into C_program::change_progs (PC only, the name is

@@ -40,11 +40,11 @@ class C_web_path
 public:
     C_web_node *nodes;                  // 0x4
     int unknown_8;                      // 0x8
-    int unknown_c;                      // 0xc
+    int unknown_c;                      // 0xc, the nodes' count, by PS2's ClearNode (PS2 0x8)
     uint unknown_10;                    // 0x10, the constructor's (50 for the mission's, PS2's too)
-    uchar *unknown_14;                  // 0x14
-    int unknown_18;                     // 0x18
-    bool unknown_1c;                    // 0x1c
+    uchar *unknown_14;                  // 0x14 (PS2 0x24)
+    int unknown_18;                     // 0x18 (PS2 0x28)
+    bool unknown_1c;                    // 0x1c (PS2 0x2c)
 
     // Inline: C_mission::Init has it inlined. VC6 stores the vtable after the initializers and before the body, and the
     // original's comes after the last four members (PS2's, which stores its vtable first, has the same split).
@@ -60,6 +60,17 @@ public:
     }
     // Not virtual: UnInit calls it directly
     ~C_web_path();
+
+    // PS2 name. Inline: C_mission::Close has it inlined. PS2's also clears each node's connections and frees the nodes
+    // unless its help memory holds them; the PC's keeps the nodes and frees only the array PS2 frees with them.
+    void ClearNode()
+    {
+        unknown_c = 0;
+        delete[] unknown_14;
+        unknown_14 = NULL;
+        unknown_18 = 0;
+        unknown_1c = false;
+    }
 
     // PS2's virtual functions in PS2's order, but for RecompileDistance, which isn't virtual on the PC (its vtable has
     // 14 entries, the parameters each one's ret takes)

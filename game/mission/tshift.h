@@ -19,3 +19,7 @@ public:
     C_tshift();
     ~C_tshift();
 };
+
+// The elements' erase, which C_mission::Close's inlined clear calls (Mission.cpp's copy)
+// TEMPLATE: GAME 0x547a10
+// std::vector<S_tshift_elem,std::allocator<S_tshift_elem> >::erase

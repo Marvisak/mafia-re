@@ -1,5 +1,6 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the constructor,
-// the destructor, Init, UnInit and the video options' methods; the rest of what main and InitSystem call is stubs.
+// the destructor, Init, UnInit, Close and the video options' methods; the rest of what main and InitSystem call is
+// stubs.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -7,6 +8,9 @@
 #include "ai/pathweb.h"
 #include "ai/road_web.h"
 #include "mission/C_effects.h"
+#include "mission/C_program.h"
+#include "mission/C_cutscene.h"
+#include "mission/m_cache.h"
 #include "I3D_cache.h"
 #include "stub.h"
 
@@ -100,13 +104,60 @@ void C_mission::UnInit()
     }
 }
 
+// Close's helpers where the original has them: Close has no unwinding, so a stub defined before it changes nothing
+
 #pragma auto_inline(off)
 
-// STUB: GAME 0x5405e0
+// STUB: GAME 0x540240
+void C_mission::DelActors()
+{
+    StubLog("C_mission::DelActors");
+}
+
+#pragma auto_inline(on)
+
+// PS2's in another order (its caches after the scripts and the scene, its anim cache only down to a count of its own),
+// with PS2's own (its screen cleared, its second block cache, its frames' reference buffer, two arrays deleted) and
+// without the cutscene's Close. The scripts are deleted through their virtual destructor, which tests the pointer itself.
+// FUNCTION: GAME 0x5405e0
 void C_mission::Close()
 {
-    StubLog("C_mission::Close");
+    if (!unknown_c)
+        return;
+    if (game)
+    {
+        game->Done();
+        game->DoneIntern();
+    }
+    FrmActBuff_ClearAll();
+    cutscene.Close();
+    if (tshift)
+        tshift->elems.clear();
+    if (web_path)
+        web_path->ClearNode();
+    if (roads)
+        roads->Clear();
+    DelActors();
+    anim_models.clear();
+    base_cache.Close();
+    sound_cache.Clear();
+    model_cache.Clear();
+    anim_cache.Clear();
+    int i;
+    for (i = programs.size(); i--;)
+        delete programs[i];
+    programs.clear();
+    for (i = t_transparent.size(); i--;)
+    {
+        if (t_transparent[i].object)
+            t_transparent[i].object->Release();
+    }
+    t_transparent.clear();
+    scene->Close();
+    unknown_c = false;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5409d0
 int C_mission::Open(const char *name, bool, uint, bool)
@@ -192,3 +243,13 @@ void S_mission_options::SetParticles(int level)
     if (particles > OPTION_HIGH)
         particles = OPTION_HIGH;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x546b70
+void C_mission::FrmActBuff_ClearAll()
+{
+    StubLog("C_mission::FrmActBuff_ClearAll");
+}
+
+#pragma auto_inline(on)

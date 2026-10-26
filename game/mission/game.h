@@ -268,6 +268,9 @@ public:
     }
 
     void Init();
+    // PS2 names: what C_mission::Close calls first, when a mission ends
+    void Done();
+    void DoneIntern();
 
     // Empty the stacks, the inventories' copies deleted
     void InventoryStackClear();

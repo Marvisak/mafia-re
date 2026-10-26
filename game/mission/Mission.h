@@ -95,7 +95,7 @@ public:
     int unknown_0;                      // 0x0
     int unknown_4;                      // 0x4
     int unknown_8;                      // 0x8
-    bool unknown_c;                     // 0xc
+    bool unknown_c;                     // 0xc, set while a mission is open: Close does nothing without it, and clears it
     I3D_scene *scene;                   // 0x10
     std::vector<S_anim_model> anim_models;  // 0x14
     C_game *game;                       // 0x24 (PS2 0x20)
@@ -129,7 +129,11 @@ public:
     void UnInit();
     // Opens the mission of that name, a folder in missions\; 0 if it succeeds
     int Open(const char *name, bool, uint, bool);
+    // Unloads the open mission: its game, actors, scripts and objects, the caches' contents and the scene's frames
     void Close();
+    // PS2 names: Close's helpers
+    void DelActors();
+    void FrmActBuff_ClearAll();
     // The name is ours. main clears both members through one load of act_mission, so through a method: written out,
     // VC6 reloads the pointer after the first store.
     void ResetUnknown70()
@@ -142,3 +146,11 @@ public:
 // The mission (PS2 main_mission, Main.cpp's), which act_mission points to
 extern C_mission main_mission;
 extern C_mission *act_mission;
+
+// What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
+// vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
+// TEMPLATE: GAME 0x44b270
+// std::vector<C_program *,std::allocator<C_program *> >::erase
+
+// TEMPLATE: GAME 0x538520
+// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z

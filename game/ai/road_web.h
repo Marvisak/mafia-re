@@ -31,6 +31,14 @@ public:
     // Not virtual: UnInit calls it directly
     ~C_roads();
 
+    // Empties the network (the name is ours). Inline: C_mission::Close has it inlined (PS2's too), the object kept in a
+    // register across the first clear, the second clear called out of line as the budget's nested call.
+    void Clear()
+    {
+        nodes.clear();
+        links.clear();
+    }
+
     // PS2's three virtual functions in PS2's order, and LoadData, which isn't virtual on PS2, between the last two (the
     // parameters each one's ret takes)
     virtual void SortNodesByX();
@@ -38,3 +46,11 @@ public:
     virtual void LoadData(C_chunk *chunk);
     virtual void RecompileDistances();
 };
+
+// What C_mission::Close's inlined Clear calls (Mission.cpp's copies): the nodes' erase, and the links' clear, with its
+// erase inlined
+// TEMPLATE: GAME 0x5472a0
+// std::vector<S_road_node,std::allocator<S_road_node> >::erase
+
+// TEMPLATE: GAME 0x5470f0
+// std::vector<S_road_link,std::allocator<S_road_link> >::clear
