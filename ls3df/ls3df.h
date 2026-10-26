@@ -327,7 +327,7 @@ public:
 // ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
 
 // TEMPLATE: LS3DF11 0x10005d10
-// ?remove@?$C_list@PAVI3D_sector@@@@QAE_NABQAVI3D_sector@@@Z
+// ?remove@?$C_list@PAVI3D_sound@@@@QAE_NABQAVI3D_sound@@@Z
 
 // TEMPLATE: LS3DF 0x100508d0
 // TEMPLATE: LS3DF11 0x1004e730

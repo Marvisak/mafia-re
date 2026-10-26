@@ -35,7 +35,12 @@ struct S_vector2 {
 
     float Magnitude() const;
 
+    S_vector2 operator+(const S_vector2 &v) const;
     S_vector2 operator-(const S_vector2 &v) const;
+    // Member by member (the game's HUD)
+    S_vector2 operator*(const S_vector2 &v) const;
+    S_vector2 operator*(float f) const;
+    S_vector2 operator/(float f) const;
     // Normalized unless null (the name is a guess)
     void Normalize();
     // The distance to the line through p along dir, positive on its left (Insanity3D's name)
@@ -493,9 +498,30 @@ inline float S_vector2::Magnitude() const
 
 inline S_vector2::S_vector2(float x1, float y1) : x(x1), y(y1) {}
 
+inline S_vector2 S_vector2::operator+(const S_vector2 &v) const
+{
+    return S_vector2(x + v.x, y + v.y);
+}
+
 inline S_vector2 S_vector2::operator-(const S_vector2 &v) const
 {
     return S_vector2(x - v.x, y - v.y);
+}
+
+inline S_vector2 S_vector2::operator*(const S_vector2 &v) const
+{
+    return S_vector2(x * v.x, y * v.y);
+}
+
+inline S_vector2 S_vector2::operator*(float f) const
+{
+    return S_vector2(x * f, y * f);
+}
+
+inline S_vector2 S_vector2::operator/(float f) const
+{
+    f = 1.0f / f;
+    return S_vector2(x * f, y * f);
 }
 
 inline void S_vector2::Normalize()

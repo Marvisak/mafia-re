@@ -170,6 +170,9 @@
 // LIBRARY: GAME 0x6118df SYMBOL
 // _fprintf
 
+// LIBRARY: GAME 0x611911 SYMBOL
+// _fread
+
 // LIBRARY: GAME 0x611ad5 SYMBOL
 // _strtol
 
@@ -325,6 +328,9 @@
 
 // LIBRARY: GAME 0x6166fa SYMBOL
 // __ftbuf
+
+// LIBRARY: GAME 0x616737 SYMBOL
+// __filbuf
 
 // LIBRARY: GAME 0x616810 SYMBOL
 // __read

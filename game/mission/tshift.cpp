@@ -10,8 +10,7 @@ C_tshift::C_tshift()
 {
 }
 
-// The same code as C_blood_manager's destructor (actors/C_blood.cpp), whose copy the original's linker kept, ours this one
-// FUNCTION: GAME 0x412000 FOLDED
+// The same code as C_blood_manager's destructor (actors/C_blood.cpp), whose copy the linker kept: the marker is there
 C_tshift::~C_tshift()
 {
 }

@@ -4789,7 +4789,7 @@ LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIM
 // ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF11 0x1005d600
-// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
+// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);

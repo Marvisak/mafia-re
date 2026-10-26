@@ -749,7 +749,7 @@ DWORD WINAPI RenderThreadProc(void *param);
 // ??1?$C_list@PAUS_VB_block@@@@QAE@XZ
 
 // TEMPLATE: LS3DF11 0x1004e760
-// ??1?$C_list@UWE_STRUCT@@@@QAE@XZ
+// ??1?$C_list@UDUMMY_STRUCT@@@@QAE@XZ
 
 // The destructors ITexture.cpp's thunks register for managed_textures and for pool_textures, through the vector
 // destructor iterator: the eleventh $E5 in link order, after IShowStream.cpp's, and the fourth $E10, after

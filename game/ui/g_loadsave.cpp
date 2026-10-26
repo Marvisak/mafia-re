@@ -1,7 +1,9 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
-// docs/game-files.md), with the car database, as PS2's. Written so far: what InitSystem and CloseSystem reach (Init,
-// Close, the constructors and destructors, AllDefault, ProfileEnumRelease, ApplyControls, the car database's Init and
-// Close, RaceCarsEnable and RaceCarsDisable) and LanguageSelect; the rest of what they and main call is stubs.
+// docs/game-files.md), with the car database and the save files' G_Stream, as PS2's. Written so far: what InitSystem
+// and CloseSystem reach (Init, Close, the constructors and destructors, AllDefault, ProfileEnumFiles, ProfileEnumRelease,
+// SaveGameNewGame, the PC's controls and options defaults, ApplyControls, the car database's Init and Close, G_Stream's
+// reading, RaceCarsEnable, RaceCarsDisable and GarageClear) and LanguageSelect; the rest of what they and main call is
+// stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -11,6 +13,7 @@
 #include "mission/game.h"
 #include "g_material.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "IGraph/IGraph.h"
@@ -19,6 +22,9 @@
 
 // GLOBAL: GAME 0x639320
 bool profileIgnoreSave = true;
+
+// GLOBAL: GAME 0x6d4540
+S_freeride freeride;
 
 // The original constructs both in this order, its file's first functions
 // GLOBAL: GAME 0x6d4628
@@ -110,15 +116,31 @@ void G_LoadSaveClass::AllDefault()
     SaveGameNewGame();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x605260
-void G_LoadSaveClass::ProfileEnumFiles()
+// The PC's version has no version check (PS2's takes only version 10's files) and numbers each head after its file
+// FUNCTION: GAME 0x605260
+std::vector<G_Profile_FileHead> *G_LoadSaveClass::ProfileEnumFiles()
 {
-    StubLog("G_LoadSaveClass::ProfileEnumFiles");
+    profiles.clear();
+    G_Stream stream;
+    stream.SetParams(PROFILE_MAGIC, true, false);
+    for (int i = 0; i < MAX_PROFILES; i++)
+    {
+        char name[128];
+        // STRING: GAME 0x6395f4
+        sprintf(name, "savegame\\mafia%03d.sav", i);
+        if (stream.OpenRead(name))
+        {
+            G_Profile_FileHead head;
+            if (stream.ReadAdr(&head, sizeof(head)) == sizeof(head))
+            {
+                head.number = i;
+                profiles.push_back(head);
+            }
+            stream.Close();
+        }
+    }
+    return &profiles;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x605530
 void G_LoadSaveClass::ProfileEnumRelease()
@@ -140,11 +162,18 @@ void G_LoadSaveClass::ProfileSave()
     StubLog("G_LoadSaveClass::ProfileSave");
 }
 
-// STUB: GAME 0x605ff0
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x605ff0
 void G_LoadSaveClass::SaveGameNewGame()
 {
-    StubLog("G_LoadSaveClass::SaveGameNewGame");
+    unknown_1e8 = 0;
+    unknown_98 = 0;
+    GarageClear();
+    freeride.unknown_18 = false;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x606150
 void G_LoadSaveClass::SaveGameLoad()
@@ -175,15 +204,91 @@ void G_LoadSaveClass::LanguageSelect(uint language)
     mafiaIndicators.LanguageSelect(language);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x607600
-void G_LoadSaveClass::DefaultControls(uint flags)
+// FUNCTION: GAME 0x6073c0
+void G_LoadSaveClass::SetBinding(int index, ushort device, ushort code, int joy, int half)
 {
-    StubLog("G_LoadSaveClass::DefaultControls");
+    bindings[index].device = device;
+    bindings[index].code = code;
+    bindings[index].joy = joy;
+    bindings[index].half = half;
 }
 
-#pragma auto_inline(on)
+// The player's defaults are the arrows and the right-hand keys first, WSAD and the left-hand ones second; the car's
+// keys first and the first joystick second
+// FUNCTION: GAME 0x607600
+void G_LoadSaveClass::DefaultControls(uint flags)
+{
+    if (flags & DEFAULTS_CLEAR)
+        memset(bindings, 0, sizeof(bindings));
+    if (flags & DEFAULTS_PLAYER)
+    {
+        SetBinding(CTRL_FORWARD, CONTROL_KEY, DIK_UP, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_FORWARD + CTRL_SECONDARY, CONTROL_KEY, DIK_W, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_BACKWARD, CONTROL_KEY, DIK_DOWN, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_BACKWARD + CTRL_SECONDARY, CONTROL_KEY, DIK_S, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_LEFT, CONTROL_KEY, DIK_LEFT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_LEFT + CTRL_SECONDARY, CONTROL_KEY, DIK_A, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_RIGHT, CONTROL_KEY, DIK_RIGHT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_RIGHT + CTRL_SECONDARY, CONTROL_KEY, DIK_D, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_WALK, CONTROL_KEY, DIK_RSHIFT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_WALK + CTRL_SECONDARY, CONTROL_KEY, DIK_LSHIFT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_ACTION, CONTROL_MOUSE, MBUT_RIGHT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_ACTION + CTRL_SECONDARY, CONTROL_KEY, DIK_U, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CROUCH, CONTROL_KEY, DIK_RCONTROL, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CROUCH + CTRL_SECONDARY, CONTROL_KEY, DIK_Q, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_FIRE, CONTROL_MOUSE, MBUT_LEFT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_FIRE + CTRL_SECONDARY, CONTROL_KEY, DIK_F, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_JUMP, CONTROL_KEY, DIK_NUMPAD0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_JUMP + CTRL_SECONDARY, CONTROL_KEY, DIK_E, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_AIM, CONTROL_MOUSE, CONTROL_MOUSE_X, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_AIM + CTRL_SECONDARY, CONTROL_MOUSE, CONTROL_MOUSE_Y, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CYCLE_UP, CONTROL_MOUSE, CONTROL_MOUSE_Z, 0, CONTROL_AXIS_POSITIVE);
+        SetBinding(CTRL_CYCLE_UP + CTRL_SECONDARY, CONTROL_KEY, DIK_PRIOR, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CYCLE_DOWN, CONTROL_MOUSE, CONTROL_MOUSE_Z, 0, CONTROL_AXIS_NEGATIVE);
+        SetBinding(CTRL_CYCLE_DOWN + CTRL_SECONDARY, CONTROL_KEY, DIK_NEXT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_INVENTORY, CONTROL_KEY, DIK_I, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_HIDE_WEAPON, CONTROL_KEY, DIK_H, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_DROP_WEAPON, CONTROL_KEY, DIK_BACK, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_MAP, CONTROL_KEY, DIK_TAB, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_TOGGLE_RUN, CONTROL_KEY, DIK_CAPITAL, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_RELOAD, CONTROL_KEY, DIK_L, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_SNIPER, CONTROL_KEY, DIK_R, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_OBJECTIVES, CONTROL_KEY, DIK_F1, 0, CONTROL_AXIS_FULL);
+    }
+    if (flags & DEFAULTS_CAR)
+    {
+        SetBinding(CTRL_ACCELERATE, CONTROL_KEY, DIK_UP, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_ACCELERATE + CTRL_SECONDARY, CONTROL_JOY, JOY_Y, 0, CONTROL_AXIS_NEGATIVE);
+        SetBinding(CTRL_BRAKE, CONTROL_KEY, DIK_DOWN, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_BRAKE + CTRL_SECONDARY, CONTROL_JOY, JOY_Y, 0, CONTROL_AXIS_POSITIVE);
+        SetBinding(CTRL_STEER_LEFT, CONTROL_KEY, DIK_LEFT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_STEER_LEFT + CTRL_SECONDARY, CONTROL_JOY, JOY_X, 0, CONTROL_AXIS_NEGATIVE);
+        SetBinding(CTRL_STEER_RIGHT, CONTROL_KEY, DIK_RIGHT, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_STEER_RIGHT + CTRL_SECONDARY, CONTROL_JOY, JOY_X, 0, CONTROL_AXIS_POSITIVE);
+        SetBinding(CTRL_HANDBRAKE, CONTROL_KEY, DIK_SPACE, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_HANDBRAKE + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_SPEED_LIMITER, CONTROL_KEY, DIK_F5, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_SPEED_LIMITER + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_GEAR_UP, CONTROL_KEY, DIK_A, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_GEAR_UP + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_GEAR_DOWN, CONTROL_KEY, DIK_Z, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_GEAR_DOWN + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_HORN, CONTROL_KEY, DIK_K, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_HORN + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        // The second POV's left and right
+        SetBinding(CTRL_LOOK_LEFT, CONTROL_KEY, DIK_COMMA, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_LOOK_LEFT + CTRL_SECONDARY, CONTROL_JOY, CONTROL_JOY_POV + 0x10 + CONTROL_POV_LEFT, 0,
+                   CONTROL_AXIS_FULL);
+        SetBinding(CTRL_LOOK_RIGHT, CONTROL_KEY, DIK_PERIOD, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_LOOK_RIGHT + CTRL_SECONDARY, CONTROL_JOY, CONTROL_JOY_POV + 0x10 + CONTROL_POV_RIGHT, 0,
+                   CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CLUTCH, CONTROL_KEY, DIK_X, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CLUTCH + CTRL_SECONDARY, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_GEARING, CONTROL_KEY, DIK_M, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_CAMERA, CONTROL_KEY, DIK_C, 0, CONTROL_AXIS_FULL);
+        SetBinding(CTRL_REPLACE_CAR, CONTROL_KEY, DIK_NUMPAD0, 0, CONTROL_AXIS_FULL);
+    }
+}
 
 // FUNCTION: GAME 0x607a60
 void G_LoadSaveClass::ApplyControls()
@@ -194,15 +299,39 @@ void G_LoadSaveClass::ApplyControls()
     controls.SetMouseScale(400, 400, 400);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x607ab0
+// The blood level and the profile's other values aren't in either group
+// FUNCTION: GAME 0x607ab0
 void G_LoadSaveClass::DefaultSettings(uint flags)
 {
-    StubLog("G_LoadSaveClass::DefaultSettings");
+    if (flags & DEFAULTS_CLEAR)
+        memset(&settings, 0, sizeof(settings));
+    if (flags & DEFAULTS_OTHER)
+    {
+        settings.aiming_sensitivity_x = .5f;
+        settings.aiming_sensitivity_y = .5f;
+        settings.aiming_speed_x = .5f;
+        settings.cursor = CURSOR_CROSSHAIR;
+        settings.speedometer_mph = true;
+        settings.side_roll = true;
+        settings.mouse_inverted = false;
+        settings.subtitles = false;
+        settings.steering_linearity = .2f;
+        settings.ff_volume = 1.0f;
+        settings.ff_suspension = .703f;
+        settings.ff_collisions = 1.0f;
+        settings.ff_revs = .117f;
+        settings.ff_tire_grip = 1.0f;
+        settings.ff_player_movement = 1.0f;
+    }
+    if (flags & DEFAULTS_AUDIO_VIDEO)
+    {
+        settings.gamma = 0.0f;
+        settings.sound_volume = 1.0f;
+        settings.music_volume = 1.0f;
+        settings.car_volume = 1.0f;
+        settings.speech_volume = 1.0f;
+    }
 }
-
-#pragma auto_inline(on)
 
 // The default car's texts: "none" and "bad c/p-index.def" (Czech, the car and player indices)
 // FUNCTION: GAME 0x60a2f0
@@ -266,6 +395,84 @@ void G_CarDatabase::Close()
     num_players = 0;
 }
 
+// FUNCTION: GAME 0x60b050
+G_Stream::G_Stream()
+{
+    unknown_2d = false;
+    unknown_2c = false;
+    unknown_34 = 0;
+    size = 0;
+    file = NULL;
+    buffer = NULL;
+    key1 = STREAM_KEY1;
+    key2 = STREAM_KEY2;
+}
+
+// FUNCTION: GAME 0x60b080
+G_Stream::~G_Stream()
+{
+    Close();
+}
+
+// FUNCTION: GAME 0x60b090
+void G_Stream::SetParams(uint magic, bool crypt, bool unknown)
+{
+    this->magic = magic;
+    this->crypt = crypt;
+    unknown_1 = unknown;
+}
+
+// The head isn't checked (PS2's compares its first dword with the magic)
+// FUNCTION: GAME 0x60b0b0
+bool G_Stream::OpenRead(char *name)
+{
+    key1 = STREAM_KEY1;
+    key2 = STREAM_KEY2;
+    // STRING: GAME 0x6396e4
+    file = fopen(name, "rb");
+    if (!file)
+        return false;
+    fread(head, 1, sizeof(head), file);
+    return true;
+}
+
+// FUNCTION: GAME 0x60b170
+bool G_Stream::Close()
+{
+    if (file)
+        fclose(file);
+    file = NULL;
+    return unknown_2d || unknown_2c ? true : false;
+}
+
+// FUNCTION: GAME 0x60b2b0
+void G_Stream::Decrypt(void *data, uint size)
+{
+    uint *p = (uint *)data;
+    uint count = size / 4;
+    for (uint i = 0; i < count; i++)
+    {
+        p[i] ^= key1;
+        key2 += p[i];
+        key1 += key2;
+    }
+}
+
+// FUNCTION: GAME 0x60b380
+uint G_Stream::ReadAdr(void *adr, uint size)
+{
+    if (!size)
+        return 0;
+    if (!crypt)
+        return fread(adr, 1, size, file);
+    uchar *data = new uchar[size];
+    uint read = fread(data, 1, size, file);
+    Decrypt(data, size);
+    memcpy(adr, data, size);
+    delete[] data;
+    return read;
+}
+
 // FUNCTION: GAME 0x60b610
 void G_LoadSaveClass::RaceCarsEnable(uint cars)
 {
@@ -276,6 +483,17 @@ void G_LoadSaveClass::RaceCarsEnable(uint cars)
 void G_LoadSaveClass::RaceCarsDisable(uint cars)
 {
     race_cars &= ~cars;
+}
+
+// FUNCTION: GAME 0x60b940
+void G_LoadSaveClass::GarageClear()
+{
+    for (int i = 0; i < MAX_GARAGE_CARS; i++)
+    {
+        garage[i].car = 0;
+        garage[i].actor = NULL;
+        unknown_168[i] = 0;
+    }
 }
 
 #pragma auto_inline(off)

@@ -17,6 +17,7 @@
 #define CONTROL_AXIS_PEDAL 3            // the whole axis as 0..1, IJoy's JOY_AXIS_POSITIVE (a pedal's)
 
 // S_control::device (the names are ours)
+#define CONTROL_NONE 0                  // unbound
 #define CONTROL_KEY 1
 #define CONTROL_MOUSE 2
 #define CONTROL_JOY 3
@@ -38,6 +39,11 @@ enum {
 // direction bits; an axis's is its JOY_* (the names are ours)
 #define CONTROL_JOY_BUTTON 0x100
 #define CONTROL_JOY_POV 0x200
+
+// A POV's direction bits in S_control::code (the names are guesses: the default look left and right bindings use 8 and
+// 2)
+#define CONTROL_POV_RIGHT 2
+#define CONTROL_POV_LEFT 8
 
 // A control's binding (PC only, the names are ours): what the controls' table gives each of the game's 60 controls, and
 // how GetLastInput (0x4f11f0) describes the last input it saw

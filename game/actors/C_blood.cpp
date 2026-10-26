@@ -10,8 +10,8 @@ C_blood_manager::C_blood_manager()
 {
 }
 
-// The original's linker kept this copy (0x412000) of the code C_tshift's destructor shares, ours C_tshift's: the marker
-// is there
+// The same code as C_tshift's destructor, whose copy the linker kept (0x412000): the marker is here
+// FUNCTION: GAME 0x412000 FOLDED
 C_blood_manager::~C_blood_manager()
 {
 }
