@@ -4,12 +4,13 @@
 
 #include "mission/tshift.h"
 
-// FUNCTION: GAME 0x5604f0
+// C_blood_manager's constructor (actors/C_blood.cpp) is the same code, folded into this one
+// FUNCTION: GAME 0x5604f0 FOLDED
 C_tshift::C_tshift()
 {
 }
 
-// The linker kept another file's copy of this code (a vector's destructor)
+// The same code as C_blood_manager's destructor (actors/C_blood.cpp), whose copy the original's linker kept, ours this one
 // FUNCTION: GAME 0x412000 FOLDED
 C_tshift::~C_tshift()
 {

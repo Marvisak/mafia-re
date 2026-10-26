@@ -6,6 +6,29 @@
 
 class I3D_sound;
 
+// A period ticked with the game's time (the name is ours; PS2 has it inline, without a symbol), 8 bytes: the game, the
+// police (C_shvestky) and the force feedback have them, 200 ms unless set otherwise. PS2's C_shvestky::Tick adds the
+// time and, once it is past the period, subtracts the period and does the work.
+struct S_timer
+{
+    uint time;                          // 0x0
+    uint period;                        // 0x4
+
+    S_timer() : time(0), period(200) {}
+};
+
+// The objects the player can use (PS2 C_using_object, tools.cpp): only its two vectors are known, which the game's
+// inline constructor constructs (PS2's also clears its 0x18 and 0x1c). Its methods are in the PC's tools.cpp
+// (0x55dd60, 0x55df10).
+class C_using_object
+{
+public:
+    struct S_using_object;
+
+    std::vector<S_using_object *> objects;  // 0x0 (PS2's first, destroyed last)
+    std::vector<uint> unknown_10;       // 0x10, 4-byte values (PS2's vector<unsigned int>)
+};
+
 // A group of the sound table's sounds (PS2 S_sound_group), 0x24 bytes: the editor's, which the game skips in the file
 struct S_sound_group
 {

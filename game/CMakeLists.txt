@@ -6,19 +6,23 @@ project(game)
 # initializer of std::ctype<unsigned short>::id, which every file that includes <string> gets, and those mark the files
 # in the code (docs/game-files.md). The sources in the original's order, across the folders; most of them aren't written
 # yet, as the game is written in the order it runs, and some only hold stubs of what the written code calls.
-# The folders are ours, as no binary records the original's paths: actors/ (C_actor and the actors' animations),
-# vehicles/ (the cars and their physics), ai/ (the walking paths' and the roads' webs), collision/, input/ (the controls
-# and the force feedback), mission/ (the mission and what it holds: the game, the scripts, the effects), ui/ (the menus,
-# the HUD, the saved games and the console); at the top the start (WinMain, main, Winstuff), the chunks, the caches and
-# the tools.
+# The folders are ours, as no binary records the original's paths: actors/ (C_actor, the actors' animations and blood),
+# vehicles/ (the cars, their physics and effects), ai/ (the walking paths' and the roads' webs, the police, the chases),
+# collision/, input/ (the controls and the force feedback), mission/ (the mission and what it holds: the game, the
+# scripts, the effects, rmorf.bin), camera/ (the game's camera), ui/ (the menus, the HUD, the saved games and the
+# console); at the top the start (WinMain, main, Winstuff), the chunks, the caches and the tools.
 add_executable(game WIN32
     actors/C_actor.cpp
     actors/C_animations.cpp
     C_chunk.cpp
+    actors/C_blood.cpp
     vehicles/C_car.cpp
     input/C_ff_manager.cpp
     mission/C_effects.cpp
     mission/C_program.cpp
+    mission/C_rmorf.cpp
+    ai/C_shvestky.cpp
+    ai/C_sledovacka.cpp
     vehicles/C_Vehicle.cpp
     input/controls.cpp
     ui/console.cpp
@@ -37,6 +41,7 @@ add_executable(game WIN32
     ui/g_m_carc.cpp
     ui/g_m_start.cpp
     ui/g_menu.cpp
+    camera/g_camera.cpp
     ui/g_indicators.cpp
     ui/g_loadsave.cpp
     g_material.cpp
