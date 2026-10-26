@@ -1,5 +1,5 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
-// LanguageSelect; the rest of what main calls is stubs.
+// LanguageSelect; the rest of what main and the profiles call is stubs.
 
 #include "ui/g_indicators.h"
 
@@ -47,6 +47,24 @@ void G_IndicatorsClass::LanguageSelect(uint language)
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x5f70e0
+void G_IndicatorsClass::Create()
+{
+    StubLog("G_IndicatorsClass::Create");
+}
+
+// STUB: GAME 0x5f7250
+void G_IndicatorsClass::Destroy()
+{
+    StubLog("G_IndicatorsClass::Destroy");
+}
+
+// STUB: GAME 0x601520
+void G_IndicatorsClass::ResolutionChanged()
+{
+    StubLog("G_IndicatorsClass::ResolutionChanged");
+}
 
 // STUB: GAME 0x604a80
 void G_IndicatorsClass::ParheliaSetCenter(bool center)

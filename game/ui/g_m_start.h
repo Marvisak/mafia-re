@@ -2,37 +2,29 @@
 
 #include "ui/g_menu.h"
 
-// The main menu's choices, what ExecuteMenu returns for it. The names are ours.
-enum E_MAINMENU_RESULT {
-    MAINMENU_TUTORIAL = 0x11,
-    MAINMENU_NEW_GAME = 0x12,           // the intro mission, then the first one
-    MAINMENU_LOAD_GAME = 0x13,
-    MAINMENU_RACING = 0x15,
-    MAINMENU_INTRO = 0x16,
-    MAINMENU_CREDITS = 0x17,
-    MAINMENU_QUIT = 0x18,
-    MAINMENU_CARCYCLOPEDIA = 0x19,
-    MAINMENU_PROFILE_CHANGE = 0x1a,
-    MAINMENU_EXTREME = 0x1b,
-    MAINMENU_FREEITALY = 0x1c,
-    MAINMENU_FREERIDE = 0x1d,
-    MAINMENU_FREERIDENOC = 0x1e,
-    MAINMENU_FREEKRAJINA = 0x1f,
-    MAINMENU_FREEKRAJINANOC = 0x20,
-};
+// What ExecuteMenu returns for the profile menu when the player quits the game there (G_LoadSaveClass::Init; the name
+// is ours)
+#define PROFILESELECT_QUIT 0xf
 
-// The main menu (PS2 GM_MainMenu; the file is a guess, PS2's g_m_start.cpp). Its constructor is inline: main's has the
-// flag after the base's constructor and the vtable.
-// VTABLE: GAME 0x625eb8
-class GM_MainMenu : public GM_Menu
+// The menu of the player's profiles, "profileselect" (PS2 GM_ProfileSelect, g_m_start.cpp), 0x54 bytes, which
+// G_LoadSaveClass::Init runs before the main menu: its items are the profile, "Create New Profile", "Delete Profile"
+// and "Quit Game". Its constructor is the compiler's, inlined. OnBeforeCreate's and OnKey's copies are in the file of
+// G_LoadSaveClass::Init, which creates the menu.
+// VTABLE: GAME 0x6279dc
+class GM_ProfileSelect : public GM_Menu
 {
 public:
-    GM_MainMenu() { flags |= 0x80000; }
-
-    // "mainmenurac" or "mainmenu"
-    virtual const char *OnBeforeCreate();
+    // FUNCTION: GAME 0x605010
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x6395e4
+        return "profileselect";
+    }
     virtual int OnCreate();
+    virtual int OnCloseChild(GM_Menu *child, uint, uint);
     virtual int OnKey(uchar key, uint) { return 0; }
     virtual int OnClick(uint id);
-    virtual int OnChange(GM_Component *, GM_Component *);
+    virtual int OnTick(uint time);
+
+    uchar unknown_30[0x24];
 };

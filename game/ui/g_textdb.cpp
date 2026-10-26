@@ -1,5 +1,5 @@
 // The game's texts (PS2 g_textdb.cpp; the PC's file is the last one, at 0x60fa00-0x60fc2c, docs/game-files.md): the
-// global's initializer, the constructor, the destructor, LoadDatabase, then Unload (0x60fb10), GetText (0x60fb40) and
+// global's initializer, the constructor, the destructor, LoadDatabase, Unload, then GetText (0x60fb40) and
 // GetTextOrNULL (0x60fba0), which nothing written calls yet. PS2's Transpose isn't on PC.
 
 #include "ui/g_textdb.h"
@@ -44,4 +44,13 @@ bool G_TextDatabase::LoadDatabase(char *name)
     for (uint i = 0; i < num_texts; i++)
         texts[i].text += (uint)data;
     return true;
+}
+
+// FUNCTION: GAME 0x60fb10
+void G_TextDatabase::Unload()
+{
+    if (data)
+        delete[] data;
+    data = NULL;
+    num_texts = 0;
 }

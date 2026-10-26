@@ -1,9 +1,12 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
-// constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close and Init.
+// constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
+// ClearControls and SetControl.
 
 #include "input/controls.h"
 
 #include <string.h>
+
+#include "IGraph/IGraph.h"
 
 // FUNCTION: GAME 0x4efb40
 C_controls::C_controls()
@@ -32,6 +35,15 @@ void C_controls::Close()
     joys.clear();
 }
 
+// FUNCTION: GAME 0x4efdb0
+bool C_controls::SetMouseScale(int x, int y, int z)
+{
+    mouse_scale[MOUSE_AXIS_X] = (float)x;
+    mouse_scale[MOUSE_AXIS_Y] = (float)y;
+    mouse_scale[MOUSE_AXIS_Z] = (float)z;
+    return true;
+}
+
 // FUNCTION: GAME 0x4efde0
 bool C_controls::Init(IGraph *graph, IJoy **joy_list, int num_joys)
 {
@@ -53,5 +65,128 @@ bool C_controls::Init(IGraph *graph, IJoy **joy_list, int num_joys)
         joys.push_back(j);
     }
     key_mask = (ulong)-1;
+    return true;
+}
+
+// FUNCTION: GAME 0x4f00f0
+void C_controls::ClearControls()
+{
+    controls.clear();
+    values.clear();
+    pressed.clear();
+    memset(keys, 0, sizeof(keys));
+    memset(key_refs, 0, sizeof(key_refs));
+    memset(mouse_refs, 0, sizeof(mouse_refs));
+}
+
+// FUNCTION: GAME 0x4f02b0
+bool C_controls::SetControl(const S_control *binding, int index)
+{
+    if (index < 0)
+        return false;
+    if (index >= controls.size())
+    {
+        S_control none;
+        memset(&none, 0, sizeof(none));
+        while (controls.size() <= index)
+            controls.push_back(none);
+        while (values.size() <= index)
+            values.push_back(0.0f);
+        while (pressed.size() <= index)
+            pressed.push_back(0.0f);
+    }
+    // The old binding's key and mouse button lose a user
+    int i;
+    if (controls[index].device == CONTROL_KEY)
+    {
+        for (i = 0; i < MAX_CONTROL_KEYS; i++)
+            if (keys[i] == (uchar)controls[index].code)
+                break;
+        if (i < MAX_CONTROL_KEYS && !--key_refs[i])
+        {
+            keys[i] = 0;
+            igraph->DefineKeys(keys, MAX_CONTROL_KEYS);
+        }
+    }
+    if (controls[index].device == CONTROL_MOUSE)
+    {
+        switch (controls[index].code)
+        {
+        case MBUT_LEFT:
+            i = 0;
+            break;
+        case MBUT_RIGHT:
+            i = 1;
+            break;
+        case MBUT_MIDDLE:
+            i = 2;
+            break;
+        default:
+            i = -1;
+        }
+        if (i >= 0)
+            mouse_refs[i]--;
+    }
+    if (binding)
+    {
+        if (binding->device == CONTROL_KEY)
+        {
+            for (i = 0; i < MAX_CONTROL_KEYS; i++)
+                if (keys[i] == (uchar)binding->code)
+                    break;
+            if (i < MAX_CONTROL_KEYS)
+                key_refs[i]++;
+            else
+            {
+                // A free slot for the new key
+                int j;
+                for (j = 0; j < MAX_CONTROL_KEYS; j++)
+                    if (!keys[j])
+                        break;
+                if (j < MAX_CONTROL_KEYS)
+                {
+                    keys[j] = (uchar)binding->code;
+                    igraph->DefineKeys(keys, MAX_CONTROL_KEYS);
+                    key_refs[j]++;
+                }
+                else
+                    return false;
+            }
+        }
+        else if (binding->device == CONTROL_MOUSE)
+        {
+            switch (binding->code)
+            {
+            case MBUT_LEFT:
+                i = 0;
+                break;
+            case MBUT_RIGHT:
+                i = 1;
+                break;
+            case MBUT_MIDDLE:
+                i = 2;
+                break;
+            default:
+                i = -1;
+            }
+            if (i >= 0)
+                mouse_refs[i]++;
+        }
+        else if (binding->device == CONTROL_JOY)
+        {
+            if (joys.size() > (uint)binding->joy)
+            {
+                if (binding->half == CONTROL_AXIS_PEDAL && binding->code < 0xff)
+                    joys[binding->joy].joy->SetAxisMode(binding->code, JOY_AXIS_POSITIVE);
+                else
+                    joys[binding->joy].joy->SetAxisMode(binding->code, 0);
+            }
+            else
+                return false;
+        }
+        controls[index] = *binding;
+    }
+    else
+        memset(&controls[index], 0, sizeof(S_control));
     return true;
 }

@@ -3,8 +3,8 @@
 #include "Main.h"
 
 // The game's tables of materials, particles, items and voices (PS2 g_material.cpp), each a file read whole into an
-// array: tables\materials.def, particles.def, predmety.def and voices.def. LoadMaterialsFromBin (0x60f5c0, PS2's name),
-// which G_LoadSaveClass::Init calls, loads them, UnloadMaterials (0x60f780) frees them; not written yet. The tables'
+// array: tables\materials.def, particles.def, predmety.def and voices.def. LoadMaterialsFromBin, which
+// G_LoadSaveClass::Init calls, loads them, UnloadMaterials, which G_LoadSaveClass::Close calls, frees them. The tables'
 // structs and their names are ours, after their files.
 
 // A material of the scene's surfaces (materials.def), 0x170 bytes. The cars take their part (C_car::LoadMaterials);
@@ -58,9 +58,17 @@ struct S_particle_def
     float color_end[3];                 // 0x98
 };
 
-// The voices (voices.def, 0xa4 bytes each) and the items (predmety.def, 0xbc bytes), not read yet
-struct S_voice_def;
-struct S_item_def;
+// A voice (voices.def), 0xa4 bytes, not read yet
+struct S_voice_def
+{
+    uchar unknown_0[0xa4];
+};
+
+// An item (predmety.def, "items"), 0xbc bytes, not read yet
+struct S_item_def
+{
+    uchar unknown_0[0xbc];
+};
 
 // The tables (PS2 names) and their sizes in entries
 extern S_voice_def *gameVoices;
@@ -71,3 +79,8 @@ extern S_particle_def *gameParticleTable;
 extern uint numOfGameParticles;
 extern S_material_def *materialList;
 extern uint numOfMaterials;
+
+// Reads the four tables (PS2's names); false if a file is missing, the tables before it read
+bool LoadMaterialsFromBin();
+// Frees them
+void UnloadMaterials();

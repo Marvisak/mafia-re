@@ -51,7 +51,7 @@ void G_Camera::Reset()
     unknown_8 = 0;
     unknown_c = 0;
     unknown_0 = 0;
-    unknown_10 = mafiaLoadSave.unknown_4f4;
+    unknown_10 = mafiaLoadSave.settings.camera;
     unknown_14 = unknown_10;
     unknown_20 = false;
     unknown_21 = false;

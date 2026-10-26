@@ -24,6 +24,8 @@ public:
     ~G_TextDatabase();
     // Loads the file, false if there is none. PS2's has a second parameter, a bool it doesn't use.
     bool LoadDatabase(char *name);
+    // Frees the file, at CloseSystem
+    void Unload();
 };
 
 extern G_TextDatabase textDatabase;

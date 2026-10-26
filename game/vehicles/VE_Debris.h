@@ -28,4 +28,4 @@ public:
 // Its destructor's copy, which the game's destructor and its constructor's unwinding call (Mission.cpp's range), the
 // same code as C_using_object's (tools.h), folded
 // SYNTHETIC: GAME 0x5479e0
-// ??1C_using_object@@QAE@XZ
+// ??1C_Debris@@QAE@XZ

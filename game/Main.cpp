@@ -9,7 +9,7 @@
 #include "Main.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
-#include "ui/g_m_start.h"
+#include "ui/g_m_func.h"
 #include "ui/g_m_carc.h"
 #include "ui/racing.h"
 #include "ui/g_loadsave.h"

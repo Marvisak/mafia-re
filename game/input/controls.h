@@ -14,6 +14,7 @@
 #define CONTROL_AXIS_FULL 0
 #define CONTROL_AXIS_POSITIVE 1
 #define CONTROL_AXIS_NEGATIVE 2
+#define CONTROL_AXIS_PEDAL 3            // the whole axis as 0..1, IJoy's JOY_AXIS_POSITIVE (a pedal's)
 
 // S_control::device (the names are ours)
 #define CONTROL_KEY 1
@@ -78,8 +79,16 @@ public:
     ~C_controls();
     // Releases the joysticks and forgets the controls
     void Close();
+    // The movement that makes each mouse axis's full value
+    bool SetMouseScale(int x, int y, int z);
     // Takes IGraph and the joysticks InitJoy found, each with an AddRef; fails if one of them is missing
     bool Init(IGraph *graph, IJoy **joy_list, int num_joys);
+    // Forgets the controls and the keys they defined, keeping the joysticks
+    void ClearControls();
+    // Binds the control of that index (NULL unbinds it): defines its key with IGraph, counts the keys' and the mouse
+    // buttons' users, sets a joystick axis's mode, and grows the tables to the index. False for a negative index, a key
+    // with no free slot, or a joystick that isn't there.
+    bool SetControl(const S_control *binding, int index);
 };
 
 extern C_controls controls;
@@ -93,3 +102,10 @@ extern C_controls controls;
 
 // TEMPLATE: GAME 0x4f1b00
 // ?_Construct@std@@YIXPAUS_joy@@ABU2@@Z
+
+// The tables' helpers, which SetControl's inlined push_back calls
+// TEMPLATE: GAME 0x60f1f0
+// ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
+
+// TEMPLATE: GAME 0x448cc0
+// ?insert@?$vector@MV?$allocator@M@std@@@std@@QAEXPAMIABM@Z

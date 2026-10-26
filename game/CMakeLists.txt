@@ -41,6 +41,7 @@ add_executable(game WIN32
     Main.cpp
     collision/g_colls.cpp
     ui/g_m_carc.cpp
+    ui/g_m_func.cpp
     ui/g_m_start.cpp
     ui/g_menu.cpp
     camera/g_camera.cpp

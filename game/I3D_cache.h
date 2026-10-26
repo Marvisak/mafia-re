@@ -394,4 +394,4 @@ extern C_I3D_anim_cache anim_cache;
 // ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
