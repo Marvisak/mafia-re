@@ -23,15 +23,20 @@ struct G_RafickaDef
     float min;                          // 0x8, the value at the scale's start
     float range;                        // 0xc
     float x, y;                         // 0x10, the needle's axis on the dial
-    float unknown_18[4];                // its shape
+    float tip, tail;                    // 0x18, its ends' distances from the axis, the tail's negative
+    float tip_width, tail_width;        // 0x20, its half widths there
     uint color;                         // 0x28
 };
 
-// A needle's value and the corners _SpocitejRafiku2 computes from it (PS2's name; the members' names are ours)
+// A needle's value and the corners _SpocitejRafiku2 computes from it on the screen, left and right as the needle points
+// up (PS2's name; the members' names are ours). Not an array: the original's constructor of the HUD constructs none.
 struct G_RafickaValue
 {
     float value;
-    float corners[4][2];                // 0x4
+    S_vector2 tail_left;                // 0x4
+    S_vector2 tip_left;                 // 0xc
+    S_vector2 tail_right;               // 0x14
+    S_vector2 tip_right;                // 0x1c
 };
 
 // The HUD (PS2 G_IndicatorsClass, g_indicators.cpp; mafiaIndicators is 0x4e38 bytes there). Only what main and the

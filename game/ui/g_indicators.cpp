@@ -1,5 +1,6 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
-// LoadFont, LanguageSelect, Create and ResolutionChanged; the rest of what main and the profiles call is stubs.
+// LoadFont, LanguageSelect, Create, _SpocitejRafiku2 and ResolutionChanged; the rest of what main and the profiles call
+// is stubs.
 
 #include "ui/g_indicators.h"
 
@@ -181,13 +182,59 @@ void G_IndicatorsClass::Destroy()
     StubLog("G_IndicatorsClass::Destroy");
 }
 
-// STUB: GAME 0x5f7680
+#pragma auto_inline(on)
+
+// The needle at the value's angle, scaled from 800x600, and its quad, the texture's u along it from the tail
+// FUNCTION: GAME 0x5f7680
 void G_IndicatorsClass::_SpocitejRafiku2(G_RafickaDef *def, G_RafickaValue *value, S_vector2 &pos, TLVERTEX *verts)
 {
-    StubLog("G_IndicatorsClass::_SpocitejRafiku2");
+    float t = (value->value - def->min) / def->range;
+    if (t < 0.0f)
+        t = 0.0f;
+    else if (t > 1.0f)
+        t = 1.0f;
+    float angle = t * def->angle_range + def->angle;
+    float s = (float)sin(angle);
+    float c = (float)cos(angle);
+    S_vector2 axis(def->x, def->y);
+    S_vector2 dir(s, -c);               // up at 0, clockwise on the screen
+    S_vector2 side(c, s);
+    value->tip_right = (axis + side * def->tip_width + dir * def->tip) * hud_scale + pos;
+    value->tail_right = (axis + side * def->tail_width + dir * def->tail) * hud_scale + pos;
+    value->tip_left = (axis - side * def->tip_width + dir * def->tip) * hud_scale + pos;
+    value->tail_left = (axis - side * def->tail_width + dir * def->tail) * hud_scale + pos;
+    uint color = def->color;
+    verts[0].x = value->tail_left.x;
+    verts[0].y = value->tail_left.y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = color;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = value->tip_left.x;
+    verts[1].y = value->tip_left.y;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = color;
+    verts[1].u = 1.0f;
+    verts[1].v = 0.0f;
+    verts[2].x = value->tail_right.x;
+    verts[2].y = value->tail_right.y;
+    verts[2].z = 0.0f;
+    verts[2].rhw = 1.0f;
+    verts[2].color = color;
+    verts[2].u = 0.0f;
+    verts[2].v = 1.0f;
+    verts[3].x = value->tip_right.x;
+    verts[3].y = value->tip_right.y;
+    verts[3].z = 0.0f;
+    verts[3].rhw = 1.0f;
+    verts[3].color = color;
+    verts[3].u = 1.0f;
+    verts[3].v = 1.0f;
+    verts[4] = verts[2];
+    verts[5] = verts[1];
 }
-
-#pragma auto_inline(on)
 
 // A quad's two triangles: the rectangle at pos, of size, and its texture's coordinates (PC only, the name is ours)
 inline void SetRectVertices(const S_vector2 &pos, const S_vector2 &size, float u0, float v0, float u1, float v1,
