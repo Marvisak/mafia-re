@@ -6,10 +6,13 @@
 // GameLoopSingle updates where the PC's ticks this object). Its Tick (0x599610) plays two tracks of keys, 0x40 and
 // 0x38 bytes, until a key whose time is 666.0; GameLoopSingle stops it on Space or Enter, and on Escape in the intro
 // mission. Vtable 0x625ad8, whose first function takes a state (0 or 4, 4 when it is stopped). Only what
-// C_mission::Close calls so far.
+// C_mission::Close and C_actor's destructor call so far.
 class C_cutscene
 {
 public:
+    // Takes the actor from the cutscene's lists (+0x90's, which takes the flag too, +0x8's and +0x18's): true if one held
+    // it (the name is ours; C_actor's destructor calls it)
+    bool RemoveActor(C_actor *actor, bool unknown);
     // Unloads the cutscene and gives the HUD and the player's controls back (C_mission::Close, C_game::Done, the racing
     // menu and GameLoopSingle call it)
     void Close();

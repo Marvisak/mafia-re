@@ -48,10 +48,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVC_effect_part@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_prog_change@C_program@@V?$allocator@US_prog_change@C_program@@@std@@@std@@IAEXPAUS_prog_change@C_program@@0@Z
+// ?_Destroy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEPAHPBH0PAH@Z
+// ?_Ucopy@?$vector@PAVGM_Component@@V?$allocator@PAVGM_Component@@@std@@@std@@IAEPAPAVGM_Component@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEXPAHIABH@Z
+// ?_Ufill@?$vector@PAVGM_Component@@V?$allocator@PAVGM_Component@@@std@@@std@@IAEXPAPAVGM_Component@@IABQAV3@@Z

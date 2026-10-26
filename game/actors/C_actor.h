@@ -41,8 +41,8 @@ class C_chunk;
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 16 come before the destructor, where PS2 has
 // AI, Update and NetDirect; from the destructor on the PC's are PS2's in PS2's order. The first 16 are placeholders.
-// Not written yet: the destructor and the virtual functions declared here but Init and Release, which the actors'
-// classes need, are stubs (C_actor.cpp).
+// Not written yet: the virtual functions declared here but the destructor, Init and Release, which the actors' classes
+// need, are stubs (C_actor.cpp).
 // VTABLE: GAME 0x623248
 class C_actor
 {
@@ -99,6 +99,8 @@ public:
 
     // Adds the actor to global_actors, unless it is there already (PS2 name)
     static void AddActorToGlobal(C_actor *act);
+    // Takes the actor from global_actors, the last one in its place (PS2 name)
+    static void DelActorFromGlobal(C_actor *act);
 
     int unknown_4;                      // 0x4
     int unknown_8;                      // 0x8, 0 from the constructor's body

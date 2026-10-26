@@ -1,17 +1,19 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
-// frees, the constructor with global_actors and AddActorToGlobal, and Init, which C_mission::OpenBin calls for the
-// mission's actors. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
-// written yet. The destructor and the virtual functions, which the actors' classes need, are stubs, in the vtable's
-// addresses' order; six of those addresses lie in other files' ranges, where the linker kept a copy (inline functions
-// most likely, or folded with another class's), and the empty ones aren't annotated (folded with the other empty
-// functions of their kinds). Release (0x4091d0) is inline (C_actor.h), its copy after DoneAnimIndex.
+// frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
+// mission's actors, and the destructor with DelActorFromGlobal. GetAnimIndex (0x408760, after DoneAnimIndex), the
+// index's binary search, isn't called by anything written yet. The virtual functions, which the actors' classes need,
+// are stubs, in the vtable's addresses' order; seven of those addresses lie in other files' ranges, where the linker
+// kept a copy (inline functions most likely, or folded with another class's), and the empty ones but DuplicateFrom's
+// aren't annotated (folded with the other empty functions of their kinds). Release (0x4091d0) is inline (C_actor.h),
+// its copy after DoneAnimIndex.
 
 #include "actors/C_actor.h"
 
 #include <stdlib.h>
 
 #include "mission/Mission.h"
+#include "mission/C_cutscene.h"
 #include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
@@ -670,15 +672,16 @@ C_actor::C_actor() :
     AddActorToGlobal(this);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x405d90
+// PS2's without its array at 0x48 and with the cutscene's (PC only), which may hold the actor
+// FUNCTION: GAME 0x405d90
 C_actor::~C_actor()
 {
-    StubLog("C_actor::~C_actor");
+    global_refs--;
+    cutscene.RemoveActor(this, false);
+    if (own_frame && frame)
+        frame->Release();
+    DelActorFromGlobal(this);
 }
-
-#pragma auto_inline(on)
 
 // The frame's user data cleared, though it may point to the actor already
 // FUNCTION: GAME 0x405dd0
@@ -758,6 +761,21 @@ void C_actor::AddActorToGlobal(C_actor *act)
             return;
     }
     global_actors.push_back(act);
+}
+
+// From the last one, as AddActorToGlobal
+// FUNCTION: GAME 0x407f50
+void C_actor::DelActorFromGlobal(C_actor *act)
+{
+    for (int i = global_actors.size(); i--;)
+    {
+        if (global_actors[i] == act)
+        {
+            global_actors[i] = global_actors.back();
+            global_actors.pop_back();
+            return;
+        }
+    }
 }
 
 // qsort's, by id
