@@ -125,6 +125,6 @@ else()
 endif()
 
 vc6_header_dependencies(game ${CMAKE_SOURCE_DIR}/ls3df ${CMAKE_SOURCE_DIR}/ijoy ${CMAKE_SOURCE_DIR}/rw_data)
-# RC's dependency output lists only included headers, not the files the script loads, so an icon extracted over the
-# placeholder (README) wouldn't rebuild the resources
+# RC's dependency output lists only included headers, not the files the script loads, so a changed icon wouldn't
+# rebuild the resources
 set_property(SOURCE res/game.rc APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/mafia.ico")

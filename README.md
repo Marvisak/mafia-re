@@ -24,9 +24,9 @@ worked through.
 | Binary | Status |
 | --- | --- |
 | `rw_data.dll` | Done. The Visual C++ 6.0 build is identical to the original, byte for byte. |
-| `setup.exe` | Fully decompiled. With the original splash and icon ([below](#setupexe-splash-and-icon)), the Visual C++ 6.0 build is identical to the 1.2 setup, and with 1.0's differences behind `SETUP_1_0` to the 1.0 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1, identical to it too, and with each language's resources Steam's German, French, Italian and Spanish setups, identical as well, and its Russian one, identical when linked on Windows 2000 (on current Windows the order of its imports differs, as `IJoy.dll`'s does). Its Polish one, a week older than 1.2, is a target of its own with its differences behind `SETUP_DATE`, and identical too. So is its Czech one, a build of August 2002 without optimization, which keeps the source's shape: compiled the same way, the source gives its code, and the build is identical to it, linked on Windows 2000 like the Russian one. |
+| `setup.exe` | Fully decompiled. The Visual C++ 6.0 build is identical to the 1.2 setup, and with 1.0's differences behind `SETUP_1_0` to the 1.0 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1, identical to it too, and with each language's resources Steam's German, French, Italian and Spanish setups, identical as well, and its Russian one, identical when linked on Windows 2000 (on current Windows the order of its imports differs, as `IJoy.dll`'s does). Its Polish one, a week older than 1.2, is a target of its own with its differences behind `SETUP_DATE`, and identical too. So is its Czech one, a build of August 2002 without optimization, which keeps the source's shape: compiled the same way, the source gives its code, and the build is identical to it, linked on Windows 2000 like the Russian one. |
 | `LS3DF.dll` (engine) | Every source file is written: the 3D engine (frames and visuals, meshes, objects and lightmapped objects, models, animation, cameras, lights, particles, portals and sectors, shadows and projectors, collision, the scene loaders, the renderer, the driver with its vertex and index buffers, and the math), the graphics layer (the Direct3D device, textures, and video through Bink and DirectShow) and the sound driver. About nine in ten of its functions compile to the original instructions. The others differ mostly in register allocation and in what the compiler inlines, and until they match the file differs from the original too, its code shifted by their sizes. The libraries it links are in place: S3's texture compressor comes from the original's own objects, and the DirectX 8.1 SDK's DirectShow base classes build from the SDK's source to the original's bytes. |
-| `Game.exe` | Started. The build is in place: the C runtime is linked as in the original, and the resources are the original's apart from the icon ([below](#gameexe-icon)). The code is written in the order the game runs, so that the rebuilt executable gets further with each step, each function in the source file the original's layout puts it in ([docs/game-files.md](docs/game-files.md)). The first step, through the start-up to the main menu, is under way: the entry point and `main`, the CD check, `InitSystem` and `CloseSystem` are written, with part of what they call (the mission, the caches of models, sounds and animations, the effects table, the console's font, the patch's script changes, the logo videos), and most of them compile to the original's instructions. A run of the rebuilt executable goes from the start to the main menu and closes down again; what it reaches that isn't written yet, such as the menu itself, is a stub that logs its name ([CONTRIBUTING.md](CONTRIBUTING.md#running-the-rebuilt-gameexe)). With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it is compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
+| `Game.exe` | Started. The build is in place: the C runtime is linked as in the original, and the resources are the original's. The code is written in the order the game runs, so that the rebuilt executable gets further with each step, each function in the source file the original's layout puts it in ([docs/game-files.md](docs/game-files.md)). The first step, through the start-up to the main menu, is under way: the entry point and `main`, the CD check, `InitSystem` and `CloseSystem` are written, with part of what they call (the mission, the caches of models, sounds and animations, the effects table, the console's font, the patch's script changes, the logo videos), and most of them compile to the original's instructions. A run of the rebuilt executable goes from the start to the main menu and closes down again; what it reaches that isn't written yet, such as the menu itself, is a stub that logs its name ([CONTRIBUTING.md](CONTRIBUTING.md#running-the-rebuilt-gameexe)). With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it is compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
 | `IJoy.dll` | Done. Every function compiles to the original instructions, and linked on Windows 2000 the build is identical to the original. On current Windows the order of the imports within each DLL differs, because the linker sorts them with the system's `msvcrt.dll`, whose sort has changed since. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
 
 ## Versions
@@ -35,7 +35,7 @@ Each version replaced only some of the binaries. A binary that a version didn't 
 
 | Version | Built | Its own binaries | State |
 | --- | --- | --- | --- |
-| 1.0 | July–August 2002 | All of them | `setup.exe` is a target, built from the setup's source with its differences behind `SETUP_DATE`: its texts are in the code and the dialog instead of a string table, it has no W-buffer test, and it collects the antialiasing modes differently. With the original splash and icon the build is identical to it. Its `Game.exe` and `LS3DF.dll` aren't started yet. |
+| 1.0 | July–August 2002 | All of them | `setup.exe` is a target, built from the setup's source with its differences behind `SETUP_DATE`: its texts are in the code and the dialog instead of a string table, it has no W-buffer test, and it collects the antialiasing modes differently. The build is identical to it. Its `Game.exe` and `LS3DF.dll` aren't started yet. |
 | Patch 1.1 | November 2002 – March 2003 | `Game.exe`, `LS3DF.dll`, `setup.exe` | `LS3DF.dll` is a target, built from the engine's source with its differences behind `ENGINE_VERSION` (393 against 1.2's 395); about nine in ten of its functions are 1.2's. Its `setup.exe` is the target above: the 1.2 patch ships the same file. Its `Game.exe` survives only inside its SafeDisc protection, so it can't be compared yet. |
 | Patch 1.2 | June 2003 | `Game.exe`, `LS3DF.dll` | The main target, [above](#progress). |
 | Steam | April 2010 | `setup.exe` | A target, built from the setup's source with Steam's changes behind `SETUP_STEAM`. Its language versions ship their own `setup.exe`: German, French, Italian and Spanish are the 2010 rebuild with translated resources, the others older builds (Russian 1.2's code, Polish and Czech versions between 1.0 and 1.2). Steam's other binaries are 1.2's, some with small patches of their own. |
@@ -88,38 +88,6 @@ the original binaries does: bring your own copy of version 1.2.
    ```
 
 [CONTRIBUTING.md](CONTRIBUTING.md) describes how to compare a build with the original binaries.
-
-### setup.exe splash and icon
-
-`setup/res/splash.bmp` and `setup/res/mafia.ico` are placeholders. The originals are the game's artwork and aren't
-distributed with this repository. The setup builds and works with the placeholders, but shows a grey box instead of the
-splash, and a byte-exact build needs the originals. Extract them over the placeholders from your own `setup.exe`:
-version 1.2's (`Patch\setup.exe` in the official 1.2 patch), 1.0's, or Steam's (the one at the top of the game's
-folder), which have the same artwork:
-
-- The splash, with [7-Zip](https://www.7-zip.org/):
-  ```bash
-  7z e -osetup/res path/to/setup.exe '.rsrc\1029\BITMAP\108.bmp' && mv setup/res/108.bmp setup/res/splash.bmp
-  ```
-- The icon: save icon group 1 (32×32 and 16×16 in one file) as `setup/res/mafia.ico` with a resource editor such as
-  Resource Hacker. 7-Zip exports the two sizes as separate files, which won't do.
-
-Don't commit the extracted files. Git shows them as modified; this hides them:
-
-```bash
-git update-index --skip-worktree setup/res/splash.bmp setup/res/mafia.ico
-```
-
-### Game.exe icon
-
-`game/res/mafia.ico` is a placeholder too: `Game.exe`'s icon is the game's artwork. Its 32×32 image isn't the setup's, so
-it needs extracting from `Game.exe` itself: save icon group 1 (32×32 and 16×16 in one file) as `game/res/mafia.ico`
-with a resource editor, from Steam's `Game.exe` (in the game's folder) or from the reconstructed one. Hide it from git
-the same way:
-
-```bash
-git update-index --skip-worktree game/res/mafia.ico
-```
 
 ## Contributing
 

@@ -149,8 +149,8 @@ else()
 endif()
 
 vc6_header_dependencies(${setup})
-# RC's dependency output lists only included headers, not the files the script loads, so a splash or icon extracted
-# over the placeholders (README) wouldn't rebuild the resources
+# RC's dependency output lists only included headers, not the files the script loads, so a changed splash or icon
+# wouldn't rebuild the resources
 set_property(SOURCE ${resources} APPEND PROPERTY OBJECT_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/res/splash.bmp" "${CMAKE_CURRENT_SOURCE_DIR}/res/mafia.ico")
 
