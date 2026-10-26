@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "I3D/I3D.h"
+#include "ISound/ISound.h"
 
 // What the caches report a file they couldn't load or open with: the message, the caller's context (PS2's parameters;
 // __fastcall under /Gr). The name is ours.
@@ -70,7 +71,8 @@ public:
 
 // The caches of the models, sounds and animations the missions load (PS2 C_I3D_cache<T>, with C_I3D_model_cache,
 // C_I3D_sound_cache and C_I3D_anim_cache derived from it; the header's name is ours), 0x28 bytes. Main.cpp has the
-// three. Written: Open, Clear and AddDir; the other functions of the vtable are stubs.
+// three. Written: Open, Clear, AddDir and DelDir, and the derived caches' CreateNew and Duplicate; the other functions
+// of the vtable are stubs.
 // Open: the original's destructor (0x5c1fd0 for the model cache) releases the items, Clear inlined; ours is implicit.
 // The constructor sets cache_size to 0x100.
 template<class T>
@@ -265,17 +267,25 @@ bool C_I3D_cache<T>::MakeRelative(char *name)
 class C_I3D_model_cache : public C_I3D_cache<I3D_model>
 {
 public:
-    // STUB: GAME 0x5c23e0
-    virtual I3D_model *CreateNew() const
-    {
-        StubLog("C_I3D_model_cache::CreateNew");
-        return NULL;
-    }
-
-    // STUB: GAME 0x5c23a0
+    // The model's hierarchy, without the frames' user data (the game's actors)
+    // FUNCTION: GAME 0x5c23a0
     virtual void Duplicate(I3D_model *dst, I3D_model *src)
     {
-        StubLog("C_I3D_model_cache::Duplicate");
+        dst->DuplicateHierarchy(src);
+        dst->EnumFrames(cbClearData, 0, ENUMF_ALL, NULL);
+    }
+
+    // FUNCTION: GAME 0x5c23d0
+    static I3DENUMRET __stdcall cbClearData(I3D_frame *frm, uint context)
+    {
+        frm->m_UserData = 0;
+        return I3DENUMRET_OK;
+    }
+
+    // FUNCTION: GAME 0x5c23e0
+    virtual I3D_model *CreateNew() const
+    {
+        return (I3D_model *)driver->CreateFrame(FRAME_MODEL);
     }
 };
 
@@ -283,29 +293,33 @@ public:
 class C_I3D_sound_cache : public C_I3D_cache<I3D_sound>
 {
 public:
-    // STUB: GAME 0x5c2430
-    virtual I3D_sound *CreateNew() const
-    {
-        StubLog("C_I3D_sound_cache::CreateNew");
-        return NULL;
-    }
-
-    // STUB: GAME 0x5c23f0
+    // The source's file opened again, with its flags
+    // FUNCTION: GAME 0x5c23f0
     virtual void Duplicate(I3D_sound *dst, I3D_sound *src)
     {
-        StubLog("C_I3D_sound_cache::Duplicate");
+        // STRING: GAME 0x63d2a0
+        dst->Open(src->snd_src ? src->snd_src->GetFileName() : "", src->open_flags, NULL, NULL);
+    }
+
+    // FUNCTION: GAME 0x5c2430
+    virtual I3D_sound *CreateNew() const
+    {
+        return (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
     }
 };
+
+// The source's file name, which the sound cache's Duplicate calls out of line (the engine's inline, ISound/ISound.h)
+// FUNCTION: GAME 0x4ef480
+// ?GetFileName@ISND_source@@QBEPBDXZ
 
 // VTABLE: GAME 0x625e24
 class C_I3D_anim_cache : public C_I3D_cache<I3D_animation_set>
 {
 public:
-    // STUB: GAME 0x5c2440
+    // FUNCTION: GAME 0x5c2440
     virtual I3D_animation_set *CreateNew() const
     {
-        StubLog("C_I3D_anim_cache::CreateNew");
-        return NULL;
+        return driver->CreateAnimationSet();
     }
 
     // Nothing to copy: the original's is an empty ret 8, folded with the other empty functions of its kind (0x4d2040)
@@ -319,16 +333,16 @@ extern C_I3D_anim_cache anim_cache;
 // The items' helpers, which CloseSystem's inlined Clear calls. The linker folded the three caches' copies of each; the
 // original kept the first file's (Main.cpp's for the assignment).
 // SYNTHETIC: GAME 0x5c2540
-// ??4S_itm@?$C_I3D_cache@VI3D_model@@@@QAEAAU01@ABU01@@Z
+// ??4S_itm@?$C_I3D_cache@VI3D_sound@@@@QAEAAU01@ABU01@@Z
 
 // SYNTHETIC: GAME 0x410c30
-// ??1S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAE@XZ
+// ??1S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
 // ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
-// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
+// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU23@00@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -380,7 +394,7 @@ extern C_I3D_anim_cache anim_cache;
 
 // The loader's callback, the three caches' folded into one
 // TEMPLATE: GAME 0x410c50
-// ?LoadCallback@?$C_I3D_cache@VI3D_model@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
+// ?LoadCallback@?$C_I3D_cache@VI3D_sound@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
 
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
@@ -391,7 +405,7 @@ extern C_I3D_anim_cache anim_cache;
 // ?size@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@ABU34@@Z

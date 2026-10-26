@@ -7,6 +7,7 @@
 #include "I3D/I3d_math.h"
 
 class ITexture;
+class I3D_camera;
 struct TLVERTEX;
 
 // The HUD's fonts (the name is ours)
@@ -238,6 +239,10 @@ public:
     // The mouse's cursor, which GM_Menu::Draw draws over the active menu: a square of 15 pixels from 1int.tga (PC only,
     // the name is ours)
     void DrawCursor(float x, float y);
+    // Gives the camera its field of view and the screen's aspect (PC only, the name is ours): with Parhelia's two or
+    // three screens, the view of all of them (twice or 1.6 times the angle, at most 0.98 PI) or, with
+    // ParheliaSetCenter, of the middle one
+    void SetCameraFOV(I3D_camera *cam, float fov);
     // PC only, the name is ours. Stores the flag at 0x46f4 and, with Matrox Parhelia's two or three screens
     // (parheliaIndex), confines the scene's viewport and camera to the middle one while it is set; main sets it around
     // the car encyclopedia.

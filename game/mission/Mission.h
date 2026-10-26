@@ -55,6 +55,11 @@ struct S_mission_options
     void SetParticles(int level);
 };
 
+// What C_mission::OpenBin returns (the names are ours)
+#define OPENBIN_OK 0
+#define OPENBIN_CORRUPTED 1             // a chunk that isn't complete
+#define OPENBIN_NOFILE 3                // no scene2.bin
+
 // What C_mission::Open returns (the names are ours)
 #define MISSION_OPEN_OK 0
 #define MISSION_OPEN_FAILED 1           // OpenBin failed
@@ -141,8 +146,19 @@ public:
     // (OpenBin, which takes flags), with mafiaLoadSave's loading screen, which progress creates if there is none.
     // MISSION_OPEN_*.
     int Open(const char *name, bool log, uint flags, bool progress);
-    // Loads the mission's data from its folder (PS2 name), the actors and the scripts; 0 if it succeeds
+    // A new actor of a type of the mission's scene2.bin, NULL for an unknown type (PS2 name)
+    C_actor *CreateActor(int type);
+    // Adds the actor to the mission's (PS2 name)
+    void AddActor(C_actor *actor, bool);
+    // Loads the mission's data from its folder (PS2 name), its scene2.bin: the scene's objects and camera, the actors,
+    // the scripts, the webs. OPENBIN_*.
     int OpenBin(const char *dir, uint flags);
+    // The name is ours
+    // FUNCTION: GAME 0x547120
+    C_tshift *GetTShift()
+    {
+        return tshift;
+    }
     // Unloads the open mission: its game, actors, scripts and objects, the caches' contents and the scene's frames
     void Close();
     // A frame of the mission: its scene, actors, scripts and game

@@ -1,6 +1,7 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
 // the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
-// _SpocitejRafiku2, ResolutionChanged and the menus' cursor; the rest of what main and the profiles call is stubs.
+// _SpocitejRafiku2, ResolutionChanged, the menus' cursor and the camera's field of view; the rest of what main and the
+// profiles call is stubs.
 
 #include "ui/g_indicators.h"
 #include "ui/g_textdb.h"
@@ -800,6 +801,50 @@ void G_IndicatorsClass::DrawCursor(float x, float y)
     verts[3].v = 250.0f / 256;
     igraph->SetTexture(texture_int);
     igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
+}
+
+// The aspect is the screen's width over its height; the middle screen's is a half or a third of that
+// FUNCTION: GAME 0x604890
+void G_IndicatorsClass::SetCameraFOV(I3D_camera *cam, float fov)
+{
+    if (!cam)
+        return;
+    switch (parheliaIndex)
+    {
+    case PARHELIA_DUAL:
+        if (parhelia_center)
+        {
+            cam->SetFOV(fov);
+            cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy() * .5f);
+        }
+        else
+        {
+            fov *= 1.6f;
+            if (fov > PI * .98f)
+                fov = PI * .98f;
+            cam->SetFOV(fov);
+            cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
+        }
+        break;
+    case PARHELIA_TRIPLE:
+        if (parhelia_center)
+        {
+            cam->SetFOV(fov);
+            cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy() * (1.0f / 3));
+        }
+        else
+        {
+            fov *= 2;
+            if (fov > PI * .98f)
+                fov = PI * .98f;
+            cam->SetFOV(fov);
+            cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
+        }
+        break;
+    default:
+        cam->SetFOV(fov);
+        cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
+    }
 }
 
 #pragma auto_inline(off)

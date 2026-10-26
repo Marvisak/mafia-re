@@ -174,6 +174,32 @@ public:
             Descend();
         }
     }
+
+    // The file's handle, DTA_INVALID_HANDLE if none is open (the name is ours): C_mission::OpenBin hands it to the
+    // lightmaps, which read their data from the file themselves
+    // FUNCTION: GAME 0x548480
+    int GetHandle() const
+    {
+        return open ? handle : DTA_INVALID_HANDLE;
+    }
+
+    float ReadFloat()
+    {
+        float value;
+        Read(&value, sizeof(value));
+        Descend();
+        return value;
+    }
+
+    // Reads the current chunk's dword and leaves the chunk (the name is ours)
+    // FUNCTION: GAME 0x548490
+    int ReadDword()
+    {
+        int value;
+        Read(&value, sizeof(value));
+        Descend();
+        return value;
+    }
 };
 
 // The stack's out-of-line functions: push_back's insert(P, x), which the parts' Load calls, and the insert(P, n, x)
@@ -202,4 +228,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QBEIXZ
+// ?size@?$vector@HV?$C_chunk_allocator@H@@@std@@QBEIXZ

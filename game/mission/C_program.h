@@ -4,7 +4,10 @@
 
 #include <vector>
 
-// A script (PS2 C_program, C_program.cpp). Only what InitSystem and CloseSystem use so far.
+class C_chunk;
+
+// A script (PS2 C_program, C_program.cpp), 0x68 bytes. Only what InitSystem, CloseSystem and C_mission::OpenBin use so
+// far.
 class C_program
 {
 public:
@@ -22,9 +25,15 @@ public:
     // What the patch's files replace, which LoadPatchFile fills (PS2 name; nothing fills PS2's)
     static std::vector<S_prog_change> change_progs;
 
-    // Virtual, the vtable's first function: C_mission::Close deletes its scripts through it (PS2's too). Not written
-    // yet; nothing constructs a script so far, so nothing needs the vtable.
+    C_program();
+    // Virtual, the vtable's first function (0x624858, ten functions as PS2's): C_mission::Close deletes its scripts
+    // through it (PS2's too). Not written yet.
     virtual ~C_program();
+
+    // Reads the script from its chunk of the mission's scene2.bin (PS2 name)
+    void LoadSourceCode(C_chunk *chunk);
+
+    uchar unknown_4[0x64];
 };
 
 // Loads one of the patch's script files, patch\a1.bin to a4.bin, into C_program::change_progs (PC only, the name is

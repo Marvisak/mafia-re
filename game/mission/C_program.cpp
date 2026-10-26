@@ -1,15 +1,39 @@
 // The scripts (PS2 C_program.cpp; the PC's file is most likely the one at 0x460a50-0x47c31c, whose strings are the
 // script language's, docs/game-files.md, and which starts with the changes' initializer). Written so far: the patch's
-// changes, LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles. Not written: the scripts.
+// changes, LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles. Not written: the scripts; their
+// constructor, destructor and LoadSourceCode, which C_mission::OpenBin calls, are stubs.
 // Open: the changes' destructor (0x460a90, registered by 0x460a80) tests and sets a guard byte (0x63d774) of its own,
 // as C_animations_machine_de_luxe::tracks' does.
 
 #include "mission/C_program.h"
 
 #include "C_chunk.h"
+#include "stub.h"
 
 // GLOBAL: GAME 0x63d778
 std::vector<C_program::S_prog_change> C_program::change_progs;
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x460ad0
+C_program::C_program()
+{
+    StubLog("C_program::C_program");
+}
+
+// STUB: GAME 0x460b40
+C_program::~C_program()
+{
+    StubLog("C_program::~C_program");
+}
+
+// STUB: GAME 0x460c90
+void C_program::LoadSourceCode(C_chunk *chunk)
+{
+    StubLog("C_program::LoadSourceCode");
+}
+
+#pragma auto_inline(on)
 
 // The patch files' chunk of changes (the name is ours)
 #define CT_PROG_CHANGES 0x64
