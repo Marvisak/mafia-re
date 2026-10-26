@@ -23,6 +23,8 @@ int main(HINSTANCE hInstance);
 
 // Runs the loaded mission until it ends
 void GameLoopSingle();
+// Whether the main menu has Racing (PC only): it hasn't
+bool RacingInMainMenu();
 // Closes what InitSystem started
 void CloseSystem();
 
@@ -46,10 +48,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVIJoy@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@0@Z
+// ?_Destroy@?$vector@US_TYRE@@V?$allocator@US_TYRE@@@std@@@std@@IAEXPAUS_TYRE@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEPAPAVIJoy@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@IAEPAPAVC_effect@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@IAEXPAPAVC_effect_subpart@@IABQAV3@@Z
+// ?_Ufill@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEXPAHIABH@Z

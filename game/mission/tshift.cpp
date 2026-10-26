@@ -4,8 +4,7 @@
 
 #include "mission/tshift.h"
 
-// C_blood_manager's constructor (actors/C_blood.cpp) is the same code, folded into this one
-// FUNCTION: GAME 0x5604f0 FOLDED
+// C_blood_manager's constructor (actors/C_blood.cpp) is the same code, folded into this one: the marker is in the header
 C_tshift::C_tshift()
 {
 }

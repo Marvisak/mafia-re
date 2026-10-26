@@ -1,12 +1,13 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
 // constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
-// ClearControls and SetControl.
+// ClearControls, GetValues and SetControl; Update is a stub.
 
 #include "input/controls.h"
 
 #include <string.h>
 
 #include "IGraph/IGraph.h"
+#include "stub.h"
 
 // FUNCTION: GAME 0x4efb40
 C_controls::C_controls()
@@ -77,6 +78,22 @@ void C_controls::ClearControls()
     memset(keys, 0, sizeof(keys));
     memset(key_refs, 0, sizeof(key_refs));
     memset(mouse_refs, 0, sizeof(mouse_refs));
+}
+
+// FUNCTION: GAME 0x4f01a0
+int C_controls::GetValues(float *&list, uint flags)
+{
+    if (flags & CONTROLS_PRESSED)
+    {
+        if (pressed.size() < 1)
+            return -1;
+        list = pressed.begin();
+        return pressed.size();
+    }
+    if (values.size() < 1)
+        return -1;
+    list = values.begin();
+    return values.size();
 }
 
 // FUNCTION: GAME 0x4f02b0
@@ -190,3 +207,13 @@ bool C_controls::SetControl(const S_control *binding, int index)
         memset(&controls[index], 0, sizeof(S_control));
     return true;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4f0620
+void C_controls::Update(bool update_input)
+{
+    StubLog("C_controls::Update");
+}
+
+#pragma auto_inline(on)

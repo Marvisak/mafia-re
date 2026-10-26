@@ -5,7 +5,7 @@
 
 #include "actors/C_blood.h"
 
-// The same code as C_tshift's constructor, whose copy the linker kept (0x5604f0): the marker is there
+// The same code as C_tshift's constructor, whose copy the linker kept (0x5604f0): the marker is mission/tshift.h's
 C_blood_manager::C_blood_manager()
 {
 }

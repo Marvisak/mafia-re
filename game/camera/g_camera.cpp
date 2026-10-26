@@ -1,9 +1,11 @@
 // The game's camera (PS2 g_camera.cpp; the PC's file is the one at 0x5ece70-0x5f4b5c, docs/game-files.md): its
 // constructor, destructor and Reset, PS2's order. Written so far: those three, which the game's constructor and
-// destructor run.
+// destructor run; Tick, which the menus run, is a stub.
 
 #include "camera/g_camera.h"
 #include "ui/g_loadsave.h"
+
+#include "stub.h"
 
 // The cameras (PS2's name, a static of the file), from 0x638700, after the file's other initialized data
 // GLOBAL: GAME 0x638700
@@ -70,3 +72,13 @@ void G_Camera::Reset()
     push_pop.clear();
     needLookFromEyes = 0.0f;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5ed4c0
+void G_Camera::Tick(uint time)
+{
+    StubLog("G_Camera::Tick");
+}
+
+#pragma auto_inline(on)

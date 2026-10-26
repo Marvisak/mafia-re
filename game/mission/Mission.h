@@ -131,6 +131,8 @@ public:
     int Open(const char *name, bool, uint, bool);
     // Unloads the open mission: its game, actors, scripts and objects, the caches' contents and the scene's frames
     void Close();
+    // A frame of the mission: its scene, actors, scripts and game
+    void Tick(int time);
     // PS2 names: Close's helpers
     void DelActors();
     void FrmActBuff_ClearAll();

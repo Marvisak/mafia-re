@@ -68,4 +68,6 @@ public:
 
     // Sets the camera's defaults; the constructor calls it
     void Reset();
+    // A frame of the camera
+    void Tick(uint time);
 };

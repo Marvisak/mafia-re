@@ -228,6 +228,14 @@ void __cdecl GraphErrorHandler(LS3D_RESULT result, E_SEVERITY severity, const ch
     }
 }
 
+// Whether the main menu has Racing ("mainmenurac", PC only, the name is ours): GM_MainMenu::OnBeforeCreate asks, and
+// the answer is no
+// FUNCTION: GAME 0x5bebd0
+bool RacingInMainMenu()
+{
+    return false;
+}
+
 // The loop runs the main menu, then what the player chose, until they quit or choose another profile; a new profile
 // restarts it. Each choice that plays a mission opens it, loads its collisions and runs it, and the menu's mission is
 // opened again on the next pass. The cases are in the original's order, which a single jump table keeps.

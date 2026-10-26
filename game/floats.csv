@@ -19,6 +19,10 @@ address|type|size
 0x624058|float|4
 0x624e14|float|4
 0x625408|float|4
+0x625914|float|4
+0x6275b4|float|4
+0x6275b8|float|4
+0x6275bc|float|4
 0x6278b4|float|4
 0x6278dc|float|4
 0x6278e0|float|4

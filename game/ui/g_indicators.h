@@ -23,6 +23,13 @@ struct TLVERTEX;
 #define PARHELIA_DUAL 1                 // wider than 2:1
 #define PARHELIA_TRIPLE 2               // wider than 3:1: the HUD is on the middle screen
 
+// G_IndicatorsClass::unknown_40a4's bits (the names are ours, by value where the meaning isn't known yet): a menu keeps
+// the three unknown ones while it runs
+#define INDF_MENU 1                     // set while GM_Menu::ExecuteMenu runs a menu
+#define INDF_UNKNOWN_4000 0x4000
+#define INDF_UNKNOWN_8000 0x8000
+#define INDF_UNKNOWN_20000 0x20000
+
 // A needle of the HUD's dials (PS2's name; the members' names are ours), 0x2c bytes: the angles in radians
 struct G_RafickaDef
 {
@@ -94,8 +101,9 @@ public:
     ITexture *texture_sight;            // 0x4098, 2sight.bmp with its alpha
     ITexture *texture_race_start;       // 0x409c, racestart.bmp
     ITexture *texture_race_wrong;       // 0x40a0, racewrong.bmp
-    // Cleared by ResetValues and by G_LoadSaveClass::Init after ResolutionChanged, as PS2's 0x3094
+    // INDF_*. Cleared by ResetValues and by G_LoadSaveClass::Init after ResolutionChanged, as PS2's 0x3094
     uint unknown_40a4;                  // 0x40a4
+    // GM_Menu::ExecuteMenu pushes unknown_40a4 here while its menu runs
     std::vector<uint> unknown_40a8;     // 0x40a8, PS2's vector<unsigned int>
     S_vector2 screen_size;              // 0x40b8
     S_vector2 screen_scale;             // 0x40c0, the HUD's screen relative to 800x600

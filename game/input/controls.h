@@ -45,6 +45,9 @@ enum {
 #define CONTROL_POV_RIGHT 2
 #define CONTROL_POV_LEFT 8
 
+// C_controls::GetValues' flags (the name is ours)
+#define CONTROLS_PRESSED 1
+
 // A control's binding (PC only, the names are ours): what the controls' table gives each of the game's 60 controls, and
 // how GetLastInput (0x4f11f0) describes the last input it saw
 struct S_control {
@@ -91,13 +94,21 @@ public:
     bool Init(IGraph *graph, IJoy **joy_list, int num_joys);
     // Forgets the controls and the keys they defined, keeping the joysticks
     void ClearControls();
+    // The controls' values, or with CONTROLS_PRESSED their values at the update each was pressed in (the name is ours):
+    // the first one through values and the count, -1 while there are none
+    int GetValues(float *&list, uint flags);
     // Binds the control of that index (NULL unbinds it): defines its key with IGraph, counts the keys' and the mouse
     // buttons' users, sets a joystick axis's mode, and grows the tables to the index. False for a negative index, a key
     // with no free slot, or a joystick that isn't there.
     bool SetControl(const S_control *binding, int index);
+    // Reads the keyboard, the mouse and the joysticks into the controls' values; with update_input it has IGraph and
+    // the joysticks update their state first, which the menus do themselves
+    void Update(bool update_input);
 };
 
 extern C_controls controls;
+// The joysticks InitJoy found (Main.cpp's)
+extern std::vector<IJoy *> joy;
 
 // The joysticks' vector's helpers, which Init's inlined push_back calls
 // TEMPLATE: GAME 0x4f1a80

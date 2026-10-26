@@ -159,6 +159,12 @@ void C_mission::Close()
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x5407e0
+void C_mission::Tick(int time)
+{
+    StubLog("C_mission::Tick");
+}
+
 // STUB: GAME 0x5409d0
 int C_mission::Open(const char *name, bool, uint, bool)
 {
