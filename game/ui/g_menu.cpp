@@ -1,6 +1,7 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
-// ExecuteMenu runs as far as the components (the constructor and the resources, Create, CreateCompsByDef, Draw and the
-// activation), and the wrappers by id the loading screen calls; the components, Tick and the rest are stubs.
+// ExecuteMenu runs as far as the components (the constructor, the destructor and the resources, Create,
+// CreateCompsByDef, Destroy, Draw and the activation), SetCameraTargetID, and the wrappers by id the loading screen
+// calls; the components, Tick, TickCamera and the rest are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
@@ -60,6 +61,62 @@ ITexture *GM_Menu::textureMemory = NULL;
 ITexture *GM_Menu::textureWait = NULL;
 // GLOBAL: GAME 0x6bd8dc
 uint GM_Menu::lastKameraTargetID = 0;
+// GLOBAL: GAME 0x6bd8e0
+I3D_camera *GM_Menu::tc_frame = NULL;
+// GLOBAL: GAME 0x6bd8e4
+float GM_Menu::circleTime = 0.0f;
+// PS2's, a plain global, which TickCamera keeps between 0 and 1
+// GLOBAL: GAME 0x6bd8e8
+float circleScale = 0.0f;
+
+// The original's .bss has these in the reverse of PS2's order, from tc_actCamera (0x6bd878) down to circlePos
+// (0x6bd830), as another file's precompiled header would give them (g_indicators.cpp's the same); ours are hashed.
+// Below them, 0x6bd884 is 4 bytes nothing reads (PS2 has GM_Menu::lastKey there).
+// GLOBAL: GAME 0x6bd878
+S_vector GM_Menu::tc_actCamera;
+// GLOBAL: GAME 0x6bd86c
+S_vector GM_Menu::tc_actTarget;
+// GLOBAL: GAME 0x6bd860
+S_vector GM_Menu::tc_destCamera;
+// GLOBAL: GAME 0x6bd854
+S_vector GM_Menu::tc_destTarget;
+// GLOBAL: GAME 0x6bd848
+S_vector GM_Menu::tc_speedCamera;
+// GLOBAL: GAME 0x6bd83c
+S_vector GM_Menu::tc_speedTarget;
+// GLOBAL: GAME 0x6bd830
+S_vector GM_Menu::circlePos;
+
+// A main menu item's camera frame (the names are ours)
+struct S_menu_target
+{
+    uint id;                            // the item's component
+    const char *name;                   // the scene's frame
+};
+
+// The frames the main menu's camera goes to (PS2's name), the file's first data; the last one ends the table
+// GLOBAL: GAME 0x6384d8
+S_menu_target _GM_MainMenuTargets[] = {
+    {990001, "camera_start"},
+    {990101, "intro_pos"},
+    {990102, "training_pos"},
+    {990103, "new_game_pos"},
+    {990104, "load_game_pos"},
+    {990105, "free_ride_pos"},
+    {990106, "free_ride_pos"},
+    {990107, "racing_pos"},
+    {990108, "multiplayer_pos"},
+    {990109, "carcyclopedia_pos"},
+    {990110, "options_pos"},
+    {990111, "credits_pos"},
+    {990112, "profile_pos"},
+    {990113, "exit_pos"},
+    {990411, "single_pos"},
+    {990412, "champion_pos"},
+    {990413, "multiplayer_pos"},
+    {990416, "racing_pos"},
+    {0, ""},
+};
 
 #pragma auto_inline(off)
 
@@ -142,6 +199,39 @@ void GM_Menu::LoadResources()
     }
 }
 
+// PS2's releases its two sounds only
+// FUNCTION: GAME 0x5e9b40
+void GM_Menu::UnloadResources()
+{
+    if (textureMenuTop)
+        textureMenuTop->Release();
+    textureMenuTop = NULL;
+    if (textureMenuBottom)
+        textureMenuBottom->Release();
+    textureMenuBottom = NULL;
+    if (textureSponka)
+        textureSponka->Release();
+    textureSponka = NULL;
+    if (textureProgress)
+        textureProgress->Release();
+    textureProgress = NULL;
+    if (menuSoundOpen)
+    {
+        menuSoundOpen->Release();
+        menuSoundOpen = NULL;
+    }
+    if (menuSoundClose)
+    {
+        menuSoundClose->Release();
+        menuSoundClose = NULL;
+    }
+    if (menuSoundChange)
+    {
+        menuSoundChange->Release();
+        menuSoundChange = NULL;
+    }
+}
+
 // FUNCTION: GAME 0x5e9d60
 void GM_Component::BaseDraw(uint draw_flags)
 {
@@ -170,6 +260,16 @@ GM_Menu::GM_Menu() : parent(NULL), root(NULL), active(NULL), unknown_20(false), 
     if (!menuCount)
         LoadResources();
     menuCount++;
+}
+
+// FUNCTION: GAME 0x5ea270
+GM_Menu::~GM_Menu()
+{
+    if (--menuCount <= 0)
+    {
+        UnloadResources();
+        menuCount = 0;
+    }
 }
 
 // PS2's frees the components' array
@@ -256,15 +356,14 @@ void GM_Menu::CreateCompsByDef(const char *name)
     delete[] design;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5ea690
+// PS2's deletes the menu through its virtual destructor
+// FUNCTION: GAME 0x5ea690
 void GM_Menu::Destroy()
 {
-    StubLog("GM_Menu::Destroy");
+    for (std::vector<GM_Component *>::iterator it = components.begin(); it < components.end(); it++)
+        delete *it;
+    delete this;
 }
-
-#pragma auto_inline(on)
 
 // PS2's draws the components only without the menu's flag 0x200000, and no cursor
 // FUNCTION: GAME 0x5ea7e0
@@ -419,7 +518,7 @@ int GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
     mafiaIndicators.unknown_40a8.push_back(mafiaIndicators.unknown_40a4);
     mafiaIndicators.unknown_40a4 =
         (mafiaIndicators.unknown_40a4 & (INDF_UNKNOWN_4000 | INDF_UNKNOWN_8000 | INDF_UNKNOWN_20000)) | INDF_MENU;
-    SetCameraTargetID(0);
+    SetCameraTargetID(MENUCAM_NONE);
     zz_globalReturnCode = 0;
     if (!menu->root)
         menu->Create();
@@ -496,13 +595,82 @@ int GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
     return zz_globalReturnCode;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5ebe80
+// PS2's is the same switch, its cases in this order. Open: the original calls S_vector's constructor of
+// "camera_start"'s `dir * 10.0f` out of line too (its frame is 0x58 bytes, ours 0x4c); two empty inline calls after
+// the camera's Update, or between there and case 0's sum, give that and the original's instruction count, so its
+// source had about that many more inline calls there.
+// FUNCTION: GAME 0x5ebe80
 void GM_Menu::SetCameraTargetID(uint id)
 {
-    StubLog("GM_Menu::SetCameraTargetID %u", id);
+    I3D_frame *frame;
+    lastKameraTargetID = id;
+    switch (id)
+    {
+    case MENUCAM_START:
+        tc_frame = act_mission->scene->current_camera;
+        // STRING: GAME 0x638638
+        frame = act_mission->scene->FindFrame("camera_start", ENUMF_CAMERA);
+        if (frame)
+        {
+            tc_actCamera = frame->GetWorldPos();
+            tc_actTarget = tc_actCamera + frame->GetWorldDir() * 10.0f;
+        }
+        else if (tc_frame)
+        {
+            tc_actCamera = tc_frame->GetWorldPos();
+            tc_actTarget = tc_actCamera + tc_frame->GetWorldDir() * 10.0f;
+        }
+        else
+        {
+            tc_actCamera = S_vector(0.0f, 0.0f, 1.0f);
+            tc_actTarget = S_vector(0.0f, 0.0f, 0.0f);
+        }
+        tc_speedCamera.Zero();
+        tc_speedTarget.Zero();
+        tc_destCamera = tc_actCamera;
+        tc_destTarget = tc_actTarget;
+        if (tc_frame)
+        {
+            tc_frame->SetPos(tc_actCamera);
+            tc_frame->SetDir(tc_actTarget - tc_actCamera, 0.0f);
+            tc_frame->Update();
+        }
+        lastKameraTargetID = 0;
+        circleTime = 0.0f;
+        circleScale = 0.0f;
+        break;
+    case MENUCAM_NONE:
+        tc_frame = act_mission->scene->current_camera;
+        if (tc_frame)
+        {
+            tc_actCamera = tc_frame->GetWorldPos();
+            tc_actTarget = tc_actCamera + tc_frame->GetWorldDir();
+        }
+        else
+        {
+            tc_actCamera = S_vector(0.0f, 0.0f, 1.0f);
+            tc_actTarget = S_vector(0.0f, 0.0f, 0.0f);
+        }
+        tc_speedCamera.Zero();
+        tc_speedTarget.Zero();
+        tc_destCamera = tc_actCamera;
+        tc_destTarget = tc_actTarget;
+        break;
+    default:
+        for (uint i = 0; i < sizeof(_GM_MainMenuTargets) / sizeof(*_GM_MainMenuTargets); i++)
+            if (_GM_MainMenuTargets[i].id == id)
+            {
+                frame = act_mission->scene->FindFrame(_GM_MainMenuTargets[i].name, ENUMF_ALL);
+                if (frame)
+                {
+                    tc_destCamera = frame->GetWorldPos();
+                    tc_destTarget = tc_destCamera + frame->GetWorldDir();
+                }
+            }
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5ec8a0
 void GM_Menu::TickCamera(uint time)

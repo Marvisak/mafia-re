@@ -228,4 +228,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@HV?$C_chunk_allocator@H@@@std@@QBEIXZ
+// ?size@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QBEIXZ

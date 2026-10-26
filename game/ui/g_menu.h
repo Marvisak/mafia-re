@@ -7,6 +7,7 @@
 #include "I3D/I3d_math.h"
 
 class GM_Component;
+class I3D_camera;
 class I3D_sound;
 class ITexture;
 
@@ -19,6 +20,11 @@ class ITexture;
 #define MENUDRAW_ALL 0xffffffff
 #define MENUDRAW_CURSOR 0x10000000      // the cursor's blink: cleared for the second's last 300 ms
 #define MENUDRAW_UNKNOWN_40000000 0x40000000 // cleared for the parent menu
+
+// SetCameraTargetID's ids besides those of the main menu's items, which _GM_MainMenuTargets gives a frame each (the
+// names are ours)
+#define MENUCAM_NONE 0                  // the scene's camera where it is
+#define MENUCAM_START ((uint)-1)        // the frame "camera_start", where the main menu opens
 
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
@@ -80,6 +86,8 @@ class GM_Menu
 {
 public:
     GM_Menu();
+    // Not virtual on the PC: Destroy and the loading screen's owner (0x6068aa) call it directly
+    ~GM_Menu();
 
     // The menu's name
     virtual const char *OnBeforeCreate() = 0;
@@ -97,6 +105,7 @@ public:
 
     // The textures and sounds all menus share, which the first menu loads and the last one releases
     static void LoadResources();
+    static void UnloadResources();
     // Creates the menu's components from its definition, activates the first one it can, calls OnCreate, plays the open
     // sound and tells the parent
     void Create();
@@ -129,7 +138,9 @@ public:
     // result. While it runs it ticks the mission, or only the game's camera; the HUD's flags are pushed and the menus'
     // set. PS2's has a fourth bool, which both calls in its main pass as false; neither build reads the third.
     static int ExecuteMenu(GM_Menu *menu, bool tick_mission, bool);
-    // The camera the menu looks through, 0 for none
+    // Where the menu's camera goes: an item's id moves it to the item's frame (_GM_MainMenuTargets), which TickCamera
+    // then approaches; MENUCAM_START puts it at once at "camera_start" (or where the camera is), looking at a point 10
+    // ahead, and MENUCAM_NONE takes the scene's camera as it is. Only an item's id leaves TickCamera running.
     static void SetCameraTargetID(uint id);
     static void TickCamera(uint time);
 
@@ -171,5 +182,13 @@ public:
     // _gm_precachedNumOf, which follow them there)
     static ITexture *textureMemory;
     static ITexture *textureWait;
+    // The menu camera (PS2's names): the id SetCameraTargetID was given, 0 once the camera stands, the scene's camera,
+    // where it is and looks now, where it goes and its speeds there, and TickCamera's circling
     static uint lastKameraTargetID;
+    static I3D_camera *tc_frame;
+    static S_vector tc_actCamera, tc_actTarget;
+    static S_vector tc_destCamera, tc_destTarget;
+    static S_vector tc_speedCamera, tc_speedTarget;
+    static S_vector circlePos;
+    static float circleTime;
 };

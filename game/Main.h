@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1S_web_conn@@QAE@XZ
+// ??1S_unknown_26c@C_game@@QAE@XZ
 
 #include <settings.h>
 
@@ -48,10 +48,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVIJoy@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_unknown_3618@C_game@@V?$allocator@US_unknown_3618@C_game@@@std@@@std@@IAEXPAUS_unknown_3618@C_game@@0@Z
+// ?_Destroy@?$vector@US_enemy_talk@C_game@@V?$allocator@US_enemy_talk@C_game@@@std@@@std@@IAEXPAUS_enemy_talk@C_game@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVGM_Component@@V?$allocator@PAVGM_Component@@@std@@@std@@IAEPAPAVGM_Component@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@IAEPAPAVC_effect_subpart@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVGM_Component@@V?$allocator@PAVGM_Component@@@std@@@std@@IAEXPAPAVGM_Component@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@IAEXPAPAVC_effect_subpart@@IABQAV3@@Z

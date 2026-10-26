@@ -19,4 +19,4 @@ public:
 
 // The destructor, folded with C_tshift's: the name our PDB keeps for the two changes with the build (foldfix)
 // FUNCTION: GAME 0x412000
-// ??1C_blood_manager@@QAE@XZ
+// ??1C_tshift@@QAE@XZ

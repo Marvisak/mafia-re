@@ -4,11 +4,14 @@ address|type|size
 0x62323c|float|4
 0x623240|float|4
 0x623244|float|4
+0x6232e0|float|4
+0x6232e8|float|8
 0x6232f8|float|4
 0x6232fc|float|4
 0x6233b4|float|4
 0x6233b8|float|4
 0x6233e4|float|4
+0x6233ec|float|4
 0x62348c|float|4
 0x623498|float|8
 0x6234a4|float|4
