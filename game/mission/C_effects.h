@@ -356,12 +356,12 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_item@@UAEPAXI@Z
+// ??_EC_effect_subpart@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
 // SYNTHETIC: GAME 0x44beb0
-// ??1C_effect_item@@UAE@XZ
+// ??1C_effect_subpart@@UAE@XZ
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -376,13 +376,13 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAXV?$allocator@PAX@std@@@std@@QAE@XZ
+// ??1?$vector@US_joy@@V?$allocator@US_joy@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QAEPAPAVC_effect_subpart@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
 // ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z

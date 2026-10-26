@@ -39,6 +39,7 @@ add_executable(game WIN32
     ui/g_menu.cpp
     ui/g_indicators.cpp
     ui/g_loadsave.cpp
+    g_material.cpp
     ui/g_textdb.cpp
     res/game.rc
 )

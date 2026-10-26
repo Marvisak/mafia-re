@@ -4104,7 +4104,7 @@ struct TLVERTEX2 {
 // I3D files written later (0x10041700; 1.1's after BuildAllVBuffers, 0x10062c10, and 1.1 has no list of vertex
 // buffers)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_VBuffer@@@@QAEXABQAVC_VBuffer@@@Z
+// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
 
 // TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
@@ -4786,7 +4786,7 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
+// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF11 0x1005d600
 // ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z

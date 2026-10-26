@@ -136,6 +136,7 @@ public:
 
     // FUNCTION: LS3DF 0x1006ff80
     // FUNCTION: LS3DF11 0x1006d010
+    // FUNCTION: GAME 0x403450
     C_str operator+(const char *cp) const
     {
         if (!rep)
@@ -166,10 +167,59 @@ public:
         return rep ? rep->size : 0;
     }
 
-    // The game's (the caches' DelDir), defined in game/C_fstr.h: a body here moves where /YX puts LS3DF's deferred
-    // items. The declaration leaves 1.2 as it is; in 1.1 any declaration of it reorders instructions of
+    // The game's: the caches' DelDir and Open use them, LS3DF doesn't. Open: their bodies count for LS3DF's /YX
+    // (tools/autopch.py), which puts 15 files' deferred items later (the interpolator's, occluder's and math's $E at
+    // the original's places, the driver's, sound's and particles' one function past them), and they reorder 1.1's
     // I3D_lit_object::m_AddFGroups (equivalent, not identical).
-    bool operator==(const C_str &s) const;
+
+    // The same buffer, or the same size and bytes
+    bool operator==(const C_str &s) const
+    {
+        if (rep == s.rep)
+            return true;
+        if (Size() != s.Size())
+            return false;
+        return !memcmp(*this, s, Size());
+    }
+
+    // A letter's upper case. A member, though it doesn't use the string: its out-of-line copy (0x408ca0) is
+    // __thiscall. The name is ours.
+    int ToUpper(int c) const
+    {
+        if (c >= 'a' && c <= 'z')
+            c += 'A' - 'a';
+        return c;
+    }
+
+    // The string against a mask: * matches the rest, ? any one character, the others ignore case. An empty string
+    // matches only an empty mask. The name is ours. The switch gives the original's layout (the ? case after the
+    // others' test).
+    // Open: the original's upper case adds -0x20 (add ecx, -0x20), ours subtracts 0x20 in every spelling and type
+    // tried.
+    // FUNCTION: GAME 0x4035d0
+    bool Match(const C_str &mask) const
+    {
+        uint len = Size(), len1 = mask.Size();
+        if (!len || !len1)
+            return len == len1;
+        const char *cp = *this, *cp1 = mask;
+        while (*cp1) {
+            switch (*cp1) {
+            case '*':
+                return true;
+            case '?':
+                if (!*cp)
+                    return false;
+                break;
+            default:
+                if (ToUpper(*cp) != ToUpper(*cp1))
+                    return false;
+            }
+            cp++;
+            cp1++;
+        }
+        return !*cp;
+    }
 
     operator const char *() const
     {

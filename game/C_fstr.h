@@ -23,12 +23,7 @@ public:
     }
 };
 
-// The same buffer, or the same size and bytes (common/C_str.h declares it)
-inline bool C_str::operator==(const C_str &s) const
-{
-    if (rep == s.rep)
-        return true;
-    if (Size() != s.Size())
-        return false;
-    return !memcmp(*this, s, Size());
-}
+// C_str's constructor of a char *, the game's first copy. Annotated here by name: a comment line above it in
+// common/C_str.h counts for LS3DF's /YX and reorders IGraph.cpp's functions.
+// TEMPLATE: GAME 0x403320
+// ??0C_str@@QAE@PBD@Z
