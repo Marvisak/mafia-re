@@ -1,6 +1,6 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
 // constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
-// ClearControls, GetValues, GetValue and SetControl; Update is a stub.
+// ClearControls, GetValues, GetValue, SetControl and GetControl; Update is a stub.
 
 #include "input/controls.h"
 
@@ -220,6 +220,18 @@ bool C_controls::SetControl(const S_control *binding, int index)
     }
     else
         memset(&controls[index], 0, sizeof(S_control));
+    return true;
+}
+
+// An index outside the table returns early: written as the copy's condition, VC6 pushes esi after the first test
+// FUNCTION: GAME 0x4f05b0
+bool C_controls::GetControl(S_control *binding, int index)
+{
+    if (!binding)
+        return false;
+    if (index < 0 || index >= controls.size())
+        return true;
+    *binding = controls[index];
     return true;
 }
 

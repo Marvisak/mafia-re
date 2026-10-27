@@ -40,6 +40,17 @@ inline int GetRefCount(const I3D_animation_set *set)
     return set->ref;
 }
 
+// And a reference more, which Create gives the caller (ours too)
+inline void AddRef(I3D_frame *frm)
+{
+    frm->m_RefCount++;
+}
+
+inline void AddRef(I3D_animation_set *set)
+{
+    set->ref++;
+}
+
 // The caches' interface (PS2 C_I3D_cache_base<T>): the vtable of C_I3D_cache<T> but Duplicate, every function pure but
 // CreateNew and the destructor. The anim cache's is 0x625dc0, 12 slots.
 template<class T>
@@ -71,8 +82,8 @@ public:
 
 // The caches of the models, sounds and animations the missions load (PS2 C_I3D_cache<T>, with C_I3D_model_cache,
 // C_I3D_sound_cache and C_I3D_anim_cache derived from it; the header's name is ours), 0x28 bytes. Main.cpp has the
-// three. Written: Open, Clear, AddDir and DelDir, and the derived caches' CreateNew and Duplicate; the other functions
-// of the vtable are stubs.
+// three. Written: Open, Create, Clear, AddDir and DelDir, and the derived caches' CreateNew and Duplicate; the other
+// functions of the vtable are stubs.
 // Open: the original's destructor (0x5c1fd0 for the model cache) releases the items, Clear inlined; ours is implicit.
 // The constructor sets cache_size to 0x100.
 template<class T>
@@ -228,12 +239,58 @@ LS3D_RESULT C_I3D_cache<T>::Open(T *obj, const char *name, uint flags, I3D_CACHE
     return ret;
 }
 
+// The cached object of a name, or a new one loaded from the first folder that has the file, which the cache then keeps
+// (after releasing the first object nobody else holds if the cache is full): a reference for the caller either way.
+// Out of memory and a corrupted file end the search; NULL on failure. C_game::Init inlines the anim cache's.
 template<class T>
 LS3D_RESULT C_I3D_cache<T>::Create(const char *name, T **obj, I3D_CACHE_CB_PROC *cb, void *context)
 {
-    StubLog("C_I3D_cache::Create %s", name);
+    for (uint i = 0; i < items.size(); i++) {
+        if (!items[i].name.Match(C_str(name)))
+            continue;
+        AddRef(items[i].obj);
+        *obj = items[i].obj;
+        return I3D_OK;
+    }
+    T *o = CreateNew();
+    if (!o) {
+        *obj = NULL;
+        return I3DERR_OUTOFMEM;
+    }
+    uint flags = 0;
+    if (cb)
+        flags |= I3DLOAD_ERRORS;
+    LS3D_RESULT ret = I3DERR_NOFILE;
+    S_cache_cb_context c;
+    c.cb = cb;
+    c.context = context;
+    for (uint k = 0; k < dirs.size(); k++) {
+        ret = o->Open(dirs[k] + name, flags, LoadCallback, &c);
+        if (ret == I3DERR_NOFILE)
+            continue;
+        if (ret == I3DERR_OUTOFMEM || ret == I3DERR_FILECORRUPTED)
+            break;
+        if (ret < I3D_OK)
+            continue;
+        if (items.size() >= (uint)cache_size) {
+            for (uint m = 0; m < items.size(); m++) {
+                if (GetRefCount(items[m].obj) == 1) {
+                    items[m].obj->Release();
+                    items.erase(items.begin() + m);
+                    break;
+                }
+            }
+        }
+        items.push_back(S_itm());
+        items.back().obj = o;
+        items.back().name = name;
+        AddRef(o);
+        *obj = o;
+        return ret;
+    }
+    o->Release();
     *obj = NULL;
-    return I3DERR_NOFILE;
+    return ret;
 }
 
 template<class T>
@@ -333,13 +390,13 @@ extern C_I3D_anim_cache anim_cache;
 // The items' helpers, which CloseSystem's inlined Clear calls. The linker folded the three caches' copies of each; the
 // original kept the first file's (Main.cpp's for the assignment).
 // SYNTHETIC: GAME 0x5c2540
-// ??4S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAEAAU01@ABU01@@Z
+// ??4S_itm@?$C_I3D_cache@VI3D_model@@@@QAEAAU01@ABU01@@Z
 
 // SYNTHETIC: GAME 0x410c30
 // ??1S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
-// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
+// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
 // ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU23@00@Z
@@ -394,18 +451,18 @@ extern C_I3D_anim_cache anim_cache;
 
 // The loader's callback, the three caches' folded into one
 // TEMPLATE: GAME 0x410c50
-// ?LoadCallback@?$C_I3D_cache@VI3D_model@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
+// ?LoadCallback@?$C_I3D_cache@VI3D_animation_set@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
 
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
 // SYNTHETIC: GAME 0x403730
-// ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
+// ??0S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QBEIXZ
+// ?size@?$vector@Uai_group_member@@V?$allocator@Uai_group_member@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
 // ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@ABU34@@Z

@@ -417,6 +417,10 @@ public:
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
 
+    // The rotation, made from the local matrix first if it isn't up to date (the name is a guess; the game's
+    // out-of-line copy is at 0x47a810 in Game.exe). Defined at the file's end: see there.
+    const S_quat &GetRot();
+
     // Insanity3D's name
     void SetPos(const S_vector &pos)
     {
@@ -491,6 +495,10 @@ public:
             return m_Scale;
         return GetMatrix().GetScale();
     }
+
+    // The hierarchy's bound volume in the frame's space, updated first if it isn't (the name is a guess, after
+    // GetHRBoundVolumeW; the game's garage reaches the private UpdateHRBoundVol through it). Defined at the file's end.
+    const I3D_bvolume &GetHRBoundVolume();
 
     // The hierarchy's bound volume in world space, updated first if it isn't (the name is a guess, after the visuals'
     // GetWBoundVolume; the collision tests, free functions, reach the private UpdateHRBoundVolW through it)
@@ -4123,7 +4131,7 @@ struct TLVERTEX2 {
 // I3D files written later (0x10041700; 1.1's after BuildAllVBuffers, 0x10062c10, and 1.1 has no list of vertex
 // buffers)
 // TEMPLATE: LS3DF 0x10041700
-// ?push_back@?$C_list@PAVC_IBuffer@@@@QAEXABQAVC_IBuffer@@@Z
+// ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
 
 // TEMPLATE: LS3DF11 0x10062c10
 // ?push_back@?$C_list@PAVI3D_area@@@@QAEXABQAVI3D_area@@@Z
@@ -4805,10 +4813,30 @@ I3D_mesh_object *LoadMeshImage();
 LS3D_RESULT LoadShadowImage(ShadowDef *def, const char *file_name, const FILETIME *time);
 // Out of line for LoadShadowImage's vertices, the file's last function; the faces' and parts' are inlined
 // TEMPLATE: LS3DF 0x10061790
-// ?reserve@?$C_list@US_vector@@@@QAEXH@Z
+// ?reserve@?$C_list@UOFFSET_STRUCT@@@@QAEXH@Z
 
 // TEMPLATE: LS3DF11 0x1005d600
 // ?reserve@?$C_list@US_vector@@@@QAEXH@Z
 
 // Load5ds.cpp (PS2 name): an animation file's data
 LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME *time);
+
+// The frame's accessors that only the game uses (Game.exe inlines them; LS3DF has no copy of either). Defined here, after
+// the inline functions /YX defers in the engine's files, where they move the fewest of them: in the class they moved
+// five files' deferred items, here only I3d_object.cpp's. Their declarations alone change I3D_lit_object::Construct's
+// code: it is one of the functions that the number of symbols declared before them moves.
+inline const S_quat &I3D_frame::GetRot()
+{
+    if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID)) {
+        m_FrmFlags |= FRMFLAGS_QUAT_VALID;
+        m_Rot.Make(m_LocalMatrix);
+    }
+    return m_Rot;
+}
+
+inline const I3D_bvolume &I3D_frame::GetHRBoundVolume()
+{
+    if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
+        UpdateHRBoundVol();
+    return m_HRBoundVol;
+}

@@ -72,8 +72,19 @@ struct S_VEH_PARTICLE
 // A vehicle's wheel (the name is ours; PS2's C_Vehicle has them through pointers too). Only what the camera reads.
 struct S_wheel
 {
-    uchar unknown_0[0x7c];
+    uchar unknown_0[0xc];
+    // 0xc and 0x10 (PS2 0x15c and 0x30), what GetWheelCamPos places the camera by: the wheel's position and a distance
+    // outwards, to the right for the odd wheels
+    float unknown_c;
+    S_vector unknown_10;
+    uchar unknown_1c[0x60];
     S_vector unknown_7c;                // 0x7c, the camera "C In" tilts by their sum
+};
+
+// An element of C_Vehicle::unknown_ca0 (the name is ours; its members are unknown), 0x24 bytes
+struct S_vehicle_unknown_ca0
+{
+    uchar unknown_0[0x24];
 };
 
 // The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp), a base of C_car at 0x70 (the car
@@ -101,6 +112,9 @@ public:
     static uchar s_material_conv_tbl[0x100];
     // The particle emitters (PS2 name)
     static std::vector<S_VEH_PARTICLE> v_particle;
+    // The sectors with projector lights and those with sounds (PS2 names), which C_game::Init fills
+    static std::vector<I3D_sector *> v_light_sector;
+    static std::vector<I3D_sector *> v_sound_sector;
 
     // Copies the tyres, each with its own copy of its surfaces
     static bool SetTyres(const std::vector<S_TYRE> *tyres);
@@ -113,7 +127,25 @@ public:
     static void CloseParticles();
     // Sets sound_volume (C_Vehicle_sounds.cpp; PC only, the name is ours)
     static void SetSoundVolume(float volume);
+    // A sector for v_light_sector (PS2 name)
+    static void AddSectorForProjectorLights(I3D_sector *sector);
 
+    // Settles the vehicle at the game's start (PS2 name; PS2's on C_car takes three parameters)
+    void CalmVehicle(uint time);
+    // unknown_ca0's size, as an int (the name is ours: G_LoadSaveClass::GarageGameDone's loop over the seats compares
+    // it signed)
+    int GetNumUnknownCa0() const
+    {
+        return unknown_ca0.size();
+    }
+    // PS2 name and parameter, which G_LoadSaveClass::GarageGameInit calls with 0 for a car kept between missions
+    void Deactivate(uint flags);
+    // Fills the tank up to fuel, at most its size (PS2 name); true
+    bool SetFuel(float fuel);
+
+    // A camera's position at a wheel, offset from it (PS2 name): the offset's x mirrored for the even wheels, which
+    // are on the left
+    S_vector GetWheelCamPos(int wheel, const S_vector &offset);
     // The driver's head (PS2 name), where the camera "C In" sits
     const S_vector &GetHeadPos();
     // While it is set, the car cameras' faktorStability falls (PS2 name)
@@ -124,6 +156,12 @@ public:
     S_vector GetVelocity() const
     {
         return velocity;
+    }
+    // The tank's size (the name is ours): C_mission::FrmActBuff_IsActiveActor passes it to SetFuel through the FPU, as
+    // an inline function's float result, where the member read directly is pushed with integer moves
+    float GetUnknown1fa0() const
+    {
+        return unknown_1fa0;
     }
 
     // Our names are guesses after the members' uses.
@@ -150,12 +188,18 @@ public:
     S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
     uchar unknown_c60[4];               // 0xc60
     float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
-    uchar unknown_c68[0x80];            // 0xc68
+    uchar unknown_c68[0x38];            // 0xc68
+    // 0xca0 (car 0xd10), as many as the car has seats most likely: G_LoadSaveClass::GarageGameDone asks C_car::GetOwner
+    // for each
+    std::vector<S_vehicle_unknown_ca0> unknown_ca0;
+    uchar unknown_cb0[0x38];            // 0xcb0
     S_matrix model_matrix;              // 0xce8 (car 0xd58), C_car::GetInvModelMatrix's
     S_matrix inv_model_matrix;          // 0xd28 (car 0xd98)
     uchar unknown_d68[0x1228];          // 0xd68
     S_vector velocity;                  // 0x1f90 (car 0x2000), most likely
-    uchar unknown_1f9c[0xa4];           // 0x1f9c
+    uchar unknown_1f9c[4];              // 0x1f9c
+    float unknown_1fa0;                 // 0x1fa0 (car 0x2010), the tank's size: SetFuel's upper bound
+    uchar unknown_1fa4[0x9c];           // 0x1fa4, to the car's own members at its 0x20b0
 };
 
 // The tables' vector helpers the loaders and the Set functions call out of line: each push_back's insert(P, n, x) and the
@@ -174,7 +218,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -189,7 +233,7 @@ public:
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
 // ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z

@@ -2,6 +2,8 @@
 
 #include "Main.h"
 
+#include <string.h>
+
 struct S_vector;
 
 // TestSphereB's flags (the names are ours, by value until the collisions' code shows their meanings): what the sphere
@@ -11,7 +13,18 @@ struct S_vector;
 #define COLF_ALL 0xffffffff
 #define COLF2_UNKNOWN_100000 0x100000
 
-// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main and the camera use so far.
+// A moving object's collision (PS2 tDynamicCollObject, 0x60 bytes), 0x48 bytes by the game's arrays of them; what it
+// holds isn't known yet
+struct tDynamicCollObject
+{
+    uchar unknown_0[0x48];
+
+    // PS2's, which clears it
+    tDynamicCollObject() { memset(this, 0, sizeof(*this)); }
+};
+
+// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main, the camera and the game use
+// so far.
 class g_collision
 {
 public:
@@ -24,6 +37,14 @@ public:
         uint flags, uint flags2);
     // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize")
     bool LoadCollision(const char *name, bool);
+    // Takes a moving object out of the collisions (PS2 name)
+    void DynErase(tDynamicCollObject *obj);
+    // PS2 name (PS2's takes a bool)
+    void GameDone();
+    // PS2 names, GameDone's: the moving objects' collisions out, and the level's freed (PS2's DeleteCollsLevel takes a
+    // bool, the PC's nothing)
+    void DynWipeOut();
+    void DeleteCollsLevel();
 };
 
 extern g_collision gifCollision;

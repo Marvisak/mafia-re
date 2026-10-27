@@ -1,11 +1,9 @@
 // The clocks (PS2 c_clock.cpp; the PC's file is the one at 0x56add0-0x56b17c, docs/game-files.md), which starts with
-// the constructor. Written so far: the constructor and Init, which C_mission::CreateActor and OpenBin call, and the
-// destructor (c_clock.h). Not written: GameInit (0x56ae90) and GameDone (0x56afd0), stubs, and the hands' Tick
+// the constructor. Written so far: the constructor and Init, which C_mission::CreateActor and OpenBin call, the
+// destructor (c_clock.h), and GameInit and GameDone, which C_game::Init and Done call. Not written: the hands' Tick
 // (0x56afe0).
 
 #include "actors/c_clock.h"
-
-#include "stub.h"
 
 // FUNCTION: GAME 0x56add0
 C_clock::C_clock()
@@ -29,18 +27,32 @@ bool C_clock::Init(I3D_frame *frm)
     return true;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x56ae90
+// The hour hand turns by the minutes too, the second hand starts at 0 (PS2's the same)
+// FUNCTION: GAME 0x56ae90
 void C_clock::GameInit()
 {
-    StubLog("C_clock::GameInit");
+    angle_hour = 0.0f;
+    angle_minute = 0.0f;
+    time = 0;
+    C_actor::GameInit();
+    unknown_65 = true;
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    angle_hour = (float)(st.wHour * 2) * PI / 12.0f;
+    angle_minute = (float)(st.wMinute * 2) * PI / 60.0f;
+    hand_hour->SetDir(S_vector(0.0f, 1.0f, 0.0f), PI - (angle_hour + angle_minute / 12.0f));
+    hand_hour->Update();
+    hand_minute->SetDir(S_vector(0.0f, 1.0f, 0.0f), PI - angle_minute);
+    hand_minute->Update();
+    if (hand_second)
+    {
+        hand_second->SetDir(S_vector(0.0f, 1.0f, 0.0f), 0.0f);
+        hand_second->Update();
+    }
 }
 
-// STUB: GAME 0x56afd0
+// FUNCTION: GAME 0x56afd0
 void C_clock::GameDone()
 {
-    StubLog("C_clock::GameDone");
+    C_actor::GameDone();
 }
-
-#pragma auto_inline(on)

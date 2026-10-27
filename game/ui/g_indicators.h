@@ -8,6 +8,8 @@
 
 class ITexture;
 class I3D_camera;
+class C_car;
+class C_web_node;
 struct TLVERTEX;
 
 // The HUD's fonts (the name is ours)
@@ -25,11 +27,52 @@ struct TLVERTEX;
 #define PARHELIA_TRIPLE 2               // wider than 3:1: the HUD is on the middle screen
 
 // G_IndicatorsClass::unknown_40a4's bits (the names are ours, by value where the meaning isn't known yet): a menu keeps
-// the three unknown ones while it runs
+// 0x4000, 0x8000 and 0x20000 while it runs
 #define INDF_MENU 1                     // set while GM_Menu::ExecuteMenu runs a menu
+#define INDF_UNKNOWN_20 0x20            // cleared while the camera is CAMERA_CP_SNIPER, where INDF_UNKNOWN_20000 is set
+#define INDF_UNKNOWN_800 0x800          // cleared by C_cutscene::Close
 #define INDF_UNKNOWN_4000 0x4000
 #define INDF_UNKNOWN_8000 0x8000
 #define INDF_UNKNOWN_20000 0x20000
+#define INDF_RACE_START 0x200000        // RaceSetStartFlag's flag shows
+
+// The lines of the HUD's console (the name is ours; PS2's has 3)
+#define CONSOLE_LINES 5
+
+// RaceSetStartFlag's flags that hide it (the names are ours, by value where the meaning isn't known yet)
+#define RACE_START_UNKNOWN_4 4
+#define RACE_START_NONE 0xffffffff
+
+// OutText's flags (the names are ours)
+#define OUTTEXT_UNDERLINE 0x1           // a red line under the text
+#define OUTTEXT_CENTER 0x2              // centered in the width
+#define OUTTEXT_RIGHT 0x4               // aligned to the width's right end
+#define OUTTEXT_INDENT 0x8              // half the size from the left
+#define OUTTEXT_FIT 0x10                // narrowed to the width (less the indent)
+
+// The quads OutText draws in one call (the name is ours)
+#define OUTTEXT_MAX_CHARS 100
+
+// A character of a HUD font (the names are ours), 0x10 bytes: its rectangle in the font's texture, the bottom
+// G_Font::tex_height below the top, and its width relative to the font's
+struct G_FontChar
+{
+    float u, v;                         // the top left corner
+    float u1;                           // 0x8, the right edge
+    float width;                        // 0xc, under .001 for no character
+};
+
+// A HUD font, tables\font<n><suffix>.gmf (the names are ours), 0x101c bytes: the scales relative to the text's size
+struct G_Font
+{
+    uchar unknown_0[8];
+    float height;                       // 0x8, the characters' height
+    float width;                        // 0xc, the scale of their widths, relative to the height
+    float tex_height;                   // 0x10, their height in the texture
+    float spacing;                      // 0x14, what each character overlaps the next
+    float top;                          // 0x18, the characters' top above the text's position
+    G_FontChar chars[0x100];            // 0x1c, by the font's character code (fontTranstable's)
+};
 
 // A needle of the HUD's dials (PS2's name; the members' names are ours), 0x2c bytes: the angles in radians
 struct G_RafickaDef
@@ -84,17 +127,20 @@ public:
     // A car and a thing on the radar (PS2's names; their members are unknown), 8 bytes each
     struct G_RadarCar
     {
-        uchar unknown_0[8];
+        C_car *car;                     // RadarAddCar's (the names are ours)
+        uint color;                     // 0x4
     };
     struct G_RadarItem
     {
         uchar unknown_0[8];
     };
 
-    uchar fonts[NUM_FONTS][0x101c];     // 0x0, LoadFont's tables\font<n><suffix>.gmf
+    G_Font fonts[NUM_FONTS];            // 0x0, LoadFont's tables\font<n><suffix>.gmf
     ITexture *font_textures[NUM_FONTS]; // 0x4070, font<n><suffix>.tga
     ITexture *texture_int;              // 0x4080, 1int.tga
-    ITexture *unknown_4084;             // 0x4084, cleared by Create (PS2's too), released by Destroy
+    // 0x4084, the dials: 2int.tga, 2intmph.tga with the profile's speedometer in miles, at night 2intnoc.tga and
+    // 2intnocmph.tga (GameInit's); cleared by Create (PS2's too), released by Destroy
+    ITexture *texture_int2;
     ITexture *texture_numbers;          // 0x4088, 1numbers.tga
     ITexture *texture_textura;          // 0x408c, 0textura.tga
     ITexture *unknown_4090;             // 0x4090, cleared by Create (PS2's too), released by Destroy
@@ -152,9 +198,13 @@ public:
     S_vector2 screen_center;            // 0x426c
     uchar unknown_4274[4];
     uint unknown_4278;                  // 0x4278, cleared by ResetValues
-    uchar unknown_427c[0x43e4 - 0x427c];
-    uint unknown_43e4;                  // 0x43e4, cleared by ResetValues
-    uint unknown_43e8;                  // 0x43e8
+    // The HUD's console (the names are ours, after ConsoleAddText at 0x5f9d50; PS2's has three lines at 0x4278): a ring
+    // of lines, the oldest at console_first
+    char console_texts[CONSOLE_LINES][0x40];    // 0x427c
+    uint console_colors[CONSOLE_LINES]; // 0x43bc, 0xrrggbb
+    float console_times[CONSOLE_LINES]; // 0x43d0, 5 when added
+    uint console_first;                 // 0x43e4, cleared by ResetValues
+    uint console_count;                 // 0x43e8, cleared by ResetValues and ConsoleClear
     std::vector<G_MISubtitleStruct> subtitles;      // 0x43ec (PS2 0x4b38), SubtitlesClear's (0x5f8990)
     std::vector<G_MISubtitleStruct> mission_help;   // 0x43fc (PS2 0x4b44), MissionHelpClear's (0x5f99b0)
     std::vector<G_MIIntroSubtitles> intro_subtitles;    // 0x440c (PS2 0x4b50)
@@ -164,18 +214,20 @@ public:
     uchar unknown_445c[0x24];
     uint unknown_4480;                  // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0)
     uint unknown_4484;                  // 0x4484
-    uchar unknown_4488[4];
-    uint unknown_448c;                  // 0x448c
-    uint unknown_4490;                  // 0x4490
+    uint unknown_4488;                  // 0x4488, SetUnknown4484's second value
+    uint unknown_448c;                  // 0x448c, SetUnknownTexture's name
+    uint unknown_4490;                  // 0x4490, SetUnknownTexture's texture
     uchar unknown_4494[4];
     std::vector<G_RadarCar> radar_cars; // 0x4498 (PS2 0x4bd8)
     uint unknown_44a8;                  // 0x44a8, cleared by ResetValues (PS2 0x4be4)
     std::vector<G_RadarItem> radar_items;   // 0x44ac (PS2 0x4be8)
     uint unknown_44bc;                  // 0x44bc, cleared by ResetValues (PS2 0x4bf4)
     float unknown_44c0;                 // 0x44c0, .9 from ResetValues (PS2 0x4bf8)
-    uchar unknown_44c4[8];
-    uint unknown_44cc;                  // 0x44cc, cleared by ResetValues (PS2 0x4c04)
-    uint unknown_44d0;                  // 0x44d0
+    // RaceSetStartFlag's (PS2 0x4bfc to 0x4c08): the flag before and its float, the flag and its float, 1 when set
+    uint race_start_flag_last;          // 0x44c4
+    uint race_start_flag;               // 0x44c8
+    float race_start_last_time;         // 0x44cc, cleared by ResetValues
+    float race_start_time;              // 0x44d0
     // The race's texts (PS2 0x4c0c to 0x4d0c): RaceSetTime's, RaceSetLapTime's, RaceSetBestTime's, RaceSetPosition's
     // and RaceSetLaps'
     char race_time[0x40];               // 0x44d4
@@ -190,7 +242,7 @@ public:
     uint unknown_46e0;                  // 0x46e0
     int unknown_46e4;                   // 0x46e4, -1 from ResetValues
     uchar unknown_46e8[4];
-    bool unknown_46ec;                  // 0x46ec, cleared by ResetValues (PS2 0x4e24)
+    bool map_enabled;                   // 0x46ec, MapEnable's (PS2 0x4e24), cleared by ResetValues
     char *text_out_of_city;             // 0x46f0, text 0x5f, "Out of City Limits" (PS2 0x4e28)
     bool parhelia_center;               // 0x46f4, ParheliaSetCenter's flag
 
@@ -232,8 +284,41 @@ public:
     void IntroSubtitlesClear();
     // The black bars above and below the picture, the picture's height a ratio of the screen's width
     void WideScreenSetRatio(float ratio);
+    // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 unless that name's
+    // is there already (reload loads it again), released for NULL; C_cutscene::Close clears both
+    void SetUnknown4484(uint a, uint b);
+    void SetUnknownTexture(const char *name, bool unknown, bool reload);
     // The bonus the HUD shows, BONUS_NONE for none
     void BonusSetCount(int count);
+    // PS2 names, what C_game's Init and Done call (PS2's GameDone takes a bool). GameInit loads the dials' textures for
+    // the game's day or night, GameDone frees what the game used.
+    void GameInit();
+    void GameDone();
+    // Forgets the radar's cars and things
+    void RadarClear();
+    void RadarAddCar(C_car *car, uint color);
+    void RadarRemoveCar(C_car *car);
+    // The road's edges the radar draws, from a vector of web nodes; NULL for none (PS2 names)
+    void RadarSetLeftEdge(std::vector<C_web_node *> *edge);
+    void RadarSetRightEdge(std::vector<C_web_node *> *edge);
+    // The race's start lights, RACE_START_UNKNOWN_4 and RACE_START_NONE hiding them (PS2 name)
+    void RaceSetStartFlag(uint flag);
+    void SubtitlesClear();
+    // Empties the HUD's console
+    void ConsoleClear();
+    // Whether the city map may be shown (PS2 name), which also takes text 0x5f again
+    void MapEnable(bool enable);
+    // A text's width in a font at a size, up to stop if not NULL (PS2 name)
+    float TextSize(const char *text, float size, uint font, const char *stop);
+    // Writes a text at x, y in a font, up to stop if not NULL, the characters sy high: OUTTEXT_* place it in the width
+    // sx (PS2 name). Returns where it ends.
+    float OutText(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font,
+        const char *stop);
+    // The name is ours: its copy is among the accessors at the end of the file at 0x460a50
+    void SetUnknown40a4(uint flags)
+    {
+        unknown_40a4 = flags;
+    }
     // Lays the HUD out for the screen's resolution: Parhelia's screens, the scale and the dials' vertices
     void ResolutionChanged();
     // The mouse's cursor, which GM_Menu::Draw draws over the active menu: a square of 15 pixels from 1int.tga (PC only,

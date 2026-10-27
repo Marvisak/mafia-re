@@ -9,5 +9,8 @@ class C_dog : public C_actor
 public:
     C_dog();
 
+    // The dogs' animations' tracks (PS2 name)
+    static void LoadTCK();
+
     uchar unknown_70[0x2a0];            // 0x70
 };

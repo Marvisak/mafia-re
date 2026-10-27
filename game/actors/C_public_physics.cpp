@@ -6,6 +6,9 @@
 
 #include "stub.h"
 
+// GLOBAL: GAME 0x63d78c
+std::vector<uint> C_public_physics::unknown_63d78c;
+
 #pragma auto_inline(off)
 
 // STUB: GAME 0x47c3a0

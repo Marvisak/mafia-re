@@ -3,6 +3,7 @@
 // calls, is a stub.
 
 #include "actors/C_dog.h"
+#include "actors/C_animations.h"
 
 #include "stub.h"
 
@@ -15,3 +16,15 @@ C_dog::C_dog()
 }
 
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x434b50
+void C_dog::LoadTCK()
+{
+    // STRING: GAME 0x63246c
+    C_animations_machine_de_luxe::LoadTrack("DturnL.tck");
+    // STRING: GAME 0x632460
+    C_animations_machine_de_luxe::LoadTrack("DturnR.tck");
+    // STRING: GAME 0x632454
+    C_animations_machine_de_luxe::LoadTrack("Ddeath.tck");
+}
+

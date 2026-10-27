@@ -1,7 +1,8 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the names' order
 // of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close,
 // ShowProgress, Open with its two helpers, OpenBin with its frames' callback, the video options' methods and
-// FrmActBuff_ClearAll; the rest of what main and InitSystem call is stubs, Tick among them.
+// FrmActBuff_ClearAll; what C_game's Init and Done call: ClearGameAnimModels, DelNotMeActors, the GlobalProgram
+// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, Tick among them.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -154,6 +155,22 @@ void C_mission::UnInit()
     }
 }
 
+// The flagged models leave the list, the last one taking each one's place, as PS2's
+// FUNCTION: GAME 0x53f770
+void C_mission::ClearGameAnimModels()
+{
+    for (uint i = 0; i < anim_models.size();)
+    {
+        if (anim_models[i].unknown_4)
+        {
+            anim_models[i] = anim_models.back();
+            anim_models.pop_back();
+        }
+        else
+            i++;
+    }
+}
+
 // An actor of the class for its type, NULL for a type without one; OpenBin initializes it with its frame. PS2's in the
 // same order, without the three PC only classes (C_dyn_object, C_seagull and C_scatter), and with its local: the NULL
 // is loaded before the switch, which the other types return, and VC6 copies the return into each case. The
@@ -275,6 +292,28 @@ void C_mission::AddActor(C_actor *actor, bool add_unknown_44)
     }
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x540080
+bool C_mission::RemoveActor(C_actor *actor)
+{
+    StubLog("C_mission::RemoveActor");
+    return false;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x540130
+bool C_mission::DelActor(C_actor *actor)
+{
+    StubLog("C_mission::DelActor");
+    return true;
+}
+
+#pragma auto_inline(on)
+
 // From the last actor, as PS2's: each one's frame forgets it first, through a pointer to NULL, which SetFrameActor frees
 // FUNCTION: GAME 0x540240
 void C_mission::DelActors()
@@ -295,6 +334,77 @@ void C_mission::DelActors()
     }
     actors.clear();
     unknown_44.clear();
+}
+
+// The actors of unknown_44 leave the mission as DelActors' do, each looked for from the last actor, as PS2's
+// FUNCTION: GAME 0x540300
+void C_mission::DelNotMeActors()
+{
+    for (int i = unknown_44.size(); i--;)
+    {
+        for (int j = actors.size(); j--;)
+        {
+            if (actors[j] == unknown_44[i])
+            {
+                I3D_frame *frm = actors[j]->frame;
+                if (frm)
+                {
+                    C_actor **p = GetFrameActor(frm);
+                    if (p && *p)
+                    {
+                        *p = NULL;
+                        SetFrameActor(frm, p);
+                    }
+                }
+                actors[j]->Release();
+                actors.erase(&actors[j]);
+                break;
+            }
+        }
+    }
+    unknown_44.clear();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x540420
+bool C_mission::IsOwnActor(C_actor *actor)
+{
+    StubLog("C_mission::IsOwnActor");
+    return false;
+}
+
+#pragma auto_inline(on)
+
+// From the last script, as PS2's
+// FUNCTION: GAME 0x540520
+void C_mission::GlobalProgramGameInit()
+{
+    for (int i = programs.size(); i--;)
+        programs[i]->Init();
+}
+
+// FUNCTION: GAME 0x540550
+void C_mission::GlobalProgramGameDone()
+{
+    for (int i = programs.size(); i--;)
+        programs[i]->Done();
+}
+
+// The game's scripts first: the mission's of that name runs only where the game has none (PS2's the same)
+// FUNCTION: GAME 0x540580
+void C_mission::GlobalProgramRun(const char *name)
+{
+    if (game->GlobalProgramRun(name))
+        return;
+    for (int i = programs.size(); i--;)
+    {
+        if (!_strcmpi(programs[i]->name, name))
+        {
+            programs[i]->CallSubroutine();
+            return;
+        }
+    }
 }
 
 // PS2's in another order (its caches after the scripts and the scene, its anim cache only down to a count of its own),
@@ -1472,6 +1582,50 @@ static I3DENUMRET __stdcall cbFrameMap(I3D_frame *frm, uint context)
     return I3DENUMRET_OK;
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5459b0
+void C_mission::FinishTimeTransparentObjects()
+{
+    StubLog("C_mission::FinishTimeTransparentObjects");
+}
+
+#pragma auto_inline(on)
+
+// With the city's blocks open the camera sees the options' part of its range, and the level of detail can go below 1
+// (PS2's the same). The level's bits are read through its address, which keeps it in memory from its copy on, as the
+// original's (I3DFloatAsInt's copy leaves it on the FPU stack)
+// FUNCTION: GAME 0x545a30
+void C_mission::UpdateSettings()
+{
+    I3D_camera *cam = scene->current_camera;
+    if (cam)
+    {
+        if (base_cache.IsOpen())
+            cam->SetRange(.05f, options.far_range * options.draw_distance);
+        else
+            cam->SetRange(.05f, options.far_range);
+        cam->Update();
+    }
+    float lod = options.level_of_detail;
+    if (!base_cache.IsOpen() && lod < 1.0f)
+        lod = 1.0f;
+    driver->SetState(RS_LOD_QUALITY, *(int *)&lod);
+    game->OsefujPocasi(false, (uint)-1);
+}
+
+// FUNCTION: GAME 0x545ad0
+void C_mission::RestoreSettings()
+{
+    I3D_camera *cam = scene->current_camera;
+    if (cam)
+    {
+        cam->SetRange(.05f, options.far_range);
+        cam->Update();
+    }
+    driver->SetState(RS_LOD_QUALITY, I3DFloatAsInt(1.0f));
+}
+
 // An else if on the parameter: the lower bound's branch returns at once, and the upper bound compares the parameter, where
 // SetDrawDistance's reads the member back
 // FUNCTION: GAME 0x545b20
@@ -1546,6 +1700,73 @@ void S_mission_options::SetParticles(int level)
         particles = OPTION_LOW;
     if (particles > OPTION_HIGH)
         particles = OPTION_HIGH;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x545ce0
+bool C_mission::FrmActBuff_StoreActor(C_actor *actor, bool flag)
+{
+    StubLog("C_mission::FrmActBuff_StoreActor");
+    // Kept, so that the callers don't release it
+    return true;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x546280
+C_actor *C_mission::FrmActBuff_GetActor(const char *name, int type)
+{
+    StubLog("C_mission::FrmActBuff_GetActor %s", name);
+    return NULL;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5464d0
+bool C_mission::FrmActBuff_StoreActiveActor(C_actor *actor)
+{
+    StubLog("C_mission::FrmActBuff_StoreActiveActor");
+    return false;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5466e0
+void C_mission::FrmActBuff_RemoveActiveActor(C_actor *actor)
+{
+    StubLog("C_mission::FrmActBuff_RemoveActiveActor");
+}
+
+#pragma auto_inline(on)
+
+// Whether the actor was kept active between missions: it leaves the list (the last one taking its place) and is reborn, a
+// car reset with its tank full first (PS2's the same)
+// FUNCTION: GAME 0x546770
+bool C_mission::FrmActBuff_IsActiveActor(C_actor *actor)
+{
+    for (int i = active_actors.size(); i--;)
+    {
+        if (active_actors[i] == actor)
+        {
+            if (active_actors[i]->type == ACTOR_CAR)
+            {
+                ((C_car *)active_actors[i])->Reset(0.0f, true);
+                ((C_car *)active_actors[i])->SetFuel(((C_car *)active_actors[i])->GetUnknown1fa0());
+            }
+            active_actors[i]->Rebirth();
+            active_actors[i] = active_actors.back();
+            active_actors.pop_back();
+            return true;
+        }
+    }
+    return false;
 }
 
 // Each buffer from its last entry, as PS2's. An entry's name is deleted before the entry is read again: the original

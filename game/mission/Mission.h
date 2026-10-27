@@ -164,6 +164,47 @@ public:
     }
     // Unloads the open mission: its game, actors, scripts and objects, the caches' contents and the scene's frames
     void Close();
+    // PS2 names, of what C_game's Init and Done call
+    void GlobalProgramGameInit();
+    void GlobalProgramRun(const char *name);
+    void GlobalProgramGameDone();
+    bool FrmActBuff_IsActiveActor(C_actor *actor);
+    // The kept actor of a frame's name and type, taken from the buffer (PS2 name), NULL for none
+    C_actor *FrmActBuff_GetActor(const char *name, int type);
+    // Keeps the actor of a model for the next mission (PS2 name and parameters)
+    // Keeps the actor of a model frame for the next mission (PS2 name): false where it doesn't
+    bool FrmActBuff_StoreActor(C_actor *actor, bool flag);
+    // Takes the actor from actors and unknown_44 (the name is ours): whether it was one of actors
+    bool RemoveActor(C_actor *actor);
+    // Whether the actor is one of actors but not of unknown_44 (the name is ours)
+    bool IsOwnActor(C_actor *actor);
+    bool FrmActBuff_StoreActiveActor(C_actor *actor);
+    void FrmActBuff_RemoveActiveActor(C_actor *actor);
+    bool DelActor(C_actor *actor);
+    void DelNotMeActors();
+    void ClearGameAnimModels();
+    void FinishTimeTransparentObjects();
+    // The video options' effects on the scene, and the scene's own back (PS2 names)
+    void UpdateSettings();
+    void RestoreSettings();
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    void SetUnknown78(int value)
+    {
+        unknown_78 = value;
+    }
+    // Its copy most likely the getter of 0x24 at 0x47ae50
+    C_game *GetGame() const
+    {
+        return game;
+    }
+    const char *GetMissionName() const
+    {
+        return mission_name;
+    }
+    I3D_scene *GetScene() const
+    {
+        return scene;
+    }
     // A frame of the mission: its scene, actors, scripts and game
     void Tick(int time);
     // PS2 names: Close's helpers. DelActors releases the actors and takes them from their frames, FrmActBuff_ClearAll
@@ -186,7 +227,7 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// std::vector<C_program *,std::allocator<C_program *> >::erase
+// ?erase@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@QAEPAPAUS_shvestky@C_shvestky@@PAPAU34@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z

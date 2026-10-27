@@ -29,7 +29,13 @@ public:
     C_racing();
     ~C_racing();
 
-    uchar unknown_0[0x238];
+    // PS2 names
+    void GameInit();
+    void GameDone();
+
+    uchar unknown_0;
+    bool unknown_1;                     // 0x1, C_game::Done deletes the racing when it is set
+    uchar unknown_2[0x236];
     // The race's cars (the names are ours)
     C_opponent *opponents[0x19];        // 0x238 (PS2 0xa3c)
     uint num_opponents;                 // 0x29c (PS2 0xac8)

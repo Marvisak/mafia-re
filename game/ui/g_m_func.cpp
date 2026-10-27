@@ -200,6 +200,13 @@ int GM_LoadProgress::OnKey(uchar key, uint)
 
 #pragma auto_inline(on)
 
+// PS2's order of the sum: the mission's part, then the game's of the rest
+// FUNCTION: GAME 0x5e3cf0
+void GM_LoadProgress::SetProgressGameInit(float progress)
+{
+    SetRawProgress((1.0f - mission_part) * progress + mission_part);
+}
+
 // FUNCTION: GAME 0x5e3d20
 void GM_LoadProgress::SetProgressMissionOpen(float progress)
 {
@@ -218,6 +225,38 @@ void GM_LoadProgress::Present()
     igraph->EndScene();
     igraph->Present();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e3da0
+int GM_GarageEndOfMission::OnCreate()
+{
+    StubLog("GM_GarageEndOfMission::OnCreate");
+    return 0;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e3fe0
+int GM_GarageEndOfMission::OnClick(uint id)
+{
+    StubLog("GM_GarageEndOfMission::OnClick %u", id);
+    return 0;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e41b0
+void GM_GarageEndOfMission::vfunc_13()
+{
+    StubLog("GM_GarageEndOfMission::vfunc_13");
+}
+
+#pragma auto_inline(on)
 
 #pragma auto_inline(off)
 

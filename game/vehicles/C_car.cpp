@@ -1,7 +1,8 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set. The constructor, which C_mission::CreateActor calls, is a stub.
+// profiles set, GetInvModelMatrix and GetActualLevel. The constructor, which C_mission::CreateActor calls, and the
+// other virtual functions (GetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -302,6 +303,64 @@ void C_car::ConvertTyres(S_TSRFC *src, S_SRFC *dst)
     dst->curve[1].unknown_28 = src->curve[1].unknown_20;
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41dec0
+C_human *C_car::GetOwner(int seat)
+{
+    StubLog("C_car::GetOwner %d", seat);
+    return NULL;
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x41e9f0
+int C_car::GetActualLevel()
+{
+    return actual_level;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41ea00
+bool C_car::SetActualLevel(int level)
+{
+    StubLog("C_car::SetActualLevel %d", level);
+    return false;
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41eb00
+void C_car::InitFFEffects()
+{
+    StubLog("C_car::InitFFEffects");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41eca0
+void C_car::DoneFFEffects()
+{
+    StubLog("C_car::DoneFFEffects");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x422be0
+void C_car::Reset(float unknown, bool unknown2)
+{
+    StubLog("C_car::Reset");
+}
+
+#pragma auto_inline(on)
+
 // PS2's order: the frame's world matrix into the model matrix, that into the inverse, inverted from a copy
 // FUNCTION: GAME 0x4293e0
 const S_matrix &C_car::GetInvModelMatrix(bool update)
@@ -314,6 +373,17 @@ const S_matrix &C_car::GetInvModelMatrix(bool update)
     }
     return inv_model_matrix;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x429850
+bool C_car::IsCarUsable(uint flags)
+{
+    StubLog("C_car::IsCarUsable %u", flags);
+    return false;
+}
+
+#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x42bb90
 void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs)

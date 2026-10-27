@@ -42,6 +42,13 @@ void C_roads::RecompileDistances()
     StubLog("C_roads::RecompileDistances");
 }
 
+// STUB: GAME 0x55b370
+ushort C_roads::GetNearNode(S_vector pos)
+{
+    StubLog("C_roads::GetNearNode");
+    return 0xffff;
+}
+
 // STUB: GAME 0x55c890
 void C_roads::SortNodesByX()
 {

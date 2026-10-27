@@ -24,12 +24,17 @@ add_executable(game WIN32
     actors/C_dyn_object.cpp
     vehicles/C_car.cpp
     vehicles/C_car_ex.cpp
+    actors/C_cartridge.cpp
     actors/C_detector.cpp
     actors/C_dog.cpp
     actors/C_door.cpp
+    ai/C_driver.cpp
     input/C_ff_manager.cpp
     actors/C_irenka.cpp
+    mission/C_Particle.cpp
+    mission/C_ParticleEmitter.cpp
     mission/C_effects.cpp
+    mission/C_ParticleType.cpp
     ai/C_person_traffic.cpp
     actors/C_PhThings.cpp
     mission/C_program.cpp
@@ -39,6 +44,7 @@ add_executable(game WIN32
     mission/C_rmorf.cpp
     ai/C_shvestky.cpp
     ai/C_sledovacka.cpp
+    actors/C_stone.cpp
     vehicles/C_trf_c.cpp
     vehicles/C_turnout.cpp
     vehicles/C_Vehicle.cpp
@@ -47,6 +53,10 @@ add_executable(game WIN32
     vehicles/C_wagon.cpp
     ui/console.cpp
     ai/jp_ai_entity.cpp
+    ai/jp_ai_groups.cpp
+    ai/jp_ai_main.cpp
+    ai/jp_ai_prislusnici.cpp
+    ai/jp_ai_segments.cpp
     mission/Mission.cpp
     ui/g_m_race.cpp
     ai/pathweb.cpp
@@ -54,6 +64,8 @@ add_executable(game WIN32
     ai/road_web.cpp
     tools.cpp
     mission/tshift.cpp
+    vehicles/VE_BreakageGlass.cpp
+    vehicles/VE_Debris.cpp
     WinMain.cpp
     Winstuff.cpp
     actors/C_actor_shot.cpp
@@ -75,6 +87,7 @@ add_executable(game WIN32
     ui/g_m_start.cpp
     ui/g_menu.cpp
     camera/g_camera.cpp
+    ui/g_dabing.cpp
     ui/g_indicators.cpp
     ui/g_loadsave.cpp
     g_material.cpp

@@ -1,18 +1,22 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
 // frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
-// mission's actors, and the destructor with DelActorFromGlobal. GetAnimIndex (0x408760, after DoneAnimIndex), the
-// index's binary search, isn't called by anything written yet. The virtual functions, which the actors' classes need,
-// are stubs, in the vtable's addresses' order; seven of those addresses lie in other files' ranges, where the linker
-// kept a copy (inline functions most likely, or folded with another class's), and the empty ones but DuplicateFrom's
-// aren't annotated (folded with the other empty functions of their kinds). Release (0x4091d0) is inline (C_actor.h),
-// its copy after DoneAnimIndex.
+// mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_cutscene::Close calls,
+// GameInit and GameDone, which C_game::Init and Done call
+// (with DebustizeFrame and NoShadowFrame), SetActState and Rebirth. Not written: PS2's InternalPlacementReset (0x405e60) and
+// ResetPlacement (0x405ee0), between Init and GameInit, which save and restore the frame's placement as GameInit and
+// GameDone do. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
+// written yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
+// order; seven of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
+// likely, or folded with another class's), and the empty ones but DuplicateFrom's aren't annotated (folded with the
+// other empty functions of their kinds). Release (0x4091d0) is inline (C_actor.h), its copy after DoneAnimIndex.
 
 #include "actors/C_actor.h"
 
 #include <stdlib.h>
 
 #include "mission/Mission.h"
+#include "mission/game.h"
 #include "mission/C_cutscene.h"
 #include "stub.h"
 
@@ -653,6 +657,9 @@ void C_actor::vfunc_4()
 // Its initializer (0x405c20) comes before the constructor. PS2's posscoll_frame, a vector too (0x63d2a4), follows it
 // with its own (0x405ca0). Open: their destructors (0x405c60, 0x405ce0) test and set a guard byte (0x63d2b4) they share,
 // a bit each, as C_program::change_progs' does.
+// GLOBAL: GAME 0x63d2a4
+std::vector<uint> C_actor::posscoll_frame;
+
 // GLOBAL: GAME 0x63d2b8
 std::vector<C_actor *> C_actor::global_actors;
 
@@ -708,23 +715,116 @@ bool C_actor::Init(I3D_frame *frm)
         if (target)
             target->SetOn(false);
     }
-    unknown_1c = 0;
+    act_state = ACTSTATE_0;
     return true;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x405fa0
+// Takes the actor into the game, at the mission's start (C_game::Init): the frame's placement saved for GameDone, the
+// frame given its pointer to the actor unless it has one, the position and direction taken from it. As PS2's but for
+// the types left in their place (PS2 leaves only ACTOR_ACTOR). The frame goes through a local where the original keeps
+// it across calls (the user data's new, Make, UpdateWMatrixProc), as PS2's does. Open: the inlined GetDir's
+// normalization sums the squares as y, z, x where the original's sums z, x, y (the out-of-line copy at 0x47a890 has
+// ours), with the same instructions otherwise.
+// FUNCTION: GAME 0x405fa0
 void C_actor::GameInit()
 {
-    StubLog("C_actor::GameInit");
+    act_state = ACTSTATE_0;
+    unknown_65 = type == ACTOR_ACTOR;
+    if (frame)
+    {
+        // A car anywhere but in a sector goes into the primary sector, a metre higher
+        if (type == ACTOR_CAR && frame->m_pParent && frame->m_pParent->GetType() != FRAME_SECTOR)
+        {
+            frame->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
+            act_mission->scene->SetFrameSectorPos(frame, frame->GetWorldPos() + S_vector(0.0f, 1.0f, 0.0f));
+        }
+        I3D_frame *frm = frame;
+        if (GetFrameActor(frm) && *GetFrameActor(frm))
+            frame_actor_set = false;
+        else
+        {
+            frame_actor_set = true;
+            C_actor **p = GetFrameActor(frm);
+            if (!p)
+            {
+                p = new C_actor *;
+                frm->m_UserData = (uint)p;
+            }
+            *p = this;
+            SetFrameActor(frame, p);
+        }
+        saved_on = frame->IsOn();
+        saved_pos = frame->GetPos();
+        saved_rot = frame->GetRot();
+        frm = frame;
+        saved_parent = frm->m_pParent;
+        // The actors but the plain ones and the shots: one in a sector is put in the sector of its position, a model
+        // under another frame is linked to the sector above it
+        if (type != ACTOR_ACTOR && type != ACTOR_ACTOR_SHOT && frm->m_pParent &&
+            frm->m_pParent->GetType() == FRAME_SECTOR)
+        {
+            I3D_scene *scene = act_mission->scene;
+            scene->SetFrameSectorPos(frm, frm->GetWorldPos());
+        }
+        if (type != ACTOR_ACTOR && type != ACTOR_ACTOR_SHOT && frame->GetType() == FRAME_MODEL)
+        {
+            I3D_frame *sector = frame->m_pParent;
+            while (sector && sector->GetType() != FRAME_SECTOR)
+                sector = sector->m_pParent;
+            if (sector && sector != frame->m_pParent)
+            {
+                frame->LinkTo(sector, I3DLINK_UPDMATRIX);
+                frame->Update();
+            }
+        }
+        pos = frame->GetPos();
+        dir = frame->GetDir();
+    }
+    else
+    {
+        pos = S_vector(0.0f, 0.0f, 0.0f);
+        dir = S_vector(0.0f, 0.0f, 1.0f);
+    }
+    unknown_5e = false;
+    unknown_5d = true;
+    unknown_5f = false;
+    if (type == ACTOR_ACTOR && frame)
+    {
+        DebustizeFrame(frame);
+        NoShadowFrame(frame);
+    }
 }
 
-// STUB: GAME 0x4063e0
+// Puts the frame back where GameInit found it, and takes the pointer to the actor it gave the frame back. PS2's links
+// the frame to its parent only where the parent is still in the scene.
+// FUNCTION: GAME 0x4063e0
 void C_actor::GameDone()
 {
-    StubLog("C_actor::GameDone");
+    if (!frame)
+        return;
+    frame->SetOn(true);
+    frame->LinkTo(saved_parent, 0);
+    frame->SetPos(saved_pos);
+    // SetRot with a normalization, written out as C_game::DoneIntern's
+    I3D_frame *frm = frame;
+    frm->m_Rot = saved_rot;
+    frm->m_Rot.Normalize();
+    frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
+    frame->Update();
+    frame->SetOn(saved_on);
+    if (frame_actor_set)
+    {
+        C_actor **p = GetFrameActor(frame);
+        if (p && *p)
+        {
+            *p = NULL;
+            SetFrameActor(frame, p);
+        }
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x406770
 int C_actor::SaveGameGetSize()
@@ -750,6 +850,51 @@ bool C_actor::SaveGameLoad(void **buf)
 #pragma auto_inline(on)
 
 // From the last one, which the actor most likely is if anything
+// FUNCTION: GAME 0x406da0
+void C_actor::SetActState(int state)
+{
+    if (act_state != ACTSTATE_2 && act_state != state)
+        act_mission->game->unknown_10c = true;
+    act_state = state;
+}
+
+// An actor in ACTSTATE_2 goes back to ACTSTATE_0, which the game is told of as of SetActState's changes
+// FUNCTION: GAME 0x406dd0
+void C_actor::Rebirth()
+{
+    if (act_state == ACTSTATE_2)
+    {
+        act_state = ACTSTATE_0;
+        act_mission->game->unknown_10c = true;
+    }
+}
+
+// Turns the projectors off on the frame's visuals, the frame's and its children's, from the last child (PS2's order)
+// FUNCTION: GAME 0x407cd0
+void C_actor::DebustizeFrame(I3D_frame *frm)
+{
+    if (!frm)
+        return;
+    if (frm->GetType() == FRAME_VISUAL)
+        ((I3D_visual *)frm)->SetProjectorMode(SHADOW_MODE_0);
+    int i = frm->NumChildren();
+    while (i--)
+        DebustizeFrame(frm->GetChild(i));
+}
+
+// The same for the shadows
+// FUNCTION: GAME 0x407d10
+void C_actor::NoShadowFrame(I3D_frame *frm)
+{
+    if (!frm)
+        return;
+    if (frm->GetType() == FRAME_VISUAL)
+        ((I3D_visual *)frm)->SetShadowMode(SHADOW_MODE_0);
+    int i = frm->NumChildren();
+    while (i--)
+        NoShadowFrame(frm->GetChild(i));
+}
+
 // FUNCTION: GAME 0x407d50
 void C_actor::AddActorToGlobal(C_actor *act)
 {
@@ -778,6 +923,20 @@ void C_actor::DelActorFromGlobal(C_actor *act)
     }
 }
 
+// From the last one too
+// FUNCTION: GAME 0x407fb0
+bool C_actor::IsGlobalActor(C_actor *act)
+{
+    if (!act)
+        return false;
+    for (int i = global_actors.size(); i--;)
+    {
+        if (global_actors[i] == act)
+            return true;
+    }
+    return false;
+}
+
 // The frame's world position, or the actor's own without a frame (PS2 name)
 // FUNCTION: GAME 0x407fe0
 S_vector C_actor::GetWorldPos()
@@ -787,12 +946,20 @@ S_vector C_actor::GetWorldPos()
     return pos;
 }
 
+// FUNCTION: GAME 0x408450
+int rnd(int n)
+{
+    if (n < 1)
+        return 0;
+    return rand() % n;
+}
+
 // qsort's, by id
 // FUNCTION: GAME 0x408690
-int __cdecl compare_anim_index(const void *a, const void *b)
+int __cdecl compare_anim_index(const S_anim_index *a, const S_anim_index *b)
 {
-    uint id_a = ((const S_anim_index *)a)->id;
-    uint id_b = ((const S_anim_index *)b)->id;
+    uint id_a = a->id;
+    uint id_b = b->id;
     if (id_a == id_b)
         return 0;
     return id_a < id_b ? -1 : 1;
@@ -813,7 +980,8 @@ void InitAnimIndex()
         _anim_index_[i].id = _anim_info_[i].id;
         _anim_index_[i].index = i;
     }
-    qsort(_anim_index_, _anim_index_count_, sizeof(S_anim_index), compare_anim_index);
+    qsort(_anim_index_, _anim_index_count_, sizeof(S_anim_index),
+        (int (__cdecl *)(const void *, const void *))compare_anim_index);
 }
 
 // The pointer stays as it is, as PS2's
@@ -852,13 +1020,13 @@ void C_actor::vfunc_10()
 }
 
 // STUB: GAME 0x5c27b0
-void C_actor::vfunc_6()
+void C_actor::vfunc_6(bool on)
 {
     StubLog("C_actor::vfunc_6");
 }
 
 // STUB: GAME 0x5c27d0
-void C_actor::vfunc_7()
+void C_actor::vfunc_7(bool on)
 {
     StubLog("C_actor::vfunc_7");
 }

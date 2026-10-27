@@ -9,4 +9,7 @@ class C_public_physics : public C_PhThing
 {
 public:
     C_public_physics();
+
+    // C_game::Init clears it (the name and the type are ours)
+    static std::vector<uint> unknown_63d78c;
 };

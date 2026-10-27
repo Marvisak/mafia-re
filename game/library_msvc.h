@@ -14,6 +14,9 @@
 // LIBRARY: GAME 0x60fc3c
 // ?Normalize@S_quat@@QAGXXZ
 
+// LIBRARY: GAME 0x60fc48
+// ?UpdateHRBoundVol@I3D_frame@@AAGXXZ
+
 // LIBRARY: GAME 0x60fc5a
 // ?SetRot3@S_matrix@@QAGXABUS_quat@@@Z
 
@@ -29,6 +32,9 @@
 // LIBRARY: GAME 0x60fc9c SYMBOL
 // _I3DGetDriver
 
+// LIBRARY: GAME 0x60fca8 SYMBOL
+// _dbgPrintf
+
 // LIBRARY: GAME 0x60fccc SYMBOL
 // _GetIGraph
 
@@ -40,6 +46,69 @@
 
 // LIBRARY: GAME 0x60fcf6
 // ??3@YAXPAX@Z
+
+// LIBRARY: GAME 0x60fd01
+// ?_Xlen@std@@YAXXZ
+
+// LIBRARY: GAME 0x60fd5b
+// ??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+
+// LIBRARY: GAME 0x60fdbf
+// ?what@logic_error@std@@UBEPBDXZ
+
+// LIBRARY: GAME 0x60fdcc
+// ?_Doraise@logic_error@std@@MBEXXZ
+
+// LIBRARY: GAME 0x60fde9
+// ??1logic_error@std@@UAE@XZ
+
+// LIBRARY: GAME 0x60fe26
+// ??_Elogic_error@std@@UAEPAXI@Z
+
+// LIBRARY: GAME 0x60fe42
+// ??0logic_error@std@@QAE@ABV01@@Z
+
+// LIBRARY: GAME 0x60fe9f
+// ??1length_error@std@@UAE@XZ
+
+// LIBRARY: GAME 0x60fedc
+// ?_Doraise@length_error@std@@MBEXXZ
+
+// LIBRARY: GAME 0x60fef9
+// ??_Elength_error@std@@UAEPAXI@Z
+
+// LIBRARY: GAME 0x60ff15
+// ??0length_error@std@@QAE@ABV01@@Z
+
+// LIBRARY: GAME 0x60ff2d
+// ?_Xran@std@@YAXXZ
+
+// LIBRARY: GAME 0x60ff87
+// ??1out_of_range@std@@UAE@XZ
+
+// LIBRARY: GAME 0x60ffc4
+// ?_Doraise@out_of_range@std@@MBEXXZ
+
+// LIBRARY: GAME 0x60ffe1
+// ??_Eout_of_range@std@@UAEPAXI@Z
+
+// LIBRARY: GAME 0x60fffd
+// ??0out_of_range@std@@QAE@ABV01@@Z
+
+// LIBRARY: GAME 0x610015
+// ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z
+
+// LIBRARY: GAME 0x6100e3
+// ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z
+
+// LIBRARY: GAME 0x610118
+// ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z
+
+// LIBRARY: GAME 0x61017f
+// ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXXZ
+
+// LIBRARY: GAME 0x6101f1
+// ?id@?$collate@D@std@@$E
 
 // LIBRARY: GAME 0x6101f2 SYMBOL
 // _CreateJoyBase@20
@@ -140,6 +209,12 @@
 // LIBRARY: GAME 0x610760 SYMBOL
 // _strrchr
 
+// LIBRARY: GAME 0x610787 SYMBOL
+// _srand
+
+// LIBRARY: GAME 0x610791 SYMBOL
+// _rand
+
 // LIBRARY: GAME 0x6107af SYMBOL
 // _qsort
 
@@ -155,6 +230,9 @@
 // LIBRARY: GAME 0x610a16 SYMBOL
 // ___from_strstr_to_strchr
 
+// LIBRARY: GAME 0x610b6a SYMBOL
+// _atol
+
 // LIBRARY: GAME 0x610c00 SYMBOL
 // __chkstk
 
@@ -167,6 +245,9 @@
 // LIBRARY: GAME 0x610dd0 SYMBOL
 // _memmove
 
+// LIBRARY: GAME 0x611105
+// ??_L@YGXPAXIHP6EX0@Z1@Z
+
 // LIBRARY: GAME 0x611187
 // ??_M@YGXPAXIHP6EX0@Z@Z
 
@@ -178,6 +259,9 @@
 
 // LIBRARY: GAME 0x611294 SYMBOL
 // _asin
+
+// LIBRARY: GAME 0x61141b SYMBOL
+// _vsprintf
 
 // LIBRARY: GAME 0x611470 SYMBOL
 // _strncpy
@@ -200,8 +284,14 @@
 // LIBRARY: GAME 0x611911 SYMBOL
 // _fread
 
+// LIBRARY: GAME 0x6119f9 SYMBOL
+// _time
+
 // LIBRARY: GAME 0x611ad5 SYMBOL
 // _strtol
+
+// LIBRARY: GAME 0x611cf4 SYMBOL
+// _strtoul
 
 // LIBRARY: GAME 0x611d0b SYMBOL
 // __purecall
@@ -224,6 +314,9 @@
 // LIBRARY: GAME 0x612310 SYMBOL
 // __aulldiv
 
+// LIBRARY: GAME 0x612380 SYMBOL
+// __allmul
+
 // LIBRARY: GAME 0x6123b4 SYMBOL
 // _WinMainCRTStartup
 
@@ -233,8 +326,35 @@
 // LIBRARY: GAME 0x6124f3 SYMBOL
 // _free
 
+// LIBRARY: GAME 0x61255c
+// ??_Eexception@@UAEPAXI@Z
+
+// LIBRARY: GAME 0x612578
+// ??0exception@@QAE@ABQBD@Z
+
+// LIBRARY: GAME 0x6125b5
+// ??0exception@@QAE@ABV0@@Z
+
+// LIBRARY: GAME 0x6125ff
+// ??1exception@@UAE@XZ
+
+// LIBRARY: GAME 0x612615
+// ?what@exception@@UBEPBDXZ
+
+// LIBRARY: GAME 0x612622
+// ??1type_info@@UAE@XZ
+
+// LIBRARY: GAME 0x612637
+// ??_Gtype_info@@UAEPAXI@Z
+
 // LIBRARY: GAME 0x612660 SYMBOL
 // _strlen
+
+// LIBRARY: GAME 0x6126dc SYMBOL
+// __EH_prolog
+
+// LIBRARY: GAME 0x6126fb SYMBOL
+// __CxxThrowException@8
 
 // LIBRARY: GAME 0x612740 SYMBOL
 // _memcpy
@@ -491,6 +611,9 @@
 // LIBRARY: GAME 0x616810 SYMBOL
 // __read
 
+// LIBRARY: GAME 0x616a06 SYMBOL
+// ___loctotime_t
+
 // LIBRARY: GAME 0x616ac8 SYMBOL
 // _toupper
 
@@ -740,6 +863,15 @@
 // LIBRARY: GAME 0x61a33e SYMBOL
 // __sopen
 
+// LIBRARY: GAME 0x61a5f7 SYMBOL
+// ___tzset
+
+// LIBRARY: GAME 0x61a60c SYMBOL
+// __tzset
+
+// LIBRARY: GAME 0x61a86a SYMBOL
+// __isindst
+
 // LIBRARY: GAME 0x61ab60 SYMBOL
 // _fdiv_main_routine
 
@@ -857,14 +989,35 @@
 // LIBRARY: GAME 0x61c773 SYMBOL
 // __chsize
 
+// LIBRARY: GAME 0x61c8b9 SYMBOL
+// _getenv
+
 // LIBRARY: GAME 0x61c936 SYMBOL
 // __setmode
+
+// LIBRARY: GAME 0x61c9ac SYMBOL
+// __mbsnbicoll
+
+// LIBRARY: GAME 0x61c9eb SYMBOL
+// ___wtomb_environ
+
+// LIBRARY: GAME 0x61ca59 SYMBOL
+// ___crtCompareStringA
+
+// LIBRARY: GAME 0x61cd01 SYMBOL
+// ___crtsetenv
 
 // LIBRARY: GAME 0x61cf47 SYMBOL
 // __mbschr
 
+// LIBRARY: GAME 0x61cfba SYMBOL
+// __strdup
+
 // LIBRARY: GAME 0x61cff0 SYMBOL
 // _RtlUnwind@16
+
+// LIBRARY: GAME 0x61d000 SYMBOL
+// __strnicmp
 
 // LIBRARY: GAME 0x61d0b0 SYMBOL
 // __strcmpi
@@ -893,11 +1046,38 @@
 // LIBRARY: GAME 0x61d672 SYMBOL
 // __cenvarg
 
+// VTABLE: GAME 0x627ac4
+// class std::length_error
+
+// VTABLE: GAME 0x627ae4
+// class std::logic_error
+
+// GLOBAL: GAME 0x627af0
+// ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB
+
+// VTABLE: GAME 0x627af8
+// class std::out_of_range
+
+// VTABLE: GAME 0x627b68
+// class exception
+
+// VTABLE: GAME 0x627b88
+// class type_info
+
 // GLOBAL: GAME 0x627c28
 // ___lookuptable
 
 // GLOBAL: GAME 0x627d1a
 // __pi_by_2_to_61
+
+// GLOBAL: GAME 0x62cec8
+// __TI3?AVlength_error@std@@
+
+// GLOBAL: GAME 0x62cf38
+// __TI2?AVlogic_error@std@@
+
+// GLOBAL: GAME 0x62cff0
+// __TI3?AVout_of_range@std@@
 
 // GLOBAL: GAME 0x62e000
 // ___xc_a
@@ -1022,6 +1202,24 @@
 // GLOBAL: GAME 0x63cc10
 // __matherr_flag
 
+// GLOBAL: GAME 0x63cc14
+// __timezone
+
+// GLOBAL: GAME 0x63cc18
+// __daylight
+
+// GLOBAL: GAME 0x63cc1c
+// __dstbias
+
+// GLOBAL: GAME 0x63cca0
+// __tzname
+
+// GLOBAL: GAME 0x63ccc4
+// __lpdays
+
+// GLOBAL: GAME 0x63ccf8
+// __days
+
 // GLOBAL: GAME 0x63cf88
 // __pow10pos
 
@@ -1063,6 +1261,12 @@
 
 // GLOBAL: GAME 0x6d8768
 // __environ
+
+// GLOBAL: GAME 0x6d876c
+// ___initenv
+
+// GLOBAL: GAME 0x6d8770
+// __wenviron
 
 // GLOBAL: GAME 0x6d8778
 // __pgmptr
@@ -1123,6 +1327,12 @@
 
 // GLOBAL: GAME 0x6d8a40
 // __fmode
+
+// GLOBAL: GAME 0x6d8a48
+// ??_B?1???id@?$ctype@G@std@@$D@@9@51
+
+// GLOBAL: GAME 0x6d8a49
+// ??_B?1???id@?$collate@D@std@@$D@@9@51
 
 // GLOBAL: GAME 0x6d8a4c
 // ___mbcodepage
@@ -1196,6 +1406,15 @@
 // GLOBAL: GAME 0x6d9dd4
 // ___onexitbegin
 
+// STRING: GAME 0x627ad0
+// "string too long"
+
+// STRING: GAME 0x627b04
+// "invalid string position"
+
+// STRING: GAME 0x627b70
+// "Unknown exception"
+
 // STRING: GAME 0x627cb0
 // "IsProcessorFeaturePresent"
 
@@ -1231,6 +1450,9 @@
 
 // STRING: GAME 0x628118
 // "<program name unknown>"
+
+// STRING: GAME 0x62817c
+// "TZ"
 
 // STRING: GAME 0x628180
 // "GetLastActivePopup"

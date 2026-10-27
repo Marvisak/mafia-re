@@ -1,9 +1,16 @@
 // The game's tools (PS2 tools.cpp, which has C_sound_table; the PC's file is most likely the one at 0x55cfa0-0x56040c,
-// docs/game-files.md). Written so far: PlayLogo, and the sound table's constructor, destructor, FreeTables and
-// LoadTables, which InitSystem and CloseSystem call; its virtual functions, which the vtable needs, are stubs.
+// docs/game-files.md). Written so far: PlayLogo, the sound table's constructor, destructor, FreeTables and LoadTables,
+// which InitSystem and CloseSystem call, and C_compass::Activate and the sound table's ConstructSound, which C_game
+// calls, with the virtual TestConstructSound and ClearInvisibleFlag; the other virtual functions, which the vtable
+// needs, are stubs; C_using_object's ClearObjects and ClearInvalidItems, which C_game calls, and DelObject, which
+// C_detector::GameDone calls.
 
 #include "tools.h"
 #include "Winstuff.h"
+#include "I3D_cache.h"
+#include "actors/C_actor.h"
+#include "mission/Mission.h"
+#include "mission/game.h"
 
 #include "stub.h"
 
@@ -91,6 +98,76 @@ bool PlayLogo(const char *name, float sx, float sy)
     show->RenderVideoUntilKeyPressOrEnd();
     show->Release();
     return true;
+}
+
+// FUNCTION: GAME 0x55d770
+void C_compass::Activate(I3D_frame *frm)
+{
+    unknown_c = igraph->Scrn_sx() / 25;
+    unknown_10 = igraph->Scrn_sy() / 40;
+    unknown_4 = igraph->Scrn_sx() / 15;
+    unknown_8 = igraph->Scrn_sy() / 20;
+    frame = frm;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x55d8a0
+C_fire::~C_fire()
+{
+    StubLog("C_fire::~C_fire");
+}
+
+#pragma auto_inline(on)
+
+// Looked for from the last object, its place taken by the last one. PS2's also releases a member at its 0x2c.
+// FUNCTION: GAME 0x55df10
+void C_using_object::DelObject(S_using_object *obj)
+{
+    if (!obj)
+        return;
+    for (int i = objects.size(); i--;)
+    {
+        if (objects[i] == obj)
+        {
+            if (objects[i]->frame && objects[i]->flags & USINGF_FRAME)
+            {
+                act_mission->game->InvalidateFrame(objects[i]->frame);
+                objects[i]->frame->LinkTo(NULL, 0);
+                objects[i]->frame->Release();
+            }
+            if (objects[i]->flags & USINGF_DELETE)
+                delete objects[i];
+            objects[i] = objects.back();
+            objects.pop_back();
+            return;
+        }
+    }
+}
+
+// The objects, from the last: each frame the game forgets, unlinks and releases, each object allocated here deleted
+// (PS2 name)
+// FUNCTION: GAME 0x55dfe0
+void C_using_object::ClearObjects()
+{
+    for (int i = objects.size(); i--;)
+    {
+        if (objects[i]->flags & USINGF_FRAME && objects[i]->frame)
+        {
+            act_mission->game->InvalidateFrame(objects[i]->frame);
+            objects[i]->frame->LinkTo(NULL, 0);
+            objects[i]->frame->Release();
+        }
+        if (objects[i]->flags & USINGF_DELETE)
+            delete objects[i];
+    }
+    objects.clear();
+}
+
+// FUNCTION: GAME 0x55e3e0
+void C_using_object::ClearInvalidItems()
+{
+    unknown_10.clear();
 }
 
 // FUNCTION: GAME 0x55edd0
@@ -234,18 +311,80 @@ void C_sound_table::SaveTables(const char *name)
     StubLog("C_sound_table::SaveTables %s", name);
 }
 
-// The original's jumps to ConstructSound (0x55f820), which sets the sound up from its table
-// STUB: GAME 0x55fa00
-bool C_sound_table::TestConstructSound(I3D_sound *sound, uint id)
+#pragma auto_inline(on)
+
+// Picks one of the sound's files by their chances and one of its parameter sets at random. A file that doesn't open
+// hides the sound until ClearInvisibleFlag.
+// FUNCTION: GAME 0x55f820
+bool C_sound_table::ConstructSound(I3D_sound *sound, uint id)
 {
-    StubLog("C_sound_table::TestConstructSound %u", id);
+    for (int i = tables.size(); i--;)
+    {
+        if (tables[i].id == id)
+        {
+            if (!tables[i].visible || !tables[i].num_files || !tables[i].num_params)
+                return false;
+            int r = rnd(100);
+            int f;
+            for (f = 0; f < tables[i].num_files && r > tables[i].file_probability[f]; f++)
+                ;
+            if (f == tables[i].num_files)
+                f--;
+            int p = rnd(tables[i].num_params);
+            if (sound_cache.Open(sound, tables[i].file_names[f], 0, NULL, NULL, NULL) != I3D_OK)
+            {
+                tables[i].visible = false;
+                return false;
+            }
+            switch (tables[i].params[p].type)
+            {
+            case SOUNDPARAM_AMBIENT:
+                sound->SetSoundType(I3DSOUND_AMBIENT);
+                break;
+            case SOUNDPARAM_POINT:
+                sound->SetSoundType(I3DSOUND_POINT);
+                break;
+            case SOUNDPARAM_SPOT:
+                sound->SetSoundType(I3DSOUND_SPOT);
+                break;
+            case SOUNDPARAM_VOLUME:
+                igraph->Present();
+                MsgBox(
+                    // STRING: GAME 0x636638
+                    "Sound type I3DSOUND_VOLUME not exist.",
+                    // STRING: GAME 0x636660
+                    "ConstructSound",
+                    MSGBOX_OK);
+                break;
+            }
+            sound->SetRange(tables[i].params[p].near_range, tables[i].params[p].far_range, tables[i].params[p].mid,
+                tables[i].params[p].mid_vol);
+            sound->SetCone(tables[i].params[p].in_angle, tables[i].params[p].out_angle);
+            sound->SetVolume(tables[i].params[p].volume);
+            sound->SetOutVol(tables[i].params[p].out_vol);
+            return true;
+        }
+    }
     return false;
 }
 
-// STUB: GAME 0x55fa10
-void C_sound_table::ClearInvisibleFlag()
+// FUNCTION: GAME 0x55fa00
+bool C_sound_table::TestConstructSound(I3D_sound *sound, uint id)
 {
-    StubLog("C_sound_table::ClearInvisibleFlag");
+    return ConstructSound(sound, id);
 }
 
-#pragma auto_inline(on)
+// FUNCTION: GAME 0x55fa10
+void C_sound_table::ClearInvisibleFlag()
+{
+    for (int i = tables.size(); i--;)
+        tables[i].visible = true;
+}
+
+// FUNCTION: GAME 0x55fcf0
+void soundArena::Init()
+{
+    memset(unknown_0, 0, sizeof(unknown_0));
+    unknown_200 = 0;
+    unknown_204 = 0;
+}

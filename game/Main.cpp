@@ -1,7 +1,7 @@
 // The game's start and its main loop: PS2's Main.cpp (main, InitSystem, CloseSystem, GameLoopSingle,
 // InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem,
-// InitErrorMessageBox and CloseSystem, and the PC's InitJoy, CloseJoy and GraphErrorHandler; SceneCallback and
-// GameLoopSingle are stubs.
+// InitErrorMessageBox, CloseSystem and SetWBuffer, and the PC's InitJoy, CloseJoy and GraphErrorHandler; SceneCallback
+// and GameLoopSingle are stubs.
 // Open: the engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
 // the original's files don't have (docs/game-files.md). The .bss names: PS2's isound, driver and the caches' don't give
 // the original's order (driver, isound, igraph, setting), so at least those had other names on the PC.
@@ -149,6 +149,16 @@ bool _is_intro_ = false;
 
 static bool InitSystem(void *hinstance, bool &fatal);
 static void InitErrorMessageBox(LS3D_RESULT result, int base);
+
+// The w-buffer only where setup.exe turned it on, as PS2's
+// FUNCTION: GAME 0x5bd5c0
+void SetWBuffer(bool on)
+{
+    if (on && setting.w_buffer)
+        driver->SetState(RS_WBUFFER, true);
+    else
+        driver->SetState(RS_WBUFFER, false);
+}
 
 // The joysticks (PC only, the name is ours): every device IJoy finds, with force feedback reset and turned on. Its y
 // axis is inverted only when CreateJoy fails, which leaves the joystick NULL: CreateJoy returns true on success.

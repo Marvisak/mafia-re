@@ -11,10 +11,13 @@ class C_human;
 class C_car;
 struct S_vector;
 
-// A camera state pushed and popped (PS2 G_CameraPushPop), 0x10 bytes by Reset's copy loop; what it holds isn't known yet
+// A camera state pushed and popped (PS2 G_CameraPushPop), 0x10 bytes: the mode and the I3D camera's field of view and
+// clipping planes (PS2's PushMode; the names are ours, the camera's)
 struct G_CameraPushPop
 {
-    uchar unknown_0[0x10];
+    uint mode;                          // 0x0, CAMERA_*
+    float fov;                          // 0x4
+    float ncp, fcp;                     // 0x8
 };
 
 // A race camera (PS2 G_RaceCamera, C_racecam's), 0x18 bytes: CAMERA_C_RACING shows the race from the camera whose
@@ -53,6 +56,14 @@ struct G_RaceCamera
 #define CAMERA_C_LOCK 22                    // "C Lock"
 #define CAMERA_P_BEHIND_23 23               // "P Behind", as C RailwayIn lower
 #define CAMERA_UNKNOWN_24 24                // Tick does nothing in it
+// SetMode's: the camera's next one, G_Camera::unknown_14 (the name is ours)
+#define CAMERA_NEXT ((uint)-1)
+// The ranges of cameras the profile keeps, which SetMode stores there: the on-foot ones, the profile's camera, and the
+// car ones, S_profile_settings::unknown_34 (the names are ours)
+#define CAMERA_P_FIRST CAMERA_P_BEHIND
+#define CAMERA_P_END 4
+#define CAMERA_C_FIRST CAMERA_C_BEHIND_HELLBOY
+#define CAMERA_C_END 16
 
 // S_camera_params' flags (the names are ours, by value where the use isn't known): the code copies 1 into
 // G_Camera::unknown_22
@@ -81,6 +92,9 @@ struct G_RaceCamera
 #define CAMV_POS_FILTER 8                   // how fast the position follows, times the frame's time in 1/40 s
 #define CAMV_DIR_FILTER 9                   // the direction's (the car cameras' also times their speed squared)
 
+// The cameras' entries (the name is ours)
+#define NUM_CAMERAS 17
+
 // One of the cameras (an entry of PS2's cameraParams; the struct's and the members' names are ours), 0x44 bytes. PS2's
 // entries are 0x38 bytes, without the name.
 struct S_camera_params
@@ -92,9 +106,10 @@ struct S_camera_params
     uint flags;                         // 0x40, CAMPF_*
 };
 
-// The game's camera (PS2 G_Camera, g_camera.cpp), the game's 0x4c, 0xa0 bytes. PS2's has the same members in the same
-// order, at other offsets (in the comments). The names are ours, after the setters that set them (PS2's SetCamera,
-// SetPlayer, SetCar, Link, SetMode, SetSwing, LookAround); the others are named by their offset.
+// The game's camera (PS2 G_Camera, g_camera.cpp), the game's 0x4c, 0x98 bytes: the game's player follows it, as PS2's
+// does. PS2's has the same members in the same order, at other offsets (in the comments). The names are ours, after the
+// setters that set them (PS2's SetCamera, SetPlayer, SetCar, Link, SetMode, SetSwing, LookAround); the others are named
+// by their offset.
 class G_Camera
 {
 public:
@@ -138,7 +153,7 @@ public:
     float unknown_8c;                   // 0x8c (PS2 0x9c)
     float unknown_90;                   // 0x90, 0.2 after Reset
     bool free_look;                     // 0x94 (PS2 0xa4), the car cameras' free look (the name is ours)
-    uchar unknown_95[0xb];              // 0x95
+    uchar unknown_95[3];                // 0x95
 
     G_Camera();
     ~G_Camera();
@@ -153,4 +168,30 @@ public:
     // The mouse's free look (PS2 names)
     void FreeLook(float x, float y);
     void FreeLookBase(float x, float y, S_vector &pos, S_vector &dir, S_vector &up);
+    // PS2 names, of what C_game's Init and Done call: each of the setters ends the camera, sets the member and begins it
+    // again; Link's frame (NULL for none) gives CAMERA_C_RAILWAY_IN, without it the profile's camera
+    void SetCamera(I3D_camera *cam);
+    void SetPlayer(C_human *human);
+    void Link(I3D_frame *frm);
+    // Pops the pushed states
+    void GameDone();
+    // Changes the camera to a CAMERA_* or, with CAMERA_NEXT, to the camera's next one, which the profile then keeps; with
+    // begin, the old camera ends and the new one begins (PS2 names)
+    void SetMode(uint m, bool begin);
+    // Sets the I3D camera up for the mode, from its cameraParams entry: its values and flags, its parent and position
+    // (PS2 name)
+    void Begin();
+    // Undoes Begin's: the sniper's HUD and the frames the camera was linked to, and shows the car again (PS2 name)
+    void End();
+    // The last pushed state back, the mode through SetMode and the I3D camera's view; clear clears mode_changed (PS2
+    // names)
+    void PopMode(bool clear);
+    void SetSniperMode(bool on);
+    // C_game::Done turns it off after a cutscene (PC only, the name is a guess)
+    void SetCutscene(bool on);
+    // The name is ours: its copy is in game.cpp's range
+    void SetModeChanged()
+    {
+        mode_changed = true;
+    }
 };

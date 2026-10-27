@@ -1,6 +1,7 @@
 // The startup's Windows helpers, the file at 0x5661f0-0x566f3c (docs/game-files.md); the name is a guess, PS2's
-// Winstuff.cpp, which has no functions left. Written so far: what InitSystem calls (LoadResString, SetWindowIcon,
-// FindGameFile) and the CD check (WaitForCD, FileExists, CheckCD), all names ours, and the caches' AddDir that follow.
+// Winstuff.cpp, which has no functions left. Written so far: the message box (MsgBox), which the sound table calls,
+// what InitSystem calls (LoadResString, SetWindowIcon, FindGameFile) and the CD check (WaitForCD, FileExists,
+// CheckCD), all names ours, and the caches' AddDir that follow.
 
 #include "Winstuff.h"
 #include "I3D_cache.h"
@@ -9,6 +10,45 @@
 
 #include "IGraph/IGraph.h"
 #include "res/resource.h"
+
+// The cases' bodies in the jump tables' order. MSGBOX_OK's own body gives the first table its entry, which points at
+// the default's: VC6 merges the two after building the table
+// FUNCTION: GAME 0x5661f0
+int MsgBox(const char *text, const char *caption, int type)
+{
+    uint style;
+    switch (type)
+    {
+    case MSGBOX_YESNO:
+        style = MB_YESNO;
+        break;
+    case MSGBOX_YESNOCANCEL:
+        style = MB_YESNOCANCEL;
+        break;
+    case MSGBOX_RETRYCANCEL:
+        style = MB_RETRYCANCEL;
+        break;
+    case MSGBOX_OKCANCEL:
+        style = MB_OKCANCEL;
+        break;
+    case MSGBOX_OK:
+        style = MB_OK;
+        break;
+    default:
+        style = MB_OK;
+    }
+    switch (MessageBox(igraph ? igraph->GetMainHWND() : NULL, text, caption, style))
+    {
+    case IDRETRY:
+    case IDYES:
+        return MSGBOX_RETURN_YES;
+    case IDNO:
+        return MSGBOX_RETURN_NO;
+    case IDCANCEL:
+        return MSGBOX_RETURN_CANCEL;
+    }
+    return -1;
+}
 
 // FUNCTION: GAME 0x5662a0
 int LoadResString(HINSTANCE hinstance, uint id, char *buffer, int size)

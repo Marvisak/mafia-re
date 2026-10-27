@@ -1,5 +1,6 @@
-// The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. Not
-// written yet: only what main needs to link.
+// The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. Written
+// so far: GameDone and TestSphereB (in the file at 0x5d5900 on the PC); the rest of what main and the game call is
+// stubs.
 
 #include "collision/g_colls.h"
 
@@ -10,11 +11,29 @@ g_collision gifCollision;
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x5c28d0
+void g_collision::DeleteCollsLevel()
+{
+    StubLog("g_collision::DeleteCollsLevel");
+}
+
 // STUB: GAME 0x5c2b70
 bool g_collision::LoadCollision(const char *name, bool)
 {
     StubLog("g_collision::LoadCollision %s", name);
     return false;
+}
+
+// STUB: GAME 0x5c38b0
+void g_collision::DynErase(tDynamicCollObject *obj)
+{
+    StubLog("g_collision::DynErase");
+}
+
+// STUB: GAME 0x5c3da0
+void g_collision::DynWipeOut()
+{
+    StubLog("g_collision::DynWipeOut");
 }
 
 // PS2's is another file's than TestSphereB; the PC's is in the file at 0x5cafb0 (docs/game-files.md)
@@ -27,6 +46,14 @@ bool g_collision::_TestSphereB(const S_vector &from, const S_vector &dir, float 
 }
 
 #pragma auto_inline(on)
+
+// The moving objects' collisions, then the level's; PS2's passes its bool on to DeleteCollsLevel
+// FUNCTION: GAME 0x5d5900
+void g_collision::GameDone()
+{
+    DynWipeOut();
+    DeleteCollsLevel();
+}
 
 // PS2's g_colls.cpp has it after g_camera.cpp's functions (12 bytes, a jump with this); the PC's is in the file at
 // 0x5d5900 and loads gifCollision whatever it is called on

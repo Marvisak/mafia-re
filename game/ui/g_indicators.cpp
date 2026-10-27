@@ -1,9 +1,16 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
 // the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
-// _SpocitejRafiku2, ResolutionChanged, the menus' cursor and the camera's field of view; the rest of what main and the
-// profiles call is stubs.
+// GameInit, GameDone, the clock's setters, _SpocitejRafiku2, the tachometer's and the player's setters, the clears
+// C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear, ConsoleClear, RadarClear), MapEnable,
+// WideScreenSetRatio, SetUnknown4484, RadarRemoveCar, RaceSetStartFlag, BonusSetCount, ResolutionChanged (with the
+// dials' vertex helpers), TextSize, OutText, the menus' cursor and the camera's field of view; the rest of what main,
+// the profiles, the game and the cutscene call is stubs (SetUnknownTexture, RadarAddCar, the radar's edges,
+// ParheliaSetCenter).
 
 #include "ui/g_indicators.h"
+#include "mission/Mission.h"
+#include "mission/game.h"
+#include "ui/g_loadsave.h"
 #include "ui/g_textdb.h"
 
 #include <stdio.h>
@@ -125,8 +132,8 @@ void G_IndicatorsClass::ResetValues()
     PlayerSetWingmanLives(3, 100);
     unknown_4278 = 0;
     unknown_4458 = .5f;
-    unknown_43e4 = 0;
-    unknown_43e8 = 0;
+    console_first = 0;
+    console_count = 0;
     SYSTEMTIME time;
     GetLocalTime(&time);
     TimerSetTime(time.wHour, time.wMinute, time.wSecond);
@@ -139,8 +146,8 @@ void G_IndicatorsClass::ResetValues()
     unknown_44bc = 0;
     radar_items.clear();
     unknown_44c0 = .9f;
-    unknown_44cc = 0;
-    unknown_44d0 = 0;
+    race_start_last_time = 0.0f;
+    race_start_time = 0.0f;
     race_best_time[0] = 0;
     race_lap_time[0] = 0;
     race_time[0] = 0;
@@ -153,7 +160,7 @@ void G_IndicatorsClass::ResetValues()
     unknown_4480 = 0;
     unknown_46e0 = 0;
     unknown_46e4 = -1;
-    unknown_46ec = false;
+    map_enabled = false;
     text_out_of_city = textDatabase.GetText(0x5f);
     parhelia_center = false;
     IntroSubtitlesClear();
@@ -177,7 +184,7 @@ void G_IndicatorsClass::LoadFont(bool credits, uint font)
     int file = dtaOpen(name, false);
     if (file >= 0)
     {
-        dtaRead(file, fonts[font], sizeof(fonts[font]));
+        dtaRead(file, &fonts[font], sizeof(fonts[font]));
         dtaClose(file);
     }
     fontTranstable[font] = language->chars;
@@ -244,7 +251,7 @@ void G_IndicatorsClass::Create()
         ITC_USE_ALPHA, &textureCrew);
     // STRING: GAME 0x639260
     igraph->CreateITexture("1int.tga", NULL, ITC_COLORKEY, &texture_int);
-    unknown_4084 = NULL;
+    texture_int2 = NULL;
     // STRING: GAME 0x639250
     igraph->CreateITexture("1numbers.tga", NULL, ITC_ALPHA, &texture_numbers);
     // STRING: GAME 0x639240
@@ -280,9 +287,9 @@ void G_IndicatorsClass::Destroy()
     if (texture_int)
         texture_int->Release();
     texture_int = NULL;
-    if (unknown_4084)
-        unknown_4084->Release();
-    unknown_4084 = NULL;
+    if (texture_int2)
+        texture_int2->Release();
+    texture_int2 = NULL;
     if (texture_numbers)
         texture_numbers->Release();
     texture_numbers = NULL;
@@ -316,6 +323,57 @@ void G_IndicatorsClass::Destroy()
     if (textureCrew)
         textureCrew->Release();
     textureCrew = NULL;
+}
+
+// The PC's: PS2's loads much more (its map among it)
+// FUNCTION: GAME 0x5f73c0
+void G_IndicatorsClass::GameInit()
+{
+    if (act_mission->game->unknown_2d44)
+    {
+        if (texture_int2)
+            texture_int2->Release();
+        if (mafiaLoadSave.settings.speedometer_mph)
+            // STRING: GAME 0x6392f8
+            igraph->CreateITexture("2intnocmph.tga", NULL, ITC_COLORKEY, &texture_int2);
+        else
+            // STRING: GAME 0x6392ec
+            igraph->CreateITexture("2intnoc.tga", NULL, ITC_COLORKEY, &texture_int2);
+        if (textureIcons)
+            textureIcons->Release();
+        // STRING: GAME 0x6392dc
+        igraph->CreateITexture("2intauton.tga", NULL, ITC_COLORKEY, &textureIcons);
+    }
+    else
+    {
+        if (texture_int2)
+            texture_int2->Release();
+        if (mafiaLoadSave.settings.speedometer_mph)
+            // STRING: GAME 0x6392d0
+            igraph->CreateITexture("2intmph.tga", NULL, ITC_COLORKEY, &texture_int2);
+        else
+            // STRING: GAME 0x6392c4
+            igraph->CreateITexture("2int.tga", NULL, ITC_COLORKEY, &texture_int2);
+        if (textureIcons)
+            textureIcons->Release();
+        // STRING: GAME 0x6392b4
+        igraph->CreateITexture("2intauto.tga", NULL, ITC_COLORKEY, &textureIcons);
+    }
+}
+
+// PS2's releases the dials' texture too unless asked not to, and resets more
+// FUNCTION: GAME 0x5f74a0
+void G_IndicatorsClass::GameDone()
+{
+    if (unknown_4090)
+        unknown_4090->Release();
+    unknown_4090 = NULL;
+    RadarSetLeftEdge(NULL);
+    RadarSetRightEdge(NULL);
+    BonusSetCount(BONUS_NONE);
+    IntroSubtitlesClear();
+    RaceSetStartFlag(RACE_START_NONE);
+    TimerSetInterval(0);
 }
 
 // FUNCTION: GAME 0x5f7500
@@ -508,11 +566,31 @@ void G_IndicatorsClass::PlayerSetWingmanLives(uint wingman, uint lives)
         wingman_lives[wingman] = lives;
 }
 
+// FUNCTION: GAME 0x5f8990
+void G_IndicatorsClass::SubtitlesClear()
+{
+    subtitles.clear();
+}
+
 // FUNCTION: GAME 0x5f9940
 void G_IndicatorsClass::IntroSubtitlesClear()
 {
     intro_subtitles.clear();
     intro_subtitles_waiting.clear();
+}
+
+// FUNCTION: GAME 0x5f9d10
+void G_IndicatorsClass::MapEnable(bool enable)
+{
+    map_enabled = enable;
+    text_out_of_city = textDatabase.GetText(0x5f);
+}
+
+// PS2's also stops its console's timer, which the PC's lines have each
+// FUNCTION: GAME 0x5f9d40
+void G_IndicatorsClass::ConsoleClear()
+{
+    console_count = 0;
 }
 
 // Two quads in the colour 0xaf0000ff over the whole width, a few pixels past the screen's edges: from the top to where
@@ -587,6 +665,103 @@ void G_IndicatorsClass::WideScreenSetRatio(float ratio)
     _VtxWideScreen[9].v = 1.0f;
     _VtxWideScreen[10] = _VtxWideScreen[8];
     _VtxWideScreen[11] = _VtxWideScreen[7];
+}
+
+// FUNCTION: GAME 0x5fa410
+void G_IndicatorsClass::SetUnknown4484(uint a, uint b)
+{
+    unknown_4484 = a;
+    unknown_4488 = b;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fa430
+void G_IndicatorsClass::SetUnknownTexture(const char *name, bool unknown, bool reload)
+{
+    StubLog("G_IndicatorsClass::SetUnknownTexture");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5fa4a0
+void G_IndicatorsClass::RadarClear()
+{
+    radar_cars.clear();
+    radar_items.clear();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fa510
+void G_IndicatorsClass::RadarAddCar(C_car *car, uint color)
+{
+    StubLog("G_IndicatorsClass::RadarAddCar");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5fa720
+void G_IndicatorsClass::RadarRemoveCar(C_car *car)
+{
+    for (G_RadarCar *p = radar_cars.begin(); p < radar_cars.end(); p++)
+    {
+        if (p->car == car)
+        {
+            radar_cars.erase(p);
+            return;
+        }
+    }
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fa9f0
+void G_IndicatorsClass::RadarSetLeftEdge(std::vector<C_web_node *> *edge)
+{
+    StubLog("G_IndicatorsClass::RadarSetLeftEdge");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fabf0
+void G_IndicatorsClass::RadarSetRightEdge(std::vector<C_web_node *> *edge)
+{
+    StubLog("G_IndicatorsClass::RadarSetRightEdge");
+}
+
+#pragma auto_inline(on)
+
+// PS2's shows any flag under 16. The hiding case assigns in PS2's order, which lets VC6 share its end with case 0's.
+// FUNCTION: GAME 0x5fadf0
+void G_IndicatorsClass::RaceSetStartFlag(uint flag)
+{
+    switch (flag)
+    {
+    case 0:
+        unknown_40a4 |= INDF_RACE_START;
+        race_start_flag_last = 0xff;
+        race_start_flag = 0;
+        race_start_last_time = 1.0f;
+        race_start_time = 1.0f;
+        break;
+    case RACE_START_UNKNOWN_4:
+    case RACE_START_NONE:
+        unknown_40a4 &= ~INDF_RACE_START;
+        race_start_flag_last = 0xff;
+        race_start_last_time = 1.0f;
+        race_start_flag = 0xff;
+        race_start_time = 1.0f;
+        break;
+    default:
+        unknown_40a4 |= INDF_RACE_START;
+        race_start_flag_last = race_start_flag;
+        race_start_last_time = race_start_time;
+        race_start_flag = flag;
+        race_start_time = 1.0f;
+    }
 }
 
 // FUNCTION: GAME 0x5fb010
@@ -765,6 +940,263 @@ inline void SetDiamondVertices(const S_vector2 &pos, const S_vector2 &size, floa
     verts[3].v = v1;
     verts[4] = verts[2];
     verts[5] = verts[1];
+}
+
+// A text's width in the font, at its size (the characters' height): each character's width less what it overlaps the
+// next, a space's .3 of the size for a code the font has no character for; the last one's overlap counts
+// FUNCTION: GAME 0x6036d0
+float G_IndicatorsClass::TextSize(const char *text, float size, uint font, const char *stop)
+{
+    if (!text)
+        return 0.0f;
+    ushort *trans = fontTranstable[font];
+    G_Font *f = &fonts[font];
+    float spacing = size * f->spacing;
+    size *= f->width;
+    float width = 0.0f;
+    for (; *text; text++)
+    {
+        if (stop && text >= stop)
+            break;
+        uchar c = (uchar)trans[(uchar)*text];
+        if (f->chars[c].width < .001)
+            width += size * .3f;
+        else
+            width += size * f->chars[c].width - spacing;
+    }
+    return width + spacing;
+}
+
+// The PC's: PS2's also draws the icons of the codes under 0x20, the text's background and skips texts off the screen.
+// A code above 0xff that fontTranstable gives is two characters, an accent (the high byte, lowered with 0x8000)
+// centered over a letter (the low byte, none for 0). The characters are quads of the font's texture, OUTTEXT_MAX_CHARS
+// of them at most.
+// FUNCTION: GAME 0x603880
+float G_IndicatorsClass::OutText(const char *text, float x, float y, float sx, float sy, uint color, uint flags,
+    uint font, const char *stop)
+{
+    if (!text)
+        return x;
+    ushort *trans = fontTranstable[font];
+    y -= sy * fonts[font].top;
+    G_Font *f = &fonts[font];
+    float tex_height = f->tex_height;
+    float size = sy * f->height;
+    float spacing = sy * f->spacing;
+    float char_width = size * f->width;
+    if (flags & (OUTTEXT_CENTER | OUTTEXT_RIGHT))
+    {
+        float text_size = TextSize(text, size, font, stop);
+        if (flags & OUTTEXT_CENTER)
+            x = x + sx * .5f - text_size * .5f;
+        else
+            x = x + sx - text_size;
+    }
+    else
+    {
+        if (flags & OUTTEXT_INDENT)
+            x += sy * .5f;
+        if (flags & OUTTEXT_FIT)
+        {
+            float text_size = TextSize(text, size, font, stop);
+            if (flags & OUTTEXT_INDENT)
+            {
+                if (text_size > sx - sy)
+                {
+                    float scale = (sx - sy) / text_size;
+                    char_width *= scale;
+                    spacing *= scale;
+                }
+            }
+            else if (text_size > sx)
+            {
+                float scale = sx / text_size;
+                char_width *= scale;
+                spacing *= scale;
+            }
+        }
+    }
+    float cur_x = x;
+    int num = 0;
+    float ch_width;
+    TLVERTEX verts[450];
+    for (; *text; text++)
+    {
+        if (stop && text >= stop)
+            break;
+        uchar c = *text;
+        ushort code = trans[c];
+        if (!c)
+            continue;
+        if (code > 0xff)
+        {
+            uchar accent_code = (code >> 8) & 0x7f;
+            float cy = y;
+            G_FontChar *accent = &f->chars[accent_code];
+            float accent_width = char_width * accent->width;
+            G_FontChar *ch = &f->chars[code & 0xff];
+            float ax = cur_x;
+            if (ch->width >= .001)
+            {
+                ch_width = char_width * ch->width;
+                ax = cur_x + (ch_width - accent_width) * .5f;
+                if (code & 0x8000)
+                    cy = y - size * .12f;
+            }
+            verts[num].x = ax;
+            verts[num].y = cy;
+            verts[num].z = 0.0f;
+            verts[num].rhw = 1.0f;
+            verts[num].color = color;
+            verts[num].u = accent->u;
+            verts[num].v = accent->v;
+            verts[num + 1].x = ax + accent_width;
+            verts[num + 1].y = cy;
+            verts[num + 1].z = 0.0f;
+            verts[num + 1].rhw = 1.0f;
+            verts[num + 1].color = color;
+            verts[num + 1].u = accent->u1;
+            verts[num + 1].v = accent->v;
+            verts[num + 2].x = ax;
+            verts[num + 2].y = cy + size;
+            verts[num + 2].z = 0.0f;
+            verts[num + 2].rhw = 1.0f;
+            verts[num + 2].color = color;
+            verts[num + 2].u = accent->u;
+            verts[num + 2].v = tex_height + accent->v;
+            verts[num + 3].x = ax + accent_width;
+            verts[num + 3].y = cy + size;
+            verts[num + 3].z = 0.0f;
+            verts[num + 3].rhw = 1.0f;
+            verts[num + 3].color = color;
+            verts[num + 3].u = accent->u1;
+            verts[num + 3].v = tex_height + accent->v;
+            num += 4;
+            if (num >= OUTTEXT_MAX_CHARS * 4)
+                break;
+            if (ch->width < .001)
+            {
+                if (code & 0xff)
+                    cur_x += size * .3f;
+                else
+                    cur_x += accent_width - spacing;
+                continue;
+            }
+            verts[num].x = cur_x;
+            verts[num].y = y;
+            verts[num].z = 0.0f;
+            verts[num].rhw = 1.0f;
+            verts[num].color = color;
+            verts[num].u = ch->u;
+            verts[num].v = ch->v;
+            verts[num + 1].x = cur_x + ch_width;
+            verts[num + 1].y = y;
+            verts[num + 1].z = 0.0f;
+            verts[num + 1].rhw = 1.0f;
+            verts[num + 1].color = color;
+            verts[num + 1].u = ch->u1;
+            verts[num + 1].v = ch->v;
+            verts[num + 2].x = cur_x;
+            verts[num + 2].y = y + size;
+            verts[num + 2].z = 0.0f;
+            verts[num + 2].rhw = 1.0f;
+            verts[num + 2].color = color;
+            verts[num + 2].u = ch->u;
+            verts[num + 2].v = tex_height + ch->v;
+            verts[num + 3].x = cur_x + ch_width;
+            verts[num + 3].y = y + size;
+            verts[num + 3].z = 0.0f;
+            verts[num + 3].rhw = 1.0f;
+            verts[num + 3].color = color;
+            verts[num + 3].u = ch->u1;
+            verts[num + 3].v = tex_height + ch->v;
+            num += 4;
+            if (num >= OUTTEXT_MAX_CHARS * 4)
+                break;
+            cur_x += ch_width - spacing;
+        }
+        else
+        {
+            G_FontChar *ch = &f->chars[code & 0xff];
+            if (ch->width < .001)
+                cur_x += size * .3f;
+            else
+            {
+                ch_width = char_width * ch->width;
+                verts[num].x = cur_x;
+                verts[num].y = y;
+                verts[num].z = 0.0f;
+                verts[num].rhw = 1.0f;
+                verts[num].color = color;
+                verts[num].u = ch->u;
+                verts[num].v = ch->v;
+                verts[num + 1].x = cur_x + ch_width;
+                verts[num + 1].y = y;
+                verts[num + 1].z = 0.0f;
+                verts[num + 1].rhw = 1.0f;
+                verts[num + 1].color = color;
+                verts[num + 1].u = ch->u1;
+                verts[num + 1].v = ch->v;
+                verts[num + 2].x = cur_x;
+                verts[num + 2].y = y + size;
+                verts[num + 2].z = 0.0f;
+                verts[num + 2].rhw = 1.0f;
+                verts[num + 2].color = color;
+                verts[num + 2].u = ch->u;
+                verts[num + 2].v = tex_height + ch->v;
+                verts[num + 3].x = cur_x + ch_width;
+                verts[num + 3].y = y + size;
+                verts[num + 3].z = 0.0f;
+                verts[num + 3].rhw = 1.0f;
+                verts[num + 3].color = color;
+                verts[num + 3].u = ch->u1;
+                verts[num + 3].v = tex_height + ch->v;
+                cur_x += ch_width - spacing;
+                num += 4;
+                if (num >= OUTTEXT_MAX_CHARS * 4)
+                    break;
+            }
+        }
+    }
+    igraph->SetTexture(font_textures[font]);
+    igraph->DrawIndexedPrimitiveList(PT_TRIANGLELIST, num, __idx, num / 2, verts, LS3D_STREAM_TLVERTEX);
+    if (flags & OUTTEXT_UNDERLINE)
+    {
+        y += !font ? size * .9f : size * .8f;
+        verts[0].x = x;
+        verts[0].y = y;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = 0x7fff0000;
+        verts[0].u = 0.0f;
+        verts[0].v = 0.0f;
+        float end = cur_x + spacing;
+        verts[1].x = end;
+        verts[1].y = y;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = 0x7fff0000;
+        verts[1].u = 0.0f;
+        verts[1].v = 0.0f;
+        igraph->SetTexture(NULL);
+        igraph->DrawPrimitiveList(PT_LINELIST, 1, verts, LS3D_STREAM_TLVERTEX);
+        verts[0].x = x;
+        verts[0].y = y - 1.0f;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = 0x7fff0000;
+        verts[0].u = 0.0f;
+        verts[0].v = 0.0f;
+        verts[1].x = end;
+        verts[1].y = y - 1.0f;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = 0x7fff0000;
+        verts[1].u = 0.0f;
+        verts[1].v = 0.0f;
+        igraph->DrawPrimitiveList(PT_LINELIST, 1, verts, LS3D_STREAM_TLVERTEX);
+    }
+    return cur_x;
 }
 
 // FUNCTION: GAME 0x604770

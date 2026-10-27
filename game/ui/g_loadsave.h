@@ -216,7 +216,9 @@ public:
     std::vector<G_Profile_FileHead> profiles;   // 0x0, what ProfileEnumFiles found
     std::vector<G_SaveGame_FileHead> savegames; // 0x10, the profile's saved games
     G_Profile_FileHead profile;         // 0x20, the profile's head
-    uchar unknown_74[0x18];
+    uchar unknown_74[8];
+    uint mission;                       // 0x7c, the saved game's mission (the name is ours)
+    uchar unknown_80[0xc];
     uint unknown_8c;                    // 0x8c
     bool unknown_90;                    // 0x90, set by Init (PS2's 0x2b0 the same)
     bool unknown_91;                    // 0x91, set while ProfileLoad reads the profile: a failed load leaves the defaults
@@ -225,10 +227,13 @@ public:
     uint unknown_9c;                    // 0x9c
     S_garage_car garage[MAX_GARAGE_CARS];   // 0xa0, the cars 0x60b9f0 adds
     uint unknown_168[MAX_GARAGE_CARS];  // 0x168, cleared with them
-    uchar unknown_1cc[8];
+    bool unknown_1cc;                   // 0x1cc, cleared by GarageGameInit (PS2's G_GarageClass 0x7c)
+    bool unknown_1cd;                   // 0x1cd, the same (PS2's 0x7d)
+    uchar unknown_1ce[6];
     bool unknown_1d4;                   // 0x1d4, cleared by ProfileLoad
     std::vector<uint> objectives;       // 0x1d8, ObjectivesClear and ObjectivesRemove's
-    uint unknown_1e8;                   // 0x1e8, cleared by SaveGameNewGame
+    // 0x1e8, cleared by SaveGameNewGame: a car GarageGameDone adds to the garage with unknown_1cc or unknown_1cd set
+    C_car *unknown_1e8;
     uint unknown_1ec;
     uint unknown_1f0;                   // 0x1f0
     S_control bindings[NUM_CONTROLS];   // 0x1f4, the profile's controls, which ApplyControls hands to the controls
@@ -284,6 +289,20 @@ public:
     void RaceCarsDisable(uint cars);
     // Empties the garage (PC only, the name is ours; PS2's SaveGameNewGame clears its G_GarageClass instead)
     void GarageClear();
+    // PS2's G_GarageClass's (the PC has the garage here): IsCarIn, GameInit and GameDone
+    bool IsCarIn(C_car *car);
+    void GarageGameInit();
+    // The garage at the mission's end: the cars the mission leaves in it, the actors taken away (but those of cars,
+    // which the next mission keeps), the menu to choose which go where there are more than room
+    void GarageGameDone(std::vector<C_car *> *cars);
+    // PS2's G_GarageClass's: the garage's results' screen at a mission's end
+    void GarageShowResultsProc();
+    void ObjectivesClear();
+    // The accessor whose copy is in the file's range (the name is ours)
+    uint GetMission() const
+    {
+        return mission;
+    }
     // Applies the options REFRESH_* chooses, and puts the cameras back in their ranges
     void Refresh(uint flags);
     // Plays tables\credits.def
@@ -336,7 +355,43 @@ public:
     void Init();
     // Frees them
     void Close();
+    // The model's file of a car descriptor (PS2 name): the car's id and the variant's two digits, the variant 10 higher
+    // with second; false for an index out of range
+    bool GetCarModel(uint car, char *name, bool second);
+    // A car descriptor's parts (PS2 name), each pointer may be NULL: the index, the level (0 to 2) and the variant (0 to
+    // 4); false, all 0, for an index out of range
+    bool GetCarParams(uint car, uint *index, uint *level, uint *variant);
+    // A car descriptor's car (PS2 name): the first car for an index out of range, none without the table
+    S_car_index *GetCar(uint car);
+    // The index of a model's file, "<id><variant>.i3d" with a path, and its variant (PS2 name); 0 for none
+    uint GetIdxByModelLong(const char *model, uint &variant);
+    // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it
+    uint GetIDByActor(C_car *car);
 };
+
+// Cars GarageGameDone doesn't take into the garage (the names are ours, after tables\carindex.def's ids): the trucks,
+// and the racing Bugatti as the car of unknown_1e8
+#define CAR_RACING_BUGATTI 0x2b         // bugatti, "Carrozella C-Otto 4WD"
+#define CAR_TRUCK_FLATBED 0x39          // trucka
+#define CAR_TRUCK_COVERED 0x3a          // truckb
+#define CAR_TRUCK 0x3d                  // TruckBx
+
+// The cars the garage keeps at a mission's end, past which GarageGameDone runs its menu (the name is ours)
+#define GARAGE_ROOM 16
+
+// A car GarageGameDone keeps (the names are ours), 0xc bytes
+struct S_garage_item
+{
+    uint car;                           // the descriptor, its level cleared; 0 for an item to drop
+    C_car *actor;                       // 0x4, NULL for a garage car without one
+    int slot;                           // 0x8, its garage slot, -1 for a car new to the garage
+};
+
+// A garage car's descriptor (G_LoadSaveClass::garage, S_garage_car::car; the names are ours): the car database's index,
+// the level and the variant
+#define CAR_INDEX_MASK 0xffff
+#define CAR_LEVEL_SHIFT 16
+#define CAR_VARIANT_SHIFT 24
 
 // The profiles' vector's helpers, which ProfileEnumFiles' inlined push_back calls
 // TEMPLATE: GAME 0x60efa0

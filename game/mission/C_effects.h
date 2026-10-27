@@ -6,6 +6,12 @@
 
 #include "C_chunk.h"
 
+class C_Particle;
+class C_ParticleEmitter;
+class C_ParticleType;
+class I3D_frame;
+struct S_particle_subpart;
+
 // The effects the game loads from tables\effects.tbl ("Effects.bin" in its messages), PC only (PS2's mission has a
 // particle manager instead), 0x38 bytes. The classes' and the members' names are ours. The table is a tree of chunks:
 // effects, their parts and the parts' subparts, each with its name and its parameters, and each class reads its own
@@ -339,11 +345,20 @@ public:
 class C_effects
 {
 public:
-    std::vector<void *> unknown_0;      // 0x0
+    // An emitter in use and its number (PS2's C_ParticleInUse is 16 bytes; the members' names are ours)
+    struct S_particle_in_use
+    {
+        C_ParticleEmitter *emitter;     // 0x0
+        int unknown_4;                  // 0x4
+    };
+
+    std::vector<S_particle_in_use> unknown_0;  // 0x0
     std::vector<C_effect *> effects;    // 0x10
-    std::vector<void *> unknown_20;     // 0x20
-    int unknown_30;                     // 0x30
-    int unknown_34;                     // 0x34
+    std::vector<C_ParticleEmitter *> unknown_20;  // 0x20
+    int unknown_30;                     // 0x30, -1 from the constructor, Mission_Start and Mission_Done
+    // 0x34, set by Mission_Start: Mission_Done does nothing without it, and clears it
+    bool unknown_34;
+    uchar unknown_35[3];                // 0x35
 
     C_effects();
     ~C_effects();
@@ -352,7 +367,23 @@ public:
     void Load();
     // Deletes the effects
     void Clear();
+    // PS2's particle manager's (C_ParticleManager), which C_game's Init and Done call: the mission's effects.bin, and
+    // the effects loaded if they aren't, and freed
+    void LoadStaticParticles();
+    bool Mission_Start();
+    void Mission_Done();
+    void DestroyParticle(int particle);
+    // PS2's names: the emitters in use deleted, an effect started at a frame (with the matrix) for LoadStaticParticles
+    void ClearEmitters();
+    void CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm);
 };
+
+// The free objects of the emitters (the names are ours), each type's (C_effects.cpp's .bss; their order there is the
+// names' buckets', tools/bsshash.py)
+extern std::vector<C_Particle *> particle_pool;
+extern std::vector<C_ParticleType *> particle_parts;
+extern std::vector<S_particle_subpart *> particle_subparts;
+extern std::vector<C_ParticleEmitter *> particle_emitters;
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
@@ -376,16 +407,16 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QAEPAPAVC_effect_subpart@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAEPAPAVC_effect_part@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@IV?$allocator@I@std@@@std@@QAE@ABV?$allocator@I@1@@Z
+// ??0?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QAE@ABV?$allocator@US_vector@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

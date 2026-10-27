@@ -10,12 +10,17 @@ class C_chunk;
 
 #pragma pack(push, 1)
 
+// The flags of the nodes and their connections (C_web_node::unknown_c, S_web_conn::unknown_2) that DeRiciConns clears
+// (the names are ours, by value)
+#define WEBF_UNKNOWN_1000 0x1000
+#define WEBF_UNKNOWN_4000 0x4000
+
 // A node's connection to another (8 bytes, the size the node's Resize allocates them by; the names are ours). Its
 // destructor is declared and empty: the node's delete[] destroys them through the empty function 0x404990.
 struct S_web_conn
 {
     ushort node;                        // 0x0, the other node
-    ushort unknown_2;                   // 0x2
+    ushort unknown_2;                   // 0x2, WEBF_*
     float distance;                     // 0x4
 
     // Resize constructs them through 0x54d2b0
@@ -26,7 +31,9 @@ struct S_web_conn
 class C_web_node
 {
 public:
-    uchar unknown_0[0x18];              // 0x0
+    uchar unknown_0[0xc];               // 0x0
+    ushort unknown_c;                   // 0xc, WEBF_*
+    uchar unknown_e[0xa];               // 0xe
     S_web_conn *conns;                  // 0x18
     uchar max_conns;                    // 0x1c
     uchar num_conns;                    // 0x1d
@@ -74,6 +81,8 @@ public:
 
     // Reads the nodes of the mission's check.bin (PS2 name), which C_mission::Open calls directly, as PS2's
     void LoadNodes(C_chunk *chunk);
+    // PS2 name (Czech, roughly "of the connections"), which C_game::Init calls
+    void DeRiciConns();
 
     // PS2's virtual functions in PS2's order, but for RecompileDistance, which isn't virtual on the PC (its vtable has
     // 14 entries, the parameters each one's ret takes)

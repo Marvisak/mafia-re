@@ -27,7 +27,9 @@ address|type|size
 0x6234a8|float|4
 0x6234b0|float|4
 0x6234bc|float|4
+0x623598|float|4
 0x62359c|float|4
+0x6235f0|float|8
 0x6235f8|float|8
 0x623614|float|4
 0x6236b4|float|4
@@ -48,8 +50,11 @@ address|type|size
 0x624e14|float|4
 0x624e30|float|4
 0x624f50|float|4
+0x625160|float|4
 0x625230|float|4
 0x625408|float|4
+0x6256e0|float|4
+0x6256e4|float|4
 0x625914|float|4
 0x6275b4|float|4
 0x6275b8|float|4

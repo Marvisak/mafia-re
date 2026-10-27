@@ -4,7 +4,7 @@
 
 // The clocks (PS2 C_clock, c_clock.cpp), 0x88 bytes (PS2's 0xa0): a model whose hands turn with the computer's time.
 // Only the constructor, the destructor and Init so far, which C_mission::CreateActor and OpenBin call for ACTOR_CLOCK,
-// and the vtable's functions from DuplicateFrom to GameDone, the last two stubs.
+// and the vtable's functions from DuplicateFrom to GameDone, which C_game::Init and Done call.
 // VTABLE: GAME 0x625648
 class C_clock : public C_actor
 {
@@ -34,6 +34,7 @@ public:
     {
         return true;
     }
+    // The hands set to the computer's time
     virtual void GameInit();
     virtual void GameDone();
 
@@ -42,5 +43,9 @@ public:
     I3D_frame *hand_hour;               // 0x70
     I3D_frame *hand_minute;             // 0x74
     I3D_frame *hand_second;             // 0x78, which the clock may lack
-    uchar unknown_7c[0xc];              // 0x7c
+    // The time and the hands' angles (the names are ours): the hands' Tick adds the time, and turns the hands on at each
+    // minute past
+    uint time;                          // 0x7c, in ms since the last minute
+    float angle_hour;                   // 0x80, in radians
+    float angle_minute;                 // 0x84
 };

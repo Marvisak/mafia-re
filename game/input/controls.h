@@ -104,6 +104,9 @@ public:
     // buttons' users, sets a joystick axis's mode, and grows the tables to the index. False for a negative index, a key
     // with no free slot, or a joystick that isn't there.
     bool SetControl(const S_control *binding, int index);
+    // Copies the binding of that index, leaving binding as it is for an index outside the table; false only without
+    // binding (the name is ours)
+    bool GetControl(S_control *binding, int index);
     // Reads the keyboard, the mouse and the joysticks into the controls' values; with update_input it has IGraph and
     // the joysticks update their state first, which the menus do themselves
     void Update(bool update_input);
@@ -125,7 +128,7 @@ extern std::vector<IJoy *> joy;
 
 // The tables' helpers, which SetControl's inlined push_back calls
 // TEMPLATE: GAME 0x60f1f0
-// ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
+// ?insert@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEXPAUS_Telephone@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@MV?$allocator@M@std@@@std@@QAEXPAMIABM@Z
+// ?insert@?$vector@PAVC_traffic_car@@V?$allocator@PAVC_traffic_car@@@std@@@std@@QAEXPAPAVC_traffic_car@@IABQAV3@@Z

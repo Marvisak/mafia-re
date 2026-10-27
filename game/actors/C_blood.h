@@ -15,6 +15,10 @@ public:
 
     C_blood_manager();
     ~C_blood_manager();
+
+    // PS2 names: C_game's Init and Done call them
+    void GameInit();
+    void GameDone();
 };
 
 // The destructor, folded with C_tshift's: the name our PDB keeps for the two changes with the build (foldfix)

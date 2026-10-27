@@ -6,9 +6,14 @@
 // them in PS2's order (naklon to filteringLastPos, then Tick's rot, kl, kl2, cameraDirRot, cameraDirUpDown): what a
 // precompiled header of another file (/Yu) gives (CLAUDE.md), as for g_indicators.cpp. They are defined here in that
 // order. Open: the build compiles the file with /YX, so the .bss order isn't the original's.
+// Also written: GameDone, SetCamera, SetPlayer, Link, SetMode, Begin, End and PopMode, which C_game's Init and Done
+// reach.
 
 #include "camera/g_camera.h"
+
+#include "stub.h"
 #include "actors/C_human.h"
+#include "actors/C_player.h"
 #include "collision/g_colls.h"
 #include "input/controls.h"
 #include "mission/Mission.h"
@@ -39,7 +44,7 @@ float dialogSide = 1.0f;
 
 // The cameras (PS2's name), from 0x638700, after the file's other initialized data
 // GLOBAL: GAME 0x638700
-S_camera_params cameraParams[17] = {
+S_camera_params cameraParams[NUM_CAMERAS] = {
     {CAMERA_P_BEHIND, 0,
         {0.5f, 0.31f, 0.09f, 0.09f, 0.3f, 0.5f, 0.2f, 0.1f, 0.27f, 0.27f}, "P Behind", CAMPF_EYES},
     {CAMERA_P_IN, CAMERA_P_BEHIND,
@@ -120,6 +125,10 @@ float naklon = 0.0f;
 // GLOBAL: GAME 0x6bdb08
 float poklesVDrepu = 0.0f;
 
+// PS2's name; Begin clears it for "C In"
+// GLOBAL: GAME 0x6bdb0c
+float rotInAct = 0.0f;
+
 // PS2's name
 // GLOBAL: GAME 0x6bdb10
 float needLookFromEyes = 0.0f;
@@ -182,6 +191,60 @@ void G_Camera::Reset()
     free_look = false;
     push_pop.clear();
     needLookFromEyes = 0.0f;
+}
+
+// FUNCTION: GAME 0x5ed120
+void G_Camera::GameDone()
+{
+    while (push_pop.size())
+        PopMode(false);
+}
+
+// FUNCTION: GAME 0x5ed150
+void G_Camera::SetCamera(I3D_camera *cam)
+{
+    End();
+    camera = cam;
+    Begin();
+}
+
+// FUNCTION: GAME 0x5ed170
+void G_Camera::SetPlayer(C_human *human)
+{
+    End();
+    player = human;
+    Begin();
+}
+
+// The profile's camera where PS2's takes CAMERA_P_BEHIND
+// FUNCTION: GAME 0x5ed1e0
+void G_Camera::Link(I3D_frame *frm)
+{
+    link = frm;
+    if (link)
+        SetMode(CAMERA_C_RAILWAY_IN, true);
+    else
+        SetMode(mafiaLoadSave.settings.camera, true);
+}
+
+// PS2's without its test of a lock (0xa5) at the start and the car camera it sets again after Begin, for the car of
+// the mission's player in a state of its own
+// FUNCTION: GAME 0x5ed400
+void G_Camera::SetMode(uint m, bool begin)
+{
+    if (m == CAMERA_NEXT && !unknown_14)
+        return;
+    if (begin)
+        End();
+    if (m == CAMERA_NEXT)
+        m = unknown_14;
+    if (m >= CAMERA_C_FIRST && m < CAMERA_C_END)
+        mafiaLoadSave.settings.unknown_34 = m;
+    if (m >= CAMERA_P_FIRST && m < CAMERA_P_END)
+        mafiaLoadSave.settings.camera = m;
+    mode = m;
+    if (begin)
+        Begin();
 }
 
 // The camera's frame, by its mode (the cameras' numbers, S_camera_params::id): PS2's cases in PS2's order. The car
@@ -959,6 +1022,125 @@ void G_Camera::WantPos(const S_vector &target, const S_vector &pos, const S_vect
     oldDist = dist;
 }
 
+// PS2's cases in PS2's order, two of them (C Over, C In) as PS2's; "C Chase" places the camera between the first two
+// wheels where PS2's in-cockpit case does, without PS2's test, and the death camera links the camera to the scene
+// without PS2's test for a wall behind it. The two cases on another frame are each written out, as PS2 has them.
+// Open: the original shares the LinkTo of the cases on another frame with the default's (the case loads link and
+// jumps into it), where ours schedules the camera's load first and keeps them apart; the sniper's and the death
+// camera's scratch registers come one later in the rotation (eax for edx), and "C Chase"'s sum adds x the other way.
+// FUNCTION: GAME 0x5f2ea0
+void G_Camera::Begin()
+{
+    if (!camera)
+        return;
+    unknown_14 = 0;
+    int i;
+    for (i = 0; i < NUM_CAMERAS; i++)
+    {
+        if (cameraParams[i].id == mode)
+        {
+            params = cameraParams[i].values;
+            flags = cameraParams[i].flags;
+            unknown_22 = (flags & CAMPF_UNKNOWN_1) != 0;
+            unknown_14 = cameraParams[i].next;
+            if (car && car->frame)
+            {
+                car->frame->SetOn(!(flags & CAMPF_UNKNOWN_2));
+                car->unknown_2119 = (flags & CAMPF_UNKNOWN_2) != 0;
+            }
+            if (!(flags & CAMPF_EYES))
+            {
+                if (player && player->GetType() == ACTOR_PLAYER)
+                    ((C_player *)player)->FadeReset();
+                needLookFromEyes = 0.0f;
+            }
+            break;
+        }
+    }
+    if (i >= NUM_CAMERAS)
+    {
+        if (player && player->GetType() == ACTOR_PLAYER)
+            ((C_player *)player)->FadeReset();
+        needLookFromEyes = 0.0f;
+    }
+    switch (mode)
+    {
+    case CAMERA_C_OVER:
+        if (car)
+        {
+            camera->LinkTo(car->frame, 0);
+            camera->SetPos(car->GetWheelCamPos(0, S_vector(0.5f, 0.0f, -1.0f)));
+            camera->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        }
+        break;
+    case CAMERA_C_IN:
+        if (car)
+        {
+            camera->LinkTo(car->frame, 0);
+            camera->SetPos(car->GetHeadPos());
+            camera->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        }
+        rotInAct = 0.0f;
+        break;
+    case CAMERA_C_CHASE:
+        if (car)
+        {
+            camera->LinkTo(car->frame, 0);
+            camera->SetPos((car->GetWheelCamPos(0, S_vector(0.0f, 0.0f, 0.0f)) +
+                car->GetWheelCamPos(1, S_vector(0.0f, 0.0f, 0.0f))) * 0.5f + S_vector(0.0f, 0.2f, 0.0f));
+            camera->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        }
+        break;
+    case CAMERA_C_RAILWAY_IN:
+        camera->LinkTo(link, I3DLINK_UPDMATRIX);
+        break;
+    case CAMERA_P_BEHIND_23:
+        camera->LinkTo(link, I3DLINK_UPDMATRIX);
+        break;
+    case CAMERA_CP_SNIPER:
+        mafiaIndicators.unknown_40a4 &= ~INDF_UNKNOWN_20;
+        mafiaIndicators.unknown_40a4 |= INDF_UNKNOWN_20000;
+        break;
+    case CAMERA_DEATH:
+        cameraInDeath = camera->GetWorldPos();
+        interpInDeath = -1.0f;
+        destInDeath = cameraInDeath + camera->GetWorldDir();
+        camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
+        break;
+    default:
+        camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
+    }
+    camera->Update();
+    mode_changed = true;
+}
+
+// PS2's without its car's frame test (and an empty loop PS2 has at the start)
+// FUNCTION: GAME 0x5f3450
+void G_Camera::End()
+{
+    if (!camera)
+        return;
+    switch (mode)
+    {
+    case CAMERA_CP_SNIPER:
+        mafiaIndicators.unknown_40a4 &= ~INDF_UNKNOWN_20000;
+        mafiaIndicators.unknown_40a4 |= INDF_UNKNOWN_20;
+        break;
+    case CAMERA_C_RAILWAY_IN:
+        camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
+        break;
+    case CAMERA_P_BEHIND_23:
+        camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
+        break;
+    }
+    camera->Update();
+    if (car)
+    {
+        car->frame->SetOn(true);
+        car->unknown_2119 = false;
+    }
+}
+
 // The mouse's free look (PS2 name): turns the camera by the mouse's movement (PS2's 800 steps of pi / 500 per unit),
 // times the profile's sensitivity and inverted with it (PS2 has neither), up and down to just short of straight.
 // VC6's choices it hangs on: dy as an if/else (a ?: of the two factors loads the factor first, and keeps dy
@@ -1065,4 +1247,43 @@ void G_Camera::FreeLookBase(float x, float y, S_vector &dir, S_vector &up, S_vec
     camera->SetDir1(d, u);
     camera->Update();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f3fd0
+void G_Camera::SetCutscene(bool on)
+{
+    StubLog("G_Camera::SetCutscene");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5f4220
+void G_Camera::PopMode(bool clear)
+{
+    if (!push_pop.size())
+        return;
+    SetMode(push_pop.back().mode, true);
+    if (camera)
+    {
+        camera->SetFOV(push_pop.back().fov);
+        camera->SetRange(push_pop.back().ncp, push_pop.back().fcp);
+        camera->Update();
+    }
+    if (clear)
+        mode_changed = false;
+    push_pop.pop_back();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f4ab0
+void G_Camera::SetSniperMode(bool on)
+{
+    StubLog("G_Camera::SetSniperMode");
+}
+
+#pragma auto_inline(on)
+
+
 

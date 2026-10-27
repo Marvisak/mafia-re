@@ -2,6 +2,7 @@
 // destructor, docs/game-files.md). Written so far: the node's and the path's destructors, which C_mission::UnInit
 // runs, and the three empty virtual functions; the other virtual functions, which the path's vtable needs, and
 // LoadNodes, which C_mission::Open calls, are stubs.
+// Also written: DeRiciConns, which C_game::Init calls.
 // PS2's file has more (the pathfinding's help memory, AllocHelpMem and FreeHelpMem); the PC's functions are PS2's in
 // PS2's order, as far as they are there.
 
@@ -39,8 +40,7 @@ void C_web_path::DeleteNode(uint)
 
 #pragma auto_inline(on)
 
-// Empty, as PS2's: the vtable's entry is the linker's folded empty function
-// FUNCTION: GAME 0x4aabe0 FOLDED
+// Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)
 void C_web_path::DrawConnections()
 {
 }
@@ -120,6 +120,18 @@ void C_web_path::SortNodesByX()
 }
 
 #pragma auto_inline(on)
+
+// Clears two flags of the nodes and their connections, from the last node, as PS2's
+// FUNCTION: GAME 0x54cd20
+void C_web_path::DeRiciConns()
+{
+    for (int i = unknown_c; i--;)
+    {
+        nodes[i].unknown_c &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
+        for (int j = nodes[i].num_conns; j--;)
+            nodes[i].conns[j].unknown_2 &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
+    }
+}
 
 // Empty, as PS2's: the vtable's entry is a folded copy
 // FUNCTION: GAME 0x46ca70 FOLDED
