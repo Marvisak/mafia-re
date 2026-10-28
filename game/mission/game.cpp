@@ -349,12 +349,12 @@ bool C_game::Init()
     console_1.y = .89f;
     console_1.sx = .035f;
     console_1.sy = .028f;
-    console_1.unknown_38 = true;
-    console_1.unknown_39 = false;
-    console_1.unknown_3a = false;
+    console_1.upwards = true;
+    console_1.right_aligned = false;
+    console_1.reversed = false;
     console_1.lines = 20;
     console_1.time = 10000;
-    ConsoleReg(&console_1, 2);
+    ConsoleReg(&console_1, CONREG_RENDER);
     console_2.Clear();
     console_2.r = 0x80;
     console_2.g = 0xff;
@@ -363,11 +363,11 @@ bool C_game::Init()
     console_2.y = .45f;
     console_2.sx = .038f;
     console_2.sy = .028f;
-    console_2.unknown_38 = false;
-    console_2.unknown_39 = false;
-    console_2.unknown_3a = false;
+    console_2.upwards = false;
+    console_2.right_aligned = false;
+    console_2.reversed = false;
     console_2.lines = 20;
-    ConsoleReg(&console_2, 3);
+    ConsoleReg(&console_2, CONREG_CLEAR | CONREG_RENDER);
     AIManager.segments.Load();
     ff_manager.unknown_74 = false;
     if (unknown_363c)

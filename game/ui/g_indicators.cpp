@@ -4,8 +4,8 @@
 // C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear, ConsoleClear, RadarClear), MapEnable,
 // WideScreenSetRatio, SetUnknown4484, RadarRemoveCar, RaceSetStartFlag, BonusSetCount, ResolutionChanged (with the
 // dials' vertex helpers), TextSize, OutText, the menus' cursor and the camera's field of view; the rest of what main,
-// the profiles, the game and the cutscene call is stubs (SetUnknownTexture, RadarAddCar, the radar's edges,
-// ParheliaSetCenter).
+// the scene's callback, the profiles, the game and the cutscene call is stubs (SetUnknownTexture, RadarAddCar, the
+// radar's edges, DrawAll, ParheliaSetCenter).
 
 #include "ui/g_indicators.h"
 #include "mission/Mission.h"
@@ -773,6 +773,22 @@ void G_IndicatorsClass::BonusSetCount(int count)
     else
         bonus_text[0] = 0;
 }
+
+#pragma auto_inline(off)
+
+// 0x64ca bytes. The stub logs its first call only, as the scene's callback calls it every frame.
+// STUB: GAME 0x5fb060
+void G_IndicatorsClass::DrawAll()
+{
+    static bool logged = false;
+    if (!logged)
+    {
+        StubLog("G_IndicatorsClass::DrawAll");
+        logged = true;
+    }
+}
+
+#pragma auto_inline(on)
 
 // A quad's two triangles: the rectangle at pos, of size, and its texture's coordinates (PC only, the name is ours)
 inline void SetRectVertices(const S_vector2 &pos, const S_vector2 &size, float u0, float v0, float u1, float v1,

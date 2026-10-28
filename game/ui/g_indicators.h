@@ -290,6 +290,8 @@ public:
     void SetUnknownTexture(const char *name, bool unknown, bool reload);
     // The bonus the HUD shows, BONUS_NONE for none
     void BonusSetCount(int count);
+    // Draws the HUD over the frame (PS2 name), which the scene's callback does after each frame
+    void DrawAll();
     // PS2 names, what C_game's Init and Done call (PS2's GameDone takes a bool). GameInit loads the dials' textures for
     // the game's day or night, GameDone frees what the game used.
     void GameInit();

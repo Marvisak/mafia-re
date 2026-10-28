@@ -1,7 +1,7 @@
 // The game's start and its main loop: PS2's Main.cpp (main, InitSystem, CloseSystem, GameLoopSingle,
 // InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem,
-// InitErrorMessageBox, CloseSystem and SetWBuffer, and the PC's InitJoy, CloseJoy and GraphErrorHandler; SceneCallback
-// and GameLoopSingle are stubs.
+// InitErrorMessageBox, CloseSystem, SetWBuffer and cbScene, and the PC's InitJoy, CloseJoy and GraphErrorHandler;
+// GameLoopSingle is a stub.
 // Open: the engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
 // the original's files don't have (docs/game-files.md). The .bss names: PS2's isound, driver and the caches' don't give
 // the original's order (driver, isound, igraph, setting), so at least those had other names on the PC.
@@ -25,6 +25,7 @@
 #include "mission/C_program.h"
 #include "input/controls.h"
 #include "ui/console.h"
+#include "g_lines.h"
 #include "tools.h"
 
 #include <settings_registry.h>
@@ -195,21 +196,29 @@ void CloseJoy()
     }
 }
 
-#pragma auto_inline(off)
-
-// The scene's callback (PC only, the name is ours), after the scene and after the whole frame: at the end of the frame
-// it draws the HUD and the active menu (0x6bd890) over it. The stub logs its first call only.
-// STUB: GAME 0x5bd8d0
-uint __stdcall SceneCallback(SCN_CALLBACK_MESSAGE message, uint param1, uint param2)
+// The scene's callback (PS2 name), which InitSystem asks for after the scene and after the whole frame. After the frame
+// it draws over it, in PS2's order but for PS2's inventory and LSI setup: the frame's lines, the HUD, the active menu
+// and the consoles. After the scene it does nothing, as PS2's: the empty case shares the default's code.
+// FUNCTION: GAME 0x5bd8d0
+uint __stdcall cbScene(SCN_CALLBACK_MESSAGE message, uint param1, uint param2)
 {
-    static bool logged = false;
-    if (!logged)
+    switch (message)
     {
-        StubLog("SceneCallback");
-        logged = true;
+    case SCN_CALLBACK_POST_RENDER:
+        DrawLines();
+        ClearLines();
+        mafiaIndicators.DrawAll();
+        if (GM_Menu::activeMenuWindow)
+            GM_Menu::activeMenuWindow->Draw(MENUDRAW_ALL);
+        ConsoleRender();
+        break;
+    case SCN_CALLBACK_POST_SCENE:
+        break;
     }
     return 0;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5be750
 void GameLoopSingle()
@@ -746,7 +755,7 @@ static bool InitSystem(void *hinstance, bool &fatal)
     igraph->SetState(DXS_ALPHAREF, 200);
     driver->SetState(RS_TEXTURELOWDETAIL, setting.texture_low_detail);
     act_mission->Init(driver);
-    act_mission->scene->SetCallback(SceneCallback, 1 << SCN_CALLBACK_POST_SCENE | 1 << SCN_CALLBACK_POST_RENDER);
+    act_mission->scene->SetCallback(cbScene, 1 << SCN_CALLBACK_POST_SCENE | 1 << SCN_CALLBACK_POST_RENDER);
     igraph->KeyboardInit(KBINIT_EXCLUSIVE);
     igraph->MouseInit(MOUSEMODE_EXCLUSIVE);
     ShowCursor(FALSE);

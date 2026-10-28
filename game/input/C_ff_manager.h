@@ -50,4 +50,4 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?HideLegs@C_human@@SIXPAVI3D_model@@_N@Z
+// ?Close@C_ff_manager@@QAEXXZ
