@@ -7,6 +7,7 @@
 #include "I3D/I3D.h"
 
 class C_chunk;
+class C_cutscene_records;
 
 // The actors' types (C_actor::type), which the mission's scene2.bin gives each actor and C_mission::CreateActor creates
 // a class for (the names are ours, after the classes; PS2's are the same values but for the three PC only classes)
@@ -160,7 +161,8 @@ public:
     }
 
     int unknown_4;                      // 0x4, flags: ACTF_*
-    int unknown_8;                      // 0x8, 0 from the constructor's body
+    // 0x8, what a cutscene keeps for the actor (C_cutscene::vfunc_5's), 0 from the constructor's body
+    C_cutscene_records *unknown_8;
     ushort ref;                         // 0xc, Release's references, 1 at first (the name is ours)
     int type;                           // 0x10, ACTOR_*, ACTOR_ACTOR from the constructor
     int unknown_14;                     // 0x14, 1 at first

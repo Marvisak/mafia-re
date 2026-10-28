@@ -32,17 +32,57 @@ public:
     int unknown_c;                      // 0xc, 0x100 from the constructor
 };
 
-// The cutscene's object at 0x90 (the names are ours), 0x24 bytes: a vector of 0x58-byte elements at 0x4, each with an
-// actor at 0x50, and one of 0x28-byte elements at 0x14. Its constructor (0x59cf70) isn't written yet.
+// What C_cutscene::vfunc_5 creates for an actor of a cutscene (the names are ours), 0x5c bytes: the actor holds it
+// (C_actor::unknown_8), and so does its entry in the object at 0x90. Records in blocks of 0x1800 bytes (0x5c2700)
+// that end in 0xeeeeeeee, each a dword the walks compare with unknown_14, its type and as many bytes as unknown_44
+// gives for the type; C_actor's vfunc_10 and vfunc_11 walk them. Its name is the actor type's prefix and a count
+// ("act%d", "hum%d", "car%d", ...). Its functions are in the range of the file at 0x5c25b0-0x5c283c, with C_actor's
+// vfunc_6, vfunc_7, vfunc_8, vfunc_10 and vfunc_11.
+class C_cutscene_records
+{
+public:
+    // Drops the records (unknown_18), nothing for NULL (the name is ours)
+    void Reset();
+
+    uchar unknown_0[0x14];              // 0x0
+    int unknown_14;                     // 0x14, -666 from vfunc_5
+    uchar *unknown_18;                  // 0x18, the first block
+    int unknown_1c;                     // 0x1c
+    char name[0x24];                    // 0x20
+    int unknown_44[4];                  // 0x44, the records' sizes by type: 8, then vfunc_5's first three arguments
+    uchar unknown_54[8];                // 0x54
+};
+
+// An actor of the cutscene's object at 0x90 (the names are ours), 0x58 bytes
+struct S_cutscene_actor
+{
+    int unknown_0;                      // 0x0, while 0 the records are reset where the entry lets them go
+    int unknown_4;                      // 0x4
+    char unknown_8[0x24];               // 0x8
+    char unknown_2c[0x24];              // 0x2c
+    C_actor *actor;                     // 0x50
+    C_cutscene_records *records;        // 0x54, the actor's (C_actor::unknown_8)
+};
+
+// The elements of the vector at 0x14 of the cutscene's object at 0x90 (the name is ours), 0x28 bytes
+struct S_cutscene_unknown_28
+{
+    uchar unknown_0[0x28];
+};
+
+// The cutscene's object at 0x90 (the names are ours), 0x24 bytes. Its constructor (0x59cf70) isn't written yet.
 class C_cutscene_unknown_90
 {
 public:
-    // Takes the actor's element out of the first vector, with the flag releasing what it holds first
+    // Takes the actor's entry out of the vector of actors; with the flag it also resets its records (unless
+    // unknown_0 is set) and takes them from the entry and from the actor
     void RemoveActor(C_actor *actor, bool unknown);
     // Releases the first vector's elements and empties it, then calls 0x59d350
     void Clear();
 
-    uchar unknown_0[0x24];
+    int unknown_0;                      // 0x0, 0 from the constructor
+    std::vector<S_cutscene_actor> actors;   // 0x4
+    std::vector<S_cutscene_unknown_28> unknown_14;  // 0x14
 };
 
 // The in-engine cutscenes (PC only, the names are ours: PS2 plays its cutscenes as videos, C_vid, which its
@@ -63,8 +103,9 @@ public:
     virtual void vfunc_2(int unknown);
     virtual int GetUnknown11c();
     virtual int GetUnknown120();
-    // Creates an object of 0x5c bytes or of another class by the first argument, NULL for an unknown one
-    virtual void *vfunc_5(int type, int a, int b, int c);
+    // Creates an actor's records (C_cutscene_records), their sizes of types 1 to 3 from the first three arguments,
+    // named by the actor type
+    virtual void *vfunc_5(int a, int b, int c, int type);
     // Clears a 0x20-byte struct, its member at 0x14 to -666
     virtual void vfunc_6(void *p);
     virtual void vfunc_7(int unknown);

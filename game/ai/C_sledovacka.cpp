@@ -15,8 +15,7 @@ C_sledovacka::C_sledovacka() :
 {
 }
 
-// The linker kept another file's copy of the same code (two vectors' destructors), in the force feedback's range
-// FUNCTION: GAME 0x444670 FOLDED
+// The same code as the force feedback's destructor, whose copy the linker kept (0x444670): the marker is that one's
 C_sledovacka::~C_sledovacka()
 {
 }

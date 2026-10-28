@@ -387,12 +387,12 @@ extern std::vector<C_ParticleEmitter *> particle_emitters;
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_item@@UAEPAXI@Z
+// ??_EC_effect_subpart@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
 // SYNTHETIC: GAME 0x44beb0
-// ??1C_effect_item@@UAE@XZ
+// ??1C_effect_subpart@@UAE@XZ
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -407,7 +407,7 @@ extern std::vector<C_ParticleEmitter *> particle_emitters;
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_sound_table@C_sound_table@@V?$allocator@US_sound_table@C_sound_table@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
@@ -416,7 +416,7 @@ extern std::vector<C_ParticleEmitter *> particle_emitters;
 // ?insert@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAEPAPAVC_effect_part@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QAE@ABV?$allocator@US_vector@@@1@@Z
+// ??0?$vector@Uai_anim_item@@V?$allocator@Uai_anim_item@@@std@@@std@@QAE@ABV?$allocator@Uai_anim_item@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)
