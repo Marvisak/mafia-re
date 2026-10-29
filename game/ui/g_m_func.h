@@ -34,7 +34,8 @@ public:
     virtual int OnCreate();
     virtual int OnKey(uchar key, uint) { return 0; }
     virtual int OnClick(uint id);
-    virtual int OnChange(GM_Component *, GM_Component *);
+    // The camera to the frame of the item that became active
+    virtual int OnChange(GM_Component *active, GM_Component *);
 };
 
 // A message with an OK button, "messagebox" (PC only: PS2's GM_QuestionBox is this one or the question by a flag, the

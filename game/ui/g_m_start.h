@@ -2,14 +2,15 @@
 
 #include "ui/g_menu.h"
 
-// What ExecuteMenu returns for the profile menu when the player quits the game there (G_LoadSaveClass::Init; the name
-// is ours)
-#define PROFILESELECT_QUIT 0xf
+// What ExecuteMenu returns for the profile menu (G_LoadSaveClass::Init; the names are ours)
+#define PROFILESELECT_QUIT 0xf          // the player quits the game
+#define PROFILESELECT_CHOSEN 0x10       // the player chose a profile
 
 // The profiles' menu's items, tables\menu\profileselect.mnu (the names are ours)
 #define PROFILESELECT_WINDOW 3          // "Player Profile:"
 #define PROFILESELECT_LIST 0xa          // the frame around the profiles
 #define PROFILESELECT_PROFILE 0x64      // the first profile, "< none >" without one; OnCreate adds the others after it
+#define PROFILESELECT_PROFILE_END 0xc8  // past the profiles' ids
 #define PROFILESELECT_CREATE 0xc9       // "Create New Profile"
 #define PROFILESELECT_DELETE 0xca       // "Delete Profile"
 #define PROFILESELECT_QUIT_GAME 0xcb    // "Quit Game"

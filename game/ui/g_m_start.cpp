@@ -1,6 +1,7 @@
 // The profiles' menu (PS2 g_m_start.cpp, where PS2's GM_ProfileSelect, GM_ProfileCreate and GM_ProfileDelete are; the
 // PC's file is the one at 0x5e84c0-0x5e8d0c, docs/game-files.md). Written so far: OnCreate, which GM_Menu::Create
-// calls when G_LoadSaveClass::Init runs the menu, and OnTick, which GM_Menu::Tick calls; the rest is stubs.
+// calls when G_LoadSaveClass::Init runs the menu, OnTick, which GM_Menu::Tick calls, and OnClick, the items' clicks;
+// the rest is stubs.
 
 #include "ui/g_m_start.h"
 
@@ -41,7 +42,7 @@ int GM_ProfileSelect::OnCreate()
         if (window)
         {
             window->sy += height;
-            window->y -= height * .5f;
+            window->rel_y -= height * .5f;
         }
         if (profiles->size() <= 1)
             SetDisabled(PROFILESELECT_DELETE, false);
@@ -95,14 +96,35 @@ int GM_ProfileSelect::OnTick(uint time)
     return 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e88d0
+// A profile's item makes it the profile and ends the menu, also for "< none >"; the two dialogs open over the menu, the
+// deletion only with more than one profile. PS2's reads the memory card's profile it chose.
+// FUNCTION: GAME 0x5e88d0
 int GM_ProfileSelect::OnClick(uint id)
 {
-    StubLog("GM_ProfileSelect::OnClick");
+    switch (id)
+    {
+    case PROFILESELECT_CREATE:
+        MenuOpen(new GM_ProfileCreate(new_name), PROFILESELECT_CREATE);
+        break;
+    case PROFILESELECT_DELETE:
+        if (mafiaLoadSave.ProfileGetList()->size() > 1)
+            MenuOpen(new GM_ProfileDelete, PROFILESELECT_DELETE);
+        break;
+    case PROFILESELECT_QUIT_GAME:
+        MenuCloseAll((uint)-1, PROFILESELECT_QUIT);
+        break;
+    default:
+        if (id >= PROFILESELECT_PROFILE && id < PROFILESELECT_PROFILE_END)
+        {
+            if (id - PROFILESELECT_PROFILE < mafiaLoadSave.ProfileGetList()->size())
+                mafiaLoadSave.ProfileSelect(id - PROFILESELECT_PROFILE);
+            MenuCloseAll((uint)-1, PROFILESELECT_CHOSEN);
+        }
+    }
     return 0;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5e8a40
 int GM_ProfileCreate::OnCreate()

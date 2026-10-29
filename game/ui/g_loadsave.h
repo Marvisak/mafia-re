@@ -96,7 +96,7 @@ struct G_Profile_FileHead
     uint number;                        // 0x8, the file's
     uint unknown_c;                     // 0xc, 0 when saved
     uchar name[0x34];                   // 0x10, the player's, which the profiles' menu shows
-    uint unknown_44;                    // 0x44, G_LoadSaveClass::unknown_1f0 when saved
+    uint freeride_enabled;              // 0x44, G_LoadSaveClass::freeride_enabled
     uint unknown_48;                    // 0x48, G_LoadSaveClass::unknown_9c
     uint unknown_4c;                    // 0x4c, 0 when saved
     uint race_cars;                     // 0x50, G_LoadSaveClass::race_cars
@@ -168,6 +168,13 @@ struct S_freeride
     bool unknown_18;                    // 0x18, cleared by SaveGameNewGame
 };
 
+// G_LoadSaveClass::freeride_enabled, how much of the free ride is open (the names are ours, after the texts of the
+// locations it opens): the small city only, then the city by day and night, then the countryside too; above that also
+// the main menu's Free Ride Extreme
+#define FREERIDE_SMALL_CITY 0
+#define FREERIDE_CITY 1
+#define FREERIDE_COUNTRYSIDE 2
+
 // The keys G_Stream's encryption starts with (the names are ours): two dates, 23.10.1976 and 10.7.2002
 #define STREAM_KEY1 0x23101976
 #define STREAM_KEY2 0x10072002
@@ -235,7 +242,9 @@ public:
     // 0x1e8, cleared by SaveGameNewGame: a car GarageGameDone adds to the garage with unknown_1cc or unknown_1cd set
     C_car *unknown_1e8;
     uint unknown_1ec;
-    uint unknown_1f0;                   // 0x1f0
+    // 0x1f0, how much of the free ride is open (FREERIDE_*; the name is ours): PS2's FreerideEnable sets it (the PC's
+    // 0x60e910), the profile keeps it
+    uint freeride_enabled;
     S_control bindings[NUM_CONTROLS];   // 0x1f4, the profile's controls, which ApplyControls hands to the controls
     S_profile_settings settings;        // 0x4c4
     uchar unknown_520[0x9c];            // 0x520, which ProfileSave writes last (PS2's 0x2fc, as AllDefault clears it)
@@ -262,6 +271,8 @@ public:
     void ProfileEnumRelease();
     // The list ProfileEnumFiles read (PS2 name)
     std::vector<G_Profile_FileHead> *ProfileGetList();
+    // The list's profile of that index becomes the profile, which ProfileLoad then reads (PS2 name)
+    void ProfileSelect(uint index);
     // Reads the profile's file, which profile.number names, or takes the defaults
     void ProfileLoad();
     // Writes the profile's file

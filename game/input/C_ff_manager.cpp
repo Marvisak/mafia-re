@@ -14,8 +14,8 @@ C_ff_manager::C_ff_manager()
     unknown_24.Reset(1000);
 }
 
-// The same code as C_sledovacka's destructor (two vectors' destructors): the linker kept this file's copy
-// FUNCTION: GAME 0x444670
+// The same code as C_sledovacka's destructor (two vectors' destructors): the linker kept this file's copy, ours keeps
+// either, so the marker is by name (C_ff_manager.h)
 C_ff_manager::~C_ff_manager()
 {
 }

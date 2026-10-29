@@ -1,13 +1,15 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
-// ExecuteMenu runs as far as the components (the constructor, the destructor and the resources, Create,
-// CreateCompsByDef, Destroy, Draw, Tick with MenuClose and the activation's searches), MenuOpen, SetCameraTargetID,
-// the wrappers by id the loading screen and the profiles' menu call, and PridejComponentPod; the components,
-// TickCamera and the rest are stubs.
+// ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
+// with MenuClose and the activation's searches), MenuOpen, MenuCloseAll, SetCameraTargetID, the wrappers by id the
+// loading screen and the profiles' menu call, PridejComponentPod, and of the components what the classes written so far
+// use (the two drawing functions, the constructors, the children's insertion and SetTextID); TickCamera and the rest
+// are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
 #include "ui/g_indicators.h"
 #include "ui/g_loadsave.h"
+#include "ui/g_textdb.h"
 #include "input/controls.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -40,6 +42,8 @@ int GM_Menu::zz_globalReturnCode = 0;
 uint GM_Menu::zz_blinkTime = 0;
 // GLOBAL: GAME 0x6bd8b0
 G_FactoryItem *G_GlobalFactory::first = NULL;
+// PS2's, next to first; nothing reads it, so the original's place isn't known
+G_GlobalFactory globalFactory;
 // GLOBAL: GAME 0x6bd8b4
 int GM_Menu::menuCount = 0;
 // GLOBAL: GAME 0x6bd8b8
@@ -130,6 +134,87 @@ int GM_Menu::OnKey(uchar key, uint)
 }
 
 #pragma auto_inline(on)
+
+// A line strip around it, from the top left
+// FUNCTION: GAME 0x5e8e00
+void Rectangle(float x, float y, float sx, float sy, uint color)
+{
+    TLVERTEX verts[5];
+    verts[0].x = x;
+    verts[0].y = y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = color;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx;
+    verts[1].y = y;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = color;
+    verts[1].u = 0.0f;
+    verts[1].v = 0.0f;
+    verts[2].x = x + sx;
+    verts[2].y = y + sy;
+    verts[2].z = 0.0f;
+    verts[2].rhw = 1.0f;
+    verts[2].color = color;
+    verts[2].u = 0.0f;
+    verts[2].v = 0.0f;
+    verts[3].x = x;
+    verts[3].y = y + sy;
+    verts[3].z = 0.0f;
+    verts[3].rhw = 1.0f;
+    verts[3].color = color;
+    verts[3].u = 0.0f;
+    verts[3].v = 0.0f;
+    verts[4].x = x;
+    verts[4].y = y;
+    verts[4].z = 0.0f;
+    verts[4].rhw = 1.0f;
+    verts[4].color = color;
+    verts[4].u = 0.0f;
+    verts[4].v = 0.0f;
+    igraph->SetTexture(NULL);
+    igraph->DrawPrimitiveList(PT_LINESTRIP, 4, verts, LS3D_STREAM_TLVERTEX);
+}
+
+// Two triangles, the whole texture over the rectangle
+// FUNCTION: GAME 0x5e8f60
+void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture)
+{
+    TLVERTEX verts[4];
+    verts[0].x = x;
+    verts[0].y = y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = color;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx;
+    verts[1].y = y;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = color;
+    verts[1].u = 1.0f;
+    verts[1].v = 0.0f;
+    verts[2].x = x;
+    verts[2].y = y + sy;
+    verts[2].z = 0.0f;
+    verts[2].rhw = 1.0f;
+    verts[2].color = color;
+    verts[2].u = 0.0f;
+    verts[2].v = 1.0f;
+    verts[3].x = x + sx;
+    verts[3].y = y + sy;
+    verts[3].z = 0.0f;
+    verts[3].rhw = 1.0f;
+    verts[3].color = color;
+    verts[3].u = 1.0f;
+    verts[3].v = 1.0f;
+    igraph->SetTexture(texture);
+    igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
+}
 
 // FUNCTION: GAME 0x5e98a0
 void SetViewport(int x, int y, int sx, int sy)
@@ -233,6 +318,44 @@ void GM_Menu::UnloadResources()
     }
 }
 
+// FUNCTION: GAME 0x5e9be0
+GM_Component::GM_Component(GM_DesignStruct *design, GM_Component *parent)
+{
+    id = design->id;
+    flags = design->flags;
+    x = rel_x = design->x * GM_Menu::menuScreenScale.x;
+    y = rel_y = design->y * GM_Menu::menuScreenScale.y;
+    sx = design->sx * GM_Menu::menuScreenScale.x;
+    sy = design->sy * GM_Menu::menuScreenScale.y;
+    text_id = design->text_id;
+    if (text_id)
+        text = (uchar *)textDatabase.GetText(text_id);
+    else
+        text = NULL;
+    this->parent = parent;
+    if (this->parent)
+        this->parent->InsertComponent(this);
+}
+
+// The copy isn't active
+// FUNCTION: GAME 0x5e9cb0
+GM_Component::GM_Component(GM_Component *component)
+{
+    id = component->id + 1;
+    flags = component->flags & ~COMPF_ACTIVE;
+    text_id = component->text_id;
+    text = component->text;
+    x = component->x;
+    y = component->y;
+    sx = component->sx;
+    sy = component->sy;
+    rel_x = component->rel_x;
+    rel_y = component->rel_y;
+    parent = component->parent;
+    if (parent)
+        parent->InsertComponentAfter(this, component);
+}
+
 // FUNCTION: GAME 0x5e9d60
 void GM_Component::BaseDraw(uint draw_flags)
 {
@@ -268,6 +391,35 @@ GM_Component *GM_Component::FindComponentAt(float x, float y)
             return this;
     }
     return NULL;
+}
+
+// FUNCTION: GAME 0x5e9e50
+void GM_Component::InsertComponent(GM_Component *component)
+{
+    children.push_back(component);
+}
+
+// FUNCTION: GAME 0x5ea000
+void GM_Component::InsertComponentAfter(GM_Component *component, GM_Component *after)
+{
+    std::vector<GM_Component *>::iterator it;
+    for (it = children.begin(); it < children.end(); it++)
+        if (*it == after)
+        {
+            it++;
+            break;
+        }
+    children.insert(it, component);
+}
+
+// FUNCTION: GAME 0x5ea1c0
+void GM_Component::SetTextID(uint id)
+{
+    text_id = id;
+    if (id)
+        text = (uchar *)textDatabase.GetText(id);
+    else
+        text = NULL;
 }
 
 // PS2's loads the resources in ExecuteMenu
@@ -366,7 +518,7 @@ void GM_Menu::CreateCompsByDef(const char *name)
         {
             root = component;
             parent = component;
-            component->x += levyOkraj.x;
+            component->rel_x += levyOkraj.x;
         }
         if (component->CanBeParent())
             parent = component;
@@ -548,6 +700,16 @@ void GM_Menu::MenuClose(uint code)
     close_code = code;
     closing = true;
     OnClose();
+}
+
+// PS2's closes the parents through itself
+// FUNCTION: GAME 0x5eae40
+void GM_Menu::MenuCloseAll(uint code, uint result)
+{
+    MenuClose(code);
+    for (GM_Menu *menu = parent; menu; menu = menu->parent)
+        menu->MenuClose((uint)-1);
+    zz_globalReturnCode = result;
 }
 
 // FUNCTION: GAME 0x5eaed0
@@ -749,7 +911,7 @@ void GM_Menu::PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_i
     if (!dup)
         return;
     components.push_back(dup);
-    dup->y = src->y + src->sy;
+    dup->rel_y = src->rel_y + src->sy;
     dup->id = new_id;
     dup->AfterMove(0);
     if (grow_id)
@@ -762,19 +924,19 @@ void GM_Menu::PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_i
     {
         component = FindComponentByID(move_id1);
         if (component)
-            component->y += dup->sy;
+            component->rel_y += dup->sy;
     }
     if (move_id2)
     {
         component = FindComponentByID(move_id2);
         if (component)
-            component->y += dup->sy;
+            component->rel_y += dup->sy;
     }
     if (move_id3)
     {
         component = FindComponentByID(move_id3);
         if (component)
-            component->y += dup->sy;
+            component->rel_y += dup->sy;
     }
 }
 

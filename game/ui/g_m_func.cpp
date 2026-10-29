@@ -1,12 +1,14 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
-// docs/game-files.md). OnChange (0x5e4a50) lies in the range of the next file but one. The PC's message box (from
-// 0x5e2170), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main
-// menu's OnBeforeCreate, the message box's OnBeforeCreate and constructor, the loading screen's constructor,
-// OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main,
-// C_mission::Open and the profiles' menu need to link.
+// docs/game-files.md). The original's OnChange is folded into the racing menu's (0x5e4a50, in the next file but one).
+// The PC's message box (from 0x5e2170), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order.
+// Written so far: the main menu's OnBeforeCreate, OnCreate and OnChange, the message box's OnBeforeCreate and
+// constructor, the loading screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present;
+// the rest is stubs of what main, C_mission::Open and the profiles' menu need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
+#include "ui/g_loadsave.h"
+#include "ui/g_m_comps.h"
 #include "ui/g_textdb.h"
 #include "mission/Mission.h"
 
@@ -15,6 +17,23 @@
 #include "IGraph/IGraph.h"
 #include "rw_data.h"
 #include "stub.h"
+
+// The main menu's items, tables\menu\mainmenu.mnu, and mainmenurac.mnu with Racing (the names are ours, after their
+// texts). Decimal, as _GM_MainMenuTargets (g_menu.cpp) gives them: 9901 and the item's number.
+#define MAINMENU_WINDOW 1               // "Main Menu:"
+#define MAINMENU_ITEM_INTRO 990101
+#define MAINMENU_ITEM_TUTORIAL 990102
+#define MAINMENU_ITEM_NEW_GAME 990103
+#define MAINMENU_ITEM_LOAD_GAME 990104
+#define MAINMENU_ITEM_FREE_RIDE 990105
+#define MAINMENU_ITEM_FREE_RIDE_EXTREME 990106
+#define MAINMENU_ITEM_RACING 990107     // mainmenurac's only
+// 990108 is in neither menu, the multiplayer's camera frame's
+#define MAINMENU_ITEM_CARCYCLOPEDIA 990109
+#define MAINMENU_ITEM_OPTIONS 990110
+#define MAINMENU_ITEM_CREDITS 990111
+#define MAINMENU_ITEM_CHANGE_PROFILE 990112
+#define MAINMENU_ITEM_QUIT 990113
 
 // The loading screen's items, tables\menu\loadprogress.mnu (the names are ours)
 #define LOADPROGRESS_SIDE 0x64          // the picture on the left, "loadbok.tga"
@@ -50,17 +69,31 @@ const char *GM_MainMenu::OnBeforeCreate()
         "mainmenu";
 }
 
-#pragma auto_inline(off)
-
-// Ends the main menu with its quit before its first frame, so that a run goes through: without the components the
-// menu has none, GM_Menu::Tick closes it with -1, and main would open it again forever
-// STUB: GAME 0x5e0690
+// The camera at "camera_start", Free Ride Extreme only once the whole free ride is open, the free ride's choices reset
+// and Intro active. PS2's has no free ride here: it enables and activates the items by the memory card's saves and puts
+// a text into item 4.
+// FUNCTION: GAME 0x5e0690
 int GM_MainMenu::OnCreate()
 {
-    StubLog("GM_MainMenu::OnCreate");
-    zz_globalReturnCode = MAINMENU_QUIT;
+    SetCameraTargetID(MENUCAM_START);
+    if (mafiaLoadSave.freeride_enabled <= FREERIDE_COUNTRYSIDE)
+        SetDisabled(MAINMENU_ITEM_FREE_RIDE_EXTREME, false);
+    mafiaLoadSave.FreerideStoreA(1, 0, 1.0f, 1.0f, 1.0f);
+    ActivateByIDOrNext(MAINMENU_ITEM_INTRO);
     return 0;
 }
+
+// The camera goes to the frame of the item that became active. The linker kept the racing menu's identical copy
+// (0x5e4a50, its vtable 0x625264), after its OnClick. PS2's also clears a member the PC's class doesn't have.
+// FUNCTION: GAME 0x5e4a50 FOLDED
+int GM_MainMenu::OnChange(GM_Component *active, GM_Component *)
+{
+    if (active)
+        SetCameraTargetID(active->id);
+    return 0;
+}
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5e06e0
 int GM_MainMenu::OnClick(uint id)
@@ -254,17 +287,6 @@ int GM_GarageEndOfMission::OnClick(uint id)
 void GM_GarageEndOfMission::vfunc_13()
 {
     StubLog("GM_GarageEndOfMission::vfunc_13");
-}
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e4a50
-int GM_MainMenu::OnChange(GM_Component *, GM_Component *)
-{
-    StubLog("GM_MainMenu::OnChange");
-    return 0;
 }
 
 #pragma auto_inline(on)

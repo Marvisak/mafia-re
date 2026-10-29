@@ -49,7 +49,7 @@ bool G_LoadSaveClass::Init()
 {
     unknown_90 = true;
     race_cars = 0;
-    unknown_1f0 = 0;
+    freeride_enabled = FREERIDE_SMALL_CITY;
     unknown_9c = 0;
     unknown_1e8 = 0;
     mafiaLoadSave.AllDefault();
@@ -121,7 +121,7 @@ void G_LoadSaveClass::AllDefault()
     RaceCarsEnable(1);
     mafiaLoadSave.settings.camera = 1;
     mafiaLoadSave.settings.unknown_34 = 7;
-    unknown_1f0 = 0;
+    freeride_enabled = FREERIDE_SMALL_CITY;
     unknown_9c = 0;
     SaveGameNewGame();
 }
@@ -164,6 +164,14 @@ std::vector<G_Profile_FileHead> *G_LoadSaveClass::ProfileGetList()
     return &profiles;
 }
 
+// PS2's also keeps the index and selects the memory card's profile
+// FUNCTION: GAME 0x605570
+void G_LoadSaveClass::ProfileSelect(uint index)
+{
+    if (index < profiles.size())
+        profile = profiles[index];
+}
+
 // The file: the head (the PC's version 1), the controls, the options and unknown_520, and nothing after them; anything
 // else leaves the defaults. Then the sniper mode's binding, the tests taking FindBinding's result as a bool, so that its
 // -1 counts as found: unless the first control shares the binding, it is cleared, or put on R if the first control has
@@ -192,7 +200,7 @@ void G_LoadSaveClass::ProfileLoad()
                     if (!stream.ReadAdr(&end, sizeof(end)))
                     {
                         race_cars = profile.race_cars;
-                        unknown_1f0 = profile.unknown_44;
+                        freeride_enabled = profile.freeride_enabled;
                         unknown_9c = profile.unknown_48;
                         unknown_91 = false;
                         if (FindBinding(CTRL_SNIPER, &bindings[CTRL_SNIPER], false, NUM_CONTROLS))
@@ -223,7 +231,7 @@ void G_LoadSaveClass::ProfileLoad()
 }
 
 // PS2's sets the head before it opens the file, with the time it saves. The order of the head's stores: unknown_4c's
-// before unknown_44's (three other orders give the same code)
+// before freeride_enabled's (three other orders give the same code)
 // FUNCTION: GAME 0x6059f0
 void G_LoadSaveClass::ProfileSave()
 {
@@ -238,7 +246,7 @@ void G_LoadSaveClass::ProfileSave()
         profile.unknown_c = 0;
         profile.race_cars = race_cars;
         profile.unknown_4c = 0;
-        profile.unknown_44 = unknown_1f0;
+        profile.freeride_enabled = freeride_enabled;
         profile.unknown_48 = unknown_9c;
         stream.WriteAdr(&profile, sizeof(profile));
         stream.WriteAdr(bindings, sizeof(bindings));

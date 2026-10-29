@@ -21,11 +21,19 @@ class ITexture;
 #define MENUDRAW_CURSOR 0x10000000      // the cursor's blink: cleared for the second's last 300 ms
 #define MENUDRAW_UNKNOWN_40000000 0x40000000 // cleared for the parent menu
 
+// Tick's buttons, which reach the components' Mouse: the buttons down, those pressed shifted by 4 and those released by
+// 8, IGraph's bits (the names are ours)
+#define MENUMOUSE_LEFT_RELEASED 0x100
+
 // SetCameraTargetID's ids besides those of the main menu's items, which _GM_MainMenuTargets gives a frame each (the
 // names are ours)
 #define MENUCAM_NONE 0                  // the scene's camera where it is
 #define MENUCAM_START ((uint)-1)        // the frame "camera_start", where the main menu opens
 
+// The components' drawing (PS2's, global functions of g_menu.cpp): a rectangle's outline in the color, and the rectangle
+// filled with the texture (none for the color alone) in the color
+void Rectangle(float x, float y, float sx, float sy, uint color);
+void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
 
@@ -40,8 +48,8 @@ struct GM_DesignStruct
     uint flags;                         // 0x1c, the component's (COMPF_*)
 };
 
-// A component's factory (PS2's names; the members' names are ours): PS2's G_Factory<T> is one for each component's class,
-// a global the file's initializer registers
+// A component's factory (PS2's names; the members' names are ours): G_Factory<T> is one for each component's class, a
+// global the file's initializer registers
 struct G_FactoryItem
 {
     // A component of the class, the parent's child
@@ -77,6 +85,32 @@ public:
 
     // The last one registered, the start of the list
     static G_FactoryItem *first;
+};
+
+// What the factories register with (PS2's name): nothing reads it, Register being inline
+extern G_GlobalFactory globalFactory;
+
+// The factory of a component's class (PS2's), a global of the components' files: its constructor registers it with the
+// class's type, which it takes from the class's GetType without an object
+template <class T> class G_Factory : public G_FactoryItem
+{
+public:
+    G_Factory()
+    {
+        type = ((T *)NULL)->T::GetType();
+        G_FactoryItem::Make = Make;
+        G_FactoryItem::MakeDup = MakeDup;
+        globalFactory.Register(this);
+    }
+
+    static GM_Component *Make(GM_DesignStruct *design, GM_Component *parent)
+    {
+        return new T(design, parent);
+    }
+    static GM_Component *MakeDup(GM_Component *component)
+    {
+        return new T(component);
+    }
 };
 
 // A menu (PS2 g_menu.cpp), 0x30 bytes. The PC's has twelve virtual functions, PS2's in its order without the
@@ -131,6 +165,8 @@ public:
     // Closes the menu with that code (PS2's name): tells the parent (OnCloseChild), then OnClose. Tick destroys it at
     // the frame's end. PS2's ends ExecuteMenu with -1 here where the menu has no parent, the PC's Tick does.
     void MenuClose(uint code);
+    // Closes the menu with the code and its parents with -1, and ends ExecuteMenu with the result (PS2's name)
+    void MenuCloseAll(uint code, uint result);
     // Enables the component of that id, if the menu has one, with true (COMPF_ENABLED), and disables it with false:
     // PS2's name, and its code the same
     void SetDisabled(uint id, bool enabled);
