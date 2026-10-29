@@ -393,6 +393,21 @@ public:
     }
 };
 
+// The factory of a component's class not written yet (ours, not the original's): it registers the class's type as
+// G_Factory does, but makes nothing, so a menu skips the item as it would without a factory, and logs the item through
+// StubLog. The components' files have one for each such class, under the name of the original's factory. Its functions
+// are in g_m_comps.cpp, out of line: declared alone, it leaves the other files that include this header as they were.
+class G_StubFactory : public G_FactoryItem
+{
+public:
+    G_StubFactory(uint type, const char *name);
+
+    static GM_Component *Make(GM_DesignStruct *design, GM_Component *parent);
+    static GM_Component *MakeDup(GM_Component *component);
+
+    const char *name;                   // 0x10, the class's
+};
+
 // The copies of the classes' functions, by name: the original's come in the order the factories first need them
 // (docs/game-files.md), so not in the order of the classes above. Those not listed folded with other files' functions
 // of the same code (the empty ones, GetTextID's and GetText's accessors). The destructors and scalar deleting
@@ -435,7 +450,7 @@ public:
 // ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_Rectangle@@UAE@XZ
+// ??1GM_StaticText@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ

@@ -131,7 +131,7 @@ public:
 // ?_Destroy@?$vector@Uai_group@@V?$allocator@Uai_group@@@std@@@std@@IAEXPAUai_group@@0@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
+// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z

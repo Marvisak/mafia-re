@@ -85,6 +85,8 @@ add_executable(game WIN32
     g_lines.cpp
     ui/g_m_carc.cpp
     ui/g_m_comps.cpp
+    ui/g_m_comps2.cpp
+    ui/g_m_compsm.cpp
     ui/g_m_func.cpp
     ui/g_m_start.cpp
     ui/g_menu.cpp

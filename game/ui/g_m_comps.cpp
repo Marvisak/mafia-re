@@ -3,46 +3,107 @@
 // classes. The classes are in g_m_comps.h, their functions in the class: the file's code is the factories' Make and
 // MakeDup, each class's functions after the first one that needs its vtable. The two other files of components,
 // g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written so far: the factories of the base class, the window, the
-// clean window, the static text, the rectangle, the rectangle's texture, the progress bar and the menu item; the others'
-// classes aren't written yet, and a menu skips their items.
+// clean window, the static text, the rectangle, the rectangle's texture, the progress bar and the menu item. The others
+// are stub factories (G_StubFactory), which log each item a menu asks them for and make nothing, so the menu skips it.
 
 #include "ui/g_m_comps.h"
 
-// The factories (PS2's names), in the original's order; a type not written yet is a comment with its global's address
+#include "stub.h"
+
+// The factories (PS2's names), in the original's order; a class not written yet has a stub factory with the class's
+// type and name, its comment the original's global
 // GLOBAL: GAME 0x6bd70c
 G_Factory<GM_Component> GM_ComponentFactory;
-// GM_NahradaFactory, 0x6bd6fc ('xxxx')
-// GM_UpUpFactory, 0x6bd6ec ('upup', which CreateCompsByDef handles itself)
+// 0x6bd6fc
+G_StubFactory GM_NahradaFactory('xxxx', "GM_Nahrada");
+// 0x6bd6ec, which CreateCompsByDef never asks: it handles 'upup' itself
+G_StubFactory GM_UpUpFactory('upup', "GM_UpUp");
 // GLOBAL: GAME 0x6bd6dc
 G_Factory<GM_Window> GM_WindowFactory;
 // GLOBAL: GAME 0x6bd6cc
 G_Factory<GM_WindowClean> GM_WindowCleanFactory;
-// GM_WindowScrollFactory, 0x6bd6bc ('wins')
+// 0x6bd6bc
+G_StubFactory GM_WindowScrollFactory('wins', "GM_WindowScroll");
 // GLOBAL: GAME 0x6bd6ac
 G_Factory<GM_StaticText> GM_StaticTextFactory;
-// GM_StaticTextMemFactory, 0x6bd69c ('mtxt')
-// GM_StaticTextNumFactory, 0x6bd68c ('ntxt')
-// GM_StaticTextTimeFactory, 0x6bd67c ('htxt')
-// GM_LineFactory, 0x6bd66c ('line')
+// 0x6bd69c
+G_StubFactory GM_StaticTextMemFactory('mtxt', "GM_StaticTextMem");
+// 0x6bd68c
+G_StubFactory GM_StaticTextNumFactory('ntxt', "GM_StaticTextNum");
+// 0x6bd67c
+G_StubFactory GM_StaticTextTimeFactory('htxt', "GM_StaticTextTime");
+// 0x6bd66c
+G_StubFactory GM_LineFactory('line', "GM_Line");
 // GLOBAL: GAME 0x6bd65c
 G_Factory<GM_Rectangle> GM_RectangleFactory;
-// GM_OrezavacFactory, 0x6bd64c ('orez')
+// 0x6bd64c
+G_StubFactory GM_OrezavacFactory('orez', "GM_Orezavac");
 // GLOBAL: GAME 0x6bd63c
 G_Factory<GM_RectangleTexture> GM_RectangleTextureFactory;
 // GLOBAL: GAME 0x6bd62c
 G_Factory<GM_ProgressBar> GM_ProgressBarFactory;
 // GLOBAL: GAME 0x6bd61c
 G_Factory<GM_MenuItem> GM_MenuItemFactory;
-// GM_MenuItemMemFactory, 0x6bd60c ('itmm')
-// GM_MenuItemNumFactory, 0x6bd5fc ('iten')
-// GM_RaceRoundItemFactory, 0x6bd5ec ('rari')
-// GM_ButtonFactory, 0x6bd5dc ('butt')
-// GM_ButtonCleanFactory, 0x6bd5cc ('butc')
-// GM_SliderFactory, 0x6bd5bc ('slid')
-// GM_SliderIntegerFactory, 0x6bd5ac ('sldi')
-// GM_NetPlayerFactory, 0x6bd59c ('netp')
-// GM_TextEditFactory, 0x6bd58c ('edit')
-// GM_CheckBoxFactory, 0x6bd57c ('chck')
-// GM_ButtonSelectFactory, 0x6bd56c ('bsel')
-// GM_ButtonSelectBoolFactory, 0x6bd55c ('bslb')
-// GM_EditNumFactory, 0x6bd54c ('edin')
+// 0x6bd60c
+G_StubFactory GM_MenuItemMemFactory('itmm', "GM_MenuItemMem");
+// 0x6bd5fc
+G_StubFactory GM_MenuItemNumFactory('iten', "GM_MenuItemNum");
+// 0x6bd5ec
+G_StubFactory GM_RaceRoundItemFactory('rari', "GM_RaceRoundItem");
+// 0x6bd5dc
+G_StubFactory GM_ButtonFactory('butt', "GM_Button");
+// 0x6bd5cc
+G_StubFactory GM_ButtonCleanFactory('butc', "GM_ButtonClean");
+// 0x6bd5bc
+G_StubFactory GM_SliderFactory('slid', "GM_Slider");
+// 0x6bd5ac
+G_StubFactory GM_SliderIntegerFactory('sldi', "GM_SliderInteger");
+// 0x6bd59c
+G_StubFactory GM_NetPlayerFactory('netp', "GM_NetPlayer");
+// 0x6bd58c
+G_StubFactory GM_TextEditFactory('edit', "GM_TextEdit");
+// 0x6bd57c
+G_StubFactory GM_CheckBoxFactory('chck', "GM_CheckBox");
+// 0x6bd56c
+G_StubFactory GM_ButtonSelectFactory('bsel', "GM_ButtonSelect");
+// 0x6bd55c
+G_StubFactory GM_ButtonSelectBoolFactory('bslb', "GM_ButtonSelectBool");
+// 0x6bd54c
+G_StubFactory GM_EditNumFactory('edin', "GM_EditNum");
+
+#pragma auto_inline(off)
+
+G_StubFactory::G_StubFactory(uint type, const char *name) : name(name)
+{
+    this->type = type;
+    G_FactoryItem::Make = Make;
+    G_FactoryItem::MakeDup = MakeDup;
+    globalFactory.Register(this);
+}
+
+// The stub factory of the type, which MakeComponent found first
+static G_StubFactory *FindStubFactory(uint type)
+{
+    G_FactoryItem *item = G_GlobalFactory::first;
+    while (item->type != type)
+        item = item->next;
+    return (G_StubFactory *)item;
+}
+
+// The class, its type and the item's id, which the menu then skips
+GM_Component *G_StubFactory::Make(GM_DesignStruct *design, GM_Component *)
+{
+    uint type = design->type;
+    StubLog("%s ('%c%c%c%c'): menu item 0x%x", FindStubFactory(type)->name, (type >> 24) & 0xff, (type >> 16) & 0xff,
+        (type >> 8) & 0xff, type & 0xff, design->id);
+    return NULL;
+}
+
+// Never reached: no component of a stub factory's class exists to be copied
+GM_Component *G_StubFactory::MakeDup(GM_Component *component)
+{
+    StubLog("%s::MakeDup", FindStubFactory(component->GetType())->name);
+    return NULL;
+}
+
+#pragma auto_inline(on)
