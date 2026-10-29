@@ -261,7 +261,7 @@ void C_cutscene::Close()
     memset(&unknown_d8, 0, sizeof(unknown_d8));
     unknown_647a58 = 0;
     mafiaIndicators.SetUnknownTexture(NULL, false, false);
-    mafiaIndicators.SetUnknown4484(0, 0);
+    mafiaIndicators.SetUnknown4484(0.0f, 0);
     actors.clear();
     actors_2.clear();
     if (unknown_647a4c)

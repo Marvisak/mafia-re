@@ -4,6 +4,8 @@
 
 #include <string.h>
 
+struct S_matrix;
+
 struct S_vector;
 
 // TestSphereB's flags (the names are ours, by value until the collisions' code shows their meanings): what the sphere
@@ -17,7 +19,12 @@ struct S_vector;
 // holds isn't known yet
 struct tDynamicCollObject
 {
-    uchar unknown_0[0x48];
+    uchar unknown_0[0x24];
+    // 0x24, the box the radar draws, an I3D_bbox as PS2's: bytes here, as including the engine's math would give each
+    // includer the engine header's statics, which the original's game files don't have
+    uchar bbox[0x18];
+    S_matrix *matrix;                   // 0x3c, the radar places the box by it
+    uchar unknown_40[8];
 
     // PS2's, which clears it
     tDynamicCollObject() { memset(this, 0, sizeof(*this)); }

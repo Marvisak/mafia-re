@@ -967,7 +967,7 @@ int GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
     menuScreenScale.y = igraph->Scrn_sy() * (1.0f / 600.0f);
     mafiaIndicators.unknown_40a8.push_back(mafiaIndicators.unknown_40a4);
     mafiaIndicators.unknown_40a4 =
-        (mafiaIndicators.unknown_40a4 & (INDF_UNKNOWN_4000 | INDF_UNKNOWN_8000 | INDF_UNKNOWN_20000)) | INDF_MENU;
+        (mafiaIndicators.unknown_40a4 & (INDF_WIDESCREEN | INDF_FADE | INDF_SNIPER)) | INDF_MENU;
     SetCameraTargetID(MENUCAM_NONE);
     zz_globalReturnCode = 0;
     if (!menu->root)

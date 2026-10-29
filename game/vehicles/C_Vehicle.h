@@ -152,6 +152,8 @@ public:
     bool IsVehicleUnstable();
     // One of the vehicle's two sizes (PS2 name)
     const S_vector &GetVehicleSize(bool b);
+    // The pivot's position in the vehicle (PS2 name), the same way
+    const S_vector &GetVehiclePivotPos(bool b);
     // The velocity, by value (the name is a guess): the camera copies it before each use, as for the actors' vectors
     S_vector GetVelocity() const
     {
@@ -170,7 +172,9 @@ public:
     uchar unknown_4[0x154];             // 0x4
     S_vector unknown_158;               // 0x158 (car 0x1c8), GetVehicleSize(false)'s
     S_vector unknown_164;               // 0x164 (car 0x1d4), GetVehicleSize(true)'s
-    uchar unknown_170[0x34];            // 0x170
+    S_vector unknown_170;               // 0x170 (car 0x1e0), GetVehiclePivotPos(false)'s
+    S_vector unknown_17c;               // 0x17c (car 0x1ec), GetVehiclePivotPos(true)'s
+    uchar unknown_188[0x1c];            // 0x188
     uint unknown_1a4;                   // 0x1a4 (car 0x214), flags: 8 while the vehicle is unstable
     uchar unknown_1a8[0x12c];           // 0x1a8
     S_vector head_pos;                  // 0x2d4 (car 0x344), the driver's head (GetHeadPos)
@@ -218,7 +222,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@QBEIXZ
+// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -227,7 +231,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
@@ -236,4 +240,4 @@ public:
 // ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

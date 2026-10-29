@@ -1098,8 +1098,8 @@ void G_Camera::Begin()
         camera->LinkTo(link, I3DLINK_UPDMATRIX);
         break;
     case CAMERA_CP_SNIPER:
-        mafiaIndicators.unknown_40a4 &= ~INDF_UNKNOWN_20;
-        mafiaIndicators.unknown_40a4 |= INDF_UNKNOWN_20000;
+        mafiaIndicators.unknown_40a4 &= ~INDF_CROSSHAIR;
+        mafiaIndicators.unknown_40a4 |= INDF_SNIPER;
         break;
     case CAMERA_DEATH:
         cameraInDeath = camera->GetWorldPos();
@@ -1123,8 +1123,8 @@ void G_Camera::End()
     switch (mode)
     {
     case CAMERA_CP_SNIPER:
-        mafiaIndicators.unknown_40a4 &= ~INDF_UNKNOWN_20000;
-        mafiaIndicators.unknown_40a4 |= INDF_UNKNOWN_20;
+        mafiaIndicators.unknown_40a4 &= ~INDF_SNIPER;
+        mafiaIndicators.unknown_40a4 |= INDF_CROSSHAIR;
         break;
     case CAMERA_C_RAILWAY_IN:
         camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);

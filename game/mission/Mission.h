@@ -230,4 +230,4 @@ extern C_mission *act_mission;
 // ?erase@?$vector@PAVC_car@@V?$allocator@PAVC_car@@@std@@@std@@QAEPAPAVC_car@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUai_group_member@@PBU2@0PAU2@@Z
+// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z

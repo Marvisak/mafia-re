@@ -10,7 +10,9 @@ class ITexture;
 class I3D_camera;
 class C_car;
 class C_web_node;
+class I3D_frame;
 struct TLVERTEX;
+struct tDynamicCollObject;
 
 // The HUD's fonts (the name is ours)
 #define NUM_FONTS 4
@@ -26,15 +28,39 @@ struct TLVERTEX;
 #define PARHELIA_DUAL 1                 // wider than 2:1
 #define PARHELIA_TRIPLE 2               // wider than 3:1: the HUD is on the middle screen
 
-// G_IndicatorsClass::unknown_40a4's bits (the names are ours, by value where the meaning isn't known yet): a menu keeps
-// 0x4000, 0x8000 and 0x20000 while it runs
+// G_IndicatorsClass::unknown_40a4's bits, what DrawAll draws (the names are ours, by value where the meaning isn't known
+// yet): a menu keeps INDF_WIDESCREEN, INDF_FADE and INDF_SNIPER while it runs. INDF_MENU and INDF_UNKNOWN_800 hide most
+// of the HUD.
 #define INDF_MENU 1                     // set while GM_Menu::ExecuteMenu runs a menu
-#define INDF_UNKNOWN_20 0x20            // cleared while the camera is CAMERA_CP_SNIPER, where INDF_UNKNOWN_20000 is set
+#define INDF_TACHOMETR 2                // the tachometer
+#define INDF_PLAYER 4                   // the player's health and the wingmen's
+#define INDF_TIMER 8                    // the clock
+#define INDF_UNKNOWN_10 0x10            // a bar for unknown_46e8 with INDF_UNKNOWN_4000000
+#define INDF_CROSSHAIR 0x20             // cleared while the camera is CAMERA_CP_SNIPER, where INDF_SNIPER is set
+#define INDF_COMPASS 0x80              // the arrow to compass_destination, and its mark on the radar
+#define INDF_UNKNOWN_100 0x100          // the tachometer's light at its top right
 #define INDF_UNKNOWN_800 0x800          // cleared by C_cutscene::Close
-#define INDF_UNKNOWN_4000 0x4000
-#define INDF_UNKNOWN_8000 0x8000
-#define INDF_UNKNOWN_20000 0x20000
+#define INDF_THIEF 0x1000               // PS2's ThiefIndicatorSetValue's bar
+#define INDF_MAP 0x2000                 // the city map, where map_enabled
+#define INDF_WIDESCREEN 0x4000          // WideScreenSetRatio's bars
+#define INDF_FADE 0x8000                // PS2's FadeInOut sets it: the screen in fade_color
+#define INDF_UNKNOWN_10000 0x10000      // a bar for unknown_420c
+#define INDF_SNIPER 0x20000             // the sniper's scope
+#define INDF_REFULLING 0x40000          // PS2's RefullingIndicatorSetValue's bar
+#define INDF_RADAR 0x80000
+#define INDF_RACE 0x100000              // the race's texts
 #define INDF_RACE_START 0x200000        // RaceSetStartFlag's flag shows
+#define INDF_UNKNOWN_400000 0x400000    // the text at 0x4614
+#define INDF_RACE_WRONG 0x800000        // racewrong.bmp
+#define INDF_MISSION_HELP 0x1000000     // the mission's help texts, cleared by DrawAll when there are none
+#define INDF_CREW 0x2000000             // the blood over the screen, crew_quads of _VtxCrew
+#define INDF_UNKNOWN_4000000 0x4000000  // a part of 0textura.tga, unknown_46e0's, in unknown_46e4's colour
+#define INDF_AMMO 0x8000000             // the weapon's ammo, with INDF_PLAYER
+#define INDF_WINGMAN1 0x10000000        // the wingmen, with INDF_PLAYER
+#define INDF_WINGMAN2 0x20000000
+#define INDF_WINGMAN3 0x40000000
+#define INDF_WINGMAN4 0x80000000
+
 
 // The lines of the HUD's console (the name is ours; PS2's has 3)
 #define CONSOLE_LINES 5
@@ -49,6 +75,7 @@ struct TLVERTEX;
 #define OUTTEXT_RIGHT 0x4               // aligned to the width's right end
 #define OUTTEXT_INDENT 0x8              // half the size from the left
 #define OUTTEXT_FIT 0x10                // narrowed to the width (less the indent)
+#define OUTTEXT_UNKNOWN_20 0x20         // DrawAll passes it, OutText doesn't read it (PS2's neither)
 
 // The quads OutText draws in one call (the name is ours)
 #define OUTTEXT_MAX_CHARS 100
@@ -98,16 +125,26 @@ struct G_RafickaValue
     S_vector2 tip_right;                // 0x1c
 };
 
-// A subtitle's line (PS2's name; its members are unknown), 0x10 bytes, as the mission's help texts have them
+// A subtitle's line (PS2's name; the members' names are ours), 0x10 bytes, as the mission's help texts have them:
+// DrawAll writes the text up to end, unless hidden, the last one at the bottom
 struct G_MISubtitleStruct
 {
-    uchar unknown_0[0x10];
+    const char *text;
+    const char *end;                    // 0x4, OutText's stop
+    uint hidden;                        // 0x8
+    uint alpha;                         // 0xc, over 0xff opaque
 };
 
-// An intro's subtitle (PS2's name; its members are unknown), 0x1c bytes
+// An intro's subtitle (PS2's name; the members' names are ours), 0x1c bytes: placed for 800x600 from the HUD's left
+// edge, as transparent as the less opaque of its two alphas
 struct G_MIIntroSubtitles
 {
-    uchar unknown_0[0x1c];
+    float x, y;
+    float size;                         // 0x8, the characters' height
+    const char *text;                   // 0xc
+    const char *end;                    // 0x10, OutText's stop
+    float alpha_in;                     // 0x14
+    float alpha_out;                    // 0x18
 };
 
 // One waiting to be shown (PS2's name; its members are unknown), 8 bytes
@@ -132,7 +169,8 @@ public:
     };
     struct G_RadarItem
     {
-        uchar unknown_0[8];
+        tDynamicCollObject *object;     // PS2's RadarAddObject's (the names are ours)
+        uint color;                     // 0x4
     };
 
     G_Font fonts[NUM_FONTS];            // 0x0, LoadFont's tables\font<n><suffix>.gmf
@@ -143,7 +181,7 @@ public:
     ITexture *texture_int2;
     ITexture *texture_numbers;          // 0x4088, 1numbers.tga
     ITexture *texture_textura;          // 0x408c, 0textura.tga
-    ITexture *unknown_4090;             // 0x4090, cleared by Create (PS2's too), released by Destroy
+    ITexture *unknown_4090;             // 0x4090, the city map's; cleared by Create (PS2's too), released by Destroy
     ITexture *texture_logo;             // 0x4094, logoplay.bmp
     ITexture *texture_sight;            // 0x4098, 2sight.bmp with its alpha
     ITexture *texture_race_start;       // 0x409c, racestart.bmp
@@ -182,22 +220,28 @@ public:
     S_vector2 revs_pos;                 // 0x41fc, the revs' dial's
     bool unknown_4204;                  // 0x4204, TachometrSetGear's flag (PS2 0x41f8)
     bool fuel_low;                      // 0x4205, set by TachometrSetValues while the fuel is under 2%
-    uint unknown_4208;                  // 0x4208, cleared by ResetValues and by TachometrSetValues (PS2 0x41fc)
-    uchar unknown_420c[4];
+    // 0x4208, cleared by ResetValues and by TachometrSetValues (PS2 0x41fc): the low fuel light shows while it is under
+    // .25
+    float unknown_4208;
+    float unknown_420c;                 // 0x420c, INDF_UNKNOWN_10000's bar, 0 to 1
     // The player's (PS2 0x4204 to 0x4230)
     uint lives;                         // 0x4210
     uint ammo;                          // 0x4214, the weapon's rounds
     uint ammo_spare;                    // 0x4218, the others
     char lives_text[0x10];              // 0x421c
     char ammo_text[0x10];               // 0x422c, "<ammo>/<spare>"
-    float accuracy;                     // 0x423c
-    uchar unknown_4240[0xc];
+    float accuracy;                     // 0x423c, the crosshair's spread
+    uchar unknown_4240[4];
+    uint unknown_4244;                  // 0x4244, the alpha of an icon above the player's panel, none for 0
+    uchar unknown_4248[4];
     // The wingmen's (PS2 0x4244 and 0x4254)
     uint wingman_names[MAX_WINGMEN];    // 0x424c, 0 to 7
     uint wingman_lives[MAX_WINGMEN];    // 0x425c
     S_vector2 screen_center;            // 0x426c
     uchar unknown_4274[4];
-    uint unknown_4278;                  // 0x4278, cleared by ResetValues
+    // 0x4278, PS2's CompassSetDestination's (PS2 0x4270): the frame INDF_COMPASS's arrow, the radar and the map point to,
+    // cleared by ResetValues
+    I3D_frame *compass_destination;
     // The HUD's console (the names are ours, after ConsoleAddText at 0x5f9d50; PS2's has three lines at 0x4278): a ring
     // of lines, the oldest at console_first
     char console_texts[CONSOLE_LINES][0x40];    // 0x427c
@@ -209,21 +253,28 @@ public:
     std::vector<G_MISubtitleStruct> mission_help;   // 0x43fc (PS2 0x4b44), MissionHelpClear's (0x5f99b0)
     std::vector<G_MIIntroSubtitles> intro_subtitles;    // 0x440c (PS2 0x4b50)
     std::vector<G_MIIntroSubtitlesWaiting> intro_subtitles_waiting; // 0x441c (PS2 0x4b5c)
-    uchar unknown_442c[0x2c];
-    float unknown_4458;                 // 0x4458, .5 from ResetValues (PS2 0x4b98)
-    uchar unknown_445c[0x24];
-    uint unknown_4480;                  // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0)
-    uint unknown_4484;                  // 0x4484
-    uint unknown_4488;                  // 0x4488, SetUnknown4484's second value
+    uchar unknown_442c[0x28];
+    uint crew_quads;                    // 0x4454, the quads of _VtxCrew INDF_CREW draws
+    float thief_indicator;              // 0x4458, PS2's ThiefIndicatorSetValue's, .5 from ResetValues (PS2 0x4b98)
+    float refulling_indicator;          // 0x445c, PS2's RefullingIndicatorSetValue's (PS2 0x4b9c)
+    uchar unknown_4460[0x18];
+    uint fade_color;                    // 0x4478, PS2's FadeInOut's (PS2 0x4bb8), with its alpha
+    uchar unknown_447c[4];
+    // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0): INDF_FADE's texture
+    ITexture *unknown_4480;
+    float unknown_4484;                 // 0x4484, a fade from 0 to 1 over the screen
+    uint unknown_4488;                  // 0x4488, SetUnknown4484's second value, the fade's colour (0xrrggbb)
     const char *unknown_448c;           // 0x448c, SetUnknownTexture's name, the caller's pointer
     ITexture *unknown_4490;             // 0x4490, SetUnknownTexture's texture
-    bool unknown_4494;                  // 0x4494, SetUnknownTexture's flag, false without a texture
+    // 0x4494, SetUnknownTexture's flag, false without a texture: the texture drawn as it is with the fade over it,
+    // otherwise in the fade's colour
+    bool unknown_4494;
     uchar unknown_4495[3];
     std::vector<G_RadarCar> radar_cars; // 0x4498 (PS2 0x4bd8)
-    uint unknown_44a8;                  // 0x44a8, cleared by ResetValues (PS2 0x4be4)
+    C_car *radar_player_car;            // 0x44a8, PS2's RadarSetPlayerCar's, cleared by ResetValues (PS2 0x4be4)
     std::vector<G_RadarItem> radar_items;   // 0x44ac (PS2 0x4be8)
     uint unknown_44bc;                  // 0x44bc, cleared by ResetValues (PS2 0x4bf4)
-    float unknown_44c0;                 // 0x44c0, .9 from ResetValues (PS2 0x4bf8)
+    float unknown_44c0;                 // 0x44c0, the radar's scale, .9 from ResetValues (PS2 0x4bf8)
     // RaceSetStartFlag's (PS2 0x4bfc to 0x4c08): the flag before and its float, the flag and its float, 1 when set
     uint race_start_flag_last;          // 0x44c4
     uint race_start_flag;               // 0x44c8
@@ -236,13 +287,14 @@ public:
     char race_best_time[0x40];          // 0x4554
     char race_position[0x40];           // 0x4594
     char race_laps[0x40];               // 0x45d4
-    uchar unknown_4614[0x4698 - 0x4614];
+    char unknown_4614[0x80];            // 0x4614, INDF_UNKNOWN_400000's text
+    float unknown_4694;                 // 0x4694, its alpha
     int bonus_count;                    // 0x4698, BonusSetCount's (PS2 0x4dd0)
     char bonus_text[0x40];              // 0x469c, the count as text 0xb3 ("$%d") formats it
     uint unknown_46dc;                  // 0x46dc, cleared by ResetValues (PS2 0x4e14)
-    uint unknown_46e0;                  // 0x46e0
-    int unknown_46e4;                   // 0x46e4, -1 from ResetValues
-    uchar unknown_46e8[4];
+    uint unknown_46e0;                  // 0x46e0, INDF_UNKNOWN_4000000's part of 0textura.tga, 1 to 4
+    int unknown_46e4;                   // 0x46e4, its colour, -1 from ResetValues
+    float unknown_46e8;                 // 0x46e8, INDF_UNKNOWN_10's bar, 0 to 1
     bool map_enabled;                   // 0x46ec, MapEnable's (PS2 0x4e24), cleared by ResetValues
     char *text_out_of_city;             // 0x46f0, text 0x5f, "Out of City Limits" (PS2 0x4e28)
     bool parhelia_center;               // 0x46f4, ParheliaSetCenter's flag
@@ -269,6 +321,13 @@ public:
     void TimerSetInterval(uint interval);
     // A needle's corners for its value, on the dial at pos (PS2's name: "compute the needle")
     void _SpocitejRafiku2(G_RafickaDef *def, G_RafickaValue *value, S_vector2 &pos, TLVERTEX *verts);
+    // The player's panel, quads added to verts from *count on, which they advance (PS2's names: "add the wingman's
+    // background", "the ammo's background", "the wingman's health", "the ammo"): the background of the player (index 0)
+    // or a wingman's row, with the name's picture, and their health; the ammo's
+    void _PridejWingPodklad(TLVERTEX *verts, uint *count, uint index, uint name);
+    void _PridejAmmoPodklad(TLVERTEX *verts, uint *count);
+    void _PridejWingLives(TLVERTEX *verts, uint *count, uint index, uint lives);
+    void _PridejAmmo(TLVERTEX *verts, uint *count, uint ammo, uint spare);
     // The gear the tachometer's small display shows
     void TachometrSetGear(int gear, bool flag);
     // The needles and the odometer: the speed in metres per second (shown in km/h), the revs and the fuel from 0 to 1,
@@ -288,7 +347,7 @@ public:
     // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 with the flag at
     // 0x4494, unless the same pointer's is there already (reload loads it again), released for NULL; C_cutscene::Close
     // clears both
-    void SetUnknown4484(uint a, uint b);
+    void SetUnknown4484(float fade, uint color);
     void SetUnknownTexture(const char *name, bool unknown, bool reload);
     // The bonus the HUD shows, BONUS_NONE for none
     void BonusSetCount(int count);
@@ -318,6 +377,8 @@ public:
     // sx (PS2 name). Returns where it ends.
     float OutText(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font,
         const char *stop);
+    // The same for a text of several lines (PS2 name)
+    void OutTextMultiLine(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font);
     // The name is ours: its copy is among the accessors at the end of the file at 0x460a50
     void SetUnknown40a4(uint flags)
     {
@@ -369,7 +430,17 @@ extern int parheliaIndex;
 extern S_vector2 pravyOkraj;
 extern S_vector2 levyOkraj;
 
-// The engine's S_vector2 operators (I3d_math.h), which ResolutionChanged calls out of line where its budget runs out
+// The engine's S_vector2 constructor and operators (I3d_math.h), which ResolutionChanged and DrawAll call out of line
+// where their budgets run out
+// LIBRARY: GAME 0x402530
+// ??GS_vector2@@QBE?AU0@ABU0@@Z
+
+// LIBRARY: GAME 0x47a350
+// ??0S_vector2@@QAE@MM@Z
+
+// LIBRARY: GAME 0x49b7a0
+// ??DS_vector2@@QBE?AU0@M@Z
+
 // LIBRARY: GAME 0x5f7640
 // ??DS_vector2@@QBE?AU0@ABU0@@Z
 

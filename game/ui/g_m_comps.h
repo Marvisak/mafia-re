@@ -310,7 +310,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?GetBool@GM_Component@@UAE_NXZ
+// ?CanBeParent@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9530
 // ?GetType@GM_Window@@UAEIXZ
@@ -326,7 +326,7 @@ public:
 // ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_Rectangle@@UAE@XZ
+// ??1GM_Component@@UAE@XZ
 
 // FUNCTION: GAME 0x5da7e0
 // ?GetType@GM_Rectangle@@UAEIXZ
