@@ -2,10 +2,10 @@
 // the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
 // GameInit, GameDone, the clock's setters, _SpocitejRafiku2, the tachometer's and the player's setters, the clears
 // C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear, ConsoleClear, RadarClear), MapEnable,
-// WideScreenSetRatio, SetUnknown4484, RadarRemoveCar, RaceSetStartFlag, BonusSetCount, ResolutionChanged (with the
-// dials' vertex helpers), TextSize, OutText, the menus' cursor and the camera's field of view; the rest of what main,
-// the scene's callback, the profiles, the game and the cutscene call is stubs (SetUnknownTexture, RadarAddCar, the
-// radar's edges, DrawAll, ParheliaSetCenter).
+// WideScreenSetRatio, SetUnknown4484, SetUnknownTexture, RadarRemoveCar, RaceSetStartFlag, BonusSetCount,
+// ResolutionChanged (with the dials' vertex helpers), TextSize, OutText, the menus' cursor, the camera's field of view
+// and ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs
+// (RadarAddCar, the radar's edges, DrawAll).
 
 #include "ui/g_indicators.h"
 #include "mission/Mission.h"
@@ -155,8 +155,8 @@ void G_IndicatorsClass::ResetValues()
     race_laps[0] = 0;
     unknown_46dc = 0;
     unknown_4484 = 0;
-    unknown_4490 = 0;
-    unknown_448c = 0;
+    unknown_4490 = NULL;
+    unknown_448c = NULL;
     unknown_4480 = 0;
     unknown_46e0 = 0;
     unknown_46e4 = -1;
@@ -674,15 +674,21 @@ void G_IndicatorsClass::SetUnknown4484(uint a, uint b)
     unknown_4488 = b;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5fa430
+// FUNCTION: GAME 0x5fa430
 void G_IndicatorsClass::SetUnknownTexture(const char *name, bool unknown, bool reload)
 {
-    StubLog("G_IndicatorsClass::SetUnknownTexture");
+    if (name == unknown_448c && !reload)
+        return;
+    if (unknown_4490)
+        unknown_4490->Release();
+    unknown_4490 = NULL;
+    unknown_448c = name;
+    unknown_4494 = unknown;
+    if (name)
+        igraph->CreateITexture(name, NULL, 0, &unknown_4490);
+    else
+        unknown_4494 = false;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5fa4a0
 void G_IndicatorsClass::RadarClear()
@@ -1295,12 +1301,51 @@ void G_IndicatorsClass::SetCameraFOV(I3D_camera *cam, float fov)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x604a80
+// The viewport's edges, not its size: the left half of two screens, the middle third of three. The scene is read again
+// after the screens are cleared, the camera kept from before.
+// FUNCTION: GAME 0x604a80
 void G_IndicatorsClass::ParheliaSetCenter(bool center)
 {
-    StubLog("G_IndicatorsClass::ParheliaSetCenter");
+    parhelia_center = center;
+    I3D_camera *cam = act_mission->GetScene()->current_camera;
+    if (center)
+    {
+        switch (parheliaIndex)
+        {
+        case PARHELIA_DUAL:
+            igraph->ResetRenderProps();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            act_mission->GetScene()->SetViewport(0, 0, igraph->Scrn_sx() / 2, igraph->Scrn_sy());
+            if (cam)
+                cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy() * .5f);
+            break;
+        case PARHELIA_TRIPLE:
+            igraph->ResetRenderProps();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+            igraph->Present();
+            act_mission->GetScene()->SetViewport(igraph->Scrn_sx() / 3, 0, igraph->Scrn_sx() / 3 * 2, igraph->Scrn_sy());
+            if (cam)
+                cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy() * (1.0f / 3));
+            break;
+        default:
+            act_mission->GetScene()->SetViewport(0, 0, igraph->Scrn_sx(), igraph->Scrn_sy());
+            if (cam)
+                cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
+        }
+    }
+    else
+    {
+        act_mission->GetScene()->SetViewport(0, 0, igraph->Scrn_sx(), igraph->Scrn_sy());
+        if (cam)
+            cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
+    }
 }
-
-#pragma auto_inline(on)

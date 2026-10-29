@@ -2,10 +2,10 @@
 // docs/game-files.md): the keys' interpolation (0x598410, 0x5984e0), the object's initializer (0x59cc20) and constructor
 // (0x59cc40) mid-file, Close (0x59c6a0), Tick (0x599610), and the seagulls after them (their constructor 0x59e7e0).
 // Written so far: SetState, which C_game::Done calls, the vtable's getters, RemoveActor, which C_actor's destructor
-// calls, with the object at 0x90's, Close, which C_mission::Close calls, with the object at 0x80's Clear, and IsPlaying.
-// Stubs: the other functions of the vtable's first eleven, what Close calls of the object and of its object at 0x90,
-// the seagulls' constructor, which C_mission::CreateActor calls, and the actors' records' Reset, which lies in another
-// file's range.
+// calls, with the object at 0x90's, Close, which C_mission::Close calls, with what it calls of the cutscene
+// (RemoveActors, ReleaseUnknown34), of the object at 0x80 (Clear) and of the object at 0x90 (Clear, ReleaseUnknown0),
+// and IsPlaying. Stubs: the other functions of the vtable's first eleven, the seagulls' constructor, which
+// C_mission::CreateActor calls, and the actors' records' Reset, which lies in another file's range.
 
 #include "mission/C_cutscene.h"
 #include "mission/Mission.h"
@@ -167,15 +167,34 @@ bool C_cutscene::RemoveActor(C_actor *actor, bool unknown)
     return false;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5990e0
+// FUNCTION: GAME 0x5990e0
 void C_cutscene::RemoveActors()
 {
-    StubLog("C_cutscene::RemoveActors");
+    uint i;
+    if (unknown_ec == 1)
+    {
+        for (i = 0; i < actors.size(); i++)
+            RemoveActor(actors[i], true);
+        for (i = 0; i < actors_2.size(); i++)
+            RemoveActor(actors_2[i], true);
+    }
+    else
+    {
+        for (i = 0; i < actors.size(); i++)
+        {
+            delete actors[i]->unknown_8;
+            actors[i]->unknown_4 &= ~ACTF_UNKNOWN_10;
+            actors[i]->unknown_8 = NULL;
+        }
+        for (i = 0; i < actors_2.size(); i++)
+        {
+            delete actors_2[i]->unknown_8;
+            actors_2[i]->unknown_4 &= ~ACTF_UNKNOWN_10;
+            actors_2[i]->unknown_8 = NULL;
+        }
+        unknown_90.Clear();
+    }
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x59bb50
 void C_cutscene_unknown_80::Clear()
@@ -186,15 +205,20 @@ void C_cutscene_unknown_80::Clear()
     unknown_4 = 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x59c4e0
+// FUNCTION: GAME 0x59c4e0
 void C_cutscene::ReleaseUnknown34()
 {
-    StubLog("C_cutscene::ReleaseUnknown34");
+    for (S_cutscene_anim **p = unknown_34.begin(); p < unknown_34.end(); p++)
+    {
+        if (*p)
+        {
+            if ((*p)->anim_set)
+                (*p)->anim_set->Release();
+            delete *p;
+        }
+    }
+    unknown_34.clear();
 }
-
-#pragma auto_inline(on)
 
 // The actors' placements back where they still exist: a human's or an entity's model gets its pose back, a door its
 // position and rotation (SetRot with a normalization, written out as C_actor::GameDone's). The accessors after the
@@ -298,15 +322,38 @@ void C_cutscene_unknown_90::RemoveActor(C_actor *actor, bool unknown)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x59d2c0
+// FUNCTION: GAME 0x59d2c0
 void C_cutscene_unknown_90::Clear()
 {
-    StubLog("C_cutscene_unknown_90::Clear");
+    for (uint i = 0; i < actors.size(); i++)
+    {
+        if (!actors[i].unknown_0)
+            actors[i].records->Reset();
+        if (actors[i].actor)
+            actors[i].actor->unknown_8->unknown_18 = NULL;
+    }
+    actors.clear();
+    ReleaseUnknown0();
 }
 
-#pragma auto_inline(on)
+// FUNCTION: GAME 0x59d350
+void C_cutscene_unknown_90::ReleaseUnknown0()
+{
+    int count = 0;
+    if (unknown_0)
+    {
+        for (uint i = 0; i < actors.size(); i++)
+        {
+            if (actors[i].unknown_0 == 1)
+                count++;
+        }
+        if (!count)
+        {
+            delete unknown_0;
+            unknown_0 = NULL;
+        }
+    }
+}
 
 // FUNCTION: GAME 0x59e2d0
 bool C_cutscene::IsPlaying()

@@ -4,9 +4,9 @@
 // ClearDiffData, the semaphores, the city's music areas, the road blocks, the taxis' stops, the telephones, the traffic
 // signs, the scream areas, the weather, the inter-city boxes, GlobalProgramRun, and the Clear functions); the stacks'
 // Clear functions, which the destructor calls (the constructor and the destructor are game.h's), IShowSetVolume, which
-// the profiles call, ScoreSetOn and LightnessClear. Stubs: what the run doesn't reach (PrepareBaseBlocks and the
-// inter-city boxes' helper, both behind the base blocks, which stay closed while C_cache_base_block::Open is a stub;
-// ChangeActState, InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade, EntityBlock, which C_cutscene::Close calls).
+// the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_cutscene::Close calls. Stubs: what the run
+// doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed
+// while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade).
 // Open: the consoles' and file 12's globals (0x647a74, 0x647ab0, 0x63d6d4) are here for now; Init, Done and DoneIntern
 // aren't matched yet.
 
@@ -26,6 +26,7 @@
 #include "actors/C_public_physics.h"
 #include "actors/C_stone.h"
 #include "ai/C_person_traffic.h"
+#include "ai/jp_ai_entity.h"
 #include "ai/jp_ai_main.h"
 #include "ai/pathweb.h"
 #include "ai/road_web.h"
@@ -2151,15 +2152,31 @@ void C_game::CreateSignalMarkIDX()
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5b7ed0
+// FUNCTION: GAME 0x5b7ed0
 void C_game::EntityBlock(bool block, bool unknown)
 {
-    StubLog("C_game::EntityBlock");
+    int i;
+    for (i = unknown_ec.size(); i--;)
+    {
+        if (unknown_ec[i]->type == ACTOR_ENTITY)
+        {
+            if (block)
+                ((C_entity *)unknown_ec[i])->SedniNaPrdelASledujKino(unknown);
+            else
+                ((C_entity *)unknown_ec[i])->VzbudSeUzSouTitulky();
+        }
+    }
+    for (i = unknown_fc.size(); i--;)
+    {
+        if (unknown_fc[i]->type == ACTOR_ENTITY)
+        {
+            if (block)
+                ((C_entity *)unknown_fc[i])->SedniNaPrdelASledujKino(unknown);
+            else
+                ((C_entity *)unknown_fc[i])->VzbudSeUzSouTitulky();
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // Every actor's sounds off (PS2 name)
 // FUNCTION: GAME 0x5b83f0

@@ -326,7 +326,7 @@ public:
 // ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_MenuItem@@UAE@XZ
+// ??1GM_Rectangle@@UAE@XZ
 
 // FUNCTION: GAME 0x5da7e0
 // ?GetType@GM_Rectangle@@UAEIXZ

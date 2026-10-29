@@ -77,13 +77,39 @@ public:
     // Takes the actor's entry out of the vector of actors; with the flag it also resets its records (unless
     // unknown_0 is set) and takes them from the entry and from the actor
     void RemoveActor(C_actor *actor, bool unknown);
-    // Releases the first vector's elements and empties it, then calls 0x59d350
+    // Resets the actors' records (those whose entry's unknown_0 is 0) and takes their first blocks from the actors,
+    // empties the vector of actors, then ReleaseUnknown0
     void Clear();
+    // Frees unknown_0 unless an actor's entry has unknown_0 1
+    void ReleaseUnknown0();
 
-    int unknown_0;                      // 0x0, 0 from the constructor
+    uchar *unknown_0;                   // 0x0, NULL from the constructor, new
     std::vector<S_cutscene_actor> actors;   // 0x4
     std::vector<S_cutscene_unknown_28> unknown_14;  // 0x14
 };
+
+// What an animation's .tck file (anims\<name> with the extension .tck) gives (the names are ours), 0x44 bytes: the
+// cutscene's vtable's 21st function (0x59bdf0) loads it
+struct S_cutscene_tck
+{
+    int unknown_0;                      // 0x0, 0 where the file isn't loaded
+    uchar unknown_4[0x1c];              // 0x4
+    std::vector<uint> unknown_20;       // 0x20
+    std::vector<uint> unknown_30;       // 0x30
+    uchar unknown_40[4];                // 0x40
+};
+
+// An animation of the cutscene (the names are ours), 0x48 bytes: the cutscene's vtable's 17th function (0x59bc20)
+// creates it, with an animation set of anims\<name> and, if asked, its .tck file. Its destructor is the implicit one,
+// out of line after ReleaseUnknown34 (0x59c550).
+struct S_cutscene_anim
+{
+    I3D_animation_set *anim_set;        // 0x0
+    S_cutscene_tck tck;                 // 0x4
+};
+
+// SYNTHETIC: GAME 0x59c550
+// S_cutscene_anim::~S_cutscene_anim
 
 // The in-engine cutscenes (PC only, the names are ours: PS2 plays its cutscenes as videos, C_vid, which its
 // GameLoopSingle updates where the PC's ticks this object). Its Tick (0x599610) plays two tracks of keys, 0x40 and
@@ -114,7 +140,9 @@ public:
     // Takes the actor from the cutscene's lists (+0x90's, which takes the flag too, +0x4's and +0x14's), the first
     // list's with its ACTF_UNKNOWN_10: true if one of those two held it (C_actor's destructor calls it)
     virtual bool RemoveActor(C_actor *actor, bool unknown);
-    // Takes every actor out of the two lists: through RemoveActor with the flag where unknown_ec is 1, itself otherwise
+    // Takes every actor out of the two lists where unknown_ec is 1, through RemoveActor with the flag (which skips every
+    // other one, the lists shrinking under the loops); otherwise frees each actor's records and clears its
+    // ACTF_UNKNOWN_10, keeping the lists, and clears the object at 0x90
     virtual void RemoveActors();
     // Unloads the cutscene and gives the HUD and the player's controls back (C_mission::Close, C_game::Done, the racing
     // menu and GameLoopSingle call it). The vtable's 40th function, declared plain until the slots before it are.
@@ -122,14 +150,16 @@ public:
     // Whether a cutscene is playing (the name is ours): while unknown_647a58 counts down, and in a state but
     // CUTSCENE_STATE_0 and CUTSCENE_STOPPED
     bool IsPlaying();
-    // Releases the objects of unknown_34 and empties it (the name is ours)
+    // Releases the animations of unknown_34 and empties it (the name is ours)
     void ReleaseUnknown34();
 
     // The names are ours
     std::vector<C_actor *> actors;      // 0x4
     std::vector<C_actor *> actors_2;    // 0x14
     std::vector<uint> unknown_24;       // 0x24
-    std::vector<uint> unknown_34;       // 0x34
+    // 0x34, an animation for each of unknown_80's items, NULL where an item has none (the vtable's 23rd function,
+    // 0x59c2f0)
+    std::vector<S_cutscene_anim *> unknown_34;
     // Close clears the rest from unknown_44 to state, and frees the tracks' items first
     uchar unknown_44[0x18];             // 0x44
     uchar unknown_5c[0xc];              // 0x5c

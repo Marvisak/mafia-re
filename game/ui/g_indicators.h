@@ -215,9 +215,10 @@ public:
     uint unknown_4480;                  // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0)
     uint unknown_4484;                  // 0x4484
     uint unknown_4488;                  // 0x4488, SetUnknown4484's second value
-    uint unknown_448c;                  // 0x448c, SetUnknownTexture's name
-    uint unknown_4490;                  // 0x4490, SetUnknownTexture's texture
-    uchar unknown_4494[4];
+    const char *unknown_448c;           // 0x448c, SetUnknownTexture's name, the caller's pointer
+    ITexture *unknown_4490;             // 0x4490, SetUnknownTexture's texture
+    bool unknown_4494;                  // 0x4494, SetUnknownTexture's flag, false without a texture
+    uchar unknown_4495[3];
     std::vector<G_RadarCar> radar_cars; // 0x4498 (PS2 0x4bd8)
     uint unknown_44a8;                  // 0x44a8, cleared by ResetValues (PS2 0x4be4)
     std::vector<G_RadarItem> radar_items;   // 0x44ac (PS2 0x4be8)
@@ -284,8 +285,9 @@ public:
     void IntroSubtitlesClear();
     // The black bars above and below the picture, the picture's height a ratio of the screen's width
     void WideScreenSetRatio(float ratio);
-    // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 unless that name's
-    // is there already (reload loads it again), released for NULL; C_cutscene::Close clears both
+    // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 with the flag at
+    // 0x4494, unless the same pointer's is there already (reload loads it again), released for NULL; C_cutscene::Close
+    // clears both
     void SetUnknown4484(uint a, uint b);
     void SetUnknownTexture(const char *name, bool unknown, bool reload);
     // The bonus the HUD shows, BONUS_NONE for none
@@ -331,8 +333,9 @@ public:
     // ParheliaSetCenter, of the middle one
     void SetCameraFOV(I3D_camera *cam, float fov);
     // PC only, the name is ours. Stores the flag at 0x46f4 and, with Matrox Parhelia's two or three screens
-    // (parheliaIndex), confines the scene's viewport and camera to the middle one while it is set; main sets it around
-    // the car encyclopedia.
+    // (parheliaIndex), confines the scene's viewport and camera to the middle one while it is set (with two the left
+    // half), after clearing the screens; otherwise the whole screen. main sets it around the car encyclopedia,
+    // C_cutscene::Close clears it.
     void ParheliaSetCenter(bool center);
 };
 

@@ -460,7 +460,8 @@ public:
     void LoadTaxiPoints();
     void LoadTelephones();
     void CreateSignalMarkIDX();
-    // PS2 name: each ACTOR_ENTITY of unknown_ec and unknown_fc, from the last, blocked (with the second flag) or not
+    // PS2 name: each ACTOR_ENTITY of unknown_ec and unknown_fc, from the last, blocked (C_entity::SedniNaPrdelASledujKino,
+    // with the second flag) or woken (VzbudSeUzSouTitulky)
     void EntityBlock(bool block, bool unknown);
     void StopAllSounds();
     void LoadScreamAreas();
@@ -522,7 +523,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

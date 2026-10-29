@@ -6,6 +6,7 @@
 
 class I3D_sound;
 class I3D_frame;
+class I3D_visual;
 
 // The dubbing, the characters' speech (PS2 g_dabing.cpp, "dabing" Czech for dubbing). Only what C_game's Init and Done
 // call so far.
@@ -26,7 +27,8 @@ struct S_dabing_chanel
     uchar unknown_10[4];
     I3D_sound *sound;                   // 0x14, sounds\<speech>.wav, a sound frame of the driver's
     I3D_frame *unknown_18;              // 0x18, the frame the sound is linked to
-    uchar unknown_1c[0x44 - 0x1c];
+    I3D_visual *face;                   // 0x1c, the speaker's face, whose weights DabingReset sets back
+    uchar unknown_20[0x44 - 0x20];
 };
 
 // A morph of a speaking face (PS2's name, 0x10 bytes; its members are unknown, dwords on PC as its copies show)
@@ -45,7 +47,7 @@ extern std::vector<G_DabingMorphObj> G_DabingMorphActive;
 // PS2 names: the channels cleared, and their sounds released at the game's end
 void DabingInit();
 void DabingDone();
-// Each channel's face (its pointer at 0x1c) gets its morphs' weights back, the first of each of three groups 1, the
-// other four 0; then the channels' data and sounds are freed and the channels cleared, as DabingDone does (PC only, the
-// name is ours; C_cutscene::Close calls it)
+// Each channel's face gets its weights back, in each of three regions the first level 1, the other four 0; then the
+// channels' data and sounds are freed (the data first, where DabingDone frees the sound first) and the channels
+// cleared, as DabingDone does (PC only, the name is ours; C_cutscene::Close calls it)
 void DabingReset();

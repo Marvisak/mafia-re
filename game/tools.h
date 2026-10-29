@@ -200,10 +200,11 @@ public:
 
 extern C_sound_table sound_table;
 
-// GetSounds' folded group (mov eax, [ecx + 0x10]; ret, with C_actor::GetType and C_mission::GetScene), whose copy the
-// original kept from another file: named after the copy our linker keeps (foldfix)
+// GetSounds' folded group (mov eax, [ecx + 0x10]; ret, with C_actor::GetType, C_mission::GetScene and
+// GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
+// (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetType@C_actor@@QBEHXZ
+// ?GetText@GM_Component@@UAEPAEXZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

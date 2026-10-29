@@ -132,7 +132,7 @@ public:
     // PS2 name, which C_mission::FrmActBuff_IsActiveActor calls for a kept actor
     void Rebirth();
     // The type, ACTOR_* (the name is ours): calls VC6 left out of line read it through it, a copy folded with
-    // C_mission::GetScene and C_sound_table::GetSounds
+    // C_mission::GetScene, C_sound_table::GetSounds and GM_Component::GetText
     int GetType() const
     {
         return type;
