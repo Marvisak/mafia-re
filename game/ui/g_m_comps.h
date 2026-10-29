@@ -393,6 +393,88 @@ public:
     }
 };
 
+// A text edit's buffer (the name is ours): the longest text is one less
+#define TEXTEDIT_SIZE 0x40
+
+// A text edit (PS2's), 'edit': its own copy of the text, which the keys extend and Backspace shortens, black and
+// centered with a blinking cursor while active. Its text starts as the item's and is at most the length its dword gives
+// (the whole buffer's to start). It can be activated.
+// VTABLE: GAME 0x626b80
+class GM_TextEdit : public GM_Component
+{
+public:
+    GM_TextEdit(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        flags |= COMPF_UNKNOWN_8000;
+        buffer[0] = 0;
+        if (text)
+            strncpy(buffer, (char *)text, TEXTEDIT_SIZE);
+        max_length = TEXTEDIT_SIZE - 1;
+    }
+    GM_TextEdit(GM_Component *component) : GM_Component(component)
+    {
+        buffer[0] = 0;
+        if (text)
+            strncpy(buffer, (char *)text, TEXTEDIT_SIZE);
+        max_length = TEXTEDIT_SIZE - 1;
+    }
+
+    virtual uint GetType() { return 'edit'; }
+    // The cursor where the text ends, while the component is active and the cursor's blink shows it
+    virtual void Draw(uint draw_flags)
+    {
+        float end = mafiaIndicators.OutText(buffer, x, y, sx, sy, 0xff000000, OUTTEXT_CENTER | OUTTEXT_FIT, 0, NULL);
+        if (flags & COMPF_ACTIVE && draw_flags & MENUDRAW_CURSOR)
+            // STRING: GAME 0x637938
+            mafiaIndicators.OutText("_", end, y, sx, sy, 0xff000000, 0, 0, NULL);
+    }
+    // Backspace removes the last character; another key adds the character IGraph read for it, if there is room and it
+    // isn't a control character. Never clicks.
+    virtual uint Key(uint shift_keys, uint key)
+    {
+        int len = strlen(buffer);
+        if (key != DIK_BACK)
+        {
+            if (len < max_length)
+            {
+                uchar c = igraph->ReadChar();
+                if (c >= ' ')
+                {
+                    buffer[len] = c;
+                    buffer[len + 1] = 0;
+                }
+            }
+        }
+        else
+        {
+            if (len > 0)
+                len--;
+            buffer[len] = 0;
+        }
+        return 0;
+    }
+    // A copy of the text, cut to the length
+    virtual void SetText(uchar *text)
+    {
+        buffer[0] = 0;
+        if (text)
+            strncpy(buffer, (char *)text, TEXTEDIT_SIZE);
+        buffer[max_length] = 0;
+    }
+    virtual uchar *GetText() { return (uchar *)buffer; }
+    // The length, at most the buffer's; the text is cut to it
+    virtual void SetDword(uint value)
+    {
+        max_length = value;
+        if (max_length > TEXTEDIT_SIZE - 1)
+            max_length = TEXTEDIT_SIZE - 1;
+        buffer[max_length] = 0;
+    }
+
+    char buffer[TEXTEDIT_SIZE];         // 0x40 (the names are ours)
+    uint max_length;                    // 0x80
+};
+
 // The factory of a component's class not written yet (ours, not the original's): it registers the class's type as
 // G_Factory does, but makes nothing, so a menu skips the item as it would without a factory, and logs the item through
 // StubLog. The components' files have one for each such class, under the name of the original's factory. Its functions
@@ -431,7 +513,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?CanBeParent@GM_Component@@UAE_NXZ
+// ?GetBool@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9530
 // ?GetType@GM_Window@@UAEIXZ
@@ -447,10 +529,10 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_Window@@UAE_NXZ
+// ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_StaticText@@UAE@XZ
+// ??1GM_TextEdit@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -497,6 +579,24 @@ public:
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
 // ?Key@GM_MenuItem@@UAEIII@Z
+
+// FUNCTION: GAME 0x5dc850
+// ?GetType@GM_TextEdit@@UAEIXZ
+
+// FUNCTION: GAME 0x5dc860
+// ?SetText@GM_TextEdit@@UAEXPAE@Z
+
+// FUNCTION: GAME 0x5dc8a0
+// ?GetText@GM_TextEdit@@UAEPAEXZ
+
+// FUNCTION: GAME 0x5dc8b0
+// ?SetDword@GM_TextEdit@@UAEXI@Z
+
+// FUNCTION: GAME 0x5dc8f0
+// ?Key@GM_TextEdit@@UAEIII@Z
+
+// FUNCTION: GAME 0x5dc950
+// ?Draw@GM_TextEdit@@UAEXI@Z
 
 // The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
 // FUNCTION: GAME 0x5df350
@@ -554,3 +654,9 @@ public:
 
 // TEMPLATE: GAME 0x5dae80
 // ?MakeDup@?$G_Factory@VGM_MenuItem@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dc7a0
+// ?Make@?$G_Factory@VGM_TextEdit@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dc9d0
+// ?MakeDup@?$G_Factory@VGM_TextEdit@@@@SIPAVGM_Component@@PAV2@@Z

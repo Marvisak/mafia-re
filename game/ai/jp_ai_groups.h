@@ -143,8 +143,8 @@ public:
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
 // SYNTHETIC: GAME 0x538c30
-// ??1ai_police_action@@QAE@XZ
+// ??1ai_fight_followship@@QAE@XZ
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_actor@@PAPAV2@00@Z
+// ?copy@std@@YIPAIPBI0PAI@Z
