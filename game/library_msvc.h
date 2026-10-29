@@ -20,14 +20,26 @@
 // LIBRARY: GAME 0x60fc5a
 // ?SetRot3@S_matrix@@QAGXABUS_quat@@@Z
 
+// LIBRARY: GAME 0x60fc60
+// ??DS_vector@@QBG?AU0@ABUS_matrix@@@Z
+
 // LIBRARY: GAME 0x60fc66
 // ?RotateByMatrix@S_vector@@QBG?AU1@ABUS_matrix@@@Z
+
+// LIBRARY: GAME 0x60fc6c
+// ?Identity@S_matrix@@QAGXXZ
 
 // LIBRARY: GAME 0x60fc72
 // ?Inverse@S_matrix@@QAG_NABU1@@Z
 
+// LIBRARY: GAME 0x60fc7e
+// ?AngleTo@S_vector@@QBGMABU1@@Z
+
 // LIBRARY: GAME 0x60fc90
 // ?SetDir3@S_matrix@@QAGXABUS_vector@@0@Z
+
+// LIBRARY: GAME 0x60fc96
+// ??DS_matrix@@QBG?AU0@ABU0@@Z
 
 // LIBRARY: GAME 0x60fc9c SYMBOL
 // _I3DGetDriver
@@ -43,6 +55,9 @@
 
 // LIBRARY: GAME 0x60fcde SYMBOL
 // _ISndGetDriver
+
+// LIBRARY: GAME 0x60fcf0
+// ?SetDir@S_matrix@@QAGXABUS_vector@@@Z
 
 // LIBRARY: GAME 0x60fcf6
 // ??3@YAXPAX@Z
@@ -310,6 +325,9 @@
 
 // LIBRARY: GAME 0x6120d9 SYMBOL
 // _pow
+
+// LIBRARY: GAME 0x6122dd SYMBOL
+// _remove
 
 // LIBRARY: GAME 0x612310 SYMBOL
 // __aulldiv

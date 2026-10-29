@@ -57,6 +57,40 @@ public:
     char *title;                        // 0x34, the window's, NULL to keep the menu's
 };
 
+// The question box's items, tables\menu\questionbox.mnu (the names are ours)
+#define QUESTIONBOX_WINDOW 0x82         // its text the title
+#define QUESTIONBOX_TEXT 0x83           // the question
+#define QUESTIONBOX_YES 0x8a
+#define QUESTIONBOX_NO 0x8b
+
+// The codes the question box closes with, which the parent's OnCloseChild gets; Escape closes it with -1 (the names
+// are ours)
+#define QUESTIONBOX_CODE_NO 0
+#define QUESTIONBOX_CODE_YES 1
+
+// What ExecuteMenu returns for the question box run without a parent menu, Escape's being No's (the names are ours)
+#define QUESTIONBOX_RESULT_YES 0xb
+#define QUESTIONBOX_RESULT_NO 0xc
+
+// A question with Yes and No, "questionbox" (PS2 GM_QuestionBox, whose message box is the question without No by a
+// flag; PS2's takes the texts' ids), 0x38 bytes
+// VTABLE: GAME 0x627554
+class GM_QuestionBox : public GM_Menu
+{
+public:
+    // The window's title and the question, NULL for none
+    GM_QuestionBox(char *title, char *text);
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    // Escape closes it as No does, but with its own code
+    virtual int OnKey(uchar key, uint);
+    virtual int OnClick(uint id);
+
+    char *title;                        // 0x30 (the names are ours)
+    char *text;                         // 0x34
+};
+
 // The loading screen's progress bar (its menu's item 0x12c, a "pbar"; the name is ours)
 #define LOADPROGRESS_BAR 0x12c
 

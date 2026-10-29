@@ -222,7 +222,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@QBEIXZ
+// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -240,4 +240,4 @@ public:
 // ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

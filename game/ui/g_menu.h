@@ -118,7 +118,9 @@ public:
 // A menu (PS2 g_menu.cpp), 0x30 bytes. The PC's has twelve virtual functions, PS2's in its order without the
 // destructor, Destroy and MartinovaKlavesa. The defaults are the base's vtable's: the empty ones are folded copies
 // (0x409220, 0x409210, 0x605020), OnBeforeExchange and OnExchange call the menu's own OnBeforeCreate and OnCreate,
-// and the copies of the inline ones are in the run of out-of-line accessors at 0x47a400. PS2's has the members in the
+// and the copies of the inline ones are in the run of out-of-line accessors at 0x47a400, but OnKey's: the menus of that
+// file override it, so LINK kept the copy of the first object that needs it, the file at 0x549140 (after 0x5493d0,
+// which creates the menu of vtable 0x625234, the first vtable in .rdata to point to it). PS2's has the members in the
 // same order, 4 bytes lower (its vtable is at the end). Only what ExecuteMenu, Create and Draw use so far.
 // VTABLE: GAME 0x627834
 class GM_Menu
@@ -136,7 +138,15 @@ public:
     virtual int OnExchange() { return OnCreate(); }
     virtual int OnCreateChild(GM_Menu *child, uint) { return 0; }
     virtual int OnCloseChild(GM_Menu *child, uint, uint) { return 0; }
-    virtual int OnKey(uchar key, uint);
+    // Escape closes the menu (1 is DIK_ESCAPE, from dinput.h through ijoy.h, which this header doesn't include: it moves
+    // the game's files)
+    // FUNCTION: GAME 0x5498f0
+    virtual int OnKey(uchar key, uint)
+    {
+        if (key == 1)
+            MenuClose((uint)-1);
+        return 0;
+    }
     virtual int OnMouse(int x, int y, int z, uint, uint) { return 0; }
     virtual int OnClick(uint id) { return 0; }
     virtual int OnTick(uint time) { return 0; }
@@ -164,6 +174,9 @@ public:
     // Opens a menu over the active one (PS2's name): the active menu becomes its parent, which gets the id back in
     // OnCreateChild and OnCloseChild, and the new one is created and active. Called on the menu, which it doesn't read.
     void MenuOpen(GM_Menu *menu, uint id);
+    // Creates the menu's components again (PS2's name): deletes them, creates those of OnBeforeExchange's definition,
+    // activates the component of the active one's id again (or the next one) and calls OnExchange and OnChange
+    void MenuExchange();
     // Closes the menu with that code (PS2's name): tells the parent (OnCloseChild), then OnClose. Tick destroys it at
     // the frame's end. PS2's ends ExecuteMenu with -1 here where the menu has no parent, the PC's Tick does.
     void MenuClose(uint code);
@@ -181,8 +194,12 @@ public:
     void SetText(uint id, uchar *text);
     // Sets the string of the component of that id, if the menu has one
     void SetString(uint id, uchar *text);
+    // The text of the component of that id, NULL where the menu has none
+    uchar *GetText(uint id);
     // Sets the value of the component of that id, if the menu has one
     void SetFloat(uint id, float value);
+    // Sets the dword of the component of that id, if the menu has one (a text edit's length)
+    void SetDword(uint id, uint value);
     // Activates the component of that id, or else the next one that can be activated
     void ActivateByIDOrNext(uint id);
     // The menu's component of that id, NULL for none

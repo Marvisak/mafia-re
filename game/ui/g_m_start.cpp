@@ -1,7 +1,6 @@
 // The profiles' menu (PS2 g_m_start.cpp, where PS2's GM_ProfileSelect, GM_ProfileCreate and GM_ProfileDelete are; the
-// PC's file is the one at 0x5e84c0-0x5e8d0c, docs/game-files.md). Written so far: OnCreate, which GM_Menu::Create
-// calls when G_LoadSaveClass::Init runs the menu, OnTick, which GM_Menu::Tick calls, and OnClick, the items' clicks;
-// the rest is stubs.
+// PC's file is the one at 0x5e84c0-0x5e8d0c, docs/game-files.md), written: the profiles' menu, which
+// G_LoadSaveClass::Init runs, the name dialog GM_ProfileCreate and the deletion GM_ProfileDelete.
 
 #include "ui/g_m_start.h"
 
@@ -11,7 +10,6 @@
 #include "ui/g_m_comps.h"
 #include "ui/g_m_func.h"
 #include "ui/g_textdb.h"
-#include "stub.h"
 
 // The profiles' names in the menu, an item for each below the first, the window grown by them and moved up by half as
 // much. PS2's (memory cards' profiles, the selected one active) is another function.
@@ -63,16 +61,31 @@ int GM_ProfileSelect::OnCreate()
     return 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e86a0
-int GM_ProfileSelect::OnCloseChild(GM_Menu *child, uint, uint)
+// The name dialog cancelled asks for it again only without a profile; closed otherwise, also with Escape's -1, it creates
+// the profile of new_name, which keeps the last name where OK didn't set it. Any child's closing creates the menu again
+// with the profiles there are now. PS2's creates the profile on a memory card.
+// FUNCTION: GAME 0x5e86a0
+int GM_ProfileSelect::OnCloseChild(GM_Menu *child, uint id, uint code)
 {
-    StubLog("GM_ProfileSelect::OnCloseChild");
+    if (id == PROFILESELECT_CREATE)
+    {
+        if (!code)
+        {
+            int count = mafiaLoadSave.ProfileGetList()->size();
+            if (count)
+                dialog = PROFILEDIALOG_NONE;
+            else
+                dialog = PROFILEDIALOG_CREATE;
+        }
+        else if (mafiaLoadSave.ProfileCreate((uchar *)new_name))
+            dialog = PROFILEDIALOG_NONE;
+        else
+            dialog = PROFILEDIALOG_EXISTS;
+    }
+    MenuExchange();
+    SetDisabled(PROFILESELECT_DELETE, mafiaLoadSave.ProfileGetList()->size() > 1);
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // The name dialog stays asked for: the profiles' menu doesn't tick while its child is open, and OnCloseChild then asks
 // for the next. PS2's is the memory card's.
@@ -124,48 +137,106 @@ int GM_ProfileSelect::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e8a40
+// The edit takes PROFILECREATE_NAME_LENGTH characters and starts with the profiles' menu's name. ReadChar's characters,
+// which the edit adds, come from the window messages (KBINIT_WINMESSAGES). PS2's builds its on-screen keyboard instead.
+// FUNCTION: GAME 0x5e8a40
 int GM_ProfileCreate::OnCreate()
 {
-    StubLog("GM_ProfileCreate::OnCreate");
+    flags &= ~MENUF_UNKNOWN_10000;
+    SetDword(PROFILECREATE_NAME, PROFILECREATE_NAME_LENGTH);
+    SetText(PROFILECREATE_NAME, (uchar *)name);
+    igraph->KeyboardInit(KBINIT_WINMESSAGES);
     return 0;
 }
 
-// STUB: GAME 0x5e8a80
+// The keyboard as InitSystem set it up. PS2's does nothing.
+// FUNCTION: GAME 0x5e8a80
 int GM_ProfileCreate::OnClose()
 {
-    StubLog("GM_ProfileCreate::OnClose");
+    igraph->KeyboardInit(KBINIT_EXCLUSIVE);
     return 0;
 }
 
-// STUB: GAME 0x5e8aa0
+// OK copies the edit's name into the profiles' menu's; both close the dialog, or without a parent menu end ExecuteMenu.
+// PS2's also has its on-screen keyboard's keys.
+// FUNCTION: GAME 0x5e8aa0
 int GM_ProfileCreate::OnClick(uint id)
 {
-    StubLog("GM_ProfileCreate::OnClick");
+    switch (id)
+    {
+    case PROFILECREATE_OK:
+        strncpy(name, (char *)GetText(PROFILECREATE_NAME), PROFILESELECT_NAME_SIZE);
+        if (!open_id)
+            MenuCloseAll(PROFILECREATE_CODE_OK, PROFILECREATE_CREATED);
+        else
+            MenuClose(PROFILECREATE_CODE_OK);
+        break;
+    case PROFILECREATE_CANCEL:
+        if (!open_id)
+            MenuCloseAll(PROFILECREATE_CODE_CANCEL, PROFILECREATE_CANCELLED);
+        else
+            MenuClose(PROFILECREATE_CODE_CANCEL);
+        break;
+    }
     return 0;
 }
 
-// STUB: GAME 0x5e8b10
+// PS2's lists the memory cards' profiles
+// FUNCTION: GAME 0x5e8b10
 int GM_ProfileDelete::OnCreate()
 {
-    StubLog("GM_ProfileDelete::OnCreate");
+    flags &= ~MENUF_UNKNOWN_10000;
+    std::vector<G_Profile_FileHead> *profiles = mafiaLoadSave.ProfileGetList();
+    float height = 0.0f;
+    int count = profiles->size();
+    if (count)
+    {
+        std::vector<G_Profile_FileHead>::iterator it = profiles->begin();
+        uint id = PROFILEDELETE_PROFILE;
+        SetText(id, it->name);
+        for (it++; it < profiles->end(); it++)
+        {
+            PridejComponentPod(id, id + 1, PROFILEDELETE_LIST, PROFILEDELETE_CANCEL, 0, 0);
+            id++;
+            GM_Component *component = FindComponentByID(id);
+            if (component)
+                height += component->sy;
+            SetText(id, it->name);
+        }
+        GM_Component *window = FindComponentByID(PROFILEDELETE_WINDOW);
+        if (window)
+        {
+            window->sy += height;
+            window->rel_y -= height * .5f;
+        }
+    }
     return 0;
 }
 
-// STUB: GAME 0x5e8c00
-int GM_ProfileDelete::OnCloseChild(GM_Menu *child, uint, uint)
+// Any code but No's deletes the profile, also Escape's -1 (PS2's takes Yes's only)
+// FUNCTION: GAME 0x5e8c00
+int GM_ProfileDelete::OnCloseChild(GM_Menu *child, uint id, uint code)
 {
-    StubLog("GM_ProfileDelete::OnCloseChild");
+    if (id >= PROFILEDELETE_PROFILE && id < PROFILEDELETE_PROFILE_END && code)
+    {
+        mafiaLoadSave.ProfileDelete(id - PROFILEDELETE_PROFILE);
+        MenuClose(PROFILEDELETE_CODE_DELETED);
+    }
     return 0;
 }
 
-// STUB: GAME 0x5e8c40
+// A profile's item asks whether to delete it: "Delete", with its name as the question
+// FUNCTION: GAME 0x5e8c40
 int GM_ProfileDelete::OnClick(uint id)
 {
-    StubLog("GM_ProfileDelete::OnClick");
+    switch (id)
+    {
+    case PROFILEDELETE_CANCEL:
+        MenuClose((uint)-1);
+        break;
+    default:
+        if (id >= PROFILEDELETE_PROFILE && id < PROFILEDELETE_PROFILE_END)
+            MenuOpen(new GM_QuestionBox(textDatabase.GetText(TEXT_DELETE), (char *)GetText(id)), id);
+    }
     return 0;
 }
-
-#pragma auto_inline(on)

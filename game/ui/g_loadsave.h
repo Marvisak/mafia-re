@@ -73,6 +73,13 @@
 // The profiles' files that ProfileEnumFiles looks for, savegame\mafia000.sav to mafia031.sav (the name is ours)
 #define MAX_PROFILES 32
 
+// The longest name ProfileCreate gives a profile (the head has room for more; the name is ours)
+#define PROFILE_NAME_LENGTH 0x1f
+
+// The saved games' files of a profile that ProfileDelete removes with it, savegame\mafia<profile>.000 to .599 (the name
+// is ours)
+#define PROFILE_SAVE_FILES 600
+
 // The garage's slots (the name is ours)
 #define MAX_GARAGE_CARS 25
 
@@ -273,6 +280,11 @@ public:
     std::vector<G_Profile_FileHead> *ProfileGetList();
     // The list's profile of that index becomes the profile, which ProfileLoad then reads (PS2 name)
     void ProfileSelect(uint index);
+    // A new profile of that name, the list's last and the profile: its file has only the head. False where a profile
+    // has the name already, whatever the case (PS2 name).
+    bool ProfileCreate(uchar *name);
+    // Deletes the list's profile of that index, its file and its saved games' (PS2 name)
+    void ProfileDelete(uint index);
     // Reads the profile's file, which profile.number names, or takes the defaults
     void ProfileLoad();
     // Writes the profile's file
@@ -413,6 +425,10 @@ struct S_garage_item
 
 // TEMPLATE: GAME 0x60f560
 // ?_Ufill@?$vector@UG_Profile_FileHead@@V?$allocator@UG_Profile_FileHead@@@std@@@std@@IAEXPAUG_Profile_FileHead@@IABU3@@Z
+
+// ProfileCreate's push_back calls it; the original's copy is a folded one in the file at 0x4f6a60
+// TEMPLATE: GAME 0x4f7cf0
+// ?insert@?$vector@UG_Profile_FileHead@@V?$allocator@UG_Profile_FileHead@@@std@@@std@@QAEXPAUG_Profile_FileHead@@IABU3@@Z
 
 // Set while the profile mustn't be saved: from the start until Init has loaded one, and when the player quit in the
 // profiles' menu (PS2's name)

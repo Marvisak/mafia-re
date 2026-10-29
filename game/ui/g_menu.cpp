@@ -1,9 +1,9 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
-// with MenuClose and the activation's searches), MenuOpen, MenuCloseAll, SetCameraTargetID, the wrappers by id the
-// loading screen and the profiles' menu call, PridejComponentPod, and of the components what the classes written so far
-// use (the three drawing functions, the constructors, the children's insertion and SetTextID); TickCamera and the rest
-// are stubs.
+// with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, the wrappers
+// by id the loading screen and the profiles' menus call, PridejComponentPod, and of the components what the classes
+// written so far use (the three drawing functions, the constructors, the children's insertion and SetTextID);
+// TickCamera and the rest are stubs.
 
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
@@ -122,18 +122,6 @@ S_menu_target _GM_MainMenuTargets[] = {
     {990416, "racing_pos"},
     {0, ""},
 };
-
-#pragma auto_inline(off)
-
-// The original's copy lies in the file at 0x549140, most likely a folded one
-// STUB: GAME 0x5498f0
-int GM_Menu::OnKey(uchar key, uint)
-{
-    StubLog("GM_Menu::OnKey");
-    return 0;
-}
-
-#pragma auto_inline(on)
 
 // A line strip around it, from the top left
 // FUNCTION: GAME 0x5e8e00
@@ -728,7 +716,24 @@ void GM_Menu::MenuOpen(GM_Menu *menu, uint id)
     menu->Create();
 }
 
-// MenuExchange (0x5ead80) comes before it, as PS2's
+// PS2's frees the components' array
+// FUNCTION: GAME 0x5ead80
+void GM_Menu::MenuExchange()
+{
+    uint id = 1;
+    if (active)
+        id = active->id;
+    for (std::vector<GM_Component *>::iterator it = components.begin(); it < components.end(); it++)
+        delete *it;
+    components.clear();
+    root = NULL;
+    active = NULL;
+    CreateCompsByDef(OnBeforeExchange());
+    ActivateByIDOrNext(id);
+    OnExchange();
+    OnChange(active, NULL);
+}
+
 // FUNCTION: GAME 0x5eae10
 void GM_Menu::MenuClose(uint code)
 {
@@ -799,12 +804,29 @@ void GM_Menu::SetString(uint id, uchar *text)
         component->SetString(text);
 }
 
+// FUNCTION: GAME 0x5eb050
+uchar *GM_Menu::GetText(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        return component->GetText();
+    return NULL;
+}
+
 // FUNCTION: GAME 0x5eb070
 void GM_Menu::SetFloat(uint id, float value)
 {
     GM_Component *component = FindComponentByID(id);
     if (component)
         component->SetFloat(value);
+}
+
+// FUNCTION: GAME 0x5eb0c0
+void GM_Menu::SetDword(uint id, uint value)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetDword(value);
 }
 
 // FUNCTION: GAME 0x5eb210

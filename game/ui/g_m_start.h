@@ -18,9 +18,40 @@
 // The profiles the menu takes: with as many, it can't create another (the name is ours)
 #define PROFILESELECT_MAX_PROFILES 12
 
-// The text database's "Default" and "This Profile Already Exists" (the names are ours)
+// GM_ProfileSelect::new_name's size, which the name dialog copies the name into (the name is ours)
+#define PROFILESELECT_NAME_SIZE 0x20
+
+// The name dialog's items, tables\menu\profilecreate.mnu (the names are ours)
+#define PROFILECREATE_NAME 0xb          // the name's text edit, "Mafia" in the definition
+#define PROFILECREATE_OK 0x65
+#define PROFILECREATE_CANCEL 0x66
+
+// The longest name the dialog's edit takes (the name is ours)
+#define PROFILECREATE_NAME_LENGTH 10
+
+// The codes the name dialog closes with, which the profiles' menu's OnCloseChild gets (the names are ours)
+#define PROFILECREATE_CODE_CANCEL 0
+#define PROFILECREATE_CODE_OK 1         // the name is in the profiles' menu's new_name
+
+// What ExecuteMenu returns for the name dialog run without a parent menu (the names are ours; the game always opens it
+// over the profiles' menu)
+#define PROFILECREATE_CREATED 0xd
+#define PROFILECREATE_CANCELLED 0xe
+
+// The deletion's items, tables\menu\profiledelete.mnu, the profiles' menu's ids (the names are ours)
+#define PROFILEDELETE_WINDOW 3          // "Delete Profile:"
+#define PROFILEDELETE_LIST 0xa          // the frame around the profiles
+#define PROFILEDELETE_PROFILE 0x64      // the first profile; OnCreate adds the others after it
+#define PROFILEDELETE_PROFILE_END 0xc8  // past the profiles' ids
+#define PROFILEDELETE_CANCEL 0xc9
+
+// The code the deletion closes with once it deleted a profile, which the profiles' menu doesn't read (the name is ours)
+#define PROFILEDELETE_CODE_DELETED 1
+
+// The text database's "Default", "This Profile Already Exists" and "Delete" (the names are ours)
 #define TEXT_DEFAULT 0x84
 #define TEXT_PROFILE_EXISTS 0x83
+#define TEXT_DELETE 0x82
 
 // GM_ProfileSelect::dialog, the dialog its OnTick opens (the names are ours)
 #define PROFILEDIALOG_NONE 0
@@ -43,6 +74,8 @@ public:
         return "profileselect";
     }
     virtual int OnCreate();
+    // The name dialog's closing creates the profile or asks for the dialog again; the menu is then created again for
+    // the profiles there are now
     virtual int OnCloseChild(GM_Menu *child, uint, uint);
     virtual int OnKey(uchar key, uint) { return 0; }
     virtual int OnClick(uint id);
@@ -53,14 +86,14 @@ public:
     // the name dialog (the name is ours)
     int dialog;
     // 0x34, "Default" from OnCreate, the name dialog's, which OnCloseChild creates the profile with (the name is ours)
-    char new_name[0x20];
+    char new_name[PROFILESELECT_NAME_SIZE];
 };
 
 // The new profile's name, "profilecreate" (PS2 GM_ProfileCreate, g_m_start.cpp), 0x34 bytes, which the profiles' menu
 // opens with PROFILESELECT_CREATE. Its constructor is inline, as PS2's. The copies of its and GM_ProfileDelete's
 // OnBeforeCreate follow GM_ProfileSelect::OnTick, the first function that needs them, in the original; ours come at
 // the file's end: under /YX they come due once the file's own source outweighs the headers' inline code before them,
-// and OnCloseChild, before OnTick, isn't written yet.
+// which with all of the file written it still doesn't (open: our headers have more inline code before them).
 // VTABLE: GAME 0x6277d0
 class GM_ProfileCreate : public GM_Menu
 {
@@ -73,7 +106,9 @@ public:
         // STRING: GAME 0x6384b8
         return "profilecreate";
     }
+    // The name's edit, IGraph's keys from the window messages while the dialog is open
     virtual int OnCreate();
+    // IGraph's keyboard exclusive again
     virtual int OnClose();
     virtual int OnClick(uint id);
 
@@ -81,7 +116,8 @@ public:
 };
 
 // Which profile to delete, "profiledelete" (PS2 GM_ProfileDelete, g_m_start.cpp), 0x30 bytes, which the profiles' menu
-// opens with PROFILESELECT_DELETE. Its constructor is the compiler's, inlined.
+// opens with PROFILESELECT_DELETE: a profile's item asks in a question box (GM_QuestionBox) whether to delete it. Its
+// constructor is the compiler's, inlined.
 // VTABLE: GAME 0x627800
 class GM_ProfileDelete : public GM_Menu
 {
@@ -92,7 +128,9 @@ public:
         // STRING: GAME 0x6384c8
         return "profiledelete";
     }
+    // The profiles' names in the menu, as the profiles' menu's OnCreate
     virtual int OnCreate();
+    // The question box's closing deletes the profile and closes the menu
     virtual int OnCloseChild(GM_Menu *child, uint, uint);
     virtual int OnClick(uint id);
 };

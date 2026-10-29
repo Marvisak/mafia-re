@@ -529,7 +529,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_WindowClean@@UAE_NXZ
+// ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
 // ??1GM_TextEdit@@UAE@XZ

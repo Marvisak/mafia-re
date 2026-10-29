@@ -1,8 +1,9 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
 // docs/game-files.md). The original's OnChange is folded into the racing menu's (0x5e4a50, in the next file but one).
-// The PC's message box (from 0x5e2170), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order.
-// Written so far: the main menu's OnBeforeCreate, OnCreate and OnChange, the message box's OnBeforeCreate and
-// constructor, the loading screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present;
+// The PC's message box (from 0x5e2170) and question box (from 0x5e2310), then the loading screen (GM_LoadProgress, from
+// 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu's OnBeforeCreate, OnCreate and OnChange, the message
+// box's OnBeforeCreate and constructor, the question box, the loading screen's constructor, OnBeforeCreate, OnCreate,
+// OnTick, SetProgressMissionOpen and Present;
 // the rest is stubs of what main, C_mission::Open and the profiles' menu need to link.
 
 #include "ui/g_m_func.h"
@@ -142,6 +143,63 @@ int GM_MessageBox::OnClick(uint id)
 }
 
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e2310
+GM_QuestionBox::GM_QuestionBox(char *title, char *text) : title(title)
+{
+    this->text = text;
+}
+
+// FUNCTION: GAME 0x5e2340
+const char *GM_QuestionBox::OnBeforeCreate()
+{
+    // STRING: GAME 0x6382e0
+    return "questionbox";
+}
+
+// The title isn't tested for NULL, the question is
+// FUNCTION: GAME 0x5e2350
+int GM_QuestionBox::OnCreate()
+{
+    SetText(QUESTIONBOX_WINDOW, (uchar *)title);
+    if (text)
+        SetText(QUESTIONBOX_TEXT, (uchar *)text);
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e2380
+int GM_QuestionBox::OnKey(uchar key, uint)
+{
+    if (key == DIK_ESCAPE)
+    {
+        if (open_id)
+            MenuClose((uint)-1);
+        else
+            MenuCloseAll((uint)-1, QUESTIONBOX_RESULT_NO);
+    }
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e23b0
+int GM_QuestionBox::OnClick(uint id)
+{
+    switch (id)
+    {
+    case QUESTIONBOX_YES:
+        if (open_id)
+            MenuClose(QUESTIONBOX_CODE_YES);
+        else
+            MenuCloseAll(QUESTIONBOX_CODE_YES, QUESTIONBOX_RESULT_YES);
+        break;
+    case QUESTIONBOX_NO:
+        if (open_id)
+            MenuClose(QUESTIONBOX_CODE_NO);
+        else
+            MenuCloseAll(QUESTIONBOX_CODE_NO, QUESTIONBOX_RESULT_NO);
+        break;
+    }
+    return 0;
+}
 
 // The menus' scale, relative to 800x600 (the HUD's screen of Parhelia's two or three): the constants are quotients, the
 // reciprocals of the sizes

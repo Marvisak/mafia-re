@@ -5,8 +5,8 @@
 // database's Init and Close, G_Stream's reading and writing, RaceCarsEnable, RaceCarsDisable, GarageClear, Refresh,
 // FreerideStoreA and FreerideStoreB), LanguageSelect, and what C_game's Init and Done reach: ObjectivesClear, the
 // garage's GarageGameInit and GarageGameDone with the car database's GetCar, GetCarModel, GetCarParams,
-// GetIdxByModelLong and GetIDByActor, and the end of mission garage menu's names; the rest of what they and main call is
-// stubs.
+// GetIdxByModelLong and GetIDByActor, the end of mission garage menu's names, and the profiles' menus' ProfileCreate and
+// ProfileDelete; the rest of what they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -170,6 +170,65 @@ void G_LoadSaveClass::ProfileSelect(uint index)
 {
     if (index < profiles.size())
         profile = profiles[index];
+}
+
+// The file's number is the lowest no profile has. PS2's creates the profile on the memory card, with the defaults.
+// FUNCTION: GAME 0x6055c0
+bool G_LoadSaveClass::ProfileCreate(uchar *name)
+{
+    G_Profile_FileHead head;
+    memset(&head, 0, sizeof(head));
+    strncpy((char *)head.name, (char *)name, PROFILE_NAME_LENGTH);
+    head.name[PROFILE_NAME_LENGTH] = 0;
+    uint number = 0;
+    uint last;
+    G_Profile_FileHead *p;
+    for (p = profiles.begin(); p < profiles.end(); p++)
+    {
+        if (!strcmpi((char *)name, (char *)p->name))
+            return false;
+    }
+    do
+    {
+        last = number;
+        for (p = profiles.begin(); p < profiles.end(); p++)
+        {
+            if (number == p->number)
+                number++;
+        }
+    } while (number != last);
+    head.number = number;
+    // STRING: GAME 0x63960c
+    CreateDirectory("savegame", NULL);
+    G_Stream stream;
+    stream.SetParams(PROFILE_MAGIC, true, false);
+    char file_name[128];
+    sprintf(file_name, "savegame\\mafia%03d.sav", number);
+    if (stream.OpenWrite(file_name))
+    {
+        stream.WriteAdr(&head, sizeof(head));
+        stream.Close();
+    }
+    profiles.push_back(head);
+    ProfileSelect(profiles.size() - 1);
+    return true;
+}
+
+// PS2's deletes the profile on the memory card
+// FUNCTION: GAME 0x605740
+void G_LoadSaveClass::ProfileDelete(uint index)
+{
+    char name[128];
+    uint number = profiles[index].number;
+    sprintf(name, "savegame\\mafia%03d.sav", number);
+    remove(name);
+    for (int i = 0; i < PROFILE_SAVE_FILES; i++)
+    {
+        // STRING: GAME 0x639618
+        sprintf(name, "savegame\\mafia%03d.%03d", number, i);
+        remove(name);
+    }
+    profiles.erase(profiles.begin() + index);
 }
 
 // The file: the head (the PC's version 1), the controls, the options and unknown_520, and nothing after them; anything
