@@ -410,6 +410,248 @@ class I3D_frame;
 // How many there are
 #define NUM_COMMANDS 398
 
+// The most parameters a command has, which ExtrudeParams splits its text into (the name is ours)
+#define MAX_PARAMS 16
+
+// The events the game raises itself, which EVENT names as the scripts do (the names are ours, after the scripts')
+#define EVENT_USE_AB 60000
+#define EVENT_DEATH 60001
+#define EVENT_ENEMY_TO_AI 60002
+#define EVENT_ENEMY_TO_SCRIPT 60003
+#define EVENT_HIT_FROM_PLAYER 60004
+#define EVENT_DETECTOR_HIT 60005
+
+// The command block's modes, the parameter of its { (the names are ours, after the scripts')
+#define BLOCK_MODE_NONE 0
+#define BLOCK_MODE_UP 1
+#define BLOCK_MODE_DOWN 2
+
+// ACT_SETSTATE's states (the names are ours, after the scripts')
+#define ACT_STATE_NONE 0
+#define ACT_STATE_ACTIVE 1
+#define ACT_STATE_INACTIVE 2
+
+// LET's operators, S_let_params::op (the names are ours)
+#define LET_OP_NONE 0                   // flt[n] = a
+#define LET_OP_ADD 1
+#define LET_OP_SUB 2
+#define LET_OP_MUL 3
+#define LET_OP_DIV 4
+
+// IF's comparisons, S_if_params::op (the names are ours)
+#define IF_OP_LESS 1
+#define IF_OP_GREATER 2
+#define IF_OP_EQUAL 3
+#define IF_OP_NOT_EQUAL 4               // !
+
+// WEATHER_SETPARAM's parameters, in the order of their names' table (the names are ours, after the scripts')
+#define WEATHER_ON 0
+#define WEATHER_SECTORS 1
+#define WEATHER_DUMMIES 2
+#define WEATHER_COLORH 3
+#define WEATHER_COLORL 4
+#define WEATHER_SPEED 5
+#define WEATHER_LEN 6
+#define WEATHER_WIDTH 7
+#define WEATHER_MAX_DIST 8
+#define WEATHER_MAX_HEIGHT 9
+#define WEATHER_MAX_CNT 10
+#define WEATHER_DIR_X 11
+#define WEATHER_DIR_Y 12
+#define WEATHER_DIR_Z 13
+#define WEATHER_MODE 14
+#define NUM_WEATHER_PROPERTIES 15
+
+// The commands' parameters, which DecodeParams allocates as S_instruction::params for Process (the names are ours).
+// A command whose parameters are all integers has an int[] of them, LABEL and the commands that take a script's name a
+// char[], the others one of these. The labels and the quoted names are copied into the arrays.
+
+// An operand: flt[reg], a float register, or a value, with reg -1 (DecodeOperand's), WAIT's and its group's parameter
+struct S_operand
+{
+    int reg;                            // 0x0
+    float value;                        // 0x4
+};
+
+// GOTO's and GOSUB's: a label, or a register that holds the command to go to
+struct S_goto_params
+{
+    S_operand target;                   // 0x0, only for a register
+    char label[16];                     // 0x8, "" for a register
+};
+
+// LET's: flt[dest] = a, or a op b
+struct S_let_params
+{
+    int dest;                           // 0x0
+    S_operand a;                        // 0x4
+    S_operand b;                        // 0xc, reg -1 for LET_OP_NONE
+    int op;                             // 0x14, LET_OP_*
+};
+
+// IF's: a op b, and the two labels
+struct S_if_params
+{
+    S_operand a;                        // 0x0
+    S_operand b;                        // 0x8
+    int op;                             // 0x10, IF_OP_*
+    char label1[16];                    // 0x14
+    char label2[16];                    // 0x24
+};
+
+// VECT_SET's and CAR_SETPROJECTOR's: a register and three values
+struct S_vector_params
+{
+    float x, y, z;                      // 0x0
+    int reg;                            // 0xc
+};
+
+// PERSON_PLAYANIM's
+struct S_playanim_params
+{
+    char anim[64];                      // 0x0
+    int unknown_40;                     // 0x40, -1 without it
+    bool simple;                        // 0x44, SIMPLE
+    int reg;                            // 0x48
+    bool unknown_4c;                    // 0x4c, true without it
+};
+
+// A register and a name, FINDFRAME's and its group's, MODEL_CREATE's and its group's
+struct S_name_params
+{
+    int reg;                            // 0x0
+    char name[64];                      // 0x4, "" for FINDFRAME's group without it
+};
+
+// IFFLTINRANGE's
+struct S_ifflt_params
+{
+    float min, max;                     // 0x0
+    int reg;                            // 0x8
+    char label[16];                     // 0xc
+};
+
+// PLAYSOUND's
+struct S_playsound_params
+{
+    char name[64];                      // 0x0
+    int unknown_40;                     // 0x40
+    float unknown_44;                   // 0x44
+    float unknown_48;                   // 0x48
+    int unknown_4c;                     // 0x4c, 0 without it
+    float unknown_50;                   // 0x50, 0 without it, its reciprocal if above 1
+};
+
+// DETECTOR_ISSIGNAL's
+struct S_signal_params
+{
+    int reg;                            // 0x0
+    char label1[16];                    // 0x4
+    char label2[16];                    // 0x14
+};
+
+// Two integers and a name, SETEVENT's (a label), SETNPCKILLEVENT's and ENDOFMISSION's (both quoted, the latter's ""
+// without it)
+struct S_event_params
+{
+    int value1;                         // 0x0
+    int value2;                         // 0x4
+    char name[64];                      // 0x8
+};
+
+// An integer and a float, PLAYSOUNDSTOP's (0 without it, its reciprocal if above 1) and DETECTOR_INRANGE's group's
+// (an integer converted)
+struct S_int_float_params
+{
+    int value1;                         // 0x0
+    float value2;                       // 0x4
+};
+
+// SOUNDFADE's group's: two integers, then two floats
+struct S_fade_params
+{
+    float value3;                       // 0x0
+    float value4;                       // 0x4
+    int value1;                         // 0x8
+    int value2;                         // 0xc
+};
+
+// CHANGE_MISSION's: two quoted names and a value
+struct S_change_mission_params
+{
+    char name1[64];                     // 0x0
+    char name2[64];                     // 0x40
+    float value;                        // 0x80
+    int unknown_84;                     // 0x84, not set
+};
+
+// A float and two integers, CAMERA_SETSWING's group's (the float second) and AIRPLANE_START's group's (the float last)
+struct S_float_int_params
+{
+    float value;                        // 0x0
+    int value1;                         // 0x4
+    int value2;                         // 0x8
+};
+
+// HUMAN_CHANGEANIM's (with a register first) and ENEMY_CHANGEANIM's (without): an animation and maybe a second one
+struct S_changeanim_params
+{
+    int reg;                            // 0x0
+    char anim1[64];                     // 0x4
+    char anim2[64];                     // 0x44, "" without it
+};
+struct S_enemy_changeanim_params
+{
+    char anim1[64];                     // 0x0
+    char anim2[64];                     // 0x40, "" without it
+};
+
+// COMPAREOWNERWITHEX's
+struct S_compareowner_params
+{
+    int value1;                         // 0x0
+    int value2;                         // 0x4
+    char name1[64];                     // 0x8
+    char name2[64];                     // 0x48
+};
+
+// HUMAN_SETPROPERTY's: the human's register, the value, an operand, and the property's index in its names' table
+struct S_setproperty_params
+{
+    int reg;                            // 0x0
+    int value_reg;                      // 0x4
+    int property;                       // 0x8, -1 for an unknown name, which fails
+    float value;                        // 0xc
+};
+
+// WEATHER_SETPARAM's: the parameter and its value, an operand, an integer for some parameters
+struct S_weather_params
+{
+    union
+    {
+        int i;
+        float f;
+    } value;                            // 0x0
+    int param;                          // 0x4, WEATHER_*, -1 for an unknown name, which fails
+    int value_reg;                      // 0x8
+};
+
+// VECT_MUL_SCL's group's: a register and an operand
+struct S_reg_operand_params
+{
+    float value;                        // 0x0
+    int reg;                            // 0x4
+    int value_reg;                      // 0x8
+};
+
+// HUMAN_THROWGRENADE's
+struct S_grenade_params
+{
+    float value1;                       // 0x0
+    float value2;                       // 0x4
+    int reg;                            // 0x8
+};
+
 // A script (PS2 C_program, C_program.cpp), 0x68 bytes. PS2's has the same members at offsets 4 lower (its vtable is
 // last), and 4 more lower after each vector (PS2's are 12 bytes). Only what InitSystem, CloseSystem, C_mission::OpenBin
 // and the mission's and the game's Init and Done use so far.
@@ -486,6 +728,20 @@ public:
     void Init();
     // Frees the commands and the registers, at the mission's end (PS2 name)
     void Done();
+    // Splits a command's parameters at their commas into params, at most MAX_PARAMS, each without the spaces around it
+    // (PS2 name)
+    void ExtrudeParams(char *s, int &num, char **params);
+    // An operand, flt[reg] or a value, with reg -1 (PS2 name): false if the register's bracket doesn't close
+    static bool DecodeOperand(char *s, int &reg, float &value);
+    // The same with an integer value (PS2 name)
+    static bool DecodeOperandInt(char *s, int &reg, int &value);
+    // The text between the quotes s starts with, spaces aside, NULL without them (PS2 name); the closing quote becomes
+    // its end
+    char *ExtrudeString(char *s);
+    // LET's parameters into its S_let_params (PS2 name)
+    static bool DecodeLet(S_instruction &ins, char *s);
+    // IF's condition into its S_if_params (PS2 name)
+    static bool DecodeIf(S_instruction &ins, char *s);
     // Compiles the lines of src into the commands (PS2 name), one only if one_line; returns the number of lines that
     // didn't compile, the last one's offset and length in err_pos and err_len (if both are given)
     int Compile(char *src, bool one_line, int *err_pos, int *err_len);

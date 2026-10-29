@@ -245,14 +245,23 @@
 // LIBRARY: GAME 0x610a16 SYMBOL
 // ___from_strstr_to_strchr
 
+// LIBRARY: GAME 0x610acc SYMBOL
+// __strupr
+
 // LIBRARY: GAME 0x610b6a SYMBOL
 // _atol
+
+// LIBRARY: GAME 0x610bf5 SYMBOL
+// _atoi
 
 // LIBRARY: GAME 0x610c00 SYMBOL
 // __chkstk
 
 // LIBRARY: GAME 0x610c70 SYMBOL
 // _strncmp
+
+// LIBRARY: GAME 0x610cfe SYMBOL
+// _atof
 
 // LIBRARY: GAME 0x610d50 SYMBOL
 // _strstr
@@ -463,6 +472,9 @@
 
 // LIBRARY: GAME 0x6147f4 SYMBOL
 // __isctype
+
+// LIBRARY: GAME 0x61531a SYMBOL
+// __fltin
 
 // LIBRARY: GAME 0x6153b4 SYMBOL
 // __except_handler3

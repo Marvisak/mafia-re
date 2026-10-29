@@ -3,11 +3,12 @@
 // constructor, the destructor and LoadSourceCode, which C_mission::OpenBin and Close call, the patch's changes,
 // LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles, TryChangeProgramData with
 // EqualFinalPath, and SetSourceCode, which LoadSourceCode calls; Init and Done, which the mission's and the game's Init
-// and Done call, the compiler Init calls (Compile, DecodeInstruction with its table of the commands' names; the
-// parameters' DecodeParams is a stub, so no line compiles yet), CallSubroutine and CallProcess, DecompileCommand.
-// Stubs: SaveSourceCode, DecodeParams, the save functions and Process, the interpreter (a switch of 396 commands,
-// about 50 KB of code, 0x46d3b0-0x4799b9). The menu mission's script (dim_flt, stream_create, stream_play,
-// stream_setloop: the menu's music) needs DecodeParams and Process.
+// and Done call, the compiler Init calls (Compile, DecodeInstruction with its table of the commands' names, and
+// DecodeParams with its helpers, ExtrudeParams to DecodeIf, and its names' tables), CallSubroutine and CallProcess,
+// DecompileCommand. Not written: DuplicateProgramFrom (0x4617d0, between Done and ExtrudeParams), which the detector's
+// and the AI humans' Duplicate call. Stubs: SaveSourceCode, the save functions and Process, the interpreter (a switch
+// of 396 commands, about 50 KB of code, 0x46d3b0-0x4799b9). The menu mission's script (dim_flt, stream_create,
+// stream_play, stream_setloop: the menu's music) now compiles and needs Process.
 // Open: the changes' destructor (0x460a90, registered by 0x460a80) tests and sets a guard byte (0x63d774) of its own,
 // as C_animations_machine_de_luxe::tracks' does. Compile: the original stores the line's end pointer to its stack home
 // at the top of the scan loop (ours after it), and its slot and the error count's are swapped. DecodeInstruction: VC6
@@ -15,12 +16,14 @@
 
 #include "mission/C_program.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "C_chunk.h"
 #include "actors/C_actor.h"
 #include "mission/Mission.h"
 #include "stub.h"
+#include "ui/g_loadsave.h"
 
 // GLOBAL: GAME 0x63d778
 std::vector<C_program::S_prog_change> C_program::change_progs;
@@ -328,18 +331,1330 @@ void C_program::Done()
     num_actor_regs = 0;
 }
 
-#pragma auto_inline(off)
-
-// No command has parameters yet: every line fails to compile
-// STUB: GAME 0x461c70
-bool C_program::DecodeParams(char *params, S_instruction &ins)
+// The commas become the parameters' ends, and so do the spaces after them; a last parameter only if it isn't empty
+// FUNCTION: GAME 0x461830
+void C_program::ExtrudeParams(char *s, int &num, char **params)
 {
-    StubLog("C_program::DecodeParams %s", params);
-    return false;
+    num = 0;
+    params[0] = s;
+    int len = strlen(s);
+    int i;
+    for (i = 0; i < len; i++)
+    {
+        if (s[i] == ',')
+        {
+            s[i] = 0;
+            num++;
+            if (num > MAX_PARAMS - 1)
+                break;
+            params[num] = &s[i + 1];
+        }
+    }
+    if (num < MAX_PARAMS && strlen(params[num]))
+        num++;
+    for (i = 0; i < num; i++)
+    {
+        while (*params[i] == ' ')
+            params[i]++;
+        if (strlen(params[i]))
+        {
+            char *e = params[i] + strlen(params[i]) - 1;
+            while (*e == ' ' && e > params[i])
+                *e-- = 0;
+        }
+    }
 }
 
+// FUNCTION: GAME 0x461900
+bool C_program::DecodeOperand(char *s, int &reg, float &value)
+{
+    while (*s && *s == ' ')
+        s++;
+    while (s[strlen(s) - 1] == ' ')
+        s[strlen(s) - 1] = 0;
+    // STRING: GAME 0x6327d0
+    if (_strnicmp(s, "flt[", 4))
+    {
+        reg = -1;
+        value = (float)atof(s);
+        return true;
+    }
+    char *e = strchr(s + 4, ']');
+    if (!e)
+        return false;
+    *e = 0;
+    reg = atoi(s + 4);
+    return true;
+}
 
-#pragma auto_inline(on)
+// FUNCTION: GAME 0x4619b0
+bool C_program::DecodeOperandInt(char *s, int &reg, int &value)
+{
+    while (*s && *s == ' ')
+        s++;
+    while (s[strlen(s) - 1] == ' ')
+        s[strlen(s) - 1] = 0;
+    if (_strnicmp(s, "flt[", 4))
+    {
+        reg = -1;
+        value = atoi(s);
+        return true;
+    }
+    char *e = strchr(s + 4, ']');
+    if (!e)
+        return false;
+    *e = 0;
+    reg = atoi(s + 4);
+    return true;
+}
+
+// FUNCTION: GAME 0x461a60
+char *C_program::ExtrudeString(char *s)
+{
+    while (*s && *s == ' ')
+        s++;
+    if (*s != '"')
+        return NULL;
+    s++;
+    char *e = strchr(s, '"');
+    if (!e)
+        return NULL;
+    *e = 0;
+    return s;
+}
+
+// flt[dest] = a, then the first of the operators found in that order, + / * -, splits a from b. The operands' results
+// aren't tested.
+// FUNCTION: GAME 0x461aa0
+bool C_program::DecodeLet(S_instruction &ins, char *s)
+{
+    while (*s && *s == ' ')
+        s++;
+    if (_strnicmp(s, "flt[", 4))
+        return false;
+    s += 4;
+    char *e = strchr(s, ']');
+    if (!e)
+        return false;
+    S_let_params *let = (S_let_params *)ins.params;
+    *e = 0;
+    let->dest = atoi(s);
+    char *eq = strchr(e + 1, '=');
+    if (!eq)
+        return false;
+    eq++;
+    char *op;
+    if ((op = strchr(eq, '+')) != NULL)
+        let->op = LET_OP_ADD;
+    else if ((op = strchr(eq, '/')) != NULL)
+        let->op = LET_OP_DIV;
+    else if ((op = strchr(eq, '*')) != NULL)
+        let->op = LET_OP_MUL;
+    else if ((op = strchr(eq, '-')) != NULL)
+        let->op = LET_OP_SUB;
+    else
+        let->op = LET_OP_NONE;
+    if (op)
+    {
+        *op = 0;
+        DecodeOperand(eq, let->a.reg, let->a.value);
+        DecodeOperand(op + 1, let->b.reg, let->b.value);
+    }
+    else
+    {
+        DecodeOperand(eq, let->a.reg, let->a.value);
+        let->b.reg = -1;
+    }
+    return true;
+}
+
+// The first of the comparisons found in that order, < > = !, splits a from b
+// FUNCTION: GAME 0x461bd0
+bool C_program::DecodeIf(S_instruction &ins, char *s)
+{
+    S_if_params *cond = (S_if_params *)ins.params;
+    char *op;
+    if ((op = strchr(s, '<')) != NULL)
+        cond->op = IF_OP_LESS;
+    else if ((op = strchr(s, '>')) != NULL)
+        cond->op = IF_OP_GREATER;
+    else if ((op = strchr(s, '=')) != NULL)
+        cond->op = IF_OP_EQUAL;
+    else if ((op = strchr(s, '!')) != NULL)
+        cond->op = IF_OP_NOT_EQUAL;
+    if (!op)
+        return false;
+    *op = 0;
+    DecodeOperand(s, cond->a.reg, cond->a.value);
+    DecodeOperand(op + 1, cond->b.reg, cond->b.value);
+    return true;
+}
+
+// The humans' properties, HUMAN_SETPROPERTY's and HUMAN_GETPROPERTY's, by their index (PS2 name)
+#define NUM_HUMAN_PROPERTIES 15
+// GLOBAL: GAME 0x624150
+static const char _human_property_[NUM_HUMAN_PROPERTIES][16] = {
+    "Strenght",
+    "Energy",
+    "EnergyHandL",
+    "EnergyHandR",
+    "EnergyLegL",
+    "EnergyLegR",
+    "Reactions",
+    "Speed",
+    "Aggresivity",
+    "Intelligence",
+    "Shooting",
+    "Sight",
+    "Hearing",
+    "Driving",
+    "Mass"
+};
+
+// WEATHER_SETPARAM's parameters, WEATHER_* (PS2 name)
+// GLOBAL: GAME 0x624240
+static const char _weather_property_[NUM_WEATHER_PROPERTIES][16] = {
+    "ON",
+    "SECTORS",
+    "DUMMIES",
+    "COLORH",
+    "COLORL",
+    "SPEED",
+    "LEN",
+    "WIDTH",
+    "MAX_DIST",
+    "MAX_HEIGHT",
+    "MAX_CNT",
+    "DIR_X",
+    "DIR_Y",
+    "DIR_Z",
+    "MODE"
+};
+
+// A value the scripts give a name (the names are ours)
+struct S_named_value
+{
+    char name[16];
+    int value;
+};
+
+// FINDNEARACTOR's actor types, ACTOR_* (PS2 name)
+#define NUM_ACTOR_TYPES 16
+// GLOBAL: GAME 0x624330
+static const S_named_value _actor_type_[NUM_ACTOR_TYPES] = {
+    {"Player", ACTOR_PLAYER},
+    {"Enemy", ACTOR_ENTITY},
+    {"Car", ACTOR_CAR},
+    {"Detector", ACTOR_DETECTOR},
+    {"Door", ACTOR_DOOR},
+    {"Railway", ACTOR_RAILWAY},
+    {"Box", ACTOR_DYN_OBJECT},
+    {"Bottle", ACTOR_BOTTLE},
+    {"Traffic_person", ACTOR_TRAFFIC_GENERATOR},
+    {"Traffic_car", ACTOR_TRAFFIC_CAR},
+    {"Bridge", ACTOR_BRIDGE},
+    {"Dog", ACTOR_DOG},
+    {"Airplane", ACTOR_AIRPLANE},
+    {"Turnout", ACTOR_TURNOUT},
+    {"Pumper", ACTOR_PUMPER},
+    {"Race camera", ACTOR_RACECAM}
+};
+
+// CTRL_READ's controls, CTRL_* (PS2 name): the walking ones, the driving ones at the walking ones' indices, the rest;
+// the last three entries are empty
+#define NUM_CTRLS_TYPES 50
+// GLOBAL: GAME 0x624470
+static const S_named_value _ctrls_type_[NUM_CTRLS_TYPES] = {
+    {"UP", CTRL_FORWARD},
+    {"UP1", CTRL_FORWARD + CTRL_SECONDARY},
+    {"DOWN", CTRL_BACKWARD},
+    {"DOWN1", CTRL_BACKWARD + CTRL_SECONDARY},
+    {"LEFT", CTRL_LEFT},
+    {"LEFT1", CTRL_LEFT + CTRL_SECONDARY},
+    {"RIGHT", CTRL_RIGHT},
+    {"RIGHT1", CTRL_RIGHT + CTRL_SECONDARY},
+    {"RUN", CTRL_WALK},
+    {"RUN1", CTRL_WALK + CTRL_SECONDARY},
+    {"ACTION", CTRL_ACTION},
+    {"ACTION1", CTRL_ACTION + CTRL_SECONDARY},
+    {"FIRE", CTRL_FIRE},
+    {"FIRE1", CTRL_FIRE + CTRL_SECONDARY},
+    {"CROUCH", CTRL_CROUCH},
+    {"CROUCH1", CTRL_CROUCH + CTRL_SECONDARY},
+    {"JUMP", CTRL_JUMP},
+    {"JUMP1", CTRL_JUMP + CTRL_SECONDARY},
+    {"DRVUP", CTRL_FORWARD},
+    {"DRVUP1", CTRL_FORWARD + CTRL_SECONDARY},
+    {"DRVDOWN", CTRL_BACKWARD},
+    {"DRVDOWN1", CTRL_BACKWARD + CTRL_SECONDARY},
+    {"DRVLEFT", CTRL_LEFT},
+    {"DRVLEFT1", CTRL_LEFT + CTRL_SECONDARY},
+    {"DRVRIGHT", CTRL_RIGHT},
+    {"DRVRIGHT1", CTRL_RIGHT + CTRL_SECONDARY},
+    {"HANDBRAKE", CTRL_HANDBRAKE},
+    {"HANDBRAKE1", CTRL_HANDBRAKE + CTRL_SECONDARY},
+    {"MOTORSWITCH", CTRL_GEARING},
+    {"GEARUP", CTRL_GEAR_UP},
+    {"GEARUP1", CTRL_GEAR_UP + CTRL_SECONDARY},
+    {"GEARDOWN", CTRL_GEAR_DOWN},
+    {"GEARDOWN1", CTRL_GEAR_DOWN + CTRL_SECONDARY},
+    {"HORN", CTRL_HORN},
+    {"HORN1", CTRL_HORN + CTRL_SECONDARY},
+    {"CLUTCH", CTRL_CLUTCH},
+    {"CLUTCH1", CTRL_CLUTCH + CTRL_SECONDARY},
+    {"INVENTORY", CTRL_INVENTORY},
+    {"HOLSTER", CTRL_HIDE_WEAPON},
+    {"WEAPONDROP", CTRL_DROP_WEAPON},
+    {"RUNSWITCH", CTRL_TOGGLE_RUN},
+    {"RELOAD", CTRL_RELOAD},
+    {"SNIPERMODE", CTRL_SNIPER},
+    {"OBJECTIVES", CTRL_OBJECTIVES},
+    {"MAP", CTRL_MAP},
+    {"SPEEDLIMIT", CTRL_SPEED_LIMITER},
+    {"SPEEDLIMIT1", CTRL_SPEED_LIMITER + CTRL_SECONDARY}
+};
+
+// The parameters are the text after the command's name, split at its commas. The cases in PS2's order, a body for each
+// group of commands the original's switch shares one for; a command without one has none. A number of parameters
+// other than the command's fails, as does a label too long for its array, and those failures leave ins.params as it
+// was. BEEP, DEBUG_TEXT and the bracketed debugging commands always fail.
+// FUNCTION: GAME 0x461c70
+bool C_program::DecodeParams(char *params, S_instruction &ins)
+{
+    int num;
+    char *p[MAX_PARAMS];
+    ExtrudeParams(params, num, p);
+    switch (ins.command)
+    {
+    case CMD_EVENT:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            // STRING: GAME 0x632860
+            if (!_stricmp(p[0], "use_AB"))
+                v[0] = EVENT_USE_AB;
+            // STRING: GAME 0x632858
+            else if (!_stricmp(p[0], "death"))
+                v[0] = EVENT_DEATH;
+            // STRING: GAME 0x63284c
+            else if (!_stricmp(p[0], "enemy_to_AI"))
+                v[0] = EVENT_ENEMY_TO_AI;
+            // STRING: GAME 0x63283c
+            else if (!_stricmp(p[0], "enemy_to_Script"))
+                v[0] = EVENT_ENEMY_TO_SCRIPT;
+            // STRING: GAME 0x63282c
+            else if (!_stricmp(p[0], "hit_from_player"))
+                v[0] = EVENT_HIT_FROM_PLAYER;
+            // STRING: GAME 0x63281c
+            else if (!_stricmp(p[0], "detector_hit"))
+                v[0] = EVENT_DETECTOR_HIT;
+            else
+                v[0] = atoi(p[0]);
+            if (num == 2)
+                v[1] = atoi(p[1]);
+            else
+                v[1] = 0;
+            return true;
+        }
+        break;
+    case CMD_BLOCK_BEGIN:
+        if (num < 2)
+        {
+            ins.params = new int;
+            *(int *)ins.params = BLOCK_MODE_NONE;
+            if (num == 1)
+            {
+                // STRING: GAME 0x632818
+                if (!_strnicmp(p[0], "UP", 2))
+                    *(int *)ins.params = BLOCK_MODE_UP;
+                // STRING: GAME 0x632810
+                else if (!_strnicmp(p[0], "DOWN", 4))
+                    *(int *)ins.params = BLOCK_MODE_DOWN;
+            }
+            return true;
+        }
+        break;
+    case CMD_DIM_FLT: case CMD_DIM_FRM: case CMD_DIM_ACT: case CMD_CALL: case CMD_STOPSOUND: case CMD_SETCOMPASS:
+    case CMD_COMMANDBLOCK: case CMD_AIRPLANE_START2: case CMD_EVENT_USE_CB: case CMD_GAME_NIGHTMISSION:
+    case CMD_GETMISSIONNUMBER: case CMD_GARAGE_ADDCAR: case CMD_GARAGE_DELCAR: case CMD_PLAYER_LOCKCONTROLS:
+    case CMD_PERSON_STOPANIM: case CMD_ENEMY_FORCESCRIPT: case CMD_DISABLECOLLS: case CMD_STOPPARTICLE:
+    case CMD_HUMAN_HOLSTER: case CMD_CAMERA_LOCK: case CMD_SETMISSIONNAMEID: case CMD_MODEL_STOPANIM:
+    case CMD_MODEL_DESTROY: case CMD_HUMAN_DEATH: case CMD_HUMAN_ERASEAB: case CMD_HUMAN_CREATEAB:
+    case CMD_CAR_FORCESTOP: case CMD_INVENTORY_PUSH: case CMD_INVENTORY_POP: case CMD_FUCKINGBOX_MOVE:
+    case CMD_MISSION_OBJECTIVES: case CMD_MISSION_OBJECTIVESREMOVE: case CMD_RACING_MISSION6_START:
+    case CMD_CAR_EXPLOSION: case CMD_CAR_REMOVE_DRIVER: case CMD_SETMODELTOCAR: case CMD_STREAM_PLAY:
+    case CMD_STREAM_PAUSE: case CMD_STREAM_STOP: case CMD_STREAM_DESTROY: case CMD_HUMAN_FORCEFALL:
+    case CMD_DESTROY_PHYSICALOBJECT: case CMD_GETTICKTIME: case CMD_GETGAMETIME: case CMD_GETACTIVEPLAYER:
+    case CMD_SETCITYTRAFFICVISIBLE: case CMD_CHARACTER_PUSH: case CMD_CHARACTER_POP: case CMD_CONSOLE_ADDTEXT:
+    case CMD_ACTOR_DELETE: case CMD_HUMAN_RESET: case CMD_HUMAN_STOPTALK: case CMD_CARDAMAGEVISIBLE:
+    case CMD_SUBTITLE_ADD: case CMD_MATH_COS: case CMD_MATH_SIN: case CMD_MATH_ACOS: case CMD_MATH_ASIN:
+    case CMD_MATH_ATAN: case CMD_MATH_ABS: case CMD_VECT_NORMALIZE: case CMD_VECT_INVERSE: case CMD_MATRIX_ZERO:
+    case CMD_MATRIX_IDENTITY: case CMD_MATRIX_INVERSE: case CMD_QUAT_INVERSE: case CMD_QUAT_NORMALIZE: case CMD_VLVP:
+    case CMD_ACTORUPDATEPLACEMENT: case CMD_POLICEITCHFORPLAYER: case CMD_SETNULLACTOR: case CMD_SETNULLFRAME:
+    case CMD_SETFREERIDE: case CMD_ENABLEMAP: case CMD_CAR_CALM: case CMD_GETACTIVECAMERA: case CMD_PM_SHOWSYMBOL:
+    case CMD_PM_SHOWPROGRESS: case CMD_PM_SETPROGRESS: case CMD_SETFILMMUSIC: case CMD_FLOATREG_PUSH:
+    case CMD_FLOATREG_POP: case CMD_WEATHER_PREPAREBUFFER: case CMD_HUMAN_CANDIE: case CMD_VERSION_IS_GERMANY:
+    case CMD_VERSION_IS_EDITOR: case CMD_GARAGE_NEZAHAZUJ: case CMD_CAMERA_GETFOV: case CMD_FREERIDE_SCOREON:
+    case CMD_FREERIDE_SCOREGET: case CMD_TAXIDRIVER_ENABLE: case CMD_HUMAN_RETURNTOTRAFF: case CMD_TIMER_GETINTERVAL:
+    case CMD_TIMER_SETINTERVAL: case CMD_HUMAN_WAITTOREADY: case CMD_ACTOR_ADDDORICI: case CMD_CAR_REPAIR:
+    case CMD_NPC_SHUTUP: case CMD_INVENTORY_CLEAR: case CMD_GETLASTSAVENUM: case CMD_CAR_SETAXIS:
+    case CMD_ISVALIDTAXIPASSENGER:
+        if (num == 1)
+        {
+            ins.params = new int;
+            *(int *)ins.params = atoi(p[0]);
+            return true;
+        }
+        break;
+    case CMD_POLICEMANAGER_ON:
+        if (num >= 0 && num <= 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            if (num > 0)
+                v[0] = atoi(p[0]);
+            else
+                v[0] = 980000;
+            if (num > 1)
+                v[1] = atoi(p[1]);
+            else
+                v[1] = 0;
+            return true;
+        }
+        break;
+    case CMD_RETURN: case CMD_END: case CMD_DETECTOR_WAITFORHIT: case CMD_PROGRAM_STORAGE: case CMD_RECCLEAR:
+    case CMD_RECWAITFOREND: case CMD_RECUNLOAD: case CMD_TIMEROFF: case CMD_CLEARDIFFERENCES: case CMD_BLOCK_END:
+    case CMD_DIALOG_END: case CMD_GARAGE_GENERATECARS: case CMD_GARAGE_RELEASECARS: case CMD_GARAGE_CARMANAGER:
+    case CMD_GUNSHOP_MENU: case CMD_CAMERA_UNLOCK: case CMD_FUCKINGBOX_RECOMPILE: case CMD_MISSION_OBJECTIVESCLEAR:
+    case CMD_USE_LIGHTCACHE: case CMD_GARAGE_ADDLASTSTOLEN: case CMD_GARAGE_SHOW: case CMD_WEATHER_RESET:
+    case CMD_ENEMY_BLOCK: case CMD_ENEMY_UNBLOCK: case CMD_RACING_AUTOINVISIBLE: case CMD_NOANIMPRELOAD:
+    case CMD_CITYMUSIC_OFF: case CMD_CITYMUSIC_ON: case CMD_CITYCACHING_TICK: case CMD_ACTORLIGHTNESSON:
+    case CMD_DETECTOR_CREATEDYNCOLL: case CMD_DETECTOR_ERASEDYNCOLL: case CMD_SUBTITLE: case CMD_PLAY_AVI_INTRO:
+    case CMD_CARTRIDGE_INVALIDATE: case CMD_FREERIDE_TRAFFSETUP: case CMD_M7_ZASTAVZKURVENEPOLISE:
+    case CMD_DAN_INTERNAL_1: case CMD_DAN_INTERNAL_2:
+        return true;
+    case CMD_DETECTOR_WAITFORUSE:
+        if (num >= 0 && num <= 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            if (num > 0)
+            {
+                v[0] = atoi(p[0]);
+                if (num > 1)
+                    v[1] = atoi(p[1]);
+                else
+                    v[1] = 0;
+            }
+            else
+            {
+                v[0] = 0;
+                v[1] = 0;
+            }
+            return true;
+        }
+        break;
+    case CMD_CAR_SETPROJECTOR: case CMD_VECT_SET:
+        if (num == 4)
+        {
+            ins.params = new S_vector_params;
+            S_vector_params *v = (S_vector_params *)ins.params;
+            v->reg = atoi(p[0]);
+            v->x = (float)atof(p[1]);
+            v->y = (float)atof(p[2]);
+            v->z = (float)atof(p[3]);
+            return true;
+        }
+        break;
+    case CMD_LET:
+        if (num == 1)
+        {
+            ins.params = new S_let_params;
+            if (DecodeLet(ins, p[0]))
+                return true;
+            delete ins.params;
+            ins.params = NULL;
+            break;
+        }
+        break;
+    case CMD_GOTO: case CMD_GOSUB:
+        if (num == 1 && strlen(p[0]) < 16)
+        {
+            ins.params = new S_goto_params;
+            S_goto_params *g = (S_goto_params *)ins.params;
+            if (_strnicmp(p[0], "flt[", 4))
+                strcpy(g->label, p[0]);
+            else
+            {
+                strcpy(g->label, "");
+                if (!DecodeOperand(p[0], g->target.reg, g->target.value))
+                {
+                    delete ins.params;
+                    break;
+                }
+            }
+            return true;
+        }
+        break;
+    case CMD_WAIT: case CMD_SETMISSIONNUMBER: case CMD_CAMERA_SETFOV: case CMD_FREERIDE_SCORESET:
+    case CMD_FREERIDE_SCOREADD: case CMD_POLICE_SPEED_FACTOR:
+        if (num == 1)
+        {
+            ins.params = new S_operand;
+            if (DecodeOperand(p[0], ((S_operand *)ins.params)->reg, ((S_operand *)ins.params)->value))
+                return true;
+            delete ins.params;
+            ins.params = NULL;
+            break;
+        }
+        break;
+    case CMD_IF:
+        if (num == 3 && strlen(p[1]) <= 15 && strlen(p[2]) <= 15)
+        {
+            ins.params = new S_if_params;
+            if (DecodeIf(ins, p[0]))
+            {
+                S_if_params *c = (S_if_params *)ins.params;
+                strcpy(c->label1, p[1]);
+                strcpy(c->label2, p[2]);
+                return true;
+            }
+            delete ins.params;
+            ins.params = NULL;
+            break;
+        }
+        break;
+    case CMD_HUMAN_LOOKTOACTOR: case CMD_HUMAN_LOOKTOFRAME:
+        if (num >= 1 && num <= 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = -1;
+            v[2] = 0;
+            if (num > 1)
+                v[1] = atoi(p[1]);
+            if (num > 2)
+                v[2] = atoi(p[2]);
+            return true;
+        }
+        break;
+    case CMD_EMITPARTICLE:
+        if (num == 2 || num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = -1;
+            if (num > 2)
+                v[2] = atoi(p[2]);
+            return true;
+        }
+        break;
+    case CMD_GET_PM_STATE:
+        // The last one a bit, 0 to 12
+        if (num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            int bit = atoi(p[2]);
+            if (bit < 0)
+                bit = 0;
+            if (bit > 12)
+                bit = 12;
+            v[2] = 1 << bit;
+            return true;
+        }
+        break;
+    case CMD_HUMAN_SETFIRETARGET:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            if (num == 2)
+                v[1] = atoi(p[1]);
+            else
+                v[1] = -1;
+            return true;
+        }
+        break;
+    case CMD_GROUP_DISBAND:
+        if (num == 1)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = 0;
+            v[2] = 0;
+            return true;
+        }
+        break;
+    case CMD_AUTOSAVEGAME: case CMD_AUTOSAVEGAMEFULL:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            if (num == 2)
+                v[1] = atoi(p[1]);
+            else
+                v[1] = 500;
+            return true;
+        }
+        break;
+    case CMD_RND: case CMD_FRM_SETON: case CMD_FRM_SETON1: case CMD_FRM_ISON: case CMD_FRM_LINKTO:
+    case CMD_PLAYSOUNDEX: case CMD_GETSOUNDTIME: case CMD_DETECTOR_SETSIGNAL: case CMD_SETLMLEVEL: case CMD_DOOR_LOCK:
+    case CMD_DOOR_OPEN: case CMD_DOOR_ENABLEUS: case CMD_GETCARDAMAGE: case CMD_HUMAN_DELWEAPON:
+    case CMD_HUMAN_ACTIVATEWEAPON: case CMD_HUMAN_ANYWEAPONINHAND: case CMD_HUMAN_ANYWEAPONININVENTORY:
+    case CMD_HUMAN_GETITEMINRHAND: case CMD_DIALOG_BEGIN: case CMD_DIALOG_CAMSWITCH: case CMD_HUMAN_SET8SLOT:
+    case CMD_HUMAN_GETOWNER: case CMD_CAR_SETDESTROYMOTOR: case CMD_ACTOR_SETDIR: case CMD_ACTOR_SETPOS:
+    case CMD_ACTOR_SETPLACEMENT: case CMD_SETTIMEOUTEVENT: case CMD_SETPLAYERFIREEVENT: case CMD_SETPLAYERHORNEVENT:
+    case CMD_WINGMAN_DELINDICATOR: case CMD_CAR_ENABLEUS: case CMD_ISCARUSABLE: case CMD_AIRPLANE_ISDESTROYED:
+    case CMD_HUMAN_RETURNFROMPANIC: case CMD_CAR_GETSPEED: case CMD_CAR_BREAKMOTOR: case CMD_HUMAN_THROWITEM:
+    case CMD_FUCKINGBOX_GETNUMBOX: case CMD_FUCKINGBOX_GETNUMDEST: case CMD_WAGON_SETEVENT: case CMD_WAGON_GETLASTNODE:
+    case CMD_CAR_SETSPECCOLL: case CMD_CAR_GETSPECCOLL: case CMD_HUMAN_FROMCAR: case CMD_GETENEMYAISTATE:
+    case CMD_GET_PM_CRASHTIME: case CMD_GET_PM_FIRETIME: case CMD_GET_PM_NUMPREDATORS: case CMD_GET_PM_HUMANSTATE:
+    case CMD_STREAM_CONNECT: case CMD_STREAM_SETLOOP: case CMD_STREAM_SETPOS: case CMD_STREAM_GETPOS:
+    case CMD_SETTANKHITCOUNT: case CMD_SETNOANIMHIT: case CMD_CARLIGHT_MAIN: case CMD_CARLIGHT_LIGHT:
+    case CMD_CARLIGHT_INDIC_L: case CMD_CARLIGHT_INDIC_R: case CMD_CARLIGHT_INDIC_OFF: case CMD_CAR_MUSTSTEAL:
+    case CMD_GARAGE_CANSTEAL: case CMD_CAR_INWATER: case CMD_SHOWCARDAMAGE: case CMD_HUMAN_HAVEBODY:
+    case CMD_GETACTORFRAME: case CMD_IFPLAYERSTEALCAR: case CMD_INTRO_SUBTITLE_ADD: case CMD_FRM_GETDIR:
+    case CMD_FRM_SETDIR: case CMD_FRM_GETPOS: case CMD_FRM_SETPOS: case CMD_FRM_GETSCALE: case CMD_FRM_SETSCALE:
+    case CMD_FRM_GETROT: case CMD_FRM_SETROT: case CMD_FRM_GETWORLDDIR: case CMD_FRM_GETWORLDPOS:
+    case CMD_FRM_GETWORLDSCALE: case CMD_FRM_GETWORLDROT: case CMD_FRM_GETLOCALMATRIX: case CMD_FRM_GETWORLDMATRIX:
+    case CMD_VECT_COPY: case CMD_VECT_MUL_VECT: case CMD_VECT_MUL_QUAT: case CMD_VECT_MUL_MATRIX:
+    case CMD_VECT_ADD_VECT: case CMD_VECT_SUB_VECT: case CMD_VECT_CROSS: case CMD_VECT_MAGNITUDE: case CMD_MATRIX_COPY:
+    case CMD_MATRIX_MUL: case CMD_QUAT_COPY: case CMD_QUAT_GETROTMATRIX: case CMD_QUAT_ADD: case CMD_QUAT_SUB:
+    case CMD_QUAT_MUL_QUAT: case CMD_QUAT_ROTBYMATRIX: case CMD_GETFRAMEFROMACTOR: case CMD_SETPLAYERWFALLEVENT:
+    case CMD_CAR_INVISIBLE: case CMD_CAR_SWITCHSHOWENERGY: case CMD_FRAMEISTELEPHONE: case CMD_BRIDGE_SHUTDOWN:
+    case CMD_FRM_GETPARENT: case CMD_SOUND_GETVOLUME: case CMD_RACING_CHANGE_MODEL: case CMD_CAR_LOCK:
+    case CMD_CAR_LOCK_ALL: case CMD_GETFILMMUSIC: case CMD_HUMAN_GETSEATIDX: case CMD_AIRPLANESHOWDAMAGE:
+    case CMD_CAR_GETSEATCOUNT: case CMD_FRM_SETALPHA: case CMD_CAR_UNBREAKABLE: case CMD_DOOR_GETSTATE:
+    case CMD_CAR_GETMAXLEVELS: case CMD_CAR_GETACTLEVEL: case CMD_FRM_GETNUMCHILDREN: case CMD_GETCARLINENUMFROMTABLE:
+    case CMD_ENEMY_GETHOSTILESTATE: case CMD_HUMAN_SHUTUP: case CMD_PUMPER_CANWORK: case CMD_HUMAN_GETACTANIMID:
+        if (num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            return true;
+        }
+        break;
+    case CMD_ZATMYSE:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            if (num == 2)
+                v[1] = atoi(p[1]);
+            else
+                v[1] = 500;
+            return true;
+        }
+        break;
+    case CMD_HUMAN_HAVEBOX:
+        // The third from the second parameter again, as PS2's
+        if (num == 2 || num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            if (num == 2)
+                v[2] = -1;
+            else
+                v[2] = atoi(p[1]);
+            return true;
+        }
+        break;
+    case CMD_PERSON_PLAYANIM:
+        if (num >= 2 && num < 6)
+        {
+            ins.params = new S_playanim_params;
+            S_playanim_params *a = (S_playanim_params *)ins.params;
+            a->reg = atoi(p[0]);
+            char *anim = ExtrudeString(p[1]);
+            if (!anim)
+            {
+                delete ins.params;
+                break;
+            }
+            a->unknown_40 = -1;
+            if (num > 2)
+                a->unknown_40 = atoi(p[2]);
+            a->simple = false;
+            // STRING: GAME 0x632808
+            if (num > 3 && !_stricmp(p[3], "SIMPLE"))
+                a->simple = true;
+            a->unknown_4c = true;
+            if (num > 4)
+                a->unknown_4c = atoi(p[4]) != 0;
+            strcpy(a->anim, anim);
+            return true;
+        }
+        break;
+    case CMD_MODEL_PLAYANIM: case CMD_MODEL_CREATE: case CMD_HUMAN_CHANGEMODEL: case CMD_FUCKINGBOX_ADD:
+    case CMD_FUCKINGBOX_ADD_DEST: case CMD_STREAM_CREATE:
+        if (num == 2)
+        {
+            ins.params = new S_name_params;
+            S_name_params *n = (S_name_params *)ins.params;
+            n->reg = atoi(p[0]);
+            char *name = ExtrudeString(p[1]);
+            if (!name)
+            {
+                delete ins.params;
+                break;
+            }
+            strcpy(n->name, name);
+            return true;
+        }
+        break;
+    case CMD_FINDFRAME: case CMD_FINDACTOR: case CMD_RECADDACTOR:
+        if (num > 0 && num < 3)
+        {
+            ins.params = new S_name_params;
+            S_name_params *n = (S_name_params *)ins.params;
+            n->reg = atoi(p[0]);
+            if (num == 2)
+            {
+                char *name = ExtrudeString(p[1]);
+                if (!name)
+                {
+                    delete ins.params;
+                    break;
+                }
+                strcpy(n->name, name);
+            }
+            else
+                strcpy(n->name, "");
+            return true;
+        }
+        break;
+    case CMD_IFFLTINRANGE:
+        if (num == 4 && strlen(p[3]) <= 15)
+        {
+            ins.params = new S_ifflt_params;
+            S_ifflt_params *r = (S_ifflt_params *)ins.params;
+            r->reg = atoi(p[0]);
+            r->min = (float)atof(p[1]);
+            r->max = (float)atof(p[2]);
+            strcpy(r->label, p[3]);
+            return true;
+        }
+        break;
+    case CMD_PLAYSOUND:
+        if (num >= 4 && num <= 6)
+        {
+            ins.params = new S_playsound_params;
+            S_playsound_params *s = (S_playsound_params *)ins.params;
+            char *name = ExtrudeString(p[0]);
+            if (name)
+                strcpy(s->name, name);
+            else
+            {
+                delete ins.params;
+                break;
+            }
+            s->unknown_40 = atoi(p[1]);
+            s->unknown_44 = (float)atof(p[2]);
+            s->unknown_48 = (float)atof(p[3]);
+            s->unknown_4c = 0;
+            s->unknown_50 = 0;
+            if (num > 4)
+            {
+                s->unknown_4c = atoi(p[4]);
+                if (num > 5)
+                {
+                    s->unknown_50 = (float)atof(p[5]);
+                    if (s->unknown_50 > 1.0f)
+                        s->unknown_50 = 1.0f / s->unknown_50;
+                }
+            }
+            return true;
+        }
+        break;
+    case CMD_ACT_SETSTATE:
+        if (num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = ACT_STATE_NONE;
+            // STRING: GAME 0x632800
+            if (!_stricmp(p[1], "ACTIVE"))
+                v[1] = ACT_STATE_ACTIVE;
+            // STRING: GAME 0x6327f4
+            else if (!_stricmp(p[1], "INACTIVE"))
+                v[1] = ACT_STATE_INACTIVE;
+            return true;
+        }
+        break;
+    case CMD_GARAGE_ADDCARIDX:
+        if (num > 0 && num < 4)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = v[2] = 0;
+            if (num > 1)
+                v[1] = atoi(p[1]);
+            if (num > 2)
+                v[2] = atoi(p[2]);
+            return true;
+        }
+        break;
+    case CMD_DETECTOR_ISSIGNAL:
+        if (num == 3 && strlen(p[1]) <= 15 && strlen(p[2]) <= 15)
+        {
+            ins.params = new S_signal_params;
+            S_signal_params *s = (S_signal_params *)ins.params;
+            s->reg = atoi(p[0]);
+            strcpy(s->label1, p[1]);
+            strcpy(s->label2, p[2]);
+            return true;
+        }
+        break;
+    case CMD_SETEVENT:
+        if (num == 3 && strlen(p[2]) <= 15)
+        {
+            ins.params = new S_event_params;
+            S_event_params *e = (S_event_params *)ins.params;
+            e->value1 = atoi(p[0]);
+            e->value2 = atoi(p[1]);
+            strcpy(e->name, p[2]);
+            return true;
+        }
+        break;
+    case CMD_SETNPCKILLEVENT:
+        if (num == 3 && strlen(p[2]) <= 31)
+        {
+            ins.params = new S_event_params;
+            S_event_params *e = (S_event_params *)ins.params;
+            e->value1 = atoi(p[0]);
+            e->value2 = atoi(p[1]);
+            char *name = ExtrudeString(p[2]);
+            if (name)
+                strcpy(e->name, name);
+            else
+            {
+                delete ins.params;
+                break;
+            }
+            return true;
+        }
+        break;
+    case CMD_CTRL_READ: case CMD_CTRL_READEX:
+        // -1 for an unknown control
+        if (num == 2)
+        {
+            ins.params = new int[2];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = -1;
+            for (int i = 0; i < NUM_CTRLS_TYPES; i++)
+            {
+                if (!_stricmp(_ctrls_type_[i].name, p[1]))
+                {
+                    v[1] = _ctrls_type_[i].value;
+                    break;
+                }
+            }
+            return true;
+        }
+        break;
+    case CMD_FINDNEARACTOR:
+        // -1 for an unknown type
+        if (num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = -1;
+            for (int i = 0; i < NUM_ACTOR_TYPES; i++)
+            {
+                if (!_stricmp(_actor_type_[i].name, p[2]))
+                {
+                    v[2] = _actor_type_[i].value;
+                    break;
+                }
+            }
+            return true;
+        }
+        break;
+    case CMD_ENDOFMISSION:
+        if (num == 2 || num == 3)
+        {
+            ins.params = new S_event_params;
+            S_event_params *e = (S_event_params *)ins.params;
+            e->value1 = atoi(p[0]);
+            e->value2 = atoi(p[1]);
+            if (num == 3)
+            {
+                char *name = ExtrudeString(p[2]);
+                if (!name)
+                {
+                    delete ins.params;
+                    break;
+                }
+                strcpy(e->name, name);
+            }
+            else
+                strcpy(e->name, "");
+            return true;
+        }
+        break;
+    case CMD_POLICEMANAGER_FORCEARREST:
+        if (num == 2 || num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            if (num == 3)
+                v[2] = atoi(p[2]);
+            else
+                v[2] = 0;
+            return true;
+        }
+        break;
+    case CMD_HUMAN_CANADDWEAPON: case CMD_HUMAN_ISWEAPON: case CMD_HUMAN_FORCE_SETTOCAR: case CMD_WINGMAN_SETINDICATOR:
+    case CMD_GETANGLEACTORTOACTOR: case CMD_ACTOR_DUPLICATE: case CMD_GET_REMOTE_FLOAT: case CMD_GET_REMOTE_FRAME:
+    case CMD_GET_REMOTE_ACTOR: case CMD_SET_REMOTE_FLOAT: case CMD_SET_REMOTE_FRAME: case CMD_SET_REMOTE_ACTOR:
+    case CMD_VECT_ANGLETO: case CMD_VECT_ANGLETO_2D: case CMD_QUAT_MAKE: case CMD_QUAT_SETDIR: case CMD_QUAT_EXTRACT:
+    case CMD_QUAT_DOT: case CMD_COMPAREACTORS: case CMD_COMPAREFRAMES: case CMD_ISPOINTINSECTOR: case CMD_ISPOINTINAREA:
+    case CMD_HUMAN_ENTERTOTRUCK: case CMD_PHOBJ_IMPULS: case CMD_CAR_DISABLE_UO: case CMD_POCZKURVENYCHBEDENCAR:
+        if (num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = atoi(p[2]);
+            return true;
+        }
+        break;
+    case CMD_PLAYSOUNDSTOP:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new S_int_float_params;
+            S_int_float_params *s = (S_int_float_params *)ins.params;
+            s->value1 = atoi(p[0]);
+            s->value2 = 0;
+            if (num == 2)
+            {
+                s->value2 = (float)atoi(p[1]);
+                if (s->value2 > 1.0f)
+                    s->value2 = 1.0f / s->value2;
+            }
+            return true;
+        }
+        break;
+    case CMD_DETECTOR_INRANGE: case CMD_DOOR_SETOPENPOSE: case CMD_CAR_SETSPEED:
+        if (num == 2)
+        {
+            ins.params = new S_int_float_params;
+            S_int_float_params *s = (S_int_float_params *)ins.params;
+            s->value1 = atoi(p[0]);
+            s->value2 = (float)atoi(p[1]);
+            return true;
+        }
+        break;
+    case CMD_LABEL:
+        if (num == 1)
+        {
+            ins.params = new char[32];
+            strcpy((char *)ins.params, p[0]);
+            return true;
+        }
+        break;
+    case CMD_CALLSUBROUTINE: case CMD_RECLOAD: case CMD_RECLOADFULL: case CMD_LOADCOLLTREE: case CMD_PRELOADMODEL:
+    case CMD_LOADDIFFERENCES: case CMD_POLICEMANAGER_ADD: case CMD_POLICEMANAGER_DEL: case CMD_SETTRAFFSECTORSND:
+        // A quoted name, "unknown" without the quotes
+        if (num == 1)
+        {
+            ins.params = new char[48];
+            char *name = ExtrudeString(p[0]);
+            if (name)
+                strcpy((char *)ins.params, name);
+            else
+                // STRING: GAME 0x6327ec
+                strcpy((char *)ins.params, "unknown");
+            return true;
+        }
+        break;
+    case CMD_SOUNDFADE: case CMD_STREAM_FADEVOL: case CMD_CREATE_PHYSICALOBJECT: case CMD_GRABER_SETFOCUS:
+        if (num == 4)
+        {
+            ins.params = new S_fade_params;
+            S_fade_params *f = (S_fade_params *)ins.params;
+            f->value1 = atoi(p[0]);
+            f->value2 = atoi(p[1]);
+            f->value3 = (float)atof(p[2]);
+            f->value4 = (float)atof(p[3]);
+            return true;
+        }
+        break;
+    case CMD_EXPLOSION: case CMD_POLICEMANAGER_SETSPEED: case CMD_CAMERA_SETRANGE:
+        if (num == 2)
+        {
+            ins.params = new float[2];
+            float *f = (float *)ins.params;
+            f[0] = (float)atof(p[0]);
+            f[1] = (float)atof(p[1]);
+            return true;
+        }
+        break;
+    case CMD_HUMAN_TALK:
+        if (num == 2 || num == 3)
+        {
+            ins.params = new int[4];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            if (num == 3)
+                v[2] = atoi(p[2]);
+            else
+                v[2] = 0;
+            v[3] = -1;
+            return true;
+        }
+        break;
+    case CMD_GETACTORSDIST:
+        if (num == 3 || num == 4)
+        {
+            ins.params = new int[4];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = atoi(p[2]);
+            if (num == 4)
+                v[3] = atoi(p[3]);
+            else
+                v[3] = 0;
+            return true;
+        }
+        break;
+    case CMD_TIMERON: case CMD_HUMAN_ADDWEAPON: case CMD_RACING_MISSION6_INIT: case CMD_QUAT_SLERP:
+        if (num == 4)
+        {
+            ins.params = new int[4];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = atoi(p[2]);
+            v[3] = atoi(p[3]);
+            return true;
+        }
+        break;
+    case CMD_CHANGE_MISSION:
+        if (num == 3)
+        {
+            char *name1 = ExtrudeString(p[0]);
+            char *name2 = ExtrudeString(p[1]);
+            if (name1 && name2)
+            {
+                ins.params = new S_change_mission_params;
+                S_change_mission_params *m = (S_change_mission_params *)ins.params;
+                strcpy(m->name1, name1);
+                strcpy(m->name2, name2);
+                m->value = (float)atof(p[2]);
+                return true;
+            }
+        }
+        break;
+    case CMD_CAMERA_SETSWING: case CMD_POLICE_SUPPORT:
+        if (num == 3)
+        {
+            ins.params = new S_float_int_params;
+            S_float_int_params *s = (S_float_int_params *)ins.params;
+            s->value1 = atoi(p[0]);
+            s->value = (float)atof(p[1]);
+            s->value2 = atoi(p[2]);
+            return true;
+        }
+        break;
+    case CMD_AIRPLANE_START: case CMD_CAR_SETDOOROPEN:
+        if (num == 3)
+        {
+            ins.params = new S_float_int_params;
+            S_float_int_params *s = (S_float_int_params *)ins.params;
+            s->value1 = atoi(p[0]);
+            s->value2 = atoi(p[1]);
+            s->value = (float)atof(p[2]);
+            return true;
+        }
+        break;
+    case CMD_SETAIPRIORITY:
+        if (num == 1)
+        {
+            ins.params = new float;
+            float *f = (float *)ins.params;
+            *f = (float)atof(p[0]);
+            return true;
+        }
+        break;
+    case CMD_HUMAN_CHANGEANIM:
+        if (num == 2 || num == 3)
+        {
+            ins.params = new S_changeanim_params;
+            S_changeanim_params *a = (S_changeanim_params *)ins.params;
+            a->reg = atoi(p[0]);
+            a->anim2[0] = 0;
+            char *anim = ExtrudeString(p[1]);
+            if (!anim)
+            {
+                delete ins.params;
+                break;
+            }
+            strcpy(a->anim1, anim);
+            if (num == 3)
+            {
+                anim = ExtrudeString(p[2]);
+                if (anim)
+                    strcpy(a->anim2, anim);
+            }
+            return true;
+        }
+        break;
+    case CMD_ENEMY_CHANGEANIM:
+        if (num == 1 || num == 2)
+        {
+            ins.params = new S_enemy_changeanim_params;
+            S_enemy_changeanim_params *a = (S_enemy_changeanim_params *)ins.params;
+            a->anim2[0] = 0;
+            char *anim = ExtrudeString(p[0]);
+            if (!anim)
+            {
+                delete ins.params;
+                break;
+            }
+            strcpy(a->anim1, anim);
+            if (num == 2)
+            {
+                anim = ExtrudeString(p[1]);
+                if (anim)
+                    strcpy(a->anim2, anim);
+            }
+            return true;
+        }
+        break;
+    case CMD_HUMAN_LINKTOHAND:
+        if (num > 1 && num < 5)
+        {
+            ins.params = new int[4];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = 0;
+            v[3] = 0;
+            // STRING: GAME 0x6327e4
+            if (num > 2 && !_stricmp(p[2], "LEFT"))
+                v[2] = 1;
+            // STRING: GAME 0x6327d8
+            if (num > 3 && !_stricmp(p[3], "DONT_MOVE"))
+                v[3] = 1;
+            return true;
+        }
+        break;
+    case CMD_HUMAN_UNLINKFROMHAND:
+        if (num > 1 && num < 6)
+        {
+            ins.params = new int[5];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = 0;
+            v[3] = 0;
+            v[4] = 0;
+            if (num > 2)
+                v[2] = atoi(p[2]);
+            if (num > 3)
+                v[3] = atoi(p[3]);
+            if (num > 4)
+                v[4] = atoi(p[4]);
+            return true;
+        }
+        break;
+    case CMD_CREATEWEAPONFROMFRAME:
+        if (num > 1 && num < 5)
+        {
+            ins.params = new int[4];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = 0;
+            v[3] = 0;
+            if (num > 2)
+                v[2] = atoi(p[2]);
+            if (num > 3)
+                v[3] = atoi(p[3]);
+            return true;
+        }
+        break;
+    case CMD_COMPAREOWNERWITHEX:
+        if (num == 4 && strlen(p[2]) <= 15 && strlen(p[3]) <= 15)
+        {
+            ins.params = new S_compareowner_params;
+            S_compareowner_params *c = (S_compareowner_params *)ins.params;
+            c->value1 = atoi(p[0]);
+            c->value2 = atoi(p[1]);
+            strcpy(c->name1, p[2]);
+            strcpy(c->name2, p[3]);
+            return true;
+        }
+        break;
+    case CMD_HUMAN_SETPROPERTY:
+        if (num == 3)
+        {
+            ins.params = new S_setproperty_params;
+            S_setproperty_params *s = (S_setproperty_params *)ins.params;
+            s->reg = atoi(p[0]);
+            if (!DecodeOperand(p[1], s->value_reg, s->value))
+            {
+                delete s;
+                break;
+            }
+            s->property = -1;
+            for (int i = NUM_HUMAN_PROPERTIES; i--;)
+            {
+                if (!_stricmp(p[2], _human_property_[i]))
+                {
+                    s->property = i;
+                    break;
+                }
+            }
+            if (s->property < 0)
+                break;
+            return true;
+        }
+        break;
+    case CMD_HUMAN_GETPROPERTY:
+        if (num == 3)
+        {
+            ins.params = new int[3];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = -1;
+            for (int i = NUM_HUMAN_PROPERTIES; i--;)
+            {
+                if (!_stricmp(p[2], _human_property_[i]))
+                {
+                    v[2] = i;
+                    break;
+                }
+            }
+            if (v[2] < 0)
+                break;
+            return true;
+        }
+        break;
+    case CMD_WEATHER_SETPARAM:
+        // An integer or a float, after the parameter
+        if (num == 2)
+        {
+            ins.params = new S_weather_params;
+            S_weather_params *w = (S_weather_params *)ins.params;
+            w->param = -1;
+            for (int i = NUM_WEATHER_PROPERTIES; i--;)
+            {
+                if (!_stricmp(p[0], _weather_property_[i]))
+                {
+                    w->param = i;
+                    break;
+                }
+            }
+            switch (w->param)
+            {
+            case WEATHER_ON: case WEATHER_SECTORS: case WEATHER_DUMMIES: case WEATHER_COLORH: case WEATHER_COLORL:
+            case WEATHER_MAX_CNT: case WEATHER_MODE:
+                {
+                    int value;
+                    if (!DecodeOperandInt(p[1], w->value_reg, value))
+                    {
+                        delete w;
+                        return false;
+                    }
+                    w->value.i = value;
+                }
+                break;
+            case WEATHER_SPEED: case WEATHER_LEN: case WEATHER_WIDTH: case WEATHER_MAX_DIST: case WEATHER_MAX_HEIGHT:
+            case WEATHER_DIR_X: case WEATHER_DIR_Y: case WEATHER_DIR_Z:
+                if (!DecodeOperand(p[1], w->value_reg, w->value.f))
+                {
+                    delete w;
+                    return false;
+                }
+                break;
+            default:
+                delete w;
+                return false;
+            }
+            return true;
+        }
+        break;
+    case CMD_GARAGE_ENABLESTEAL: case CMD_FREERIDE_ENABLECAR:
+        // The parameter's first character, in upper case
+        if (num == 1)
+        {
+            ins.params = new char;
+            char *c = (char *)ins.params;
+            _strupr(p[0]);
+            *c = p[0][0];
+            return true;
+        }
+        break;
+    case CMD_VECT_MUL_SCL: case CMD_VECT_ROTATE_2D: case CMD_QUAT_MUL_SCL: case CMD_SOUND_SETVOLUME:
+    case CMD_CAR_SETACTLEVEL: case CMD_FRM_GETCHILD:
+        if (num == 2)
+        {
+            ins.params = new S_reg_operand_params;
+            S_reg_operand_params *s = (S_reg_operand_params *)ins.params;
+            s->reg = atoi(p[0]);
+            if (!DecodeOperand(p[1], s->value_reg, s->value))
+            {
+                delete ins.params;
+                break;
+            }
+            return true;
+        }
+        break;
+    case CMD_COLL_TESTLINE:
+        if (num == 5)
+        {
+            ins.params = new int[5];
+            int *v = (int *)ins.params;
+            v[0] = atoi(p[0]);
+            v[1] = atoi(p[1]);
+            v[2] = atoi(p[2]);
+            v[3] = atoi(p[3]);
+            v[4] = atoi(p[4]);
+            return true;
+        }
+        break;
+    case CMD_HUMAN_THROWGRENADE:
+        if (num == 3)
+        {
+            ins.params = new S_grenade_params;
+            S_grenade_params *g = (S_grenade_params *)ins.params;
+            g->reg = atoi(p[0]);
+            g->value1 = (float)atof(p[1]);
+            g->value2 = (float)atof(p[2]);
+            return true;
+        }
+        break;
+    }
+    return false;
+}
 
 // A command's name as the scripts spell it, a space after it, and its number (the names are ours)
 struct S_command_name
