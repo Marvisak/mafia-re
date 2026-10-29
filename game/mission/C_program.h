@@ -426,6 +426,12 @@ class I3D_frame;
 #define BLOCK_MODE_UP 1
 #define BLOCK_MODE_DOWN 2
 
+// What gosub_stack's entries hold besides the command to return to (the names are ours): SetEvent's entries have both
+// flags, and RETURN tells the script's CallBack the event's end and gives the command back the time it had run
+#define GOSUB_EVENT 0x8000
+#define GOSUB_EVENT_TIME 0x4000
+#define GOSUB_COMMAND 0x3fff
+
 // ACT_SETSTATE's states (the names are ours, after the scripts')
 #define ACT_STATE_NONE 0
 #define ACT_STATE_ACTIVE 1
@@ -510,7 +516,7 @@ struct S_vector_params
 struct S_playanim_params
 {
     char anim[64];                      // 0x0
-    int unknown_40;                     // 0x40, -1 without it
+    int result_reg;                     // 0x40, the float register for the animation's result, -1 without it
     bool simple;                        // 0x44, SIMPLE
     int reg;                            // 0x48
     bool unknown_4c;                    // 0x4c, true without it
@@ -677,9 +683,12 @@ public:
         S_saved_code *next;             // 0x14, the code saved before it
     };
 
-    // What the derived classes' CallBack hears (PS2's type; its values aren't known yet)
+    // What the derived classes' CallBack hears (PS2's type; the values' names are ours): PS2's C_entity sets a flag of
+    // its own at the first and clears it at the second
     enum E_cb_action
     {
+        CB_EVENT_BEGIN,                 // SetEvent jumps to an event's commands
+        CB_EVENT_END                    // RETURN leaves them
     };
 
     // A script replaced by the patch (PS2 C_program::S_prog_change, 16 bytes; the members' names are ours, from PS2's
@@ -745,10 +754,41 @@ public:
     // Compiles the lines of src into the commands (PS2 name), one only if one_line; returns the number of lines that
     // didn't compile, the last one's offset and length in err_pos and err_len (if both are given)
     int Compile(char *src, bool one_line, int *err_pos, int *err_len);
+    // The registers (PS2 names): 0 or NULL for a register the script doesn't have, where the setters do nothing
+    float GetFloatReg(int i);
+    I3D_frame *GetFrameReg(int i);
+    C_actor *GetActorReg(int i);
+    void SetFloatReg(int i, float f);
+    void SetFrameReg(int i, I3D_frame *frm);
+    void SetActorReg(int i, C_actor *act);
+    // Goes on to the next command, or to the last LABEL of that name (PS2 name); the command's time starts again
+    void NextCommand(char *label);
     // Runs the script from its start, one command after another, until one stops it (PS2 name)
     void CallSubroutine();
+    // Leaves a command block (PS2 name): goes up to its { or down to its }, as the block's mode says or else as up
+    // does; false outside a block
+    bool LeaveCompactBlock(bool up);
     // Runs the current command, and while run_through stays set the next ones (PS2 name)
     void CallProcess(uint time);
+    // END's: goes back to the script's own commands where it ran another's (PS2 name), and the actor's state is
+    // ACTSTATE_2
+    void ClearAfterEnd();
+    // Jumps to the last EVENT of that id (PS2 name), to return there with GOSUB_EVENT: false while the script is in
+    // an event already, true otherwise, also without the event
+    bool SetEvent(int id);
+    // Whether the script has an EVENT of that id (PS2 name), and its parameter
+    bool IsEventID(int id, int *param);
+    // Clears the actor registers that hold the actor (PS2 name)
+    void InvalidateActorReg(C_actor *act);
+    // Puts the game's actor of that id into an actor register (PS2 name)
+    void FindActorLater(int reg, uint id);
+
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47b010
+    void SetAIPriority(float priority)
+    {
+        ai_priority = priority;
+    }
 
     char *name;                         // 0x4, what S_prog_change::program names (the names are ours)
     char *source;                       // 0x8
@@ -771,7 +811,8 @@ public:
     int num_frame_regs;                 // 0x54
     C_actor **actor_regs;               // 0x58
     int num_actor_regs;                 // 0x5c
-    float unknown_float_60;             // 0x60, 0.5 at first, 0 for a script without commands
+    // 0x60, SETAIPRIORITY's (the name is ours), 0.5 at first, 0 for a script without commands
+    float ai_priority;
     // Set while CallProcess runs the commands one after another (CallSubroutine sets it, CMD_END clears it)
     bool run_through;                   // 0x64
     // Set where RETURN ends CallProcess's run too (Process's)

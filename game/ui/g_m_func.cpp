@@ -36,6 +36,12 @@
 #define MAINMENU_ITEM_CHANGE_PROFILE 990112
 #define MAINMENU_ITEM_QUIT 990113
 
+// The failure menu's items, tables\menu\gamefailed.mnu (the names are ours, after their texts)
+#define GAMEFAILED_WINDOW 0xa           // "Game Over"
+#define GAMEFAILED_TEXT 0x64            // the failure's text
+#define GAMEFAILED_RETRY 0x3e8
+#define GAMEFAILED_EXIT 0x3ea           // "Exit to Main Menu"
+
 // The loading screen's items, tables\menu\loadprogress.mnu (the names are ours)
 #define LOADPROGRESS_SIDE 0x64          // the picture on the left, "loadbok.tga"
 #define LOADPROGRESS_MISSION_PICTURE 0x65
@@ -200,6 +206,50 @@ int GM_QuestionBox::OnClick(uint id)
     }
     return 0;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e2880
+int GM_GameFailed::OnCreate()
+{
+    StubLog("GM_GameFailed::OnCreate");
+    return 0;
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e2950
+int GM_GameFailed::OnClick(uint id)
+{
+    switch (id)
+    {
+    case GAMEFAILED_EXIT:
+        MenuCloseAll((uint)-1, GAMEFAILED_RESULT_EXIT);
+        break;
+    case GAMEFAILED_RETRY:
+        MenuCloseAll((uint)-1, GAMEFAILED_RESULT_RETRY);
+        break;
+    }
+    return 0;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e3610
+int GM_GunShop::OnCreate()
+{
+    StubLog("GM_GunShop::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e3700
+int GM_GunShop::OnClick(uint id)
+{
+    StubLog("GM_GunShop::OnClick");
+    return 0;
+}
+
+#pragma auto_inline(on)
 
 // The menus' scale, relative to 800x600 (the HUD's screen of Parhelia's two or three): the constants are quotients, the
 // reciprocals of the sizes

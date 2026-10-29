@@ -91,6 +91,71 @@ public:
     char *text;                         // 0x34
 };
 
+// What ExecuteMenu returns for the mission's failure menu, its items' clicks (the names are ours, after the items'
+// texts in tables\menu\gamefailed.mnu, by value where none is known): "Exit to Main Menu" (item 0x3ea), "Retry" (item
+// 0x3e8), and one its OnClick doesn't return, which the script's ENDOFMISSION handles too
+#define GAMEFAILED_RESULT_EXIT 0x4fb
+#define GAMEFAILED_RESULT_4FC 0x4fc
+#define GAMEFAILED_RESULT_RETRY 0x4fd
+
+// The mission's failure, "gamefailed" (PS2 GM_GameFailed, g_m_func.cpp), 0x34 bytes: "Game Over" with the failure's
+// text, Retry and Exit to Main Menu. The mission's script runs it (ENDOFMISSION).
+// VTABLE: GAME 0x624898
+class GM_GameFailed : public GM_Menu
+{
+public:
+    // FUNCTION: GAME 0x47a3e0
+    GM_GameFailed(uint text)
+    {
+        text_id = text;
+    }
+
+    // FUNCTION: GAME 0x47a470
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x634414
+        return "gamefailed";
+    }
+    // The text in item 0x64, the items below moved down by its height
+    virtual int OnCreate();
+    // Escape doesn't close it: the vtable's is a folded copy of an empty one (0x605020)
+    virtual int OnKey(uchar key, uint) { return 0; }
+    // Closes the menus with GAMEFAILED_RESULT_RETRY or GAMEFAILED_RESULT_EXIT
+    virtual int OnClick(uint id);
+
+    uint text_id;                       // 0x30, of the text database, the failure's (the name is ours)
+};
+
+class G_Inventory;
+
+// The gun shop, "gunshop" (PS2 GM_GunShop, g_m_func.cpp), 0x43c bytes (PS2's 0x438): the player's inventory and the
+// shop's weapons, "Inventory (Drop)" and "Select (Pick Up)". The mission's script runs it (GUNSHOP_MENU). PS2's
+// RefreshInventory and destructor aren't in the PC's vtable.
+// VTABLE: GAME 0x6248c8
+class GM_GunShop : public GM_Menu
+{
+public:
+    // FUNCTION: GAME 0x47a480
+    GM_GunShop(G_Inventory *inventory)
+    {
+        this->inventory = inventory;
+    }
+
+    // FUNCTION: GAME 0x47a4a0
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x634420
+        return "gunshop";
+    }
+    virtual int OnCreate();
+    // The vtable's is a folded copy of an empty one (0x605020)
+    virtual int OnKey(uchar key, uint) { return 0; }
+    virtual int OnClick(uint id);
+
+    G_Inventory *inventory;             // 0x30 (PS2 0x2c), the player's (the name is ours)
+    uchar unknown_34[0x408];
+};
+
 // The loading screen's progress bar (its menu's item 0x12c, a "pbar"; the name is ours)
 #define LOADPROGRESS_BAR 0x12c
 

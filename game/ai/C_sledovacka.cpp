@@ -1,6 +1,7 @@
 // The chases (PS2 C_sledovacka.cpp; the PC's file is the one at 0x4a0320-0x4aa2ac, docs/game-files.md), which starts
 // with the constructor. Written so far: the constructor and the destructor, which the game's constructor and destructor
-// call, and Init and Done, which its Init and Done call.
+// call, and Init and Done, which its Init and Done call; what the script's commands call (RemoveCar, SetActionStatus)
+// are stubs.
 
 #include "ai/C_sledovacka.h"
 
@@ -8,6 +9,8 @@
 #include "ai/C_driver.h"
 #include "ai/road_web.h"
 #include "mission/Mission.h"
+
+#include "stub.h"
 
 // FUNCTION: GAME 0x4a0320
 C_sledovacka::C_sledovacka() :
@@ -55,3 +58,19 @@ void C_sledovacka::Done()
     elements.clear();
     bridges.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4a1c30
+void C_sledovacka::RemoveCar(C_car *car)
+{
+    StubLog("C_sledovacka::RemoveCar");
+}
+
+// STUB: GAME 0x4a86d0
+void C_sledovacka::SetActionStatus(C_car *car, E_STATUS status)
+{
+    StubLog("C_sledovacka::SetActionStatus");
+}
+
+#pragma auto_inline(on)

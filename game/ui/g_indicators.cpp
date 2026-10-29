@@ -1,11 +1,12 @@
 // The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
 // the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
-// GameInit, GameDone, the clock's setters, _SpocitejRafiku2, the player's panel's helpers, the tachometer's and the
-// player's setters, the clears C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear, ConsoleClear,
-// RadarClear), MapEnable, WideScreenSetRatio, SetUnknown4484, SetUnknownTexture, RadarRemoveCar, RaceSetStartFlag,
-// BonusSetCount, DrawAll, ResolutionChanged (with the dials' vertex helpers), TextSize, OutText, OutTextMultiLine, the
-// menus' cursor, the camera's field of view and ParheliaSetCenter; the rest of what main, the scene's callback, the
-// profiles and the game call is stubs (RadarAddCar, the radar's edges).
+// GameInit, GameDone, the clock's setters and TimerGetInterval, _SpocitejRafiku2, the player's panel's helpers, the
+// tachometer's and the player's setters, the clears C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear,
+// ConsoleClear, RadarClear), MapEnable, CompassSetDestination, WideScreenSetRatio, FadeInOutIsDark, SetUnknown4484,
+// SetUnknownTexture, RadarRemoveCar, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged (with the dials'
+// vertex helpers), TextSize, OutText, OutTextMultiLine, the menus' cursor, the camera's field of view and
+// ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs (RadarAddCar,
+// the radar's edges, and the scripts' subtitles, console texts, wide screen and fades).
 
 #include "ui/g_indicators.h"
 #include "collision/g_colls.h"
@@ -352,7 +353,7 @@ void G_IndicatorsClass::Destroy()
 // FUNCTION: GAME 0x5f73c0
 void G_IndicatorsClass::GameInit()
 {
-    if (act_mission->game->unknown_2d44)
+    if (act_mission->game->night_mission)
     {
         if (texture_int2)
             texture_int2->Release();
@@ -422,6 +423,12 @@ void G_IndicatorsClass::TimerSetInterval(uint interval)
     timer_minutes.value = -1.0f;
     timer_hours.value = -1.0f;
     timer_seconds.value = -1.0f;
+}
+
+// FUNCTION: GAME 0x5f7620
+void G_IndicatorsClass::TimerGetInterval(uint *interval)
+{
+    *interval = this->interval / 1000;
 }
 
 // The needle at the value's angle, scaled from 800x600, and its quad, the texture's u along it from the tail
@@ -1057,6 +1064,22 @@ void G_IndicatorsClass::SubtitlesClear()
     subtitles.clear();
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f9480
+void G_IndicatorsClass::IntroSubtitlesAdd(uint a, uint b)
+{
+    StubLog("G_IndicatorsClass::IntroSubtitlesAdd");
+}
+
+// STUB: GAME 0x5f9690
+void G_IndicatorsClass::IntroSubtitlesAddSimple(uint id)
+{
+    StubLog("G_IndicatorsClass::IntroSubtitlesAddSimple");
+}
+
+#pragma auto_inline(on)
+
 // FUNCTION: GAME 0x5f9940
 void G_IndicatorsClass::IntroSubtitlesClear()
 {
@@ -1076,6 +1099,22 @@ void G_IndicatorsClass::MapEnable(bool enable)
 void G_IndicatorsClass::ConsoleClear()
 {
     console_count = 0;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f9de0
+void G_IndicatorsClass::ConsoleAddTextByID(uint id, uint color)
+{
+    StubLog("G_IndicatorsClass::ConsoleAddTextByID");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5fa020
+void G_IndicatorsClass::CompassSetDestination(I3D_frame *frm)
+{
+    compass_destination = frm;
 }
 
 // Two quads in the colour 0xaf0000ff over the whole width, a few pixels past the screen's edges: from the top to where
@@ -1150,6 +1189,35 @@ void G_IndicatorsClass::WideScreenSetRatio(float ratio)
     _VtxWideScreen[9].v = 1.0f;
     _VtxWideScreen[10] = _VtxWideScreen[8];
     _VtxWideScreen[11] = _VtxWideScreen[7];
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fa300
+void G_IndicatorsClass::WideScreenSetOn(bool on, uint time)
+{
+    StubLog("G_IndicatorsClass::WideScreenSetOn");
+}
+
+// STUB: GAME 0x5fa370
+void G_IndicatorsClass::FadeInOut(bool in, uint time, uint color)
+{
+    StubLog("G_IndicatorsClass::FadeInOut");
+}
+
+// STUB: GAME 0x5fa3e0
+bool G_IndicatorsClass::FadeInOutGetState()
+{
+    StubLog("G_IndicatorsClass::FadeInOutGetState");
+    return true;
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5fa400
+bool G_IndicatorsClass::FadeInOutIsDark()
+{
+    return unknown_40a4 & INDF_FADE ? true : false;
 }
 
 // FUNCTION: GAME 0x5fa410

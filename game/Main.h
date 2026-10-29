@@ -16,6 +16,7 @@ class IGraph;
 class I3D_driver;
 class ISND_driver;
 class C_actor;
+struct S_vector;
 
 // The game itself: loads the settings setup.exe saved, starts the engine and runs the main menu until the player quits.
 // VC6 keeps main __cdecl under /Gr.
@@ -41,19 +42,28 @@ extern ISND_driver *isound;
 extern S_settings setting;
 // Cleared before each menu and mission
 extern C_actor *NewMissionActors[2];
+// The next mission the scripts' CHANGE_MISSION asks for (PS2 names): its name and the second name, empty where no
+// actors are kept, the kept actor's position and its z and y axes in the space of the script actor's frame, and the
+// command's value
+extern char NewMission[32];
+extern bool ActiveNewMission;
+extern char NewMission_ENTRY[32];
+extern S_vector NewMission_POS;
+extern S_vector NewMission_ROT[2];
+extern float NewMissionSpeed;
 // Set while the intro mission runs
 extern bool _is_intro_;
 
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAUS_particle_subpart@@ABQAU2@@Z
+// ?_Construct@std@@YIXPAPAVC_actor@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_joy@@V?$allocator@US_joy@@@std@@@std@@IAEXPAUS_joy@@0@Z
+// ?_Destroy@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@IAEXPAPAUS_shvestky@C_shvestky@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEPAHPBH0PAH@Z
+// ?_Ucopy@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEPAPAVC_program@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVI3D_sector@@V?$allocator@PAVI3D_sector@@@std@@@std@@IAEXPAPAVI3D_sector@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z

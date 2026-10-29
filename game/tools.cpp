@@ -3,7 +3,7 @@
 // which InitSystem and CloseSystem call, and C_compass::Activate and the sound table's ConstructSound, which C_game
 // calls, with the virtual TestConstructSound and ClearInvisibleFlag; the other virtual functions, which the vtable
 // needs, are stubs; C_using_object's ClearObjects and ClearInvalidItems, which C_game calls, and DelObject, which
-// C_detector::GameDone calls.
+// C_detector::GameDone calls; AddObject, which the scripts call, is a stub.
 
 #include "tools.h"
 #include "Winstuff.h"
@@ -116,6 +116,12 @@ void C_compass::Activate(I3D_frame *frm)
 C_fire::~C_fire()
 {
     StubLog("C_fire::~C_fire");
+}
+
+// STUB: GAME 0x55dd60
+void C_using_object::AddObject(S_using_object *obj)
+{
+    StubLog("C_using_object::AddObject");
 }
 
 #pragma auto_inline(on)

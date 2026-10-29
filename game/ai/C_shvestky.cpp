@@ -1,6 +1,7 @@
 // The police (PS2 C_shvestky.cpp; the PC's file is the one at 0x499b40-0x4a031c, docs/game-files.md), which starts with
 // the constructor and the destructor. Written so far: those two, which the game's constructor and destructor call, and
-// GameInit and GameDone, which C_game's Init and Done call; the records' destructor and TickDoRiciActors are stubs.
+// GameInit and GameDone, which C_game's Init and Done call; the records' destructor, TickDoRiciActors and what the
+// script's commands call are stubs.
 
 #include "ai/C_shvestky.h"
 #include "actors/C_actor.h"
@@ -135,10 +136,107 @@ C_shvestky::S_shvestky::~S_shvestky()
     StubLog("C_shvestky::S_shvestky::~S_shvestky");
 }
 
+// STUB: GAME 0x49b860
+void C_shvestky::SetActive(bool active, int unknown, bool unknown2)
+{
+    StubLog("C_shvestky::SetActive");
+}
+
+// STUB: GAME 0x49c7e0
+void C_shvestky::AddPerson(C_human *human)
+{
+    StubLog("C_shvestky::AddPerson");
+}
+
+// STUB: GAME 0x49ca50
+void C_shvestky::DelPerson(C_human *human)
+{
+    StubLog("C_shvestky::DelPerson");
+}
+
+// STUB: GAME 0x49cbb0
+void C_shvestky::DriveCar(C_human *human, C_car *car)
+{
+    StubLog("C_shvestky::DriveCar");
+}
+
+// STUB: GAME 0x49d130
+void C_shvestky::ForceArrest(C_human *human, bool a, bool b)
+{
+    StubLog("C_shvestky::ForceArrest");
+}
+
+// STUB: GAME 0x49d340
+uint C_shvestky::GetHumanStatus(C_human *human)
+{
+    StubLog("C_shvestky::GetHumanStatus");
+    return 0;
+}
+
+// STUB: GAME 0x49d390
+int C_shvestky::JakPicusNaTomJest(C_human *human)
+{
+    StubLog("C_shvestky::JakPicusNaTomJest");
+    return 0;
+}
+
+// STUB: GAME 0x49d3e0
+uint C_shvestky::GetCrashTime(C_human *human)
+{
+    StubLog("C_shvestky::GetCrashTime");
+    return 0;
+}
+
+// STUB: GAME 0x49d420
+uint C_shvestky::GetFireTime(C_human *human)
+{
+    StubLog("C_shvestky::GetFireTime");
+    return 0;
+}
+
+// STUB: GAME 0x49d460
+int C_shvestky::PocetNasranych(C_human *human)
+{
+    StubLog("C_shvestky::PocetNasranych");
+    return 0;
+}
+
+// STUB: GAME 0x49d4b0
+int C_shvestky::PocetNasranychZivych(C_human *human)
+{
+    StubLog("C_shvestky::PocetNasranychZivych");
+    return 0;
+}
+
+// STUB: GAME 0x49d560
+bool C_shvestky::NeviDoKterePiceVlezl(C_human *human)
+{
+    StubLog("C_shvestky::NeviDoKterePiceVlezl");
+    return false;
+}
+
+// STUB: GAME 0x49e820
+void C_shvestky::AddDoRiciActor(C_actor *act)
+{
+    StubLog("C_shvestky::AddDoRiciActor");
+}
+
+// STUB: GAME 0x49e9e0
+void C_shvestky::DelDoRiciActor(C_actor *act)
+{
+    StubLog("C_shvestky::DelDoRiciActor");
+}
+
 // STUB: GAME 0x49ea80
 void C_shvestky::TickDoRiciActors(bool)
 {
     StubLog("C_shvestky::TickDoRiciActors");
+}
+
+// STUB: GAME 0x49eee0
+void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
+{
+    StubLog("C_shvestky::DalsiChalpiDoPartie");
 }
 
 #pragma auto_inline(on)

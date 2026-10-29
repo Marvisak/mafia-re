@@ -7,9 +7,10 @@
 class I3D_sound;
 class I3D_frame;
 class I3D_visual;
+class C_human;
 
 // The dubbing, the characters' speech (PS2 g_dabing.cpp, "dabing" Czech for dubbing). Only what C_game's Init and Done
-// call so far.
+// and the scripts call so far.
 
 // The speaking channels (PS2's 16 of dabingChanel; the PC's are 0x44 bytes, PS2's 0x48)
 #define NUM_DABING_CHANELS 16
@@ -47,6 +48,12 @@ extern std::vector<G_DabingMorphObj> G_DabingMorphActive;
 // PS2 names: the channels cleared, and their sounds released at the game's end
 void DabingInit();
 void DabingDone();
+// PS2 names, what the scripts' speech calls: the last channel that isn't speaking (the last one if all are), the
+// speaker of a channel, its speech (the parameters' meaning isn't known), and whether the channel still speaks
+int DabingGetFreeChanel();
+void DabingSetHuman(int chanel, C_human *human);
+void DabingSpeak(int chanel, uint speech, bool unknown, uint unknown2);
+bool DabingIsSpeaking(int chanel);
 // Each channel's face gets its weights back, in each of three regions the first level 1, the other four 0; then the
 // channels' data and sounds are freed (the data first, where DabingDone frees the sound first) and the channels
 // cleared, as DabingDone does (PC only, the name is ours; C_cutscene::Close calls it)

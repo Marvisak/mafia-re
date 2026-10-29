@@ -2,7 +2,8 @@
 // of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close,
 // ShowProgress, Open with its two helpers, OpenBin with its frames' callback, the video options' methods and
 // FrmActBuff_ClearAll; what C_game's Init and Done call: ClearGameAnimModels, DelNotMeActors, the GlobalProgram
-// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, Tick among them.
+// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, Tick among them, and
+// AddAnimModel and DelAnimModel, which the scripts call.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -154,6 +155,22 @@ void C_mission::UnInit()
         mission_name = NULL;
     }
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x53f520
+void C_mission::AddAnimModel(I3D_model *model, bool unknown)
+{
+    StubLog("C_mission::AddAnimModel");
+}
+
+// STUB: GAME 0x53f710
+void C_mission::DelAnimModel(I3D_model *model)
+{
+    StubLog("C_mission::DelAnimModel");
+}
+
+#pragma auto_inline(on)
 
 // The flagged models leave the list, the last one taking each one's place, as PS2's
 // FUNCTION: GAME 0x53f770

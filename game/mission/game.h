@@ -19,6 +19,7 @@
 
 class C_mission;
 class C_human;
+class C_car;
 class C_stone;
 class C_cartridge;
 class C_don_ocas;
@@ -38,6 +39,16 @@ struct S_semaphore
     I3D_frame *green;                   // 0xc
     uint *phase;                        // 0x10, C_game's unknown_19c or unknown_1a0, by the semaphore's direction
 };
+
+// The shadows' types, which AddFrameForShadow and DelFrameForShadow take (PS2's E_shadow_type, a global enum; the
+// enumerator's name is ours, by value): FRM_SETON passes 0
+enum E_shadow_type { SHADOW_TYPE_0 };
+
+// C_game::unknown_2edc, RACING_MISSION6_START's states (the names are ours): the command starts the race at
+// RACE6_STATE_NONE and goes on at RACE6_STATE_END
+#define RACE6_STATE_NONE 0
+#define RACE6_STATE_STARTED 2           // SetUnknown2edc(true)
+#define RACE6_STATE_END 10
 
 // The game of the loaded mission (PS2 game.cpp), 0x36ac bytes, the size C_mission::Init creates it with. PS2's Init
 // takes two bools and loads the mission's collisions itself; the PC's takes none, main loads them before it.
@@ -234,7 +245,7 @@ public:
     std::vector<C_actor *> unknown_140;  // 0x140 (PS2 0x198, a gif::vector)
     std::vector<S_lightness *> lightness;  // 0x150 (PS2 0x1a4), LightnessClear deletes them
     int unknown_160;                    // 0x160
-    bool unknown_164;                   // 0x164
+    bool actor_lightness;               // 0x164, ACTORLIGHTNESSON's (the name is ours)
     std::vector<I3D_frame *> unknown_168;  // 0x168 (PS2 0x1b8), turned on again by Done
     int unknown_178;                    // 0x178
     std::vector<S_invisible_actor> invisible_actors;  // 0x17c (PS2 0x1c8)
@@ -294,20 +305,22 @@ public:
     std::vector<I3D_frame *> unknown_2adc;  // 0x2adc (PS2 0xe30), frames ClearDiffData deletes from the scene
     std::vector<C_actor *> unknown_2aec;  // 0x2aec (PS2 0xe3c), actors ClearDiffData deletes from the mission
     std::vector<C_program *> unknown_2afc;  // 0x2afc (PS2 0xe48), the game's own scripts (GlobalProgramRun's)
-    int unknown_2b0c;                   // 0x2b0c
+    int game_time;                      // 0x2b0c, the game's time (the name is ours)
     int unknown_2b10;                   // 0x2b10
-    int unknown_2b14;                   // 0x2b14
+    uint unknown_2b14;                  // 0x2b14, unsigned (CAMERA_LOCK compares it so)
     C_sledovacka sledovacka;            // 0x2b18 (PS2 0xe60)
     soundArena sound_arena;             // 0x2b3c (PS2's among the 16 entries of 0x30 bytes from 0xe80)
-    bool unknown_2d44;                  // 0x2d44
-    int unknown_2d48;                   // 0x2d48
-    int unknown_2d4c;                   // 0x2d4c
-    int unknown_2d50;                   // 0x2d50
-    int unknown_2d54;                   // 0x2d54
-    int unknown_2d58;                   // 0x2d58
-    int unknown_2d5c;                   // 0x2d5c
-    int unknown_2d60;                   // 0x2d60
-    int unknown_2d64;                   // 0x2d64
+    bool night_mission;                 // 0x2d44, GAME_NIGHTMISSION's (PS2 0x1190; the name is ours)
+    // The scripts' events the game fires and the scripts to fire them in (PS2 0x1194 to 0x11b0, which PS2's
+    // Timer_TimeOut, PFire_Fire, PHorn_Horn and WFall_Player fire; the names are ours)
+    C_program *timeout_program;         // 0x2d48
+    int timeout_event;                  // 0x2d4c
+    C_program *player_fire_program;     // 0x2d50
+    int player_fire_event;              // 0x2d54
+    C_program *player_horn_program;     // 0x2d58
+    int player_horn_event;              // 0x2d5c
+    C_program *player_wfall_program;    // 0x2d60
+    int player_wfall_event;             // 0x2d64
     std::vector<S_npc_kill_event> npc_kill_events;  // 0x2d68 (PS2 0x11b4)
     std::vector<S_driver_man> driver_men;  // 0x2d78 (PS2 0x11c0)
     // The steering wheels' animations' lengths, AutoRidicVolant.I3D's and FormuleVolant.I3D's (the names are ours)
@@ -331,8 +344,8 @@ public:
     bool unknown_2ec4;                  // 0x2ec4 (PS2 0x12e8)
     S_unknown_2ec8 unknown_2ec8;        // 0x2ec8 (PS2 0x12f0)
     bool unknown_2ed8;                  // 0x2ed8, set by Done
-    int unknown_2edc;                   // 0x2edc
-    int unknown_2ee0;                   // 0x2ee0
+    int unknown_2edc;                   // 0x2edc, RACE6_STATE_*
+    float *unknown_2ee0;                // 0x2ee0, a float register of a script (the race's result most likely)
     std::vector<uint> unknown_2ee4;     // 0x2ee4 (PS2 0x130c)
     char unknown_2ef4[0x20];            // 0x2ef4, a name, empty from Init
     int unknown_2f14;                   // 0x2f14
@@ -349,7 +362,7 @@ public:
     uchar unknown_2f74[8];              // 0x2f74
     std::vector<S_find_actor> find_actors;  // 0x2f7c (PS2 0x1394)
     std::vector<uint> unknown_2f8c;     // 0x2f8c (PS2 0x13a0)
-    bool unknown_2f9c;                  // 0x2f9c
+    bool anim_preload;                  // 0x2f9c, NOANIMPRELOAD clears it (the name is ours)
     std::vector<I3D_frame *> city_music_areas;  // 0x2fa0 (PS2 0x13b0), the areas city_music_*
     int unknown_2fb0;                   // 0x2fb0
     int unknown_2fb4;                   // 0x2fb4
@@ -475,6 +488,8 @@ public:
     void InvalidateActor(C_actor *act, bool);
     // A frame going away: its placements and its subtree's taken from the list (PS2 name)
     void InvalidateFrame(I3D_frame *frm);
+    // The actor whose id is given, the scripts' FindActorLater's (PS2 name)
+    C_actor *GetActorFromGUID(uint id);
     // Runs the game's own script of that name (PS2's is C_mission's): false without one
     bool GlobalProgramRun(const char *name);
     // PS2's C_mission has these two
@@ -491,12 +506,221 @@ public:
     // The shadows' order for qsort, by their distance (the name is ours)
     static int __cdecl CompareShadows(const S_shadow_item *a, const S_shadow_item *b);
 
+    // What the scripts call (C_program::Process), PS2 names but where said
+    void AddTemporaryActor(C_actor *act);
+    void InternTempActAdd(C_actor *act);
+    // The traffic generators' cars shown or hidden
+    void SetTrafficVisible(bool visible);
+    // An explosion of the actor at the position (EXPLOSION's)
+    void NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float unknown2, bool unknown3, bool unknown4,
+        bool unknown5, int unknown6);
+    // A sound of the sound cache played at the frame (the vector by value, PS2's by reference): its number, which
+    // Stop3DSound takes, -1 if it fails
+    int Play3DSound(I3D_frame *frm, const char *name, I3D_SOUNDTYPE type, S_vector pos, float near_range,
+        float far_range, float volume, bool unknown1, float unknown2, bool unknown3);
+    void Stop3DSound(int sound, bool fade, float time);
+    // A shadow for the frame, type2 one of the shadow models (shadow_temp), type1 choosing the list: its number, 0 if
+    // it fails (the human keeps it)
+    int AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *unknown, char *name);
+    void DelFrameForShadow(I3D_frame *frm, E_shadow_type type);
+    // The city's music (the IShow of unknown_2fb8) faded out and forgotten, or paused
+    void CityMusicOff();
+    void CityMusicPaused(bool paused);
+    void SetFilmMusic(int music);
+    // The film music of unknown_2fc4's index, -1 for none
+    int GetFilmMusic(int index);
+    // The streams of unknown_2fc4 destroyed, from the last (the name is ours: RECUNLOAD)
+    void StreamDestroyAll();
+    // ClearDiffData, then the chunk file diff\<name> (the name is ours, after ClearDiffData; PS2's LOADDIFFERENCES does
+    // nothing)
+    void LoadDiffData(const char *name);
+    // The frame's state kept in frame_placements, which Done puts back
+    void AddFramePlacement(I3D_frame *frm);
+    // SETNPCKILLEVENT's: the script, its value and the name
+    void AddNPCKillEvent(C_program *prog, int unknown, char *label);
+    void ClearProjectorsForFrame(I3D_frame *frm);
+    // What the player keeps between missions (inventory_stack, float_stack, character_stack)
+    void InventoryStackPush(C_human *human);
+    void InventoryStackPop(C_human *human);
+    void FloatStackPush(float f);
+    void FloatStackPop(float *f);
+    void CharacterStackPush(C_human *human);
+    void CharacterStackPop(C_human *human);
+    void BoxPlacementAdd(I3D_frame *frm, int unknown);
+    void BoxPlacementRecompile();
+    void BoxPlacementDestAdd(I3D_frame *frm, int unknown);
+    void BoxPlacement_DelInfo(I3D_frame *frm);
+    int BoxPlacement_GetBox(int index);
+    int BoxPlacement_GetBoxDest(int index);
+    void BoxPlacement_MoveBoxToDest(int index);
+    void BoxRecompileBoxForCar(C_car *car, bool unknown);
+    int BoxPlacementPoPiciNaZkurvenemAute(C_car *car, int unknown);
+    void DeathActorAdd(C_actor *act);
+    void UseLightCacheSystem();
+    void RecomputeLightCache();
+    // The videos and the music the scripts play (i_shows): a new one's id, which the others take, -1 if it fails
+    int CreateIShow(uint flags);
+    // Opens the file in the stream of the id: false if it doesn't
+    bool OpenIShow(const char *name, int id);
+    void DestroyIShow(int show);
+    // The stream of the id, NULL for none
+    IShow *GetIShow(int id);
+    void IShowStoreVolume(int show, float volume);
+    void IShowLoop(int show, bool loop);
+    void IShowFadeDownAll(int time);
+    void IShowFade(int id, float from, float to, int time);
+    bool IsValidTaxiPassenger();
+    // Whether the frame is one of the telephones
+    bool IsTelephoneExist(I3D_frame *frm);
+    void AddHumanTalk(C_human *human, int chanel);
+    void DelHumanTalk(C_human *human, int chanel);
+    void DeathHumanTalk(C_human *human);
+    // Adds the actor to invisible_actors unless it is there
+    void AddInvisibleActor(C_actor *act);
+    // A particle the cutscene's EMITPARTICLE emitted, which DestroyUnknown2f8cParticles destroys (PC only, the names
+    // are ours: unknown_2f8c)
+    void AddCutsceneParticle(int particle);
+    void DestroyUnknown2f8cParticles();
+    // A frame the scripts created (unknown_20, which Done unlinks and releases), and taken from it: false if it isn't
+    // there
+    void AddCreatedFrameToVector(I3D_frame *frm);
+    bool DelCreatedFrameToVector(I3D_frame *frm);
+    // The score, which the HUD's bonus counter shows while it is on
+    void ScoreSet(int value);
+    void SetCameraRotRepair();
+    // The cartridges' frames unlinked
+    void ClearCartridges();
+    // Every global actor of ACTOR_PLAYER or ACTOR_ENTITY set up for a recording (PC only, the name is ours: RECLOAD's
+    // and RECLOADFULL's)
+    void RecPrepareHumans();
+
     // The name is ours. C_mission::Open sets both through one load of its game, so through a method: written out, VC6
     // reloads the pointer after the first store.
     void ResetUnknown363c()
     {
         unknown_363c = true;
         unknown_363d = false;
+    }
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47b510
+    G_Camera &GetCamera()
+    {
+        return camera;
+    }
+    // FUNCTION: GAME 0x47b520
+    C_human *GetPlayer() const
+    {
+        return player;
+    }
+    // FUNCTION: GAME 0x47b530
+    C_using_object &GetUsingObject()
+    {
+        return using_object;
+    }
+    // CLEARDIFFERENCES' (PS2's does nothing)
+    // FUNCTION: GAME 0x47b540
+    void SetUnknown2ad9()
+    {
+        unknown_2ad9 = true;
+    }
+    // FUNCTION: GAME 0x47b550
+    C_sledovacka *GetSledovacka()
+    {
+        return &sledovacka;
+    }
+    // FUNCTION: GAME 0x47b560
+    int GetGameTime() const
+    {
+        return game_time;
+    }
+    // FUNCTION: GAME 0x47b570
+    uint GetUnknown2b14() const
+    {
+        return unknown_2b14;
+    }
+    // FUNCTION: GAME 0x47b580
+    soundArena &GetSoundArena()
+    {
+        return sound_arena;
+    }
+    // FUNCTION: GAME 0x47b590
+    void SetNightMission(bool night)
+    {
+        night_mission = night;
+    }
+    // FUNCTION: GAME 0x47b5a0
+    void SetTimeOutEvent(C_program *prog, int event)
+    {
+        timeout_program = prog;
+        timeout_event = event;
+    }
+    // FUNCTION: GAME 0x47b5c0
+    void SetPlayerFireEvent(C_program *prog, int event)
+    {
+        player_fire_program = prog;
+        player_fire_event = event;
+    }
+    // FUNCTION: GAME 0x47b5e0
+    void SetPlayerHornEvent(C_program *prog, int event)
+    {
+        player_horn_program = prog;
+        player_horn_event = event;
+    }
+    // FUNCTION: GAME 0x47b600
+    void SetPlayerWFallEvent(C_program *prog, int event)
+    {
+        player_wfall_program = prog;
+        player_wfall_event = event;
+    }
+    // FUNCTION: GAME 0x47b620
+    C_shvestky *GetShvestky()
+    {
+        return &shvestky;
+    }
+    // FUNCTION: GAME 0x47b630
+    void SetUnknown48(int value)
+    {
+        unknown_48 = value;
+    }
+    // FUNCTION: GAME 0x47b640
+    void SetUnknown2edc(bool start)
+    {
+        unknown_2edc = start ? RACE6_STATE_STARTED : RACE6_STATE_NONE;
+    }
+    // FUNCTION: GAME 0x47b660
+    int GetUnknown2edc() const
+    {
+        return unknown_2edc;
+    }
+    // FUNCTION: GAME 0x47b670
+    void SetUnknown2ee0(float *f)
+    {
+        unknown_2ee0 = f;
+    }
+    // FUNCTION: GAME 0x47b680
+    void SetActorLightness(bool on)
+    {
+        actor_lightness = on;
+    }
+    // FUNCTION: GAME 0x47b690
+    void SetAnimPreload(bool on)
+    {
+        anim_preload = on;
+    }
+    // FUNCTION: GAME 0x47b6a0
+    void SetUnknown3638(int value)
+    {
+        unknown_3638 = value;
+    }
+    // FUNCTION: GAME 0x47b6b0
+    int GetScore() const
+    {
+        return score;
+    }
+    // FUNCTION: GAME 0x47b6c0
+    void SetUnknown3665(bool value)
+    {
+        unknown_3665 = value;
     }
 
     // Init's local struct (PS2's S_hlp, whose cbEnumSectors is PS2's; the other name is ours)
@@ -523,7 +747,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

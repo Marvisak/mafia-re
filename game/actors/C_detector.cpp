@@ -53,7 +53,7 @@ void C_detector::GameInit()
     if (instructions.size() < 1)
         C_actor::unknown_65 = true;
     DebustizeFrame(frame);
-    unknown_dc = false;
+    signal = false;
     unknown_dd = false;
     unknown_de = false;
     unknown_df = false;

@@ -3,6 +3,9 @@
 #include "Main.h"
 
 #include <string.h>
+#include <vector>
+
+class I3D_frame;
 
 struct S_matrix;
 
@@ -30,8 +33,17 @@ struct tDynamicCollObject
     tDynamicCollObject() { memset(this, 0, sizeof(*this)); }
 };
 
-// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main, the camera and the game use
-// so far.
+// g_collision_header::flags (the name is ours, after the command): DISABLECOLLS sets it
+#define COLLHF_DISABLED 0x20
+
+// A collision of the level (PS2 g_collision_header): only its flags are known so far, the first dword
+struct g_collision_header
+{
+    uint flags;                         // 0x0, COLLHF_* (the name is ours)
+};
+
+// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main, the camera, the game and
+// the script's commands use so far.
 class g_collision
 {
 public:
@@ -42,6 +54,15 @@ public:
         uint flags, uint flags2);
     bool _TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
         uint flags, uint flags2);
+    // A line from from along dir (PS2 names; the parameters' names are ours, its flags most likely TestSphereB's):
+    // nonzero for a hit, its place into pos and the surface's normal into normal. TestLineV is the wrapper of
+    // _TestLineV, as TestSphereB is of _TestSphereB, which returns 0 at once without a level.
+    int TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
+    int _TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
+    // The level's collisions of a frame into colls (PS2 name), and their number
+    uint FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls);
     // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize")
     bool LoadCollision(const char *name, bool);
     // Takes a moving object out of the collisions (PS2 name)

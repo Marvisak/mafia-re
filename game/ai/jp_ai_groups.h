@@ -6,6 +6,8 @@
 #include <vector>
 
 class C_actor;
+class C_car;
+class C_entity;
 
 // The AI's groups, its following and its fights (PS2 ai_groups, ai_follow_manager and ai_fight_manager, members of
 // AIManager; PS2's jp_ai_groups.cpp, most likely the PC's file at 0x530390-0x53857c). The classes' and the structs'
@@ -16,7 +18,7 @@ class C_actor;
 // A member of a group (PS2 ai_group_member), 8 bytes; PS2's ai_group::Add takes an entity and a number
 struct ai_group_member
 {
-    int unknown_0;                      // 0x0
+    C_entity *entity;                   // 0x0
     int unknown_4;                      // 0x4
 };
 
@@ -52,11 +54,22 @@ public:
     int unknown_0;                      // 0x0, -1 after Init and Destroy
     int unknown_4;                      // 0x4, the last group's number (PS2's NewGroup counts it up)
     std::vector<ai_group> groups;       // 0x8
-    std::vector<uint> unknown_18;       // 0x18
+    // The actors the groups let go (PS2's second vector, a gif::vector<C_actor *, 2> at 0x14)
+    std::vector<C_actor *> free_actors; // 0x18
 
     // PS2 names
     void Init();
     void Destroy();
+    // The group of that number, NULL for none (PS2 name)
+    ai_group *GetGroup(uint id);
+
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): its copy
+    // inlines push_back's insert
+    // FUNCTION: GAME 0x47b870
+    void AddFreeActor(C_actor *act)
+    {
+        free_actors.push_back(act);
+    }
 };
 
 // A group that follows an actor (PS2 ai_follow_group), 0x38 bytes (PS2's 0x40, its position first)
@@ -108,7 +121,7 @@ struct ai_fight_followship
     int unknown_38;                     // 0x38
     int unknown_3c;                     // 0x3c
     int unknown_40;                     // 0x40
-    int unknown_44;                     // 0x44
+    C_car *car;                         // 0x44 (PS2 0x48), the party's car, GROUP_DISBAND's
 };
 
 // PS2's has its parties only, as the PC's: AIManager's next member is PS2's sight manager too
@@ -120,6 +133,10 @@ public:
     // PS2 names
     void Init();
     void Destroy();
+    // The entity, or else the actor, leaves its party
+    void LeaveParty(C_entity *e, C_actor *act);
+    // The party of the entity, or else of the actor, NULL for none; the third parameter receives a number of it
+    ai_fight_followship *GetParty(C_entity *e, C_actor *act, uint *unknown);
 };
 
 // The copies of the implicit functions and the vectors' helpers that the managers' Init and Destroy call out of line:
@@ -131,7 +148,7 @@ public:
 // ?_Destroy@?$vector@Uai_group@@V?$allocator@Uai_group@@@std@@@std@@IAEXPAUai_group@@0@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
+// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -147,4 +164,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAIPAI00@Z
+// ?copy@std@@YIPAPAVI3D_frame@@PAPAV2@00@Z

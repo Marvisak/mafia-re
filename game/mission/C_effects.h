@@ -41,6 +41,10 @@ struct S_particle_subpart;
 #define EFFECT_ITEM_PART 2
 #define EFFECT_ITEM_SUBPART 3
 
+// An effect of the table, by its index (the name is ours, by value): the scripts' EMITPARTICLE emits it even with the
+// particles option at Low
+#define EFFECT_UNKNOWN_5A 0x5a
+
 // What the table's effects, parts and subparts have in common, deleted through its virtual destructor
 // VTABLE: GAME 0x623eec
 class C_effect_item
@@ -371,6 +375,9 @@ public:
     void LoadStaticParticles();
     bool Mission_Start();
     void Mission_Done();
+    // An emitter of the effect at the position and the direction, at the frame (PS2's particle manager's; PS2 has the
+    // frame fourth and two bools): its particle's number, which DestroyParticle takes, -1 for an effect not loaded
+    int CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm);
     void DestroyParticle(int particle);
     // PS2's names: the emitters in use deleted, an effect started at a frame (with the matrix) for LoadStaticParticles
     void ClearEmitters();
@@ -379,12 +386,12 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_subpart@@UAEPAXI@Z
+// ??_EC_effect_item@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
 // SYNTHETIC: GAME 0x44beb0
-// ??1C_effect_item@@UAE@XZ
+// ??1C_effect_subpart@@UAE@XZ
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -399,7 +406,7 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_sound_light_sector@@V?$allocator@US_sound_light_sector@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_particle_in_use@C_effects@@V?$allocator@US_particle_in_use@C_effects@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
@@ -408,7 +415,7 @@ public:
 // ?insert@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@Uai_anim_item@@V?$allocator@Uai_anim_item@@@std@@@std@@QAE@ABV?$allocator@Uai_anim_item@@@1@@Z
+// ??0?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAE@ABV?$allocator@PAUg_collision_header@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

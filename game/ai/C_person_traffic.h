@@ -39,13 +39,23 @@ public:
     static void SetVisible(bool visible);
     static void ClearElements();
     static void FreeDynCollElements();
+    // Gives a pedestrian of that model, or the actor, to the generators (PS2 name; the bool's name is ours)
+    static void AddFreePerson(I3D_model *model, C_actor *act, bool unknown);
+
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): NPC_SHUTUP's
+    // FUNCTION: GAME 0x47b780
+    static void SetUnknown63d728(bool b)
+    {
+        unknown_63d728 = b;
+    }
 
     int unknown_70;                     // 0x70, without it the camera has to be in the range
     float range;                        // 0x74 (the name is ours)
     int active;                         // 0x78, the one C_game::SetActiveTrafficP chose (the name is ours)
     uchar unknown_7c[0x3c];             // 0x7c
 
-    // C_game::Init sets it (the name is ours; PS2's GameInit sets first_frame)
+    // C_game::Init sets it (the name is ours; PS2's GameInit sets first_frame), NPC_SHUTUP clears it with a nonzero
+    // parameter: most likely whether the pedestrians talk
     static bool unknown_63d728;
     // PS2 names: the pedestrians, whether they are shown, whether the taxi driver has passengers, whether the player
     // drives a taxi, and the pedestrians' animations

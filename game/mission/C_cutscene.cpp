@@ -4,8 +4,9 @@
 // Written so far: SetState, which C_game::Done calls, the vtable's getters, RemoveActor, which C_actor's destructor
 // calls, with the object at 0x90's, Close, which C_mission::Close calls, with what it calls of the cutscene
 // (RemoveActors, ReleaseUnknown34), of the object at 0x80 (Clear) and of the object at 0x90 (Clear, ReleaseUnknown0),
-// and IsPlaying. Stubs: the other functions of the vtable's first eleven, the seagulls' constructor, which
-// C_mission::CreateActor calls, and the actors' records' Reset, which lies in another file's range.
+// and IsPlaying. Stubs: the other functions of the vtable's first eleven, the recordings' functions, which the scripts
+// call, the seagulls' constructor, which C_mission::CreateActor calls, and the actors' records' Reset, which lies in
+// another file's range.
 
 #include "mission/C_cutscene.h"
 #include "mission/Mission.h"
@@ -196,6 +197,16 @@ void C_cutscene::RemoveActors()
     }
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x59a3c0
+void C_cutscene::RecLoadFull(const char *name)
+{
+    StubLog("C_cutscene::RecLoadFull %s", name);
+}
+
+#pragma auto_inline(on)
+
 // FUNCTION: GAME 0x59bb50
 void C_cutscene_unknown_80::Clear()
 {
@@ -220,9 +231,31 @@ void C_cutscene::ReleaseUnknown34()
     unknown_34.clear();
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x59c620
+void C_cutscene::RecClear()
+{
+    StubLog("C_cutscene::RecClear");
+}
+
+// STUB: GAME 0x59c630
+void C_cutscene::RecAddActor(const char *name, C_actor *actor)
+{
+    StubLog("C_cutscene::RecAddActor %s", name);
+}
+
+// STUB: GAME 0x59c640
+void C_cutscene::RecLoad(const char *name)
+{
+    StubLog("C_cutscene::RecLoad %s", name);
+}
+
+#pragma auto_inline(on)
+
 // The actors' placements back where they still exist: a human's or an entity's model gets its pose back, a door its
 // position and rotation (SetRot with a normalization, written out as C_actor::GameDone's). The accessors after the
-// two clears (GetType, GetGame, SetUnknown40a4) are the inline calls still to come that leave both clears' _Destroy out
+// two clears (GetType, GetGame, SetFlags) are the inline calls still to come that leave both clears' _Destroy out
 // of line, as the original calls it.
 // FUNCTION: GAME 0x59c6a0
 void C_cutscene::Close()
@@ -298,7 +331,7 @@ void C_cutscene::Close()
     SetWBuffer(true);
     mafiaIndicators.ParheliaSetCenter(false);
     mafiaIndicators.SubtitlesClear();
-    mafiaIndicators.SetUnknown40a4(mafiaIndicators.unknown_40a4 & ~INDF_UNKNOWN_800);
+    mafiaIndicators.SetFlags(mafiaIndicators.unknown_40a4 & ~INDF_UNKNOWN_800);
 }
 
 // FUNCTION: GAME 0x59d1f0

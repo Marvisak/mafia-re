@@ -5,6 +5,7 @@
 #include <vector>
 
 class C_actor;
+class C_car;
 class C_driver;
 
 // The cars that chase, flee or follow (PS2 C_sledovacka, C_sledovacka.cpp), the game's 0x2b18. PS2's is 0x20 bytes, its
@@ -12,6 +13,13 @@ class C_driver;
 class C_sledovacka
 {
 public:
+    // A car's action (PS2's type; the value's name is ours, by value): GROUP_DISBAND sets its fighting parties' cars to
+    // the second
+    enum E_STATUS
+    {
+        STATUS_UNKNOWN_2 = 2
+    };
+
     // A bridge of the mission and the road node it is at (PS2 C_sledovacka::S_BRIDGE, whose members are the same; the
     // names are ours), 8 bytes
     struct S_BRIDGE
@@ -39,6 +47,9 @@ public:
     // forgets the cars and the bridges.
     void Init();
     void Done();
+    // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
+    void RemoveCar(C_car *car);
+    void SetActionStatus(C_car *car, E_STATUS status);
 };
 
 // What Init's inlined push_back calls out of line: the bridges' _Ucopy and _Ufill, folded with other vectors' of 8-byte

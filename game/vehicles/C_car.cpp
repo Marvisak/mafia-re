@@ -1,8 +1,9 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set, GetInvModelMatrix and GetActualLevel. The constructor, which C_mission::CreateActor calls, and the
-// other virtual functions (GetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable) are stubs.
+// profiles set, GetInvModelMatrix and GetActualLevel. The constructor, which C_mission::CreateActor calls, the
+// other virtual functions (GetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable) and the functions
+// the scripts call are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -26,6 +27,9 @@ float C_car::ff_collisions = 1.0f;
 float C_car::ff_suspension = 1.0f;
 // GLOBAL: GAME 0x6322ec
 float C_car::ff_revs = 1.0f;
+
+// GLOBAL: GAME 0x63d6c4
+bool record_playing;
 
 // A bool parameter's bits, the way I3DFloatAsInt gives a float's (I3D.h): the original stores the byte to a slot of its
 // own for each call and pushes the whole dword. The name is ours.
@@ -312,6 +316,19 @@ C_human *C_car::GetOwner(int seat)
     return NULL;
 }
 
+// STUB: GAME 0x41e690
+void C_car::_RepairPosition(bool unknown)
+{
+    StubLog("C_car::_RepairPosition");
+}
+
+// STUB: GAME 0x41e9c0
+int C_car::GetLevelsCount()
+{
+    StubLog("C_car::GetLevelsCount");
+    return 0;
+}
+
 #pragma auto_inline(on)
 
 // FUNCTION: GAME 0x41e9f0
@@ -353,10 +370,23 @@ void C_car::DoneFFEffects()
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x421d60
+bool C_car::CarExplosion(uint unknown)
+{
+    StubLog("C_car::CarExplosion");
+    return false;
+}
+
 // STUB: GAME 0x422be0
 void C_car::Reset(float unknown, bool unknown2)
 {
     StubLog("C_car::Reset");
+}
+
+// STUB: GAME 0x422ee0
+void C_car::ResetCar()
+{
+    StubLog("C_car::ResetCar");
 }
 
 #pragma auto_inline(on)
@@ -375,6 +405,37 @@ const S_matrix &C_car::GetInvModelMatrix(bool update)
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x429450
+float C_car::ShowCarEnergy()
+{
+    StubLog("C_car::ShowCarEnergy");
+    return 0.0f;
+}
+
+// STUB: GAME 0x429580
+void C_car::SetEnterProtect(bool protect)
+{
+    StubLog("C_car::SetEnterProtect %d", protect);
+}
+
+// STUB: GAME 0x429770
+void C_car::SetEnterProtect1(int seat, bool on)
+{
+    StubLog("C_car::SetEnterProtect1 %d %d", seat, on);
+}
+
+// STUB: GAME 0x4297b0
+void C_car::GetCarWheelColl(bool *colls, int num)
+{
+    StubLog("C_car::GetCarWheelColl");
+}
+
+// STUB: GAME 0x429800
+void C_car::SetCarWheelColl(bool *colls, int num)
+{
+    StubLog("C_car::SetCarWheelColl");
+}
 
 // STUB: GAME 0x429850
 bool C_car::IsCarUsable(uint flags)

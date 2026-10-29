@@ -3,7 +3,8 @@
 // PS2's C_ParticleManager.cpp would, whose class has the functions C_game calls). Written so far: the free objects'
 // vectors, the constructor, the destructor, Load and Clear, which C_mission's Init and UnInit run, and with Load the
 // effects' classes (C_effects.h), Mission_Start, Mission_Done, ClearEmitters and LoadStaticParticles, which C_game's
-// Init and Done run, and CreateSParticle, which LoadStaticParticles runs; DestroyParticle is a stub.
+// Init and Done run, and CreateSParticle, which LoadStaticParticles runs; CreateParticle, which the scripts call, and
+// DestroyParticle are stubs.
 
 #include "mission/C_effects.h"
 #include "mission/C_Particle.h"
@@ -115,6 +116,13 @@ void C_effects::Load()
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x449690
+int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm)
+{
+    StubLog("C_effects::CreateParticle");
+    return -1;
+}
 
 // STUB: GAME 0x44a240
 void C_effects::DestroyParticle(int particle)

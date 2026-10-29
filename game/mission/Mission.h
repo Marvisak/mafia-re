@@ -54,6 +54,12 @@ struct S_mission_options
     float GetLevelOfDetail() const { return level_of_detail; }
     float GetDrawDistance() const { return draw_distance; }
     void SetParticles(int level);
+    // Its copy is among those at the end of the file at 0x460a50 (the name is ours)
+    // FUNCTION: GAME 0x47ae30
+    int GetParticles() const
+    {
+        return particles;
+    }
 };
 
 // What C_mission::OpenBin returns (the names are ours)
@@ -187,16 +193,60 @@ public:
     // The video options' effects on the scene, and the scene's own back (PS2 names)
     void UpdateSettings();
     void RestoreSettings();
+    // A model the mission's animations use, and taken from them (PS2 names)
+    void AddAnimModel(I3D_model *model, bool unknown);
+    void DelAnimModel(I3D_model *model);
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
-    void SetUnknown78(int value)
+    // FUNCTION: GAME 0x47ae40
+    std::vector<C_actor *> &GetActors()
     {
-        unknown_78 = value;
+        return actors;
     }
     // Its copy most likely the getter of 0x24 at 0x47ae50
     C_game *GetGame() const
     {
         return game;
     }
+    // FUNCTION: GAME 0x47ae60
+    C_effects *GetEffects() const
+    {
+        return effects;
+    }
+    // The mission's number (GETMISSIONNUMBER, SETMISSIONNUMBER): the setter writes unknown_70, the getter reads
+    // unknown_74 (PS2's the same), which KeepUnknown70 copies it to (CHANGE_MISSION's)
+    // FUNCTION: GAME 0x47ae70
+    void SetMissionNumber(int n)
+    {
+        unknown_70 = n;
+    }
+    // FUNCTION: GAME 0x47ae80
+    int GetMissionNumber() const
+    {
+        return unknown_74;
+    }
+    // FUNCTION: GAME 0x47ae90
+    void KeepUnknown70()
+    {
+        unknown_74 = unknown_70;
+        unknown_70 = 0;
+    }
+    // FUNCTION: GAME 0x47aea0
+    void SetUnknown78(int value)
+    {
+        unknown_78 = value;
+    }
+    // FUNCTION: GAME 0x47aeb0
+    int GetUnknown78() const
+    {
+        return unknown_78;
+    }
+    // Its copy folded with I3D_frame::GetScale's (0x47aec0, annotated by name after the class)
+    S_mission_options &GetOptions()
+    {
+        return options;
+    }
+    // Its copy folded with C_actor::GetFrame's
+    // FUNCTION: GAME 0x47afb0
     const char *GetMissionName() const
     {
         return mission_name;
@@ -227,7 +277,16 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_Particle@@V?$allocator@PAVC_Particle@@@std@@@std@@QAEPAPAVC_Particle@@PAPAV3@0@Z
+// ?erase@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
+// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
+
+// The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
+// original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
+// TEMPLATE: GAME 0x4a9930
+// ??A?$vector@IV?$allocator@I@std@@@std@@QAEAAII@Z
+
+// The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
+// SYNTHETIC: GAME 0x47aec0
+// ?GetOptions@C_mission@@QAEAAUS_mission_options@@XZ

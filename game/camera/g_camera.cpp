@@ -7,7 +7,8 @@
 // precompiled header of another file (/Yu) gives (CLAUDE.md), as for g_indicators.cpp. They are defined here in that
 // order. Open: the build compiles the file with /YX, so the .bss order isn't the original's.
 // Also written: GameDone, SetCamera, SetPlayer, Link, SetMode, Begin, End and PopMode, which C_game's Init and Done
-// reach.
+// reach, and SetCar and IsInDialog, which the scripts call; their other calls are stubs (SetSwing, LockAt, the dialog's
+// DialogLook, DialogStart and DialogStop).
 
 #include "camera/g_camera.h"
 
@@ -216,6 +217,23 @@ void G_Camera::SetPlayer(C_human *human)
     Begin();
 }
 
+// PS2's order; on foot the profile's camera where PS2's takes CAMERA_P_BEHIND
+// FUNCTION: GAME 0x5ed190
+void G_Camera::SetCar(C_car *c)
+{
+    End();
+    car = c;
+    if (car)
+        mode = mafiaLoadSave.settings.unknown_34;
+    else
+    {
+        mode = mafiaLoadSave.settings.camera;
+        free_look = false;
+    }
+    Begin();
+    mode_changed = true;
+}
+
 // The profile's camera where PS2's takes CAMERA_P_BEHIND
 // FUNCTION: GAME 0x5ed1e0
 void G_Camera::Link(I3D_frame *frm)
@@ -226,6 +244,16 @@ void G_Camera::Link(I3D_frame *frm)
     else
         SetMode(mafiaLoadSave.settings.camera, true);
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5ed210
+void G_Camera::SetSwing(bool on, float amount, I3D_frame *frm)
+{
+    StubLog("G_Camera::SetSwing");
+}
+
+#pragma auto_inline(on)
 
 // PS2's without its test of a lock (0xa5) at the start and the car camera it sets again after Begin, for the car of
 // the mission's player in a state of its own
@@ -1250,6 +1278,12 @@ void G_Camera::FreeLookBase(float x, float y, S_vector &dir, S_vector &up, S_vec
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x5f39f0
+void G_Camera::LockAt(const S_vector &pos, const S_vector &dir)
+{
+    StubLog("G_Camera::LockAt");
+}
+
 // STUB: GAME 0x5f3fd0
 void G_Camera::SetCutscene(bool on)
 {
@@ -1273,6 +1307,34 @@ void G_Camera::PopMode(bool clear)
     if (clear)
         mode_changed = false;
     push_pop.pop_back();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f42e0
+void G_Camera::DialogLook(C_human *from, C_human *to)
+{
+    StubLog("G_Camera::DialogLook");
+}
+
+// STUB: GAME 0x5f4370
+void G_Camera::DialogStart(C_human **humans, uint count)
+{
+    StubLog("G_Camera::DialogStart");
+}
+
+// STUB: GAME 0x5f4650
+void G_Camera::DialogStop()
+{
+    StubLog("G_Camera::DialogStop");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5f4690
+bool G_Camera::IsInDialog()
+{
+    return mode == CAMERA_C_DIALOG;
 }
 
 #pragma auto_inline(off)

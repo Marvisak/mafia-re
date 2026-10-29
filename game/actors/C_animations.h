@@ -9,13 +9,23 @@
 // The version of the .tck files LoadTrack reads (the name is ours)
 #define TCK_VERSION 4
 
-// The actors' animations (PS2 C_animations_machine_de_luxe, C_animations.cpp). Only what CloseSystem and C_game use so
-// far.
+// The actors' animations (PS2 C_animations_machine_de_luxe, C_animations.cpp), 0x128 bytes (the traffic's new, C_human
+// has one at 0xbc). Only what CloseSystem, C_game and the script use so far.
 class C_animations_machine_de_luxe
 {
 public:
     // Empty, out of line (C_traffic_generator::ClearElements calls it before its delete)
     ~C_animations_machine_de_luxe();
+
+    // Clears the machine's state (PS2 name), which the script's ACTOR_SETPLACEMENT calls
+    void Reset();
+
+    uchar unknown_0[0xf4];              // 0x0
+    // Both set, the human isn't ready (C_human::IsReady)
+    bool unknown_f4;                    // 0xf4, cleared by Reset
+    uchar unknown_f5[0x17];             // 0xf5
+    bool unknown_10c;                   // 0x10c
+    uchar unknown_10d[0x1b];            // 0x10d
 
     // A loaded track, 0x64 bytes (PS2's, 0x60 bytes, keeps its two lists as arrays; the names are ours), as its
     // implicit destructor and assignment show (0x40e470, 0x4116d0): the name's 32 bytes one by one, the two lists by

@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Main.h"
+#include "actors/g_inventory.h"
 
 #include <vector>
+
+#include "I3D/I3d_math.h"
 
 class I3D_frame;
 class I3D_sound;
@@ -46,26 +49,32 @@ struct S_timer
 class C_using_object
 {
 public:
-    // An object the player can use (PS2 C_using_object::S_using_object, whose members are 4 bytes further), 0x28 bytes:
-    // C_detector has one at 0xe0, before its 0x108. Only its flags and frame are known so far, which ClearObjects and
-    // DelObject use. Its constructor is C_detector's stores (PS2's clears its flags too).
+    // An object the player can use (PS2 C_using_object::S_using_object, whose members are 4 bytes further, 0x40 bytes),
+    // 0x38 bytes: C_detector has one at 0xe0, and the scripts' CREATEWEAPONFROMFRAME creates one for a weapon's copy,
+    // which gives the members (the names are ours but PS2's frame and flags). Its constructor is C_detector's stores
+    // (PS2's clears its flags too), the item's memset last.
     struct S_using_object
     {
-        uchar unknown_0[0x10];          // 0x0
+        S_vector pos;                   // 0x0, the frame's world position, 1 higher
+        float unknown_c;                // 0xc, 0.5 for a weapon
         int unknown_10;                 // 0x10
         uint flags;                     // 0x14, USINGF_*
         I3D_frame *frame;               // 0x18 (PS2 0x1c)
         int unknown_1c;                 // 0x1c
-        int unknown_20;                 // 0x20
+        I3D_frame *sector;              // 0x20, the frame's nearest FRAME_SECTOR parent
         bool unknown_24;                // 0x24
+        S_GameItem item;                // 0x28, the item the player gets, whose unknown_c is the object itself
 
-        S_using_object() : unknown_10(0), frame(NULL), unknown_1c(0), unknown_20(0), unknown_24(false) {}
+        // FUNCTION: GAME 0x47aef0
+        S_using_object() : unknown_10(0), frame(NULL), unknown_1c(0), sector(NULL), unknown_24(false) {}
     };
 
     std::vector<S_using_object *> objects;  // 0x0 (PS2's first, destroyed last)
     std::vector<uint> unknown_10;       // 0x10, 4-byte values (PS2's vector<unsigned int>)
 
     // PS2 names
+    // An object for the player to use
+    void AddObject(S_using_object *obj);
     // Forgets the object, its frame and itself freed as ClearObjects' (from the last object)
     void DelObject(S_using_object *obj);
     void ClearObjects();
@@ -204,7 +213,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
+// ?GetMode@G_Camera@@QBEIXZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

@@ -54,4 +54,4 @@ extern C_ff_manager ff_manager;
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670
-// ??1C_sledovacka@@QAE@XZ
+// ??1C_ff_manager@@QAE@XZ

@@ -6,7 +6,9 @@
 // FreerideStoreA and FreerideStoreB), LanguageSelect, and what C_game's Init and Done reach: ObjectivesClear, the
 // garage's GarageGameInit and GarageGameDone with the car database's GetCar, GetCarModel, GetCarParams,
 // GetIdxByModelLong and GetIDByActor, the end of mission garage menu's names, and the profiles' menus' ProfileCreate and
-// ProfileDelete; the rest of what they and main call is stubs.
+// ProfileDelete; and of what the scripts call, the car database's GetPlayerModel and GetIdxByModel, the garage's
+// GarageAddLastStolen, GarageShowResults, CarCantGetOut and EnableSteal, FreerideEnableCar and FreerideEnable; the rest
+// of what they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -332,6 +334,12 @@ void G_LoadSaveClass::SaveGameLoad()
     StubLog("G_LoadSaveClass::SaveGameLoad");
 }
 
+// STUB: GAME 0x6072f0
+void G_LoadSaveClass::SaveGameFromScript(uint slot, bool full, bool message)
+{
+    StubLog("G_LoadSaveClass::SaveGameFromScript");
+}
+
 #pragma auto_inline(on)
 
 // Loads the language's texts and the HUD's tables. -1 keeps the texts loaded while the game's flag is set and takes the
@@ -510,6 +518,59 @@ void G_LoadSaveClass::DefaultSettings(uint flags)
     }
 }
 
+// G_Inventory's functions (actors/g_inventory.h), which lie in this file's range on the PC
+#pragma auto_inline(off)
+
+// STUB: GAME 0x6081d0
+bool G_Inventory::SelectByID(uint id, std::vector<S_GameItem> *dropped)
+{
+    StubLog("G_Inventory::SelectByID");
+    return false;
+}
+
+// STUB: GAME 0x608520
+bool G_Inventory::HaveSomeWeapon(bool in_hand, uint flags)
+{
+    StubLog("G_Inventory::HaveSomeWeapon");
+    return false;
+}
+
+// STUB: GAME 0x608a20
+bool G_Inventory::IsIn(uint id, bool unknown)
+{
+    StubLog("G_Inventory::IsIn");
+    return false;
+}
+
+// STUB: GAME 0x608aa0
+bool G_Inventory::HaveSpaceFor(uint id, bool unknown)
+{
+    StubLog("G_Inventory::HaveSpaceFor");
+    return true;
+}
+
+// STUB: GAME 0x6092b0
+bool G_Inventory::Insert(S_GameItem *item, bool unknown)
+{
+    StubLog("G_Inventory::Insert");
+    return false;
+}
+
+// STUB: GAME 0x6095e0
+bool G_Inventory::Remove(S_GameItem *item, std::vector<S_GameItem> *dropped)
+{
+    StubLog("G_Inventory::Remove");
+    return false;
+}
+
+// STUB: GAME 0x609920
+void G_Inventory::SetCanHaveBigWeapon(bool can, std::vector<S_GameItem> *dropped)
+{
+    StubLog("G_Inventory::SetCanHaveBigWeapon");
+}
+
+#pragma auto_inline(on)
+
 // The default car's texts: "none" and "bad c/p-index.def" (Czech, the car and player indices)
 // FUNCTION: GAME 0x60a2f0
 G_CarDatabase::G_CarDatabase()
@@ -584,6 +645,19 @@ S_car_index *G_CarDatabase::GetCar(uint car)
     return &cars[index];
 }
 
+// FUNCTION: GAME 0x60a4e0
+char *G_CarDatabase::GetPlayerModel(uint id)
+{
+    if (players)
+    {
+        uint index = id & CAR_INDEX_MASK;
+        if (index < num_players)
+            return players[index].model;
+    }
+    // STRING: GAME 0x638144
+    return "-";
+}
+
 // FUNCTION: GAME 0x60a6a0
 bool G_CarDatabase::GetCarModel(uint car, char *name, bool second)
 {
@@ -626,6 +700,18 @@ bool G_CarDatabase::GetCarParams(uint car, uint *index, uint *level, uint *varia
             *variant = 0;
     }
     return true;
+}
+
+// The first car, index 0, is never found (as GetIdxByModelLong's)
+// FUNCTION: GAME 0x60a800
+uint G_CarDatabase::GetIdxByModel(const char *model)
+{
+    for (uint i = 1; i < num_cars; i++)
+    {
+        if (!strcmpi(cars[i].id, model))
+            return i;
+    }
+    return 0;
 }
 
 // The file's name without its path is the car's id, the variant's two digits and ".i3d" (PS2's takes ids without the
@@ -815,6 +901,22 @@ void G_LoadSaveClass::ObjectivesClear()
     objectives.clear();
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x60b6c0
+void G_LoadSaveClass::ObjectivesAdd(uint id)
+{
+    StubLog("G_LoadSaveClass::ObjectivesAdd");
+}
+
+// STUB: GAME 0x60b8a0
+void G_LoadSaveClass::ObjectivesRemove(uint id)
+{
+    StubLog("G_LoadSaveClass::ObjectivesRemove");
+}
+
+#pragma auto_inline(on)
+
 // FUNCTION: GAME 0x60b940
 void G_LoadSaveClass::GarageClear()
 {
@@ -824,6 +926,38 @@ void G_LoadSaveClass::GarageClear()
         garage[i].actor = NULL;
         unknown_168[i] = 0;
     }
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x60b970
+void G_LoadSaveClass::AddCarByIdx(uint car, uint unknown1, uint unknown2)
+{
+    StubLog("G_LoadSaveClass::AddCarByIdx");
+}
+
+// STUB: GAME 0x60b9f0
+void G_LoadSaveClass::AddCarByActor(C_car *car)
+{
+    StubLog("G_LoadSaveClass::AddCarByActor");
+}
+
+// STUB: GAME 0x60baa0
+void G_LoadSaveClass::RemoveCar(char *model, int level)
+{
+    StubLog("G_LoadSaveClass::RemoveCar");
+}
+
+#pragma auto_inline(on)
+
+// Empty on the PC (PS2's G_GarageClass has them), so without markers: the original's calls go to a folded copy of an
+// empty function (0x4aabe0)
+void G_LoadSaveClass::GenerateCars()
+{
+}
+
+void G_LoadSaveClass::ReleaseCars()
+{
 }
 
 // The garage's cars into the mission's garage (PS2 G_GarageClass::GameInit; the garage is in this class on PC), in a
@@ -1274,11 +1408,33 @@ const char *GM_GarageEndOfMission::OnBeforeCreate()
     return "garageendofmission";
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x60d490
+void G_LoadSaveClass::CarManager()
+{
+    StubLog("G_LoadSaveClass::CarManager");
+}
+
+#pragma auto_inline(on)
+
 // FUNCTION: GAME 0x60da70
 const char *GM_GarageEndOfMission::vfunc_12()
 {
     // STRING: GAME 0x639790
     return "garagemanager";
+}
+
+// FUNCTION: GAME 0x60dc80
+void G_LoadSaveClass::GarageAddLastStolen()
+{
+    unknown_1cd = true;
+}
+
+// FUNCTION: GAME 0x60dc90
+void G_LoadSaveClass::GarageShowResults()
+{
+    unknown_1cc = true;
 }
 
 #pragma auto_inline(off)
@@ -1287,6 +1443,35 @@ const char *GM_GarageEndOfMission::vfunc_12()
 void G_LoadSaveClass::GarageShowResultsProc()
 {
     StubLog("G_LoadSaveClass::GarageShowResultsProc");
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x60ded0
+void G_LoadSaveClass::CarCantGetOut(C_car *car)
+{
+    cant_get_out = car;
+}
+
+// The letter's place in the alphabet, the bit 0 for another character
+// FUNCTION: GAME 0x60dee0
+void G_LoadSaveClass::EnableSteal(uchar c)
+{
+    uint bit = 0;
+    if (c >= 'A' && c <= 'Z')
+        bit = c - 'A';
+    if (c >= 'a' && c <= 'z')
+        bit = c - 'a';
+    unknown_98 |= 1 << bit;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x60df20
+bool G_LoadSaveClass::CanSteal(uchar *model)
+{
+    StubLog("G_LoadSaveClass::CanSteal");
+    return false;
 }
 
 #pragma auto_inline(on)
@@ -1301,6 +1486,18 @@ bool G_LoadSaveClass::IsCarIn(C_car *car)
 }
 
 #pragma auto_inline(on)
+
+// EnableSteal's for the free ride's cars
+// FUNCTION: GAME 0x60df90
+void G_LoadSaveClass::FreerideEnableCar(uchar c)
+{
+    uint bit = 0;
+    if (c >= 'A' && c <= 'Z')
+        bit = c - 'A';
+    if (c >= 'a' && c <= 'z')
+        bit = c - 'a';
+    unknown_9c |= 1 << bit;
+}
 
 // PS2's sets the sound driver's volume, the videos' and the screen's offset. The cars' volume is relative to the sounds',
 // the gamma ramp a power curve, steeper with more gamma.
@@ -1345,6 +1542,12 @@ void G_LoadSaveClass::ExecuteCredits()
 
 #pragma auto_inline(on)
 
+// FUNCTION: GAME 0x60e910
+void G_LoadSaveClass::FreerideEnable(uint level)
+{
+    freeride_enabled = level;
+}
+
 // FUNCTION: GAME 0x60e920
 void G_LoadSaveClass::FreerideStoreA(uint a, uint b, float c, float d, float e)
 {
@@ -1362,6 +1565,12 @@ void G_LoadSaveClass::FreerideStoreB(uint state)
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x60e980
+void G_LoadSaveClass::FreerideSetupFromScript()
+{
+    StubLog("G_LoadSaveClass::FreerideSetupFromScript");
+}
 
 // STUB: GAME 0x60e9d0
 void G_LoadSaveClass::FreerideSetup()

@@ -112,6 +112,18 @@ const char *dta_names[NUM_ARCHIVES] = {
     // STRING: GAME 0x6378c8
     "ab.dta",
 };
+// CHANGE_MISSION's (PS2 names). The two vectors' empty dynamic initializers are the original's two before
+// ff_manager's (0x5bd540, 0x5bd560).
+// GLOBAL: GAME 0x647ba0
+char NewMission[32];
+// GLOBAL: GAME 0x647b9c
+bool ActiveNewMission;
+// GLOBAL: GAME 0x647b7c
+char NewMission_ENTRY[32];
+// GLOBAL: GAME 0x647b70
+S_vector NewMission_POS;
+// GLOBAL: GAME 0x647b58
+S_vector NewMission_ROT[2];
 // The original's has a dynamic initializer (0x5bd590)
 // GLOBAL: GAME 0x647b28
 C_ff_manager ff_manager;
@@ -145,6 +157,8 @@ IJoyBase *joy_base;
 // PS2's is initialized data
 // GLOBAL: GAME 0x647f28
 C_actor *NewMissionActors[2] = {NULL, NULL};
+// GLOBAL: GAME 0x647f30
+float NewMissionSpeed = 0.0f;
 // GLOBAL: GAME 0x647f34
 bool _is_intro_ = false;
 

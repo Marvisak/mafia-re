@@ -64,10 +64,16 @@ struct S_voice_def
     uchar unknown_0[0xa4];
 };
 
-// An item (predmety.def, "items"), 0xbc bytes, not read yet
+// S_item_def::flags (the name is a guess): what G_Inventory::HaveSomeWeapon tests, which the scripts' ANYWEAPONINHAND
+// and ANYWEAPONININVENTORY pass
+#define ITEMF_WEAPON 0x20
+
+// An item (predmety.def, "items"), 0xbc bytes, not read yet but its flags
 struct S_item_def
 {
-    uchar unknown_0[0xbc];
+    uchar unknown_0[0x20];              // 0x0
+    uint flags;                         // 0x20, ITEMF_*
+    uchar unknown_24[0x98];             // 0x24
 };
 
 // The tables (PS2 names) and their sizes in entries

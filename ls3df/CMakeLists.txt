@@ -78,6 +78,10 @@ add_library(${engine} SHARED
     ISound/IS_sound.cpp
     ISound/IS_source.cpp
 )
+# One name for the engine's own build in both targets, where CMake's default is each target's own (ls3df_EXPORTS,
+# ls3df_1_1_EXPORTS): the headers give the game a few inline functions as the engine's shipped interface had them
+# (I3D/I3D.h)
+set_target_properties(${engine} PROPERTIES DEFINE_SYMBOL LS3DF_EXPORTS)
 # The export directory names the DLL
 set_target_properties(${engine} PROPERTIES OUTPUT_NAME LS3DF)
 # Every file includes ls3df.h, and a header from another folder by its folder (I3D/I3D.h); rw_data.h is rw_data's own

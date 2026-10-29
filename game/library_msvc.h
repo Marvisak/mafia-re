@@ -14,8 +14,17 @@
 // LIBRARY: GAME 0x60fc3c
 // ?Normalize@S_quat@@QAGXXZ
 
+// LIBRARY: GAME 0x60fc42
+// ?GetScale@S_matrix@@QBG?AUS_vector@@XZ
+
 // LIBRARY: GAME 0x60fc48
 // ?UpdateHRBoundVol@I3D_frame@@AAGXXZ
+
+// LIBRARY: GAME 0x60fc4e
+// ?Slerp@S_quat@@QBG?AU1@ABU1@M_N@Z
+
+// LIBRARY: GAME 0x60fc54
+// ??XS_vector@@QAGAAU0@ABUS_matrix@@@Z
 
 // LIBRARY: GAME 0x60fc5a
 // ?SetRot3@S_matrix@@QAGXABUS_quat@@@Z
@@ -32,8 +41,17 @@
 // LIBRARY: GAME 0x60fc72
 // ?Inverse@S_matrix@@QAG_NABU1@@Z
 
+// LIBRARY: GAME 0x60fc78
+// ?Make@S_quat@@QAGXABUS_vector@@M@Z
+
 // LIBRARY: GAME 0x60fc7e
 // ?AngleTo@S_vector@@QBGMABU1@@Z
+
+// LIBRARY: GAME 0x60fc84
+// ?RotationMatrix@S_quat@@QBG?AUS_matrix@@XZ
+
+// LIBRARY: GAME 0x60fc8a
+// ?SetDir@S_quat@@QAGXABUS_vector@@M@Z
 
 // LIBRARY: GAME 0x60fc90
 // ?SetDir3@S_matrix@@QAGXABUS_vector@@0@Z
@@ -46,6 +64,15 @@
 
 // LIBRARY: GAME 0x60fca8 SYMBOL
 // _dbgPrintf
+
+// LIBRARY: GAME 0x60fcb4
+// ?Inverse@S_quat@@QBGXAAUS_vector@@AAM@Z
+
+// LIBRARY: GAME 0x60fcba
+// ?RotateByMatrix@S_quat@@QBG?AU1@ABUS_matrix@@@Z
+
+// LIBRARY: GAME 0x60fcc0
+// ??XS_matrix@@QAGAAU0@ABU0@@Z
 
 // LIBRARY: GAME 0x60fccc SYMBOL
 // _GetIGraph
@@ -283,6 +310,12 @@
 
 // LIBRARY: GAME 0x611294 SYMBOL
 // _asin
+
+// LIBRARY: GAME 0x611350 SYMBOL
+// __CIacos
+
+// LIBRARY: GAME 0x611364 SYMBOL
+// _acos
 
 // LIBRARY: GAME 0x61141b SYMBOL
 // _vsprintf

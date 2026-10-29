@@ -33,7 +33,8 @@ class C_web_node
 public:
     uchar unknown_0[0xc];               // 0x0
     ushort unknown_c;                   // 0xc, WEBF_*
-    uchar unknown_e[0xa];               // 0xe
+    ushort unknown_e;                   // 0xe (PS2 0xe), C_wagon::GetLastNode's
+    uchar unknown_10[8];                // 0x10
     S_web_conn *conns;                  // 0x18
     uchar max_conns;                    // 0x1c
     uchar num_conns;                    // 0x1d

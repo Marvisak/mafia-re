@@ -598,7 +598,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?GetBool@GM_Component@@UAE_NXZ
+// ?CanBeParent@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9530
 // ?GetType@GM_Window@@UAEIXZ
@@ -659,11 +659,11 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_Button@@UAEIII@Z
+// ?Key@GM_MenuItem@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db7a0
 // ?GetType@GM_Button@@UAEIXZ

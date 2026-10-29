@@ -1,8 +1,8 @@
 // The vehicles (PS2 C_Vehicle.cpp; the PC's file is most likely the one at 0x4bd650-0x4d34ac, whose first initializers
 // construct the tables, docs/game-files.md). Written so far: the tables C_car's loaders fill and CloseSystem frees, in
 // PS2's order (each table's Set before its Close), what the camera calls (GetWheelCamPos, GetHeadPos,
-// IsVehicleUnstable, GetVehicleSize), what the HUD calls (GetVehiclePivotPos) and AddSectorForProjectorLights, which
-// C_game::Init calls.
+// IsVehicleUnstable, GetVehicleSize), what the HUD calls (GetVehiclePivotPos), AddSectorForProjectorLights, which
+// C_game::Init calls, and AddSectorForSounds, the scripts'. The scripts' other functions are stubs.
 // Open: the file starts with an empty initializer (0x4bd650) and has two more vectors after v_particle (0x63d890,
 // 0x63d880), most likely PS2's v_light_sector and v_sound_sector; the tables' destructors (0x4bd6a0 and on) test and set
 // a guard byte (0x63d9c0) as the tracks' do (actors/C_animations.cpp), and the .bss order isn't the buckets' of these
@@ -164,6 +164,41 @@ const S_vector &C_Vehicle::GetVehiclePivotPos(bool b)
     return b ? unknown_17c : unknown_170;
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4cd600
+void C_Vehicle::LockVehicle(bool lock)
+{
+    StubLog("C_Vehicle::LockVehicle %d", lock);
+}
+
+// STUB: GAME 0x4cd640
+void C_Vehicle::SetProjectorSize(uint projector, const S_vector &size)
+{
+    StubLog("C_Vehicle::SetProjectorSize %x", projector);
+}
+
+// STUB: GAME 0x4cda20
+void C_Vehicle::OpenDoor(int door, float open, bool unknown)
+{
+    StubLog("C_Vehicle::OpenDoor %d", door);
+}
+
+// STUB: GAME 0x4cdb10
+bool C_Vehicle::SetSpecialDynamicColls(bool on)
+{
+    StubLog("C_Vehicle::SetSpecialDynamicColls %d", on);
+    return false;
+}
+
+// STUB: GAME 0x4cdcc0
+void C_Vehicle::SetDynamicCollsOn(bool on, bool unknown)
+{
+    StubLog("C_Vehicle::SetDynamicCollsOn %d", on);
+}
+
+#pragma auto_inline(on)
+
 // Unless it is there already, searched from the last one, as PS2's
 // FUNCTION: GAME 0x4ce560
 void C_Vehicle::AddSectorForProjectorLights(I3D_sector *sector)
@@ -176,6 +211,20 @@ void C_Vehicle::AddSectorForProjectorLights(I3D_sector *sector)
     }
     if (i < 0)
         v_light_sector.push_back(sector);
+}
+
+// The same for the sounds' sectors, which the scripts' SETTRAFFSECTORSND adds
+// FUNCTION: GAME 0x4ce760
+void C_Vehicle::AddSectorForSounds(I3D_sector *sector)
+{
+    int i = v_sound_sector.size();
+    while (i--)
+    {
+        if (v_sound_sector[i] == sector)
+            break;
+    }
+    if (i < 0)
+        v_sound_sector.push_back(sector);
 }
 
 #pragma auto_inline(off)

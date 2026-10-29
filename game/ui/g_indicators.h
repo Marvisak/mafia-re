@@ -319,6 +319,8 @@ public:
     void TimerSetTime(uint hour, uint minute, uint second);
     // The interval to show on the clock, in seconds, from its time
     void TimerSetInterval(uint interval);
+    // The interval in seconds (PS2 name)
+    void TimerGetInterval(uint *interval);
     // A needle's corners for its value, on the dial at pos (PS2's name: "compute the needle")
     void _SpocitejRafiku2(G_RafickaDef *def, G_RafickaValue *value, S_vector2 &pos, TLVERTEX *verts);
     // The player's panel, quads added to verts from *count on, which they advance (PS2's names: "add the wingman's
@@ -340,10 +342,25 @@ public:
     // A wingman's name (0 to 7) and health
     void PlayerSetWingmanName(uint wingman, uint name);
     void PlayerSetWingmanLives(uint wingman, uint lives);
+    // An intro's subtitle, the text of that id (PS2 names; the parameters' meaning isn't known)
+    void IntroSubtitlesAdd(uint a, uint b);
+    void IntroSubtitlesAddSimple(uint id);
     // Forgets the intro's subtitles
     void IntroSubtitlesClear();
+    // A line of the HUD's console in the colour (0xrrggbb), the text database's text of that id, if it has one (PS2
+    // name)
+    void ConsoleAddTextByID(uint id, uint color);
+    // The frame INDF_COMPASS points to (PS2 name)
+    void CompassSetDestination(I3D_frame *frm);
     // The black bars above and below the picture, the picture's height a ratio of the screen's width
     void WideScreenSetRatio(float ratio);
+    // Shows or hides the black bars over time milliseconds, at once for 0 (the name is ours)
+    void WideScreenSetOn(bool on, uint time);
+    // Fades the screen in fade_color in or out over time milliseconds, at once for 0 (PS2 names): FadeInOutGetState is
+    // false while a fade runs, FadeInOutIsDark whether INDF_FADE is set
+    void FadeInOut(bool in, uint time, uint color);
+    bool FadeInOutGetState();
+    bool FadeInOutIsDark();
     // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 with the flag at
     // 0x4494, unless the same pointer's is there already (reload loads it again), released for NULL; C_cutscene::Close
     // clears both
@@ -379,11 +396,6 @@ public:
         const char *stop);
     // The same for a text of several lines (PS2 name)
     void OutTextMultiLine(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font);
-    // The name is ours: its copy is among the accessors at the end of the file at 0x460a50
-    void SetUnknown40a4(uint flags)
-    {
-        unknown_40a4 = flags;
-    }
     // Lays the HUD out for the screen's resolution: Parhelia's screens, the scale and the dials' vertices
     void ResolutionChanged();
     // The mouse's cursor, which GM_Menu::Draw draws over the active menu: a square of 15 pixels from 1int.tga (PC only,
@@ -398,6 +410,60 @@ public:
     // half), after clearing the screens; otherwise the whole screen. main sets it around the car encyclopedia,
     // C_cutscene::Close clears it.
     void ParheliaSetCenter(bool center);
+
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): the INDF_*
+    // flags set, added, removed and tested, pushed (as ExecuteMenu does) and popped, each returning the flags
+    // FUNCTION: GAME 0x47a070
+    void SetFlags(uint flags)
+    {
+        unknown_40a4 = flags;
+    }
+    // FUNCTION: GAME 0x47a080
+    void AddFlags(uint flags)
+    {
+        unknown_40a4 |= flags;
+    }
+    // FUNCTION: GAME 0x47a0a0
+    void RemoveFlags(uint flags)
+    {
+        unknown_40a4 &= ~flags;
+    }
+    // FUNCTION: GAME 0x47a0c0
+    bool IsShown(uint flags) const
+    {
+        return flags & unknown_40a4 ? true : false;
+    }
+    // FUNCTION: GAME 0x47a0e0
+    uint PushFlags()
+    {
+        unknown_40a8.push_back(unknown_40a4);
+        return unknown_40a4;
+    }
+    // FUNCTION: GAME 0x47a2a0
+    uint PopFlags()
+    {
+        if (unknown_40a8.size())
+        {
+            unknown_40a4 = unknown_40a8.back();
+            unknown_40a8.pop_back();
+        }
+        return unknown_40a4;
+    }
+    // INDF_UNKNOWN_4000000's part of the texture and its opacity, 0 to 1
+    // FUNCTION: GAME 0x47a300
+    void SetSymbol(uint symbol, float alpha)
+    {
+        unknown_46e0 = symbol;
+        uint a = (uint)(alpha * 255.0f);
+        if (a > 0xff)
+            a = 0xff;
+        unknown_46e4 = a << 24 | 0xffffff;
+    }
+    // FUNCTION: GAME 0x47a340
+    void SetUnknown46e8(float value)
+    {
+        unknown_46e8 = value;
+    }
 };
 
 extern G_IndicatorsClass mafiaIndicators;

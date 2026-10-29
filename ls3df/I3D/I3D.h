@@ -403,12 +403,19 @@ public:
     }
 
     // Insanity3D's name
+    // FUNCTION: GAME 0x47abb0
     const S_matrix &GetLocalMatrix()
     {
         UpdateMatrix();
         return m_LocalMatrix;
     }
 
+    // The game was compiled against the engine's interface as it shipped, which differs from the engine's own build
+    // (LS3DF_EXPORTS, ls3df/CMakeLists.txt) in a few inline functions: the game's out-of-line copies return GetType,
+    // NumChildren, I3D_visual::GetVisualType and I3D_object::GetMesh by reference, and its SetRot normalizes the
+    // rotation, where the engine's code matches with them by value and without the normalization (SetDir inlines
+    // that SetRot).
+#ifdef LS3DF_EXPORTS
     // Insanity3D's name
     void SetRot(const S_quat &q)
     {
@@ -416,12 +423,27 @@ public:
         m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
             FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
     }
+#else
+    // FUNCTION: GAME 0x43bce0
+    void SetRot(const S_quat &q)
+    {
+        m_Rot = q;
+        m_Rot.Normalize();
+        m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+            FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
+    }
+#endif
 
     // The rotation, made from the local matrix first if it isn't up to date (the name is a guess; the game's
     // out-of-line copy is at 0x47a810 in Game.exe). Defined at the file's end: see there.
     const S_quat &GetRot();
 
+    // The world rotation, made from the world matrix (the name is ours; the game's, defined at the
+    // file's end)
+    S_quat GetWorldRot();
+
     // Insanity3D's name
+    // FUNCTION: GAME 0x460980
     void SetPos(const S_vector &pos)
     {
         if (m_FrmFlags & FRMFLAGS_LOCKED)
@@ -430,7 +452,11 @@ public:
         m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
     }
 
+    // The same from three values (the game's; defined at the file's end)
+    void SetPos(const float &x, const float &y, const float &z);
+
     // The local position (Insanity3D's name; the game's cameras read it in place)
+    // FUNCTION: GAME 0x47a720
     const S_vector &GetPos() const
     {
         return m_LocalMatrix(3);
@@ -454,6 +480,7 @@ public:
 
     // Sets the scale; the matrix is made again from it and the rotation, which is taken from the matrix first if it
     // isn't up to date (the game inlines it too)
+    // FUNCTION: GAME 0x47a750
     void SetScale(const S_vector &s)
     {
         m_Scale = s;
@@ -480,6 +507,7 @@ public:
             UpdateWMatrixProc();
     }
 
+    // FUNCTION: GAME 0x47acd0
     const S_matrix &GetMatrix()
     {
         UpdateWMatrix();
@@ -489,6 +517,7 @@ public:
     // The scale in world space: the frame's own at the top of the hierarchy, else the world matrix's (the name is a
     // guess). Returned from each branch, so VC6 writes the result where it goes; a conditional expression selects a
     // pointer to either and copies after (the collision tests' billboards in mode 2).
+    // FUNCTION: GAME 0x47a7b0
     S_vector GetWorldScale()
     {
         if (!m_pParent)
@@ -511,12 +540,14 @@ public:
 
     // Whether the frame is on (the name is a guess; the projectors' CollectReceivers reads the flags through it, so VC6
     // loads them again for the bound volume's test after it)
+    // FUNCTION: GAME 0x47acf0
     bool IsOn() const
     {
         return m_FrmFlags & FRMFLAGS_ON;
     }
 
     // PS2 name
+    // FUNCTION: GAME 0x47a730
     const S_vector &GetWorldPos()
     {
         return GetMatrix()(3);
@@ -524,6 +555,7 @@ public:
 
     // The local z axis, normalized unless the matrix is made from the rotation here (PS2 name; the game's out-of-line
     // copy is at 0x47a890 in Game.exe)
+    // FUNCTION: GAME 0x47a890
     S_vector GetDir()
     {
         if (!(m_FrmFlags & FRMFLAGS_MAT_VALID)) {
@@ -538,6 +570,7 @@ public:
     }
 
     // The world z axis, normalized (PS2 name; the game's out-of-line copy is at 0x47aa40 in Game.exe)
+    // FUNCTION: GAME 0x47aa40
     S_vector GetWorldDir()
     {
         S_vector dir = GetMatrix()(2);
@@ -545,6 +578,7 @@ public:
         return dir;
     }
 
+    // FUNCTION: GAME 0x47ad00
     const char *GetName() const
     {
         return m_pName ? m_pName : "";
@@ -563,6 +597,7 @@ public:
         return m_UserData;
     }
 
+#ifdef LS3DF_EXPORTS
     I3D_FRAME_TYPE GetType() const
     {
         return m_Type;
@@ -572,6 +607,22 @@ public:
     {
         return m_numChildren;
     }
+#else
+    // FUNCTION: GAME 0x47a6c0
+    const I3D_FRAME_TYPE &GetType() const
+    {
+        return m_Type;
+    }
+
+    // FUNCTION: GAME 0x47ad20
+    const int &NumChildren() const
+    {
+        return m_numChildren;
+    }
+#endif
+
+    // Insanity3D's name; the game's, defined at the file's end
+    I3D_frame *const &GetParent() const;
 
     void DeleteFromOwner();
     void RemoveFromFFTree();
@@ -729,6 +780,9 @@ public:
     void m_SetState(uchar new_state);
 
     float GetRangeVolume(float dist) const;
+
+    // The game's (defined at the file's end)
+    const float &GetVolume() const;
 
     uint snd_flags;                     // 0x140, SOUNDF_*
     uchar state;                        // 0x144, SOUNDSTATE_*
@@ -1056,6 +1110,9 @@ public:
 
     // PS2 name: the animations
     const S_frame_anim *GetAnims() const;
+
+    // The game's (the name is ours; defined at the file's end)
+    void SetOptions(uint o);
 
     int ref;                            // 0x04
     uint options;                       // 0x08, the animations' I3DANIMOP_* where SetAnimation gets none
@@ -1471,6 +1528,12 @@ public:
     LS3D_RESULT DeleteShadow(I3D_shadow *shadow);
     void AddMirror(I3D_mirror *mirror);
     LS3D_RESULT DeleteMirror(I3D_mirror *mirror);
+
+    // The game's (Insanity3D's names; defined at the file's end): the active camera and the primary sector, and
+    // the frame's sector set from its world position
+    I3D_camera *const &GetActiveCamera() const;
+    I3D_sector *const &GetPrimarySector() const;
+    LS3D_RESULT SetFrameSector(I3D_frame *frame) const;
 
     SCN_CALLBACK *callback;             // 0x140
     uint cb_flags;                      // 0x144, the messages the rendering sends: bit n for message n
@@ -1908,6 +1971,9 @@ public:
     void UpdateProjMatrix();
     void UpdateSector();
 
+    // The game's (defined at the file's end)
+    const float &GetFOV() const;
+
     float fov_a;                        // 0x140, the field of view
     float ncp, fcp;                     // 0x144, the clipping planes
     float near_fov_a;                   // 0x14c, the near projection's
@@ -2233,6 +2299,9 @@ public:
 
     // Gives the frames the model's name, or their own if it has none
     LS3D_RESULT SetName();
+
+    // Insanity3D's name; the game's, defined at the file's end
+    const char *GetFileName() const;
 
     C_list<I3D_frame *> frames;         // 0x140, the frames it owns
     I3D_IPolSet *ipol_set;              // 0x150
@@ -2650,11 +2719,19 @@ private:
 public:
     void SetBoundVolume(const I3D_bvolume &bvol);
 
-    // Insanity3D's name (its GetVisualType1)
+    // Insanity3D's name (its GetVisualType1); the game's by reference (see I3D_frame::SetRot)
+#ifdef LS3DF_EXPORTS
     I3D_VISUAL_TYPE GetVisualType() const
     {
         return visual_type;
     }
+#else
+    // FUNCTION: GAME 0x47ad70
+    const I3D_VISUAL_TYPE &GetVisualType() const
+    {
+        return visual_type;
+    }
+#endif
 
     // The visual's bound volume in world space, updated first if it isn't (the name is a guess; the lighting and the
     // visuals' rendering inline it)
@@ -2790,11 +2867,19 @@ public:
     // Like SetTransparency, for fade (PC only, the name is a guess)
     void SetFade(float f);
 
-    // Insanity3D's name
+    // Insanity3D's name; the game's by reference (see I3D_frame::SetRot)
+#ifdef LS3DF_EXPORTS
     I3D_mesh_object *GetMesh() const
     {
         return mesh;
     }
+#else
+    // FUNCTION: GAME 0x47ad80
+    I3D_mesh_object *const &GetMesh() const
+    {
+        return mesh;
+    }
+#endif
 
     // The level the visual's mesh is rendered at, the first with VISF_UNKNOWN_10 (the name is a guess). The shadows'
     // receivers read it through this: written out, VC6 reads the flags once for two uses where the original reads
@@ -3063,6 +3148,9 @@ public:
     virtual RECTANGLE_INFO *__stdcall GetRectInfos(int lod_index, int index);
     virtual void __stdcall UpdateLMFromRectInfos(int lod_index, int index);
     virtual int __stdcall GetRectInfoFlags(int lod_index, int index, int flags);
+
+    // The game's (the name is ours; defined at the file's end)
+    const S_lit_level &GetLevel(const int &index) const;
 
     int active_level;                   // 0x21c, of levels
     S_lit_level levels[6];              // 0x220
@@ -3873,6 +3961,7 @@ public:
     COMPLETE_IB_STRUCT ib;              // 0x10
 
     // The members by reference (the names are guesses)
+    // FUNCTION: GAME 0x47ad40
     I3D_material *const &GetMaterial() const
     {
         return material;
@@ -3955,6 +4044,9 @@ public:
     {
         return mesh_flags;
     }
+
+    // The game's (the name is ours; defined at the file's end)
+    const uint &NumFGroups() const;
 };
 
 // A mesh: up to 10 levels of detail and their bound volume (0x6c bytes on PC), reference counted. Its destructor is
@@ -3982,6 +4074,9 @@ public:
     {
         ref++;
     }
+
+    // The game's (the name is ours; defined at the file's end)
+    const uint &NumLODs() const;
 
     int ref;                            // 0x04
     uint num_lods;                      // 0x08
@@ -4825,6 +4920,7 @@ LS3D_RESULT LoadAnimation5ds(const char *file_name, void **data, const FILETIME 
 // the inline functions /YX defers in the engine's files, where they move the fewest of them: in the class they moved
 // five files' deferred items, here only I3d_object.cpp's. Their declarations alone change I3D_lit_object::Construct's
 // code: it is one of the functions that the number of symbols declared before them moves.
+// FUNCTION: GAME 0x47a810
 inline const S_quat &I3D_frame::GetRot()
 {
     if (!(m_FrmFlags & FRMFLAGS_QUAT_VALID)) {
@@ -4839,4 +4935,94 @@ inline const I3D_bvolume &I3D_frame::GetHRBoundVolume()
     if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
         UpdateHRBoundVol();
     return m_HRBoundVol;
+}
+
+// More of the engine classes' inline functions that only the game uses, defined here for the same reason;
+// Game.exe has their out-of-line copies (by reference where the copy returns the member's address)
+
+// The matrix's elements directly: stored through the row (m_LocalMatrix(3).x), they may alias the flags, which
+// VC6 then reads again after them
+// FUNCTION: GAME 0x47a6d0
+inline void I3D_frame::SetPos(const float &x, const float &y, const float &z)
+{
+    if (m_FrmFlags & FRMFLAGS_LOCKED)
+        return;
+    m_LocalMatrix.m[3][0] = x;
+    m_LocalMatrix.m[3][1] = y;
+    m_LocalMatrix.m[3][2] = z;
+    m_FrmFlags = (m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID)) | FRMFLAGS_UPDATE;
+}
+
+// FUNCTION: GAME 0x47a840
+inline S_quat I3D_frame::GetWorldRot()
+{
+    S_quat q;
+    q.Make(GetMatrix());
+    return q;
+}
+
+// FUNCTION: GAME 0x47ad10
+inline I3D_frame *const &I3D_frame::GetParent() const
+{
+    return m_pParent;
+}
+
+// FUNCTION: GAME 0x47ad30
+inline void I3D_animation_set::SetOptions(uint o)
+{
+    options = o;
+}
+
+// FUNCTION: GAME 0x47ad50
+inline const uint &I3D_mesh_level::NumFGroups() const
+{
+    return num_fgroups;
+}
+
+// FUNCTION: GAME 0x47ad60
+inline const uint &I3D_mesh_object::NumLODs() const
+{
+    return num_lods;
+}
+
+// FUNCTION: GAME 0x47ad90
+inline const float &I3D_camera::GetFOV() const
+{
+    return fov_a;
+}
+
+// FUNCTION: GAME 0x47ada0
+inline const S_lit_level &I3D_lit_object::GetLevel(const int &index) const
+{
+    return levels[index];
+}
+
+// FUNCTION: GAME 0x47adc0
+inline const char *I3D_model::GetFileName() const
+{
+    return file_name ? file_name : "";
+}
+
+// FUNCTION: GAME 0x47add0
+inline I3D_camera *const &I3D_scene::GetActiveCamera() const
+{
+    return current_camera;
+}
+
+// FUNCTION: GAME 0x47ade0
+inline I3D_sector *const &I3D_scene::GetPrimarySector() const
+{
+    return primary_sector;
+}
+
+// FUNCTION: GAME 0x47adf0
+inline LS3D_RESULT I3D_scene::SetFrameSector(I3D_frame *frame) const
+{
+    return SetFrameSectorPos(frame, frame->GetWorldPos());
+}
+
+// FUNCTION: GAME 0x47ae20
+inline const float &I3D_sound::GetVolume() const
+{
+    return volume;
 }

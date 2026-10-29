@@ -331,6 +331,11 @@ struct S_matrix : D3DMATRIX {
     I3D_MATH_API S_vector __stdcall GetScale() const;
     I3D_MATH_API S_vector __stdcall GetScale2() const;
     I3D_MATH_API float __stdcall GetUScale() const;
+
+    // The game's (defined after the zero vector). Zero is Insanity3D's name; Invert (ours) inverts the matrix in
+    // place, __stdcall as the exported members: the game's copy takes the matrix on the stack.
+    void Zero();
+    bool __stdcall Invert();
 };
 
 // A rotation: s is the cosine of half the angle, v the axis scaled by its sine (PS2 __ct__6S_quatFfRC8S_vector). PS2's
@@ -377,6 +382,14 @@ struct S_quat {
     I3D_MATH_API S_quat __stdcall Slerp(const S_quat &q, float t, bool shorten) const;
     I3D_MATH_API S_quat __stdcall RotateByMatrix(const S_matrix &m) const;
     I3D_MATH_API void __stdcall Normalize();
+
+    // The game's (defined after the zero vector; the names are ours)
+    S_quat operator+(const S_quat &q) const;
+    S_quat operator-(const S_quat &q) const;
+    S_quat &operator*=(const S_quat &q);
+    S_quat operator*(float f) const;
+    // q by value
+    float Dot(S_quat q) const;
 };
 
 struct S_plane {
@@ -539,6 +552,59 @@ inline float S_vector2::DistanceToLine(const S_vector2 &p, const S_vector2 &dir)
     S_vector2 n(-dir.y, dir.x);
     n.Normalize();
     return Dot(n) - p.Dot(n);
+}
+
+// The game's S_matrix and S_quat functions (Game.exe has their out-of-line copies; LS3DF none), after the zero
+// vector as S_vector2's. Their bodies move the /YX deferred items of twelve of LS3DF's files (ten of 1.1's),
+// no code; at I3D.h's end they would move three (two).
+
+// A loop: memset gives the same code (rep stosd), but swaps three reloads in 1.1's I3D_lit_object::Construct,
+// which the number of symbols declared before it decides
+// FUNCTION: GAME 0x47a3d0
+inline void S_matrix::Zero()
+{
+    for (int i = 0; i < 16; i++)
+        ((float *)m)[i] = 0.0f;
+}
+
+// FUNCTION: GAME 0x47a440
+inline bool __stdcall S_matrix::Invert()
+{
+    return Inverse(S_matrix(*this));
+}
+
+// FUNCTION: GAME 0x47a4b0
+inline S_quat S_quat::operator+(const S_quat &q) const
+{
+    return S_quat(s + q.s, v + q.v);
+}
+
+// The game's copy adds the axes too: only s is subtracted
+// FUNCTION: GAME 0x47a500
+inline S_quat S_quat::operator-(const S_quat &q) const
+{
+    return S_quat(s - q.s, v + q.v);
+}
+
+// FUNCTION: GAME 0x47a550
+inline S_quat &S_quat::operator*=(const S_quat &q)
+{
+    float s1 = s;
+    s = s * q.s - v.Dot(q.v);
+    v = q.v * s1 + v * q.s + v.Cross(q.v);
+    return *this;
+}
+
+// FUNCTION: GAME 0x47a640
+inline S_quat S_quat::operator*(float f) const
+{
+    return S_quat(s * f, v * f);
+}
+
+// FUNCTION: GAME 0x47a690
+inline float S_quat::Dot(S_quat q) const
+{
+    return v.Dot(q.v) + s * q.s;
 }
 
 // Insanity3D's. Defined after the zero vector, as inline code before it moves the files' $Es (see ZeroSVector): the

@@ -6,6 +6,9 @@
 
 #include "I3D/I3D.h"
 
+// GetProgram's vector of C_program::S_instruction
+#include "mission/C_program.h"
+
 class C_chunk;
 class C_cutscene_records;
 
@@ -41,11 +44,21 @@ class C_cutscene_records;
 #define ACTOR_CLOCK 0x22
 #define ACTOR_BOX_NEW 0x23
 #define ACTOR_CAR_EX 0x24
+#define ACTOR_DROP_IN_WEAPON 0x25       // PS2 C_drop_in_weapon's constructor
 #define ACTOR_RAIL_GENERATOR 0x26
+
+// C_actor::unknown_14, a subtype: 1 from C_actor's constructor (the names are ours)
+#define ACTORSUB_CAR_EX 3               // a C_car_ex's, whose type stays ACTOR_CAR
 
 // The actors' states (C_actor::act_state, PS2's C_actor::E_act_state; the names are ours, by value)
 #define ACTSTATE_0 0
+#define ACTSTATE_1 1                    // the script's ACT_SETSTATE INACTIVE
 #define ACTSTATE_2 2
+
+// Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, by value): the script's HUMAN_SETPROPERTY
+// hits a human whose energy runs out with them, in a car and on foot
+#define HIT_UNKNOWN_5 5
+#define HIT_UNKNOWN_6 6
 
 // C_actor::unknown_4's flags (the names are ours, by value): the cutscenes set and clear 0x10 on their actors
 #define ACTF_UNKNOWN_10 0x10
@@ -103,17 +116,28 @@ public:
     // calls GameDone before releasing a kept actor
     virtual void GameInit();
     virtual void GameDone();
-    // The vtable's other slots (0x6c to 0x90): PS2's Death, Collision, Hit, IsPossibleColl and the other small ones,
-    // in an order not known yet; placeholders
+    // The vtable's other slots (0x6c to 0x90): PS2's Death, Collision, IsPossibleColl and the other small ones, in an
+    // order not known yet; placeholders but for Hit and GetProgram
     virtual void vfunc_27() {}
     virtual void vfunc_28() {}
     virtual void vfunc_29() {}
     virtual void vfunc_30() {}
-    virtual void vfunc_31() {}
+    // A hit of the type, HIT_* (PS2 name, the parameters' names are ours): false, as PS2's (the original's slot points
+    // at a folded copy, 0x4bd260)
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm)
+    {
+        return false;
+    }
     virtual void vfunc_32() {}
     virtual void vfunc_33() {}
     virtual void vfunc_34() {}
-    virtual void vfunc_35() {}
+    // The actor's script's instructions, NULL without one (PS2 name), which the script's CALL runs: a copy the linker
+    // folded with every return of NULL, annotated by name after the class
+    virtual std::vector<C_program::S_instruction> *GetProgram()
+    {
+        return NULL;
+    }
     virtual void vfunc_36(int) {}
     // The actor's sounds changed (PS2 name), which C_game::StopAllSounds calls with 0: empty here, as PS2's (the
     // original's slot points at a folded empty ret 4)
@@ -147,14 +171,20 @@ public:
     static void DelActorFromGlobal(C_actor *act);
     // Whether the actor is one of global_actors, so still exists: false for NULL (PC only, the name is ours)
     static bool IsGlobalActor(C_actor *act);
+    // A tick of the actor's frame, a model's first (PS2 name), which the script calls for a car it puts on
+    void Tick(uint time);
     // The frame's world position, or pos without a frame (PS2 name)
     S_vector GetWorldPos();
+    // The same for the direction (PS2 name)
+    S_vector GetWorldDir();
     // The position and the direction, by value (the names are ours): the camera copies them before each use, as an inline
     // function returning a copy does, where a member read in place is used there
+    // FUNCTION: GAME 0x47af30
     S_vector GetPos() const
     {
         return pos;
     }
+    // FUNCTION: GAME 0x47af70
     S_vector GetDir() const
     {
         return dir;
@@ -165,7 +195,7 @@ public:
     C_cutscene_records *unknown_8;
     ushort ref;                         // 0xc, Release's references, 1 at first (the name is ours)
     int type;                           // 0x10, ACTOR_*, ACTOR_ACTOR from the constructor
-    int unknown_14;                     // 0x14, 1 at first
+    int unknown_14;                     // 0x14, ACTORSUB_*, 1 at first
     // 0x18, the mission's count of actors when Init took the actor's frame (C_mission::unknown_8; the name is ours)
     int number;
     int act_state;                      // 0x1c, ACTSTATE_*, 0 from Init (PS2 SetActState's; the name is ours)
@@ -202,15 +232,62 @@ public:
     static std::vector<uint> posscoll_frame;
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47af20
+    int GetUnknown14() const
+    {
+        return unknown_14;
+    }
+    // The position and the direction set, by value (the script's)
+    // FUNCTION: GAME 0x47af50
+    void SetPos(S_vector pos)
+    {
+        this->pos = pos;
+    }
+    // FUNCTION: GAME 0x47af90
+    void SetDir(S_vector dir)
+    {
+        this->dir = dir;
+    }
     I3D_frame *GetFrame() const
     {
         return frame;
     }
+    // FUNCTION: GAME 0x47afc0
+    bool GetUnknown5e() const
+    {
+        return unknown_5e;
+    }
+    // FUNCTION: GAME 0x47afd0
+    bool GetUnknown5d() const
+    {
+        return unknown_5d;
+    }
+    // FUNCTION: GAME 0x47afe0
+    void SetOwnFrame(bool own)
+    {
+        own_frame = own;
+    }
+    // FUNCTION: GAME 0x47aff0
+    void SetUnknown65(bool b)
+    {
+        unknown_65 = b;
+    }
+    // FUNCTION: GAME 0x47b000
     static std::vector<C_actor *> &GetGlobalActors()
     {
         return global_actors;
     }
+    // Its copy is in g_indicators.cpp's range, folded with another class's
+    // FUNCTION: GAME 0x604d80
+    int GetUnknown4() const
+    {
+        return unknown_4;
+    }
 };
+
+// GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
+// SYNTHETIC: GAME 0x409220
+// ?OnClose@GM_Menu@@UAEHXZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
@@ -257,6 +334,12 @@ extern int _anim_index_count_;
 
 // A random number from 0 to n - 1, 0 for an n below 1 (PS2 name, C_actor.cpp)
 int rnd(int n);
+// A random number from 0 to 1 (PS2 name)
+float rnd();
+// The angle from one 2D direction to the other, from -pi to pi (PS2 name)
+float AngleTo2(const S_vector2 &a, const S_vector2 &b);
+// Turns the vector about the y axis (PS2 name)
+void RotateDir(S_vector &v, float angle);
 
 // Builds the animations' index and sorts it (PS2 C_actor.cpp), once, for InitSystem
 void InitAnimIndex();

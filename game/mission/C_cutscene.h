@@ -144,6 +144,14 @@ public:
     // other one, the lists shrinking under the loops); otherwise frees each actor's records and clears its
     // ACTF_UNKNOWN_10, keeping the lists, and clears the object at 0x90
     virtual void RemoveActors();
+    // The scripts' recordings (RECLOADFULL, RECCLEAR, RECADDACTOR, RECLOAD; the names are ours), the vtable's 26th,
+    // 30th, 31st and 32nd functions, declared plain until the slots before them are. RecLoadFull reads the mission's
+    // actors; the other three pass on to the object at 0x90's functions (0x59d4d0, 0x59d500 and 0x59dcd0, not written
+    // yet).
+    void RecLoadFull(const char *name);
+    void RecClear();
+    void RecAddActor(const char *name, C_actor *actor);
+    void RecLoad(const char *name);
     // Unloads the cutscene and gives the HUD and the player's controls back (C_mission::Close, C_game::Done, the racing
     // menu and GameLoopSingle call it). The vtable's 40th function, declared plain until the slots before it are.
     void Close();

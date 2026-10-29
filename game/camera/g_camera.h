@@ -172,7 +172,12 @@ public:
     // again; Link's frame (NULL for none) gives CAMERA_C_RAILWAY_IN, without it the profile's camera
     void SetCamera(I3D_camera *cam);
     void SetPlayer(C_human *human);
+    // The car the player is in, NULL on foot: the profile's car camera or, on foot, its camera without the free look
+    void SetCar(C_car *c);
     void Link(I3D_frame *frm);
+    // The swing of WantPos on foot, by amount, with a frame swung along with the scene's backdrop; turned off, both are
+    // set straight again (PS2 name)
+    void SetSwing(bool on, float amount, I3D_frame *frm);
     // Pops the pushed states
     void GameDone();
     // Changes the camera to a CAMERA_* or, with CAMERA_NEXT, to the camera's next one, which the profile then keeps; with
@@ -187,11 +192,33 @@ public:
     // names)
     void PopMode(bool clear);
     void SetSniperMode(bool on);
+    // CAMERA_C_LOCK at the position, looking along the direction, unless it is the mode already (PS2 name; the
+    // parameters' names are guesses)
+    void LockAt(const S_vector &pos, const S_vector &dir);
     // C_game::Done turns it off after a cutscene (PC only, the name is a guess)
     void SetCutscene(bool on);
+    // The dialog's camera between the humans (PS2 names): DialogStart for count humans, DialogLook from one to the
+    // other (it sets dialogSide), DialogStop back to the mode before, unless it is CAMERA_C_RAILWAY_IN
+    void DialogLook(C_human *from, C_human *to);
+    void DialogStart(C_human **humans, uint count);
+    void DialogStop();
+    // Whether the mode is CAMERA_C_DIALOG (PS2 name)
+    bool IsInDialog();
     // The name is ours: its copy is in game.cpp's range
     void SetModeChanged()
     {
         mode_changed = true;
+    }
+
+    // The name is ours: its copy is a folded one (0x5d92d0, tools.h)
+    uint GetMode() const
+    {
+        return mode;
+    }
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47b4d0
+    C_car *GetCar() const
+    {
+        return car;
     }
 };

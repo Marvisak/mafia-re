@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string.h>
-
 #include "actors/C_actor.h"
 #include "mission/C_program.h"
 #include "tools.h"
@@ -18,15 +16,6 @@ struct tDynamicCollObject;
 class C_detector : public C_actor, public C_program
 {
 public:
-    // Cleared through a register of its own after the other members' zero stores (PS2's memset of its 0x140): an inlined
-    // memset
-    struct S_unknown_108
-    {
-        int unknown_0[4];
-
-        S_unknown_108() { memset(this, 0, sizeof(*this)); }
-    };
-
     C_detector();
     virtual ~C_detector();
     // The script runs for the actor itself
@@ -38,19 +27,39 @@ public:
     virtual bool SaveGameLoad(void **buf);
     virtual void GameInit();
     virtual void GameDone();
+    // The script's (PS2 name)
+    // FUNCTION: GAME 0x434020
+    virtual std::vector<S_instruction> *GetProgram()
+    {
+        return &instructions;
+    }
 
     // Takes the collisions back (PS2 name)
     void EraseColls();
 
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47b750
+    bool GetSignal() const
+    {
+        return signal;
+    }
+    // The signal set, which clears the actor's unknown_65 first (PS2 inlines it the other way round)
+    // FUNCTION: GAME 0x47b760
+    void SetSignal(bool on)
+    {
+        unknown_65 = false;
+        signal = on;
+    }
+
     int unknown_d8;                     // 0xd8, 0 from Init, then LoadData's (PS2 0x108)
     // GameInit clears them (PS2 0x10c to 0x10f)
-    bool unknown_dc;                    // 0xdc
+    bool signal;                        // 0xdc, DETECTOR_SETSIGNAL's (the name is ours)
     bool unknown_dd;                    // 0xdd
     bool unknown_de;                    // 0xde
     bool unknown_df;                    // 0xdf
-    // What the player can use, which GameDone takes from the game's objects (PS2's at 0x110; the name is ours)
+    // What the player can use, which GameDone takes from the game's objects (PS2's at 0x110; the name is ours): its
+    // item is cleared through a register of its own after the other members' zero stores, S_GameItem's memset inlined
     C_using_object::S_using_object using_object;  // 0xe0
-    S_unknown_108 unknown_108;          // 0x108
     // The collisions PS2's CreateColls makes and EraseColls frees (PS2 0x100, 0xe0, 0xe4 and 0x104; the names are ours):
     // the objects, most likely their matrices and the matrices' inverses, as C_game's inter-city boxes, and the count
     tDynamicCollObject **colls;         // 0x118

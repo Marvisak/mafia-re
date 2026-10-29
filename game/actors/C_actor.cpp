@@ -3,7 +3,8 @@
 // frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
 // mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_cutscene::Close calls,
 // GameInit and GameDone, which C_game::Init and Done call
-// (with DebustizeFrame and NoShadowFrame), SetActState and Rebirth. Not written: PS2's InternalPlacementReset (0x405e60) and
+// (with DebustizeFrame and NoShadowFrame), SetActState and Rebirth, and rnd's float one, which the script calls with
+// Tick, GetWorldDir, AngleTo2 and RotateDir (stubs). Not written: PS2's InternalPlacementReset (0x405e60) and
 // ResetPlacement (0x405ee0), between Init and GameInit, which save and restore the frame's placement as GameInit and
 // GameDone do. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
 // written yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
@@ -826,6 +827,12 @@ void C_actor::GameDone()
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x4064f0
+void C_actor::Tick(uint time)
+{
+    StubLog("C_actor::Tick");
+}
+
 // STUB: GAME 0x406770
 int C_actor::SaveGameGetSize()
 {
@@ -946,6 +953,17 @@ S_vector C_actor::GetWorldPos()
     return pos;
 }
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x408040
+S_vector C_actor::GetWorldDir()
+{
+    StubLog("C_actor::GetWorldDir");
+    return dir;
+}
+
+#pragma auto_inline(on)
+
 // FUNCTION: GAME 0x408450
 int rnd(int n)
 {
@@ -953,6 +971,29 @@ int rnd(int n)
         return 0;
     return rand() % n;
 }
+
+// FUNCTION: GAME 0x408470
+float rnd()
+{
+    return rand() * (1.0f / RAND_MAX);
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x408490
+float AngleTo2(const S_vector2 &a, const S_vector2 &b)
+{
+    StubLog("AngleTo2");
+    return 0.0f;
+}
+
+// STUB: GAME 0x408630
+void RotateDir(S_vector &v, float angle)
+{
+    StubLog("RotateDir");
+}
+
+#pragma auto_inline(on)
 
 // qsort's, by id
 // FUNCTION: GAME 0x408690

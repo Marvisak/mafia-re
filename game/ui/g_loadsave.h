@@ -237,18 +237,22 @@ public:
     bool unknown_90;                    // 0x90, set by Init (PS2's 0x2b0 the same)
     bool unknown_91;                    // 0x91, set while ProfileLoad reads the profile: a failed load leaves the defaults
     uint race_cars;                     // 0x94, RaceCarsEnable's bits
-    uint unknown_98;                    // 0x98, cleared by SaveGameNewGame
-    uint unknown_9c;                    // 0x9c
+    // 0x98, cleared by SaveGameNewGame: the cars EnableSteal lets steal, a bit for each letter, which CanSteal tests
+    // against the car's
+    uint unknown_98;
+    uint unknown_9c;                    // 0x9c, FreerideEnableCar's bits, a bit for each letter
     S_garage_car garage[MAX_GARAGE_CARS];   // 0xa0, the cars 0x60b9f0 adds
     uint unknown_168[MAX_GARAGE_CARS];  // 0x168, cleared with them
-    bool unknown_1cc;                   // 0x1cc, cleared by GarageGameInit (PS2's G_GarageClass 0x7c)
-    bool unknown_1cd;                   // 0x1cd, the same (PS2's 0x7d)
-    uchar unknown_1ce[6];
+    // 0x1cc, cleared by GarageGameInit, set by GarageShowResults (PS2's G_GarageClass 0x7c)
+    bool unknown_1cc;
+    bool unknown_1cd;                   // 0x1cd, the same, set by GarageAddLastStolen (PS2's 0x7d)
+    uchar unknown_1ce[2];
+    uint mission_name_id;               // 0x1d0, SetMissionNameID's, of the text database (the name is ours)
     bool unknown_1d4;                   // 0x1d4, cleared by ProfileLoad
     std::vector<uint> objectives;       // 0x1d8, ObjectivesClear and ObjectivesRemove's
     // 0x1e8, cleared by SaveGameNewGame: a car GarageGameDone adds to the garage with unknown_1cc or unknown_1cd set
     C_car *unknown_1e8;
-    uint unknown_1ec;
+    C_car *cant_get_out;                // 0x1ec, CarCantGetOut's car (the name is ours)
     // 0x1f0, how much of the free ride is open (FREERIDE_*; the name is ours): PS2's FreerideEnable sets it (the PC's
     // 0x60e910), the profile keeps it
     uint freeride_enabled;
@@ -293,6 +297,9 @@ public:
     void SaveGameNewGame();
     // Loads the saved game the player chose and opens its mission
     void SaveGameLoad();
+    // Saves the game in the slot from a mission's script (PS2 name; the parameters' names are guesses): the profile
+    // too, and with message the console says so
+    void SaveGameFromScript(uint slot, bool full, bool message);
     // The game's language, two lowercase letters as a multicharacter constant ('en')
     void LanguageSelect(uint language);
     // One control's binding (PC only, the name is ours), which DefaultControls passes
@@ -320,9 +327,30 @@ public:
     void GarageGameDone(std::vector<C_car *> *cars);
     // PS2's G_GarageClass's: the garage's results' screen at a mission's end
     void GarageShowResultsProc();
+    // PS2's G_GarageClass's too (the Garage prefix ours, where the name is the class's). Into the garage: a car of the
+    // database, with two values it passes on to the database in the other order (PS2's takes one), or a car actor; out
+    // of it the car of that model (the level is passed, not read). GenerateCars and ReleaseCars are empty on the PC
+    // (the calls go to a folded empty function, 0x4aabe0). CarManager is the garage's manager; GarageShowResults and
+    // GarageAddLastStolen set the flags GarageGameDone reads at the mission's end. Then the car the player can't get
+    // out of, and the cars that can be stolen, a letter each (A to Z, either case), and whether a model's car can.
+    void AddCarByIdx(uint car, uint unknown1, uint unknown2);
+    void AddCarByActor(C_car *car);
+    void RemoveCar(char *model, int level);
+    void GenerateCars();
+    void ReleaseCars();
+    void CarManager();
+    void GarageShowResults();
+    void GarageAddLastStolen();
+    void CarCantGetOut(C_car *car);
+    void EnableSteal(uchar c);
+    bool CanSteal(uchar *model);
+    // The mission's objectives, texts of the text database (PS2 names)
     void ObjectivesClear();
-    // The accessor whose copy is in the file's range (the name is ours)
-    uint GetMission() const
+    void ObjectivesAdd(uint id);
+    void ObjectivesRemove(uint id);
+    // The saved game's mission (PS2 name, a real function on PS2): the copy is in the file's range
+    // FUNCTION: GAME 0x605e80
+    uint SaveGameGetSelectedNumber() const
     {
         return mission;
     }
@@ -330,12 +358,25 @@ public:
     void Refresh(uint flags);
     // Plays tables\credits.def
     void ExecuteCredits();
+    // The free ride's cars, a bit for each letter (A to Z, either case), and how much of it is open, FREERIDE_* (PS2
+    // names)
+    void FreerideEnableCar(uchar c);
+    void FreerideEnable(uint level);
     // The free ride's state (PS2's names)
     void FreerideStoreA(uint a, uint b, float c, float d, float e);
     void FreerideStoreB(uint state);
+    // The free ride set up from its mission's script (PS2 name)
+    void FreerideSetupFromScript();
     void FreerideSetup();
     // Finds Tommy and his car in the free ride's mission
     void FreerideSetupAfter();
+
+    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
+    // FUNCTION: GAME 0x47b0d0
+    void SetMissionNameID(uint id)
+    {
+        mission_name_id = id;
+    }
 };
 
 // A car of tables\carindex.def (the name is ours), 0xa8 bytes
@@ -386,6 +427,11 @@ public:
     bool GetCarParams(uint car, uint *index, uint *level, uint *variant);
     // A car descriptor's car (PS2 name): the first car for an index out of range, none without the table
     S_car_index *GetCar(uint car);
+    // A player's model of tables\playerindex.def, "-" for an index out of range or without the table (PS2 name)
+    char *GetPlayerModel(uint id);
+    // The index of the first car (from 1) whose id is the model, whatever the case, 0 for none (PS2 name; PS2's takes
+    // a uchar *)
+    uint GetIdxByModel(const char *model);
     // The index of a model's file, "<id><variant>.i3d" with a path, and its variant (PS2 name); 0 for none
     uint GetIdxByModelLong(const char *model, uint &variant);
     // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it

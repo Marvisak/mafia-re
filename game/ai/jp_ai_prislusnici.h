@@ -65,15 +65,25 @@ class ai_police_nastenka : public ai_animitem_manager
 public:
     std::vector<ai_police_action> actions;  // 0x10 (PS2 0xc)
     int unknown_20;                     // 0x20, the actions' numbers (PS2's JaChcuCislo, "I want a number", counts it up)
-    int unknown_24;                     // 0x24
-    float unknown_28;                   // 0x28
-    bool unknown_2c;                    // 0x2c
+    uint unknown_24;                    // 0x24
+    // POLICE_SPEED_FACTOR's, 0 to 1 (the name is ours, after the command)
+    float speed_factor;                 // 0x28
+    uchar unknown_2c;                   // 0x2c
     int unknown_30;                     // 0x30
 
     // The shift's start
     void ZacatekSmeny();
     // An action done ("the action is finished, colonel")
     void AkceDokoncenaPlukovniku(ai_police_action *action);
+    // Whether unknown_24 is 0 ("colonel, you have the player in the cooler"), which CHANGE_MISSION asks
+    bool PlukovnikuMasVChladkuPlajeraFrafera();
+    // Whether an action after the actor has seen it lately ("gentlemen, do you have your eyes on the bastard or are you
+    // staring at the girls")
+    bool PanoveMateOciNaZmrdoviNeboCumitePoBabach(C_actor *actor);
+    // Whether unknown_2c is set ("gentlemen, are you playing cops")
+    bool PanoveHrajeteSiNaPoldy();
     // The shift's end
     void KonecSmeny();
+    // Stops the motorized units (PS2's name, Czech)
+    void ZastavMotorizovaneJednotky();
 };
