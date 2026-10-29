@@ -131,4 +131,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEXPAPAVC_actor@@IABQAV3@@Z
+// ?insert@?$vector@PAVC_traffic_car@@V?$allocator@PAVC_traffic_car@@@std@@@std@@QAEXPAPAVC_traffic_car@@IABQAV3@@Z

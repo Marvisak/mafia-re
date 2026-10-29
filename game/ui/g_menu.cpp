@@ -2,7 +2,7 @@
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
 // with MenuClose and the activation's searches), MenuOpen, MenuCloseAll, SetCameraTargetID, the wrappers by id the
 // loading screen and the profiles' menu call, PridejComponentPod, and of the components what the classes written so far
-// use (the two drawing functions, the constructors, the children's insertion and SetTextID); TickCamera and the rest
+// use (the three drawing functions, the constructors, the children's insertion and SetTextID); TickCamera and the rest
 // are stubs.
 
 #include "ui/g_menu.h"
@@ -211,6 +211,43 @@ void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture 
     verts[3].rhw = 1.0f;
     verts[3].color = color;
     verts[3].u = 1.0f;
+    verts[3].v = 1.0f;
+    igraph->SetTexture(texture);
+    igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
+}
+
+// RectangleFilled's two triangles cut at the part of the width, the texture's u with them
+// FUNCTION: GAME 0x5e9080
+void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture)
+{
+    TLVERTEX verts[4];
+    verts[0].x = x;
+    verts[0].y = y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = color;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx * part;
+    verts[1].y = y;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = color;
+    verts[1].u = part;
+    verts[1].v = 0.0f;
+    verts[2].x = x;
+    verts[2].y = y + sy;
+    verts[2].z = 0.0f;
+    verts[2].rhw = 1.0f;
+    verts[2].color = color;
+    verts[2].u = 0.0f;
+    verts[2].v = 1.0f;
+    verts[3].x = x + sx * part;
+    verts[3].y = y + sy;
+    verts[3].z = 0.0f;
+    verts[3].rhw = 1.0f;
+    verts[3].color = color;
+    verts[3].u = part;
     verts[3].v = 1.0f;
     igraph->SetTexture(texture);
     igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);

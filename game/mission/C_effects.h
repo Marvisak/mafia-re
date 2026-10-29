@@ -407,7 +407,7 @@ extern std::vector<C_ParticleEmitter *> particle_emitters;
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_sound_light_sector@@V?$allocator@US_sound_light_sector@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original

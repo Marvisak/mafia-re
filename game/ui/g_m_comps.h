@@ -206,6 +206,46 @@ public:
     }
 };
 
+// A window without anything drawn (PS2's), 'winc': only a parent, whose children are placed from its own position
+// VTABLE: GAME 0x626180
+class GM_WindowClean : public GM_Component
+{
+public:
+    GM_WindowClean(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent) {}
+    GM_WindowClean(GM_Component *component) : GM_Component(component) {}
+
+    virtual uint GetType() { return 'winc'; }
+    virtual bool CanBeParent() { return true; }
+    // PS2's is its own empty function, the PC's folded with the base's
+    virtual void Draw(uint draw_flags) {}
+};
+
+// A text (PS2's), 'stxt', over as many lines as it takes: in the alternate style black, or yellow in the normal color;
+// otherwise white, or grey in the normal color (PS2's darker)
+// VTABLE: GAME 0x626280
+class GM_StaticText : public GM_Component
+{
+public:
+    GM_StaticText(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent) {}
+    GM_StaticText(GM_Component *component) : GM_Component(component) {}
+
+    virtual uint GetType() { return 'stxt'; }
+    virtual void Draw(uint draw_flags)
+    {
+        uint color;
+        if (flags & COMPF_ALTERNATE_STYLE)
+            color = flags & COMPF_ALTERNATE_COLOR ? 0xff000000 : 0xffffff00;
+        else
+            color = flags & COMPF_ALTERNATE_COLOR ? 0xffffffff : 0xff7f7f7f;
+        if (flags & COMPF_TEXT_CENTER)
+            mafiaIndicators.OutTextMultiLine((char *)text, x, y, sx, sy, color, OUTTEXT_CENTER, flags & COMPF_FONT);
+        else if (flags & COMPF_TEXT_RIGHT)
+            mafiaIndicators.OutTextMultiLine((char *)text, x, y, sx, sy, color, OUTTEXT_RIGHT, flags & COMPF_FONT);
+        else
+            mafiaIndicators.OutTextMultiLine((char *)text, x, y, sx, sy, color, 0, flags & COMPF_FONT);
+    }
+};
+
 // A rectangle (PS2's), 'rect': in the alternate style filled, white or black, otherwise a black outline, or filled half
 // transparent in the alternate color
 // VTABLE: GAME 0x626500
@@ -233,6 +273,72 @@ public:
                 Rectangle(x, y, sx, sy, 0xff000000);
         }
     }
+};
+
+// A picture (PS2's), 'rctt': the texture its string names, over the rectangle, none until it has one. PS2's also takes
+// the texture as its pointer (SetPointer, GetPointer).
+// VTABLE: GAME 0x626600
+class GM_RectangleTexture : public GM_Component
+{
+public:
+    GM_RectangleTexture(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        texture = NULL;
+    }
+    GM_RectangleTexture(GM_Component *component) : GM_Component(component)
+    {
+        texture = NULL;
+    }
+    virtual ~GM_RectangleTexture()
+    {
+        if (texture)
+            texture->Release();
+    }
+
+    virtual uint GetType() { return 'rctt'; }
+    virtual void Draw(uint draw_flags)
+    {
+        if (texture)
+            RectangleFilled(x, y, sx, sy, 0xffffffff, texture);
+    }
+    // The texture of that file, the previous one released
+    virtual void SetString(uchar *text)
+    {
+        if (texture)
+        {
+            texture->Release();
+            texture = NULL;
+        }
+        igraph->CreateITexture((const char *)text, NULL, ITC_ALPHA, &texture);
+    }
+
+    ITexture *texture;                  // 0x40 (the name is ours)
+};
+
+// A progress bar (PS2's), 'pbar': the menus' beads (GM_Menu::textureProgress), grey over the whole width and red over
+// the part its value fills, 0 to 1
+// VTABLE: GAME 0x626680
+class GM_ProgressBar : public GM_Component
+{
+public:
+    GM_ProgressBar(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        value = 0.0f;
+    }
+    GM_ProgressBar(GM_Component *component) : GM_Component(component)
+    {
+        value = 0.0f;
+    }
+
+    virtual uint GetType() { return 'pbar'; }
+    virtual void Draw(uint draw_flags)
+    {
+        RectangleProgress(x, y, sx, sy, 0x5f7f7f7f, 1.0f, GM_Menu::textureProgress);
+        RectangleProgress(x, y, sx, sy, 0xffff0000, value, GM_Menu::textureProgress);
+    }
+    virtual void SetFloat(float value) { this->value = value; }
+
+    float value;                        // 0x40 (the name is ours)
 };
 
 // A menu's item (PS2's), 'item': its text, which the mouse's left button or Space, Enter and the keypad's Enter click.
@@ -321,18 +427,48 @@ public:
 // FUNCTION: GAME 0x5d9570
 // ?Draw@GM_Window@@UAEXI@Z
 
-// The original kept another class's copy
+// FUNCTION: GAME 0x5d9900
+// ?GetType@GM_WindowClean@@UAEIXZ
+
+// GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
 // ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_Component@@UAE@XZ
+// ??1GM_Rectangle@@UAE@XZ
+
+// FUNCTION: GAME 0x5da080
+// ?GetType@GM_StaticText@@UAEIXZ
+
+// FUNCTION: GAME 0x5da090
+// ?Draw@GM_StaticText@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da7e0
 // ?GetType@GM_Rectangle@@UAEIXZ
 
 // FUNCTION: GAME 0x5da7f0
 // ?Draw@GM_Rectangle@@UAEXI@Z
+
+// FUNCTION: GAME 0x5daa60
+// ?GetType@GM_RectangleTexture@@UAEIXZ
+
+// FUNCTION: GAME 0x5daa70
+// ?SetString@GM_RectangleTexture@@UAEXPAE@Z
+
+// FUNCTION: GAME 0x5daaa0
+// ?Draw@GM_RectangleTexture@@UAEXI@Z
+
+// SYNTHETIC: GAME 0x5daad0
+// GM_RectangleTexture::`scalar deleting destructor'
+
+// FUNCTION: GAME 0x5daaf0
+// ??1GM_RectangleTexture@@UAE@XZ
+
+// FUNCTION: GAME 0x5dac60
+// ?GetType@GM_ProgressBar@@UAEIXZ
+
+// FUNCTION: GAME 0x5dac70
+// ?Draw@GM_ProgressBar@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dadb0
 // ?GetType@GM_MenuItem@@UAEIXZ
@@ -346,6 +482,10 @@ public:
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
 // ?Key@GM_MenuItem@@UAEIII@Z
+
+// The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
+// FUNCTION: GAME 0x5df350
+// ?SetFloat@GM_ProgressBar@@UAEXM@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
@@ -364,11 +504,35 @@ public:
 // TEMPLATE: GAME 0x5d9840
 // ?MakeDup@?$G_Factory@VGM_Window@@@@SIPAVGM_Component@@PAV2@@Z
 
+// TEMPLATE: GAME 0x5d98a0
+// ?Make@?$G_Factory@VGM_WindowClean@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5d9920
+// ?MakeDup@?$G_Factory@VGM_WindowClean@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5da020
+// ?Make@?$G_Factory@VGM_StaticText@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5da120
+// ?MakeDup@?$G_Factory@VGM_StaticText@@@@SIPAVGM_Component@@PAV2@@Z
+
 // TEMPLATE: GAME 0x5da780
 // ?Make@?$G_Factory@VGM_Rectangle@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
 
 // TEMPLATE: GAME 0x5da870
 // ?MakeDup@?$G_Factory@VGM_Rectangle@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5da9e0
+// ?Make@?$G_Factory@VGM_RectangleTexture@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dab60
+// ?MakeDup@?$G_Factory@VGM_RectangleTexture@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dabe0
+// ?Make@?$G_Factory@VGM_ProgressBar@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dacc0
+// ?MakeDup@?$G_Factory@VGM_ProgressBar@@@@SIPAVGM_Component@@PAV2@@Z
 
 // TEMPLATE: GAME 0x5dad40
 // ?Make@?$G_Factory@VGM_MenuItem@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z

@@ -3,7 +3,8 @@
 // classes. The classes are in g_m_comps.h, their functions in the class: the file's code is the factories' Make and
 // MakeDup, each class's functions after the first one that needs its vtable. The two other files of components,
 // g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written so far: the factories of the base class, the window, the
-// rectangle and the menu item; the others' classes aren't written yet, and a menu skips their items.
+// clean window, the static text, the rectangle, the rectangle's texture, the progress bar and the menu item; the others'
+// classes aren't written yet, and a menu skips their items.
 
 #include "ui/g_m_comps.h"
 
@@ -14,9 +15,11 @@ G_Factory<GM_Component> GM_ComponentFactory;
 // GM_UpUpFactory, 0x6bd6ec ('upup', which CreateCompsByDef handles itself)
 // GLOBAL: GAME 0x6bd6dc
 G_Factory<GM_Window> GM_WindowFactory;
-// GM_WindowCleanFactory, 0x6bd6cc ('winc')
+// GLOBAL: GAME 0x6bd6cc
+G_Factory<GM_WindowClean> GM_WindowCleanFactory;
 // GM_WindowScrollFactory, 0x6bd6bc ('wins')
-// GM_StaticTextFactory, 0x6bd6ac ('stxt')
+// GLOBAL: GAME 0x6bd6ac
+G_Factory<GM_StaticText> GM_StaticTextFactory;
 // GM_StaticTextMemFactory, 0x6bd69c ('mtxt')
 // GM_StaticTextNumFactory, 0x6bd68c ('ntxt')
 // GM_StaticTextTimeFactory, 0x6bd67c ('htxt')
@@ -24,8 +27,10 @@ G_Factory<GM_Window> GM_WindowFactory;
 // GLOBAL: GAME 0x6bd65c
 G_Factory<GM_Rectangle> GM_RectangleFactory;
 // GM_OrezavacFactory, 0x6bd64c ('orez')
-// GM_RectangleTextureFactory, 0x6bd63c ('rctt')
-// GM_ProgressBarFactory, 0x6bd62c ('pbar')
+// GLOBAL: GAME 0x6bd63c
+G_Factory<GM_RectangleTexture> GM_RectangleTextureFactory;
+// GLOBAL: GAME 0x6bd62c
+G_Factory<GM_ProgressBar> GM_ProgressBarFactory;
 // GLOBAL: GAME 0x6bd61c
 G_Factory<GM_MenuItem> GM_MenuItemFactory;
 // GM_MenuItemMemFactory, 0x6bd60c ('itmm')

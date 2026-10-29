@@ -30,10 +30,12 @@ class ITexture;
 #define MENUCAM_NONE 0                  // the scene's camera where it is
 #define MENUCAM_START ((uint)-1)        // the frame "camera_start", where the main menu opens
 
-// The components' drawing (PS2's, global functions of g_menu.cpp): a rectangle's outline in the color, and the rectangle
-// filled with the texture (none for the color alone) in the color
+// The components' drawing (PS2's, global functions of g_menu.cpp): a rectangle's outline in the color, the rectangle
+// filled with the texture (none for the color alone) in the color, and its part from the left, 0 to 1 of the width,
+// filled with as much of the texture (the progress bar's)
 void Rectangle(float x, float y, float sx, float sy, uint color);
 void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
+void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture);
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
 
