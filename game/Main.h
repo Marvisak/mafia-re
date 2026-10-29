@@ -66,4 +66,4 @@ extern bool _is_intro_;
 // ?_Ucopy@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEPAPAVC_program@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEXPAPAVC_program@@IABQAV3@@Z

@@ -390,7 +390,7 @@ extern C_I3D_anim_cache anim_cache;
 // The items' helpers, which CloseSystem's inlined Clear calls. The linker folded the three caches' copies of each; the
 // original kept the first file's (Main.cpp's for the assignment).
 // SYNTHETIC: GAME 0x5c2540
-// ??4S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAEAAU01@ABU01@@Z
+// ??4S_itm@?$C_I3D_cache@VI3D_sound@@@@QAEAAU01@ABU01@@Z
 
 // SYNTHETIC: GAME 0x410c30
 // ??1S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
@@ -399,7 +399,7 @@ extern C_I3D_anim_cache anim_cache;
 // ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
-// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
+// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU23@00@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -459,10 +459,10 @@ extern C_I3D_anim_cache anim_cache;
 // ??0S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_BRIDGE@C_sledovacka@@V?$allocator@US_BRIDGE@C_sledovacka@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z

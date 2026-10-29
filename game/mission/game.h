@@ -444,6 +444,8 @@ public:
     // PS2 names: what C_mission::Close calls first, when a mission ends. Done is false if Init hasn't run.
     bool Done();
     void DoneIntern();
+    // A frame of the game, which C_mission::Tick runs once Init has (PS2 name and parameter)
+    void Tick(uint time);
 
     // Empty the stacks, the inventories' copies deleted
     void InventoryStackClear();

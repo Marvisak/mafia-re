@@ -1,9 +1,9 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the names' order
-// of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close,
+// of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close, Tick,
 // ShowProgress, Open with its two helpers, OpenBin with its frames' callback, the video options' methods and
 // FrmActBuff_ClearAll; what C_game's Init and Done call: ClearGameAnimModels, DelNotMeActors, the GlobalProgram
-// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, Tick among them, and
-// AddAnimModel and DelAnimModel, which the scripts call.
+// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, among them AddAnimModel
+// and DelAnimModel, which the scripts call.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -57,7 +57,7 @@
 #include "ISound/ISound.h"
 
 // Whether the mission has a cache.bin: Open clears it, sets it to 1 when it finds the file and to 2 after OpenBin, and
-// the Tick reads it (PS2 name, the same values in PS2's Open)
+// ShowProgress reads it (PS2 name, the same values in PS2's Open)
 // GLOBAL: GAME 0x646db0
 int _can_show_progress_;
 
@@ -465,15 +465,44 @@ void C_mission::Close()
     unknown_c = false;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5407e0
+// PS2's without the volume (PC only) and with a loop over its actors of its own. The objects that fade out are taken
+// from the list by moving the last one into their place: VC6's pop_back is an erase of the last element, whose end
+// pointer it folds (an erase written out loads it twice).
+// FUNCTION: GAME 0x5407e0
 void C_mission::Tick(int time)
 {
-    StubLog("C_mission::Tick");
+    if (restore_volume && unknown_78 < 1)
+    {
+        restore_volume = false;
+        if (isound)
+            isound->SetVolume(mafiaLoadSave.settings.sound_volume);
+    }
+    if (tshift)
+        tshift->Tick(time);
+    if (scene)
+        scene->Tick(time);
+    driver->Tick(time);
+    for (int i = anim_models.size(); i--;)
+        anim_models[i].model->Tick(time);
+    if (game && game->initialized)
+        game->Tick(time);
+    for (uint j = 0; j < t_transparent.size();)
+    {
+        t_transparent[j].time += time;
+        if (t_transparent[j].time >= t_transparent[j].fade_time)
+        {
+            t_transparent[j].object->SetTransparency(1.0f);
+            t_transparent[j].object->Release();
+            t_transparent[j] = t_transparent.back();
+            t_transparent.pop_back();
+        }
+        else
+        {
+            t_transparent[j].object->SetTransparency((float)t_transparent[j].time / t_transparent[j].fade_time);
+            j++;
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // The loading bar at the file's position: the whole bar, or its first fifth while a cache.bin is to be loaded after the
 // file (PS2 name and code)
@@ -1405,7 +1434,7 @@ int C_mission::OpenBin(const char *dir, uint flags)
                     if (type == CT_TSHIFT)
                     {
                         ushort a;
-                        int b, c;
+                        float b, c;
                         int len;
                         char frame_name[256];
                         chunk.Read(&a, sizeof(a));

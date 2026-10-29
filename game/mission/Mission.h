@@ -84,12 +84,13 @@ public:
         I3D_model *model;
         bool unknown_4;
     };
-    // An object that fades out over time (PS2 C_mission::S_t_transparent, AddTimeTransparentObject's)
+    // An object that fades out over time (PS2 C_mission::S_t_transparent, AddTimeTransparentObject's): Tick sets its
+    // transparency to the part of the fade gone by, and releases it at the end (the members' names are ours)
     struct S_t_transparent
     {
         I3D_object *object;             // 0x0
-        short unknown_4;                // 0x4, 0 when added
-        short unknown_6;                // 0x6, the time AddTimeTransparentObject takes
+        short time;                     // 0x4, the time gone by, 0 when added
+        short fade_time;                // 0x6, the time AddTimeTransparentObject takes
     };
     // An actor or model kept between missions (PS2 C_mission::S_frame_actor_buffer, the FrmActBuff functions'), 0x10
     // bytes. PS2's StoreActor stores the actor, its frame, the frame's name and its flag, StoreModel no actor, the

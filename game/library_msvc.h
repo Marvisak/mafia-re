@@ -192,7 +192,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -322,6 +322,12 @@
 
 // LIBRARY: GAME 0x611470 SYMBOL
 // _strncpy
+
+// LIBRARY: GAME 0x61156e SYMBOL
+// _ceil
+
+// LIBRARY: GAME 0x61163d SYMBOL
+// _floor
 
 // LIBRARY: GAME 0x61174c SYMBOL
 // _fclose
@@ -605,14 +611,26 @@
 // LIBRARY: GAME 0x6157a9 SYMBOL
 // __check_range_exit
 
+// LIBRARY: GAME 0x61584c SYMBOL
+// __handle_qnan1
+
+// LIBRARY: GAME 0x61589f SYMBOL
+// __except1
+
 // LIBRARY: GAME 0x615937 SYMBOL
 // __raise_exc
 
 // LIBRARY: GAME 0x615bea SYMBOL
 // __handle_exc
 
+// LIBRARY: GAME 0x615e01 SYMBOL
+// __umatherr
+
 // LIBRARY: GAME 0x615e89 SYMBOL
 // __set_errno
+
+// LIBRARY: GAME 0x615ed4 SYMBOL
+// __errcode
 
 // LIBRARY: GAME 0x615f01 SYMBOL
 // __frnd

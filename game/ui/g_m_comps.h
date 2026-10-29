@@ -583,7 +583,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverActive@GM_Component@@UAE_NMM@Z
+// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -617,7 +617,7 @@ public:
 // ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_TextEdit@@UAE@XZ
+// ??1GM_Window@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ

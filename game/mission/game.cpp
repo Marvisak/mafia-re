@@ -7,7 +7,8 @@
 // the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_cutscene::Close calls, and ScoreSet, which the
 // scripts call. Stubs: what the run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the
 // base blocks, which stay closed while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor,
-// BoxPlacementDel, RemoveDeathHumanFade), and the other functions the scripts call (C_program::Process).
+// BoxPlacementDel, RemoveDeathHumanFade), the other functions the scripts call (C_program::Process), and Tick, which
+// C_mission::Tick runs every frame of the main menu, not written yet.
 // Open: the consoles' and file 12's globals (0x647a74, 0x647ab0, 0x63d6d4) are here for now; Init, Done and DoneIntern
 // aren't matched yet.
 
@@ -1559,6 +1560,12 @@ void C_game::DoneIntern()
 void C_game::ChangeActState()
 {
     StubLog("C_game::ChangeActState");
+}
+
+// STUB: GAME 0x5a51c0
+void C_game::Tick(uint time)
+{
+    StubLog("C_game::Tick");
 }
 
 // STUB: GAME 0x5a77c0

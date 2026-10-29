@@ -164,4 +164,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVI3D_frame@@PAPAV2@00@Z
+// ?copy@std@@YIPAIPAI00@Z
