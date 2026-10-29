@@ -163,16 +163,16 @@ public:
     float unknown_84;                   // 0x84
     float unknown_88;                   // 0x88
     float unknown_8c;                   // 0x8c
-    float unknown_90;                   // 0x90
+    int unknown_90;                     // 0x90, an integer: the emitter's part takes it as one
     float unknown_94;                   // 0x94
-    float unknown_98;                   // 0x98
+    int unknown_98;                     // 0x98, flags, as the emitter's part takes them
 
     // The order of the two values outside their places is the original's stores'
     // FUNCTION: GAME 0x44b820
     C_effect_part()
     {
         type = EFFECT_ITEM_PART;
-        unknown_90 = 0.0f;
+        unknown_90 = 0;
         unknown_20.Zero();
         unknown_2c.Zero();
         unknown_38.Zero();
@@ -189,7 +189,7 @@ public:
         unknown_88 = 0.0f;
         unknown_8c = 0.0f;
         unknown_94 = 0.0f;
-        unknown_98 = 0.0f;
+        unknown_98 = 0;
         unknown_7c = 0;
     }
 
@@ -205,10 +205,9 @@ public:
 
     // Reads the part's chunks: its subparts, its name, its frame's, two pairs of vectors, a value and its parameters
     // (which have only the first value of each vector 0x6c has).
-    // Open: ours sets an EH state after the subpart's base constructor, the original doesn't: VC6 leaves it out when it
-    // knows the calls after it can't throw, here S_vector(float, float, float)'s copy, which ours compiles after this
-    // copy (with /YX too). So the original compiled that copy earlier, most likely where I3d_math.h's deferred inline
-    // functions came due in C_effects.cpp's longer functions (see the file's comment above)
+    // No EH state after the subpart's base constructor: VC6 knows that the calls after it can't throw, here
+    // S_vector(float, float, float)'s copy, which C_effects::CreateSParticle compiled before this copy (it calls the
+    // constructor out of line)
     // FUNCTION: GAME 0x44b8e0
     void Load(C_chunk &chunk)
     {
@@ -378,13 +377,6 @@ public:
     void CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm);
 };
 
-// The free objects of the emitters (the names are ours), each type's (C_effects.cpp's .bss; their order there is the
-// names' buckets', tools/bsshash.py)
-extern std::vector<C_Particle *> particle_pool;
-extern std::vector<C_ParticleType *> particle_parts;
-extern std::vector<S_particle_subpart *> particle_subparts;
-extern std::vector<C_ParticleEmitter *> particle_emitters;
-
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
 // ??_EC_effect_item@@UAEPAXI@Z
@@ -407,16 +399,16 @@ extern std::vector<C_ParticleEmitter *> particle_emitters;
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAVC_fire@@V?$allocator@PAVC_fire@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAUS_particle_subpart@@V?$allocator@PAUS_particle_subpart@@@std@@@std@@QAEPAPAUS_particle_subpart@@PAPAU3@ABQAU3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QAE@ABV?$allocator@US_vector@@@1@@Z
+// ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)
