@@ -393,6 +393,91 @@ public:
     }
 };
 
+// A button (PS2's), 'butt': its text, which clicks as a menu item's does, underlined while active. Red in the alternate
+// color, otherwise white in the alternate style and black in the normal one; while disabled dark red or grey. It can be
+// activated.
+// VTABLE: GAME 0x626900
+class GM_Button : public GM_Component
+{
+public:
+    GM_Button(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        flags |= COMPF_UNKNOWN_8000;
+    }
+    GM_Button(GM_Component *component) : GM_Component(component) {}
+
+    virtual uint GetType() { return 'butt'; }
+    virtual void Draw(uint draw_flags)
+    {
+        uint text_flags = 0;
+        if (flags & COMPF_ACTIVE)
+            text_flags |= OUTTEXT_UNDERLINE;
+        if (flags & COMPF_TEXT_CENTER)
+            text_flags |= OUTTEXT_CENTER;
+        if (flags & COMPF_TEXT_RIGHT)
+            text_flags |= OUTTEXT_RIGHT;
+        if (flags & COMPF_ALTERNATE_STYLE)
+        {
+            if (flags & COMPF_ALTERNATE_COLOR)
+            {
+                if (draw_flags & COMPF_ENABLED)
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xffff0000, text_flags,
+                        flags & COMPF_FONT, NULL);
+                else
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff7f3f3f, text_flags,
+                        flags & COMPF_FONT, NULL);
+            }
+            else
+            {
+                if (draw_flags & COMPF_ENABLED)
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xffffffff, text_flags,
+                        flags & COMPF_FONT, NULL);
+                else
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff7f7f7f, text_flags,
+                        flags & COMPF_FONT, NULL);
+            }
+        }
+        else
+        {
+            if (flags & COMPF_ALTERNATE_COLOR)
+            {
+                if (draw_flags & COMPF_ENABLED)
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xffff0000, text_flags,
+                        flags & COMPF_FONT, NULL);
+                else
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff7f3f3f, text_flags,
+                        flags & COMPF_FONT, NULL);
+            }
+            else
+            {
+                if (draw_flags & COMPF_ENABLED)
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff000000, text_flags,
+                        flags & COMPF_FONT, NULL);
+                else
+                    mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff7f7f7f, text_flags,
+                        flags & COMPF_FONT, NULL);
+            }
+        }
+    }
+    // The menu item's: PS2's has Enter and the keypad's Enter
+    virtual uint Key(uint shift_keys, uint key)
+    {
+        if (key == DIK_SPACE)
+            return id;
+        if (key == DIK_RETURN)
+            return id;
+        if (key == DIK_NUMPADENTER)
+            return id;
+        return 0;
+    }
+    virtual uint Mouse(int x, int y, int z, uint buttons, uint time)
+    {
+        if (buttons & MENUMOUSE_LEFT_RELEASED)
+            return id;
+        return 0;
+    }
+};
+
 // A text edit's buffer (the name is ours): the longest text is one less
 #define TEXTEDIT_SIZE 0x40
 
@@ -529,7 +614,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_Window@@UAE_NXZ
+// ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
 // ??1GM_TextEdit@@UAE@XZ
@@ -574,11 +659,17 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
 // ?Key@GM_MenuItem@@UAEIII@Z
+
+// FUNCTION: GAME 0x5db7a0
+// ?GetType@GM_Button@@UAEIXZ
+
+// FUNCTION: GAME 0x5db7b0
+// ?Draw@GM_Button@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dc850
 // ?GetType@GM_TextEdit@@UAEIXZ
@@ -654,6 +745,12 @@ public:
 
 // TEMPLATE: GAME 0x5dae80
 // ?MakeDup@?$G_Factory@VGM_MenuItem@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5db730
+// ?Make@?$G_Factory@VGM_Button@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5db890
+// ?MakeDup@?$G_Factory@VGM_Button@@@@SIPAVGM_Component@@PAV2@@Z
 
 // TEMPLATE: GAME 0x5dc7a0
 // ?Make@?$G_Factory@VGM_TextEdit@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z

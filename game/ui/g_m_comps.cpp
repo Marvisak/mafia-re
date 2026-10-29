@@ -3,9 +3,9 @@
 // classes. The classes are in g_m_comps.h, their functions in the class: the file's code is the factories' Make and
 // MakeDup, each class's functions after the first one that needs its vtable. The two other files of components,
 // g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written so far: the factories of the base class, the window, the
-// clean window, the static text, the rectangle, the rectangle's texture, the progress bar, the menu item and the text
-// edit. The others are stub factories (G_StubFactory), which log each item a menu asks them for and make nothing, so
-// the menu skips it.
+// clean window, the static text, the rectangle, the rectangle's texture, the progress bar, the menu item, the button and
+// the text edit. The others are stub factories (G_StubFactory), which log each item a menu asks them for and make
+// nothing, so the menu skips it.
 
 #include "ui/g_m_comps.h"
 
@@ -51,8 +51,8 @@ G_StubFactory GM_MenuItemMemFactory('itmm', "GM_MenuItemMem");
 G_StubFactory GM_MenuItemNumFactory('iten', "GM_MenuItemNum");
 // 0x6bd5ec
 G_StubFactory GM_RaceRoundItemFactory('rari', "GM_RaceRoundItem");
-// 0x6bd5dc
-G_StubFactory GM_ButtonFactory('butt', "GM_Button");
+// GLOBAL: GAME 0x6bd5dc
+G_Factory<GM_Button> GM_ButtonFactory;
 // 0x6bd5cc
 G_StubFactory GM_ButtonCleanFactory('butc', "GM_ButtonClean");
 // 0x6bd5bc
