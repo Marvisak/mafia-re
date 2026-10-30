@@ -56,6 +56,9 @@ struct ai_police_action
     int unknown_60;                     // 0x60
     int unknown_64;                     // 0x64
     bool unknown_68;                    // 0x68
+
+    // The action by the time passed, which the board's Tick calls (PS2 name)
+    void Tick(uint time);
 };
 
 // The police's notice board (PS2 ai_police_nastenka, "nastenka" Czech for a notice board), a member of AIManager, 0x34

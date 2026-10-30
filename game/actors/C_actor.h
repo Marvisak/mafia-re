@@ -60,7 +60,10 @@ class C_cutscene_records;
 #define HIT_UNKNOWN_5 5
 #define HIT_UNKNOWN_6 6
 
-// C_actor::unknown_4's flags (the names are ours, by value): the cutscenes set and clear 0x10 on their actors
+// C_actor::unknown_4's flags (the names are ours, by value): the cutscenes set and clear 0x10 on their actors; Tick
+// leaves out AI where 1 or 4 is set (vfunc_7 sets and clears both)
+#define ACTF_UNKNOWN_1 0x1
+#define ACTF_UNKNOWN_4 0x4
 #define ACTF_UNKNOWN_10 0x10
 
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
@@ -88,9 +91,12 @@ public:
     virtual void vfunc_10();
     virtual void vfunc_11();
     virtual void vfunc_12();
-    virtual void vfunc_13();
-    virtual void vfunc_14();
-    virtual void vfunc_15();
+    // The actor's frame of a tick (PS2 names): its own decisions, unless ACTF_UNKNOWN_1 or 4 stops them, or what the
+    // network says instead where unknown_20 is set, then the update. Empty here, as PS2's (the original's slots point
+    // at the folded ret 4, 0x403db0).
+    virtual void AI(uint time) {}
+    virtual void Update(uint time) {}
+    virtual void NetDirect(uint time) {}
     virtual ~C_actor();
     // Releases a reference, and deletes the actor with the last one (PS2 name); the references left
     // FUNCTION: GAME 0x4091d0
@@ -117,10 +123,11 @@ public:
     virtual void GameInit();
     virtual void GameDone();
     // The vtable's other slots (0x6c to 0x90): PS2's Death, Collision, IsPossibleColl and the other small ones, in an
-    // order not known yet; placeholders but for Hit and GetProgram
+    // order not known yet; placeholders but for Death, Hit and GetProgram
     virtual void vfunc_27() {}
     virtual void vfunc_28() {}
-    virtual void vfunc_29() {}
+    // The actor's death, which Tick runs once (PS2 name; empty, its slot the folded empty function, 0x4aabe0)
+    virtual void Death();
     virtual void vfunc_30() {}
     // A hit of the type, HIT_* (PS2 name, the parameters' names are ours): false, as PS2's (the original's slot points
     // at a folded copy, 0x4bd260)
@@ -171,7 +178,7 @@ public:
     static void DelActorFromGlobal(C_actor *act);
     // Whether the actor is one of global_actors, so still exists: false for NULL (PC only, the name is ours)
     static bool IsGlobalActor(C_actor *act);
-    // A tick of the actor's frame, a model's first (PS2 name), which the script calls for a car it puts on
+    // The actor's frame (PS2 name), which C_game::Tick runs for the mission's actors and the script for a car it puts on
     void Tick(uint time);
     // The frame's world position, or pos without a frame (PS2 name)
     S_vector GetWorldPos();
@@ -286,15 +293,15 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?SaveGameGetSize@C_clock@@UAEHXZ
+// ?OnClose@GM_Menu@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?begin@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

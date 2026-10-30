@@ -46,12 +46,17 @@ struct ai_group
     std::vector<ai_group_event> events; // 0x30
     std::vector<uint> unknown_40;       // 0x40
     std::vector<uint> unknown_50;       // 0x50
+
+    // The group's events by the game's time, which ai_groups::Tick calls (PS2 name)
+    void ProcessEvents(uint time);
 };
 
 class ai_groups
 {
 public:
-    int unknown_0;                      // 0x0, -1 after Init and Destroy
+    // 0x0, the game's time at which Tick unlocks the player's controls, -1 for none, as after Init and Destroy (unsigned:
+    // Tick compares it so, as PS2's)
+    uint unknown_0;
     int unknown_4;                      // 0x4, the last group's number (PS2's NewGroup counts it up)
     std::vector<ai_group> groups;       // 0x8
     // The actors the groups let go (PS2's second vector, a gif::vector<C_actor *, 2> at 0x14)
@@ -170,4 +175,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_ParticleType@@PAPAV2@00@Z
+// ?copy@std@@YIPAIPAI00@Z

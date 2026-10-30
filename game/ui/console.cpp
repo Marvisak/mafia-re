@@ -1,8 +1,8 @@
 // The console's text (PS2 console.cpp; the PC's file is most likely the one at 0x4f5dc0-0x4f6a2c, which loads
 // editfont.bmp and fnt_matrix.bin, docs/game-files.md). Written so far: the consoles' vector (PS2 _consoles, whose
 // initializer starts the file), C_console's constructor, destructor, Clear and Render, ConsoleReg, ConsoleUnReg,
-// ConsoleRender, the font, CreateFontTexture, ConsolesInit and ConsolesDone; C_console::Tick, which C_game::Tick calls,
-// is a stub.
+// ConsoleRender, the font, CreateFontTexture, ConsolesInit and ConsolesDone, and C_console::Tick, which C_game::Tick
+// calls.
 
 #include "ui/console.h"
 
@@ -76,15 +76,23 @@ void C_console::Clear()
     unknown_34 = 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x4f5f50
+// The first line goes each time a line's time has passed, which runs faster the more lines there are: with all the
+// lines shown 11 times as fast (PS2's the same)
+// FUNCTION: GAME 0x4f5f50
 void C_console::Tick(uint time)
 {
-    StubLog("C_console::Tick");
+    if (text_lines.size())
+        unknown_34 += time * (text_lines.size() / (float)lines * 10.0f + 1.0f);
+    while (unknown_34 > this->time)
+    {
+        unknown_34 -= this->time;
+        if (text_lines.size())
+        {
+            delete[] text_lines[0].text;
+            text_lines.erase(text_lines.begin());
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // One vertex of a character's quad (the name is ours). Through an inline function's parameters, as the original's
 // texture coordinates go through the FPU, which VC6 copies with integer moves where they are assigned directly.

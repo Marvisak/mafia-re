@@ -2,11 +2,10 @@
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
 // frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
 // mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_cutscene::Close calls,
-// GameInit and GameDone, which C_game::Init and Done call
-// (with DebustizeFrame and NoShadowFrame), SetActState and Rebirth, and rnd's float one, which the script calls with
-// Tick, GetWorldDir, AngleTo2 and RotateDir (stubs). Not written: PS2's InternalPlacementReset (0x405e60) and
-// ResetPlacement (0x405ee0), between Init and GameInit, which save and restore the frame's placement as GameInit and
-// GameDone do. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
+// GameInit and GameDone, which C_game::Init and Done call (with DebustizeFrame and NoShadowFrame), Tick, which
+// C_game::Tick calls, SetActState and Rebirth, and rnd's float one, which the script calls with GetWorldDir, AngleTo2
+// and RotateDir (stubs). Not written: PS2's InternalPlacementReset (0x405e60) and ResetPlacement (0x405ee0), between
+// Init and GameInit, which save and restore the frame's placement as GameInit and GameDone do. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
 // written yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
 // order; seven of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
 // likely, or folded with another class's), and the empty ones but DuplicateFrom's aren't annotated (folded with the
@@ -825,13 +824,35 @@ void C_actor::GameDone()
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x4064f0
+// Whether the frame was rendered in the scene's last frame, for a model or a visual (the same test twice, as PS2's and
+// C_game::Tick's), then the actor's AI and update, and its death once, the first tick that finds it neither alive nor
+// dead
+// FUNCTION: GAME 0x4064f0
 void C_actor::Tick(uint time)
 {
-    StubLog("C_actor::Tick");
+    if (frame->GetType() == FRAME_MODEL)
+        unknown_5f = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
+    else if (frame->GetType() == FRAME_VISUAL)
+        unknown_5f = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
+    else
+        unknown_5f = true;
+    if (!(unknown_4 & (ACTF_UNKNOWN_1 | ACTF_UNKNOWN_4)))
+    {
+        if (unknown_20)
+            NetDirect(time);
+        else
+            AI(time);
+    }
+    Update(time);
+    if (!unknown_5d && !unknown_5e)
+    {
+        unknown_5e = true;
+        unknown_5d = false;
+        Death();
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x406770
 int C_actor::SaveGameGetSize()
@@ -1084,20 +1105,9 @@ void C_actor::vfunc_12()
     StubLog("C_actor::vfunc_12");
 }
 
-// The vtable's 0x403db0, a ret 4, the next two too (VE_BreakageGlass.h)
-void C_actor::vfunc_13()
+// Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)
+void C_actor::Death()
 {
-    StubLog("C_actor::vfunc_13");
-}
-
-void C_actor::vfunc_14()
-{
-    StubLog("C_actor::vfunc_14");
-}
-
-void C_actor::vfunc_15()
-{
-    StubLog("C_actor::vfunc_15");
 }
 
 // The vtable's 0x4aa490, which returns true (a mov al, 1 and a ret 4), as LoadData's

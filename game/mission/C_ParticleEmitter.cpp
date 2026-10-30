@@ -1,11 +1,14 @@
 // The effects' emitters (named after PS2's C_ParticleEmitter.cpp, which sorts here: the PC's file is most likely the one
 // at 0x448570-0x448efc, docs/game-files.md), which starts with the emitter's destructor. Written: the destructor, which
-// C_effects::Mission_Done runs, and Reset and Init, which C_effects::CreateSParticle runs.
+// C_effects::Mission_Done runs, and Reset and Init, which C_effects::CreateSParticle runs; Tick, which
+// C_effects::ClientTick runs, is a stub.
 
 #include "mission/C_ParticleEmitter.h"
 #include "mission/C_ParticleType.h"
 
 #include "I3D/I3D.h"
+
+#include "stub.h"
 
 // From the last part, as C_effect's destructor deletes its parts
 // FUNCTION: GAME 0x448570
@@ -51,3 +54,14 @@ void C_ParticleEmitter::Init(I3D_frame *at, const S_vector &p, const S_vector &d
     drv->unknown_58 = n + 1;
     id = n;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x448960
+bool C_ParticleEmitter::Tick(int time)
+{
+    StubLog("C_ParticleEmitter::Tick");
+    return true;
+}
+
+#pragma auto_inline(on)

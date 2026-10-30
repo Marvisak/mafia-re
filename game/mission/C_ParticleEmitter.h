@@ -42,6 +42,8 @@ public:
     // The effect's frame, matrix and values, and a number of the driver's
     void Init(I3D_frame *at, const S_vector &p, const S_vector &d, bool v4a, bool v4b, const S_vector &v30,
         const S_vector &v3c);
+    // The effect by the time passed: false once it has ended (PS2's name)
+    bool Tick(int time);
 };
 
 // The free emitters (C_effects.cpp's, the name is ours)

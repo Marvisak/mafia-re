@@ -1,6 +1,7 @@
-// The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. Written
-// so far: GameDone, TestLineV and TestSphereB (in the file at 0x5d5900 on the PC); the rest of what main, the game and
-// the script's commands call is stubs.
+// The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. It starts
+// with gifCollision's initializer, whose constructor's copy is the file's last function. Written so far: DynOptimizeTick,
+// which C_game::Tick calls, GameDone, TestLineV and TestSphereB (in the file at 0x5d5900 on the PC); the rest of what
+// main, the game and the script's commands call is stubs.
 
 #include "collision/g_colls.h"
 
@@ -24,10 +25,21 @@ bool g_collision::LoadCollision(const char *name, bool)
     return false;
 }
 
-// STUB: GAME 0x5c3610
+// The cells to check from the last one: one left without objects is taken out of the grid onto the free ones (PS2's the
+// same)
+// FUNCTION: GAME 0x5c3610
 void g_collision::DynOptimizeTick()
 {
-    StubLog("g_collision::DynOptimizeTick");
+    while (dyn_queue.size())
+    {
+        tDynamicPolicko *p = dyn_queue.back();
+        if (!p->objects.size())
+        {
+            dyn_grid->cells[p->x + p->y * dyn_grid->width] = NULL;
+            free_cells.push_back(dyn_queue.back());
+        }
+        dyn_queue.pop_back();
+    }
 }
 
 // STUB: GAME 0x5c38b0

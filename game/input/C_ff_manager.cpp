@@ -1,6 +1,6 @@
 // The force feedback (PS2 C_ff_manager.cpp; the PC's file is most likely the one at 0x444430-0x44525c, which starts
 // with its constructor's helpers, docs/game-files.md). Written so far: the constructor, the destructor, Reset, GameInit,
-// GameDone and Close; Tick, which C_game::Tick calls, is a stub.
+// GameDone and Close, and Tick, which C_game::Tick calls; StartWaiting, which Tick calls, is a stub.
 
 #include "input/C_ff_manager.h"
 
@@ -84,12 +84,20 @@ void C_ff_manager::Close()
 {
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x4451e0
+// The timer is advanced by a second whatever the time passed, so the waiting effects are tried from the second tick on
+// FUNCTION: GAME 0x4451e0
 void C_ff_manager::Tick(uint time)
 {
-    StubLog("C_ff_manager::Tick");
+    if (unknown_24.Tick(1000))
+        StartWaiting();
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x445200
+void C_ff_manager::StartWaiting()
+{
+    StubLog("C_ff_manager::StartWaiting");
 }
 
 #pragma auto_inline(on)

@@ -1,8 +1,9 @@
 // The police's officers (PS2 jp_ai_prislusnici.cpp; the PC's file is most likely the one at 0x538c80-0x53e4ac,
 // docs/game-files.md), in PS2's order. Written so far: the shift's start and end, which C_game's Init and Done call,
 // and the frames' Clear and Init, which they end with (tail calls), and two tests the script's commands make
-// (PlukovnikuMasVChladkuPlajeraFrafera, PanoveHrajeteSiNaPoldy); stubs of AkceDokoncenaPlukovniku, which the shift's
-// end calls for each action, of Tick, which C_game::Tick calls, and of what the script's commands call.
+// (PlukovnikuMasVChladkuPlajeraFrafera, PanoveHrajeteSiNaPoldy), and the board's Tick, which C_game::Tick calls; stubs
+// of AkceDokoncenaPlukovniku, which the shift's end calls for each action, of the actions' Tick, which the board's
+// calls, and of what the script's commands call.
 
 #include "ai/jp_ai_prislusnici.h"
 
@@ -30,10 +31,27 @@ void ai_police_nastenka::AkceDokoncenaPlukovniku(ai_police_action *action)
     StubLog("ai_police_nastenka::AkceDokoncenaPlukovniku");
 }
 
-// STUB: GAME 0x53c890
+#pragma auto_inline(on)
+
+// From the last action, then the time counted down to 0 (PS2's the same)
+// FUNCTION: GAME 0x53c890
 void ai_police_nastenka::Tick(uint time)
 {
-    StubLog("ai_police_nastenka::Tick");
+    for (int i = actions.size() - 1; i >= 0; i--)
+        actions[i].Tick(time);
+    if (unknown_24 > time)
+        unknown_24 -= time;
+    else
+        unknown_24 = 0;
+}
+
+#pragma auto_inline(off)
+
+// The PC's is in the file's range before AkceDokoncenaPlukovniku (PS2's order)
+// STUB: GAME 0x538df0
+void ai_police_action::Tick(uint time)
+{
+    StubLog("ai_police_action::Tick");
 }
 
 #pragma auto_inline(on)

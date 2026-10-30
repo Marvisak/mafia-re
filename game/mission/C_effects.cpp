@@ -3,8 +3,9 @@
 // PS2's C_ParticleManager.cpp would, whose class has the functions C_game calls). Written so far: the free objects'
 // vectors, the constructor, the destructor, Load and Clear, which C_mission's Init and UnInit run, and with Load the
 // effects' classes (C_effects.h), Mission_Start, Mission_Done, ClearEmitters and LoadStaticParticles, which C_game's
-// Init and Done run, and CreateSParticle, which LoadStaticParticles runs; CreateParticle, which the scripts call,
-// DestroyParticle, and ClientTick, IsParticleAlive and PauseParticle, which C_game::Tick calls, are stubs.
+// Init and Done run, CreateSParticle, which LoadStaticParticles runs, and ClientTick, which C_game::Tick calls;
+// CreateParticle, which the scripts call, DestroyParticle, and IsParticleAlive and PauseParticle, which C_game::Tick
+// calls, are stubs.
 
 #include "mission/C_effects.h"
 #include "mission/C_Particle.h"
@@ -124,11 +125,31 @@ int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &d
     return -1;
 }
 
-// STUB: GAME 0x44a0d0
+#pragma auto_inline(on)
+
+// The static emitters, then, once a mission has started, those in use: one whose Tick ends is reset and goes back to
+// the free ones (PS2's particle manager's the same, with one counter). The counter's decrement in the erase's argument
+// comes before the erase's copy loop, as the original's; a statement of its own after it comes after.
+// FUNCTION: GAME 0x44a0d0
 void C_effects::ClientTick(int time)
 {
-    StubLog("C_effects::ClientTick");
+    uint i;
+    for (i = 0; i < unknown_20.size(); i++)
+        unknown_20[i]->Tick(time);
+    if (unknown_30 == -1)
+        return;
+    for (i = 0; i < unknown_0.size(); i++)
+    {
+        if (!unknown_0[i].emitter->Tick(time))
+        {
+            unknown_0[i].emitter->Reset();
+            particle_emitters.push_back(unknown_0[i].emitter);
+            unknown_0.erase(unknown_0.begin() + i--);
+        }
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x44a240
 void C_effects::DestroyParticle(int particle)

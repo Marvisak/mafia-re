@@ -1,9 +1,10 @@
 // The pedestrians' generator (PS2 C_person_traffic.cpp, C_traffic_generator's; the PC's file is the one at
 // 0x44c520-0x459e8c, docs/game-files.md), whose constructor (0x44d410) comes after functions of its own. Written so far:
 // C_don_ocas's constructor, the static functions C_game's Init and Done call (SetVisible, PlayerInTaxi,
-// EnableTaxiDriver, ClearElements and FreeDynCollElements) and ZrusVsechnyMavajici; the constructor, which
-// C_mission::CreateActor calls, TickElements, which C_game::Tick calls, AddFreePerson, which a script's command calls,
-// and C_traffic_element's EndMavaniNaTaxi and Deactivate are stubs.
+// EnableTaxiDriver, ClearElements and FreeDynCollElements), ZrusVsechnyMavajici, and TickElements, which C_game::Tick
+// calls; the constructor, which C_mission::CreateActor calls, TryGoToAssHole and GeneratePassengerForTaxi, which
+// TickElements calls, AddFreePerson, which a script's command calls, and C_traffic_element's EndMavaniNaTaxi, Tick and
+// Deactivate are stubs.
 // The vectors' initializers start the file (0x44c520, 0x44c5a0), then an empty one (0x44c620). Open: their destructors
 // (0x44c560, 0x44c5e0) test and set a guard byte they share (0x63d760), a bit each, as C_actor.cpp's do.
 
@@ -12,6 +13,7 @@
 #include <string.h>
 
 #include "actors/C_animations.h"
+#include "mission/Mission.h"
 #include "vehicles/C_car.h"
 #include "stub.h"
 
@@ -32,6 +34,12 @@ bool C_traffic_generator::player_in_taxi;
 bool C_traffic_generator::enable_taxi_driver;
 // GLOBAL: GAME 0x63d730
 bool C_traffic_generator::all_visible;
+// GLOBAL: GAME 0x63d738
+int C_traffic_generator::t_horn;
+// GLOBAL: GAME 0x63d734
+int C_traffic_generator::try_do_rici;
+// GLOBAL: GAME 0x63d72c
+int C_traffic_generator::taxi_timer;
 
 // FUNCTION: GAME 0x44c640
 C_don_ocas::C_don_ocas()
@@ -64,12 +72,58 @@ void C_traffic_generator::SetVisible(bool visible)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x44ef70
+// Nothing while the pedestrians are hidden. The active ones from the last, each with the camera's distance in the
+// horizontal plane first (PS2's the same, the height zeroed), then the timers.
+// FUNCTION: GAME 0x44ef70
 void C_traffic_generator::TickElements(uint time)
 {
-    StubLog("C_traffic_generator::TickElements");
+    if (!all_visible)
+        return;
+    if (t_horn > 0)
+    {
+        if (time > t_horn)
+            t_horn = 0;
+        else
+            t_horn -= time;
+    }
+    S_vector cam = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
+    for (int i = array.size(); i--;)
+    {
+        if (array[i]->active)
+        {
+            S_vector d = cam - array[i]->pos;
+            d.y = 0.0f;
+            array[i]->dist = d.Square();
+            array[i]->Tick(time);
+        }
+    }
+    try_do_rici -= time;
+    if (try_do_rici < 0)
+    {
+        try_do_rici = 2123;
+        TryGoToAssHole();
+    }
+    if (enable_taxi_driver && player_in_taxi)
+    {
+        if (taxi_timer < 0)
+            GeneratePassengerForTaxi();
+        else
+            taxi_timer -= time;
+    }
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x44f0e0
+void C_traffic_generator::TryGoToAssHole()
+{
+    StubLog("C_traffic_generator::TryGoToAssHole");
+}
+
+// STUB: GAME 0x44f7d0
+void C_traffic_generator::GeneratePassengerForTaxi()
+{
+    StubLog("C_traffic_generator::GeneratePassengerForTaxi");
 }
 
 #pragma auto_inline(on)
@@ -164,6 +218,12 @@ void C_traffic_generator::AddFreePerson(I3D_model *model, C_actor *act, bool unk
 void C_traffic_element::EndMavaniNaTaxi()
 {
     StubLog("C_traffic_element::EndMavaniNaTaxi");
+}
+
+// STUB: GAME 0x452cd0
+void C_traffic_element::Tick(uint time)
+{
+    StubLog("C_traffic_element::Tick");
 }
 
 // STUB: GAME 0x4587c0

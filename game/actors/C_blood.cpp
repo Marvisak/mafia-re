@@ -1,22 +1,25 @@
 // The humans' blood (PS2 C_blood.cpp; the PC's file is the second one in the range 0x411be0-0x41234c, after C_chunk.cpp,
 // docs/game-files.md): C_blood's Tick (0x411e30) and Init (0x411fb0), then C_blood_manager's destructor, GameInit
 // (0x412020), GameDone (0x412050), Tick (0x4120a0) and AddBlood (0x412140), PS2's order. Written so far: the manager's
-// constructor and destructor, which the game's constructor and destructor call, and its GameInit and GameDone; its
-// Tick, which the game's Tick calls, is a stub.
+// constructor and destructor, which the game's constructor and destructor call, its GameInit and GameDone, and its
+// Tick, which the game's Tick calls; C_blood's Tick, which it calls, is a stub.
 
 #include "actors/C_blood.h"
 
 #include "stub.h"
 
 // A blood stain (PS2 C_blood), 0x24 bytes (AddBlood's new). Only its destructor so far, empty, for which GameDone's
-// delete tests the pointer; the class is here rather than in the header, which game.h includes, until more of it is
-// written.
+// delete tests the pointer, and Tick; the class is here rather than in the header, which game.h includes, until more
+// of it is written.
 class C_blood
 {
 public:
     ~C_blood()
     {
     }
+
+    // The stain by the time passed in seconds: false once it is gone (PS2 name)
+    bool Tick(float time);
 
     uchar unknown_0[0x24];
 };
@@ -47,12 +50,31 @@ void C_blood_manager::GameDone()
     bloods.clear();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x4120a0
+// A stain whose Tick ends is deleted, the last one taken into its place (PS2's the same)
+// FUNCTION: GAME 0x4120a0
 void C_blood_manager::Tick(uint time)
 {
-    StubLog("C_blood_manager::Tick");
+    float t = time * .001f;
+    for (uint i = 0; i < bloods.size();)
+    {
+        if (!bloods[i]->Tick(t))
+        {
+            delete bloods[i];
+            bloods[i] = bloods.back();
+            bloods.pop_back();
+        }
+        else
+            i++;
+    }
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x411e30
+bool C_blood::Tick(float time)
+{
+    StubLog("C_blood::Tick");
+    return false;
 }
 
 #pragma auto_inline(on)

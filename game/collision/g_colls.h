@@ -46,11 +46,35 @@ struct g_collision_header
     C_actor *owner;                     // 0x44 (the name is ours)
 };
 
-// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main, the camera, the game and
-// the script's commands use so far.
+// A cell of the grid of the moving objects' collisions (PS2 tDynamicPolicko, Czech "little field"): its place in the
+// grid and the objects in it (the members' names are ours)
+struct tDynamicPolicko
+{
+    int x, y;                           // 0x0
+    std::vector<tDynamicCollObject *> objects; // 0x8
+};
+
+// The grid of the moving objects' cells (the names are ours): only what DynOptimizeTick reads is known so far
+struct S_dyn_grid
+{
+    uchar unknown_0[0x10];
+    int width;                          // 0x10, the cells in a row
+    uchar unknown_14[4];
+    tDynamicPolicko **cells;            // 0x18, row by row, NULL where a cell has no objects
+};
+
+// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2c8 bytes (the constructor's last
+// store). Only what main, the camera, the game and the script's commands use so far.
 class g_collision
 {
 public:
+    // Its copy is the file's last function before the file's end (0x5c4fa0)
+    // FUNCTION: GAME 0x5c4fa0
+    g_collision() : unknown_284(0), dyn_grid(NULL), unknown_2b0(0), unknown_2b4(0), unknown_2b8(0), unknown_2bc(0),
+        unknown_2c4(0)
+    {
+    }
+
     // A sphere of that radius moved from from along dir (PS2 names; the parameters' names are ours): where it stops
     // into pos, the surface's normal into normal where it isn't NULL. PS2 has TestSphereB in g_colls.cpp, the wrapper of
     // _TestSphereB, another file's.
@@ -79,6 +103,25 @@ public:
     // bool, the PC's nothing)
     void DynWipeOut();
     void DeleteCollsLevel();
+
+    uchar unknown_0[0x284];
+    int unknown_284;                    // 0x284
+    uchar unknown_288[4];               // 0x288
+    S_dyn_grid *dyn_grid;               // 0x28c (PS2 0x3ec; the names are ours, as the next two's)
+    // 0x290, the cells taken out of the grid once empty (PS2 0x3f0, its gif::vector<tDynamicPolicko *, 8>)
+    std::vector<tDynamicPolicko *> free_cells;
+    // 0x2a0, the cells to check, which DynOptimizeTick empties (PS2 0x3fc)
+    std::vector<tDynamicPolicko *> dyn_queue;
+    int unknown_2b0;                    // 0x2b0
+    int unknown_2b4;                    // 0x2b4
+    int unknown_2b8;                    // 0x2b8
+    int unknown_2bc;                    // 0x2bc
+    uchar unknown_2c0[4];               // 0x2c0
+    int unknown_2c4;                    // 0x2c4
 };
+
+// The implicit destructor (the two vectors'), which the initializer's atexit helper jumps to, after the initializer
+// SYNTHETIC: GAME 0x5c2880
+// ??1g_collision@@QAE@XZ
 
 extern g_collision gifCollision;
