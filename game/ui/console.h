@@ -48,7 +48,7 @@ public:
     float sy;                           // 0x28, the lines' spacing, relative to the screen's height
     int lines;                          // 0x2c, how many lines it shows
     int time;                           // 0x30, how long a line stays, in ms
-    // The time the tick (0x4f5f50) has counted towards removing the first line, faster the more lines there are
+    // The time Tick has counted towards removing the first line, faster the more lines there are
     int unknown_34;                     // 0x34
     bool upwards;                       // 0x38, the lines go up from a line above y
     bool right_aligned;                 // 0x39, the lines end at x
@@ -59,6 +59,8 @@ public:
     ~C_console();
     // Forgets the lines (PS2 name)
     void Clear();
+    // The lines by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
     // Draws the lines that are on the screen (PS2 name), into the vertex buffer it shares with the other consoles
     void Render();
 };

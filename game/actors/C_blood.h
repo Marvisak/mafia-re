@@ -19,6 +19,8 @@ public:
     // PS2 names: C_game's Init and Done call them
     void GameInit();
     void GameDone();
+    // The stains by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
 };
 
 // The destructor, folded with C_tshift's: the name our PDB keeps for the two changes with the build (foldfix)

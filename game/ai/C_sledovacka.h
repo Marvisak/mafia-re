@@ -47,6 +47,8 @@ public:
     // forgets the cars and the bridges.
     void Init();
     void Done();
+    // The cars by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
     // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
     void RemoveCar(C_car *car);
     void SetActionStatus(C_car *car, E_STATUS status);

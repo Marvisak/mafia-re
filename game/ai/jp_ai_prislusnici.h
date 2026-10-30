@@ -75,6 +75,8 @@ public:
     void ZacatekSmeny();
     // An action done ("the action is finished, colonel")
     void AkceDokoncenaPlukovniku(ai_police_action *action);
+    // The actions by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
     // Whether unknown_24 is 0 ("colonel, you have the player in the cooler"), which CHANGE_MISSION asks
     bool PlukovnikuMasVChladkuPlajeraFrafera();
     // Whether an action after the actor has seen it lately ("gentlemen, do you have your eyes on the bastard or are you

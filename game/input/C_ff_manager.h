@@ -8,7 +8,7 @@
 class IJoyEffect;
 
 // The force feedback (PS2 C_ff_manager, C_ff_manager.cpp; the PC's drives the joysticks' effects), 0xbc bytes. The
-// cars call most of its methods. Only what InitSystem, CloseSystem and C_game's Init and Done use so far.
+// cars call most of its methods. Only what InitSystem, CloseSystem and C_game's Init, Done and Tick use so far.
 class C_ff_manager
 {
 public:
@@ -43,6 +43,8 @@ public:
     // PS2 names: what C_game's Init and Done call
     void GameInit();
     void GameDone();
+    // The effects by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
 };
 
 extern C_ff_manager ff_manager;
@@ -50,7 +52,7 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ??1C_animations_machine_de_luxe@@QAE@XZ
+// ?HideLegs@C_human@@SIXPAVI3D_model@@_N@Z
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670

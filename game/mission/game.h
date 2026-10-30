@@ -37,7 +37,7 @@ struct S_semaphore
     I3D_frame *red;                     // 0x4
     I3D_frame *orange;                  // 0x8
     I3D_frame *green;                   // 0xc
-    uint *phase;                        // 0x10, C_game's unknown_19c or unknown_1a0, by the semaphore's direction
+    int *phase;                         // 0x10, C_game's unknown_19c or unknown_1a0, by the semaphore's direction
 };
 
 // The shadows' types, which AddFrameForShadow and DelFrameForShadow take (PS2's E_shadow_type, a global enum; the
@@ -47,6 +47,7 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // C_game::unknown_2edc, RACING_MISSION6_START's states (the names are ours): the command starts the race at
 // RACE6_STATE_NONE and goes on at RACE6_STATE_END
 #define RACE6_STATE_NONE 0
+#define RACE6_STATE_RUNNING 1           // Tick's, after it has run the race
 #define RACE6_STATE_STARTED 2           // SetUnknown2edc(true)
 #define RACE6_STATE_END 10
 
@@ -64,9 +65,12 @@ public:
     {
         uchar unknown_0[0x20];
     };
+    // An actor Tick wakes (ACTSTATE_0 to ACTSTATE_1) or puts back to ACTSTATE_0 once it is seen, at most every sixth
+    // frame (the members' names are ours)
     struct S_invisible_actor
     {
-        uchar unknown_0[8];
+        C_actor *actor;                 // 0x0
+        uint frame;                     // 0x4, unknown_2b10 when Tick last changed its state
     };
     // Its destructor's copy (0x402090) destroys the vector
     struct S_RoadBlock
@@ -100,22 +104,28 @@ public:
         uint unknown_14;                // 0x14, an index into the shadow models
         float dist;                     // 0x18, from the camera, which the tick sorts them by
     };
-    // A hydrant's water (the members' names are ours)
+    // A hydrant's water (the members' names are ours): TickHydrant pauses the particle while the line up from it hits
+    // anything but a car, and destroys it 150 m from the camera
     struct S_hydrant
     {
         int particle;                   // 0x0, the effects' particle (C_effects::DestroyParticle's)
-        uchar unknown_4[0x10];          // 0x4
+        bool flowing;                   // 0x4, the particle isn't paused
+        S_vector pos;                   // 0x8
         I3D_frame *frame;               // 0x14
     };
     struct S_stop_sounds
     {
         uchar unknown_0[0x14];
     };
-    // A sound the game plays (the members' names are ours)
+    // A sound the game plays, released once it has stopped (the members' names are ours)
     struct S_sound_play
     {
         I3D_sound *sound;               // 0x0
-        uchar unknown_4[0x14];          // 0x4
+        uchar unknown_4[4];             // 0x4
+        float volume;                   // 0x8, the volume a fade in goes to
+        float fade;                     // 0xc, the volume's change per ms, in while positive, out to silence otherwise
+        bool fading;                    // 0x10, counted by unknown_310
+        uint time;                      // 0x14, the sound's GetCurrTime at the last tick, if it doesn't loop
     };
     struct S_npc_kill_event
     {
@@ -125,21 +135,28 @@ public:
     struct S_driver_man
     {
         I3D_model *model;               // 0x0
-        uint unknown_4;                 // 0x4
+        C_car *car;                     // 0x4, whose steering the animation's time follows (TickDriverMan)
         uint anim;                      // 0x8, the animation Done stops
-        uint unknown_c;                 // 0xc
+        bool formula;                   // 0xc, FormuleVolant.I3D's animation, else AutoRidicVolant.I3D's
     };
     // A video playing in the mission (the members' names are ours)
+#define ISHOWF_LOOP 0x1                 // Tick starts it again at its end (IShowLoop's; the name is ours)
     struct S_i_show
     {
-        IShow *show;
-        uchar unknown_4[8];
-        char *unknown_c;                // 0xc, DestroyIShowAll deletes it
+        IShow *show;                    // 0x0
+        int id;                         // 0x4, the id the IShow functions take
+        uint flags;                     // 0x8, ISHOWF_*
+        char *name;                     // 0xc, the file's name, which DestroyIShowAll deletes
         float volume;                   // 0x10, its own, which the music's scales (PS2's IShowStoreVolume stores it)
     };
+    // A fade of a video's volume (IShowFade's; the members' names are ours)
     struct S_i_show_fade
     {
-        uchar unknown_0[0x10];
+        int id;                         // 0x0
+        float from;                     // 0x4
+        float to;                       // 0x8
+        short time;                     // 0xc, in ms, signed (Tick compares and converts them so)
+        short length;                   // 0xe
     };
     struct S_enemy_talk
     {
@@ -182,7 +199,10 @@ public:
         I3D_frame *frame;               // 0x0
         tDynamicCollObject coll;        // 0x4
         bool in_collision;              // 0x4c, whether coll is among gifCollision's dynamic objects
-        uchar unknown_4d[0xb];          // 0x4d
+        bool growing;                   // 0x4d, Tick scales the projector up to scale 1, then clears it
+        uchar unknown_4e[2];            // 0x4e
+        float scale;                    // 0x50
+        uchar unknown_54[4];            // 0x54
 
         S_unknown_75c() {}
     };
@@ -194,16 +214,17 @@ public:
 
         S_unknown_2ec8() { memset(this, 0, sizeof(*this)); }
     };
+    // The shots' lights (PS2's ShootLightTick's)
     struct S_unknown_2a48
     {
         I3D_light *light;               // 0x0
-        int unknown_4;                  // 0x4, -1 from Init
-        int unknown_8;                  // 0x8
+        int unknown_4;                  // 0x4, -1 from Init: the time left, after which the light goes off
+        int unknown_8;                  // 0x8, with 1 the light flickers, and fades in its last 500 ms
     };
     struct S_unknown_2ac0
     {
         I3D_sound *sound;               // 0x0
-        int unknown_4;                  // 0x4, -1 from Init
+        int unknown_4;                  // 0x4, -1 from Init: the time left until the sound is turned on
     };
     struct S_unknown_2fd8
     {
@@ -247,14 +268,14 @@ public:
     int unknown_160;                    // 0x160
     bool actor_lightness;               // 0x164, ACTORLIGHTNESSON's (the name is ours)
     std::vector<I3D_frame *> unknown_168;  // 0x168 (PS2 0x1b8), turned on again by Done
-    int unknown_178;                    // 0x178
+    int unknown_178;                    // 0x178, the time left until LightCacheTick checks the lights again
     std::vector<S_invisible_actor> invisible_actors;  // 0x17c (PS2 0x1c8)
     S_timer unknown_18c;                // 0x18c (PS2 0x1d4), the traffic generators' choice
     S_timer unknown_194;                // 0x194 (PS2 0x1dc)
     // 0x19c, the semaphores' phases, one per direction, 0 and 5 from Init (no S_timer: the constructor leaves them):
-    // indices into game.cpp's semaphore_lights
-    uint unknown_19c;
-    uint unknown_1a0;                   // 0x1a0
+    // indices into game.cpp's semaphore_lights, signed (Tick wraps them so)
+    int unknown_19c;
+    int unknown_1a0;                    // 0x1a0
     std::vector<S_semaphore> semaphores;  // 0x1a4 (PS2 0x1ec)
     std::vector<S_RoadBlock> road_blocks;  // 0x1b4 (PS2 0x1f8)
     std::vector<S_Telephone> telephones;  // 0x1c4 (PS2 0x204)
@@ -275,9 +296,9 @@ public:
     std::vector<S_stop_sounds> stop_sounds;  // 0x2d4 (PS2 0x308, a gif::vector)
     std::vector<uint> unknown_2e4;      // 0x2e4 (PS2 0x314)
     std::vector<S_sound_play> sound_play;  // 0x2f4 (PS2 0x320)
-    S_timer unknown_304;                // 0x304 (PS2 0x32c)
+    S_timer unknown_304;                // 0x304 (PS2 0x32c), TickEffects' while no sound fades
     int unknown_30c;                    // 0x30c
-    int unknown_310;                    // 0x310
+    int unknown_310;                    // 0x310, the sounds of sound_play fading
     std::vector<C_fire *> fires;        // 0x314 (PS2 0x33c), Done deletes them
     // The actors Init creates for the game from 2stone.i3d (PC only) and the cartridges' models, each with a count
     C_stone *stones[32];                // 0x324
@@ -294,8 +315,8 @@ public:
     int unknown_29e4;                   // 0x29e4
     int unknown_29e8;                   // 0x29e8
     C_using_object using_object;        // 0x29ec (PS2 0xde0)
-    int unknown_2a0c;                   // 0x2a0c
-    S_vector unknown_2a10;              // 0x2a10, where the player or else the camera is at Init
+    float unknown_2a0c;                 // 0x2a0c, how fast unknown_2a10 moved in the last frame, per second
+    S_vector unknown_2a10;              // 0x2a10, where the player or else the camera is (Init's and each Tick's)
     C_don_ocas *don_ocas;               // 0x2a1c
     I3D_sound *unknown_2a20[10];        // 0x2a20
     S_unknown_2a48 unknown_2a48[10];    // 0x2a48
@@ -364,17 +385,20 @@ public:
     std::vector<uint> unknown_2f8c;     // 0x2f8c (PS2 0x13a0)
     bool anim_preload;                  // 0x2f9c, NOANIMPRELOAD clears it (the name is ours)
     std::vector<I3D_frame *> city_music_areas;  // 0x2fa0 (PS2 0x13b0), the areas city_music_*
+    // The city's music (TickCityMusic's): the time left until the areas are checked again, the area of the music
+    // playing, the IShow ids of that music and of the music fading out (-1 for none)
     int unknown_2fb0;                   // 0x2fb0
-    int unknown_2fb4;                   // 0x2fb4
+    I3D_frame *unknown_2fb4;            // 0x2fb4
     int unknown_2fb8;                   // 0x2fb8
     int unknown_2fbc;                   // 0x2fbc
-    int unknown_2fc0;                   // 0x2fc0
+    bool unknown_2fc0;                  // 0x2fc0, the city's music isn't checked while it is set
+    uchar unknown_2fc1[3];              // 0x2fc1
     std::vector<uint> unknown_2fc4;     // 0x2fc4
-    int unknown_2fd4;                   // 0x2fd4
+    int unknown_2fd4;                   // 0x2fd4, 7000 from Init: the time before the player's death fades to the menu
     S_unknown_2fd8 unknown_2fd8[100];   // 0x2fd8
     std::vector<S_unknown_3618> unknown_3618;  // 0x3618
     int unknown_3628;                   // 0x3628
-    int unknown_362c;                   // 0x362c
+    int unknown_362c;                   // 0x362c, the time left until TickScreamAreas runs again
     // The scene's weather system's WS_PARAM_ON and WS_PARAM_COUNT when Init started, which Done sets again (the names are
     // ours)
     bool weather_on;                    // 0x3630
@@ -384,17 +408,23 @@ public:
     bool unknown_363d;                  // 0x363d, cleared by C_mission::Open (PS2 0x1539 the same): DoneIntern's
     bool score_on;                      // 0x363e (PS2 ScoreSetOn's)
     int score;                          // 0x3640
-    bool unknown_3644;                  // 0x3644
-    uchar unknown_3645[0x13];           // 0x3645
+    bool unknown_3644;                  // 0x3644, Tick sets the camera's rotation to unknown_3648 and clears it
+    uchar unknown_3645[3];              // 0x3645
+    S_quat unknown_3648;                // 0x3648
     I3D_model *sheet;                   // 0x3658, 9sheet.i3d
     I3D_frame *unknown_365c;            // 0x365c
     I3D_model *money;                   // 0x3660, 9money.i3d
     bool unknown_3664;                  // 0x3664
     bool unknown_3665;                  // 0x3665
+    // The cars' sounds (TickCarSoundManager's): on while positive, the time left until the next tick, and which of
+    // the two periods (200 and 800 ms) runs
     int unknown_3668;                   // 0x3668
-    uchar unknown_366c[8];              // 0x366c
+    int unknown_366c;                   // 0x366c
+    bool unknown_3670;                  // 0x3670
+    uchar unknown_3671[3];              // 0x3671
     std::vector<uchar *> unknown_3674;  // 0x3674, Done deletes them
-    int unknown_3684;                   // 0x3684
+    bool unknown_3684;                  // 0x3684, ItemBlurTick runs while it is set
+    uchar unknown_3685[3];              // 0x3685
     std::vector<S_unknown_3688> death_human_fades;  // 0x3688 (PS2's DeathHumanFade functions')
     // The inter-city's collisions, frames and their arrays, which InterCity_GameInit creates with the city's base blocks
     // (the types are ours)
@@ -497,9 +527,28 @@ public:
     // PS2's C_mission has these two
     void InterCity_GameInit();
     void InterCity_GameDoneInGameDone();
-    // Inlined in Init (PS2's are methods; its TickShadows is empty)
+    // Inlined in Init and Tick (PS2's are methods; its TickShadows is empty)
     void TickShadows(uint time);
     void SetActiveTrafficP(uint time);
+    // Inlined in Tick (PS2's are methods): the fades of sound_play's sounds, the shots' lights, the lights near the
+    // camera turned on, the hydrants, the city's music by the camera's area, the cars' steering wheels
+    void TickEffects(uint time);
+    void ShootLightTick(uint time);
+    void LightCacheTick(uint time);
+    void TickHydrant(uint time);
+    void TickCityMusic(uint time);
+    void TickDriverMan();
+    // PS2 names, of what Tick calls
+    void FindActorsVect();
+    void TickDeadHumanForTick(uint time);
+    void DeathActorProcess();
+    void _RemoveTemporaryActor(C_actor *act);
+    void TickShoot(uint time);
+    void ItemBlurTick(uint time);
+    void TickScreamAreas();
+    void TickCarSoundManager();
+    void LightnessTick(uint time);
+    void DoubleKiss(uint time);
     void PreloadAnims();
     // A shadow's model for the shadows' lists (the name is ours)
     void AddShadowModel(const char *name);
@@ -749,7 +798,17 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
+
+// The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
+// TEMPLATE: GAME 0x5470c0
+// std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::size
+
+// TEMPLATE: GAME 0x5bc050
+// std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
+
+// TEMPLATE: GAME 0x5bc900
+// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z

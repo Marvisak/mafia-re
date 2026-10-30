@@ -24,6 +24,12 @@ bool g_collision::LoadCollision(const char *name, bool)
     return false;
 }
 
+// STUB: GAME 0x5c3610
+void g_collision::DynOptimizeTick()
+{
+    StubLog("g_collision::DynOptimizeTick");
+}
+
 // STUB: GAME 0x5c38b0
 void g_collision::DynErase(tDynamicCollObject *obj)
 {

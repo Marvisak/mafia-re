@@ -118,6 +118,13 @@ C_fire::~C_fire()
     StubLog("C_fire::~C_fire");
 }
 
+// STUB: GAME 0x55da80
+bool C_fire::Tick(uint time)
+{
+    StubLog("C_fire::Tick");
+    return false;
+}
+
 // STUB: GAME 0x55dd60
 void C_using_object::AddObject(S_using_object *obj)
 {

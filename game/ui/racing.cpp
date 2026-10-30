@@ -1,5 +1,5 @@
 // The racing championship (PS2 racing.cpp; the PC's file is the one at 0x54d320-0x55997c, docs/game-files.md). Not
-// written yet: only what main needs to link.
+// written yet: only what main and C_game need to link.
 
 #include "ui/racing.h"
 
@@ -40,6 +40,16 @@ void C_racing::GameInit()
 void C_racing::GameDone()
 {
     StubLog("C_racing::GameDone");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x555e40
+void C_racing::Tick(uint time)
+{
+    StubLog("C_racing::Tick");
 }
 
 #pragma auto_inline(on)

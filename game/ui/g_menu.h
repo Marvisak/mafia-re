@@ -220,7 +220,7 @@ public:
     // Runs the menu until one of its functions sets the result (zz_globalReturnCode), then destroys it and returns the
     // result. While it runs it ticks the mission, or only the game's camera; the HUD's flags are pushed and the menus'
     // set. PS2's has a fourth bool, which both calls in its main pass as false; neither build reads the third.
-    static int ExecuteMenu(GM_Menu *menu, bool tick_mission, bool);
+    static uint ExecuteMenu(GM_Menu *menu, bool tick_mission, bool);
     // Where the menu's camera goes: an item's id moves it to the item's frame (_GM_MainMenuTargets), which TickCamera
     // then approaches; MENUCAM_START puts it at once at "camera_start" (or where the camera is), looking at a point 10
     // ahead, and MENUCAM_NONE takes the scene's camera as it is. Only an item's id leaves TickCamera running.
@@ -289,3 +289,11 @@ public:
 
 // LIBRARY: GAME 0x40ae00
 // ??HS_vector@@QBE?AU0@ABU0@@Z
+
+// And Magnitude and Square, which C_game::Tick calls out of line: the original kept the copies of the files at
+// 0x413d90 (Magnitude) and 0x44c520 (Square), docs/game-files.md
+// LIBRARY: GAME 0x415ae0
+// ?Magnitude@S_vector@@QBEMXZ
+
+// LIBRARY: GAME 0x4564d0
+// ?Square@S_vector@@QBEMXZ

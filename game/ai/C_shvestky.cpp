@@ -1,7 +1,7 @@
 // The police (PS2 C_shvestky.cpp; the PC's file is the one at 0x499b40-0x4a031c, docs/game-files.md), which starts with
 // the constructor and the destructor. Written so far: those two, which the game's constructor and destructor call, and
-// GameInit and GameDone, which C_game's Init and Done call; the records' destructor, TickDoRiciActors and what the
-// script's commands call are stubs.
+// GameInit and GameDone, which C_game's Init and Done call; the records' destructor, Tick, which C_game::Tick calls,
+// TickDoRiciActors and what the script's commands call are stubs.
 
 #include "ai/C_shvestky.h"
 #include "actors/C_actor.h"
@@ -134,6 +134,12 @@ void C_shvestky::GameDone()
 C_shvestky::S_shvestky::~S_shvestky()
 {
     StubLog("C_shvestky::S_shvestky::~S_shvestky");
+}
+
+// STUB: GAME 0x49a300
+void C_shvestky::Tick(uint time)
+{
+    StubLog("C_shvestky::Tick");
 }
 
 // STUB: GAME 0x49b860

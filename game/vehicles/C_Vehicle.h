@@ -327,7 +327,13 @@ public:
     int num_wheels;                    // 0x4c4 (car 0x534)
     uchar unknown_4c8[0xd4];            // 0x4c8
     float speed;                        // 0x59c (car 0x60c), in m/s: velocity's magnitude (SetVelocity)
-    uchar unknown_5a0[0x698];           // 0x5a0
+    uchar unknown_5a0[0x70];            // 0x5a0
+    // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely: C_game::TickDriverMan
+    // turns the driver's steering wheel by their ratio
+    float unknown_610;
+    uchar unknown_614[0x14];            // 0x614
+    float unknown_628;
+    uchar unknown_62c[0x60c];           // 0x62c
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
     uchar unknown_c3c[0x18];            // 0xc3c
     S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
@@ -369,7 +375,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
+// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -378,13 +384,13 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
 // ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

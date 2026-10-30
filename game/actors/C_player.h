@@ -22,7 +22,9 @@ public:
     uchar unknown_a9c[0x1c];            // 0xa9c
     float unknown_ab8;                  // 0xab8, 1 from C_game::Init and FadeReset (PS2 0xc3c), SetAlpha's
     float unknown_abc;                  // 0xabc, 1 from C_game::Init and FadeReset (PS2 0xc40)
-    uchar unknown_ac0[0x40];            // 0xac0
+    uchar unknown_ac0[0x10];            // 0xac0
+    float unknown_ad0;                  // 0xad0 (PS2 0xc50), a tenth of it off the camera's tilt (C_game::Tick)
+    uchar unknown_ad4[0x2c];            // 0xad4
 
     // C_game::Init clears it, the script's CARDAMAGEVISIBLE sets it (PS2 a global set the same; the name is ours)
     static bool unknown_6478b0;

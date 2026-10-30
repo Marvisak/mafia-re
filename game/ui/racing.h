@@ -44,6 +44,8 @@ public:
     // PS2 names
     void GameInit();
     void GameDone();
+    // The race by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
 
     uchar unknown_0;
     bool unknown_1;                     // 0x1, C_game::Done deletes the racing when it is set
@@ -75,3 +77,6 @@ void ExecuteRacingMenu();
 // The racing mission's (mission 6's) race, which its script starts (PS2 name, after ExecuteRacingMenu as on the PC;
 // the parameters' meaning isn't known)
 void RacingMisse06(uint a, uint b, uint c, uint d);
+// The race's frame, which C_game::Tick calls (PS2 name; the result's meaning isn't known, the caller converts it to a
+// float as an unsigned int)
+uint RacingMisse06ExecuteLoop();

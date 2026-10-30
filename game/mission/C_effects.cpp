@@ -3,8 +3,8 @@
 // PS2's C_ParticleManager.cpp would, whose class has the functions C_game calls). Written so far: the free objects'
 // vectors, the constructor, the destructor, Load and Clear, which C_mission's Init and UnInit run, and with Load the
 // effects' classes (C_effects.h), Mission_Start, Mission_Done, ClearEmitters and LoadStaticParticles, which C_game's
-// Init and Done run, and CreateSParticle, which LoadStaticParticles runs; CreateParticle, which the scripts call, and
-// DestroyParticle are stubs.
+// Init and Done run, and CreateSParticle, which LoadStaticParticles runs; CreateParticle, which the scripts call,
+// DestroyParticle, and ClientTick, IsParticleAlive and PauseParticle, which C_game::Tick calls, are stubs.
 
 #include "mission/C_effects.h"
 #include "mission/C_Particle.h"
@@ -124,10 +124,29 @@ int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &d
     return -1;
 }
 
+// STUB: GAME 0x44a0d0
+void C_effects::ClientTick(int time)
+{
+    StubLog("C_effects::ClientTick");
+}
+
 // STUB: GAME 0x44a240
 void C_effects::DestroyParticle(int particle)
 {
     StubLog("C_effects::DestroyParticle");
+}
+
+// STUB: GAME 0x44a2b0
+bool C_effects::IsParticleAlive(int particle)
+{
+    StubLog("C_effects::IsParticleAlive");
+    return false;
+}
+
+// STUB: GAME 0x44a2d0
+void C_effects::PauseParticle(int particle, bool pause)
+{
+    StubLog("C_effects::PauseParticle");
 }
 
 #pragma auto_inline(on)

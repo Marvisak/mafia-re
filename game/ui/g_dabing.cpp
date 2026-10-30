@@ -1,6 +1,7 @@
 // The dubbing (PS2 g_dabing.cpp; the PC's file is most likely the one at 0x5f4b60-0x5f6a1c, between g_camera.cpp and
 // g_indicators.cpp as the names sort, docs/game-files.md). Written so far: the globals, DabingInit, DabingDone,
-// DabingGetFreeChanel and DabingReset (PC only), which C_cutscene::Close calls; stubs of the rest the scripts call.
+// DabingGetFreeChanel and DabingReset (PC only), which C_cutscene::Close calls; stubs of the rest the scripts call
+// and of DabingTick, which C_game::Tick calls.
 //
 // Open: the original's .bss has G_DabingMorphActive (0x6bdb40) before dabingChanel (0x6bdb50), the reverse of PS2's
 // definition order, where their buckets (tools/bsshash.py: 885 and 135) give the other order; as g_indicators.cpp's,
@@ -107,6 +108,12 @@ bool DabingIsSpeaking(int chanel)
 {
     StubLog("DabingIsSpeaking");
     return false;
+}
+
+// STUB: GAME 0x5f5dd0
+void DabingTick(uint time)
+{
+    StubLog("DabingTick");
 }
 
 #pragma auto_inline(on)

@@ -1,7 +1,7 @@
 // The AI's groups, following and fights (PS2 jp_ai_groups.cpp; the PC's file is most likely the one at
 // 0x530390-0x53857c, after jp_ai_entity.cpp as the names sort, docs/game-files.md). Written so far: the managers' Init
 // and Destroy, which C_game's Init and Done call, PS2's shapes; stubs of what the script's commands call (GetGroup,
-// LeaveParty, GetParty). The copies of the implicit functions they call (ai_group's operator= and destructor, the
+// LeaveParty, GetParty) and of what C_game::Tick calls (the groups' and the fights' Tick, the following's Update). The copies of the implicit functions they call (ai_group's operator= and destructor, the
 // vectors' helpers) are compiler-generated.
 
 #include "ai/jp_ai_groups.h"
@@ -43,6 +43,22 @@ void ai_groups::Destroy()
     }
     groups.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x531340
+void ai_groups::Tick()
+{
+    StubLog("ai_groups::Tick");
+}
+
+// STUB: GAME 0x5325a0
+void ai_follow_manager::Update()
+{
+    StubLog("ai_follow_manager::Update");
+}
+
+#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x532da0
 void ai_follow_manager::Init()
@@ -90,3 +106,13 @@ void ai_fight_manager::Destroy()
         parties[i].members.clear();
     parties.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5350b0
+void ai_fight_manager::Tick()
+{
+    StubLog("ai_fight_manager::Tick");
+}
+
+#pragma auto_inline(on)

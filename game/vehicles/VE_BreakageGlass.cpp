@@ -1,9 +1,11 @@
 // The broken glass (PS2 VE_BreakageGlass.cpp; the PC's file is most likely the one at 0x5605c0-0x56488c, after
-// tshift.cpp as on PS2, docs/game-files.md). Written so far: Init and Done, which C_game's Init and Done call.
+// tshift.cpp as on PS2, docs/game-files.md). Written so far: Init and Done, which C_game's Init and Done call; Tick,
+// which C_game::Tick calls, is a stub.
 
 #include "vehicles/VE_BreakageGlass.h"
 
 #include "I3D/I3D.h"
+#include "stub.h"
 
 // The gravity goes through a temporary, as PS2's
 // FUNCTION: GAME 0x560db0
@@ -84,3 +86,13 @@ bool C_Break_plain_glass::Done()
     frames.clear();
     return true;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5611b0
+void C_Break_plain_glass::Tick(uint time)
+{
+    StubLog("C_Break_plain_glass::Tick");
+}
+
+#pragma auto_inline(on)

@@ -1,7 +1,8 @@
 // The console's text (PS2 console.cpp; the PC's file is most likely the one at 0x4f5dc0-0x4f6a2c, which loads
 // editfont.bmp and fnt_matrix.bin, docs/game-files.md). Written so far: the consoles' vector (PS2 _consoles, whose
 // initializer starts the file), C_console's constructor, destructor, Clear and Render, ConsoleReg, ConsoleUnReg,
-// ConsoleRender, the font, CreateFontTexture, ConsolesInit and ConsolesDone. Not written: C_console's tick (0x4f5f50).
+// ConsoleRender, the font, CreateFontTexture, ConsolesInit and ConsolesDone; C_console::Tick, which C_game::Tick calls,
+// is a stub.
 
 #include "ui/console.h"
 
@@ -10,6 +11,7 @@
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
 #include "rw_data.h"
+#include "stub.h"
 
 // The registered consoles, which ConsoleRender draws (PS2's name, static as PS2's; a global vector, which VC6 assumes a
 // call may change, leaves ConsoleReg's push_back a test it folds here). Defined first: its initializer starts the file.
@@ -73,6 +75,16 @@ void C_console::Clear()
     text_lines.clear();
     unknown_34 = 0;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4f5f50
+void C_console::Tick(uint time)
+{
+    StubLog("C_console::Tick");
+}
+
+#pragma auto_inline(on)
 
 // One vertex of a character's quad (the name is ours). Through an inline function's parameters, as the original's
 // texture coordinates go through the FPU, which VC6 copies with integer moves where they are assigned directly.

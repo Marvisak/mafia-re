@@ -114,11 +114,16 @@ public:
     void Init();
 };
 
-// A fire (PS2 C_fire, tools.cpp), which the game keeps (its 0x314) and deletes at Done; only the destructor is known
+// A fire (PS2 C_fire, tools.cpp), which the game keeps (its 0x314) and deletes at Done; only the destructor and Tick
+// are known
 class C_fire
 {
 public:
     ~C_fire();
+
+    // The fire by the time passed, which C_game::Tick calls (PS2 name): false when it has burnt out, and C_game::Tick
+    // deletes it
+    bool Tick(uint time);
 };
 
 // A group of the sound table's sounds (PS2 S_sound_group), 0x24 bytes: the editor's, which the game skips in the file

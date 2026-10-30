@@ -1,9 +1,10 @@
 // The debris (PS2 VE_Debris.cpp; the PC's file is most likely the one at 0x564890-0x56615c, docs/game-files.md).
-// Written so far: Init and Done, which C_game's Init and Done call.
+// Written so far: Init and Done, which C_game's Init and Done call; Tick, which C_game::Tick calls, is a stub.
 
 #include "vehicles/VE_Debris.h"
 
 #include "I3D/I3D.h"
+#include "stub.h"
 
 // The gravity goes through a temporary, as PS2's
 // FUNCTION: GAME 0x564890
@@ -27,3 +28,13 @@ bool C_Debris::Done()
     flashes.clear();
     return true;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5649d0
+void C_Debris::Tick(uint time)
+{
+    StubLog("C_Debris::Tick");
+}
+
+#pragma auto_inline(on)

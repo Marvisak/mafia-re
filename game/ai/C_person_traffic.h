@@ -23,8 +23,8 @@ public:
 };
 
 // The pedestrians' generator (PS2 C_traffic_generator, C_person_traffic.cpp), 0xb8 bytes (PS2's 0xd0). Only the
-// constructor and the static functions C_game's Init and Done call so far; the constructor, which
-// C_mission::CreateActor calls for ACTOR_TRAFFIC_GENERATOR, is a stub.
+// constructor and the static functions C_game's Init, Done and Tick call so far; the constructor, which
+// C_mission::CreateActor calls for ACTOR_TRAFFIC_GENERATOR, and TickElements are stubs.
 class C_traffic_generator : public C_actor
 {
 public:
@@ -39,6 +39,8 @@ public:
     static void SetVisible(bool visible);
     static void ClearElements();
     static void FreeDynCollElements();
+    // The pedestrians by the time passed, which C_game::Tick calls (PS2 name)
+    static void TickElements(uint time);
     // Gives a pedestrian of that model, or the actor, to the generators (PS2 name; the bool's name is ours)
     static void AddFreePerson(I3D_model *model, C_actor *act, bool unknown);
 
@@ -49,9 +51,11 @@ public:
         unknown_63d728 = b;
     }
 
-    int unknown_70;                     // 0x70, without it the camera has to be in the range
+    bool unknown_70;                    // 0x70, without it the camera has to be in the range
+    uchar unknown_71[3];                // 0x71
     float range;                        // 0x74 (the name is ours)
-    int active;                         // 0x78, the one C_game::SetActiveTrafficP chose (the name is ours)
+    bool active;                        // 0x78, the one C_game::SetActiveTrafficP chose (the name is ours)
+    uchar unknown_79[3];                // 0x79
     uchar unknown_7c[0x3c];             // 0x7c
 
     // C_game::Init sets it (the name is ours; PS2's GameInit sets first_frame), NPC_SHUTUP clears it with a nonzero

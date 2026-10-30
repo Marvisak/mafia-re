@@ -281,13 +281,13 @@ extern C_mission *act_mission;
 // ?erase@?$vector@PAVC_Particle@@V?$allocator@PAVC_Particle@@@std@@@std@@QAEPAPAVC_Particle@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
 // TEMPLATE: GAME 0x4a9930
-// ??A?$vector@IV?$allocator@I@std@@@std@@QAEAAII@Z
+// ??A?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAEAAPAUg_collision_header@@I@Z
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
-// ?GetOptions@C_mission@@QAEAAUS_mission_options@@XZ
+// ?GetScale@I3D_frame@@QBEABUS_vector@@XZ

@@ -32,6 +32,8 @@ public:
     bool Init(float gravity);
     // Releases the debris' frames and forgets the debris and the flashes
     bool Done();
+    // The debris and the flashes by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
 
     std::vector<S_DEBRIS> debris;       // 0x0 (PS2 0x10, gif::vector<S_DEBRIS>)
     std::vector<S_FLASH> flashes;       // 0x10 (PS2 0x1c)
@@ -41,4 +43,4 @@ public:
 // Its destructor's copy, which the game's destructor and its constructor's unwinding call (Mission.cpp's range), the
 // same code as C_using_object's (tools.h), folded
 // SYNTHETIC: GAME 0x5479e0
-// ??1C_Debris@@QAE@XZ
+// ??1C_using_object@@QAE@XZ

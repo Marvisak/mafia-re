@@ -67,6 +67,8 @@ public:
     // PS2 names: C_game's Init and Done call them
     void GameInit();
     void GameDone();
+    // The police by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
     // PS2 name (Czech, roughly "tick the actors in the face")
     void TickDoRiciActors(bool);
 

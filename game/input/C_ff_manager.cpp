@@ -1,11 +1,12 @@
 // The force feedback (PS2 C_ff_manager.cpp; the PC's file is most likely the one at 0x444430-0x44525c, which starts
 // with its constructor's helpers, docs/game-files.md). Written so far: the constructor, the destructor, Reset, GameInit,
-// GameDone and Close.
+// GameDone and Close; Tick, which C_game::Tick calls, is a stub.
 
 #include "input/C_ff_manager.h"
 
 #include "input/controls.h"
 #include "ui/g_loadsave.h"
+#include "stub.h"
 
 // The timer's constructor's 200 stored before the period
 // FUNCTION: GAME 0x444630
@@ -82,3 +83,13 @@ void C_ff_manager::GameDone()
 void C_ff_manager::Close()
 {
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4451e0
+void C_ff_manager::Tick(uint time)
+{
+    StubLog("C_ff_manager::Tick");
+}
+
+#pragma auto_inline(on)

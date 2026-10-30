@@ -1007,7 +1007,7 @@ void GM_Menu::PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_i
 // last_key's 0xff never reaches the loop: VC6 gives the switch's int-to-float temporary the same stack slot (the
 // original's too), so the first frames test the low byte of the screen's width as the key held.
 // FUNCTION: GAME 0x5eba40
-int GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
+uint GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
 {
     uint buttons = 0;
     uint delay = 1000;

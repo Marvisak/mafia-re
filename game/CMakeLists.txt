@@ -25,6 +25,7 @@ add_executable(game WIN32
     vehicles/C_car.cpp
     vehicles/C_car_ex.cpp
     actors/C_cartridge.cpp
+    actors/C_crash_obj.cpp
     actors/C_detector.cpp
     actors/C_dog.cpp
     actors/C_door.cpp

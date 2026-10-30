@@ -36,10 +36,14 @@ struct tDynamicCollObject
 // g_collision_header::flags (the name is ours, after the command): DISABLECOLLS sets it
 #define COLLHF_DISABLED 0x20
 
-// A collision of the level (PS2 g_collision_header): only its flags are known so far, the first dword
+// A collision of the level (PS2 g_collision_header): only its flags are known so far, the first dword, and the actor
+// whose collision it is, which C_game::TickHydrant reads of what TestLineV returns (PS2 0x48, compared with ACTOR_CAR
+// as an actor's type), so most likely this struct
 struct g_collision_header
 {
     uint flags;                         // 0x0, COLLHF_* (the name is ours)
+    uchar unknown_4[0x40];              // 0x4
+    C_actor *owner;                     // 0x44 (the name is ours)
 };
 
 // The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp). Only what main, the camera, the game and
@@ -67,6 +71,8 @@ public:
     bool LoadCollision(const char *name, bool);
     // Takes a moving object out of the collisions (PS2 name)
     void DynErase(tDynamicCollObject *obj);
+    // The moving objects' collisions optimized each frame, which C_game::Tick calls (PS2 name)
+    void DynOptimizeTick();
     // PS2 name (PS2's takes a bool)
     void GameDone();
     // PS2 names, GameDone's: the moving objects' collisions out, and the level's freed (PS2's DeleteCollsLevel takes a

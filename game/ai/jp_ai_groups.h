@@ -60,6 +60,8 @@ public:
     // PS2 names
     void Init();
     void Destroy();
+    // The groups' frame, which C_game::Tick calls (PS2 name)
+    void Tick();
     // The group of that number, NULL for none (PS2 name)
     ai_group *GetGroup(uint id);
 
@@ -95,6 +97,8 @@ public:
     // PS2 names
     void Init();
     void Destroy();
+    // The following's frame, which C_game::Tick calls (PS2 name)
+    void Update();
 };
 
 // A member of a fighting party (PS2 ai_fight_member), 0x14 bytes
@@ -133,6 +137,8 @@ public:
     // PS2 names
     void Init();
     void Destroy();
+    // The fights' frame, which C_game::Tick calls (PS2 name)
+    void Tick();
     // The entity, or else the actor, leaves its party
     void LeaveParty(C_entity *e, C_actor *act);
     // The party of the entity, or else of the actor, NULL for none; the third parameter receives a number of it
@@ -155,7 +161,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
@@ -164,4 +170,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUS_effect@C_ff_manager@@PAPAU23@00@Z
+// ?copy@std@@YIPAPAVC_ParticleType@@PAPAV2@00@Z

@@ -2,7 +2,7 @@
 // docs/game-files.md), in PS2's order. Written so far: the shift's start and end, which C_game's Init and Done call,
 // and the frames' Clear and Init, which they end with (tail calls), and two tests the script's commands make
 // (PlukovnikuMasVChladkuPlajeraFrafera, PanoveHrajeteSiNaPoldy); stubs of AkceDokoncenaPlukovniku, which the shift's
-// end calls for each action, and of what the script's commands call.
+// end calls for each action, of Tick, which C_game::Tick calls, and of what the script's commands call.
 
 #include "ai/jp_ai_prislusnici.h"
 
@@ -28,6 +28,12 @@ void ai_police_nastenka::ZacatekSmeny()
 void ai_police_nastenka::AkceDokoncenaPlukovniku(ai_police_action *action)
 {
     StubLog("ai_police_nastenka::AkceDokoncenaPlukovniku");
+}
+
+// STUB: GAME 0x53c890
+void ai_police_nastenka::Tick(uint time)
+{
+    StubLog("ai_police_nastenka::Tick");
 }
 
 #pragma auto_inline(on)

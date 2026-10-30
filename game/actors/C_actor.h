@@ -286,15 +286,15 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?OnClose@GM_Menu@@UAEHXZ
+// ?SaveGameGetSize@C_clock@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

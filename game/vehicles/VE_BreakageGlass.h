@@ -35,6 +35,8 @@ public:
     bool Init(int num);
     // Releases the frames and the pieces and forgets them
     bool Done();
+    // The broken panes' pieces by the time passed, which C_game::Tick calls (PS2 name)
+    void Tick(uint time);
 
     std::vector<I3D_frame *> frames;    // 0x0 (PS2 0x10, gif::vector<I3D_frame *>)
     std::vector<S_DICE> dices;          // 0x10 (PS2 0x1c)
@@ -48,7 +50,7 @@ public:
 // inlines it, calling the frames' assignment, this file's copy, which the linker folded with the other vectors of
 // pointers')
 // SYNTHETIC: GAME 0x560f20
-// ??0S_DICE@@QAE@XZ
+// ??0S_saved_code@C_program@@QAE@XZ
 
 // SYNTHETIC: GAME 0x562000
 // S_DICE::operator=
