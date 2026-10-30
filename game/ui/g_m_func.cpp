@@ -1,10 +1,11 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
-// docs/game-files.md). The original's OnChange is folded into the racing menu's (0x5e4a50, in the next file but one).
-// The PC's message box (from 0x5e2170) and question box (from 0x5e2310), then the loading screen (GM_LoadProgress, from
-// 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu's OnBeforeCreate, OnCreate and OnChange, the message
-// box's OnBeforeCreate and constructor, the question box, the loading screen's constructor, OnBeforeCreate, OnCreate,
-// OnTick, SetProgressMissionOpen and Present;
-// the rest is stubs of what main, C_mission::Open and the profiles' menu need to link.
+// docs/game-files.md), after its quit question's OnClick, the file's first function. The original's OnChange is folded
+// into the racing menu's (0x5e4a50, in the next file but one). The menus it opens (the options from 0x5e0ad0, the free
+// ride from 0x5e1920), the PC's message box (from 0x5e2170) and question box (from 0x5e2310), the saved games (from
+// 0x5e2400), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main
+// menu and its quit question, the message box's OnBeforeCreate and constructor, the question box, the loading screen's
+// constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main,
+// C_mission::Open, the profiles' menu and the main menu need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
@@ -29,7 +30,7 @@
 #define MAINMENU_ITEM_FREE_RIDE 990105
 #define MAINMENU_ITEM_FREE_RIDE_EXTREME 990106
 #define MAINMENU_ITEM_RACING 990107     // mainmenurac's only
-// 990108 is in neither menu, the multiplayer's camera frame's
+#define MAINMENU_ITEM_MULTIPLAYER 990108 // in neither menu, though it has a camera frame and a case in OnClick
 #define MAINMENU_ITEM_CARCYCLOPEDIA 990109
 #define MAINMENU_ITEM_OPTIONS 990110
 #define MAINMENU_ITEM_CREDITS 990111
@@ -54,8 +55,97 @@
 #define LOADPROGRESS_UNKNOWN_2000 2000
 #define LOADPROGRESS_UNKNOWN_3000 3000
 
-// The text database's "press <ESC> to Abort" (the name is ours)
+// The quit question's items, tables\menu\exityesno.mnu: the question box's ids (the names are ours)
+#define EXITYESNO_WINDOW 0x82           // its text set by OnCreate
+#define EXITYESNO_YES 0x8a
+#define EXITYESNO_NO 0x8b
+
+// The text database's "press <ESC> to Abort" and "Quit Game?" (the names are ours)
 #define TEXT_PRESS_ESC_TO_ABORT 0x2ce
+#define TEXT_QUIT_GAME 0x77
+
+// The menus the main menu opens, which only its OnClick creates. Their inline functions are declared in the classes and
+// defined after OnClick, where the original has their copies: in the classes, their markers would come before the
+// file's first function.
+
+// The quit question, "exityesno" (PS2 GM_MainMenuExit, g_m_func.cpp), 0x30 bytes, which the main menu's Quit opens.
+// Its constructor is the compiler's, inlined.
+// VTABLE: GAME 0x62730c
+class GM_MainMenuExit : public GM_Menu
+{
+public:
+    virtual const char *OnBeforeCreate();
+    // The window's text, "Quit Game?"
+    virtual int OnCreate();
+    // Yes ends the main menu with MAINMENU_QUIT, No closes the question
+    virtual int OnClick(uint id);
+};
+
+// The options, "optionsb" (PS2 GM_Options, g_m_func.cpp, whose class is 0x4c bytes and has OnCreate, OnKey and OnTick
+// of its own), 0x30 bytes, which the main menu's Options opens: Controls, Audio & Video and Back. Its constructor is
+// inline, as the main menu's.
+// VTABLE: GAME 0x62733c
+class GM_Options : public GM_Menu
+{
+public:
+    GM_Options() { flags |= MENUF_UNKNOWN_80000; }
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnClick(uint id);
+};
+
+// The free ride's choices, "freeride" (PS2 GM_FreeRide, g_m_func.cpp), 0x38 bytes, which the main menu's Free Ride
+// opens: the location, the car and the densities of the traffic, the pedestrians and the police. Its constructor is
+// inline, as the main menu's.
+// VTABLE: GAME 0x62736c
+class GM_FreeRide : public GM_Menu
+{
+public:
+    GM_FreeRide() { flags |= MENUF_UNKNOWN_80000; }
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    virtual int OnCloseChild(GM_Menu *child, uint, uint);
+    virtual int OnClick(uint id);
+
+    uchar unknown_30[8];
+};
+
+// The saved games, "loadgame" (PS2 GM_LoadGame, g_m_func.cpp, whose class is 0x284 bytes, with a vector at its end the
+// PC's constructor doesn't construct), 0x270 bytes, which the main menu's Load Game opens. Its constructor is inline,
+// as the main menu's.
+// VTABLE: GAME 0x62739c
+class GM_LoadGame : public GM_Menu
+{
+public:
+    GM_LoadGame() { flags |= MENUF_UNKNOWN_80000; }
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    virtual int OnKey(uchar key, uint);
+    virtual int OnMouse(int x, int y, int z, uint, uint);
+    virtual int OnClick(uint id);
+    virtual int OnTick(uint time);
+    virtual int OnChange(GM_Component *active, GM_Component *);
+
+    uchar unknown_30[0x240];
+};
+
+// The file's first function. The cases in the order of PS2's bodies: VC6's dec falls into the one written first.
+// FUNCTION: GAME 0x5e0640
+int GM_MainMenuExit::OnClick(uint id)
+{
+    switch (id)
+    {
+    case EXITYESNO_NO:
+        MenuClose((uint)-1);
+        break;
+    case EXITYESNO_YES:
+        MenuCloseAll((uint)-1, MAINMENU_QUIT);
+        break;
+    }
+    return 0;
+}
 
 // A mission's entry in tables\load.def (the names are ours), 0x44 bytes: its loading screen's picture and name
 struct S_load_def
@@ -100,12 +190,118 @@ int GM_MainMenu::OnChange(GM_Component *active, GM_Component *)
     return 0;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e06e0
+// The cases in the items' order, as PS2's, whose first two choose the intro or a new game by the memory card's saves and
+// open the PSX menus
+// FUNCTION: GAME 0x5e06e0
 int GM_MainMenu::OnClick(uint id)
 {
-    StubLog("GM_MainMenu::OnClick");
+    switch (id)
+    {
+    case MAINMENU_ITEM_INTRO:
+        MenuCloseAll((uint)-1, MAINMENU_INTRO);
+        break;
+    case MAINMENU_ITEM_TUTORIAL:
+        MenuCloseAll((uint)-1, MAINMENU_TUTORIAL);
+        break;
+    case MAINMENU_ITEM_NEW_GAME:
+        MenuCloseAll((uint)-1, MAINMENU_NEW_GAME);
+        break;
+    case MAINMENU_ITEM_LOAD_GAME:
+        MenuOpen(new GM_LoadGame, id);
+        break;
+    case MAINMENU_ITEM_FREE_RIDE:
+        MenuOpen(new GM_FreeRide, id);
+        break;
+    case MAINMENU_ITEM_FREE_RIDE_EXTREME:
+        MenuCloseAll((uint)-1, MAINMENU_EXTREME);
+        break;
+    case MAINMENU_ITEM_RACING:
+        MenuCloseAll((uint)-1, MAINMENU_RACING);
+        break;
+    case MAINMENU_ITEM_MULTIPLAYER:
+        MenuCloseAll((uint)-1, MAINMENU_MULTIPLAYER);
+        break;
+    case MAINMENU_ITEM_CARCYCLOPEDIA:
+        MenuCloseAll((uint)-1, MAINMENU_CARCYCLOPEDIA);
+        break;
+    case MAINMENU_ITEM_OPTIONS:
+        MenuOpen(new GM_Options, id);
+        break;
+    case MAINMENU_ITEM_CREDITS:
+        MenuCloseAll((uint)-1, MAINMENU_CREDITS);
+        break;
+    case MAINMENU_ITEM_CHANGE_PROFILE:
+        MenuCloseAll((uint)-1, MAINMENU_PROFILE_CHANGE);
+        break;
+    case MAINMENU_ITEM_QUIT:
+        MenuOpen(new GM_MainMenuExit, id);
+        break;
+    }
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e08e0
+inline const char *GM_MainMenuExit::OnBeforeCreate()
+{
+    // STRING: GAME 0x6381e8
+    return "exityesno";
+}
+
+// FUNCTION: GAME 0x5e08f0
+inline int GM_MainMenuExit::OnCreate()
+{
+    SetTextID(EXITYESNO_WINDOW, TEXT_QUIT_GAME);
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e0900
+inline const char *GM_Options::OnBeforeCreate()
+{
+    // STRING: GAME 0x6381f4
+    return "optionsb";
+}
+
+// The literal is main's (Main.cpp), the first object's that has it
+// FUNCTION: GAME 0x5e0910
+inline const char *GM_FreeRide::OnBeforeCreate()
+{
+    return "freeride";
+}
+
+// FUNCTION: GAME 0x5e0920
+inline const char *GM_LoadGame::OnBeforeCreate()
+{
+    // STRING: GAME 0x638200
+    return "loadgame";
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e0ad0
+int GM_Options::OnClick(uint id)
+{
+    StubLog("GM_Options::OnClick %u", id);
+    return 0;
+}
+
+// STUB: GAME 0x5e1920
+int GM_FreeRide::OnCreate()
+{
+    StubLog("GM_FreeRide::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e1a20
+int GM_FreeRide::OnCloseChild(GM_Menu *child, uint, uint)
+{
+    StubLog("GM_FreeRide::OnCloseChild");
+    return 0;
+}
+
+// STUB: GAME 0x5e1b40
+int GM_FreeRide::OnClick(uint id)
+{
+    StubLog("GM_FreeRide::OnClick %u", id);
     return 0;
 }
 
@@ -208,6 +404,51 @@ int GM_QuestionBox::OnClick(uint id)
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x5e2400
+int GM_LoadGame::OnCreate()
+{
+    StubLog("GM_LoadGame::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e2570
+int GM_LoadGame::OnTick(uint time)
+{
+    StubLog("GM_LoadGame::OnTick");
+    return 0;
+}
+
+// Escape closes the menu, as the original's does, so that a run gets back to the main menu
+// STUB: GAME 0x5e26b0
+int GM_LoadGame::OnKey(uchar key, uint)
+{
+    StubLog("GM_LoadGame::OnKey");
+    if (key == DIK_ESCAPE)
+        MenuClose((uint)-1);
+    return 0;
+}
+
+// STUB: GAME 0x5e2750
+int GM_LoadGame::OnMouse(int x, int y, int z, uint, uint)
+{
+    StubLog("GM_LoadGame::OnMouse");
+    return 0;
+}
+
+// STUB: GAME 0x5e2810
+int GM_LoadGame::OnChange(GM_Component *active, GM_Component *)
+{
+    StubLog("GM_LoadGame::OnChange");
+    return 0;
+}
+
+// STUB: GAME 0x5e2840
+int GM_LoadGame::OnClick(uint id)
+{
+    StubLog("GM_LoadGame::OnClick %u", id);
+    return 0;
+}
 
 // STUB: GAME 0x5e2880
 int GM_GameFailed::OnCreate()

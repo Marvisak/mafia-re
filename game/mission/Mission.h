@@ -278,7 +278,7 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@0@Z
+// ?erase@?$vector@PAVC_Particle@@V?$allocator@PAVC_Particle@@@std@@@std@@QAEPAPAVC_Particle@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
 // ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z

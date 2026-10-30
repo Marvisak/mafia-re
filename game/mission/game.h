@@ -752,4 +752,4 @@ public:
 // ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_RoadBlock@C_game@@QAE@XZ
+// ??1S_cache_model_set@@QAE@XZ

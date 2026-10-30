@@ -13,7 +13,7 @@ class ITexture;
 
 // GM_Menu::flags (the names are ours: by value where the meaning isn't known yet)
 #define MENUF_UNKNOWN_10000 0x10000     // set by the constructor
-#define MENUF_UNKNOWN_80000 0x80000     // the main menu's
+#define MENUF_UNKNOWN_80000 0x80000     // the main menu's, and the menus' it opens (not the quit question's)
 #define MENUF_INVENTORY_CLOSES 0x100000 // ExecuteMenu reads the controls: the inventory's acts as Escape
 
 // GM_Menu::Draw's flags, which reach the components' Draw (the names are ours)
@@ -278,3 +278,14 @@ public:
     static S_vector circlePos;
     static float circleTime;
 };
+
+// The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
+// files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md
+// LIBRARY: GAME 0x407540
+// ??GS_vector@@QBE?AU0@ABU0@@Z
+
+// LIBRARY: GAME 0x40add0
+// ??DS_vector@@QBE?AU0@ABM@Z
+
+// LIBRARY: GAME 0x40ae00
+// ??HS_vector@@QBE?AU0@ABU0@@Z

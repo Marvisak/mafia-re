@@ -1,10 +1,14 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
-// with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, the wrappers
-// by id the loading screen and the profiles' menus call, PridejComponentPod, and of the components what the classes
-// written so far use (the three drawing functions, the constructors, the children's insertion and SetTextID);
-// TickCamera and the rest are stubs.
+// with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, TickCamera,
+// the wrappers by id the loading screen and the profiles' menus call, PridejComponentPod, and of the components what the
+// classes written so far use (the three drawing functions, the constructors, the children's insertion and SetTextID).
 
+// The engine's math first: under /YX the copies of S_vector's inline functions then come due before TickCamera, as
+// the original's do. Compiled after it, the out-of-line constructor that SetCameraTargetID calls is unknown to VC6 when
+// it compiles TickCamera, which then keeps a stack slot for each vector the constructor makes and reloads tc_frame
+// after the calls.
+#include "I3D/I3d_math.h"
 #include "ui/g_menu.h"
 #include "ui/g_m_comps.h"
 #include "ui/g_indicators.h"
@@ -19,7 +23,6 @@
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
 #include "rw_data.h"
-#include "stub.h"
 
 // Its initializer starts the file (0x5e8d10)
 // GLOBAL: GAME 0x6bd888
@@ -1179,12 +1182,35 @@ void GM_Menu::SetCameraTargetID(uint id)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5ec8a0
+// PS2's in PS2's order. The camera circles around where it stands, across its view and up and down, the circle growing
+// to its size in 10 seconds; the camera and the point it looks at move by their speeds, which turn towards where they
+// go.
+// FUNCTION: GAME 0x5ec8a0
 void GM_Menu::TickCamera(uint time)
 {
-    StubLog("GM_Menu::TickCamera");
+    circleScale += time * 0.0001f;
+    if (circleScale > 1.0f)
+        circleScale = 1.0f;
+    circleTime += time * 0.0002f;
+    while (circleTime > 2 * PI)
+        circleTime -= 2 * PI;
+    if (tc_frame)
+    {
+        S_vector dir = tc_frame->GetWorldDir();
+        circlePos = (S_vector(dir.z, 0.0f, -dir.x) * (float)sin(circleTime) * 0.1f +
+            S_vector(0.0f, 1.0f, 0.0f) * (float)cos(circleTime) * 0.05f) * circleScale;
+    }
+    float t = time * 0.001f;
+    tc_actTarget += tc_speedTarget * t * 0.3f;
+    tc_actCamera += tc_speedCamera * t * 0.3f;
+    if (tc_frame)
+    {
+        tc_frame->SetPos(tc_actCamera + circlePos);
+        tc_frame->SetDir(tc_actTarget - tc_actCamera, 0.0f);
+        tc_frame->Update();
+    }
+    S_vector camera = tc_destCamera - tc_actCamera;
+    S_vector target = tc_destTarget - tc_actTarget;
+    tc_speedCamera = tc_speedCamera * 0.98f + camera * 0.02f;
+    tc_speedTarget = tc_speedTarget * 0.98f + target * 0.02f;
 }
-
-#pragma auto_inline(on)

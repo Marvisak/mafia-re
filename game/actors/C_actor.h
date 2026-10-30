@@ -277,8 +277,7 @@ public:
     {
         return global_actors;
     }
-    // Its copy is in g_indicators.cpp's range, folded with another class's
-    // FUNCTION: GAME 0x604d80
+    // Its copy is in g_indicators.cpp's range, folded with another class's (by name, after the class)
     int GetUnknown4() const
     {
         return unknown_4;
@@ -289,9 +288,16 @@ public:
 // SYNTHETIC: GAME 0x409220
 // ?OnClose@GM_Menu@@UAEHXZ
 
+// GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
+// copy our linker keeps (foldfix)
+// FUNCTION: GAME 0x604d80
+// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+
+// FUNCTION: GAME 0x604d90
+// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
-// FUNCTION: GAME 0x604d90
 inline C_actor **GetFrameActor(I3D_frame *frm)
 {
     return (C_actor **)frm->GetData();

@@ -60,10 +60,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVC_actor@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@IAEXPAPAUS_shvestky@C_shvestky@@0@Z
+// ?_Destroy@?$vector@US_frame_placement@C_game@@V?$allocator@US_frame_placement@C_game@@@std@@@std@@IAEXPAUS_frame_placement@C_game@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEPAPAVC_program@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@IAEPAPAVC_ParticleType@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEXPAPAVC_program@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@IAEXPAPAVC_ParticleType@@IABQAV3@@Z

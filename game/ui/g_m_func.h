@@ -7,6 +7,7 @@ enum E_MAINMENU_RESULT {
     MAINMENU_TUTORIAL = 0x11,
     MAINMENU_NEW_GAME = 0x12,           // the intro mission, then the first one
     MAINMENU_LOAD_GAME = 0x13,
+    MAINMENU_MULTIPLAYER = 0x14,        // its item's, which neither menu has; main has no case for it
     MAINMENU_RACING = 0x15,
     MAINMENU_INTRO = 0x16,
     MAINMENU_CREDITS = 0x17,
@@ -27,12 +28,13 @@ enum E_MAINMENU_RESULT {
 class GM_MainMenu : public GM_Menu
 {
 public:
-    GM_MainMenu() { flags |= 0x80000; }
+    GM_MainMenu() { flags |= MENUF_UNKNOWN_80000; }
 
     // "mainmenurac" or "mainmenu"
     virtual const char *OnBeforeCreate();
     virtual int OnCreate();
     virtual int OnKey(uchar key, uint) { return 0; }
+    // An item ends the main menu with its choice (E_MAINMENU_RESULT) or opens its menu (g_m_func.cpp)
     virtual int OnClick(uint id);
     // The camera to the frame of the item that became active
     virtual int OnChange(GM_Component *active, GM_Component *);
