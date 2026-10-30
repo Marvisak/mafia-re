@@ -4,10 +4,45 @@
 
 // The player (PS2 C_player, C_player.cpp), a human, 0xb00 bytes (PS2's 0xc90). Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_PLAYER.
+// VTABLE: GAME 0x625878
 class C_player : public C_human
 {
 public:
     C_player();
+    virtual ~C_player();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    // The base's: the original's jumps there
+    // FUNCTION: GAME 0x594050 FOLDED
+    virtual void Update(uint time)
+    {
+        C_human::Update(time);
+    }
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    // The base's: the original's jumps there
+    // FUNCTION: GAME 0x58f290 FOLDED
+    virtual void DuplicateFrom(C_actor *act)
+    {
+        C_human::DuplicateFrom(act);
+    }
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    // The base's: the original's jumps there
+    // FUNCTION: GAME 0x58f4a0 FOLDED
+    virtual void Death()
+    {
+        C_human::Death();
+    }
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
 
     // PS2 names
     void UpdateControls();
@@ -38,6 +73,9 @@ public:
         unknown_6478b0 = on;
     }
 };
+
+// SYNTHETIC: GAME 0x58f200
+// C_player::`scalar deleting destructor'
 
 // The player's navigation point, a frame or NULL (PS2 name), which the script's SETCOMPASS and C_game::Init set
 void SetPlayerNaviPoint(I3D_frame *frm);

@@ -59,10 +59,26 @@ public:
 // The pedestrians' generator (PS2 C_traffic_generator, C_person_traffic.cpp), 0xb8 bytes (PS2's 0xd0). Only the
 // constructor and the static functions C_game's Init, Done and Tick call, and what TickElements calls, so far; the
 // constructor, which C_mission::CreateActor calls for ACTOR_TRAFFIC_GENERATOR, is a stub.
+// VTABLE: GAME 0x623fa0
 class C_traffic_generator : public C_actor
 {
 public:
     C_traffic_generator();
+    virtual ~C_traffic_generator();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
 
     // PS2 names, of the generators' shared state: the taxi driver's passengers on or off (off ends the waving), whether
     // the player's car is a taxi, the pedestrians shown or hidden, the pedestrians and their animations freed, and the
@@ -118,6 +134,9 @@ public:
     static float unknown_63263c;
 };
 
+// SYNTHETIC: GAME 0x44d480
+// C_traffic_generator::`scalar deleting destructor'
+
 // The don's tail (PS2 C_don_ocas, "ocas" Czech for a tail), ACTOR_DON_OCAS, 0x70 bytes: C_game::Init creates one for
 // the game. Only the constructor so far.
 // VTABLE: GAME 0x623ef8
@@ -125,4 +144,17 @@ class C_don_ocas : public C_actor
 {
 public:
     C_don_ocas();
+    virtual ~C_don_ocas();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void GameInit();
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
+    virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
 };
+
+// SYNTHETIC: GAME 0x44c660
+// C_don_ocas::`scalar deleting destructor'

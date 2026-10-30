@@ -15,10 +15,28 @@ struct S_THING_BOX
 // The physical things (PS2 C_PhThing, C_PhThings.cpp), the base of the public physics, of C_box_new and of
 // C_drop_in_weapon, 0x38c bytes. Only the constructor so far, which the derived classes' constructors call, and the
 // functions the script calls, as stubs.
+// VTABLE: GAME 0x624088
 class C_PhThing : public C_actor
 {
 public:
     C_PhThing();
+    virtual ~C_PhThing();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void ChangeState();
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
 
     // PS2 names, which the script calls; the parameters' names are ours
     // The thing's box, its state set by the velocity
@@ -28,3 +46,6 @@ public:
 
     uchar unknown_70[0x31c];            // 0x70
 };
+
+// SYNTHETIC: GAME 0x459f70
+// C_PhThing::`scalar deleting destructor'

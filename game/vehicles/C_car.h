@@ -35,10 +35,40 @@ struct S_TSRFC
 // C_mission::CreateActor and the scripts (C_program::Process) use so far: its tables, which InitSystem loads once
 // (C_game::Init loads them again, with the game's tables loaded), and which C_Vehicle keeps, the force feedback's
 // scales, the constructor, a stub, and the scripts' functions and accessors.
+// VTABLE: GAME 0x623618
 class C_car : public C_actor, public C_Vehicle
 {
 public:
     C_car();
+    virtual ~C_car();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual int vfunc_0(int a);
+    virtual void vfunc_1(int a);
+    virtual void vfunc_2(int a);
+    virtual bool vfunc_3(int a);
+    virtual S_vector vfunc_4(int a);
+    virtual bool vfunc_9();
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void ChangeState();
+    virtual void GetActorSpeed(S_vector &speed);
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual int GetMaterialID(I3D_frame *frm);
+    virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
+    virtual void SoundsChange(int i);
 
     // The profile's force feedback options, which the cars' effects scale by (PC only, the names are ours, after the
     // options), 1 until G_LoadSaveClass::Refresh sets them
@@ -214,6 +244,9 @@ public:
     bool invisible;                     // 0x221a, CAR_INVISIBLE sets it
     uchar unknown_221b;                 // 0x221b
 };
+
+// SYNTHETIC: GAME 0x41bc90
+// C_car::`scalar deleting destructor'
 
 // Set while the scripts' RECLOADFULL plays a cutscene's record; the cars read it (the names are ours)
 extern bool record_playing;

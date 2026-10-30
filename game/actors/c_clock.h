@@ -10,30 +10,28 @@ class C_clock : public C_actor
 {
 public:
     C_clock();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
     // FUNCTION: GAME 0x56ae10
     virtual ~C_clock() {}
     // The hands: false without the hour's and the minute's
     virtual bool Init(I3D_frame *frm);
     // Inline: the vtable's copy (0x443860) is in another file's range and jumps to C_actor's (PS2 has a C_clock
     // DuplicateFrom too)
-    // FUNCTION: GAME 0x443860
+    // FUNCTION: GAME 0x443860 FOLDED
     virtual void DuplicateFrom(C_actor *act)
     {
         C_actor::DuplicateFrom(act);
     }
-    // Nothing to save: the vtable has the copies of other classes' (0x409220, a xor eax, eax, and 0x4aa490, a mov al, 1)
+    // Nothing to save: the vtable has the copies of other classes' (0x409220, a xor eax, eax, of the in-class kind,
+    // and 0x4aa490, a mov al, 1, of the out-of-line kind)
     virtual int SaveGameGetSize()
     {
         return 0;
     }
-    virtual bool SaveGameSave(void **buf)
-    {
-        return true;
-    }
-    virtual bool SaveGameLoad(void **buf)
-    {
-        return true;
-    }
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
     // The hands set to the computer's time
     virtual void GameInit();
     virtual void GameDone();
@@ -49,3 +47,6 @@ public:
     float angle_hour;                   // 0x80, in radians
     float angle_minute;                 // 0x84
 };
+
+// SYNTHETIC: GAME 0x56adf0
+// C_clock::`scalar deleting destructor'

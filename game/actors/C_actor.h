@@ -11,6 +11,7 @@
 
 class C_chunk;
 class C_cutscene_records;
+struct tDynamicCollObject;
 
 // The actors' types (C_actor::type), which the mission's scene2.bin gives each actor and C_mission::CreateActor creates
 // a class for (the names are ours, after the classes; PS2's are the same values but for the three PC only classes)
@@ -67,30 +68,33 @@ class C_cutscene_records;
 #define ACTF_UNKNOWN_10 0x10
 
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
-// The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 16 come before the destructor, where PS2 has
-// AI, Update and NetDirect; from the destructor on the PC's are PS2's in PS2's order. The first 16 are placeholders.
+// The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 13 come before AI, Update and NetDirect, PS2's
+// first three; from those on the PC's are PS2's in PS2's order, but for PS2's last two (ChangeSceneInit and
+// ChangeSceneDone). The first 13 are PC only, most of them the cutscenes' (they read unknown_8): placeholders, their
+// parameters and results by the original's code (the types are guesses).
 // Not written yet: the virtual functions declared here but the destructor, Init, Release, GameInit and GameDone, which
-// the actors' classes need, are stubs (C_actor.cpp).
+// the actors' classes need, are stubs (C_actor.cpp). Each actor class declares the slots its vtable overrides.
 // VTABLE: GAME 0x623248
 class C_actor
 {
 public:
     C_actor();
 
-    virtual void vfunc_0();
-    virtual void vfunc_1();
-    virtual void vfunc_2();
-    virtual void vfunc_3();
-    virtual void vfunc_4();
-    virtual void vfunc_5();
+    virtual int vfunc_0(int a);         // -1 here
+    virtual void vfunc_1(int a);
+    virtual void vfunc_2(int a);
+    virtual bool vfunc_3(int a);
+    virtual S_vector vfunc_4(int a);
+    virtual S_vector vfunc_5(int a);
     // Set or clear the flags' 8 and 2 and their 4 and 1 (0x5c27b0, 0x5c27d0); the cutscenes call them
     virtual void vfunc_6(bool on);
     virtual void vfunc_7(bool on);
     virtual void vfunc_8();
-    virtual void vfunc_9();
-    virtual void vfunc_10();
-    virtual void vfunc_11();
-    virtual void vfunc_12();
+    virtual bool vfunc_9();
+    virtual void *vfunc_10();
+    virtual void *vfunc_11(int a);
+    // Empty here (the folded ret, 0x404990)
+    virtual void vfunc_12() {}
     // The actor's frame of a tick (PS2 names): its own decisions, unless ACTF_UNKNOWN_1 or 4 stops them, or what the
     // network says instead where unknown_20 is set, then the update. Empty here, as PS2's (the original's slots point
     // at the folded ret 4, 0x403db0).
@@ -122,13 +126,22 @@ public:
     // calls GameDone before releasing a kept actor
     virtual void GameInit();
     virtual void GameDone();
-    // The vtable's other slots (0x6c to 0x90): PS2's Death, Collision, IsPossibleColl and the other small ones, in an
-    // order not known yet; placeholders but for Death, Hit and GetProgram
-    virtual void vfunc_27() {}
-    virtual void vfunc_28() {}
-    // The actor's death, which Tick runs once (PS2 name; empty, its slot the folded empty function, 0x4aabe0)
+    // PS2 names from here on, the types PS2's but where noted: empty or constant here, each slot a folded copy, but for
+    // GetBoundPoints2D (a stub)
+    virtual void ChangeState() {}
+    // The actor's speed, none here
+    virtual void GetActorSpeed(S_vector &speed)
+    {
+        speed.Zero();
+    }
+    // The actor's death, which Tick runs once (empty, its slot the folded empty function of the out-of-line kind,
+    // 0x4aabe0)
     virtual void Death();
-    virtual void vfunc_30() {}
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm)
+    {
+        return false;
+    }
     // A hit of the type, HIT_* (PS2 name, the parameters' names are ours): false, as PS2's (the original's slot points
     // at a folded copy, 0x4bd260)
     virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
@@ -136,16 +149,23 @@ public:
     {
         return false;
     }
-    virtual void vfunc_32() {}
-    virtual void vfunc_33() {}
-    virtual void vfunc_34() {}
+    virtual int GetMaterialID(I3D_frame *frm)
+    {
+        return 0;
+    }
+    // The PC's takes ten dwords, PS2's six parameters, the two vectors references: taken here by value (a guess)
+    virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll)
+    {
+        return false;
+    }
+    virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
     // The actor's script's instructions, NULL without one (PS2 name), which the script's CALL runs: a copy the linker
     // folded with every return of NULL, annotated by name after the class
     virtual std::vector<C_program::S_instruction> *GetProgram()
     {
         return NULL;
     }
-    virtual void vfunc_36(int) {}
+    virtual void cbCollTester(tDynamicCollObject *obj) {}
     // The actor's sounds changed (PS2 name), which C_game::StopAllSounds calls with 0: empty here, as PS2's (the
     // original's slot points at a folded empty ret 4)
     virtual void SoundsChange(int) {}
@@ -255,6 +275,8 @@ public:
     {
         this->dir = dir;
     }
+    // Folded with C_mission::GetMissionName's copy (Mission.h)
+    // FUNCTION: GAME 0x47afb0 FOLDED
     I3D_frame *GetFrame() const
     {
         return frame;
@@ -293,12 +315,44 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?OnClose@GM_Menu@@UAEHXZ
+// ?GetProgram@C_actor@@UAEPAV?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@XZ
+
+// The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
+// (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
+// IsPossibleColl's and Collision's returns of false
+// SYNTHETIC: GAME 0x4ab130
+// ?NetDirect@C_human@@UAEXI@Z
+
+// SYNTHETIC: GAME 0x4091f0
+// ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
+
+// SYNTHETIC: GAME 0x409210
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+
+// SYNTHETIC: GAME 0x407590
+// ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
+
+// SYNTHETIC: GAME 0x4aa450
+// ?Collision@C_actor@@UAE_NPAV1@ABUS_vector@@11MPAVI3D_frame@@@Z
+
+// The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
+// the class and out of line, one argument) and of 0 (out of line, none)
+// SYNTHETIC: GAME 0x4bd260
+// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
+
+// SYNTHETIC: GAME 0x4aa440
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
+
+// SYNTHETIC: GAME 0x4aa490
+// ?SaveGameLoad@C_clock@@UAE_NPAPAX@Z
+
+// SYNTHETIC: GAME 0x4aa430
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@XZ
+// ?GetUnknown4@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
 // ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z

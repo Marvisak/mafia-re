@@ -4,10 +4,28 @@
 
 // The rails' turnouts (PS2 C_turnout, C_turnout.cpp), 0x1a0 bytes (PS2's 0x1d0). Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_TURNOUT.
+// VTABLE: GAME 0x624d58
 class C_turnout : public C_actor
 {
 public:
     C_turnout();
+    virtual ~C_turnout();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
 
     uchar unknown_70[0x130];            // 0x70
 };
+
+// SYNTHETIC: GAME 0x4bc470
+// C_turnout::`scalar deleting destructor'

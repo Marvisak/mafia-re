@@ -133,8 +133,7 @@ void C_web_path::DeRiciConns()
     }
 }
 
-// Empty, as PS2's: the vtable's entry is a folded copy
-// FUNCTION: GAME 0x46ca70 FOLDED
+// Empty, as PS2's: the vtable's entry is a folded copy (0x46ca70, annotated by name in mission/C_program.h)
 void C_web_path::DebugFindPath(ushort, ushort)
 {
 }

@@ -14,4 +14,61 @@ C_rail_generator::C_rail_generator()
     StubLog("C_rail_generator::C_rail_generator");
 }
 
+// Declared, empty: it stores the vtable again before the base's
+// FUNCTION: GAME 0x596680
+C_rail_generator::~C_rail_generator()
+{
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_rail_generator::Update(uint time)
+{
+}
+
+// STUB: GAME 0x596690
+bool C_rail_generator::Init(I3D_frame *frm)
+{
+    StubLog("C_rail_generator::Init");
+    return C_actor::Init(frm);
+}
+
+// STUB: GAME 0x5966a0
+void C_rail_generator::SaveData(C_chunk *chunk)
+{
+    StubLog("C_rail_generator::SaveData");
+    C_actor::SaveData(chunk);
+}
+
+// STUB: GAME 0x596710
+void C_rail_generator::LoadData(C_chunk *chunk)
+{
+    StubLog("C_rail_generator::LoadData");
+    C_actor::LoadData(chunk);
+}
+
+// STUB: GAME 0x596860
+void C_rail_generator::GameInit()
+{
+    StubLog("C_rail_generator::GameInit");
+    C_actor::GameInit();
+}
+
+// STUB: GAME 0x597a20
+void C_rail_generator::GameDone()
+{
+    StubLog("C_rail_generator::GameDone");
+    C_actor::GameDone();
+}
+
+// STUB: GAME 0x597bf0
+void C_rail_generator::AI(uint time)
+{
+    StubLog("C_rail_generator::AI");
+    C_actor::AI(time);
+}
+
 #pragma auto_inline(on)

@@ -108,10 +108,37 @@ public:
 // constructor so far, which C_mission::CreateActor calls for ACTOR_ENTITY, what C_game::EntityBlock calls, and what
 // the script's commands use. PS2's save functions and CallBack override C_program's too (its @3056@ thunks), which
 // aren't declared yet.
+// VTABLE: GAME 0x625090
 class C_entity : public C_human, public C_program
 {
 public:
     C_entity();
+    virtual ~C_entity();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void Death();
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual std::vector<C_program::S_instruction> *GetProgram();
+    // C_program's: the entity's commands (stubs)
+    virtual bool DecodeParams(char *params, S_instruction &ins);
+    virtual int DecodeInstruction(char *line, int &len);
+    virtual void Process(uint time);
+    virtual void DecompileCommand(int i, char *s);
+    virtual void CallBack(E_cb_action action);
     // PS2 names, Czech for "sit on your backside and watch the movie" and "wake up, the credits are on": the entity
     // blocked for a cutscene and woken after it (C_game::EntityBlock)
     void SedniNaPrdelASledujKino(bool unknown);
@@ -191,3 +218,6 @@ public:
     C_using_object::S_using_object using_object;  // 0x1230
     uchar unknown_1268[0x24];           // 0x1268, a vector first (the constructor's)
 };
+
+// SYNTHETIC: GAME 0x5072f0
+// C_entity::`scalar deleting destructor'

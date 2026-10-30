@@ -6,10 +6,32 @@ class C_car;
 
 // The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR.
+// VTABLE: GAME 0x624c98
 class C_traffic_car : public C_actor
 {
 public:
     C_traffic_car();
+    virtual ~C_traffic_car();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void ChangeState();
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
+    // A virtual function of its own (the original's last slot)
+    virtual bool vfunc_38(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l);
 
     // PS2 name (Czech, roughly "so now I buy them all from you"; PS2's takes a bool)
     void TakATedSiVasKupim_Vsecky();
@@ -36,3 +58,6 @@ public:
     static float unknown_63d7fc;
     static float unknown_63d804;
 };
+
+// SYNTHETIC: GAME 0x4aa810
+// C_traffic_car::`scalar deleting destructor'

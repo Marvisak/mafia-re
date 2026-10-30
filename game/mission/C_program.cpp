@@ -2607,7 +2607,7 @@ int C_program::Compile(char *src, bool one_line, int *err_pos, int *err_len)
     return errors;
 }
 
-// FUNCTION: GAME 0x46ca70 FOLDED
+// Empty: the linker folded it with the other empty functions of its kind (C_program.h)
 void C_program::DecompileCommand(int, char *)
 {
 }

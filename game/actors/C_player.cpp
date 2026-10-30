@@ -82,3 +82,92 @@ void C_player::FadeReset()
     unknown_abc = 1.0f;
     SetAlpha(unknown_ab8);
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x58f220
+C_player::~C_player()
+{
+    StubLog("C_player::~C_player");
+}
+
+// STUB: GAME 0x58f260
+bool C_player::Init(I3D_frame *frm)
+{
+    StubLog("C_player::Init");
+    return C_human::Init(frm);
+}
+
+// STUB: GAME 0x58f2a0
+void C_player::SaveData(C_chunk *chunk)
+{
+    StubLog("C_player::SaveData");
+    C_human::SaveData(chunk);
+}
+
+// STUB: GAME 0x58f2c0
+void C_player::LoadData(C_chunk *chunk)
+{
+    StubLog("C_player::LoadData");
+    C_human::LoadData(chunk);
+}
+
+// STUB: GAME 0x58f2e0
+int C_player::SaveGameGetSize()
+{
+    StubLog("C_player::SaveGameGetSize");
+    return C_human::SaveGameGetSize();
+}
+
+// STUB: GAME 0x58f2f0
+bool C_player::SaveGameSave(void **buf)
+{
+    StubLog("C_player::SaveGameSave");
+    return C_human::SaveGameSave(buf);
+}
+
+// STUB: GAME 0x58f380
+bool C_player::SaveGameLoad(void **buf)
+{
+    StubLog("C_player::SaveGameLoad");
+    return C_human::SaveGameLoad(buf);
+}
+
+// STUB: GAME 0x5937b0
+void C_player::AI(uint time)
+{
+    StubLog("C_player::AI");
+    C_human::AI(time);
+}
+
+// STUB: GAME 0x594060
+void C_player::GameInit()
+{
+    StubLog("C_player::GameInit");
+    C_human::GameInit();
+}
+
+// STUB: GAME 0x594180
+void C_player::GameDone()
+{
+    StubLog("C_player::GameDone");
+    C_human::GameDone();
+}
+
+// STUB: GAME 0x5941c0
+bool C_player::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+    I3D_frame *frm)
+{
+    StubLog("C_player::Collision");
+    return C_human::Collision(act, v1, v2, v3, f, frm);
+}
+
+// STUB: GAME 0x594210
+bool C_player::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+    uint u, I3D_frame *frm)
+{
+    StubLog("C_player::Hit");
+    return C_human::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+#pragma auto_inline(on)

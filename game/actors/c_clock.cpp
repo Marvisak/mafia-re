@@ -4,6 +4,7 @@
 // (0x56afe0).
 
 #include "actors/c_clock.h"
+#include "stub.h"
 
 // FUNCTION: GAME 0x56add0
 C_clock::C_clock()
@@ -56,3 +57,25 @@ void C_clock::GameDone()
 {
     C_actor::GameDone();
 }
+
+// Folded with the other returns of true of their kind (0x4aa490, C_actor.h)
+bool C_clock::SaveGameSave(void **buf)
+{
+    return true;
+}
+
+bool C_clock::SaveGameLoad(void **buf)
+{
+    return true;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x56afe0
+void C_clock::AI(uint time)
+{
+    StubLog("C_clock::AI");
+    C_actor::AI(time);
+}
+
+#pragma auto_inline(on)

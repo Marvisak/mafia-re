@@ -131,3 +131,70 @@ void C_detector::EraseColls()
         delete[] coll_inv_matrices;
     coll_inv_matrices = NULL;
 }
+
+// FUNCTION: GAME 0x433ce0
+bool C_detector::DecodeParams(char *params, S_instruction &ins)
+{
+    return C_program::DecodeParams(params, ins);
+}
+
+// FUNCTION: GAME 0x433cf0
+int C_detector::DecodeInstruction(char *line, int &len)
+{
+    return C_program::DecodeInstruction(line, len);
+}
+
+// FUNCTION: GAME 0x433d00
+void C_detector::DecompileCommand(int i, char *s)
+{
+    C_program::DecompileCommand(i, s);
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x433d10
+void C_detector::Process(uint time)
+{
+    StubLog("C_detector::Process");
+    C_program::Process(time);
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x432ac0
+void C_detector::SaveData(C_chunk *chunk)
+{
+    StubLog("C_detector::SaveData");
+    C_actor::SaveData(chunk);
+}
+
+// STUB: GAME 0x432d70
+void C_detector::AI(uint time)
+{
+    StubLog("C_detector::AI");
+    C_actor::AI(time);
+}
+
+// STUB: GAME 0x432db0
+void C_detector::Update(uint time)
+{
+    StubLog("C_detector::Update");
+    C_actor::Update(time);
+}
+
+// STUB: GAME 0x433020
+bool C_detector::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+    uint u, I3D_frame *frm)
+{
+    StubLog("C_detector::Hit");
+    return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_detector::NetDirect(uint time)
+{
+}
+
+#pragma auto_inline(on)

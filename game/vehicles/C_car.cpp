@@ -477,3 +477,182 @@ void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, fl
     ff_suspension = suspension;
     ff_revs = revs;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41bcb0
+C_car::~C_car()
+{
+    StubLog("C_car::~C_car");
+}
+
+// STUB: GAME 0x41bd80
+bool C_car::Init(I3D_frame *frm)
+{
+    StubLog("C_car::Init");
+    return C_actor::Init(frm);
+}
+
+// STUB: GAME 0x41df30
+void C_car::DuplicateFrom(C_actor *act)
+{
+    StubLog("C_car::DuplicateFrom");
+    C_actor::DuplicateFrom(act);
+}
+
+// STUB: GAME 0x41df80
+void C_car::SaveData(C_chunk *chunk)
+{
+    StubLog("C_car::SaveData");
+    C_actor::SaveData(chunk);
+}
+
+// STUB: GAME 0x41e070
+void C_car::LoadData(C_chunk *chunk)
+{
+    StubLog("C_car::LoadData");
+    C_actor::LoadData(chunk);
+}
+
+// STUB: GAME 0x41ed00
+void C_car::GameInit()
+{
+    StubLog("C_car::GameInit");
+    C_actor::GameInit();
+}
+
+// STUB: GAME 0x41f5e0
+void C_car::GameDone()
+{
+    StubLog("C_car::GameDone");
+    C_actor::GameDone();
+}
+
+// STUB: GAME 0x41f780
+void C_car::AI(uint time)
+{
+    StubLog("C_car::AI");
+    C_actor::AI(time);
+}
+
+// STUB: GAME 0x41fac0
+void C_car::Update(uint time)
+{
+    StubLog("C_car::Update");
+    C_actor::Update(time);
+}
+
+// STUB: GAME 0x423540
+int C_car::GetMaterialID(I3D_frame *frm)
+{
+    StubLog("C_car::GetMaterialID");
+    return C_actor::GetMaterialID(frm);
+}
+
+// STUB: GAME 0x423600
+bool C_car::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act, uint u,
+    I3D_frame *frm)
+{
+    StubLog("C_car::Hit");
+    return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// STUB: GAME 0x4248e0
+bool C_car::IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll)
+{
+    StubLog("C_car::IsPossibleColl");
+    return C_actor::IsPossibleColl(act, v1, v2, f, dist, coll);
+}
+
+// STUB: GAME 0x425040
+bool C_car::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, I3D_frame *frm)
+{
+    StubLog("C_car::Collision");
+    return C_actor::Collision(act, v1, v2, v3, f, frm);
+}
+
+// STUB: GAME 0x429a80
+void C_car::ChangeState()
+{
+    StubLog("C_car::ChangeState");
+    C_actor::ChangeState();
+}
+
+// STUB: GAME 0x429dd0
+void C_car::GetActorSpeed(S_vector &speed)
+{
+    StubLog("C_car::GetActorSpeed");
+    C_actor::GetActorSpeed(speed);
+}
+
+// STUB: GAME 0x429df0
+void C_car::SoundsChange(int i)
+{
+    StubLog("C_car::SoundsChange");
+    C_actor::SoundsChange(i);
+}
+
+// STUB: GAME 0x42bbd0
+int C_car::SaveGameGetSize()
+{
+    StubLog("C_car::SaveGameGetSize");
+    return C_actor::SaveGameGetSize();
+}
+
+// STUB: GAME 0x42bbf0
+bool C_car::SaveGameSave(void **buf)
+{
+    StubLog("C_car::SaveGameSave");
+    return C_actor::SaveGameSave(buf);
+}
+
+// STUB: GAME 0x42bdc0
+bool C_car::SaveGameLoad(void **buf)
+{
+    StubLog("C_car::SaveGameLoad");
+    return C_actor::SaveGameLoad(buf);
+}
+
+// STUB: GAME 0x42c010
+int C_car::vfunc_0(int a)
+{
+    StubLog("C_car::vfunc_0");
+    return C_actor::vfunc_0(a);
+}
+
+// STUB: GAME 0x42c220
+void C_car::vfunc_1(int a)
+{
+    StubLog("C_car::vfunc_1");
+    C_actor::vfunc_1(a);
+}
+
+// STUB: GAME 0x42c3e0
+void C_car::vfunc_2(int a)
+{
+    StubLog("C_car::vfunc_2");
+    C_actor::vfunc_2(a);
+}
+
+// STUB: GAME 0x42c7b0
+bool C_car::vfunc_9()
+{
+    StubLog("C_car::vfunc_9");
+    return C_actor::vfunc_9();
+}
+
+// STUB: GAME 0x42c7d0
+bool C_car::vfunc_3(int a)
+{
+    StubLog("C_car::vfunc_3");
+    return C_actor::vfunc_3(a);
+}
+
+// STUB: GAME 0x42cad0
+S_vector C_car::vfunc_4(int a)
+{
+    StubLog("C_car::vfunc_4");
+    return C_actor::vfunc_4(a);
+}
+
+#pragma auto_inline(on)

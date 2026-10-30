@@ -414,3 +414,85 @@ void C_cutscene_records::Reset()
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x59e850
+C_seagull::~C_seagull()
+{
+    StubLog("C_seagull::~C_seagull");
+}
+
+// The linker's folded empty function of the out-of-line kind (0x46ca70)
+void C_seagull::vfunc_38(int a, int b)
+{
+}
+
+// The original's is C_pumper's, folded: it logs that name, so ours folds too
+// STUB: GAME 0x47c760 FOLDED
+bool C_seagull::Init(I3D_frame *frm)
+{
+    StubLog("C_pumper::Init");
+    return C_actor::Init(frm);
+}
+
+// The linker's folded copy (0x4aa490)
+bool C_seagull::SaveGameSave(void **buf)
+{
+    return true;
+}
+
+// The linker's folded copy (0x4aa490)
+bool C_seagull::SaveGameLoad(void **buf)
+{
+    return true;
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_seagull::Update(uint time)
+{
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_seagull::NetDirect(uint time)
+{
+}
+
+// STUB: GAME 0x59e890
+void C_seagull::GameInit()
+{
+    StubLog("C_seagull::GameInit");
+    C_actor::GameInit();
+}
+
+// STUB: GAME 0x59f6a0
+void C_seagull::GameDone()
+{
+    StubLog("C_seagull::GameDone");
+    C_actor::GameDone();
+}
+
+// STUB: GAME 0x59f710
+bool C_seagull::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+    I3D_frame *frm)
+{
+    StubLog("C_seagull::Collision");
+    return C_actor::Collision(act, v1, v2, v3, f, frm);
+}
+
+// STUB: GAME 0x59f770
+bool C_seagull::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+    uint u, I3D_frame *frm)
+{
+    StubLog("C_seagull::Hit");
+    return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// STUB: GAME 0x59f920
+void C_seagull::AI(uint time)
+{
+    StubLog("C_seagull::AI");
+    C_actor::AI(time);
+}
+
+#pragma auto_inline(on)

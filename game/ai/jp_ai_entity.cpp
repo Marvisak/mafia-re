@@ -72,3 +72,155 @@ void C_entity::VzbudSeUzSouTitulky()
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x507310
+C_entity::~C_entity()
+{
+    StubLog("C_entity::~C_entity");
+}
+
+// STUB: GAME 0x507470
+bool C_entity::Init(I3D_frame *frm)
+{
+    StubLog("C_entity::Init");
+    return C_human::Init(frm);
+}
+
+// STUB: GAME 0x507490
+void C_entity::DuplicateFrom(C_actor *act)
+{
+    StubLog("C_entity::DuplicateFrom");
+    C_human::DuplicateFrom(act);
+}
+
+// STUB: GAME 0x5074d0
+void C_entity::GameInit()
+{
+    StubLog("C_entity::GameInit");
+    C_human::GameInit();
+}
+
+// STUB: GAME 0x507d30
+void C_entity::GameDone()
+{
+    StubLog("C_entity::GameDone");
+    C_human::GameDone();
+}
+
+// STUB: GAME 0x507dd0
+void C_entity::SaveData(C_chunk *chunk)
+{
+    StubLog("C_entity::SaveData");
+    C_human::SaveData(chunk);
+}
+
+// STUB: GAME 0x507e20
+void C_entity::LoadData(C_chunk *chunk)
+{
+    StubLog("C_entity::LoadData");
+    C_human::LoadData(chunk);
+}
+
+// STUB: GAME 0x507ec0
+bool C_entity::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+    I3D_frame *frm)
+{
+    StubLog("C_entity::Collision");
+    return C_human::Collision(act, v1, v2, v3, f, frm);
+}
+
+// STUB: GAME 0x507ed0
+bool C_entity::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+    uint u, I3D_frame *frm)
+{
+    StubLog("C_entity::Hit");
+    return C_human::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// STUB: GAME 0x508150
+void C_entity::AI(uint time)
+{
+    StubLog("C_entity::AI");
+    C_human::AI(time);
+}
+
+// STUB: GAME 0x51b020
+std::vector<C_program::S_instruction> *C_entity::GetProgram()
+{
+    StubLog("C_entity::GetProgram");
+    return C_human::GetProgram();
+}
+
+// STUB: GAME 0x51b2f0
+void C_entity::Update(uint time)
+{
+    StubLog("C_entity::Update");
+    C_human::Update(time);
+}
+
+// STUB: GAME 0x51b3f0
+void C_entity::Death()
+{
+    StubLog("C_entity::Death");
+    C_human::Death();
+}
+
+// STUB: GAME 0x51b470
+bool C_entity::DecodeParams(char *params, S_instruction &ins)
+{
+    StubLog("C_entity::DecodeParams");
+    return C_program::DecodeParams(params, ins);
+}
+
+// STUB: GAME 0x51cdd0
+int C_entity::DecodeInstruction(char *line, int &len)
+{
+    StubLog("C_entity::DecodeInstruction");
+    return C_program::DecodeInstruction(line, len);
+}
+
+// STUB: GAME 0x51f3e0
+void C_entity::DecompileCommand(int i, char *s)
+{
+    StubLog("C_entity::DecompileCommand");
+    C_program::DecompileCommand(i, s);
+}
+
+// STUB: GAME 0x51fda0
+void C_entity::Process(uint time)
+{
+    StubLog("C_entity::Process");
+    C_program::Process(time);
+}
+
+// STUB: GAME 0x524070
+void C_entity::CallBack(E_cb_action action)
+{
+    StubLog("C_entity::CallBack");
+    C_program::CallBack(action);
+}
+
+// STUB: GAME 0x52db20
+int C_entity::SaveGameGetSize()
+{
+    StubLog("C_entity::SaveGameGetSize");
+    return C_human::SaveGameGetSize();
+}
+
+// STUB: GAME 0x52db80
+bool C_entity::SaveGameSave(void **buf)
+{
+    StubLog("C_entity::SaveGameSave");
+    return C_human::SaveGameSave(buf);
+}
+
+// STUB: GAME 0x52dc40
+bool C_entity::SaveGameLoad(void **buf)
+{
+    StubLog("C_entity::SaveGameLoad");
+    return C_human::SaveGameLoad(buf);
+}
+
+#pragma auto_inline(on)

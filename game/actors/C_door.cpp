@@ -14,6 +14,12 @@ C_door::C_door()
     StubLog("C_door::C_door");
 }
 
+// Declared, empty: it stores the vtable again before the base's
+// FUNCTION: GAME 0x439390
+C_door::~C_door()
+{
+}
+
 // STUB: GAME 0x439610
 void C_door::SetState(E_state state, C_actor *actor, bool unknown1, bool unknown2)
 {
@@ -30,6 +36,115 @@ void C_door::EnableUsingObject(bool enable)
 void C_door::SetOpenAngle(float open)
 {
     StubLog("C_door::SetOpenAngle");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// The linker folded it with C_traffic_generator, C_wagon's
+// STUB: GAME 0x4393a0 FOLDED
+bool C_door::Init(I3D_frame *frm)
+{
+    StubLog("C_door::Init");
+    return C_actor::Init(frm);
+}
+
+// STUB: GAME 0x4393c0
+void C_door::DuplicateFrom(C_actor *act)
+{
+    StubLog("C_door::DuplicateFrom");
+    C_actor::DuplicateFrom(act);
+}
+
+// STUB: GAME 0x439480
+bool C_door::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act, uint u,
+    I3D_frame *frm)
+{
+    StubLog("C_door::Hit");
+    return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// STUB: GAME 0x4399c0
+void C_door::AI(uint time)
+{
+    StubLog("C_door::AI");
+    C_actor::AI(time);
+}
+
+// STUB: GAME 0x439e90
+void C_door::NetDirect(uint time)
+{
+    StubLog("C_door::NetDirect");
+    C_actor::NetDirect(time);
+}
+
+// STUB: GAME 0x439eb0
+void C_door::GameInit()
+{
+    StubLog("C_door::GameInit");
+    C_actor::GameInit();
+}
+
+// STUB: GAME 0x43ad60
+void C_door::GameDone()
+{
+    StubLog("C_door::GameDone");
+    C_actor::GameDone();
+}
+
+// STUB: GAME 0x43ae50
+void C_door::SaveData(C_chunk *chunk)
+{
+    StubLog("C_door::SaveData");
+    C_actor::SaveData(chunk);
+}
+
+// STUB: GAME 0x43b030
+void C_door::LoadData(C_chunk *chunk)
+{
+    StubLog("C_door::LoadData");
+    C_actor::LoadData(chunk);
+}
+
+// STUB: GAME 0x43b4f0
+int C_door::SaveGameGetSize()
+{
+    StubLog("C_door::SaveGameGetSize");
+    return C_actor::SaveGameGetSize();
+}
+
+// STUB: GAME 0x43b500
+bool C_door::SaveGameSave(void **buf)
+{
+    StubLog("C_door::SaveGameSave");
+    return C_actor::SaveGameSave(buf);
+}
+
+// STUB: GAME 0x43b560
+bool C_door::SaveGameLoad(void **buf)
+{
+    StubLog("C_door::SaveGameLoad");
+    return C_actor::SaveGameLoad(buf);
+}
+
+// STUB: GAME 0x43bab0
+bool C_door::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
+{
+    StubLog("C_door::GetBoundPoints2D");
+    return C_actor::GetBoundPoints2D(points, frm);
+}
+
+// STUB: GAME 0x43bcc0
+void C_door::ChangeState()
+{
+    StubLog("C_door::ChangeState");
+    C_actor::ChangeState();
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_door::Update(uint time)
+{
 }
 
 #pragma auto_inline(on)

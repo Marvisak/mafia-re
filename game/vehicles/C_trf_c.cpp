@@ -48,3 +48,122 @@ void C_traffic_car::VypraskeeeKaaaru(C_actor *act)
 
 #pragma auto_inline(on)
 
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4aa830
+C_traffic_car::~C_traffic_car()
+{
+    StubLog("C_traffic_car::~C_traffic_car");
+}
+
+// STUB: GAME 0x4aa860
+bool C_traffic_car::Init(I3D_frame *frm)
+{
+    StubLog("C_traffic_car::Init");
+    return C_actor::Init(frm);
+}
+
+// STUB: GAME 0x4aa8b0
+void C_traffic_car::ChangeState()
+{
+    StubLog("C_traffic_car::ChangeState");
+    C_actor::ChangeState();
+}
+
+// STUB: GAME 0x4aab20
+void C_traffic_car::DuplicateFrom(C_actor *act)
+{
+    StubLog("C_traffic_car::DuplicateFrom");
+    C_actor::DuplicateFrom(act);
+}
+
+// STUB: GAME 0x4aabf0
+void C_traffic_car::SaveData(C_chunk *chunk)
+{
+    StubLog("C_traffic_car::SaveData");
+    C_actor::SaveData(chunk);
+}
+
+// STUB: GAME 0x4aad20
+void C_traffic_car::LoadData(C_chunk *chunk)
+{
+    StubLog("C_traffic_car::LoadData");
+    C_actor::LoadData(chunk);
+}
+
+// FUNCTION: GAME 0x4ab120
+bool C_traffic_car::vfunc_38(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l)
+{
+    return false;
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_traffic_car::NetDirect(uint time)
+{
+}
+
+// STUB: GAME 0x4afc40
+void C_traffic_car::AI(uint time)
+{
+    StubLog("C_traffic_car::AI");
+    C_actor::AI(time);
+}
+
+// STUB: GAME 0x4b5270
+void C_traffic_car::Update(uint time)
+{
+    StubLog("C_traffic_car::Update");
+    C_actor::Update(time);
+}
+
+// STUB: GAME 0x4b54a0
+void C_traffic_car::GameInit()
+{
+    StubLog("C_traffic_car::GameInit");
+    C_actor::GameInit();
+}
+
+// STUB: GAME 0x4b8010
+void C_traffic_car::GameDone()
+{
+    StubLog("C_traffic_car::GameDone");
+    C_actor::GameDone();
+}
+
+// STUB: GAME 0x4ba9c0
+bool C_traffic_car::IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll)
+{
+    StubLog("C_traffic_car::IsPossibleColl");
+    return C_actor::IsPossibleColl(act, v1, v2, f, dist, coll);
+}
+
+// STUB: GAME 0x4baad0
+bool C_traffic_car::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+    uint u, I3D_frame *frm)
+{
+    StubLog("C_traffic_car::Hit");
+    return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
+}
+
+// STUB: GAME 0x4bc150
+int C_traffic_car::SaveGameGetSize()
+{
+    StubLog("C_traffic_car::SaveGameGetSize");
+    return C_actor::SaveGameGetSize();
+}
+
+// STUB: GAME 0x4bc160
+bool C_traffic_car::SaveGameSave(void **buf)
+{
+    StubLog("C_traffic_car::SaveGameSave");
+    return C_actor::SaveGameSave(buf);
+}
+
+// STUB: GAME 0x4bc190
+bool C_traffic_car::SaveGameLoad(void **buf)
+{
+    StubLog("C_traffic_car::SaveGameLoad");
+    return C_actor::SaveGameLoad(buf);
+}
+
+#pragma auto_inline(on)

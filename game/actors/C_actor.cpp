@@ -617,39 +617,43 @@ int _anim_index_count_ = 0;
 #pragma auto_inline(off)
 
 // STUB: GAME 0x404e00
-void C_actor::vfunc_9()
+bool C_actor::vfunc_9()
 {
     StubLog("C_actor::vfunc_9");
+    return false;
 }
 
 // STUB: GAME 0x404f30
-void C_actor::vfunc_0()
+int C_actor::vfunc_0(int a)
 {
     StubLog("C_actor::vfunc_0");
+    return -1;
 }
 
 // STUB: GAME 0x404f40
-void C_actor::vfunc_1()
+void C_actor::vfunc_1(int a)
 {
     StubLog("C_actor::vfunc_1");
 }
 
 // STUB: GAME 0x405010
-void C_actor::vfunc_2()
+void C_actor::vfunc_2(int a)
 {
     StubLog("C_actor::vfunc_2");
 }
 
 // STUB: GAME 0x4054c0
-void C_actor::vfunc_3()
+bool C_actor::vfunc_3(int a)
 {
     StubLog("C_actor::vfunc_3");
+    return false;
 }
 
 // STUB: GAME 0x405a00
-void C_actor::vfunc_4()
+S_vector C_actor::vfunc_4(int a)
 {
     StubLog("C_actor::vfunc_4");
+    return S_vector(0.0f, 0.0f, 0.0f);
 }
 
 #pragma auto_inline(on)
@@ -875,6 +879,13 @@ bool C_actor::SaveGameLoad(void **buf)
     return false;
 }
 
+// STUB: GAME 0x4075a0
+bool C_actor::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
+{
+    StubLog("C_actor::GetBoundPoints2D");
+    return false;
+}
+
 #pragma auto_inline(on)
 
 // From the last one, which the actor most likely is if anything
@@ -1056,29 +1067,30 @@ void DoneAnimIndex()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x42cc20
-void C_actor::vfunc_5()
+S_vector C_actor::vfunc_5(int a)
 {
     StubLog("C_actor::vfunc_5");
+    return S_vector(0.0f, 0.0f, 0.0f);
 }
 
-// An empty ret 4 of the out-of-line kind (0x403db0 is the inline one's), folded, in another file's range: C_clock's
-// DuplicateFrom jumps to it
-// STUB: GAME 0x4ab130
+// Empty: the vtable's entry is the linker's folded empty ret 4 of the out-of-line kind (0x4ab130, C_actor.h; 0x403db0
+// is the inline one's), which C_clock's DuplicateFrom jumps to
 void C_actor::DuplicateFrom(C_actor *act)
 {
-    StubLog("C_actor::DuplicateFrom");
 }
 
 // STUB: GAME 0x5c2650
-void C_actor::vfunc_11()
+void *C_actor::vfunc_11(int a)
 {
     StubLog("C_actor::vfunc_11");
+    return NULL;
 }
 
 // STUB: GAME 0x5c26a0
-void C_actor::vfunc_10()
+void *C_actor::vfunc_10()
 {
     StubLog("C_actor::vfunc_10");
+    return NULL;
 }
 
 // STUB: GAME 0x5c27b0
@@ -1097,12 +1109,6 @@ void C_actor::vfunc_7(bool on)
 void C_actor::vfunc_8()
 {
     StubLog("C_actor::vfunc_8");
-}
-
-// The vtable's 0x404990, a ret (Main.h)
-void C_actor::vfunc_12()
-{
-    StubLog("C_actor::vfunc_12");
 }
 
 // Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)

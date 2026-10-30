@@ -214,10 +214,37 @@ extern std::vector<S_cutscene_placement> *unknown_647a4c;
 // The seagulls (PC only, the name is ours: they load racek.i3d, Czech for a seagull), 0x244 bytes. Their file is the
 // cutscenes': the constructor (0x59e7e0) is in its range, after Close. Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_SEAGULL.
+// VTABLE: GAME 0x625bb0
 class C_seagull : public C_actor
 {
 public:
     C_seagull();
+    virtual ~C_seagull();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk) {}
+    virtual void LoadData(C_chunk *chunk) {}
+    virtual int SaveGameGetSize()
+    {
+        return 0;
+    }
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    // A virtual function of its own (the original's last slot)
+    virtual void vfunc_38(int a, int b);
 
     uchar unknown_70[0x1d4];            // 0x70
 };
+
+// SYNTHETIC: GAME 0x59e830
+// C_seagull::`scalar deleting destructor'

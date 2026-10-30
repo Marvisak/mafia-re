@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ?vfunc_27@C_actor@@UAEXXZ
+// ?vfunc_12@C_actor@@UAEXXZ
 
 #include <settings.h>
 
@@ -60,10 +60,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAVC_actor@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_BRIDGE@C_sledovacka@@V?$allocator@US_BRIDGE@C_sledovacka@@@std@@@std@@IAEXPAUS_BRIDGE@C_sledovacka@@0@Z
+// ?_Destroy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEPAPAVC_program@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@IV?$allocator@I@std@@@std@@IAEPAIPBI0PAI@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEXPAPAVC_program@@IABQAV3@@Z
+// ?_Ufill@?$vector@IV?$allocator@I@std@@@std@@IAEXPAIIABI@Z

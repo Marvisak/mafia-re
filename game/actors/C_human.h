@@ -14,10 +14,45 @@ class C_car_ex;
 // The humans (PS2 C_human, C_human.cpp), the base of the player and of the AI's C_entity, 0xa9c bytes. Only the
 // constructor so far, which the derived classes' constructors call, the members the camera and the script read, and the
 // functions the script calls, as stubs.
+// VTABLE: GAME 0x6256f8
 class C_human : public C_actor
 {
 public:
     C_human();
+    virtual ~C_human();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual int vfunc_0(int a);
+    virtual void vfunc_1(int a);
+    virtual void vfunc_2(int a);
+    virtual bool vfunc_3(int a);
+    virtual S_vector vfunc_4(int a);
+    virtual S_vector vfunc_5(int a);
+    virtual bool vfunc_9();
+    virtual void vfunc_12();
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void ChangeState();
+    virtual void GetActorSpeed(S_vector &speed);
+    virtual void Death();
+    virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
+        I3D_frame *frm);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
+    virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
+    virtual void cbCollTester(tDynamicCollObject *obj);
+    virtual void SoundsChange(int i);
 
     // The humans' force feedback effects, which C_game's Init and Done create and free when the profile has them (PC
     // only, the names are ours)
@@ -156,3 +191,6 @@ public:
         shut_up = b;
     }
 };
+
+// SYNTHETIC: GAME 0x56f1f0
+// C_human::`scalar deleting destructor'

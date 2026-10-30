@@ -17,6 +17,20 @@ class C_detector : public C_actor, public C_program
 {
 public:
     C_detector();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual void SaveData(C_chunk *chunk);
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    // C_program's: the detector's commands first, which Process handles (a stub); the original's other three only
+    // call C_program's
+    virtual bool DecodeParams(char *params, S_instruction &ins);
+    virtual int DecodeInstruction(char *line, int &len);
+    virtual void DecompileCommand(int i, char *s);
+    virtual void Process(uint time);
     virtual ~C_detector();
     // The script runs for the actor itself
     virtual bool Init(I3D_frame *frm);
@@ -67,3 +81,6 @@ public:
     S_matrix *coll_inv_matrices;        // 0x120
     int num_colls;                      // 0x124
 };
+
+// SYNTHETIC: GAME 0x432910
+// C_detector::`scalar deleting destructor'

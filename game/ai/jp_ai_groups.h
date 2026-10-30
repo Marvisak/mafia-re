@@ -159,7 +159,7 @@ public:
 // ?_Destroy@?$vector@Uai_group@@V?$allocator@Uai_group@@@std@@@std@@IAEXPAUai_group@@0@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -171,7 +171,7 @@ public:
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
 // SYNTHETIC: GAME 0x538c30
-// ??1ai_police_action@@QAE@XZ
+// ??1ai_fight_followship@@QAE@XZ
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750

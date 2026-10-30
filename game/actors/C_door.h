@@ -4,6 +4,7 @@
 
 // The doors (PS2 C_door, C_door.cpp), 0x1b8 bytes (PS2's 0x200). Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_DOOR, and the functions the script calls, as stubs.
+// VTABLE: GAME 0x623b20
 class C_door : public C_actor
 {
 public:
@@ -18,6 +19,25 @@ public:
     };
 
     C_door();
+    virtual ~C_door();
+    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
+    // linker's folded constant functions and those that only call the base's
+    virtual void AI(uint time);
+    virtual void Update(uint time);
+    virtual void NetDirect(uint time);
+    virtual bool Init(I3D_frame *frm);
+    virtual void SaveData(C_chunk *chunk);
+    virtual void LoadData(C_chunk *chunk);
+    virtual void DuplicateFrom(C_actor *act);
+    virtual int SaveGameGetSize();
+    virtual bool SaveGameSave(void **buf);
+    virtual bool SaveGameLoad(void **buf);
+    virtual void GameInit();
+    virtual void GameDone();
+    virtual void ChangeState();
+    virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
+        uint u, I3D_frame *frm);
+    virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
 
     // PS2 names, which the script calls; the parameters' names are ours
     // Opens or closes the door for the actor (the return type isn't known: nothing reads it)
@@ -50,3 +70,6 @@ public:
         return state;
     }
 };
+
+// SYNTHETIC: GAME 0x439370
+// C_door::`scalar deleting destructor'
