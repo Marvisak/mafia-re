@@ -66,4 +66,4 @@ extern bool _is_intro_;
 // ?_Ucopy@?$vector@IV?$allocator@I@std@@@std@@IAEPAIPBI0PAI@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@IV?$allocator@I@std@@@std@@IAEXPAIIABI@Z
+// ?_Ufill@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@IABQAV3@@Z

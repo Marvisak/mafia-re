@@ -82,14 +82,21 @@ public:
 
 // The caches of the models, sounds and animations the missions load (PS2 C_I3D_cache<T>, with C_I3D_model_cache,
 // C_I3D_sound_cache and C_I3D_anim_cache derived from it; the header's name is ours), 0x28 bytes. Main.cpp has the
-// three. Written: Open, Create, Clear, AddDir and DelDir, and the derived caches' CreateNew and Duplicate; the other
-// functions of the vtable are stubs.
-// Open: the original's destructor (0x5c1fd0 for the model cache) releases the items, Clear inlined; ours is implicit.
-// The constructor sets cache_size to 0x100.
+// three. Written: the constructor and the destructor, Open, Create, Clear, AddDir and DelDir, and the derived caches'
+// CreateNew and Duplicate; the other functions of the vtable are stubs.
 template<class T>
 class C_I3D_cache : public C_I3D_cache_base<T>
 {
 public:
+    // The derived caches' constructors inline it, storing only their own vtable
+    C_I3D_cache() : cache_size(0x100) {}
+    // Releases the items (Clear inlined): the derived caches' implicit destructors inline it, and it stores this class's
+    // vtable, which only the destructors and its scalar deleting destructor's copy (0x5c1fd0 for the model cache) need
+    virtual ~C_I3D_cache()
+    {
+        Clear();
+    }
+
     // A loaded object and the name it was loaded by (PS2 C_I3D_cache<T>::S_itm; the members' names are ours)
     struct S_itm
     {
@@ -393,13 +400,13 @@ extern C_I3D_anim_cache anim_cache;
 // ??4S_itm@?$C_I3D_cache@VI3D_sound@@@@QAEAAU01@ABU01@@Z
 
 // SYNTHETIC: GAME 0x410c30
-// ??1S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
+// ??1S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
-// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
+// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
-// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU23@00@Z
+// ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -456,13 +463,94 @@ extern C_I3D_anim_cache anim_cache;
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
 // SYNTHETIC: GAME 0x403730
-// ??0S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
+// ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
 // ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@ABU34@@Z
+
+// The caches' Create, each its own, and Clear, the three's folded
+// TEMPLATE: GAME 0x5c0290
+// ?Create@?$C_I3D_cache@VI3D_model@@@@UAE?AW4LS3D_RESULT@@PBDPAPAVI3D_model@@P6IX0PAX@Z2@Z
+
+// TEMPLATE: GAME 0x5c0c40
+// ?Create@?$C_I3D_cache@VI3D_sound@@@@UAE?AW4LS3D_RESULT@@PBDPAPAVI3D_sound@@P6IX0PAX@Z2@Z
+
+// TEMPLATE: GAME 0x4104f0
+// ?Create@?$C_I3D_cache@VI3D_animation_set@@@@UAE?AW4LS3D_RESULT@@PBDPAPAVI3D_animation_set@@P6IX0PAX@Z2@Z
+
+// TEMPLATE: GAME 0x5c1050
+// ?Clear@?$C_I3D_cache@VI3D_sound@@@@UAEXXZ
+
+// The abstract base's vtables, which the caches' constructors store first, and its scalar deleting destructors
+// VTABLE: GAME 0x625c90
+// class C_I3D_cache_base<I3D_model>
+
+// VTABLE: GAME 0x625d28
+// class C_I3D_cache_base<I3D_sound>
+
+// VTABLE: GAME 0x625dc0
+// class C_I3D_cache_base<I3D_animation_set>
+
+// SYNTHETIC: GAME 0x5c20e0
+// ??_G?$C_I3D_cache_base@VI3D_model@@@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5c2230
+// ??_G?$C_I3D_cache_base@VI3D_sound@@@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5c2380
+// ??_E?$C_I3D_cache_base@VI3D_animation_set@@@@UAEPAXI@Z
+
+// The caches' scalar deleting destructors
+// SYNTHETIC: GAME 0x5bd0c0
+// ??_EC_I3D_model_cache@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5bd270
+// ??_EC_I3D_sound_cache@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5bd420
+// ??_GC_I3D_anim_cache@@UAEPAXI@Z
+
+// The caches' own vtables, which their destructors store, the scalar deleting destructors those point to, and the
+// copies of the destructor they call
+// VTABLE: GAME 0x625cc0
+// class C_I3D_cache<I3D_model>
+
+// VTABLE: GAME 0x625d58
+// class C_I3D_cache<I3D_sound>
+
+// VTABLE: GAME 0x625df0
+// class C_I3D_cache<I3D_animation_set>
+
+// SYNTHETIC: GAME 0x5c1fb0
+// ??_E?$C_I3D_cache@VI3D_model@@@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5c2100
+// ??_G?$C_I3D_cache@VI3D_sound@@@@UAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5c2250
+// ??_E?$C_I3D_cache@VI3D_animation_set@@@@UAEPAXI@Z
+
+// TEMPLATE: GAME 0x5c1fd0
+// ??1?$C_I3D_cache@VI3D_model@@@@UAE@XZ
+
+// TEMPLATE: GAME 0x5c2120
+// ??1?$C_I3D_cache@VI3D_sound@@@@UAE@XZ
+
+// TEMPLATE: GAME 0x5c2270
+// ??1?$C_I3D_cache@VI3D_animation_set@@@@UAE@XZ
+
+// The caches' implicit destructors, which inline it
+// SYNTHETIC: GAME 0x5bcf60
+// ??1C_I3D_model_cache@@UAE@XZ
+
+// SYNTHETIC: GAME 0x5bd120
+// ??1C_I3D_sound_cache@@UAE@XZ
+
+// SYNTHETIC: GAME 0x5bd2d0
+// ??1C_I3D_anim_cache@@UAE@XZ

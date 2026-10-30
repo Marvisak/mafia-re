@@ -1443,7 +1443,7 @@ void G_LoadSaveClass::CarManager()
 #pragma auto_inline(on)
 
 // FUNCTION: GAME 0x60da70
-const char *GM_GarageEndOfMission::vfunc_12()
+const char *GM_GarageManager::OnBeforeCreate()
 {
     // STRING: GAME 0x639790
     return "garagemanager";

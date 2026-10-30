@@ -617,7 +617,7 @@ public:
 // ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_ProgressBar@@UAE@XZ
+// ??1GM_Window@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -659,7 +659,7 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60

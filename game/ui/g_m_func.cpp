@@ -619,6 +619,14 @@ int GM_GarageEndOfMission::OnCreate()
 
 #pragma auto_inline(on)
 
+// Empty, out of line: the original's copy, between OnCreate and OnClick, is the one the linker kept of its folded
+// group (C_web_path::SelectLine's)
+// FUNCTION: GAME 0x5e3fd0 FOLDED
+int GM_GarageEndOfMission::OnKey(uchar key, uint)
+{
+    return 0;
+}
+
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5e3fe0
@@ -632,10 +640,27 @@ int GM_GarageEndOfMission::OnClick(uint id)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x5e41b0
-void GM_GarageEndOfMission::vfunc_13()
+// The garage manager's menu's overrides: stubs that log and run the base's. Nothing constructs the menu yet, so the
+// linker drops them (no markers).
+// The original's: 0x5e41b0
+int GM_GarageManager::OnCreate()
 {
-    StubLog("GM_GarageEndOfMission::vfunc_13");
+    StubLog("GM_GarageManager::OnCreate");
+    return GM_Menu::OnCreate();
+}
+
+// The original's: 0x5e4450
+int GM_GarageManager::OnKey(uchar key, uint u)
+{
+    StubLog("GM_GarageManager::OnKey");
+    return GM_Menu::OnKey(key, u);
+}
+
+// The original's: 0x5e4470
+int GM_GarageManager::OnClick(uint id)
+{
+    StubLog("GM_GarageManager::OnClick %u", id);
+    return GM_Menu::OnClick(id);
 }
 
 #pragma auto_inline(on)

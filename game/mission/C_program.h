@@ -822,6 +822,9 @@ public:
     uchar block_mode;                   // 0x67
 };
 
+// SYNTHETIC: GAME 0x460b20
+// C_program::`scalar deleting destructor'
+
 // DecompileCommand's folded group: the empty ret 8 of the out-of-line kind (C_web_path::DebugFindPath's and
 // C_seagull's vfunc_38 too), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x46ca70

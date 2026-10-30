@@ -137,10 +137,11 @@ if (MSVC_VERSION EQUAL 1200)
     # IJoy has no such request yet, so it is on the command line.
     target_link_libraries(game PRIVATE kernel32 user32 advapi32 winmm ls3df ijoy)
     # Written functions whose callers aren't written yet, which /OPT:REF would drop: g_lines.cpp's AddLine (C_Debris's
-    # tick, in VE_Debris.cpp), and the scripts' IsEventID, InvalidateActorReg and FindActorLater (C_program.cpp)
+    # tick, in VE_Debris.cpp), the scripts' IsEventID, InvalidateActorReg and FindActorLater (C_program.cpp), and the
+    # garage manager's menu's OnBeforeCreate, whose vtable nothing constructs yet (g_loadsave.cpp)
     target_link_options(game PRIVATE /INCLUDE:?AddLine@@YIXABUS_vector@@0II@Z
         /INCLUDE:?IsEventID@C_program@@QAE_NHPAH@Z /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
-        /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z)
+        /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z /INCLUDE:?OnBeforeCreate@GM_GarageManager@@UAEPBDXZ)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

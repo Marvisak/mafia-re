@@ -279,6 +279,24 @@ public:
     static float circleTime;
 };
 
+// The base's inline functions the linker folded, by name after the copies our linker keeps (foldfix): OnBeforeExchange,
+// OnExchange, OnCloseChild and OnMouse (with GM_Component::Mouse) in the run of out-of-line accessors at 0x47a400, as
+// ours in C_program.cpp's object, and OnCreateChild's return of 0 (with GM_Component::Key and the menus' OnKey)
+// SYNTHETIC: GAME 0x47a400
+// ?OnBeforeExchange@GM_Menu@@UAEPBDXZ
+
+// SYNTHETIC: GAME 0x47a410
+// ?OnExchange@GM_Menu@@UAEHXZ
+
+// SYNTHETIC: GAME 0x47a420
+// ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
+
+// SYNTHETIC: GAME 0x47a430
+// ?OnMouse@GM_Menu@@UAEHHHHII@Z
+
+// SYNTHETIC: GAME 0x605020
+// ?OnKey@GM_GunShop@@UAEHEI@Z
+
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md
 // LIBRARY: GAME 0x407540

@@ -5,7 +5,8 @@
 // The cars with dynamic collisions (PS2 C_car_ex, C_car_ex.cpp, whose S_dyn_coll they are), a car, 0x227c bytes
 // (PS2's 0x24f0). Only the constructor so far, which C_mission::CreateActor calls for ACTOR_CAR_EX, and what the
 // scripts read.
-// VTABLE: GAME 0x6237d8
+// VTABLE: GAME 0x6237d4 C_Vehicle
+// VTABLE: GAME 0x6237d8 C_actor
 class C_car_ex : public C_car
 {
 public:

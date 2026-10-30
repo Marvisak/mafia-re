@@ -200,9 +200,9 @@ struct S_garage_item;
 
 // The garage's menu at a mission's end, "garageendofmission" (the name is ours, after the menu; PS2 has its garage menus
 // in g_m_garage.cpp), 0x3c bytes: G_LoadSaveClass::GarageGameDone runs it while it keeps more cars than the garage has
-// room for, to choose which go. Its constructor is inline (GarageGameDone has it), its vtable 0x627a0c. The original's
-// functions are in two places, OnCreate, OnClick and vfunc_13 in this file's range and the two names in
-// g_loadsave.cpp's, a base class's and a derived one's most likely; one class here, its vtable not the original's.
+// room for, to choose which go. Its constructor is inline (GarageGameDone has it). Its functions are in two places,
+// OnCreate and OnClick in this file's range, OnBeforeCreate in g_loadsave.cpp's, as the garage manager's menu's.
+// VTABLE: GAME 0x627a0c
 class GM_GarageEndOfMission : public GM_Menu
 {
 public:
@@ -213,14 +213,23 @@ public:
 
     virtual const char *OnBeforeCreate();
     virtual int OnCreate();
-    // The vtable's is a folded copy of an empty one (0x5e3fd0)
-    virtual int OnKey(uchar key, uint) { return 0; }
+    virtual int OnKey(uchar key, uint);
     virtual int OnClick(uint id);
-    // The garage manager's menu's name, "garagemanager" (the name is ours)
-    virtual const char *vfunc_12();
-    virtual void vfunc_13();
 
     std::vector<S_garage_item> *items;  // 0x30, GarageGameDone's cars (the names are ours)
     std::vector<uint> *discard;         // 0x34, the indices of items to give up
     std::vector<C_car *> *cars;         // 0x38, the mission's cars GarageGameDone was given
+};
+
+// The garage manager's menu, "garagemanager" (the name is ours, after the menu): G_LoadSaveClass::CarManager runs it,
+// its vtable 0x627a3c. Only OnBeforeCreate is written; CarManager is a stub, so nothing constructs it and the vtable
+// isn't emitted (the overrides' addresses are in comments, the written function kept by /INCLUDE, game/CMakeLists.txt).
+// Its members aren't known yet.
+class GM_GarageManager : public GM_Menu
+{
+public:
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    virtual int OnKey(uchar key, uint);
+    virtual int OnClick(uint id);
 };

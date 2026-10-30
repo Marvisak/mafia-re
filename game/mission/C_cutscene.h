@@ -18,15 +18,29 @@ struct S_cutscene_track
     uchar *items;                       // 0x8, new[]
 };
 
-// The cutscene's object at 0x80 (the names are ours), 0x10 bytes: a class with a vtable of its own (0x625ac0, six
-// functions) and a constructor (0x59b5f0), neither written yet, so the vtable's place is a placeholder
+// The cutscene's object at 0x80 (the names are ours), 0x10 bytes: an array of 0x38-byte items, each an id (0x0), a
+// name (0x4) and a value (0x34), with a vtable of its own that loads and saves it
+// VTABLE: GAME 0x625ac0
 class C_cutscene_unknown_80
 {
 public:
+    C_cutscene_unknown_80();
+    // The vtable (the names are ours): the array loaded from an archive's file (dtaRead), from a file (fread) and from
+    // memory, saved to a file (fwrite) and to memory, and the size it saves
+    virtual void LoadDta(int handle);
+    virtual void LoadFile(FILE *file);
+    virtual void LoadBuffer(void *buf);
+    virtual void SaveFile(FILE *file);
+    virtual void SaveBuffer(void *buf);
+    virtual int GetSaveSize();
+    // The name and the value of the item of that id, NULL and 0 if there is none, and the value set for each item of
+    // that id (the names are ours)
+    const char *GetName(int id);
+    int GetValue(int id);
+    void SetValue(int id, int value);
     // Frees the array
     void Clear();
 
-    uchar unknown_0[4];                 // 0x0, the vtable
     int unknown_4;                      // 0x4, the array's count
     uchar *unknown_8;                   // 0x8, new[]
     int unknown_c;                      // 0xc, 0x100 from the constructor
@@ -82,6 +96,13 @@ public:
     void Clear();
     // Frees unknown_0 unless an actor's entry has unknown_0 1
     void ReleaseUnknown0();
+    // What the cutscene's recordings pass on to (the names are ours, the last three by address)
+    void RecClear();
+    void RecAddActor(const char *name, C_actor *actor);
+    void RecLoad(const char *name);
+    void Unknown59d3c0();
+    void Unknown59df40(int unknown);
+    void Unknown59dfb0(C_actor *actor, int unknown);
 
     uchar *unknown_0;                   // 0x0, NULL from the constructor, new
     std::vector<S_cutscene_actor> actors;   // 0x4
@@ -117,12 +138,13 @@ struct S_cutscene_anim
 // mission. Only what C_mission::Close, C_actor's destructor and C_game's Done call so far, and the members they use.
 // Open: the original's constructor (0x59cc40, after Close), which sets the state CUTSCENE_STOPPED and clears the
 // members, isn't written, so ours is the implicit one, inline in the object's initializer.
+// VTABLE: GAME 0x625ad8
 class C_cutscene
 {
 public:
-    // The vtable (0x625ad8) has 45 functions or more; the first eleven are declared so far, the unknown ones by their
-    // slots (the names are ours). From CUTSCENE_STATE_0 on, CUTSCENE_STATE_1 and CUTSCENE_STATE_2 set the two lists'
-    // actors' ACTF_UNKNOWN_10 and C_actor::vfunc_6 and vfunc_7 by the state, CUTSCENE_STATE_0 clears them.
+    // The vtable has 54 functions, the unknown ones named by their slots (the names are ours). From CUTSCENE_STATE_0
+    // on, CUTSCENE_STATE_1 and CUTSCENE_STATE_2 set the two lists' actors' ACTF_UNKNOWN_10 and C_actor::vfunc_6 and
+    // vfunc_7 by the state, CUTSCENE_STATE_0 clears them.
     virtual void SetState(int new_state);
     virtual int GetState();
     // Sets unknown_11c from the argument (through 0x605560), and unknown_120 and unknown_124 from it
@@ -144,17 +166,65 @@ public:
     // other one, the lists shrinking under the loops); otherwise frees each actor's records and clears its
     // ACTF_UNKNOWN_10, keeping the lists, and clears the object at 0x90
     virtual void RemoveActors();
-    // The scripts' recordings (RECLOADFULL, RECCLEAR, RECADDACTOR, RECLOAD; the names are ours), the vtable's 26th,
-    // 30th, 31st and 32nd functions, declared plain until the slots before them are. RecLoadFull reads the mission's
-    // actors; the other three pass on to the object at 0x90's functions (0x59d4d0, 0x59d500 and 0x59dcd0, not written
-    // yet).
-    void RecLoadFull(const char *name);
-    void RecClear();
-    void RecAddActor(const char *name, C_actor *actor);
-    void RecLoad(const char *name);
+    virtual void vfunc_11();
+    // Whether the actor is in either list, and whether it is in the second one only (the names are ours)
+    virtual bool HasActor(C_actor *actor);
+    virtual void vfunc_13(C_actor *actor, int unknown);
+    virtual bool HasActor2Only(C_actor *actor);
+    virtual void vfunc_15(const char *name, int unknown);
+    virtual S_cutscene_anim *vfunc_16(const char *name, bool tck);
+    // The animation of an item of the object at 0x80, by its name and by its index, NULL if there is none (the names are
+    // ours)
+    virtual S_cutscene_anim *GetAnim(const char *name);
+    virtual S_cutscene_anim *GetAnimByIndex(int index);
+    // The object at 0x80's (the original's copies of 19 and 35 are folded into one)
+    virtual const char *vfunc_19(int id);
+    virtual void vfunc_20(const char *name, int unknown);
+    virtual void vfunc_21(int unknown);
+    virtual void vfunc_22();
+    virtual void vfunc_23();
+    // Starts the actor's records over from their first block
+    virtual void vfunc_24(C_actor *actor);
+    // The scripts' recordings (RECLOADFULL, RECCLEAR, RECADDACTOR, RECLOAD; the names are ours): RecLoadFull reads the
+    // mission's actors, the other three pass on to the object at 0x90's
+    virtual void RecLoadFull(const char *name);
+    virtual void vfunc_26(const char *name);
+    // The names are ours
+    virtual void SetUnknown129(bool on);
+    virtual bool GetUnknown129();
+    virtual void RecClear();
+    virtual void RecAddActor(const char *name, C_actor *actor);
+    virtual void RecLoad(const char *name);
+    // The object at 0x90's, the last one with vfunc_24 after it
+    virtual void vfunc_32(int unknown);
+    virtual void vfunc_33(C_actor *actor, int unknown);
+    virtual int vfunc_34(const char *name);
+    // The object at 0x80's
+    virtual const char *vfunc_35(int id);
+    virtual int vfunc_36(int id);
+    virtual void vfunc_37(int id, int value);
+    // The object at 0x90's
+    virtual void vfunc_38();
     // Unloads the cutscene and gives the HUD and the player's controls back (C_mission::Close, C_game::Done, the racing
-    // menu and GameLoopSingle call it). The vtable's 40th function, declared plain until the slots before it are.
-    void Close();
+    // menu and GameLoopSingle call it)
+    virtual void Close();
+    virtual void vfunc_40();
+    virtual void vfunc_41(int unknown);
+    virtual void vfunc_42(int unknown);
+    virtual void vfunc_43(const char *name);
+    virtual void vfunc_44(const char *name);
+    virtual void vfunc_45(int unknown);
+    virtual int vfunc_46();
+    virtual void vfunc_47(int a, int b, int c, int d);
+    virtual void vfunc_48(int a, int b, int c);
+    // The dubbing's tick (DabingTick)
+    virtual void vfunc_49(uint time);
+    virtual void vfunc_50(int unknown);
+    // Sets unknown_647a54
+    virtual void vfunc_51(int unknown);
+    virtual void vfunc_52(int unknown);
+    // The linker's folded return of 0 (0x4aa430)
+    virtual int vfunc_53();
     // Whether a cutscene is playing (the name is ours): while unknown_647a58 counts down, and in a state but
     // CUTSCENE_STATE_0 and CUTSCENE_STOPPED
     bool IsPlaying();
@@ -171,7 +241,7 @@ public:
     // Close clears the rest from unknown_44 to state, and frees the tracks' items first
     uchar unknown_44[0x18];             // 0x44
     uchar unknown_5c[0xc];              // 0x5c
-    uchar unknown_68[0xc];              // 0x68
+    int unknown_68[3];                  // 0x68, the last one cleared by vfunc_23
     S_cutscene_track unknown_74;        // 0x74
     C_cutscene_unknown_80 unknown_80;   // 0x80
     C_cutscene_unknown_90 unknown_90;   // 0x90
@@ -191,7 +261,8 @@ public:
     int unknown_120;                    // 0x120, the cutscene's time, which the tracks' items wait for
     float unknown_124;                  // 0x124, 1.0 from the constructor
     bool unknown_128;                   // 0x128, cleared by SetState(CUTSCENE_STATE_0), set by Close
-    uchar unknown_129[3];               // 0x129
+    bool unknown_129;                   // 0x129, SetUnknown129's
+    uchar unknown_12a[2];               // 0x12a
 };
 
 // An actor's frame as a cutscene found it, which Close puts back (the names are ours), 0x2c bytes

@@ -104,6 +104,7 @@ struct S_vehicle_unknown_ca0
 // class, as PS2's, the sounds' volume, what the camera reads and what the scripts (C_program::Process) call through
 // C_car: the lights, the collisions, the doors. The size is a guess: the constructor (0x4bd8f0) sets members up to
 // 0x2004, the car's own start at the car's 0x20b0 at the latest.
+// VTABLE: GAME 0x624df0
 class C_Vehicle
 {
 public:
@@ -140,6 +141,9 @@ public:
     static void CloseParticles();
     // Sets sound_volume (C_Vehicle_sounds.cpp; PC only, the name is ours)
     static void SetSoundVolume(float volume);
+    // Opens a sound of the vehicle through the sound cache (PS2 name and parameters): the class's one virtual
+    // function, as PS2's
+    virtual LS3D_RESULT OpenSnd(I3D_sound *snd, const char *name, uint flags);
     // A sector for v_light_sector (PS2 name)
     static void AddSectorForProjectorLights(I3D_sector *sector);
     // A sector for v_sound_sector (PS2 name), the same way
@@ -298,9 +302,7 @@ public:
         return num_wheels;
     }
 
-    // Our names are guesses after the members' uses.
-    // The vtable's place: PS2's C_Vehicle has one (one virtual function), the PC's car stores its second vtable here
-    void *unknown_0;                    // 0x0 (car 0x70)
+    // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
     uchar unknown_4[0x118];             // 0x4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
     uchar unknown_120[0x38];            // 0x120
@@ -375,7 +377,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -393,4 +395,4 @@ public:
 // ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

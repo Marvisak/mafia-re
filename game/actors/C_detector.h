@@ -9,8 +9,7 @@ struct tDynamicCollObject;
 // The script objects (PS2 C_detector, C_detector.cpp), an actor and its script: C_program is the second base (at 0x70,
 // PS2's 0x80, whose this adjustors PS2 names @128@), 0x128 bytes (PS2's 0x150). Only the constructor, the destructor,
 // Init and LoadData so far, which C_mission::CreateActor and OpenBin call for ACTOR_DETECTOR, GameInit and GameDone,
-// which C_game::Init and Done call, and the vtable's other functions from DuplicateFrom to SaveGameLoad as stubs. PS2's
-// save functions override C_program's too (its @128@ thunks), which doesn't declare them yet.
+// which C_game::Init and Done call, and the vtable's other functions from DuplicateFrom to SaveGameLoad as stubs.
 // VTABLE: GAME 0x6239b0 C_actor
 // VTABLE: GAME 0x623a48 C_program
 class C_detector : public C_actor, public C_program
@@ -84,3 +83,16 @@ public:
 
 // SYNTHETIC: GAME 0x432910
 // C_detector::`scalar deleting destructor'
+
+// The adjustor thunks of the C_program vtable (this - 0x70), to the destructor and the save functions
+// SYNTHETIC: GAME 0x433fe0
+// ??_EC_detector@@WHA@AEPAXI@Z
+
+// SYNTHETIC: GAME 0x433ff0
+// ?SaveGameGetSize@C_detector@@WHA@AEHXZ
+
+// SYNTHETIC: GAME 0x434000
+// ?SaveGameSave@C_detector@@WHA@AE_NPAPAX@Z
+
+// SYNTHETIC: GAME 0x434010
+// ?SaveGameLoad@C_detector@@WHA@AE_NPAPAX@Z

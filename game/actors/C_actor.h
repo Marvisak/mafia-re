@@ -313,21 +313,24 @@ public:
     }
 };
 
+// SYNTHETIC: GAME 0x405d70
+// C_actor::`scalar deleting destructor'
+
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetProgram@C_actor@@UAEPAV?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@XZ
+// ?SaveGameGetSize@C_racecam@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_human@@UAEXI@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -344,10 +347,10 @@ public:
 // ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_clock@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_racecam@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_bridge@@UAEHXZ
+// ?vfunc_53@C_cutscene@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
