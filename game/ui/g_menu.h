@@ -284,6 +284,10 @@ public:
 // LIBRARY: GAME 0x407540
 // ??GS_vector@@QBE?AU0@ABU0@@Z
 
+// And Dot, which C_traffic_generator::TryGoToAssHole calls out of line, the copy after operator-'s
+// LIBRARY: GAME 0x407570
+// ?Dot@S_vector@@QBEMABU1@@Z
+
 // LIBRARY: GAME 0x40add0
 // ??DS_vector@@QBE?AU0@ABM@Z
 

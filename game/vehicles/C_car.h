@@ -90,6 +90,11 @@ public:
     void SetCarWheelColl(bool *colls, int num);
     // Whether the car can be driven (PS2 name and parameter): G_LoadSaveClass::GarageGameDone asks with 1
     bool IsCarUsable(uint flags);
+    // PS2 names and parameters, which C_traffic_generator::TryGoToAssHole calls: a place by the car and its direction,
+    // false for none; the four points around the car, in its model's space; and the time it has been parked, in ms
+    bool GetPlacementFromTCK1(int unknown, S_vector &pos, S_vector &dir, bool unknown2);
+    void GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4);
+    uint GetTimeParking();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, most after
     // the scripts' commands)
@@ -169,7 +174,9 @@ public:
     uchar unknown_20b0[2];              // 0x20b0
     // 0x20b2 (PS2 0x246a): a car G_LoadSaveClass::GarageGameDone doesn't take into the garage
     bool unknown_20b2;
-    uchar unknown_20b3[0x3e];
+    uchar unknown_20b3[0x1d];
+    int parking_time;                   // 0x20d0, the game's time GetTimeParking counts from (the name is ours)
+    uchar unknown_20d4[0x1d];
     // The names of these are ours, after the scripts' commands
     bool show_damage;                   // 0x20f1, SHOWCARDAMAGE's
     uchar unknown_20f2[4];              // 0x20f2

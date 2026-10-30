@@ -1,6 +1,7 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
-// docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Not written yet: the
-// constructor, which C_mission::CreateActor calls, and TakATedSiVasKupim_Vsecky and VypraskeeeKaaaru are stubs.
+// docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written so far: GetParkingCars,
+// which C_traffic_generator::TryGoToAssHole calls; the constructor, which C_mission::CreateActor calls, and
+// TakATedSiVasKupim_Vsecky and VypraskeeeKaaaru are stubs.
 
 #include "vehicles/C_trf_c.h"
 
@@ -11,6 +12,10 @@ float C_traffic_car::unknown_63d7fc;
 // GLOBAL: GAME 0x63d804
 float C_traffic_car::unknown_63d804;
 
+// The fourth of the file's six vectors, whose initializers start it (0x4aa4b0 to 0x4aa730; this one's 0x4aa630)
+// GLOBAL: GAME 0x63d834
+std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems_parking;
+
 #pragma auto_inline(off)
 
 // STUB: GAME 0x4aa7a0
@@ -20,6 +25,12 @@ C_traffic_car::C_traffic_car()
 }
 
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x4b8540
+std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
+{
+    return v_elems_parking;
+}
 
 #pragma auto_inline(off)
 

@@ -127,4 +127,11 @@ void C_human::ResetActions()
     StubLog("C_human::ResetActions");
 }
 
+// STUB: GAME 0x58cfb0
+bool C_human::IsThisCarStealing(C_car *car)
+{
+    StubLog("C_human::IsThisCarStealing");
+    return false;
+}
+
 #pragma auto_inline(on)

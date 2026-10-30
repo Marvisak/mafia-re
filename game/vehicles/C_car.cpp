@@ -1,14 +1,17 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set, GetInvModelMatrix and GetActualLevel. The constructor, which C_mission::CreateActor calls, the
-// other virtual functions (GetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable) and the functions
-// the scripts call are stubs.
+// profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls.
+// The constructor, which C_mission::CreateActor calls, the other virtual functions (GetOwner, SetActualLevel, the force
+// feedback effects, Reset, IsCarUsable), the functions the scripts call and TryGoToAssHole's others
+// (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
 #include "g_material.h"
 #include "I3D_cache.h"
+#include "mission/Mission.h"
+#include "mission/game.h"
 
 #include <string.h>
 
@@ -45,6 +48,13 @@ inline uint I3DBoolAsInt(const bool &b)
 C_car::C_car()
 {
     StubLog("C_car::C_car");
+}
+
+// STUB: GAME 0x41c680
+bool C_car::GetPlacementFromTCK1(int unknown, S_vector &pos, S_vector &dir, bool unknown2)
+{
+    StubLog("C_car::GetPlacementFromTCK1");
+    return false;
 }
 
 #pragma auto_inline(on)
@@ -444,7 +454,19 @@ bool C_car::IsCarUsable(uint flags)
     return false;
 }
 
+// STUB: GAME 0x4299c0
+void C_car::GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4)
+{
+    StubLog("C_car::GetNavigationPoints");
+}
+
 #pragma auto_inline(on)
+
+// FUNCTION: GAME 0x429e50
+uint C_car::GetTimeParking()
+{
+    return act_mission->GetGame()->GetGameTime() - parking_time;
+}
 
 // FUNCTION: GAME 0x42bb90
 void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, float suspension, float revs)

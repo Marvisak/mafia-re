@@ -15,22 +15,50 @@ public:
     void Deactivate();
     // The pedestrian by the time passed, which TickElements calls for the active ones (PS2 name)
     void Tick(uint time);
+    // PS2 name; TryGoToAssHole calls it once it has set way
+    void SetNewNode();
 
-    uchar unknown_0[0xc];
+    // The name is a guess. TryGoToAssHole's comparison of the navigation points reads the position through it: the two
+    // inline calls still to come starve its first nested Dot, which the original calls out of line.
+    const S_vector &GetPos() const
+    {
+        return pos;
+    }
+
+    // 0x0 (PS2 0x180), 0x4 (PS2 0x184) and 0x19e (PS2 0x21e): TryGoToAssHole sends only a pedestrian with the first and
+    // the last clear and the second set to a car
+    bool unknown_0;
+    uchar unknown_1[3];
+    void *unknown_4;
+    uchar unknown_8[4];
     bool active;                        // 0xc (PS2 0x18c)
     uchar unknown_d[3];
     S_vector pos;                       // 0x10 (PS2 0x0)
-    uchar unknown_1c[0x24];
-    I3D_frame *frame;                   // 0x40 (PS2 0x190)
+    S_vector dir;                       // 0x1c (PS2 0x10), the direction it walks in
+    uchar unknown_28[0x18];
+    I3D_model *frame;                   // 0x40 (PS2 0x190)
     uchar unknown_44[0x10];
     float dist;                         // 0x54 (PS2 0x1a4), the camera's squared distance in the horizontal plane
-    uchar unknown_58[0x1a6];
+    uchar unknown_58[0xc];
+    S_vector target;                    // 0x64 (PS2 0x40), the point it walks to
+    uchar unknown_70[0x10];
+    // 0x80 (PS2 0x50), the points of a walk to a car: the car's placement (C_car::GetPlacementFromTCK1) and two of its
+    // navigation points, each put on the ground
+    S_vector way[3];
+    S_vector way_dir;                   // 0xa4 (PS2 0x80), the placement's direction
+    int num_way;                        // 0xb0 (PS2 0x1c4), way's points
+    uchar way_index;                    // 0xb4 (PS2 0x1c8)
+    uchar unknown_b5[0xe9];
+    bool unknown_19e;
+    uchar unknown_19f[9];
+    C_car *car;                         // 0x1a8 (PS2 0x228), the parked car it walks to
+    uchar unknown_1ac[0x52];
     bool waving;                        // 0x1fe (PS2 0x246), waving at a taxi
 };
 
 // The pedestrians' generator (PS2 C_traffic_generator, C_person_traffic.cpp), 0xb8 bytes (PS2's 0xd0). Only the
-// constructor and the static functions C_game's Init, Done and Tick call so far; the constructor, which
-// C_mission::CreateActor calls for ACTOR_TRAFFIC_GENERATOR, is a stub.
+// constructor and the static functions C_game's Init, Done and Tick call, and what TickElements calls, so far; the
+// constructor, which C_mission::CreateActor calls for ACTOR_TRAFFIC_GENERATOR, is a stub.
 class C_traffic_generator : public C_actor
 {
 public:
@@ -47,9 +75,12 @@ public:
     static void FreeDynCollElements();
     // The pedestrians by the time passed, which C_game::Tick calls (PS2 name)
     static void TickElements(uint time);
-    // PS2 names, which TickElements calls: every 2123 ms (try_do_rici), and a passenger made for the player's taxi
+    // PS2 names, which TickElements calls: every 2123 ms (try_do_rici) a pedestrian sent to a parked car, and a
+    // passenger made for the player's taxi
     static void TryGoToAssHole();
     static void GeneratePassengerForTaxi();
+    // Whether a pedestrian walks to the car (PS2 name)
+    static bool IsCarHasOcas(C_car *car);
     // Gives a pedestrian of that model, or the actor, to the generators (PS2 name; the bool's name is ours)
     static void AddFreePerson(I3D_model *model, C_actor *act, bool unknown);
 

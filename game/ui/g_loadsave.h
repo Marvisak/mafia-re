@@ -389,14 +389,16 @@ struct S_car_index
     uint unknown_80;
     uint unknown_84;                    // 0x84, PS2's AllDefault enables these race cars
     uint unknown_88;                    // 0x88
-    uchar unknown_8c[0x1c];
+    uchar unknown_8c[0xc];
+    uint civil_mask;                    // 0x98, GetCivilMaskByModel's (the name is ours)
+    uchar unknown_9c[0xc];
 };
 
 // A player's model of tables\playerindex.def (the name is ours), 0x24 bytes
 struct S_player_index
 {
     char model[0x20];                   // "civil02.i3d"
-    uint flags;
+    uint flags;                         // GetPlayerCivilMaskByModel's
 };
 
 // The cars and the players' models (PS2 G_CarDatabase, in g_loadsave.cpp as on PC), 0xc4 bytes
@@ -436,6 +438,11 @@ public:
     uint GetIdxByModelLong(const char *model, uint &variant);
     // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it
     uint GetIDByActor(C_car *car);
+    // The masks of a car's id (from the second car) and of a player's model (from the first), whatever the case, 0 for
+    // none (PS2 names; PS2's take a uchar *): C_traffic_generator::TryGoToAssHole sends a pedestrian only to a car the
+    // two share a bit of
+    uint GetCivilMaskByModel(const char *model);
+    uint GetPlayerCivilMaskByModel(const char *model);
 };
 
 // Cars GarageGameDone doesn't take into the garage (the names are ours, after tables\carindex.def's ids): the trucks,

@@ -49,6 +49,9 @@ public:
     // The model changed for the named one
     void _intern_ChangeModel(char *name, bool unknown);
     void ResetActions();
+    // Whether the player or an entity is in the car or stealing it (PS2 name), which
+    // C_traffic_generator::TryGoToAssHole asks
+    static bool IsThisCarStealing(C_car *car);
 
     int anim_id;                        // 0x70 (PS2 0x200), HUMAN_GETACTANIMID's (the name is ours)
     uchar unknown_74[0x24];             // 0x74

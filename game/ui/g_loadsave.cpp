@@ -7,8 +7,9 @@
 // garage's GarageGameInit and GarageGameDone with the car database's GetCar, GetCarModel, GetCarParams,
 // GetIdxByModelLong and GetIDByActor, the end of mission garage menu's names, and the profiles' menus' ProfileCreate and
 // ProfileDelete; and of what the scripts call, the car database's GetPlayerModel and GetIdxByModel, the garage's
-// GarageAddLastStolen, GarageShowResults, CarCantGetOut and EnableSteal, FreerideEnableCar and FreerideEnable; the rest
-// of what they and main call is stubs.
+// GarageAddLastStolen, GarageShowResults, CarCantGetOut and EnableSteal, FreerideEnableCar and FreerideEnable, and the
+// car database's GetCivilMaskByModel and GetPlayerCivilMaskByModel, which C_traffic_generator::TryGoToAssHole calls; the
+// rest of what they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -758,6 +759,29 @@ uint G_CarDatabase::GetIDByActor(C_car *car)
         level = 0;
     id |= level << CAR_LEVEL_SHIFT;
     return id & ~(0xff << CAR_LEVEL_SHIFT);
+}
+
+// The first car, index 0, is never found (as GetIdxByModel's)
+// FUNCTION: GAME 0x60aad0
+uint G_CarDatabase::GetCivilMaskByModel(const char *model)
+{
+    for (uint i = 1; i < num_cars; i++)
+    {
+        if (!strcmpi(cars[i].id, model))
+            return cars[i].civil_mask;
+    }
+    return 0;
+}
+
+// FUNCTION: GAME 0x60aea0
+uint G_CarDatabase::GetPlayerCivilMaskByModel(const char *model)
+{
+    for (uint i = 0; i < num_players; i++)
+    {
+        if (!strcmpi(players[i].model, model))
+            return players[i].flags;
+    }
+    return 0;
 }
 
 // FUNCTION: GAME 0x60b050

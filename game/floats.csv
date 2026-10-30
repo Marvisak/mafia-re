@@ -43,6 +43,7 @@ address|type|size
 0x6236b8|float|4
 0x6236c0|float|4
 0x6236dc|float|4
+0x623734|float|4
 0x623738|float|4
 0x623770|float|4
 0x623788|float|4
