@@ -106,9 +106,9 @@ public:
 // The AI's humans (PS2 C_entity, jp_ai_entity.cpp), 0x128c bytes (PS2's 0x14a0): C_program is the second base (at
 // 0xa9c, PS2's 0xbf0, whose this adjustors PS2 names @3056@), the entity's own script, as C_detector's. Only the
 // constructor so far, which C_mission::CreateActor calls for ACTOR_ENTITY, what C_game::EntityBlock calls, and what
-// the script's commands use. PS2's save functions and CallBack override C_program's too (its @3056@ thunks), which
-// aren't declared yet.
-// VTABLE: GAME 0x625090
+// the script's commands use.
+// VTABLE: GAME 0x625064 C_program
+// VTABLE: GAME 0x625090 C_human
 class C_entity : public C_human, public C_program
 {
 public:
@@ -221,3 +221,16 @@ public:
 
 // SYNTHETIC: GAME 0x5072f0
 // C_entity::`scalar deleting destructor'
+
+// The adjustor thunks of the C_program vtable (this - 0xa9c), to the destructor and the save functions
+// SYNTHETIC: GAME 0x530390
+// ??_EC_entity@@WKJM@AEPAXI@Z
+
+// SYNTHETIC: GAME 0x5303a0
+// ?SaveGameGetSize@C_entity@@WKJM@AEHXZ
+
+// SYNTHETIC: GAME 0x5303b0
+// ?SaveGameSave@C_entity@@WKJM@AE_NPAPAX@Z
+
+// SYNTHETIC: GAME 0x5303c0
+// ?SaveGameLoad@C_entity@@WKJM@AE_NPAPAX@Z
