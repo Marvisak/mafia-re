@@ -44,7 +44,9 @@ public:
     // An impulse at the position
     void ExternalImpuls(const S_vector &impuls, const S_vector &pos);
 
-    uchar unknown_70[0x31c];            // 0x70
+    uchar unknown_70[0x2dc];            // 0x70
+    int material;                       // 0x34c, an index of materialList, the shots' sound's (the name is ours)
+    uchar unknown_350[0x3c];            // 0x350
 };
 
 // SYNTHETIC: GAME 0x459f70

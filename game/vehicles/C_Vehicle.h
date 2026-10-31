@@ -72,13 +72,17 @@ struct S_VEH_PARTICLE
 // A vehicle's wheel (the name is ours; PS2's C_Vehicle has them through pointers too). Only what the camera reads.
 struct S_wheel
 {
-    uchar unknown_0[0xc];
+    uchar unknown_0[4];
+    I3D_frame *frame;                   // 0x4, the chases take the last wheel's position
+    uchar unknown_8[4];
     // 0xc and 0x10 (PS2 0x15c and 0x30), what GetWheelCamPos places the camera by: the wheel's position and a distance
     // outwards, to the right for the odd wheels
     float unknown_c;
     S_vector unknown_10;
     uchar unknown_1c[0x60];
     S_vector unknown_7c;                // 0x7c, the camera "C In" tilts by their sum
+    uchar unknown_88[0x98];             // 0x88
+    uint unknown_120;                   // 0x120, flags
 };
 
 // An element of C_Vehicle::unknown_ca0 (the name is ours; its members are unknown), 0x24 bytes
@@ -172,6 +176,9 @@ public:
     bool SetSpecialDynamicColls(bool on);
     // Adds the dynamic collisions or takes them away (PS2 name)
     void SetDynamicCollsOn(bool on, bool unknown);
+    // PS2 names
+    void SetBrake(float brake);
+    void SetPower(float power, bool unknown);
 
     // A camera's position at a wheel, offset from it (PS2 name): the offset's x mirrored for the even wheels, which
     // are on the left
@@ -302,6 +309,55 @@ public:
         return num_wheels;
     }
 
+    // The accessors whose copies are among C_sledovacka.cpp's (the names are ours)
+    // FUNCTION: GAME 0x4a9bf0
+    bool GetUnknownC2c() const
+    {
+        return unknown_c2c;
+    }
+    // FUNCTION: GAME 0x4a9c00
+    void SetUnknown4cc(bool b)
+    {
+        unknown_4cc = b;
+    }
+    // FUNCTION: GAME 0x4a9c10
+    void SetUnknown430(bool b)
+    {
+        unknown_430 = b;
+    }
+    // FUNCTION: GAME 0x4a9c20
+    bool GetUnknown431() const
+    {
+        return unknown_431;
+    }
+    // FUNCTION: GAME 0x4a9c30
+    const S_vector &GetVelocityRef() const
+    {
+        return velocity;
+    }
+    // FUNCTION: GAME 0x4a9c40
+    bool IsUnknown540() const
+    {
+        if (unknown_540 != 0.0f || unknown_544 != 0.0f)
+            return true;
+        return false;
+    }
+    // FUNCTION: GAME 0x4a9c70
+    const S_vector &GetUnknownC48() const
+    {
+        return unknown_c48;
+    }
+    // FUNCTION: GAME 0x4a9c80
+    const S_vector &GetUnknownC54() const
+    {
+        return unknown_c54;
+    }
+    // FUNCTION: GAME 0x4a9c90
+    S_wheel *GetWheel(int i) const
+    {
+        return wheels[i];
+    }
+
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
     uchar unknown_4[0x118];             // 0x4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
@@ -325,9 +381,17 @@ public:
     uchar unknown_3a4[0x7c];            // 0x3a4
     // 0x420 (car 0x490), most likely the angular velocity: the scripts' CAR_SETSPECCOLL zeroes it with the velocity
     S_vector unknown_420;
-    uchar unknown_42c[0x98];            // 0x42c
+    uchar unknown_42c[4];               // 0x42c
+    bool unknown_430;                   // 0x430 (car 0x4a0)
+    bool unknown_431;                   // 0x431 (car 0x4a1)
+    uchar unknown_432[0x92];            // 0x432
     int num_wheels;                    // 0x4c4 (car 0x534)
-    uchar unknown_4c8[0xd4];            // 0x4c8
+    uchar unknown_4c8[4];               // 0x4c8
+    bool unknown_4cc;                   // 0x4cc (car 0x53c)
+    uchar unknown_4cd[0x73];            // 0x4cd
+    float unknown_540;                  // 0x540 (car 0x5b0)
+    float unknown_544;                  // 0x544 (car 0x5b4)
+    uchar unknown_548[0x54];            // 0x548
     float speed;                        // 0x59c (car 0x60c), in m/s: velocity's magnitude (SetVelocity)
     uchar unknown_5a0[0x70];            // 0x5a0
     // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely: C_game::TickDriverMan
@@ -335,9 +399,12 @@ public:
     float unknown_610;
     uchar unknown_614[0x14];            // 0x614
     float unknown_628;
-    uchar unknown_62c[0x60c];           // 0x62c
+    uchar unknown_62c[0x600];           // 0x62c
+    bool unknown_c2c;                   // 0xc2c (car 0xc9c)
+    uchar unknown_c2d[0xb];             // 0xc2d
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
-    uchar unknown_c3c[0x18];            // 0xc3c
+    S_vector unknown_c3c;               // 0xc3c (car 0xcac), a direction the chases compare theirs with
+    S_vector unknown_c48;               // 0xc48 (car 0xcb8)
     S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
     uchar unknown_c60[4];               // 0xc60
     float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
@@ -377,7 +444,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
+// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -386,7 +453,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z

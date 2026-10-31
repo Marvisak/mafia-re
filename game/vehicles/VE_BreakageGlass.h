@@ -8,12 +8,19 @@
 
 class I3D_frame;
 
-// A piece of a broken pane (PS2 S_DICE_OBJ, most likely), 0x34 bytes (PS2's 0x40, its frame at 0x30): only its frame is
-// known so far, which Done releases
+// A piece of a broken pane (PS2 S_DICE_OBJ, most likely), 0x34 bytes (PS2's 0x40). The names are ours. Its frame,
+// which Done releases, falls, bounces off the ground below it and is laid on it.
 struct S_DICE_OBJ
 {
-    I3D_frame *frame;                   // 0x0
-    uchar unknown_4[0x30];              // 0x4
+    I3D_frame *frame;                   // 0x0 (PS2 0x30)
+    S_vector velocity;                  // 0x4 (PS2 0x0)
+    float roll;                         // 0x10 (PS2 0x34), SetDir's
+    float roll_speed;                   // 0x14 (PS2 0x38), per second
+    S_vector ground;                    // 0x18 (PS2 0x10), the point below the piece (TestLineV's), raised 5 cm
+    S_vector ground_normal;             // 0x24 (PS2 0x20), its normal
+    bool active;                        // 0x30 (PS2 0x3c), cleared once the piece lies on the ground or falls away
+    bool falling;                       // 0x31 (PS2 0x3d), cleared once it bounces slower than 2 m/s
+    bool ground_tested;                 // 0x32 (PS2 0x3e), ground found; cleared at each bounce
 };
 
 // A broken pane's pieces (PS2 S_DICE, VE_BreakageGlass.cpp), 0x18 bytes: the frames Done unlinks and releases, and the
@@ -24,6 +31,10 @@ struct S_DICE
     S_DICE_OBJ *objs;                   // 0x10 (PS2 0x8)
     int num_objs;                       // 0x14 (PS2 0xc)
 };
+
+// Makes a pane whose pieces are all out a single object again, before it goes into the pool (PS2 name, the file's
+// first function)
+void PrepareGlassSingleObject(S_DICE &dice);
 
 // The breaking of plain glass (PS2 C_Break_plain_glass, VE_BreakageGlass.cpp; the PC's file is the one at
 // 0x5605c0-0x56488c, which has its methods), the game's 0x208, 0x38 bytes. PS2's has its gravity before the vectors.
@@ -37,11 +48,14 @@ public:
     bool Done();
     // The broken panes' pieces by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
+    // The frame's glass broken along dir, with the sound of the file (PS2 name; the parameters' names are ours)
+    void BreakGlass(I3D_frame *frm, const S_vector *dir, const char *sound, bool unknown);
 
     std::vector<I3D_frame *> frames;    // 0x0 (PS2 0x10, gif::vector<I3D_frame *>)
     std::vector<S_DICE> dices;          // 0x10 (PS2 0x1c)
     S_DICE *pool;                       // 0x20, Init's array (PS2 0x28, which Init clears)
-    int unknown_24;                     // 0x24, Init sets it to the pool's size (PS2 0x2c)
+    int pool_last;                      // 0x24 (PS2 0x2c), the slot the last pane went into; Init sets it to the
+                                        // pool's size, so the first goes into 0
     int pool_size;                      // 0x28 (PS2 0x30)
     S_vector gravity;                   // 0x2c (PS2 0x0), downwards, set by Init
 };
@@ -50,7 +64,7 @@ public:
 // inlines it, calling the frames' assignment, this file's copy, which the linker folded with the other vectors of
 // pointers')
 // SYNTHETIC: GAME 0x560f20
-// ??0S_DICE@@QAE@XZ
+// ??0S_saved_code@C_program@@QAE@XZ
 
 // SYNTHETIC: GAME 0x562000
 // S_DICE::operator=

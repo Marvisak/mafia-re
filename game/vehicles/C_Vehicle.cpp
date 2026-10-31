@@ -131,6 +131,18 @@ S_vector C_Vehicle::GetWheelCamPos(int wheel, const S_vector &offset)
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x4cb130
+void C_Vehicle::SetPower(float power, bool unknown)
+{
+    StubLog("C_Vehicle::SetPower");
+}
+
+// STUB: GAME 0x4cb2d0
+void C_Vehicle::SetBrake(float brake)
+{
+    StubLog("C_Vehicle::SetBrake");
+}
+
 // STUB: GAME 0x4cb6e0
 bool C_Vehicle::SetFuel(float fuel)
 {

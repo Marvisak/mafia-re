@@ -12,7 +12,10 @@ float C_traffic_car::unknown_63d7fc;
 // GLOBAL: GAME 0x63d804
 float C_traffic_car::unknown_63d804;
 
-// The fourth of the file's six vectors, whose initializers start it (0x4aa4b0 to 0x4aa730; this one's 0x4aa630)
+// The third and the fourth of the file's six vectors, whose initializers start it (0x4aa4b0 to 0x4aa730; these
+// ones' 0x4aa5b0 and 0x4aa630)
+// GLOBAL: GAME 0x63d844
+std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems;
 // GLOBAL: GAME 0x63d834
 std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems_parking;
 

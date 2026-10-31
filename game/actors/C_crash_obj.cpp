@@ -13,6 +13,12 @@ int C_crash_obj::count;
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x431710
+void CreateCrashModel(I3D_frame *frm, S_vector &pos, S_vector &dir, float power)
+{
+    StubLog("CreateCrashModel");
+}
+
 // STUB: GAME 0x432740
 void C_crash_obj::DestroyOuterMostCrashObject()
 {

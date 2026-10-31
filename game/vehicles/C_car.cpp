@@ -423,6 +423,13 @@ float C_car::ShowCarEnergy()
     return 0.0f;
 }
 
+// STUB: GAME 0x429510
+const S_vector &C_car::GetAIPos(bool b)
+{
+    StubLog("C_car::GetAIPos");
+    return unknown_398;
+}
+
 // STUB: GAME 0x429580
 void C_car::SetEnterProtect(bool protect)
 {

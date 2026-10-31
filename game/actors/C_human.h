@@ -7,6 +7,18 @@
 class C_car;
 class C_car_ex;
 
+// The bones the shots test against (PS2 C_ShotSkeleton; its file's name isn't known, PC 0x5d6f80-0x5d767c), 0x130 bytes
+// as far as C_human shows
+class C_ShotSkeleton
+{
+public:
+    // The line from from along dir, of that length squared: the bone hit, 0 for none (PS2 name; the parameters' names
+    // and the result are ours)
+    int TestCollision(const S_vector &from, const S_vector &dir, float dist2);
+
+    uchar unknown_0[0x130];
+};
+
 // The humans' properties, max_properties' and properties' indices: _human_property_'s (C_program.cpp), whose names
 // the script's HUMAN_GETPROPERTY and HUMAN_SETPROPERTY take (the name is ours)
 #define HUMAN_PROPERTY_ENERGY 1         // "Energy", the health
@@ -87,6 +99,14 @@ public:
     // Whether the player or an entity is in the car or stealing it (PS2 name), which
     // C_traffic_generator::TryGoToAssHole asks
     static bool IsThisCarStealing(C_car *car);
+    // Whether the shooter's shot can hit the human (PS2 name; the parameters' names are ours)
+    static bool Can_Hit_FilterHumanType(C_human *shooter, C_human *human);
+    // The shot's line against the human's bones (C_ShotSkeleton::TestCollision), the line by value (the name is ours:
+    // TickShoot's call copies both vectors first, as an inline function taking them by value does)
+    int TestShotCollision(S_vector from, S_vector dir, float dist2)
+    {
+        return shot_skeleton.TestCollision(from, dir, dist2);
+    }
 
     int anim_id;                        // 0x70 (PS2 0x200), HUMAN_GETACTANIMID's (the name is ours)
     uchar unknown_74[0x24];             // 0x74
@@ -105,7 +125,7 @@ public:
     float unknown_238;                  // 0x238 (PS2 0x3d8), the camera's tilt for the player (C_game::Tick)
     uchar unknown_23c[0x9c];            // 0x23c
     I3D_frame *look_frame;              // 0x2d8 (PS2 0x454), SetLookFrame's (the name is ours)
-    uchar unknown_2dc[0x130];           // 0x2dc
+    C_ShotSkeleton shot_skeleton;       // 0x2dc (PS2 0x458; the name is ours)
     int unknown_40c;                    // 0x40c (PS2 0x588), a state: 1, 2 and 9 are ready, 9 keeps the car
     uchar unknown_410[8];               // 0x410
     float unknown_418;                  // 0x418 (PS2 0x594), HUMAN_FORCEFALL adds 0.1
@@ -121,14 +141,20 @@ public:
     I3D_frame *left_hand;               // 0x570
     uchar unknown_574[0x24];            // 0x574
     bool unknown_598;                   // 0x598, cleared while a record (RECLOADFULL) plays
-    uchar unknown_599[0x67];            // 0x599
+    uchar unknown_599[0x63];            // 0x599
+    uint unknown_5fc;                   // 0x5fc (PS2 0x660), DETECTOR_INRANGE counts those with a bit of the detector's
     // The properties' highest values and the current ones, HUMAN_PROPERTY_* (PS2 0x664 and 0x6a4; the names are ours):
     // the 15 _human_property_ names in 16 floats each
     float max_properties[16];           // 0x600
     float properties[16];               // 0x640, which C_game::Init caps at max_properties
     uchar unknown_680[4];               // 0x680
     bool shut_up;                       // 0x684 (PS2 0x6e8), HUMAN_SHUTUP's (the name is ours)
-    uchar unknown_685[0x53];            // 0x685
+    uchar unknown_685[3];               // 0x685
+    // The human's own collisions, which its shots leave out (the names are ours)
+    tDynamicCollObject **colls;         // 0x688 (PS2 0x6ec)
+    uchar unknown_68c[4];               // 0x68c
+    int num_colls;                      // 0x690 (PS2 0x6f4)
+    uchar unknown_694[0x44];            // 0x694
     // The HUD's wingman indicator, -1 for none, and its name, 0 to 7 (PS2 0x734 and 0x738; the names are ours)
     int wingman;                        // 0x6d8
     uint wingman_name;                  // 0x6dc

@@ -53,6 +53,14 @@ public:
     uchar unknown_70[0x1fc];            // 0x70
 
     static std::vector<S_ELEMENT *> v_elems_parking;
+    // The traffic's cars (PS2 name; the third of the file's six vectors, 0x63d844)
+    static std::vector<S_ELEMENT *> v_elems;
+    // Its accessor (the name is ours), whose copy is among C_sledovacka.cpp's
+    // FUNCTION: GAME 0x4a9ca0
+    static std::vector<S_ELEMENT *> &GetElems()
+    {
+        return v_elems;
+    }
 
     // C_game::DoneIntern sets both to 1 (the names are ours)
     static float unknown_63d7fc;

@@ -27,6 +27,10 @@ public:
     ~C_Particle();
     // Unlinks the visual and clears the particle's state, for particle_pool (the name is ours)
     void Reset();
+    // Goes on with the part's subpart phase (unknown_8), taking its values (the name is ours)
+    void SetPhase(int phase);
+    // The particle by the time passed (PS2's name); unknown_3c is the time it has left
+    void Tick(int time);
 };
 
 // The free particles (C_effects.cpp's, the name is ours)

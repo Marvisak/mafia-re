@@ -9,17 +9,28 @@
 class I3D_frame;
 
 // The debris and the flashes of explosions (PS2 S_DEBRIS and S_FLASH, VE_Debris.cpp), 0x1c and 0x44 bytes (PS2's 0x20
-// and 0x60), which the file's copy loops move. Only the debris' frame is known so far (PS2's at 0x10), which Done
-// unlinks and releases.
+// and 0x60), which the file's copy loops move. The members' names are ours. A piece of debris: its frame, which Done
+// unlinks and releases, falls and turns by its roll until it falls faster than 20 m/s.
 struct S_DEBRIS
 {
-    I3D_frame *frame;                   // 0x0
-    uchar unknown_4[0x18];              // 0x4
+    I3D_frame *frame;                   // 0x0 (PS2 0x10)
+    S_vector velocity;                  // 0x4 (PS2 0x0)
+    float roll;                         // 0x10 (PS2 0x14), SetDir's, kept within 0 to 2 pi
+    float roll_speed;                   // 0x14 (PS2 0x18), per second
+    bool alive;                         // 0x18 (PS2 0x1c), Tick removes the piece once it is cleared
 };
 
+// A flash: a line from its head to its tail, each moving at its speed under the gravity (the tail only after 0.05 s),
+// both drifting
 struct S_FLASH
 {
-    uchar unknown_0[0x44];              // 0x0
+    S_vector head_speed;                // 0x0 (PS2 0x0)
+    S_vector tail_speed;                // 0xc (PS2 0x10)
+    S_vector drift;                     // 0x18 (PS2 0x20)
+    S_vector head;                      // 0x24 (PS2 0x30)
+    S_vector tail;                      // 0x30 (PS2 0x40)
+    float time;                         // 0x3c (PS2 0x50), how long it has been flying
+    float life_time;                    // 0x40 (PS2 0x54)
 };
 
 // The explosions' debris (PS2 C_Debris, VE_Debris.cpp; the PC's file is the one at 0x564890-0x56615c, which has its
@@ -40,7 +51,11 @@ public:
     S_vector gravity;                   // 0x20 (PS2 0x0), downwards, set by Init (the name is ours)
 };
 
+// The debris' erase, which Tick's pop_back calls out of line
+// TEMPLATE: GAME 0x5660e0
+// std::vector<S_DEBRIS,std::allocator<S_DEBRIS> >::erase
+
 // Its destructor's copy, which the game's destructor and its constructor's unwinding call (Mission.cpp's range), the
 // same code as C_using_object's (tools.h), folded
 // SYNTHETIC: GAME 0x5479e0
-// ??1C_using_object@@QAE@XZ
+// ??1C_Debris@@QAE@XZ

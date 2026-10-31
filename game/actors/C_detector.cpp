@@ -1,12 +1,14 @@
 // The script objects (PS2 C_detector.cpp; the PC's file is the one at 0x432870-0x433fdc, docs/game-files.md), whose
 // constructor (0x432880) comes first. Written so far: the constructor and Init, which C_mission::CreateActor and
 // OpenBin call, the destructor, LoadData, which OpenBin calls next, and GameInit and GameDone, which C_game::Init and
-// Done call, with EraseColls (0x433ae0), and AI and Update, which C_actor::Tick calls. Not written: the rest; the
-// vtable's DuplicateFrom (0x4329c0) and its save functions are stubs.
+// Done call, with EraseColls (0x433ae0), AI and Update, which C_actor::Tick calls, and Process, the detector's
+// script commands. Not written: the rest; the vtable's DuplicateFrom (0x4329c0) and its save functions, and
+// CreateColls and CreateUO, which Process calls, are stubs.
 
 #include "actors/C_detector.h"
 
 #include "C_chunk.h"
+#include "actors/C_human.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
 #include "collision/g_colls.h"
@@ -189,13 +191,105 @@ void C_detector::DecompileCommand(int i, char *s)
     C_program::DecompileCommand(i, s);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x433d10
+// The detector's commands, PS2's in PS2's order; the others are C_program's, which adds their time itself. The rest
+// add the time the command has run, through a flag as PS2's, which VC6 threads into each case.
+// FUNCTION: GAME 0x433d10
 void C_detector::Process(uint time)
 {
-    StubLog("C_detector::Process");
-    C_program::Process(time);
+    if (cur_command >= instructions.size())
+        return;
+    S_instruction &ins = instructions[cur_command];
+    bool add_time = true;
+    switch (ins.command)
+    {
+    // Inactive where the script runs no other's code
+    case CMD_PROGRAM_STORAGE:
+        if (!saved_code)
+            SetActState(ACTSTATE_2);
+        else
+            NextCommand(NULL);
+        break;
+    // Counts into the register the entities and the player near enough to the detector, of the groups it watches
+    case CMD_DETECTOR_INRANGE:
+    {
+        S_int_float_params *p = (S_int_float_params *)ins.params;
+        float range = p->value2 * p->value2;
+        if (num_float_regs > p->value1 && p->value1 >= 0)
+        {
+            float_regs[p->value1] = 0.0f;
+            std::vector<C_actor *> &acts = act_mission->game->unknown_ec;
+            for (int i = acts.size(); i--;)
+            {
+                C_actor *act = acts[i];
+                if ((act->type == ACTOR_ENTITY || act->type == ACTOR_PLAYER)
+                    && ((C_human *)act)->unknown_5fc & unknown_d8)
+                {
+                    S_vector d = frame->GetWorldPos() - act->frame->GetWorldPos();
+                    if (d.x * d.x + d.y * d.y + d.z * d.z <= range)
+                        float_regs[p->value1] += 1.0f;
+                }
+            }
+        }
+        NextCommand(NULL);
+        break;
+    }
+    // Waits until the player uses it
+    case CMD_DETECTOR_WAITFORUSE:
+    {
+        int *p = (int *)ins.params;
+        act_mission->game->using_object.DelObject(&using_object);
+        CreateUO(p[0], !p[1]);
+        break;
+    }
+    // Waits for a hit, with collisions that don't move
+    case CMD_DETECTOR_WAITFORHIT:
+        if (!dyn_colls)
+        {
+            unknown_de = true;
+            SetActState(ACTSTATE_1);
+            EraseColls();
+            CreateColls(false);
+        }
+        else
+            NextCommand(NULL);
+        break;
+    case CMD_DETECTOR_CREATEDYNCOLL:
+        if (!unknown_de && !dyn_colls)
+        {
+            dyn_colls = true;
+            EraseColls();
+            CreateColls(true);
+        }
+        NextCommand(NULL);
+        break;
+    case CMD_DETECTOR_ERASEDYNCOLL:
+        if (!unknown_de && dyn_colls)
+        {
+            dyn_colls = false;
+            EraseColls();
+        }
+        NextCommand(NULL);
+        break;
+    default:
+        C_program::Process(time);
+        add_time = false;
+    }
+    if (add_time)
+        command_time += time;
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4330b0
+void C_detector::CreateColls(bool dynamic)
+{
+    StubLog("C_detector::CreateColls");
+}
+
+// STUB: GAME 0x433b80
+void C_detector::CreateUO(int unknown, bool unknown2)
+{
+    StubLog("C_detector::CreateUO");
 }
 
 #pragma auto_inline(on)

@@ -134,6 +134,13 @@ bool C_human::IsThisCarStealing(C_car *car)
     return false;
 }
 
+// STUB: GAME 0x58e270
+bool C_human::Can_Hit_FilterHumanType(C_human *shooter, C_human *human)
+{
+    StubLog("C_human::Can_Hit_FilterHumanType");
+    return true;
+}
+
 #pragma auto_inline(on)
 
 #pragma auto_inline(off)

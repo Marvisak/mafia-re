@@ -51,6 +51,32 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 #define RACE6_STATE_STARTED 2           // SetUnknown2edc(true)
 #define RACE6_STATE_END 10
 
+// A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
+// adds and TickShoot moves until it hits something or reaches the end of its range
+struct S_shoot
+{
+    S_vector pos;                       // 0x0, where it was shot from
+    S_vector dir;                       // 0xc, as far as the level's collision it hits, else its whole range
+    float range;                        // 0x18, dir's length
+    S_vector curr_pos;                  // 0x1c, where it is now
+    float power;                        // 0x28
+    C_actor *actor;                     // 0x2c, who shot it
+    I3D_frame *frame;                   // 0x30, coll's frame where it is glass or a crash collision, else NULL
+    g_collision_header *coll;           // 0x34, the level's collision the line hits, NULL for none
+    S_vector hit_pos;                   // 0x38, where it hits coll
+    S_vector hit_normal;                // 0x44
+    bool hit;                           // 0x50, coll isn't NULL
+    int sound;                          // 0x54, played where the shot ends (the material's, or SHOTSOUND_*), -1 for none
+    uchar material;                     // 0x58, coll's
+};
+
+// The sounds of a shot's hit on an actor (S_shoot::sound; the names are ours): materials.def's "Telo" (body) has the
+// first
+#define SHOTSOUND_BODY 0x19
+#define SHOTSOUND_CAR 0x1a
+// The effects' particle of a shot's hit on a human or an animal (materials.def's "Telo" has it too; the name is ours)
+#define SHOTPARTICLE_BODY 0
+
 // The game of the loaded mission (PS2 game.cpp), 0x36ac bytes, the size C_mission::Init creates it with. PS2's Init
 // takes two bools and loads the mission's collisions itself; the PC's takes none, main loads them before it.
 // PS2's has most of the members in the same order (its offsets in the comments) and a few of its own; PS2's constructor,
@@ -187,10 +213,6 @@ public:
         I3D_frame *parent;              // 0x2c
         bool on;                        // 0x30
     };
-    struct S_unknown_1d4
-    {
-        uchar unknown_0[0x40];
-    };
     // 0x58 bytes, of which only the collision object is cleared, by its constructor. PS2's is 0x80, with an I3D_bbox,
     // and clears 0x10 to 0x70. The empty constructor keeps C_game's destructor as it is: with the implicit one VC6
     // inlines less in it.
@@ -279,7 +301,7 @@ public:
     std::vector<S_semaphore> semaphores;  // 0x1a4 (PS2 0x1ec)
     std::vector<S_RoadBlock> road_blocks;  // 0x1b4 (PS2 0x1f8)
     std::vector<S_Telephone> telephones;  // 0x1c4 (PS2 0x204)
-    std::vector<S_unknown_1d4> unknown_1d4;  // 0x1d4 (PS2 0x210, a gif::vector)
+    std::vector<S_shoot> shoots;        // 0x1d4 (PS2 0x210, a gif::vector<S_shoot, 8>), TickShoot's
     std::vector<ushort> unknown_1e4;    // 0x1e4 (PS2 0x21c), the base blocks' model sets of the traffic signs
     std::vector<I3D_frame *> taxi_points;  // 0x1f4 (PS2 0x228), the dummies taxi_point*
     int unknown_204;                    // 0x204
@@ -318,7 +340,7 @@ public:
     float unknown_2a0c;                 // 0x2a0c, how fast unknown_2a10 moved in the last frame, per second
     S_vector unknown_2a10;              // 0x2a10, where the player or else the camera is (Init's and each Tick's)
     C_don_ocas *don_ocas;               // 0x2a1c
-    I3D_sound *unknown_2a20[10];        // 0x2a20
+    I3D_sound *unknown_2a20[10];        // 0x2a20, the shots' sounds, played where they end
     S_unknown_2a48 unknown_2a48[10];    // 0x2a48
     S_unknown_2ac0 unknown_2ac0[3];     // 0x2ac0
     bool unknown_2ad8;                  // 0x2ad8
@@ -544,6 +566,13 @@ public:
     void DeathActorProcess();
     void _RemoveTemporaryActor(C_actor *act);
     void TickShoot(uint time);
+    // A track on a surface (a shot's, on the hit level's frame or NULL): the texture of unknown_29bc's index, at pos
+    // facing normal, turned by angle (the name is PS2's, the parameters' names are ours; PS2's takes other ones)
+    void CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1, int texture,
+        bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm);
+    // A shot at a level's collision of control signals (the shot's coll, hit position, start, direction and shooter;
+    // PS2 name, PS2's takes the collision as a uint *)
+    void DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir, C_human *human);
     void ItemBlurTick(uint time);
     void TickScreamAreas();
     void TickCarSoundManager();
@@ -798,10 +827,10 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_RoadBlock@C_game@@QAE@XZ
+// ??1S_cache_model_set@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0

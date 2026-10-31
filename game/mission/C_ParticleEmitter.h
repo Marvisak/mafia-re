@@ -42,6 +42,9 @@ public:
     // The effect's frame, matrix and values, and a number of the driver's
     void Init(I3D_frame *at, const S_vector &p, const S_vector &d, bool v4a, bool v4b, const S_vector &v30,
         const S_vector &v3c);
+    // A particle of the part, which has already lived time (PS2's name; its PS2 parameters are a type's data, a matrix
+    // and two integers)
+    void CreateParticle(C_ParticleType *type, int time);
     // The effect by the time passed: false once it has ended (PS2's name)
     bool Tick(int time);
 };

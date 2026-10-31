@@ -28,6 +28,10 @@ struct S_road_link
 
 // GetNearNode's index without its flag, the top bit (the name is ours)
 #define NEARNODE_INDEX 0x7fff
+// The flag itself, which C_sledovacka::Tick sets on the nodes it passes to FindPath, and GetNearNode's none (the
+// names are ours)
+#define NEARNODE_FLAG 0x8000
+#define NEARNODE_NONE 0xffff
 
 // VTABLE: GAME 0x625370
 class C_roads
@@ -54,6 +58,8 @@ public:
     // The node nearest to a position, 0xffff for none (PS2 name; PS2's takes a reference). Its top bit is a flag:
     // C_sledovacka::Init masks it off (NEARNODE_INDEX)
     ushort GetNearNode(S_vector pos);
+    // The nodes from one node to another into path (PS2 name and parameters)
+    bool FindPath(ushort from, ushort to, std::vector<ushort> &path);
 
     // PS2's three virtual functions in PS2's order, and a second reader between the last two, PC only (the parameters
     // each one's ret takes). It reads what LoadData reads; the name is ours, after C_web_path's MergeNodes.

@@ -7,12 +7,24 @@
 // G_LoadSaveClass::Init calls, loads them, UnloadMaterials, which G_LoadSaveClass::Close calls, frees them. The tables'
 // structs and their names are ours, after their files.
 
+// The materials the shots treat apart (materialList's indices, g_collision_header::material; the names are ours, after
+// materials.def's "Sklo" and "CRASH COLLISION")
+#define MAT_GLASS 0x18
+#define MAT_CRASH 0x29
+
 // A material of the scene's surfaces (materials.def), 0x170 bytes. The cars take their part (C_car::LoadMaterials);
 // their meanings aren't known, C_car::LoadMaterials clamps them.
 struct S_material_def
 {
     char name[0x20];                    // 0x0, the editor's, in Czech ("Asfalt", "Trava", ...)
-    uchar unknown_20[0xe8];
+    int unknown_20;                     // 0x20
+    int shot_sound;                     // 0x24, the sound of a shot's hit (C_sound_table's id), -1 for none
+    uchar unknown_28[0x14];             // 0x28
+    // 0x3c, the texture of a shot's track on it (C_game::unknown_29bc's index) and the model of its holes
+    // (C_game::hole_models'), -1 for none
+    int hole;
+    int particle;                       // 0x40, the effects' particle of a shot's hit, -1 for none
+    uchar unknown_44[0xc4];             // 0x44
     float unknown_108;                  // 0x108, the cars' unknown_18
     float unknown_10c;                  // 0x10c, unknown_1c
     float unknown_110;                  // 0x110, unknown_08

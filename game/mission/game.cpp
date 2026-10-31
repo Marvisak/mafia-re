@@ -7,17 +7,19 @@
 // the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_cutscene::Close calls, and ScoreSet, which the
 // scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
 // TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
-// it). Stubs: what the run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base
+// it), and TickShoot, the shots in flight, which Tick calls every frame. Stubs: what the run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base
 // blocks, which stay closed while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor, BoxPlacementDel,
 // RemoveDeathHumanFade), the other functions the scripts call (C_program::Process), and what Tick calls out of line
-// (TickShoot and DoubleKiss every frame; FindActorsVect, TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor,
+// (DoubleKiss every frame; FindActorsVect, TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor,
 // ItemBlurTick, TickScreamAreas, TickCarSoundManager and LightnessTick when their lists or flags are set).
 // Open: the consoles' globals (0x647a74, 0x647ab0) are here for now; Init, Done, DoneIntern and Tick aren't matched yet.
 // Tick's remaining differences are mostly registers and the inline budget: the original calls TickEffects' size() and
 // the second clear()'s std::copy out of line, but inlines the second clear()'s erase and the city music's i_shows.size().
 // The speed (unknown_2a0c) is the Magnitude of a named difference, whose squares the original sums x, z, y (a nested
 // Square() most likely, which the engine's Magnitude doesn't have), and the city music reads the area's two letters
-// through a pointer it advances (add eax, 11), where ours folds the offset.
+// through a pointer it advances (add eax, 11), where ours folds the offset. TickShoot's remaining differences are
+// registers and its sorted frame (frm at 0xc8, the original's 0x2c), and the order of the x87 loads in two Normalize
+// copies and in the hole's position.
 
 #include "mission/game.h"
 #include "mission/Mission.h"
@@ -52,6 +54,7 @@
 #include "vehicles/C_car.h"
 #include "vehicles/C_trf_c.h"
 #include "vehicles/C_Vehicle.h"
+#include "g_material.h"
 #include "I3D_cache.h"
 #include "stub.h"
 
@@ -1261,7 +1264,7 @@ bool C_game::Done()
     ClearEffects();
     compass.Activate(NULL);
     DabingDone();
-    unknown_1d4.clear();
+    shoots.clear();
     for (i = 100; i--;)
     {
         S_unknown_75c &p = unknown_75c[i];
@@ -2331,11 +2334,306 @@ void C_game::SetTrafficVisible(bool visible)
     StubLog("C_game::SetTrafficVisible");
 }
 
-// STUB: GAME 0x5a8e70
+#pragma auto_inline(on)
+
+// The shots in flight (PS2 name), each moved along its direction by 0.3 a ms: one that hits nothing goes on in the next
+// frame; one that hits an actor's collision hits the actor (its Hit), whose false lets the shot through, the actor's
+// collisions left out of the test, which runs again for the same shot; one that hit or reached the end of its range
+// leaves its marks (a hole in what it hit, a track and the material's particle where it ended, broken glass, a crash
+// model, the control signals it destroys) and its sound, and is taken from the list.
+// FUNCTION: GAME 0x5a8e70
 void C_game::TickShoot(uint time)
 {
-    StubLog("C_game::TickShoot");
+    int i = 0;
+    std::vector<tDynamicCollObject *> colls;
+    bool move = true;
+    float len2;
+    S_vector old_pos, new_pos, delta;
+    S_vector hit_pos, hit_normal;
+    I3D_COLLISION col;
+    while (i < shoots.size())
+    {
+        // The shot moved, up to the end of its range
+        if (move)
+        {
+            len2 = shoots[i].dir.Square();
+            S_vector dir = shoots[i].dir;
+            dir.Normalize();
+            float step = time * .3;
+            new_pos = shoots[i].curr_pos + dir * step;
+            old_pos = shoots[i].curr_pos;
+            delta = new_pos - old_pos;
+            shoots[i].curr_pos = new_pos;
+            if (len2 < (shoots[i].curr_pos - shoots[i].pos).Square())
+            {
+                new_pos = shoots[i].curr_pos = shoots[i].pos + shoots[i].dir;
+                shoots[i].curr_pos = new_pos;
+                delta = shoots[i].curr_pos - old_pos;
+            }
+        }
+
+        // The moving objects' collisions along the move, but the shooter's
+        if (!colls.size())
+        {
+            C_actor *shooter = shoots[i].actor;
+            if (shooter && (shooter->type == ACTOR_PLAYER || shooter->type == ACTOR_ENTITY))
+            {
+                for (int k = ((C_human *)shooter)->num_colls; k--;)
+                    colls.push_back(((C_human *)shooter)->colls[k]);
+            }
+        }
+        if (colls.size())
+            gifCollision.DynSetNextCollOwnerMult(&colls[0], colls.size(), NULL);
+        tDynamicCollObject *hit = gifCollision.TestLineHDynamic(old_pos, delta, &hit_pos, &hit_normal, 1);
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        S_vector diff = new_pos - shoots[i].pos;
+        bool end = diff.Square() + 1.0f > len2;
+        if (!hit && !end)
+        {
+            i++;
+        }
+        else
+        {
+            // The actor hit, with the shot's power by the distance
+            bool ok = true;
+            bool make_hole = false;
+            I3D_frame *frm = NULL;
+            C_actor *actor = NULL;
+            if (hit && hit->owner)
+            {
+                float power = shoots[i].power;
+                float dist = diff.Magnitude();
+                if (dist > shoots[i].range)
+                    power = 0.0f;
+                else if (3.0f * dist > shoots[i].range)
+                    power *= 1.0f - (dist - shoots[i].range * .33f) / (shoots[i].range * .66f);
+                actor = hit->owner;
+                if (actor && actor != shoots[i].actor)
+                {
+                    if (actor->type == ACTOR_PLAYER || actor->type == ACTOR_ENTITY)
+                    {
+                        bool can = !end || (new_pos - hit_pos).Square() > 1.0f;
+                        if (can && shoots[i].actor &&
+                            (shoots[i].actor->type == ACTOR_PLAYER || shoots[i].actor->type == ACTOR_ENTITY))
+                            can = C_human::Can_Hit_FilterHumanType((C_human *)shoots[i].actor, (C_human *)actor);
+                        if (can)
+                        {
+                            int bone = ((C_human *)actor)->TestShotCollision(old_pos, delta,
+                                (new_pos - old_pos).Square());
+                            if (bone)
+                            {
+                                S_vector d = shoots[i].dir;
+                                d.Normalize();
+                                ok |= actor->Hit(HIT_SHOT, d, hit_pos, hit_normal, power, shoots[i].actor, bone, NULL);
+                                if (act_mission->GetOptions().particles >= 1)
+                                    act_mission->GetEffects()->CreateParticle(SHOTPARTICLE_BODY, hit_pos, hit_normal, 0,
+                                        NULL);
+                            }
+                            else
+                                ok = false;
+                        }
+                    }
+                    else if (actor->type == ACTOR_DON_OCAS)
+                    {
+                        S_vector d = shoots[i].dir;
+                        d.Normalize();
+                        ok = actor->Hit(HIT_SHOT, delta, old_pos, hit_pos, power, shoots[i].actor, 0, hit->frame);
+                        if (ok && act_mission->GetOptions().particles >= 1)
+                            act_mission->GetEffects()->CreateParticle(SHOTPARTICLE_BODY, hit_pos, hit_normal, 0, NULL);
+                    }
+                    else if (actor->type == ACTOR_SEAGULL)
+                        ok = actor->Hit(HIT_SHOT, delta, old_pos, hit_pos, power, shoots[i].actor, 0, hit->frame);
+                    else if (actor->type == ACTOR_RAILWAY)
+                    {
+                        S_vector d = shoots[i].dir;
+                        d.Normalize();
+                        ok = actor->Hit(HIT_SHOT, d, hit_pos, hit_normal, power, shoots[i].actor, 0, hit->frame);
+                    }
+                    else if (actor->type == ACTOR_DETECTOR && hit->frame && hit->frame->GetType() == FRAME_DUMMY)
+                    {
+                        S_vector d = shoots[i].dir;
+                        d.Normalize();
+                        ok = actor->Hit(HIT_SHOT, d, hit_pos, hit_normal, power, shoots[i].actor, 0, hit->frame);
+                    }
+                    else
+                    {
+                        frm = act_mission->scene->TestColHierarchy(old_pos, delta, hit->frame, col, 0, NULL, 0, NULL);
+                        if (frm)
+                        {
+                            S_vector d = shoots[i].dir;
+                            d.Normalize();
+                            hit_normal = col.normal;
+                            S_vector n = delta;
+                            n.Normalize();
+                            hit_pos = old_pos + n * col.dist;
+                            I3D_frame *f = frm;
+                            // A hole: the frame it is on
+                            if (!strcmp("dUra_fiRe", frm->GetName()))
+                                f = frm->GetParent();
+                            ok = actor->Hit(HIT_SHOT, d, hit_pos, hit_normal, power, shoots[i].actor, 0, f);
+                            make_hole = ok;
+                            if (actor->type == ACTOR_DOG)
+                                make_hole = false;
+                        }
+                        else
+                            ok = false;
+                    }
+                }
+            }
+            if (!ok)
+            {
+                colls.push_back(hit);
+                move = false;
+                continue;
+            }
+
+            // A track where the shot ended in the level, or a hole in the actor it hit
+            if (!shoots[i].frame && holes[num_holes])
+            {
+                if (!hit && shoots[i].hit)
+                {
+                    if (act_mission->GetOptions().game_effects >= 1)
+                    {
+                        int tex = materialList[shoots[i].material].hole;
+                        if (tex >= 0 && tex < 10)
+                        {
+                            S_vector pos = shoots[i].hit_pos + shoots[i].hit_normal * .005f;
+                            S_vector normal = -shoots[i].hit_normal;
+                            S_vector size(.04f, .04f, .01f);
+                            I3D_frame *f = shoots[i].coll->flags & (COLLHF_UNKNOWN_40 | COLLHF_UNKNOWN_80) ?
+                                shoots[i].coll->frame : NULL;
+                            CreateTrackEffect(pos, normal, rnd() * (2.0f * PI), size, .002f, tex, false, 1.0f, false,
+                                false, f);
+                        }
+                    }
+                    int particle = materialList[shoots[i].material].particle;
+                    if (particle >= 0 && act_mission->GetOptions().particles >= 1)
+                        act_mission->GetEffects()->CreateParticle(particle, shoots[i].hit_pos, shoots[i].hit_normal, 0,
+                            NULL);
+                }
+                else if (make_hole)
+                {
+                    if (strcmp("dUra_fiRe", frm->GetName()) && act_mission->GetOptions().game_effects >= 1 &&
+                        hole_models.size())
+                    {
+                        I3D_frame *f = frm;
+                        if (!strcmp("dUra_fiRe", frm->GetName()))
+                            f = frm->GetParent();
+                        int mat = actor->GetMaterialID(f);
+                        if (mat >= 0)
+                        {
+                            uint model = materialList[mat].hole;
+                            if (model >= hole_models.size())
+                                model = 0;
+                            holes[num_holes]->LinkTo(NULL, 0);
+                            holes[num_holes]->Duplicate(hole_models[model]);
+                            S_vector d = delta;
+                            d.Normalize();
+                            S_vector pos = old_pos + d * col.dist;
+                            pos += col.normal * .02f;
+                            holes[num_holes]->LinkTo(act_mission->scene->primary_sector, 0);
+                            holes[num_holes]->SetPos(pos);
+                            holes[num_holes]->SetDir(col.normal, 0.0f);
+                            holes[num_holes]->Update();
+                            holes[num_holes]->LinkTo(frm, 1);
+                            if (++num_holes >= 100)
+                                num_holes = 0;
+                        }
+                    }
+                }
+            }
+
+            // The level's collision hit: control signals destroyed, glass broken, a crash model
+            if (!hit && shoots[i].coll && (shoots[i].coll->flags & COLLHF_UNKNOWN_20000) &&
+                !(shoots[i].coll->flags & COLLHF_DISABLED))
+            {
+                S_vector d = shoots[i].dir;
+                d.Normalize();
+                d.y = (float)fabs(d.y);
+                d *= 10.0f;
+                DestroyControlSignal(shoots[i].coll, shoots[i].hit_pos, shoots[i].pos, d, (C_human *)shoots[i].actor);
+            }
+            if (!hit && shoots[i].frame && shoots[i].coll && !(shoots[i].coll->flags & COLLHF_DISABLED))
+            {
+                if (shoots[i].coll->material == MAT_GLASS)
+                {
+                    shoots[i].coll->flags |= COLLHF_DISABLED;
+                    S_vector d = shoots[i].dir;
+                    d.Normalize();
+                    // STRING: GAME 0x6323b8
+                    glass.BreakGlass(shoots[i].frame, &d, "lustr1.wav", true);
+                }
+                if (shoots[i].coll->material == MAT_CRASH)
+                {
+                    S_vector d = delta;
+                    d.Normalize();
+                    d *= 5.0f;
+                    float power = shoots[i].power;
+                    float dist = diff.Magnitude();
+                    if (dist > shoots[i].range)
+                        power = 0.0f;
+                    else if (3.0f * dist > shoots[i].range)
+                        power *= 1.0f - (dist - shoots[i].range * .33f) / (shoots[i].range * .66f);
+                    CreateCrashModel(shoots[i].frame, old_pos, d, power);
+                }
+            }
+
+            // The sound of what was hit
+            if (hit && actor)
+            {
+                switch (actor->type)
+                {
+                case ACTOR_CAR:
+                    shoots[i].sound = SHOTSOUND_CAR;
+                    break;
+                case ACTOR_PLAYER:
+                case ACTOR_ENTITY:
+                    shoots[i].sound = SHOTSOUND_BODY;
+                    break;
+                case ACTOR_UNKNOWN_11:
+                case ACTOR_CRASH_OBJ:
+                case ACTOR_PUBLIC_PHYSICS:
+                case ACTOR_BOX_NEW:
+                    {
+                        int mat = ((C_PhThing *)actor)->material;
+                        if (mat > -1 && mat < numOfMaterials)
+                            shoots[i].sound = materialList[mat].shot_sound;
+                        else
+                            shoots[i].sound = -1;
+                    }
+                    break;
+                default:
+                    shoots[i].sound = -1;
+                }
+            }
+            if (shoots[i].sound > -1)
+            {
+                for (int k = 0; k < 10; k++)
+                {
+                    if (unknown_2a20[k] && !unknown_2a20[k]->IsPlaying(false))
+                    {
+                        if (sound_table.ConstructSound(unknown_2a20[k], shoots[i].sound))
+                        {
+                            unknown_2a20[k]->SetPos(new_pos);
+                            act_mission->scene->SetFrameSector(unknown_2a20[k]);
+                            unknown_2a20[k]->Update();
+                            unknown_2a20[k]->SetOn(true, true);
+                        }
+                        break;
+                    }
+                }
+            }
+            shoots[i] = shoots.back();
+            shoots.pop_back();
+            if (!end)
+                i++;
+        }
+        colls.clear();
+        move = true;
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5aae10
 void C_game::NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float unknown2, bool unknown3, bool unknown4,
@@ -2747,6 +3045,13 @@ void C_game::AddFramePlacement(I3D_frame *frm)
 void C_game::AddNPCKillEvent(C_program *prog, int unknown, char *label)
 {
     StubLog("C_game::AddNPCKillEvent");
+}
+
+// STUB: GAME 0x5b0b60
+void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1,
+    int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm)
+{
+    StubLog("C_game::CreateTrackEffect");
 }
 
 // STUB: GAME 0x5b1d70
@@ -3207,6 +3512,17 @@ void C_game::CreateSignalMarkIDX()
             unknown_1e4.push_back(i);
     }
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5b7be0
+void C_game::DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir,
+    C_human *human)
+{
+    StubLog("C_game::DestroyControlSignal");
+}
+
+#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5b7ed0
 void C_game::EntityBlock(bool block, bool unknown)

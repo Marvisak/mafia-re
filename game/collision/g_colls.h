@@ -22,7 +22,9 @@ struct S_vector;
 // holds is known only in part
 struct tDynamicCollObject
 {
-    uchar unknown_0[0x10];
+    uchar unknown_0[4];
+    I3D_frame *frame;                   // 0x4, the frame it is the collision of (the name is ours)
+    uchar unknown_8[8];
     // 0x10, the sphere around it, an I3D_bsphere (bytes, as the box): the detector's Update sets it, DynUpdate finds
     // the object's cell by its position (the name is ours)
     uchar bsphere[0x10];
@@ -31,7 +33,8 @@ struct tDynamicCollObject
     // includer the engine header's statics, which the original's game files don't have
     uchar bbox[0x18];
     S_matrix *matrix;                   // 0x3c, the radar places the box by it
-    uchar unknown_40[8];
+    uchar unknown_40[4];
+    C_actor *owner;                     // 0x44, the actor whose collision it is (the name is ours)
 
     // PS2's, which clears it
     tDynamicCollObject() { memset(this, 0, sizeof(*this)); }
@@ -39,14 +42,28 @@ struct tDynamicCollObject
 
 // g_collision_header::flags (the name is ours, after the command): DISABLECOLLS sets it
 #define COLLHF_DISABLED 0x20
+// The flags TickShoot tests (the names are ours, by value): a shot at a collision with 0x20000 destroys control
+// signals, NewShoot keeps the frame of a glass or crash collision with 0x40 or 0x80
+#define COLLHF_UNKNOWN_40 0x40
+#define COLLHF_UNKNOWN_80 0x80
+#define COLLHF_UNKNOWN_20000 0x20000
 
 // A collision of the level (PS2 g_collision_header): only its flags are known so far, the first dword, and the actor
 // whose collision it is, which C_game::TickHydrant reads of what TestLineV returns (PS2 0x48, compared with ACTOR_CAR
 // as an actor's type), so most likely this struct
 struct g_collision_header
 {
-    uint flags;                         // 0x0, COLLHF_* (the name is ours)
-    uchar unknown_4[0x40];              // 0x4
+    union
+    {
+        uint flags;                     // 0x0, COLLHF_* (the name is ours)
+        struct
+        {
+            uchar unknown_0[3];
+            uchar material;             // 0x3, the surface's, an index of materialList (MAT_*, g_material.h)
+        };
+    };
+    I3D_frame *frame;                   // 0x4 (the name is ours)
+    uchar unknown_8[0x3c];              // 0x8
     C_actor *owner;                     // 0x44 (the name is ours)
 };
 
@@ -93,10 +110,25 @@ public:
         uint flags2);
     int _TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
+    // A horizontal line (PS2 names), the same way; TestLineH is the wrapper of _TestLineH
+    int TestLineH(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
+    int _TestLineH(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
+    // A line from from along dir against the level's static collisions only (PS2 name and parameters, their names
+    // ours, as TestLineV's): nonzero for a hit
+    int TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags);
     // The level's collisions of a frame into colls (PS2 name), and their number
     uint FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls);
     // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize")
     bool LoadCollision(const char *name, bool);
+    // A line from from along dir against the moving objects' collisions (PS2 name; PS2's takes one more uint): the
+    // object hit, NULL for none, its place into pos and the normal into normal
+    tDynamicCollObject *TestLineHDynamic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal,
+        uint flags);
+    // The objects the next test leaves out, and the callback it asks (PS2 names; the callback's type is ours)
+    void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback);
+    void DynSetNextCollOwner(tDynamicCollObject *obj, void *callback);
     // Takes a moving object out of the collisions (PS2 name)
     void DynErase(tDynamicCollObject *obj);
     // A moving object's collision moved: its cell found again by its sphere's position (PS2 name)

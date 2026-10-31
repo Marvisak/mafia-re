@@ -28,6 +28,7 @@ struct tDynamicCollObject;
 #define ACTOR_STONE 0xf                 // PC only, C_game::Init's 2stone.i3d
 #define ACTOR_CARTRIDGE 0x10            // C_game::Init's cartridges
 #define ACTOR_TRAFFIC_GENERATOR 0x12
+#define ACTOR_UNKNOWN_11 0x11            // a C_PhThing's (TickShoot takes its material)
 #define ACTOR_DON_OCAS 0x13
 #define ACTOR_BRIDGE 0x14
 #define ACTOR_DOG 0x15
@@ -35,6 +36,7 @@ struct tDynamicCollObject;
 #define ACTOR_SEAGULL 0x17
 #define ACTOR_TURNOUT 0x18
 #define ACTOR_PUMPER 0x19
+#define ACTOR_CRASH_OBJ 0x1a              // C_crash_obj's
 #define ACTOR_ENTITY 0x1b
 #define ACTOR_RACECAM 0x1c
 #define ACTOR_SCATTER 0x1d
@@ -58,6 +60,7 @@ struct tDynamicCollObject;
 
 // Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, by value): the script's HUMAN_SETPROPERTY
 // hits a human whose energy runs out with them, in a car and on foot
+#define HIT_SHOT 0                      // C_game::TickShoot's
 #define HIT_UNKNOWN_5 5
 #define HIT_UNKNOWN_6 6
 
@@ -286,6 +289,12 @@ public:
     {
         return unknown_5e;
     }
+    // Its copy is among C_sledovacka.cpp's
+    // FUNCTION: GAME 0x4a9990
+    bool GetUnknown5f() const
+    {
+        return unknown_5f;
+    }
     // FUNCTION: GAME 0x47afd0
     bool GetUnknown5d() const
     {
@@ -350,7 +359,7 @@ public:
 // ?SaveGameLoad@C_racecam@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?vfunc_53@C_cutscene@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)

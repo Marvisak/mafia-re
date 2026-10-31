@@ -4,9 +4,12 @@
 
 #include <vector>
 
+#include "I3D/I3d_math.h"
+
 class C_actor;
 class C_car;
 class C_driver;
+class C_roads;
 
 // The cars that chase, flee or follow (PS2 C_sledovacka, C_sledovacka.cpp), the game's 0x2b18. PS2's is 0x20 bytes, its
 // offsets in the comments; the PC's size isn't known yet.
@@ -27,18 +30,28 @@ public:
         C_actor *actor;                 // 0x0
         ushort node;                    // 0x4, an index of C_roads::nodes
     };
-    // A car the chases drive (PS2 C_sledovacka::S_ELEMENT, 0x50 bytes), 0x44 bytes: only its driver is known so far,
-    // which Done deletes
+    // A car the chases drive (PS2 C_sledovacka::S_ELEMENT, 0x50 bytes), 0x44 bytes
     struct S_ELEMENT
     {
-        int unknown_0;                  // 0x0
-        C_driver *driver;               // 0x4
-        uchar unknown_8[0x3c];          // 0x8
+        C_car *car;                     // 0x0
+        C_driver *driver;               // 0x4, which Done deletes
+        C_actor *unknown_8;             // 0x8, unknown_c's car (C_human::car) where it has one, else unknown_c
+        C_actor *unknown_c;             // 0xc
+        S_vector unknown_10;            // 0x10, the place without unknown_8
+        uint flags;                     // 0x1c, SLEDF_*
+        int status;                     // 0x20, 0 while the chase goes on
+        uchar unknown_24[4];            // 0x24
+        uint unknown_28;                // 0x28, a time in ms
+        uint unknown_2c;                // 0x2c, a time in ms
+        uchar unknown_30[8];            // 0x30
+        float unknown_38;               // 0x38
+        float unknown_3c;               // 0x3c
+        int unknown_40;                 // 0x40, a time in ms
     };
 
     std::vector<S_BRIDGE> bridges;      // 0x0
     std::vector<S_ELEMENT> elements;    // 0x10 (PS2 0xc, a gif::vector)
-    int unknown_20;                     // 0x20 (PS2 0x18)
+    C_roads *unknown_20;                // 0x20 (PS2 0x18), the roads the cars find their paths on
 
     C_sledovacka();
     ~C_sledovacka();
@@ -47,6 +60,11 @@ public:
     // forgets the cars and the bridges.
     void Init();
     void Done();
+    // PS2 names: the path of a car, by its index in elements (Tick calls them for a car whose path ran out)
+    bool RecompilePath(int index);
+    bool PreparePath(int index);
+    // A car's driving, by its index in elements (PS2 name)
+    void TickDriver(int index, uint time);
     // The cars by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
     // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
@@ -61,3 +79,10 @@ public:
 
 // TEMPLATE: GAME 0x604e00
 // std::vector<C_sledovacka::S_BRIDGE,std::allocator<C_sledovacka::S_BRIDGE> >::_Ufill
+
+// What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
+// TEMPLATE: GAME 0x4a9940
+// ?size@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QBEIXZ
+
+// TEMPLATE: GAME 0x4a9970
+// ??A?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QAEAAUS_ELEMENT@C_sledovacka@@I@Z

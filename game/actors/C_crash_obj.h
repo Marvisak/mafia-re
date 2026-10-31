@@ -52,5 +52,9 @@ public:
     static int count;
 };
 
+// The crash model a shot breaks off the frame (PS2 name; the parameters' names are ours): at pos along dir, with
+// the shot's power
+void CreateCrashModel(I3D_frame *frm, S_vector &pos, S_vector &dir, float power);
+
 // SYNTHETIC: GAME 0x431bb0
 // C_crash_obj::`scalar deleting destructor'

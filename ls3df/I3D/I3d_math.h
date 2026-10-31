@@ -195,6 +195,11 @@ struct S_vector {
     }
 
     S_vector &operator-=(const S_vector &v);
+#ifndef LS3DF_EXPORTS
+    // Insanity3D's (the game's: defined in VE_BreakageGlass.cpp, its only user; declared
+    // for LS3DF too, it changes 1.1's I3D_singlemesh::UpdateLodVertices)
+    float DistanceToPlane(const S_vector &p, const S_vector &n) const;
+#endif
 
     S_vector operator-() const
     {
@@ -405,6 +410,10 @@ struct S_plane {
     __forceinline void NormalizeNormal();
 
     I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
+#ifndef LS3DF_EXPORTS
+    // Where a line meets the plane (Insanity3D's name; the game's, defined in VE_BreakageGlass.cpp)
+    bool Intersection(const S_vector &pos, const S_vector &dir, S_vector &ret) const;
+#endif
 };
 
 // The vectors' empty constructor, out of line for the vector constructor iterator (the scene's weather particles and

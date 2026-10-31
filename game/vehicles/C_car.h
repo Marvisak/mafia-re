@@ -125,6 +125,9 @@ public:
     // false for none; the four points around the car, in its model's space; and the time it has been parked, in ms
     bool GetPlacementFromTCK1(int unknown, S_vector &pos, S_vector &dir, bool unknown2);
     void GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4);
+    // A point of the car in world space: one of the model's two points (0x2080, 0x208c) times the model matrix,
+    // kept in 0x2098 or 0x20a4 (PS2 name and parameter; which point the parameter picks isn't known)
+    const S_vector &GetAIPos(bool b);
     uint GetTimeParking();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, most after
@@ -205,7 +208,8 @@ public:
     uchar unknown_20b0[2];              // 0x20b0
     // 0x20b2 (PS2 0x246a): a car G_LoadSaveClass::GarageGameDone doesn't take into the garage
     bool unknown_20b2;
-    uchar unknown_20b3[0x1d];
+    uchar unknown_20b3[0x19];
+    C_actor *unknown_20cc;              // 0x20cc
     int parking_time;                   // 0x20d0, the game's time GetTimeParking counts from (the name is ours)
     uchar unknown_20d4[0x1d];
     // The names of these are ours, after the scripts' commands
@@ -239,7 +243,10 @@ public:
     uchar unknown_220b;                 // 0x220b
     // 0x220c (PS2 0x247f), set for the cars the player left in the garage, and by the scripts' DAN_INTERNAL_1
     bool unknown_220c;
-    uchar unknown_220d[0xc];            // 0x220d
+    uchar unknown_220d[7];              // 0x220d
+    bool unknown_2214;                  // 0x2214
+    bool unknown_2215;                  // 0x2215
+    uchar unknown_2216[3];              // 0x2216
     // The names are ours, after the scripts' commands
     bool in_water;                      // 0x2219 (PS2 0x248a), CAR_INWATER reads it
     bool invisible;                     // 0x221a, CAR_INVISIBLE sets it

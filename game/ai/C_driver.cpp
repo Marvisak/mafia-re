@@ -4,8 +4,20 @@
 
 #include "ai/C_driver.h"
 
+#include "stub.h"
+
 // FUNCTION: GAME 0x43bee0
 C_driver::~C_driver()
 {
     unknown_160.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x43c4f0
+void C_driver::Tick(uint time)
+{
+    StubLog("C_driver::Tick");
+}
+
+#pragma auto_inline(on)

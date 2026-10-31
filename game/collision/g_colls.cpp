@@ -54,6 +54,18 @@ void g_collision::DynUpdate(tDynamicCollObject *obj)
     StubLog("g_collision::DynUpdate");
 }
 
+// STUB: GAME 0x5c3d10
+void g_collision::DynSetNextCollOwner(tDynamicCollObject *obj, void *callback)
+{
+    StubLog("g_collision::DynSetNextCollOwner");
+}
+
+// STUB: GAME 0x5c3d60
+void g_collision::DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback)
+{
+    StubLog("g_collision::DynSetNextCollOwnerMult");
+}
+
 // STUB: GAME 0x5c3da0
 void g_collision::DynWipeOut()
 {
@@ -66,6 +78,33 @@ int g_collision::_TestLineV(const S_vector &from, const S_vector &dir, S_vector 
     uint flags2)
 {
     StubLog("g_collision::_TestLineV");
+    return 0;
+}
+
+// The PC's is in the file at 0x5c5040 (docs/game-files.md)
+// STUB: GAME 0x5c74d0
+int g_collision::TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal,
+    uint flags)
+{
+    StubLog("g_collision::TestLineHStatic");
+    return 0;
+}
+
+// The PC's is in the file at 0x5c5040 (docs/game-files.md)
+// STUB: GAME 0x5c8440
+tDynamicCollObject *g_collision::TestLineHDynamic(const S_vector &from, const S_vector &dir, S_vector *pos,
+    S_vector *normal, uint flags)
+{
+    StubLog("g_collision::TestLineHDynamic");
+    return NULL;
+}
+
+// The PC's is in the file at 0x5c5040 (docs/game-files.md)
+// STUB: GAME 0x5c8770
+int g_collision::_TestLineH(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+    uint flags2)
+{
+    StubLog("g_collision::_TestLineH");
     return 0;
 }
 
@@ -103,6 +142,14 @@ int g_collision::TestLineV(const S_vector &from, const S_vector &dir, S_vector *
     uint flags2)
 {
     return gifCollision._TestLineV(from, dir, pos, normal, flags, flags2);
+}
+
+// A jump on this (PS2 name), where TestLineV and TestSphereB load gifCollision
+// FUNCTION: GAME 0x5d5930
+int g_collision::TestLineH(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+    uint flags2)
+{
+    return _TestLineH(from, dir, pos, normal, flags, flags2);
 }
 
 // PS2's g_colls.cpp has it after g_camera.cpp's functions (12 bytes, a jump with this); the PC's is in the file at
