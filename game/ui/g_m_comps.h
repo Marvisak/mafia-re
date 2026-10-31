@@ -583,7 +583,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
+// ?IsOverActive@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -659,7 +659,7 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_Button@@UAEIHHHII@Z
+// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60

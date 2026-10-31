@@ -1,8 +1,8 @@
 // The script objects (PS2 C_detector.cpp; the PC's file is the one at 0x432870-0x433fdc, docs/game-files.md), whose
 // constructor (0x432880) comes first. Written so far: the constructor and Init, which C_mission::CreateActor and
 // OpenBin call, the destructor, LoadData, which OpenBin calls next, and GameInit and GameDone, which C_game::Init and
-// Done call, with EraseColls (0x433ae0). Not written: the rest; the vtable's DuplicateFrom (0x4329c0) and its save
-// functions are stubs.
+// Done call, with EraseColls (0x433ae0), and AI and Update, which C_actor::Tick calls. Not written: the rest; the
+// vtable's DuplicateFrom (0x4329c0) and its save functions are stubs.
 
 #include "actors/C_detector.h"
 
@@ -56,7 +56,7 @@ void C_detector::GameInit()
     signal = false;
     unknown_dd = false;
     unknown_de = false;
-    unknown_df = false;
+    dyn_colls = false;
     colls = NULL;
     coll_matrices = NULL;
     coll_inv_matrices = NULL;
@@ -106,6 +106,45 @@ bool C_detector::SaveGameLoad(void **buf)
 }
 
 #pragma auto_inline(on)
+
+// The script, while it has a command to run; past its end, END's return (PS2's the same)
+// FUNCTION: GAME 0x432d70
+void C_detector::AI(uint time)
+{
+    if (cur_command < instructions.size())
+        CallProcess(time);
+    else
+        ClearAfterEnd();
+}
+
+// DETECTOR_CREATEDYNCOLL's collisions follow the frame, from the last one: each a sphere around the hierarchy's box,
+// its radius scaled by the frame's world scale, with the frame's matrix and its inverse. PS2 also returns first where
+// the frame moved by less than a distance; the PC tests nothing. The half size is halved in place and the radius
+// scaled in place (each one stack slot, as the original's), and the inverse is Invert's (inlined, which pushes the
+// arguments before the copy).
+// FUNCTION: GAME 0x432db0
+void C_detector::Update(uint time)
+{
+    if (!dyn_colls)
+        return;
+    for (int i = num_colls; i--;)
+    {
+        if (!colls[i])
+            continue;
+        I3D_bvolume bvol = frame->GetHRBoundVolume();
+        S_vector half = bvol.bbox.max - bvol.bbox.min;
+        half *= 0.5f;
+        float radius = half.Magnitude();
+        radius *= frame->GetWorldScale().y;
+        ((I3D_bsphere &)colls[i]->bsphere).pos = half + bvol.bbox.min;
+        ((I3D_bsphere &)colls[i]->bsphere).pos *= frame->GetMatrix();
+        ((I3D_bsphere &)colls[i]->bsphere).radius = radius;
+        coll_matrices[i] = frame->GetMatrix();
+        coll_inv_matrices[i] = coll_matrices[i];
+        coll_inv_matrices[i].Invert();
+        gifCollision.DynUpdate(colls[i]);
+    }
+}
 
 // From the last one, each taken from the game's collisions first. Each array is tested before its delete, which VC6
 // doesn't do itself (PS2 tests them too).
@@ -168,20 +207,6 @@ void C_detector::SaveData(C_chunk *chunk)
 {
     StubLog("C_detector::SaveData");
     C_actor::SaveData(chunk);
-}
-
-// STUB: GAME 0x432d70
-void C_detector::AI(uint time)
-{
-    StubLog("C_detector::AI");
-    C_actor::AI(time);
-}
-
-// STUB: GAME 0x432db0
-void C_detector::Update(uint time)
-{
-    StubLog("C_detector::Update");
-    C_actor::Update(time);
 }
 
 // STUB: GAME 0x433020

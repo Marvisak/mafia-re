@@ -1,7 +1,7 @@
 // The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. It starts
 // with gifCollision's initializer, whose constructor's copy is the file's last function. Written so far: DynOptimizeTick,
 // which C_game::Tick calls, GameDone, TestLineV and TestSphereB (in the file at 0x5d5900 on the PC); the rest of what
-// main, the game and the script's commands call is stubs.
+// main, the game, the detector and the script's commands call is stubs.
 
 #include "collision/g_colls.h"
 
@@ -46,6 +46,12 @@ void g_collision::DynOptimizeTick()
 void g_collision::DynErase(tDynamicCollObject *obj)
 {
     StubLog("g_collision::DynErase");
+}
+
+// STUB: GAME 0x5c3ac0
+void g_collision::DynUpdate(tDynamicCollObject *obj)
+{
+    StubLog("g_collision::DynUpdate");
 }
 
 // STUB: GAME 0x5c3da0

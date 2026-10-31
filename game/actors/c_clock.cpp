@@ -1,10 +1,9 @@
 // The clocks (PS2 c_clock.cpp; the PC's file is the one at 0x56add0-0x56b17c, docs/game-files.md), which starts with
 // the constructor. Written so far: the constructor and Init, which C_mission::CreateActor and OpenBin call, the
-// destructor (c_clock.h), and GameInit and GameDone, which C_game::Init and Done call. Not written: the hands' Tick
-// (0x56afe0).
+// destructor (c_clock.h), GameInit and GameDone, which C_game::Init and Done call, and AI (PS2's name), which turns
+// the hands: the whole file.
 
 #include "actors/c_clock.h"
-#include "stub.h"
 
 // FUNCTION: GAME 0x56add0
 C_clock::C_clock()
@@ -34,7 +33,7 @@ void C_clock::GameInit()
 {
     angle_hour = 0.0f;
     angle_minute = 0.0f;
-    time = 0;
+    elapsed = 0;
     C_actor::GameInit();
     unknown_65 = true;
     SYSTEMTIME st;
@@ -69,13 +68,31 @@ bool C_clock::SaveGameLoad(void **buf)
     return true;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x56afe0
+// Each minute past turns the minute hand on by one, each of its turns the hour hand by PI / 12, half of the PI / 6 an
+// hour is in GameInit (PS2's the same); the second hand turns with the time
+// FUNCTION: GAME 0x56afe0
 void C_clock::AI(uint time)
 {
-    StubLog("C_clock::AI");
-    C_actor::AI(time);
+    elapsed += time;
+    if (elapsed > 60000)
+    {
+        elapsed -= 60000;
+        angle_minute += 2 * PI / 60.0f;
+        if (angle_minute > 2 * PI)
+        {
+            angle_minute -= 2 * PI;
+            angle_hour += PI / 12.0f;
+            if (angle_hour > 2 * PI)
+                angle_hour -= 2 * PI;
+        }
+        hand_hour->SetDir(S_vector(0.0f, 1.0f, 0.0f), PI - (angle_hour + angle_minute / 12.0f));
+        hand_hour->Update();
+        hand_minute->SetDir(S_vector(0.0f, 1.0f, 0.0f), PI - angle_minute);
+        hand_minute->Update();
+    }
+    if (hand_second)
+    {
+        hand_second->SetDir(S_vector(0.0f, 1.0f, 0.0f), PI - (float)elapsed * 2 * PI / 60000.0f);
+        hand_second->Update();
+    }
 }
-
-#pragma auto_inline(on)

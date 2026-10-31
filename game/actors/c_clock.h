@@ -3,15 +3,14 @@
 #include "actors/C_actor.h"
 
 // The clocks (PS2 C_clock, c_clock.cpp), 0x88 bytes (PS2's 0xa0): a model whose hands turn with the computer's time.
-// Only the constructor, the destructor and Init so far, which C_mission::CreateActor and OpenBin call for ACTOR_CLOCK,
-// and the vtable's functions from DuplicateFrom to GameDone, which C_game::Init and Done call.
+// The constructor, the destructor and Init, which C_mission::CreateActor and OpenBin call for ACTOR_CLOCK, the vtable's
+// functions from DuplicateFrom to GameDone, which C_game::Init and Done call, and AI, which C_actor::Tick calls.
 // VTABLE: GAME 0x625648
 class C_clock : public C_actor
 {
 public:
     C_clock();
-    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
-    // linker's folded constant functions and those that only call the base's
+    // The hands turned on by the time
     virtual void AI(uint time);
     // FUNCTION: GAME 0x56ae10
     virtual ~C_clock() {}
@@ -41,9 +40,8 @@ public:
     I3D_frame *hand_hour;               // 0x70
     I3D_frame *hand_minute;             // 0x74
     I3D_frame *hand_second;             // 0x78, which the clock may lack
-    // The time and the hands' angles (the names are ours): the hands' Tick adds the time, and turns the hands on at each
-    // minute past
-    uint time;                          // 0x7c, in ms since the last minute
+    // The time and the hands' angles (the names are ours): AI adds the time, and turns the hands on at each minute past
+    uint elapsed;                       // 0x7c, in ms since the last minute
     float angle_hour;                   // 0x80, in radians
     float angle_minute;                 // 0x84
 };

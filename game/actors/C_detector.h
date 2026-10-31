@@ -9,7 +9,8 @@ struct tDynamicCollObject;
 // The script objects (PS2 C_detector, C_detector.cpp), an actor and its script: C_program is the second base (at 0x70,
 // PS2's 0x80, whose this adjustors PS2 names @128@), 0x128 bytes (PS2's 0x150). Only the constructor, the destructor,
 // Init and LoadData so far, which C_mission::CreateActor and OpenBin call for ACTOR_DETECTOR, GameInit and GameDone,
-// which C_game::Init and Done call, and the vtable's other functions from DuplicateFrom to SaveGameLoad as stubs.
+// which C_game::Init and Done call, AI and Update, which C_actor::Tick calls, and the vtable's other functions from
+// DuplicateFrom to SaveGameLoad as stubs.
 // VTABLE: GAME 0x6239b0 C_actor
 // VTABLE: GAME 0x623a48 C_program
 class C_detector : public C_actor, public C_program
@@ -68,8 +69,12 @@ public:
     // GameInit clears them (PS2 0x10c to 0x10f)
     bool signal;                        // 0xdc, DETECTOR_SETSIGNAL's (the name is ours)
     bool unknown_dd;                    // 0xdd
-    bool unknown_de;                    // 0xde
-    bool unknown_df;                    // 0xdf
+    // 0xde, set by DETECTOR_WAITFORHIT, which makes collisions that don't move; DETECTOR_CREATEDYNCOLL and ERASEDYNCOLL
+    // do nothing then
+    bool unknown_de;
+    // 0xdf, DETECTOR_CREATEDYNCOLL's collisions, which follow the frame (Update), until DETECTOR_ERASEDYNCOLL (the name
+    // is ours)
+    bool dyn_colls;
     // What the player can use, which GameDone takes from the game's objects (PS2's at 0x110; the name is ours): its
     // item is cleared through a register of its own after the other members' zero stores, S_GameItem's memset inlined
     C_using_object::S_using_object using_object;  // 0xe0

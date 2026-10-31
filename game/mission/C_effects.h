@@ -411,16 +411,16 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_frame_actor_buffer@C_mission@@V?$allocator@US_frame_actor_buffer@C_mission@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAE@ABV?$allocator@US_GameItem@@@1@@Z
+// ??0?$vector@IV?$allocator@I@std@@@std@@QAE@ABV?$allocator@I@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

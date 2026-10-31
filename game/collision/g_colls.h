@@ -19,10 +19,14 @@ struct S_vector;
 #define COLF2_UNKNOWN_100000 0x100000
 
 // A moving object's collision (PS2 tDynamicCollObject, 0x60 bytes), 0x48 bytes by the game's arrays of them; what it
-// holds isn't known yet
+// holds is known only in part
 struct tDynamicCollObject
 {
-    uchar unknown_0[0x24];
+    uchar unknown_0[0x10];
+    // 0x10, the sphere around it, an I3D_bsphere (bytes, as the box): the detector's Update sets it, DynUpdate finds
+    // the object's cell by its position (the name is ours)
+    uchar bsphere[0x10];
+    uchar unknown_20[4];
     // 0x24, the box the radar draws, an I3D_bbox as PS2's: bytes here, as including the engine's math would give each
     // includer the engine header's statics, which the original's game files don't have
     uchar bbox[0x18];
@@ -95,6 +99,8 @@ public:
     bool LoadCollision(const char *name, bool);
     // Takes a moving object out of the collisions (PS2 name)
     void DynErase(tDynamicCollObject *obj);
+    // A moving object's collision moved: its cell found again by its sphere's position (PS2 name)
+    void DynUpdate(tDynamicCollObject *obj);
     // The moving objects' collisions optimized each frame, which C_game::Tick calls (PS2 name)
     void DynOptimizeTick();
     // PS2 name (PS2's takes a bool)
