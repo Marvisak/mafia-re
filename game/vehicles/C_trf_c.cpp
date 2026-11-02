@@ -1,8 +1,8 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
 // docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written so far: GetParkingCars,
-// which C_traffic_generator::TryGoToAssHole calls, and SaveGameGetSize; the constructor, which C_mission::CreateActor
-// calls, TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which C_shvestky::TickDoRiciActors calls, are
-// stubs.
+// which C_traffic_generator::TryGoToAssHole calls, SaveGameGetSize and DuplicateFrom; the constructor, which
+// C_mission::CreateActor calls, TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which
+// C_shvestky::TickDoRiciActors calls, are stubs.
 
 #include "vehicles/C_trf_c.h"
 
@@ -80,11 +80,24 @@ void C_traffic_car::ChangeState()
     C_actor::ChangeState();
 }
 
-// STUB: GAME 0x4aab20
+// The fields and the names, which DuplicateFrom copies (the names are ours)
+// FUNCTION: GAME 0x4aab20
 void C_traffic_car::DuplicateFrom(C_actor *act)
 {
-    StubLog("C_traffic_car::DuplicateFrom");
+    C_traffic_car *other = (C_traffic_car *)act;
     C_actor::DuplicateFrom(act);
+    unknown_21c = other->unknown_21c;
+    unknown_224 = other->unknown_224;
+    char *old = names;
+    unknown_228 = other->unknown_228;
+    unknown_22c = other->unknown_22c;
+    delete[] old;
+    names = NULL;
+    num_names = other->num_names;
+    if (num_names)
+        names = new char[32 * num_names];
+    for (int i = 0; i < num_names; i++)
+        strcpy(names + 32 * i, other->names + 32 * i);
 }
 
 // STUB: GAME 0x4aabf0

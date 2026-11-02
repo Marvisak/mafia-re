@@ -82,8 +82,12 @@ struct S_wheel
     uchar unknown_1c[0x60];
     S_vector unknown_7c;                // 0x7c, the camera "C In" tilts by their sum
     uchar unknown_88[0x98];             // 0x88
-    uint unknown_120;                   // 0x120, flags
+    // 0x120, flags: WHEELF_COLLISION while the wheel collides (SetCarWheelColl's)
+    uint unknown_120;
 };
+
+// S_wheel::unknown_120's collision bit, which GetCarWheelColl and SetCarWheelColl copy (the name is ours)
+#define WHEELF_COLLISION 8
 
 // An element of C_Vehicle::unknown_ca0 (the name is ours; its members are unknown), 0x24 bytes
 struct S_vehicle_unknown_ca0
@@ -415,7 +419,9 @@ public:
     S_vector unknown_c3c;               // 0xc3c (car 0xcac), a direction the chases compare theirs with
     S_vector unknown_c48;               // 0xc48 (car 0xcb8)
     S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
-    uchar unknown_c60[4];               // 0xc60
+    // SetEnterProtect1 sets it (the name is ours)
+    bool unknown_c60;                   // 0xc60 (car 0xcd0)
+    uchar unknown_c61[3];               // 0xc61
     float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
     uchar unknown_c68[0xc];             // 0xc68
     const void *callback_context;       // 0xc74 (car 0xce4, PS2 0xf20), what the callbacks get
