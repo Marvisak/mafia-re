@@ -3514,6 +3514,27 @@ public:
         return sector;
     }
 
+#ifndef LS3DF_EXPORTS
+    // The game's (the names are ours). The setters set the value and have m_AddFGroups write the colors again: inline
+    // methods, the game loads the visual once for both stores, where written out it loads it again for the flags.
+    const float &GetTransparency() const
+    {
+        return transparency;
+    }
+
+    void SetPartTransparency(float t)
+    {
+        transparency = t;
+        vis_flags |= VISF_COLOR_CHANGED;
+    }
+
+    void SetBillboard(bool b)
+    {
+        billboard = b;
+        vis_flags |= VISF_COLOR_CHANGED;
+    }
+#endif
+
     ushort sort_group;                  // 0x268, the high word of the rendering's key
     uint part_flags;                    // 0x26c, PARTF_*
     S_vector color;                     // 0x270

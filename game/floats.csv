@@ -71,6 +71,7 @@ address|type|size
 0x623eb4|float|4
 0x623ed8|float|4
 0x623ee0|float|4
+0x623ee4|float|4
 0x624038|float|4
 0x62403c|float|4
 0x624058|float|4

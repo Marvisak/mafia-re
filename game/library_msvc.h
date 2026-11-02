@@ -62,6 +62,9 @@
 // LIBRARY: GAME 0x60fc9c SYMBOL
 // _I3DGetDriver
 
+// LIBRARY: GAME 0x60fca2
+// ?GetDir@S_quat@@QBG?AUS_vector@@XZ
+
 // LIBRARY: GAME 0x60fca8 SYMBOL
 // _dbgPrintf
 

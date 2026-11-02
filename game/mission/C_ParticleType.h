@@ -9,6 +9,19 @@
 class C_Particle;
 class I3D_frame;
 
+// C_ParticleType::unknown_bc, a part's flags (the names are ours)
+#define PARTF_BILLBOARD 0x1             // the particles turn to the camera (I3D_part_base::billboard)
+#define PARTF_TURN 0x2                  // a particle is turned to its direction (C_Particle::Init)
+#define PARTF_DIR 0x4                   // the particles start in the effect's direction, else in none
+#define PARTF_LOCAL_DIR 0x8             // unknown_48 and unknown_54 are turned by the parent's matrix
+#define PARTF_LOCAL_POS 0x10            // unknown_30 and unknown_3c are turned by it
+
+// S_particle_subpart::unknown_8, a subpart's flags (the names are ours)
+#define SUBPARTF_GRAVITY 0x2            // the particles fall by unknown_60
+#define SUBPARTF_OFF 0x8                // the particles' visuals are off in it
+#define SUBPARTF_ROTATE 0x10            // the visuals turn about their axes by unknown_24
+#define SUBPARTF_STILL 0x20             // the particles don't move
+
 // A subpart's values in an emitter (the name is ours), 0x64 bytes: a copy of a C_effect_subpart's (C_effects.h, whose
 // members' names are the comments'), which Reset sets to the subpart's defaults. C_effects' particle_subparts keeps the
 // free ones. The names are ours, and so are the setters', each a group of the values that CreateSParticle copies
@@ -16,20 +29,21 @@ class I3D_frame;
 // through temporaries, as by-value parameters.
 struct S_particle_subpart
 {
-    int unknown_0;                      // 0x0, unknown_30's (1000)
-    int unknown_4;                      // 0x4, unknown_34's
-    int unknown_8;                      // 0x8, unknown_60's (1)
-    S_vector unknown_c;                 // 0xc
-    S_vector unknown_18;                // 0x18
-    S_vector unknown_24;                // 0x24
+    // C_Particle::SetPhase and Tick's: a value with a range is spread by it at random, either way
+    int unknown_0;                      // 0x0, unknown_30's (1000), the subpart's time, in ms
+    int unknown_4;                      // 0x4, unknown_34's, its range
+    int unknown_8;                      // 0x8, unknown_60's (1), SUBPARTF_*
+    S_vector unknown_c;                 // 0xc, the particles' direction in it (null: they keep theirs)
+    S_vector unknown_18;                // 0x18, its spread
+    S_vector unknown_24;                // 0x24, the visuals' turn about x, y and z, per second (SUBPARTF_ROTATE)
     uchar unknown_30[8];                // 0x30
-    S_vector unknown_38;                // 0x38
-    S_vector unknown_44;                // 0x44
-    float unknown_50;                   // 0x50
-    float unknown_54;                   // 0x54
-    float unknown_58;                   // 0x58
-    float unknown_5c;                   // 0x5c
-    float unknown_60;                   // 0x60, unknown_64's (9.8)
+    S_vector unknown_38;                // 0x38, the visuals' scale at its end
+    S_vector unknown_44;                // 0x44, its range
+    float unknown_50;                   // 0x50, their transparency at its end
+    float unknown_54;                   // 0x54, its range
+    float unknown_58;                   // 0x58, how the particles' speed changes (C_Particle::unknown_60)
+    float unknown_5c;                   // 0x5c, its range
+    float unknown_60;                   // 0x60, unknown_64's (9.8), their fall (SUBPARTF_GRAVITY), per second
 
     // Reset's values, written out: CreateSParticle inlines it, which a call of Reset would leave out of line
     S_particle_subpart()
@@ -62,6 +76,13 @@ struct S_particle_subpart
         unknown_58 = 0.0f;
         unknown_5c = 0.0f;
         unknown_60 = 9.8f;
+    }
+
+    // Whether the particles' visuals are on in the subpart (the name is ours). C_Particle::Init tests it through this:
+    // written out, VC6 tests the byte (test byte ptr [ecx + 8], 8) where the original shifts the flags first.
+    bool IsOn() const
+    {
+        return !(unknown_8 & SUBPARTF_OFF);
     }
 
     void SetValues(int v0, int v4, int v8, S_vector vc, S_vector v18, S_vector v24)
@@ -100,17 +121,18 @@ public:
     I3D_frame *frame;                   // 0x14, the part's frame of the effect's model, a reference of its own
     I3D_frame *parent;                  // 0x18, the frame the effect is at (LoadStaticParticles')
     std::vector<C_Particle *> particles;  // 0x1c
-    int unknown_2c;                     // 0x2c, unknown_90's
-    S_vector unknown_30;                // 0x30, unknown_20's
-    S_vector unknown_3c;                // 0x3c, unknown_2c's
-    S_vector unknown_48;                // 0x48, unknown_38's
-    S_vector unknown_54;                // 0x54, unknown_44's
-    float unknown_60;                   // 0x60, unknown_50's
-    float unknown_64;                   // 0x64, unknown_54's
-    S_vector unknown_68;                // 0x68, unknown_58's
-    S_vector unknown_74;                // 0x74, unknown_64's
-    float unknown_80;                   // 0x80, unknown_70's
-    float unknown_84;                   // 0x84, unknown_74's
+    int unknown_2c;                     // 0x2c, unknown_90's, the visuals' blend (1 << it: PARTF_OPAQUE, PARTF_ALPHA)
+    // C_Particle::Init's: each value with the range a particle's spreads it by, at random either way
+    S_vector unknown_30;                // 0x30, unknown_20's, the particles' offset from the position
+    S_vector unknown_3c;                // 0x3c, unknown_2c's, its spread
+    S_vector unknown_48;                // 0x48, unknown_38's, their direction, else the effect's (null)
+    S_vector unknown_54;                // 0x54, unknown_44's, its spread
+    float unknown_60;                   // 0x60, unknown_50's, their speed
+    float unknown_64;                   // 0x64, unknown_54's, its spread
+    S_vector unknown_68;                // 0x68, unknown_58's, their visuals' scale
+    S_vector unknown_74;                // 0x74, unknown_64's, its spread
+    float unknown_80;                   // 0x80, unknown_70's, their visuals' transparency
+    float unknown_84;                   // 0x84, unknown_74's, its spread
     int unknown_88;                     // 0x88, unknown_7c's
     float unknown_8c;                   // 0x8c, unknown_78's
     float unknown_90;                   // 0x90, unknown_78's
@@ -124,7 +146,6 @@ public:
     int unknown_b0;                     // 0xb0, unknown_88's, an integer
     int unknown_b4;                     // 0xb4
     bool unknown_b8;                    // 0xb8, unknown_b0 is -1
-#define PARTF_DIR 0x4                   // the particles start in the effect's direction, else in none (name ours)
     int unknown_bc;                     // 0xbc, unknown_98's (flags), PARTF_*
 
     C_ParticleType() : frame(NULL)

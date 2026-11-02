@@ -339,7 +339,7 @@ public:
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?DuplicateFrom@C_actor@@UAEXPAV1@@Z
+// ?NetDirect@C_wagon@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
@@ -370,7 +370,7 @@ public:
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?GetUnknown4@C_actor@@QBEHXZ
+// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // FUNCTION: GAME 0x604d90
 // ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
