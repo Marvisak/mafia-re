@@ -333,7 +333,7 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?CreateNew@?$C_I3D_cache_base@VI3D_animation_set@@@@UBEPAVI3D_animation_set@@XZ
+// ?SaveGameGetSize@C_scatter@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
@@ -362,10 +362,10 @@ public:
 // ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?vfunc_53@C_cutscene@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)

@@ -1,11 +1,12 @@
 // The main menu (PS2 g_m_func.cpp, where PS2's GM_MainMenu is; the PC's file is the one at 0x5e0640-0x5e48ec,
 // docs/game-files.md), after its quit question's OnClick, the file's first function. The original's OnChange is folded
-// into the racing menu's (0x5e4a50, in the next file but one). The menus it opens (the options from 0x5e0ad0, the free
-// ride from 0x5e1920), the PC's message box (from 0x5e2170) and question box (from 0x5e2310), the saved games (from
-// 0x5e2400), then the loading screen (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main
-// menu and its quit question, the message box's OnBeforeCreate and constructor, the question box, the loading screen's
-// constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main,
-// C_mission::Open, the profiles' menu and the main menu need to link.
+// into the racing menu's (0x5e4a50, in the next file but one). The menus it opens (the options from 0x5e0ad0, with the
+// Audio & Video menu from 0x5e0bb0 and the controls from 0x5e1480, the free ride from 0x5e1920), the PC's message box
+// (from 0x5e2170) and question box (from 0x5e2310), the saved games (from 0x5e2400), then the loading screen
+// (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu and its quit question, the
+// options, the Audio & Video menu's and the controls' OnBeforeCreate, the message box's OnBeforeCreate and constructor,
+// the question box, the loading screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and
+// Present; the rest is stubs of what main, C_mission::Open, the profiles' menu and the main menu need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
@@ -55,6 +56,27 @@
 #define LOADPROGRESS_UNKNOWN_2000 2000
 #define LOADPROGRESS_UNKNOWN_3000 3000
 
+// The options' items, tables\menu\optionsb.mnu (the names are ours, after their texts)
+#define OPTIONSB_WINDOW 2               // "Options:"
+#define OPTIONSB_CONTROLS 0x64
+#define OPTIONSB_AUDIO_VIDEO 0x65
+#define OPTIONSB_BACK 0x190
+
+// The Audio & Video menu's buttons, tables\menu\optionsa.mnu (the names are ours, after their texts)
+#define OPTIONSA_RESET 0x5a             // "Reset to Defaults"
+#define OPTIONSA_BACK 0x5b
+
+// The controls' pages (GM_OptionsControls::page) and their buttons, the same in tables\menu\optionsc1.mnu to
+// optionsc3.mnu (the names are ours, after their texts)
+#define OPTIONSC_PAGE_PLAYER 1          // "optionsc1", "Player Controls:"
+#define OPTIONSC_PAGE_CAR 2             // "optionsc2", "Car Controls:"
+#define OPTIONSC_PAGE_OTHER 3           // "optionsc3", "Other Controls:"
+#define OPTIONSC_PLAYER 0x32
+#define OPTIONSC_CAR 0x33
+#define OPTIONSC_OTHER 0x34
+#define OPTIONSC_RESET 0x35             // "Reset to Defaults"
+#define OPTIONSC_BACK 0x36
+
 // The quit question's items, tables\menu\exityesno.mnu: the question box's ids (the names are ours)
 #define EXITYESNO_WINDOW 0x82           // its text set by OnCreate
 #define EXITYESNO_YES 0x8a
@@ -91,6 +113,43 @@ public:
     GM_Options() { flags |= MENUF_UNKNOWN_80000; }
 
     virtual const char *OnBeforeCreate();
+    // Controls and Audio & Video open their menus, Back closes the options
+    virtual int OnClick(uint id);
+};
+
+// The controls, "optionsc1" to "optionsc3" by the page (PS2 GM_OptionsControls, g_m_func.cpp, whose class is 0x34 bytes
+// too: a pointer to the options' settings and three bytes; PS2's has one page and OnKey, SetUpTexts of its own), 0x34
+// bytes, which the options' Controls opens on the player's page. Its constructor is inline: the page is stored before
+// the vtable, an initializer.
+// VTABLE: GAME 0x6273fc
+class GM_OptionsControls : public GM_Menu
+{
+public:
+    GM_OptionsControls() : page(OPTIONSC_PAGE_PLAYER) { flags |= MENUF_UNKNOWN_80000; }
+
+    // The page's menu
+    virtual const char *OnBeforeCreate();
+    // The controls' keys and settings into the page's items
+    virtual int OnCreate();
+    virtual int OnClose();
+    // The page's buttons exchange the menu, the items set the controls
+    virtual int OnClick(uint id);
+
+    int page;                           // 0x30, OPTIONSC_PAGE_* (the name is ours)
+};
+
+// The audio and video settings, "optionsa" (PC only: PS2's GM_Options has the video settings it has; the name is ours,
+// after its menu's title), 0x30 bytes, which the options' Audio & Video opens. Its constructor is inline, as the options'.
+// VTABLE: GAME 0x62742c
+class GM_OptionsAudioVideo : public GM_Menu
+{
+public:
+    GM_OptionsAudioVideo() { flags |= MENUF_UNKNOWN_80000; }
+
+    virtual const char *OnBeforeCreate();
+    // The settings into the sliders and selections
+    virtual int OnCreate();
+    // An item sets its setting and applies it
     virtual int OnClick(uint id);
 };
 
@@ -275,12 +334,94 @@ inline const char *GM_LoadGame::OnBeforeCreate()
     return "loadgame";
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e0ad0
+// The original's code between the inline copies and this (0x5e0930-0x5e0ac1) is PS2's GM_GameMenu's, the game's menu
+// ("gamemenu", vtable 0x625e58, which main creates at 0x5be967), and its GM_GameMenuExit's (vtable 0x6273cc), in PS2's
+// order. PS2's options have a screen slide and the vibration besides Controls.
+// FUNCTION: GAME 0x5e0ad0
 int GM_Options::OnClick(uint id)
 {
-    StubLog("GM_Options::OnClick %u", id);
+    switch (id)
+    {
+    case OPTIONSB_CONTROLS:
+        MenuOpen(new GM_OptionsControls, id);
+        break;
+    case OPTIONSB_AUDIO_VIDEO:
+        MenuOpen(new GM_OptionsAudioVideo, id);
+        break;
+    case OPTIONSB_BACK:
+        MenuClose((uint)-1);
+        break;
+    }
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e0bb0
+inline const char *GM_OptionsAudioVideo::OnBeforeCreate()
+{
+    // STRING: GAME 0x63820c
+    return "optionsa";
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e0bc0
+int GM_OptionsAudioVideo::OnCreate()
+{
+    StubLog("GM_OptionsAudioVideo::OnCreate");
+    return 0;
+}
+
+// Back closes the menu, as the original's does, so that a run gets back to the options
+// STUB: GAME 0x5e0d40
+int GM_OptionsAudioVideo::OnClick(uint id)
+{
+    StubLog("GM_OptionsAudioVideo::OnClick %u", id);
+    if (id == OPTIONSA_BACK)
+        MenuClose((uint)-1);
+    return 0;
+}
+
+#pragma auto_inline(on)
+
+// FUNCTION: GAME 0x5e1480
+inline const char *GM_OptionsControls::OnBeforeCreate()
+{
+    switch (page)
+    {
+    case OPTIONSC_PAGE_PLAYER:
+        // STRING: GAME 0x638218
+        return "optionsc1";
+    case OPTIONSC_PAGE_CAR:
+        // STRING: GAME 0x638224
+        return "optionsc2";
+    }
+    // STRING: GAME 0x638230
+    return "optionsc3";
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5e14a0
+int GM_OptionsControls::OnCreate()
+{
+    StubLog("GM_OptionsControls::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e1620
+int GM_OptionsControls::OnClose()
+{
+    StubLog("GM_OptionsControls::OnClose");
+    return 0;
+}
+
+// Back closes the menu, as the original's does, so that a run gets back to the options
+// STUB: GAME 0x5e1650
+int GM_OptionsControls::OnClick(uint id)
+{
+    StubLog("GM_OptionsControls::OnClick %u", id);
+    if (id == OPTIONSC_BACK)
+        MenuClose((uint)-1);
     return 0;
 }
 
