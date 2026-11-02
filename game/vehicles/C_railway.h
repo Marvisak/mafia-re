@@ -3,8 +3,8 @@
 #include "actors/C_actor.h"
 
 // The rail vehicles (PS2 C_railway, with doors, windows and seats; C_railway.cpp, or C_rail_traffic.cpp, whose seats
-// they use), 0x370 bytes (PS2's 0x390). Only the constructor so far, which C_mission::CreateActor calls for
-// ACTOR_RAILWAY.
+// they use), 0x370 bytes (PS2's 0x390). The constructor, which C_mission::CreateActor calls for ACTOR_RAILWAY, is a
+// stub; written: DuplicateFrom, SaveGameGetSize and GetMaterialID.
 // VTABLE: GAME 0x624a70
 class C_railway : public C_actor
 {
@@ -35,7 +35,15 @@ public:
     virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
     virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
 
-    uchar unknown_70[0x300];            // 0x70
+    uchar unknown_70[0x138];            // 0x70
+    // DuplicateFrom's two copies (the names are ours)
+    int unknown_1a8;                    // 0x1a8
+    uchar unknown_1ac[8];               // 0x1ac
+    int unknown_1b4;                    // 0x1b4
+    uchar unknown_1b8[0xf4];            // 0x1b8
+    // GetMaterialID's (the name is ours)
+    int unknown_2ac;                    // 0x2ac
+    uchar unknown_2b0[0xc0];            // 0x2b0
 };
 
 // SYNTHETIC: GAME 0x486740

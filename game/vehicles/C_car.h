@@ -33,11 +33,29 @@ struct S_TSRFC
 // The value the fights' Tick gives C_car::unknown_2210 (the name is ours, by value)
 #define CAR2210_UNKNOWN_534 0x534
 
+// A tuning level of the car (the name is ours): the vector's element, whose size the original's stride gives and
+// whose members are unknown
+struct S_car_level
+{
+    uchar unknown_0[0x113c];
+};
+
+// A seat of the car (the name is ours; GetOwner's members only)
+struct S_car_seat
+{
+    uchar unknown_0[0xc];
+    bool occupied;                      // 0xc
+    uchar unknown_d[3];
+    C_human *owner;                     // 0x10
+    uchar unknown_14[0x8c];
+};
+
 // A car (PS2 C_car, C_car.cpp), 0x221c bytes (PS2's 0x2490), an actor with a C_Vehicle at 0x70 (PS2's constructor
 // constructs both, the PC's stores a second vtable there, 0x6236b0). Only what InitSystem, the profiles,
 // C_mission::CreateActor and the scripts (C_program::Process) use so far: its tables, which InitSystem loads once
 // (C_game::Init loads them again, with the game's tables loaded), and which C_Vehicle keeps, the force feedback's
-// scales, the constructor, a stub, and the scripts' functions and accessors.
+// scales, the constructor, a stub, and the scripts' functions and accessors (GetLevelsCount, GetOwner, SetEnterProtect1,
+// GetCarWheelColl, SetCarWheelColl and GetActorSpeed are written).
 // VTABLE: GAME 0x623618 C_actor
 // VTABLE: GAME 0x6236b0 C_Vehicle
 class C_car : public C_actor, public C_Vehicle
@@ -247,7 +265,14 @@ public:
     // compares with the taxis' (the name is ours)
     char model_name[32];
     int actual_level;                   // 0x21ac, GetActualLevel's (the name is ours)
-    uchar unknown_21b0[0x2c];           // 0x21b0
+    // GetLevelsCount's (the name is ours): 0x113c bytes each
+    std::vector<S_car_level> v_levels;  // 0x21b0
+    int unknown_21c0;                   // 0x21c0
+    // SetEnterProtect1's one bit a seat (the name is ours)
+    uint enter_protect;                 // 0x21c4
+    // GetOwner's (the name is ours): 0xa0 bytes each
+    std::vector<S_car_seat> v_seats;    // 0x21c8
+    uchar unknown_21d8[4];              // 0x21d8
     int locks;                          // 0x21dc, CAR_LOCK's count (Lock; the name is ours)
     uchar unknown_21e0[0x2a];           // 0x21e0
     bool destroy_motor;                 // 0x220a, CAR_SETDESTROYMOTOR's (the name is ours)

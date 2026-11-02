@@ -1,6 +1,6 @@
 // The airplanes (PS2 C_airplane.cpp; the PC's file is the one at 0x409390-0x40df6c, docs/game-files.md), which
-// starts with the constructor. Not written yet: the constructor, which C_mission::CreateActor calls, and the functions
-// the scripts call are stubs.
+// starts with the constructor. Written: SaveGameGetSize, GetMaterialID and IsDestroyed; the constructor, which
+// C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
 
@@ -26,11 +26,12 @@ void C_airplane::Start2()
     StubLog("C_airplane::Start2");
 }
 
-// STUB: GAME 0x40d6c0
+// PS2 name; the scripts' AIRPLANE_ISDESTROYED. Both of its values are under 0.01
+// FUNCTION: GAME 0x40d6c0
 bool C_airplane::IsDestroyed()
 {
-    StubLog("C_airplane::IsDestroyed");
-    return false;
+    bool destroyed = unknown_1cc < 0.01 && unknown_1c8 < 0.01;
+    return destroyed;
 }
 
 // STUB: GAME 0x40ddd0
@@ -106,11 +107,10 @@ bool C_airplane::Hit(int type, const S_vector &v1, const S_vector &v2, const S_v
     return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
 }
 
-// STUB: GAME 0x40d6f0
+// FUNCTION: GAME 0x40d6f0
 int C_airplane::SaveGameGetSize()
 {
-    StubLog("C_airplane::SaveGameGetSize");
-    return C_actor::SaveGameGetSize();
+    return C_actor::SaveGameGetSize() + 124;
 }
 
 // STUB: GAME 0x40d700
@@ -134,11 +134,10 @@ void C_airplane::ChangeState()
     C_actor::ChangeState();
 }
 
-// STUB: GAME 0x40df30
+// FUNCTION: GAME 0x40df30
 int C_airplane::GetMaterialID(I3D_frame *frm)
 {
-    StubLog("C_airplane::GetMaterialID");
-    return C_actor::GetMaterialID(frm);
+    return 19;
 }
 
 // The original's is C_pumper's, folded: it logs that name, so ours folds too

@@ -1,5 +1,5 @@
 // The rails' turnouts (PS2 C_turnout.cpp; the PC's file is the one at 0x4bc360-0x4bd64c, docs/game-files.md), which
-// starts with the constructor. Not written yet: the constructor, which C_mission::CreateActor calls, is a stub.
+// starts with the constructor. Written: SaveGameGetSize; the constructor, which C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_turnout.h"
 
@@ -80,11 +80,10 @@ void C_turnout::Update(uint time)
     C_actor::Update(time);
 }
 
-// STUB: GAME 0x4bd420
+// FUNCTION: GAME 0x4bd420
 int C_turnout::SaveGameGetSize()
 {
-    StubLog("C_turnout::SaveGameGetSize");
-    return C_actor::SaveGameGetSize();
+    return C_actor::SaveGameGetSize() + 16;
 }
 
 // STUB: GAME 0x4bd430

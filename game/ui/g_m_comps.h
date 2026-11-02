@@ -817,7 +817,7 @@ public:
 // ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_Window@@UAE@XZ
+// ??1GM_Button@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -865,11 +865,11 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_MenuItem@@UAEIII@Z
+// ?Key@GM_Button@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db7a0
 // ?GetType@GM_Button@@UAEIXZ
@@ -936,7 +936,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_GGM_Vidc@@UAEPAXI@Z
+// ??_EGM_Component@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

@@ -6,8 +6,8 @@
 
 class C_program;
 
-// The wagons (PS2 C_wagon, C_wagon.cpp), 0x1a8 bytes (PS2's 0x1e0). Only the constructor so far, which
-// C_mission::CreateActor calls for ACTOR_WAGON, and what the scripts call.
+// The wagons (PS2 C_wagon, C_wagon.cpp), 0x1a8 bytes (PS2's 0x1e0). The constructor, which
+// C_mission::CreateActor calls for ACTOR_WAGON, is a stub; written: SaveGameGetSize.
 // VTABLE: GAME 0x624e78
 class C_wagon : public C_actor
 {
@@ -55,7 +55,10 @@ public:
 
     uchar unknown_70[0xc];              // 0x70
     std::vector<uint> path;             // 0x7c (PS2 0x100), the web path's nodes (the name is ours)
-    uchar unknown_8c[0x10c];            // 0x8c
+    uchar unknown_8c[0x1c];             // 0x8c
+    // The second vector SaveGameGetSize counts (the name is ours)
+    std::vector<uint> unknown_a8;       // 0xa8
+    uchar unknown_b8[0xe0];             // 0xb8
     // The script and the event WAGON_SETEVENT gave the wagon (PS2 0x1cc and 0x1d0, the names are ours)
     C_program *event_program;           // 0x198
     int event_id;                       // 0x19c
