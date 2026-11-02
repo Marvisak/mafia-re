@@ -218,7 +218,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
+// ?GetMode@G_Camera@@QBEIXZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

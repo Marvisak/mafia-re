@@ -75,13 +75,22 @@ struct tDynamicPolicko
     std::vector<tDynamicCollObject *> objects; // 0x8
 };
 
-// The grid of the moving objects' cells (the names are ours): only what DynOptimizeTick reads is known so far
+// The grid of the moving objects' cells (the names are ours): only what DynOptimizeTick, DynWipeOut and
+// DeleteCollsLevel use is known so far
 struct S_dyn_grid
 {
     uchar unknown_0[0x10];
     int width;                          // 0x10, the cells in a row
-    uchar unknown_14[4];
+    int height;                         // 0x14, the rows
     tDynamicPolicko **cells;            // 0x18, row by row, NULL where a cell has no objects
+};
+
+// The level's collisions, LoadCollision's (PS2 0x3e4, the names are ours): only what DeleteCollsLevel frees is known so
+// far
+struct S_coll_level
+{
+    uchar unknown_0[0x2c];
+    uchar *unknown_2c;                  // 0x2c, an array
 };
 
 // The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2c8 bytes (the constructor's last
@@ -91,7 +100,7 @@ class g_collision
 public:
     // Its copy is the file's last function before the file's end (0x5c4fa0)
     // FUNCTION: GAME 0x5c4fa0
-    g_collision() : unknown_284(0), dyn_grid(NULL), unknown_2b0(0), unknown_2b4(0), unknown_2b8(0), unknown_2bc(0),
+    g_collision() : level(0), dyn_grid(NULL), unknown_2b0(0), unknown_2b4(0), unknown_2b8(0), unknown_2bc(0),
         unknown_2c4(0)
     {
     }
@@ -143,7 +152,7 @@ public:
     void DeleteCollsLevel();
 
     uchar unknown_0[0x284];
-    int unknown_284;                    // 0x284
+    S_coll_level *level;                // 0x284 (PS2 0x3e4; the name is ours)
     uchar unknown_288[4];               // 0x288
     S_dyn_grid *dyn_grid;               // 0x28c (PS2 0x3ec; the names are ours, as the next two's)
     // 0x290, the cells taken out of the grid once empty (PS2 0x3f0, its gif::vector<tDynamicPolicko *, 8>)

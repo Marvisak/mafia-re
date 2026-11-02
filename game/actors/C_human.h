@@ -111,7 +111,10 @@ public:
     int anim_id;                        // 0x70 (PS2 0x200), HUMAN_GETACTANIMID's (the name is ours)
     uchar unknown_74[0x24];             // 0x74
     C_car *car;                         // 0x98, the car the human is in (the name is ours)
-    uchar unknown_9c[8];                // 0x9c
+    // 0x9c (PS2 0x228), a second car: C_shvestky::TickDoRiciActors keeps a car in the police's faces while a player
+    // or an entity has it here or in car
+    C_car *unknown_9c;
+    uchar unknown_a0[4];                // 0xa0
     // The cars the script's CAR_LOCK and CAR_LOCK_ALL lock to the human (the names are ours)
     C_car *locked_car;                  // 0xa4
     C_car *locked_vehicle;              // 0xa8

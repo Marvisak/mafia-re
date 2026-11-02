@@ -105,6 +105,9 @@ public:
     bool SetActualLevel(int level);
     // The human in a seat (PS2 name), NULL for none
     C_human *GetOwner(int seat);
+    // The actor into a seat, NULL to empty it (PS2 name and parameters; the names are ours): false for a seat the car
+    // hasn't
+    bool SetOwner(C_actor *act, int seat, float unknown);
     // The cars' force feedback effects, which C_game's Init and Done create and free when the profile has them (PC
     // only, the names are ours)
     static void InitFFEffects();
@@ -222,7 +225,10 @@ public:
     uchar unknown_20f7;                 // 0x20f7
     int axis;                           // 0x20f8 (PS2 0x23c8), CAR_SETAXIS sets 1
     uint unbreakable;                   // 0x20fc (PS2 0x23cc), CARF_UNBREAKABLE or 0
-    uchar unknown_2100[0xd];            // 0x2100
+    uchar unknown_2100[4];              // 0x2100
+    // 0x2104 (PS2 0x2473): a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
+    bool unknown_2104;
+    uchar unknown_2105[8];              // 0x2105
     bool break_motor;                   // 0x210d (PS2 0x2477), CAR_BREAKMOTOR's
     uchar unknown_210e[0xb];            // 0x210e
     // 0x2119 (PS2 0x2479), set with the camera's CAMPF_UNKNOWN_2 (G_Camera::Begin), cleared by G_Camera::End

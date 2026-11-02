@@ -37,6 +37,9 @@ public:
     void TakATedSiVasKupim_Vsecky();
     // PS2 name (Czech, roughly "he'll beat the car up")
     void VypraskeeeKaaaru(C_actor *act);
+    // A count of the traffic's down by one, at least 0 (PS2 name, Czech slang; static: C_shvestky::TickDoRiciActors
+    // calls it with nothing in ecx, PS2's with nothing in a0)
+    static void ChlupatejVystrik();
 
     // A car of the traffic's lists (PS2 C_traffic_car::S_ELEMENT; the names are ours)
     struct S_ELEMENT

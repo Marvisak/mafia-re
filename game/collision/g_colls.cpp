@@ -1,7 +1,8 @@
 // The collisions, the file at 0x5c2840-0x5c503c (docs/game-files.md); the name is a guess, PS2's g_colls.cpp. It starts
 // with gifCollision's initializer, whose constructor's copy is the file's last function. Written so far: DynOptimizeTick,
-// which C_game::Tick calls, GameDone, TestLineV and TestSphereB (in the file at 0x5d5900 on the PC); the rest of what
-// main, the game, the detector and the script's commands call is stubs.
+// which C_game::Tick calls, DeleteCollsLevel and DynWipeOut, which GameDone calls, GameDone, TestLineV and TestSphereB
+// (in the file at 0x5d5900 on the PC); the rest of what main, the game, the detector and the script's commands call is
+// stubs.
 
 #include "collision/g_colls.h"
 
@@ -10,13 +11,29 @@
 // GLOBAL: GAME 0x647f48
 g_collision gifCollision;
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5c28d0
+// The level's collisions and the grid freed, the grid's lists emptied (PS2's frees the lists too, and with its bool
+// set keeps a level that has its unknown_c)
+// FUNCTION: GAME 0x5c28d0
 void g_collision::DeleteCollsLevel()
 {
-    StubLog("g_collision::DeleteCollsLevel");
+    if (level)
+    {
+        if (level->unknown_2c)
+            delete[] level->unknown_2c;
+        delete level;
+        level = NULL;
+    }
+    if (dyn_grid)
+    {
+        delete[] dyn_grid->cells;
+        delete dyn_grid;
+        dyn_grid = NULL;
+        free_cells.clear();
+        dyn_queue.clear();
+    }
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5c2b70
 bool g_collision::LoadCollision(const char *name, bool)
@@ -66,11 +83,62 @@ void g_collision::DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, v
     StubLog("g_collision::DynSetNextCollOwnerMult");
 }
 
-// STUB: GAME 0x5c3da0
+#pragma auto_inline(on)
+
+// The grid's cells with objects emptied and taken out onto the cells to check, then every cell of the two lists freed
+// once (PS2's also clears the objects' unknown_c and a flag of its own list's, and keeps the cells)
+// FUNCTION: GAME 0x5c3da0
 void g_collision::DynWipeOut()
 {
-    StubLog("g_collision::DynWipeOut");
+    if (dyn_grid)
+    {
+        for (uint y = 0; y < dyn_grid->height; y++)
+        {
+            for (uint x = 0; x < dyn_grid->width; x++)
+            {
+                if (dyn_grid->cells[x + y * dyn_grid->width] &&
+                    dyn_grid->cells[x + y * dyn_grid->width]->objects.size())
+                {
+                    dyn_grid->cells[x + y * dyn_grid->width]->objects.clear();
+                    dyn_queue.push_back(dyn_grid->cells[x + y * dyn_grid->width]);
+                    dyn_grid->cells[x + y * dyn_grid->width] = NULL;
+                }
+            }
+        }
+        std::vector<tDynamicPolicko *> cells;
+        tDynamicPolicko **it, **c;
+        for (it = free_cells.begin(); it < free_cells.end(); it++)
+        {
+            for (c = cells.begin(); c < cells.end(); c++)
+            {
+                if (*it == *c)
+                    break;
+            }
+            if (c >= cells.end())
+                cells.push_back(*it);
+        }
+        free_cells.clear();
+        for (it = dyn_queue.begin(); it < dyn_queue.end(); it++)
+        {
+            for (c = cells.begin(); c < cells.end(); c++)
+            {
+                if (*it == *c)
+                    break;
+            }
+            if (c >= cells.end())
+                cells.push_back(*it);
+        }
+        dyn_queue.clear();
+        for (it = cells.begin(); it < cells.end(); it++)
+        {
+            (*it)->objects.clear();
+            delete *it;
+        }
+        cells.clear();
+    }
 }
+
+#pragma auto_inline(off)
 
 // The PC's is in the file at 0x5c5040 (docs/game-files.md)
 // STUB: GAME 0x5c6b10

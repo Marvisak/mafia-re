@@ -10,8 +10,8 @@ class C_car;
 class C_human;
 
 // The police (PS2 C_shvestky, C_shvestky.cpp), the game's 0x2da0, 0xb0 bytes. PS2's has the same members, its offsets in
-// the comments. Only the constructor, the destructor, GameInit, GameDone and Tick are written so far, and the accessors
-// the script's commands use.
+// the comments. Only the constructor, the destructor, GameInit, GameDone, Tick and TickDoRiciActors are written so far,
+// and the accessors the script's commands use.
 // The records' flags (S_shvestky::flags; the names are ours, by value where the meaning isn't known yet)
 #define SHVF_WEAPON 0x1                 // an item of 5 to 15 in the right hand
 #define SHVF_FIRE 0x2                   // cleared once fire_time runs out
@@ -148,8 +148,9 @@ public:
     // cars' drivers who run a red light.
     inline void CreateShvestkyTest();
     inline void TestOverRed();
-    // PS2 name (Czech, roughly "tick the actors in the face")
-    void TickDoRiciActors(bool);
+    // PS2 name (Czech, roughly "tick the actors in the face"; the parameter's name is ours): those that went far enough
+    // from the camera, or all of them, taken out of the police's faces and out of the game
+    void TickDoRiciActors(bool all);
     // PS2 names, which Tick calls (the parameters' names are ours): Czech, roughly "he smoked me well, he can go home"
     // (the human let go) and "Vasek went boozing to the party"
     void DobreMiPokuril_MuzeJitDom(C_human *human, bool unknown);
@@ -181,6 +182,10 @@ public:
     // The actors TickDoRiciActors ticks (PS2 names): ACTOR_ADDDORICI's and DELDORICI's
     void AddDoRiciActor(C_actor *act);
     void DelDoRiciActor(C_actor *act);
+    // PS2 names, TickDoRiciActors': the actor taken out of the records' angry ones, and a road block's car, enemy or
+    // policeman freed (PS2's FreeTempCar, FreeTempEnemy and FreeTempIris by its type): false for any other actor
+    void GlobalDelNasrany(C_actor *act);
+    bool FreeMyTempActor(C_actor *act);
     // More policemen for the human (PS2 name, Czech for "more guys to the party"): POLICE_SUPPORT's (the parameters'
     // names are ours)
     void DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2);

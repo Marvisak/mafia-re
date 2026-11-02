@@ -233,7 +233,7 @@ public:
 // ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
@@ -254,8 +254,8 @@ public:
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
 // SYNTHETIC: GAME 0x538c30
-// ??1ai_fight_followship@@QAE@XZ
+// ??1ai_police_action@@QAE@XZ
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_car@@PAPAV2@00@Z
+// ?copy@std@@YIPAPAUS_particle_subpart@@PAPAU2@00@Z

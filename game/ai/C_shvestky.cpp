@@ -1,9 +1,10 @@
 // The police (PS2 C_shvestky.cpp; the PC's file is the one at 0x499b40-0x4a031c, docs/game-files.md), which starts with
 // the constructor and the destructor. Written so far: those two, which the game's constructor and destructor call,
 // GameInit and GameDone, which C_game's Init and Done call, and Tick, which C_game::Tick calls, with PS2's TestOverRed
-// and CreateShvestkyTest, which the PC inlines in it; the records' destructor, what Tick calls of the file's
-// (TickDoRiciActors, DobreMiPokuril_MuzeJitDom, VasekSelChlastatNaOslavu, the road blocks' CreateRoadBlock) and what
-// the script's commands call are stubs.
+// and CreateShvestkyTest, which the PC inlines in it, and TickDoRiciActors, which both call; the records' destructor,
+// what TickDoRiciActors calls of the file's (FreeMyTempActor, GlobalDelNasrany), what Tick calls of it
+// (DobreMiPokuril_MuzeJitDom, VasekSelChlastatNaOslavu, the road blocks' CreateRoadBlock) and what the script's
+// commands call are stubs.
 
 #include "ai/C_shvestky.h"
 #include "actors/C_actor.h"
@@ -832,6 +833,13 @@ void C_shvestky::CreateRoadBlock(int index, C_human *human)
     StubLog("C_shvestky::CreateRoadBlock");
 }
 
+// STUB: GAME 0x49e7e0
+bool C_shvestky::FreeMyTempActor(C_actor *act)
+{
+    StubLog("C_shvestky::FreeMyTempActor");
+    return false;
+}
+
 // STUB: GAME 0x49e820
 void C_shvestky::AddDoRiciActor(C_actor *act)
 {
@@ -844,16 +852,126 @@ void C_shvestky::DelDoRiciActor(C_actor *act)
     StubLog("C_shvestky::DelDoRiciActor");
 }
 
-// STUB: GAME 0x49ea80
-void C_shvestky::TickDoRiciActors(bool)
+#pragma auto_inline(on)
+
+// PS2's order and shapes. The distance is the camera's on the ground, 150 m: an entity goes once it is that far, or by
+// its ENTITYF48_UNKNOWN_8 where its unknown_5fc is 4; one in a car (of ACTOR_CAR) goes only once that far, the car
+// emptied of it and the loop run again for the car, else it stays and the records forget it. A car goes once it is
+// that far with nobody in its seats and no player or entity having it as a car, or once its frame is off; every other
+// actor goes at once. The members are read through their classes' accessors, as Tick reads them: as inline calls still
+// to come, they leave S_vector's constructor in the inlined operator- out of line, as the original calls it. The test
+// of the global actors' pointer itself, not of the actor, is PS2's too.
+// FUNCTION: GAME 0x49ea80
+void C_shvestky::TickDoRiciActors(bool all)
 {
-    StubLog("C_shvestky::TickDoRiciActors");
+    S_vector pos = act_mission->scene->GetActiveCamera()->GetWorldPos();
+    bool again;
+    do
+    {
+        again = false;
+        for (uint i = 0; i < unknown_7c.size();)
+        {
+            S_vector d = pos - unknown_7c[i]->GetFrame()->GetWorldPos();
+            d.y = 0.0f;
+            float dist = d.Square();
+            bool remove = all;
+            if (!remove)
+            {
+                switch (unknown_7c[i]->GetType())
+                {
+                case ACTOR_ENTITY:
+                    remove = dist > 22500.0f;
+                    if (!unknown_7c[i]->GetUnknown5e() && ((C_entity *)unknown_7c[i])->unknown_5fc == 4)
+                        remove = (((C_entity *)unknown_7c[i])->unknown_f48 & ENTITYF48_UNKNOWN_8) != 0;
+                    if (remove)
+                    {
+                        C_car *car = ((C_entity *)unknown_7c[i])->GetCar();
+                        if (car && car->GetType() == ACTOR_CAR)
+                        {
+                            remove = dist > 22500.0f;
+                            if (remove)
+                            {
+                                car->SetOwner(NULL, ((C_entity *)unknown_7c[i])->seat, 0.0f);
+                                again = true;
+                            }
+                            else
+                                GlobalDelNasrany(unknown_7c[i]);
+                        }
+                    }
+                    break;
+                case ACTOR_CAR:
+                    if (dist > 22500.0f)
+                    {
+                        remove = true;
+                        C_car *car = (C_car *)unknown_7c[i];
+                        for (int j = car->GetNumUnknownCa0(); j--;)
+                        {
+                            if (car->GetOwner(j))
+                            {
+                                remove = false;
+                                break;
+                            }
+                        }
+                        if (remove)
+                        {
+                            for (C_actor **p = C_actor::GetGlobalActors().begin();
+                                p < C_actor::GetGlobalActors().end(); p++)
+                            {
+                                if (p && ((*p)->GetType() == ACTOR_PLAYER || (*p)->GetType() == ACTOR_ENTITY) &&
+                                    (((C_human *)*p)->GetCar() == car || ((C_human *)*p)->unknown_9c == car))
+                                {
+                                    remove = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else if (!unknown_7c[i]->GetFrame()->IsOn())
+                        remove = true;
+                    break;
+                default:
+                    remove = true;
+                }
+            }
+            if (remove)
+            {
+                GlobalDelNasrany(unknown_7c[i]);
+                if (unknown_7c[i]->GetType() == ACTOR_CAR)
+                {
+                    mafiaIndicators.RadarRemoveCar((C_car *)unknown_7c[i]);
+                    act_mission->GetGame()->GetSledovacka()->RemoveCar((C_car *)unknown_7c[i]);
+                    if (((C_car *)unknown_7c[i])->unknown_2104)
+                        C_traffic_car::ChlupatejVystrik();
+                }
+                act_mission->GetGame()->InvalidateActor(unknown_7c[i], false);
+                if (!FreeMyTempActor(unknown_7c[i]))
+                {
+                    act_mission->GetGame()->InvalidateActor(unknown_7c[i], false);
+                    act_mission->GetGame()->RemoveTemporaryActor(unknown_7c[i]);
+                }
+                unknown_7c[i] = unknown_7c.back();
+                unknown_7c.pop_back();
+            }
+            else
+                i++;
+        }
+    } while (again);
+    if (all)
+        unknown_7c.clear();
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x49eee0
 void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
 {
     StubLog("C_shvestky::DalsiChalpiDoPartie");
+}
+
+// STUB: GAME 0x49f540
+void C_shvestky::GlobalDelNasrany(C_actor *act)
+{
+    StubLog("C_shvestky::GlobalDelNasrany");
 }
 
 // STUB: GAME 0x49f850

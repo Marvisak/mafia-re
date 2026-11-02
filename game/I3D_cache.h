@@ -466,13 +466,13 @@ extern C_I3D_anim_cache anim_cache;
 // ??0S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_BRIDGE@C_sledovacka@@V?$allocator@US_BRIDGE@C_sledovacka@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
 
 // The caches' Create, each its own, and Clear, the three's folded
 // TEMPLATE: GAME 0x5c0290
@@ -485,7 +485,7 @@ extern C_I3D_anim_cache anim_cache;
 // ?Create@?$C_I3D_cache@VI3D_animation_set@@@@UAE?AW4LS3D_RESULT@@PBDPAPAVI3D_animation_set@@P6IX0PAX@Z2@Z
 
 // TEMPLATE: GAME 0x5c1050
-// ?Clear@?$C_I3D_cache@VI3D_sound@@@@UAEXXZ
+// ?Clear@?$C_I3D_cache@VI3D_model@@@@UAEXXZ
 
 // The abstract base's vtables, which the caches' constructors store first, and its scalar deleting destructors
 // VTABLE: GAME 0x625c90

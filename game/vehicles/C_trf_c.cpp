@@ -1,7 +1,7 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
 // docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written so far: GetParkingCars,
-// which C_traffic_generator::TryGoToAssHole calls; the constructor, which C_mission::CreateActor calls, and
-// TakATedSiVasKupim_Vsecky and VypraskeeeKaaaru are stubs.
+// which C_traffic_generator::TryGoToAssHole calls; the constructor, which C_mission::CreateActor calls,
+// TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which C_shvestky::TickDoRiciActors calls, are stubs.
 
 #include "vehicles/C_trf_c.h"
 
@@ -36,6 +36,12 @@ std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x4b9560
+void C_traffic_car::ChlupatejVystrik()
+{
+    StubLog("C_traffic_car::ChlupatejVystrik");
+}
 
 // STUB: GAME 0x4bad80
 void C_traffic_car::TakATedSiVasKupim_Vsecky()

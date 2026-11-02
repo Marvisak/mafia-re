@@ -8,8 +8,9 @@
 // scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
 // TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
 // it), TickShoot, the shots in flight, and DoubleKiss, the guns on the player's car (dead code on the PC), which Tick
-// calls every frame, CreateIShow, OpenIShow, GetIShow and IShowLoop, the streams the city's music and the scripts play,
-// and ChangeActState, which Init and Tick call once an actor's state has changed. Stubs: what the run doesn't reach
+// calls every frame, CreateIShow, OpenIShow, GetIShow, IShowStoreVolume and IShowLoop, the streams the city's music and
+// the scripts play, CityMusicOff, which the scripts call, and ChangeActState, which Init and Tick call once an actor's
+// state has changed. Stubs: what the run doesn't reach
 // (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed while
 // C_cache_base_block::Open is a stub; InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade),
 // the other functions the scripts call (C_program::Process, the streams' others), what DoubleKiss calls (NewShoot,
@@ -3022,13 +3023,25 @@ I3DENUMRET __stdcall C_game::S_hlp::cbCityMusic(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5ae130
+// The city's music faded out from its volume over 5 s, as TickCityMusic does it when the area changes (PS2 name):
+// the music fading out before destroyed, the one playing forgotten
+// FUNCTION: GAME 0x5ae130
 void C_game::CityMusicOff()
 {
-    StubLog("C_game::CityMusicOff");
+    unknown_2fb4 = NULL;
+    if (unknown_2fbc > -1)
+        DestroyIShow(unknown_2fbc);
+    unknown_2fbc = unknown_2fb8;
+    IShow *show = GetIShow(unknown_2fbc);
+    if (show)
+    {
+        IShowLoop(unknown_2fbc, false);
+        IShowFade(unknown_2fbc, show->GetVolume(), 0.0f, 5000);
+    }
+    unknown_2fb8 = -1;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5ae1b0
 void C_game::CityMusicPaused(bool paused)
@@ -3540,15 +3553,19 @@ IShow *C_game::GetIShow(int id)
     return NULL;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5b6520
+// The stream's own volume, which IShowSetVolume scales by the music's (PS2 name), from the last one
+// FUNCTION: GAME 0x5b6520
 void C_game::IShowStoreVolume(int show, float volume)
 {
-    StubLog("C_game::IShowStoreVolume");
+    for (int i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id == show)
+        {
+            i_shows[i].volume = volume;
+            return;
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // Whether Tick starts the stream again at its end (PS2 name): PS2's tells its stream too, the PC's IShow has no loop
 // FUNCTION: GAME 0x5b6580

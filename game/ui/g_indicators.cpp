@@ -3,12 +3,13 @@
 // GameInit, GameDone, the clock's setters and TimerGetInterval, _SpocitejRafiku2, the player's panel's helpers, the
 // tachometer's and the player's setters, the clears C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear,
 // ConsoleClear, RadarClear), MapEnable, CompassSetDestination, WideScreenSetRatio, FadeInOutIsDark, SetUnknown4484,
-// SetUnknownTexture, RadarRemoveCar, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged (with the dials'
-// vertex helpers), TextSize, OutText, OutTextMultiLine, the menus' cursor, the camera's field of view and
-// ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs (RadarAddCar,
-// the radar's edges, and the scripts' subtitles, console texts, wide screen and fades).
+// SetUnknownTexture, RadarRemoveCar, the radar's edges, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged
+// (with the dials' vertex helpers), TextSize, OutText, OutTextMultiLine, the menus' cursor, the camera's field of view
+// and ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs
+// (RadarAddCar, and the scripts' subtitles, console texts, wide screen and fades).
 
 #include "ui/g_indicators.h"
+#include "ai/pathweb.h"
 #include "collision/g_colls.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -1273,25 +1274,100 @@ void G_IndicatorsClass::RadarRemoveCar(C_car *car)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5fa9f0
+// The road's edges the radar draws (PS2 names), NULL for none: the nodes' positions, and their vertices on the radar
+// (x and z of each, the last back at the first), fewer than two nodes leaving none. PS2's the same, the right edge's
+// vertices taking y for z as PS2's do.
+// FUNCTION: GAME 0x5fa9f0
 void G_IndicatorsClass::RadarSetLeftEdge(std::vector<C_web_node *> *edge)
 {
-    StubLog("G_IndicatorsClass::RadarSetLeftEdge");
+    if (_VtxLeftEdge)
+        delete[] _VtxLeftEdge;
+    if (_LeftEdge)
+        delete[] _LeftEdge;
+    _VtxLeftEdge = NULL;
+    _LeftEdge = NULL;
+    if (edge)
+        _VtxNumOfLeftEdge = edge->size() + 1;
+    else
+        _VtxNumOfLeftEdge = 0;
+    if (_VtxNumOfLeftEdge < 3)
+    {
+        _VtxNumOfLeftEdge = 0;
+        return;
+    }
+    _VtxLeftEdge = new TLVERTEX[_VtxNumOfLeftEdge];
+    _LeftEdge = new S_vector[_VtxNumOfLeftEdge];
+    uint i;
+    for (i = 0; i < _VtxNumOfLeftEdge - 1; i++)
+    {
+        _VtxLeftEdge[i].color = 0x7fffff7f;
+        _VtxLeftEdge[i].u = 0.0f;
+        _VtxLeftEdge[i].v = 0.0f;
+        _VtxLeftEdge[i].x = (*edge)[i]->pos.x;
+        _VtxLeftEdge[i].y = (*edge)[i]->pos.z;
+        _VtxLeftEdge[i].z = .2f;
+        _VtxLeftEdge[i].rhw = .5f;
+        _LeftEdge[i].x = (*edge)[i]->pos.x;
+        _LeftEdge[i].y = (*edge)[i]->pos.y;
+        _LeftEdge[i].z = (*edge)[i]->pos.z;
+    }
+    _VtxLeftEdge[i].color = 0x7fffff7f;
+    _VtxLeftEdge[i].u = 0.0f;
+    _VtxLeftEdge[i].v = 0.0f;
+    _VtxLeftEdge[i].x = (*edge)[0]->pos.x;
+    _VtxLeftEdge[i].y = (*edge)[0]->pos.z;
+    _VtxLeftEdge[i].z = .2f;
+    _VtxLeftEdge[i].rhw = .5f;
+    _LeftEdge[i].x = (*edge)[0]->pos.x;
+    _LeftEdge[i].y = (*edge)[0]->pos.y;
+    _LeftEdge[i].z = (*edge)[0]->pos.z;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5fabf0
+// FUNCTION: GAME 0x5fabf0
 void G_IndicatorsClass::RadarSetRightEdge(std::vector<C_web_node *> *edge)
 {
-    StubLog("G_IndicatorsClass::RadarSetRightEdge");
+    if (_VtxRightEdge)
+        delete[] _VtxRightEdge;
+    if (_RightEdge)
+        delete[] _RightEdge;
+    _VtxRightEdge = NULL;
+    _RightEdge = NULL;
+    if (edge)
+        _VtxNumOfRightEdge = edge->size() + 1;
+    else
+        _VtxNumOfRightEdge = 0;
+    if (_VtxNumOfRightEdge < 3)
+    {
+        _VtxNumOfRightEdge = 0;
+        return;
+    }
+    _VtxRightEdge = new TLVERTEX[_VtxNumOfRightEdge];
+    _RightEdge = new S_vector[_VtxNumOfRightEdge];
+    uint i;
+    for (i = 0; i < _VtxNumOfRightEdge - 1; i++)
+    {
+        _VtxRightEdge[i].color = 0x7fffff7f;
+        _VtxRightEdge[i].u = 0.0f;
+        _VtxRightEdge[i].v = 0.0f;
+        _VtxRightEdge[i].x = (*edge)[i]->pos.x;
+        _VtxRightEdge[i].y = (*edge)[i]->pos.y;
+        _VtxRightEdge[i].z = .2f;
+        _VtxRightEdge[i].rhw = .5f;
+        _RightEdge[i].x = (*edge)[i]->pos.x;
+        _RightEdge[i].y = (*edge)[i]->pos.y;
+        _RightEdge[i].z = (*edge)[i]->pos.z;
+    }
+    _VtxRightEdge[i].color = 0x7fffff7f;
+    _VtxRightEdge[i].u = 0.0f;
+    _VtxRightEdge[i].v = 0.0f;
+    _VtxRightEdge[i].x = (*edge)[0]->pos.x;
+    _VtxRightEdge[i].y = (*edge)[0]->pos.y;
+    _VtxRightEdge[i].z = .2f;
+    _VtxRightEdge[i].rhw = .5f;
+    _RightEdge[i].x = (*edge)[0]->pos.x;
+    _RightEdge[i].y = (*edge)[0]->pos.y;
+    _RightEdge[i].z = (*edge)[0]->pos.z;
 }
-
-#pragma auto_inline(on)
 
 // PS2's shows any flag under 16. The hiding case assigns in PS2's order, which lets VC6 share its end with case 0's.
 // FUNCTION: GAME 0x5fadf0

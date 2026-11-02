@@ -110,6 +110,9 @@ public:
 // parameter, GROUP_DISBAND sets the second for the members without a car and clears it when they go free
 #define ENTITYF_UNKNOWN_1 0x1
 #define ENTITYF_UNKNOWN_2 0x2
+// C_entity::unknown_f48's (the name is ours, by value): an entity in the police's faces that has it goes once its
+// unknown_5fc is 4 (C_shvestky::TickDoRiciActors)
+#define ENTITYF48_UNKNOWN_8 0x8
 
 // What C_entity::ai_state adds to the state (the names are ours, by value): GetAIState and GETENEMYAISTATE take them
 // off, PS2's hasLockedState compares the state with 666
@@ -235,7 +238,9 @@ public:
     ai_logs logs;                       // 0xe88 (PS2 0x1060)
     uchar unknown_eb8[0x88];            // 0xeb8
     uint ai_state;                      // 0xf40 (PS2 0x1128), ENTITY_STATE_* added
-    uchar unknown_f44[0xc];             // 0xf44
+    uchar unknown_f44[4];               // 0xf44
+    uint unknown_f48;                   // 0xf48 (PS2 0x1130), ENTITYF48_*
+    uchar unknown_f4c[4];               // 0xf4c
     uint unknown_f50;                   // 0xf50 (PS2 0x1138), ENTITYF_*
     uchar unknown_f54[0x210];           // 0xf54
     ai_action_manager action_manager;   // 0x1164 (PS2 0x1348)

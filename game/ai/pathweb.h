@@ -2,6 +2,8 @@
 
 #include "Main.h"
 
+#include "I3D/I3d_math.h"
+
 class C_chunk;
 
 // The walking paths' web (PS2 C_web_path and C_web_node, pathweb.cpp). Only what C_mission's Init and UnInit use so
@@ -31,7 +33,7 @@ struct S_web_conn
 class C_web_node
 {
 public:
-    uchar unknown_0[0xc];               // 0x0
+    S_vector pos;                       // 0x0 (PS2 GetPos's), the radar's edges are drawn through it
     ushort unknown_c;                   // 0xc, WEBF_*
     ushort unknown_e;                   // 0xe (PS2 0xe), C_wagon::GetLastNode's
     uchar unknown_10[8];                // 0x10

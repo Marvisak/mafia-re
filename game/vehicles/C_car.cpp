@@ -2,9 +2,9 @@
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
 // profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls.
-// The constructor, which C_mission::CreateActor calls, the other virtual functions (GetOwner, SetActualLevel, the force
-// feedback effects, Reset, IsCarUsable), the functions the scripts call and TryGoToAssHole's others
-// (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
+// The constructor, which C_mission::CreateActor calls, the other virtual functions (SetOwner and GetOwner, which
+// C_shvestky::TickDoRiciActors calls, SetActualLevel, the force feedback effects, Reset, IsCarUsable), the functions
+// the scripts call and TryGoToAssHole's others (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -318,6 +318,13 @@ void C_car::ConvertTyres(S_TSRFC *src, S_SRFC *dst)
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x41d810
+bool C_car::SetOwner(C_actor *act, int seat, float unknown)
+{
+    StubLog("C_car::SetOwner %d", seat);
+    return false;
+}
 
 // STUB: GAME 0x41dec0
 C_human *C_car::GetOwner(int seat)
