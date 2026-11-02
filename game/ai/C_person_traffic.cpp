@@ -4,7 +4,8 @@
 // EnableTaxiDriver, ClearElements and FreeDynCollElements), ZrusVsechnyMavajici, and TickElements, which C_game::Tick
 // calls, and of what TickElements calls TryGoToAssHole and IsCarHasOcas, which it calls; the constructor, which
 // C_mission::CreateActor calls, GeneratePassengerForTaxi, which TickElements calls, AddFreePerson, which a script's
-// command calls, and C_traffic_element's SetNewNode, EndMavaniNaTaxi, Tick and Deactivate are stubs.
+// command calls, PlayerHoMaVytaseneho, which C_shvestky::Tick calls, and C_traffic_element's SetNewNode,
+// EndMavaniNaTaxi, Tick and Deactivate are stubs.
 // The vectors' initializers start the file (0x44c520, 0x44c5a0), then an empty one (0x44c620). Open: their destructors
 // (0x44c560, 0x44c5e0) test and set a guard byte they share (0x63d760), a bit each, as C_actor.cpp's do.
 
@@ -64,6 +65,12 @@ C_don_ocas::~C_don_ocas()
 C_traffic_generator::C_traffic_generator()
 {
     StubLog("C_traffic_generator::C_traffic_generator");
+}
+
+// STUB: GAME 0x44e890
+void C_traffic_generator::PlayerHoMaVytaseneho()
+{
+    StubLog("C_traffic_generator::PlayerHoMaVytaseneho");
 }
 
 #pragma auto_inline(on)

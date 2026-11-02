@@ -51,6 +51,10 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 #define RACE6_STATE_STARTED 2           // SetUnknown2edc(true)
 #define RACE6_STATE_END 10
 
+// C_game::unknown_2f14's bit that turns on DoubleKiss, the guns on the player's car (the name is ours): no code of the
+// PC's sets it, the cheats' toggles (0x5a8030) have no case for it
+#define GAMEF_DOUBLEKISS 0x8
+
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
 struct S_shoot
@@ -391,18 +395,22 @@ public:
     float *unknown_2ee0;                // 0x2ee0, a float register of a script (the race's result most likely)
     std::vector<uint> unknown_2ee4;     // 0x2ee4 (PS2 0x130c)
     char unknown_2ef4[0x20];            // 0x2ef4, a name, empty from Init
-    int unknown_2f14;                   // 0x2f14
+    uint unknown_2f14;                  // 0x2f14, bits the game reads with a shift and a test, bitfields most likely
     std::vector<S_i_show> i_shows;      // 0x2f18 (PS2 0x133c)
     std::vector<S_i_show_fade> i_show_fades;  // 0x2f28 (PS2 0x1348)
     int unknown_2f38;                   // 0x2f38
     int unknown_2f3c;                   // 0x2f3c
     std::vector<S_enemy_talk> enemy_talks;  // 0x2f40 (PS2 0x135c)
-    I3D_frame *unknown_2f50;            // 0x2f50
+    // DoubleKiss's guns on the player's car (PS2 0x1368 to 0x1390; the names are ours). Nothing of the PC's creates
+    // the frames: Init clears kiss_frame and unknown_2f54, Done releases them.
+    I3D_frame *kiss_frame;              // 0x2f50, linked to the car, turned to the target
     I3D_frame *unknown_2f54[2];         // 0x2f54
-    uchar unknown_2f5c[0x10];           // 0x2f5c
-    int unknown_2f6c;                   // 0x2f6c
-    int unknown_2f70;                   // 0x2f70
-    uchar unknown_2f74[8];              // 0x2f74
+    I3D_frame *kiss_guns[2];            // 0x2f5c, where the shots start
+    I3D_frame *kiss_cartridges[2];      // 0x2f64, where the cartridges fly out
+    C_car *kiss_car;                    // 0x2f6c, the car kiss_frame is linked to
+    C_actor *kiss_target;               // 0x2f70
+    int kiss_shoot_time;                // 0x2f74, the time until the guns shoot again
+    int kiss_find_time;                 // 0x2f78, the time until the target is aimed at or looked for again
     std::vector<S_find_actor> find_actors;  // 0x2f7c (PS2 0x1394)
     std::vector<uint> unknown_2f8c;     // 0x2f8c (PS2 0x13a0)
     bool anim_preload;                  // 0x2f9c, NOANIMPRELOAD clears it (the name is ours)
@@ -566,6 +574,11 @@ public:
     void DeathActorProcess();
     void _RemoveTemporaryActor(C_actor *act);
     void TickShoot(uint time);
+    // A shot from pos along dir, which TickShoot moves (PS2 name; the vectors by value, PS2's by reference; the
+    // parameters' names are ours): true
+    bool NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int unknown1, I3D_frame *frm, int unknown2);
+    // A cartridge thrown out at the frame (PS2 name; the parameters' names are ours)
+    void NewCartidge(I3D_frame *&frm, S_vector &dir, bool unknown1, bool unknown2);
     // A track on a surface (a shot's, on the hit level's frame or NULL): the texture of unknown_29bc's index, at pos
     // facing normal, turned by angle (the name is PS2's, the parameters' names are ours; PS2's takes other ones)
     void CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1, int texture,
@@ -680,6 +693,12 @@ public:
     {
         unknown_363c = true;
         unknown_363d = false;
+    }
+    // A bit of unknown_2f14, with which C_shvestky::Tick does nothing (the name is ours): through an accessor, as VC6
+    // reads it with a shift, where the expression written out becomes a test of the byte
+    bool GetUnknown2f14Bit6() const
+    {
+        return (unknown_2f14 >> 6) & 1;
     }
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b510
@@ -830,7 +849,7 @@ public:
 // ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
@@ -840,4 +859,4 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z

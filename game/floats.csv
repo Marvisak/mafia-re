@@ -70,6 +70,7 @@ address|type|size
 0x623c10|float|4
 0x623eb4|float|4
 0x623ed8|float|4
+0x623ee0|float|4
 0x624038|float|4
 0x62403c|float|4
 0x624058|float|4
@@ -85,6 +86,7 @@ address|type|size
 0x624b30|float|4
 0x624b34|float|4
 0x624b4c|float|4
+0x624b88|float|4
 0x624b98|float|4
 0x624b9c|float|4
 0x624bd4|float|4
@@ -96,12 +98,14 @@ address|type|size
 0x624bf0|float|4
 0x624bf4|float|4
 0x624bf8|float|4
+0x624d34|float|4
 0x624e14|float|4
 0x624e30|float|4
 0x624f10|float|8
 0x624f50|float|4
 0x625150|float|4
 0x625160|float|4
+0x6251a0|float|4
 0x625230|float|4
 0x625408|float|4
 0x625440|float|4

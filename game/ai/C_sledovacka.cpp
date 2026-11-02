@@ -1,7 +1,8 @@
 // The chases (PS2 C_sledovacka.cpp; the PC's file is the one at 0x4a0320-0x4aa2ac, docs/game-files.md), which starts
 // with the constructor. Written so far: the constructor and the destructor, which the game's constructor and destructor
 // call, Init and Done, which its Init and Done call, and Tick, which its Tick calls; what the script's commands call
-// (RemoveCar, SetActionStatus) and what Tick calls of the file's (RecompilePath, PreparePath, TickDriver) are stubs.
+// (RemoveCar, SetActionStatus), what Tick calls of the file's (RecompilePath, PreparePath, TickDriver) and what the
+// AI's following and fights call (AddCarHunt, AddCarMoveTo, ActionStatus) are stubs.
 // Open: Tick (18 KB) is in VC6's large-function regime, where more source means less inlining at the end: the original
 // calls helpers out of line from the 0x800 branch's side search on (its first, an S_vector operator- at 0x4a76fc) that
 // ours inlines. About 250 dead statements anywhere in Tick give the original's decisions in the whole function (64% to
@@ -69,6 +70,21 @@ void C_sledovacka::Done()
 }
 
 #pragma auto_inline(off)
+
+// STUB: GAME 0x4a0760
+bool C_sledovacka::AddCarHunt(C_car *car, C_actor *target, uint unknown, uint unknown2, const S_vector &pos,
+    float unknown3)
+{
+    StubLog("C_sledovacka::AddCarHunt");
+    return false;
+}
+
+// STUB: GAME 0x4a1220
+bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool unknown, bool unknown2, uint unknown3)
+{
+    StubLog("C_sledovacka::AddCarMoveTo");
+    return false;
+}
 
 // STUB: GAME 0x4a1c30
 void C_sledovacka::RemoveCar(C_car *car)
@@ -1173,6 +1189,14 @@ bool C_sledovacka::PreparePath(int index)
 void C_sledovacka::TickDriver(int index, uint time)
 {
     StubLog("C_sledovacka::TickDriver");
+}
+
+// The original's answer for a car without a chase
+// STUB: GAME 0x4a8670
+uint C_sledovacka::ActionStatus(C_car *car)
+{
+    StubLog("C_sledovacka::ActionStatus");
+    return STATUS_UNKNOWN_1;
 }
 
 // STUB: GAME 0x4a86d0

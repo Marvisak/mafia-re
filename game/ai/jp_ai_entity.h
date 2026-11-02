@@ -14,6 +14,10 @@
 // names are ours, by value; PS2 the same)
 #define AIACTION_UNKNOWN_1E 0x1e
 #define AIACTION20_UNKNOWN_A 0xa
+// The jobs ai_follow_manager::Update asks a following entity for: without the first or with the second it leaves its
+// group (the names are ours, by value); C_entity::IsInDanger looks for the second among others
+#define AIACTION_UNKNOWN_1 1
+#define AIACTION_UNKNOWN_6 6
 
 // What a job's unknown_20 points to (the name is ours): only the value ENEMY_GETHOSTILESTATE compares (PS2's 0x44)
 struct ai_action_unknown_20
@@ -44,6 +48,8 @@ public:
     // PS2 names: the jobs ended, and the last job whose unknown_c is 0, NULL for none
     void Clear(bool unknown);
     ai_action *GetBaseJob();
+    // Whether the entity has a job of the type, which the second parameter receives where it isn't NULL (PS2 name)
+    bool hasAction(uint type, ai_action **action, bool unknown);
 };
 
 // What the entity has seen (PS2 ai_vis_logs), C_entity's 0xb04, 0xb0 bytes: Init clears its eight entries and keeps
@@ -74,7 +80,11 @@ public:
 // A log of another character (PS2 ai_character_log), 0x54 bytes: what it holds isn't known yet
 struct ai_character_log
 {
-    uchar unknown_0[0x54];              // 0x0
+    uchar unknown_0[0x24];              // 0x0
+    uint unknown_24;                    // 0x24, a game's time: the fights' Tick counts the 3 s after it
+    uchar unknown_28[0xc];              // 0x28
+    uint unknown_34;                    // 0x34, a game's time: the fights' Tick counts the 2 s after it
+    uchar unknown_38[0x1c];             // 0x38
 };
 
 // What the entity remembers of the other characters (PS2 ai_logs), C_entity's 0xe88, whose size isn't known
@@ -83,6 +93,9 @@ class ai_logs
 public:
     uchar unknown_0[0x20];              // 0x0
     std::vector<ai_character_log> logs; // 0x20
+
+    // The log of the actor, NULL for none (PS2 name)
+    ai_character_log *GetLog(C_actor *act);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): PS2 clears
     // the vector itself
@@ -102,6 +115,12 @@ public:
 // off, PS2's hasLockedState compares the state with 666
 #define ENTITY_STATE_10000 10000
 #define ENTITY_STATE_666 666
+
+// C_entity::Event's events (the names are ours, by value): the fights' Tick sends ENTITY_EVENT_UNKNOWN_B with
+// an ai_blob, the target of the entity's fighting party, which the entity deletes; C_shvestky::Tick sends
+// ENTITY_EVENT_UNKNOWN_13 to the entities of a road block that ends
+#define ENTITY_EVENT_UNKNOWN_B 0xb
+#define ENTITY_EVENT_UNKNOWN_13 0x13
 
 // The AI's humans (PS2 C_entity, jp_ai_entity.cpp), 0x128c bytes (PS2's 0x14a0): C_program is the second base (at
 // 0xa9c, PS2's 0xbf0, whose this adjustors PS2 names @3056@), the entity's own script, as C_detector's. Only the
@@ -150,6 +169,13 @@ public:
     void WeaponChoose(uint id);
     // Gives the game its action button object (PS2 name)
     void AddUsingObject();
+    // PS2 names: the fights' Tick locks a substate with its member's state and passes the target's ai_blob through
+    // the event ENTITY_EVENT_UNKNOWN_B, which the entity deletes
+    void LockSubstate(uint unknown, uint unknown2, float unknown3, uint unknown4, bool unknown5);
+    void Event(C_actor *act, uint id, void *data);
+    // Whether one of the game's entities has one of five jobs aimed at this one, AIACTION_UNKNOWN_1E among them (PS2
+    // name), which ai_follow_manager::Update asks
+    bool IsInDanger();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, after PS2's
     // types)
@@ -213,7 +239,9 @@ public:
     uint unknown_f50;                   // 0xf50 (PS2 0x1138), ENTITYF_*
     uchar unknown_f54[0x210];           // 0xf54
     ai_action_manager action_manager;   // 0x1164 (PS2 0x1348)
-    uchar unknown_1194[0x9c];           // 0x1194
+    uchar unknown_1194[0x18];           // 0x1194
+    uint unknown_11ac;                  // 0x11ac (PS2 0x1380), the number of the entity's group (ai_groups::GetGroup)
+    uchar unknown_11b0[0x80];           // 0x11b0
     // The entity's action button object, which the game's objects hold while it has one (PS2 0x1420; the name is ours)
     C_using_object::S_using_object using_object;  // 0x1230
     uchar unknown_1268[0x24];           // 0x1268, a vector first (the constructor's)

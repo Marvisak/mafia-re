@@ -87,6 +87,15 @@ public:
     bool PanoveMateOciNaZmrdoviNeboCumitePoBabach(C_actor *actor);
     // Whether unknown_2c is set ("gentlemen, are you playing cops")
     bool PanoveHrajeteSiNaPoldy();
+    // The police told of an actor's new state ("gentlemen, a change: arrest the bastard", "... kill the bastard") and
+    // to write him down ("gentlemen, take out your notepads and write the bastard down")
+    void PanoveZmenaZatkneteHoZmrda(C_actor *actor);
+    void PanoveZmenaZabijteHoZmrda(C_actor *actor);
+    void PanoveVytahneteBlokyAZapisteSiZmrda(C_actor *actor);
+    // Whether someone goes after the actor ("gentlemen, is someone going after the bastard"; PS2's takes a bool more)
+    // and whether they see him ("gentlemen, do you see the bastard or are you dumb")
+    bool PanoveJdeteNekdoPoZmrdovi(C_actor *actor);
+    bool PanoveViditeZmrdaNeboSteTupci(C_actor *actor);
     // The shift's end
     void KonecSmeny();
     // Stops the motorized units (PS2's name, Czech)

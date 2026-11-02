@@ -14,14 +14,19 @@ class C_chunk;
 struct S_road_node
 {
     S_vector pos;                       // 0x0 (the name is ours)
-    uchar unknown_c[0xe0];              // 0xc
+    bool unknown_c;                     // 0xc, a semaphore's most likely: C_shvestky::TestOverRed's
+    uchar unknown_d[0xdf];              // 0xd
 };
 
 // What SaveData writes after the nodes, 0x18 bytes each (the name is ours). GetNearNode returns one of them, the nodes
 // at its two ends most likely: C_sledovacka::Init takes the nearer one.
 struct S_road_link
 {
-    uchar unknown_0[0x14];              // 0x0
+    S_vector pos;                       // 0x0 (the name is ours)
+    uchar unknown_c[4];                 // 0xc
+    // 0x10, two indices for C_roads::GetPos, a node's or with NEARNODE_FLAG a link's (C_shvestky::TestOverRed's)
+    ushort unknown_10;
+    ushort unknown_12;
     ushort unknown_14;                  // 0x14, a node's index
     ushort unknown_16;                  // 0x16, a node's index
 };
@@ -60,6 +65,15 @@ public:
     ushort GetNearNode(S_vector pos);
     // The nodes from one node to another into path (PS2 name and parameters)
     bool FindPath(ushort from, ushort to, std::vector<ushort> &path);
+    // A node's position, or a link's with NEARNODE_FLAG (the name is ours; the copy the linker kept is
+    // C_shvestky.cpp's). Returned from each branch: a conditional expression selects the pointer in another register.
+    // FUNCTION: GAME 0x4a02a0
+    S_vector GetPos(ushort index)
+    {
+        if (index & NEARNODE_FLAG)
+            return links[index & NEARNODE_INDEX].pos;
+        return nodes[index].pos;
+    }
 
     // PS2's three virtual functions in PS2's order, and a second reader between the last two, PC only (the parameters
     // each one's ret takes). It reads what LoadData reads; the name is ours, after C_web_path's MergeNodes.

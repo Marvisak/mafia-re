@@ -97,6 +97,9 @@ public:
     static void GeneratePassengerForTaxi();
     // Whether a pedestrian walks to the car (PS2 name)
     static bool IsCarHasOcas(C_car *car);
+    // The player has a weapon out (PS2 name, Czech, "the player has it drawn"), which C_shvestky::Tick calls for a
+    // human on foot with a weapon in the hand
+    static void PlayerHoMaVytaseneho();
     // Gives a pedestrian of that model, or the actor, to the generators (PS2 name; the bool's name is ours)
     static void AddFreePerson(I3D_model *model, C_actor *act, bool unknown);
 

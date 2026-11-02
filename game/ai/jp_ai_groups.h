@@ -8,6 +8,7 @@
 class C_actor;
 class C_car;
 class C_entity;
+class C_human;
 
 // The AI's groups, its following and its fights (PS2 ai_groups, ai_follow_manager and ai_fight_manager, members of
 // AIManager; PS2's jp_ai_groups.cpp, most likely the PC's file at 0x530390-0x53857c). The classes' and the structs'
@@ -49,6 +50,10 @@ struct ai_group
 
     // The group's events by the game's time, which ai_groups::Tick calls (PS2 name)
     void ProcessEvents(uint time);
+    // PS2 names, which the fights' Tick calls: how much the car counts for the group, and the group's car closest to
+    // the position that its members can use, NULL for none (the second vector and the flag what else it found)
+    float GetCarFactor(C_car *car);
+    C_car *GetCarClosestAndUsable(S_vector *pos, S_vector *unknown, uint *unknown2);
 };
 
 class ai_groups
@@ -79,25 +84,40 @@ public:
     }
 };
 
+// ai_follow_group::state (the names are ours, by value): what Update does with the group. PS2's AddFollower gives a
+// new group FOLLOWSTATE_0 where the follower sits in the leader's car, else FOLLOWSTATE_5.
+#define FOLLOWSTATE_0 0                 // the leader in a car, the followers getting in
+#define FOLLOWSTATE_1 1                 // the leader without a car, the followers getting out
+#define FOLLOWSTATE_2 2                 // the car driving the group to its place (AddCarHunt or AddCarMoveTo)
+#define FOLLOWSTATE_3 3                 // all in the leader's car, which the AI doesn't drive for them
+#define FOLLOWSTATE_4 4                 // the car stopped until unknown_28 (PS2's Event 4 stops a driving one for 7 s)
+#define FOLLOWSTATE_5 5                 // the followers with the leader, in the same car or none
+
+// ai_follow_group::flags (the names are ours, by value)
+#define FOLLOWF_UNKNOWN_1 0x1           // PS2's AddFollower's: a car an entity drives takes the group to its place
+#define FOLLOWF_UNKNOWN_10 0x10         // set where the car's chase had C_sledovacka::STATUS_UNKNOWN_1
+#define FOLLOWF_UNKNOWN_20 0x20         // set with car where the chase ended otherwise, cleared with it
+
 // A group that follows an actor (PS2 ai_follow_group), 0x38 bytes (PS2's 0x40, its position first)
 struct ai_follow_group
 {
     std::vector<C_actor *> followers;   // 0x0 (PS2 0x10)
-    S_vector unknown_10;                // 0x10 (PS2 0x0)
+    S_vector pos;                       // 0x10 (PS2 0x0), where the car takes the group (PS2's AddFollower's)
     float unknown_1c;                   // 0x1c
-    int unknown_20;                     // 0x20
-    int unknown_24;                     // 0x24
-    int unknown_28;                     // 0x28
-    int unknown_2c;                     // 0x2c
-    int unknown_30;                     // 0x30
-    int unknown_34;                     // 0x34
+    uint flags;                         // 0x20, FOLLOWF_*
+    int state;                          // 0x24, FOLLOWSTATE_*
+    uint unknown_28;                    // 0x28, a time in ms: the end of FOLLOWSTATE_4, 0 out of it
+    uint unknown_2c;                    // 0x2c, a time in ms: 6 s after the car set out
+    C_actor *leader;                    // 0x30, the actor the group follows (PS2's AddFollower's second parameter)
+    C_car *car;                         // 0x34, the car whose chase ended (FOLLOWF_UNKNOWN_20's)
 };
 
 class ai_follow_manager
 {
 public:
     std::vector<ai_follow_group> groups;    // 0x0
-    int unknown_10;                     // 0x10, cleared by Init and Destroy
+    // 0x10, a time in ms: Update's next look at the followers' jobs, cleared by Init and Destroy
+    uint unknown_10;
 
     // PS2 names
     void Init();
@@ -106,31 +126,72 @@ public:
     void Update();
 };
 
+// A member's state in its party (ai_fight_member::state; the names are ours, by value): the fights' Tick moves the
+// members through them, and locks the entity's substate with the state's number in each but 2
+#define FIGHTSTATE_0 0
+#define FIGHTSTATE_1 1
+#define FIGHTSTATE_2 2
+#define FIGHTSTATE_3 3
+#define FIGHTSTATE_4 4                  // on the way to the car's seat
+#define FIGHTSTATE_5 5                  // at the seat
+#define FIGHTSTATE_6 6                  // out of the car
+#define FIGHTSTATE_7 7                  // in the car, the driver
+#define FIGHTSTATE_8 8                  // in the car
+#define FIGHTSTATE_9 9
+#define FIGHTSTATE_10 10
+#define FIGHTSTATE_11 11                // at a seat someone else has
+
 // A member of a fighting party (PS2 ai_fight_member), 0x14 bytes
 struct ai_fight_member
 {
-    int unknown_0;                      // 0x0
-    int unknown_4;                      // 0x4
+    C_entity *entity;                   // 0x0
+    int state;                          // 0x4, FIGHTSTATE_*
     int unknown_8;                      // 0x8
     int unknown_c;                      // 0xc
     int unknown_10;                     // 0x10
 };
 
+// What the fights' Tick tells the members of a party in a car about its target (PS2 ai_blob, 0x30 bytes, its
+// vectors 0x10), 0x24 bytes: each member's C_entity::Event gets a copy. PS2's has an operator new of its own, the
+// PC's original calls the global one.
+struct ai_blob
+{
+    S_vector pos;                       // 0x0, the target's position
+    S_vector dir;                       // 0xc, its direction
+    uint time;                          // 0x18, the game's time
+    int unknown_1c;                     // 0x1c, 0
+    C_actor *actor;                     // 0x20, the target
+};
+
+// ai_fight_followship::unknown_30 (the names are guesses): the party on foot or in its car
+#define FIGHTPARTY_ON_FOOT 0
+#define FIGHTPARTY_IN_CAR 1
+// What ai_fight_followship::unknown_38 counts up to while the party's car hunts (the name is ours, by value)
+#define FIGHT_UNKNOWN38_END 1000000
+
 // A fighting party (PS2 ai_fight_followship), 0x48 bytes (PS2's 0x60). Its destructor's copy the linker kept is
 // AIManager's file's (0x538c30, folded with the police actions').
 struct ai_fight_followship
 {
-    S_vector unknown_0;                 // 0x0
-    S_vector unknown_c;                 // 0xc
+    S_vector unknown_0;                 // 0x0, the party's position (ComputePosition's)
+    S_vector unknown_c;                 // 0xc, set from the second vector of ai_group::GetCarClosestAndUsable
     std::vector<ai_fight_member> members;   // 0x18 (PS2 0x20)
-    float unknown_28;                   // 0x28 (PS2 0x2c)
-    int unknown_2c;                     // 0x2c
-    int unknown_30;                     // 0x30
-    int unknown_34;                     // 0x34
-    int unknown_38;                     // 0x38
-    int unknown_3c;                     // 0x3c
-    int unknown_40;                     // 0x40
+    float unknown_28;                   // 0x28 (PS2 0x2c), a square of a distance
+    // 0x2c (PS2 0x30), the game's time at which Tick looks at the party again (unsigned: Tick compares it so)
+    uint unknown_2c;
+    int unknown_30;                     // 0x30 (PS2 0x34), FIGHTPARTY_*
+    int unknown_34;                     // 0x34 (PS2 0x38), 0, 1 or 2
+    // 0x38 (PS2 0x3c), counted up while the car hunts, to FIGHT_UNKNOWN38_END (unsigned: Tick compares it so)
+    uint unknown_38;
+    C_entity *unknown_3c;               // 0x3c (PS2 0x40), the commander most likely: its group gives the cars
+    C_human *unknown_40;                // 0x40 (PS2 0x44), the target
     C_car *car;                         // 0x44 (PS2 0x48), the party's car, GROUP_DISBAND's
+
+    // PS2 names: the party's position, whether its car hunts the target, and a new party of the members that take the
+    // car (NULL for none), which Tick copies into the parties and deletes
+    void ComputePosition();
+    bool mustCarHunt();
+    ai_fight_followship *TakeCar(C_car *car);
 };
 
 // PS2's has its parties only, as the PC's: AIManager's next member is PS2's sight manager too
@@ -148,6 +209,8 @@ public:
     void LeaveParty(C_entity *e, C_actor *act);
     // The party of the entity, or else of the actor, NULL for none; the third parameter receives a number of it
     ai_fight_followship *GetParty(C_entity *e, C_actor *act, uint *unknown);
+    // The party in a car goes apart (PS2 name)
+    void DisbandCarParty(ai_fight_followship *party, bool unknown);
 };
 
 // The copies of the implicit functions and the vectors' helpers that the managers' Init and Destroy call out of line:
@@ -158,11 +221,31 @@ public:
 // TEMPLATE: GAME 0x536460
 // ?_Destroy@?$vector@Uai_group@@V?$allocator@Uai_group@@@std@@@std@@IAEXPAUai_group@@0@Z
 
+// What the fights' Tick calls out of line: the parties' _Destroy (its erase's) and implicit operator= (the erase's
+// copy); the original's push_back calls insert(P, x) out of line too (0x536490, with insert(P, 1, x) inlined in it),
+// which ours inlines
+// TEMPLATE: GAME 0x536690
+// ?_Destroy@?$vector@Uai_fight_followship@@V?$allocator@Uai_fight_followship@@@std@@@std@@IAEXPAUai_fight_followship@@0@Z
+
+// The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
+// streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
+// TEMPLATE: GAME 0x537050
+// ?_Ucopy@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@IAEPAUai_fight_member@@PBU3@0PAU3@@Z
+
+// TEMPLATE: GAME 0x537090
+// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
+
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
+// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
+
+// TEMPLATE: GAME 0x537910
+// ?_Construct@std@@YIXPAUai_fight_member@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
+
+// SYNTHETIC: GAME 0x537e10
+// ??4ai_fight_followship@@QAEAAU0@ABU0@@Z
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
@@ -175,4 +258,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z
+// ?copy@std@@YIPAPAVI3D_frame@@PAPAV2@00@Z

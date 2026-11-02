@@ -176,9 +176,13 @@ public:
     bool SetSpecialDynamicColls(bool on);
     // Adds the dynamic collisions or takes them away (PS2 name)
     void SetDynamicCollsOn(bool on, bool unknown);
+    // The engine started or stopped (PS2 name)
+    void SetEngineOn(bool on, bool unknown);
     // PS2 names
     void SetBrake(float brake);
     void SetPower(float power, bool unknown);
+    // An impulse pushing the vehicle at pos (PS2 name; the parameters' names are ours)
+    void ExternalImpuls(const S_vector &impuls, const S_vector &pos, uint flags, const S_vector &unknown);
 
     // A camera's position at a wheel, offset from it (PS2 name): the offset's x mirrored for the even wheels, which
     // are on the left
@@ -453,7 +457,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z

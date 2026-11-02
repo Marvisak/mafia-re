@@ -30,6 +30,9 @@ struct S_TSRFC
 // C_car::unbreakable's value, which the scripts' CAR_UNBREAKABLE sets or clears (the name is ours; PS2's sets 0xc000)
 #define CARF_UNBREAKABLE 0x4000
 
+// The value the fights' Tick gives C_car::unknown_2210 (the name is ours, by value)
+#define CAR2210_UNKNOWN_534 0x534
+
 // A car (PS2 C_car, C_car.cpp), 0x221c bytes (PS2's 0x2490), an actor with a C_Vehicle at 0x70 (PS2's constructor
 // constructs both, the PC's stores a second vtable there, 0x6236b0). Only what InitSystem, the profiles,
 // C_mission::CreateActor and the scripts (C_program::Process) use so far: its tables, which InitSystem loads once
@@ -228,7 +231,9 @@ public:
     // SetTankHitCount's (PS2 0x23f0 and 0x23f4)
     int unknown_2154;                   // 0x2154
     int unknown_2158;                   // 0x2158
-    uchar unknown_215c[0x1c];           // 0x215c
+    uchar unknown_215c[0x14];           // 0x215c
+    bool unknown_2170;                  // 0x2170 (PS2 0x2463)
+    uchar unknown_2171[7];              // 0x2171
     int show_energy;                    // 0x2178, CAR_SWITCHSHOWENERGY's (the name is ours)
     bool unknown_217c;                  // 0x217c (PS2 0x2464), CARLIGHT_MAIN clears it with the lights on, sets it off
     uchar unknown_217d[0xf];            // 0x217d
@@ -243,7 +248,9 @@ public:
     uchar unknown_220b;                 // 0x220b
     // 0x220c (PS2 0x247f), set for the cars the player left in the garage, and by the scripts' DAN_INTERNAL_1
     bool unknown_220c;
-    uchar unknown_220d[7];              // 0x220d
+    uchar unknown_220d[3];              // 0x220d
+    // 0x2210 (PS2 0x23ac), set to CAR2210_UNKNOWN_534 or 0 by the fights' Tick when its party's hunt ends
+    int unknown_2210;
     bool unknown_2214;                  // 0x2214
     bool unknown_2215;                  // 0x2215
     uchar unknown_2216[3];              // 0x2216

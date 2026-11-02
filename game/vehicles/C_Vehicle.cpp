@@ -2,7 +2,8 @@
 // construct the tables, docs/game-files.md). Written so far: the tables C_car's loaders fill and CloseSystem frees, in
 // PS2's order (each table's Set before its Close), what the camera calls (GetWheelCamPos, GetHeadPos,
 // IsVehicleUnstable, GetVehicleSize), what the HUD calls (GetVehiclePivotPos), AddSectorForProjectorLights, which
-// C_game::Init calls, and AddSectorForSounds, the scripts'. The scripts' other functions are stubs.
+// C_game::Init calls, and AddSectorForSounds, the scripts'. The scripts' other functions, and SetEngineOn and
+// ExternalImpuls, which the AI's fights and C_game::DoubleKiss call, are stubs.
 // Open: the file starts with an empty initializer (0x4bd650) and has two more vectors after v_particle (0x63d890,
 // 0x63d880), most likely PS2's v_light_sector and v_sound_sector; the tables' destructors (0x4bd6a0 and on) test and set
 // a guard byte (0x63d9c0) as the tracks' do (actors/C_animations.cpp), and the .bss order isn't the buckets' of these
@@ -143,11 +144,23 @@ void C_Vehicle::SetBrake(float brake)
     StubLog("C_Vehicle::SetBrake");
 }
 
+// STUB: GAME 0x4cb5b0
+void C_Vehicle::SetEngineOn(bool on, bool unknown)
+{
+    StubLog("C_Vehicle::SetEngineOn");
+}
+
 // STUB: GAME 0x4cb6e0
 bool C_Vehicle::SetFuel(float fuel)
 {
     StubLog("C_Vehicle::SetFuel");
     return true;
+}
+
+// STUB: GAME 0x4cb7e0
+void C_Vehicle::ExternalImpuls(const S_vector &impuls, const S_vector &pos, uint flags, const S_vector &unknown)
+{
+    StubLog("C_Vehicle::ExternalImpuls");
 }
 
 #pragma auto_inline(on)

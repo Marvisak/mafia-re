@@ -121,7 +121,8 @@ public:
     // 0xbc (PS2 0x250), whose Reset the script's ACTOR_SETPLACEMENT calls (the name is ours)
     C_animations_machine_de_luxe anim_machine;
     bool crouching;                     // 0x1e4 (PS2 0x390), the camera drops while it is set (the name is ours)
-    uchar unknown_1e5[0x53];            // 0x1e5
+    bool unknown_1e5;                   // 0x1e5 (PS2 0x391)
+    uchar unknown_1e6[0x52];            // 0x1e6
     float unknown_238;                  // 0x238 (PS2 0x3d8), the camera's tilt for the player (C_game::Tick)
     uchar unknown_23c[0x9c];            // 0x23c
     I3D_frame *look_frame;              // 0x2d8 (PS2 0x454), SetLookFrame's (the name is ours)

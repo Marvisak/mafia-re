@@ -16,11 +16,14 @@ class C_roads;
 class C_sledovacka
 {
 public:
-    // A car's action (PS2's type; the value's name is ours, by value): GROUP_DISBAND sets its fighting parties' cars to
-    // the second
+    // A car's action (PS2's type; the values' names are ours, by value): ActionStatus's, STATUS_UNKNOWN_1 for a car
+    // without a chase; GROUP_DISBAND sets its fighting parties' cars to STATUS_UNKNOWN_2
     enum E_STATUS
     {
-        STATUS_UNKNOWN_2 = 2
+        STATUS_UNKNOWN_1 = 1,
+        STATUS_UNKNOWN_2 = 2,
+        STATUS_UNKNOWN_3 = 3,
+        STATUS_UNKNOWN_4 = 4
     };
 
     // A bridge of the mission and the road node it is at (PS2 C_sledovacka::S_BRIDGE, whose members are the same; the
@@ -69,6 +72,12 @@ public:
     void Tick(uint time);
     // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
     void RemoveCar(C_car *car);
+    // PS2 names: a car sent after the target or to the place, false without a car (PS2's AddCarMoveTo takes a float
+    // more), and the status of its chase, STATUS_* (the element's, STATUS_UNKNOWN_1 for a car without one; unsigned:
+    // ai_follow_manager::Update's switch compares it so). Update calls them for a group's car.
+    bool AddCarHunt(C_car *car, C_actor *target, uint unknown, uint unknown2, const S_vector &pos, float unknown3);
+    bool AddCarMoveTo(C_car *car, const S_vector &pos, bool unknown, bool unknown2, uint unknown3);
+    uint ActionStatus(C_car *car);
     void SetActionStatus(C_car *car, E_STATUS status);
 };
 

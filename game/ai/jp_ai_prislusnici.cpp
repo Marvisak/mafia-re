@@ -3,7 +3,7 @@
 // and the frames' Clear and Init, which they end with (tail calls), and two tests the script's commands make
 // (PlukovnikuMasVChladkuPlajeraFrafera, PanoveHrajeteSiNaPoldy), and the board's Tick, which C_game::Tick calls; stubs
 // of AkceDokoncenaPlukovniku, which the shift's end calls for each action, of the actions' Tick, which the board's
-// calls, and of what the script's commands call.
+// calls, of what the script's commands call, and of the board's functions C_shvestky::Tick calls (the Panove... ones).
 
 #include "ai/jp_ai_prislusnici.h"
 
@@ -64,10 +64,42 @@ bool ai_police_nastenka::PlukovnikuMasVChladkuPlajeraFrafera()
 
 #pragma auto_inline(off)
 
+// STUB: GAME 0x53cbf0
+void ai_police_nastenka::PanoveZmenaZatkneteHoZmrda(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::PanoveZmenaZatkneteHoZmrda");
+}
+
+// STUB: GAME 0x53cc90
+void ai_police_nastenka::PanoveZmenaZabijteHoZmrda(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::PanoveZmenaZabijteHoZmrda");
+}
+
+// STUB: GAME 0x53d220
+bool ai_police_nastenka::PanoveViditeZmrdaNeboSteTupci(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::PanoveViditeZmrdaNeboSteTupci");
+    return false;
+}
+
+// STUB: GAME 0x53d290
+void ai_police_nastenka::PanoveVytahneteBlokyAZapisteSiZmrda(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::PanoveVytahneteBlokyAZapisteSiZmrda");
+}
+
 // STUB: GAME 0x53d300
 bool ai_police_nastenka::PanoveMateOciNaZmrdoviNeboCumitePoBabach(C_actor *actor)
 {
     StubLog("ai_police_nastenka::PanoveMateOciNaZmrdoviNeboCumitePoBabach");
+    return false;
+}
+
+// STUB: GAME 0x53d3d0
+bool ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi");
     return false;
 }
 

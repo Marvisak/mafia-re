@@ -1,8 +1,9 @@
 // The AI's humans (PS2 jp_ai_entity.cpp, C_entity's; the PC's file is the one at 0x505400-0x53038c,
 // docs/game-files.md), whose constructor (0x5071a0) comes after functions of its own. Not written yet: the
-// constructor, which C_mission::CreateActor calls, the cutscene's block and wake, which C_game::EntityBlock calls, and
+// constructor, which C_mission::CreateActor calls, the cutscene's block and wake, which C_game::EntityBlock calls,
 // what the script's commands call (the senses', the logs' and the jobs' functions, ForceScript, WeaponChoose,
-// AddUsingObject) are stubs.
+// AddUsingObject) and what the AI's following and fights and the police call (Event, hasAction, LockSubstate,
+// IsInDanger) are stubs.
 
 #include "ai/jp_ai_entity.h"
 
@@ -34,6 +35,12 @@ void C_entity::ForceScript(bool unknown)
     StubLog("C_entity::ForceScript");
 }
 
+// STUB: GAME 0x5240a0
+void C_entity::Event(C_actor *act, uint id, void *data)
+{
+    StubLog("C_entity::Event");
+}
+
 // STUB: GAME 0x524650
 void ai_action_manager::Clear(bool unknown)
 {
@@ -47,6 +54,13 @@ ai_action *ai_action_manager::GetBaseJob()
     return NULL;
 }
 
+// STUB: GAME 0x527a50
+bool ai_action_manager::hasAction(uint type, ai_action **action, bool unknown)
+{
+    StubLog("ai_action_manager::hasAction");
+    return false;
+}
+
 // STUB: GAME 0x528370
 void C_entity::WeaponChoose(uint id)
 {
@@ -57,6 +71,19 @@ void C_entity::WeaponChoose(uint id)
 void C_entity::AddUsingObject()
 {
     StubLog("C_entity::AddUsingObject");
+}
+
+// STUB: GAME 0x5299d0
+void C_entity::LockSubstate(uint unknown, uint unknown2, float unknown3, uint unknown4, bool unknown5)
+{
+    StubLog("C_entity::LockSubstate");
+}
+
+// STUB: GAME 0x52f850
+bool C_entity::IsInDanger()
+{
+    StubLog("C_entity::IsInDanger");
+    return false;
 }
 
 // STUB: GAME 0x52ff50

@@ -7,11 +7,14 @@
 // the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_cutscene::Close calls, and ScoreSet, which the
 // scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
 // TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
-// it), and TickShoot, the shots in flight, which Tick calls every frame. Stubs: what the run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base
-// blocks, which stay closed while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor, BoxPlacementDel,
-// RemoveDeathHumanFade), the other functions the scripts call (C_program::Process), and what Tick calls out of line
-// (DoubleKiss every frame; FindActorsVect, TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor,
-// ItemBlurTick, TickScreamAreas, TickCarSoundManager and LightnessTick when their lists or flags are set).
+// it), TickShoot, the shots in flight, and DoubleKiss, the guns on the player's car (dead code on the PC), which Tick
+// calls every frame, and CreateIShow and OpenIShow, the streams the city's music and the scripts play. Stubs: what the
+// run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed
+// while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade),
+// the other functions the scripts call (C_program::Process, the streams' others), what DoubleKiss calls (NewShoot,
+// NewCartidge), and what Tick calls out of line when their lists or flags are set (FindActorsVect,
+// TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor, ItemBlurTick, TickScreamAreas, TickCarSoundManager
+// and LightnessTick).
 // Open: the consoles' globals (0x647a74, 0x647ab0) are here for now; Init, Done, DoneIntern and Tick aren't matched yet.
 // Tick's remaining differences are mostly registers and the inline budget: the original calls TickEffects' size() and
 // the second clear()'s std::copy out of line, but inlines the second clear()'s erase and the city music's i_shows.size().
@@ -953,9 +956,9 @@ bool C_game::Init()
     if (unknown_10c)
         ChangeActState();
     act_mission->SetUnknown78(10);
-    unknown_2f6c = 0;
-    unknown_2f70 = 0;
-    unknown_2f50 = NULL;
+    kiss_car = NULL;
+    kiss_target = NULL;
+    kiss_frame = NULL;
     unknown_2f54[1] = NULL;
     unknown_2f54[0] = NULL;
     act_mission->UpdateSettings();
@@ -1361,10 +1364,10 @@ bool C_game::Done()
     act_mission->GlobalProgramRun("GameDoneEnd");
     act_mission->GlobalProgramGameDone();
     DestroyIShowAll();
-    if (unknown_2f50)
+    if (kiss_frame)
     {
-        unknown_2f50->Release();
-        unknown_2f50 = NULL;
+        kiss_frame->Release();
+        kiss_frame = NULL;
     }
     for (i = 0; i < 2; i++)
     {
@@ -2227,10 +2230,164 @@ void C_game::Tick(uint time)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x5a6d60
+// The guns on the player's car (PS2 name; nothing of the PC's sets GAMEF_DOUBLEKISS or creates kiss_frame, so it
+// returns at once): kiss_frame, linked to the car, is turned to its target every 20 ms, the nearest enemy
+// (ACTOR_ENTITY) or other car more than 5 m and less than 40 m away (a car's squared distance counting 1.2 times),
+// looked for again 100 ms after none was found and given up once it is dead or more than 50 m away. The two guns shoot
+// at it every 250 ms, and every turn pushes the car back. The tests nest as PS2's block layout shows.
+// FUNCTION: GAME 0x5a6d60
 void C_game::DoubleKiss(uint time)
 {
-    StubLog("C_game::DoubleKiss");
+    if (unknown_2f14 & GAMEF_DOUBLEKISS)
+    {
+        if (kiss_frame && player)
+        {
+            C_car *car = player->car;
+            if (car && car->type == ACTOR_CAR)
+            {
+                if (kiss_car)
+                {
+                    kiss_find_time -= time;
+                    kiss_shoot_time -= time;
+                    if (kiss_find_time < 0)
+                    {
+                        kiss_find_time = 20;
+                        if (kiss_target)
+                        {
+                            // Turned to the target: a human's chest, a random point of a car
+                            S_vector pos = kiss_frame->GetWorldPos();
+                            S_vector dir = kiss_target->frame->GetWorldPos();
+                            switch (kiss_target->type)
+                            {
+                            case ACTOR_PLAYER:
+                            case ACTOR_ENTITY:
+                                dir.y += 1.3f;
+                                break;
+                            case ACTOR_CAR:
+                                {
+                                    S_vector v(rnd() - .5f, rnd(), rnd());
+                                    v *= kiss_target->frame->GetMatrix();
+                                    dir = v;
+                                }
+                                break;
+                            }
+                            dir -= pos;
+                            float dist2 = dir.Square();
+                            bool lost = kiss_target->GetUnknown5e();
+                            if (!lost && kiss_target->type == ACTOR_ENTITY &&
+                                ((C_human *)kiss_target)->properties[HUMAN_PROPERTY_ENERGY] < .01f)
+                                lost = true;
+                            if (dist2 > 2500.0f || lost)
+                            {
+                                kiss_target = NULL;
+                                return;
+                            }
+                            dir.Normalize();
+                            kiss_frame->SetWorldDir(dir, 0.0f);
+                            kiss_frame->Update();
+
+                            // Both guns' cartridges and shots
+                            if (kiss_shoot_time < 0 && dist2 < 2500.0f)
+                            {
+                                kiss_shoot_time = 250;
+                                for (int i = 2; i--;)
+                                {
+                                    S_vector shot_dir = dir;
+                                    shot_dir.Normalize();
+                                    if (kiss_cartridges[i])
+                                        NewCartidge(kiss_cartridges[i], shot_dir, false, false);
+                                    if (kiss_guns[i])
+                                    {
+                                        shot_dir *= 100.0f;
+                                        NewShoot(NULL, kiss_guns[i]->GetWorldPos(), shot_dir, 100.0f, 12, kiss_guns[i],
+                                            1);
+                                    }
+                                }
+                            }
+
+                            // The car pushed back, against the frame's direction. pos and dir are used again, as PS2
+                            // stores them where they were (and the original's frame shares their areas).
+                            dir = kiss_frame->GetWorldPos();
+                            pos = kiss_frame->GetWorldDir();
+                            pos *= -50.0f;
+                            kiss_car->ExternalImpuls(pos, dir, 1, S_vector(1.0f, 1.0f, 1.0f));
+                        }
+                        else
+                        {
+                            // The nearest target looked for. Through the reference VC6 keeps the vector's array in a
+                            // register across the loop, as the original does; the car's sum of squares is
+                            // parenthesized so, which alone gives the original's order of the squares (y, z, x).
+                            S_vector pos = kiss_frame->GetWorldPos();
+                            float best = 1600.0f;
+                            std::vector<C_actor *> &actors = C_actor::GetGlobalActors();
+                            for (int i = actors.size(); i--;)
+                            {
+                                if (!actors[i]->frame)
+                                    continue;
+                                switch (actors[i]->type)
+                                {
+                                case ACTOR_CAR:
+                                    if (actors[i] != player->car && actors[i]->act_state != ACTSTATE_2)
+                                    {
+                                        S_vector d = actors[i]->frame->GetWorldPos();
+                                        d -= pos;
+                                        float dist2 = ((d.z * d.z + d.y * d.y) + d.x * d.x) * 1.2f;
+                                        if (dist2 > 25.0f && dist2 < best)
+                                        {
+                                            best = dist2;
+                                            kiss_target = actors[i];
+                                        }
+                                    }
+                                    break;
+                                case ACTOR_ENTITY:
+                                    if (actors[i]->act_state == ACTSTATE_0)
+                                    {
+                                        S_vector d = actors[i]->frame->GetWorldPos();
+                                        d -= pos;
+                                        float dist2 = d.Square();
+                                        if (dist2 > 25.0f && dist2 < best)
+                                        {
+                                            best = dist2;
+                                            kiss_target = actors[i];
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            if (!kiss_target)
+                                kiss_find_time = 100;
+                        }
+                    }
+                }
+                else
+                {
+                    // The frame put on the car's roof, facing forward
+                    kiss_car = car;
+                    kiss_frame->LinkTo(car->frame, 0);
+                    kiss_frame->SetPos(S_vector(0.0f,
+                        kiss_car->GetVehicleSize(false).y - kiss_car->GetVehiclePivotPos(false).y, 0.0f));
+                    kiss_frame->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+                    kiss_frame->Update();
+                    kiss_shoot_time = 0;
+                    kiss_find_time = 0;
+                    kiss_target = NULL;
+                }
+            }
+            else if (kiss_car)
+            {
+                kiss_car = NULL;
+                kiss_target = NULL;
+                kiss_frame->LinkTo(NULL, 0);
+            }
+        }
+    }
+    else if (kiss_car)
+    {
+        kiss_car = NULL;
+        kiss_target = NULL;
+        if (kiss_frame)
+            kiss_frame->LinkTo(NULL, 0);
+    }
 }
 
 // STUB: GAME 0x5a77c0
@@ -2332,6 +2489,14 @@ void C_game::ClearTemporaryActors()
 void C_game::SetTrafficVisible(bool visible)
 {
     StubLog("C_game::SetTrafficVisible");
+}
+
+// STUB: GAME 0x5a84a0
+bool C_game::NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int unknown1, I3D_frame *frm,
+    int unknown2)
+{
+    StubLog("C_game::NewShoot");
+    return true;
 }
 
 #pragma auto_inline(on)
@@ -2640,6 +2805,12 @@ void C_game::NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float u
     bool unknown5, int unknown6)
 {
     StubLog("C_game::NewExplosion");
+}
+
+// STUB: GAME 0x5abfb0
+void C_game::NewCartidge(I3D_frame *&frm, S_vector &dir, bool unknown1, bool unknown2)
+{
+    StubLog("C_game::NewCartidge");
 }
 
 // STUB: GAME 0x5aca70
@@ -3241,17 +3412,66 @@ void C_game::RecomputeLightCache()
     StubLog("C_game::RecomputeLightCache");
 }
 
-// STUB: GAME 0x5b5e90
+// A new stream of IGraph's in the list, at the music's volume: its id, -1 without sound or if IGraph makes none
+// FUNCTION: GAME 0x5b5e90
 int C_game::CreateIShow(uint flags)
 {
-    StubLog("C_game::CreateIShow");
+    if (setting.disable_sound)
+        return -1;
+    S_i_show s;
+    s.id = unknown_2f38++;
+    s.flags = flags;
+    s.name = NULL;
+    s.show = igraph->CreateIShow();
+    s.volume = 1.0f;
+    if (s.show)
+    {
+        i_shows.push_back(s);
+        s.show->SetVolume(mafiaLoadSave.settings.music_volume * s.volume);
+        return s.id;
+    }
     return -1;
 }
 
-// STUB: GAME 0x5b6110
+// Another stream playing the file is destroyed first; the stream of the id keeps the name, and an .ogg it doesn't find
+// is opened as an .mp3 instead
+// FUNCTION: GAME 0x5b6110
 bool C_game::OpenIShow(const char *name, int id)
 {
-    StubLog("C_game::OpenIShow %s", name);
+    if (!name)
+        return false;
+    int i;
+    for (i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id != id && i_shows[i].name && !_stricmp(i_shows[i].name, name))
+        {
+            DestroyIShow(i_shows[i].id);
+            break;
+        }
+    }
+    for (i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id == id)
+        {
+            if (i_shows[i].name)
+                delete[] i_shows[i].name;
+            i_shows[i].name = new char[strlen(name) + 1];
+            strcpy(i_shows[i].name, name);
+            // STRING: GAME 0x6377b8
+            if (i_shows[i].show->Open(name, 0) == I3DERR_NOFILE && strstr(name, ".ogg"))
+            {
+                char *mp3 = new char[strlen(name) + 1];
+                strcpy(mp3, name);
+                char *ext = strstr(mp3, ".ogg");
+                ext[1] = 'm';
+                ext[2] = 'p';
+                ext[3] = '3';
+                i_shows[i].show->Open(mp3, 0);
+                delete[] mp3;
+            }
+            return true;
+        }
+    }
     return false;
 }
 

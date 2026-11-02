@@ -41,6 +41,11 @@ struct S_vector2 {
     S_vector2 operator*(const S_vector2 &v) const;
     S_vector2 operator*(float f) const;
     S_vector2 operator/(float f) const;
+#ifndef LS3DF_EXPORTS
+    // The game's (C_shvestky::TestOverRed). Not declared for LS3DF: with S_vector::IsNull it changes 1.1's
+    // I3D_lit_object::m_AddFGroups and I3D_singlemesh::UpdateLodVertices (equivalent, no longer identical)
+    S_vector2 &operator+=(const S_vector2 &v);
+#endif
     // Normalized unless null (the name is a guess)
     void Normalize();
     // The distance to the line through p along dir, positive on its left (Insanity3D's name)
@@ -107,6 +112,12 @@ struct S_vector {
     {
         return S_vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
     }
+
+#ifndef LS3DF_EXPORTS
+    // Whether the vector is null, its square below MRG_ZERO's (the game's C_shvestky::TestOverRed; the name is a
+    // guess). Not declared for LS3DF, as S_vector2::operator+=
+    bool IsNull() const;
+#endif
 
     // The out-of-line copy the linker kept is in collision code
     // FUNCTION: LS3DF 0x10012500
@@ -546,6 +557,15 @@ inline S_vector2 S_vector2::operator/(float f) const
     return S_vector2(x * f, y * f);
 }
 
+#ifndef LS3DF_EXPORTS
+inline S_vector2 &S_vector2::operator+=(const S_vector2 &v)
+{
+    x += v.x;
+    y += v.y;
+    return *this;
+}
+#endif
+
 inline void S_vector2::Normalize()
 {
     float len = Magnitude();
@@ -562,6 +582,13 @@ inline float S_vector2::DistanceToLine(const S_vector2 &p, const S_vector2 &dir)
     n.Normalize();
     return Dot(n) - p.Dot(n);
 }
+
+#ifndef LS3DF_EXPORTS
+inline bool S_vector::IsNull() const
+{
+    return x * x + y * y + z * z < 1e-16f;
+}
+#endif
 
 // The game's S_matrix and S_quat functions (Game.exe has their out-of-line copies; LS3DF none), after the zero
 // vector as S_vector2's. Their bodies move the /YX deferred items of twelve of LS3DF's files (ten of 1.1's),

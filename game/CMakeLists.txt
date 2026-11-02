@@ -54,6 +54,7 @@ add_executable(game WIN32
     input/controls.cpp
     vehicles/C_wagon.cpp
     ui/console.cpp
+    ai/jp_ai_actor_history.cpp
     ai/jp_ai_entity.cpp
     ai/jp_ai_groups.cpp
     ai/jp_ai_main.cpp
