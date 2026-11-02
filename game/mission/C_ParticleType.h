@@ -124,7 +124,8 @@ public:
     int unknown_b0;                     // 0xb0, unknown_88's, an integer
     int unknown_b4;                     // 0xb4
     bool unknown_b8;                    // 0xb8, unknown_b0 is -1
-    int unknown_bc;                     // 0xbc, unknown_98's (flags)
+#define PARTF_DIR 0x4                   // the particles start in the effect's direction, else in none (name ours)
+    int unknown_bc;                     // 0xbc, unknown_98's (flags), PARTF_*
 
     C_ParticleType() : frame(NULL)
     {

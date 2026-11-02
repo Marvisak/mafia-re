@@ -1,15 +1,13 @@
 // The effects' emitters (named after PS2's C_ParticleEmitter.cpp, which sorts here: the PC's file is most likely the one
 // at 0x448570-0x448efc, docs/game-files.md), which starts with the emitter's destructor. Written: the destructor, which
 // C_effects::Mission_Done runs, Reset and Init, which C_effects::CreateSParticle runs, and Tick, which
-// C_effects::ClientTick runs; CreateParticle, which Tick runs, is a stub.
+// C_effects::ClientTick runs, with CreateParticle, which Tick runs.
 
 #include "mission/C_ParticleEmitter.h"
 #include "mission/C_Particle.h"
 #include "mission/C_ParticleType.h"
 
 #include "I3D/I3D.h"
-
-#include "stub.h"
 
 // From the last part, as C_effect's destructor deletes its parts
 // FUNCTION: GAME 0x448570
@@ -54,6 +52,37 @@ void C_ParticleEmitter::Init(I3D_frame *at, const S_vector &p, const S_vector &d
     ushort n = drv->unknown_58;
     drv->unknown_58 = n + 1;
     id = n;
+}
+
+// A free particle or a new one for the part: at the effect's position plus unknown_30 (both through the frame's matrix
+// where unknown_4a is set), in the effect's direction where the part has PARTF_DIR (turned by the matrix where
+// unknown_4b is), into the part's list, or back to the free ones if it can't be
+// FUNCTION: GAME 0x448710
+void C_ParticleEmitter::CreateParticle(C_ParticleType *type, int time)
+{
+    C_Particle *p;
+    if (particle_pool.size())
+    {
+        p = particle_pool.back();
+        particle_pool.pop_back();
+    }
+    else
+        p = new C_Particle;
+    S_vector d = type->unknown_bc & PARTF_DIR ? dir : S_vector(0.0f, 0.0f, 0.0f);
+    S_vector at;
+    if (parent && unknown_4a)
+        at = pos * parent->GetMatrix() + unknown_30.RotateByMatrix(parent->GetMatrix());
+    else
+        at = unknown_30 + pos;
+    if (parent && unknown_4b && !dir.IsNull())
+        d = dir.RotateByMatrix(parent->GetMatrix());
+    if (p->Init(id, at, d, type, time))
+        type->particles.push_back(p);
+    else
+    {
+        p->Reset();
+        particle_pool.push_back(p);
+    }
 }
 
 // Each part makes its particles, all of them at once without a rate (unknown_88), or as many as the time gives at the
@@ -147,13 +176,3 @@ bool C_ParticleEmitter::Tick(int time)
     }
     return alive;
 }
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x448710
-void C_ParticleEmitter::CreateParticle(C_ParticleType *type, int time)
-{
-    StubLog("C_ParticleEmitter::CreateParticle");
-}
-
-#pragma auto_inline(on)

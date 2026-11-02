@@ -8,9 +8,10 @@
 // scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
 // TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
 // it), TickShoot, the shots in flight, and DoubleKiss, the guns on the player's car (dead code on the PC), which Tick
-// calls every frame, and CreateIShow and OpenIShow, the streams the city's music and the scripts play. Stubs: what the
-// run doesn't reach (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed
-// while C_cache_base_block::Open is a stub; ChangeActState, InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade),
+// calls every frame, CreateIShow, OpenIShow, GetIShow and IShowLoop, the streams the city's music and the scripts play,
+// and ChangeActState, which Init and Tick call once an actor's state has changed. Stubs: what the run doesn't reach
+// (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed while
+// C_cache_base_block::Open is a stub; InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade),
 // the other functions the scripts call (C_program::Process, the streams' others), what DoubleKiss calls (NewShoot,
 // NewCartidge), and what Tick calls out of line when their lists or flags are set (FindActorsVect,
 // TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor, ItemBlurTick, TickScreamAreas, TickCarSoundManager
@@ -1811,15 +1812,41 @@ inline void C_game::TickDriverMan()
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5a5070
+// The actors whose state changed moved between the two lists (PS2 name): each actor out of ACTSTATE_0 from unknown_ec,
+// each out of ACTSTATE_1 from unknown_fc, told by ChangeState and put into the other list unless it is in ACTSTATE_2,
+// the list's last actor in its place
+// FUNCTION: GAME 0x5a5070
 void C_game::ChangeActState()
 {
-    StubLog("C_game::ChangeActState");
+    unknown_10c = false;
+    uint i;
+    for (i = 0; i < unknown_ec.size();)
+    {
+        if (unknown_ec[i]->GetActState() != ACTSTATE_0)
+        {
+            unknown_ec[i]->ChangeState();
+            if (unknown_ec[i]->GetActState() != ACTSTATE_2)
+                unknown_fc.push_back(unknown_ec[i]);
+            unknown_ec[i] = unknown_ec.back();
+            unknown_ec.pop_back();
+        }
+        else
+            i++;
+    }
+    for (i = 0; i < unknown_fc.size();)
+    {
+        if (unknown_fc[i]->GetActState() != ACTSTATE_1)
+        {
+            unknown_fc[i]->ChangeState();
+            if (unknown_fc[i]->GetActState() != ACTSTATE_2)
+                unknown_ec.push_back(unknown_fc[i]);
+            unknown_fc[i] = unknown_fc.back();
+            unknown_fc.pop_back();
+        }
+        else
+            i++;
+    }
 }
-
-#pragma auto_inline(on)
 
 // A frame of the game (PS2 name), which C_mission::Tick runs once Init has: the failure menus, the actors, the
 // camera, the sounds, lights, videos and the rest of what the game keeps going
@@ -3501,14 +3528,19 @@ void C_game::DestroyIShowAll()
     unknown_2fc4.clear();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5b64c0
+// The stream of the id, NULL for none (PS2 name), from the last one
+// FUNCTION: GAME 0x5b64c0
 IShow *C_game::GetIShow(int id)
 {
-    StubLog("C_game::GetIShow");
+    for (int i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id == id)
+            return i_shows[i].show;
+    }
     return NULL;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5b6520
 void C_game::IShowStoreVolume(int show, float volume)
@@ -3516,13 +3548,24 @@ void C_game::IShowStoreVolume(int show, float volume)
     StubLog("C_game::IShowStoreVolume");
 }
 
-// STUB: GAME 0x5b6580
+#pragma auto_inline(on)
+
+// Whether Tick starts the stream again at its end (PS2 name): PS2's tells its stream too, the PC's IShow has no loop
+// FUNCTION: GAME 0x5b6580
 void C_game::IShowLoop(int show, bool loop)
 {
-    StubLog("C_game::IShowLoop");
+    for (int i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id == show)
+        {
+            if (loop)
+                i_shows[i].flags |= ISHOWF_LOOP;
+            else
+                i_shows[i].flags &= ~ISHOWF_LOOP;
+            return;
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // From the last video to the first
 // FUNCTION: GAME 0x5b6600

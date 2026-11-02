@@ -1,6 +1,7 @@
 // The force feedback (PS2 C_ff_manager.cpp; the PC's file is most likely the one at 0x444430-0x44525c, which starts
 // with its constructor's helpers, docs/game-files.md). Written so far: the constructor, the destructor, Reset, GameInit,
-// GameDone and Close, and Tick, which C_game::Tick calls; StartWaiting, which Tick calls, is a stub.
+// GameDone and Close, and Tick, which C_game::Tick calls, with StartWaiting and GetWaiting, which Tick runs; Start,
+// which StartWaiting calls for a waiting effect (none in the main menu), is a stub.
 
 #include "input/C_ff_manager.h"
 
@@ -84,6 +85,24 @@ void C_ff_manager::Close()
 {
 }
 
+// Of the effects not started; one that isn't waiting, or has unknown_20 set, isn't taken
+// FUNCTION: GAME 0x4451a0
+C_ff_manager::S_effect *C_ff_manager::GetWaiting()
+{
+    uint best = 0;
+    S_effect *found = NULL;
+    for (uint i = 0; i < effects.size(); i++)
+    {
+        S_effect *e = effects[i];
+        if (e->priority > best && e->waiting && !e->unknown_20)
+        {
+            best = e->priority;
+            found = e;
+        }
+    }
+    return found;
+}
+
 // The timer is advanced by a second whatever the time passed, so the waiting effects are tried from the second tick on
 // FUNCTION: GAME 0x4451e0
 void C_ff_manager::Tick(uint time)
@@ -92,12 +111,25 @@ void C_ff_manager::Tick(uint time)
         StartWaiting();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x445200
+// FUNCTION: GAME 0x445200
 void C_ff_manager::StartWaiting()
 {
-    StubLog("C_ff_manager::StartWaiting");
+    S_effect *e = GetWaiting();
+    bool started = true;
+    while (e && started)
+    {
+        started = Start(e->id);
+        e = GetWaiting();
+    }
+}
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x444d20
+bool C_ff_manager::Start(int id)
+{
+    StubLog("C_ff_manager::Start");
+    return false;
 }
 
 #pragma auto_inline(on)

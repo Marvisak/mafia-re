@@ -9,7 +9,7 @@ class I3D_frame;
 
 // One particle of the effects' emitters (the PC's own; the name is PS2's C_Particle, after the file, whose class the
 // PC's need not be). C_effects' particle_pool keeps the free ones, which C_ParticleType's destructor and Reset give back
-// to it. The size isn't known yet.
+// to it. 0x64 bytes (C_ParticleEmitter::CreateParticle's new).
 class C_Particle
 {
 public:
@@ -24,7 +24,22 @@ public:
     int unknown_5c;                     // 0x5c
     int unknown_60;                     // 0x60
 
+    C_Particle()
+    {
+        frame = NULL;
+        type = NULL;
+        unknown_8 = 0;
+        unknown_3c = 0;
+        unknown_44 = 0;
+        unknown_60 = 0;
+        unknown_5c = 0;
+    }
+
     ~C_Particle();
+    // The particle of the emitter's part at the position and in the direction, its visual made the first time: false
+    // if it can't be (no visual, no part or no subparts). The id is the emitter's, for the visual; time is what the
+    // particle has already lived (the name is ours).
+    bool Init(ushort id, const S_vector &pos, const S_vector &dir, C_ParticleType *type, int time);
     // Unlinks the visual and clears the particle's state, for particle_pool (the name is ours)
     void Reset();
     // Goes on with the part's subpart phase (unknown_8), taking its values (the name is ours)

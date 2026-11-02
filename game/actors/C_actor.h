@@ -183,6 +183,12 @@ public:
     // Sets the actor's state; a change from any but ACTSTATE_2 tells the game (PS2 name, its parameter a
     // C_actor::E_act_state)
     void SetActState(int state);
+    // The state (the name is ours, after SetActState): C_game::ChangeActState reads it through it, which leaves the
+    // first push_back's insert out of line there, as the original
+    int GetActState() const
+    {
+        return act_state;
+    }
     // PS2 name, which C_mission::FrmActBuff_IsActiveActor calls for a kept actor
     void Rebirth();
     // The type, ACTOR_* (the name is ours): calls VC6 left out of line read it through it, a copy folded with
@@ -327,7 +333,7 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?OnClose@GM_Menu@@UAEHXZ
+// ?SaveGameGetSize@C_scatter@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
@@ -339,7 +345,7 @@ public:
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -353,21 +359,21 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameSave@C_stone@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?vfunc_53@C_cutscene@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?GetUnknown4@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

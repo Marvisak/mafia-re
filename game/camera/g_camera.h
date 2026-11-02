@@ -215,10 +215,14 @@ public:
     {
         return mode;
     }
-    // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
-    // FUNCTION: GAME 0x47b4d0
+    // The name is ours: its copy is among those at the end of the file at 0x460a50, folded (by name below the class)
     C_car *GetCar() const
     {
         return car;
     }
 };
+
+// GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
+// keeps (foldfix)
+// FUNCTION: GAME 0x47b4d0
+// ?GetTextID@GM_Component@@UAEIXZ

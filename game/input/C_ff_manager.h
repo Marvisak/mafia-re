@@ -12,11 +12,17 @@ class IJoyEffect;
 class C_ff_manager
 {
 public:
-    // An effect (PS2's name, whose S_effect is another design): the PC's are 0x3c to 0x48 bytes, by kind, with the
-    // joystick's effect at 0x34. What the rest holds isn't known yet.
+    // An effect (PS2's name, whose S_effect is another design): the PC's are 0x3c to 0x48 bytes, by kind, with a vtable
+    // (0x623d58 the base's, its constructor 0x444440). What the rest holds isn't known yet; the names are ours.
     struct S_effect
     {
-        uchar unknown_0[0x34];
+        uchar unknown_0[0x20];
+        int unknown_20;                 // 0x20, from the constructor; one that is set doesn't wait
+        uint priority;                  // 0x24, from the constructor: a higher one stops a playing effect
+        bool unknown_28;                // 0x28, from the constructor
+        bool waiting;                   // 0x29, false from the constructor, set where another effect kept it waiting
+        uchar unknown_2a[6];            // 0x2a
+        int id;                         // 0x30, which the manager's functions take
         IJoyEffect *effect;             // 0x34, NULL if the joystick couldn't create it
     };
 
@@ -43,6 +49,11 @@ public:
     // PS2 names: what C_game's Init and Done call
     void GameInit();
     void GameDone();
+    // Starts the effect of the id, moved to effects_2: false if it doesn't start, where another one of a priority as
+    // high plays (it then waits) (the name is ours)
+    bool Start(int id);
+    // The waiting effect of the highest priority, NULL for none (the name is ours)
+    S_effect *GetWaiting();
     // The effects by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
     // Starts the waiting effects, the highest priority first, until one can't start (the name is ours)
@@ -54,8 +65,8 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?Death@C_actor@@UAEXXZ
+// ?ReleaseCars@G_LoadSaveClass@@QAEXXZ
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670
-// ??1C_sledovacka@@QAE@XZ
+// ??1C_ff_manager@@QAE@XZ
