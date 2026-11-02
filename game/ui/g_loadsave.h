@@ -56,7 +56,9 @@
 #define REFRESH_MUSIC 0x2               // the videos' and the music's
 #define REFRESH_GAMMA 0x4
 #define REFRESH_FORCE_FEEDBACK 0x8
+#define REFRESH_FF_PLAYER 0x10          // the player movement's force feedback, which Refresh doesn't apply
 #define REFRESH_CARS 0x20               // the cars' volume
+#define REFRESH_SPEECH 0x40             // the speech's volume, which Refresh doesn't apply
 #define REFRESH_ALL 0xffffffff
 
 // The flags of G_LoadSaveClass::DefaultControls and DefaultSettings (the names are ours, after the controls menu's
@@ -302,12 +304,20 @@ public:
     void SaveGameFromScript(uint slot, bool full, bool message);
     // The game's language, two lowercase letters as a multicharacter constant ('en')
     void LanguageSelect(uint language);
+    // The binding of the control of that index (PC only, the name is ours)
+    S_control &GetBinding(int index) { return bindings[index]; }
     // One control's binding (PC only, the name is ours), which DefaultControls passes
     void SetBinding(int index, ushort device, ushort code, int joy, int half);
     // Another control bound to the same key, button or axis (PC only, the name is ours), any half with any_half: among
     // the player's controls for one of the player's, among the car's for the car's or when other is one of them; skips
     // index and other. -1 for none, and for an unbound control.
     int FindBinding(int index, S_control *control, bool any_half, int other);
+    // A joystick axis's binding for the control of that index, the other half of the axis of the binding given (PC
+    // only, the name is ours): the control of the opposite direction takes it; other bindings change nothing
+    void SetOppositeBinding(int index, S_control *control);
+    // Unbinds the controls of index's group (the player's or the car's) bound to the same key, button or axis (PC only,
+    // the name is ours): of an axis's opposite half too with any_half, otherwise only the same half or the whole axis
+    void RemoveBinding(int index, S_control *control, bool any_half);
     // The controls' defaults (PC only, the name is ours): DEFAULTS_CLEAR unbinds them first, DEFAULTS_PLAYER and
     // DEFAULTS_CAR choose the groups
     void DefaultControls(uint flags);
@@ -356,6 +366,9 @@ public:
     }
     // Applies the options REFRESH_* chooses, and puts the cameras back in their ranges
     void Refresh(uint flags);
+    // The text database's id of the controls menus' label of the control of that index, "Mafia" for another index (PC
+    // only, the name is ours)
+    uint GetControlTextID(int index);
     // Plays tables\credits.def
     void ExecuteCredits();
     // The free ride's cars, a bit for each letter (A to Z, either case), and how much of it is open, FREERIDE_* (PS2

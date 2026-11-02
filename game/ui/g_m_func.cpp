@@ -4,9 +4,10 @@
 // Audio & Video menu from 0x5e0bb0 and the controls from 0x5e1480, the free ride from 0x5e1920), the PC's message box
 // (from 0x5e2170) and question box (from 0x5e2310), the saved games (from 0x5e2400), then the loading screen
 // (GM_LoadProgress, from 0x5e3aa0), PS2's in PS2's order. Written so far: the main menu and its quit question, the
-// options, the Audio & Video menu's and the controls' OnBeforeCreate, the message box's OnBeforeCreate and constructor,
-// the question box, the loading screen's constructor, OnBeforeCreate, OnCreate, OnTick, SetProgressMissionOpen and
-// Present; the rest is stubs of what main, C_mission::Open, the profiles' menu and the main menu need to link.
+// options with the Audio & Video menu and the controls, the free ride's and the saved games' OnBeforeCreate, the
+// message box's OnBeforeCreate and constructor, the question box, the loading screen's constructor, OnBeforeCreate,
+// OnCreate, OnTick, SetProgressMissionOpen and Present; the rest is stubs of what main, C_mission::Open, the profiles'
+// menu and the main menu need to link.
 
 #include "ui/g_m_func.h"
 #include "ui/g_indicators.h"
@@ -14,6 +15,7 @@
 #include "ui/g_m_comps.h"
 #include "ui/g_textdb.h"
 #include "mission/Mission.h"
+#include "mission/game.h"
 
 #include <string.h>
 
@@ -62,9 +64,32 @@
 #define OPTIONSB_AUDIO_VIDEO 0x65
 #define OPTIONSB_BACK 0x190
 
-// The Audio & Video menu's buttons, tables\menu\optionsa.mnu (the names are ours, after their texts)
+// The Audio & Video menu's items, tables\menu\optionsa.mnu (the names are ours, after their texts)
+#define OPTIONSA_GAMMA 0x50
+#define OPTIONSA_SOUNDS 0x51
+#define OPTIONSA_MUSIC 0x52
+#define OPTIONSA_CARS 0x53
+#define OPTIONSA_SPEECH 0x54
 #define OPTIONSA_RESET 0x5a             // "Reset to Defaults"
 #define OPTIONSA_BACK 0x5b
+#define OPTIONSA_LOW 0x65               // the video options' levels
+#define OPTIONSA_MEDIUM 0x66
+#define OPTIONSA_HIGH 0x67
+#define OPTIONSA_LEVEL_OF_DETAIL 0x6e
+#define OPTIONSA_DRAW_DISTANCE 0x6f
+#define OPTIONSA_BLOOD 0x70             // "Level of Blood"
+#define OPTIONSA_GAME_EFFECTS 0x71      // "In Game Effects:"
+#define OPTIONSA_GAME_SOUNDS 0x72       // "In Game Sounds:"
+#define OPTIONSA_SHADOWS 0x73
+#define OPTIONSA_PARTICLES 0x74
+
+// The texts of the Audio & Video menu's selections (the names are ours, after the texts): Low, Medium and High by the
+// level (S_mission_options' game effects, game sounds and particles), the shadows' from Very Low to Highest by
+// S_mission_options::GetShadows' index
+#define TEXT_QUALITY_LOW 0x105
+#define TEXT_QUALITY_HIGH 0x107
+#define TEXT_SHADOWS_VERY_LOW 0x119
+#define TEXT_SHADOWS_HIGHEST 0x11e
 
 // The controls' pages (GM_OptionsControls::page) and their buttons, the same in tables\menu\optionsc1.mnu to
 // optionsc3.mnu (the names are ours, after their texts)
@@ -76,6 +101,34 @@
 #define OPTIONSC_OTHER 0x34
 #define OPTIONSC_RESET 0x35             // "Reset to Defaults"
 #define OPTIONSC_BACK 0x36
+// The Other page's sliders and selections, optionsc3.mnu (the names are ours, after their texts, as the settings')
+#define OPTIONSC_AIMING_SENSITIVITY_X 0x41
+#define OPTIONSC_AIMING_SENSITIVITY_Y 0x42
+#define OPTIONSC_AIMING_SPEED_X 0x43    // "Max Aiming Speed X"
+#define OPTIONSC_STEERING_LINEARITY 0x44 // "Nonlinear / Linear"
+#define OPTIONSC_CURSOR 0x45
+#define OPTIONSC_SIDE_ROLL 0x47
+#define OPTIONSC_MOUSE_INVERTED 0x49    // "Mouse control"
+#define OPTIONSC_SPEEDOMETER 0x4b
+#define OPTIONSC_SUBTITLES 0x4d
+#define OPTIONSC_FF_VOLUME 0xbb9        // "Global Stick Volume"
+#define OPTIONSC_FF_SUSPENSION 0xbba
+#define OPTIONSC_FF_COLLISIONS 0xbbb
+#define OPTIONSC_FF_REVS 0xbbc
+#define OPTIONSC_FF_TIRE_GRIP 0xbbd
+#define OPTIONSC_FF_PLAYER_MOVEMENT 0xbbe
+
+// The texts of the Other page's selections (the names are ours, after the texts): the cursor's, CURSOR_* from
+// TEXT_CURSOR, and each yes or no selection's for false and for true
+#define TEXT_CURSOR 0xea                // "Crosshair"
+#define TEXT_ENABLED 0xe4
+#define TEXT_DISABLED 0xe5
+#define TEXT_YES 0xf8
+#define TEXT_NO 0xf9
+#define TEXT_NORMAL 0xff
+#define TEXT_INVERTED 0x100
+#define TEXT_KILOMETERS_PER_HOUR 0x15c
+#define TEXT_MILES_PER_HOUR 0x15d
 
 // The quit question's items, tables\menu\exityesno.mnu: the question box's ids (the names are ours)
 #define EXITYESNO_WINDOW 0x82           // its text set by OnCreate
@@ -120,7 +173,7 @@ public:
 // The controls, "optionsc1" to "optionsc3" by the page (PS2 GM_OptionsControls, g_m_func.cpp, whose class is 0x34 bytes
 // too: a pointer to the options' settings and three bytes; PS2's has one page and OnKey, SetUpTexts of its own), 0x34
 // bytes, which the options' Controls opens on the player's page. Its constructor is inline: the page is stored before
-// the vtable, an initializer.
+// the vtable, an initializer. The bindings' items (GM_Vidc) read the profile's controls themselves.
 // VTABLE: GAME 0x6273fc
 class GM_OptionsControls : public GM_Menu
 {
@@ -129,8 +182,9 @@ public:
 
     // The page's menu
     virtual const char *OnBeforeCreate();
-    // The controls' keys and settings into the page's items
+    // The Other page's settings into its sliders and selections (the other pages have none of their ids), Back active
     virtual int OnCreate();
+    // The profile's controls and settings take effect
     virtual int OnClose();
     // The page's buttons exchange the menu, the items set the controls
     virtual int OnClick(uint id);
@@ -362,26 +416,164 @@ inline const char *GM_OptionsAudioVideo::OnBeforeCreate()
     return "optionsa";
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e0bc0
+// The settings into the sliders and selections, the mission's video options from their ranges (the level of detail
+// 0.4 to 2, the draw distance 0.3 to 1) to 0..1, Back active
+// FUNCTION: GAME 0x5e0bc0
 int GM_OptionsAudioVideo::OnCreate()
 {
-    StubLog("GM_OptionsAudioVideo::OnCreate");
+    flags &= ~MENUF_UNKNOWN_10000;
+    SetFloat(OPTIONSA_SOUNDS, mafiaLoadSave.settings.sound_volume);
+    SetFloat(OPTIONSA_MUSIC, mafiaLoadSave.settings.music_volume);
+    SetFloat(OPTIONSA_CARS, mafiaLoadSave.settings.car_volume);
+    SetFloat(OPTIONSA_SPEECH, mafiaLoadSave.settings.speech_volume);
+    SetFloat(OPTIONSA_GAMMA, mafiaLoadSave.settings.gamma);
+    SetFloat(OPTIONSA_BLOOD, mafiaLoadSave.settings.blood_level);
+    SetFloat(OPTIONSA_LEVEL_OF_DETAIL, (act_mission->options.level_of_detail - .4f) / 1.6f);
+    SetFloat(OPTIONSA_DRAW_DISTANCE, (act_mission->options.draw_distance - .3f) / .7f);
+    SetRangeDword(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW, TEXT_QUALITY_HIGH);
+    SetTextID(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW + act_mission->options.game_effects);
+    SetRangeDword(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW, TEXT_QUALITY_HIGH);
+    SetTextID(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW + act_mission->options.game_sounds);
+    SetRangeDword(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW, TEXT_SHADOWS_HIGHEST);
+    SetTextID(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW + act_mission->options.GetShadows());
+    SetRangeDword(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW, TEXT_QUALITY_HIGH);
+    SetTextID(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW + act_mission->options.particles);
+    ActivateByID(OPTIONSA_BACK);
     return 0;
 }
 
-// Back closes the menu, as the original's does, so that a run gets back to the options
-// STUB: GAME 0x5e0d40
+// Each item sets its setting and applies it (the blood's applies itself), the mission's video options through
+// UpdateSettings: through GetOptions, which VC6 evaluates before the item's value is read, where the member read
+// directly comes after it. Low, Medium and High set the video options to their levels, the sliders' values to 0, .5 and 1
+// (each read back from its slider); Reset to Defaults sets the audio and the gamma to the defaults, the video to High,
+// and applies all of it.
+// FUNCTION: GAME 0x5e0d40
 int GM_OptionsAudioVideo::OnClick(uint id)
 {
-    StubLog("GM_OptionsAudioVideo::OnClick %u", id);
-    if (id == OPTIONSA_BACK)
+    switch (id)
+    {
+    case OPTIONSA_GAMMA:
+        mafiaLoadSave.settings.gamma = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_GAMMA);
+        break;
+    case OPTIONSA_SOUNDS:
+        mafiaLoadSave.settings.sound_volume = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_SOUND);
+        break;
+    case OPTIONSA_MUSIC:
+        mafiaLoadSave.settings.music_volume = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_MUSIC);
+        break;
+    case OPTIONSA_CARS:
+        mafiaLoadSave.settings.car_volume = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_CARS);
+        break;
+    case OPTIONSA_SPEECH:
+        mafiaLoadSave.settings.speech_volume = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_SPEECH);
+        break;
+    case OPTIONSA_RESET:
+        mafiaLoadSave.DefaultSettings(DEFAULTS_AUDIO_VIDEO);
+        SetFloat(OPTIONSA_SOUNDS, mafiaLoadSave.settings.sound_volume);
+        SetFloat(OPTIONSA_MUSIC, mafiaLoadSave.settings.music_volume);
+        SetFloat(OPTIONSA_CARS, mafiaLoadSave.settings.car_volume);
+        SetFloat(OPTIONSA_SPEECH, mafiaLoadSave.settings.speech_volume);
+        SetFloat(OPTIONSA_GAMMA, mafiaLoadSave.settings.gamma);
+        SetFloat(OPTIONSA_BLOOD, mafiaLoadSave.settings.blood_level);
+        act_mission->GetOptions().SetGameEffects(2);
+        SetTextID(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW + 2);
+        act_mission->GetOptions().SetGameSounds(2);
+        SetTextID(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW + 2);
+        act_mission->GetOptions().SetShadows(5);
+        SetTextID(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW + 5);
+        act_mission->GetOptions().SetParticles(2);
+        SetTextID(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW + 2);
+        SetFloat(OPTIONSA_LEVEL_OF_DETAIL, 1.0f);
+        act_mission->GetOptions().SetLevelOfDetail(GetFloat(OPTIONSA_LEVEL_OF_DETAIL) * 1.6f + .4f);
+        SetFloat(OPTIONSA_DRAW_DISTANCE, 1.0f);
+        act_mission->GetOptions().SetDrawDistance(GetFloat(OPTIONSA_DRAW_DISTANCE) * .7f + .3f);
+        mafiaLoadSave.Refresh(REFRESH_ALL);
+        act_mission->UpdateSettings();
+        act_mission->game->UpdateControls();
+        break;
+    case OPTIONSA_BACK:
         MenuClose((uint)-1);
+        break;
+    case OPTIONSA_LOW:
+        act_mission->GetOptions().SetGameEffects(0);
+        SetTextID(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW + 0);
+        act_mission->GetOptions().SetGameSounds(0);
+        SetTextID(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW + 0);
+        act_mission->GetOptions().SetShadows(0);
+        SetTextID(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW + 0);
+        act_mission->GetOptions().SetParticles(0);
+        SetTextID(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW + 0);
+        SetFloat(OPTIONSA_LEVEL_OF_DETAIL, 0.0f);
+        act_mission->GetOptions().SetLevelOfDetail(GetFloat(OPTIONSA_LEVEL_OF_DETAIL) * 1.6f + .4f);
+        SetFloat(OPTIONSA_DRAW_DISTANCE, 0.0f);
+        act_mission->GetOptions().SetDrawDistance(GetFloat(OPTIONSA_DRAW_DISTANCE) * .7f + .3f);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_MEDIUM:
+        act_mission->GetOptions().SetGameEffects(1);
+        SetTextID(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW + 1);
+        act_mission->GetOptions().SetGameSounds(1);
+        SetTextID(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW + 1);
+        act_mission->GetOptions().SetShadows(2);
+        SetTextID(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW + 2);
+        act_mission->GetOptions().SetParticles(1);
+        SetTextID(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW + 1);
+        SetFloat(OPTIONSA_LEVEL_OF_DETAIL, .5f);
+        act_mission->GetOptions().SetLevelOfDetail(GetFloat(OPTIONSA_LEVEL_OF_DETAIL) * 1.6f + .4f);
+        SetFloat(OPTIONSA_DRAW_DISTANCE, .5f);
+        act_mission->GetOptions().SetDrawDistance(GetFloat(OPTIONSA_DRAW_DISTANCE) * .7f + .3f);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_HIGH:
+        act_mission->GetOptions().SetGameEffects(2);
+        SetTextID(OPTIONSA_GAME_EFFECTS, TEXT_QUALITY_LOW + 2);
+        act_mission->GetOptions().SetGameSounds(2);
+        SetTextID(OPTIONSA_GAME_SOUNDS, TEXT_QUALITY_LOW + 2);
+        act_mission->GetOptions().SetShadows(5);
+        SetTextID(OPTIONSA_SHADOWS, TEXT_SHADOWS_VERY_LOW + 5);
+        act_mission->GetOptions().SetParticles(2);
+        SetTextID(OPTIONSA_PARTICLES, TEXT_QUALITY_LOW + 2);
+        SetFloat(OPTIONSA_LEVEL_OF_DETAIL, 1.0f);
+        act_mission->GetOptions().SetLevelOfDetail(GetFloat(OPTIONSA_LEVEL_OF_DETAIL) * 1.6f + .4f);
+        SetFloat(OPTIONSA_DRAW_DISTANCE, 1.0f);
+        act_mission->GetOptions().SetDrawDistance(GetFloat(OPTIONSA_DRAW_DISTANCE) * .7f + .3f);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_LEVEL_OF_DETAIL:
+        act_mission->GetOptions().SetLevelOfDetail(GetFloat(id) * 1.6f + .4f);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_DRAW_DISTANCE:
+        act_mission->GetOptions().SetDrawDistance(GetFloat(id) * .7f + .3f);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_BLOOD:
+        mafiaLoadSave.settings.blood_level = GetFloat(id);
+        break;
+    case OPTIONSA_GAME_EFFECTS:
+        act_mission->GetOptions().SetGameEffects(GetTextID(id) - TEXT_QUALITY_LOW);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_GAME_SOUNDS:
+        act_mission->GetOptions().SetGameSounds(GetTextID(id) - TEXT_QUALITY_LOW);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_SHADOWS:
+        act_mission->GetOptions().SetShadows(GetTextID(id) - TEXT_SHADOWS_VERY_LOW);
+        act_mission->UpdateSettings();
+        break;
+    case OPTIONSA_PARTICLES:
+        act_mission->GetOptions().SetParticles(GetTextID(id) - TEXT_QUALITY_LOW);
+        act_mission->UpdateSettings();
+        break;
+    }
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5e1480
 inline const char *GM_OptionsControls::OnBeforeCreate()
@@ -399,31 +591,141 @@ inline const char *GM_OptionsControls::OnBeforeCreate()
     return "optionsc3";
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5e14a0
+// FUNCTION: GAME 0x5e14a0
 int GM_OptionsControls::OnCreate()
 {
-    StubLog("GM_OptionsControls::OnCreate");
+    flags &= ~MENUF_UNKNOWN_10000;
+    SetFloat(OPTIONSC_STEERING_LINEARITY, mafiaLoadSave.settings.steering_linearity);
+    SetFloat(OPTIONSC_AIMING_SENSITIVITY_X, mafiaLoadSave.settings.aiming_sensitivity_x);
+    SetFloat(OPTIONSC_AIMING_SENSITIVITY_Y, mafiaLoadSave.settings.aiming_sensitivity_y);
+    SetFloat(OPTIONSC_AIMING_SPEED_X, mafiaLoadSave.settings.aiming_speed_x);
+    SetRangeDword(OPTIONSC_CURSOR, TEXT_CURSOR + CURSOR_CROSSHAIR, TEXT_CURSOR + CURSOR_BOTH);
+    SetTextID(OPTIONSC_CURSOR, TEXT_CURSOR + mafiaLoadSave.settings.cursor);
+    SetFloat(OPTIONSC_FF_VOLUME, mafiaLoadSave.settings.ff_volume);
+    SetFloat(OPTIONSC_FF_SUSPENSION, mafiaLoadSave.settings.ff_suspension);
+    SetFloat(OPTIONSC_FF_COLLISIONS, mafiaLoadSave.settings.ff_collisions);
+    SetFloat(OPTIONSC_FF_REVS, mafiaLoadSave.settings.ff_revs);
+    SetFloat(OPTIONSC_FF_TIRE_GRIP, mafiaLoadSave.settings.ff_tire_grip);
+    SetFloat(OPTIONSC_FF_PLAYER_MOVEMENT, mafiaLoadSave.settings.ff_player_movement);
+    SetRangeDword(OPTIONSC_SIDE_ROLL, TEXT_NO, TEXT_YES);
+    SetBool(OPTIONSC_SIDE_ROLL, mafiaLoadSave.settings.side_roll);
+    SetRangeDword(OPTIONSC_MOUSE_INVERTED, TEXT_NORMAL, TEXT_INVERTED);
+    SetBool(OPTIONSC_MOUSE_INVERTED, mafiaLoadSave.settings.mouse_inverted);
+    SetRangeDword(OPTIONSC_SPEEDOMETER, TEXT_KILOMETERS_PER_HOUR, TEXT_MILES_PER_HOUR);
+    SetBool(OPTIONSC_SPEEDOMETER, mafiaLoadSave.settings.speedometer_mph);
+    SetRangeDword(OPTIONSC_SUBTITLES, TEXT_DISABLED, TEXT_ENABLED);
+    SetBool(OPTIONSC_SUBTITLES, mafiaLoadSave.settings.subtitles);
+    ActivateByID(OPTIONSC_BACK);
     return 0;
 }
 
-// STUB: GAME 0x5e1620
+// The bindings to the controls' object, the HUD's textures again (the speedometer's units), and all of the settings
+// FUNCTION: GAME 0x5e1620
 int GM_OptionsControls::OnClose()
 {
-    StubLog("GM_OptionsControls::OnClose");
+    mafiaLoadSave.ApplyControls();
+    mafiaIndicators.GameInit();
+    mafiaLoadSave.Refresh(REFRESH_ALL);
     return 0;
 }
 
-// Back closes the menu, as the original's does, so that a run gets back to the options
-// STUB: GAME 0x5e1650
+// The page's buttons exchange the menu for the page's, Reset to Defaults resets the page's controls and settings and
+// applies them, Back closes it; the other items set their settings, the force feedback's applied, but the player
+// movement's (which Refresh doesn't apply)
+// FUNCTION: GAME 0x5e1650
 int GM_OptionsControls::OnClick(uint id)
 {
-    StubLog("GM_OptionsControls::OnClick %u", id);
-    if (id == OPTIONSC_BACK)
+    switch (id)
+    {
+    case OPTIONSC_PLAYER:
+        page = OPTIONSC_PAGE_PLAYER;
+        MenuExchange();
+        ActivateByID(id);
+        break;
+    case OPTIONSC_CAR:
+        page = OPTIONSC_PAGE_CAR;
+        MenuExchange();
+        ActivateByID(id);
+        break;
+    case OPTIONSC_OTHER:
+        page = OPTIONSC_PAGE_OTHER;
+        MenuExchange();
+        ActivateByID(id);
+        break;
+    case OPTIONSC_RESET:
+        switch (page)
+        {
+        case OPTIONSC_PAGE_PLAYER:
+            mafiaLoadSave.DefaultControls(DEFAULTS_PLAYER);
+            mafiaLoadSave.DefaultSettings(DEFAULTS_PLAYER);
+            break;
+        case OPTIONSC_PAGE_CAR:
+            mafiaLoadSave.DefaultControls(DEFAULTS_CAR);
+            mafiaLoadSave.DefaultSettings(DEFAULTS_CAR);
+            break;
+        default:
+            mafiaLoadSave.DefaultControls(DEFAULTS_OTHER);
+            mafiaLoadSave.DefaultSettings(DEFAULTS_OTHER);
+            break;
+        }
+        OnCreate();
+        mafiaLoadSave.ApplyControls();
+        mafiaLoadSave.Refresh(REFRESH_ALL);
+        act_mission->game->UpdateControls();
+        ForceUpdate();
+        ActivateByID(id);
+        break;
+    case OPTIONSC_BACK:
         MenuClose((uint)-1);
+        break;
+    case OPTIONSC_STEERING_LINEARITY:
+        mafiaLoadSave.settings.steering_linearity = GetFloat(id);
+        break;
+    case OPTIONSC_AIMING_SENSITIVITY_X:
+        mafiaLoadSave.settings.aiming_sensitivity_x = GetFloat(id);
+        break;
+    case OPTIONSC_AIMING_SENSITIVITY_Y:
+        mafiaLoadSave.settings.aiming_sensitivity_y = GetFloat(id);
+        break;
+    case OPTIONSC_AIMING_SPEED_X:
+        mafiaLoadSave.settings.aiming_speed_x = GetFloat(id);
+        break;
+    case OPTIONSC_CURSOR:
+        mafiaLoadSave.settings.cursor = GetTextID(id) - TEXT_CURSOR;
+        break;
+    case OPTIONSC_FF_VOLUME:
+    case OPTIONSC_FF_SUSPENSION:
+    case OPTIONSC_FF_COLLISIONS:
+    case OPTIONSC_FF_REVS:
+    case OPTIONSC_FF_TIRE_GRIP:
+        mafiaLoadSave.settings.ff_volume = GetFloat(OPTIONSC_FF_VOLUME);
+        mafiaLoadSave.settings.ff_suspension = GetFloat(OPTIONSC_FF_SUSPENSION);
+        mafiaLoadSave.settings.ff_collisions = GetFloat(OPTIONSC_FF_COLLISIONS);
+        mafiaLoadSave.settings.ff_revs = GetFloat(OPTIONSC_FF_REVS);
+        mafiaLoadSave.settings.ff_tire_grip = GetFloat(OPTIONSC_FF_TIRE_GRIP);
+        mafiaLoadSave.Refresh(REFRESH_FORCE_FEEDBACK);
+        break;
+    case OPTIONSC_FF_PLAYER_MOVEMENT:
+        mafiaLoadSave.settings.ff_player_movement = GetFloat(id);
+        mafiaLoadSave.Refresh(REFRESH_FF_PLAYER);
+        break;
+    case OPTIONSC_SIDE_ROLL:
+        mafiaLoadSave.settings.side_roll = GetBool(id);
+        break;
+    case OPTIONSC_MOUSE_INVERTED:
+        mafiaLoadSave.settings.mouse_inverted = GetBool(id);
+        break;
+    case OPTIONSC_SPEEDOMETER:
+        mafiaLoadSave.settings.speedometer_mph = GetBool(id);
+        break;
+    case OPTIONSC_SUBTITLES:
+        mafiaLoadSave.settings.subtitles = GetBool(id);
+        break;
+    }
     return 0;
 }
+
+#pragma auto_inline(off)
 
 // STUB: GAME 0x5e1920
 int GM_FreeRide::OnCreate()

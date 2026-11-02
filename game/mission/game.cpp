@@ -2511,6 +2511,20 @@ void C_game::ClearTemporaryActors()
     temporary_actors.clear();
 }
 
+// FUNCTION: GAME 0x5a7ff0
+void C_game::UpdateControls()
+{
+    if (initialized)
+    {
+        std::vector<C_actor *> &actors = act_mission->GetActors();
+        for (int i = actors.size(); i--;)
+            if (actors[i]->GetType() == ACTOR_PLAYER)
+                ((C_player *)actors[i])->UpdateControls();
+    }
+}
+
+// The original's code between this and SetTrafficVisible (0x5a8030-0x5a846f) is more of the game's
+
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5a8470

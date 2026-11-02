@@ -1,8 +1,9 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
 // with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, TickCamera,
-// the wrappers by id the loading screen and the profiles' menus call, PridejComponentPod, and of the components what the
-// classes written so far use (the three drawing functions, the constructors, the children's insertion and SetTextID).
+// the wrappers by id the loading screen, the profiles' menus and the controls call, ActivateByID, the components'
+// ForceUpdate, PridejComponentPod, and of the components what the classes written so far use (the drawing functions
+// but RectangleBB, the constructors, the children's insertion and SetTextID).
 
 // The engine's math first: under /YX the copies of S_vector's inline functions then come due before TickCamera, as
 // the original's do. Compiled after it, the out-of-line constructor that SetCameraTargetID calls is unknown to VC6 when
@@ -126,6 +127,29 @@ S_menu_target _GM_MainMenuTargets[] = {
     {0, ""},
 };
 
+// A line list of one line (the line's, GM_Line)
+// FUNCTION: GAME 0x5e8d60
+void Line(float x, float y, float sx, float sy, uint color)
+{
+    TLVERTEX verts[2];
+    verts[0].x = x;
+    verts[0].y = y;
+    verts[0].z = 0.0f;
+    verts[0].rhw = 1.0f;
+    verts[0].color = color;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx;
+    verts[1].y = y + sy;
+    verts[1].z = 0.0f;
+    verts[1].rhw = 1.0f;
+    verts[1].color = color;
+    verts[1].u = 0.0f;
+    verts[1].v = 0.0f;
+    igraph->SetTexture(NULL);
+    igraph->DrawPrimitiveList(PT_LINELIST, 1, verts, LS3D_STREAM_TLVERTEX);
+}
+
 // A line strip around it, from the top left
 // FUNCTION: GAME 0x5e8e00
 void Rectangle(float x, float y, float sx, float sy, uint color)
@@ -242,6 +266,112 @@ void RectangleProgress(float x, float y, float sx, float sy, uint color, float p
     verts[3].v = 1.0f;
     igraph->SetTexture(texture);
     igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
+}
+
+// The original's code between this and RectangleProgress (0x5e91b0-0x5e968f) is PS2's RectangleBB. Each direction
+// sets all three vertices, the base's first, as PS2's; another direction draws the vertices as they are. The texture's
+// corners follow the vertices.
+// FUNCTION: GAME 0x5e9690
+void Triangle(float x, float y, float sx, float sy, uint direction, uint color)
+{
+    TLVERTEX verts[3];
+    switch (direction)
+    {
+    case TRIANGLE_UP:
+        verts[0].x = x + sx;
+        verts[0].y = y + sy;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = color;
+        verts[0].u = 1.0f;
+        verts[0].v = 0.0f;
+        verts[1].x = x;
+        verts[1].y = y + sy;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = color;
+        verts[1].u = 0.0f;
+        verts[1].v = 0.0f;
+        verts[2].x = x + sx / 2;
+        verts[2].y = y;
+        verts[2].z = 0.0f;
+        verts[2].rhw = 1.0f;
+        verts[2].color = color;
+        verts[2].u = 0.0f;
+        verts[2].v = 1.0f;
+        break;
+    case TRIANGLE_DOWN:
+        verts[0].x = x;
+        verts[0].y = y;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = color;
+        verts[0].u = 0.0f;
+        verts[0].v = 0.0f;
+        verts[1].x = x + sx;
+        verts[1].y = y;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = color;
+        verts[1].u = 1.0f;
+        verts[1].v = 0.0f;
+        verts[2].x = x + sx / 2;
+        verts[2].y = y + sy;
+        verts[2].z = 0.0f;
+        verts[2].rhw = 1.0f;
+        verts[2].color = color;
+        verts[2].u = 0.0f;
+        verts[2].v = 1.0f;
+        break;
+    case TRIANGLE_RIGHT:
+        verts[0].x = x;
+        verts[0].y = y;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = color;
+        verts[0].u = 0.0f;
+        verts[0].v = 0.0f;
+        verts[1].x = x + sx;
+        verts[1].y = y + sy / 2;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = color;
+        verts[1].u = 1.0f;
+        verts[1].v = 0.0f;
+        verts[2].x = x;
+        verts[2].y = y + sy;
+        verts[2].z = 0.0f;
+        verts[2].rhw = 1.0f;
+        verts[2].color = color;
+        verts[2].u = 0.0f;
+        verts[2].v = 1.0f;
+        break;
+    case TRIANGLE_LEFT:
+        verts[0].x = x + sx;
+        verts[0].y = y;
+        verts[0].z = 0.0f;
+        verts[0].rhw = 1.0f;
+        verts[0].color = color;
+        verts[0].u = 1.0f;
+        verts[0].v = 0.0f;
+        verts[1].x = x + sx;
+        verts[1].y = y + sy;
+        verts[1].z = 0.0f;
+        verts[1].rhw = 1.0f;
+        verts[1].color = color;
+        verts[1].u = 0.0f;
+        verts[1].v = 1.0f;
+        verts[2].x = x;
+        verts[2].y = y + sy / 2;
+        verts[2].z = 0.0f;
+        verts[2].rhw = 1.0f;
+        verts[2].color = color;
+        verts[2].u = 0.0f;
+        verts[2].v = 0.0f;
+        break;
+    }
+    igraph->SetTexture(NULL);
+    igraph->DrawPrimitiveList(PT_TRIANGLELIST, 1, verts, LS3D_STREAM_TLVERTEX);
 }
 
 // FUNCTION: GAME 0x5e98a0
@@ -563,6 +693,13 @@ void GM_Menu::Destroy()
     delete this;
 }
 
+// FUNCTION: GAME 0x5ea6d0
+void GM_Menu::ForceUpdate()
+{
+    for (std::vector<GM_Component *>::iterator it = components.begin(); it < components.end(); it++)
+        (*it)->ForceUpdate();
+}
+
 // PS2's draws the components only without the menu's flag 0x200000, and no cursor
 // FUNCTION: GAME 0x5ea7e0
 void GM_Menu::Draw(uint draw_flags)
@@ -791,6 +928,15 @@ void GM_Menu::SetTextID(uint id, uint text_id)
         component->SetTextID(text_id);
 }
 
+// FUNCTION: GAME 0x5eaff0
+uint GM_Menu::GetTextID(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        return component->GetTextID();
+    return 0;
+}
+
 // FUNCTION: GAME 0x5eb010
 void GM_Menu::SetText(uint id, uchar *text)
 {
@@ -824,12 +970,64 @@ void GM_Menu::SetFloat(uint id, float value)
         component->SetFloat(value);
 }
 
+// FUNCTION: GAME 0x5eb090
+float GM_Menu::GetFloat(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        return component->GetFloat();
+    return 0.0f;
+}
+
 // FUNCTION: GAME 0x5eb0c0
 void GM_Menu::SetDword(uint id, uint value)
 {
     GM_Component *component = FindComponentByID(id);
     if (component)
         component->SetDword(value);
+}
+
+// The original's code between this and SetDword (0x5eb0e0-0x5eb0fb) is PS2's GetDword
+// FUNCTION: GAME 0x5eb100
+void GM_Menu::SetBool(uint id, bool value)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetBool(value);
+}
+
+// FUNCTION: GAME 0x5eb120
+bool GM_Menu::GetBool(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        return component->GetBool();
+    return false;
+}
+
+// The original's code between this and GetBool (0x5eb140-0x5eb17f) is PS2's SetPointer and GetRangeFloat
+// FUNCTION: GAME 0x5eb190
+void GM_Menu::SetRangeDword(uint id, uint min, uint max)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetRangeDword(min, max);
+}
+
+// ActivateByIDOrNext's start
+// FUNCTION: GAME 0x5eb1c0
+void GM_Menu::ActivateByID(uint id)
+{
+    if (active)
+        active->flags &= ~COMPF_ACTIVE;
+    active = FindComponentByID(id);
+    if (active)
+    {
+        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_UNKNOWN_8000)
+            active->flags |= COMPF_ACTIVE;
+        else
+            active = NULL;
+    }
 }
 
 // FUNCTION: GAME 0x5eb210

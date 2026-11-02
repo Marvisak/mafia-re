@@ -1,9 +1,12 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
 // constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
-// ClearControls, GetValues, GetValue, SetControl and GetControl; Update is a stub.
+// ClearControls, GetValues, GetValue, SetControl, GetControl, SaveJoyStates, GetLastInput and GetControlName; Update is a
+// stub.
 
 #include "input/controls.h"
+#include "ui/g_textdb.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "IGraph/IGraph.h"
@@ -244,3 +247,348 @@ void C_controls::Update(bool update_input)
 }
 
 #pragma auto_inline(on)
+
+// Between Update and SaveJoyStates the original has more of the bindings' functions
+
+// FUNCTION: GAME 0x4f1180
+void C_controls::SaveJoyStates()
+{
+    for (int i = joys.size(); i--;)
+    {
+        joys[i].joy->Update(JOY_UPDATE_RESET);
+        joys[i].joy->GetState(&joys[i].changes);
+    }
+}
+
+// The binding is last_input, cleared first; each kind of input sets what it has. A joystick's button or POV leaves
+// the half as it is.
+// FUNCTION: GAME 0x4f11f0
+S_control *C_controls::GetLastInput(uint flags, bool update)
+{
+    last_input.device = CONTROL_NONE;
+    last_input.code = 0;
+    last_input.joy = 0;
+    last_input.half = CONTROL_AXIS_FULL;
+    int i;
+    for (i = joys.size(); i--;)
+    {
+        if (update)
+            joys[i].joy->Update(JOY_UPDATE_RESET);
+        joys[i].joy->GetState(&joys[i].state);
+    }
+    if (update)
+    {
+        igraph->ProcessWinMessages();
+        igraph->UpdateMouseData();
+        igraph->UpdateKeyboardData();
+    }
+    uint shift_keys = igraph->GetShiftKeys(false);
+    uchar key = igraph->ReadKey();
+    uint buttons = igraph->GetMouseButtons();
+    int rx = igraph->Mouse_rx();
+    int ry = igraph->Mouse_ry();
+    int rz = igraph->Mouse_rz();
+    if (!(flags & LASTINPUT_NO_KEYS) && (shift_keys || key))
+    {
+        last_input.device = CONTROL_KEY;
+        if (shift_keys)
+        {
+            if (shift_keys & SKEY_LSHIFT)
+                last_input.code = DIK_LSHIFT;
+            else if (shift_keys & SKEY_RSHIFT)
+                last_input.code = DIK_RSHIFT;
+            else if (shift_keys & SKEY_LCTRL)
+                last_input.code = DIK_LCONTROL;
+            else if (shift_keys & SKEY_RCTRL)
+                last_input.code = DIK_RCONTROL;
+            else if (shift_keys & SKEY_LALT)
+                last_input.code = DIK_LMENU;
+            else if (shift_keys & SKEY_RALT)
+                last_input.code = DIK_RMENU;
+        }
+        else
+            last_input.code = key;
+        last_input.joy = 0;
+        last_input.half = CONTROL_AXIS_FULL;
+        return &last_input;
+    }
+    if (!(flags & LASTINPUT_NO_MOUSE_BUTTONS))
+    {
+        if (buttons & MBUT_LEFT)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = MBUT_LEFT;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_FULL;
+            return &last_input;
+        }
+        if (buttons & MBUT_RIGHT)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = MBUT_RIGHT;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_FULL;
+            return &last_input;
+        }
+        if (buttons & MBUT_MIDDLE)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = MBUT_MIDDLE;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_FULL;
+            return &last_input;
+        }
+    }
+    if (!(flags & LASTINPUT_NO_MOUSE_AXES))
+    {
+        if (rx > 10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_X;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_POSITIVE;
+            return &last_input;
+        }
+        if (rx < -10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_X;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_NEGATIVE;
+            return &last_input;
+        }
+        if (ry > 10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_Y;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_POSITIVE;
+            return &last_input;
+        }
+        if (ry < -10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_Y;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_NEGATIVE;
+            return &last_input;
+        }
+        if (rz > 10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_Z;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_POSITIVE;
+            return &last_input;
+        }
+        if (rz < -10)
+        {
+            last_input.device = CONTROL_MOUSE;
+            last_input.code = CONTROL_MOUSE_Z;
+            last_input.joy = 0;
+            last_input.half = CONTROL_AXIS_NEGATIVE;
+            return &last_input;
+        }
+    }
+    for (i = joys.size(); i--;)
+    {
+        int n = 0;
+        if (!(flags & LASTINPUT_NO_JOY_BUTTONS))
+        {
+            uint bits = joys[i].state.buttons[0];
+            while (!(bits & 1) && n < 32)
+            {
+                bits >>= 1;
+                n++;
+            }
+            if (n < 32)
+            {
+                last_input.device = CONTROL_JOY;
+                last_input.code = CONTROL_JOY_BUTTON + n;
+                last_input.joy = i;
+                return &last_input;
+            }
+        }
+        if (!(flags & LASTINPUT_NO_POVS))
+        {
+            for (n = 0; n < 4; n++)
+            {
+                if (!joys[i].state.pov_centered[n])
+                {
+                    float angle = joys[i].state.pov[n];
+                    uint direction;
+                    if (angle > 4.69f)
+                        direction = CONTROL_POV_LEFT;
+                    else if (angle > 3.12f)
+                        direction = CONTROL_POV_DOWN;
+                    else if (angle > 1.5f)
+                        direction = CONTROL_POV_RIGHT;
+                    else
+                        direction = CONTROL_POV_UP;
+                    last_input.device = CONTROL_JOY;
+                    last_input.code = (n + 0x20) * 16 + direction;
+                    last_input.joy = i;
+                    return &last_input;
+                }
+            }
+        }
+        if (!(flags & LASTINPUT_NO_JOY_AXES))
+        {
+            for (int axis = 0; axis < JOY_NUM_AXES; axis++)
+            {
+                float value = joys[i].joy->GetAxis(axis);
+                float start;
+                switch (axis)
+                {
+                case JOY_X:
+                    start = joys[i].changes.x;
+                    break;
+                case JOY_Y:
+                    start = joys[i].changes.y;
+                    break;
+                case JOY_Z:
+                    start = joys[i].changes.z;
+                    break;
+                case JOY_RX:
+                    start = joys[i].changes.rx;
+                    break;
+                case JOY_RY:
+                    start = joys[i].changes.ry;
+                    break;
+                case JOY_RZ:
+                    start = joys[i].changes.rz;
+                    break;
+                case JOY_SLIDER0:
+                    start = joys[i].changes.slider[0];
+                    break;
+                case JOY_SLIDER1:
+                    start = joys[i].changes.slider[1];
+                    break;
+                }
+                uint mode = joys[i].joy->GetAxisMode(axis);
+                if (!(mode & JOY_AXIS_RAW))
+                {
+                    if (mode & JOY_AXIS_RELATIVE)
+                    {
+                        if (mode & JOY_AXIS_POSITIVE ? fabs(value) > .5f : fabs(value) > .3f)
+                        {
+                            last_input.device = CONTROL_JOY;
+                            last_input.code = axis;
+                            last_input.joy = i;
+                            if (value > 0.0f)
+                                last_input.half = CONTROL_AXIS_POSITIVE;
+                            else
+                                last_input.half = CONTROL_AXIS_NEGATIVE;
+                            return &last_input;
+                        }
+                    }
+                    else if (mode & JOY_AXIS_POSITIVE ? fabs(value - start) > .7f : fabs(value - start) > .5f)
+                    {
+                        last_input.device = CONTROL_JOY;
+                        last_input.code = axis;
+                        last_input.joy = i;
+                        if (value > start)
+                            last_input.half = CONTROL_AXIS_POSITIVE;
+                        else
+                            last_input.half = CONTROL_AXIS_NEGATIVE;
+                        return &last_input;
+                    }
+                }
+                else if (!(flags & LASTINPUT_NO_RAW_AXES) && value != start)
+                {
+                    last_input.device = CONTROL_JOY;
+                    last_input.code = axis;
+                    last_input.joy = i;
+                    if (value > 0.0f)
+                        last_input.half = CONTROL_AXIS_POSITIVE;
+                    else
+                        last_input.half = CONTROL_AXIS_NEGATIVE;
+                    return &last_input;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+static void WideToChar(char *dst, const wchar_t *src, int size);
+
+// The texts of the mouse's names (the names are ours, after the Czech database's texts: the English one has none, so
+// GetText gives its " ")
+#define TEXT_MOUSE_LEFT 0x1ceb
+#define TEXT_MOUSE_RIGHT 0x1cec
+#define TEXT_MOUSE_MIDDLE 0x1ced
+#define TEXT_MOUSE_X 0x1cee
+#define TEXT_MOUSE_Y 0x1cef
+#define TEXT_MOUSE_Z 0x1cf0
+#define TEXT_JOY_NOT_CONNECTED 0x1cf1
+
+// A joystick's axes have codes below 0xff, its buttons above it (CONTROL_JOY_BUTTON), its POVs from CONTROL_JOY_POV.
+// The key's code goes through a byte local (the original's stores it and reads it back), the POV's number through a
+// masked local: written into the call, VC6 shifts first and masks then.
+// FUNCTION: GAME 0x4f1830
+const char *C_controls::GetControlName(const S_control *control)
+{
+    if (!control)
+        return NULL;
+    memset(name, 0, sizeof(name));
+    switch (control->device)
+    {
+    case CONTROL_NONE:
+        return NULL;
+    case CONTROL_KEY:
+        {
+            uchar key = (uchar)control->code;
+            WideToChar(name, (const wchar_t *)igraph->GetKeyName(key), sizeof(name) - 1);
+        }
+        return name;
+    case CONTROL_MOUSE:
+        switch (control->code)
+        {
+        case MBUT_LEFT:
+            return textDatabase.GetText(TEXT_MOUSE_LEFT);
+        case MBUT_RIGHT:
+            return textDatabase.GetText(TEXT_MOUSE_RIGHT);
+        case MBUT_MIDDLE:
+            return textDatabase.GetText(TEXT_MOUSE_MIDDLE);
+        case CONTROL_MOUSE_X:
+            return textDatabase.GetText(TEXT_MOUSE_X);
+        case CONTROL_MOUSE_Y:
+            return textDatabase.GetText(TEXT_MOUSE_Y);
+        case CONTROL_MOUSE_Z:
+            return textDatabase.GetText(TEXT_MOUSE_Z);
+        }
+        break;
+    case CONTROL_JOY:
+        if (joys.size() > control->joy)
+        {
+            if (control->code < 0xff)
+                return joys[control->joy].joy->GetAxisName(control->code);
+            if (control->code > 0xff && control->code < CONTROL_JOY_POV)
+                return joys[control->joy].joy->GetButtonName(control->code & 0xff);
+            if (control->code >= CONTROL_JOY_POV)
+            {
+                uint pov = control->code & 0xf0;
+                return joys[control->joy].joy->GetPOVName(pov >> 4);
+            }
+        }
+        else
+            return textDatabase.GetText(TEXT_JOY_NOT_CONNECTED);
+        break;
+    }
+    return NULL;
+}
+
+// A wide text into dst, at most size characters and the zero (the name is ours)
+// FUNCTION: GAME 0x4f1a30
+static void WideToChar(char *dst, const wchar_t *src, int size)
+{
+    if (dst && src)
+    {
+        int len = wcslen(src);
+        if (len > size)
+            len = size;
+        WideCharToMultiByte(CP_ACP, 0, src, -1, dst, len, NULL, NULL);
+        dst[len] = 0;
+    }
+}

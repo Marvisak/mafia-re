@@ -1,15 +1,16 @@
 // The saved games and profiles (PS2 g_loadsave.cpp; the PC's file is the one at 0x604e60-0x60f5bc,
 // docs/game-files.md), with the car database and the save files' G_Stream, as PS2's. Written so far: what InitSystem
 // and CloseSystem reach (Init, Close, the constructors and destructors, AllDefault, ProfileEnumFiles, ProfileEnumRelease,
-// ProfileGetList, ProfileLoad, ProfileSave, SaveGameNewGame, the PC's controls and options defaults, ApplyControls, FindBinding, the car
-// database's Init and Close, G_Stream's reading and writing, RaceCarsEnable, RaceCarsDisable, GarageClear, Refresh,
+// ProfileGetList, ProfileLoad, ProfileSave, SaveGameNewGame, the PC's controls and options defaults, ApplyControls,
+// FindBinding, the car database's Init and Close, G_Stream's reading and writing, RaceCarsEnable, RaceCarsDisable, GarageClear, Refresh,
 // FreerideStoreA and FreerideStoreB), LanguageSelect, and what C_game's Init and Done reach: ObjectivesClear, the
 // garage's GarageGameInit and GarageGameDone with the car database's GetCar, GetCarModel, GetCarParams,
 // GetIdxByModelLong and GetIDByActor, the end of mission garage menu's names, and the profiles' menus' ProfileCreate and
 // ProfileDelete; and of what the scripts call, the car database's GetPlayerModel and GetIdxByModel, the garage's
 // GarageAddLastStolen, GarageShowResults, CarCantGetOut and EnableSteal, FreerideEnableCar and FreerideEnable, and the
-// car database's GetCivilMaskByModel and GetPlayerCivilMaskByModel, which C_traffic_generator::TryGoToAssHole calls; the
-// rest of what they and main call is stubs.
+// car database's GetCivilMaskByModel and GetPlayerCivilMaskByModel, which C_traffic_generator::TryGoToAssHole calls,
+// and what the controls menu calls: the PC's SetOppositeBinding, RemoveBinding and GetControlTextID; the rest of what
+// they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -35,6 +36,23 @@
 
 // GLOBAL: GAME 0x639320
 bool profileIgnoreSave = true;
+
+// The original's data between profileIgnoreSave and this (0x639324-0x6394ef) belongs to code not written yet
+
+// The text database's ids of the controls' labels on the controls menu's pages, by CTRL_* (the name is ours): the
+// secondary bindings have their primary's, 0x20 none
+// GLOBAL: GAME 0x6394f0
+uint controlTextIDs[NUM_CONTROLS] = {
+    0x12d, 0x12d, 0x12e, 0x12e, 0x12f, 0x12f, 0x130, 0x130, 0x131, 0x131,
+    0x133, 0x133, 0x134, 0x134, 0x135, 0x135, 0x137, 0x137, 0x138, 0x138,
+    0x13d, 0x13d, 0x13d, 0x13d, 0x13f, 0x140, 0x141, 0x142, 0x143, 0x144,
+    0x145, 0x157, 0, 0x14a, 0x14a, 0x14b, 0x14b, 0x14c, 0x14c, 0x14d,
+    0x14d, 0x14e, 0x14e, 0x14f, 0x14f, 0x151, 0x151, 0x152, 0x152, 0x153,
+    0x153, 0x154, 0x154, 0x155, 0x155, 0x156, 0x156, 0x150, 0x136, 0x158,
+};
+
+// GetControlTextID's for an index outside the table (the name is ours)
+#define TEXT_MAFIA 0x64
 
 // GLOBAL: GAME 0x6d4540
 S_freeride freeride;
@@ -373,6 +391,22 @@ void G_LoadSaveClass::SetBinding(int index, ushort device, ushort code, int joy,
     bindings[index].half = half;
 }
 
+// FUNCTION: GAME 0x607400
+void G_LoadSaveClass::SetOppositeBinding(int index, S_control *control)
+{
+    if (control->device == CONTROL_JOY)
+    {
+        bindings[index].device = CONTROL_JOY;
+        bindings[index].code = control->code;
+        bindings[index].joy = control->joy;
+        bindings[index].half = CONTROL_AXIS_FULL;
+        if (control->half == CONTROL_AXIS_POSITIVE)
+            bindings[index].half = CONTROL_AXIS_NEGATIVE;
+        if (control->half == CONTROL_AXIS_NEGATIVE)
+            bindings[index].half = CONTROL_AXIS_POSITIVE;
+    }
+}
+
 // FUNCTION: GAME 0x607460
 int G_LoadSaveClass::FindBinding(int index, S_control *control, bool any_half, int other)
 {
@@ -397,6 +431,67 @@ int G_LoadSaveClass::FindBinding(int index, S_control *control, bool any_half, i
         }
     }
     return -1;
+}
+
+// With any_half each binding of the key, button or axis goes at once; otherwise a binding of the opposite half stays.
+// The car's loop lacks a break: a positive half keeps the bindings of the positive half too.
+// FUNCTION: GAME 0x607520
+void G_LoadSaveClass::RemoveBinding(int index, S_control *control, bool any_half)
+{
+    int i;
+    if (index < NUM_PLAYER_CONTROLS)
+    {
+        for (i = 0; i < NUM_PLAYER_CONTROLS; i++)
+        {
+            if (bindings[i].device == control->device && bindings[i].code == control->code
+                && bindings[i].joy == control->joy)
+            {
+                if (any_half)
+                {
+                    SetBinding(i, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+                    continue;
+                }
+                switch (control->half)
+                {
+                case CONTROL_AXIS_POSITIVE:
+                    if (bindings[i].half == CONTROL_AXIS_NEGATIVE)
+                        continue;
+                    break;
+                case CONTROL_AXIS_NEGATIVE:
+                    if (bindings[i].half == CONTROL_AXIS_POSITIVE)
+                        continue;
+                    break;
+                }
+                SetBinding(i, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+            }
+        }
+    }
+    else
+    {
+        for (i = NUM_PLAYER_CONTROLS; i < NUM_CONTROLS; i++)
+        {
+            if (bindings[i].device == control->device && bindings[i].code == control->code
+                && bindings[i].joy == control->joy)
+            {
+                if (any_half)
+                {
+                    SetBinding(i, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+                    continue;
+                }
+                switch (control->half)
+                {
+                case CONTROL_AXIS_POSITIVE:
+                    if (bindings[i].half == CONTROL_AXIS_NEGATIVE)
+                        continue;
+                case CONTROL_AXIS_NEGATIVE:
+                    if (bindings[i].half == CONTROL_AXIS_POSITIVE)
+                        continue;
+                    break;
+                }
+                SetBinding(i, CONTROL_NONE, 0, 0, CONTROL_AXIS_FULL);
+            }
+        }
+    }
 }
 
 // The player's defaults are the arrows and the right-hand keys first, WSAD and the left-hand ones second; the car's
@@ -1555,6 +1650,16 @@ void G_LoadSaveClass::Refresh(uint flags)
     if (settings.unknown_34 < 7 || settings.unknown_34 >= 0x10)
         settings.unknown_34 = 7;
 }
+
+// FUNCTION: GAME 0x60e140
+uint G_LoadSaveClass::GetControlTextID(int index)
+{
+    if (index >= 0 && index < NUM_CONTROLS)
+        return controlTextIDs[index];
+    return TEXT_MAFIA;
+}
+
+// The original's code between this and ExecuteCredits (0x60e160-0x60e70f) is more of the file's
 
 #pragma auto_inline(off)
 

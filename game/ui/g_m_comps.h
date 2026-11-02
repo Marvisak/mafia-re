@@ -9,6 +9,7 @@
 
 #include "ui/g_indicators.h"
 #include "ui/g_menu.h"
+#include "ui/g_textdb.h"
 
 #include "IGraph/IGraph.h"
 
@@ -246,6 +247,25 @@ public:
     }
 };
 
+// A line (PS2's), 'line': from the top left corner to the bottom right one, red in the alternate color, otherwise black
+// (the Audio & Video menu's two are flat)
+// VTABLE: GAME 0x626480
+class GM_Line : public GM_Component
+{
+public:
+    GM_Line(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent) {}
+    GM_Line(GM_Component *component) : GM_Component(component) {}
+
+    virtual uint GetType() { return 'line'; }
+    virtual void Draw(uint draw_flags)
+    {
+        if (flags & COMPF_ALTERNATE_COLOR)
+            Line(x, y, sx, sy, 0xffff0000);
+        else
+            Line(x, y, sx, sy, 0xff000000);
+    }
+};
+
 // A rectangle (PS2's), 'rect': in the alternate style filled, white or black, otherwise a black outline, or filled half
 // transparent in the alternate color
 // VTABLE: GAME 0x626500
@@ -478,6 +498,124 @@ public:
     }
 };
 
+// A slider (PS2's), 'slid': its value, 0 to 1, a red bar from the left between two arrows, each a square as high as
+// the slider; black outlines and arrows, the arrows red while it is active, all grey while it is disabled. The keys'
+// arrows and the mouse's left button on the arrows move it, the button between them sets it. It can be activated. PS2's
+// has keypad 4 and 6 besides the arrows, and draws the arrows first.
+// VTABLE: GAME 0x626a00
+class GM_Slider : public GM_Component
+{
+public:
+    GM_Slider(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        flags |= COMPF_UNKNOWN_8000;
+        value = .5f;
+    }
+    GM_Slider(GM_Component *component) : GM_Component(component)
+    {
+        value = ((GM_Slider *)component)->value;
+    }
+
+    virtual uint GetType() { return 'slid'; }
+    virtual void SetFloat(float value)
+    {
+        this->value = value;
+        ForceUpdate();
+    }
+    virtual float GetFloat() { return value; }
+    virtual void Draw(uint draw_flags)
+    {
+        float bar = value * (sx - 2.0f * sy);
+        float arrow_offset = sy / 4;
+        float arrow_size = sy / 2;
+        if (flags & COMPF_ENABLED)
+        {
+            RectangleFilled(x + sy, y, bar, sy, 0xffbe002c, NULL);
+            Rectangle(x, y, sx, sy, 0xff000000);
+            Rectangle(x + sy, y, sx - 2.0f * sy, sy, 0xff000000);
+            if (flags & COMPF_ACTIVE)
+            {
+                Triangle(x + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_LEFT, 0xffbe002c);
+                Triangle(x + sx - sy + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_RIGHT,
+                    0xffbe002c);
+            }
+            else
+            {
+                Triangle(x + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_LEFT, 0xff000000);
+                Triangle(x + sx - sy + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_RIGHT,
+                    0xff000000);
+            }
+        }
+        else
+        {
+            Triangle(x + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_LEFT, 0xff707070);
+            Triangle(x + sx - sy + arrow_offset, y + arrow_offset, arrow_size, arrow_size, TRIANGLE_RIGHT, 0xff707070);
+            RectangleFilled(x + sy, y, bar, sy, 0x7f707070, NULL);
+            Rectangle(x, y, sx, sy, 0xff707070);
+            Rectangle(x + sy, y, sx - 2.0f * sy, sy, 0xff707070);
+        }
+    }
+    // While the left button is down over it: left of the bar the value goes down, right of it up, by .002 a
+    // millisecond, and over it the value is where the mouse is
+    virtual uint Mouse(int x, int y, int z, uint buttons, uint time)
+    {
+        float mouse_x = (float)x;
+        if (IsOverActive(mouse_x, (float)y))
+        {
+            float width = sx - 2.0f * sy;
+            if (buttons & MENUMOUSE_LEFT)
+            {
+                int pos = (int)(mouse_x - (this->x + sy));
+                if (pos < 0)
+                {
+                    value -= time * .002f;
+                    if (value < 0.0f)
+                        value = 0.0f;
+                    ForceUpdate();
+                    return id;
+                }
+                else if (pos > width)
+                {
+                    value += time * .002f;
+                    if (value > 1.0f)
+                        value = 1.0f;
+                    ForceUpdate();
+                    return id;
+                }
+                else
+                {
+                    value = pos / width;
+                    ForceUpdate();
+                    return id;
+                }
+            }
+        }
+        return 0;
+    }
+    // The arrows move it by a tenth
+    virtual uint Key(uint shift_keys, uint key)
+    {
+        switch (key)
+        {
+        case DIK_RIGHT:
+            value += .1f;
+            if (value > 1.0f)
+                value = 1.0f;
+            ForceUpdate();
+            return id;
+        case DIK_LEFT:
+            value -= .1f;
+            if (value < 0.0f)
+                value = 0.0f;
+            ForceUpdate();
+            return id;
+        }
+        return 0;
+    }
+
+    float value;                        // 0x40 (the name is ours)
+};
+
 // A text edit's buffer (the name is ours): the longest text is one less
 #define TEXTEDIT_SIZE 0x40
 
@@ -560,6 +698,68 @@ public:
     uint max_length;                    // 0x80
 };
 
+// A selection (PS2's), 'bsel': the texts of a range of the text database's ids, its text the selected one, which a
+// click moves to the next one, from the last one around to the first. Drawn as a menu item, without its red. It can be
+// activated. PS2's arrows move it either way; Space and the Enters click it, as a menu item, and so does the mouse's
+// left button.
+// VTABLE: GAME 0x626c80
+class GM_ButtonSelect : public GM_Component
+{
+public:
+    GM_ButtonSelect(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
+    {
+        flags |= COMPF_UNKNOWN_8000;
+    }
+    GM_ButtonSelect(GM_Component *component) : GM_Component(component) {}
+
+    virtual uint GetType() { return 'bsel'; }
+    // The range's first and last ids
+    virtual void SetRangeDword(uint min, uint max)
+    {
+        first_text = min;
+        last_text = max;
+    }
+    virtual void Draw(uint draw_flags)
+    {
+        uint text_flags = 0;
+        if (flags & COMPF_ACTIVE)
+            text_flags |= OUTTEXT_UNDERLINE;
+        if (flags & COMPF_TEXT_CENTER)
+            text_flags |= OUTTEXT_CENTER;
+        if (flags & COMPF_TEXT_RIGHT)
+            text_flags |= OUTTEXT_RIGHT;
+        if (draw_flags & COMPF_ENABLED)
+            mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff000000, text_flags, flags & COMPF_FONT, NULL);
+        else
+            mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff7f7f7f, text_flags, flags & COMPF_FONT, NULL);
+    }
+    virtual uint Mouse(int x, int y, int z, uint buttons, uint time)
+    {
+        if (buttons & MENUMOUSE_LEFT_RELEASED)
+        {
+            if (++text_id > last_text)
+                text_id = first_text;
+            text = (uchar *)textDatabase.GetText(text_id);
+            return id;
+        }
+        return 0;
+    }
+    virtual uint Key(uint shift_keys, uint key)
+    {
+        if (key == DIK_SPACE || key == DIK_RETURN || key == DIK_NUMPADENTER)
+        {
+            if (++text_id > last_text)
+                text_id = first_text;
+            text = (uchar *)textDatabase.GetText(text_id);
+            return id;
+        }
+        return 0;
+    }
+
+    // 0x40, the range of the text database's ids (the names are ours: not min and max, windows.h's macros)
+    uint first_text, last_text;
+};
+
 // The factory of a component's class not written yet (ours, not the original's): it registers the class's type as
 // G_Factory does, but makes nothing, so a menu skips the item as it would without a factory, and logs the item through
 // StubLog. The components' files have one for each such class, under the name of the original's factory. Its functions
@@ -583,7 +783,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
+// ?IsOverActive@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -598,7 +798,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?GetBool@GM_Component@@UAE_NXZ
+// ?CanBeParent@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9530
 // ?GetType@GM_Window@@UAEIXZ
@@ -617,13 +817,19 @@ public:
 // ?CanBeParent@GM_WindowClean@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_ProgressBar@@UAE@XZ
+// ??1GM_Window@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
 
 // FUNCTION: GAME 0x5da090
 // ?Draw@GM_StaticText@@UAEXI@Z
+
+// FUNCTION: GAME 0x5da6c0
+// ?GetType@GM_Line@@UAEIXZ
+
+// FUNCTION: GAME 0x5da6d0
+// ?Draw@GM_Line@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da7e0
 // ?GetType@GM_Rectangle@@UAEIXZ
@@ -671,6 +877,24 @@ public:
 // FUNCTION: GAME 0x5db7b0
 // ?Draw@GM_Button@@UAEXI@Z
 
+// FUNCTION: GAME 0x5dba40
+// ?GetType@GM_Slider@@UAEIXZ
+
+// FUNCTION: GAME 0x5dba50
+// ?SetFloat@GM_Slider@@UAEXM@Z
+
+// FUNCTION: GAME 0x5dba60
+// ?GetFloat@GM_Slider@@UAEMXZ
+
+// FUNCTION: GAME 0x5dba70
+// ?Draw@GM_Slider@@UAEXI@Z
+
+// FUNCTION: GAME 0x5dbc90
+// ?Mouse@GM_Slider@@UAEIHHHII@Z
+
+// FUNCTION: GAME 0x5dbda0
+// ?Key@GM_Slider@@UAEIII@Z
+
 // FUNCTION: GAME 0x5dc850
 // ?GetType@GM_TextEdit@@UAEIXZ
 
@@ -689,13 +913,30 @@ public:
 // FUNCTION: GAME 0x5dc950
 // ?Draw@GM_TextEdit@@UAEXI@Z
 
+// FUNCTION: GAME 0x5dce20
+// ?GetType@GM_ButtonSelect@@UAEIXZ
+
+// FUNCTION: GAME 0x5dce30
+// ?SetRangeDword@GM_ButtonSelect@@UAEXII@Z
+
+// FUNCTION: GAME 0x5dce50
+// ?Mouse@GM_ButtonSelect@@UAEIHHHII@Z
+
+// FUNCTION: GAME 0x5dce90
+// ?Key@GM_ButtonSelect@@UAEIII@Z
+
+// The original kept the copy of the yes or no selection ('bslb', not written yet), which draws the same, after its
+// factory's Make
+// FUNCTION: GAME 0x5dd040
+// ?Draw@GM_ButtonSelect@@UAEXI@Z
+
 // The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
 // FUNCTION: GAME 0x5df350
 // ?SetFloat@GM_ProgressBar@@UAEXM@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_TextEdit@@UAEPAXI@Z
+// ??_GGM_Vidc@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0
@@ -721,6 +962,12 @@ public:
 
 // TEMPLATE: GAME 0x5da120
 // ?MakeDup@?$G_Factory@VGM_StaticText@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5da660
+// ?Make@?$G_Factory@VGM_Line@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5da720
+// ?MakeDup@?$G_Factory@VGM_Line@@@@SIPAVGM_Component@@PAV2@@Z
 
 // TEMPLATE: GAME 0x5da780
 // ?Make@?$G_Factory@VGM_Rectangle@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
@@ -752,8 +999,20 @@ public:
 // TEMPLATE: GAME 0x5db890
 // ?MakeDup@?$G_Factory@VGM_Button@@@@SIPAVGM_Component@@PAV2@@Z
 
+// TEMPLATE: GAME 0x5db9d0
+// ?Make@?$G_Factory@VGM_Slider@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dbe20
+// ?MakeDup@?$G_Factory@VGM_Slider@@@@SIPAVGM_Component@@PAV2@@Z
+
 // TEMPLATE: GAME 0x5dc7a0
 // ?Make@?$G_Factory@VGM_TextEdit@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
 
 // TEMPLATE: GAME 0x5dc9d0
 // ?MakeDup@?$G_Factory@VGM_TextEdit@@@@SIPAVGM_Component@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dcdb0
+// ?Make@?$G_Factory@VGM_ButtonSelect@@@@SIPAVGM_Component@@PAUGM_DesignStruct@@PAV2@@Z
+
+// TEMPLATE: GAME 0x5dcee0
+// ?MakeDup@?$G_Factory@VGM_ButtonSelect@@@@SIPAVGM_Component@@PAV2@@Z

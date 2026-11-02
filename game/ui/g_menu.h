@@ -23,6 +23,7 @@ class ITexture;
 
 // Tick's buttons, which reach the components' Mouse: the buttons down, those pressed shifted by 4 and those released by
 // 8, IGraph's bits (the names are ours)
+#define MENUMOUSE_LEFT 0x1
 #define MENUMOUSE_LEFT_RELEASED 0x100
 
 // SetCameraTargetID's ids besides those of the main menu's items, which _GM_MainMenuTargets gives a frame each (the
@@ -30,12 +31,22 @@ class ITexture;
 #define MENUCAM_NONE 0                  // the scene's camera where it is
 #define MENUCAM_START ((uint)-1)        // the frame "camera_start", where the main menu opens
 
-// The components' drawing (PS2's, global functions of g_menu.cpp): a rectangle's outline in the color, the rectangle
-// filled with the texture (none for the color alone) in the color, and its part from the left, 0 to 1 of the width,
-// filled with as much of the texture (the progress bar's)
+// Triangle's directions, where its point is (the names are ours)
+#define TRIANGLE_UP 0
+#define TRIANGLE_DOWN 1
+#define TRIANGLE_RIGHT 2
+#define TRIANGLE_LEFT 3
+
+// The components' drawing (PS2's, global functions of g_menu.cpp): a line from x, y to x + sx, y + sy in the color, a
+// rectangle's outline in the color, the rectangle filled with the texture (none for the color alone) in the color, its
+// part from the left, 0 to 1 of the width, filled with as much of the texture (the progress bar's), and a triangle in
+// the rectangle in the color, its point in the middle of the side of the direction (TRIANGLE_*), the opposite side its
+// base
+void Line(float x, float y, float sx, float sy, uint color);
 void Rectangle(float x, float y, float sx, float sy, uint color);
 void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
 void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture);
+void Triangle(float x, float y, float sx, float sy, uint direction, uint color);
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
 
@@ -162,6 +173,9 @@ public:
     void CreateCompsByDef(const char *name);
     // Deletes the menu with its components
     void Destroy();
+    // The components' ForceUpdate, each takes its value again (PC only, the name is ours: a key's binding, after the
+    // menu that set it closed)
+    void ForceUpdate();
     // Draws the menu's components (its parent's first, where MENUF_UNKNOWN_10000 is set) and, over the active menu,
     // the mouse's cursor
     void Draw(uint flags);
@@ -190,6 +204,8 @@ public:
     void SetHidden(uint id, bool visible);
     // Sets the text, of the text database, of the component of that id, if the menu has one
     void SetTextID(uint id, uint text_id);
+    // The text database's id of the text of the component of that id, 0 where the menu has none
+    uint GetTextID(uint id);
     // Sets the text of the component of that id, if the menu has one
     void SetText(uint id, uchar *text);
     // Sets the string of the component of that id, if the menu has one
@@ -198,8 +214,18 @@ public:
     uchar *GetText(uint id);
     // Sets the value of the component of that id, if the menu has one
     void SetFloat(uint id, float value);
+    // The value of the component of that id, 0 where the menu has none
+    float GetFloat(uint id);
     // Sets the dword of the component of that id, if the menu has one (a text edit's length)
     void SetDword(uint id, uint value);
+    // Sets the bool of the component of that id, if the menu has one (a yes or no selection's)
+    void SetBool(uint id, bool value);
+    // The bool of the component of that id, false where the menu has none
+    bool GetBool(uint id);
+    // Sets the range of the component of that id, if the menu has one (a selection's texts)
+    void SetRangeDword(uint id, uint min, uint max);
+    // Activates the component of that id, if it can be activated, and else none
+    void ActivateByID(uint id);
     // Activates the component of that id, or else the next one that can be activated
     void ActivateByIDOrNext(uint id);
     // The menu's component of that id, NULL for none

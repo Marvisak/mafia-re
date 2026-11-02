@@ -41,9 +41,20 @@ enum {
 #define CONTROL_JOY_POV 0x200
 
 // A POV's direction bits in S_control::code (the names are guesses: the default look left and right bindings use 8 and
-// 2)
+// 2, GetLastInput gives 1 to 8 from the angle, up, right, down, left)
+#define CONTROL_POV_UP 1
 #define CONTROL_POV_RIGHT 2
+#define CONTROL_POV_DOWN 4
 #define CONTROL_POV_LEFT 8
+
+// C_controls::GetLastInput's flags, the inputs it leaves out (the names are ours)
+#define LASTINPUT_NO_MOUSE_AXES 0x1
+#define LASTINPUT_NO_JOY_AXES 0x2
+#define LASTINPUT_NO_MOUSE_BUTTONS 0x4
+#define LASTINPUT_NO_JOY_BUTTONS 0x8
+#define LASTINPUT_NO_POVS 0x10
+#define LASTINPUT_NO_KEYS 0x20
+#define LASTINPUT_NO_RAW_AXES 0x80      // a raw axis (JOY_AXIS_RAW) that moved at all
 
 // C_controls::GetValues' flags (the name is ours)
 #define CONTROLS_PRESSED 1
@@ -62,7 +73,8 @@ struct S_control {
 struct S_joy {
     IJoy *joy;
     S_joy_state state;                  // IJoy::GetState
-    S_joy_state changes;                // IJoy::GetStateChanges
+    // IJoy::GetStateChanges; SaveJoyStates puts the state into it, from which GetLastInput measures the axes' moves
+    S_joy_state changes;
 };
 
 // The player's controls (PC only, the names are ours): the keyboard, the mouse and the joysticks, which the menus and
@@ -110,6 +122,18 @@ public:
     // Reads the keyboard, the mouse and the joysticks into the controls' values; with update_input it has IGraph and
     // the joysticks update their state first, which the menus do themselves
     void Update(bool update_input);
+    // Updates the joysticks and keeps their state, for GetLastInput (the name is ours)
+    void SaveJoyStates();
+    // The input the player gives now (the name is ours), as a binding: a key (IGraph's shift keys first), a mouse
+    // button, a mouse axis moved more than 10 (its half by the direction), a joystick's button, POV (its direction by
+    // the angle) or axis moved far enough from SaveJoyStates' state (in a relative axis's mode from the center), in that
+    // order, but those LASTINPUT_* leaves out. NULL for none. With update the joysticks and IGraph read their state
+    // first.
+    S_control *GetLastInput(uint flags, bool update);
+    // The name of a binding's key, mouse button or axis, or joystick axis, button or POV (the name is ours): a key's
+    // from IGraph, in name, the mouse's from the text database, a joystick's from IJoy. NULL for an unbound control, or
+    // a code none of them has.
+    const char *GetControlName(const S_control *control);
 };
 
 extern C_controls controls;
@@ -131,4 +155,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEXPAUS_Telephone@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEXPAPAUtDynamicCollObject@@IABQAU3@@Z
+// ?insert@?$vector@PAVC_car@@V?$allocator@PAVC_car@@@std@@@std@@QAEXPAPAVC_car@@IABQAV3@@Z
