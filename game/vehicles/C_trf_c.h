@@ -4,8 +4,8 @@
 
 class C_car;
 
-// The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). Only the constructor so far, which
-// C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR.
+// The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). The constructor, which
+// C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, is a stub; written: GetParkingCars and SaveGameGetSize.
 // VTABLE: GAME 0x624c98
 class C_traffic_car : public C_actor
 {

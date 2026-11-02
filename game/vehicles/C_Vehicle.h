@@ -363,7 +363,10 @@ public:
     }
 
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
-    uchar unknown_4[0x118];             // 0x4
+    uchar unknown_4[0xbc];              // 0x4
+    // The locks LockVehicle counts (the name is ours)
+    int unknown_c0;                     // 0xc0
+    uchar unknown_c4[0x58];             // 0xc4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
     uchar unknown_120[0x38];            // 0x120
     S_vector unknown_158;               // 0x158 (car 0x1c8), GetVehicleSize(false)'s
@@ -405,7 +408,9 @@ public:
     float unknown_628;
     uchar unknown_62c[0x600];           // 0x62c
     bool unknown_c2c;                   // 0xc2c (car 0xc9c)
-    uchar unknown_c2d[0xb];             // 0xc2d
+    uchar unknown_c2d[3];               // 0xc2d
+    float unknown_c30;                  // 0xc30 (car 0xca0), the tank's fuel: SetFuel's store (the name is ours)
+    uchar unknown_c34[4];               // 0xc34
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
     S_vector unknown_c3c;               // 0xc3c (car 0xcac), a direction the chases compare theirs with
     S_vector unknown_c48;               // 0xc48 (car 0xcb8)

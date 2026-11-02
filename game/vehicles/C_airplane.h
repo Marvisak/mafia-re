@@ -2,8 +2,8 @@
 
 #include "actors/C_actor.h"
 
-// The airplanes (PS2 C_airplane, C_airplane.cpp), 0x3f0 bytes (PS2's 0x400). Only the constructor so far, which
-// C_mission::CreateActor calls for ACTOR_AIRPLANE, and what the scripts call.
+// The airplanes (PS2 C_airplane, C_airplane.cpp), 0x3f0 bytes (PS2's 0x400). The constructor, which
+// C_mission::CreateActor calls for ACTOR_AIRPLANE, is a stub; written: SaveGameGetSize, GetMaterialID and IsDestroyed.
 // VTABLE: GAME 0x623318
 class C_airplane : public C_actor
 {
@@ -38,7 +38,11 @@ public:
     // Shows the damage on the HUD's bar or hides it (PS2 name); the scripts' AIRPLANESHOWDAMAGE
     void ShowDamageIndicator(bool show);
 
-    uchar unknown_70[0x380];            // 0x70
+    uchar unknown_70[0x158];            // 0x70
+    // IsDestroyed's two values, both under 0.01 when it is (the names are ours)
+    float unknown_1c8;                  // 0x1c8
+    float unknown_1cc;                  // 0x1cc
+    uchar unknown_1d0[0x220];           // 0x1d0
 };
 
 // SYNTHETIC: GAME 0x409500

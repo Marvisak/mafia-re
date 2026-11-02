@@ -1,7 +1,8 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
 // docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written so far: GetParkingCars,
-// which C_traffic_generator::TryGoToAssHole calls; the constructor, which C_mission::CreateActor calls,
-// TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which C_shvestky::TickDoRiciActors calls, are stubs.
+// which C_traffic_generator::TryGoToAssHole calls, and SaveGameGetSize; the constructor, which C_mission::CreateActor
+// calls, TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which C_shvestky::TickDoRiciActors calls, are
+// stubs.
 
 #include "vehicles/C_trf_c.h"
 
@@ -154,11 +155,10 @@ bool C_traffic_car::Hit(int type, const S_vector &v1, const S_vector &v2, const 
     return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
 }
 
-// STUB: GAME 0x4bc150
+// FUNCTION: GAME 0x4bc150
 int C_traffic_car::SaveGameGetSize()
 {
-    StubLog("C_traffic_car::SaveGameGetSize");
-    return C_actor::SaveGameGetSize();
+    return C_actor::SaveGameGetSize() + 2;
 }
 
 // STUB: GAME 0x4bc160
