@@ -3,6 +3,7 @@
 // C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
+#include "g_material.h"
 
 #include "stub.h"
 
@@ -26,7 +27,6 @@ void C_airplane::Start2()
     StubLog("C_airplane::Start2");
 }
 
-// PS2 name; the scripts' AIRPLANE_ISDESTROYED. Both of its values are under 0.01
 // FUNCTION: GAME 0x40d6c0
 bool C_airplane::IsDestroyed()
 {
@@ -137,7 +137,7 @@ void C_airplane::ChangeState()
 // FUNCTION: GAME 0x40df30
 int C_airplane::GetMaterialID(I3D_frame *frm)
 {
-    return 19;
+    return MAT_METAL_STRUCTURE;
 }
 
 // The original's is C_pumper's, folded: it logs that name, so ours folds too

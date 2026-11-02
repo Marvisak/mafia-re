@@ -107,6 +107,10 @@ struct S_vehicle_unknown_ca0
 #define VLIGHT_PROJECTOR_MAIN 0x800000  // CAR_SETPROJECTOR sizes it
 #define VLIGHT_PROJECTORS 0xff00000
 
+// C_Vehicle::unknown_1a4's bits (the names are ours)
+#define VEHF_UNSTABLE 0x8               // IsVehicleUnstable's
+#define VEHF_LOCKED 0x10000000          // while LockVehicle's count is above 0
+
 // The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp), a base of C_car at 0x70 (the car
 // offsets in the members' comments): the tables InitSystem loads through C_car, which CloseSystem frees through this
 // class, as PS2's, the sounds' volume, what the camera reads and what the scripts (C_program::Process) call through
@@ -368,8 +372,7 @@ public:
 
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
     uchar unknown_4[0xbc];              // 0x4
-    // The locks LockVehicle counts (the name is ours)
-    int unknown_c0;                     // 0xc0
+    int unknown_c0;                     // 0xc0, the locks LockVehicle counts
     uchar unknown_c4[0x58];             // 0xc4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
     uchar unknown_120[0x38];            // 0x120
@@ -378,7 +381,7 @@ public:
     S_vector unknown_170;               // 0x170 (car 0x1e0), GetVehiclePivotPos(false)'s
     S_vector unknown_17c;               // 0x17c (car 0x1ec), GetVehiclePivotPos(true)'s
     uchar unknown_188[0x1c];            // 0x188
-    uint unknown_1a4;                   // 0x1a4 (car 0x214), flags: 8 while the vehicle is unstable
+    uint unknown_1a4;                   // 0x1a4 (car 0x214), VEHF_*
     uchar unknown_1a8[0x12c];           // 0x1a8
     S_vector head_pos;                  // 0x2d4 (car 0x344), the driver's head (GetHeadPos)
     uchar unknown_2e0[0x28];            // 0x2e0
@@ -413,14 +416,13 @@ public:
     uchar unknown_62c[0x600];           // 0x62c
     bool unknown_c2c;                   // 0xc2c (car 0xc9c)
     uchar unknown_c2d[3];               // 0xc2d
-    float unknown_c30;                  // 0xc30 (car 0xca0), the tank's fuel: SetFuel's store (the name is ours)
+    float unknown_c30;                  // 0xc30 (car 0xca0), the tank's fuel: SetFuel's store
     uchar unknown_c34[4];               // 0xc34
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
     S_vector unknown_c3c;               // 0xc3c (car 0xcac), a direction the chases compare theirs with
     S_vector unknown_c48;               // 0xc48 (car 0xcb8)
     S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
-    // SetEnterProtect1 sets it (the name is ours)
-    bool unknown_c60;                   // 0xc60 (car 0xcd0)
+    bool unknown_c60;                   // 0xc60 (car 0xcd0), which SetEnterProtect1 sets
     uchar unknown_c61[3];               // 0xc61
     float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
     uchar unknown_c68[0xc];             // 0xc68

@@ -2,8 +2,9 @@
 // construct the tables, docs/game-files.md). Written so far: the tables C_car's loaders fill and CloseSystem frees, in
 // PS2's order (each table's Set before its Close), what the camera calls (GetWheelCamPos, GetHeadPos,
 // IsVehicleUnstable, GetVehicleSize), what the HUD calls (GetVehiclePivotPos), AddSectorForProjectorLights, which
-// C_game::Init calls, and AddSectorForSounds, the scripts', SetFuel and LockVehicle. The scripts' other functions, and
-// SetEngineOn and ExternalImpuls, which the AI's fights and C_game::DoubleKiss call, are stubs.
+// C_game::Init calls, SetFuel, which C_mission::FrmActBuff_IsActiveActor calls, and the scripts' AddSectorForSounds and
+// LockVehicle. The scripts' other functions, and SetEngineOn and ExternalImpuls, which the AI's fights and
+// C_game::DoubleKiss call, are stubs.
 // Open: the file starts with an empty initializer (0x4bd650) and has two more vectors after v_particle (0x63d890,
 // 0x63d880), most likely PS2's v_light_sector and v_sound_sector; the tables' destructors (0x4bd6a0 and on) test and set
 // a guard byte (0x63d9c0) as the tracks' do (actors/C_animations.cpp), and the .bss order isn't the buckets' of these
@@ -177,7 +178,7 @@ const S_vector &C_Vehicle::GetHeadPos()
 // FUNCTION: GAME 0x4cd5b0
 bool C_Vehicle::IsVehicleUnstable()
 {
-    return unknown_1a4 & 8 ? true : false;
+    return unknown_1a4 & VEHF_UNSTABLE ? true : false;
 }
 
 // FUNCTION: GAME 0x4cd5c0
@@ -207,9 +208,9 @@ void C_Vehicle::LockVehicle(bool lock)
     uint flags = unknown_1a4;
     unknown_c0 = count;
     if (count > 0)
-        flags |= 0x10000000;
+        flags |= VEHF_LOCKED;
     else
-        flags &= ~0x10000000;
+        flags &= ~VEHF_LOCKED;
     unknown_1a4 = flags;
 }
 

@@ -7,8 +7,10 @@
 // G_LoadSaveClass::Init calls, loads them, UnloadMaterials, which G_LoadSaveClass::Close calls, frees them. The tables'
 // structs and their names are ours, after their files.
 
-// The materials the shots treat apart (materialList's indices, g_collision_header::material; the names are ours, after
-// materials.def's "Sklo" and "CRASH COLLISION")
+// The materials the code names (materialList's indices, g_collision_header::material; the names are ours, after
+// materials.def's "Kovove konstrukce" (metal structures), "Sklo" and "CRASH COLLISION"): the airplanes'
+// (C_airplane::GetMaterialID's) and those the shots treat apart
+#define MAT_METAL_STRUCTURE 0x13
 #define MAT_GLASS 0x18
 #define MAT_CRASH 0x29
 

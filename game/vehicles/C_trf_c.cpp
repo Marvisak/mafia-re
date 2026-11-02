@@ -80,7 +80,6 @@ void C_traffic_car::ChangeState()
     C_actor::ChangeState();
 }
 
-// The fields and the names, which DuplicateFrom copies (the names are ours)
 // FUNCTION: GAME 0x4aab20
 void C_traffic_car::DuplicateFrom(C_actor *act)
 {
@@ -95,9 +94,9 @@ void C_traffic_car::DuplicateFrom(C_actor *act)
     names = NULL;
     num_names = other->num_names;
     if (num_names)
-        names = new char[32 * num_names];
+        names = new char[TRAFFIC_NAME_SIZE * num_names];
     for (int i = 0; i < num_names; i++)
-        strcpy(names + 32 * i, other->names + 32 * i);
+        strcpy(names + TRAFFIC_NAME_SIZE * i, other->names + TRAFFIC_NAME_SIZE * i);
 }
 
 // STUB: GAME 0x4aabf0

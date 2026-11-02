@@ -1,11 +1,11 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set, GetInvModelMatrix, GetActualLevel, GetTimeParking and GetActorSpeed, GetOwner, which
-// C_shvestky::TickDoRiciActors calls, and what the scripts call: GetLevelsCount, SetEnterProtect1,
-// GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor calls, SetOwner, SetActualLevel,
-// the force feedback effects, Reset, IsCarUsable, the scripts' other functions and TryGoToAssHole's others
-// (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
+// profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls,
+// GetOwner, which C_shvestky::TickDoRiciActors calls, the virtual GetActorSpeed, and what the scripts call:
+// GetLevelsCount, SetEnterProtect1, GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor
+// calls, SetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable, the scripts' other functions and
+// TryGoToAssHole's others (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -456,7 +456,7 @@ void C_car::SetEnterProtect1(int seat, bool on)
     else
         enter_protect &= ~bit;
     unknown_c60 = true;
-    SetActState(0);
+    SetActState(ACTSTATE_0);
 }
 
 // Each wheel's collision flag into colls or out of it, at most num of them (PS2 names)

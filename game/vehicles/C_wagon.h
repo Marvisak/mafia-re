@@ -56,7 +56,7 @@ public:
     uchar unknown_70[0xc];              // 0x70
     std::vector<uint> path;             // 0x7c (PS2 0x100), the web path's nodes (the name is ours)
     uchar unknown_8c[0x1c];             // 0x8c
-    // The second vector SaveGameGetSize counts (the name is ours)
+    // The second vector SaveGameGetSize counts
     std::vector<uint> unknown_a8;       // 0xa8
     uchar unknown_b8[0xe0];             // 0xb8
     // The script and the event WAGON_SETEVENT gave the wagon (PS2 0x1cc and 0x1d0, the names are ours)

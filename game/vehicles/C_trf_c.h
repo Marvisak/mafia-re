@@ -4,6 +4,9 @@
 
 class C_car;
 
+// The size of each of C_traffic_car::names (the name is a guess)
+#define TRAFFIC_NAME_SIZE 0x20
+
 // The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). The constructor, which
 // C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, is a stub; written: GetParkingCars, SaveGameGetSize and
 // DuplicateFrom.
@@ -54,17 +57,17 @@ public:
     // The parked cars (PS2 names), which C_traffic_generator::TryGoToAssHole sends pedestrians to
     static std::vector<S_ELEMENT *> &GetParkingCars();
 
-    // DuplicateFrom's fields (the names are ours)
     uchar unknown_70[0x1ac];            // 0x70
+    // DuplicateFrom's fields
     int unknown_21c;                    // 0x21c
     uchar unknown_220[4];               // 0x220
     int unknown_224;                    // 0x224
     int unknown_228;                    // 0x228
     int unknown_22c;                    // 0x22c
     uchar unknown_230[4];               // 0x230
-    // 0x234 and 0x238: the names, 32 bytes each
-    char *names;
-    int num_names;
+    // The names PS2's LoadData reads and DuplicateFrom copies, TRAFFIC_NAME_SIZE bytes each (the names are ours)
+    char *names;                        // 0x234
+    int num_names;                      // 0x238
     uchar unknown_23c[0x30];            // 0x23c
 
     static std::vector<S_ELEMENT *> v_elems_parking;

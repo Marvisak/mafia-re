@@ -40,8 +40,8 @@ void C_wagon::NetDirect(uint time)
 int C_wagon::SaveGameGetSize()
 {
     int size = C_actor::SaveGameGetSize() + 95;
-    size += 4 * unknown_a8.size();
-    size += 4 * path.size();
+    size += sizeof(uint) * unknown_a8.size();
+    size += sizeof(uint) * path.size();
     return size;
 }
 

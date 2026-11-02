@@ -36,12 +36,12 @@ public:
     virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
 
     uchar unknown_70[0x138];            // 0x70
-    // DuplicateFrom's two copies (the names are ours)
+    // DuplicateFrom's two copies
     int unknown_1a8;                    // 0x1a8
     uchar unknown_1ac[8];               // 0x1ac
     int unknown_1b4;                    // 0x1b4
     uchar unknown_1b8[0xf4];            // 0x1b8
-    // GetMaterialID's (the name is ours)
+    // GetMaterialID's, a materials.def index (materialList's)
     int unknown_2ac;                    // 0x2ac
     uchar unknown_2b0[0xc0];            // 0x2b0
 };

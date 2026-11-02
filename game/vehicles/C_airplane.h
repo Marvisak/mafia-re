@@ -39,7 +39,7 @@ public:
     void ShowDamageIndicator(bool show);
 
     uchar unknown_70[0x158];            // 0x70
-    // IsDestroyed's two values, both under 0.01 when it is (the names are ours)
+    // IsDestroyed's two values, both under 0.01 when it is
     float unknown_1c8;                  // 0x1c8
     float unknown_1cc;                  // 0x1cc
     uchar unknown_1d0[0x220];           // 0x1d0
