@@ -2,8 +2,8 @@
 // construct the tables, docs/game-files.md). Written so far: the tables C_car's loaders fill and CloseSystem frees, in
 // PS2's order (each table's Set before its Close), what the camera calls (GetWheelCamPos, GetHeadPos,
 // IsVehicleUnstable, GetVehicleSize), what the HUD calls (GetVehiclePivotPos), AddSectorForProjectorLights, which
-// C_game::Init calls, and AddSectorForSounds, the scripts'. The scripts' other functions, and SetEngineOn and
-// ExternalImpuls, which the AI's fights and C_game::DoubleKiss call, are stubs.
+// C_game::Init calls, and AddSectorForSounds, the scripts', SetFuel and LockVehicle. The scripts' other functions, and
+// SetEngineOn and ExternalImpuls, which the AI's fights and C_game::DoubleKiss call, are stubs.
 // Open: the file starts with an empty initializer (0x4bd650) and has two more vectors after v_particle (0x63d890,
 // 0x63d880), most likely PS2's v_light_sector and v_sound_sector; the tables' destructors (0x4bd6a0 and on) test and set
 // a guard byte (0x63d9c0) as the tracks' do (actors/C_animations.cpp), and the .bss order isn't the buckets' of these
@@ -150,10 +150,13 @@ void C_Vehicle::SetEngineOn(bool on, bool unknown)
     StubLog("C_Vehicle::SetEngineOn");
 }
 
-// STUB: GAME 0x4cb6e0
+// Fills the tank up to fuel, at most its size (PS2 name)
+// FUNCTION: GAME 0x4cb6e0
 bool C_Vehicle::SetFuel(float fuel)
 {
-    StubLog("C_Vehicle::SetFuel");
+    if (fuel > unknown_1fa0)
+        fuel = unknown_1fa0;
+    unknown_c30 = fuel;
     return true;
 }
 
@@ -191,10 +194,23 @@ const S_vector &C_Vehicle::GetVehiclePivotPos(bool b)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x4cd600
+// Counts the locks up or down, the vehicle locked while there are any (PS2 name)
+// FUNCTION: GAME 0x4cd600
 void C_Vehicle::LockVehicle(bool lock)
 {
-    StubLog("C_Vehicle::LockVehicle %d", lock);
+    // The count and the flags go through these locals, as the original's eax and edx do
+    int count;
+    if (lock)
+        count = unknown_c0 + 1;
+    else
+        count = unknown_c0 - 1;
+    uint flags = unknown_1a4;
+    unknown_c0 = count;
+    if (count > 0)
+        flags |= 0x10000000;
+    else
+        flags &= ~0x10000000;
+    unknown_1a4 = flags;
 }
 
 // STUB: GAME 0x4cd640

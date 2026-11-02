@@ -1,10 +1,11 @@
 // The cars (PS2 C_car.cpp; the PC's file is most likely the one at 0x41bb50-0x42e23c, docs/game-files.md). Written so
 // far: the tables InitSystem loads, in PS2's order (PS2's Load_Particle and Change_Particle after LoadParticles are
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
-// profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls.
-// The constructor, which C_mission::CreateActor calls, the other virtual functions (SetOwner and GetOwner, which
-// C_shvestky::TickDoRiciActors calls, SetActualLevel, the force feedback effects, Reset, IsCarUsable), the functions
-// the scripts call and TryGoToAssHole's others (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
+// profiles set, GetInvModelMatrix, GetActualLevel, GetTimeParking and GetActorSpeed, GetOwner, which
+// C_shvestky::TickDoRiciActors calls, and what the scripts call: GetLevelsCount, SetEnterProtect1,
+// GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor calls, SetOwner, SetActualLevel,
+// the force feedback effects, Reset, IsCarUsable, the scripts' other functions and TryGoToAssHole's others
+// (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -326,10 +327,12 @@ bool C_car::SetOwner(C_actor *act, int seat, float unknown)
     return false;
 }
 
-// STUB: GAME 0x41dec0
+// The human in a seat (PS2 name), NULL for none
+// FUNCTION: GAME 0x41dec0
 C_human *C_car::GetOwner(int seat)
 {
-    StubLog("C_car::GetOwner %d", seat);
+    if (seat >= 0 && seat < v_seats.size() && v_seats[seat].occupied)
+        return v_seats[seat].owner;
     return NULL;
 }
 
@@ -339,11 +342,11 @@ void C_car::_RepairPosition(bool unknown)
     StubLog("C_car::_RepairPosition");
 }
 
-// STUB: GAME 0x41e9c0
+// The number of tuning levels the car has (PS2 name)
+// FUNCTION: GAME 0x41e9c0
 int C_car::GetLevelsCount()
 {
-    StubLog("C_car::GetLevelsCount");
-    return 0;
+    return v_levels.size();
 }
 
 #pragma auto_inline(on)
@@ -443,22 +446,40 @@ void C_car::SetEnterProtect(bool protect)
     StubLog("C_car::SetEnterProtect %d", protect);
 }
 
-// STUB: GAME 0x429770
+// The same for one seat (PS2 name)
+// FUNCTION: GAME 0x429770
 void C_car::SetEnterProtect1(int seat, bool on)
 {
-    StubLog("C_car::SetEnterProtect1 %d %d", seat, on);
+    uint bit = 1 << seat;
+    if (on)
+        enter_protect |= bit;
+    else
+        enter_protect &= ~bit;
+    unknown_c60 = true;
+    SetActState(0);
 }
 
-// STUB: GAME 0x4297b0
+// Each wheel's collision flag into colls or out of it, at most num of them (PS2 names)
+// FUNCTION: GAME 0x4297b0
 void C_car::GetCarWheelColl(bool *colls, int num)
 {
-    StubLog("C_car::GetCarWheelColl");
+    int &count = num < num_wheels ? num : num_wheels;
+    for (int i = count; i--;)
+        colls[i] = (wheels[i]->unknown_120 & WHEELF_COLLISION) != 0;
 }
 
-// STUB: GAME 0x429800
+// FUNCTION: GAME 0x429800
 void C_car::SetCarWheelColl(bool *colls, int num)
 {
-    StubLog("C_car::SetCarWheelColl");
+    int &count = num < num_wheels ? num : num_wheels;
+    int i = count;
+    while (i--)
+    {
+        if (colls[i])
+            wheels[i]->unknown_120 |= WHEELF_COLLISION;
+        else
+            wheels[i]->unknown_120 &= ~WHEELF_COLLISION;
+    }
 }
 
 // STUB: GAME 0x429850
@@ -592,11 +613,10 @@ void C_car::ChangeState()
     C_actor::ChangeState();
 }
 
-// STUB: GAME 0x429dd0
+// FUNCTION: GAME 0x429dd0
 void C_car::GetActorSpeed(S_vector &speed)
 {
-    StubLog("C_car::GetActorSpeed");
-    C_actor::GetActorSpeed(speed);
+    speed = velocity;
 }
 
 // STUB: GAME 0x429df0

@@ -1,5 +1,5 @@
 // The wagons (PS2 C_wagon.cpp; the PC's file is the one at 0x4f1b50-0x4f5dbc, docs/game-files.md), which starts with
-// the constructor. Not written yet: the constructor, which C_mission::CreateActor calls, is a stub.
+// the constructor. Written: SaveGameGetSize; the constructor, which C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_wagon.h"
 
@@ -36,11 +36,13 @@ void C_wagon::NetDirect(uint time)
 {
 }
 
-// STUB: GAME 0x4f1ca0
+// FUNCTION: GAME 0x4f1ca0
 int C_wagon::SaveGameGetSize()
 {
-    StubLog("C_wagon::SaveGameGetSize");
-    return C_actor::SaveGameGetSize();
+    int size = C_actor::SaveGameGetSize() + 95;
+    size += 4 * unknown_a8.size();
+    size += 4 * path.size();
+    return size;
 }
 
 // STUB: GAME 0x4f1cf0

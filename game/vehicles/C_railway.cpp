@@ -1,6 +1,6 @@
 // The rail vehicles (most likely PS2 C_railway.cpp; the PC's file is the one at 0x4826c0-0x49908c,
-// docs/game-files.md), whose constructor (0x4865b0) comes after functions of its own. Not written yet: the
-// constructor, which C_mission::CreateActor calls, is a stub.
+// docs/game-files.md), whose constructor (0x4865b0) comes after functions of its own. Written: DuplicateFrom,
+// SaveGameGetSize and GetMaterialID; the constructor, which C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_railway.h"
 
@@ -31,11 +31,12 @@ bool C_railway::Init(I3D_frame *frm)
     return C_actor::Init(frm);
 }
 
-// STUB: GAME 0x4868f0
+// FUNCTION: GAME 0x4868f0
 void C_railway::DuplicateFrom(C_actor *act)
 {
-    StubLog("C_railway::DuplicateFrom");
     C_actor::DuplicateFrom(act);
+    unknown_1a8 = ((C_railway *)act)->unknown_1a8;
+    unknown_1b4 = ((C_railway *)act)->unknown_1b4;
 }
 
 // STUB: GAME 0x486920
@@ -103,11 +104,10 @@ bool C_railway::Hit(int type, const S_vector &v1, const S_vector &v2, const S_ve
     return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
 }
 
-// STUB: GAME 0x496e40
+// FUNCTION: GAME 0x496e40
 int C_railway::SaveGameGetSize()
 {
-    StubLog("C_railway::SaveGameGetSize");
-    return C_actor::SaveGameGetSize();
+    return C_actor::SaveGameGetSize() + 80;
 }
 
 // STUB: GAME 0x496e50
@@ -138,11 +138,10 @@ bool C_railway::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
     return C_actor::GetBoundPoints2D(points, frm);
 }
 
-// STUB: GAME 0x498a70
+// FUNCTION: GAME 0x498a70
 int C_railway::GetMaterialID(I3D_frame *frm)
 {
-    StubLog("C_railway::GetMaterialID");
-    return C_actor::GetMaterialID(frm);
+    return unknown_2ac;
 }
 
 // STUB: GAME 0x498a80
