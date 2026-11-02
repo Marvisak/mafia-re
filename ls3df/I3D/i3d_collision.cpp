@@ -773,7 +773,7 @@ static void testSubtree(I3D_frame *frm)
     if (frm->GetType() == FRAME_VISUAL && frm != pWFrame) {
         I3D_visual *vis = (I3D_visual *)frm;
         if (LineIntersectSphere(vis->GetWBoundVolume().bsphere) &&
-            !(vis->vis_flags & VISF_UNKNOWN_1000 && colFlags & COLF_UNKNOWN_4000000)) {
+            !(vis->vis_flags & VISF_COL_OPTIONAL && colFlags & COLF_SKIP_OPTIONAL)) {
             switch (vis->GetVisualType()) {
             case I3D_VISUAL_OBJECT:
             case I3D_VISUAL_LIT_OBJECT:
@@ -1388,7 +1388,7 @@ static void sphTestSubtree(I3D_frame *frm)
         I3D_visual *vis = (I3D_visual *)frm;
         const I3D_bvolume &bv = vis->GetWBoundVolume();
         if (BoxIntersect(sphBox, bv.bbox) && SphereIntersect(bv.bsphere) &&
-            !(vis->vis_flags & VISF_UNKNOWN_1000 && colFlags & COLF_UNKNOWN_4000000)) {
+            !(vis->vis_flags & VISF_COL_OPTIONAL && colFlags & COLF_SKIP_OPTIONAL)) {
             switch (vis->visual_type) {
             case I3D_VISUAL_OBJECT:
             case I3D_VISUAL_LIT_OBJECT:
@@ -1516,7 +1516,7 @@ I3D_frame *I3D_scene::TestColSphereVisual(const S_vector &from, const S_vector &
         return NULL;
     const I3D_bvolume &bv = vis->GetWBoundVolume();
     if (BoxIntersect(sphBox, bv.bbox) && SphereIntersect(bv.bsphere) &&
-        !(vis->vis_flags & VISF_UNKNOWN_1000 && colFlags & COLF_UNKNOWN_4000000)) {
+        !(vis->vis_flags & VISF_COL_OPTIONAL && colFlags & COLF_SKIP_OPTIONAL)) {
         switch (vis->GetVisualType()) {
         case I3D_VISUAL_OBJECT:
         case I3D_VISUAL_LIT_OBJECT:

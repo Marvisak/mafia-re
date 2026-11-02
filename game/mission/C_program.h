@@ -541,11 +541,11 @@ struct S_ifflt_params
 struct S_playsound_params
 {
     char name[64];                      // 0x0
-    int unknown_40;                     // 0x40
-    float unknown_44;                   // 0x44
-    float unknown_48;                   // 0x48
-    int unknown_4c;                     // 0x4c, 0 without it
-    float unknown_50;                   // 0x50, 0 without it, its reciprocal if above 1
+    int reg;                            // 0x40, the frame register it plays at, else the script's actor's frame
+    float range;                        // 0x44, the far range (the near one half of it)
+    float volume;                       // 0x48
+    int result_reg;                     // 0x4c, the float register for the sound's number, 0 without it
+    float fade;                         // 0x50, Play3DSound's fade in a ms, 0 without it, its reciprocal if above 1
 };
 
 // DETECTOR_ISSIGNAL's
@@ -828,7 +828,7 @@ public:
 // DecompileCommand's folded group: the empty ret 8 of the out-of-line kind (C_web_path::DebugFindPath's and
 // C_seagull's vfunc_38 too), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x46ca70
-// ?DebugFindPath@C_web_path@@UAEXGG@Z
+// ?vfunc_38@C_seagull@@UAEXHH@Z
 
 // Loads one of the patch's script files, patch\a1.bin to a4.bin, into C_program::change_progs (PC only, the name is
 // ours)

@@ -12,7 +12,7 @@
 #include "ai/road_web.h"
 #include "mission/C_effects.h"
 #include "mission/C_program.h"
-#include "mission/C_cutscene.h"
+#include "mission/C_recorder.h"
 #include "mission/m_cache.h"
 #include "actors/C_actor.h"
 #include "actors/C_actor_shot.h"
@@ -73,7 +73,7 @@ bool operator<(const C_str &s1, const C_str &s2)
 C_mission::C_mission() :
     unknown_0(0),
     unknown_4(0),
-    unknown_c(false),
+    opened(false),
     scene(NULL),
     tshift(NULL),
     mission_name(NULL)
@@ -159,7 +159,7 @@ void C_mission::UnInit()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x53f520
-void C_mission::AddAnimModel(I3D_model *model, bool unknown)
+void C_mission::AddAnimModel(I3D_model *model, bool game_model)
 {
     StubLog("C_mission::AddAnimModel");
 }
@@ -178,7 +178,7 @@ void C_mission::ClearGameAnimModels()
 {
     for (uint i = 0; i < anim_models.size();)
     {
-        if (anim_models[i].unknown_4)
+        if (anim_models[i].game_model)
         {
             anim_models[i] = anim_models.back();
             anim_models.pop_back();
@@ -285,7 +285,7 @@ C_actor *C_mission::CreateActor(int type)
 
 // Each list searched from its last actor, as AddActorToGlobal does, and PS2's second search through a flag
 // FUNCTION: GAME 0x53fea0
-void C_mission::AddActor(C_actor *actor, bool add_unknown_44)
+void C_mission::AddActor(C_actor *actor, bool not_me)
 {
     for (int i = actors.size(); i--;)
     {
@@ -293,19 +293,19 @@ void C_mission::AddActor(C_actor *actor, bool add_unknown_44)
             return;
     }
     actors.push_back(actor);
-    if (add_unknown_44)
+    if (not_me)
     {
         bool add = true;
-        for (int i = unknown_44.size(); i--;)
+        for (int i = not_me_actors.size(); i--;)
         {
-            if (actor == unknown_44[i])
+            if (actor == not_me_actors[i])
             {
                 add = false;
                 break;
             }
         }
         if (add)
-            unknown_44.push_back(actor);
+            not_me_actors.push_back(actor);
     }
 }
 
@@ -350,18 +350,18 @@ void C_mission::DelActors()
         actors[i]->Release();
     }
     actors.clear();
-    unknown_44.clear();
+    not_me_actors.clear();
 }
 
-// The actors of unknown_44 leave the mission as DelActors' do, each looked for from the last actor, as PS2's
+// The actors of not_me_actors leave the mission as DelActors' do, each looked for from the last actor, as PS2's
 // FUNCTION: GAME 0x540300
 void C_mission::DelNotMeActors()
 {
-    for (int i = unknown_44.size(); i--;)
+    for (int i = not_me_actors.size(); i--;)
     {
         for (int j = actors.size(); j--;)
         {
-            if (actors[j] == unknown_44[i])
+            if (actors[j] == not_me_actors[i])
             {
                 I3D_frame *frm = actors[j]->frame;
                 if (frm)
@@ -379,7 +379,7 @@ void C_mission::DelNotMeActors()
             }
         }
     }
-    unknown_44.clear();
+    not_me_actors.clear();
 }
 
 #pragma auto_inline(off)
@@ -430,7 +430,7 @@ void C_mission::GlobalProgramRun(const char *name)
 // FUNCTION: GAME 0x5405e0
 void C_mission::Close()
 {
-    if (!unknown_c)
+    if (!opened)
         return;
     if (game)
     {
@@ -462,7 +462,7 @@ void C_mission::Close()
     }
     t_transparent.clear();
     scene->Close();
-    unknown_c = false;
+    opened = false;
 }
 
 // PS2's without the volume (PC only) and with a loop over its actors of its own. The objects that fade out are taken
@@ -471,7 +471,7 @@ void C_mission::Close()
 // FUNCTION: GAME 0x5407e0
 void C_mission::Tick(int time)
 {
-    if (restore_volume && unknown_78 < 1)
+    if (restore_volume && skip_frames < 1)
     {
         restore_volume = false;
         if (isound)
@@ -555,10 +555,10 @@ static inline void CopyString(char *&dst, const char *src)
 // FUNCTION: GAME 0x5409d0
 int C_mission::Open(const char *name, bool log, uint flags, bool progress)
 {
-    game->ResetUnknown363c();
-    unknown_8 = 0;
+    game->ResetIntern();
+    last_actor_number = 0;
     Close();
-    unknown_78 = 0;
+    skip_frames = 0;
     C_actor::global_refs = 0;
     if (!WaitForCD())
         return MISSION_OPEN_NO_CD;
@@ -608,7 +608,7 @@ int C_mission::Open(const char *name, bool log, uint flags, bool progress)
         _can_show_progress_ = 2;
     if (ret)
         return MISSION_OPEN_FAILED;
-    unknown_c = true;
+    opened = true;
     if (chunk.ROpen(C_fstr("missions\\%s\\cache.bin", name)))
     {
         base_cache.Open(&chunk, scene);
@@ -1415,7 +1415,7 @@ int C_mission::OpenBin(const char *dir, uint flags)
                             {
                                 S_anim_model m;
                                 m.model = (I3D_model *)frm;
-                                m.unknown_4 = false;
+                                m.game_model = false;
                                 anim_models.push_back(m);
                             }
                             if (obj_flags & OBJF_CREATED && !(obj_flags & OBJF_PARENT))
@@ -1496,7 +1496,7 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                     {
                                         if (actor->Init(frm))
                                         {
-                                            actor->SetUnknown66();
+                                            actor->SetFromMission();
                                             AddActor(actor, false);
                                             C_actor **p = GetFrameActor(frm);
                                             if (!p)
@@ -1804,7 +1804,7 @@ bool C_mission::FrmActBuff_IsActiveActor(C_actor *actor)
             if (active_actors[i]->type == ACTOR_CAR)
             {
                 ((C_car *)active_actors[i])->Reset(0.0f, true);
-                ((C_car *)active_actors[i])->SetFuel(((C_car *)active_actors[i])->GetUnknown1fa0());
+                ((C_car *)active_actors[i])->SetFuel(((C_car *)active_actors[i])->GetTankSize());
             }
             active_actors[i]->Rebirth();
             active_actors[i] = active_actors.back();

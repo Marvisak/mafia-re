@@ -61,7 +61,7 @@ S_camera_params cameraParams[NUM_CAMERAS] = {
     {CAMERA_C_BEHIND3, CAMERA_C_CHASE,
         {0.12f, 0.02f, 0.06f, 0.5f, 0.8f, 0.36f, 0.2f, 1.0f, 0.48f, 0.2f}, "C Behind3", 0},
     {CAMERA_C_CHASE, CAMERA_C_IN,
-        {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f}, "C Chase", CAMPF_UNKNOWN_2},
+        {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f}, "C Chase", CAMPF_HIDE_CAR},
     {CAMERA_C_IN, CAMERA_C_OVER,
         {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f}, "C In", 0},
     {CAMERA_C_OVER, CAMERA_C_BEHIND_HELLBOY,
@@ -175,7 +175,7 @@ void G_Camera::Reset()
     car = NULL;
     link = NULL;
     mode = mafiaLoadSave.settings.camera;
-    unknown_14 = mode;
+    next_mode = mode;
     unknown_20 = false;
     unknown_21 = false;
     unknown_22 = false;
@@ -187,7 +187,7 @@ void G_Camera::Reset()
     swing_frame = NULL;
     push_pop.clear();
     unknown_8c = 0.0f;
-    unknown_90 = 0.2f;
+    sniper_fov = 0.2f;
     params = cameraParams[0].values;
     free_look = false;
     push_pop.clear();
@@ -224,7 +224,7 @@ void G_Camera::SetCar(C_car *c)
     End();
     car = c;
     if (car)
-        mode = mafiaLoadSave.settings.unknown_34;
+        mode = mafiaLoadSave.settings.car_camera;
     else
     {
         mode = mafiaLoadSave.settings.camera;
@@ -260,14 +260,14 @@ void G_Camera::SetSwing(bool on, float amount, I3D_frame *frm)
 // FUNCTION: GAME 0x5ed400
 void G_Camera::SetMode(uint m, bool begin)
 {
-    if (m == CAMERA_NEXT && !unknown_14)
+    if (m == CAMERA_NEXT && !next_mode)
         return;
     if (begin)
         End();
     if (m == CAMERA_NEXT)
-        m = unknown_14;
+        m = next_mode;
     if (m >= CAMERA_C_FIRST && m < CAMERA_C_END)
-        mafiaLoadSave.settings.unknown_34 = m;
+        mafiaLoadSave.settings.car_camera = m;
     if (m >= CAMERA_P_FIRST && m < CAMERA_P_END)
         mafiaLoadSave.settings.camera = m;
     mode = m;
@@ -490,7 +490,7 @@ void G_Camera::Tick(uint time)
                 float max_y = -(car->GetVehicleSize(false).y - p[CAMV_C_HEIGHT] * 10.0f);
                 if (look.y > max_y)
                     look.y = max_y;
-                WantPosCar(car->unknown_398 + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
+                WantPosCar(car->world_pos + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
             }
             break;
         // Only the heights of the direction and the position are filtered; the camera turns round the car with
@@ -534,10 +534,10 @@ void G_Camera::Tick(uint time)
                 side.Normalize();
                 look = dir * (1.0f - fabs(s));
                 look += side * p[CAMV_C_SIDE] * 10.0f * s;
-                WantPosCar(car->unknown_398 + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
+                WantPosCar(car->world_pos + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
             }
             break;
-        // As the three before, the direction turned towards the velocity at speed (forward or backward by unknown_c64)
+        // As the three before, the direction turned towards the velocity at speed (forward or backward by velocity_angle)
         case CAMERA_C_BEHIND_HELLBOY_11:
             {
                 static float oldDirY;
@@ -564,7 +564,7 @@ void G_Camera::Tick(uint time)
                 if (s > 1.0f)
                     s = 1.0f;
                 dir *= s;
-                dir += car->GetDir() * (car->speed > 0.4f ? (car->unknown_c64 < PI / 2 ? 1 : -1) : 0.0f) *
+                dir += car->GetDir() * (car->speed > 0.4f ? (car->velocity_angle < PI / 2 ? 1 : -1) : 0.0f) *
                     (1.0f - s);
                 dir.Normalize();
                 float c = (float)cos(look_around * PI);
@@ -598,7 +598,7 @@ void G_Camera::Tick(uint time)
                 float max_y = -(car->GetVehicleSize(false).y - p[CAMV_C_HEIGHT] * 10.0f);
                 if (look.y > max_y)
                     look.y = max_y;
-                WantPosCar(car->unknown_398 + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
+                WantPosCar(car->world_pos + S_vector(0.0f, p[CAMV_C_HEIGHT] * 10.0f, 0.0f), look);
             }
             break;
         // "C Chase" (PS2's is another camera, with C_Vehicle::GetWheelCamPos; the PC's has C Over's code)
@@ -883,8 +883,8 @@ void G_Camera::Tick(uint time)
                     sumY += weight * filteringBuffer[i][1];
                     sumTime += filteringBuffer[i][2];
                     sumWeight += weight;
-                    weight *= (float)pow(mafiaLoadSave.settings.unknown_c, mafiaLoadSave.settings.unknown_8 * sumTime *
-                        100.0f);
+                    weight *= (float)pow(mafiaLoadSave.settings.mouse_filter_base,
+                        mafiaLoadSave.settings.mouse_filter_rate * sumTime * 100.0f);
                 }
                 cameraDirRot += (sumX / sumWeight) * mafiaLoadSave.settings.aiming_sensitivity_x * 0.02f;
                 cameraDirUpDown += (sumY / sumWeight) * mafiaLoadSave.settings.aiming_sensitivity_y * 0.007f;
@@ -951,7 +951,7 @@ void G_Camera::WantPosCar(const S_vector &target, const S_vector &look)
         dir.Normalize();
         // Both assigned too: initialized, VC6 builds them in place and the frame shrinks by 8 bytes
         S_vector right;
-        right = dir.Cross(car->unknown_c54);
+        right = dir.Cross(car->up);
         right.Normalize();
         S_vector up;
         up = right.Cross(dir);
@@ -1061,7 +1061,7 @@ void G_Camera::Begin()
 {
     if (!camera)
         return;
-    unknown_14 = 0;
+    next_mode = 0;
     int i;
     for (i = 0; i < NUM_CAMERAS; i++)
     {
@@ -1070,11 +1070,11 @@ void G_Camera::Begin()
             params = cameraParams[i].values;
             flags = cameraParams[i].flags;
             unknown_22 = (flags & CAMPF_UNKNOWN_1) != 0;
-            unknown_14 = cameraParams[i].next;
+            next_mode = cameraParams[i].next;
             if (car && car->frame)
             {
-                car->frame->SetOn(!(flags & CAMPF_UNKNOWN_2));
-                car->unknown_2119 = (flags & CAMPF_UNKNOWN_2) != 0;
+                car->frame->SetOn(!(flags & CAMPF_HIDE_CAR));
+                car->hidden_by_camera = (flags & CAMPF_HIDE_CAR) != 0;
             }
             if (!(flags & CAMPF_EYES))
             {
@@ -1126,8 +1126,8 @@ void G_Camera::Begin()
         camera->LinkTo(link, I3DLINK_UPDMATRIX);
         break;
     case CAMERA_CP_SNIPER:
-        mafiaIndicators.unknown_40a4 &= ~INDF_CROSSHAIR;
-        mafiaIndicators.unknown_40a4 |= INDF_SNIPER;
+        mafiaIndicators.show_flags &= ~INDF_CROSSHAIR;
+        mafiaIndicators.show_flags |= INDF_SNIPER;
         break;
     case CAMERA_DEATH:
         cameraInDeath = camera->GetWorldPos();
@@ -1151,8 +1151,8 @@ void G_Camera::End()
     switch (mode)
     {
     case CAMERA_CP_SNIPER:
-        mafiaIndicators.unknown_40a4 &= ~INDF_SNIPER;
-        mafiaIndicators.unknown_40a4 |= INDF_CROSSHAIR;
+        mafiaIndicators.show_flags &= ~INDF_SNIPER;
+        mafiaIndicators.show_flags |= INDF_CROSSHAIR;
         break;
     case CAMERA_C_RAILWAY_IN:
         camera->LinkTo(act_mission->scene->primary_sector, I3DLINK_UPDMATRIX);
@@ -1165,7 +1165,7 @@ void G_Camera::End()
     if (car)
     {
         car->frame->SetOn(true);
-        car->unknown_2119 = false;
+        car->hidden_by_camera = false;
     }
 }
 
@@ -1216,7 +1216,7 @@ void G_Camera::FreeLook(float x, float y)
 // FUNCTION: GAME 0x5f3810
 void G_Camera::FreeLookBase(float x, float y, S_vector &dir, S_vector &up, S_vector &right)
 {
-    if (!(mafiaIndicators.unknown_40a4 & INDF_MENU))
+    if (!(mafiaIndicators.show_flags & INDF_MENU))
     {
         // PS2's factor order; any order compiles alike. Each branch's update is hoisted above the branch.
         if (x < 0.0f)

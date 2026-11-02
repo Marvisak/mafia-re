@@ -21,7 +21,7 @@ C_web_node::~C_web_node()
 C_web_path::~C_web_path()
 {
     delete[] nodes;
-    delete[] unknown_14;
+    delete[] pathfind;
 }
 
 #pragma auto_inline(off)
@@ -125,11 +125,11 @@ void C_web_path::SortNodesByX()
 // FUNCTION: GAME 0x54cd20
 void C_web_path::DeRiciConns()
 {
-    for (int i = unknown_c; i--;)
+    for (int i = num_nodes; i--;)
     {
-        nodes[i].unknown_c &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
+        nodes[i].flags &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
         for (int j = nodes[i].num_conns; j--;)
-            nodes[i].conns[j].unknown_2 &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
+            nodes[i].conns[j].flags &= ~(WEBF_UNKNOWN_1000 | WEBF_UNKNOWN_4000);
     }
 }
 

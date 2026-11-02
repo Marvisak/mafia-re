@@ -45,12 +45,12 @@ void C_Particle::Reset()
 {
     if (visual)
         visual->LinkTo(NULL, 0);
-    unknown_8 = 0;
+    subpart = 0;
     type = NULL;
-    unknown_3c = 0;
-    unknown_60 = 0.0f;
-    unknown_44 = 0;
-    unknown_5c = 0.0f;
+    time_left = 0;
+    speed_change = 0.0f;
+    flags = 0;
+    transparency_change = 0.0f;
 }
 
 // Each of the part's values spread at random by its range, either way: the direction (the effect's where the part has
@@ -65,42 +65,42 @@ bool C_Particle::Init(ushort id, const S_vector &pos, const S_vector &dir, C_Par
     visual->vis_flags &= ~VISF_PROJECTOR;
     if (!visual || !part || !part->subparts.size())
     {
-        unknown_3c = 0x7fffffff;
+        time_left = 0x7fffffff;
         return false;
     }
     visual->Duplicate(part->frame);
     // STRING: GAME 0x632588
     visual->SetName("MaraJe");
-    visual->part_flags = 1 << part->unknown_2c | PARTF_UNKNOWN_100;
+    visual->part_flags = 1 << part->blend | PARTF_UNKNOWN_100;
     SetSectorPos(visual);
-    visual->SetScale(part->unknown_68 + part->unknown_74 * (rnd() * 2.0f - 1.0f));
-    visual->SetPartTransparency((rnd() * 2.0f - 1.0f) * part->unknown_84 + part->unknown_80);
-    if (!part->unknown_48.IsNull())
+    visual->SetScale(part->scale + part->scale_spread * (rnd() * 2.0f - 1.0f));
+    visual->SetPartTransparency((rnd() * 2.0f - 1.0f) * part->transparency_spread + part->transparency);
+    if (!part->dir.IsNull())
     {
-        if (part->parent && part->unknown_bc & PARTF_LOCAL_DIR)
-            unknown_c = part->unknown_48.RotateByMatrix(part->parent->GetMatrix());
+        if (part->parent && part->flags & PARTF_LOCAL_DIR)
+            velocity = part->dir.RotateByMatrix(part->parent->GetMatrix());
         else
-            unknown_c = part->unknown_48;
+            velocity = part->dir;
     }
     else
-        unknown_c = dir;
+        velocity = dir;
     type = part;
     SetPhase(0);
     S_vector spread;
-    if (part->parent && part->unknown_bc & PARTF_LOCAL_DIR)
-        spread = part->unknown_54.RotateByMatrix(part->parent->GetMatrix());
+    if (part->parent && part->flags & PARTF_LOCAL_DIR)
+        spread = part->dir_spread.RotateByMatrix(part->parent->GetMatrix());
     else
-        spread = part->unknown_54;
+        spread = part->dir_spread;
     for (int i = 0; i < 3; i++)
-        (&unknown_c.x)[i] += (rnd() * 2.0f - 1.0f) * (&spread.x)[i];
-    unknown_c *= (rnd() * 2.0f - 1.0f) * part->unknown_64 + part->unknown_60;
-    S_vector at = part->unknown_30;
+        (&velocity.x)[i] += (rnd() * 2.0f - 1.0f) * (&spread.x)[i];
+    velocity *= (rnd() * 2.0f - 1.0f) * part->speed_spread + part->speed;
+    S_vector at = part->offset;
     S_vector offset;
-    offset.x = (rnd() * 2.0f - 1.0f) * part->unknown_3c.x;
-    offset.y = (rnd() * 2.0f - 1.0f) * part->unknown_3c.y;
-    offset.z = (rnd() * 2.0f - 1.0f) * part->unknown_3c.z;
+    offset.x = (rnd() * 2.0f - 1.0f) * part->offset_spread.x;
+    offset.y = (rnd() * 2.0f - 1.0f) * part->offset_spread.y;
+    offset.z = (rnd() * 2.0f - 1.0f) * part->offset_spread.z;
     at += offset;
-    if (part->parent && part->unknown_bc & PARTF_LOCAL_POS)
+    if (part->parent && part->flags & PARTF_LOCAL_POS)
         at = at.RotateByMatrix(part->parent->GetMatrix());
     visual->SetPos(at + pos);
     if (type->subparts[0]->IsOn())
@@ -113,10 +113,10 @@ bool C_Particle::Init(ushort id, const S_vector &pos, const S_vector &dir, C_Par
         visual->GetMesh()->GetLOD(0)->GetFGroup(0)->DetachMaterial();
         ((I3D_anim_material *)visual->GetMesh()->GetLOD(0)->GetFGroup(0)->material)->SetCurrentFrame(0);
     }
-    visual->SetBillboard(part->unknown_bc & PARTF_BILLBOARD);
-    unknown_44 = part->unknown_bc;
-    if (unknown_44 & PARTF_TURN)
-        visual->SetDir(unknown_c, 0.0f);
+    visual->SetBillboard(part->flags & PARTF_BILLBOARD);
+    flags = part->flags;
+    if (flags & PARTF_TURN)
+        visual->SetDir(velocity, 0.0f);
     SetSectorPos(visual);
     visual->Update();
     if (time)
@@ -129,57 +129,57 @@ bool C_Particle::Init(ushort id, const S_vector &pos, const S_vector &dir, C_Par
 // FUNCTION: GAME 0x4476c0
 void C_Particle::SetPhase(int phase)
 {
-    unknown_8 = phase;
+    subpart = phase;
     S_particle_subpart *sp = type->subparts[phase];
-    unknown_4c = unknown_3c = (int)((rnd() * 2.0f - 1.0f) * sp->unknown_4 + sp->unknown_0);
-    if (!sp->unknown_c.IsNull() || !sp->unknown_18.IsNull())
+    duration = time_left = (int)((rnd() * 2.0f - 1.0f) * sp->duration_range + sp->duration);
+    if (!sp->dir.IsNull() || !sp->dir_spread.IsNull())
     {
-        S_vector dir = sp->unknown_c;
-        if (!sp->unknown_18.IsNull())
-            SpreadDir(dir, sp->unknown_18);
+        S_vector dir = sp->dir;
+        if (!sp->dir_spread.IsNull())
+            SpreadDir(dir, sp->dir_spread);
         dir.Normalize();
-        if (type->parent && type->unknown_bc & PARTF_LOCAL_DIR)
+        if (type->parent && type->flags & PARTF_LOCAL_DIR)
             dir = dir.RotateByMatrix(type->parent->GetMatrix());
-        S_vector cur = unknown_c;
+        S_vector cur = velocity;
         cur.Normalize();
         if (cur.Dot(dir) < .95f)
         {
-            unknown_18.SetDir(cur, 0.0f);
-            unknown_28.SetDir(dir, 0.0f);
-            unknown_38 = true;
+            start_rot.SetDir(cur, 0.0f);
+            end_rot.SetDir(dir, 0.0f);
+            turning = true;
         }
         else
         {
-            float speed = unknown_c.Magnitude();
-            unknown_c = dir;
-            unknown_c *= speed;
-            unknown_38 = false;
+            float speed = velocity.Magnitude();
+            velocity = dir;
+            velocity *= speed;
+            turning = false;
         }
     }
     else
-        unknown_38 = false;
-    if (sp->unknown_8 & SUBPARTF_OFF)
+        turning = false;
+    if (sp->flags & SUBPARTF_OFF)
         visual->SetOn(false);
     else
         visual->SetOn(true);
     float r = rnd() * 2.0f - 1.0f;
     for (int i = 0; i < 3; i++)
     {
-        float s = r * (&sp->unknown_44.x)[i] + (&sp->unknown_38.x)[i];
+        float s = r * (&sp->scale_range.x)[i] + (&sp->scale.x)[i];
         if (s < 0.0f)
             s = 0.0f;
-        if (unknown_3c < .001f)
-            (&unknown_50.x)[i] = .001f;
+        if (time_left < .001f)
+            (&scale_change.x)[i] = .001f;
         else
-            (&unknown_50.x)[i] = (s - visual->GetScale().x) / (unknown_3c * .001f);
+            (&scale_change.x)[i] = (s - visual->GetScale().x) / (time_left * .001f);
     }
-    float a = (rnd() * 2.0f - 1.0f) * sp->unknown_54 + sp->unknown_50;
+    float a = (rnd() * 2.0f - 1.0f) * sp->transparency_range + sp->transparency;
     if (a > 1.0f)
         a = 1.0f;
     else if (a < 0.0f)
         a = 0.0f;
-    unknown_5c = (a - visual->GetTransparency()) / (unknown_3c * .001f);
-    unknown_60 = (rnd() * 2.0f - 1.0f) * sp->unknown_5c + sp->unknown_58;
+    transparency_change = (a - visual->GetTransparency()) / (time_left * .001f);
+    speed_change = (rnd() * 2.0f - 1.0f) * sp->speed_change_range + sp->speed_change;
 }
 
 // The time left, the direction turned on to the subpart's, the move by the speed, the visual turned to it or about its
@@ -192,51 +192,51 @@ void C_Particle::SetPhase(int phase)
 // FUNCTION: GAME 0x447c20
 void C_Particle::Tick(int time)
 {
-    if ((unknown_3c -= time) < 0)
-        unknown_3c = 0;
+    if ((time_left -= time) < 0)
+        time_left = 0;
     S_vector move(0.0f, 0.0f, 0.0f);
-    S_particle_subpart *sp = type->subparts[unknown_8];
-    if (unknown_38)
+    S_particle_subpart *sp = type->subparts[subpart];
+    if (turning)
     {
-        float speed = unknown_c.Magnitude();
-        S_quat q = unknown_18.Slerp(unknown_28, (float)(unknown_4c - unknown_3c) / unknown_4c, false);
-        unknown_c = q.GetDir();
-        unknown_c *= speed;
+        float speed = velocity.Magnitude();
+        S_quat q = start_rot.Slerp(end_rot, (float)(duration - time_left) / duration, false);
+        velocity = q.GetDir();
+        velocity *= speed;
     }
-    if (!(sp->unknown_8 & SUBPARTF_STILL))
-        move = unknown_c * (float)time * .001f;
-    if (unknown_44 & PARTF_TURN)
+    if (!(sp->flags & SUBPARTF_STILL))
+        move = velocity * (float)time * .001f;
+    if (flags & PARTF_TURN)
     {
         S_vector dir = move;
         dir.Normalize();
         visual->SetDir(dir, 0.0f);
     }
-    if (sp->unknown_8 & SUBPARTF_ROTATE)
+    if (sp->flags & SUBPARTF_ROTATE)
     {
-        if (sp->unknown_24.x != 0.0f)
+        if (sp->rot_speed.x != 0.0f)
         {
             S_quat q;
-            q.Make(S_vector(1.0f, 0.0f, 0.0f), time * sp->unknown_24.x * .001f);
+            q.Make(S_vector(1.0f, 0.0f, 0.0f), time * sp->rot_speed.x * .001f);
             visual->SetRot(visual->GetRot() * q);
         }
-        if (sp->unknown_24.y != 0.0f)
+        if (sp->rot_speed.y != 0.0f)
         {
             S_quat q;
-            q.Make(S_vector(0.0f, 1.0f, 0.0f), time * sp->unknown_24.y * .001f);
+            q.Make(S_vector(0.0f, 1.0f, 0.0f), time * sp->rot_speed.y * .001f);
             visual->SetRot(visual->GetRot() * q);
         }
-        if (sp->unknown_24.z != 0.0f)
+        if (sp->rot_speed.z != 0.0f)
         {
             S_quat q;
-            q.Make(S_vector(0.0f, 0.0f, 1.0f), time * sp->unknown_24.z * .001f);
+            q.Make(S_vector(0.0f, 0.0f, 1.0f), time * sp->rot_speed.z * .001f);
             visual->SetRot(visual->GetRot() * q);
         }
     }
-    if (!unknown_50.IsNull())
-        visual->SetScale(unknown_50 * (float)time * .001f + visual->GetScale());
-    if (unknown_5c != 0.0f)
+    if (!scale_change.IsNull())
+        visual->SetScale(scale_change * (float)time * .001f + visual->GetScale());
+    if (transparency_change != 0.0f)
     {
-        float a = time * unknown_5c * .001f + visual->GetTransparency();
+        float a = time * transparency_change * .001f + visual->GetTransparency();
         if (a > 1.0f)
             a = 1.0f;
         else if (a < 0.0f)
@@ -247,7 +247,7 @@ void C_Particle::Tick(int time)
     pos += move;
     visual->SetPos(pos);
     visual->Update();
-    unknown_c += unknown_c * unknown_60 * (float)time * .001f;
-    if (sp->unknown_8 & SUBPARTF_GRAVITY)
-        unknown_c.y -= time * sp->unknown_60 * .001f;
+    velocity += velocity * speed_change * (float)time * .001f;
+    if (sp->flags & SUBPARTF_GRAVITY)
+        velocity.y -= time * sp->gravity * .001f;
 }

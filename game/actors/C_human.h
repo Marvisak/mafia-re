@@ -111,9 +111,10 @@ public:
     int anim_id;                        // 0x70 (PS2 0x200), HUMAN_GETACTANIMID's (the name is ours)
     uchar unknown_74[0x24];             // 0x74
     C_car *car;                         // 0x98, the car the human is in (the name is ours)
-    // 0x9c (PS2 0x228), a second car: C_shvestky::TickDoRiciActors keeps a car in the police's faces while a player
-    // or an entity has it here or in car
-    C_car *unknown_9c;
+    // 0x9c (PS2 0x228), the car the human is getting into or was thrown out of: PS2's Use_Actor sets it to the car
+    // it uses, _intern_ThrowMeFromCar to the car, the car functions clear it; C_shvestky::TickDoRiciActors keeps a car
+    // in the police's faces while a player or an entity has it here or in car (the name is ours)
+    C_car *using_car;
     uchar unknown_a0[4];                // 0xa0
     // The cars the script's CAR_LOCK and CAR_LOCK_ALL lock to the human (the names are ours)
     C_car *locked_car;                  // 0xa4
@@ -124,15 +125,23 @@ public:
     // 0xbc (PS2 0x250), whose Reset the script's ACTOR_SETPLACEMENT calls (the name is ours)
     C_animations_machine_de_luxe anim_machine;
     bool crouching;                     // 0x1e4 (PS2 0x390), the camera drops while it is set (the name is ours)
-    bool unknown_1e5;                   // 0x1e5 (PS2 0x391)
+    // 0x1e5 (PS2 0x391), the weapon aimed: PS2's Do_Aimed sets it to its argument, Do_Shoot and the corner fire set
+    // it, a reload or a weapon change clears it (the name is ours, after Do_Aimed)
+    bool aimed;
     uchar unknown_1e6[0x52];            // 0x1e6
-    float unknown_238;                  // 0x238 (PS2 0x3d8), the camera's tilt for the player (C_game::Tick)
+    // 0x238 (PS2 0x3d8), the human's look up or down, which PS2's C_player::AI_walk moves: the camera's tilt for the
+    // player (C_game::Tick; the name is ours, after the camera's)
+    float tilt;
     uchar unknown_23c[0x9c];            // 0x23c
     I3D_frame *look_frame;              // 0x2d8 (PS2 0x454), SetLookFrame's (the name is ours)
     C_ShotSkeleton shot_skeleton;       // 0x2dc (PS2 0x458; the name is ours)
-    int unknown_40c;                    // 0x40c (PS2 0x588), a state: 1, 2 and 9 are ready, 9 keeps the car
+    // 0x40c (PS2 0x588), what the human does, which PS2's Go_*, Do_*, Hit* and car functions set and Movement switches
+    // on: 1, 2 and 9 are ready, 9 keeps the car (the name is ours)
+    int action_state;
     uchar unknown_410[8];               // 0x410
-    float unknown_418;                  // 0x418 (PS2 0x594), HUMAN_FORCEFALL adds 0.1
+    // 0x418 (PS2 0x594), the human's fall, 0 while he stands: HUMAN_FORCEFALL adds 0.1, PS2's Movement starts one at
+    // 0.05 and makes it 60 below a height of -30 (the name is ours)
+    float fall;
     uchar unknown_41c[0x48];            // 0x41c
     int unknown_464;                    // 0x464 (PS2 0x5bc), ACTOR_SETPLACEMENT clears it
     uchar unknown_468[0x10];            // 0x468
@@ -144,9 +153,15 @@ public:
     I3D_frame *right_hand;              // 0x56c
     I3D_frame *left_hand;               // 0x570
     uchar unknown_574[0x24];            // 0x574
-    bool unknown_598;                   // 0x598, cleared while a record (RECLOADFULL) plays
+    // 0x598 (PS2 0x624), whether the human plays his idle animations most likely: cleared while a record (RECLOADFULL)
+    // plays or a dialog runs, set again after; PS2's C_player::GameInit sets it, and its Update starts one of three
+    // at random when a timer runs out and it is set (the name is a guess)
+    bool idle_anims;
     uchar unknown_599[0x63];            // 0x599
-    uint unknown_5fc;                   // 0x5fc (PS2 0x660), DETECTOR_INRANGE counts those with a bit of the detector's
+    // 0x5fc (PS2 0x660), the human's type, a single bit of 11, 0 for none: PS2's Can_Hit_FilterHumanType takes the
+    // two humans' bit numbers into a table, DETECTOR_INRANGE counts those with a bit of the detector's (the name is
+    // ours, after Can_Hit_FilterHumanType)
+    uint human_type;
     // The properties' highest values and the current ones, HUMAN_PROPERTY_* (PS2 0x664 and 0x6a4; the names are ours):
     // the 15 _human_property_ names in 16 floats each
     float max_properties[16];           // 0x600
@@ -204,15 +219,15 @@ public:
         no_anim_hit = on;
     }
     // FUNCTION: GAME 0x47b800
-    void SetUnknown598(bool value)
+    void SetIdleAnims(bool value)
     {
-        unknown_598 = value;
+        idle_anims = value;
     }
     // Whether the human can go on, HUMAN_WAITTOREADY's (PS2 has the same test inline)
     // FUNCTION: GAME 0x47b810
     bool IsReady() const
     {
-        return unknown_5d && (unknown_40c == 1 || unknown_40c == 2 || unknown_40c == 9) &&
+        return alive && (action_state == 1 || action_state == 2 || action_state == 9) &&
             !(anim_machine.unknown_f4 && anim_machine.unknown_10c);
     }
     // FUNCTION: GAME 0x47b850

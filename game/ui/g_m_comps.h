@@ -22,9 +22,9 @@
 #define COMPF_TEXT_CENTER 0x80          // the text centered (OUTTEXT_CENTER)
 #define COMPF_ALTERNATE_COLOR 0x100     // PS2's GM_Menu::SetAlternateColor's
 #define COMPF_ALTERNATE_STYLE 0x200     // PS2's GM_Menu::SetAlternateStyle's
-#define COMPF_UNKNOWN_400 0x400         // a menu item's text red
-#define COMPF_UNKNOWN_4000 0x4000       // the active component gets the mouse's clicks wherever the mouse is
-#define COMPF_UNKNOWN_8000 0x8000       // with the two above, the component can be activated
+#define COMPF_TEXT_RED 0x400            // a menu item's text red
+#define COMPF_MOUSE_CAPTURE 0x4000      // the active component gets the mouse's clicks wherever the mouse is
+#define COMPF_ACTIVATABLE 0x8000        // with COMPF_VISIBLE and COMPF_ENABLED, the component can be activated
 #define COMPF_ACTIVE 0x80000000         // the menu's active component
 
 // A window's title bar on the 800x600 screen, which its client area starts below (the name is ours)
@@ -172,7 +172,7 @@ public:
         float y = this->y;
         if (flags & COMPF_ALTERNATE_COLOR)
         {
-            if (draw_flags & COMPF_ENABLED && draw_flags & MENUDRAW_UNKNOWN_40000000)
+            if (draw_flags & COMPF_ENABLED && draw_flags & MENUDRAW_ACTIVE_MENU)
             {
                 RectangleFilled(x, y + title_sy - 1.0f, sx, sy - title_sy, 0x7f000000, GM_Menu::textureMenuBottom);
                 RectangleFilled(x, y, sx, title_sy, 0x7fffffff, GM_Menu::textureMenuTop);
@@ -189,7 +189,7 @@ public:
         }
         else
         {
-            if (draw_flags & COMPF_ENABLED && draw_flags & MENUDRAW_UNKNOWN_40000000)
+            if (draw_flags & COMPF_ENABLED && draw_flags & MENUDRAW_ACTIVE_MENU)
             {
                 RectangleFilled(x, y + title_sy - 1.0f, sx, sy - title_sy, 0xffffffff, GM_Menu::textureMenuBottom);
                 RectangleFilled(x, y, sx, title_sy, 0xffffffff, GM_Menu::textureMenuTop);
@@ -369,7 +369,7 @@ class GM_MenuItem : public GM_Component
 public:
     GM_MenuItem(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
     }
     GM_MenuItem(GM_Component *component) : GM_Component(component) {}
 
@@ -386,7 +386,7 @@ public:
             text_flags |= OUTTEXT_RIGHT;
         if (draw_flags & COMPF_ENABLED)
         {
-            if (flags & COMPF_UNKNOWN_400)
+            if (flags & COMPF_TEXT_RED)
                 mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xffff0000, text_flags, flags & COMPF_FONT, NULL);
             else
                 mafiaIndicators.OutText((char *)text, x, y, sx, sy, 0xff000000, text_flags, flags & COMPF_FONT, NULL);
@@ -422,7 +422,7 @@ class GM_Button : public GM_Component
 public:
     GM_Button(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
     }
     GM_Button(GM_Component *component) : GM_Component(component) {}
 
@@ -508,7 +508,7 @@ class GM_Slider : public GM_Component
 public:
     GM_Slider(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
         value = .5f;
     }
     GM_Slider(GM_Component *component) : GM_Component(component)
@@ -628,7 +628,7 @@ class GM_TextEdit : public GM_Component
 public:
     GM_TextEdit(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
         buffer[0] = 0;
         if (text)
             strncpy(buffer, (char *)text, TEXTEDIT_SIZE);
@@ -708,7 +708,7 @@ class GM_ButtonSelect : public GM_Component
 public:
     GM_ButtonSelect(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
     }
     GM_ButtonSelect(GM_Component *component) : GM_Component(component) {}
 
@@ -783,7 +783,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverActive@GM_Component@@UAE_NMM@Z
+// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -865,7 +865,7 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_Button@@UAEIHHHII@Z
+// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
@@ -936,7 +936,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_Component@@UAEPAXI@Z
+// ??_EGM_MenuItem@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

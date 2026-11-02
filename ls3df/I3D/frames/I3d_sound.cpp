@@ -36,7 +36,7 @@ I3D_sound::I3D_sound()
     m_Type = FRAME_SOUND;
     snd_flags = SOUNDF_POS | SOUNDF_DIR | SOUNDF_RANGE | SOUNDF_VOLUME | SOUNDF_SCALE | SOUNDF_VELOCITY;
     m_SetState(SOUNDSTATE_STOP);
-    unknown_14c = 0;
+    last_update_count = 0;
     pause_time = 0;
     start_time = 0;
     pause_pos = 0;
@@ -542,16 +542,16 @@ void I3D_sound::m_UpdateSound()
 
     // The sector's blend into its sound environment
     if (fade_sector) {
-        if (fade_sector->sct_flags & SCTF_SOUND_FADE_IN && IsMrgZeroLess(fade_sector->unknown_1e8)) {
+        if (fade_sector->sct_flags & SCTF_SOUND_FADE_IN && IsMrgZeroLess(fade_sector->sound_blend)) {
             fade_sector = NULL;
             m_Pause();
             return;
         }
-        if (!(fade_sector->sct_flags & SCTF_SOUND_FADE_IN) && IsMrgZeroLess(1.0 - fade_sector->unknown_1e8)) {
+        if (!(fade_sector->sct_flags & SCTF_SOUND_FADE_IN) && IsMrgZeroLess(1.0 - fade_sector->sound_blend)) {
             fade_sector = NULL;
             return;
         }
-        vol *= fade_sector->unknown_1e8;
+        vol *= fade_sector->sound_blend;
     }
 
     // The fading in its areas

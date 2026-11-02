@@ -195,10 +195,10 @@ bool check_seg_clusters::Load()
                 dtaRead(file, seg.specials[j], sizeof(check_seg_special_1));
                 break;
             case CHECK_SEG_UNKNOWN_2:
-                seg.specials[j] = new uchar[sizeof(check_seg_special_2)];
-                dtaRead(file, seg.specials[j], sizeof(check_seg_special_2));
-                ((check_seg_special_2 *)seg.specials[j])->unknown_30 = 0;
-                ((check_seg_special_2 *)seg.specials[j])->unknown_34 = 0;
+                seg.specials[j] = new uchar[sizeof(ai_seg_corner)];
+                dtaRead(file, seg.specials[j], sizeof(ai_seg_corner));
+                ((ai_seg_corner *)seg.specials[j])->unknown_30 = 0;
+                ((ai_seg_corner *)seg.specials[j])->unknown_34 = 0;
                 break;
             case CHECK_SEG_UNKNOWN_4:
                 seg.specials[j] = new uchar[sizeof(check_seg_special_4)];

@@ -15,11 +15,11 @@
 void ai_police_nastenka::ZacatekSmeny()
 {
     actions.clear();
-    unknown_20 = 0;
+    next_id = 0;
     unknown_24 = 0xfffffff;
-    unknown_2c = 0;
+    on_duty = 0;
     speed_factor = 1.0f;
-    unknown_30 = 0;
+    customer = NULL;
     Init();
 }
 
@@ -108,7 +108,7 @@ bool ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi(C_actor *actor)
 // FUNCTION: GAME 0x53d480
 bool ai_police_nastenka::PanoveHrajeteSiNaPoldy()
 {
-    return unknown_2c;
+    return on_duty;
 }
 
 // FUNCTION: GAME 0x53d750

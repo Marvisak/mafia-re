@@ -42,11 +42,12 @@ struct tDynamicCollObject
 
 // g_collision_header::flags (the name is ours, after the command): DISABLECOLLS sets it
 #define COLLHF_DISABLED 0x20
-// The flags TickShoot tests (the names are ours, by value): a shot at a collision with 0x20000 destroys control
-// signals, NewShoot keeps the frame of a glass or crash collision with 0x40 or 0x80
+// The flags TickShoot tests (the names are ours, by value where the use isn't known): NewShoot keeps the frame of a
+// glass or crash collision with 0x40 or 0x80
 #define COLLHF_UNKNOWN_40 0x40
 #define COLLHF_UNKNOWN_80 0x80
-#define COLLHF_UNKNOWN_20000 0x20000
+// A control signal's collision: a shot at it runs C_game::DestroyControlSignal, which PS2's tests the flag in again
+#define COLLHF_CONTROL_SIGNAL 0x20000
 
 // A collision of the level (PS2 g_collision_header): only its flags are known so far, the first dword, and the actor
 // whose collision it is, which C_game::TickHydrant reads of what TestLineV returns (PS2 0x48, compared with ACTOR_CAR

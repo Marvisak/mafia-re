@@ -437,7 +437,7 @@ float C_car::ShowCarEnergy()
 const S_vector &C_car::GetAIPos(bool b)
 {
     StubLog("C_car::GetAIPos");
-    return unknown_398;
+    return world_pos;
 }
 
 // STUB: GAME 0x429580
@@ -455,7 +455,7 @@ void C_car::SetEnterProtect1(int seat, bool on)
         enter_protect |= bit;
     else
         enter_protect &= ~bit;
-    unknown_c60 = true;
+    wake_request = true;
     SetActState(ACTSTATE_0);
 }
 
@@ -465,7 +465,7 @@ void C_car::GetCarWheelColl(bool *colls, int num)
 {
     int &count = num < num_wheels ? num : num_wheels;
     for (int i = count; i--;)
-        colls[i] = (wheels[i]->unknown_120 & WHEELF_COLLISION) != 0;
+        colls[i] = (wheels[i]->flags & WHEELF_COLLISION) != 0;
 }
 
 // FUNCTION: GAME 0x429800
@@ -476,9 +476,9 @@ void C_car::SetCarWheelColl(bool *colls, int num)
     while (i--)
     {
         if (colls[i])
-            wheels[i]->unknown_120 |= WHEELF_COLLISION;
+            wheels[i]->flags |= WHEELF_COLLISION;
         else
-            wheels[i]->unknown_120 &= ~WHEELF_COLLISION;
+            wheels[i]->flags &= ~WHEELF_COLLISION;
     }
 }
 

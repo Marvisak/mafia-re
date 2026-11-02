@@ -16,14 +16,15 @@ class C_roads;
 class C_sledovacka
 {
 public:
-    // A car's action (PS2's type; the values' names are ours, by value): ActionStatus's, STATUS_UNKNOWN_1 for a car
-    // without a chase; GROUP_DISBAND sets its fighting parties' cars to STATUS_UNKNOWN_2
+    // A car's action (PS2's type; the values' names are ours): ActionStatus's, STATUS_DONE for a car without a chase;
+    // GROUP_DISBAND sets its fighting parties' cars to STATUS_FAILED. Tick ends a chase done at its end or near the
+    // target (or with the driver stuck), failed where it lost the target, with a dead driver or a car without energy.
     enum E_STATUS
     {
-        STATUS_UNKNOWN_1 = 1,
-        STATUS_UNKNOWN_2 = 2,
-        STATUS_UNKNOWN_3 = 3,
-        STATUS_UNKNOWN_4 = 4
+        STATUS_DONE = 1,
+        STATUS_FAILED = 2,
+        STATUS_DRIVER_DEAD = 3,
+        STATUS_NO_ENERGY = 4
     };
 
     // A bridge of the mission and the road node it is at (PS2 C_sledovacka::S_BRIDGE, whose members are the same; the
@@ -38,9 +39,10 @@ public:
     {
         C_car *car;                     // 0x0
         C_driver *driver;               // 0x4, which Done deletes
-        C_actor *unknown_8;             // 0x8, unknown_c's car (C_human::car) where it has one, else unknown_c
-        C_actor *unknown_c;             // 0xc
-        S_vector unknown_10;            // 0x10, the place without unknown_8
+        // The names are ours
+        C_actor *chased;                // 0x8, target's car (C_human::car) where it has one, else target
+        C_actor *target;                // 0xc, AddCarHunt's
+        S_vector target_pos;            // 0x10, the place without chased (AddCarHunt's and AddCarMoveTo's pos)
         uint flags;                     // 0x1c, SLEDF_*
         int status;                     // 0x20, 0 while the chase goes on
         uchar unknown_24[4];            // 0x24
@@ -49,12 +51,14 @@ public:
         uchar unknown_30[8];            // 0x30
         float unknown_38;               // 0x38
         float unknown_3c;               // 0x3c
-        int unknown_40;                 // 0x40, a time in ms
+        int horn_time;                  // 0x40, a time in ms: Tick sounds the car's horn while it runs, 200 to 800
     };
 
     std::vector<S_BRIDGE> bridges;      // 0x0
     std::vector<S_ELEMENT> elements;    // 0x10 (PS2 0xc, a gif::vector)
-    C_roads *unknown_20;                // 0x20 (PS2 0x18), the roads the cars find their paths on
+    // 0x20 (PS2 0x18), the roads the cars find their paths on, the mission's from AddCarHunt (the name is ours: Init's
+    // local is roads)
+    C_roads *road_net;
 
     C_sledovacka();
     ~C_sledovacka();
@@ -73,7 +77,7 @@ public:
     // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
     void RemoveCar(C_car *car);
     // PS2 names: a car sent after the target or to the place, false without a car (PS2's AddCarMoveTo takes a float
-    // more), and the status of its chase, STATUS_* (the element's, STATUS_UNKNOWN_1 for a car without one; unsigned:
+    // more), and the status of its chase, STATUS_* (the element's, STATUS_DONE for a car without one; unsigned:
     // ai_follow_manager::Update's switch compares it so). Update calls them for a group's car.
     bool AddCarHunt(C_car *car, C_actor *target, uint unknown, uint unknown2, const S_vector &pos, float unknown3);
     bool AddCarMoveTo(C_car *car, const S_vector &pos, bool unknown, bool unknown2, uint unknown3);

@@ -10,9 +10,11 @@
 struct S_GameItem
 {
     ushort id;                          // 0x0, the item's index in gameItemTable (g_material.h)
-    int unknown_4;                      // 0x4
-    int unknown_8;                      // 0x8
-    void *unknown_c;                    // 0xc, the using object of a weapon put down, NULL in a hand
+    // The weapon's ammunition, in it and in reserve: PS2's G_Inventory::Vystrel ("shot") takes one off the first,
+    // NabijJeden ("load one") moves one from the second to the first, up to the weapon's gameItemTable count
+    int ammo_loaded;                    // 0x4
+    int ammo_spare;                     // 0x8
+    void *using_object;                 // 0xc, the using object of a weapon put down, NULL in a hand
 
     // Cleared, as PS2's memset before an item is filled: G_Inventory's constructor constructs its arrays through it
     // FUNCTION: GAME 0x47aed0

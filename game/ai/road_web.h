@@ -14,7 +14,9 @@ class C_chunk;
 struct S_road_node
 {
     S_vector pos;                       // 0x0 (the name is ours)
-    bool unknown_c;                     // 0xc, a semaphore's most likely: C_shvestky::TestOverRed's
+    // 0xc, whether the node has a semaphore: C_shvestky::TestOverRed tests the red light only at such a node (PS2's
+    // tests 0x10 of its S_road_crossing_1, 0xe0 bytes; the name is a guess)
+    bool semaphore;
     uchar unknown_d[0xdf];              // 0xd
 };
 
@@ -24,11 +26,13 @@ struct S_road_link
 {
     S_vector pos;                       // 0x0 (the name is ours)
     uchar unknown_c[4];                 // 0xc
-    // 0x10, two indices for C_roads::GetPos, a node's or with NEARNODE_FLAG a link's (C_shvestky::TestOverRed's)
-    ushort unknown_10;
-    ushort unknown_12;
-    ushort unknown_14;                  // 0x14, a node's index
-    ushort unknown_16;                  // 0x16, a node's index
+    // 0x10, the link's two ends as indices for C_roads::GetPos, a node's or with NEARNODE_FLAG a link's
+    // (C_shvestky::TestOverRed's; the names are ours)
+    ushort end0;
+    ushort end1;
+    // 0x14, the nodes at its two ends, of which C_sledovacka::Init takes the nearer one (the names are ours)
+    ushort node0;
+    ushort node1;
 };
 
 // GetNearNode's index without its flag, the top bit (the name is ours)

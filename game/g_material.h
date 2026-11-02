@@ -22,7 +22,7 @@ struct S_material_def
     int unknown_20;                     // 0x20
     int shot_sound;                     // 0x24, the sound of a shot's hit (C_sound_table's id), -1 for none
     uchar unknown_28[0x14];             // 0x28
-    // 0x3c, the texture of a shot's track on it (C_game::unknown_29bc's index) and the model of its holes
+    // 0x3c, the texture of a shot's track on it (C_game::track_textures' index) and the model of its holes
     // (C_game::hole_models'), -1 for none
     int hole;
     int particle;                       // 0x40, the effects' particle of a shot's hit, -1 for none

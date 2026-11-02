@@ -42,14 +42,14 @@ public:
         event_program = program;
         event_id = id;
     }
-    // The unknown_e of the path's first node, 0 without a path. The size is tested around the read: with an early
+    // The id of the path's first node, 0 without a path. The size is tested around the read: with an early
     // return for 0 VC6 reads the vector's array again. Either way it stores the size to a slot nothing reads, as the
     // original's copy does.
     // FUNCTION: GAME 0x47b710
     int GetLastNode()
     {
         if (path.size())
-            return act_mission->web_path->nodes[path[0]].unknown_e;
+            return act_mission->web_path->nodes[path[0]].id;
         return 0;
     }
 

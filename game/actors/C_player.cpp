@@ -8,9 +8,9 @@
 #include "stub.h"
 
 // GLOBAL: GAME 0x6478b0
-bool C_player::unknown_6478b0;
+bool C_player::can_car_damage;
 // GLOBAL: GAME 0x6478b4
-I3D_frame *C_player::unknown_6478b4;
+I3D_frame *C_player::navi_frame;
 
 #pragma auto_inline(off)
 
@@ -19,7 +19,7 @@ I3D_frame *C_player::unknown_6478b4;
 // FUNCTION: GAME 0x58f160
 void SetPlayerNaviPoint(I3D_frame *frm)
 {
-    C_player::unknown_6478b4 = frm;
+    C_player::navi_frame = frm;
 }
 
 #pragma auto_inline(off)
@@ -78,9 +78,9 @@ void C_player::LockControls(bool lock)
 // FUNCTION: GAME 0x5961b0
 void C_player::FadeReset()
 {
-    unknown_ab8 = 1.0f;
-    unknown_abc = 1.0f;
-    SetAlpha(unknown_ab8);
+    fade_alpha = 1.0f;
+    fade_target = 1.0f;
+    SetAlpha(fade_alpha);
 }
 
 #pragma auto_inline(off)

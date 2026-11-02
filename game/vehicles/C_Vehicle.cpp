@@ -123,11 +123,11 @@ S_vector C_Vehicle::GetWheelCamPos(int wheel, const S_vector &offset)
     if (!(wheel % 2))
     {
         pos.x = -pos.x;
-        pos.x -= wheels[wheel]->unknown_c;
+        pos.x -= wheels[wheel]->cam_offset;
     }
     else
-        pos.x += wheels[wheel]->unknown_c;
-    pos += wheels[wheel]->unknown_10;
+        pos.x += wheels[wheel]->cam_offset;
+    pos += wheels[wheel]->pos;
     return pos;
 }
 
@@ -155,9 +155,9 @@ void C_Vehicle::SetEngineOn(bool on, bool unknown)
 // FUNCTION: GAME 0x4cb6e0
 bool C_Vehicle::SetFuel(float fuel)
 {
-    if (fuel > unknown_1fa0)
-        fuel = unknown_1fa0;
-    unknown_c30 = fuel;
+    if (fuel > tank_size)
+        fuel = tank_size;
+    tank_fuel = fuel;
     return true;
 }
 
@@ -178,19 +178,19 @@ const S_vector &C_Vehicle::GetHeadPos()
 // FUNCTION: GAME 0x4cd5b0
 bool C_Vehicle::IsVehicleUnstable()
 {
-    return unknown_1a4 & VEHF_UNSTABLE ? true : false;
+    return vehicle_flags & VEHF_UNSTABLE ? true : false;
 }
 
 // FUNCTION: GAME 0x4cd5c0
 const S_vector &C_Vehicle::GetVehicleSize(bool b)
 {
-    return b ? unknown_164 : unknown_158;
+    return b ? vehicle_size_2 : vehicle_size;
 }
 
 // FUNCTION: GAME 0x4cd5e0
 const S_vector &C_Vehicle::GetVehiclePivotPos(bool b)
 {
-    return b ? unknown_17c : unknown_170;
+    return b ? pivot_pos_2 : pivot_pos;
 }
 
 #pragma auto_inline(off)
@@ -202,16 +202,16 @@ void C_Vehicle::LockVehicle(bool lock)
     // The count and the flags go through these locals, as the original's eax and edx do
     int count;
     if (lock)
-        count = unknown_c0 + 1;
+        count = lock_count + 1;
     else
-        count = unknown_c0 - 1;
-    uint flags = unknown_1a4;
-    unknown_c0 = count;
+        count = lock_count - 1;
+    uint flags = vehicle_flags;
+    lock_count = count;
     if (count > 0)
         flags |= VEHF_LOCKED;
     else
         flags &= ~VEHF_LOCKED;
-    unknown_1a4 = flags;
+    vehicle_flags = flags;
 }
 
 // STUB: GAME 0x4cd640

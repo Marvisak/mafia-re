@@ -41,8 +41,8 @@ public:
     uchar unknown_1ac[8];               // 0x1ac
     int unknown_1b4;                    // 0x1b4
     uchar unknown_1b8[0xf4];            // 0x1b8
-    // GetMaterialID's, a materials.def index (materialList's)
-    int unknown_2ac;                    // 0x2ac
+    // GetMaterialID's, a materials.def index (materialList's; the name is ours)
+    int material;                       // 0x2ac (PS2 0x330)
     uchar unknown_2b0[0xc0];            // 0x2b0
 };
 

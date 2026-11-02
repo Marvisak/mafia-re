@@ -350,7 +350,7 @@ int main(HINSTANCE hInstance)
             {
             case MAINMENU_LOAD_GAME:
                 act_mission->Close();
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameLoad();
                 GameLoopSingle();
                 act_mission->Close();
@@ -365,7 +365,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637b04
                 gifCollision.LoadCollision("missions\\tutorial\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 act_mission->game->Init();
                 GameLoopSingle();
@@ -381,7 +381,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637aec
                 gifCollision.LoadCollision("missions\\intro\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 act_mission->game->Init();
                 _is_intro_ = true;
                 GameLoopSingle();
@@ -395,7 +395,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637ac8
                 gifCollision.LoadCollision("missions\\mise01\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 act_mission->game->Init();
                 GameLoopSingle();
@@ -411,7 +411,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637aa0
                 gifCollision.LoadCollision("missions\\freeitaly\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 mafiaLoadSave.FreerideSetup();
                 act_mission->game->Init();
@@ -429,7 +429,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637a78
                 gifCollision.LoadCollision("missions\\freeride\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 mafiaLoadSave.FreerideSetup();
                 act_mission->game->Init();
@@ -447,7 +447,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637a4c
                 gifCollision.LoadCollision("missions\\freeridenoc\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 mafiaLoadSave.FreerideSetup();
                 act_mission->game->Init();
@@ -465,7 +465,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x637a20
                 gifCollision.LoadCollision("missions\\freekrajina\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 mafiaLoadSave.FreerideSetup();
                 act_mission->game->Init();
@@ -483,7 +483,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x6379ec
                 gifCollision.LoadCollision("missions\\freekrajinanoc\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 mafiaLoadSave.FreerideSetup();
                 act_mission->game->Init();
@@ -501,7 +501,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x6379c8
                 gifCollision.LoadCollision("missions\\extreme\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 mafiaLoadSave.SaveGameNewGame();
                 act_mission->game->Init();
                 GameLoopSingle();
@@ -525,7 +525,7 @@ int main(HINSTANCE hInstance)
                 }
                 // STRING: GAME 0x6379a0
                 gifCollision.LoadCollision("missions\\autosalon\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 act_mission->game->Init();
                 mafiaIndicators.ParheliaSetCenter(true);
                 GM_Menu::ExecuteMenu(new GM_Carcyclopedia, false, true);
@@ -540,7 +540,7 @@ int main(HINSTANCE hInstance)
                     goto end;
                 }
                 gifCollision.LoadCollision("missions\\intro\\tree.klz", true);
-                act_mission->ResetUnknown70();
+                act_mission->ResetMissionNumbers();
                 act_mission->game->Init();
                 _is_intro_ = true;
                 GameLoopSingle();

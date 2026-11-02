@@ -30,8 +30,8 @@ struct S_TSRFC
 // C_car::unbreakable's value, which the scripts' CAR_UNBREAKABLE sets or clears (the name is ours; PS2's sets 0xc000)
 #define CARF_UNBREAKABLE 0x4000
 
-// The value the fights' Tick gives C_car::unknown_2210 (the name is ours, by value)
-#define CAR2210_UNKNOWN_534 0x534
+// The value the fights' Tick gives C_car::death_fade_time, 1332 ms of its 4000 (the name is ours)
+#define CAR_DEATH_FADE_START 0x534
 
 // A tuning level of the car (the name is ours): the vector's element, whose size the original's stride gives and
 // whose members are unknown
@@ -159,7 +159,7 @@ public:
     // FUNCTION: GAME 0x47b3a0
     void SetTankHitCount(int count)
     {
-        unknown_2154 = unknown_2158 = count;
+        tank_hits_left = tank_hit_count = count;
     }
     // FUNCTION: GAME 0x47b3c0
     void SetMustSteal(bool on)
@@ -195,9 +195,9 @@ public:
             locks--;
     }
     // FUNCTION: GAME 0x47b440
-    void SetUnknown220c(bool b)
+    void SetTemporary(bool b)
     {
-        unknown_220c = b;
+        temporary = b;
     }
     // The old value
     // FUNCTION: GAME 0x47b450
@@ -230,8 +230,9 @@ public:
     }
 
     uchar unknown_20b0[2];              // 0x20b0
-    // 0x20b2 (PS2 0x246a): a car G_LoadSaveClass::GarageGameDone doesn't take into the garage
-    bool unknown_20b2;
+    // 0x20b2 (PS2 0x246a; the name is ours): PS2's Init sets it for the models POLCAD, POLI, POLIMFOR and POLIMTUD;
+    // G_LoadSaveClass::GarageGameDone doesn't take such a car into the garage
+    bool police_model;
     uchar unknown_20b3[0x19];
     C_actor *unknown_20cc;              // 0x20cc
     int parking_time;                   // 0x20d0, the game's time GetTimeParking counts from (the name is ours)
@@ -244,19 +245,26 @@ public:
     int axis;                           // 0x20f8 (PS2 0x23c8), CAR_SETAXIS sets 1
     uint unbreakable;                   // 0x20fc (PS2 0x23cc), CARF_UNBREAKABLE or 0
     uchar unknown_2100[4];              // 0x2100
-    // 0x2104 (PS2 0x2473): a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
-    bool unknown_2104;
+    // 0x2104 (PS2 0x2473), a car in the police's service (the name is ours): PS2's C_shvestky sets it for the cars it
+    // sends and its PocetPolicejnichPlechovekVRici ("the number of police cans in the region") counts the cars with it;
+    // a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
+    bool police_car;
     uchar unknown_2105[8];              // 0x2105
     bool break_motor;                   // 0x210d (PS2 0x2477), CAR_BREAKMOTOR's
     uchar unknown_210e[0xb];            // 0x210e
-    // 0x2119 (PS2 0x2479), set with the camera's CAMPF_UNKNOWN_2 (G_Camera::Begin), cleared by G_Camera::End
-    bool unknown_2119;
+    // 0x2119 (PS2 0x2479), set with the camera's CAMPF_HIDE_CAR, which turns the car's frame off (G_Camera::Begin),
+    // cleared by G_Camera::End (the name is ours)
+    bool hidden_by_camera;
     uchar unknown_211a[0x3a];           // 0x211a
-    // SetTankHitCount's (PS2 0x23f0 and 0x23f4)
-    int unknown_2154;                   // 0x2154
-    int unknown_2158;                   // 0x2158
+    // SetTankHitCount's (PS2 0x23f0 and 0x23f4, the names are ours): PS2's Hit counts the first down, GameInit and Reset
+    // set it to the second again
+    int tank_hits_left;                 // 0x2154
+    int tank_hit_count;                 // 0x2158
     uchar unknown_215c[0x14];           // 0x215c
-    bool unknown_2170;                  // 0x2170 (PS2 0x2463)
+    // 0x2170 (PS2 0x2463), the car drives where it mustn't (the name is ours): PS2's AI clears it and sets it again
+    // where it calls C_shvestky::CarIllegalPath, for a wheel on a surface of type 3; the police's SHVF_ILLEGAL_PATH
+    // ends without it
+    bool illegal_path;
     uchar unknown_2171[7];              // 0x2171
     int show_energy;                    // 0x2178, CAR_SWITCHSHOWENERGY's (the name is ours)
     bool unknown_217c;                  // 0x217c (PS2 0x2464), CARLIGHT_MAIN clears it with the lights on, sets it off
@@ -277,11 +285,15 @@ public:
     uchar unknown_21e0[0x2a];           // 0x21e0
     bool destroy_motor;                 // 0x220a, CAR_SETDESTROYMOTOR's (the name is ours)
     uchar unknown_220b;                 // 0x220b
-    // 0x220c (PS2 0x247f), set for the cars the player left in the garage, and by the scripts' DAN_INTERNAL_1
-    bool unknown_220c;
+    // 0x220c (PS2 0x247f; the name is a guess), set for the cars the player left in the garage, and by the scripts'
+    // DAN_INTERNAL_1; C_game::Done removes such cars (PS2's C_game::VyhjebejTemporaryho, "throw the temporary one
+    // out", clears it, CarExplosion sets it)
+    bool temporary;
     uchar unknown_220d[3];              // 0x220d
-    // 0x2210 (PS2 0x23ac), set to CAR2210_UNKNOWN_534 or 0 by the fights' Tick when its party's hunt ends
-    int unknown_2210;
+    // 0x2210 (PS2 0x23ac; the name is a guess), set to CAR_DEATH_FADE_START or 0 by the fights' Tick when its party's
+    // hunt ends; in ms, which PS2's Update counts up with a flag of its (PS2 0x2480) set, to C_game::AddDeathHumanFade
+    // at 4000
+    int death_fade_time;
     bool unknown_2214;                  // 0x2214
     bool unknown_2215;                  // 0x2215
     uchar unknown_2216[3];              // 0x2216

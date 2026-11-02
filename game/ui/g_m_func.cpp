@@ -421,7 +421,7 @@ inline const char *GM_OptionsAudioVideo::OnBeforeCreate()
 // FUNCTION: GAME 0x5e0bc0
 int GM_OptionsAudioVideo::OnCreate()
 {
-    flags &= ~MENUF_UNKNOWN_10000;
+    flags &= ~MENUF_DRAW_PARENT;
     SetFloat(OPTIONSA_SOUNDS, mafiaLoadSave.settings.sound_volume);
     SetFloat(OPTIONSA_MUSIC, mafiaLoadSave.settings.music_volume);
     SetFloat(OPTIONSA_CARS, mafiaLoadSave.settings.car_volume);
@@ -594,7 +594,7 @@ inline const char *GM_OptionsControls::OnBeforeCreate()
 // FUNCTION: GAME 0x5e14a0
 int GM_OptionsControls::OnCreate()
 {
-    flags &= ~MENUF_UNKNOWN_10000;
+    flags &= ~MENUF_DRAW_PARENT;
     SetFloat(OPTIONSC_STEERING_LINEARITY, mafiaLoadSave.settings.steering_linearity);
     SetFloat(OPTIONSC_AIMING_SENSITIVITY_X, mafiaLoadSave.settings.aiming_sensitivity_x);
     SetFloat(OPTIONSC_AIMING_SENSITIVITY_Y, mafiaLoadSave.settings.aiming_sensitivity_y);

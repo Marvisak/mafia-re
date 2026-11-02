@@ -48,22 +48,22 @@ int C_animations_machine_de_luxe::LoadTrack(const char *name)
                 strcpy(t.name, name);
                 chunk.Read(&t.unknown_28, sizeof(t.unknown_28));
                 chunk.Read(&t.unknown_34, sizeof(t.unknown_34));
-                chunk.Read(&t.unknown_20, sizeof(t.unknown_20));
-                chunk.Read(&t.unknown_24, sizeof(t.unknown_24));
+                chunk.Read(&t.length, sizeof(t.length));
+                chunk.Read(&t.key_time, sizeof(t.key_time));
                 int num;
                 chunk.Read(&num, sizeof(num));
                 if (num)
                 {
-                    t.unknown_44.resize(num, S_vector(0.0f, 0.0f, 0.0f));
-                    chunk.Read(t.unknown_44.begin(), num * sizeof(S_vector));
+                    t.positions.resize(num, S_vector(0.0f, 0.0f, 0.0f));
+                    chunk.Read(t.positions.begin(), num * sizeof(S_vector));
                 }
                 chunk.Read(&num, sizeof(num));
                 if (num)
                 {
-                    t.unknown_54.resize(num, S_vector(0.0f, 0.0f, 0.0f));
-                    chunk.Read(t.unknown_54.begin(), num * sizeof(S_vector));
+                    t.directions.resize(num, S_vector(0.0f, 0.0f, 0.0f));
+                    chunk.Read(t.directions.begin(), num * sizeof(S_vector));
                 }
-                t.unknown_40 = num > 0;
+                t.has_directions = num > 0;
                 tracks.push_back(t);
                 chunk.Close();
             }

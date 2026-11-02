@@ -582,7 +582,7 @@ uchar *I3D_object::LockVertices(int index, uint flags)
 }
 
 // Queues the face groups of the level of detail the distance picks, after bringing its lod up to date: created with
-// the level's vertices, the texture coordinates of the level shown (VISF_UNKNOWN_10), lit, its alpha, the environment
+// the level's vertices, the texture coordinates of the level shown (VISF_TEXTURE_LOD), lit, its alpha, the environment
 // map and, without hardware T&L, transformed and fogged. ProcessVertices is in both clipping branches and FogProcess
 // called in each branch of the stride (the original pushes 0x28 and 0x20 in two arms, tail-merged): the copies' extra
 // references to num_verts give the original's stack slots. The help struct's clip is assigned first, as the original
@@ -648,7 +648,7 @@ void I3D_object::m_AddFGroups()
         l->lights_changed = (uint)-1;
         l->light_key = (uint)-1;
         created = true;
-        if (vis_flags & VISF_UNKNOWN_10)
+        if (vis_flags & VISF_TEXTURE_LOD)
             vis_flags |= VISF_LOD_CHANGED;
     }
 
@@ -821,14 +821,14 @@ void I3D_object::m_AddFGroups()
         I3D_material *mat = fg->GetMaterial();
         h.fg = fg;
         if (mat && mat->flags & MATF_TEXTURE) {
-            if (vis_flags & VISF_UNKNOWN_10)
+            if (vis_flags & VISF_TEXTURE_LOD)
                 h.texture = mesh->levels[cur_lod]->fgroups->material->GetTexture();
             else
                 h.texture = mat->GetTexture();
         } else
             h.texture = NULL;
         if (mat && mat->flags & MATF_ENVMAP) {
-            if (vis_flags & VISF_UNKNOWN_10)
+            if (vis_flags & VISF_TEXTURE_LOD)
                 h.env_texture = mesh->levels[cur_lod]->fgroups->material->GetEnvTexture();
             else
                 h.env_texture = mat->GetEnvTexture();

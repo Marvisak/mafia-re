@@ -17,29 +17,29 @@ class C_Particle
 public:
     I3D_part_base *visual;              // 0x0, the particle's (Init makes it once), released by the destructor
     C_ParticleType *type;               // 0x4, the emitter's part it belongs to
-    int unknown_8;                      // 0x8, the part's subpart it is at (SetPhase)
-    S_vector unknown_c;                 // 0xc, its direction times its speed, per second
-    S_quat unknown_18;                  // 0x18, its direction when the subpart started, as a rotation
-    S_quat unknown_28;                  // 0x28, the subpart's direction, which Tick turns it to
-    bool unknown_38;                    // 0x38, it turns from unknown_18 to unknown_28
-    int unknown_3c;                     // 0x3c, the time the subpart has left, in ms
+    int subpart;                        // 0x8, the index of the part's subpart it is at (SetPhase)
+    S_vector velocity;                  // 0xc, its direction times its speed, per second
+    S_quat start_rot;                   // 0x18, its direction when the subpart started, as a rotation
+    S_quat end_rot;                     // 0x28, the subpart's direction, which Tick turns it to
+    bool turning;                       // 0x38, it turns from start_rot to end_rot
+    int time_left;                      // 0x3c, the time the subpart has left, in ms
     uchar unknown_40[4];                // 0x40
-    int unknown_44;                     // 0x44, the part's flags (PARTF_*)
+    int flags;                          // 0x44, the part's flags (PARTF_*)
     uchar unknown_48[4];                // 0x48
-    int unknown_4c;                     // 0x4c, the subpart's time
-    S_vector unknown_50;                // 0x50, how the visual's scale changes, per ms
-    float unknown_5c;                   // 0x5c, how its transparency changes, per ms
-    float unknown_60;                   // 0x60, how the speed changes (a fraction of it), per second
+    int duration;                       // 0x4c, the subpart's time, in ms
+    S_vector scale_change;              // 0x50, how the visual's scale changes, per second
+    float transparency_change;          // 0x5c, how its transparency changes, per second
+    float speed_change;                 // 0x60, how the speed changes (a fraction of it), per second
 
     C_Particle()
     {
         visual = NULL;
         type = NULL;
-        unknown_8 = 0;
-        unknown_3c = 0;
-        unknown_44 = 0;
-        unknown_60 = 0.0f;
-        unknown_5c = 0.0f;
+        subpart = 0;
+        time_left = 0;
+        flags = 0;
+        speed_change = 0.0f;
+        transparency_change = 0.0f;
     }
 
     ~C_Particle();

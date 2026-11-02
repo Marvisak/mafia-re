@@ -50,7 +50,7 @@ public:
     int time;                           // 0x30, how long a line stays, in ms
     // The time Tick has counted towards removing the first line, faster the more lines there are (unsigned: Tick adds
     // to it as a 64-bit value)
-    uint unknown_34;                    // 0x34
+    uint elapsed;                       // 0x34
     bool upwards;                       // 0x38, the lines go up from a line above y
     bool right_aligned;                 // 0x39, the lines end at x
     bool reversed;                      // 0x3a, the last line first

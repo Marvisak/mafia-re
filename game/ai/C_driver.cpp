@@ -9,7 +9,7 @@
 // FUNCTION: GAME 0x43bee0
 C_driver::~C_driver()
 {
-    unknown_160.clear();
+    path.clear();
 }
 
 #pragma auto_inline(off)

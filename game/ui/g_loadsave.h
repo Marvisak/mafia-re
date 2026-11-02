@@ -106,7 +106,7 @@ struct G_Profile_FileHead
     uint unknown_c;                     // 0xc, 0 when saved
     uchar name[0x34];                   // 0x10, the player's, which the profiles' menu shows
     uint freeride_enabled;              // 0x44, G_LoadSaveClass::freeride_enabled
-    uint unknown_48;                    // 0x48, G_LoadSaveClass::unknown_9c
+    uint freeride_cars;                 // 0x48, G_LoadSaveClass::freeride_cars
     uint unknown_4c;                    // 0x4c, 0 when saved
     uint race_cars;                     // 0x50, G_LoadSaveClass::race_cars
 };
@@ -127,10 +127,11 @@ struct S_profile_settings
 {
     float steering_linearity;           // 0x0, "Nonlinear / Linear"
     float blood_level;                  // 0x4, "Level of Blood"
-    // The mouse camera's filter (G_Camera::Tick's CAMERA_P_MOUSE: each older movement weighs unknown_c to the power of
-    // unknown_8 times its age in hundredths of a second); nothing else reads them
-    float unknown_8;                    // 0x8
-    float unknown_c;                    // 0xc
+    // The mouse camera's filter (G_Camera::Tick's CAMERA_P_MOUSE: each older movement weighs mouse_filter_base to the
+    // power of mouse_filter_rate times its age in hundredths of a second); nothing else reads them, and no menu sets
+    // them
+    float mouse_filter_rate;            // 0x8
+    float mouse_filter_base;            // 0xc
     uchar unknown_10[4];                // 0x10
     float aiming_sensitivity_x;         // 0x14
     float aiming_sensitivity_y;         // 0x18
@@ -142,8 +143,9 @@ struct S_profile_settings
     // 1 to 3 (Refresh resets others to 1): the camera G_Camera::Reset takes, the number of an
     // entry of the camera's cameraParams (where PS2's Reset takes 1)
     uint camera;                        // 0x30
-    // The same for 7 to 15, 7 otherwise
-    uint unknown_34;                    // 0x34
+    // The same for the car's cameras, 7 to 15, 7 otherwise: G_Camera::SetCar takes it, SetMode stores the car's
+    // camera here (the name is ours)
+    uint car_camera;                    // 0x34
     float gamma;                        // 0x38
     // Force feedback
     float ff_volume;                    // 0x3c, "Global Stick Volume"
@@ -237,23 +239,29 @@ public:
     uchar unknown_80[0xc];
     uint unknown_8c;                    // 0x8c
     bool unknown_90;                    // 0x90, set by Init (PS2's 0x2b0 the same)
-    bool unknown_91;                    // 0x91, set while ProfileLoad reads the profile: a failed load leaves the defaults
+    // 0x91, set by the constructor and while ProfileLoad reads the profile, cleared once the whole profile was read: a
+    // failed load leaves the defaults (the name is ours)
+    bool load_failed;
     uint race_cars;                     // 0x94, RaceCarsEnable's bits
-    // 0x98, cleared by SaveGameNewGame: the cars EnableSteal lets steal, a bit for each letter, which CanSteal tests
-    // against the car's
-    uint unknown_98;
-    uint unknown_9c;                    // 0x9c, FreerideEnableCar's bits, a bit for each letter
+    // 0x98, cleared by SaveGameNewGame: the cars EnableSteal lets steal (PS2's G_GarageClass 0x78), a bit for each
+    // letter, which CanSteal tests against the car's (the name is ours)
+    uint steal_cars;
+    // 0x9c, FreerideEnableCar's bits, a bit for each letter, PS2's FreerideGetEnabledCars' (the name is ours)
+    uint freeride_cars;
     S_garage_car garage[MAX_GARAGE_CARS];   // 0xa0, the cars 0x60b9f0 adds
     uint unknown_168[MAX_GARAGE_CARS];  // 0x168, cleared with them
-    // 0x1cc, cleared by GarageGameInit, set by GarageShowResults (PS2's G_GarageClass 0x7c)
-    bool unknown_1cc;
-    bool unknown_1cd;                   // 0x1cd, the same, set by GarageAddLastStolen (PS2's 0x7d)
+    // Cleared by GarageGameInit, set by the scripts' GARAGE_SHOW and GARAGE_ADDLASTSTOLEN (the names are ours):
+    // GarageGameDone then takes last_stolen into the garage, and with show_results runs GarageShowResultsProc
+    bool show_results;                  // 0x1cc, GarageShowResults' (PS2's G_GarageClass 0x7c)
+    bool add_last_stolen;               // 0x1cd, GarageAddLastStolen's (PS2's 0x7d)
     uchar unknown_1ce[2];
     uint mission_name_id;               // 0x1d0, SetMissionNameID's, of the text database (the name is ours)
     bool unknown_1d4;                   // 0x1d4, cleared by ProfileLoad
     std::vector<uint> objectives;       // 0x1d8, ObjectivesClear and ObjectivesRemove's
-    // 0x1e8, cleared by SaveGameNewGame: a car GarageGameDone adds to the garage with unknown_1cc or unknown_1cd set
-    C_car *unknown_1e8;
+    // 0x1e8, the car the player stole last, PS2's G_GarageClass::CarIsStolen's (0x80, next to its CarCantGetOut's as
+    // here): cleared by SaveGameNewGame, GarageGameDone adds it to the garage with show_results or add_last_stolen set
+    // (the name is ours)
+    C_car *last_stolen;
     C_car *cant_get_out;                // 0x1ec, CarCantGetOut's car (the name is ours)
     // 0x1f0, how much of the free ride is open (FREERIDE_*; the name is ours): PS2's FreerideEnable sets it (the PC's
     // 0x60e910), the profile keeps it
@@ -400,7 +408,9 @@ struct S_car_index
     char shadow_model[0x20];            // 0x40, "fordTrunS.i3d"
     char name[0x20];                    // 0x60, "Bolt Ace Tudor"
     uint unknown_80;
-    uint unknown_84;                    // 0x84, PS2's AllDefault enables these race cars
+    // 0x84, the race cars the car enables (RaceCarsEnable's bits): GarageGameDone enables those of the cars it keeps,
+    // and PS2's AllDefault enables these too (the name is ours)
+    uint race_cars;
     uint unknown_88;                    // 0x88
     uchar unknown_8c[0xc];
     uint civil_mask;                    // 0x98, GetCivilMaskByModel's (the name is ours)
@@ -459,7 +469,7 @@ public:
 };
 
 // Cars GarageGameDone doesn't take into the garage (the names are ours, after tables\carindex.def's ids): the trucks,
-// and the racing Bugatti as the car of unknown_1e8
+// and the racing Bugatti as the car of last_stolen
 #define CAR_RACING_BUGATTI 0x2b         // bugatti, "Carrozella C-Otto 4WD"
 #define CAR_TRUCK_FLATBED 0x39          // trucka
 #define CAR_TRUCK_COVERED 0x3a          // truckb

@@ -55,22 +55,26 @@ public:
     void LockControls(bool lock);
 
     uchar unknown_a9c[0x1c];            // 0xa9c
-    float unknown_ab8;                  // 0xab8, 1 from C_game::Init and FadeReset (PS2 0xc3c), SetAlpha's
-    float unknown_abc;                  // 0xabc, 1 from C_game::Init and FadeReset (PS2 0xc40)
+    // The player's alpha and the one it fades to, 1 from C_game::Init and FadeReset: PS2's AI fades the first to the
+    // second, 0 while the camera looks from his eyes, and passes it to SetAlpha (the names are ours)
+    float fade_alpha;                   // 0xab8 (PS2 0xc3c)
+    float fade_target;                  // 0xabc (PS2 0xc40)
     uchar unknown_ac0[0x10];            // 0xac0
-    float unknown_ad0;                  // 0xad0 (PS2 0xc50), a tenth of it off the camera's tilt (C_game::Tick)
+    // 0xad0 (PS2 0xc50), the shots' recoil: PS2's ShootDeAimed adds the weapon's, AI lets it down with the time, and a
+    // tenth of it comes off the camera's tilt (C_game::Tick; the name is ours)
+    float recoil;
     uchar unknown_ad4[0x2c];            // 0xad4
 
-    // C_game::Init clears it, the script's CARDAMAGEVISIBLE sets it (PS2 a global set the same; the name is ours)
-    static bool unknown_6478b0;
-    // SetPlayerNaviPoint's (the name is ours)
-    static I3D_frame *unknown_6478b4;
+    // C_game::Init clears it, the script's CARDAMAGEVISIBLE sets it (PS2 name)
+    static bool can_car_damage;
+    // SetPlayerNaviPoint's (PS2 name, a static of PS2's C_player.cpp)
+    static I3D_frame *navi_frame;
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b860
-    static void SetUnknown6478b0(bool on)
+    static void SetCanCarDamage(bool on)
     {
-        unknown_6478b0 = on;
+        can_car_damage = on;
     }
 };
 

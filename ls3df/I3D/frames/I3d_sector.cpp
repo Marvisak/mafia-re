@@ -117,8 +117,8 @@ I3D_sector::I3D_sector()
     occluders = NULL;
     occluder = NULL;
     m_FrmFlags |= FRMFLAGS_HR_SECTORS;
-    unknown_1e8 = 0;
-    unknown_1ec = 0;
+    sound_blend = 0;
+    sound_blend_time = 0;
     sound_props.SetupDefaults();
     m_FrmFlags |= FRMFLAGS_NO_CULL;
     group_bits = 0;
@@ -555,7 +555,7 @@ LS3D_RESULT I3D_sector::Duplicate(I3D_frame *frame)
             }
         }
     }
-    sct_flags = (sct->sct_flags & (SCTF_OCCLUDER | SCTF_UNKNOWN_100)) | SCTF_SOUND_CHANGED;
+    sct_flags = (sct->sct_flags & (SCTF_OCCLUDER | SCTF_FAR_NO_CHILDREN)) | SCTF_SOUND_CHANGED;
     group_bits = sct->group_bits;
     return I3D_OK;
 }

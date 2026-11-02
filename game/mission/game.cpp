@@ -4,7 +4,7 @@
 // ClearDiffData, the semaphores, the city's music areas, the road blocks, the taxis' stops, the telephones, the traffic
 // signs, the scream areas, the weather, the inter-city boxes, GlobalProgramRun, and the Clear functions); the stacks'
 // Clear functions, which the destructor calls (the constructor and the destructor are game.h's), IShowSetVolume, which
-// the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_cutscene::Close calls, and ScoreSet, which the
+// the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_recorder::Close calls, and ScoreSet, which the
 // scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
 // TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
 // it), TickShoot, the shots in flight, and DoubleKiss, the guns on the player's car (dead code on the PC), which Tick
@@ -20,7 +20,7 @@
 // Open: the consoles' globals (0x647a74, 0x647ab0) are here for now; Init, Done, DoneIntern and Tick aren't matched yet.
 // Tick's remaining differences are mostly registers and the inline budget: the original calls TickEffects' size() and
 // the second clear()'s std::copy out of line, but inlines the second clear()'s erase and the city music's i_shows.size().
-// The speed (unknown_2a0c) is the Magnitude of a named difference, whose squares the original sums x, z, y (a nested
+// The speed (player_speed) is the Magnitude of a named difference, whose squares the original sums x, z, y (a nested
 // Square() most likely, which the engine's Magnitude doesn't have), and the city music reads the area's two letters
 // through a pointer it advances (add eax, 11), where ours folds the offset. TickShoot's remaining differences are
 // registers and its sorted frame (frm at 0xc8, the original's 0x2c), and the order of the x87 loads in two Normalize
@@ -28,7 +28,7 @@
 
 #include "mission/game.h"
 #include "mission/Mission.h"
-#include "mission/C_cutscene.h"
+#include "mission/C_recorder.h"
 #include "mission/C_effects.h"
 #include "mission/C_program.h"
 #include "mission/m_cache.h"
@@ -118,13 +118,13 @@ static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_ma
 // point ahead of the camera, and puts the shadows' models on the nearest ones, as many as the video options allow
 inline void C_game::TickShadows(uint time)
 {
-    if (!unknown_2b0.Tick(time))
+    if (!shadow_timer.Tick(time))
         return;
     if (!shadow_temp.size())
         return;
     I3D_frame *own = NULL;
     std::vector<S_shadow_item> *list;
-    bool humans = unknown_2b8;
+    bool humans = human_shadows_next;
     if (humans)
     {
         list = &shadow_items;
@@ -133,11 +133,11 @@ inline void C_game::TickShadows(uint time)
     }
     else
     {
-        list = &shadow_items_2a0;
+        list = &car_shadow_items;
         if (player && player->car)
             own = player->car->frame;
     }
-    unknown_2b8 = !humans;
+    human_shadows_next = !humans;
     if (!list->size())
         return;
     float ahead = 3.0f;
@@ -163,8 +163,8 @@ inline void C_game::TickShadows(uint time)
                 (*list)[i].model->LinkTo((*list)[i].frame, 0);
                 (*list)[i].frame->Update();
                 (*list)[i].on = true;
-                if ((*list)[i].unknown_8)
-                    (*list)[i].unknown_8->SetOn(false);
+                if ((*list)[i].replaced_frame)
+                    (*list)[i].replaced_frame->SetOn(false);
             }
         }
         else if ((*list)[i].on)
@@ -173,8 +173,8 @@ inline void C_game::TickShadows(uint time)
             (*list)[i].model->Close();
             (*list)[i].frame->Update();
             (*list)[i].on = false;
-            if ((*list)[i].unknown_8)
-                (*list)[i].unknown_8->SetOn(true);
+            if ((*list)[i].replaced_frame)
+                (*list)[i].replaced_frame->SetOn(true);
         }
     }
 }
@@ -183,7 +183,7 @@ inline void C_game::TickShadows(uint time)
 // those without a range, becomes the active one
 inline void C_game::SetActiveTrafficP(uint time)
 {
-    if (!unknown_18c.Tick(time))
+    if (!traffic_timer.Tick(time))
         return;
     I3D_frame *cam = act_mission->scene->current_camera;
     S_vector pos = cam->GetWorldPos();
@@ -199,7 +199,7 @@ inline void C_game::SetActiveTrafficP(uint time)
         I3D_frame *frm = g->frame;
         g->active = false;
         float dist = (frm->GetWorldPos() - pos).Magnitude();
-        if (g->unknown_70)
+        if (g->no_range)
         {
             if (!in_range && dist < best)
             {
@@ -252,11 +252,11 @@ bool C_game::Init()
 {
     if (initialized)
         return false;
-    unknown_3665 = false;
-    unknown_3668 = 0;
+    mission_passed = false;
+    car_sounds = 0;
     weather_on = act_mission->scene->GetWeatherSystemParam(WS_PARAM_ON) != 0;
     weather_count = act_mission->scene->GetWeatherSystemParam(WS_PARAM_COUNT);
-    unknown_3638 = -1;
+    weather_buffer = -1;
     if (isound)
     {
         isound->SetVolume(0.0f);
@@ -264,15 +264,15 @@ bool C_game::Init()
         act_mission->restore_volume = true;
     }
     stop_sounds.clear();
-    unknown_2e4.clear();
-    unknown_3674.clear();
+    paused_i_shows.clear();
+    free_shadow_names.clear();
     score_on = false;
     ScoreSetOn(false);
     score = 0;
-    unknown_3644 = false;
-    unknown_3664 = true;
+    camera_rot_repair = false;
+    heal_cheat = true;
     shvestky.unknown_ac = true;
-    unknown_2fd4 = 7000;
+    death_fade_time = 7000;
     actor_lightness = false;
     unknown_140.clear();
     AIManager.police.ZacatekSmeny();
@@ -281,59 +281,59 @@ bool C_game::Init()
     AIManager.fight.Init();
     _show_progress_(0.0f);
     SetPlayerNaviPoint(NULL);
-    C_player::unknown_6478b0 = false;
-    if (unknown_363c)
+    C_player::can_car_damage = false;
+    if (intern_load)
     {
         C_Vehicle::v_light_sector.clear();
         C_Vehicle::v_sound_sector.clear();
         S_hlp::cbEnumSectors(act_mission->scene->primary_sector);
     }
     C_public_physics::unknown_63d78c.clear();
-    strcpy(unknown_2ef4, "");
-    unknown_2f14 = 0;
-    unknown_2ed8 = false;
-    unknown_48 = 0;
-    unknown_29e8 = 0;
+    strcpy(cheat_keys, "");
+    cheats = 0;
+    game_done = false;
+    mission_end = 0;
+    growing_projectors = 0;
     game_time = 0;
-    unknown_2b10 = 0;
-    unknown_2b14 = 0;
+    game_frames = 0;
+    init_frames = 0;
     night_mission = false;
     timeout_program = NULL;
     player_fire_program = NULL;
     player_horn_program = NULL;
     player_wfall_program = NULL;
-    unknown_2edc = RACE6_STATE_NONE;
-    unknown_2ee4.clear();
-    unknown_168.clear();
-    unknown_178 = -1;
+    race6_state = RACE6_STATE_NONE;
+    death_actors.clear();
+    light_cache.clear();
+    light_cache_time = -1;
     i_shows.clear();
     i_show_fades.clear();
-    unknown_2f38 = 0;
-    unknown_30c = 0;
-    unknown_310 = 0;
-    unknown_304.time = 0;
-    unknown_304.period = 813;
+    next_i_show_id = 0;
+    next_sound_number = 0;
+    sounds_fading = 0;
+    sound_play_timer.time = 0;
+    sound_play_timer.period = 813;
     enemy_talks.clear();
     find_actors.clear();
     anim_preload = true;
-    unknown_2fc4.clear();
+    film_music_streams.clear();
     npc_kill_events.clear();
     C_actor::posscoll_frame.clear();
     shvestky.GameInit();
     C_traffic_generator::EnableTaxiDriver(false);
     C_traffic_generator::PlayerInTaxi(NULL);
-    C_traffic_generator::unknown_63d728 = true;
+    C_traffic_generator::global_valid_scream = true;
     sound_arena.Init();
     LightnessClear();
-    unknown_160 = 0;
+    lightness_next = 0;
     invisible_actors.clear();
     mafiaIndicators.RadarClear();
     act_mission->GlobalProgramGameInit();
     // STRING: GAME 0x6376e0
     act_mission->GlobalProgramRun("GameInitStart");
     mafiaIndicators.GameInit();
-    unknown_2e80.clear();
-    unknown_2e90.clear();
+    boxes.clear();
+    box_dests.clear();
     box_placement_temp.clear();
     act_mission->effects->LoadStaticParticles();
     act_mission->effects->Mission_Start();
@@ -343,14 +343,14 @@ bool C_game::Init()
         C_human::InitFFEffects();
     if (ff_manager.car_effects)
         C_car::InitFFEffects();
-    unknown_2adc.clear();
-    unknown_2aec.clear();
-    unknown_2ad9 = false;
+    diff_frames.clear();
+    diff_actors.clear();
+    clear_diff_data = false;
     C_crash_obj::count = 0;
     blood_manager.GameInit();
     frame_placements.clear();
-    unknown_10.clear();
-    unknown_20.clear();
+    hidden_frames.clear();
+    created_frames.clear();
     int fast_find = driver->GetState(RS_FAST_FIND);
     driver->SetState(RS_FAST_FIND, 0);
     srand(time(NULL));
@@ -383,7 +383,7 @@ bool C_game::Init()
     ConsoleReg(&console_2, CONREG_CLEAR | CONREG_RENDER);
     AIManager.segments.Load();
     ff_manager.unknown_74 = false;
-    if (unknown_363c)
+    if (intern_load)
     {
         C_car::LoadTyres();
         C_car::LoadMaterials();
@@ -411,7 +411,7 @@ bool C_game::Init()
         wheel_anim_time_formula = (float)set->GetEndTime();
         set->Release();
     }
-    if (unknown_363c && anim_preload)
+    if (intern_load && anim_preload)
     {
         // STRING: GAME 0x63769c
         AddShadowModel("models\\ShadowManHIGH.i3d");
@@ -501,16 +501,16 @@ bool C_game::Init()
         AddShadowModel("models\\hotrodp6s.i3d");
     }
     shadow_items.clear();
-    shadow_items_2a0.clear();
+    car_shadow_items.clear();
     _show_progress_(.1f);
 
-    // The player: the last of the players that isn't ...
+    // The player: the last of the players that isn't a cutscene's
     std::vector<C_actor *> &actors = act_mission->actors;
     player = NULL;
     int i;
     for (i = actors.size(); i--;)
     {
-        if (actors[i]->type == ACTOR_PLAYER && !(actors[i]->unknown_4 & 0x10))
+        if (actors[i]->type == ACTOR_PLAYER && !(actors[i]->act_flags & ACTF_CUTSCENE))
         {
             player = (C_human *)actors[i];
             break;
@@ -522,16 +522,16 @@ bool C_game::Init()
             mafiaIndicators.RadarAddCar((C_car *)actors[i], (uint)-1);
     }
     I3D_camera *cam = act_mission->scene->current_camera;
-    unknown_2a10 = S_vector(0.0f, 0.0f, 0.0f);
+    player_pos = S_vector(0.0f, 0.0f, 0.0f);
     if (player)
     {
         I3D_frame *frm = player->frame;
         if (frm)
-            unknown_2a10 = frm->GetWorldPos();
+            player_pos = frm->GetWorldPos();
     }
     else if (cam)
-        unknown_2a10 = cam->GetWorldPos();
-    unknown_2a0c = 0;
+        player_pos = cam->GetWorldPos();
+    player_speed = 0;
     // The camera behind the player
     if (player && cam)
     {
@@ -544,10 +544,10 @@ bool C_game::Init()
         cam->SetPos(p);
         cam->Update();
     }
-    unknown_e8 = player;
+    camera_human = player;
     don_ocas = new C_don_ocas;
     C_traffic_generator::SetVisible(true);
-    unknown_10c = false;
+    act_state_changed = false;
     C_traffic_generator::ClearElements();
     for (i = actors.size(); i--;)
     {
@@ -561,10 +561,10 @@ bool C_game::Init()
         step = .6f / actors.size();
     int every = actors.size() > 20 ? actors.size() / 20 : actors.size();
     int count = 0;
-    if (unknown_363c)
+    if (intern_load)
     {
         memset(holes, 0, sizeof(holes));
-        memset(unknown_2fd8, 0, sizeof(unknown_2fd8));
+        memset(scratches, 0, sizeof(scratches));
     }
     for (i = 0; i < (int)actors.size(); i++)
     {
@@ -580,17 +580,17 @@ bool C_game::Init()
             _show_progress_(i * step + .1f);
         }
     }
-    unknown_ec.clear();
-    unknown_fc.clear();
-    unknown_110.clear();
+    active_actors.clear();
+    inactive_actors.clear();
+    dead_humans.clear();
     for (i = actors.size(); i--;)
-        unknown_ec.push_back(actors[i]);
-    if (unknown_10c)
+        active_actors.push_back(actors[i]);
+    if (act_state_changed)
         ChangeActState();
     InterCity_GameInit();
-    unknown_18c.time = 0;
-    unknown_18c.period = 6000;
-    SetActiveTrafficP(unknown_18c.period + 1);
+    traffic_timer.time = 0;
+    traffic_timer.period = 6000;
+    SetActiveTrafficP(traffic_timer.period + 1);
     fires.clear();
     camera.Reset();
     camera.SetCamera(act_mission->scene->current_camera);
@@ -601,103 +601,103 @@ bool C_game::Init()
     sledovacka.Init();
     glass.Init(5);
     debris.Init(10.0f);
-    unknown_2ad8 = false;
+    game_failed = false;
     compass.Activate(NULL);
-    unknown_130.clear();
-    unknown_19c = 0;
-    unknown_1a0 = 5;
+    removed_actors.clear();
+    semaphore_phase_x = 0;
+    semaphore_phase_z = 5;
     LoadSemaphores();
     TickSemaphores();
-    unknown_194.time = 0;
-    unknown_194.period = 3000;
+    semaphore_timer.time = 0;
+    semaphore_timer.period = 3000;
     LoadRoadBlocks();
     LoadTelephones();
     CreateSignalMarkIDX();
     LoadTaxiPoints();
-    unknown_204 = 0;
+    taxi_passenger = NULL;
     LoadCityMusicAreas();
-    unknown_2fb4 = 0;
-    unknown_2fb0 = -1;
-    unknown_2fb8 = -1;
-    unknown_2fbc = -1;
-    unknown_2fc0 = false;
+    city_music_area = 0;
+    city_music_time = -1;
+    city_music = -1;
+    city_music_old = -1;
+    city_music_paused = false;
     LoadScreamAreas();
-    unknown_362c = -1;
-    unknown_3628 = 1;
-    unknown_2b0.time = 0;
-    unknown_2b0.period = 823;
-    unknown_2b8 = true;
-    TickShadows(unknown_2b0.period + 1);
+    scream_areas_time = -1;
+    camera_scream_areas = 1;
+    shadow_timer.time = 0;
+    shadow_timer.period = 823;
+    human_shadows_next = true;
+    TickShadows(shadow_timer.period + 1);
     _show_progress_(.7f);
 
-    if (unknown_363c)
+    if (intern_load)
     {
         // The blood's and the dirt's textures, each with its alpha (the HUD's literals for the first)
         if (GetIGraph()->CreateITexture(
                 "2blood.bmp",
-                "2blood+.bmp", 4, &unknown_29bc[0]))
-            unknown_29bc[0] = NULL;
+                "2blood+.bmp", 4, &track_textures[0]))
+            track_textures[0] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x6372b8
                 "2flek.bmp",
                 // STRING: GAME 0x6372c4
-                "2flek+.bmp", 4, &unknown_29bc[1]))
-            unknown_29bc[1] = NULL;
+                "2flek+.bmp", 4, &track_textures[1]))
+            track_textures[1] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x63729c
                 "2dirbet.bmp",
                 // STRING: GAME 0x6372a8
-                "2dirbet+.bmp", 4, &unknown_29bc[2]))
-            unknown_29bc[2] = NULL;
+                "2dirbet+.bmp", 4, &track_textures[2]))
+            track_textures[2] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x637280
                 "2dirdre.bmp",
                 // STRING: GAME 0x63728c
-                "2dirdre+.bmp", 4, &unknown_29bc[3]))
-            unknown_29bc[3] = NULL;
+                "2dirdre+.bmp", 4, &track_textures[3]))
+            track_textures[3] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x637264
                 "2dirple.bmp",
                 // STRING: GAME 0x637270
-                "2dirple+.bmp", 4, &unknown_29bc[4]))
-            unknown_29bc[4] = NULL;
+                "2dirple+.bmp", 4, &track_textures[4]))
+            track_textures[4] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x637254
                 "2dirsklo.bmp",
-                "2dirsklo.bmp", 4, &unknown_29bc[5]))
-            unknown_29bc[5] = NULL;
+                "2dirsklo.bmp", 4, &track_textures[5]))
+            track_textures[5] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x637230
                 "2bfootprint.bmp",
                 // STRING: GAME 0x637240
-                "2bfootprint+.bmp", 4, &unknown_29bc[6]))
-            unknown_29bc[6] = NULL;
+                "2bfootprint+.bmp", 4, &track_textures[6]))
+            track_textures[6] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x637214
                 "2blood3.bmp",
                 // STRING: GAME 0x637220
-                "2blood3+.bmp", 4, &unknown_29bc[7]))
-            unknown_29bc[7] = NULL;
+                "2blood3+.bmp", 4, &track_textures[7]))
+            track_textures[7] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x6371f4
                 "2dogfoot.bmp",
                 // STRING: GAME 0x637204
-                "2dogfoot+.bmp", 4, &unknown_29bc[8]))
-            unknown_29bc[8] = NULL;
+                "2dogfoot+.bmp", 4, &track_textures[8]))
+            track_textures[8] = NULL;
         if (GetIGraph()->CreateITexture(
                 // STRING: GAME 0x6371e8
-                "skrob.tga", NULL, 2, &unknown_29bc[9]))
-            unknown_29bc[9] = NULL;
+                "skrob.tga", NULL, 2, &track_textures[9]))
+            track_textures[9] = NULL;
     }
     _show_progress_(.75f);
 
-    if (unknown_363c)
+    if (intern_load)
     {
         // The projectors of the blood and the holes
-        unknown_29e4 = 0;
+        track_projector_next = 0;
         for (i = 100; i--;)
         {
-            S_unknown_75c &p = unknown_75c[i];
+            S_track_projector &p = track_projectors[i];
             p.in_collision = false;
             p.frame = driver->CreateVisual(I3D_VISUAL_PROJECTOR);
             if (p.frame)
@@ -710,9 +710,9 @@ bool C_game::Init()
         }
         for (i = 100; i--;)
         {
-            S_unknown_2fd8 &p = unknown_2fd8[i];
-            p.unknown_4 = 0;
-            p.unknown_8 = 0;
+            S_scratch &p = scratches[i];
+            p.car = NULL;
+            p.car_frame = NULL;
             p.frame = driver->CreateVisual(I3D_VISUAL_PROJECTOR);
             if (p.frame)
             {
@@ -871,11 +871,11 @@ bool C_game::Init()
         for (i = 0; i < 3; i++)
             C_cartridge::sounds[i] = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
         for (i = 0; i < 10; i++)
-            unknown_2a20[i] = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+            shoot_sounds[i] = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
         for (i = 0; i < 10; i++)
         {
-            S_unknown_2a48 &l = unknown_2a48[i];
-            l.unknown_4 = -1;
+            S_shoot_light &l = shoot_lights[i];
+            l.time = -1;
             l.light = (I3D_light *)driver->CreateFrame(FRAME_LIGHT);
             if (l.light)
             {
@@ -888,8 +888,8 @@ bool C_game::Init()
         }
         for (i = 0; i < 3; i++)
         {
-            S_unknown_2ac0 &s = unknown_2ac0[i];
-            s.unknown_4 = -1;
+            S_delayed_sound &s = delayed_sounds[i];
+            s.time = -1;
             s.sound = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
             if (s.sound)
             {
@@ -955,9 +955,9 @@ bool C_game::Init()
     SetWBuffer(true);
     // STRING: GAME 0x637190
     act_mission->GlobalProgramRun("GameInitEnd");
-    if (unknown_10c)
+    if (act_state_changed)
         ChangeActState();
-    act_mission->SetUnknown78(10);
+    act_mission->SetSkipFrames(10);
     kiss_car = NULL;
     kiss_target = NULL;
     kiss_frame = NULL;
@@ -984,18 +984,18 @@ bool C_game::Init()
     OsefujPocasi(false, (uint)-1);
     if (player)
     {
-        ((C_player *)player)->unknown_ab8 = 1.0f;
-        ((C_player *)player)->unknown_abc = 1.0f;
+        ((C_player *)player)->fade_alpha = 1.0f;
+        ((C_player *)player)->fade_target = 1.0f;
         ((C_player *)player)->SetAlpha(1.0f);
     }
     death_human_fades.clear();
-    unknown_3684 = false;
+    item_blur = false;
     act_mission->FrmActBuff_ClearAll();
     igraph->ResetRenderProps();
     igraph->Clear(0, 1.0f, 3);
     igraph->Present();
-    unknown_363c = false;
-    unknown_363d = true;
+    intern_load = false;
+    intern_loaded = true;
     // The bank's mission: the Duesenberg (deuseJco) the player came in stays put
     // STRING: GAME 0x637180
     if (mafiaLoadSave.SaveGameGetSelectedNumber() == 0x208 &&!_stricmp(act_mission->GetMissionName(), "MISE19-BANKA"))
@@ -1099,17 +1099,17 @@ bool C_game::Done()
     mafiaIndicators.GameDone();
     mafiaLoadSave.ObjectivesClear();
     stop_sounds.clear();
-    unknown_2e4.clear();
+    paused_i_shows.clear();
     DelAllHydrants();
-    unknown_2ed8 = true;
+    game_done = true;
     LightnessClear();
     int i;
-    for (i = unknown_168.size(); i--;)
+    for (i = light_cache.size(); i--;)
     {
-        if (unknown_168[i])
-            unknown_168[i]->SetOn(true);
+        if (light_cache[i])
+            light_cache[i]->SetOn(true);
     }
-    unknown_168.clear();
+    light_cache.clear();
     // STRING: GAME 0x637738
     act_mission->GlobalProgramRun("GameDoneStart");
     if (camera.mode == CAMERA_CP_SNIPER)
@@ -1136,7 +1136,7 @@ bool C_game::Done()
             cars[i]->TakATedSiVasKupim_Vsecky();
     }
     shvestky.GameDone();
-    unknown_2ee4.clear();
+    death_actors.clear();
     // The cars in the garage leave the game
     for (i = 0; i < (int)unknown_140.size();)
     {
@@ -1160,7 +1160,7 @@ bool C_game::Done()
     if (CRacing && anim_preload)
     {
         CRacing->GameDone();
-        if (CRacing->unknown_1)
+        if (CRacing->mission_race)
         {
             delete CRacing;
             CRacing = NULL;
@@ -1204,9 +1204,9 @@ bool C_game::Done()
         }
     }
     shadow_items.clear();
-    for (i = shadow_items_2a0.size(); i--;)
+    for (i = car_shadow_items.size(); i--;)
     {
-        S_shadow_item &s = shadow_items_2a0[i];
+        S_shadow_item &s = car_shadow_items[i];
         if (s.model)
         {
             s.model->LinkTo(NULL, 0);
@@ -1217,7 +1217,7 @@ bool C_game::Done()
                 delete[] s.name;
         }
     }
-    shadow_items_2a0.clear();
+    car_shadow_items.clear();
     for (i = fires.size(); i--;)
     {
         if (fires[i])
@@ -1227,7 +1227,7 @@ bool C_game::Done()
     using_object.ClearObjects();
     using_object.ClearInvalidItems();
     ClearTemporaryActors();
-    unknown_130.clear();
+    removed_actors.clear();
     std::vector<C_actor *> &actors = act_mission->actors;
     C_traffic_generator::FreeDynCollElements();
     InterCity_GameDoneInGameDone();
@@ -1235,7 +1235,7 @@ bool C_game::Done()
     for (i = actors.size(); i--;)
     {
         C_actor *act = actors[i];
-        if (!act->unknown_66 || act->type != ACTOR_CAR)
+        if (!act->from_mission || act->type != ACTOR_CAR)
             act->GameDone();
         else if (act->act_state != ACTSTATE_2)
         {
@@ -1251,9 +1251,9 @@ bool C_game::Done()
         don_ocas->Release();
         don_ocas = NULL;
     }
-    unknown_ec.clear();
-    unknown_fc.clear();
-    unknown_110.clear();
+    active_actors.clear();
+    inactive_actors.clear();
+    dead_humans.clear();
     act_mission->DelNotMeActors();
     AIManager.police.KonecSmeny();
     AIManager.follow.Destroy();
@@ -1272,7 +1272,7 @@ bool C_game::Done()
     shoots.clear();
     for (i = 100; i--;)
     {
-        S_unknown_75c &p = unknown_75c[i];
+        S_track_projector &p = track_projectors[i];
         if (p.in_collision)
             gifCollision.DynErase(&p.coll);
         if (p.frame)
@@ -1280,8 +1280,8 @@ bool C_game::Done()
     }
     for (i = 100; i--;)
     {
-        if (unknown_2fd8[i].frame)
-            unknown_2fd8[i].frame->LinkTo(NULL, 0);
+        if (scratches[i].frame)
+            scratches[i].frame->LinkTo(NULL, 0);
     }
     for (i = 0; i < 100; i++)
     {
@@ -1305,40 +1305,40 @@ bool C_game::Done()
     }
     for (i = 0; i < 10; i++)
     {
-        if (unknown_2a20[i])
-            unknown_2a20[i]->SetOn(false);
+        if (shoot_sounds[i])
+            shoot_sounds[i]->SetOn(false);
     }
     for (i = 0; i < 10; i++)
     {
-        if (unknown_2a48[i].light)
+        if (shoot_lights[i].light)
         {
-            unknown_2a48[i].light->LinkTo(NULL, 0);
-            unknown_2a48[i].light->SetOn(false);
+            shoot_lights[i].light->LinkTo(NULL, 0);
+            shoot_lights[i].light->SetOn(false);
         }
     }
     for (i = 0; i < 3; i++)
     {
-        if (unknown_2ac0[i].sound)
-            unknown_2ac0[i].sound->SetOn(false);
+        if (delayed_sounds[i].sound)
+            delayed_sounds[i].sound->SetOn(false);
     }
     rmorf.Mission_Done();
     mafiaIndicators.SetFlags(0);
-    for (i = unknown_2e80.size(); i--;)
-        BoxPlacementDel(unknown_2e80[i]->frame);
-    for (i = unknown_2e90.size(); i--;)
-        delete unknown_2e90[i];
-    unknown_2e80.clear();
-    unknown_2e90.clear();
+    for (i = boxes.size(); i--;)
+        BoxPlacementDel(boxes[i]->frame);
+    for (i = box_dests.size(); i--;)
+        delete box_dests[i];
+    boxes.clear();
+    box_dests.clear();
     box_placement_temp.clear();
-    for (i = unknown_20.size(); i--;)
+    for (i = created_frames.size(); i--;)
     {
-        unknown_20[i]->LinkTo(NULL, 0);
-        unknown_20[i]->Release();
+        created_frames[i]->LinkTo(NULL, 0);
+        created_frames[i]->Release();
     }
-    unknown_20.clear();
-    for (i = unknown_10.size(); i--;)
-        unknown_10[i]->SetOn(true);
-    unknown_10.clear();
+    created_frames.clear();
+    for (i = hidden_frames.size(); i--;)
+        hidden_frames[i]->SetOn(true);
+    hidden_frames.clear();
     // The frames' saved state back
     for (i = frame_placements.size(); i--;)
     {
@@ -1359,7 +1359,7 @@ bool C_game::Done()
     road_blocks.clear();
     telephones.clear();
     taxi_points.clear();
-    unknown_1e4.clear();
+    signal_mark_idx.clear();
     if (base_cache.IsOpen())
         base_cache.VisibleAllFrames();
     // STRING: GAME 0x63772c
@@ -1393,7 +1393,7 @@ bool C_game::Done()
 restart:
     for (i = 0; i < (int)actors.size(); i++)
     {
-        if (actors[i]->type == ACTOR_CAR && ((C_car *)actors[i])->unknown_220c)
+        if (actors[i]->type == ACTOR_CAR && ((C_car *)actors[i])->temporary)
         {
             act_mission->FrmActBuff_RemoveActiveActor(actors[i]);
             act_mission->DelActor(actors[i]);
@@ -1408,9 +1408,9 @@ restart:
         money->LinkTo(NULL, 0);
     act_mission->scene->SetWeatherSystemParam(WS_PARAM_ON, weather_on);
     act_mission->scene->SetWeatherSystemParam(WS_PARAM_COUNT, weather_count);
-    for (i = unknown_3674.size(); i--;)
-        delete unknown_3674[i];
-    unknown_3674.clear();
+    for (i = free_shadow_names.size(); i--;)
+        delete free_shadow_names[i];
+    free_shadow_names.clear();
     initialized = false;
     return true;
 }
@@ -1419,9 +1419,9 @@ restart:
 // FUNCTION: GAME 0x5a4d20
 void C_game::DoneIntern()
 {
-    if (!unknown_363d)
+    if (!intern_loaded)
         return;
-    unknown_363d = false;
+    intern_loaded = false;
     C_Vehicle::v_light_sector.clear();
     int i;
     for (i = shadow_temp.size(); i--;)
@@ -1438,12 +1438,12 @@ void C_game::DoneIntern()
     shadow_temp.clear();
     for (i = 10; i--;)
     {
-        if (unknown_29bc[i])
-            unknown_29bc[i]->Release();
+        if (track_textures[i])
+            track_textures[i]->Release();
     }
     for (i = 100; i--;)
     {
-        S_unknown_75c &p = unknown_75c[i];
+        S_track_projector &p = track_projectors[i];
         if (p.in_collision)
             gifCollision.DynErase(&p.coll);
         if (p.frame)
@@ -1454,13 +1454,13 @@ void C_game::DoneIntern()
     }
     for (i = 100; i--;)
     {
-        S_unknown_2fd8 &p = unknown_2fd8[i];
+        S_scratch &p = scratches[i];
         if (p.frame)
         {
             p.frame->LinkTo(NULL, 0);
             p.frame->Release();
         }
-        p.unknown_4 = 0;
+        p.car = NULL;
     }
     for (i = 0; i < 32; i++)
     {
@@ -1520,32 +1520,32 @@ void C_game::DoneIntern()
     }
     for (i = 0; i < 10; i++)
     {
-        if (unknown_2a20[i])
+        if (shoot_sounds[i])
         {
-            unknown_2a20[i]->Release();
-            unknown_2a20[i] = NULL;
+            shoot_sounds[i]->Release();
+            shoot_sounds[i] = NULL;
         }
     }
     for (i = 0; i < 10; i++)
     {
-        if (unknown_2a48[i].light)
+        if (shoot_lights[i].light)
         {
-            unknown_2a48[i].light->Release();
-            unknown_2a48[i].light = NULL;
+            shoot_lights[i].light->Release();
+            shoot_lights[i].light = NULL;
         }
     }
     for (i = 0; i < 3; i++)
     {
-        if (unknown_2ac0[i].sound)
+        if (delayed_sounds[i].sound)
         {
-            unknown_2ac0[i].sound->Release();
-            unknown_2ac0[i].sound = NULL;
+            delayed_sounds[i].sound->Release();
+            delayed_sounds[i].sound = NULL;
         }
     }
-    C_traffic_generator::unknown_632638 = 1.0f;
-    C_traffic_generator::unknown_63263c = 1.0f;
-    C_traffic_car::unknown_63d7fc = 1.0f;
-    C_traffic_car::unknown_63d804 = 1.0f;
+    C_traffic_generator::ratio_all = 1.0f;
+    C_traffic_generator::ratio_police = 1.0f;
+    C_traffic_car::elems_coefff = 1.0f;
+    C_traffic_car::police_coefff = 1.0f;
     if (sheet)
     {
         sheet->Release();
@@ -1566,10 +1566,10 @@ void C_game::DoneIntern()
 
 // The sounds of sound_play (PS2 name): a sound that has stopped, or gone back to its start without looping, is
 // released; a fading one has its volume moved by its fade, up to its volume or down to silence, where it is turned
-// off. While none fades the list is checked only at unknown_304's periods.
+// off. While none fades the list is checked only at sound_play_timer's periods.
 inline void C_game::TickEffects(uint time)
 {
-    if (!unknown_310 && !unknown_304.Tick(time))
+    if (!sounds_fading && !sound_play_timer.Tick(time))
         return;
     for (uint i = 0; i < sound_play.size();)
     {
@@ -1590,7 +1590,7 @@ inline void C_game::TickEffects(uint time)
                     {
                         vol = sound_play[i].volume;
                         sound_play[i].fading = false;
-                        unknown_310--;
+                        sounds_fading--;
                     }
                     sound_play[i].sound->SetVolume(vol);
                 }
@@ -1600,7 +1600,7 @@ inline void C_game::TickEffects(uint time)
                     if (vol <= 0.0f)
                     {
                         sound_play[i].sound->SetOn(false, true);
-                        unknown_310--;
+                        sounds_fading--;
                     }
                     else
                         sound_play[i].sound->SetVolume(vol);
@@ -1624,11 +1624,11 @@ inline void C_game::ShootLightTick(uint time)
 {
     for (int i = 10; i--;)
     {
-        S_unknown_2a48 &l = unknown_2a48[i];
-        if (l.unknown_4 > 0)
+        S_shoot_light &l = shoot_lights[i];
+        if (l.time > 0)
         {
-            l.unknown_4 -= time;
-            if (l.unknown_4 <= 0)
+            l.time -= time;
+            if (l.time <= 0)
             {
                 I3D_frame *parent = l.light->GetParent();
                 if (parent && parent->GetType() == FRAME_SECTOR)
@@ -1636,36 +1636,36 @@ inline void C_game::ShootLightTick(uint time)
                 l.light->LinkTo(NULL, 0);
                 l.light->SetOn(false);
             }
-            else if (l.unknown_8 & 1)
+            else if (l.flags & 1)
             {
-                if (l.unknown_4 > 500)
+                if (l.time > 500)
                     l.light->SetDiffusePower(rnd() * .4f + .8f);
                 else
-                    l.light->SetDiffusePower(l.unknown_4 * .002f);
+                    l.light->SetDiffusePower(l.time * .002f);
             }
         }
     }
 }
 
-// The lights of unknown_168 (PS2 name): about every two seconds, each turned on while the camera is within its range
+// The lights of light_cache (PS2 name): about every two seconds, each turned on while the camera is within its range
 // and the camera's own, 15 m more
 inline void C_game::LightCacheTick(uint time)
 {
-    if (!unknown_168.size())
+    if (!light_cache.size())
         return;
-    if (unknown_178 > 0)
+    if (light_cache_time > 0)
     {
-        unknown_178 -= time;
+        light_cache_time -= time;
         return;
     }
-    unknown_178 = 2023;
+    light_cache_time = 2023;
     I3D_camera *cam = act_mission->GetScene()->GetActiveCamera();
     float range = cam->fcp;
     S_vector pos = cam->GetWorldPos();
-    for (int i = unknown_168.size(); i--;)
+    for (int i = light_cache.size(); i--;)
     {
-        S_vector dir = unknown_168[i]->GetWorldPos() - pos;
-        I3D_light *lt = (I3D_light *)unknown_168[i];
+        S_vector dir = light_cache[i]->GetWorldPos() - pos;
+        I3D_light *lt = (I3D_light *)light_cache[i];
         float r = (lt->far_range + range + 15.0f) * (lt->far_range + range + 15.0f);
         if (dir.Square() < r)
             lt->SetOn(true);
@@ -1675,7 +1675,8 @@ inline void C_game::LightCacheTick(uint time)
 }
 
 // The hydrants (PS2 name): one whose particle has ended, or 150 m from the camera, taken from the list; the others'
-// particles flow while the line up from them hits something, a car if anything with an actor
+// particles stop while the line up from them hits something, a car if anything with an actor (PauseParticle's bool
+// is the emitter's emitting: PS2's toggles the emitter's flag 4 instead, whatever the bool)
 inline void C_game::TickHydrant(uint time)
 {
     S_vector pos = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
@@ -1706,15 +1707,15 @@ inline void C_game::TickHydrant(uint time)
                 c = NULL;
             if (c)
             {
-                if (!hydrants[i].flowing)
+                if (!hydrants[i].blocked)
                 {
-                    hydrants[i].flowing = true;
+                    hydrants[i].blocked = true;
                     act_mission->GetEffects()->PauseParticle(hydrants[i].particle, false);
                 }
             }
-            else if (hydrants[i].flowing)
+            else if (hydrants[i].blocked)
             {
-                hydrants[i].flowing = false;
+                hydrants[i].blocked = false;
                 act_mission->GetEffects()->PauseParticle(hydrants[i].particle, true);
             }
             i++;
@@ -1729,15 +1730,15 @@ inline void C_game::TickHydrant(uint time)
 // the camera is in, its name's two letters after the prefix, faded in over the one before
 inline void C_game::TickCityMusic(uint time)
 {
-    if (unknown_2fb0 < 0)
+    if (city_music_time < 0)
     {
-        unknown_2fb0 = 10000;
+        city_music_time = 10000;
         if (!city_music_areas.size())
             return;
         int i;
         for (i = i_shows.size(); i--;)
         {
-            if (i_shows[i].id != unknown_2fb8 && i_shows[i].id != unknown_2fbc && i_shows[i].show)
+            if (i_shows[i].id != city_music && i_shows[i].id != city_music_old && i_shows[i].show)
             {
                 i_shows[i].show->GetEvent();
                 if (!i_shows[i].show->GetEvent())
@@ -1753,9 +1754,9 @@ inline void C_game::TickCityMusic(uint time)
             if (((I3D_area *)city_music_areas[i])->CheckPoint(pos))
             {
                 I3D_frame *area = city_music_areas[i];
-                if (!area || area == unknown_2fb4)
+                if (!area || area == city_music_area)
                     return;
-                unknown_2fb4 = area;
+                city_music_area = area;
                 // The two letters after city_music_
                 const char *name = area->GetName() + 11;
                 char music[3];
@@ -1767,36 +1768,36 @@ inline void C_game::TickCityMusic(uint time)
                 sprintf(file, "sounds\\music\\city_music_%s.ogg", music);
                 for (int j = i_shows.size(); j--;)
                 {
-                    if (i_shows[j].id == unknown_2fb8)
+                    if (i_shows[j].id == city_music)
                     {
                         if (i_shows[j].name && !strcmp(file, i_shows[j].name))
                             return;
                         break;
                     }
                 }
-                if (unknown_2fbc > -1)
-                    DestroyIShow(unknown_2fbc);
-                unknown_2fbc = unknown_2fb8;
-                if (GetIShow(unknown_2fbc))
+                if (city_music_old > -1)
+                    DestroyIShow(city_music_old);
+                city_music_old = city_music;
+                if (GetIShow(city_music_old))
                 {
-                    IShowLoop(unknown_2fbc, false);
-                    IShowFade(unknown_2fbc, .5f, 0.0f, 5000);
+                    IShowLoop(city_music_old, false);
+                    IShowFade(city_music_old, .5f, 0.0f, 5000);
                 }
-                unknown_2fb8 = CreateIShow(2);
-                OpenIShow(file, unknown_2fb8);
-                IShow *show = GetIShow(unknown_2fb8);
+                city_music = CreateIShow(2);
+                OpenIShow(file, city_music);
+                IShow *show = GetIShow(city_music);
                 if (show)
                 {
                     show->Play();
-                    IShowLoop(unknown_2fb8, true);
-                    IShowFade(unknown_2fb8, 0.0f, .5f, 5000);
+                    IShowLoop(city_music, true);
+                    IShowFade(city_music, 0.0f, .5f, 5000);
                 }
                 return;
             }
         }
     }
     else
-        unknown_2fb0 -= time;
+        city_music_time -= time;
 }
 
 // The drivers' steering wheels (PS2 name), with the game effects on: each animation's time by its car's steering
@@ -1807,42 +1808,42 @@ inline void C_game::TickDriverMan()
     for (int i = driver_men.size(); i--;)
     {
         driver_men[i].model->SetAnimTime(driver_men[i].anim,
-            (int)((driver_men[i].car->unknown_628 / driver_men[i].car->unknown_610 + 1.0f) * .5f *
+            (int)((driver_men[i].car->steer / driver_men[i].car->steer_max + 1.0f) * .5f *
             (driver_men[i].formula ? wheel_anim_time_formula : wheel_anim_time)));
         driver_men[i].model->Tick(0);
     }
 }
 
-// The actors whose state changed moved between the two lists (PS2 name): each actor out of ACTSTATE_0 from unknown_ec,
-// each out of ACTSTATE_1 from unknown_fc, told by ChangeState and put into the other list unless it is in ACTSTATE_2,
-// the list's last actor in its place
+// The actors whose state changed moved between the two lists (PS2 name): each actor out of ACTSTATE_0 from
+// active_actors, each out of ACTSTATE_1 from inactive_actors, told by ChangeState and put into the other list unless it
+// is in ACTSTATE_2, the list's last actor in its place
 // FUNCTION: GAME 0x5a5070
 void C_game::ChangeActState()
 {
-    unknown_10c = false;
+    act_state_changed = false;
     uint i;
-    for (i = 0; i < unknown_ec.size();)
+    for (i = 0; i < active_actors.size();)
     {
-        if (unknown_ec[i]->GetActState() != ACTSTATE_0)
+        if (active_actors[i]->GetActState() != ACTSTATE_0)
         {
-            unknown_ec[i]->ChangeState();
-            if (unknown_ec[i]->GetActState() != ACTSTATE_2)
-                unknown_fc.push_back(unknown_ec[i]);
-            unknown_ec[i] = unknown_ec.back();
-            unknown_ec.pop_back();
+            active_actors[i]->ChangeState();
+            if (active_actors[i]->GetActState() != ACTSTATE_2)
+                inactive_actors.push_back(active_actors[i]);
+            active_actors[i] = active_actors.back();
+            active_actors.pop_back();
         }
         else
             i++;
     }
-    for (i = 0; i < unknown_fc.size();)
+    for (i = 0; i < inactive_actors.size();)
     {
-        if (unknown_fc[i]->GetActState() != ACTSTATE_1)
+        if (inactive_actors[i]->GetActState() != ACTSTATE_1)
         {
-            unknown_fc[i]->ChangeState();
-            if (unknown_fc[i]->GetActState() != ACTSTATE_2)
-                unknown_ec.push_back(unknown_fc[i]);
-            unknown_fc[i] = unknown_fc.back();
-            unknown_fc.pop_back();
+            inactive_actors[i]->ChangeState();
+            if (inactive_actors[i]->GetActState() != ACTSTATE_2)
+                active_actors.push_back(inactive_actors[i]);
+            inactive_actors[i] = inactive_actors.back();
+            inactive_actors.pop_back();
         }
         else
             i++;
@@ -1857,24 +1858,24 @@ void C_game::Tick(uint time)
     if (!initialized)
         return;
 
-    // The weather's particles a script asked for (unknown_3638), or the weather off
-    if (unknown_3638 > 0)
+    // The weather's particles a script asked for (weather_buffer), or the weather off
+    if (weather_buffer > 0)
     {
         act_mission->GetScene()->WeatherSystemReset();
         act_mission->GetScene()->SetWeatherSystemParam(WS_PARAM_ON, 1);
-        act_mission->GetScene()->SetWeatherSystemParam(WS_PARAM_COUNT, unknown_3638);
-        unknown_3638 = 0;
+        act_mission->GetScene()->SetWeatherSystemParam(WS_PARAM_COUNT, weather_buffer);
+        weather_buffer = 0;
     }
-    else if (!unknown_3638)
+    else if (!weather_buffer)
     {
         act_mission->GetScene()->SetWeatherSystemParam(WS_PARAM_ON, 0);
-        unknown_3638 = -1;
+        weather_buffer = -1;
     }
 
     // The mission failed, or the player dead: once the screen has faded out, the failure's menu
     if (!CRacing)
     {
-        if (unknown_2ad8 && mafiaIndicators.FadeInOutGetState())
+        if (game_failed && mafiaIndicators.FadeInOutGetState())
         {
             if (mafiaIndicators.FadeInOutIsDark())
             {
@@ -1882,14 +1883,14 @@ void C_game::Tick(uint time)
                 switch (GM_Menu::ExecuteMenu(new GM_GameFailed(0x5b3f63), false, true))
                 {
                 case GAMEFAILED_RESULT_EXIT:
-                    unknown_48 = 1;
+                    mission_end = 1;
                     break;
                 case GAMEFAILED_RESULT_4FC:
-                    unknown_48 = 2;
+                    mission_end = 2;
                     break;
                 case MAINMENU_LOAD_GAME:
                 case GAMEFAILED_RESULT_RETRY:
-                    unknown_48 = 3;
+                    mission_end = 3;
                     break;
                 }
                 mafiaIndicators.FadeInOut(false, 0, 0);
@@ -1897,9 +1898,9 @@ void C_game::Tick(uint time)
             else
                 mafiaIndicators.FadeInOut(true, 1000, 0);
         }
-        if (player && player->unknown_5e)
+        if (player && player->dead)
         {
-            if (unknown_2fd4 < 0)
+            if (death_fade_time < 0)
             {
                 if (mafiaIndicators.FadeInOutGetState())
                 {
@@ -1909,14 +1910,14 @@ void C_game::Tick(uint time)
                         switch (GM_Menu::ExecuteMenu(new GM_GameFailed(0xd55162), false, true))
                         {
                         case GAMEFAILED_RESULT_EXIT:
-                            unknown_48 = 1;
+                            mission_end = 1;
                             break;
                         case GAMEFAILED_RESULT_4FC:
-                            unknown_48 = 2;
+                            mission_end = 2;
                             break;
                         case MAINMENU_LOAD_GAME:
                         case GAMEFAILED_RESULT_RETRY:
-                            unknown_48 = 3;
+                            mission_end = 3;
                             break;
                         }
                         mafiaIndicators.FadeInOut(false, 0, 0);
@@ -1926,7 +1927,7 @@ void C_game::Tick(uint time)
                 }
             }
             else
-                unknown_2fd4 -= time;
+                death_fade_time -= time;
         }
     }
 
@@ -1934,36 +1935,36 @@ void C_game::Tick(uint time)
         FindActorsVect();
 
     game_time += time;
-    unknown_2b10++;
-    unknown_2b14++;
-    act_mission->unknown_64 = act_mission->GetScene()->m_RenderNumber;
+    game_frames++;
+    init_frames++;
+    act_mission->render_number = act_mission->GetScene()->m_RenderNumber;
 
     // How fast the player, or else the camera, moves
     I3D_frame *frm = act_mission->GetScene()->GetActiveCamera();
     if (player)
         frm = player->frame;
     S_vector pos = frm->GetWorldPos();
-    S_vector d = pos - unknown_2a10;
-    unknown_2a0c = d.Magnitude();
+    S_vector d = pos - player_pos;
+    player_speed = d.Magnitude();
     if (time > 0)
-        unknown_2a0c = 1000.0f / time * unknown_2a0c;
+        player_speed = 1000.0f / time * player_speed;
     else
-        unknown_2a0c *= 1000.0f;
-    unknown_2a10 = pos;
+        player_speed *= 1000.0f;
+    player_pos = pos;
 
     if (C_crash_obj::count > 20)
         C_crash_obj::DestroyOuterMostCrashObject();
 
-    for (uint i = 0; i < unknown_ec.size(); i++)
-        unknown_ec[i]->Tick(time);
-    if (unknown_110.size())
+    for (uint i = 0; i < active_actors.size(); i++)
+        active_actors[i]->Tick(time);
+    if (dead_humans.size())
         TickDeadHumanForTick(time);
     C_traffic_generator::TickElements(time);
-    if (unknown_2ee4.size())
+    if (death_actors.size())
         DeathActorProcess();
-    if (unknown_2ad9)
+    if (clear_diff_data)
     {
-        unknown_2ad9 = false;
+        clear_diff_data = false;
         ClearDiffData();
     }
 
@@ -1971,16 +1972,16 @@ void C_game::Tick(uint time)
     // visual was rendered in the last frame
     for (int j = invisible_actors.size(); j--;)
     {
-        if (unknown_2b10 - invisible_actors[j].frame <= 5)
+        if (game_frames - invisible_actors[j].frame <= 5)
             continue;
         C_actor *act = invisible_actors[j].actor;
         switch (act->act_state)
         {
         case ACTSTATE_0:
-            if (!act->unknown_5f)
+            if (!act->rendered)
             {
                 act->SetActState(ACTSTATE_1);
-                invisible_actors[j].frame = unknown_2b10;
+                invisible_actors[j].frame = game_frames;
             }
             break;
         case ACTSTATE_1:
@@ -1995,23 +1996,23 @@ void C_game::Tick(uint time)
                 if (seen)
                 {
                     act->SetActState(ACTSTATE_0);
-                    invisible_actors[j].frame = unknown_2b10;
+                    invisible_actors[j].frame = game_frames;
                 }
             }
             break;
         }
     }
-    if (unknown_10c)
+    if (act_state_changed)
         ChangeActState();
 
     // The camera, turned to the four sides in the first frames (the scene's textures loaded), then the rotation a
     // script set
-    camera.tilt = player ? player->unknown_238 - ((C_player *)player)->unknown_ad0 * .1f : .5f;
+    camera.tilt = player ? player->tilt - ((C_player *)player)->recoil * .1f : .5f;
     camera.Tick(time);
-    if (unknown_2b14 < 7)
+    if (init_frames < 7)
     {
         I3D_frame *cam = act_mission->GetScene()->GetActiveCamera();
-        switch (unknown_2b14)
+        switch (init_frames)
         {
         case 0:
         case 1:
@@ -2028,21 +2029,21 @@ void C_game::Tick(uint time)
             cam->SetDir(S_vector(0.0f, 0.0f, -1.0f), 0.0f);
             break;
         case 6:
-            if (unknown_3644)
+            if (camera_rot_repair)
             {
-                unknown_3644 = false;
-                cam->SetRot(unknown_3648);
+                camera_rot_repair = false;
+                cam->SetRot(camera_rot);
             }
             break;
         }
         cam->Update();
     }
 
-    if (unknown_130.size())
+    if (removed_actors.size())
     {
-        for (int k = unknown_130.size(); k--;)
-            _RemoveTemporaryActor(unknown_130[k]);
-        unknown_130.clear();
+        for (int k = removed_actors.size(); k--;)
+            _RemoveTemporaryActor(removed_actors[k]);
+        removed_actors.clear();
     }
 
     DabingTick(time);
@@ -2065,35 +2066,35 @@ void C_game::Tick(uint time)
     AIManager.follow.Update();
     AIManager.fight.Tick();
     TickHydrant(time);
-    if (unknown_3684)
+    if (item_blur)
         ItemBlurTick(time);
-    if (unknown_3618.size())
+    if (scream_areas.size())
     {
-        if (unknown_362c < 0)
+        if (scream_areas_time < 0)
         {
-            unknown_362c = 513;
+            scream_areas_time = 513;
             TickScreamAreas();
         }
         else
-            unknown_362c -= time;
+            scream_areas_time -= time;
     }
-    if (unknown_10c)
+    if (act_state_changed)
         ChangeActState();
-    if (unknown_130.size())
+    if (removed_actors.size())
     {
-        for (int k = unknown_130.size(); k--;)
-            _RemoveTemporaryActor(unknown_130[k]);
-        unknown_130.clear();
+        for (int k = removed_actors.size(); k--;)
+            _RemoveTemporaryActor(removed_actors[k]);
+        removed_actors.clear();
     }
 
     // The cars' sounds, alternately 200 and 800 ms apart
-    if (unknown_3668 > 0)
+    if (car_sounds > 0)
     {
-        unknown_366c -= time;
-        if (unknown_366c < 0)
+        car_sounds_time -= time;
+        if (car_sounds_time < 0)
         {
-            unknown_3670 = !unknown_3670;
-            unknown_366c = unknown_3670 ? 200 : 800;
+            car_sounds_short = !car_sounds_short;
+            car_sounds_time = car_sounds_short ? 200 : 800;
             TickCarSoundManager();
         }
     }
@@ -2111,10 +2112,10 @@ void C_game::Tick(uint time)
                 if (to < .005f && to < i_show_fades[m].from)
                 {
                     show->Stop();
-                    if (i_show_fades[m].id == unknown_2fbc)
+                    if (i_show_fades[m].id == city_music_old)
                     {
-                        DestroyIShow(unknown_2fbc);
-                        unknown_2fbc = -1;
+                        DestroyIShow(city_music_old);
+                        city_music_old = -1;
                     }
                 }
                 else
@@ -2156,17 +2157,17 @@ void C_game::Tick(uint time)
     if (actor_lightness && lightness.size() && act_mission->GetOptions().game_effects >= 2)
         LightnessTick(time);
 
-    // The semaphores' phases, by unknown_194's periods
-    if (unknown_194.Tick(time))
+    // The semaphores' phases, by semaphore_timer's periods
+    if (semaphore_timer.Tick(time))
     {
-        if (++unknown_19c > 9)
-            unknown_19c = 0;
-        if (++unknown_1a0 > 9)
-            unknown_1a0 = 0;
+        if (++semaphore_phase_x > 9)
+            semaphore_phase_x = 0;
+        if (++semaphore_phase_z > 9)
+            semaphore_phase_z = 0;
         TickSemaphores();
     }
 
-    if (!unknown_2fc0)
+    if (!city_music_paused)
         TickCityMusic(time);
 
     // The fires, each deleted once it has burnt out
@@ -2185,8 +2186,8 @@ void C_game::Tick(uint time)
     if (CRacing && anim_preload)
     {
         bool run = true;
-        if (CRacing->unknown_1)
-            run = unknown_2edc != 0;
+        if (CRacing->mission_race)
+            run =race6_state != 0;
         if (run)
             CRacing->Tick(time);
     }
@@ -2194,11 +2195,11 @@ void C_game::Tick(uint time)
     TickDriverMan();
 
     // The blood's and the holes' projectors growing to their full size
-    if (unknown_29e8)
+    if (growing_projectors)
     {
         for (int p = 100; p--;)
         {
-            S_unknown_75c &h = unknown_75c[p];
+            S_track_projector &h = track_projectors[p];
             if (h.in_collision && h.growing)
             {
                 S_vector scale = h.frame->GetScale();
@@ -2211,42 +2212,42 @@ void C_game::Tick(uint time)
                     h.scale = 1.0f;
                     h.growing = false;
                     grown = true;
-                    unknown_29e8--;
+                    growing_projectors--;
                 }
                 scale.x *= h.scale;
                 scale.y *= h.scale;
                 h.frame->SetScale(scale);
                 h.frame->Update();
                 if (grown)
-                    ((I3D_projector *)unknown_75c[unknown_29e4].frame)->SetProjectorLock(I3DLOCK_RECEIVERS);
+                    ((I3D_projector *)track_projectors[track_projector_next].frame)->SetProjectorLock(I3DLOCK_RECEIVERS);
             }
         }
     }
 
     // Mission 6's race run (RACING_MISSION6_START): its result into the script's register
-    if (unknown_2edc == RACE6_STATE_STARTED)
+    if (race6_state == RACE6_STATE_STARTED)
     {
-        unknown_2edc = RACE6_STATE_RUNNING;
-        unknown_3668 = 3;
-        unknown_3670 = true;
-        unknown_366c = 0;
+        race6_state = RACE6_STATE_RUNNING;
+        car_sounds = 3;
+        car_sounds_short = true;
+        car_sounds_time = 0;
         uint result = RacingMisse06ExecuteLoop();
-        if (unknown_2ee0)
+        if (race6_result)
         {
-            *unknown_2ee0 = (float)result;
-            unknown_2ee0 = NULL;
+            *race6_result = (float)result;
+            race6_result = NULL;
         }
-        unknown_2edc = RACE6_STATE_END;
+        race6_state = RACE6_STATE_END;
     }
 
     // The sounds turned on once their time is up
     for (int q = 3; q--;)
     {
-        S_unknown_2ac0 &s = unknown_2ac0[q];
-        if (s.unknown_4 >= 0)
+        S_delayed_sound &s = delayed_sounds[q];
+        if (s.time >= 0)
         {
-            s.unknown_4 -= time;
-            if (s.unknown_4 < 0 && s.sound)
+            s.time -= time;
+            if (s.time < 0 && s.sound)
                 s.sound->SetOn(true);
         }
     }
@@ -2266,7 +2267,7 @@ void C_game::Tick(uint time)
 // FUNCTION: GAME 0x5a6d60
 void C_game::DoubleKiss(uint time)
 {
-    if (unknown_2f14 & GAMEF_DOUBLEKISS)
+    if (cheats & GAMEF_DOUBLEKISS)
     {
         if (kiss_frame && player)
         {
@@ -2301,7 +2302,7 @@ void C_game::DoubleKiss(uint time)
                             }
                             dir -= pos;
                             float dist2 = dir.Square();
-                            bool lost = kiss_target->GetUnknown5e();
+                            bool lost = kiss_target->GetDead();
                             if (!lost && kiss_target->type == ACTOR_ENTITY &&
                                 ((C_human *)kiss_target)->properties[HUMAN_PROPERTY_ENERGY] < .01f)
                                 lost = true;
@@ -2429,13 +2430,13 @@ void C_game::AddTemporaryActor(C_actor *act)
 // FUNCTION: GAME 0x5a79a0
 void C_game::RemoveTemporaryActor(C_actor *act)
 {
-    for (int i = unknown_130.size(); i--;)
+    for (int i = removed_actors.size(); i--;)
     {
-        if (unknown_130[i] == act)
+        if (removed_actors[i] == act)
             return;
     }
     act->SetActState(ACTSTATE_2);
-    unknown_130.push_back(act);
+    removed_actors.push_back(act);
 }
 
 #pragma auto_inline(off)
@@ -2452,9 +2453,9 @@ void C_game::InternTempActAdd(C_actor *act)
 void C_game::InternTempActDel(C_actor *act)
 {
     int i;
-    for (i = unknown_130.size(); i--;)
+    for (i = removed_actors.size(); i--;)
     {
-        if (unknown_130[i] == act)
+        if (removed_actors[i] == act)
             return;
     }
     for (i = temporary_actors.size(); i--;)
@@ -2466,21 +2467,21 @@ void C_game::InternTempActDel(C_actor *act)
             break;
         }
     }
-    for (i = unknown_ec.size(); i--;)
+    for (i = active_actors.size(); i--;)
     {
-        if (unknown_ec[i] == act)
+        if (active_actors[i] == act)
         {
-            unknown_ec[i] = unknown_ec.back();
-            unknown_ec.pop_back();
+            active_actors[i] = active_actors.back();
+            active_actors.pop_back();
             break;
         }
     }
-    for (i = unknown_fc.size(); i--;)
+    for (i = inactive_actors.size(); i--;)
     {
-        if (unknown_fc[i] == act)
+        if (inactive_actors[i] == act)
         {
-            unknown_fc[i] = unknown_fc.back();
-            unknown_fc.pop_back();
+            inactive_actors[i] = inactive_actors.back();
+            inactive_actors.pop_back();
             break;
         }
     }
@@ -2751,7 +2752,7 @@ void C_game::TickShoot(uint time)
             }
 
             // The level's collision hit: control signals destroyed, glass broken, a crash model
-            if (!hit && shoots[i].coll && (shoots[i].coll->flags & COLLHF_UNKNOWN_20000) &&
+            if (!hit && shoots[i].coll && (shoots[i].coll->flags & COLLHF_CONTROL_SIGNAL) &&
                 !(shoots[i].coll->flags & COLLHF_DISABLED))
             {
                 S_vector d = shoots[i].dir;
@@ -2817,14 +2818,14 @@ void C_game::TickShoot(uint time)
             {
                 for (int k = 0; k < 10; k++)
                 {
-                    if (unknown_2a20[k] && !unknown_2a20[k]->IsPlaying(false))
+                    if (shoot_sounds[k] && !shoot_sounds[k]->IsPlaying(false))
                     {
-                        if (sound_table.ConstructSound(unknown_2a20[k], shoots[i].sound))
+                        if (sound_table.ConstructSound(shoot_sounds[k], shoots[i].sound))
                         {
-                            unknown_2a20[k]->SetPos(new_pos);
-                            act_mission->scene->SetFrameSector(unknown_2a20[k]);
-                            unknown_2a20[k]->Update();
-                            unknown_2a20[k]->SetOn(true, true);
+                            shoot_sounds[k]->SetPos(new_pos);
+                            act_mission->scene->SetFrameSector(shoot_sounds[k]);
+                            shoot_sounds[k]->Update();
+                            shoot_sounds[k]->SetOn(true, true);
                         }
                         break;
                     }
@@ -2857,7 +2858,7 @@ void C_game::NewCartidge(I3D_frame *&frm, S_vector &dir, bool unknown1, bool unk
 
 // STUB: GAME 0x5aca70
 int C_game::Play3DSound(I3D_frame *frm, const char *name, I3D_SOUNDTYPE type, S_vector pos, float near_range,
-    float far_range, float volume, bool unknown1, float unknown2, bool unknown3)
+    float far_range, float volume, bool fade_in, float fade, bool unknown3)
 {
     StubLog("C_game::Play3DSound %s", name);
     return -1;
@@ -2926,13 +2927,13 @@ void C_game::SetupShadow(S_shadow_item *item)
         }
     }
     else
-        item->model->Duplicate(shadow_temp[item->unknown_14].model);
+        item->model->Duplicate(shadow_temp[item->model_index].model);
 }
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5ad2a0
-int C_game::AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *unknown,
+int C_game::AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
     char *name)
 {
     StubLog("C_game::AddFrameForShadow");
@@ -2968,9 +2969,9 @@ I3DENUMRET __stdcall C_game::S_hlp::cbFindSemaphores(I3D_frame *frm, uint user)
     s.green = frm->FindChildFrame("GREEN", ENUMF_ALL);
     S_vector dir = frm->GetWorldDir();
     if (fabs(dir.x) > fabs(dir.z))
-        s.phase = &act_mission->game->unknown_19c;
+        s.phase = &act_mission->game->semaphore_phase_x;
     else
-        s.phase = &act_mission->game->unknown_1a0;
+        s.phase = &act_mission->game->semaphore_phase_z;
     ((std::vector<S_semaphore> *)user)->push_back(s);
     return I3DENUMRET_OK;
 }
@@ -3042,17 +3043,17 @@ I3DENUMRET __stdcall C_game::S_hlp::cbCityMusic(I3D_frame *frm, uint user)
 // FUNCTION: GAME 0x5ae130
 void C_game::CityMusicOff()
 {
-    unknown_2fb4 = NULL;
-    if (unknown_2fbc > -1)
-        DestroyIShow(unknown_2fbc);
-    unknown_2fbc = unknown_2fb8;
-    IShow *show = GetIShow(unknown_2fbc);
+    city_music_area = NULL;
+    if (city_music_old > -1)
+        DestroyIShow(city_music_old);
+    city_music_old = city_music;
+    IShow *show = GetIShow(city_music_old);
     if (show)
     {
-        IShowLoop(unknown_2fbc, false);
-        IShowFade(unknown_2fbc, show->GetVolume(), 0.0f, 5000);
+        IShowLoop(city_music_old, false);
+        IShowFade(city_music_old, show->GetVolume(), 0.0f, 5000);
     }
-    unknown_2fb8 = -1;
+    city_music = -1;
 }
 
 #pragma auto_inline(off)
@@ -3097,60 +3098,60 @@ void C_game::LoadDiffData(const char *name)
 void C_game::ClearDiffData()
 {
     int i, j;
-    for (i = unknown_2aec.size(); i--;)
+    for (i = diff_actors.size(); i--;)
     {
-        for (j = unknown_ec.size(); j--;)
+        for (j = active_actors.size(); j--;)
         {
-            if (unknown_ec[j] == unknown_2aec[i])
+            if (active_actors[j] == diff_actors[i])
             {
-                unknown_ec[j] = unknown_ec.back();
-                unknown_ec.pop_back();
+                active_actors[j] = active_actors.back();
+                active_actors.pop_back();
                 break;
             }
         }
-        for (j = unknown_fc.size(); j--;)
+        for (j = inactive_actors.size(); j--;)
         {
-            if (unknown_fc[j] == unknown_2aec[i])
+            if (inactive_actors[j] == diff_actors[i])
             {
-                unknown_fc[j] = unknown_fc.back();
-                unknown_fc.pop_back();
+                inactive_actors[j] = inactive_actors.back();
+                inactive_actors.pop_back();
                 break;
             }
         }
         for (j = temporary_actors.size(); j--;)
         {
-            if (temporary_actors[j] == unknown_2aec[i])
+            if (temporary_actors[j] == diff_actors[i])
             {
                 temporary_actors[j] = temporary_actors.back();
                 temporary_actors.pop_back();
                 break;
             }
         }
-        InvalidateActor(unknown_2aec[i], false);
-        unknown_2aec[i]->GameDone();
-        act_mission->DelActor(unknown_2aec[i]);
+        InvalidateActor(diff_actors[i], false);
+        diff_actors[i]->GameDone();
+        act_mission->DelActor(diff_actors[i]);
     }
-    unknown_2aec.clear();
-    for (i = unknown_2adc.size(); i--;)
+    diff_actors.clear();
+    for (i = diff_frames.size(); i--;)
     {
-        C_actor **act = GetFrameActor(unknown_2adc[i]);
+        C_actor **act = GetFrameActor(diff_frames[i]);
         if (act && *act)
         {
-            for (j = unknown_ec.size(); j--;)
+            for (j = active_actors.size(); j--;)
             {
-                if (unknown_ec[j] == *act)
+                if (active_actors[j] == *act)
                 {
-                    unknown_ec[j] = unknown_ec.back();
-                    unknown_ec.pop_back();
+                    active_actors[j] = active_actors.back();
+                    active_actors.pop_back();
                     break;
                 }
             }
-            for (j = unknown_fc.size(); j--;)
+            for (j = inactive_actors.size(); j--;)
             {
-                if (unknown_fc[j] == *act)
+                if (inactive_actors[j] == *act)
                 {
-                    unknown_fc[j] = unknown_fc.back();
-                    unknown_fc.pop_back();
+                    inactive_actors[j] = inactive_actors.back();
+                    inactive_actors.pop_back();
                     break;
                 }
             }
@@ -3171,8 +3172,8 @@ void C_game::ClearDiffData()
             if (!act_mission->DelActor(a) && temporary)
                 temporary->Release();
         }
-        S_hlp::cbFreeFramePlacement(unknown_2adc[i], frame_placements);
-        I3D_frame *frm = unknown_2adc[i];
+        S_hlp::cbFreeFramePlacement(diff_frames[i], frame_placements);
+        I3D_frame *frm = diff_frames[i];
         if (frm->GetType() == FRAME_LIGHT)
         {
             I3D_light *lt = (I3D_light *)frm;
@@ -3180,15 +3181,15 @@ void C_game::ClearDiffData()
             for (j = lt->sectors.size(); j--;)
                 sectors[j]->DeleteLight(lt);
         }
-        act_mission->scene->DeleteFrame(unknown_2adc[i]);
+        act_mission->scene->DeleteFrame(diff_frames[i]);
     }
-    unknown_2adc.clear();
-    for (i = unknown_2afc.size(); i--;)
+    diff_frames.clear();
+    for (i = diff_programs.size(); i--;)
     {
-        unknown_2afc[i]->Done();
-        delete unknown_2afc[i];
+        diff_programs[i]->Done();
+        delete diff_programs[i];
     }
-    unknown_2afc.clear();
+    diff_programs.clear();
 }
 
 // FUNCTION: GAME 0x5afca0
@@ -3211,11 +3212,11 @@ void C_game::S_hlp::cbFreeFramePlacement(I3D_frame *frm, std::vector<S_frame_pla
 // FUNCTION: GAME 0x5afd50
 bool C_game::GlobalProgramRun(const char *name)
 {
-    for (int i = unknown_2afc.size(); i--;)
+    for (int i = diff_programs.size(); i--;)
     {
-        if (!_stricmp(unknown_2afc[i]->name, name))
+        if (!_stricmp(diff_programs[i]->name, name))
         {
-            unknown_2afc[i]->CallSubroutine();
+            diff_programs[i]->CallSubroutine();
             return true;
         }
     }
@@ -3473,7 +3474,7 @@ int C_game::CreateIShow(uint flags)
     if (setting.disable_sound)
         return -1;
     S_i_show s;
-    s.id = unknown_2f38++;
+    s.id = next_i_show_id++;
     s.flags = flags;
     s.name = NULL;
     s.show = igraph->CreateIShow();
@@ -3552,7 +3553,7 @@ void C_game::DestroyIShowAll()
     }
     i_shows.clear();
     i_show_fades.clear();
-    unknown_2fc4.clear();
+    film_music_streams.clear();
 }
 
 // The stream of the id, NULL for none (PS2 name), from the last one
@@ -3775,35 +3776,35 @@ void C_game::DeathHumanTalk(C_human *human)
 // FUNCTION: GAME 0x5b7860
 void C_game::CreateSignalMarkIDX()
 {
-    unknown_1e4.clear();
+    signal_mark_idx.clear();
     if (!base_cache.IsOpen())
         return;
     for (ushort i = base_cache.model_sets.size(); i--;)
     {
         // STRING: GAME 0x637860
         if (!_stricmp(base_cache.model_sets[i].name, "dopravni1B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637850
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni2B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637840
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni3B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637830
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni4B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637820
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni5B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637810
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni6B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x637800
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni7B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
         // STRING: GAME 0x6377f0
         else if (!_stricmp(base_cache.model_sets[i].name, "dopravni8B.I3D"))
-            unknown_1e4.push_back(i);
+            signal_mark_idx.push_back(i);
     }
 }
 
@@ -3822,24 +3823,24 @@ void C_game::DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vec
 void C_game::EntityBlock(bool block, bool unknown)
 {
     int i;
-    for (i = unknown_ec.size(); i--;)
+    for (i = active_actors.size(); i--;)
     {
-        if (unknown_ec[i]->type == ACTOR_ENTITY)
+        if (active_actors[i]->type == ACTOR_ENTITY)
         {
             if (block)
-                ((C_entity *)unknown_ec[i])->SedniNaPrdelASledujKino(unknown);
+                ((C_entity *)active_actors[i])->SedniNaPrdelASledujKino(unknown);
             else
-                ((C_entity *)unknown_ec[i])->VzbudSeUzSouTitulky();
+                ((C_entity *)active_actors[i])->VzbudSeUzSouTitulky();
         }
     }
-    for (i = unknown_fc.size(); i--;)
+    for (i = inactive_actors.size(); i--;)
     {
-        if (unknown_fc[i]->type == ACTOR_ENTITY)
+        if (inactive_actors[i]->type == ACTOR_ENTITY)
         {
             if (block)
-                ((C_entity *)unknown_fc[i])->SedniNaPrdelASledujKino(unknown);
+                ((C_entity *)inactive_actors[i])->SedniNaPrdelASledujKino(unknown);
             else
-                ((C_entity *)unknown_fc[i])->VzbudSeUzSouTitulky();
+                ((C_entity *)inactive_actors[i])->VzbudSeUzSouTitulky();
         }
     }
 }
@@ -3865,9 +3866,9 @@ void C_game::AddCutsceneParticle(int particle)
 }
 
 // STUB: GAME 0x5b8390
-void C_game::DestroyUnknown2f8cParticles()
+void C_game::DestroyCutsceneParticles()
 {
-    StubLog("C_game::DestroyUnknown2f8cParticles");
+    StubLog("C_game::DestroyCutsceneParticles");
 }
 
 #pragma auto_inline(on)
@@ -3901,8 +3902,8 @@ bool C_game::DelCreatedFrameToVector(I3D_frame *frm)
 // FUNCTION: GAME 0x5b90b0
 void C_game::LoadScreamAreas()
 {
-    unknown_3618.clear();
-    act_mission->scene->primary_sector->EnumFrames(S_hlp::cbScreamArea, (uint)&unknown_3618, ENUMF_AREA, NULL);
+    scream_areas.clear();
+    act_mission->scene->primary_sector->EnumFrames(S_hlp::cbScreamArea, (uint)&scream_areas, ENUMF_AREA, NULL);
 }
 
 // The areas named enm_scrm_ and more, each with the hexadecimal number in its name's parentheses, 0 without one
@@ -3915,7 +3916,7 @@ I3DENUMRET __stdcall C_game::S_hlp::cbScreamArea(I3D_frame *frm, uint user)
         // STRING: GAME 0x637870
         if (strlen(name) > 9 && !_strnicmp(name, "enm_scrm_", 9))
         {
-            S_unknown_3618 a;
+            S_scream_area a;
             a.area = frm;
             a.id = 0;
             char buf[256];
@@ -3929,7 +3930,7 @@ I3DENUMRET __stdcall C_game::S_hlp::cbScreamArea(I3D_frame *frm, uint user)
                     *e = 0;
                 a.id = (ushort)strtoul(s, &e, 16);
             }
-            ((std::vector<S_unknown_3618> *)user)->push_back(a);
+            ((std::vector<S_scream_area> *)user)->push_back(a);
         }
     }
     return I3DENUMRET_OK;
@@ -4065,7 +4066,7 @@ void C_game::ClearDeathHumanFade()
     for (int i = death_human_fades.size(); i--;)
         RemoveDeathHumanFade(i, false);
     death_human_fades.clear();
-    unknown_3684 = false;
+    item_blur = false;
 }
 
 #pragma auto_inline(off)
@@ -4095,48 +4096,48 @@ void C_game::RecPrepareHumans()
 // FUNCTION: GAME 0x5bab80
 void C_game::InterCity_GameInit()
 {
-    unknown_3698 = NULL;
-    unknown_369c = NULL;
-    unknown_36a0 = NULL;
-    unknown_36a8 = NULL;
-    unknown_36a4 = 0;
+    inter_city_colls = NULL;
+    inter_city_matrices = NULL;
+    inter_city_inv_matrices = NULL;
+    inter_city_frames = NULL;
+    num_inter_city = 0;
     if (!base_cache.IsOpen())
         return;
     // STRING: GAME 0x63787c
     bool city = !_stricmp(act_mission->GetMissionName(), "mise16-mesto");
-    unknown_36a4 = city ? 13 : 9;
-    unknown_3698 = new tDynamicCollObject *[unknown_36a4];
-    unknown_369c = new S_matrix[unknown_36a4];
-    unknown_36a0 = new S_matrix[unknown_36a4];
-    unknown_36a8 = new I3D_frame *[unknown_36a4];
+    num_inter_city = city ? 13 : 9;
+    inter_city_colls = new tDynamicCollObject *[num_inter_city];
+    inter_city_matrices = new S_matrix[num_inter_city];
+    inter_city_inv_matrices = new S_matrix[num_inter_city];
+    inter_city_frames = new I3D_frame *[num_inter_city];
     int n = 0;
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(561.601f, -0.364f, 13.733f), S_vector(-0.061f, -0.991f, -0.12f), 65.83f, S_vector(22.15f, 2.955f, 0.358f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-764.324f, 5.911f, 466.544f), S_vector(0.0f, -1.0f, 0.0f), 179.445f, S_vector(1.604f, 3.066f, 0.347f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-775.669f, 5.664f, 466.665f), S_vector(0.0f, -1.0f, 0.0f), 177.698f, S_vector(3.134f, 3.642f, 0.158f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-780.123f, 5.041f, 466.292f), S_vector(0.0f, -1.0f, 0.0f), 179.445f, S_vector(3.138f, 3.066f, 0.347f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-742.653f, 5.641f, 467.539f), S_vector(0.007f, 0.969f, 0.246f), 179.66f, S_vector(1.546f, 1.0f, 2.371f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-735.396f, 5.641f, 462.545f), S_vector(0.245f, 0.942f, 0.23f), 94.16f, S_vector(1.546f, 1.0f, 2.371f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-735.561f, 5.715f, 450.99f), S_vector(0.185f, 0.968f, 0.17f), 92.645f, S_vector(2.127f, 1.0f, 2.371f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-735.349f, 6.378f, 450.0f), S_vector(0.185f, 0.968f, 0.17f), 92.645f, S_vector(0.28f, 1.0f, 2.371f));
-    AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+    AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
         S_vector(-735.319f, 6.378f, 451.956f), S_vector(0.185f, 0.968f, 0.17f), 92.645f, S_vector(0.28f, 1.0f, 2.371f));
     if (city)
     {
-        AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+        AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
             S_vector(-338.627f, 14.89f, 188.401f), S_vector(0.0f, -1.0f, 0.0f), 90.0f, S_vector(1.036f, 5.0f, 12.43f));
-        AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+        AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
             S_vector(-351.433f, 13.947f, 188.491f), S_vector(0.0f, -1.0f, 0.0f), 90.0f, S_vector(1.0f, 5.0f, 13.34f));
-        AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+        AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
             S_vector(-351.433f, 14.919f, 153.997f), S_vector(0.0f, -1.0f, 0.0f), 90.0f, S_vector(1.0f, 5.0f, 13.34f));
-        AddInterCityBox(unknown_3698, unknown_369c, unknown_36a0, &n, unknown_36a8,
+        AddInterCityBox(inter_city_colls, inter_city_matrices, inter_city_inv_matrices, &n, inter_city_frames,
             S_vector(-338.627f, 15.861f, 153.906f), S_vector(0.0f, -1.0f, 0.0f), 90.0f, S_vector(1.036f, 5.0f, 12.43f));
     }
 }
@@ -4159,29 +4160,29 @@ static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_ma
 // FUNCTION: GAME 0x5bbb20
 void C_game::InterCity_GameDoneInGameDone()
 {
-    if (!unknown_3698)
+    if (!inter_city_colls)
         return;
-    for (int i = unknown_36a4; i--;)
+    for (int i = num_inter_city; i--;)
     {
-        if (unknown_3698[i])
+        if (inter_city_colls[i])
         {
-            gifCollision.DynErase(unknown_3698[i]);
-            delete unknown_3698[i];
+            gifCollision.DynErase(inter_city_colls[i]);
+            delete inter_city_colls[i];
         }
-        if (unknown_36a8[i])
-            unknown_36a8[i]->Release();
+        if (inter_city_frames[i])
+            inter_city_frames[i]->Release();
     }
-    unknown_36a4 = 0;
-    if (unknown_3698)
-        delete[] unknown_3698;
-    unknown_3698 = NULL;
-    if (unknown_369c)
-        delete[] unknown_369c;
-    unknown_369c = NULL;
-    if (unknown_36a0)
-        delete[] unknown_36a0;
-    unknown_36a0 = NULL;
-    if (unknown_36a8)
-        delete[] unknown_36a8;
-    unknown_36a8 = NULL;
+    num_inter_city = 0;
+    if (inter_city_colls)
+        delete[] inter_city_colls;
+    inter_city_colls = NULL;
+    if (inter_city_matrices)
+        delete[] inter_city_matrices;
+    inter_city_matrices = NULL;
+    if (inter_city_inv_matrices)
+        delete[] inter_city_inv_matrices;
+    inter_city_inv_matrices = NULL;
+    if (inter_city_frames)
+        delete[] inter_city_frames;
+    inter_city_frames = NULL;
 }

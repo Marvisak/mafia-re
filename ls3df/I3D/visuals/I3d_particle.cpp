@@ -336,7 +336,7 @@ I3D_emitor::I3D_emitor() : elements(0x20)
     num_emitted = 0;
     sector = NULL;
     I3D_driver *drv = pI3DDriver;
-    ushort n = drv->unknown_58++;
+    ushort n = drv->next_emitor_id++;
     id = n;
 }
 
@@ -1041,7 +1041,7 @@ I3D_part_base::I3D_part_base()
     rot_axis = 0;
     axis_mode = 3;
     sector = NULL;
-    sort_group = 0xffff;                // no emitter's (they number theirs from 0, I3D_driver::unknown_58)
+    sort_group = 0xffff;                // no emitter's (they number theirs from 0, I3D_driver::next_emitor_id)
     part_flags = PARTF_OPAQUE | PARTF_UNKNOWN_100;
 }
 

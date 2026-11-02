@@ -34,24 +34,25 @@ C_shvestky::~C_shvestky()
 {
 }
 
-// PS2's order, with the PC's values for unknown_c and unknown_10. The periods are milliseconds most likely; the timers
-// are set through S_timer::Reset, whose inline calls leave the first clear's _Destroy out of line, as the original.
+// PS2's order, with the PC's values for speed_limit and speed_limit_arrest. The periods are milliseconds most likely;
+// the timers are set through S_timer::Reset, whose inline calls leave the first clear's _Destroy out of line, as the
+// original.
 // FUNCTION: GAME 0x499cd0
 void C_shvestky::GameInit()
 {
-    unknown_0 = false;
-    unknown_4.Reset(330);
-    unknown_c = 17.0f;
-    unknown_10 = 28.0f;
-    unknown_3c.clear();
-    unknown_1c.Reset(217);
+    active = false;
+    records_timer.Reset(330);
+    speed_limit = 17.0f;
+    speed_limit_arrest = 28.0f;
+    records.clear();
+    red_light_timer.Reset(217);
     unknown_24.Reset(4013);
     unknown_2c = 0;
     unknown_30 = 0;
     road_block_cars.clear();
     road_block_irises.clear();
-    unknown_14.Reset(913);
-    unknown_7c.clear();
+    do_rici_timer.Reset(913);
+    do_rici_actors.clear();
 }
 
 // The police's records deleted, the next mission's actors kept out of its lists, its temporary cars taken from the game
@@ -61,36 +62,36 @@ void C_shvestky::GameInit()
 void C_shvestky::GameDone()
 {
     int i, j;
-    for (i = unknown_3c.size(); i--;)
-        delete unknown_3c[i];
-    unknown_3c.clear();
+    for (i = records.size(); i--;)
+        delete records[i];
+    records.clear();
     for (j = 0; j < 2; j++)
     {
         C_actor *act = NewMissionActors[j];
         if (!act)
             continue;
-        for (i = unknown_7c.size(); i--;)
+        for (i = do_rici_actors.size(); i--;)
         {
-            if (unknown_7c[i] == act)
+            if (do_rici_actors[i] == act)
             {
-                unknown_7c[i] = unknown_7c.back();
-                unknown_7c.pop_back();
+                do_rici_actors[i] = do_rici_actors.back();
+                do_rici_actors.pop_back();
                 break;
             }
         }
     }
-    for (i = unknown_8c.size(); i--;)
+    for (i = temp_cars.size(); i--;)
     {
-        if (NewMissionActors[0] == unknown_8c[i])
-            act_mission->game->InternTempActDel(unknown_8c[i]);
+        if (NewMissionActors[0] == temp_cars[i])
+            act_mission->game->InternTempActDel(temp_cars[i]);
         else
         {
-            act_mission->game->InvalidateActor(unknown_8c[i], false);
-            mafiaIndicators.RadarRemoveCar(unknown_8c[i]);
-            act_mission->game->RemoveTemporaryActor(unknown_8c[i]);
+            act_mission->game->InvalidateActor(temp_cars[i], false);
+            mafiaIndicators.RadarRemoveCar(temp_cars[i]);
+            act_mission->game->RemoveTemporaryActor(temp_cars[i]);
         }
     }
-    unknown_8c.clear();
+    temp_cars.clear();
     TickDoRiciActors(true);
     for (i = road_block_cars.size(); i--;)
     {
@@ -106,7 +107,7 @@ void C_shvestky::GameDone()
             sprintf(name, "road_bl_C_%i", i);
             road_block_cars[i].car->frame->SetName(name);
         }
-        if (!road_block_cars[i].unknown_4)
+        if (!road_block_cars[i].free)
             act_mission->game->InternTempActDel(road_block_cars[i].car);
         if (NewMissionActors[0] != road_block_cars[i].car && NewMissionActors[1] != road_block_cars[i].car &&
             !act_mission->FrmActBuff_StoreActor(road_block_cars[i].car, false))
@@ -118,7 +119,7 @@ void C_shvestky::GameDone()
     road_block_cars.clear();
     for (i = road_block_irises.size(); i--;)
     {
-        if (!road_block_irises[i].unknown_4)
+        if (!road_block_irises[i].free)
             act_mission->game->InternTempActDel(road_block_irises[i].actor);
         road_block_irises[i].actor->GameDone();
         road_block_irises[i].actor->Release();
@@ -126,7 +127,7 @@ void C_shvestky::GameDone()
     road_block_irises.clear();
     for (i = road_block_enemies.size(); i--;)
     {
-        if (!road_block_enemies[i].unknown_4)
+        if (!road_block_enemies[i].free)
             act_mission->game->InternTempActDel(road_block_enemies[i].actor);
         if (!act_mission->FrmActBuff_StoreActor(road_block_enemies[i].actor, false))
         {
@@ -159,24 +160,24 @@ static const int semaphore_colors[10] = {
     SEMAPHORE_ORANGE,
 };
 
-// The police by the time passed (PS2's order): the actors in their faces at unknown_14's periods, at most five
-// temporary cars, the failure's menu once the player is in the cooler (as C_game::Tick's); then, while the manager is
-// on, the red lights at unknown_1c's periods (TestOverRed) and the records at unknown_4's: their times, the road blocks
-// (PC only) and their states (CreateShvestkyTest); last the player's bar on the HUD. The members are read through
-// their classes' accessors: as inline calls still to come, they leave the nested calls the original calls out of line
-// there (the temporary cars' std::copy, the angry ones' erase in pop_back, the sizes in TestOverRed and
-// CreateShvestkyTest).
+// The police by the time passed (PS2's order): the actors gone to hell (do_rici_actors) at do_rici_timer's periods, at
+// most five temporary cars, the failure's menu once the player is in the cooler (as C_game::Tick's); then, while the
+// manager is on, the red lights at red_light_timer's periods (TestOverRed) and the records at records_timer's: their
+// times, the road blocks (PC only) and their states (CreateShvestkyTest); last the player's bar on the HUD. The
+// members are read through their classes' accessors: as inline calls still to come, they leave the nested calls the
+// original calls out of line there (the temporary cars' std::copy, the angry ones' erase in pop_back, the sizes in
+// TestOverRed and CreateShvestkyTest).
 // FUNCTION: GAME 0x49a300
 void C_shvestky::Tick(uint time)
 {
-    if (unknown_14.Tick(time))
+    if (do_rici_timer.Tick(time))
         TickDoRiciActors(false);
-    while (unknown_8c.size() > 5)
+    while (temp_cars.size() > 5)
     {
-        act_mission->GetGame()->InvalidateActor(unknown_8c[0], false);
-        mafiaIndicators.RadarRemoveCar(unknown_8c[0]);
-        act_mission->GetGame()->RemoveTemporaryActor(unknown_8c[0]);
-        unknown_8c.erase(unknown_8c.begin());
+        act_mission->GetGame()->InvalidateActor(temp_cars[0], false);
+        mafiaIndicators.RadarRemoveCar(temp_cars[0]);
+        act_mission->GetGame()->RemoveTemporaryActor(temp_cars[0]);
+        temp_cars.erase(temp_cars.begin());
     }
     // The player in the cooler: once the screen has faded out, the failure's menu, as C_game::Tick's
     if (AIManager.police.PlukovnikuMasVChladkuPlajeraFrafera() && mafiaIndicators.FadeInOutGetState())
@@ -184,17 +185,17 @@ void C_shvestky::Tick(uint time)
         if (mafiaIndicators.FadeInOutIsDark())
         {
             act_mission->GetGame()->StopAllSounds();
-            switch (GM_Menu::ExecuteMenu(new GM_GameFailed(unknown_34), false, true))
+            switch (GM_Menu::ExecuteMenu(new GM_GameFailed(arrest_text), false, true))
             {
             case GAMEFAILED_RESULT_EXIT:
-                act_mission->GetGame()->unknown_48 = 1;
+                act_mission->GetGame()->mission_end = 1;
                 break;
             case GAMEFAILED_RESULT_4FC:
-                act_mission->GetGame()->unknown_48 = 2;
+                act_mission->GetGame()->mission_end = 2;
                 break;
             case MAINMENU_LOAD_GAME:
             case GAMEFAILED_RESULT_RETRY:
-                act_mission->GetGame()->unknown_48 = 3;
+                act_mission->GetGame()->mission_end = 3;
                 break;
             }
             mafiaIndicators.FadeInOut(false, 0, 0);
@@ -202,19 +203,19 @@ void C_shvestky::Tick(uint time)
         else
             mafiaIndicators.FadeInOut(true, 1000, 0);
     }
-    if (!unknown_0)
+    if (!active)
         return;
-    if (act_mission->GetGame()->GetUnknown2f14Bit6())
+    if (act_mission->GetGame()->GetCheatsBit6())
         return;
     int i;
-    if (act_mission->GetGame()->GetUnknown2b14() < 10)
+    if (act_mission->GetGame()->GetInitFrames() < 10)
     {
-        for (i = unknown_3c.size(); i--;)
+        for (i = records.size(); i--;)
         {
-            unknown_3c[i]->flags &= SHVF_UNKNOWN_2000 | SHVF_UNKNOWN_4000;
-            unknown_3c[i]->unknown_18 = 0;
-            unknown_3c[i]->flags2 = 0;
-            unknown_3c[i]->crash_time = 0;
+            records[i]->flags &= SHVF_HIT_POLICEMAN | SHVF_FORCE_ARREST;
+            records[i]->collision_time = 0;
+            records[i]->flags2 = 0;
+            records[i]->crash_time = 0;
         }
         return;
     }
@@ -223,160 +224,160 @@ void C_shvestky::Tick(uint time)
         DobreMiPokuril_MuzeJitDom(act_mission->GetGame()->GetPlayer(), false);
         return;
     }
-    if (unknown_1c.Tick(time))
+    if (red_light_timer.Tick(time))
         TestOverRed();
-    if (unknown_4.Tick(time))
+    if (records_timer.Tick(time))
     {
         // The records' times
-        for (i = unknown_3c.size(); i--;)
+        for (i = records.size(); i--;)
         {
-            int item = unknown_3c[i]->human->inventory.GetItemInRightHand(NULL);
+            int item = records[i]->human->inventory.GetItemInRightHand(NULL);
             if (item >= SHVITEM_FIRST && item <= SHVITEM_LAST)
             {
-                unknown_3c[i]->flags |= SHVF_WEAPON;
-                if (!unknown_3c[i]->human->car)
+                records[i]->flags |= SHVF_WEAPON;
+                if (!records[i]->human->car)
                     C_traffic_generator::PlayerHoMaVytaseneho();
             }
             else
-                unknown_3c[i]->flags &= ~SHVF_WEAPON;
-            if (unknown_3c[i]->car && unknown_3c[i]->car->GetSpeed() > unknown_c)
-                unknown_3c[i]->flags |= SHVF_SPEEDING;
+                records[i]->flags &= ~SHVF_WEAPON;
+            if (records[i]->car && records[i]->car->GetSpeed() > speed_limit)
+                records[i]->flags |= SHVF_SPEEDING;
             else
-                unknown_3c[i]->flags &= ~SHVF_SPEEDING;
-            if (unknown_3c[i]->unknown_18 > 0)
+                records[i]->flags &= ~SHVF_SPEEDING;
+            if (records[i]->collision_time > 0)
             {
-                unknown_3c[i]->unknown_18 -= unknown_4.period;
-                if (unknown_3c[i]->unknown_18 <= 0)
+                records[i]->collision_time -= records_timer.period;
+                if (records[i]->collision_time <= 0)
                 {
-                    unknown_3c[i]->unknown_18 = 0;
-                    unknown_3c[i]->flags &= ~SHVF_UNKNOWN_38;
+                    records[i]->collision_time = 0;
+                    records[i]->flags &= ~SHVF_CRASH;
                 }
             }
-            if (unknown_3c[i]->crash_time > 0)
+            if (records[i]->crash_time > 0)
             {
-                unknown_3c[i]->crash_time -= unknown_4.period;
-                if (unknown_3c[i]->crash_time <= 0)
+                records[i]->crash_time -= records_timer.period;
+                if (records[i]->crash_time <= 0)
                 {
-                    unknown_3c[i]->crash_time = 0;
-                    unknown_3c[i]->flags2 &= ~SHVF2_UNKNOWN_38;
+                    records[i]->crash_time = 0;
+                    records[i]->flags2 &= ~SHVF2_CRASH;
                 }
             }
-            if (unknown_3c[i]->flags & SHVF_UNKNOWN_40)
+            if (records[i]->flags & SHVF_ILLEGAL_PATH)
             {
-                if (unknown_3c[i]->car && unknown_3c[i]->car->GetSpeed() > 11.0f)
+                if (records[i]->car && records[i]->car->GetSpeed() > 11.0f)
                 {
-                    unknown_3c[i]->unknown_14 += unknown_4.period;
-                    if (!unknown_3c[i]->car->unknown_2170)
-                        unknown_3c[i]->flags &= ~SHVF_UNKNOWN_40;
-                    if (unknown_3c[i]->unknown_14 > 5000)
-                        unknown_3c[i]->unknown_14 = 5000;
+                    records[i]->illegal_path_time += records_timer.period;
+                    if (!records[i]->car->illegal_path)
+                        records[i]->flags &= ~SHVF_ILLEGAL_PATH;
+                    if (records[i]->illegal_path_time > 5000)
+                        records[i]->illegal_path_time = 5000;
                 }
                 else
                 {
-                    unknown_3c[i]->flags &= ~SHVF_UNKNOWN_40;
-                    unknown_3c[i]->unknown_14 = 0;
+                    records[i]->flags &= ~SHVF_ILLEGAL_PATH;
+                    records[i]->illegal_path_time = 0;
                 }
             }
-            if (unknown_3c[i]->unknown_20 > 0)
+            if (records[i]->boxing_time > 0)
             {
-                unknown_3c[i]->unknown_20 -= unknown_4.period;
-                if (unknown_3c[i]->unknown_20 <= 0)
+                records[i]->boxing_time -= records_timer.period;
+                if (records[i]->boxing_time <= 0)
                 {
-                    unknown_3c[i]->unknown_20 = 0;
-                    unknown_3c[i]->flags &= ~SHVF_UNKNOWN_200;
+                    records[i]->boxing_time = 0;
+                    records[i]->flags &= ~SHVF_BOXING;
                 }
             }
-            if (unknown_3c[i]->unknown_24 > 0)
+            if (records[i]->signal_time > 0)
             {
-                unknown_3c[i]->unknown_24 -= unknown_4.period;
-                if (unknown_3c[i]->unknown_24 <= 0)
+                records[i]->signal_time -= records_timer.period;
+                if (records[i]->signal_time <= 0)
                 {
-                    unknown_3c[i]->unknown_24 = 0;
-                    unknown_3c[i]->flags &= ~(SHVF_RED_LIGHT | SHVF_UNKNOWN_1000);
+                    records[i]->signal_time = 0;
+                    records[i]->flags &= ~(SHVF_RED_LIGHT | SHVF_SIGNAL_MARK);
                 }
             }
-            if (unknown_3c[i]->unknown_c > 0)
+            if (records[i]->car_steal_time > 0)
             {
-                unknown_3c[i]->unknown_c -= unknown_4.period;
-                if (unknown_3c[i]->unknown_c <= 0)
+                records[i]->car_steal_time -= records_timer.period;
+                if (records[i]->car_steal_time <= 0)
                 {
-                    unknown_3c[i]->unknown_c = 0;
-                    unknown_3c[i]->flags &= ~SHVF_UNKNOWN_800;
+                    records[i]->car_steal_time = 0;
+                    records[i]->flags &= ~SHVF_CAR_STEAL;
                 }
             }
-            if (unknown_3c[i]->fire_time > 0)
+            if (records[i]->fire_time > 0)
             {
-                unknown_3c[i]->fire_time -= unknown_4.period;
-                if (unknown_3c[i]->fire_time <= 0)
+                records[i]->fire_time -= records_timer.period;
+                if (records[i]->fire_time <= 0)
                 {
-                    unknown_3c[i]->fire_time = 0;
-                    unknown_3c[i]->flags &= ~SHVF_FIRE;
+                    records[i]->fire_time = 0;
+                    records[i]->flags &= ~SHVF_FIRE;
                 }
             }
             // The dead out of the angry ones
-            if (unknown_3c[i]->nasrany.size())
+            if (records[i]->nasrany.size())
             {
-                for (uint j = 0; j < unknown_3c[i]->nasrany.size();)
+                for (uint j = 0; j < records[i]->nasrany.size();)
                 {
-                    if (unknown_3c[i]->nasrany[j]->GetUnknown5e())
+                    if (records[i]->nasrany[j]->GetDead())
                     {
-                        unknown_3c[i]->nasrany[j] = unknown_3c[i]->nasrany.back();
-                        unknown_3c[i]->nasrany.pop_back();
+                        records[i]->nasrany[j] = records[i]->nasrany.back();
+                        records[i]->nasrany.pop_back();
                     }
                     else
                         j++;
                 }
             }
-            if (unknown_3c[i]->unknown_40 > 0)
+            if (records[i]->hits_time > 0)
             {
-                unknown_3c[i]->unknown_40 -= unknown_4.period;
-                if (unknown_3c[i]->unknown_40 < 0)
-                    unknown_3c[i]->unknown_4c = 0;
+                records[i]->hits_time -= records_timer.period;
+                if (records[i]->hits_time < 0)
+                    records[i]->hits = 0;
             }
-            if (unknown_3c[i]->state > SHVSTATE_NONE)
+            if (records[i]->state > SHVSTATE_NONE)
             {
-                if (!unknown_3c[i]->nasrany.size())
+                if (!records[i]->nasrany.size())
                 {
-                    unknown_3c[i]->unknown_44 -= unknown_4.period;
-                    if (!unknown_3c[i]->unknown_50)
-                        unknown_3c[i]->unknown_44 = -1;
-                    if (unknown_3c[i]->unknown_44 < 0)
-                        DobreMiPokuril_MuzeJitDom(unknown_3c[i]->human, true);
+                    records[i]->wanted_time -= records_timer.period;
+                    if (!records[i]->alerted)
+                        records[i]->wanted_time = -1;
+                    if (records[i]->wanted_time < 0)
+                        DobreMiPokuril_MuzeJitDom(records[i]->human, true);
                     else
                     {
-                        if (unknown_3c[i]->fire_time > 2000)
-                            unknown_3c[i]->fire_time = 2000;
-                        if (unknown_3c[i]->unknown_18 > 2000)
-                            unknown_3c[i]->unknown_18 = 2000;
-                        if (unknown_3c[i]->unknown_20 > 2000)
-                            unknown_3c[i]->unknown_20 = 2000;
+                        if (records[i]->fire_time > 2000)
+                            records[i]->fire_time = 2000;
+                        if (records[i]->collision_time > 2000)
+                            records[i]->collision_time = 2000;
+                        if (records[i]->boxing_time > 2000)
+                            records[i]->boxing_time = 2000;
                     }
                 }
-                else if (unknown_3c[i]->unknown_50)
+                else if (records[i]->alerted)
                 {
-                    switch (unknown_3c[i]->state)
+                    switch (records[i]->state)
                     {
                     case SHVSTATE_1:
-                        unknown_3c[i]->unknown_44 = 20000;
+                        records[i]->wanted_time = 20000;
                         break;
                     case SHVSTATE_ARREST:
-                        unknown_3c[i]->unknown_44 = 40000;
+                        records[i]->wanted_time = 40000;
                         break;
                     case SHVSTATE_KILL:
-                        unknown_3c[i]->unknown_44 = 60000;
+                        records[i]->wanted_time = 60000;
                         break;
                     }
-                    unknown_3c[i]->unknown_48 = unknown_3c[i]->unknown_44;
-                    if (unknown_3c[i]->human == act_mission->GetGame()->GetPlayer() && unknown_3c[i]->unknown_50)
-                        mafiaIndicators.SetUnknown46e8(1.0f);
+                    records[i]->wanted_time_start = records[i]->wanted_time;
+                    if (records[i]->human == act_mission->GetGame()->GetPlayer() && records[i]->alerted)
+                        mafiaIndicators.SetProgress(1.0f);
                 }
             }
-            if (unknown_3c[i]->human == act_mission->GetGame()->GetPlayer())
+            if (records[i]->human == act_mission->GetGame()->GetPlayer())
             {
-                if (unknown_3c[i]->state && unknown_3c[i]->unknown_50)
-                    mafiaIndicators.AddFlags(INDF_UNKNOWN_10);
+                if (records[i]->state && records[i]->alerted)
+                    mafiaIndicators.AddFlags(INDF_PROGRESS);
                 else
-                    mafiaIndicators.RemoveFlags(INDF_UNKNOWN_10);
+                    mafiaIndicators.RemoveFlags(INDF_PROGRESS);
             }
         }
         // The road blocks (PC only): one comes up for the first record whose police car comes near enough to it, and
@@ -386,11 +387,11 @@ void C_shvestky::Tick(uint time)
         {
             C_human *human = NULL;
             bool near_block = false;
-            for (i = unknown_3c.size(); i--;)
+            for (i = records.size(); i--;)
             {
-                if (unknown_3c[i]->car && unknown_3c[i]->unknown_2c && !unknown_3c[i]->nevi)
+                if (records[i]->car && records[i]->block_way && !records[i]->nevi)
                 {
-                    S_vector d = unknown_3c[i]->car->GetFrame()->GetWorldPos() -
+                    S_vector d = records[i]->car->GetFrame()->GetWorldPos() -
                         act_mission->roads->links[road_blocks[j].node].pos;
                     float dist = d.Square();
                     if (!road_blocks[j].unknown_2 && dist < 150.0f * 150.0f)
@@ -398,7 +399,7 @@ void C_shvestky::Tick(uint time)
                     if (dist < 200.0f * 200.0f)
                     {
                         near_block = true;
-                        human = unknown_3c[i]->human;
+                        human = records[i]->human;
                         break;
                     }
                 }
@@ -410,7 +411,7 @@ void C_shvestky::Tick(uint time)
                 {
                     C_actor *act = (C_actor *)road_blocks[j].unknown_4[k];
                     if (act->GetType() == ACTOR_ENTITY)
-                        ((C_entity *)act)->Event(NULL, ENTITY_EVENT_UNKNOWN_13, NULL);
+                        ((C_entity *)act)->Event(NULL, ENTITY_EVENT_DISMISS, NULL);
                     AddDoRiciActor((C_actor *)road_blocks[j].unknown_4[k]);
                 }
                 road_blocks[j].unknown_4.clear();
@@ -424,18 +425,18 @@ void C_shvestky::Tick(uint time)
         CreateShvestkyTest();
     }
     // The player's record: the HUD's bar of the time left
-    for (i = unknown_3c.size(); i--;)
+    for (i = records.size(); i--;)
     {
-        if (unknown_3c[i]->human == act_mission->GetGame()->GetPlayer())
+        if (records[i]->human == act_mission->GetGame()->GetPlayer())
         {
-            if (unknown_3c[i]->unknown_50)
+            if (records[i]->alerted)
             {
-                if (unknown_3c[i]->unknown_48 > 0 && unknown_3c[i]->unknown_44 < unknown_3c[i]->unknown_48)
+                if (records[i]->wanted_time_start > 0 && records[i]->wanted_time < records[i]->wanted_time_start)
                 {
-                    int left = unknown_3c[i]->unknown_44 - unknown_4.time;
-                    if (left > unknown_3c[i]->unknown_44)
-                        left = unknown_3c[i]->unknown_44;
-                    int total = unknown_3c[i]->unknown_48 - unknown_4.period;
+                    int left = records[i]->wanted_time - records_timer.time;
+                    if (left > records[i]->wanted_time)
+                        left = records[i]->wanted_time;
+                    int total = records[i]->wanted_time_start - records_timer.period;
                     if (total < 1)
                         total = 1;
                     float f = (float)left / total;
@@ -443,10 +444,10 @@ void C_shvestky::Tick(uint time)
                         f = 1.0f;
                     else if (f < 0.0f)
                         f = 0.0f;
-                    mafiaIndicators.SetUnknown46e8(f);
+                    mafiaIndicators.SetProgress(f);
                 }
                 else
-                    mafiaIndicators.SetUnknown46e8(1.0f);
+                    mafiaIndicators.SetProgress(1.0f);
             }
             break;
         }
@@ -460,19 +461,19 @@ void C_shvestky::Tick(uint time)
 // takes the link's position, as PS2's (the same slot in both builds).
 inline void C_shvestky::TestOverRed()
 {
-    for (int i = unknown_3c.size(); i--;)
+    for (int i = records.size(); i--;)
     {
-        if (unknown_3c[i]->car)
+        if (records[i]->car)
         {
-            S_vector pos = unknown_3c[i]->car->GetWorldPos();
-            S_vector dir = unknown_3c[i]->car->GetVelocity();
-            ushort link = act_mission->roads->GetNearNode(unknown_3c[i]->car->GetFrame()->GetWorldPos());
+            S_vector pos = records[i]->car->GetWorldPos();
+            S_vector dir = records[i]->car->GetVelocity();
+            ushort link = act_mission->roads->GetNearNode(records[i]->car->GetFrame()->GetWorldPos());
             if (link != NEARNODE_NONE && !dir.IsNull())
             {
                 dir.Normalize();
                 ushort ends[2];
-                ends[0] = act_mission->roads->links[link].unknown_10;
-                ends[1] = act_mission->roads->links[link].unknown_12;
+                ends[0] = act_mission->roads->links[link].end0;
+                ends[1] = act_mission->roads->links[link].end1;
                 if (ends[0] != NEARNODE_NONE && ends[1] != NEARNODE_NONE)
                 {
                     S_vector p0 = act_mission->roads->GetPos(ends[0]);
@@ -483,12 +484,12 @@ inline void C_shvestky::TestOverRed()
                         ends[0] = ends[1];
                         ends[1] = t;
                     }
-                    bool ok = !(ends[0] & NEARNODE_FLAG) && act_mission->roads->nodes[ends[0]].unknown_c;
+                    bool ok = !(ends[0] & NEARNODE_FLAG) && act_mission->roads->nodes[ends[0]].semaphore;
                     if (ok)
                     {
-                        for (int j = unknown_9c.size(); j--;)
+                        for (int j = bridge_nodes.size(); j--;)
                         {
-                            if ((unknown_9c[j] & NEARNODE_INDEX) == (ends[0] & NEARNODE_INDEX))
+                            if ((bridge_nodes[j] & NEARNODE_INDEX) == (ends[0] & NEARNODE_INDEX))
                             {
                                 ok = false;
                                 break;
@@ -503,27 +504,27 @@ inline void C_shvestky::TestOverRed()
                         S_vector2 line_pos(p1.x, p1.z);
                         S_vector2 car_pos(pos.x, pos.z);
                         // unused, as PS2's
-                        S_vector2 moved = unknown_3c[i]->pos - car_pos;
+                        S_vector2 moved = records[i]->pos - car_pos;
                         S_vector2 dn = d;
                         dn.Normalize();
                         line_pos += dn * 1.5f;
                         if ((float)fabs(car_pos.DistanceToLine(line_pos, d)) < 15.0f)
                         {
                             float side = car_pos.DistanceToLine(line_pos, n);
-                            if (unknown_3c[i]->pos.DistanceToLine(line_pos, n) * side <= 0.0f)
+                            if (records[i]->pos.DistanceToLine(line_pos, n) * side <= 0.0f)
                             {
                                 int *phase = (float)fabs(d.x) > (float)fabs(d.y) ?
-                                    &act_mission->GetGame()->unknown_19c : &act_mission->GetGame()->unknown_1a0;
+                                    &act_mission->GetGame()->semaphore_phase_x : &act_mission->GetGame()->semaphore_phase_z;
                                 if (phase && semaphore_colors[*phase] == SEMAPHORE_RED)
                                 {
-                                    unknown_3c[i]->flags |= SHVF_RED_LIGHT;
-                                    unknown_3c[i]->unknown_24 += 4000;
-                                    if (unknown_3c[i]->unknown_24 > 10000)
-                                        unknown_3c[i]->unknown_24 = 10000;
-                                    if (unknown_3c[i]->new_state < SHVSTATE_1)
+                                    records[i]->flags |= SHVF_RED_LIGHT;
+                                    records[i]->signal_time += 4000;
+                                    if (records[i]->signal_time > 10000)
+                                        records[i]->signal_time = 10000;
+                                    if (records[i]->new_state < SHVSTATE_1)
                                     {
-                                        unknown_3c[i]->new_state = SHVSTATE_1;
-                                        unknown_3c[i]->reason = SHVREASON_RED_LIGHT;
+                                        records[i]->new_state = SHVSTATE_1;
+                                        records[i]->reason = SHVREASON_RED_LIGHT;
                                     }
                                 }
                             }
@@ -531,7 +532,7 @@ inline void C_shvestky::TestOverRed()
                     }
                 }
             }
-            unknown_3c[i]->pos = S_vector2(pos.x, pos.z);
+            records[i]->pos = S_vector2(pos.x, pos.z);
         }
     }
 }
@@ -540,216 +541,216 @@ inline void C_shvestky::TestOverRed()
 // told of a change, and the player's on the HUD with more policemen at its states 5 and 6
 inline void C_shvestky::CreateShvestkyTest()
 {
-    for (int i = unknown_3c.size(); i--;)
+    for (int i = records.size(); i--;)
     {
-        if ((unknown_3c[i]->flags & SHVF_SPEEDING) && unknown_3c[i]->car)
+        if ((records[i]->flags & SHVF_SPEEDING) && records[i]->car)
         {
-            if (unknown_3c[i]->car->GetSpeed() > unknown_10)
+            if (records[i]->car->GetSpeed() > speed_limit_arrest)
             {
-                if (unknown_3c[i]->new_state < SHVSTATE_ARREST)
+                if (records[i]->new_state < SHVSTATE_ARREST)
                 {
-                    unknown_3c[i]->new_state = SHVSTATE_ARREST;
-                    unknown_3c[i]->reason = SHVREASON_SPEEDING;
+                    records[i]->new_state = SHVSTATE_ARREST;
+                    records[i]->reason = SHVREASON_SPEEDING;
                 }
             }
             else
             {
-                if (unknown_3c[i]->new_state < SHVSTATE_1)
+                if (records[i]->new_state < SHVSTATE_1)
                 {
-                    unknown_3c[i]->new_state = SHVSTATE_1;
-                    unknown_3c[i]->reason = SHVREASON_SPEEDING;
+                    records[i]->new_state = SHVSTATE_1;
+                    records[i]->reason = SHVREASON_SPEEDING;
                 }
             }
         }
-        if (unknown_3c[i]->flags & SHVF_UNKNOWN_4000)
+        if (records[i]->flags & SHVF_FORCE_ARREST)
         {
-            if (unknown_3c[i]->new_state < SHVSTATE_ARREST)
-                unknown_3c[i]->new_state = SHVSTATE_ARREST;
+            if (records[i]->new_state < SHVSTATE_ARREST)
+                records[i]->new_state = SHVSTATE_ARREST;
         }
-        if (unknown_3c[i]->flags & SHVF_UNKNOWN_2000)
+        if (records[i]->flags & SHVF_HIT_POLICEMAN)
         {
-            if (unknown_3c[i]->new_state < SHVSTATE_KILL)
+            if (records[i]->new_state < SHVSTATE_KILL)
             {
-                unknown_3c[i]->new_state = SHVSTATE_KILL;
-                unknown_3c[i]->reason = SHVREASON_UNKNOWN_9;
+                records[i]->new_state = SHVSTATE_KILL;
+                records[i]->reason = SHVREASON_HIT_POLICEMAN;
             }
         }
-        if (unknown_3c[i]->flags & SHVF_UNKNOWN_8000)
+        if (records[i]->flags & SHVF_RAM_POLICE_CAR)
         {
-            if (unknown_3c[i]->unknown_6c)
+            if (records[i]->hard_ram)
             {
-                if (unknown_3c[i]->new_state < SHVSTATE_ARREST)
+                if (records[i]->new_state < SHVSTATE_ARREST)
                 {
-                    unknown_3c[i]->new_state = SHVSTATE_ARREST;
-                    unknown_3c[i]->reason = SHVREASON_UNKNOWN_A;
+                    records[i]->new_state = SHVSTATE_ARREST;
+                    records[i]->reason = SHVREASON_RAM_POLICE_CAR;
                 }
             }
             else
             {
-                if (unknown_3c[i]->new_state < SHVSTATE_1)
+                if (records[i]->new_state < SHVSTATE_1)
                 {
-                    unknown_3c[i]->new_state = SHVSTATE_1;
-                    unknown_3c[i]->reason = SHVREASON_UNKNOWN_A;
+                    records[i]->new_state = SHVSTATE_1;
+                    records[i]->reason = SHVREASON_RAM_POLICE_CAR;
                 }
             }
         }
-        if (unknown_3c[i]->new_state < SHVSTATE_1 && (unknown_3c[i]->flags & SHVF_WEAPON))
+        if (records[i]->new_state < SHVSTATE_1 && (records[i]->flags & SHVF_WEAPON))
         {
-            if (unknown_3c[i]->human->car && unknown_3c[i]->human->car->GetType() == ACTOR_CAR)
+            if (records[i]->human->car && records[i]->human->car->GetType() == ACTOR_CAR)
             {
-                if (unknown_3c[i]->human->unknown_1e5)
+                if (records[i]->human->aimed)
                 {
-                    int item = unknown_3c[i]->human->inventory.GetItemInRightHand(NULL);
-                    if (unknown_3c[i]->human->seat)
+                    int item = records[i]->human->inventory.GetItemInRightHand(NULL);
+                    if (records[i]->human->seat)
                     {
                         if (item >= SHVITEM_CAR_FIRST && item <= SHVITEM_CAR_LAST)
                         {
-                            unknown_3c[i]->new_state = SHVSTATE_ARREST;
-                            unknown_3c[i]->reason = SHVREASON_WEAPON;
+                            records[i]->new_state = SHVSTATE_ARREST;
+                            records[i]->reason = SHVREASON_WEAPON;
                         }
                     }
                     else
                     {
                         if (item >= SHVITEM_CAR_FIRST && item <= SHVITEM_DRIVER_LAST)
                         {
-                            unknown_3c[i]->new_state = SHVSTATE_ARREST;
-                            unknown_3c[i]->reason = SHVREASON_WEAPON;
+                            records[i]->new_state = SHVSTATE_ARREST;
+                            records[i]->reason = SHVREASON_WEAPON;
                         }
                     }
                 }
             }
-            else if (!unknown_3c[i]->human->car)
+            else if (!records[i]->human->car)
             {
-                unknown_3c[i]->new_state = SHVSTATE_ARREST;
-                unknown_3c[i]->reason = SHVREASON_WEAPON;
+                records[i]->new_state = SHVSTATE_ARREST;
+                records[i]->reason = SHVREASON_WEAPON;
             }
         }
-        if ((unknown_3c[i]->flags & SHVF_UNKNOWN_800) && unknown_3c[i]->new_state < SHVSTATE_ARREST)
+        if ((records[i]->flags & SHVF_CAR_STEAL) && records[i]->new_state < SHVSTATE_ARREST)
         {
-            unknown_3c[i]->new_state = SHVSTATE_ARREST;
-            unknown_3c[i]->reason = SHVREASON_UNKNOWN_7;
+            records[i]->new_state = SHVSTATE_ARREST;
+            records[i]->reason = SHVREASON_CAR_STEAL;
         }
-        if ((unknown_3c[i]->flags & SHVF_UNKNOWN_40) && unknown_3c[i]->unknown_14 > 5800 &&
-            unknown_3c[i]->new_state < SHVSTATE_1)
+        if ((records[i]->flags & SHVF_ILLEGAL_PATH) && records[i]->illegal_path_time > 5800 &&
+            records[i]->new_state < SHVSTATE_1)
         {
-            unknown_3c[i]->new_state = SHVSTATE_1;
-            unknown_3c[i]->reason = SHVREASON_UNKNOWN_4;
+            records[i]->new_state = SHVSTATE_1;
+            records[i]->reason = SHVREASON_ILLEGAL_PATH;
         }
-        if (unknown_3c[i]->new_state == SHVSTATE_1 && unknown_3c[i]->state < SHVSTATE_ARREST && unknown_3c[i]->car &&
-            unknown_3c[i]->car->unknown_20b2)
-            unknown_3c[i]->new_state = SHVSTATE_NONE;
-        if (unknown_3c[i]->new_state == SHVSTATE_1 && unknown_3c[i]->unknown_28 >= 3)
-            unknown_3c[i]->new_state = SHVSTATE_ARREST;
-        if (unknown_3c[i]->new_state > unknown_3c[i]->state)
+        if (records[i]->new_state == SHVSTATE_1 && records[i]->state < SHVSTATE_ARREST && records[i]->car &&
+            records[i]->car->police_model)
+            records[i]->new_state = SHVSTATE_NONE;
+        if (records[i]->new_state == SHVSTATE_1 && records[i]->offenses >= 3)
+            records[i]->new_state = SHVSTATE_ARREST;
+        if (records[i]->new_state > records[i]->state)
         {
             bool seen = true;
-            if (unknown_3c[i]->nevi)
-                seen = AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(unknown_3c[i]->human);
-            if (unknown_3c[i]->nasrany.size())
+            if (records[i]->nevi)
+                seen = AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(records[i]->human);
+            if (records[i]->nasrany.size())
             {
                 if (seen)
                 {
-                    switch (unknown_3c[i]->new_state)
+                    switch (records[i]->new_state)
                     {
                     case SHVSTATE_ARREST:
-                        AIManager.police.PanoveZmenaZatkneteHoZmrda(unknown_3c[i]->human);
+                        AIManager.police.PanoveZmenaZatkneteHoZmrda(records[i]->human);
                         break;
                     case SHVSTATE_KILL:
-                        AIManager.police.PanoveZmenaZabijteHoZmrda(unknown_3c[i]->human);
+                        AIManager.police.PanoveZmenaZabijteHoZmrda(records[i]->human);
                         break;
                     }
-                    unknown_3c[i]->state = unknown_3c[i]->new_state;
+                    records[i]->state = records[i]->new_state;
                 }
             }
             else
-                unknown_3c[i]->state = unknown_3c[i]->new_state;
+                records[i]->state = records[i]->new_state;
         }
-        else if (unknown_3c[i]->new_state && unknown_3c[i]->nasrany.size() && unknown_3c[i]->nevi &&
-            AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(unknown_3c[i]->human))
-            AIManager.police.PanoveVytahneteBlokyAZapisteSiZmrda(unknown_3c[i]->human);
-        bool gone = !unknown_3c[i]->nasrany.size() && unknown_3c[i]->unknown_44 < 0;
-        int time_left = unknown_3c[i]->unknown_44;
-        uint count = unknown_3c[i]->nasrany.size();
-        if (unknown_3c[i]->unknown_50 && unknown_3c[i]->nevi)
+        else if (records[i]->new_state && records[i]->nasrany.size() && records[i]->nevi &&
+            AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(records[i]->human))
+            AIManager.police.PanoveVytahneteBlokyAZapisteSiZmrda(records[i]->human);
+        bool gone = !records[i]->nasrany.size() && records[i]->wanted_time < 0;
+        int time_left = records[i]->wanted_time;
+        uint count = records[i]->nasrany.size();
+        if (records[i]->alerted && records[i]->nevi)
         {
-            if (unknown_3c[i]->new_state > SHVSTATE_NONE && unknown_3c[i]->state > SHVSTATE_NONE)
-                VasekSelChlastatNaOslavu(unknown_3c[i]->human, unknown_3c[i]->human->GetWorldPos(), 150.0f, false,
-                    unknown_3c[i]->new_state < SHVSTATE_1);
+            if (records[i]->new_state > SHVSTATE_NONE && records[i]->state > SHVSTATE_NONE)
+                VasekSelChlastatNaOslavu(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false,
+                    records[i]->new_state < SHVSTATE_1);
         }
-        else if (unknown_3c[i]->unknown_50 ? (bool)(unknown_3c[i]->state > SHVSTATE_NONE) :
-            (bool)(unknown_3c[i]->new_state > SHVSTATE_NONE))
-            VasekSelChlastatNaOslavu(unknown_3c[i]->human, unknown_3c[i]->human->GetWorldPos(), 150.0f, false, false);
-        if (gone && !unknown_3c[i]->nasrany.size())
+        else if (records[i]->alerted ? (bool)(records[i]->state > SHVSTATE_NONE) :
+            (bool)(records[i]->new_state > SHVSTATE_NONE))
+            VasekSelChlastatNaOslavu(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false, false);
+        if (gone && !records[i]->nasrany.size())
         {
-            unknown_3c[i]->state = SHVSTATE_NONE;
-            unknown_3c[i]->unknown_44 = -1;
+            records[i]->state = SHVSTATE_NONE;
+            records[i]->wanted_time = -1;
         }
-        if (count == unknown_3c[i]->nasrany.size())
-            unknown_3c[i]->unknown_44 = time_left;
+        if (count == records[i]->nasrany.size())
+            records[i]->wanted_time = time_left;
         else
-            mafiaIndicators.SetUnknown46e8(1.0f);
-        if (unknown_3c[i]->human == act_mission->GetGame()->GetPlayer())
+            mafiaIndicators.SetProgress(1.0f);
+        if (records[i]->human == act_mission->GetGame()->GetPlayer())
         {
-            ushort flags = unknown_3c[i]->flags;
-            int level = unknown_3c[i]->state;
-            if ((flags & SHVF_UNKNOWN_4000) && unknown_3c[i]->unknown_50 && level < SHVSTATE_ARREST)
+            ushort flags = records[i]->flags;
+            int level = records[i]->state;
+            if ((flags & SHVF_FORCE_ARREST) && records[i]->alerted && level < SHVSTATE_ARREST)
                 level = SHVSTATE_ARREST;
-            if ((flags & SHVF_UNKNOWN_2000) && level < SHVSTATE_KILL)
+            if ((flags & SHVF_HIT_POLICEMAN) && level < SHVSTATE_KILL)
                 level = SHVSTATE_KILL;
             if (level > SHVSTATE_NONE)
             {
-                if (unknown_3c[i]->unknown_50)
+                if (records[i]->alerted)
                     level += 3;
-                mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+                mafiaIndicators.AddFlags(INDF_SYMBOL);
                 float alpha = 1.0f;
-                if (PocetNasranychZivych(unknown_3c[i]->human))
+                if (PocetNasranychZivych(records[i]->human))
                 {
-                    if (AIManager.police.PanoveJdeteNekdoPoZmrdovi(unknown_3c[i]->human))
-                        unknown_3c[i]->nevi = !AIManager.police.PanoveViditeZmrdaNeboSteTupci(unknown_3c[i]->human);
+                    if (AIManager.police.PanoveJdeteNekdoPoZmrdovi(records[i]->human))
+                        records[i]->nevi = !AIManager.police.PanoveViditeZmrdaNeboSteTupci(records[i]->human);
                     else
-                        unknown_3c[i]->nevi = false;
+                        records[i]->nevi = false;
                 }
-                else if (unknown_3c[i]->human->car)
-                    unknown_3c[i]->nevi = unknown_3c[i]->unknown_54 != unknown_3c[i]->human->car;
+                else if (records[i]->human->car)
+                    records[i]->nevi = records[i]->known_car != records[i]->human->car;
                 else
-                    unknown_3c[i]->nevi = !unknown_3c[i]->unknown_58;
+                    records[i]->nevi = !records[i]->known_on_foot;
                 int symbol = level;
                 if (level > 3)
                     symbol = level - 3;
-                if (unknown_3c[i]->nevi && !unknown_38)
+                if (records[i]->nevi && !unknown_38)
                     symbol = 4;
-                if (!AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(unknown_3c[i]->human))
+                if (!AIManager.police.PanoveMateOciNaZmrdoviNeboCumitePoBabach(records[i]->human))
                     alpha = .4f;
                 mafiaIndicators.SetSymbol(symbol, alpha);
                 if (level == 5)
                 {
-                    if (unknown_3c[i]->unknown_5c < 1)
+                    if (records[i]->support_level < 1)
                     {
-                        unknown_3c[i]->unknown_5c = 1;
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(unknown_3c[i]->human, 4, 200.0f);
+                        records[i]->support_level = 1;
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 4, 200.0f);
                     }
                 }
                 else if (level == 6)
                 {
-                    if (unknown_3c[i]->unknown_5c < 2)
+                    if (records[i]->support_level < 2)
                     {
-                        unknown_3c[i]->unknown_5c = 2;
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(unknown_3c[i]->human, 0, 200.0f);
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(unknown_3c[i]->human, 0, 200.0f);
+                        records[i]->support_level = 2;
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 0, 200.0f);
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 0, 200.0f);
                     }
                 }
             }
             else
-                mafiaIndicators.RemoveFlags(INDF_UNKNOWN_4000000);
+                mafiaIndicators.RemoveFlags(INDF_SYMBOL);
         }
-        unknown_3c[i]->new_state = SHVSTATE_NONE;
+        records[i]->new_state = SHVSTATE_NONE;
     }
 }
 
 #pragma auto_inline(off)
 
 // STUB: GAME 0x49b860
-void C_shvestky::SetActive(bool active, int unknown, bool unknown2)
+void C_shvestky::SetActive(bool on, int text, bool unknown2)
 {
     StubLog("C_shvestky::SetActive");
 }
@@ -855,7 +856,7 @@ void C_shvestky::DelDoRiciActor(C_actor *act)
 #pragma auto_inline(on)
 
 // PS2's order and shapes. The distance is the camera's on the ground, 150 m: an entity goes once it is that far, or by
-// its ENTITYF48_UNKNOWN_8 where its unknown_5fc is 4; one in a car (of ACTOR_CAR) goes only once that far, the car
+// its AISTATEF_DISMISSED where its human_type is 4; one in a car (of ACTOR_CAR) goes only once that far, the car
 // emptied of it and the loop run again for the car, else it stays and the records forget it. A car goes once it is
 // that far with nobody in its seats and no player or entity having it as a car, or once its frame is off; every other
 // actor goes at once. The members are read through their classes' accessors, as Tick reads them: as inline calls still
@@ -869,33 +870,33 @@ void C_shvestky::TickDoRiciActors(bool all)
     do
     {
         again = false;
-        for (uint i = 0; i < unknown_7c.size();)
+        for (uint i = 0; i < do_rici_actors.size();)
         {
-            S_vector d = pos - unknown_7c[i]->GetFrame()->GetWorldPos();
+            S_vector d = pos - do_rici_actors[i]->GetFrame()->GetWorldPos();
             d.y = 0.0f;
             float dist = d.Square();
             bool remove = all;
             if (!remove)
             {
-                switch (unknown_7c[i]->GetType())
+                switch (do_rici_actors[i]->GetType())
                 {
                 case ACTOR_ENTITY:
                     remove = dist > 22500.0f;
-                    if (!unknown_7c[i]->GetUnknown5e() && ((C_entity *)unknown_7c[i])->unknown_5fc == 4)
-                        remove = (((C_entity *)unknown_7c[i])->unknown_f48 & ENTITYF48_UNKNOWN_8) != 0;
+                    if (!do_rici_actors[i]->GetDead() && ((C_entity *)do_rici_actors[i])->human_type == 4)
+                        remove = (((C_entity *)do_rici_actors[i])->ai_state_flags & AISTATEF_DISMISSED) != 0;
                     if (remove)
                     {
-                        C_car *car = ((C_entity *)unknown_7c[i])->GetCar();
+                        C_car *car = ((C_entity *)do_rici_actors[i])->GetCar();
                         if (car && car->GetType() == ACTOR_CAR)
                         {
                             remove = dist > 22500.0f;
                             if (remove)
                             {
-                                car->SetOwner(NULL, ((C_entity *)unknown_7c[i])->seat, 0.0f);
+                                car->SetOwner(NULL, ((C_entity *)do_rici_actors[i])->seat, 0.0f);
                                 again = true;
                             }
                             else
-                                GlobalDelNasrany(unknown_7c[i]);
+                                GlobalDelNasrany(do_rici_actors[i]);
                         }
                     }
                     break;
@@ -903,8 +904,8 @@ void C_shvestky::TickDoRiciActors(bool all)
                     if (dist > 22500.0f)
                     {
                         remove = true;
-                        C_car *car = (C_car *)unknown_7c[i];
-                        for (int j = car->GetNumUnknownCa0(); j--;)
+                        C_car *car = (C_car *)do_rici_actors[i];
+                        for (int j = car->GetNumSeats(); j--;)
                         {
                             if (car->GetOwner(j))
                             {
@@ -918,7 +919,7 @@ void C_shvestky::TickDoRiciActors(bool all)
                                 p < C_actor::GetGlobalActors().end(); p++)
                             {
                                 if (p && ((*p)->GetType() == ACTOR_PLAYER || (*p)->GetType() == ACTOR_ENTITY) &&
-                                    (((C_human *)*p)->GetCar() == car || ((C_human *)*p)->unknown_9c == car))
+                                    (((C_human *)*p)->GetCar() == car || ((C_human *)*p)->using_car == car))
                                 {
                                     remove = false;
                                     break;
@@ -926,7 +927,7 @@ void C_shvestky::TickDoRiciActors(bool all)
                             }
                         }
                     }
-                    else if (!unknown_7c[i]->GetFrame()->IsOn())
+                    else if (!do_rici_actors[i]->GetFrame()->IsOn())
                         remove = true;
                     break;
                 default:
@@ -935,29 +936,29 @@ void C_shvestky::TickDoRiciActors(bool all)
             }
             if (remove)
             {
-                GlobalDelNasrany(unknown_7c[i]);
-                if (unknown_7c[i]->GetType() == ACTOR_CAR)
+                GlobalDelNasrany(do_rici_actors[i]);
+                if (do_rici_actors[i]->GetType() == ACTOR_CAR)
                 {
-                    mafiaIndicators.RadarRemoveCar((C_car *)unknown_7c[i]);
-                    act_mission->GetGame()->GetSledovacka()->RemoveCar((C_car *)unknown_7c[i]);
-                    if (((C_car *)unknown_7c[i])->unknown_2104)
+                    mafiaIndicators.RadarRemoveCar((C_car *)do_rici_actors[i]);
+                    act_mission->GetGame()->GetSledovacka()->RemoveCar((C_car *)do_rici_actors[i]);
+                    if (((C_car *)do_rici_actors[i])->police_car)
                         C_traffic_car::ChlupatejVystrik();
                 }
-                act_mission->GetGame()->InvalidateActor(unknown_7c[i], false);
-                if (!FreeMyTempActor(unknown_7c[i]))
+                act_mission->GetGame()->InvalidateActor(do_rici_actors[i], false);
+                if (!FreeMyTempActor(do_rici_actors[i]))
                 {
-                    act_mission->GetGame()->InvalidateActor(unknown_7c[i], false);
-                    act_mission->GetGame()->RemoveTemporaryActor(unknown_7c[i]);
+                    act_mission->GetGame()->InvalidateActor(do_rici_actors[i], false);
+                    act_mission->GetGame()->RemoveTemporaryActor(do_rici_actors[i]);
                 }
-                unknown_7c[i] = unknown_7c.back();
-                unknown_7c.pop_back();
+                do_rici_actors[i] = do_rici_actors.back();
+                do_rici_actors.pop_back();
             }
             else
                 i++;
         }
     } while (again);
     if (all)
-        unknown_7c.clear();
+        do_rici_actors.clear();
 }
 
 #pragma auto_inline(off)

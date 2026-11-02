@@ -30,7 +30,8 @@ public:
     std::vector<S_effect *> effects;    // 0x0
     std::vector<S_effect *> effects_2;  // 0x10
     int unknown_20;                     // 0x20
-    S_timer unknown_24;                 // 0x24, its period 1000 from the constructor
+    // 0x24, its period 1000 from the constructor: Tick tries the waiting effects each second (the name is ours)
+    S_timer wait_timer;
     // 0x2c and 0x2d, which of the effects C_game::Init creates (the names are ours): GameInit sets them where the
     // player's (forward's secondary binding) and the car's controls (steer left's) are on a joystick with force feedback
     bool human_effects;
@@ -65,8 +66,8 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?DrawConnections@C_web_path@@UAEXXZ
+// ?Death@C_actor@@UAEXXZ
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670
-// ??1C_ff_manager@@QAE@XZ
+// ??1C_sledovacka@@QAE@XZ

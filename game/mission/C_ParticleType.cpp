@@ -47,23 +47,23 @@ void C_ParticleType::Reset()
     if (frame)
         frame->Release();
     frame = NULL;
-    unknown_68 = S_vector(1.0f, 1.0f, 1.0f);
-    unknown_bc = 0;
-    unknown_88 = 0;
-    unknown_8c = 0.0f;
-    unknown_94 = 0.0f;
-    unknown_90 = 0.0f;
-    unknown_98 = 0.0f;
-    unknown_a0 = 0;
-    unknown_9c = 0.0f;
-    unknown_b8 = false;
-    unknown_b4 = 0;
-    unknown_ac = 0;
-    unknown_b0 = 0;
-    unknown_a8 = 0;
-    unknown_60 = 0.0f;
-    unknown_64 = 0.0f;
-    unknown_74 = S_vector(0.0f, 0.0f, 0.0f);
+    scale = S_vector(1.0f, 1.0f, 1.0f);
+    flags = 0;
+    burst = 0;
+    rate = 0.0f;
+    rate_fall = 0.0f;
+    start_rate = 0.0f;
+    interval = 0.0f;
+    fall_delay = 0;
+    fall_interval = 0.0f;
+    forever = false;
+    emit_time = 0;
+    wait = 0;
+    repeats = 0;
+    restart_delay = 0;
+    speed = 0.0f;
+    speed_spread = 0.0f;
+    scale_spread = S_vector(0.0f, 0.0f, 0.0f);
 }
 
 // The rates are per second of times in milliseconds
@@ -74,24 +74,24 @@ void C_ParticleType::Init(I3D_frame *at, I3D_frame *frm, const S_vector &v30, co
     parent = at;
     frame = frm;
     frm->m_RefCount++;
-    unknown_30 = v30;
-    unknown_3c = v3c;
-    unknown_88 = v88;
-    unknown_8c = v8c;
-    unknown_90 = v8c;
-    unknown_94 = v94;
+    offset = v30;
+    offset_spread = v3c;
+    burst = v88;
+    rate = v8c;
+    start_rate = v8c;
+    rate_fall = v94;
     if (v8c != 0.0f)
-        unknown_98 = (1.0f / v8c) * 1000.0f;
+        interval = (1.0f / v8c) * 1000.0f;
     else
-        unknown_98 = 0.0f;
+        interval = 0.0f;
     if (v94 != 0.0f)
-        unknown_9c = (1.0f / v94) * 1000.0f;
+        fall_interval = (1.0f / v94) * 1000.0f;
     else
-        unknown_9c = 0.0f;
-    unknown_a0 = va0;
-    unknown_b8 = vb0 == -1;
-    unknown_b0 = vb0;
-    unknown_a4 = 0;
-    unknown_a8 = va8;
-    unknown_ac = -1;
+        fall_interval = 0.0f;
+    fall_delay = va0;
+    forever = vb0 == -1;
+    repeats = vb0;
+    run_time = 0;
+    restart_delay = va8;
+    wait = -1;
 }

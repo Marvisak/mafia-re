@@ -63,7 +63,7 @@ public:
         int unknown_1c;                 // 0x1c
         I3D_frame *sector;              // 0x20, the frame's nearest FRAME_SECTOR parent
         bool unknown_24;                // 0x24
-        S_GameItem item;                // 0x28, the item the player gets, whose unknown_c is the object itself
+        S_GameItem item;                // 0x28, the item the player gets, whose using_object is the object itself
 
         // FUNCTION: GAME 0x47aef0
         S_using_object() : unknown_10(0), frame(NULL), unknown_1c(0), sector(NULL), unknown_24(false) {}
@@ -218,7 +218,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetMode@G_Camera@@QBEIXZ
+// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

@@ -73,7 +73,7 @@ void C_console::Clear()
     for (int i = text_lines.size(); i--; )
         delete[] text_lines[i].text;
     text_lines.clear();
-    unknown_34 = 0;
+    elapsed = 0;
 }
 
 // The first line goes each time a line's time has passed, which runs faster the more lines there are: with all the
@@ -82,10 +82,10 @@ void C_console::Clear()
 void C_console::Tick(uint time)
 {
     if (text_lines.size())
-        unknown_34 += time * (text_lines.size() / (float)lines * 10.0f + 1.0f);
-    while (unknown_34 > this->time)
+        elapsed += time * (text_lines.size() / (float)lines * 10.0f + 1.0f);
+    while (elapsed > this->time)
     {
-        unknown_34 -= this->time;
+        elapsed -= this->time;
         if (text_lines.size())
         {
             delete[] text_lines[0].text;

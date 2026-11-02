@@ -16,7 +16,7 @@
 // FUNCTION: GAME 0x5e84c0
 int GM_ProfileSelect::OnCreate()
 {
-    flags &= ~MENUF_UNKNOWN_10000;
+    flags &= ~MENUF_DRAW_PARENT;
     std::vector<G_Profile_FileHead> *profiles = mafiaLoadSave.ProfileGetList();
     float height = 0.0f;
     strcpy(new_name, textDatabase.GetText(TEXT_DEFAULT));
@@ -142,7 +142,7 @@ int GM_ProfileSelect::OnClick(uint id)
 // FUNCTION: GAME 0x5e8a40
 int GM_ProfileCreate::OnCreate()
 {
-    flags &= ~MENUF_UNKNOWN_10000;
+    flags &= ~MENUF_DRAW_PARENT;
     SetDword(PROFILECREATE_NAME, PROFILECREATE_NAME_LENGTH);
     SetText(PROFILECREATE_NAME, (uchar *)name);
     igraph->KeyboardInit(KBINIT_WINMESSAGES);
@@ -185,7 +185,7 @@ int GM_ProfileCreate::OnClick(uint id)
 // FUNCTION: GAME 0x5e8b10
 int GM_ProfileDelete::OnCreate()
 {
-    flags &= ~MENUF_UNKNOWN_10000;
+    flags &= ~MENUF_DRAW_PARENT;
     std::vector<G_Profile_FileHead> *profiles = mafiaLoadSave.ProfileGetList();
     float height = 0.0f;
     int count = profiles->size();

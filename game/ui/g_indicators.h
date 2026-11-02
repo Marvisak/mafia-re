@@ -28,33 +28,36 @@ struct tDynamicCollObject;
 #define PARHELIA_DUAL 1                 // wider than 2:1
 #define PARHELIA_TRIPLE 2               // wider than 3:1: the HUD is on the middle screen
 
-// G_IndicatorsClass::unknown_40a4's bits, what DrawAll draws (the names are ours, by value where the meaning isn't known
-// yet): a menu keeps INDF_WIDESCREEN, INDF_FADE and INDF_SNIPER while it runs. INDF_MENU and INDF_UNKNOWN_800 hide most
-// of the HUD.
+// G_IndicatorsClass::show_flags's bits, what DrawAll draws (the names are ours): a menu keeps INDF_WIDESCREEN, INDF_FADE
+// and INDF_SNIPER while it runs. INDF_MENU and INDF_CUTSCENE hide most of the HUD.
 #define INDF_MENU 1                     // set while GM_Menu::ExecuteMenu runs a menu
 #define INDF_TACHOMETR 2                // the tachometer
 #define INDF_PLAYER 4                   // the player's health and the wingmen's
 #define INDF_TIMER 8                    // the clock
-#define INDF_UNKNOWN_10 0x10            // a bar for unknown_46e8 with INDF_UNKNOWN_4000000
+#define INDF_PROGRESS 0x10              // the scripts' PM_SHOWPROGRESS (the police's too): a bar for progress, under
+                                        // INDF_SYMBOL
 #define INDF_CROSSHAIR 0x20             // cleared while the camera is CAMERA_CP_SNIPER, where INDF_SNIPER is set
 #define INDF_COMPASS 0x80              // the arrow to compass_destination, and its mark on the radar
-#define INDF_UNKNOWN_100 0x100          // the tachometer's light at its top right
-#define INDF_UNKNOWN_800 0x800          // cleared by C_cutscene::Close
+// The tachometer's light at its top right: set with the player's car's speed limit (C_Vehicle::SetSpeedLimit, PS2's
+// name) when CTRL_SPEED_LIMITER turns it on (0x591f4a)
+#define INDF_SPEED_LIMITER 0x100
+#define INDF_CUTSCENE 0x800             // set by C_recorder::RecLoadFull, cleared by C_recorder::Close
 #define INDF_THIEF 0x1000               // PS2's ThiefIndicatorSetValue's bar
 #define INDF_MAP 0x2000                 // the city map, where map_enabled
 #define INDF_WIDESCREEN 0x4000          // WideScreenSetRatio's bars
 #define INDF_FADE 0x8000                // PS2's FadeInOut sets it: the screen in fade_color
-#define INDF_UNKNOWN_10000 0x10000      // a bar for unknown_420c
+#define INDF_CAR_DAMAGE 0x10000         // the scripts' CARDAMAGEVISIBLE's bar for car_damage
 #define INDF_SNIPER 0x20000             // the sniper's scope
 #define INDF_REFULLING 0x40000          // PS2's RefullingIndicatorSetValue's bar
 #define INDF_RADAR 0x80000
 #define INDF_RACE 0x100000              // the race's texts
 #define INDF_RACE_START 0x200000        // RaceSetStartFlag's flag shows
-#define INDF_UNKNOWN_400000 0x400000    // the text at 0x4614
+#define INDF_RACE_FLASH 0x400000        // PS2's RaceFlashText's text, race_flash_text
 #define INDF_RACE_WRONG 0x800000        // racewrong.bmp
 #define INDF_MISSION_HELP 0x1000000     // the mission's help texts, cleared by DrawAll when there are none
 #define INDF_CREW 0x2000000             // the blood over the screen, crew_quads of _VtxCrew
-#define INDF_UNKNOWN_4000000 0x4000000  // a part of 0textura.tga, unknown_46e0's, in unknown_46e4's colour
+// The scripts' PM_SHOWSYMBOL (the police's too): a part of 0textura.tga, symbol_index's, in symbol_color's colour
+#define INDF_SYMBOL 0x4000000
 #define INDF_AMMO 0x8000000             // the weapon's ammo, with INDF_PLAYER
 #define INDF_WINGMAN1 0x10000000        // the wingmen, with INDF_PLAYER
 #define INDF_WINGMAN2 0x20000000
@@ -65,8 +68,9 @@ struct tDynamicCollObject;
 // The lines of the HUD's console (the name is ours; PS2's has 3)
 #define CONSOLE_LINES 5
 
-// RaceSetStartFlag's flags that hide it (the names are ours, by value where the meaning isn't known yet)
-#define RACE_START_UNKNOWN_4 4
+// RaceSetStartFlag's flags that hide it (the names are ours): the countdown's step after its last light (0x5507c0
+// counts the flags 0 to 3 a second each and starts the race at 4), and none
+#define RACE_START_DONE 4
 #define RACE_START_NONE 0xffffffff
 
 // OutText's flags (the names are ours)
@@ -181,15 +185,18 @@ public:
     ITexture *texture_int2;
     ITexture *texture_numbers;          // 0x4088, 1numbers.tga
     ITexture *texture_textura;          // 0x408c, 0textura.tga
-    ITexture *unknown_4090;             // 0x4090, the city map's; cleared by Create (PS2's too), released by Destroy
+    // 0x4090, the city map's, which PS2's NahrajMapu ("load the map") loads; cleared by Create (PS2's too), released
+    // by Destroy
+    ITexture *texture_map;
     ITexture *texture_logo;             // 0x4094, logoplay.bmp
     ITexture *texture_sight;            // 0x4098, 2sight.bmp with its alpha
     ITexture *texture_race_start;       // 0x409c, racestart.bmp
     ITexture *texture_race_wrong;       // 0x40a0, racewrong.bmp
-    // INDF_*. Cleared by ResetValues and by G_LoadSaveClass::Init after ResolutionChanged, as PS2's 0x3094
-    uint unknown_40a4;                  // 0x40a4
-    // GM_Menu::ExecuteMenu pushes unknown_40a4 here while its menu runs
-    std::vector<uint> unknown_40a8;     // 0x40a8, PS2's vector<unsigned int>
+    // INDF_*, what the HUD shows. Cleared by ResetValues and by G_LoadSaveClass::Init after ResolutionChanged, as PS2's
+    // 0x3094
+    uint show_flags;                    // 0x40a4
+    // PushFlags pushes show_flags here, as GM_Menu::ExecuteMenu does while its menu runs
+    std::vector<uint> show_flags_stack; // 0x40a8, PS2's vector<unsigned int>
     S_vector2 screen_size;              // 0x40b8
     S_vector2 screen_scale;             // 0x40c0, the HUD's screen relative to 800x600
     S_vector2 hud_size;                 // 0x40c8, the size of the HUD's screen: the middle one with Parhelia's three
@@ -213,17 +220,21 @@ public:
     G_RafickaValue tachometr_revs;      // 0x4198
     G_RafickaValue tachometr_fuel;      // 0x41bc
     uchar unknown_41e0[4];
-    float unknown_41e4;                 // 0x41e4, the texture's column of the tachometer's small display
+    float display_column;               // 0x41e4, the tachometer's small display's, as gear_column (the name is ours)
     float gear_column;                  // 0x41e8, TachometrSetGear's: the gear's column in the texture (PS2 0x41e4)
     S_vector2 hud_scale;                // 0x41ec, the same as screen_scale
     S_vector2 tachometr_pos;            // 0x41f4, its dial's
     S_vector2 revs_pos;                 // 0x41fc, the revs' dial's
-    bool unknown_4204;                  // 0x4204, TachometrSetGear's flag (PS2 0x41f8)
+    // 0x4204, TachometrSetGear's flag (PS2 0x41f8), which picks the icon's half: the player's car's gearing, manual or
+    // automatic (which is which isn't known), C_Vehicle::auto_gearing (0x4cc), which CTRL_GEARING toggles (0x591ece)
+    bool gearing_mode;
     bool fuel_low;                      // 0x4205, set by TachometrSetValues while the fuel is under 2%
-    // 0x4208, cleared by ResetValues and by TachometrSetValues (PS2 0x41fc): the low fuel light shows while it is under
-    // .25
-    float unknown_4208;
-    float unknown_420c;                 // 0x420c, INDF_UNKNOWN_10000's bar, 0 to 1
+    // 0x4208 (PS2 0x41fc; the name is a guess: nothing written yet counts it up), cleared by ResetValues and by
+    // TachometrSetValues: the low fuel light shows while it is under .25
+    float fuel_light_phase;
+    // 0x420c, INDF_CAR_DAMAGE's bar, 0 to 1: one less the player's car's C_car::ShowCarEnergy, while
+    // CARDAMAGEVISIBLE is on (0x591ea2)
+    float car_damage;
     // The player's (PS2 0x4204 to 0x4230)
     uint lives;                         // 0x4210
     uint ammo;                          // 0x4214, the weapon's rounds
@@ -232,7 +243,8 @@ public:
     char ammo_text[0x10];               // 0x422c, "<ammo>/<spare>"
     float accuracy;                     // 0x423c, the crosshair's spread
     uchar unknown_4240[4];
-    uint unknown_4244;                  // 0x4244, the alpha of an icon above the player's panel, none for 0
+    // 0x4244, the alpha of the dials' texture's icon above the panel, none for 0 (the name is ours)
+    uint panel_icon_alpha;
     uchar unknown_4248[4];
     // The wingmen's (PS2 0x4244 and 0x4254)
     uint wingman_names[MAX_WINGMEN];    // 0x424c, 0 to 7
@@ -261,20 +273,22 @@ public:
     uint fade_color;                    // 0x4478, PS2's FadeInOut's (PS2 0x4bb8), with its alpha
     uchar unknown_447c[4];
     // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0): INDF_FADE's texture
-    ITexture *unknown_4480;
-    float unknown_4484;                 // 0x4484, a fade from 0 to 1 over the screen
-    uint unknown_4488;                  // 0x4488, SetUnknown4484's second value, the fade's colour (0xrrggbb)
-    const char *unknown_448c;           // 0x448c, SetUnknownTexture's name, the caller's pointer
-    ITexture *unknown_4490;             // 0x4490, SetUnknownTexture's texture
-    // 0x4494, SetUnknownTexture's flag, false without a texture: the texture drawn as it is with the fade over it,
-    // otherwise in the fade's colour
-    bool unknown_4494;
+    ITexture *fade_texture;
+    // The cutscenes' fade and picture over the scene, which their track's keys set (0x599d78): SetOverlayFade's and
+    // SetOverlayTexture's (the names are ours)
+    float overlay_fade;                 // 0x4484, 0 to 1
+    uint overlay_color;                 // 0x4488, the fade's colour (0xrrggbb)
+    const char *overlay_name;           // 0x448c, the picture's name, the caller's pointer
+    ITexture *overlay_texture;          // 0x4490
+    // 0x4494, false without a texture: the texture drawn as it is with the fade over it, otherwise in the fade's
+    // colour
+    bool overlay_opaque;
     uchar unknown_4495[3];
     std::vector<G_RadarCar> radar_cars; // 0x4498 (PS2 0x4bd8)
     C_car *radar_player_car;            // 0x44a8, PS2's RadarSetPlayerCar's, cleared by ResetValues (PS2 0x4be4)
     std::vector<G_RadarItem> radar_items;   // 0x44ac (PS2 0x4be8)
     uint unknown_44bc;                  // 0x44bc, cleared by ResetValues (PS2 0x4bf4)
-    float unknown_44c0;                 // 0x44c0, the radar's scale, .9 from ResetValues (PS2 0x4bf8)
+    float radar_scale;                  // 0x44c0, .9 from ResetValues (PS2 0x4bf8)
     // RaceSetStartFlag's (PS2 0x4bfc to 0x4c08): the flag before and its float, the flag and its float, 1 when set
     uint race_start_flag_last;          // 0x44c4
     uint race_start_flag;               // 0x44c8
@@ -287,14 +301,16 @@ public:
     char race_best_time[0x40];          // 0x4554
     char race_position[0x40];           // 0x4594
     char race_laps[0x40];               // 0x45d4
-    char unknown_4614[0x80];            // 0x4614, INDF_UNKNOWN_400000's text
-    float unknown_4694;                 // 0x4694, its alpha
+    // PS2's RaceFlashText's text and alpha (PS2 0x4d4c and 0x4dcc), which INDF_RACE_FLASH shows
+    char race_flash_text[0x80];         // 0x4614
+    float race_flash_alpha;             // 0x4694
     int bonus_count;                    // 0x4698, BonusSetCount's (PS2 0x4dd0)
     char bonus_text[0x40];              // 0x469c, the count as text 0xb3 ("$%d") formats it
     uint unknown_46dc;                  // 0x46dc, cleared by ResetValues (PS2 0x4e14)
-    uint unknown_46e0;                  // 0x46e0, INDF_UNKNOWN_4000000's part of 0textura.tga, 1 to 4
-    int unknown_46e4;                   // 0x46e4, its colour, -1 from ResetValues
-    float unknown_46e8;                 // 0x46e8, INDF_UNKNOWN_10's bar, 0 to 1
+    // SetSymbol's, the scripts' PM_SHOWSYMBOL's, and SetProgress's, PM_SETPROGRESS's
+    uint symbol_index;                  // 0x46e0, INDF_SYMBOL's part of 0textura.tga, 1 to 4
+    int symbol_color;                   // 0x46e4, its colour, -1 from ResetValues
+    float progress;                     // 0x46e8, INDF_PROGRESS's bar, 0 to 1
     bool map_enabled;                   // 0x46ec, MapEnable's (PS2 0x4e24), cleared by ResetValues
     char *text_out_of_city;             // 0x46f0, text 0x5f, "Out of City Limits" (PS2 0x4e28)
     bool parhelia_center;               // 0x46f4, ParheliaSetCenter's flag
@@ -361,11 +377,11 @@ public:
     void FadeInOut(bool in, uint time, uint color);
     bool FadeInOutGetState();
     bool FadeInOutIsDark();
-    // PC only, the names are ours: the two values at 0x4484, and a texture loaded by name into 0x4490 with the flag at
-    // 0x4494, unless the same pointer's is there already (reload loads it again), released for NULL; C_cutscene::Close
-    // clears both
-    void SetUnknown4484(float fade, uint color);
-    void SetUnknownTexture(const char *name, bool unknown, bool reload);
+    // PC only, the names are ours: the cutscenes' fade over the scene, and their picture, a texture loaded by name with
+    // the flag (opaque: drawn as it is under the fade), unless the same pointer's is there already (reload loads it
+    // again), released for NULL; C_recorder::Close clears both
+    void SetOverlayFade(float fade, uint color);
+    void SetOverlayTexture(const char *name, bool opaque, bool reload);
     // The bonus the HUD shows, BONUS_NONE for none
     void BonusSetCount(int count);
     // Draws the HUD over the frame (PS2 name), which the scene's callback does after each frame
@@ -381,7 +397,7 @@ public:
     // The road's edges the radar draws, from a vector of web nodes; NULL for none (PS2 names)
     void RadarSetLeftEdge(std::vector<C_web_node *> *edge);
     void RadarSetRightEdge(std::vector<C_web_node *> *edge);
-    // The race's start lights, RACE_START_UNKNOWN_4 and RACE_START_NONE hiding them (PS2 name)
+    // The race's start lights, RACE_START_DONE and RACE_START_NONE hiding them (PS2 name)
     void RaceSetStartFlag(uint flag);
     void SubtitlesClear();
     // Empties the HUD's console
@@ -408,7 +424,7 @@ public:
     // PC only, the name is ours. Stores the flag at 0x46f4 and, with Matrox Parhelia's two or three screens
     // (parheliaIndex), confines the scene's viewport and camera to the middle one while it is set (with two the left
     // half), after clearing the screens; otherwise the whole screen. main sets it around the car encyclopedia,
-    // C_cutscene::Close clears it.
+    // C_recorder::Close clears it.
     void ParheliaSetCenter(bool center);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): the INDF_*
@@ -416,53 +432,53 @@ public:
     // FUNCTION: GAME 0x47a070
     void SetFlags(uint flags)
     {
-        unknown_40a4 = flags;
+        show_flags = flags;
     }
     // FUNCTION: GAME 0x47a080
     void AddFlags(uint flags)
     {
-        unknown_40a4 |= flags;
+        show_flags |= flags;
     }
     // FUNCTION: GAME 0x47a0a0
     void RemoveFlags(uint flags)
     {
-        unknown_40a4 &= ~flags;
+        show_flags &= ~flags;
     }
     // FUNCTION: GAME 0x47a0c0
     bool IsShown(uint flags) const
     {
-        return flags & unknown_40a4 ? true : false;
+        return flags & show_flags ? true : false;
     }
     // FUNCTION: GAME 0x47a0e0
     uint PushFlags()
     {
-        unknown_40a8.push_back(unknown_40a4);
-        return unknown_40a4;
+        show_flags_stack.push_back(show_flags);
+        return show_flags;
     }
     // FUNCTION: GAME 0x47a2a0
     uint PopFlags()
     {
-        if (unknown_40a8.size())
+        if (show_flags_stack.size())
         {
-            unknown_40a4 = unknown_40a8.back();
-            unknown_40a8.pop_back();
+            show_flags = show_flags_stack.back();
+            show_flags_stack.pop_back();
         }
-        return unknown_40a4;
+        return show_flags;
     }
-    // INDF_UNKNOWN_4000000's part of the texture and its opacity, 0 to 1
+    // INDF_SYMBOL's part of the texture and its opacity, 0 to 1
     // FUNCTION: GAME 0x47a300
     void SetSymbol(uint symbol, float alpha)
     {
-        unknown_46e0 = symbol;
+        symbol_index = symbol;
         uint a = (uint)(alpha * 255.0f);
         if (a > 0xff)
             a = 0xff;
-        unknown_46e4 = a << 24 | 0xffffff;
+        symbol_color = a << 24 | 0xffffff;
     }
     // FUNCTION: GAME 0x47a340
-    void SetUnknown46e8(float value)
+    void SetProgress(float value)
     {
-        unknown_46e8 = value;
+        progress = value;
     }
 };
 

@@ -41,9 +41,9 @@ struct S_particle_subpart;
 #define EFFECT_ITEM_PART 2
 #define EFFECT_ITEM_SUBPART 3
 
-// An effect of the table, by its index (the name is ours, by value): the scripts' EMITPARTICLE emits it even with the
-// particles option at Low
-#define EFFECT_UNKNOWN_5A 0x5a
+// An effect of the table, by its index (the table's name for it, "dymovnice", Czech for a smoke bomb): the scripts'
+// EMITPARTICLE emits it even with the particles option at Low
+#define EFFECT_DYMOVNICE 0x5a
 
 // What the table's effects, parts and subparts have in common, deleted through its virtual destructor
 // VTABLE: GAME 0x623eec
@@ -63,41 +63,41 @@ public:
     virtual ~C_effect_item() {}
 };
 
-// A part's subpart, 0x68 bytes
+// A part's subpart, 0x68 bytes: the values of the emitters' copies (S_particle_subpart, C_ParticleType.h)
 // VTABLE: GAME 0x623ef4
 class C_effect_subpart : public C_effect_item
 {
 public:
-    S_vector unknown_c;                 // 0xc
-    S_vector unknown_18;                // 0x18
-    S_vector unknown_24;                // 0x24
-    int unknown_30;                     // 0x30
-    int unknown_34;                     // 0x34
-    S_vector unknown_38;                // 0x38
-    S_vector unknown_44;                // 0x44
-    float unknown_50;                   // 0x50
-    float unknown_54;                   // 0x54
-    float unknown_58;                   // 0x58
-    float unknown_5c;                   // 0x5c
-    int unknown_60;                     // 0x60
-    float unknown_64;                   // 0x64
+    S_vector dir;                       // 0xc
+    S_vector dir_spread;                // 0x18
+    S_vector rot_speed;                 // 0x24
+    int duration;                       // 0x30
+    int duration_range;                 // 0x34
+    S_vector scale;                     // 0x38
+    S_vector scale_range;               // 0x44
+    float transparency;                 // 0x50
+    float transparency_range;           // 0x54
+    float speed_change;                 // 0x58
+    float speed_change_range;           // 0x5c
+    int flags;                          // 0x60, SUBPARTF_*
+    float gravity;                      // 0x64
 
     C_effect_subpart()
     {
         type = EFFECT_ITEM_SUBPART;
-        unknown_34 = 0;
-        unknown_30 = 1000;
-        unknown_c = S_vector(0.0f, 1.0f, 0.0f);
-        unknown_18.Zero();
-        unknown_24.Zero();
-        unknown_38 = S_vector(1.0f, 1.0f, 1.0f);
-        unknown_44.Zero();
-        unknown_50 = 1.0f;
-        unknown_54 = 0.0f;
-        unknown_58 = 0.0f;
-        unknown_5c = 0.0f;
-        unknown_60 = 1;
-        unknown_64 = 9.8f;
+        duration_range = 0;
+        duration = 1000;
+        dir = S_vector(0.0f, 1.0f, 0.0f);
+        dir_spread.Zero();
+        rot_speed.Zero();
+        scale = S_vector(1.0f, 1.0f, 1.0f);
+        scale_range.Zero();
+        transparency = 1.0f;
+        transparency_range = 0.0f;
+        speed_change = 0.0f;
+        speed_change_range = 0.0f;
+        flags = 1;
+        gravity = 9.8f;
     }
 
     // Reads the subpart's chunks: its name, two chunks of values and its parameters (which have only the first value of
@@ -115,27 +115,27 @@ public:
                     chunk.ReadString(name);
                     break;
                 case 0x6b:
-                    chunk.Read(&unknown_64, sizeof(unknown_64));
+                    chunk.Read(&gravity, sizeof(gravity));
                     chunk.Descend();
                     break;
                 case 0x6c:
-                    chunk.Read(&unknown_38, sizeof(unknown_38));
-                    chunk.Read(&unknown_44, sizeof(unknown_44));
+                    chunk.Read(&scale, sizeof(scale));
+                    chunk.Read(&scale_range, sizeof(scale_range));
                     chunk.Descend();
                     break;
                 default:            // CT_EFFECT_PARAMS
-                    chunk.Read(&unknown_c, sizeof(unknown_c));
-                    chunk.Read(&unknown_18, sizeof(unknown_18));
-                    chunk.Read(&unknown_24, sizeof(unknown_24));
-                    chunk.Read(&unknown_30, sizeof(unknown_30));
-                    chunk.Read(&unknown_34, sizeof(unknown_34));
-                    chunk.Read(&unknown_38, sizeof(float));
-                    chunk.Read(&unknown_44, sizeof(float));
-                    chunk.Read(&unknown_50, sizeof(unknown_50));
-                    chunk.Read(&unknown_54, sizeof(unknown_54));
-                    chunk.Read(&unknown_58, sizeof(unknown_58));
-                    chunk.Read(&unknown_5c, sizeof(unknown_5c));
-                    chunk.Read(&unknown_60, sizeof(unknown_60));
+                    chunk.Read(&dir, sizeof(dir));
+                    chunk.Read(&dir_spread, sizeof(dir_spread));
+                    chunk.Read(&rot_speed, sizeof(rot_speed));
+                    chunk.Read(&duration, sizeof(duration));
+                    chunk.Read(&duration_range, sizeof(duration_range));
+                    chunk.Read(&scale, sizeof(float));
+                    chunk.Read(&scale_range, sizeof(float));
+                    chunk.Read(&transparency, sizeof(transparency));
+                    chunk.Read(&transparency_range, sizeof(transparency_range));
+                    chunk.Read(&speed_change, sizeof(speed_change));
+                    chunk.Read(&speed_change_range, sizeof(speed_change_range));
+                    chunk.Read(&flags, sizeof(flags));
                     chunk.Descend();
                     break;
                 }
@@ -144,57 +144,57 @@ public:
     }
 };
 
-// An effect's part, 0x9c bytes
+// An effect's part, 0x9c bytes: the values of the emitters' parts (C_ParticleType, C_ParticleType.h), but unknown_94
 // VTABLE: GAME 0x623ef0
 class C_effect_part : public C_effect_item
 {
 public:
     std::vector<C_effect_subpart *> subparts;   // 0xc
     C_str frame;                        // 0x1c, the name of a frame of the effect's model
-    S_vector unknown_20;                // 0x20
-    S_vector unknown_2c;                // 0x2c
-    S_vector unknown_38;                // 0x38
-    S_vector unknown_44;                // 0x44
-    float unknown_50;                   // 0x50
-    float unknown_54;                   // 0x54
-    S_vector unknown_58;                // 0x58
-    S_vector unknown_64;                // 0x64
-    float unknown_70;                   // 0x70
-    float unknown_74;                   // 0x74
-    float unknown_78;                   // 0x78
-    int unknown_7c;                     // 0x7c
-    float unknown_80;                   // 0x80
-    float unknown_84;                   // 0x84
-    float unknown_88;                   // 0x88
-    float unknown_8c;                   // 0x8c
-    int unknown_90;                     // 0x90, an integer: the emitter's part takes it as one
-    float unknown_94;                   // 0x94
-    int unknown_98;                     // 0x98, flags, as the emitter's part takes them
+    S_vector offset;                    // 0x20
+    S_vector offset_spread;             // 0x2c
+    S_vector dir;                       // 0x38
+    S_vector dir_spread;                // 0x44
+    float speed;                        // 0x50
+    float speed_spread;                 // 0x54
+    S_vector scale;                     // 0x58
+    S_vector scale_spread;              // 0x64
+    float transparency;                 // 0x70
+    float transparency_spread;          // 0x74
+    float rate;                         // 0x78
+    int burst;                          // 0x7c
+    float rate_fall;                    // 0x80
+    float fall_delay;                   // 0x84, the emitter's part takes it as an integer, as the next two
+    float repeats;                      // 0x88
+    float restart_delay;                // 0x8c
+    int blend;                          // 0x90, an integer: the emitter's part takes it as one
+    float unknown_94;                   // 0x94, if above 0, CreateParticle's fourth argument above 0 must be it
+    int flags;                          // 0x98, PARTF_*
 
     // The order of the two values outside their places is the original's stores'
     // FUNCTION: GAME 0x44b820
     C_effect_part()
     {
         type = EFFECT_ITEM_PART;
-        unknown_90 = 0;
-        unknown_20.Zero();
-        unknown_2c.Zero();
-        unknown_38.Zero();
-        unknown_44.Zero();
-        unknown_50 = 1.0f;
-        unknown_54 = 0.0f;
-        unknown_58 = S_vector(1.0f, 1.0f, 1.0f);
-        unknown_64.Zero();
-        unknown_70 = 1.0f;
-        unknown_74 = 0.0f;
-        unknown_78 = 0.0f;
-        unknown_80 = 0.0f;
-        unknown_84 = 0.0f;
-        unknown_88 = 0.0f;
-        unknown_8c = 0.0f;
+        blend = 0;
+        offset.Zero();
+        offset_spread.Zero();
+        dir.Zero();
+        dir_spread.Zero();
+        speed = 1.0f;
+        speed_spread = 0.0f;
+        scale = S_vector(1.0f, 1.0f, 1.0f);
+        scale_spread.Zero();
+        transparency = 1.0f;
+        transparency_spread = 0.0f;
+        rate = 0.0f;
+        rate_fall = 0.0f;
+        fall_delay = 0.0f;
+        repeats = 0.0f;
+        restart_delay = 0.0f;
         unknown_94 = 0.0f;
-        unknown_98 = 0;
-        unknown_7c = 0;
+        flags = 0;
+        burst = 0;
     }
 
     // FUNCTION: GAME 0x44bef0
@@ -237,36 +237,36 @@ public:
                     chunk.ReadString(frame);
                     break;
                 case 0x6b:
-                    chunk.Read(&unknown_38, sizeof(unknown_38));
-                    chunk.Read(&unknown_44, sizeof(unknown_44));
+                    chunk.Read(&dir, sizeof(dir));
+                    chunk.Read(&dir_spread, sizeof(dir_spread));
                     chunk.Descend();
                     break;
                 case 0x6c:
-                    chunk.Read(&unknown_58, sizeof(unknown_58));
-                    chunk.Read(&unknown_64, sizeof(unknown_64));
+                    chunk.Read(&scale, sizeof(scale));
+                    chunk.Read(&scale_spread, sizeof(scale_spread));
                     chunk.Descend();
                     break;
                 case 0x6d:
-                    chunk.Read(&unknown_7c, sizeof(unknown_7c));
+                    chunk.Read(&burst, sizeof(burst));
                     chunk.Descend();
                     break;
                 default:            // CT_EFFECT_PARAMS
-                    chunk.Read(&unknown_20, sizeof(unknown_20));
-                    chunk.Read(&unknown_2c, sizeof(unknown_2c));
-                    chunk.Read(&unknown_50, sizeof(unknown_50));
-                    chunk.Read(&unknown_54, sizeof(unknown_54));
-                    chunk.Read(&unknown_58, sizeof(float));
-                    chunk.Read(&unknown_64, sizeof(float));
-                    chunk.Read(&unknown_70, sizeof(unknown_70));
-                    chunk.Read(&unknown_74, sizeof(unknown_74));
-                    chunk.Read(&unknown_78, sizeof(unknown_78));
-                    chunk.Read(&unknown_80, sizeof(unknown_80));
-                    chunk.Read(&unknown_84, sizeof(unknown_84));
-                    chunk.Read(&unknown_88, sizeof(unknown_88));
-                    chunk.Read(&unknown_8c, sizeof(unknown_8c));
-                    chunk.Read(&unknown_90, sizeof(unknown_90));
+                    chunk.Read(&offset, sizeof(offset));
+                    chunk.Read(&offset_spread, sizeof(offset_spread));
+                    chunk.Read(&speed, sizeof(speed));
+                    chunk.Read(&speed_spread, sizeof(speed_spread));
+                    chunk.Read(&scale, sizeof(float));
+                    chunk.Read(&scale_spread, sizeof(float));
+                    chunk.Read(&transparency, sizeof(transparency));
+                    chunk.Read(&transparency_spread, sizeof(transparency_spread));
+                    chunk.Read(&rate, sizeof(rate));
+                    chunk.Read(&rate_fall, sizeof(rate_fall));
+                    chunk.Read(&fall_delay, sizeof(fall_delay));
+                    chunk.Read(&repeats, sizeof(repeats));
+                    chunk.Read(&restart_delay, sizeof(restart_delay));
+                    chunk.Read(&blend, sizeof(blend));
                     chunk.Read(&unknown_94, sizeof(unknown_94));
-                    chunk.Read(&unknown_98, sizeof(unknown_98));
+                    chunk.Read(&flags, sizeof(flags));
                     chunk.Descend();
                     break;
                 }
@@ -281,18 +281,18 @@ class C_effect : public C_effect_item
 {
 public:
     std::vector<C_effect_part *> parts; // 0xc
-    S_vector unknown_1c;                // 0x1c
-    S_vector unknown_28;                // 0x28
+    S_vector offset;                    // 0x1c, the particles' offset from the effect's position (C_ParticleEmitter's)
+    S_vector unknown_28;                // 0x28, null in all of the table's effects; the emitter keeps it, unread
     C_str model;                        // 0x34, the model's file (an .I3D)
-    bool unknown_38;                    // 0x38
-    bool unknown_39;                    // 0x39
+    bool local_dir;                     // 0x38, the emitter's direction turned by its frame's matrix
+    bool local_pos;                     // 0x39, its position and offset turned by it
 
     C_effect()
     {
         type = EFFECT_ITEM_EFFECT;
-        unknown_1c.Zero();
+        offset.Zero();
         unknown_28.Zero();
-        unknown_38 = unknown_39 = false;
+        local_dir = local_pos = false;
     }
 
     // FUNCTION: GAME 0x44bff0
@@ -330,12 +330,12 @@ public:
                     chunk.ReadString(model);
                     break;
                 case 0x6e:
-                    chunk.Read(&unknown_38, sizeof(unknown_38));
-                    chunk.Read(&unknown_39, sizeof(unknown_39));
+                    chunk.Read(&local_dir, sizeof(local_dir));
+                    chunk.Read(&local_pos, sizeof(local_pos));
                     chunk.Descend();
                     break;
                 default:            // CT_EFFECT_PARAMS
-                    chunk.Read(&unknown_1c, sizeof(unknown_1c));
+                    chunk.Read(&offset, sizeof(offset));
                     chunk.Read(&unknown_28, sizeof(unknown_28));
                     chunk.Descend();
                     break;
@@ -352,15 +352,15 @@ public:
     struct S_particle_in_use
     {
         C_ParticleEmitter *emitter;     // 0x0
-        int unknown_4;                  // 0x4
+        int guid;                       // 0x4, CreateParticle's number for it (after PS2's FindGuid, which finds it)
     };
 
-    std::vector<S_particle_in_use> unknown_0;  // 0x0
+    std::vector<S_particle_in_use> in_use;  // 0x0, CreateParticle's emitters
     std::vector<C_effect *> effects;    // 0x10
-    std::vector<C_ParticleEmitter *> unknown_20;  // 0x20
-    int unknown_30;                     // 0x30, -1 from the constructor, Mission_Start and Mission_Done
-    // 0x34, set by Mission_Start: Mission_Done does nothing without it, and clears it
-    bool unknown_34;
+    std::vector<C_ParticleEmitter *> static_emitters;  // 0x20, LoadStaticParticles' (CreateSParticle's)
+    int last_guid;                      // 0x30, CreateParticle's last; -1 from the constructor, Mission_Start and Done
+    // 0x34, set by Mission_Start: Mission_Done does nothing without it, and clears it (PS2's particle manager the same)
+    bool started;
     uchar unknown_35[3];                // 0x35
 
     C_effects();
@@ -380,10 +380,10 @@ public:
     int CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm);
     void DestroyParticle(int particle);
     // PS2's particle manager's names, which C_game::Tick calls: the emitters by the time passed, whether a particle's
-    // emitter is still at work, and a particle paused or resumed
+    // emitter is still at work, and whether it makes new particles (the flag is C_ParticleEmitter::emitting's)
     void ClientTick(int time);
     bool IsParticleAlive(int particle);
-    void PauseParticle(int particle, bool pause);
+    void PauseParticle(int particle, bool emit);
     // PS2's names: the emitters in use deleted, an effect started at a frame (with the matrix) for LoadStaticParticles
     void ClearEmitters();
     void CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm);
@@ -411,16 +411,16 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAE@ABV?$allocator@US_GameItem@@@1@@Z
+// ??0?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QAE@ABV?$allocator@US_vector@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

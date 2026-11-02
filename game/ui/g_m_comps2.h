@@ -98,7 +98,7 @@ public:
 class GM_WaitForVid : public GM_Menu
 {
 public:
-    GM_WaitForVid(int control) : control(control), unknown_34(false) {}
+    GM_WaitForVid(int control) : control(control), axes_only(false) {}
 
     virtual const char *OnBeforeCreate()
     {
@@ -133,7 +133,7 @@ public:
     virtual int OnTick(uint time)
     {
         S_control *input;
-        if (unknown_34)
+        if (axes_only)
         {
             if (control == CTRL_AIM || control == CTRL_AIM + CTRL_SECONDARY)
                 input = controls.GetLastInput(LASTINPUT_NO_KEYS | LASTINPUT_NO_POVS | LASTINPUT_NO_JOY_BUTTONS |
@@ -234,7 +234,7 @@ public:
     }
 
     int control;                        // 0x30, the index of the binding it sets (the names are ours)
-    bool unknown_34;                    // 0x34, set: only axes (nothing sets it)
+    bool axes_only;                     // 0x34, OnTick takes no keys or buttons then (nothing sets it)
 };
 
 // A control's binding (PC only, the name is ours, after its type), 'vidc': its text the name of the key, button or
@@ -248,7 +248,7 @@ class GM_Vidc : public GM_Component
 public:
     GM_Vidc(GM_DesignStruct *design, GM_Component *parent) : GM_Component(design, parent)
     {
-        flags |= COMPF_UNKNOWN_8000;
+        flags |= COMPF_ACTIVATABLE;
         ForceUpdate();
     }
     GM_Vidc(GM_Component *component) : GM_Component(component)

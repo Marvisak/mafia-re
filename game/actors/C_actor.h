@@ -50,7 +50,7 @@ struct tDynamicCollObject;
 #define ACTOR_DROP_IN_WEAPON 0x25       // PS2 C_drop_in_weapon's constructor
 #define ACTOR_RAIL_GENERATOR 0x26
 
-// C_actor::unknown_14, a subtype: 1 from C_actor's constructor (the names are ours)
+// C_actor::subtype: 1 from C_actor's constructor (the names are ours)
 #define ACTORSUB_CAR_EX 3               // a C_car_ex's, whose type stays ACTOR_CAR
 
 // The actors' states (C_actor::act_state, PS2's C_actor::E_act_state; the names are ours, by value)
@@ -64,16 +64,18 @@ struct tDynamicCollObject;
 #define HIT_UNKNOWN_5 5
 #define HIT_UNKNOWN_6 6
 
-// C_actor::unknown_4's flags (the names are ours, by value): the cutscenes set and clear 0x10 on their actors; Tick
-// leaves out AI where 1 or 4 is set (vfunc_7 sets and clears both)
+// C_actor::act_flags (the names are ours, by value where the meaning isn't known): Tick leaves out AI where 1 or 4 is
+// set (vfunc_7 sets and clears both)
 #define ACTF_UNKNOWN_1 0x1
 #define ACTF_UNKNOWN_4 0x4
-#define ACTF_UNKNOWN_10 0x10
+// A cutscene's actor: set on a cutscene's actors while it plays (C_recorder::SetState), cleared after; C_game::Init's
+// search for the player skips the players that have it
+#define ACTF_CUTSCENE 0x10
 
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 13 come before AI, Update and NetDirect, PS2's
 // first three; from those on the PC's are PS2's in PS2's order, but for PS2's last two (ChangeSceneInit and
-// ChangeSceneDone). The first 13 are PC only, most of them the cutscenes' (they read unknown_8): placeholders, their
+// ChangeSceneDone). The first 13 are PC only, most of them the cutscenes' (they read records): placeholders, their
 // parameters and results by the original's code (the types are guesses).
 // Not written yet: the virtual functions declared here but the destructor, Init, Release, GameInit and GameDone, which
 // the actors' classes need, are stubs (C_actor.cpp). Each actor class declares the slots its vtable overrides.
@@ -99,7 +101,7 @@ public:
     // Empty here (the folded ret, 0x404990)
     virtual void vfunc_12() {}
     // The actor's frame of a tick (PS2 names): its own decisions, unless ACTF_UNKNOWN_1 or 4 stops them, or what the
-    // network says instead where unknown_20 is set, then the update. Empty here, as PS2's (the original's slots point
+    // network says instead where net_direct is set, then the update. Empty here, as PS2's (the original's slots point
     // at the folded ret 4, 0x403db0).
     virtual void AI(uint time) {}
     virtual void Update(uint time) {}
@@ -173,11 +175,11 @@ public:
     // original's slot points at a folded empty ret 4)
     virtual void SoundsChange(int) {}
 
-    // C_mission::OpenBin sets it for the actors of the mission's file (PC only, the name is ours)
+    // C_mission::OpenBin sets from_mission for the actors of the mission's file (PC only, the name is ours)
     // FUNCTION: GAME 0x547220
-    void SetUnknown66()
+    void SetFromMission()
     {
-        unknown_66 = true;
+        from_mission = true;
     }
 
     // Sets the actor's state; a change from any but ACTSTATE_2 tells the game (PS2 name, its parameter a
@@ -226,16 +228,19 @@ public:
         return dir;
     }
 
-    int unknown_4;                      // 0x4, flags: ACTF_*
-    // 0x8, what a cutscene keeps for the actor (C_cutscene::vfunc_5's), 0 from the constructor's body
-    C_cutscene_records *unknown_8;
+    int act_flags;                      // 0x4, ACTF_* (the name is ours, after act_state)
+    // 0x8, what a cutscene keeps for the actor (C_recorder::vfunc_5's), 0 from the constructor's body (the name is ours,
+    // after the type)
+    C_cutscene_records *records;
     ushort ref;                         // 0xc, Release's references, 1 at first (the name is ours)
     int type;                           // 0x10, ACTOR_*, ACTOR_ACTOR from the constructor
-    int unknown_14;                     // 0x14, ACTORSUB_*, 1 at first
-    // 0x18, the mission's count of actors when Init took the actor's frame (C_mission::unknown_8; the name is ours)
+    int subtype;                        // 0x14, ACTORSUB_*, 1 at first (the name is ours)
+    // 0x18, the mission's count of actors when Init took the actor's frame (C_mission::last_actor_number; the name is ours)
     int number;
     int act_state;                      // 0x1c, ACTSTATE_*, 0 from Init (PS2 SetActState's; the name is ours)
-    bool unknown_20;                    // 0x20
+    // 0x20 (PS2 0x60), false from the constructor: Tick runs NetDirect instead of AI where it is set (the name is ours,
+    // after NetDirect)
+    bool net_direct;
     uchar unknown_21[3];                // 0x21
     S_vector pos;                       // 0x24, the actor's position (the name is ours)
     S_vector dir;                       // 0x30, its direction (the name is ours)
@@ -244,16 +249,21 @@ public:
     S_quat saved_rot;                   // 0x48
     I3D_frame *saved_parent;            // 0x58
     bool saved_on;                      // 0x5c
-    bool unknown_5d;                    // 0x5d, true from GameInit
-    bool unknown_5e;                    // 0x5e, false from GameInit
-    bool unknown_5f;                    // 0x5f, false from GameInit
+    // The actor's life (PS2 0x61 to 0x63; the names are ours): alive from GameInit till its end, dead once Tick has run
+    // Death for it (HUMAN_GETPROPERTY gives an actor not alive no energy, the HUD's lives stay at least 1 for one not
+    // dead), and whether Tick found its model or visual rendered in the scene's last frame
+    bool alive;                         // 0x5d, true from GameInit
+    bool dead;                          // 0x5e, false from GameInit
+    bool rendered;                      // 0x5f, false from GameInit
     int unknown_60;                     // 0x60
     // 0x64, GameInit gave the frame its pointer to the actor, which GameDone takes back (the name is ours)
     bool frame_actor_set;
     // 0x65, set by GameInit for a plain actor (ACTOR_ACTOR), by C_clock's and by C_detector's for a script without
     // instructions
     bool unknown_65;
-    bool unknown_66;                    // 0x66
+    // 0x66, false from the constructor, set for the actors of the mission's file (SetFromMission), whose cars
+    // C_game::Done keeps (the name is ours)
+    bool from_mission;
     I3D_frame *frame;                   // 0x68, Init's (the name is ours)
     // 0x6c, false from Init; the destructor releases the frame where it is set (the name is ours)
     bool own_frame;
@@ -269,9 +279,9 @@ public:
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47af20
-    int GetUnknown14() const
+    int GetSubtype() const
     {
-        return unknown_14;
+        return subtype;
     }
     // The position and the direction set, by value (the script's)
     // FUNCTION: GAME 0x47af50
@@ -291,20 +301,20 @@ public:
         return frame;
     }
     // FUNCTION: GAME 0x47afc0
-    bool GetUnknown5e() const
+    bool GetDead() const
     {
-        return unknown_5e;
+        return dead;
     }
     // Its copy is among C_sledovacka.cpp's
     // FUNCTION: GAME 0x4a9990
-    bool GetUnknown5f() const
+    bool GetRendered() const
     {
-        return unknown_5f;
+        return rendered;
     }
     // FUNCTION: GAME 0x47afd0
-    bool GetUnknown5d() const
+    bool GetAlive() const
     {
-        return unknown_5d;
+        return alive;
     }
     // FUNCTION: GAME 0x47afe0
     void SetOwnFrame(bool own)
@@ -322,9 +332,9 @@ public:
         return global_actors;
     }
     // Its copy is in g_indicators.cpp's range, folded with another class's (by name, after the class)
-    int GetUnknown4() const
+    int GetActFlags() const
     {
-        return unknown_4;
+        return act_flags;
     }
 };
 
@@ -333,7 +343,7 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?SaveGameGetSize@C_clock@@UAEHXZ
+// ?SaveGameGetSize@C_racecam@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
@@ -359,18 +369,18 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_actor_shot@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?vfunc_3@C_actor_shot@@UAE_NH@Z
+// ?SaveGameLoad@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
-// GetUnknown4's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
+// GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
 
 // FUNCTION: GAME 0x604d90
 // ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ

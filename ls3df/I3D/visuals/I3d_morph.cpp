@@ -432,7 +432,7 @@ LS3D_RESULT I3D_morph::Duplicate(I3D_frame *frame)
     return I3D_OK;
 }
 
-// I3D_object::m_AddFGroups without the lods that follow the textures loaded (VISF_UNKNOWN_10): the vertices are
+// I3D_object::m_AddFGroups without the lods that follow the textures loaded (VISF_TEXTURE_LOD): the vertices are
 // summed into the lod's when the weights changed, which lights it again. As there, ProcessVertices is in both clipping
 // branches, FogProcess in both branches of the stride and the help struct's clip assigned first; lv is declared before
 // base and dest (the order of their stores).

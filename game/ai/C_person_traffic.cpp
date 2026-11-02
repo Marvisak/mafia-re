@@ -29,11 +29,11 @@ std::vector<C_traffic_element *> C_traffic_generator::array;
 std::vector<C_animations_machine_de_luxe *> C_traffic_generator::anims;
 
 // GLOBAL: GAME 0x632638
-float C_traffic_generator::unknown_632638 = 1.0f;
+float C_traffic_generator::ratio_all = 1.0f;
 // GLOBAL: GAME 0x63263c
-float C_traffic_generator::unknown_63263c = 1.0f;
+float C_traffic_generator::ratio_police = 1.0f;
 // GLOBAL: GAME 0x63d728
-bool C_traffic_generator::unknown_63d728;
+bool C_traffic_generator::global_valid_scream;
 // GLOBAL: GAME 0x63d729
 bool C_traffic_generator::player_in_taxi;
 // GLOBAL: GAME 0x63d72a
@@ -135,7 +135,7 @@ bool C_traffic_generator::IsCarHasOcas(C_car *car)
 {
     for (int i = array.size(); i--;)
     {
-        if (array[i]->active && !array[i]->unknown_0 && !array[i]->unknown_19e && array[i]->car == car)
+        if (array[i]->active && !array[i]->dead && !array[i]->fleeing && array[i]->car == car)
             return true;
     }
     return false;
@@ -172,7 +172,7 @@ void C_traffic_generator::TryGoToAssHole()
     std::vector<C_traffic_car::S_ELEMENT *> &parking = C_traffic_car::GetParkingCars();
     for (int i = array.size(); i--;)
     {
-        if (array[i]->active && !array[i]->unknown_0 && !array[i]->unknown_19e && array[i]->unknown_4 &&
+        if (array[i]->active && !array[i]->dead && !array[i]->fleeing && array[i]->generator &&
             !array[i]->car)
         {
             float best = FLT_MAX;

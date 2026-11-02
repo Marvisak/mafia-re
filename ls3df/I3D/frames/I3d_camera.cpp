@@ -19,8 +19,8 @@ I3D_camera::I3D_camera()
     sector = NULL;
     orthogonal = false;
     ortho_scale = 1.0f;
-    unknown_3fc = 0;
-    unknown_400 = 0;
+    last_update_count = 0;
+    last_sector_update_count = 0;
     ncp_x = ncp;
     ncp_y = ncp;
     near_ncp_x = near_ncp;
@@ -65,8 +65,8 @@ LS3D_RESULT I3D_camera::Duplicate(I3D_frame *frame)
         sector = NULL;
         orthogonal = cam->orthogonal;
         ortho_scale = cam->ortho_scale;
-        unknown_3fc = 0;
-        unknown_400 = 0;
+        last_update_count = 0;
+        last_sector_update_count = 0;
         ncp_x = cam->ncp_x;
         ncp_y = cam->ncp_y;
         m_FrmFlags |= FRMFLAGS_NO_CULL;

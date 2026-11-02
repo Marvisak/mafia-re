@@ -579,8 +579,8 @@ void I3D_scene::Close()
     pLastCameraSector = NULL;
     pPrevLastCameraSector = NULL;
     primary_sector->sct_flags |= SCTF_SOUND_CHANGED;
-    primary_sector->unknown_1e8 = 0;
-    primary_sector->unknown_1ec = 0;
+    primary_sector->sound_blend = 0;
+    primary_sector->sound_blend_time = 0;
     primary_sector->sound_props.SetupDefaults();
     m_pD3DDevice8->ResourceManagerDiscardBytes(0);
     cVBMan.m_FreeAllUnusedVBuffers(NULL);

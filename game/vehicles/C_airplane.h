@@ -39,9 +39,10 @@ public:
     void ShowDamageIndicator(bool show);
 
     uchar unknown_70[0x158];            // 0x70
-    // IsDestroyed's two values, both under 0.01 when it is
-    float unknown_1c8;                  // 0x1c8
-    float unknown_1cc;                  // 0x1cc
+    // The two engines' energies (PS2 0x37c and 0x380, the names are ours): PS2's Hit lowers them down to 0, its
+    // UpdateParticles smokes each at GetEnginesPos' engine below half; the plane is destroyed with both under 0.01
+    float engine_energy_1;              // 0x1c8
+    float engine_energy_2;              // 0x1cc
     uchar unknown_1d0[0x220];           // 0x1d0
 };
 

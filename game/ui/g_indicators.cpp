@@ -2,8 +2,8 @@
 // the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
 // GameInit, GameDone, the clock's setters and TimerGetInterval, _SpocitejRafiku2, the player's panel's helpers, the
 // tachometer's and the player's setters, the clears C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear,
-// ConsoleClear, RadarClear), MapEnable, CompassSetDestination, WideScreenSetRatio, FadeInOutIsDark, SetUnknown4484,
-// SetUnknownTexture, RadarRemoveCar, the radar's edges, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged
+// ConsoleClear, RadarClear), MapEnable, CompassSetDestination, WideScreenSetRatio, FadeInOutIsDark, SetOverlayFade,
+// SetOverlayTexture, RadarRemoveCar, the radar's edges, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged
 // (with the dials' vertex helpers), TextSize, OutText, OutTextMultiLine, the menus' cursor, the camera's field of view
 // and ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs
 // (RadarAddCar, and the scripts' subtitles, console texts, wide screen and fades).
@@ -139,11 +139,11 @@ G_IndicatorsClass::G_IndicatorsClass()
 // FUNCTION: GAME 0x5f6cf0
 void G_IndicatorsClass::ResetValues()
 {
-    unknown_40a4 = 0;
-    unknown_40a8.clear();
+    show_flags = 0;
+    show_flags_stack.clear();
     TachometrSetGear(0, false);
     TachometrSetValues(0.0f, 0.0f, 0.0f, 0.0f);
-    unknown_4208 = 0.0f;
+    fuel_light_phase = 0.0f;
     PlayerSetLives(100);
     PlayerSetAmmo(16, 30);
     PlayerSetAccuracy(1.0f);
@@ -170,7 +170,7 @@ void G_IndicatorsClass::ResetValues()
     radar_cars.clear();
     unknown_44bc = 0;
     radar_items.clear();
-    unknown_44c0 = .9f;
+    radar_scale = .9f;
     race_start_last_time = 0.0f;
     race_start_time = 0.0f;
     race_best_time[0] = 0;
@@ -179,12 +179,12 @@ void G_IndicatorsClass::ResetValues()
     race_position[0] = 0;
     race_laps[0] = 0;
     unknown_46dc = 0;
-    unknown_4484 = 0.0f;
-    unknown_4490 = NULL;
-    unknown_448c = NULL;
-    unknown_4480 = NULL;
-    unknown_46e0 = 0;
-    unknown_46e4 = -1;
+    overlay_fade = 0.0f;
+    overlay_texture = NULL;
+    overlay_name = NULL;
+    fade_texture = NULL;
+    symbol_index = 0;
+    symbol_color = -1;
     map_enabled = false;
     text_out_of_city = textDatabase.GetText(0x5f);
     parhelia_center = false;
@@ -255,7 +255,7 @@ uint G_IndicatorsClass::GetLanguage()
 // FUNCTION: GAME 0x5f70e0
 void G_IndicatorsClass::Create()
 {
-    unknown_4090 = NULL;
+    texture_map = NULL;
     // STRING: GAME 0x6392a4
     igraph->CreateITexture("logoplay.bmp", NULL, 0, &texture_logo);
     igraph->CreateITexture(
@@ -330,9 +330,9 @@ void G_IndicatorsClass::Destroy()
     if (textureBenzin)
         textureBenzin->Release();
     textureBenzin = NULL;
-    if (unknown_4090)
-        unknown_4090->Release();
-    unknown_4090 = NULL;
+    if (texture_map)
+        texture_map->Release();
+    texture_map = NULL;
     if (texture_logo)
         texture_logo->Release();
     texture_logo = NULL;
@@ -390,9 +390,9 @@ void G_IndicatorsClass::GameInit()
 // FUNCTION: GAME 0x5f74a0
 void G_IndicatorsClass::GameDone()
 {
-    if (unknown_4090)
-        unknown_4090->Release();
-    unknown_4090 = NULL;
+    if (texture_map)
+        texture_map->Release();
+    texture_map = NULL;
     RadarSetLeftEdge(NULL);
     RadarSetRightEdge(NULL);
     BonusSetCount(BONUS_NONE);
@@ -951,7 +951,7 @@ void G_IndicatorsClass::_PridejAmmo(TLVERTEX *verts, uint *count, uint ammo, uin
 void G_IndicatorsClass::TachometrSetGear(int gear, bool flag)
 {
     gear_column = gear * 11.0f;
-    unknown_4204 = flag;
+    gearing_mode = flag;
 }
 
 // The needles move only when their values change. The odometer shows five digits of a hundredth of the distance (a
@@ -1018,7 +1018,7 @@ void G_IndicatorsClass::TachometrSetValues(float speed, float revs, float fuel, 
     {
         fuel_low = true;
         if (revs < .01f)
-            unknown_4208 = 0.0f;
+            fuel_light_phase = 0.0f;
     }
 }
 
@@ -1218,30 +1218,30 @@ bool G_IndicatorsClass::FadeInOutGetState()
 // FUNCTION: GAME 0x5fa400
 bool G_IndicatorsClass::FadeInOutIsDark()
 {
-    return unknown_40a4 & INDF_FADE ? true : false;
+    return show_flags & INDF_FADE ? true : false;
 }
 
 // FUNCTION: GAME 0x5fa410
-void G_IndicatorsClass::SetUnknown4484(float fade, uint color)
+void G_IndicatorsClass::SetOverlayFade(float fade, uint color)
 {
-    unknown_4484 = fade;
-    unknown_4488 = color;
+    overlay_fade = fade;
+    overlay_color = color;
 }
 
 // FUNCTION: GAME 0x5fa430
-void G_IndicatorsClass::SetUnknownTexture(const char *name, bool unknown, bool reload)
+void G_IndicatorsClass::SetOverlayTexture(const char *name, bool opaque, bool reload)
 {
-    if (name == unknown_448c && !reload)
+    if (name == overlay_name && !reload)
         return;
-    if (unknown_4490)
-        unknown_4490->Release();
-    unknown_4490 = NULL;
-    unknown_448c = name;
-    unknown_4494 = unknown;
+    if (overlay_texture)
+        overlay_texture->Release();
+    overlay_texture = NULL;
+    overlay_name = name;
+    overlay_opaque = opaque;
     if (name)
-        igraph->CreateITexture(name, NULL, 0, &unknown_4490);
+        igraph->CreateITexture(name, NULL, 0, &overlay_texture);
     else
-        unknown_4494 = false;
+        overlay_opaque = false;
 }
 
 // FUNCTION: GAME 0x5fa4a0
@@ -1376,22 +1376,22 @@ void G_IndicatorsClass::RaceSetStartFlag(uint flag)
     switch (flag)
     {
     case 0:
-        unknown_40a4 |= INDF_RACE_START;
+        show_flags |= INDF_RACE_START;
         race_start_flag_last = 0xff;
         race_start_flag = 0;
         race_start_last_time = 1.0f;
         race_start_time = 1.0f;
         break;
-    case RACE_START_UNKNOWN_4:
+    case RACE_START_DONE:
     case RACE_START_NONE:
-        unknown_40a4 &= ~INDF_RACE_START;
+        show_flags &= ~INDF_RACE_START;
         race_start_flag_last = 0xff;
         race_start_last_time = 1.0f;
         race_start_flag = 0xff;
         race_start_time = 1.0f;
         break;
     default:
-        unknown_40a4 |= INDF_RACE_START;
+        show_flags |= INDF_RACE_START;
         race_start_flag_last = race_start_flag;
         race_start_last_time = race_start_time;
         race_start_flag = flag;
@@ -1409,9 +1409,10 @@ void G_IndicatorsClass::BonusSetCount(int count)
         bonus_text[0] = 0;
 }
 
-// Whether the camera has CAMPF_UNKNOWN_8 (the name is ours): the original tests the flag through an inline function,
-// which keeps its shift (PS2 has no such function)
-static inline bool CameraUnknown8(const G_Camera &camera)
+// Whether the camera has CAMPF_UNKNOWN_8, the scripted cameras' flag ("C LookTo", "C Lock", "C Dialog"), which hides
+// the crosshair (the name is ours): the original tests the flag through an inline function, which keeps its shift (PS2
+// has no such function)
+static inline bool CameraHidesCrosshair(const G_Camera &camera)
 {
     return (camera.flags >> 3) & 1;
 }
@@ -1431,11 +1432,11 @@ void G_IndicatorsClass::DrawAll()
     TLVERTEX verts[80];
     igraph->SetState(DXS_ALPHA, ALPHASTATE_BLEND);
     driver->SetState(RS_USEZB, 0);
-    // SetUnknownTexture's picture over the HUD's screen, a few pixels past its edges: drawn as it is with the fade over
+    // SetOverlayTexture's picture over the HUD's screen, a few pixels past its edges: drawn as it is with the fade over
     // it, or in the fade's colour
-    if (unknown_4484 > 0.0f || unknown_4494)
+    if (overlay_fade > 0.0f || overlay_opaque)
     {
-        if (unknown_4494)
+        if (overlay_opaque)
         {
             verts[0].x = levyOkraj.x - 2.0f;
             verts[0].y = -2.0f;
@@ -1465,9 +1466,9 @@ void G_IndicatorsClass::DrawAll()
             verts[3].color = 0xffffffff;
             verts[3].u = 1.0f;
             verts[3].v = 1.0f;
-            igraph->SetTexture(unknown_4490);
+            igraph->SetTexture(overlay_texture);
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
-            uint color = (uint)(unknown_4484 * 255.0f) << 24 | unknown_4488;
+            uint color = (uint)(overlay_fade * 255.0f) << 24 | overlay_color;
             verts[0].x = levyOkraj.x - 2.0f;
             verts[0].y = -2.0f;
             verts[0].z = 0.0f;
@@ -1501,7 +1502,7 @@ void G_IndicatorsClass::DrawAll()
         }
         else
         {
-            uint color = (uint)(unknown_4484 * 255.0f) << 24 | unknown_4488;
+            uint color = (uint)(overlay_fade * 255.0f) << 24 | overlay_color;
             verts[0].x = levyOkraj.x - 2.0f;
             verts[0].y = -2.0f;
             verts[0].z = 0.0f;
@@ -1530,21 +1531,21 @@ void G_IndicatorsClass::DrawAll()
             verts[3].color = color;
             verts[3].u = 1.0f;
             verts[3].v = 1.0f;
-            igraph->SetTexture(unknown_4490);
+            igraph->SetTexture(overlay_texture);
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
         }
     }
-    if (unknown_40a4 & INDF_WIDESCREEN)
+    if (show_flags & INDF_WIDESCREEN)
     {
         igraph->SetTexture(NULL);
         igraph->DrawPrimitiveList(PT_TRIANGLELIST, 4, _VtxWideScreen, LS3D_STREAM_TLVERTEX);
     }
-    if (unknown_40a4 & INDF_CREW && crew_quads)
+    if (show_flags & INDF_CREW && crew_quads)
     {
         igraph->SetTexture(textureCrew);
         igraph->DrawPrimitiveList(PT_TRIANGLELIST, crew_quads * 2, _VtxCrew, LS3D_STREAM_TLVERTEX);
     }
-    if (unknown_40a4 & INDF_SNIPER)
+    if (show_flags & INDF_SNIPER)
     {
         // The scope over the whole screen, then its black lines from the left and right edges and from the bottom to the
         // middle. The scope's top right vertex is at 0, not -2 (PS2's too).
@@ -1676,14 +1677,14 @@ void G_IndicatorsClass::DrawAll()
         igraph->SetTexture(NULL);
         igraph->DrawPrimitiveList(PT_TRIANGLELIST, 6, verts, LS3D_STREAM_TLVERTEX);
     }
-    if (!(unknown_40a4 & (INDF_MENU | INDF_UNKNOWN_800)))
+    if (!(show_flags & (INDF_MENU | INDF_CUTSCENE)))
     {
-        if (unknown_40a4 & INDF_UNKNOWN_4000000)
+        if (show_flags & INDF_SYMBOL)
         {
             // A part of 0textura.tga at the screen's top, centered; another value draws the vertices as they are
             float w, h, x, y;
-            uint color = unknown_46e4;
-            switch (unknown_46e0)
+            uint color = symbol_color;
+            switch (symbol_index)
             {
             case 2:
                 w = screen_scale.x * 117.0f;
@@ -1824,9 +1825,9 @@ void G_IndicatorsClass::DrawAll()
             }
             igraph->SetTexture(texture_textura);
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
-            if (unknown_40a4 & INDF_UNKNOWN_10)
+            if (show_flags & INDF_PROGRESS)
             {
-                // A bar under it, its frame and then its part for unknown_46e8 from 3% to 98%
+                // A bar under it, its frame and then its part for progress from 3% to 98%
                 float x = screen_scale.x * 336.0f;
                 float y = screen_scale.y * 92.0f;
                 float w = screen_scale.x * 128.0f;
@@ -1867,12 +1868,12 @@ void G_IndicatorsClass::DrawAll()
                 verts[0].color = 0xffffffff;
                 verts[0].u = 0.0f;
                 verts[0].v = 222 / 256.0f;
-                verts[1].x = x + (float)(unknown_46e8 * .95 + .03) * screen_scale.x * 128.0f;
+                verts[1].x = x + (float)(progress * .95 + .03) * screen_scale.x * 128.0f;
                 verts[1].y = y;
                 verts[1].z = 0.0f;
                 verts[1].rhw = 1.0f;
                 verts[1].color = 0xffffffff;
-                verts[1].u = (float)(unknown_46e8 * .95 + .03) * 127.0f / 128.0f;
+                verts[1].u = (float)(progress * .95 + .03) * 127.0f / 128.0f;
                 verts[1].v = 222 / 256.0f;
                 verts[2].x = x;
                 verts[2].y = y + h;
@@ -1881,17 +1882,17 @@ void G_IndicatorsClass::DrawAll()
                 verts[2].color = 0xffffffff;
                 verts[2].u = 0.0f;
                 verts[2].v = 238 / 256.0f;
-                verts[3].x = x + (float)(unknown_46e8 * .95 + .03) * screen_scale.x * 128.0f;
+                verts[3].x = x + (float)(progress * .95 + .03) * screen_scale.x * 128.0f;
                 verts[3].y = y + h;
                 verts[3].z = 0.0f;
                 verts[3].rhw = 1.0f;
                 verts[3].color = 0xffffffff;
-                verts[3].u = (float)(unknown_46e8 * .95 + .03) * 127.0f / 128.0f;
+                verts[3].u = (float)(progress * .95 + .03) * 127.0f / 128.0f;
                 verts[3].v = 238 / 256.0f;
                 igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
             }
         }
-        if (unknown_40a4 & INDF_CROSSHAIR && !CameraUnknown8(act_mission->game->camera))
+        if (show_flags & INDF_CROSSHAIR && !CameraHidesCrosshair(act_mission->game->camera))
         {
             // Lines around screen_center, spread by the accuracy: the profile's cross, the point or both
             float size = screen_scale.x * 10.0f;
@@ -2051,7 +2052,7 @@ void G_IndicatorsClass::DrawAll()
                 igraph->DrawPrimitiveList(PT_LINELIST, 5, verts, LS3D_STREAM_TLVERTEX);
             }
         }
-        if (unknown_40a4 & INDF_TIMER)
+        if (show_flags & INDF_TIMER)
         {
             igraph->SetTexture(texture_int2);
             igraph->DrawPrimitiveList(PT_TRIANGLELIST, 2, _VtxTimerCifernik, LS3D_STREAM_TLVERTEX);
@@ -2067,11 +2068,12 @@ void G_IndicatorsClass::DrawAll()
                 igraph->SetState(DXS_CULL, cull);
             }
         }
-        if (unknown_40a4 & INDF_TACHOMETR)
+        if (show_flags & INDF_TACHOMETR)
         {
-            // The dials and the digits, with INDF_UNKNOWN_100 the light; the small display, the needles, the gear's icon
+            // The dials and the digits, with INDF_SPEED_LIMITER the light; the small display, the needles, the gear's
+            // icon
             igraph->SetTexture(texture_int2);
-            if (unknown_40a4 & INDF_UNKNOWN_100)
+            if (show_flags & INDF_SPEED_LIMITER)
                 igraph->DrawPrimitiveList(PT_TRIANGLELIST, 16, _VtxTachometrCiselnik, LS3D_STREAM_TLVERTEX);
             else
                 igraph->DrawPrimitiveList(PT_TRIANGLELIST, 14, _VtxTachometrCiselnik, LS3D_STREAM_TLVERTEX);
@@ -2083,7 +2085,7 @@ void G_IndicatorsClass::DrawAll()
             float y = pravyOkraj.y - screen_scale.y * 42.0f;
             float w = screen_scale.x * 32.0f;
             float h = screen_scale.y * 32.0f;
-            if (unknown_4204)
+            if (gearing_mode)
             {
                 verts[0].x = x;
                 verts[0].y = y;
@@ -2147,7 +2149,7 @@ void G_IndicatorsClass::DrawAll()
             }
             igraph->SetTexture(textureIcons);
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
-            if (fuel_low && unknown_4208 < .25f)
+            if (fuel_low && fuel_light_phase < .25f)
             {
                 float x = pravyOkraj.x - screen_scale.x * 132.0f;
                 float y = pravyOkraj.y - screen_scale.y * 41.0f;
@@ -2185,9 +2187,9 @@ void G_IndicatorsClass::DrawAll()
                 igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
             }
         }
-        if (unknown_40a4 & INDF_UNKNOWN_10000)
+        if (show_flags & INDF_CAR_DAMAGE)
         {
-            // A bar at the bottom's middle from 1int.tga: its frame, then its part for unknown_420c from 3% to 98%
+            // A bar at the bottom's middle from 1int.tga: its frame, then its part for car_damage from 3% to 98%
             float x = (levyOkraj.x + pravyOkraj.x) * .5f - screen_scale.x * 32.0f;
             float y = pravyOkraj.y - screen_scale.y * 32.0f;
             float w = screen_scale.x * 63.0f;
@@ -2229,12 +2231,12 @@ void G_IndicatorsClass::DrawAll()
             verts[0].color = 0xffffffff;
             verts[0].u = 0.0f;
             verts[0].v = 24 / 256.0f;
-            verts[1].x = x + (float)(unknown_420c * .95 + .03) * screen_scale.x * 63.0f;
+            verts[1].x = x + (float)(car_damage * .95 + .03) * screen_scale.x * 63.0f;
             verts[1].y = y;
             verts[1].z = 0.0f;
             verts[1].rhw = 1.0f;
             verts[1].color = 0xffffffff;
-            verts[1].u = (float)(unknown_420c * .95 + .03) * 63.0f / 64.0f;
+            verts[1].u = (float)(car_damage * .95 + .03) * 63.0f / 64.0f;
             verts[1].v = 24 / 256.0f;
             verts[2].x = x;
             verts[2].y = y + h;
@@ -2243,12 +2245,12 @@ void G_IndicatorsClass::DrawAll()
             verts[2].color = 0xffffffff;
             verts[2].u = 0.0f;
             verts[2].v = 48 / 256.0f;
-            verts[3].x = x + (float)(unknown_420c * .95 + .03) * screen_scale.x * 63.0f;
+            verts[3].x = x + (float)(car_damage * .95 + .03) * screen_scale.x * 63.0f;
             verts[3].y = y + h;
             verts[3].z = 0.0f;
             verts[3].rhw = 1.0f;
             verts[3].color = 0xffffffff;
-            verts[3].u = (float)(unknown_420c * .95 + .03) * 63.0f / 64.0f;
+            verts[3].u = (float)(car_damage * .95 + .03) * 63.0f / 64.0f;
             verts[3].v = 48 / 256.0f;
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
         }
@@ -2258,44 +2260,44 @@ void G_IndicatorsClass::DrawAll()
         // The player's panel: the rows' backgrounds, then their numbers, the player's at the bottom and a row above it
         // for each wingman shown; rows counts them for what goes above the panel
         uint rows = 0;
-        if (unknown_40a4 & INDF_PLAYER)
+        if (show_flags & INDF_PLAYER)
         {
             uint count = 0;
             _PridejWingPodklad(verts, &count, rows, 0);
-            if (unknown_40a4 & INDF_AMMO)
+            if (show_flags & INDF_AMMO)
                 _PridejAmmoPodklad(verts, &count);
             rows++;
-            if (unknown_40a4 & INDF_WINGMAN1)
+            if (show_flags & INDF_WINGMAN1)
                 _PridejWingPodklad(verts, &count, rows++, wingman_names[0]);
-            if (unknown_40a4 & INDF_WINGMAN2)
+            if (show_flags & INDF_WINGMAN2)
                 _PridejWingPodklad(verts, &count, rows++, wingman_names[1]);
-            if (unknown_40a4 & INDF_WINGMAN3)
+            if (show_flags & INDF_WINGMAN3)
                 _PridejWingPodklad(verts, &count, rows++, wingman_names[2]);
-            if (unknown_40a4 & INDF_WINGMAN4)
+            if (show_flags & INDF_WINGMAN4)
                 _PridejWingPodklad(verts, &count, rows++, wingman_names[3]);
             igraph->SetTexture(texture_int);
             igraph->DrawIndexedPrimitiveList(PT_TRIANGLELIST, count * 3, __idx, count, verts, LS3D_STREAM_TLVERTEX);
             count = 0;
             rows = 0;
             _PridejWingLives(verts, &count, rows, lives);
-            if (unknown_40a4 & INDF_AMMO)
+            if (show_flags & INDF_AMMO)
                 _PridejAmmo(verts, &count, ammo, ammo_spare);
             rows++;
-            if (unknown_40a4 & INDF_WINGMAN1)
+            if (show_flags & INDF_WINGMAN1)
                 _PridejWingLives(verts, &count, rows++, wingman_lives[0]);
-            if (unknown_40a4 & INDF_WINGMAN2)
+            if (show_flags & INDF_WINGMAN2)
                 _PridejWingLives(verts, &count, rows++, wingman_lives[1]);
-            if (unknown_40a4 & INDF_WINGMAN3)
+            if (show_flags & INDF_WINGMAN3)
                 _PridejWingLives(verts, &count, rows++, wingman_lives[2]);
-            if (unknown_40a4 & INDF_WINGMAN4)
+            if (show_flags & INDF_WINGMAN4)
                 _PridejWingLives(verts, &count, rows++, wingman_lives[3]);
             igraph->SetTexture(texture_numbers);
             igraph->DrawIndexedPrimitiveList(PT_TRIANGLELIST, count * 3, __idx, count, verts, LS3D_STREAM_TLVERTEX);
         }
-        // An icon of the dials' texture above the panel, 33 pixels square, unknown_4244 its alpha
-        if (!(unknown_40a4 & INDF_MENU) && unknown_4244)
+        // An icon of the dials' texture above the panel, 33 pixels square
+        if (!(show_flags & INDF_MENU) && panel_icon_alpha)
         {
-            uint color = unknown_4244 << 24 | 0xffffff;
+            uint color = panel_icon_alpha << 24 | 0xffffff;
             float x = screen_scale.x * 9.0f + levyOkraj.x;
             float y = (float)(552 - rows * 26) * screen_scale.y;
             float sx = screen_scale.x * 33.0f;
@@ -2332,7 +2334,7 @@ void G_IndicatorsClass::DrawAll()
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
         }
         // The console's lines above the panel, the oldest at the top, each as opaque as its time left
-        if (console_count && !(unknown_40a4 & INDF_MENU))
+        if (console_count && !(show_flags & INDF_MENU))
         {
             float y = (547 - rows * 26 - console_count * 20 * .8f) * screen_scale.y;
             for (uint i = 0; i < console_count; i++)
@@ -2347,7 +2349,7 @@ void G_IndicatorsClass::DrawAll()
             }
         }
         // PS2's thief indicator: a bar in a white frame, red from its left end to thief_indicator's, more so further on
-        if (unknown_40a4 & INDF_THIEF)
+        if (show_flags & INDF_THIEF)
         {
             S_vector2 pos = levyOkraj + S_vector2(250.0f, 500.0f) * screen_scale;
             S_vector2 size = S_vector2(300.0f, 10.0f) * screen_scale;
@@ -2421,7 +2423,7 @@ void G_IndicatorsClass::DrawAll()
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
         }
         // PS2's refulling indicator, the same as the thief's
-        if (unknown_40a4 & INDF_REFULLING)
+        if (show_flags & INDF_REFULLING)
         {
             S_vector2 pos = levyOkraj + S_vector2(350.0f, 20.0f) * screen_scale;
             S_vector2 size = S_vector2(100.0f, 8.0f) * screen_scale;
@@ -2496,7 +2498,7 @@ void G_IndicatorsClass::DrawAll()
         }
     }
     // The mission's help texts, centred on the HUD's screen, the last at the bottom; the flag goes once there are none
-    if (!(unknown_40a4 & INDF_MENU) && unknown_40a4 & INDF_MISSION_HELP)
+    if (!(show_flags & INDF_MENU) && show_flags & INDF_MISSION_HELP)
     {
         if (!mission_help.empty())
         {
@@ -2518,13 +2520,13 @@ void G_IndicatorsClass::DrawAll()
             }
         }
         else
-            unknown_40a4 &= ~INDF_MISSION_HELP;
+            show_flags &= ~INDF_MISSION_HELP;
     }
-    if (!(unknown_40a4 & (INDF_MENU | INDF_UNKNOWN_800)))
+    if (!(show_flags & (INDF_MENU | INDF_CUTSCENE)))
     {
         // The radar: the cars, the things and the road's edges around the player's car (or the camera), turned with the
         // camera, inside radarclp.bmp's frame
-        if (unknown_40a4 & INDF_RADAR)
+        if (show_flags & INDF_RADAR)
         {
             LS3D_VIEWPORT vp = *igraph->GetViewPort();
             int use_zb = driver->GetState(RS_USEZB);
@@ -2640,7 +2642,7 @@ void G_IndicatorsClass::DrawAll()
                         }
                     }
                     for (int k = 0; k < 8; k++)
-                        corners[k] = center - (corners[k] * mat) * S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                        corners[k] = center - (corners[k] * mat) * S_vector(-radar_scale, 0.0f, radar_scale);
                     verts[0].x = corners[0].x;
                     verts[0].y = corners[0].z;
                     verts[0].z = .2f;
@@ -2695,7 +2697,7 @@ void G_IndicatorsClass::DrawAll()
                     }
                 }
                 for (int k = 0; k < 8; k++)
-                    corners[k] = center - (corners[k] * mat) * S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                    corners[k] = center - (corners[k] * mat) * S_vector(-radar_scale, 0.0f, radar_scale);
                 verts[0].x = corners[0].x;
                 verts[0].y = corners[0].z;
                 verts[0].z = .2f;
@@ -2728,12 +2730,12 @@ void G_IndicatorsClass::DrawAll()
             }
             // The compass destination's red cross. The original transforms the last thing's corners once more first,
             // for nothing.
-            if (unknown_40a4 & INDF_COMPASS && compass_destination)
+            if (show_flags & INDF_COMPASS && compass_destination)
             {
                 for (int k = 0; k < 8; k++)
-                    corners[k] = center - (corners[k] * mat) * S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                    corners[k] = center - (corners[k] * mat) * S_vector(-radar_scale, 0.0f, radar_scale);
                 S_vector p = center - (compass_destination->GetWorldPos() * m) *
-                    S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                    S_vector(-radar_scale, 0.0f, radar_scale);
                 verts[0].x = p.x - screen_scale.x * 5.0f;
                 verts[0].y = p.z;
                 verts[0].z = .2f;
@@ -2770,14 +2772,14 @@ void G_IndicatorsClass::DrawAll()
                 uint i;
                 for (i = 0; i < _VtxNumOfLeftEdge; i++)
                 {
-                    S_vector p = center - (_LeftEdge[i] * m) * S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                    S_vector p = center - (_LeftEdge[i] * m) * S_vector(-radar_scale, 0.0f, radar_scale);
                     _VtxLeftEdge[i].x = p.x;
                     _VtxLeftEdge[i].y = p.z;
                 }
                 igraph->DrawPrimitiveList(PT_LINESTRIP, _VtxNumOfLeftEdge - 1, _VtxLeftEdge, LS3D_STREAM_TLVERTEX);
                 for (i = 0; i < _VtxNumOfRightEdge; i++)
                 {
-                    S_vector p = center - (_RightEdge[i] * m) * S_vector(-unknown_44c0, 0.0f, unknown_44c0);
+                    S_vector p = center - (_RightEdge[i] * m) * S_vector(-radar_scale, 0.0f, radar_scale);
                     _VtxRightEdge[i].x = p.x;
                     _VtxRightEdge[i].y = p.z;
                 }
@@ -2787,7 +2789,7 @@ void G_IndicatorsClass::DrawAll()
             driver->SetState(RS_USEZB, use_zb);
         }
         // The compass: a dial with a needle pointing to compass_destination, as seen in the camera's direction
-        if (unknown_40a4 & INDF_COMPASS && compass_destination)
+        if (show_flags & INDF_COMPASS && compass_destination)
         {
             S_vector dir;
             dir = compass_destination->GetWorldPos() - act_mission->GetScene()->current_camera->GetWorldPos();
@@ -2873,7 +2875,7 @@ void G_IndicatorsClass::DrawAll()
         // The city map (PS2's DrawMap): the part of the map around the player, framed in black, with the player's arrow
         // or, outside the map, text 0x5f; with INDF_COMPASS the destination's marker, or an arrow at the window's edge
         // pointing to it
-        if (unknown_40a4 & INDF_MAP && map_enabled)
+        if (show_flags & INDF_MAP && map_enabled)
         {
             S_vector dir, pos;
             C_car *car = act_mission->GetGame()->camera.car;
@@ -2917,7 +2919,7 @@ void G_IndicatorsClass::DrawAll()
             }
             S_vector dest_pos;
             S_vector2 dest;
-            if (unknown_40a4 & INDF_COMPASS && compass_destination)
+            if (show_flags & INDF_COMPASS && compass_destination)
             {
                 dest_pos = compass_destination->GetWorldPos();
                 dest_pos *= S_vector(.00022986f, 0.0f, -.00050728f);
@@ -2966,7 +2968,7 @@ void G_IndicatorsClass::DrawAll()
             verts[3].color = 0x7fffffff;
             verts[3].u = corner.x + .4f;
             verts[3].v = corner.y + .55f;
-            igraph->SetTexture(unknown_4090);
+            igraph->SetTexture(texture_map);
             igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
             // Its frame, two black rectangles one pixel apart
             verts[0].x = tl.x - 1.0f;
@@ -3112,7 +3114,7 @@ void G_IndicatorsClass::DrawAll()
                 OutText(text_out_of_city, levyOkraj.x + screen_scale.x * 350.0f, screen_scale.y * 290.0f,
                     screen_scale.x * 100.0f, screen_scale.y * 40.0f, 0xffff0000, OUTTEXT_CENTER, 1, NULL);
             }
-            if (unknown_40a4 & INDF_COMPASS && compass_destination)
+            if (show_flags & INDF_COMPASS && compass_destination)
             {
                 // The destination relative to the window's center, -.5 to .5 inside it; outside, moved along the line
                 // to the center onto the window's edge
@@ -3250,7 +3252,7 @@ void G_IndicatorsClass::DrawAll()
         // The start lights, the flag set and the one before it: a quarter of racestart.bmp each, chosen by the flag's
         // two low bits, sized and faded by its time; flags from 10 up show nothing (PS2's from 16 up). The quads'
         // vertices go 0, 1, 3, 2.
-        if (unknown_40a4 & INDF_RACE_START)
+        if (show_flags & INDF_RACE_START)
         {
             if (race_start_flag < 10)
             {
@@ -3332,7 +3334,7 @@ void G_IndicatorsClass::DrawAll()
             }
         }
         // The race's texts at the right edge, one under the other
-        if (unknown_40a4 & INDF_RACE)
+        if (show_flags & INDF_RACE)
         {
             float x = levyOkraj.x + screen_scale.x * 780.0f;
             float h = screen_scale.y * 30.0f;
@@ -3342,19 +3344,19 @@ void G_IndicatorsClass::DrawAll()
             OutText(race_position, x, h * 4.0f, 10.0f, h, 0xffffffff, OUTTEXT_RIGHT, 1, NULL);
             OutText(race_laps, x, h * 5.0f, 10.0f, h, 0xffffffff, OUTTEXT_RIGHT, 1, NULL);
         }
-        // unknown_4614's lines, centred across the screen from a quarter of its height down, in unknown_4694's alpha
-        if (unknown_40a4 & INDF_UNKNOWN_400000)
+        // race_flash_text's lines, centred across the screen from a quarter of its height down, in race_flash_alpha
+        if (show_flags & INDF_RACE_FLASH)
         {
             S_vector2 pos = levyOkraj + S_vector2(390.0f, 150.0f) * screen_scale;
             float sy = screen_scale.y * 30.0f;
-            uint alpha = (uint)(unknown_4694 * 255.0f);
+            uint alpha = (uint)(race_flash_alpha * 255.0f);
             if (alpha > 0xff)
                 alpha = 0xff;
-            OutTextMultiLine(unknown_4614, pos.x, pos.y, 20.0f, sy, alpha << 24 | 0xffffff,
+            OutTextMultiLine(race_flash_text, pos.x, pos.y, 20.0f, sy, alpha << 24 | 0xffffff,
                 OUTTEXT_CENTER | OUTTEXT_UNKNOWN_20, 0);
         }
         // racewrong.bmp, half transparent
-        if (unknown_40a4 & INDF_RACE_WRONG)
+        if (show_flags & INDF_RACE_WRONG)
         {
             S_vector2 pos = levyOkraj + S_vector2(272.0f, 100.0f) * screen_scale;
             S_vector2 size = S_vector2(256.0f, 128.0f) * screen_scale;
@@ -3391,7 +3393,7 @@ void G_IndicatorsClass::DrawAll()
         }
     }
     // The logo at the top right, but in a menu
-    if (unknown_40a4 & ~INDF_MENU && texture_logo)
+    if (show_flags & ~INDF_MENU && texture_logo)
     {
         S_vector2 pos = S_vector2(687.0f, 20.0f) * screen_scale;
         S_vector2 size = S_vector2(93.0f, 128.0f) * screen_scale;
@@ -3428,7 +3430,7 @@ void G_IndicatorsClass::DrawAll()
     }
     // The whole screen and a pixel more in fade_color, through INDF_FADE's texture. The quad's vertices go 0, 2, 1, 3
     // (PS2's the same), the others' 0, 1, 3, 2.
-    if (unknown_40a4 & INDF_FADE)
+    if (show_flags & INDF_FADE)
     {
         verts[0].x = 0.0f;
         verts[0].y = 0.0f;
@@ -3458,12 +3460,12 @@ void G_IndicatorsClass::DrawAll()
         verts[3].color = fade_color;
         verts[3].u = 1.0f;
         verts[3].v = 1.0f;
-        igraph->SetTexture(unknown_4480);
+        igraph->SetTexture(fade_texture);
         igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
     }
     // The subtitles centred at the bottom (of the left screen with Parhelia's two), the last line lowest, all opaque
     // (PS2's take their alpha)
-    if (!(unknown_40a4 & INDF_MENU) && subtitles.size() && mafiaLoadSave.settings.subtitles)
+    if (!(show_flags & INDF_MENU) && subtitles.size() && mafiaLoadSave.settings.subtitles)
     {
         float x = screen_size.x * .5f;
         if (parheliaIndex == PARHELIA_DUAL)
@@ -3552,11 +3554,11 @@ void G_IndicatorsClass::ResolutionChanged()
         &_VtxTachometrCiselnik[0]);
     SetRectVertices(revs_pos, hud_scale * 76.0f, 109 / 256.0f, 165 / 256.0f, 185 / 256.0f, 241 / 256.0f, 0xffffffff,
         &_VtxTachometrCiselnik[6]);
-    // Its small display, the texture's column from unknown_41e4
+    // Its small display
     S_vector2 pos, size;
     pos = tachometr_pos + S_vector2(78.0f, 63.0f) * hud_scale;
     size = tachometr_pos + S_vector2(103.0f, 77.0f) * hud_scale - pos;
-    SetRectVertices(pos, size, (unknown_41e4 + 22.0f) / 256.0f, 199 / 256.0f, (unknown_41e4 + 43.0f - 2.0f) / 256.0f,
+    SetRectVertices(pos, size, (display_column + 22.0f) / 256.0f, 199 / 256.0f, (display_column + 43.0f - 2.0f) / 256.0f,
         210 / 256.0f, 0x70ffffff, &_VtxTachometrCiselnik[48]);
     // Its row of five digits
     SetRectVertices(tachometr_pos + S_vector2(62.0f, 104.0f) * hud_scale, hud_scale * 12.0f, 1 / 256.0f, 1 / 256.0f,

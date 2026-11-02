@@ -389,8 +389,8 @@ red_ok:
 
 // Lights a mesh level's vertices for an object: picks up to 8 of the current sector's lights of the mode (with their
 // position and direction in the object's space, m being the object's inverse world matrix), and writes each vertex's
-// color, or the average of them all for VISF_UNKNOWN_80, unless the lights are the ones rec was lit by. Returns whether
-// it wrote the colors. Its first half is PS2's PrepareLights, which reads the list's size first and increments the
+// color, or the average of them all for VISF_AVERAGE_LIGHT, unless the lights are the ones rec was lit by. Returns
+// whether it wrote the colors. Its first half is PS2's PrepareLights, which reads the list's size first and increments the
 // light count before it returns it less one, as here.
 // The unused light types are listed: the original's jump table covers all eight. The vertex loops walk a copy of dst
 // made before the branch, which takes mode's stack slot as in the original (and the assembly's t dst's). The clamps
@@ -524,7 +524,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
             key += TempLightList[j].light->m_UpdateCount;
         key *= GlobalLightCount;
     }
-    uint *cached = obj->vis_flags & VISF_UNKNOWN_10 ? &obj->lods[0]->light_key : &obj->lods[obj->cur_lod]->light_key;
+    uint *cached = obj->vis_flags & VISF_TEXTURE_LOD ? &obj->lods[0]->light_key : &obj->lods[obj->cur_lod]->light_key;
     if (!force || !GlobalLightCount && key > 0) {
         if (key == *cached)
             return false;
@@ -541,7 +541,7 @@ bool PrepareLights(uchar *dst, uint dst_stride, I3D_mesh_level *level, const uch
 
     uchar *p = dst;
     pVertices = src;
-    if (obj->vis_flags & VISF_UNKNOWN_80) {
+    if (obj->vis_flags & VISF_AVERAGE_LIGHT) {
         uint r = 0, g = 0, b = 0;
         for (uint n = level->num_vertices; n; n--) {
             uint color = LightVertex();

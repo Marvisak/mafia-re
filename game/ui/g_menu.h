@@ -12,14 +12,15 @@ class I3D_sound;
 class ITexture;
 
 // GM_Menu::flags (the names are ours: by value where the meaning isn't known yet)
-#define MENUF_UNKNOWN_10000 0x10000     // set by the constructor
+#define MENUF_DRAW_PARENT 0x10000       // Draw draws the parent first, under it; set by the constructor
 #define MENUF_UNKNOWN_80000 0x80000     // the main menu's, and the menus' it opens (not the quit question's)
 #define MENUF_INVENTORY_CLOSES 0x100000 // ExecuteMenu reads the controls: the inventory's acts as Escape
 
 // GM_Menu::Draw's flags, which reach the components' Draw (the names are ours)
 #define MENUDRAW_ALL 0xffffffff
 #define MENUDRAW_CURSOR 0x10000000      // the cursor's blink: cleared for the second's last 300 ms
-#define MENUDRAW_UNKNOWN_40000000 0x40000000 // cleared for the parent menu
+#define MENUDRAW_ACTIVE_MENU 0x40000000 // cleared for the parent menu: a window's title bar is lit only in the active
+                                        // menu
 
 // Tick's buttons, which reach the components' Mouse: the buttons down, those pressed shifted by 4 and those released by
 // 8, IGraph's bits (the names are ours)
@@ -176,7 +177,7 @@ public:
     // The components' ForceUpdate, each takes its value again (PC only, the name is ours: a key's binding, after the
     // menu that set it closed)
     void ForceUpdate();
-    // Draws the menu's components (its parent's first, where MENUF_UNKNOWN_10000 is set) and, over the active menu,
+    // Draws the menu's components (its parent's first, where MENUF_DRAW_PARENT is set) and, over the active menu,
     // the mouse's cursor
     void Draw(uint flags);
     // A frame of the menu: the mouse's movement and buttons (the buttons released, pressed and down, 4 bits each), the

@@ -9,9 +9,9 @@
 #include "stub.h"
 
 // GLOBAL: GAME 0x63d7fc
-float C_traffic_car::unknown_63d7fc;
+float C_traffic_car::elems_coefff;
 // GLOBAL: GAME 0x63d804
-float C_traffic_car::unknown_63d804;
+float C_traffic_car::police_coefff;
 
 // The third and the fourth of the file's six vectors, whose initializers start it (0x4aa4b0 to 0x4aa730; these
 // ones' 0x4aa5b0 and 0x4aa630)

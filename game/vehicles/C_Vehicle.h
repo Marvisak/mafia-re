@@ -75,22 +75,23 @@ struct S_wheel
     uchar unknown_0[4];
     I3D_frame *frame;                   // 0x4, the chases take the last wheel's position
     uchar unknown_8[4];
-    // 0xc and 0x10 (PS2 0x15c and 0x30), what GetWheelCamPos places the camera by: the wheel's position and a distance
-    // outwards, to the right for the odd wheels
-    float unknown_c;
-    S_vector unknown_10;
+    // 0xc (PS2 0x15c), GetWheelCamPos's distance outwards from pos, to the right for the odd wheels (the name is ours)
+    float cam_offset;
+    // 0x10 (PS2 0x30), the wheel's position in the vehicle, GetWheelCamPos's (the name is ours)
+    S_vector pos;
     uchar unknown_1c[0x60];
     S_vector unknown_7c;                // 0x7c, the camera "C In" tilts by their sum
     uchar unknown_88[0x98];             // 0x88
-    // 0x120, flags: WHEELF_COLLISION while the wheel collides (SetCarWheelColl's)
-    uint unknown_120;
+    // 0x120, WHEELF_*; the chases also test 0x40000000 (the name is ours)
+    uint flags;
 };
 
-// S_wheel::unknown_120's collision bit, which GetCarWheelColl and SetCarWheelColl copy (the name is ours)
+// S_wheel::flags' collision bit, which GetCarWheelColl and SetCarWheelColl copy (the name is ours)
 #define WHEELF_COLLISION 8
 
-// An element of C_Vehicle::unknown_ca0 (the name is ours; its members are unknown), 0x24 bytes
-struct S_vehicle_unknown_ca0
+// A seat of the vehicle (PS2 C_Vehicle::S_SEAT; the name is ours), 0x24 bytes. PS2's is 0x30, two of its 16-byte
+// vectors and three floats, the seat's mass the first of them (SetSeatMass); the members are unknown.
+struct S_vehicle_seat
 {
     uchar unknown_0[0x24];
 };
@@ -99,7 +100,9 @@ struct S_vehicle_unknown_ca0
 // commands set: the lights themselves, then the projector lights' bits, each the projector of one light
 #define VLIGHT_INDICATOR_L 0x1
 #define VLIGHT_INDICATOR_R 0x2
-#define VLIGHT_UNKNOWN_8 0x8            // the indicators' setters do nothing while it is set
+// The indicators by the steering: PS2's DoLights sets them while it is set, and their setters (the driver's too) do
+// nothing
+#define VLIGHT_INDICATOR_AUTO 0x8
 #define VLIGHT_LIGHT 0x80
 #define VLIGHT_MAIN 0x10000
 #define VLIGHT_PROJECTOR_INDICATOR 0x100000
@@ -107,7 +110,7 @@ struct S_vehicle_unknown_ca0
 #define VLIGHT_PROJECTOR_MAIN 0x800000  // CAR_SETPROJECTOR sizes it
 #define VLIGHT_PROJECTORS 0xff00000
 
-// C_Vehicle::unknown_1a4's bits (the names are ours)
+// C_Vehicle::vehicle_flags' bits (the names are ours)
 #define VEHF_UNSTABLE 0x8               // IsVehicleUnstable's
 #define VEHF_LOCKED 0x10000000          // while LockVehicle's count is above 0
 
@@ -163,12 +166,13 @@ public:
 
     // Settles the vehicle at the game's start (PS2 name; PS2's on C_car takes three parameters)
     void CalmVehicle(uint time);
-    // unknown_ca0's size, as an int (the name is ours: G_LoadSaveClass::GarageGameDone's loop over the seats compares
-    // it signed, the scripts' CAR_SETDOOROPEN a door's number)
+    // The number of seats, as an int (the name is ours: the scripts' CAR_GETSEATCOUNT returns it,
+    // G_LoadSaveClass::GarageGameDone's loop over the seats compares it signed, the scripts' CAR_SETDOOROPEN a door's
+    // number)
     // FUNCTION: GAME 0x47b1f0
-    int GetNumUnknownCa0() const
+    int GetNumSeats() const
     {
-        return unknown_ca0.size();
+        return seats.size();
     }
     // PS2 name and parameter, which G_LoadSaveClass::GarageGameInit calls with 0 for a car kept between missions
     void Deactivate(uint flags);
@@ -210,9 +214,9 @@ public:
     }
     // The tank's size (the name is ours): C_mission::FrmActBuff_IsActiveActor passes it to SetFuel through the FPU, as
     // an inline function's float result, where the member read directly is pushed with integer moves
-    float GetUnknown1fa0() const
+    float GetTankSize() const
     {
-        return unknown_1fa0;
+        return tank_size;
     }
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours). The setters
@@ -236,20 +240,20 @@ public:
             wake_up(callback_context);
     }
     // FUNCTION: GAME 0x47b1b0
-    void SetUnknown420(const S_vector &v)
+    void SetAngularVelocity(const S_vector &v)
     {
-        unknown_420 = v;
+        angular_velocity = v;
         if (wake_up)
             wake_up(callback_context);
     }
     // Without a wake-up
     // FUNCTION: GAME 0x47b220
-    void SetLightsUnknown8(bool on)
+    void SetIndicatorAuto(bool on)
     {
         if (on)
-            lights |= VLIGHT_UNKNOWN_8;
+            lights |= VLIGHT_INDICATOR_AUTO;
         else
-            lights &= ~VLIGHT_UNKNOWN_8;
+            lights &= ~VLIGHT_INDICATOR_AUTO;
     }
     // FUNCTION: GAME 0x47b250
     void SetLight(bool on)
@@ -265,7 +269,7 @@ public:
     // FUNCTION: GAME 0x47b280
     void SetIndicatorL(bool on)
     {
-        if (lights & VLIGHT_UNKNOWN_8)
+        if (lights & VLIGHT_INDICATOR_AUTO)
             return;
         if (on)
         {
@@ -279,7 +283,7 @@ public:
     // FUNCTION: GAME 0x47b2c0
     void SetIndicatorR(bool on)
     {
-        if (lights & VLIGHT_UNKNOWN_8)
+        if (lights & VLIGHT_INDICATOR_AUTO)
             return;
         if (on)
         {
@@ -323,24 +327,24 @@ public:
 
     // The accessors whose copies are among C_sledovacka.cpp's (the names are ours)
     // FUNCTION: GAME 0x4a9bf0
-    bool GetUnknownC2c() const
+    bool GetEngineOn() const
     {
-        return unknown_c2c;
+        return engine_on;
     }
     // FUNCTION: GAME 0x4a9c00
-    void SetUnknown4cc(bool b)
+    void SetAutoGearing(bool b)
     {
-        unknown_4cc = b;
+        auto_gearing = b;
     }
     // FUNCTION: GAME 0x4a9c10
-    void SetUnknown430(bool b)
+    void SetHorn(bool b)
     {
-        unknown_430 = b;
+        horn = b;
     }
     // FUNCTION: GAME 0x4a9c20
-    bool GetUnknown431() const
+    bool GetSiren() const
     {
-        return unknown_431;
+        return siren;
     }
     // FUNCTION: GAME 0x4a9c30
     const S_vector &GetVelocityRef() const
@@ -360,9 +364,9 @@ public:
         return unknown_c48;
     }
     // FUNCTION: GAME 0x4a9c80
-    const S_vector &GetUnknownC54() const
+    const S_vector &GetUp() const
     {
-        return unknown_c54;
+        return up;
     }
     // FUNCTION: GAME 0x4a9c90
     S_wheel *GetWheel(int i) const
@@ -372,16 +376,17 @@ public:
 
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
     uchar unknown_4[0xbc];              // 0x4
-    int unknown_c0;                     // 0xc0, the locks LockVehicle counts
+    int lock_count;                     // 0xc0 (PS2 0x51c), LockVehicle's count
     uchar unknown_c4[0x58];             // 0xc4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
     uchar unknown_120[0x38];            // 0x120
-    S_vector unknown_158;               // 0x158 (car 0x1c8), GetVehicleSize(false)'s
-    S_vector unknown_164;               // 0x164 (car 0x1d4), GetVehicleSize(true)'s
-    S_vector unknown_170;               // 0x170 (car 0x1e0), GetVehiclePivotPos(false)'s
-    S_vector unknown_17c;               // 0x17c (car 0x1ec), GetVehiclePivotPos(true)'s
+    // GetVehicleSize's and GetVehiclePivotPos', each the false one first (PS2 0xc0 to 0xf0)
+    S_vector vehicle_size;              // 0x158 (car 0x1c8)
+    S_vector vehicle_size_2;            // 0x164 (car 0x1d4)
+    S_vector pivot_pos;                 // 0x170 (car 0x1e0)
+    S_vector pivot_pos_2;               // 0x17c (car 0x1ec)
     uchar unknown_188[0x1c];            // 0x188
-    uint unknown_1a4;                   // 0x1a4 (car 0x214), VEHF_*
+    uint vehicle_flags;                 // 0x1a4 (car 0x214, PS2 0x5c8), VEHF_*
     uchar unknown_1a8[0x12c];           // 0x1a8
     S_vector head_pos;                  // 0x2d4 (car 0x344), the driver's head (GetHeadPos)
     uchar unknown_2e0[0x28];            // 0x2e0
@@ -391,53 +396,70 @@ public:
     uchar unknown_30c[0x40];            // 0x30c
     I3D_frame *model_frame;            // 0x34c (car 0x3bc), the frame whose world matrix model_matrix is
     uchar unknown_350[0x48];            // 0x350
-    S_vector unknown_398;               // 0x398 (car 0x408), the point the car cameras look at, the position most likely
+    // 0x398 (car 0x408), the position most likely (the name is a guess): the point the car cameras look at, which the
+    // chases measure their distances from, C_car::GetAIPos' stub's
+    S_vector world_pos;
     uchar unknown_3a4[0x7c];            // 0x3a4
-    // 0x420 (car 0x490), most likely the angular velocity: the scripts' CAR_SETSPECCOLL zeroes it with the velocity
-    S_vector unknown_420;
+    // 0x420 (car 0x490), most likely the angular velocity (the name is a guess): the scripts' CAR_SETSPECCOLL zeroes it
+    // with the velocity
+    S_vector angular_velocity;
     uchar unknown_42c[4];               // 0x42c
-    bool unknown_430;                   // 0x430 (car 0x4a0)
-    bool unknown_431;                   // 0x431 (car 0x4a1)
+    // 0x430 and 0x431 (car 0x4a0 and 0x4a1, PS2 0x221c and 0x221d), PS2's C_Vehicle::Update passes them to HornSnd and
+    // SirenSnd (the names are ours): the chases sound the horn, unless the siren is on
+    bool horn;
+    bool siren;
     uchar unknown_432[0x92];            // 0x432
     int num_wheels;                    // 0x4c4 (car 0x534)
     uchar unknown_4c8[4];               // 0x4c8
-    bool unknown_4cc;                   // 0x4cc (car 0x53c)
+    // 0x4cc (car 0x53c, PS2 0x2225), the gearing, automatic most likely while it is set (the name is a guess): the HUD's
+    // TachometrSetGear shows it (PS2's C_player::AI_drive passes it), CTRL_GEARING toggles it, PS2's AI drivers and
+    // chases set it, and PS2's SetPower takes reverse throttle as the brake with it
+    bool auto_gearing;
     uchar unknown_4cd[0x73];            // 0x4cd
     float unknown_540;                  // 0x540 (car 0x5b0)
     float unknown_544;                  // 0x544 (car 0x5b4)
     uchar unknown_548[0x54];            // 0x548
     float speed;                        // 0x59c (car 0x60c), in m/s: velocity's magnitude (SetVelocity)
     uchar unknown_5a0[0x70];            // 0x5a0
-    // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely: C_game::TickDriverMan
-    // turns the driver's steering wheel by their ratio
-    float unknown_610;
+    // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely (the names are guesses):
+    // C_game::TickDriverMan turns the driver's steering wheel by their ratio
+    float steer_max;
     uchar unknown_614[0x14];            // 0x614
-    float unknown_628;
+    float steer;
     uchar unknown_62c[0x600];           // 0x62c
-    bool unknown_c2c;                   // 0xc2c (car 0xc9c)
+    // 0xc2c (car 0xc9c, PS2 0x2247), the engine runs (the name is ours): PS2's SetEngineOn sets it, SetPower,
+    // MotorForce and the engine's sounds test it; the chases count the time a car with it stands
+    bool engine_on;
     uchar unknown_c2d[3];               // 0xc2d
-    float unknown_c30;                  // 0xc30 (car 0xca0), the tank's fuel: SetFuel's store
+    float tank_fuel;                    // 0xc30 (car 0xca0, PS2 0xf04), SetFuel's store
     uchar unknown_c34[4];               // 0xc34
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
     S_vector unknown_c3c;               // 0xc3c (car 0xcac), a direction the chases compare theirs with
-    S_vector unknown_c48;               // 0xc48 (car 0xcb8)
-    S_vector unknown_c54;               // 0xc54 (car 0xcc4), the car's up axis most likely
-    bool unknown_c60;                   // 0xc60 (car 0xcd0), which SetEnterProtect1 sets
+    S_vector unknown_c48;               // 0xc48 (car 0xcb8), the chases look 5 m along it for room at the target's side
+    // 0xc54 (car 0xcc4), the car's up axis most likely (the name is a guess): the camera's right is the direction
+    // crossed with it, and the chases take the car for overturned once it is 0.52 off the world's
+    S_vector up;
+    // 0xc60 (car 0xcd0, PS2 0x2248), most likely a request to wake the vehicle up (the name is a guess): set by
+    // SetEnterProtect1 and, on PS2, by SetOwner, SetSeatMass, ExternalImpuls, ExternalForce, the collisions and
+    // CalmVehicle; PS2's Tick sets the vehicle's flags' 1 with it
+    bool wake_request;
     uchar unknown_c61[3];               // 0xc61
-    float unknown_c64;                  // 0xc64 (car 0xcd4), an angle: below pi/2 the car goes forward
+    // 0xc64 (car 0xcd4), the angle between the velocity and the car's direction most likely (the name is a guess):
+    // below pi/2 the car goes forward
+    float velocity_angle;
     uchar unknown_c68[0xc];             // 0xc68
     const void *callback_context;       // 0xc74 (car 0xce4, PS2 0xf20), what the callbacks get
     uchar unknown_c78[0x28];            // 0xc78
-    // 0xca0 (car 0xd10), as many as the car has seats most likely: G_LoadSaveClass::GarageGameDone asks C_car::GetOwner
-    // for each
-    std::vector<S_vehicle_unknown_ca0> unknown_ca0;
+    // 0xca0 (car 0xd10, PS2 0xf50), the seats (the name is ours; PS2's SetSeatMass reads its vector of S_SEAT there):
+    // G_LoadSaveClass::GarageGameDone asks C_car::GetOwner for each
+    std::vector<S_vehicle_seat> seats;
     uchar unknown_cb0[0x38];            // 0xcb0
     S_matrix model_matrix;              // 0xce8 (car 0xd58), C_car::GetInvModelMatrix's
     S_matrix inv_model_matrix;          // 0xd28 (car 0xd98)
     uchar unknown_d68[0x1228];          // 0xd68
     S_vector velocity;                  // 0x1f90 (car 0x2000), speed's vector (SetVelocity)
     uchar unknown_1f9c[4];              // 0x1f9c
-    float unknown_1fa0;                 // 0x1fa0 (car 0x2010), the tank's size: SetFuel's upper bound
+    float tank_size;                    // 0x1fa0 (car 0x2010, PS2 0x21bc), SetFuel's upper bound
     uchar unknown_1fa4[6];              // 0x1fa4
     bool special_dynamic_colls;         // 0x1faa (car 0x201a, PS2 0x224b), SetSpecialDynamicColls'
     bool dynamic_colls_on;              // 0x1fab (car 0x201b), SetDynamicCollsOn's first flag
@@ -461,7 +483,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -470,7 +492,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z

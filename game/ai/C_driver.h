@@ -23,7 +23,7 @@ struct S_car_node
 {
     S_vector pos;                       // 0x0
     uchar unknown_c[0x24];              // 0xc
-    float unknown_30;                   // 0x30, the distance from the previous node most likely
+    float distance;                     // 0x30, from the previous node (the chases set it so; the name is ours)
     uchar unknown_34[0x10];             // 0x34
     bool unknown_44;                    // 0x44
     bool unknown_45;                    // 0x45
@@ -34,9 +34,11 @@ struct S_car_node
     uchar unknown_50[4];                // 0x50
     bool unknown_54;                    // 0x54
     uchar unknown_55[0xb];              // 0x55
-    ushort unknown_60;                  // 0x60, a node of C_roads
+    ushort road_node;                   // 0x60, a node of C_roads (the name is ours)
     uchar unknown_62[6];                // 0x62
-    int *unknown_68;                    // 0x68
+    // 0x68, the semaphore phase the node waits at, one of C_game's two (C_sledovacka::Tick takes a car stopped at a
+    // light other than green for waiting there; the name is ours)
+    int *semaphore_phase;
     uchar unknown_6c[4];                // 0x6c
 };
 
@@ -45,14 +47,15 @@ class C_driver
 public:
     std::vector<uint> unknown_0;        // 0x0 (PS2 0x120, a gif::vector; the elements' type isn't known yet)
     uchar unknown_10[0x150];            // 0x10
-    std::vector<S_car_node> unknown_160;  // 0x160 (PS2 0x1bc, a gif::vector), the path
-    uint unknown_170;                   // 0x170, the node of unknown_160 the car drives to
+    // The names are ours
+    std::vector<S_car_node> path;       // 0x160 (PS2 0x1bc, a gif::vector)
+    uint next_node;                     // 0x170, the node of path the car drives to
     uchar unknown_174[0x2c];            // 0x174
     int unknown_1a0;                    // 0x1a0
     uchar unknown_1a4[8];               // 0x1a4
     std::vector<S_LOCKCROSS> lock_crosses;  // 0x1ac (PS2 0x1f8; the name is ours)
     uchar unknown_1bc[0x20];            // 0x1bc
-    uint unknown_1dc;                   // 0x1dc, flags
+    uint flags;                         // 0x1dc
     uchar unknown_1e0[0x1c];            // 0x1e0
     C_actor *unknown_1fc;               // 0x1fc
     C_actor *unknown_200;               // 0x200

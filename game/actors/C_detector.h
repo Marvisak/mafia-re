@@ -70,14 +70,15 @@ public:
         signal = on;
     }
 
-    // 0xd8, 0 from Init, then LoadData's (PS2 0x108): the groups DETECTOR_INRANGE counts, bits of C_human::unknown_5fc
-    int unknown_d8;
+    // 0xd8, 0 from Init, then LoadData's (PS2 0x108): the humans DETECTOR_INRANGE counts, bits of C_human::human_type
+    // (the name is ours)
+    int human_types;
     // GameInit clears them (PS2 0x10c to 0x10f)
     bool signal;                        // 0xdc, DETECTOR_SETSIGNAL's (the name is ours)
     bool unknown_dd;                    // 0xdd
-    // 0xde, set by DETECTOR_WAITFORHIT, which makes collisions that don't move; DETECTOR_CREATEDYNCOLL and ERASEDYNCOLL
-    // do nothing then
-    bool unknown_de;
+    // 0xde, set by DETECTOR_WAITFORHIT, which waits for a hit with collisions that don't move; DETECTOR_CREATEDYNCOLL
+    // and ERASEDYNCOLL do nothing then (the name is ours, after the command)
+    bool wait_for_hit;
     // 0xdf, DETECTOR_CREATEDYNCOLL's collisions, which follow the frame (Update), until DETECTOR_ERASEDYNCOLL (the name
     // is ours)
     bool dyn_colls;

@@ -132,7 +132,7 @@ enum I3D_RENDERSTATE {
     RS_LOD_QUALITY = 20,                // a float, 1.0 by default: the levels of detail's distance scale (Insanity3D's
                                         // name, the same number)
     RS_TEXTURELOWDETAIL = 21,           // the textures at half their size but for MATF_FULL_SIZE materials (ITC_HALF),
-                                        // and GetObjectLOD takes the next coarser level for VISF_UNKNOWN_10 visuals
+                                        // and GetObjectLOD takes the next coarser level for VISF_TEXTURE_LOD visuals
                                         // (Insanity3D's name, its number is 22)
     RS_UNKNOWN_22 = 22,
     RS_UNKNOWN_23 = 23,
@@ -787,7 +787,9 @@ public:
     uint snd_flags;                     // 0x140, SOUNDF_*
     uchar state;                        // 0x144, SOUNDSTATE_*
     uint priority;                      // 0x148, the voice's Play's
-    uint unknown_14c;                   // 0x14c
+    uint last_update_count;             // 0x14c, the frame's m_UpdateCount as of the voice's last placing (the name is
+                                        // ours): the renderer places the voice again where the count differs, and
+                                        // sets the count back to it, which stays the constructor's 0
     uint start_time;                    // 0x150, timeGetTime when it played from the start
     uint pause_time;                    // 0x154, timeGetTime when it paused
     uint pause_pos;                     // 0x158, the position it paused at
@@ -894,9 +896,11 @@ enum I3D_SECTOR_SOUND_DATA_INDEX {
 #define SCTF_PREPARED 0x4               // MakeReady was called: the sector has its hull's planes
 #define SCTF_CULLED 0x10                // its frames were culled this frame (CullThruPortal's CTP_EnumProcFirst)
 #define SCTF_OCCLUDER 0x40              // MakeReady makes an occluder of the hull
-#define SCTF_UNKNOWN_80 0x80            // the walk came back into it through a portal without a twin: the occluder
+#define SCTF_OCCLUDER_OFF 0x80          // the walk came back into it through a portal without a twin: the occluder
                                         // made of its hull hides nothing (ProcessOccluders)
-#define SCTF_UNKNOWN_100 0x100          // Duplicate keeps it
+#define SCTF_FAR_NO_CHILDREN 0x100      // from the file, Duplicate keeps it: seen through a portal past its range
+                                        // (CTP_PartlyOffPortal), the walk culls its frames but not their children
+                                        // (CTP_EnumProc)
 #define SCTF_PRIMARY 0x200
 #define SCTF_SOUND_FADE_IN 0x400        // the renderer blends into the sound environment, not out of it
 #define SCTF_SOUND_CHANGED 0x800        // the sound properties are to be given to the listener
@@ -956,8 +960,9 @@ public:
     int num_faces;                      // 0x1dc
     S_vector *verts;                    // 0x1e0
     ushort *faces;                      // 0x1e4, three vertex indices each
-    float unknown_1e8;                  // 0x1e8, the renderer's blend into the sound environment, 0 to 1
-    uint unknown_1ec;                   // 0x1ec, the time of its last step, in ms
+    float sound_blend;                  // 0x1e8, the renderer's blend into the sound environment, 0 to 1; its sounds'
+                                        // volumes follow it
+    uint sound_blend_time;              // 0x1ec, the time of the blend's last step, in ms
     I3D_light *fog_light;               // 0x1f0, the fog light of the lights that is on
     C_list<I3D_portal *> portals;       // 0x1f4, its own, leading out
     C_list<I3D_portal *> portals_in;    // 0x204, the other sectors' that lead into it
@@ -1415,7 +1420,7 @@ struct I3D_COLLISION {
 #define COLF_TWO_SIDED 0x100000         // a ray: every face is two-sided
 #define COLF_FIRST_HIT 0x1000000        // a ray: the first hit ends the test
 #define COLF_FRAME_LOD 0x2000000        // the frame given is tested at the level of detail given, the others at 0
-#define COLF_UNKNOWN_4000000 0x4000000  // the visuals with VISF_UNKNOWN_1000 aren't tested
+#define COLF_SKIP_OPTIONAL 0x4000000  // the visuals with VISF_COL_OPTIONAL aren't tested
 #define COLF_HIDDEN 0x8000000           // the frames switched off are tested too
 #define COLF_EXCLUDE_SUBTREE 0x10000000 // the frame given and its children aren't tested
 #define COLF_OMNI_SECTOR 0x20000000     // the scene's omni sector is tested too
@@ -1995,8 +2000,8 @@ public:
     float near_ncp_x, near_ncp_y;       // 0x3ec, the same for the near projection
     I3D_scene *scene;                   // 0x3f4, the scene the camera is active in (I3D_scene::current_camera)
     I3D_sector *sector;                 // 0x3f8, the sector it is in
-    uint unknown_3fc;                   // 0x3fc
-    uint unknown_400;                   // 0x400
+    uint last_update_count;             // 0x3fc, its m_UpdateCount as of the last render that found it moved
+    uint last_sector_update_count;      // 0x400, and its sector's
     S_frustum frustums[3];              // 0x404, of the view, the backdrop and the near projection
 };
 
@@ -2451,7 +2456,8 @@ public:
     I3D_area *next_in_scene;            // 0x158
     S_plane *planes;                    // 0x15c, one for each face, in world space (UpdateV)
     I3D_scene *scene;                   // 0x160
-    int unknown_164;                    // 0x164, -1 when the sounds change
+    int last_update_count;              // 0x164, its m_UpdateCount as of the renderer's last test of the camera in
+                                        // it; -1 when the sounds change, which has it tested again
     C_list<I3D_sound *> sounds;         // 0x168, the sounds that play in it
     uint switch_fade_time;              // 0x178, 500 by default
 };
@@ -2658,18 +2664,20 @@ enum SHADOW_MODE {
 // FRMFLAGS_INV_MAT_VALID)
 #define VISF_COLOR_CHANGED 0x4          // a particle's color or transparency changed: m_AddFGroups writes them into
                                         // its lod's vertices
-#define VISF_UNKNOWN_10 0x10            // the level of detail follows the textures loaded, and the lighting takes
-                                        // the first lod's cache, not the current one's
+#define VISF_TEXTURE_LOD 0x10           // the level of detail follows the textures loaded and picks only the texture
+                                        // (its level's first face group's): the vertices are the first level's, and
+                                        // the lighting takes the first lod's cache, not the current one's
 #define VISF_NO_MIRROR 0x20             // the mirrors don't reflect it (I3D_mirror::CollectVisuals, its only test; the
                                         // name is a guess)
 #define VISF_WORLD_SPACE 0x40          // the vertices are in world space (SetSpace): a move invalidates nothing
-#define VISF_UNKNOWN_80 0x80            // the lighting gives every vertex their average color
+#define VISF_AVERAGE_LIGHT 0x80         // the lighting gives every vertex their average color
 #define VISF_ZBIAS 0x100                // drawn with a z-bias of 2 (m_DrawAllSortedFG; the 4ds files' depth bias)
 #define VISF_SHADOW 0x200               // SHADOW_MODE 1 or 2: shadows fall on it
 #define VISF_SHADOW_2 0x400             // SHADOW_MODE 2
 #define VISF_OBJECT 0x800               // an I3D_object or derived (a mesh, lods, a transparency): set by its constructor,
                                         // SetMesh and Duplicate, and the mirrors and the rendering cast to I3D_object on it
-#define VISF_UNKNOWN_1000 0x1000        // the collision tests leave it out with COLF_UNKNOWN_4000000
+#define VISF_COL_OPTIONAL 0x1000        // the collision tests leave it out with COLF_SKIP_OPTIONAL (from the file;
+                                        // what it marks isn't known)
 #define VISF_PROJECTOR 0x2000           // projector mode 1 or 2: projectors fall on it
 #define VISF_PROJECTOR_2 0x4000         // projector mode 2
 #define VISF_NO_FOG 0x8000              // never fogged (m_DrawAllSortedFG; the 4ds files' "forbid fog")
@@ -2678,7 +2686,7 @@ enum SHADOW_MODE {
 #define VISF_WBOUND_VALID 0x40000       // vis_bound_w is up to date (UpdateWBoundProc)
 #define VISF_UNKNOWN_80000 0x80000      // cleared with VISF_WBOUND_VALID when the frame moves; nothing in LS3DF tests it
 #define VISF_INV_MAT_VALID 0x100000     // inv_matrix is up to date
-#define VISF_LOD_CHANGED 0x2000000      // GetObjectLOD changed a VISF_UNKNOWN_10 visual's level
+#define VISF_LOD_CHANGED 0x2000000      // GetObjectLOD changed a VISF_TEXTURE_LOD visual's level
 // The flags the visuals' Duplicate copies: all but VISF_COLOR_CHANGED's nibble, VISF_NO_MIRROR, VISF_PROXY and the
 // validity bits from VISF_WBOUND_VALID up (VISF_BOUND_VALID stays: vis_bound is copied with it)
 #define VISF_DUPLICATE_MASK 0x2ffd0
@@ -2881,12 +2889,12 @@ public:
     }
 #endif
 
-    // The level the visual's mesh is rendered at, the first with VISF_UNKNOWN_10 (the name is a guess). The shadows'
+    // The level the visual's mesh is rendered at, the first with VISF_TEXTURE_LOD (the name is a guess). The shadows'
     // receivers read it through this: written out, VC6 reads the flags once for two uses where the original reads
     // them again.
     int GetMeshLOD() const
     {
-        return vis_flags & VISF_UNKNOWN_10 ? 0 : cur_lod;
+        return vis_flags & VISF_TEXTURE_LOD ? 0 : cur_lod;
     }
 
     float sort_dist;                    // 0x1dc, orders the transparent face groups (set by the rendering)
@@ -4352,7 +4360,8 @@ public:
     C_list<I3D_sector *> sectors;       // 0x28
     C_list<I3D_sound *> sounds;         // 0x38, CreateFrame's
     C_list<I3D_scene *> scenes;         // 0x48, CreateFrame's
-    ushort unknown_58;                  // the particles'
+    ushort next_emitor_id;              // 0x58, each emitter takes the next for its id, the game's particle emitters
+                                        // too (the name is ours)
 };
 
 // IGraph.cpp's render states, which the I3D code sets through the helpers below

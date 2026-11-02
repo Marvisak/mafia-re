@@ -1,6 +1,6 @@
 // The dubbing (PS2 g_dabing.cpp; the PC's file is most likely the one at 0x5f4b60-0x5f6a1c, between g_camera.cpp and
 // g_indicators.cpp as the names sort, docs/game-files.md). Written so far: the globals, DabingInit, DabingDone,
-// DabingGetFreeChanel, DabingReset (PC only), which C_cutscene::Close calls, and DabingTick, which C_game::Tick
+// DabingGetFreeChanel, DabingReset (PC only), which C_recorder::Close calls, and DabingTick, which C_game::Tick
 // calls; stubs of the rest the scripts call.
 //
 // Open: the original's .bss has G_DabingMorphActive (0x6bdb40) before dabingChanel (0x6bdb50), the reverse of PS2's
@@ -33,7 +33,7 @@ void DabingDone()
 {
     for (int i = 0; i < NUM_DABING_CHANELS; i++)
     {
-        if (dabingChanel[i].sound && dabingChanel[i].state != DABING_STATE_UNKNOWN_5)
+        if (dabingChanel[i].sound && dabingChanel[i].state != DABING_STATE_SCENE_SOUND)
             dabingChanel[i].sound->Release();
         dabingChanel[i].sound = NULL;
         if (dabingChanel[i].data)
@@ -87,7 +87,7 @@ void DabingReset()
         }
         if (dabingChanel[i].data)
             delete dabingChanel[i].data;
-        if (dabingChanel[i].sound && dabingChanel[i].state != DABING_STATE_UNKNOWN_5)
+        if (dabingChanel[i].sound && dabingChanel[i].state != DABING_STATE_SCENE_SOUND)
             dabingChanel[i].sound->Release();
         dabingChanel[i].sound = NULL;
     }
@@ -98,7 +98,7 @@ void DabingReset()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x5f5570
-void DabingSpeak(int chanel, uint speech, bool unknown, uint unknown2)
+void DabingSpeak(int chanel, uint speech, bool subtitle, uint kind)
 {
     StubLog("DabingSpeak");
 }
@@ -176,7 +176,7 @@ void DabingTick(uint time)
         }
         switch (dabingChanel[i].state)
         {
-        case DABING_STATE_UNKNOWN_5:
+        case DABING_STATE_SCENE_SOUND:
             // the sound's position, whether it plays or not
             if (!dabingChanel[i].sound)
                 break;
@@ -272,7 +272,7 @@ void DabingTick(uint time)
             dabingChanel[i].face->SetWeight(2, 3, 1.0f - w3);
             break;
         }
-        case DABING_STATE_UNKNOWN_4:
+        case DABING_STATE_SUBTITLE:
             if (dabingChanel[i].fade_time > time)
                 dabingChanel[i].fade_time -= time;
             else

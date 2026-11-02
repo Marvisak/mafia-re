@@ -154,7 +154,7 @@ C_list<LVERTEX> LVertList;
 // FUNCTION: LS3DF11 0x10015140
 I3D_driver::I3D_driver()
 {
-    unknown_58 = 0;
+    next_emitor_id = 0;
 }
 
 // FUNCTION: LS3DF 0x10015670

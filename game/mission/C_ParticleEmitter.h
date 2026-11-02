@@ -11,8 +11,8 @@ class I3D_frame;
 
 // An effect at work (the name is PS2's C_ParticleEmitter, after the file; the PC's is its own), 0x4c bytes: its parts,
 // one for each of the effect's parts that has subparts and a frame in the model, and the effect's values (C_effect's,
-// C_effects.h, whose members' names are the comments'). C_effects' particle_emitters keeps the free ones, its unknown_0
-// and unknown_20 the ones in use. The members' names are ours.
+// C_effects.h, whose members have the same names). C_effects' particle_emitters keeps the free ones, its in_use and
+// static_emitters the ones in use. The members' names are ours.
 class C_ParticleEmitter
 {
 public:
@@ -21,19 +21,19 @@ public:
     ushort id;                          // 0x14, the driver's count of emitters
     S_vector pos;                       // 0x18, the effect's matrix's position
     S_vector dir;                       // 0x24, and its second row
-    S_vector unknown_30;                // 0x30, unknown_1c's
-    S_vector unknown_3c;                // 0x3c, unknown_28's
-    bool unknown_48;                    // 0x48, true from the constructor and Reset
-    bool unknown_49;                    // 0x49
-    bool unknown_4a;                    // 0x4a, unknown_39's
-    bool unknown_4b;                    // 0x4b, unknown_38's
+    S_vector offset;                    // 0x30, the particles' offset from pos
+    S_vector unknown_3c;                // 0x3c, C_effect::unknown_28's
+    bool emitting;                      // 0x48, the parts make new particles (Tick): true from the constructor and Reset
+    bool frozen;                        // 0x49, Tick does nothing and the emitter stays alive
+    bool local_pos;                     // 0x4a, pos and offset are turned by the frame's matrix
+    bool local_dir;                     // 0x4b, dir is turned by it
 
     C_ParticleEmitter() : parent(NULL)
     {
-        unknown_48 = true;
-        unknown_49 = false;
-        unknown_4a = false;
-        unknown_4b = false;
+        emitting = true;
+        frozen = false;
+        local_pos = false;
+        local_dir = false;
     }
 
     ~C_ParticleEmitter();

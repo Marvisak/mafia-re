@@ -20,17 +20,19 @@ class C_human;
 struct ai_group_member
 {
     C_entity *entity;                   // 0x0
-    int unknown_4;                      // 0x4
+    // 0x4, Add's number: PS2's canCast is false for a member of 1, canReceive for one of 2 (the name is ours)
+    int role;
 };
 
-// An event of a group (PS2 ai_group_event), 0x14 bytes
+// An event of a group (PS2 ai_group_event), 0x14 bytes: PS2's ai_group::UnderAttack adds one of type 1, which
+// ProcessEvents passes on to the members once its time has come (the PC's the same). The names are ours.
 struct ai_group_event
 {
-    int unknown_0;                      // 0x0
-    int unknown_4;                      // 0x4
-    int unknown_8;                      // 0x8
-    int unknown_c;                      // 0xc
-    int unknown_10;                     // 0x10
+    int type;                           // 0x0
+    int time;                           // 0x4, the game's time it is processed at (UnderAttack's 1 s ahead)
+    float unknown_8;                    // 0x8, UnderAttack's, whose address the members' Event gets
+    C_entity *entity;                   // 0xc, the member attacked
+    C_actor *attacker;                  // 0x10
 };
 
 // A group (PS2 ai_group), 0x60 bytes (PS2's 0x4c, its vectors 0xc bytes). Its operator= (0x537a50) and destructor
@@ -38,15 +40,18 @@ struct ai_group_event
 // operator=.
 struct ai_group
 {
-    int unknown_0;                      // 0x0, the group's number (PS2's NewGroup)
+    int id;                             // 0x0, the group's number (PS2's NewGroup; the name is ours)
     int unknown_4;                      // 0x4
     int unknown_8;                      // 0x8
     int unknown_c;                      // 0xc
     std::vector<ai_group_member> members;   // 0x10
-    std::vector<uint> unknown_20;       // 0x20
+    // The vectors' names are ours: 0x20 (PS2 0x1c), the attackers ProcessEvents has told the members of, each once
+    std::vector<C_actor *> attackers;
     std::vector<ai_group_event> events; // 0x30
-    std::vector<uint> unknown_40;       // 0x40
-    std::vector<uint> unknown_50;       // 0x50
+    // 0x40 (PS2 0x34), the group's cars, which GetCarClosestAndUsable searches (PS2's) and GROUP_DISBAND frees
+    std::vector<C_car *> cars;
+    // 0x50 (PS2 0x40), GetCarFactor's: the one at a car's index in cars, 1 without one
+    std::vector<float> car_factors;
 
     // The group's events by the game's time, which ai_groups::Tick calls (PS2 name)
     void ProcessEvents(uint time);
@@ -60,9 +65,9 @@ class ai_groups
 {
 public:
     // 0x0, the game's time at which Tick unlocks the player's controls, -1 for none, as after Init and Destroy (unsigned:
-    // Tick compares it so, as PS2's)
-    uint unknown_0;
-    int unknown_4;                      // 0x4, the last group's number (PS2's NewGroup counts it up)
+    // Tick compares it so, as PS2's). The names are ours.
+    uint unlock_time;
+    int last_id;                        // 0x4, the last group's number (PS2's NewGroup counts it up)
     std::vector<ai_group> groups;       // 0x8
     // The actors the groups let go (PS2's second vector, a gif::vector<C_actor *, 2> at 0x14)
     std::vector<C_actor *> free_actors; // 0x18
@@ -90,13 +95,15 @@ public:
 #define FOLLOWSTATE_1 1                 // the leader without a car, the followers getting out
 #define FOLLOWSTATE_2 2                 // the car driving the group to its place (AddCarHunt or AddCarMoveTo)
 #define FOLLOWSTATE_3 3                 // all in the leader's car, which the AI doesn't drive for them
-#define FOLLOWSTATE_4 4                 // the car stopped until unknown_28 (PS2's Event 4 stops a driving one for 7 s)
+#define FOLLOWSTATE_4 4                 // the car stopped until stop_end (PS2's Event 4 stops a driving one for 7 s)
 #define FOLLOWSTATE_5 5                 // the followers with the leader, in the same car or none
 
-// ai_follow_group::flags (the names are ours, by value)
-#define FOLLOWF_UNKNOWN_1 0x1           // PS2's AddFollower's: a car an entity drives takes the group to its place
-#define FOLLOWF_UNKNOWN_10 0x10         // set where the car's chase had C_sledovacka::STATUS_UNKNOWN_1
-#define FOLLOWF_UNKNOWN_20 0x20         // set with car where the chase ended otherwise, cleared with it
+// ai_follow_group::flags (the names are ours)
+// Set by PS2's AddFollower that takes a position, with pos: a car an entity drives takes the group there
+#define FOLLOWF_HAS_POS 0x1
+#define FOLLOWF_DRIVE_DONE 0x10         // set where the car's chase had C_sledovacka::STATUS_DONE
+// Set with car where the chase ended otherwise, cleared with it: PS2's mustLeave gets the followers out while it's set
+#define FOLLOWF_MUSTLEAVE 0x20
 
 // A group that follows an actor (PS2 ai_follow_group), 0x38 bytes (PS2's 0x40, its position first)
 struct ai_follow_group
@@ -106,18 +113,18 @@ struct ai_follow_group
     float unknown_1c;                   // 0x1c
     uint flags;                         // 0x20, FOLLOWF_*
     int state;                          // 0x24, FOLLOWSTATE_*
-    uint unknown_28;                    // 0x28, a time in ms: the end of FOLLOWSTATE_4, 0 out of it
+    uint stop_end;                      // 0x28, a time in ms: the end of FOLLOWSTATE_4, 0 out of it (the name is ours)
     uint unknown_2c;                    // 0x2c, a time in ms: 6 s after the car set out
     C_actor *leader;                    // 0x30, the actor the group follows (PS2's AddFollower's second parameter)
-    C_car *car;                         // 0x34, the car whose chase ended (FOLLOWF_UNKNOWN_20's)
+    C_car *car;                         // 0x34, the car whose chase ended (FOLLOWF_MUSTLEAVE's)
 };
 
 class ai_follow_manager
 {
 public:
     std::vector<ai_follow_group> groups;    // 0x0
-    // 0x10, a time in ms: Update's next look at the followers' jobs, cleared by Init and Destroy
-    uint unknown_10;
+    // 0x10, a time in ms: Update's next look at the followers' jobs, cleared by Init and Destroy (the name is ours)
+    uint check_time;
 
     // PS2 names
     void Init();
@@ -147,7 +154,8 @@ struct ai_fight_member
     C_entity *entity;                   // 0x0
     int state;                          // 0x4, FIGHTSTATE_*
     int unknown_8;                      // 0x8
-    int unknown_c;                      // 0xc
+    // 0xc, 1 where the entity is of the commander's group, else 0 (PS2's SetCommander; the name is ours)
+    int same_group;
     int unknown_10;                     // 0x10
 };
 
@@ -163,28 +171,32 @@ struct ai_blob
     C_actor *actor;                     // 0x20, the target
 };
 
-// ai_fight_followship::unknown_30 (the names are guesses): the party on foot or in its car
+// ai_fight_followship::type (the names are guesses): the party on foot or in its car
 #define FIGHTPARTY_ON_FOOT 0
 #define FIGHTPARTY_IN_CAR 1
-// What ai_fight_followship::unknown_38 counts up to while the party's car hunts (the name is ours, by value)
-#define FIGHT_UNKNOWN38_END 1000000
+// What ai_fight_followship::stand_time is set to once it reaches 10 s and the hunt is given up (the name is ours)
+#define FIGHT_HUNT_ENDED 1000000
 
 // A fighting party (PS2 ai_fight_followship), 0x48 bytes (PS2's 0x60). Its destructor's copy the linker kept is
-// AIManager's file's (0x538c30, folded with the police actions').
+// AIManager's file's (0x538c30, folded with the police actions'). The members' names are ours.
 struct ai_fight_followship
 {
-    S_vector unknown_0;                 // 0x0, the party's position (ComputePosition's)
+    S_vector pos;                       // 0x0, the party's position (ComputePosition's)
     S_vector unknown_c;                 // 0xc, set from the second vector of ai_group::GetCarClosestAndUsable
     std::vector<ai_fight_member> members;   // 0x18 (PS2 0x20)
-    float unknown_28;                   // 0x28 (PS2 0x2c), a square of a distance
+    // 0x28 (PS2 0x2c), the largest square of a member's distance from pos (PS2's ComputePosition)
+    float max_dist_sq;
     // 0x2c (PS2 0x30), the game's time at which Tick looks at the party again (unsigned: Tick compares it so)
-    uint unknown_2c;
-    int unknown_30;                     // 0x30 (PS2 0x34), FIGHTPARTY_*
+    uint check_time;
+    int type;                           // 0x30 (PS2 0x34), FIGHTPARTY_*
     int unknown_34;                     // 0x34 (PS2 0x38), 0, 1 or 2
-    // 0x38 (PS2 0x3c), counted up while the car hunts, to FIGHT_UNKNOWN38_END (unsigned: Tick compares it so)
-    uint unknown_38;
-    C_entity *unknown_3c;               // 0x3c (PS2 0x40), the commander most likely: its group gives the cars
-    C_human *unknown_40;                // 0x40 (PS2 0x44), the target
+    // 0x38 (PS2 0x3c), while the car hunts: 2 s more at each of Tick's looks that finds it standing with all the
+    // members in, else 4 s; FIGHT_HUNT_ENDED once it reaches 10 s (unsigned: Tick compares it so)
+    uint stand_time;
+    // 0x3c (PS2 0x40), the member of a group with cars, or else of a group, or else the first (PS2's SetCommander):
+    // its group gives the cars
+    C_entity *commander;
+    C_human *target;                    // 0x40 (PS2 0x44)
     C_car *car;                         // 0x44 (PS2 0x48), the party's car, GROUP_DISBAND's
 
     // PS2 names: the party's position, whether its car hunts the target, and a new party of the members that take the
@@ -233,13 +245,13 @@ public:
 // ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
+// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_i_show@C_game@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -249,7 +261,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
@@ -258,4 +270,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUS_particle_subpart@@PAPAU2@00@Z
+// ?copy@std@@YIPAPAVC_fire@@PAPAV2@00@Z

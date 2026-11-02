@@ -70,7 +70,7 @@ public:
 // S_DICE::operator=
 
 // TEMPLATE: GAME 0x563b40
-// std::vector<C_actor *,std::allocator<C_actor *> >::operator=
+// std::vector<float,std::allocator<float> >::operator=
 
 // Its destructor's copy, which the game's destructor and its constructor's unwinding call (Mission.cpp's range)
 // SYNTHETIC: GAME 0x5483d0

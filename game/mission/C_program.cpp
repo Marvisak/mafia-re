@@ -51,7 +51,7 @@
 #include "collision/g_colls.h"
 #include "g_material.h"
 #include "input/controls.h"
-#include "mission/C_cutscene.h"
+#include "mission/C_recorder.h"
 #include "mission/C_effects.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -1111,19 +1111,19 @@ bool C_program::DecodeParams(char *params, S_instruction &ins)
                 delete ins.params;
                 break;
             }
-            s->unknown_40 = atoi(p[1]);
-            s->unknown_44 = (float)atof(p[2]);
-            s->unknown_48 = (float)atof(p[3]);
-            s->unknown_4c = 0;
-            s->unknown_50 = 0;
+            s->reg = atoi(p[1]);
+            s->range = (float)atof(p[2]);
+            s->volume = (float)atof(p[3]);
+            s->result_reg = 0;
+            s->fade = 0;
             if (num > 4)
             {
-                s->unknown_4c = atoi(p[4]);
+                s->result_reg = atoi(p[4]);
                 if (num > 5)
                 {
-                    s->unknown_50 = (float)atof(p[5]);
-                    if (s->unknown_50 > 1.0f)
-                        s->unknown_50 = 1.0f / s->unknown_50;
+                    s->fade = (float)atof(p[5]);
+                    if (s->fade > 1.0f)
+                        s->fade = 1.0f / s->fade;
                 }
             }
             return true;
@@ -3294,19 +3294,19 @@ void C_program::Process(uint time)
         // On the frame of a register, else on the script's actor's; the sound's number into a float register
         S_playsound_params *s = (S_playsound_params *)instructions[cur_command].params;
         I3D_frame *frm = NULL;
-        if (s->unknown_40 >= 0 && num_frame_regs > s->unknown_40)
-            frm = frame_regs[s->unknown_40];
+        if (s->reg >= 0 && num_frame_regs > s->reg)
+            frm = frame_regs[s->reg];
         if (!frm)
             frm = actor->GetFrame();
         int sound;
-        if (s->unknown_50 == 0.0f)
+        if (s->fade == 0.0f)
             sound = act_mission->GetGame()->Play3DSound(frm, s->name, I3DSOUND_POINT, S_vector(0.0f, 0.0f, 0.0f),
-                s->unknown_44 / 2, s->unknown_44, s->unknown_48, false, .001f, false);
+                s->range / 2, s->range, s->volume, false, .001f, false);
         else
             sound = act_mission->GetGame()->Play3DSound(frm, s->name, I3DSOUND_POINT, S_vector(0.0f, 0.0f, 0.0f),
-                s->unknown_44 / 2, s->unknown_44, s->unknown_48, true, s->unknown_50, false);
-        if (num_float_regs > s->unknown_4c && s->unknown_4c >= 0)
-            float_regs[s->unknown_4c] = (float)sound;
+                s->range / 2, s->range, s->volume, true, s->fade, false);
+        if (num_float_regs > s->result_reg && s->result_reg >= 0)
+            float_regs[s->result_reg] = (float)sound;
     }
         break;
     case CMD_PLAYSOUNDSTOP:
@@ -3484,9 +3484,9 @@ void C_program::Process(uint time)
         mafiaIndicators.WideScreenSetRatio(1.0f / 1.85f);
         mafiaIndicators.WideScreenSetOn(true, 250);
         if (act_mission->GetGame()->GetPlayer())
-            act_mission->GetGame()->GetPlayer()->SetUnknown598(false);
-        if (act_mission->GetUnknown78() < 1)
-            act_mission->SetUnknown78(1);
+            act_mission->GetGame()->GetPlayer()->SetIdleAnims(false);
+        if (act_mission->GetSkipFrames() < 1)
+            act_mission->SetSkipFrames(1);
         SetRecordPlaying(true);
     }
         break;
@@ -3495,15 +3495,15 @@ void C_program::Process(uint time)
             return;
         break;
     case CMD_RECUNLOAD:
-        act_mission->GetGame()->DestroyUnknown2f8cParticles();
+        act_mission->GetGame()->DestroyCutsceneParticles();
         cutscene.Close();
         act_mission->GetGame()->GetCamera().SetCutscene(false);
         mafiaIndicators.PopFlags();
         mafiaIndicators.WideScreenSetOn(false, 250);
         if (act_mission->GetGame()->GetPlayer())
-            act_mission->GetGame()->GetPlayer()->SetUnknown598(true);
-        if (act_mission->GetUnknown78() < 2)
-            act_mission->SetUnknown78(2);
+            act_mission->GetGame()->GetPlayer()->SetIdleAnims(true);
+        if (act_mission->GetSkipFrames() < 2)
+            act_mission->SetSkipFrames(2);
         act_mission->GetGame()->GetSoundArena().Init();
         SetRecordPlaying(false);
         act_mission->GetGame()->StreamDestroyAll();
@@ -3568,12 +3568,12 @@ void C_program::Process(uint time)
         // and his car, their directions and the player's position relative to the script's actor's frame.
         if (act_mission->GetGame()->GetPlayer() && AIManager.police.PlukovnikuMasVChladkuPlajeraFrafera())
             return;
-        act_mission->GetGame()->SetUnknown3665(true);
+        act_mission->GetGame()->SetMissionPassed(true);
         S_change_mission_params *m = (S_change_mission_params *)instructions[cur_command].params;
         strcpy(NewMission, m->name1);
         ActiveNewMission = true;
         strcpy(NewMission_ENTRY, m->name2);
-        act_mission->KeepUnknown70();
+        act_mission->KeepMissionNumber();
         NewMissionSpeed = m->value;
         if (!strlen(NewMission_ENTRY))
             break;
@@ -3648,8 +3648,8 @@ void C_program::Process(uint time)
             break;
         float_regs[p[2]] = (actor_regs[p[0]]->GetFrame()->GetWorldPos() -
             actor_regs[p[1]]->GetFrame()->GetWorldPos()).Magnitude();
-        // The fourth parameter: negative, at least 0.1, where the second actor has unknown_5e
-        if (p[3] && actor_regs[p[1]]->GetUnknown5e())
+        // The fourth parameter: negative, at least 0.1, where the second actor is dead
+        if (p[3] && actor_regs[p[1]]->GetDead())
         {
             if (float_regs[p[2]] < .1f)
                 float_regs[p[2]] = .1f;
@@ -3680,8 +3680,8 @@ void C_program::Process(uint time)
         C_human *human = (C_human *)actor_regs[p[0]];
         S_GameItem item;
         item.id = (ushort)p[1];
-        item.unknown_4 = p[2];
-        item.unknown_8 = p[3];
+        item.ammo_loaded = p[2];
+        item.ammo_spare = p[3];
         human->inventory.Insert(&item, false);
         human->ChangeWeaponModel();
         if (human->GetType() == ACTOR_ENTITY)
@@ -3788,7 +3788,7 @@ void C_program::Process(uint time)
         act_mission->GetGame()->LoadDiffData((char *)instructions[cur_command].params);
         break;
     case CMD_CLEARDIFFERENCES:
-        act_mission->GetGame()->SetUnknown2ad9();
+        act_mission->GetGame()->SetClearDiffData();
         break;
     case CMD_BLOCK_BEGIN:
         in_block = true;
@@ -3881,7 +3881,7 @@ void C_program::Process(uint time)
         mafiaIndicators.RemoveFlags(INDF_MAP);
         mafiaIndicators.RemoveFlags(INDF_CROSSHAIR);
         if (act_mission->GetGame()->GetPlayer())
-            act_mission->GetGame()->GetPlayer()->SetUnknown598(false);
+            act_mission->GetGame()->GetPlayer()->SetIdleAnims(false);
         break;
     }
     case CMD_DIALOG_END:
@@ -3889,7 +3889,7 @@ void C_program::Process(uint time)
         if (act_mission->GetGame()->GetPlayer())
         {
             ((C_player *)act_mission->GetGame()->GetPlayer())->IndicatorSetAimed();
-            act_mission->GetGame()->GetPlayer()->SetUnknown598(true);
+            act_mission->GetGame()->GetPlayer()->SetIdleAnims(true);
         }
         break;
     case CMD_DIALOG_CAMSWITCH:
@@ -4059,9 +4059,9 @@ void C_program::Process(uint time)
             box.velocity = S_vector(0.0f, -.11f, 0.0f);
             drop->InitBox(&box);
             drop->item.id = (ushort)p[2];
-            drop->item.unknown_4 = p[3];
-            drop->item.unknown_8 = p[4];
-            drop->item.unknown_c = NULL;
+            drop->item.ammo_loaded = p[3];
+            drop->item.ammo_spare = p[4];
+            drop->item.using_object = NULL;
             act_mission->GetGame()->AddTemporaryActor(drop);
         }
         else
@@ -4117,9 +4117,9 @@ void C_program::Process(uint time)
                 break;
         }
         obj->item.id = (ushort)p[1];
-        obj->item.unknown_4 = p[2];
-        obj->item.unknown_8 = p[3];
-        obj->item.unknown_c = obj;
+        obj->item.ammo_loaded = p[2];
+        obj->item.ammo_spare = p[3];
+        obj->item.using_object = obj;
         act_mission->GetGame()->GetUsingObject().AddObject(obj);
         act_mission->GetGame()->AddFramePlacement(frame_regs[p[0]]);
         frame_regs[p[0]]->SetOn(false);
@@ -4248,7 +4248,7 @@ void C_program::Process(uint time)
             {
                 label = c->name2;
                 C_car *car = ((C_human *)actor_regs[c->value1])->GetCar();
-                if (car && car->GetType() == ACTOR_CAR && ((C_human *)actor_regs[c->value1])->unknown_40c != 9 &&
+                if (car && car->GetType() == ACTOR_CAR && ((C_human *)actor_regs[c->value1])->action_state != 9 &&
                     ((C_human *)actor_regs[c->value1])->seat > -1)
                     car = NULL;
                 if (car == actor_regs[c->value2])
@@ -4271,7 +4271,7 @@ void C_program::Process(uint time)
                 float_regs[p[1]] = 0.0f;
             else
                 float_regs[p[1]] = human->properties[p[2]] / human->max_properties[p[2]] * 100.0f;
-            if (p[2] == HUMAN_PROPERTY_ENERGY && !human->GetUnknown5d())
+            if (p[2] == HUMAN_PROPERTY_ENERGY && !human->GetAlive())
                 float_regs[p[1]] = 0.0f;
         }
         break;
@@ -4304,7 +4304,7 @@ void C_program::Process(uint time)
             {
                 int lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] /
                     human->max_properties[HUMAN_PROPERTY_ENERGY] * 100.0f);
-                if (!human->GetUnknown5e())
+                if (!human->GetDead())
                     lives = Max(lives, 1);
                 mafiaIndicators.PlayerSetLives(lives);
             }
@@ -4312,7 +4312,7 @@ void C_program::Process(uint time)
             {
                 int lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] /
                     human->max_properties[HUMAN_PROPERTY_ENERGY] * 100.0f);
-                if (!human->GetUnknown5e())
+                if (!human->GetDead())
                     lives = Max(lives, 1);
                 mafiaIndicators.PlayerSetWingmanLives(human->wingman, lives);
             }
@@ -4338,7 +4338,7 @@ void C_program::Process(uint time)
                 break;
             C_human *human = (C_human *)actor_regs[p[0]];
             actor_regs[p[1]] = human->GetCar();
-            if (human->GetCar() && human->GetCar()->GetType() == ACTOR_CAR && human->unknown_40c != 9 &&
+            if (human->GetCar() && human->GetCar()->GetType() == ACTOR_CAR && human->action_state != 9 &&
                 human->seat > -1)
                 actor_regs[p[1]] = NULL;
         }
@@ -4492,7 +4492,7 @@ void C_program::Process(uint time)
         {
             int *p = (int *)instructions[cur_command].params;
             // Only this effect with the particles off
-            if (act_mission->GetOptions().GetParticles() < 1 && p[1] != EFFECT_UNKNOWN_5A)
+            if (act_mission->GetOptions().GetParticles() < 1 && p[1] != EFFECT_DYMOVNICE)
                 break;
             if (num_frame_regs <= p[0] || p[0] < 0 || !frame_regs[p[0]])
                 break;
@@ -4526,7 +4526,7 @@ void C_program::Process(uint time)
             std::vector<C_actor *> &actors = C_actor::GetGlobalActors();
             for (int i = actors.size(); i--;)
             {
-                if (actors[i]->GetType() == p[2] && actors[i]->GetFrame() && actors[i]->GetUnknown4() != 2 &&
+                if (actors[i]->GetType() == p[2] && actors[i]->GetFrame() && actors[i]->GetActFlags() != 2 &&
                     actors[i] != actor)
                 {
                     float dist = (actors[i]->GetFrame()->GetWorldPos() - pos).Square();
@@ -4550,8 +4550,8 @@ void C_program::Process(uint time)
             S_event_params *e = (S_event_params *)instructions[cur_command].params;
             if (e->value1)
             {
-                act_mission->GetGame()->SetUnknown48(1);
-                act_mission->GetGame()->SetUnknown3665(true);
+                act_mission->GetGame()->SetMissionEnd(1);
+                act_mission->GetGame()->SetMissionPassed(true);
             }
             else
             {
@@ -4559,14 +4559,14 @@ void C_program::Process(uint time)
                 switch (GM_Menu::ExecuteMenu(new GM_GameFailed(e->value2), true, false))
                 {
                 case GAMEFAILED_RESULT_EXIT:
-                    act_mission->GetGame()->SetUnknown48(1);
+                    act_mission->GetGame()->SetMissionEnd(1);
                     break;
                 case GAMEFAILED_RESULT_4FC:
-                    act_mission->GetGame()->SetUnknown48(2);
+                    act_mission->GetGame()->SetMissionEnd(2);
                     break;
                 case MAINMENU_LOAD_GAME:
                 case GAMEFAILED_RESULT_RETRY:
-                    act_mission->GetGame()->SetUnknown48(3);
+                    act_mission->GetGame()->SetMissionEnd(3);
                     break;
                 }
             }
@@ -4633,7 +4633,7 @@ void C_program::Process(uint time)
         if (num_frame_regs > p[0] && p[0] >= 0 && frame_regs[p[0]])
             act_mission->GetGame()->GetCamera().LockAt(frame_regs[p[0]]->GetWorldPos(),
                 frame_regs[p[0]]->GetWorldDir());
-        if (act_mission->GetGame()->GetUnknown2b14() < 6)
+        if (act_mission->GetGame()->GetInitFrames() < 6)
             act_mission->GetGame()->SetCameraRotRepair();
         act_mission->GetGame()->RecomputeLightCache();
         break;
@@ -4657,7 +4657,7 @@ void C_program::Process(uint time)
             human->SetWingman(p[2], p[1]);
             mafiaIndicators.PlayerSetWingmanName(p[2], p[1]);
             int lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] / human->max_properties[HUMAN_PROPERTY_ENERGY] * 100.0f);
-            if (!human->GetUnknown5e())
+            if (!human->GetDead())
                 lives = Max(lives, 1);
             mafiaIndicators.PlayerSetWingmanLives(p[2], lives);
             switch (p[2])
@@ -4830,7 +4830,7 @@ void C_program::Process(uint time)
         {
             if (num_actor_regs > p[0] && p[0] >= 0 && actor_regs[p[0]] &&
                 (actor_regs[p[0]]->GetType() == ACTOR_ENTITY || actor_regs[p[0]]->GetType() == ACTOR_PLAYER) &&
-                !actor_regs[p[0]]->GetUnknown5e())
+                !actor_regs[p[0]]->GetDead())
             {
                 p[3] = DabingGetFreeChanel();
                 DabingSetHuman(p[3], (C_human *)actor_regs[p[0]]);
@@ -4930,7 +4930,7 @@ void C_program::Process(uint time)
         {
             C_car *car = (C_car *)actor_regs[s->value1];
             int door = s->value2;
-            if (door >= 0 && door < car->GetNumUnknownCa0())
+            if (door >= 0 && door < car->GetNumSeats())
             {
                 float open = s->value * .01f;
                 if (open < 0.0f)
@@ -5148,7 +5148,7 @@ void C_program::Process(uint time)
                     ((C_car *)actor_regs[p[0]])->SetSpecialDynamicColls(false);
                     ((C_car *)actor_regs[p[0]])->LockVehicle(false);
                     ((C_car *)actor_regs[p[0]])->SetVelocity(S_vector(0.0f, 0.0f, 0.0f));
-                    ((C_car *)actor_regs[p[0]])->SetUnknown420(S_vector(0.0f, 0.0f, 0.0f));
+                    ((C_car *)actor_regs[p[0]])->SetAngularVelocity(S_vector(0.0f, 0.0f, 0.0f));
                     act_mission->GetGame()->BoxRecompileBoxForCar((C_car *)actor_regs[p[0]], false);
                 }
             }
@@ -5185,15 +5185,15 @@ void C_program::Process(uint time)
         break;
     case CMD_RACING_MISSION6_START:
         // Starts the race and waits for its end: the command stays until the game's state is RACE6_STATE_END
-        if (act_mission->GetGame()->GetUnknown2edc() == RACE6_STATE_NONE)
+        if (act_mission->GetGame()->GetRace6State() == RACE6_STATE_NONE)
         {
             int i = *(int *)instructions[cur_command].params;
             if (i >= 0 && i < num_float_regs)
-                act_mission->GetGame()->SetUnknown2ee0(&float_regs[i]);
-            act_mission->GetGame()->SetUnknown2edc(true);
+                act_mission->GetGame()->SetRace6Result(&float_regs[i]);
+            act_mission->GetGame()->SetRace6State(true);
             return;
         }
-        if (act_mission->GetGame()->GetUnknown2edc() != RACE6_STATE_END)
+        if (act_mission->GetGame()->GetRace6State() != RACE6_STATE_END)
             return;
         break;
     case CMD_CAR_EXPLOSION:
@@ -5467,17 +5467,17 @@ void C_program::Process(uint time)
                 switch (p[1])
                 {
                 case 1:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(false);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorL(true);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors);
                     break;
                 case 2:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(false);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorL(true);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors | VLIGHT_PROJECTOR_INDICATOR);
                     break;
                 default:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(true);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(true);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorL(false);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors);
                 }
@@ -5493,17 +5493,17 @@ void C_program::Process(uint time)
                 switch (p[1])
                 {
                 case 1:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(false);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorR(true);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors);
                     break;
                 case 2:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(false);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorR(true);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors | VLIGHT_PROJECTOR_INDICATOR);
                     break;
                 default:
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(true);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(true);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorR(false);
                     ((C_car *)actor_regs[p[0]])->SetProjectors(projectors);
                 }
@@ -5516,10 +5516,10 @@ void C_program::Process(uint time)
             if (num_actor_regs > p[0] && p[0] >= 0 && actor_regs[p[0]] && actor_regs[p[0]]->GetType() == ACTOR_CAR)
             {
                 if (p[1])
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(true);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(true);
                 else
                 {
-                    ((C_car *)actor_regs[p[0]])->SetLightsUnknown8(false);
+                    ((C_car *)actor_regs[p[0]])->SetIndicatorAuto(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorL(false);
                     ((C_car *)actor_regs[p[0]])->SetIndicatorR(false);
                 }
@@ -5563,7 +5563,7 @@ void C_program::Process(uint time)
             int i = *(int *)instructions[cur_command].params;
             if (i >= 0 && i < num_actor_regs && actor_regs[i] &&
                 (actor_regs[i]->GetType() == ACTOR_PLAYER || actor_regs[i]->GetType() == ACTOR_ENTITY))
-                ((C_human *)actor_regs[i])->unknown_418 += .1f;
+                ((C_human *)actor_regs[i])->fall += .1f;
         }
         break;
     case CMD_CREATE_PHYSICALOBJECT:
@@ -6009,15 +6009,15 @@ void C_program::Process(uint time)
     case CMD_CARDAMAGEVISIBLE:
         {
             int on = *(int *)instructions[cur_command].params;
-            C_player::SetUnknown6478b0(on != 0);
+            C_player::SetCanCarDamage(on != 0);
             if (on)
             {
                 if (act_mission->GetGame()->GetPlayer() && act_mission->GetGame()->GetPlayer()->GetCar() &&
                     act_mission->GetGame()->GetPlayer()->GetCar()->GetType() == ACTOR_CAR)
-                    mafiaIndicators.AddFlags(INDF_UNKNOWN_10000);
+                    mafiaIndicators.AddFlags(INDF_CAR_DAMAGE);
             }
             else
-                mafiaIndicators.RemoveFlags(INDF_UNKNOWN_10000);
+                mafiaIndicators.RemoveFlags(INDF_CAR_DAMAGE);
         }
         break;
     case CMD_IFPLAYERSTEALCAR:
@@ -6959,11 +6959,11 @@ void C_program::Process(uint time)
         if (actor_regs[p[0]]->GetType() != ACTOR_ENTITY && actor_regs[p[0]]->GetType() != ACTOR_PLAYER)
             break;
         C_human *human = (C_human *)actor_regs[p[0]];
-        for (int n = CRacing->GetUnknown298(); n--; )
+        for (int n = CRacing->GetOpponentCount(); n--; )
         {
-            if (CRacing->GetOpponents()[n]->GetUnknown60() == p[1])
+            if (CRacing->GetOpponents()[n]->GetId() == p[1])
             {
-                human->_intern_ChangeModel(mafiaCarDatabase.GetPlayerModel(CRacing->GetOpponents()[n]->unknown_20),
+                human->_intern_ChangeModel(mafiaCarDatabase.GetPlayerModel(CRacing->GetOpponents()[n]->driver_model),
                     false);
                 break;
             }
@@ -7037,58 +7037,58 @@ void C_program::Process(uint time)
     }
         break;
     case CMD_PM_SHOWSYMBOL:
-        if (act_mission->GetGame()->GetShvestky()->GetUnknown0())
+        if (act_mission->GetGame()->GetShvestky()->GetActive())
             break;
         switch (*(int *)instructions[cur_command].params)
         {
         case 1:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(1, 1.0f);
             break;
         case 2:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(2, 1.0f);
             break;
         case 3:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(3, 1.0f);
             break;
         case 4:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(4, 1.0f);
             break;
         case 5:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(1, .4f);
             break;
         case 6:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(2, .4f);
             break;
         case 7:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(3, .4f);
             break;
         case 8:
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.AddFlags(INDF_SYMBOL);
             mafiaIndicators.SetSymbol(4, .4f);
             break;
         default:
-            mafiaIndicators.RemoveFlags(INDF_UNKNOWN_4000000);
+            mafiaIndicators.RemoveFlags(INDF_SYMBOL);
             break;
         }
         break;
     case CMD_PM_SHOWPROGRESS:
-        if (act_mission->GetGame()->GetShvestky()->GetUnknown0())
+        if (act_mission->GetGame()->GetShvestky()->GetActive())
             break;
         if (*(int *)instructions[cur_command].params)
-            mafiaIndicators.AddFlags(INDF_UNKNOWN_10);
+            mafiaIndicators.AddFlags(INDF_PROGRESS);
         else
-            mafiaIndicators.RemoveFlags(INDF_UNKNOWN_10);
+            mafiaIndicators.RemoveFlags(INDF_PROGRESS);
         break;
     case CMD_PM_SETPROGRESS:
     {
-        if (act_mission->GetGame()->GetShvestky()->GetUnknown0())
+        if (act_mission->GetGame()->GetShvestky()->GetActive())
             break;
         int *p = (int *)instructions[cur_command].params;
         if (num_float_regs <= p[0] || p[0] < 0)
@@ -7098,7 +7098,7 @@ void C_program::Process(uint time)
             progress = 0.0f;
         else if (progress > 1.0f)
             progress = 1.0f;
-        mafiaIndicators.SetUnknown46e8(progress);
+        mafiaIndicators.SetProgress(progress);
     }
         break;
     case CMD_HUMAN_ENTERTOTRUCK:
@@ -7109,7 +7109,7 @@ void C_program::Process(uint time)
             break;
         if (actor_regs[p[0]]->GetType() != ACTOR_PLAYER && actor_regs[p[0]]->GetType() != ACTOR_ENTITY)
             break;
-        if (actor_regs[p[1]]->GetType() != ACTOR_CAR || actor_regs[p[1]]->GetUnknown14() != ACTORSUB_CAR_EX)
+        if (actor_regs[p[1]]->GetType() != ACTOR_CAR || actor_regs[p[1]]->GetSubtype() != ACTORSUB_CAR_EX)
             break;
         C_human *human = (C_human *)actor_regs[p[0]];
         C_car_ex *car = (C_car_ex *)actor_regs[p[1]];
@@ -7187,7 +7187,7 @@ void C_program::Process(uint time)
         if (num_actor_regs <= p[0] || p[0] < 0 || !actor_regs[p[0]] || num_float_regs <= p[1] || p[1] < 0 ||
             actor_regs[p[0]]->GetType() != ACTOR_CAR)
             break;
-        float_regs[p[1]] = (float)((C_car *)actor_regs[p[0]])->GetNumUnknownCa0();
+        float_regs[p[1]] = (float)((C_car *)actor_regs[p[0]])->GetNumSeats();
     }
         break;
     case CMD_FRM_SETALPHA:
@@ -7265,7 +7265,7 @@ void C_program::Process(uint time)
         }
         break;
     case CMD_WEATHER_PREPAREBUFFER:
-        act_mission->GetGame()->SetUnknown3638(*(int *)instructions[cur_command].params);
+        act_mission->GetGame()->SetWeatherBuffer(*(int *)instructions[cur_command].params);
         break;
     case CMD_SUBTITLE:
         mafiaLoadSave.ExecuteCredits();
@@ -7308,7 +7308,7 @@ void C_program::Process(uint time)
                     if (car->Init(model))
                     {
                         car->GameInit();
-                        car->SetUnknown220c(true);
+                        car->SetTemporary(true);
                         act_mission->GetGame()->InternTempActAdd(car);
                         car->CalmVehicle(100);
                         car->SetUnknown65(true);
@@ -7565,7 +7565,7 @@ void C_program::Process(uint time)
         act_mission->GetGame()->ClearCartridges();
         break;
     case CMD_NPC_SHUTUP:
-        C_traffic_generator::SetUnknown63d728(*(int *)instructions[cur_command].params == 0);
+        C_traffic_generator::SetGlobalValidScream(*(int *)instructions[cur_command].params == 0);
         break;
     case CMD_FREERIDE_ENABLECAR:
         mafiaLoadSave.FreerideEnableCar(*(char *)instructions[cur_command].params);
@@ -7591,7 +7591,7 @@ void C_program::Process(uint time)
                 break;
             float_regs[p[1]] = 0.0f;
             ai_action *job = ((C_entity *)actor_regs[p[0]])->action_manager.GetBaseJob();
-            if (job && job->type == AIACTION_UNKNOWN_1E && job->unknown_20->unknown_38 == AIACTION20_UNKNOWN_A)
+            if (job && job->type == AIACTION_NORMALFIGHT && job->params->state == NORMALFIGHT_STATE_A)
                 float_regs[p[1]] = 1.0f;
         }
         break;
@@ -7609,8 +7609,8 @@ void C_program::Process(uint time)
         {
             // The group of the float register's number goes apart in steps, the second parameter the step (0 from
             // DecodeParams): 0 stops the members' fights' cars, keeping the last one in the third parameter, 1 marks
-            // the members without a car or not unknown_5d until none is left, 2 frees the members, that car and the
-            // group's unknown_40. The first two steps stay on the command. The register's test is unsigned, as PS2's.
+            // the members without a car or not alive until none is left, 2 frees the members, that car and the
+            // group's cars. The first two steps stay on the command. The register's test is unsigned, as PS2's.
             int *p = (int *)instructions[cur_command].params;
             if ((uint)p[0] >= (uint)num_float_regs)
                 break;
@@ -7627,11 +7627,11 @@ void C_program::Process(uint time)
                         C_entity *e = g->members[i].entity;
                         uint unknown;
                         ai_fight_followship *party = AIManager.fight.GetParty(e, NULL, &unknown);
-                        if (party && party->unknown_30 == 1)
+                        if (party && party->type == FIGHTPARTY_IN_CAR)
                         {
                             p[2] = (int)party->car;
                             act_mission->GetGame()->GetSledovacka()->SetActionStatus(party->car,
-                                C_sledovacka::STATUS_UNKNOWN_2);
+                                C_sledovacka::STATUS_FAILED);
                         }
                     }
                     p[1] = 1;
@@ -7643,9 +7643,9 @@ void C_program::Process(uint time)
                     for (int i = g->members.size() - 1; i >= 0; i--)
                     {
                         C_entity *e = g->members[i].entity;
-                        if (!e->GetCar() || !e->GetUnknown5d())
+                        if (!e->GetCar() || !e->GetAlive())
                         {
-                            e->SetUnknownF50Bit2(true);
+                            e->SetNoStateSwitch(true);
                             count--;
                         }
                     }
@@ -7663,14 +7663,14 @@ void C_program::Process(uint time)
                         e->GetSensors()->Init(e);
                         e->GetVisLogs()->Init(e);
                         e->action_manager.Clear(false);
-                        e->SetUnknownF50Bit2(false);
+                        e->SetNoStateSwitch(false);
                         AIManager.fight.LeaveParty(e, NULL);
                         AIManager.groups.AddFreeActor(e);
                     }
                     if (p[2])
                         AIManager.groups.AddFreeActor((C_actor *)p[2]);
-                    for (i = g->unknown_40.size() - 1; i >= 0; i--)
-                        AIManager.groups.AddFreeActor((C_actor *)g->unknown_40[i]);
+                    for (i = g->cars.size() - 1; i >= 0; i--)
+                        AIManager.groups.AddFreeActor(g->cars[i]);
                 }
                 break;
             }
@@ -7692,7 +7692,7 @@ void C_program::Process(uint time)
                 break;
             C_car *car = (C_car *)actor_regs[p[0]];
             int seat = p[1];
-            if (car->GetNumUnknownCa0() <= seat || seat < 0)
+            if (car->GetNumSeats() <= seat || seat < 0)
                 break;
             car->SetEnterProtect1(seat, p[2] != 0);
         }

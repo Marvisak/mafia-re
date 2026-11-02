@@ -9,55 +9,55 @@
 class C_Particle;
 class I3D_frame;
 
-// C_ParticleType::unknown_bc, a part's flags (the names are ours)
+// C_ParticleType::flags, a part's flags (the names are ours)
 #define PARTF_BILLBOARD 0x1             // the particles turn to the camera (I3D_part_base::billboard)
 #define PARTF_TURN 0x2                  // a particle is turned to its direction (C_Particle::Init)
 #define PARTF_DIR 0x4                   // the particles start in the effect's direction, else in none
-#define PARTF_LOCAL_DIR 0x8             // unknown_48 and unknown_54 are turned by the parent's matrix
-#define PARTF_LOCAL_POS 0x10            // unknown_30 and unknown_3c are turned by it
+#define PARTF_LOCAL_DIR 0x8             // dir and dir_spread are turned by the parent's matrix
+#define PARTF_LOCAL_POS 0x10            // offset and offset_spread are turned by it
 
-// S_particle_subpart::unknown_8, a subpart's flags (the names are ours)
-#define SUBPARTF_GRAVITY 0x2            // the particles fall by unknown_60
+// S_particle_subpart::flags, a subpart's flags (the names are ours)
+#define SUBPARTF_GRAVITY 0x2            // the particles fall by gravity
 #define SUBPARTF_OFF 0x8                // the particles' visuals are off in it
-#define SUBPARTF_ROTATE 0x10            // the visuals turn about their axes by unknown_24
+#define SUBPARTF_ROTATE 0x10            // the visuals turn about their axes by rot_speed
 #define SUBPARTF_STILL 0x20             // the particles don't move
 
 // A subpart's values in an emitter (the name is ours), 0x64 bytes: a copy of a C_effect_subpart's (C_effects.h, whose
-// members' names are the comments'), which Reset sets to the subpart's defaults. C_effects' particle_subparts keeps the
-// free ones. The names are ours, and so are the setters', each a group of the values that CreateSParticle copies
-// together: its floats go through the FPU, as through an inline function's parameters, and its first three vectors
-// through temporaries, as by-value parameters.
+// members have the same names), which Reset sets to the subpart's defaults. C_effects' particle_subparts keeps the free
+// ones. The names are ours, and so are the setters', each a group of the values that CreateSParticle copies together:
+// its floats go through the FPU, as through an inline function's parameters, and its first three vectors through
+// temporaries, as by-value parameters.
 struct S_particle_subpart
 {
     // C_Particle::SetPhase and Tick's: a value with a range is spread by it at random, either way
-    int unknown_0;                      // 0x0, unknown_30's (1000), the subpart's time, in ms
-    int unknown_4;                      // 0x4, unknown_34's, its range
-    int unknown_8;                      // 0x8, unknown_60's (1), SUBPARTF_*
-    S_vector unknown_c;                 // 0xc, the particles' direction in it (null: they keep theirs)
-    S_vector unknown_18;                // 0x18, its spread
-    S_vector unknown_24;                // 0x24, the visuals' turn about x, y and z, per second (SUBPARTF_ROTATE)
+    int duration;                       // 0x0, the subpart's time, in ms (the table's subpart's default: 1000)
+    int duration_range;                 // 0x4
+    int flags;                          // 0x8, SUBPARTF_* (the table's subpart's default: 1)
+    S_vector dir;                       // 0xc, the particles' direction in it (null: they keep theirs)
+    S_vector dir_spread;                // 0x18
+    S_vector rot_speed;                 // 0x24, the visuals' turn about x, y and z, per second (SUBPARTF_ROTATE)
     uchar unknown_30[8];                // 0x30
-    S_vector unknown_38;                // 0x38, the visuals' scale at its end
-    S_vector unknown_44;                // 0x44, its range
-    float unknown_50;                   // 0x50, their transparency at its end
-    float unknown_54;                   // 0x54, its range
-    float unknown_58;                   // 0x58, how the particles' speed changes (C_Particle::unknown_60)
-    float unknown_5c;                   // 0x5c, its range
-    float unknown_60;                   // 0x60, unknown_64's (9.8), their fall (SUBPARTF_GRAVITY), per second
+    S_vector scale;                     // 0x38, the visuals' scale at its end
+    S_vector scale_range;               // 0x44
+    float transparency;                 // 0x50, their transparency at its end
+    float transparency_range;           // 0x54
+    float speed_change;                 // 0x58, how the particles' speed changes (C_Particle::speed_change)
+    float speed_change_range;           // 0x5c
+    float gravity;                      // 0x60, their fall (SUBPARTF_GRAVITY), per second (the default: 9.8)
 
     // Reset's values, written out: CreateSParticle inlines it, which a call of Reset would leave out of line
     S_particle_subpart()
     {
-        unknown_0 = 0;
-        unknown_4 = 0;
-        unknown_8 = 1;
-        unknown_38 = S_vector(1.0f, 1.0f, 1.0f);
-        unknown_44 = S_vector(0.0f, 0.0f, 0.0f);
-        unknown_50 = 0.0f;
-        unknown_54 = 0.0f;
-        unknown_58 = 0.0f;
-        unknown_5c = 0.0f;
-        unknown_60 = 9.8f;
+        duration = 0;
+        duration_range = 0;
+        flags = 1;
+        scale = S_vector(1.0f, 1.0f, 1.0f);
+        scale_range = S_vector(0.0f, 0.0f, 0.0f);
+        transparency = 0.0f;
+        transparency_range = 0.0f;
+        speed_change = 0.0f;
+        speed_change_range = 0.0f;
+        gravity = 9.8f;
     }
 
     // Declared and empty: deleting one tests the pointer, which a structure without a destructor doesn't
@@ -66,53 +66,53 @@ struct S_particle_subpart
     // The defaults, which C_ParticleType::Reset inlines
     void Reset()
     {
-        unknown_0 = 0;
-        unknown_4 = 0;
-        unknown_8 = 1;
-        unknown_38 = S_vector(1.0f, 1.0f, 1.0f);
-        unknown_44 = S_vector(0.0f, 0.0f, 0.0f);
-        unknown_50 = 0.0f;
-        unknown_54 = 0.0f;
-        unknown_58 = 0.0f;
-        unknown_5c = 0.0f;
-        unknown_60 = 9.8f;
+        duration = 0;
+        duration_range = 0;
+        flags = 1;
+        scale = S_vector(1.0f, 1.0f, 1.0f);
+        scale_range = S_vector(0.0f, 0.0f, 0.0f);
+        transparency = 0.0f;
+        transparency_range = 0.0f;
+        speed_change = 0.0f;
+        speed_change_range = 0.0f;
+        gravity = 9.8f;
     }
 
     // Whether the particles' visuals are on in the subpart (the name is ours). C_Particle::Init tests it through this:
     // written out, VC6 tests the byte (test byte ptr [ecx + 8], 8) where the original shifts the flags first.
     bool IsOn() const
     {
-        return !(unknown_8 & SUBPARTF_OFF);
+        return !(flags & SUBPARTF_OFF);
     }
 
     void SetValues(int v0, int v4, int v8, S_vector vc, S_vector v18, S_vector v24)
     {
-        unknown_0 = v0;
-        unknown_4 = v4;
-        unknown_8 = v8;
-        unknown_c = vc;
-        unknown_18 = v18;
-        unknown_24 = v24;
+        duration = v0;
+        duration_range = v4;
+        flags = v8;
+        dir = vc;
+        dir_spread = v18;
+        rot_speed = v24;
     }
 
-    void SetFloats1(float f50, float f54)
+    void SetTransparency(float f50, float f54)
     {
-        unknown_50 = f50;
-        unknown_54 = f54;
+        transparency = f50;
+        transparency_range = f54;
     }
 
-    void SetFloats2(float f58, float f5c, float f60)
+    void SetMotion(float f58, float f5c, float f60)
     {
-        unknown_58 = f58;
-        unknown_5c = f5c;
-        unknown_60 = f60;
+        speed_change = f58;
+        speed_change_range = f5c;
+        gravity = f60;
     }
 };
 
 // An emitter's part, one of an effect's parts at work (the names are ours, after PS2's C_ParticleEmitter, which keeps a
-// vector of C_ParticleType), 0xc0 bytes: the values of a C_effect_part (C_effects.h, whose members' names are the
-// comments'), its subparts' and its particles. C_effects' particle_parts keeps the free ones. The destructor and Reset
-// give the subparts back to particle_subparts and the particles to particle_pool.
+// vector of C_ParticleType), 0xc0 bytes: the values of a C_effect_part (C_effects.h, whose members have the same
+// names), its subparts' and its particles. C_effects' particle_parts keeps the free ones. The destructor and Reset give
+// the subparts back to particle_subparts and the particles to particle_pool.
 class C_ParticleType
 {
 public:
@@ -121,51 +121,51 @@ public:
     I3D_frame *frame;                   // 0x14, the part's frame of the effect's model, a reference of its own
     I3D_frame *parent;                  // 0x18, the frame the effect is at (LoadStaticParticles')
     std::vector<C_Particle *> particles;  // 0x1c
-    int unknown_2c;                     // 0x2c, unknown_90's, the visuals' blend (1 << it: PARTF_OPAQUE, PARTF_ALPHA)
+    int blend;                          // 0x2c, the visuals' blend (1 << it: PARTF_OPAQUE, PARTF_ALPHA)
     // C_Particle::Init's: each value with the range a particle's spreads it by, at random either way
-    S_vector unknown_30;                // 0x30, unknown_20's, the particles' offset from the position
-    S_vector unknown_3c;                // 0x3c, unknown_2c's, its spread
-    S_vector unknown_48;                // 0x48, unknown_38's, their direction, else the effect's (null)
-    S_vector unknown_54;                // 0x54, unknown_44's, its spread
-    float unknown_60;                   // 0x60, unknown_50's, their speed
-    float unknown_64;                   // 0x64, unknown_54's, its spread
-    S_vector unknown_68;                // 0x68, unknown_58's, their visuals' scale
-    S_vector unknown_74;                // 0x74, unknown_64's, its spread
-    float unknown_80;                   // 0x80, unknown_70's, their visuals' transparency
-    float unknown_84;                   // 0x84, unknown_74's, its spread
-    int unknown_88;                     // 0x88, unknown_7c's
-    float unknown_8c;                   // 0x8c, unknown_78's
-    float unknown_90;                   // 0x90, unknown_78's
-    float unknown_94;                   // 0x94, unknown_80's
-    float unknown_98;                   // 0x98, 1000 / unknown_78, 0 for 0
-    float unknown_9c;                   // 0x9c, 1000 / unknown_80, 0 for 0
-    int unknown_a0;                     // 0xa0, unknown_84's, an integer
-    int unknown_a4;                     // 0xa4
-    int unknown_a8;                     // 0xa8, unknown_8c's, an integer
-    int unknown_ac;                     // 0xac, -1 from Init
-    int unknown_b0;                     // 0xb0, unknown_88's, an integer
-    int unknown_b4;                     // 0xb4
-    bool unknown_b8;                    // 0xb8, unknown_b0 is -1
-    int unknown_bc;                     // 0xbc, unknown_98's (flags), PARTF_*
+    S_vector offset;                    // 0x30, the particles' offset from the position
+    S_vector offset_spread;             // 0x3c
+    S_vector dir;                       // 0x48, their direction, else the effect's (null)
+    S_vector dir_spread;                // 0x54
+    float speed;                        // 0x60, their speed
+    float speed_spread;                 // 0x64
+    S_vector scale;                     // 0x68, their visuals' scale
+    S_vector scale_spread;              // 0x74
+    float transparency;                 // 0x80, their visuals' transparency
+    float transparency_spread;          // 0x84
+    int burst;                          // 0x88, the particles the part makes at once when it (re)starts
+    float rate;                         // 0x8c, the particles it makes per second, which falls after fall_delay
+    float start_rate;                   // 0x90, rate's first value, which a restart sets again
+    float rate_fall;                    // 0x94, how much rate falls per second
+    float interval;                     // 0x98, 1000 / rate, the time between two particles in ms, 0 for 0
+    float fall_interval;                // 0x9c, 1000 / rate_fall, 0 for 0
+    int fall_delay;                     // 0xa0, the time at the full rate, in ms (an integer of the table's float)
+    int run_time;                       // 0xa4, the time since the part (re)started, in ms
+    int restart_delay;                  // 0xa8, the wait before a restart, in ms (an integer)
+    int wait;                           // 0xac, the wait left before the part makes particles: -1 from Init
+    int repeats;                        // 0xb0, how many times the part runs, -1 for ever (an integer)
+    int emit_time;                      // 0xb4, the time since the last particle, in ms
+    bool forever;                       // 0xb8, repeats is -1
+    int flags;                          // 0xbc, PARTF_*
 
     C_ParticleType() : frame(NULL)
     {
-        unknown_60 = 0.0f;
-        unknown_64 = 0.0f;
-        unknown_68 = S_vector(1.0f, 1.0f, 1.0f);
-        unknown_74 = S_vector(0.0f, 0.0f, 0.0f);
-        unknown_88 = 0;
-        unknown_8c = 0.0f;
-        unknown_90 = 0.0f;
-        unknown_94 = 0.0f;
-        unknown_98 = 0.0f;
-        unknown_9c = 0.0f;
-        unknown_a8 = 0;
-        unknown_ac = 0;
-        unknown_b0 = 0;
-        unknown_b4 = 0;
-        unknown_b8 = false;
-        unknown_bc = 0;
+        speed = 0.0f;
+        speed_spread = 0.0f;
+        scale = S_vector(1.0f, 1.0f, 1.0f);
+        scale_spread = S_vector(0.0f, 0.0f, 0.0f);
+        burst = 0;
+        rate = 0.0f;
+        start_rate = 0.0f;
+        rate_fall = 0.0f;
+        interval = 0.0f;
+        fall_interval = 0.0f;
+        restart_delay = 0;
+        wait = 0;
+        repeats = 0;
+        emit_time = 0;
+        forever = false;
+        flags = 0;
     }
 
     ~C_ParticleType();
@@ -175,16 +175,16 @@ public:
     // Gives the subparts and the particles back and clears the values, for particle_parts (the name is ours)
     void Reset();
 
-    void SetFloats1(float f60, float f64)
+    void SetSpeed(float f60, float f64)
     {
-        unknown_60 = f60;
-        unknown_64 = f64;
+        speed = f60;
+        speed_spread = f64;
     }
 
-    void SetFloats2(float f80, float f84)
+    void SetTransparency(float f80, float f84)
     {
-        unknown_80 = f80;
-        unknown_84 = f84;
+        transparency = f80;
+        transparency_spread = f84;
     }
 };
 

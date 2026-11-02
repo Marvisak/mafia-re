@@ -13,7 +13,7 @@
 // FUNCTION: GAME 0x444630
 C_ff_manager::C_ff_manager()
 {
-    unknown_24.Reset(1000);
+    wait_timer.Reset(1000);
 }
 
 // The same code as C_sledovacka's destructor (two vectors' destructors): the linker kept this file's copy, ours keeps
@@ -107,7 +107,7 @@ C_ff_manager::S_effect *C_ff_manager::GetWaiting()
 // FUNCTION: GAME 0x4451e0
 void C_ff_manager::Tick(uint time)
 {
-    if (unknown_24.Tick(1000))
+    if (wait_timer.Tick(1000))
         StartWaiting();
 }
 

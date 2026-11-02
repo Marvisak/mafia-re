@@ -108,7 +108,7 @@ uint unknown_4CA8[2];
 
 // The level of an object's mesh to render at the squared distance dist_2: the first whose distance (scaled by
 // RSLodQuality and the object's scale) is as far or farther, or one past the last. The frame's callback is told of a
-// change. With VISF_UNKNOWN_10 (PC only) a level whose first texture isn't loaded yet gives way to one whose is, the
+// change. With VISF_TEXTURE_LOD (PC only) a level whose first texture isn't loaded yet gives way to one whose is, the
 // level is only stored, and the result is 0.
 // The count is decremented in place (num--, then num + 1 for one past the last), and the texture search assigns lod
 // inside its loop (then if (i >= last) lod = last;), which lets the exhausted loop jump straight to that assignment.
@@ -151,7 +151,7 @@ int GetObjectLOD(I3D_object *obj, const float &dist_2)
 
     if (lod != obj->cur_lod && obj->m_FrmFlags & LS3D_CALLBACK_LOD)
         obj->m_pCallback(obj, LS3D_CALLBACK_LOD, obj->cur_lod, lod);
-    if (obj->vis_flags & VISF_UNKNOWN_10) {
+    if (obj->vis_flags & VISF_TEXTURE_LOD) {
         int last = mesh->num_lods - 1;
         if (lod <= last) {
             if (renderState[RS_TEXTURELOWDETAIL] && lod < last)
@@ -305,12 +305,12 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
     *(int *)&RSLodQuality = renderState[RS_LOD_QUALITY];
     RSLodQuality *= FOVDistCorrection;
     // The camera moved, or its sector did
-    renderCameraChanged = pCurrentCamera->m_UpdateCount != pCurrentCamera->unknown_3fc ||
-        pCurrentCamera->sector->m_UpdateCount != pCurrentCamera->unknown_400 || RecomputeAllGeometry;
+    renderCameraChanged = pCurrentCamera->m_UpdateCount != pCurrentCamera->last_update_count ||
+        pCurrentCamera->sector->m_UpdateCount != pCurrentCamera->last_sector_update_count || RecomputeAllGeometry;
     RecomputeAllGeometry = false;
     if (renderCameraChanged) {
-        pCurrentCamera->unknown_3fc = pCurrentCamera->m_UpdateCount;
-        pCurrentCamera->unknown_400 = pCurrentCamera->sector->m_UpdateCount;
+        pCurrentCamera->last_update_count = pCurrentCamera->m_UpdateCount;
+        pCurrentCamera->last_sector_update_count = pCurrentCamera->sector->m_UpdateCount;
         if (!renderCB && scene->listener) {
             scene->listener->SetPos(pCurrentCamera->GetWorldPos());
             scene->listener->SetDir(pCurrentCamera->GetMatrix()(2), pCurrentCamera->GetMatrix()(1));
@@ -326,8 +326,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
             I3D_area *area = scene->areas;
             int i = scene->num_areas;
             while (i--) {
-                if (renderCameraChanged || area->m_UpdateCount != area->unknown_164) {
-                    area->unknown_164 = area->m_UpdateCount;
+                if (renderCameraChanged || area->m_UpdateCount != area->last_update_count) {
+                    area->last_update_count = area->m_UpdateCount;
                     if (area->CheckPoint(cam_pos))
                         CurrentActiveAreaList.push_back_unique(area);
                     else {
@@ -381,7 +381,7 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         if (!pLastCameraSector && pCurrentCamera->sector) {
             pLastCameraSector = pCurrentCamera->sector;
             pLastCameraSector->sct_flags &= ~SCTF_SOUND_FADE_IN;
-            pLastCameraSector->unknown_1ec = time;
+            pLastCameraSector->sound_blend_time = time;
             if (!sectors.find(pLastCameraSector))
                 sectors.push_back(pLastCameraSector);
             for (int i = pLastCameraSector->sounds.size(); i--; ) {
@@ -404,12 +404,12 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
                 }
             }
             pLastCameraSector->sct_flags |= SCTF_SOUND_FADE_IN;
-            pLastCameraSector->unknown_1ec = time;
+            pLastCameraSector->sound_blend_time = time;
             if (!sectors.find(pLastCameraSector))
                 sectors.push_back(pLastCameraSector);
             pLastCameraSector = pCurrentCamera->sector;
             pLastCameraSector->sct_flags &= ~SCTF_SOUND_FADE_IN;
-            pLastCameraSector->unknown_1ec = time;
+            pLastCameraSector->sound_blend_time = time;
             if (!sectors.find(pLastCameraSector))
                 sectors.push_back(pLastCameraSector);
             // The first loop's counter again, as below for the sectors' blends: the original's frame has one slot for
@@ -429,8 +429,8 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         for (i = sounds.size(); i--; ) {
             I3D_sound *snd = sounds[i];
             if (snd->m_FrmFlags & FRMFLAGS_ON && snd->state != SOUNDSTATE_STOP) {
-                if (snd->m_UpdateCount != snd->unknown_14c) {
-                    snd->m_UpdateCount = snd->unknown_14c;
+                if (snd->m_UpdateCount != snd->last_update_count) {
+                    snd->m_UpdateCount = snd->last_update_count;
                     snd->snd_flags |= SOUNDF_POS | SOUNDF_DIR | SOUNDF_SCALE;
                     snd->m_UpdateSound();
                 } else if (renderCameraChanged || snd->fade_sector || snd->snd_flags > 0)
@@ -441,28 +441,28 @@ LS3D_RESULT I3D_driver::Render(I3D_scene *scene)
         // The sectors' blends into and out of their sound environments, over their blend times
         for (i = 0; i < sectors.size(); i++) {
             I3D_sector *sct = sectors[i];
-            int dt = time - sct->unknown_1ec;
+            int dt = time - sct->sound_blend_time;
             if (dt > 0) {
-                sct->unknown_1ec = time;
+                sct->sound_blend_time = time;
                 // The reciprocal first, then times dt (fdivr, fimul): without the parentheses VC6 divides dt instead
                 float step = (1.0 / sct->sound_props.blend_time) * dt;
                 if (sct->sct_flags & SCTF_SOUND_FADE_IN) {
-                    if (IsMrgZeroLess(sct->unknown_1e8)) {
+                    if (IsMrgZeroLess(sct->sound_blend)) {
                         sectors.erase(i);
                         i--;
                         continue;
                     }
-                    sct->unknown_1e8 = max(sct->unknown_1e8 - step, 0.0);
+                    sct->sound_blend = max(sct->sound_blend - step, 0.0);
                 } else {
-                    if (IsMrgZeroLess(1.0 - sct->unknown_1e8)) {
+                    if (IsMrgZeroLess(1.0 - sct->sound_blend)) {
                         sectors.erase(i);
                         i--;
                         continue;
                     }
-                    sct->unknown_1e8 = min(sct->unknown_1e8 + step, 1.0);
+                    sct->sound_blend = min(sct->sound_blend + step, 1.0);
                 }
                 if (sct == pLastCameraSector && pPrevLastCameraSector)
-                    scene->m_UpdateSoundProperties(sct, pPrevLastCameraSector, sct->unknown_1e8);
+                    scene->m_UpdateSoundProperties(sct, pPrevLastCameraSector, sct->sound_blend);
             }
         }
         if (pCurrentCamera->sector->sct_flags & SCTF_SOUND_CHANGED)
@@ -788,7 +788,7 @@ void NextFFrameProc(I3D_frame *frm)
                     I3D_mesh_object *mesh = ((I3D_object *)vis)->mesh;
                     float prev = 0.0f;
                     int num = 1;
-                    if (!(vis->vis_flags & VISF_UNKNOWN_10))
+                    if (!(vis->vis_flags & VISF_TEXTURE_LOD))
                         num = mesh->num_lods;
                     for (int i = 0; i < num; i++) {
                         AddFGHlpStruct.cam_pos = vis->GetWBoundVolume().bsphere.pos;

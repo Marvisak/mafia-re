@@ -12,8 +12,8 @@ class C_chunk;
 
 #pragma pack(push, 1)
 
-// The flags of the nodes and their connections (C_web_node::unknown_c, S_web_conn::unknown_2) that DeRiciConns clears
-// (the names are ours, by value)
+// The flags of the nodes and their connections (C_web_node::flags, S_web_conn::flags) that DeRiciConns clears (the
+// names are ours, by value)
 #define WEBF_UNKNOWN_1000 0x1000
 #define WEBF_UNKNOWN_4000 0x4000
 
@@ -22,7 +22,7 @@ class C_chunk;
 struct S_web_conn
 {
     ushort node;                        // 0x0, the other node
-    ushort unknown_2;                   // 0x2, WEBF_*
+    ushort flags;                       // 0x2, WEBF_*
     float distance;                     // 0x4
 
     // Resize constructs them through 0x54d2b0
@@ -34,8 +34,9 @@ class C_web_node
 {
 public:
     S_vector pos;                       // 0x0 (PS2 GetPos's), the radar's edges are drawn through it
-    ushort unknown_c;                   // 0xc, WEBF_*
-    ushort unknown_e;                   // 0xe (PS2 0xe), C_wagon::GetLastNode's
+    // The names are ours
+    ushort flags;                       // 0xc, WEBF_*, PS2 C_web_path::AddNode's
+    ushort id;                          // 0xe (PS2 0xe), what PS2's C_web_path::FindNodeID finds, C_wagon::GetLastNode's
     uchar unknown_10[8];                // 0x10
     S_web_conn *conns;                  // 0x18
     uchar max_conns;                    // 0x1c
@@ -48,25 +49,28 @@ public:
 class C_web_path
 {
 public:
+    // The names are ours
     C_web_node *nodes;                  // 0x4
-    int unknown_8;                      // 0x8
-    int unknown_c;                      // 0xc, the nodes' count, by PS2's ClearNode (PS2 0x8)
+    int max_nodes;                      // 0x8 (PS2 0x4), the array's size, which PS2's Resize grows
+    int num_nodes;                      // 0xc, the nodes' count, by PS2's ClearNode (PS2 0x8)
     uint unknown_10;                    // 0x10, the constructor's (50 for the mission's, PS2's too)
-    uchar *unknown_14;                  // 0x14 (PS2 0x24)
-    int unknown_18;                     // 0x18 (PS2 0x28)
-    bool unknown_1c;                    // 0x1c (PS2 0x2c)
+    // 0x14 (PS2 0x24), PS2's FindPath's work array, an 8-byte C_web_path::S_pathfind for each node (PS2's new[] for
+    // num_nodes of them where num_pathfind differs)
+    uchar *pathfind;
+    int num_pathfind;                   // 0x18 (PS2 0x28)
+    bool finding_by_roads;              // 0x1c (PS2 0x2c), set by PS2's FindPath while its FindPath_FastByRoads runs
 
     // Inline: C_mission::Init has it inlined. VC6 stores the vtable after the initializers and before the body, and the
     // original's comes after the last four members (PS2's, which stores its vtable first, has the same split).
     C_web_path(uint unknown) :
         unknown_10(unknown),
-        unknown_14(NULL),
-        unknown_18(0),
-        unknown_1c(false)
+        pathfind(NULL),
+        num_pathfind(0),
+        finding_by_roads(false)
     {
         nodes = NULL;
-        unknown_8 = 0;
-        unknown_c = 0;
+        max_nodes = 0;
+        num_nodes = 0;
     }
     // Not virtual: UnInit calls it directly
     ~C_web_path();
@@ -75,11 +79,11 @@ public:
     // unless its help memory holds them; the PC's keeps the nodes and frees only the array PS2 frees with them.
     void ClearNode()
     {
-        unknown_c = 0;
-        delete[] unknown_14;
-        unknown_14 = NULL;
-        unknown_18 = 0;
-        unknown_1c = false;
+        num_nodes = 0;
+        delete[] pathfind;
+        pathfind = NULL;
+        num_pathfind = 0;
+        finding_by_roads = false;
     }
 
     // Reads the nodes of the mission's check.bin (PS2 name), which C_mission::Open calls directly, as PS2's

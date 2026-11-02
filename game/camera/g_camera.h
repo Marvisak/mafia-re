@@ -56,10 +56,10 @@ struct G_RaceCamera
 #define CAMERA_C_LOCK 22                    // "C Lock"
 #define CAMERA_P_BEHIND_23 23               // "P Behind", as C RailwayIn lower
 #define CAMERA_UNKNOWN_24 24                // Tick does nothing in it
-// SetMode's: the camera's next one, G_Camera::unknown_14 (the name is ours)
+// SetMode's: the camera's next one, G_Camera::next_mode (the name is ours)
 #define CAMERA_NEXT ((uint)-1)
 // The ranges of cameras the profile keeps, which SetMode stores there: the on-foot ones, the profile's camera, and the
-// car ones, S_profile_settings::unknown_34 (the names are ours)
+// car ones, S_profile_settings::car_camera (the names are ours)
 #define CAMERA_P_FIRST CAMERA_P_BEHIND
 #define CAMERA_P_END 4
 #define CAMERA_C_FIRST CAMERA_C_BEHIND_HELLBOY
@@ -68,7 +68,8 @@ struct G_RaceCamera
 // S_camera_params' flags (the names are ours, by value where the use isn't known): the code copies 1 into
 // G_Camera::unknown_22
 #define CAMPF_UNKNOWN_1 1
-#define CAMPF_UNKNOWN_2 2
+// Begin turns the car's frame off ("C Chase", between its wheels) and sets C_car::hidden_by_camera
+#define CAMPF_HIDE_CAR 2
 // Tick moves the camera into the player's eyes while it comes close to his head
 #define CAMPF_EYES 4
 #define CAMPF_UNKNOWN_8 8
@@ -119,7 +120,9 @@ public:
     C_car *car;                         // 0xc, the car the player is in, NULL on foot
     // CAMERA_* (S_camera_params::id), the profile's after Reset (PS2's Reset sets CAMERA_P_BEHIND)
     uint mode;                          // 0x10
-    uint unknown_14;                    // 0x14, Reset sets it to mode, the camera's code to the entry's next
+    // 0x14, the CAMERA_* SetMode(CAMERA_NEXT) switches to (the name is ours): Reset sets it to mode, Begin to the
+    // entry's next
+    uint next_mode;
     uint flags;                         // 0x18, the camera's CAMPF_*
     // The camera's values, the first camera's after Reset (PS2 0xd0)
     float *params;                      // 0x1c
@@ -151,7 +154,9 @@ public:
     std::vector<G_RaceCamera *> race_cameras;
     I3D_frame *look_to;                 // 0x88, the frame CAMERA_C_LOOK_TO looks at (PS2 SetLookTo's; the name is ours)
     float unknown_8c;                   // 0x8c (PS2 0x9c)
-    float unknown_90;                   // 0x90, 0.2 after Reset
+    // 0x90 (PS2 0xa0), the sniper camera's field of view, 0.2 after Reset (the name is ours, after PS2's SetSniperFov,
+    // which stores it and gives it to the HUD's ParheliaSetFov in CAMERA_CP_SNIPER)
+    float sniper_fov;
     bool free_look;                     // 0x94 (PS2 0xa4), the car cameras' free look (the name is ours)
     uchar unknown_95[3];                // 0x95
 

@@ -80,9 +80,12 @@ public:
         return v_elems;
     }
 
-    // C_game::DoneIntern sets both to 1 (the names are ours)
-    static float unknown_63d7fc;
-    static float unknown_63d804;
+    // Two of the class's three coefficients (PS2 names, most likely: C_game::DoneIntern sets both to 1 after the
+    // pedestrians' two ratios, as PS2's sets elems_coefff and police_coefff; PS2's GameInit reads them, its
+    // G_LoadSaveClass::FreerideSetupFromScript sets them). The third, PS2's mafian_coefff, is most likely the original's
+    // 0x63d800, between them.
+    static float elems_coefff;
+    static float police_coefff;
 };
 
 // SYNTHETIC: GAME 0x4aa810

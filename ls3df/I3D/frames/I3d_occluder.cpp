@@ -566,7 +566,7 @@ static void POIS_EnumProc(I3D_frame *frm)
 inline void ProcessOccludersInSector(I3D_sector *sct)
 {
     for (I3D_occluder *o = sct->occluders; o; o = o->next_in_sector) {
-        if (o->sector && (o->sector->sct_flags & SCTF_UNKNOWN_80))
+        if (o->sector && (o->sector->sct_flags & SCTF_OCCLUDER_OFF))
             o->occl_flags &= ~OCCLF_ACTIVE;
     }
     CullOcclsEachOther(sct);

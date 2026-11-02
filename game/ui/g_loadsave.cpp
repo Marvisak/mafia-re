@@ -71,14 +71,14 @@ bool G_LoadSaveClass::Init()
     unknown_90 = true;
     race_cars = 0;
     freeride_enabled = FREERIDE_SMALL_CITY;
-    unknown_9c = 0;
-    unknown_1e8 = 0;
+    freeride_cars = 0;
+    last_stolen = 0;
     mafiaLoadSave.AllDefault();
     mafiaIndicators.Create();
     LoadMaterialsFromBin();
     mafiaLoadSave.ApplyControls();
     mafiaIndicators.ResolutionChanged();
-    mafiaIndicators.unknown_40a4 = 0;
+    mafiaIndicators.show_flags = 0;
     ProfileEnumFiles();
     igraph->NullTimer();
     act_mission->Open("00menu", false, (uint)-1, false);
@@ -127,7 +127,7 @@ G_LoadSaveClass::G_LoadSaveClass()
     memset(unknown_5bc, 0, sizeof(unknown_5bc));
     unknown_8c = 0;
     progress = NULL;
-    unknown_91 = true;
+    load_failed = true;
 }
 
 // The options' camera values through the global (PS2's stores its one value there the same way)
@@ -141,9 +141,9 @@ void G_LoadSaveClass::AllDefault()
     RaceCarsDisable((uint)-1);
     RaceCarsEnable(1);
     mafiaLoadSave.settings.camera = 1;
-    mafiaLoadSave.settings.unknown_34 = 7;
+    mafiaLoadSave.settings.car_camera = 7;
     freeride_enabled = FREERIDE_SMALL_CITY;
-    unknown_9c = 0;
+    freeride_cars = 0;
     SaveGameNewGame();
 }
 
@@ -264,7 +264,7 @@ void G_LoadSaveClass::ProfileLoad()
     stream.SetParams(PROFILE_MAGIC, true, false);
     char name[128];
     sprintf(name, "savegame\\mafia%03d.sav", number);
-    unknown_91 = true;
+    load_failed = true;
     if (stream.OpenRead(name))
     {
         if (stream.ReadAdr(&profile, sizeof(profile)) == sizeof(profile))
@@ -281,8 +281,8 @@ void G_LoadSaveClass::ProfileLoad()
                     {
                         race_cars = profile.race_cars;
                         freeride_enabled = profile.freeride_enabled;
-                        unknown_9c = profile.unknown_48;
-                        unknown_91 = false;
+                        freeride_cars = profile.freeride_cars;
+                        load_failed = false;
                         if (FindBinding(CTRL_SNIPER, &bindings[CTRL_SNIPER], false, NUM_CONTROLS))
                         {
                             S_control key;
@@ -302,7 +302,7 @@ void G_LoadSaveClass::ProfileLoad()
         }
         stream.Close();
     }
-    if (unknown_91)
+    if (load_failed)
         AllDefault();
     Refresh(REFRESH_ALL);
     FreerideStoreA(1, 0, 1.0f, 1.0f, 1.0f);
@@ -327,7 +327,7 @@ void G_LoadSaveClass::ProfileSave()
         profile.race_cars = race_cars;
         profile.unknown_4c = 0;
         profile.freeride_enabled = freeride_enabled;
-        profile.unknown_48 = unknown_9c;
+        profile.freeride_cars = freeride_cars;
         stream.WriteAdr(&profile, sizeof(profile));
         stream.WriteAdr(bindings, sizeof(bindings));
         stream.WriteAdr(&settings, sizeof(settings));
@@ -339,8 +339,8 @@ void G_LoadSaveClass::ProfileSave()
 // FUNCTION: GAME 0x605ff0
 void G_LoadSaveClass::SaveGameNewGame()
 {
-    unknown_1e8 = 0;
-    unknown_98 = 0;
+    last_stolen = 0;
+    steal_cars = 0;
     GarageClear();
     freeride.unknown_18 = false;
 }
@@ -1086,8 +1086,8 @@ void G_LoadSaveClass::ReleaseCars()
 // FUNCTION: GAME 0x60baf0
 void G_LoadSaveClass::GarageGameInit()
 {
-    unknown_1cc = false;
-    unknown_1cd = false;
+    show_results = false;
+    add_last_stolen = false;
     int park = 0;
     // STRING: GAME 0x639738
     if (!act_mission->scene->FindFrame("oblast_garaze_a", ENUMF_ALL) &&
@@ -1139,7 +1139,7 @@ void G_LoadSaveClass::GarageGameInit()
                 car->SetActualLevel(level);
                 car->GameInit();
                 car->CalmVehicle(40);
-                act_mission->game->unknown_fc.push_back((C_actor *&)car);
+                act_mission->game->inactive_actors.push_back((C_actor *&)car);
                 garage[i].actor = car;
                 mafiaIndicators.RadarAddCar(car, 0xffc0c0c0);
                 model->Release();
@@ -1169,7 +1169,7 @@ void G_LoadSaveClass::GarageGameInit()
             }
             car->Reset(0.0f, true);
             car->CalmVehicle(40);
-            act_mission->game->unknown_fc.push_back((C_actor *&)car);
+            act_mission->game->inactive_actors.push_back((C_actor *&)car);
             garage[i].actor = car;
             mafiaIndicators.RadarAddCar(car, 0xffc0c0c0);
         }
@@ -1189,8 +1189,8 @@ static inline S_vector MaxVector(const S_vector &a, const S_vector &b)
 
 // PS2 G_GarageClass::GameDone's, the PC's own: the cars kept are the garage's, the mission's (cars, which stay where
 // they are) and the mission's cars standing in the garage's box (between the regions oblast_garaze_a and
-// oblast_garaze_b), but a frame named "nesahat" ("don't touch") and the trucks, and with unknown_1cc or unknown_1cd
-// set unknown_1e8. Past GARAGE_ROOM the menu chooses which go; then the garage's actors leave the mission, kept for the
+// oblast_garaze_b), but a frame named "nesahat" ("don't touch") and the trucks, and with show_results or add_last_stolen
+// set last_stolen. Past GARAGE_ROOM the menu chooses which go; then the garage's actors leave the mission, kept for the
 // next one unless they are its own, the kept cars fill the free slots, and a frame with "please wait" (text 0x581) is
 // drawn. Open: the loop over cars at the start has an empty body (PS2's forgets its last stolen car there), and the
 // last search through cars reads cars->end() without a test of cars, as the original does.
@@ -1254,12 +1254,12 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         item.actor = actor;
         item.slot = i;
         items.push_back(item);
-        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->unknown_84);
+        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->race_cars);
     }
 
     // The mission's cars in the garage's box, of its actors and of the garage's cars
     C_game *game = act_mission->game;
-    for (C_actor **a = game->unknown_ec.begin(); a < game->unknown_ec.end(); a++)
+    for (C_actor **a = game->active_actors.begin(); a < game->active_actors.end(); a++)
     {
         if ((*a)->type != ACTOR_CAR)
             continue;
@@ -1268,7 +1268,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             continue;
         if (!(*a)->frame->IsOn())
             continue;
-        if (((C_car *)*a)->unknown_20b2)
+        if (((C_car *)*a)->police_model)
             continue;
         // STRING: GAME 0x639748
         if (strstr((*a)->frame->GetName(), "nesahat"))
@@ -1291,10 +1291,10 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         item.actor = (C_car *)*a;
         item.slot = -1;
         items.push_back(item);
-        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->unknown_84);
+        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->race_cars);
     }
     game = act_mission->game;
-    for (C_actor **b = game->unknown_fc.begin(); b < game->unknown_fc.end(); b++)
+    for (C_actor **b = game->inactive_actors.begin(); b < game->inactive_actors.end(); b++)
     {
         C_car *car = (C_car *)*b;
         if (car->type != ACTOR_CAR)
@@ -1304,7 +1304,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             continue;
         if (!car->frame->IsOn())
             continue;
-        if (car->unknown_20b2)
+        if (car->police_model)
             continue;
         if (strstr(car->frame->GetName(), "nesahat"))
             continue;
@@ -1326,18 +1326,18 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         item.actor = car;
         item.slot = -1;
         items.push_back(item);
-        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->unknown_84);
+        RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->race_cars);
     }
 
-    if ((unknown_1cc || unknown_1cd) && unknown_1e8 && !unknown_1e8->unknown_20b2 && unknown_1e8->IsCarUsable(1))
+    if ((show_results || add_last_stolen) && last_stolen && !last_stolen->police_model && last_stolen->IsCarUsable(1))
     {
         S_garage_item item;
-        item.car = mafiaCarDatabase.GetIDByActor(unknown_1e8);
+        item.car = mafiaCarDatabase.GetIDByActor(last_stolen);
         uint index = item.car & CAR_INDEX_MASK;
         if (index != CAR_TRUCK_FLATBED && index != CAR_TRUCK_COVERED && index != CAR_TRUCK &&
             index != CAR_RACING_BUGATTI)
         {
-            item.actor = unknown_1e8;
+            item.actor = last_stolen;
             item.car &= ~(0xff << CAR_LEVEL_SHIFT);
             item.slot = -1;
             for (p = items.begin(); p < items.end(); p++)
@@ -1348,7 +1348,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             if (p >= items.end())
             {
                 items.push_back(item);
-                RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->unknown_84);
+                RaceCarsEnable(mafiaCarDatabase.GetCar(item.car & CAR_INDEX_MASK)->race_cars);
             }
         }
     }
@@ -1356,10 +1356,10 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
     // The player chooses which go, until the rest fits
     std::vector<uint> discard;
     discard.clear();
-    if (act_mission->game->unknown_3665)
+    if (act_mission->game->mission_passed)
     {
         int extra = 0;
-        if (unknown_1cc)
+        if (show_results)
             extra = 1;
         while (items.size() > discard.size() - extra + GARAGE_ROOM)
         {
@@ -1429,7 +1429,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             if (it < cars->end())
                 continue;
         }
-        for (int seat = 0; seat < garage[n].actor->GetNumUnknownCa0(); seat++)
+        for (int seat = 0; seat < garage[n].actor->GetNumSeats(); seat++)
         {
             C_human *owner = garage[n].actor->GetOwner(seat);
             if (owner)
@@ -1441,20 +1441,20 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             }
         }
         game = act_mission->game;
-        for (C_actor **a = game->unknown_ec.begin(); a < game->unknown_ec.end(); a++)
+        for (C_actor **a = game->active_actors.begin(); a < game->active_actors.end(); a++)
         {
             if (*a == garage[n].actor)
             {
-                game->unknown_ec.erase(a);
+                game->active_actors.erase(a);
                 a--;
             }
         }
         game = act_mission->game;
-        for (C_actor **b = game->unknown_fc.begin(); b < game->unknown_fc.end(); b++)
+        for (C_actor **b = game->inactive_actors.begin(); b < game->inactive_actors.end(); b++)
         {
             if (*b == garage[n].actor)
             {
-                game->unknown_fc.erase(b);
+                game->inactive_actors.erase(b);
                 b--;
             }
         }
@@ -1462,7 +1462,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         act_mission->game->InvalidateActor(garage[n].actor, false);
         if (!act_mission->IsOwnActor(garage[n].actor))
         {
-            garage[n].actor->unknown_220c = true;
+            garage[n].actor->temporary = true;
             act_mission->RemoveActor(garage[n].actor);
             act_mission->FrmActBuff_StoreActor(garage[n].actor, false);
         }
@@ -1504,7 +1504,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
             garage[slot].actor = NULL;
     }
 
-    if (act_mission->game->unknown_3665 && unknown_1cc)
+    if (act_mission->game->mission_passed && show_results)
         GarageShowResultsProc();
     igraph->ResetRenderProps();
     igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
@@ -1515,9 +1515,9 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         mafiaIndicators.screen_scale.y * 40.0f, (uint)-1, OUTTEXT_RIGHT, 1, NULL);
     igraph->EndScene();
     igraph->Present();
-    unknown_1cc = false;
-    unknown_1cd = false;
-    unknown_1e8 = NULL;
+    show_results = false;
+    add_last_stolen = false;
+    last_stolen = NULL;
 }
 
 // FUNCTION: GAME 0x60d480
@@ -1547,13 +1547,13 @@ const char *GM_GarageManager::OnBeforeCreate()
 // FUNCTION: GAME 0x60dc80
 void G_LoadSaveClass::GarageAddLastStolen()
 {
-    unknown_1cd = true;
+    add_last_stolen = true;
 }
 
 // FUNCTION: GAME 0x60dc90
 void G_LoadSaveClass::GarageShowResults()
 {
-    unknown_1cc = true;
+    show_results = true;
 }
 
 #pragma auto_inline(off)
@@ -1581,7 +1581,7 @@ void G_LoadSaveClass::EnableSteal(uchar c)
         bit = c - 'A';
     if (c >= 'a' && c <= 'z')
         bit = c - 'a';
-    unknown_98 |= 1 << bit;
+    steal_cars |= 1 << bit;
 }
 
 #pragma auto_inline(off)
@@ -1615,7 +1615,7 @@ void G_LoadSaveClass::FreerideEnableCar(uchar c)
         bit = c - 'A';
     if (c >= 'a' && c <= 'z')
         bit = c - 'a';
-    unknown_9c |= 1 << bit;
+    freeride_cars |= 1 << bit;
 }
 
 // PS2's sets the sound driver's volume, the videos' and the screen's offset. The cars' volume is relative to the sounds',
@@ -1647,8 +1647,8 @@ void G_LoadSaveClass::Refresh(uint flags)
             settings.ff_revs);
     if (settings.camera < 1 || settings.camera >= 4)
         settings.camera = 1;
-    if (settings.unknown_34 < 7 || settings.unknown_34 >= 0x10)
-        settings.unknown_34 = 7;
+    if (settings.car_camera < 7 || settings.car_camera >= 0x10)
+        settings.car_camera = 7;
 }
 
 // FUNCTION: GAME 0x60e140

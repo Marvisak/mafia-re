@@ -29,7 +29,7 @@ I3D_area::I3D_area()
     planes = NULL;
     scene = NULL;
     m_FrmFlags |= FRMFLAGS_HR_AREAS;
-    unknown_164 = 0;
+    last_update_count = 0;
     switch_fade_time = 500;             // ms
 }
 
@@ -198,7 +198,7 @@ bool I3D_area::CheckPoint(const S_vector &pos)
 // FUNCTION: LS3DF11 0x10005a20
 void I3D_area::AddSound(I3D_sound *sound)
 {
-    unknown_164 = -1;
+    last_update_count = -1;
     if (sounds.find(sound))
         return;
     sounds.push_back(sound);
@@ -211,7 +211,7 @@ void I3D_area::AddSound(I3D_sound *sound)
 // FUNCTION: LS3DF11 0x10005b80
 LS3D_RESULT I3D_area::DeleteSound(I3D_sound *sound)
 {
-    unknown_164 = -1;
+    last_update_count = -1;
     if (!sounds.find(sound))
         return I3DERR_OBJECTNOTFOUND;
     sound->areas.remove(this);

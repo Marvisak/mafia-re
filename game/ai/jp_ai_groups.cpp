@@ -31,8 +31,8 @@ ai_group *ai_groups::GetGroup(uint id)
 // FUNCTION: GAME 0x531130
 void ai_groups::Init()
 {
-    unknown_0 = -1;
-    unknown_4 = 0;
+    unlock_time = -1;
+    last_id = 0;
     groups.clear();
     free_actors.clear();
 }
@@ -40,29 +40,29 @@ void ai_groups::Init()
 // FUNCTION: GAME 0x5311a0
 void ai_groups::Destroy()
 {
-    unknown_0 = -1;
-    unknown_4 = 0;
+    unlock_time = -1;
+    last_id = 0;
     free_actors.clear();
     for (int i = groups.size() - 1; i >= 0; i--) {
         groups[i].members.clear();
-        groups[i].unknown_20.clear();
+        groups[i].attackers.clear();
         groups[i].events.clear();
-        groups[i].unknown_40.clear();
-        groups[i].unknown_50.clear();
+        groups[i].cars.clear();
+        groups[i].car_factors.clear();
     }
     groups.clear();
 }
 
-// The player's controls unlocked once the game's time passes unknown_0, the groups' events, then the actors the
+// The player's controls unlocked once the game's time passes unlock_time, the groups' events, then the actors the
 // groups let go, from the last: one farther than 150 from the camera is put away, a car hidden and without its dynamic
 // collisions first (PS2's the same)
 // FUNCTION: GAME 0x531340
 void ai_groups::Tick()
 {
     uint time = act_mission->game->game_time;
-    if (unknown_0 != -1 && unknown_0 < time)
+    if (unlock_time != -1 && unlock_time < time)
     {
-        unknown_0 = -1;
+        unlock_time = -1;
         ((C_player *)act_mission->game->player)->LockControls(false);
     }
     for (uint i = 0; i < groups.size(); i++)
@@ -97,20 +97,20 @@ void ai_group::ProcessEvents(uint time)
 #pragma auto_inline(on)
 
 // The groups by their states, from the last group (PS2's the same): the followers get into the leader's car
-// (FOLLOWSTATE_0), then, with FOLLOWF_UNKNOWN_1 and an entity driving, the car takes the group to its place, hunting
+// (FOLLOWSTATE_0), then, with FOLLOWF_HAS_POS and an entity driving, the car takes the group to its place, hunting
 // where a follower is in danger (FOLLOWSTATE_2, until the chase's status says the drive ended), or else they ride along
 // (FOLLOWSTATE_3); they get out after the leader (FOLLOWSTATE_1) and stay with the leader (FOLLOWSTATE_5). Every 2 s
-// (unknown_10) the entities that follow without the job 1 or with the job 6 also leave their group, and a group left
-// without followers goes. Only the PC's FOLLOWSTATE_1 also clears FOLLOWF_UNKNOWN_20 on foot, testing is_car as an
-// earlier group or frame left it.
+// (check_time) the entities that follow without AIACTION_FOLLOW or with AIACTION_FIRE also leave their group, and a
+// group left without followers goes. Only the PC's FOLLOWSTATE_1 also clears FOLLOWF_MUSTLEAVE on foot, testing is_car
+// as an earlier group or frame left it.
 // FUNCTION: GAME 0x5325a0
 void ai_follow_manager::Update()
 {
     bool check = false;
     uint time = act_mission->GetGame()->GetGameTime();
-    if (time > unknown_10)
+    if (time > check_time)
     {
-        unknown_10 = time + 2000;
+        check_time = time + 2000;
         check = true;
     }
     bool is_car;
@@ -136,7 +136,7 @@ void ai_follow_manager::Update()
                     n++;
             if (n)
                 break;
-            if (g.flags & FOLLOWF_UNKNOWN_1 && is_car && car->GetOwner(0) && car->GetOwner(0)->type == ACTOR_ENTITY)
+            if (g.flags & FOLLOWF_HAS_POS && is_car && car->GetOwner(0) && car->GetOwner(0)->type == ACTOR_ENTITY)
             {
                 g.unknown_2c = act_mission->GetGame()->GetGameTime() + 6000;
                 bool danger = false;
@@ -168,7 +168,7 @@ void ai_follow_manager::Update()
                 if (is_car && g.car && car != g.car)
                 {
                     g.car = NULL;
-                    g.flags &= ~FOLLOWF_UNKNOWN_20;
+                    g.flags &= ~FOLLOWF_MUSTLEAVE;
                 }
                 continue;
             }
@@ -179,7 +179,7 @@ void ai_follow_manager::Update()
                 break;
             g.state = FOLLOWSTATE_5;
             if (is_car && !g.car)
-                g.flags &= ~FOLLOWF_UNKNOWN_20;
+                g.flags &= ~FOLLOWF_MUSTLEAVE;
             continue;
         case FOLLOWSTATE_2:
             car = ((C_human *)g.leader)->car;
@@ -208,17 +208,17 @@ void ai_follow_manager::Update()
             }
             switch (act_mission->GetGame()->GetSledovacka()->ActionStatus(car))
             {
-            case C_sledovacka::STATUS_UNKNOWN_1:
-                g.flags |= FOLLOWF_UNKNOWN_10;
+            case C_sledovacka::STATUS_DONE:
+                g.flags |= FOLLOWF_DRIVE_DONE;
                 act_mission->GetGame()->GetSledovacka()->RemoveCar(car);
                 g.state = FOLLOWSTATE_5;
                 break;
-            case C_sledovacka::STATUS_UNKNOWN_2:
-            case C_sledovacka::STATUS_UNKNOWN_3:
-            case C_sledovacka::STATUS_UNKNOWN_4:
+            case C_sledovacka::STATUS_FAILED:
+            case C_sledovacka::STATUS_DRIVER_DEAD:
+            case C_sledovacka::STATUS_NO_ENERGY:
                 act_mission->GetGame()->GetSledovacka()->RemoveCar(car);
                 g.state = FOLLOWSTATE_1;
-                g.flags |= FOLLOWF_UNKNOWN_20;
+                g.flags |= FOLLOWF_MUSTLEAVE;
                 g.car = car;
                 break;
             }
@@ -241,7 +241,7 @@ void ai_follow_manager::Update()
             if (!car)
             {
                 g.state = FOLLOWSTATE_1;
-                g.unknown_28 = 0;
+                g.stop_end = 0;
                 break;
             }
             if (car->type == ACTOR_CAR)
@@ -251,10 +251,10 @@ void ai_follow_manager::Update()
             if (!is_car)
             {
                 g.state = FOLLOWSTATE_3;
-                g.unknown_28 = 0;
+                g.stop_end = 0;
                 break;
             }
-            if (g.unknown_28 < time)
+            if (g.stop_end < time)
             {
                 g.unknown_2c = act_mission->GetGame()->GetGameTime() + 6000;
                 bool danger = false;
@@ -272,7 +272,7 @@ void ai_follow_manager::Update()
                 else
                     act_mission->GetGame()->GetSledovacka()->AddCarMoveTo(car, g.pos, false, true, 0);
                 g.state = FOLLOWSTATE_2;
-                g.unknown_28 = 0;
+                g.stop_end = 0;
                 break;
             }
             act_mission->GetGame()->GetSledovacka()->RemoveCar(car);
@@ -295,7 +295,7 @@ void ai_follow_manager::Update()
                     if (g.car && car && car->type == ACTOR_CAR && car != g.car)
                     {
                         g.car = NULL;
-                        g.flags &= ~FOLLOWF_UNKNOWN_20;
+                        g.flags &= ~FOLLOWF_MUSTLEAVE;
                     }
                     break;
                 }
@@ -309,7 +309,7 @@ void ai_follow_manager::Update()
                 if (g.followers[j]->type == ACTOR_ENTITY)
                 {
                     ai_action_manager &am = ((C_entity *)g.followers[j])->action_manager;
-                    if (!am.hasAction(AIACTION_UNKNOWN_1, NULL, false) || am.hasAction(AIACTION_UNKNOWN_6, NULL, false))
+                    if (!am.hasAction(AIACTION_FOLLOW, NULL, false) || am.hasAction(AIACTION_FIRE, NULL, false))
                     {
                         g.followers.erase(g.followers.begin() + j);
                         if (!g.followers.size())
@@ -324,14 +324,14 @@ void ai_follow_manager::Update()
 // FUNCTION: GAME 0x532da0
 void ai_follow_manager::Init()
 {
-    unknown_10 = 0;
+    check_time = 0;
     groups.clear();
 }
 
 // FUNCTION: GAME 0x532e30
 void ai_follow_manager::Destroy()
 {
-    unknown_10 = 0;
+    check_time = 0;
     for (int i = groups.size() - 1; i >= 0; i--)
         groups[i].followers.clear();
     groups.clear();
@@ -389,27 +389,27 @@ void ai_fight_manager::Tick()
             continue;
         }
         S_vector pos, pos2;
-        if (party.unknown_2c >= time)
+        if (party.check_time >= time)
         {
-            switch (party.unknown_30)
+            switch (party.type)
             {
             case FIGHTPARTY_IN_CAR:
                 {
-                    // The members' states, which the part below sets too: recent_34 and recent_24 whether what
-                    // the entity remembers of the target has its times within the last 2 and 3 s
+                    // The members' states, which the part below sets too: recent_shot and recent_seen whether the
+                    // entity's log of the target has it shooting within the last 2 s and seen within the last 3 s
                     bool mode1 = party.unknown_34 == 1;
                     bool mode2 = party.unknown_34 == 2;
                     for (uint j = 0; j < party.members.size(); j++)
                     {
                         ai_fight_member &m = party.members[j];
                         m.entity->LockSubstate(3, 8, 2.0f, 0, false);
-                        bool recent_34 = false;
-                        bool recent_24 = false;
-                        ai_character_log *log = m.entity->logs.GetLog(party.unknown_40);
-                        if (log && time - log->unknown_34 < 2000)
-                            recent_34 = true;
-                        if (log && time - log->unknown_24 < 3000)
-                            recent_24 = true;
+                        bool recent_shot = false;
+                        bool recent_seen = false;
+                        ai_character_log *log = m.entity->logs.GetLog(party.target);
+                        if (log && time - log->shot_time < 2000)
+                            recent_shot = true;
+                        if (log && time - log->seen_time < 3000)
+                            recent_seen = true;
                         switch (m.state)
                         {
                         case FIGHTSTATE_0:
@@ -417,7 +417,7 @@ void ai_fight_manager::Tick()
                                 break;
                             if (!j)
                             {
-                                if (!recent_34)
+                                if (!recent_shot)
                                     m.state = FIGHTSTATE_9;
                                 else if (party.members.size() > 2)
                                     m.state = FIGHTSTATE_9;
@@ -438,14 +438,14 @@ void ai_fight_manager::Tick()
                                 pos2 = party.car->frame->GetWorldPos();
                                 S_vector d = pos2 - pos;
                                 float dist = d.x * d.x + d.y * d.y + d.z * d.z;
-                                if (recent_34 && recent_24)
+                                if (recent_shot && recent_seen)
                                 {
                                     if (dist < 25.0f)
                                         m.state = FIGHTSTATE_3;
                                     else
                                         m.state = FIGHTSTATE_2;
                                 }
-                                else if (m.entity == party.unknown_3c)
+                                else if (m.entity == party.commander)
                                     m.state = FIGHTSTATE_4;
                                 else if (dist < 25.0f)
                                     m.state = FIGHTSTATE_3;
@@ -457,7 +457,7 @@ void ai_fight_manager::Tick()
                             m.entity->LockSubstate(3, 8, 3.0f, 0, false);
                             break;
                         case FIGHTSTATE_4:
-                            if (recent_34)
+                            if (recent_shot)
                             {
                                 m.state = FIGHTSTATE_3;
                                 break;
@@ -533,7 +533,7 @@ void ai_fight_manager::Tick()
                             m.entity->LockSubstate(3, 8, 8.0f, 0, false);
                             break;
                         case FIGHTSTATE_9:
-                            if (recent_34 && recent_24 && !j)
+                            if (recent_shot && recent_seen && !j)
                             {
                                 m.state = FIGHTSTATE_3;
                                 break;
@@ -546,7 +546,7 @@ void ai_fight_manager::Tick()
                             m.entity->LockSubstate(3, 8, 9.0f, 0, false);
                             break;
                         case FIGHTSTATE_10:
-                            if (recent_34 && recent_24 && !j)
+                            if (recent_shot && recent_seen && !j)
                             {
                                 m.state = FIGHTSTATE_3;
                                 break;
@@ -564,29 +564,29 @@ void ai_fight_manager::Tick()
         }
         else
         {
-            party.unknown_2c = time + 2000;
+            party.check_time = time + 2000;
             party.ComputePosition();
-            switch (party.unknown_30)
+            switch (party.type)
             {
             case FIGHTPARTY_ON_FOOT:
                 {
                     // The target driving away in a car of its own: the closest usable car of the commander's group
                     // becomes a new party's
-                    C_human *target = party.unknown_40;
+                    C_human *target = party.target;
                     if (target->type == ACTOR_PLAYER || target->type == ACTOR_ENTITY)
                     {
                         C_car *target_car = target->car;
                         if (target_car && target_car->type == ACTOR_CAR)
                         {
-                            pos = target_car->frame->GetWorldPos() - party.unknown_0;
+                            pos = target_car->frame->GetWorldPos() - party.pos;
                             if (pos.Square() > 400.0f && target_car->speed > 3.0f)
                             {
-                                ai_group *g = AIManager.groups.GetGroup(party.unknown_3c->unknown_11ac);
+                                ai_group *g = AIManager.groups.GetGroup(party.commander->group_id);
                                 uint found = 0;
                                 if (g)
                                 {
                                     S_vector v;
-                                    C_car *car = g->GetCarClosestAndUsable(&party.unknown_0, &v, &found);
+                                    C_car *car = g->GetCarClosestAndUsable(&party.pos, &v, &found);
                                     if (car)
                                     {
                                         ai_fight_followship *p = party.TakeCar(car);
@@ -617,11 +617,11 @@ void ai_fight_manager::Tick()
                     // The members told where the target is, counting those in the car
                     uint in_car = 0;
                     ai_blob *blob = new ai_blob;
-                    blob->pos = party.unknown_40->GetWorldPos();
-                    blob->dir = party.unknown_40->GetWorldDir();
+                    blob->pos = party.target->GetWorldPos();
+                    blob->dir = party.target->GetWorldDir();
                     blob->time = time;
                     blob->unknown_1c = 0;
-                    blob->actor = party.unknown_40;
+                    blob->actor = party.target;
                     uint num = party.members.size();
                     for (uint j = 0; j < num; j++)
                     {
@@ -629,27 +629,27 @@ void ai_fight_manager::Tick()
                             in_car++;
                         ai_blob *b = new ai_blob;
                         memcpy(b, blob, sizeof(ai_blob));
-                        party.members[j].entity->Event(NULL, ENTITY_EVENT_UNKNOWN_B, b);
+                        party.members[j].entity->Event(NULL, ENTITY_EVENT_SNIFF, b);
                     }
                     delete blob;
-                    if (party.unknown_38 < FIGHT_UNKNOWN38_END)
+                    if (party.stand_time < FIGHT_HUNT_ENDED)
                     {
                         if (num == in_car && party.car->speed < 2.0f)
-                            party.unknown_38 += 2000;
+                            party.stand_time += 2000;
                         else
-                            party.unknown_38 = 4000;
+                            party.stand_time = 4000;
                     }
-                    if (party.unknown_38 >= 10000 && party.unknown_38 < FIGHT_UNKNOWN38_END)
+                    if (party.stand_time >= 10000 && party.stand_time < FIGHT_HUNT_ENDED)
                     {
                         act_mission->GetGame()->GetSledovacka()->SetActionStatus(party.car,
-                            C_sledovacka::STATUS_UNKNOWN_2);
-                        party.unknown_38 = FIGHT_UNKNOWN38_END;
+                            C_sledovacka::STATUS_FAILED);
+                        party.stand_time = FIGHT_HUNT_ENDED;
                     }
                     if (num == in_car)
                     {
                         // All in: a target on foot near the car or the car standing gets them out, else the car
                         // hunts it
-                        C_human *target = party.unknown_40;
+                        C_human *target = party.target;
                         if ((target->type == ACTOR_PLAYER || target->type == ACTOR_ENTITY) && !target->car)
                         {
                             pos = party.car->frame->GetWorldPos();
@@ -666,19 +666,19 @@ void ai_fight_manager::Tick()
                         else
                         {
                             C_human *owner = party.car->GetOwner(0);
-                            if (owner && !owner->unknown_5d)
+                            if (owner && !owner->alive)
                             {
                                 act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                 if (party.car->speed < 0.5f)
                                 {
                                     for (uint j = 0; j < party.members.size(); j++)
                                         party.members[j].state = FIGHTSTATE_6;
-                                    party.car->unknown_2210 = 0;
+                                    party.car->death_fade_time = 0;
                                 }
                             }
-                            else if (party.unknown_38 >= FIGHT_UNKNOWN38_END)
+                            else if (party.stand_time >= FIGHT_HUNT_ENDED)
                             {
-                                party.car->unknown_2210 = CAR2210_UNKNOWN_534;
+                                party.car->death_fade_time = CAR_DEATH_FADE_START;
                                 act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                 for (uint j = 0; j < party.members.size(); j++)
                                     party.members[j].state = FIGHTSTATE_6;
@@ -694,33 +694,33 @@ void ai_fight_manager::Tick()
                                     else
                                         party.members[j].state = FIGHTSTATE_8;
                                 }
-                                ai_group *g = AIManager.groups.GetGroup(party.unknown_3c->unknown_11ac);
+                                ai_group *g = AIManager.groups.GetGroup(party.commander->group_id);
                                 float factor = 1.0f;
                                 if (g)
                                     factor = g->GetCarFactor(party.car);
-                                act_mission->GetGame()->GetSledovacka()->AddCarHunt(party.car, party.unknown_40, 0x200,
+                                act_mission->GetGame()->GetSledovacka()->AddCarHunt(party.car, party.target, 0x200,
                                     300, S_vector(0.0f, 0.0f, 0.0f), factor);
                                 switch (act_mission->GetGame()->GetSledovacka()->ActionStatus(party.car))
                                 {
-                                case C_sledovacka::STATUS_UNKNOWN_1:
+                                case C_sledovacka::STATUS_DONE:
                                     act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                     for (j = 0; j < party.members.size(); j++)
                                         party.members[j].state = FIGHTSTATE_6;
                                     return;
-                                case C_sledovacka::STATUS_UNKNOWN_2:
-                                    party.unknown_38 = FIGHT_UNKNOWN38_END;
-                                    party.car->unknown_2210 = CAR2210_UNKNOWN_534;
+                                case C_sledovacka::STATUS_FAILED:
+                                    party.stand_time = FIGHT_HUNT_ENDED;
+                                    party.car->death_fade_time = CAR_DEATH_FADE_START;
                                     act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                     for (j = 0; j < party.members.size(); j++)
                                         party.members[j].state = FIGHTSTATE_6;
                                     return;
-                                case C_sledovacka::STATUS_UNKNOWN_3:
+                                case C_sledovacka::STATUS_DRIVER_DEAD:
                                     act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                     for (j = 0; j < party.members.size(); j++)
                                         party.members[j].state = FIGHTSTATE_6;
                                     return;
-                                case C_sledovacka::STATUS_UNKNOWN_4:
-                                    party.car->unknown_2210 = CAR2210_UNKNOWN_534;
+                                case C_sledovacka::STATUS_NO_ENERGY:
+                                    party.car->death_fade_time = CAR_DEATH_FADE_START;
                                     act_mission->GetGame()->GetSledovacka()->RemoveCar(party.car);
                                     for (j = 0; j < party.members.size(); j++)
                                         party.members[j].state = FIGHTSTATE_6;
@@ -729,18 +729,18 @@ void ai_fight_manager::Tick()
                             }
                         }
                     }
-                    else if (party.mustCarHunt() && party.unknown_38 < FIGHT_UNKNOWN38_END)
+                    else if (party.mustCarHunt() && party.stand_time < FIGHT_HUNT_ENDED)
                     {
                         // Not all in yet: the members walk to the car, or wait in it
                         if (party.car->speed > 0.5f)
                             break;
-                        party.unknown_38 = 0;
-                        pos = party.car->frame->GetWorldPos() - party.unknown_0;
+                        party.stand_time = 0;
+                        pos = party.car->frame->GetWorldPos() - party.pos;
                         pos.y = 0.0f;
                         pos *= 0.8f;
                         float dist = pos.Square();
                         uint j;
-                        if (party.unknown_3c->car == party.car)
+                        if (party.commander->car == party.car)
                         {
                             for (j = 0; j < party.members.size(); j++)
                             {
@@ -750,7 +750,7 @@ void ai_fight_manager::Tick()
                                     party.members[j].state = FIGHTSTATE_4;
                             }
                         }
-                        else if (dist <= party.unknown_28 && dist <= 49.0f)
+                        else if (dist <= party.max_dist_sq && dist <= 49.0f)
                         {
                             for (j = 0; j < party.members.size(); j++)
                             {

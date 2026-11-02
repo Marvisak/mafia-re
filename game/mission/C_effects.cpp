@@ -38,7 +38,7 @@ std::vector<C_ParticleEmitter *> particle_emitters;
 C_effects::C_effects()
 {
     Load();
-    unknown_30 = -1;
+    last_guid = -1;
 }
 
 // FUNCTION: GAME 0x449100
@@ -58,11 +58,11 @@ bool C_effects::Mission_Start()
         QueryPerformanceFrequency(&frequency);
         QueryPerformanceCounter(&counter);
     }
-    unknown_34 = false;
-    unknown_30 = -1;
+    started = false;
+    last_guid = -1;
     if (!effects.size())
         Load();
-    unknown_34 = true;
+    started = true;
     return true;
 }
 
@@ -70,13 +70,13 @@ bool C_effects::Mission_Start()
 // FUNCTION: GAME 0x4491d0
 void C_effects::Mission_Done()
 {
-    if (!unknown_34)
+    if (!started)
         return;
     ClearEmitters();
-    unknown_30 = -1;
-    for (uint i = 0; i < unknown_20.size(); i++)
-        delete unknown_20[i];
-    unknown_20.clear();
+    last_guid = -1;
+    for (uint i = 0; i < static_emitters.size(); i++)
+        delete static_emitters[i];
+    static_emitters.clear();
     C_Particle **particle;
     for (particle = particle_pool.begin(); particle < particle_pool.end(); particle++)
         delete *particle;
@@ -93,7 +93,7 @@ void C_effects::Mission_Done()
     for (emitter = particle_emitters.begin(); emitter < particle_emitters.end(); emitter++)
         delete *emitter;
     particle_emitters.clear();
-    unknown_34 = false;
+    started = false;
 }
 
 // The table is a list of effect chunks; anything else ends it
@@ -134,17 +134,17 @@ int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &d
 void C_effects::ClientTick(int time)
 {
     uint i;
-    for (i = 0; i < unknown_20.size(); i++)
-        unknown_20[i]->Tick(time);
-    if (unknown_30 == -1)
+    for (i = 0; i < static_emitters.size(); i++)
+        static_emitters[i]->Tick(time);
+    if (last_guid == -1)
         return;
-    for (i = 0; i < unknown_0.size(); i++)
+    for (i = 0; i < in_use.size(); i++)
     {
-        if (!unknown_0[i].emitter->Tick(time))
+        if (!in_use[i].emitter->Tick(time))
         {
-            unknown_0[i].emitter->Reset();
-            particle_emitters.push_back(unknown_0[i].emitter);
-            unknown_0.erase(unknown_0.begin() + i--);
+            in_use[i].emitter->Reset();
+            particle_emitters.push_back(in_use[i].emitter);
+            in_use.erase(in_use.begin() + i--);
         }
     }
 }
@@ -165,7 +165,7 @@ bool C_effects::IsParticleAlive(int particle)
 }
 
 // STUB: GAME 0x44a2d0
-void C_effects::PauseParticle(int particle, bool pause)
+void C_effects::PauseParticle(int particle, bool emit)
 {
     StubLog("C_effects::PauseParticle");
 }
@@ -175,9 +175,9 @@ void C_effects::PauseParticle(int particle, bool pause)
 // FUNCTION: GAME 0x44a2f0
 void C_effects::ClearEmitters()
 {
-    for (uint i = 0; i < unknown_0.size(); i++)
-        delete unknown_0[i].emitter;
-    unknown_0.clear();
+    for (uint i = 0; i < in_use.size(); i++)
+        delete in_use[i].emitter;
+    in_use.clear();
 }
 
 // FUNCTION: GAME 0x44a350
@@ -225,7 +225,7 @@ void C_effects::CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm)
     }
     else
         emitter = new C_ParticleEmitter;
-    emitter->Init(frm, m(3), m(1), e->unknown_39, e->unknown_38, e->unknown_1c, e->unknown_28);
+    emitter->Init(frm, m(3), m(1), e->local_pos, e->local_dir, e->offset, e->unknown_28);
     for (uint i = 0; i < e->parts.size(); i++)
     {
         C_effect_part *part = e->parts[i];
@@ -243,16 +243,16 @@ void C_effects::CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm)
                 }
                 else
                     type = new C_ParticleType;
-                type->Init(frm, f, part->unknown_20, part->unknown_2c, part->unknown_7c, part->unknown_78,
-                    part->unknown_80, (int)part->unknown_84, (int)part->unknown_88, (int)part->unknown_8c);
-                type->unknown_bc = part->unknown_98;
-                type->unknown_68 = part->unknown_58;
-                type->unknown_74 = part->unknown_64;
-                type->SetFloats2(part->unknown_70, part->unknown_74);
-                type->unknown_2c = part->unknown_90;
-                type->SetFloats1(part->unknown_50, part->unknown_54);
-                type->unknown_48 = part->unknown_38;
-                type->unknown_54 = part->unknown_44;
+                type->Init(frm, f, part->offset, part->offset_spread, part->burst, part->rate,
+                    part->rate_fall, (int)part->fall_delay, (int)part->repeats, (int)part->restart_delay);
+                type->flags = part->flags;
+                type->scale = part->scale;
+                type->scale_spread = part->scale_spread;
+                type->SetTransparency(part->transparency, part->transparency_spread);
+                type->blend = part->blend;
+                type->SetSpeed(part->speed, part->speed_spread);
+                type->dir = part->dir;
+                type->dir_spread = part->dir_spread;
                 for (uint j = 0; j < part->subparts.size(); j++)
                 {
                     C_effect_subpart *sub = part->subparts[j];
@@ -264,12 +264,12 @@ void C_effects::CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm)
                     }
                     else
                         subpart = new S_particle_subpart;
-                    subpart->SetValues(sub->unknown_30, sub->unknown_34, sub->unknown_60, sub->unknown_c,
-                        sub->unknown_18, sub->unknown_24);
-                    subpart->unknown_38 = sub->unknown_38;
-                    subpart->unknown_44 = sub->unknown_44;
-                    subpart->SetFloats1(sub->unknown_50, sub->unknown_54);
-                    subpart->SetFloats2(sub->unknown_58, sub->unknown_5c, sub->unknown_64);
+                    subpart->SetValues(sub->duration, sub->duration_range, sub->flags, sub->dir,
+                        sub->dir_spread, sub->rot_speed);
+                    subpart->scale = sub->scale;
+                    subpart->scale_range = sub->scale_range;
+                    subpart->SetTransparency(sub->transparency, sub->transparency_range);
+                    subpart->SetMotion(sub->speed_change, sub->speed_change_range, sub->gravity);
                     type->subparts.push_back(subpart);
                 }
                 emitter->types.push_back(type);
@@ -284,7 +284,7 @@ void C_effects::CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm)
     }
     else
     {
-        unknown_20.push_back(emitter);
+        static_emitters.push_back(emitter);
         mod->Release();
     }
 }

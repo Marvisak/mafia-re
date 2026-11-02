@@ -40,8 +40,8 @@ struct check_seg_data_4
     int unknown_c;                      // 0xc
 };
 
-// What a segment's specials point to, by their types (the names are ours): a position and the radius isInSpecial
-// (0x53e570) tests against, allocated as raw memory too
+// What a segment's specials point to, by their types (the names are ours but ai_seg_corner's): a position and the
+// radius isInSpecial (0x53e570) tests against, allocated as raw memory too
 struct check_seg_special_1
 {
     S_vector pos;                       // 0x0
@@ -50,7 +50,9 @@ struct check_seg_special_1
     float radius;                       // 0x30
     int unknown_34;                     // 0x34
 };
-struct check_seg_special_2
+// The special of type 2 is a corner (PS2's name: PS2's ai_wayfind::FindCORNERNEAR and FindWayCORNERNEAR pass the
+// specials of type 2 to hasCornerVisHide as an ai_seg_corner)
+struct ai_seg_corner
 {
     S_vector pos;                       // 0x0
     float unknown_c[6];                 // 0xc
@@ -87,7 +89,7 @@ public:
     uint flags;
     int unknown_20;                     // 0x20
     void *data;                         // 0x24, a check_seg_data_* of the type
-    void **specials;                    // 0x28, check_seg_special_* of their types
+    void **specials;                    // 0x28, check_seg_special_* (ai_seg_corner) of their types
 
     // PS2 names
     uint NumSpecials();

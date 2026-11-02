@@ -26,10 +26,13 @@ public:
     }
 
     // 0x0 (PS2 0x180), 0x4 (PS2 0x184) and 0x19e (PS2 0x21e): TryGoToAssHole sends only a pedestrian with the first and
-    // the last clear and the second set to a car
-    bool unknown_0;
+    // the last clear and the second set to a car. The first is set by PS2's Tick once the health is gone, taking its
+    // collision and shadows, the second is its C_traffic_generator (PS2 CreateModel's, which SetModel clears), the
+    // last PS2's SetPanic sets once for a panic, with the place it runs to, and Tick clears with the panic (the name is
+    // a guess).
+    bool dead;
     uchar unknown_1[3];
-    void *unknown_4;
+    void *generator;
     uchar unknown_8[4];
     bool active;                        // 0xc (PS2 0x18c)
     uchar unknown_d[3];
@@ -49,7 +52,7 @@ public:
     int num_way;                        // 0xb0 (PS2 0x1c4), way's points
     uchar way_index;                    // 0xb4 (PS2 0x1c8)
     uchar unknown_b5[0xe9];
-    bool unknown_19e;
+    bool fleeing;
     uchar unknown_19f[9];
     C_car *car;                         // 0x1a8 (PS2 0x228), the parked car it walks to
     uchar unknown_1ac[0x52];
@@ -105,21 +108,23 @@ public:
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): NPC_SHUTUP's
     // FUNCTION: GAME 0x47b780
-    static void SetUnknown63d728(bool b)
+    static void SetGlobalValidScream(bool b)
     {
-        unknown_63d728 = b;
+        global_valid_scream = b;
     }
 
-    bool unknown_70;                    // 0x70, without it the camera has to be in the range
+    // 0x70, a generator without a range: C_game::SetActiveTrafficP takes the nearest of them where the camera is in no
+    // other's range (the name is ours)
+    bool no_range;
     uchar unknown_71[3];                // 0x71
     float range;                        // 0x74 (the name is ours)
     bool active;                        // 0x78, the one C_game::SetActiveTrafficP chose (the name is ours)
     uchar unknown_79[3];                // 0x79
     uchar unknown_7c[0x3c];             // 0x7c
 
-    // C_game::Init sets it (the name is ours; PS2's GameInit sets first_frame), NPC_SHUTUP clears it with a nonzero
-    // parameter: most likely whether the pedestrians talk
-    static bool unknown_63d728;
+    // Whether the pedestrians may scream (PS2 name; PS2's ElementNewScream tests it): C_game::Init sets it, NPC_SHUTUP
+    // clears it with a nonzero parameter
+    static bool global_valid_scream;
     // PS2 names: the pedestrians, whether they are shown, whether the taxi driver has passengers, whether the player
     // drives a taxi, and the pedestrians' animations
     static std::vector<C_traffic_element *> array;
@@ -132,9 +137,9 @@ public:
     static int t_horn;
     static int try_do_rici;
     static int taxi_timer;
-    // C_game::DoneIntern sets both to 1 (the names are ours)
-    static float unknown_632638;
-    static float unknown_63263c;
+    // PS2 names, its GameInit's (PS2's FreerideSetupFromScript sets the police's): C_game::DoneIntern sets both to 1
+    static float ratio_all;
+    static float ratio_police;
 };
 
 // SYNTHETIC: GAME 0x44d480

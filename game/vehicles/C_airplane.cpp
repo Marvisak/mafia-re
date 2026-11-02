@@ -30,7 +30,7 @@ void C_airplane::Start2()
 // FUNCTION: GAME 0x40d6c0
 bool C_airplane::IsDestroyed()
 {
-    bool destroyed = unknown_1cc < 0.01 && unknown_1c8 < 0.01;
+    bool destroyed = engine_energy_2 < 0.01 && engine_energy_1 < 0.01;
     return destroyed;
 }
 

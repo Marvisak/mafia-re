@@ -30,7 +30,7 @@ bool C_detector::Init(I3D_frame *frm)
 {
     if (!C_actor::Init(frm))
         return false;
-    unknown_d8 = 0;
+    human_types = 0;
     actor = this;
     return true;
 }
@@ -57,7 +57,7 @@ void C_detector::GameInit()
     DebustizeFrame(frame);
     signal = false;
     unknown_dd = false;
-    unknown_de = false;
+    wait_for_hit = false;
     dyn_colls = false;
     colls = NULL;
     coll_matrices = NULL;
@@ -80,7 +80,7 @@ void C_detector::LoadData(C_chunk *chunk)
 {
     uchar unknown;
     chunk->Read(&unknown, sizeof(unknown));
-    chunk->Read(&unknown_d8, sizeof(unknown_d8));
+    chunk->Read(&human_types, sizeof(human_types));
     LoadSourceCode(chunk);
 }
 
@@ -217,12 +217,12 @@ void C_detector::Process(uint time)
         if (num_float_regs > p->value1 && p->value1 >= 0)
         {
             float_regs[p->value1] = 0.0f;
-            std::vector<C_actor *> &acts = act_mission->game->unknown_ec;
+            std::vector<C_actor *> &acts = act_mission->game->active_actors;
             for (int i = acts.size(); i--;)
             {
                 C_actor *act = acts[i];
                 if ((act->type == ACTOR_ENTITY || act->type == ACTOR_PLAYER)
-                    && ((C_human *)act)->unknown_5fc & unknown_d8)
+                    && ((C_human *)act)->human_type & human_types)
                 {
                     S_vector d = frame->GetWorldPos() - act->frame->GetWorldPos();
                     if (d.x * d.x + d.y * d.y + d.z * d.z <= range)
@@ -245,7 +245,7 @@ void C_detector::Process(uint time)
     case CMD_DETECTOR_WAITFORHIT:
         if (!dyn_colls)
         {
-            unknown_de = true;
+            wait_for_hit = true;
             SetActState(ACTSTATE_1);
             EraseColls();
             CreateColls(false);
@@ -254,7 +254,7 @@ void C_detector::Process(uint time)
             NextCommand(NULL);
         break;
     case CMD_DETECTOR_CREATEDYNCOLL:
-        if (!unknown_de && !dyn_colls)
+        if (!wait_for_hit && !dyn_colls)
         {
             dyn_colls = true;
             EraseColls();
@@ -263,7 +263,7 @@ void C_detector::Process(uint time)
         NextCommand(NULL);
         break;
     case CMD_DETECTOR_ERASEDYNCOLL:
-        if (!unknown_de && dyn_colls)
+        if (!wait_for_hit && dyn_colls)
         {
             dyn_colls = false;
             EraseColls();

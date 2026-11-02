@@ -545,7 +545,7 @@ GM_Component *GM_Component::FindComponentAt(float x, float y)
             if (found)
                 return found;
         }
-        if (flags & COMPF_UNKNOWN_8000 && IsOverActive(x, y))
+        if (flags & COMPF_ACTIVATABLE && IsOverActive(x, y))
             return this;
     }
     return NULL;
@@ -584,7 +584,7 @@ void GM_Component::SetTextID(uint id)
 // FUNCTION: GAME 0x5ea1f0
 GM_Menu::GM_Menu() : parent(NULL), root(NULL), active(NULL), closing(false), close_code(0), open_id(0)
 {
-    flags = MENUF_UNKNOWN_10000;
+    flags = MENUF_DRAW_PARENT;
     if (!menuCount)
         LoadResources();
     menuCount++;
@@ -707,8 +707,8 @@ void GM_Menu::Draw(uint draw_flags)
     driver->SetState(RS_USEZB, false);
     if (zz_blinkTime > 700)
         draw_flags &= ~MENUDRAW_CURSOR;
-    if (parent && flags & MENUF_UNKNOWN_10000)
-        parent->Draw(draw_flags & ~MENUDRAW_UNKNOWN_40000000);
+    if (parent && flags & MENUF_DRAW_PARENT)
+        parent->Draw(draw_flags & ~MENUDRAW_ACTIVE_MENU);
     if (root)
     {
         SetViewport(0, 0, igraph->Scrn_sx(), igraph->Scrn_sy());
@@ -762,7 +762,7 @@ int GM_Menu::Tick(int mouse_rx, int mouse_ry, int mouse_rz, uint buttons, uint k
     uint active_id = old_active ? old_active->id : 0;
     if (buttons || mouse_rz)
     {
-        if (old_active && (old_active->flags & COMPF_UNKNOWN_4000 ||
+        if (old_active && (old_active->flags & COMPF_MOUSE_CAPTURE ||
             old_active->IsOverActive((float)mouseX, (float)mouseY)))
             clicked = active->Mouse(mouseX, mouseY, mouse_rz, buttons, time);
     }
@@ -1023,7 +1023,7 @@ void GM_Menu::ActivateByID(uint id)
     active = FindComponentByID(id);
     if (active)
     {
-        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_UNKNOWN_8000)
+        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_ACTIVATABLE)
             active->flags |= COMPF_ACTIVE;
         else
             active = NULL;
@@ -1038,7 +1038,7 @@ void GM_Menu::ActivateByIDOrNext(uint id)
     active = FindComponentByID(id);
     if (active)
     {
-        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_UNKNOWN_8000)
+        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_ACTIVATABLE)
             active->flags |= COMPF_ACTIVE;
         else
             active = NULL;
@@ -1066,7 +1066,7 @@ GM_Component *GM_Menu::FindComponentByIDPrev(uint id)
     std::vector<GM_Component *>::iterator it;
     for (it = components.begin(); it < components.end(); it++)
         if ((*it)->id < id && (*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE &&
-            (*it)->flags & COMPF_UNKNOWN_8000 && (*it)->id > found_id)
+            (*it)->flags & COMPF_ACTIVATABLE && (*it)->id > found_id)
         {
             found_id = (*it)->id;
             found = *it;
@@ -1074,7 +1074,7 @@ GM_Component *GM_Menu::FindComponentByIDPrev(uint id)
     if (found)
         return found;
     for (it = components.begin(); it < components.end(); it++)
-        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000 &&
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_ACTIVATABLE &&
             (*it)->id > found_id)
         {
             found_id = (*it)->id;
@@ -1091,7 +1091,7 @@ GM_Component *GM_Menu::FindComponentByIDNext(uint id)
     std::vector<GM_Component *>::iterator it;
     for (it = components.begin(); it < components.end(); it++)
         if ((*it)->id > id && (*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE &&
-            (*it)->flags & COMPF_UNKNOWN_8000 && (*it)->id < found_id)
+            (*it)->flags & COMPF_ACTIVATABLE && (*it)->id < found_id)
         {
             found_id = (*it)->id;
             found = *it;
@@ -1099,7 +1099,7 @@ GM_Component *GM_Menu::FindComponentByIDNext(uint id)
     if (found)
         return found;
     for (it = components.begin(); it < components.end(); it++)
-        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000 &&
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_ACTIVATABLE &&
             (*it)->id < found_id)
         {
             found_id = (*it)->id;
@@ -1123,7 +1123,7 @@ GM_Component *GM_Menu::FindComponentPrev(uint id)
     {
         if (it < components.begin())
             it = components.end() - 1;
-        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000)
+        if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_ACTIVATABLE)
             return *it;
     }
     return NULL;
@@ -1143,7 +1143,7 @@ GM_Component *GM_Menu::FindComponentNext(uint id)
     {
         if (it < components.end())
         {
-            if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_UNKNOWN_8000)
+            if ((*it)->flags & COMPF_ENABLED && (*it)->flags & COMPF_VISIBLE && (*it)->flags & COMPF_ACTIVATABLE)
                 return *it;
         }
         else
@@ -1225,9 +1225,9 @@ uint GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
         menuScreenScale.x = igraph->Scrn_sx() * (1.0f / 800.0f);
     }
     menuScreenScale.y = igraph->Scrn_sy() * (1.0f / 600.0f);
-    mafiaIndicators.unknown_40a8.push_back(mafiaIndicators.unknown_40a4);
-    mafiaIndicators.unknown_40a4 =
-        (mafiaIndicators.unknown_40a4 & (INDF_WIDESCREEN | INDF_FADE | INDF_SNIPER)) | INDF_MENU;
+    mafiaIndicators.show_flags_stack.push_back(mafiaIndicators.show_flags);
+    mafiaIndicators.show_flags =
+        (mafiaIndicators.show_flags & (INDF_WIDESCREEN | INDF_FADE | INDF_SNIPER)) | INDF_MENU;
     SetCameraTargetID(MENUCAM_NONE);
     zz_globalReturnCode = 0;
     if (!menu->root)
@@ -1292,10 +1292,10 @@ uint GM_Menu::ExecuteMenu(GM_Menu *menu, bool tick_mission, bool)
     }
     activeMenuWindow->Destroy();
     activeMenuWindow = NULL;
-    if (mafiaIndicators.unknown_40a8.size())
+    if (mafiaIndicators.show_flags_stack.size())
     {
-        mafiaIndicators.unknown_40a4 = mafiaIndicators.unknown_40a8.back();
-        mafiaIndicators.unknown_40a8.erase(mafiaIndicators.unknown_40a8.end() - 1);
+        mafiaIndicators.show_flags = mafiaIndicators.show_flags_stack.back();
+        mafiaIndicators.show_flags_stack.erase(mafiaIndicators.show_flags_stack.end() - 1);
     }
     if (controls_read)
     {

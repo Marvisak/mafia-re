@@ -80,7 +80,7 @@ add_executable(game WIN32
     actors/C_player.cpp
     camera/c_racecam.cpp
     vehicles/C_rail_generator.cpp
-    mission/C_cutscene.cpp
+    mission/C_recorder.cpp
     mission/game.cpp
     ui/Load_progress.cpp
     Main.cpp

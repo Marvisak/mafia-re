@@ -141,7 +141,7 @@ bool C_railway::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
 // FUNCTION: GAME 0x498a70
 int C_railway::GetMaterialID(I3D_frame *frm)
 {
-    return unknown_2ac;
+    return material;
 }
 
 // STUB: GAME 0x498a80

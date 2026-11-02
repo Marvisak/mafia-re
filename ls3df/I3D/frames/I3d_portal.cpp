@@ -1215,7 +1215,7 @@ void CTP_EnumProc(I3D_frame *root)
             }
         }
         if (frm->m_pChild && (!CTP_PartlyOffPortal || (frm->m_pParent->m_Type == FRAME_SECTOR &&
-            !(((I3D_sector *)frm->m_pParent)->sct_flags & SCTF_UNKNOWN_100))))
+            !(((I3D_sector *)frm->m_pParent)->sct_flags & SCTF_FAR_NO_CHILDREN))))
             CTP_EnumProc(frm);
     }
 }
@@ -1549,7 +1549,7 @@ all:
 #define SCT_LOOK_STACK_SIZE 100         // the walk's stack of sectors (the name is a guess)
 
 // The stack of the sectors the walk is in (PS2 names): a sector reached again through a portal without a twin marks
-// those it went through since (SCTF_UNKNOWN_80)
+// those it went through since (SCTF_OCCLUDER_OFF)
 // GLOBAL: LS3DF 0x101b4410
 // GLOBAL: LS3DF11 0x101b1530
 static I3D_sector *SctLookStck[SCT_LOOK_STACK_SIZE];
@@ -1596,7 +1596,7 @@ void ParsePortalsInSector(I3D_sector *sct, I3D_portal *p)
                     I3D_sector *t = *--s;
                     if (t == sct)
                         break;
-                    t->sct_flags |= SCTF_UNKNOWN_80;
+                    t->sct_flags |= SCTF_OCCLUDER_OFF;
                 }
             }
         }
@@ -1807,20 +1807,20 @@ void ProcessPortals(I3D_scene *scene)
     int i = scene->num_sectors;
     I3D_sector *s = scene->sectors;
     while (i--) {
-        s->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
+        s->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_OCCLUDER_OFF);
         s = s->next_in_scene;
     }
     scene->primary_sector->m_pNextVisual = NULL;
     scene->backdrop_sector->m_pNextVisual = NULL;
     scene->omni_sector->m_pNextVisual = NULL;
     scene->near_sector->m_pNextVisual = NULL;
-    scene->primary_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
+    scene->primary_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_OCCLUDER_OFF);
     ParsePortalsInSector_Begin(cam_sector);
-    scene->backdrop_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
+    scene->backdrop_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_OCCLUDER_OFF);
     CullThruPortal_First(scene->backdrop_sector, NULL, SCTF_BACKDROP);
-    scene->omni_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
+    scene->omni_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_OCCLUDER_OFF);
     CullThruPortal_First(scene->omni_sector, NULL, 0);
-    scene->near_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_UNKNOWN_80);
+    scene->near_sector->sct_flags &= ~(SCTF_VISIBLE | SCTF_CULLED | SCTF_OCCLUDER_OFF);
     CullThruPortal_First(scene->near_sector, NULL, SCTF_NEAR);
 }
 

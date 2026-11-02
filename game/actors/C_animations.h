@@ -37,13 +37,15 @@ public:
     struct S_track
     {
         char name[32];                  // 0x0, the file's (PS2 0x30), which LoadTrack finds it by
-        int unknown_20;                 // 0x20 (PS2 0x50), the length in ms most likely: PS2 compares it with 250
-        int unknown_24;                 // 0x24 (PS2 0x54), the time between the keys most likely
+        // The length in ms and the time between the keys: PS2's GetMixingPointOfTCK takes the key 250 ms before the end
+        // of a track longer than 250, the key count less 250 / key_time
+        int length;                     // 0x20 (PS2 0x50)
+        int key_time;                   // 0x24 (PS2 0x54)
         S_vector unknown_28;            // 0x28 (PS2 0x0)
         S_vector unknown_34;            // 0x34 (PS2 0x10)
-        bool unknown_40;                // 0x40 (PS2 0x58), whether it has the directions
-        std::vector<S_vector> unknown_44;  // 0x44 (PS2 0x20), the positions of the keys
-        std::vector<S_vector> unknown_54;  // 0x54 (PS2 0x24), the directions of the keys
+        bool has_directions;            // 0x40 (PS2 0x58)
+        std::vector<S_vector> positions;    // 0x44 (PS2 0x20), the keys'
+        std::vector<S_vector> directions;   // 0x54 (PS2 0x24), the keys'
     };
 
     // The tracks every actor shares

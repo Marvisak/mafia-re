@@ -82,7 +82,9 @@ public:
     struct S_anim_model
     {
         I3D_model *model;
-        bool unknown_4;
+        // The game's model (a script's animation's, AddAnimModel's flag), which ClearGameAnimModels takes from the list
+        // at the game's end; the scene's own have it clear (OpenBin's)
+        bool game_model;
     };
     // An object that fades out over time (PS2 C_mission::S_t_transparent, AddTimeTransparentObject's): Tick sets its
     // transparency to the part of the fade gone by, and releases it at the end (the members' names are ours)
@@ -104,18 +106,20 @@ public:
         bool release_frame;
     };
     // An actor's sound kept between missions (PS2 C_mission::S_actor_sound_buffer, FrmActBuff_StoreActorSound's), 0xc
-    // bytes
+    // bytes (the members' names are ours)
     struct S_actor_sound_buffer
     {
         C_actor *actor;                 // 0x0
-        int unknown_4;                  // 0x4, the sound's number
+        int number;                     // 0x4, the sound's, which PS2's FrmActBuff_GetActorSound takes with the actor
         I3D_sound *sound;               // 0x8
     };
 
     int unknown_0;                      // 0x0
     int unknown_4;                      // 0x4
-    int unknown_8;                      // 0x8, the actors C_actor::Init has numbered (C_actor::number)
-    bool unknown_c;                     // 0xc, set while a mission is open: Close does nothing without it, and clears it
+    // The last number C_actor::Init gave an actor (C_actor::number), cleared by Open, and whether a mission is open:
+    // Close does nothing without it, and clears it (the names are ours)
+    int last_actor_number;              // 0x8
+    bool opened;                        // 0xc
     I3D_scene *scene;                   // 0x10
     std::vector<S_anim_model> anim_models;  // 0x14
     C_game *game;                       // 0x24 (PS2 0x20)
@@ -123,19 +127,26 @@ public:
     C_web_path *web_path;               // 0x2c (PS2 0x28)
     C_roads *roads;                     // 0x30
     std::vector<C_actor *> actors;      // 0x34
-    // The actors AddActor adds with its flag set (PS2 0x40)
-    std::vector<C_actor *> unknown_44;  // 0x44
+    // The actors AddActor adds with its flag set (PS2 0x40), which DelNotMeActors deletes at the game's end and
+    // IsOwnActor tells from the mission's own (the name is ours, after PS2's DelNotMeActors)
+    std::vector<C_actor *> not_me_actors;  // 0x44
     // The scripts that run for the whole game (PS2 0x4c, the GlobalProgram functions')
     std::vector<C_program *> programs;  // 0x54
-    int unknown_64;                     // 0x64 (PS2 0x58)
+    // The scene's m_RenderNumber, which C_game::Tick copies each frame (the name is ours)
+    int render_number;                  // 0x64 (PS2 0x58)
     // Open's copy of the mission's name, which UnInit deletes (the name is ours)
     char *mission_name;                 // 0x68 (PS2 0x5c)
     // PC only: PS2 has its particle manager (0x64) in the mission
     C_effects *effects;                 // 0x6c
-    int unknown_70;                     // 0x70, cleared after each mission is opened (PS2 0xca0)
-    int unknown_74;                     // 0x74 (PS2 0xca4)
-    int unknown_78;                     // 0x78, cleared by Open (PS2 0xca8 the same)
-    // Set by Open, which mutes the sound while it loads: the first Tick with unknown_78 below 1 sets the profile's
+    // The mission's numbers (the names are ours): SETMISSIONNUMBER's for the next mission, which CHANGE_MISSION makes
+    // the current one's (GETMISSIONNUMBER's) and clears; main clears both for each choice of the main menu
+    int next_mission_number;            // 0x70 (PS2 0xca0)
+    int mission_number;                 // 0x74 (PS2 0xca4)
+    // 0x78, cleared by Open (PS2 0xca8 the same): the frames GameLoopSingle renders without presenting them, counting
+    // it down (0x5bea3b): 10 after C_game::Init, at least 1 from RECLOADFULL, 2 from RECUNLOAD and a cutscene's Close
+    // (the name is ours)
+    int skip_frames;
+    // Set by Open, which mutes the sound while it loads: the first Tick with skip_frames below 1 sets the profile's
     // volume again and clears it (PC only, the name is ours)
     bool restore_volume;                // 0x7c
     uchar unknown_7d[3];
@@ -158,8 +169,8 @@ public:
     int Open(const char *name, bool log, uint flags, bool progress);
     // A new actor of a type of the mission's scene2.bin, NULL for an unknown type (PS2 name)
     C_actor *CreateActor(int type);
-    // Adds the actor to the mission's, and with the flag to unknown_44 too, unless it is there already (PS2 name)
-    void AddActor(C_actor *actor, bool add_unknown_44);
+    // Adds the actor to the mission's, and with the flag to not_me_actors too, unless it is there already (PS2 name)
+    void AddActor(C_actor *actor, bool not_me);
     // Loads the mission's data from its folder (PS2 name), its scene2.bin: the scene's objects and camera, the actors,
     // the scripts, the webs. OPENBIN_*.
     int OpenBin(const char *dir, uint flags);
@@ -181,9 +192,9 @@ public:
     // Keeps the actor of a model for the next mission (PS2 name and parameters)
     // Keeps the actor of a model frame for the next mission (PS2 name): false where it doesn't
     bool FrmActBuff_StoreActor(C_actor *actor, bool flag);
-    // Takes the actor from actors and unknown_44 (the name is ours): whether it was one of actors
+    // Takes the actor from actors and not_me_actors (the name is ours): whether it was one of actors
     bool RemoveActor(C_actor *actor);
-    // Whether the actor is one of actors but not of unknown_44 (the name is ours)
+    // Whether the actor is one of actors but not of not_me_actors (the name is ours)
     bool IsOwnActor(C_actor *actor);
     bool FrmActBuff_StoreActiveActor(C_actor *actor);
     void FrmActBuff_RemoveActiveActor(C_actor *actor);
@@ -194,8 +205,8 @@ public:
     // The video options' effects on the scene, and the scene's own back (PS2 names)
     void UpdateSettings();
     void RestoreSettings();
-    // A model the mission's animations use, and taken from them (PS2 names)
-    void AddAnimModel(I3D_model *model, bool unknown);
+    // A model the mission's animations use, and taken from them (PS2 names): the scripts add theirs as game_model
+    void AddAnimModel(I3D_model *model, bool game_model);
     void DelAnimModel(I3D_model *model);
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47ae40
@@ -213,33 +224,33 @@ public:
     {
         return effects;
     }
-    // The mission's number (GETMISSIONNUMBER, SETMISSIONNUMBER): the setter writes unknown_70, the getter reads
-    // unknown_74 (PS2's the same), which KeepUnknown70 copies it to (CHANGE_MISSION's)
+    // The mission's number (GETMISSIONNUMBER, SETMISSIONNUMBER, PS2's the same): the setter writes next_mission_number,
+    // the getter reads mission_number, which KeepMissionNumber copies it to (CHANGE_MISSION's; the name is ours)
     // FUNCTION: GAME 0x47ae70
     void SetMissionNumber(int n)
     {
-        unknown_70 = n;
+        next_mission_number = n;
     }
     // FUNCTION: GAME 0x47ae80
     int GetMissionNumber() const
     {
-        return unknown_74;
+        return mission_number;
     }
     // FUNCTION: GAME 0x47ae90
-    void KeepUnknown70()
+    void KeepMissionNumber()
     {
-        unknown_74 = unknown_70;
-        unknown_70 = 0;
+        mission_number = next_mission_number;
+        next_mission_number = 0;
     }
     // FUNCTION: GAME 0x47aea0
-    void SetUnknown78(int value)
+    void SetSkipFrames(int value)
     {
-        unknown_78 = value;
+        skip_frames = value;
     }
     // FUNCTION: GAME 0x47aeb0
-    int GetUnknown78() const
+    int GetSkipFrames() const
     {
-        return unknown_78;
+        return skip_frames;
     }
     // Its copy folded with I3D_frame::GetScale's (0x47aec0, annotated by name after the class)
     S_mission_options &GetOptions()
@@ -264,10 +275,10 @@ public:
     void FrmActBuff_ClearAll();
     // The name is ours. main clears both members through one load of act_mission, so through a method: written out,
     // VC6 reloads the pointer after the first store.
-    void ResetUnknown70()
+    void ResetMissionNumbers()
     {
-        unknown_70 = 0;
-        unknown_74 = 0;
+        next_mission_number = 0;
+        mission_number = 0;
     }
 };
 
@@ -278,10 +289,10 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEPAPAUtDynamicCollObject@@PAPAU3@0@Z
+// ?erase@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
+// ?copy@std@@YIPAUai_group_member@@PBU2@0PAU2@@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)

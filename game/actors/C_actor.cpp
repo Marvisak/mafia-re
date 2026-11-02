@@ -1,7 +1,7 @@
 // The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
 // docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
 // frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
-// mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_cutscene::Close calls,
+// mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_recorder::Close calls,
 // GameInit and GameDone, which C_game::Init and Done call (with DebustizeFrame and NoShadowFrame), Tick, which
 // C_game::Tick calls, SetActState and Rebirth, and rnd's float one, which the script calls with GetWorldDir, AngleTo2
 // and RotateDir (stubs). Not written: PS2's InternalPlacementReset (0x405e60) and ResetPlacement (0x405ee0), between
@@ -17,7 +17,7 @@
 
 #include "mission/Mission.h"
 #include "mission/game.h"
-#include "mission/C_cutscene.h"
+#include "mission/C_recorder.h"
 #include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
@@ -669,16 +669,16 @@ std::vector<C_actor *> C_actor::global_actors;
 
 // FUNCTION: GAME 0x405d20
 C_actor::C_actor() :
-    unknown_4(0),
+    act_flags(0),
     ref(1),
     type(ACTOR_ACTOR),
-    unknown_14(1),
-    unknown_20(false),
+    subtype(1),
+    net_direct(false),
     unknown_60(0),
-    unknown_66(false),
+    from_mission(false),
     frame(NULL)
 {
-    unknown_8 = 0;
+    records = 0;
     global_refs++;
     AddActorToGlobal(this);
 }
@@ -706,7 +706,7 @@ bool C_actor::Init(I3D_frame *frm)
     frame = frm;
     frame->m_UserData = 0;
     C_mission *mission = act_mission;
-    number = ++mission->unknown_8;
+    number = ++mission->last_actor_number;
     own_frame = false;
     if (frame)
     {
@@ -789,9 +789,9 @@ void C_actor::GameInit()
         pos = S_vector(0.0f, 0.0f, 0.0f);
         dir = S_vector(0.0f, 0.0f, 1.0f);
     }
-    unknown_5e = false;
-    unknown_5d = true;
-    unknown_5f = false;
+    dead = false;
+    alive = true;
+    rendered = false;
     if (type == ACTOR_ACTOR && frame)
     {
         DebustizeFrame(frame);
@@ -835,23 +835,23 @@ void C_actor::GameDone()
 void C_actor::Tick(uint time)
 {
     if (frame->GetType() == FRAME_MODEL)
-        unknown_5f = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
+        rendered = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
     else if (frame->GetType() == FRAME_VISUAL)
-        unknown_5f = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
+        rendered = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
     else
-        unknown_5f = true;
-    if (!(unknown_4 & (ACTF_UNKNOWN_1 | ACTF_UNKNOWN_4)))
+        rendered = true;
+    if (!(act_flags & (ACTF_UNKNOWN_1 | ACTF_UNKNOWN_4)))
     {
-        if (unknown_20)
+        if (net_direct)
             NetDirect(time);
         else
             AI(time);
     }
     Update(time);
-    if (!unknown_5d && !unknown_5e)
+    if (!alive && !dead)
     {
-        unknown_5e = true;
-        unknown_5d = false;
+        dead = true;
+        alive = false;
         Death();
     }
 }
@@ -893,7 +893,7 @@ bool C_actor::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
 void C_actor::SetActState(int state)
 {
     if (act_state != ACTSTATE_2 && act_state != state)
-        act_mission->game->unknown_10c = true;
+        act_mission->game->act_state_changed = true;
     act_state = state;
 }
 
@@ -904,7 +904,7 @@ void C_actor::Rebirth()
     if (act_state == ACTSTATE_2)
     {
         act_state = ACTSTATE_0;
-        act_mission->game->unknown_10c = true;
+        act_mission->game->act_state_changed = true;
     }
 }
 
