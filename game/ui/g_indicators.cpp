@@ -1261,6 +1261,13 @@ void G_IndicatorsClass::RadarAddCar(C_car *car, uint color)
 
 #pragma auto_inline(on)
 
+// The airplanes' damage bar shares the refuelling one (PS2 name)
+// FUNCTION: GAME 0x5fa040
+void G_IndicatorsClass::RefullingIndicatorSetValue(float value)
+{
+    refulling_indicator = value;
+}
+
 // FUNCTION: GAME 0x5fa720
 void G_IndicatorsClass::RadarRemoveCar(C_car *car)
 {

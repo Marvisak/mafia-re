@@ -44,17 +44,19 @@ bool C_scatter::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x58e420
-void C_scatter::SaveData(C_chunk *chunk)
+bool C_scatter::SaveData(C_chunk *chunk)
 {
     StubLog("C_scatter::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x58e470
-void C_scatter::LoadData(C_chunk *chunk)
+bool C_scatter::LoadData(C_chunk *chunk)
 {
     StubLog("C_scatter::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x58e550

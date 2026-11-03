@@ -19,15 +19,17 @@ C_roads::~C_roads()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x559d40
-void C_roads::SaveData(C_chunk *chunk)
+bool C_roads::SaveData(C_chunk *chunk)
 {
     StubLog("C_roads::SaveData");
+    return true;
 }
 
 // STUB: GAME 0x559e60
-void C_roads::LoadData(C_chunk *chunk)
+bool C_roads::LoadData(C_chunk *chunk)
 {
     StubLog("C_roads::LoadData");
+    return true;
 }
 
 // STUB: GAME 0x55a210

@@ -38,17 +38,19 @@ void C_box_new::GameInit()
 }
 
 // STUB: GAME 0x567730
-void C_box_new::LoadData(C_chunk *chunk)
+bool C_box_new::LoadData(C_chunk *chunk)
 {
     StubLog("C_box_new::LoadData");
     C_PhThing::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x567ab0
-void C_box_new::SaveData(C_chunk *chunk)
+bool C_box_new::SaveData(C_chunk *chunk)
 {
     StubLog("C_box_new::SaveData");
     C_PhThing::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x567c20

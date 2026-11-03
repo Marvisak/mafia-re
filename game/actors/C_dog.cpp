@@ -37,17 +37,19 @@ C_dog::~C_dog()
 }
 
 // STUB: GAME 0x4342d0
-void C_dog::SaveData(C_chunk *chunk)
+bool C_dog::SaveData(C_chunk *chunk)
 {
     StubLog("C_dog::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x434410
-void C_dog::LoadData(C_chunk *chunk)
+bool C_dog::LoadData(C_chunk *chunk)
 {
     StubLog("C_dog::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x434630

@@ -1,9 +1,11 @@
 // The airplanes (PS2 C_airplane.cpp; the PC's file is the one at 0x409390-0x40df6c, docs/game-files.md), which
-// starts with the constructor. Written: SaveGameGetSize, GetMaterialID and IsDestroyed; the constructor, which
-// C_mission::CreateActor calls, and the scripts' other functions are stubs.
+// starts with the constructor. Written: the destructor, SaveGameGetSize, GetMaterialID, IsDestroyed and
+// ShowDamageIndicator; the constructor, which C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
+#include "C_chunk.h"
 #include "g_material.h"
+#include "ui/g_indicators.h"
 
 #include "stub.h"
 
@@ -34,34 +36,78 @@ bool C_airplane::IsDestroyed()
     return destroyed;
 }
 
-// STUB: GAME 0x40ddd0
+// The engines' energy as the HUD's refuelling bar, which the airplane's damage shares (PS2 name)
+// FUNCTION: GAME 0x40ddd0
 void C_airplane::ShowDamageIndicator(bool show)
 {
-    StubLog("C_airplane::ShowDamageIndicator %d", show);
+    damage_indicator = show;
+    if (show)
+    {
+        mafiaIndicators.RefullingIndicatorSetValue((engine_energy_2 + engine_energy_1) / (unknown_a8 * 2.0f));
+        mafiaIndicators.AddFlags(INDF_REFULLING);
+    }
+    else
+    {
+        mafiaIndicators.RemoveFlags(INDF_REFULLING);
+    }
 }
 
 #pragma auto_inline(on)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x409520
+// The two vectors' destructors follow the base's, which is all the body does (PS2 name)
+// FUNCTION: GAME 0x409520
 C_airplane::~C_airplane()
 {
-    StubLog("C_airplane::~C_airplane");
 }
 
-// STUB: GAME 0x409580
-void C_airplane::SaveData(C_chunk *chunk)
+// Writes the airplane's values (PS2 name)
+// FUNCTION: GAME 0x409580
+bool C_airplane::SaveData(C_chunk *chunk)
 {
-    StubLog("C_airplane::SaveData");
-    C_actor::SaveData(chunk);
+    uchar one = 1;
+    chunk->Write(&one, 1);
+    chunk->Write(&unknown_70, 4);
+    chunk->Write(&unknown_74, 4);
+    chunk->Write(&unknown_78, 4);
+    chunk->Write(&unknown_84, 4);
+    chunk->Write(&unknown_88, 4);
+    chunk->Write(&unknown_8c, 4);
+    chunk->Write(&unknown_90, 12);
+    chunk->Write(&unknown_9c, 4);
+    chunk->Write(&unknown_a0, 4);
+    chunk->Write(&unknown_a4, 4);
+    chunk->Write(&unknown_a8, 4);
+    chunk->Write(&unknown_ac, 4);
+    chunk->Write(&unknown_b0, 4);
+    chunk->Write(&unknown_7c, 4);
+    chunk->Write(&unknown_80, 4);
+    return true;
 }
 
-// STUB: GAME 0x4097c0
-void C_airplane::LoadData(C_chunk *chunk)
+// Reads the airplane's values (PS2 name)
+// FUNCTION: GAME 0x4097c0
+bool C_airplane::LoadData(C_chunk *chunk)
 {
-    StubLog("C_airplane::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_70, 4);
+    chunk->Read(&unknown_74, 4);
+    chunk->Read(&unknown_78, 4);
+    chunk->Read(&unknown_84, 4);
+    chunk->Read(&unknown_88, 4);
+    chunk->Read(&unknown_8c, 4);
+    chunk->Read(&unknown_90, 12);
+    chunk->Read(&unknown_9c, 4);
+    chunk->Read(&unknown_a0, 4);
+    chunk->Read(&unknown_a4, 4);
+    chunk->Read(&unknown_a8, 4);
+    chunk->Read(&unknown_ac, 4);
+    chunk->Read(&unknown_b0, 4);
+    chunk->Read(&unknown_7c, 4);
+    chunk->Read(&unknown_80, 4);
+    return true;
 }
 
 // STUB: GAME 0x409a40

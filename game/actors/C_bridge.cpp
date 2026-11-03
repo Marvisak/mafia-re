@@ -71,10 +71,11 @@ void C_bridge::GameDone()
 }
 
 // STUB: GAME 0x56a6b0
-void C_bridge::LoadData(C_chunk *chunk)
+bool C_bridge::LoadData(C_chunk *chunk)
 {
     StubLog("C_bridge::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x56a790

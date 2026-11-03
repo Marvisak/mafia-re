@@ -119,9 +119,9 @@ public:
     // Takes the actor's frame from the scene: false if it can't be the actor, where the frame has another one (PS2
     // name). It gives the actor the mission's next number and turns the frame's targets off.
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
     // The actor's data of the mission's scene2.bin (PS2 name)
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     // PS2 names, the types PS2's; the save functions return true (mov al, 1)
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();

@@ -385,17 +385,19 @@ void C_traffic_generator::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x44d670
-void C_traffic_generator::SaveData(C_chunk *chunk)
+bool C_traffic_generator::SaveData(C_chunk *chunk)
 {
     StubLog("C_traffic_generator::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x44d820
-void C_traffic_generator::LoadData(C_chunk *chunk)
+bool C_traffic_generator::LoadData(C_chunk *chunk)
 {
     StubLog("C_traffic_generator::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x44de00

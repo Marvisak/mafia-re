@@ -1,7 +1,11 @@
 // The rails' turnouts (PS2 C_turnout.cpp; the PC's file is the one at 0x4bc360-0x4bd64c, docs/game-files.md), which
-// starts with the constructor. Written: SaveGameGetSize; the constructor, which C_mission::CreateActor calls, is a stub.
+// starts with the constructor. Written: SaveGameGetSize, SaveGameSave and DuplicateFrom; the constructor, which
+// C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_turnout.h"
+#include "C_chunk.h"
+
+#include <string.h>
 
 #include "stub.h"
 
@@ -31,25 +35,57 @@ bool C_turnout::Init(I3D_frame *frm)
     return C_actor::Init(frm);
 }
 
-// STUB: GAME 0x4bc4a0
-void C_turnout::SaveData(C_chunk *chunk)
+// Writes the type byte, the flag and the two names' values (PS2 name)
+// FUNCTION: GAME 0x4bc4a0
+bool C_turnout::SaveData(C_chunk *chunk)
 {
-    StubLog("C_turnout::SaveData");
-    C_actor::SaveData(chunk);
+    uchar zero = 0;
+    chunk->Write(&zero, 1);
+    chunk->Write(&unknown_c8, 1);
+    chunk->Write(&unknown_70, 4);
+    chunk->Write(&unknown_74, 4);
+    chunk->Write(&unknown_78, 4);
+    chunk->Write(&unknown_7c, 4);
+    chunk->Write(&unknown_80, 4);
+    chunk->Write(&unknown_84, 4);
+    chunk->Write(unknown_88, 32);
+    chunk->Write(unknown_a8, 32);
+    return true;
 }
 
-// STUB: GAME 0x4bc600
-void C_turnout::LoadData(C_chunk *chunk)
+// Reads the flag and the two names' values (PS2 name)
+// FUNCTION: GAME 0x4bc600
+bool C_turnout::LoadData(C_chunk *chunk)
 {
-    StubLog("C_turnout::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_c8, 1);
+    chunk->Read(&unknown_70, 4);
+    chunk->Read(&unknown_74, 4);
+    chunk->Read(&unknown_78, 4);
+    chunk->Read(&unknown_7c, 4);
+    chunk->Read(&unknown_80, 4);
+    chunk->Read(&unknown_84, 4);
+    chunk->Read(unknown_88, 32);
+    chunk->Read(unknown_a8, 32);
+    return true;
 }
 
-// STUB: GAME 0x4bc830
+// Copies the turnout's values and its two names (PS2 name)
+// FUNCTION: GAME 0x4bc830
 void C_turnout::DuplicateFrom(C_actor *act)
 {
-    StubLog("C_turnout::DuplicateFrom");
-    C_actor::DuplicateFrom(act);
+    C_turnout *turnout = (C_turnout *)act;
+    unknown_c8 = turnout->unknown_c8;
+    unknown_70 = turnout->unknown_70;
+    unknown_74 = turnout->unknown_74;
+    unknown_78 = turnout->unknown_78;
+    unknown_7c = turnout->unknown_7c;
+    unknown_80 = turnout->unknown_80;
+    unknown_84 = turnout->unknown_84;
+    unknown_c8 = turnout->unknown_c8;
+    strcpy(unknown_88, turnout->unknown_88);
+    strcpy(unknown_a8, turnout->unknown_a8);
 }
 
 // STUB: GAME 0x4bc8c0
@@ -86,11 +122,16 @@ int C_turnout::SaveGameGetSize()
     return C_actor::SaveGameGetSize() + 16;
 }
 
-// STUB: GAME 0x4bd430
+// FUNCTION: GAME 0x4bd430
 bool C_turnout::SaveGameSave(void **buf)
 {
-    StubLog("C_turnout::SaveGameSave");
-    return C_actor::SaveGameSave(buf);
+    if (!C_actor::SaveGameSave(buf))
+        return false;
+    uchar *p = (uchar *)*buf;
+    *p = 2;
+    *(uint *)(p + 4) = unknown_190;
+    *(uint *)(p + 0xc) = unknown_144;
+    return true;
 }
 
 // STUB: GAME 0x4bd470

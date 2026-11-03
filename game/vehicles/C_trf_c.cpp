@@ -1,17 +1,22 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
-// docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written so far: GetParkingCars,
-// which C_traffic_generator::TryGoToAssHole calls, SaveGameGetSize and DuplicateFrom; the constructor, which
-// C_mission::CreateActor calls, TakATedSiVasKupim_Vsecky, VypraskeeeKaaaru and ChlupatejVystrik, which
-// C_shvestky::TickDoRiciActors calls, are stubs.
+// docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written: the constructor, which
+// C_mission::CreateActor calls, the destructor, GetParkingCars, which C_traffic_generator::TryGoToAssHole calls,
+// SaveGameGetSize, DuplicateFrom, SaveGameSave, SaveGameLoad and DecrementCount, which C_shvestky::TickDoRiciActors
+// calls; RemoveAllCars and RemoveCar are stubs.
 
 #include "vehicles/C_trf_c.h"
+#include "C_chunk.h"
 
 #include "stub.h"
 
 // GLOBAL: GAME 0x63d7fc
 float C_traffic_car::elems_coefff;
+// GLOBAL: GAME 0x63d800
+float C_traffic_car::mafian_coefff;
 // GLOBAL: GAME 0x63d804
 float C_traffic_car::police_coefff;
+// GLOBAL: GAME 0x63d810
+int C_traffic_car::count;
 
 // The third and the fourth of the file's six vectors, whose initializers start it (0x4aa4b0 to 0x4aa730; these
 // ones' 0x4aa5b0 and 0x4aa630)
@@ -22,10 +27,20 @@ std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems_parking;
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x4aa7a0
+// FUNCTION: GAME 0x4aa7a0
 C_traffic_car::C_traffic_car()
 {
-    StubLog("C_traffic_car::C_traffic_car");
+    unknown_220 = 0;
+    unknown_21c = 0;
+    names = NULL;
+    num_names = 0;
+    type = ACTOR_TRAFFIC_CAR;
+    unknown_228 = 150.0f;
+    unknown_22c = 170.0f;
+    unknown_224 = 180.0f;
+    police_coefff = 1.0f;
+    mafian_coefff = 1.0f;
+    elems_coefff = 1.0f;
 }
 
 #pragma auto_inline(on)
@@ -38,32 +53,37 @@ std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x4b9560
-void C_traffic_car::ChlupatejVystrik()
+// Decrements the traffic's count, never below 0
+// FUNCTION: GAME 0x4b9560
+void C_traffic_car::DecrementCount()
 {
-    StubLog("C_traffic_car::ChlupatejVystrik");
+    if (--count < 0)
+        count = 0;
 }
 
+// Removes every active car from the traffic's lists
 // STUB: GAME 0x4bad80
-void C_traffic_car::TakATedSiVasKupim_Vsecky()
+void C_traffic_car::RemoveAllCars()
 {
-    StubLog("C_traffic_car::TakATedSiVasKupim_Vsecky");
+    StubLog("C_traffic_car::RemoveAllCars");
 }
 
+// Removes an actor's traffic car from the lists and frees it
 // STUB: GAME 0x4bbe90
-void C_traffic_car::VypraskeeeKaaaru(C_actor *act)
+void C_traffic_car::RemoveCar(C_actor *act)
 {
-    StubLog("C_traffic_car::VypraskeeeKaaaru");
+    StubLog("C_traffic_car::RemoveCar");
 }
 
 #pragma auto_inline(on)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x4aa830
+// FUNCTION: GAME 0x4aa830
 C_traffic_car::~C_traffic_car()
 {
-    StubLog("C_traffic_car::~C_traffic_car");
+    delete[] names;
+    names = NULL;
 }
 
 // STUB: GAME 0x4aa860
@@ -99,18 +119,28 @@ void C_traffic_car::DuplicateFrom(C_actor *act)
         strcpy(names + TRAFFIC_NAME_SIZE * i, other->names + TRAFFIC_NAME_SIZE * i);
 }
 
-// STUB: GAME 0x4aabf0
-void C_traffic_car::SaveData(C_chunk *chunk)
+// Writes the type, the values and the names (PS2 name)
+// FUNCTION: GAME 0x4aabf0
+bool C_traffic_car::SaveData(C_chunk *chunk)
 {
-    StubLog("C_traffic_car::SaveData");
-    C_actor::SaveData(chunk);
+    int five = 5;
+    chunk->Write(&five, 4);
+    chunk->Write(&unknown_224, 4);
+    chunk->Write(&unknown_228, 4);
+    chunk->Write(&unknown_22c, 4);
+    chunk->Write(&unknown_21c, 4);
+    chunk->Write(&num_names, 4);
+    for (int i = 0; i < num_names; i++)
+        chunk->Write(names + i * TRAFFIC_NAME_SIZE, TRAFFIC_NAME_SIZE);
+    return true;
 }
 
 // STUB: GAME 0x4aad20
-void C_traffic_car::LoadData(C_chunk *chunk)
+bool C_traffic_car::LoadData(C_chunk *chunk)
 {
     StubLog("C_traffic_car::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // FUNCTION: GAME 0x4ab120
@@ -173,18 +203,25 @@ int C_traffic_car::SaveGameGetSize()
     return C_actor::SaveGameGetSize() + 2;
 }
 
-// STUB: GAME 0x4bc160
+// FUNCTION: GAME 0x4bc160
 bool C_traffic_car::SaveGameSave(void **buf)
 {
-    StubLog("C_traffic_car::SaveGameSave");
-    return C_actor::SaveGameSave(buf);
+    if (!C_actor::SaveGameSave(buf))
+        return false;
+    *(ushort *)*buf = 1;
+    *buf = (uchar *)*buf + 2;
+    return true;
 }
 
-// STUB: GAME 0x4bc190
+// FUNCTION: GAME 0x4bc190
 bool C_traffic_car::SaveGameLoad(void **buf)
 {
-    StubLog("C_traffic_car::SaveGameLoad");
-    return C_actor::SaveGameLoad(buf);
+    if (!C_actor::SaveGameLoad(buf))
+        return false;
+    if (*(ushort *)*buf != 1)
+        return false;
+    *buf = (uchar *)*buf + 2;
+    return true;
 }
 
 #pragma auto_inline(on)

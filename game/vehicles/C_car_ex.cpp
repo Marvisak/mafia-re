@@ -1,6 +1,6 @@
 // The cars with dynamic collisions (PS2 C_car_ex.cpp; the PC's file is the one at 0x42e240-0x4307cc,
-// docs/game-files.md), which starts with the constructor. Not written yet: the constructor, which
-// C_mission::CreateActor calls, is a stub.
+// docs/game-files.md), which starts with the constructor. Written: the constructor, destructor and Init; what the
+// scripts read.
 
 #include "vehicles/C_car_ex.h"
 
@@ -8,27 +8,27 @@
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x42e240
+// The four vectors default-construct with the car (PS2 name)
+// FUNCTION: GAME 0x42e240
 C_car_ex::C_car_ex()
 {
-    StubLog("C_car_ex::C_car_ex");
+    subtype = 3;
 }
 
 #pragma auto_inline(on)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x42e300
+// The four vectors' destructors follow the base's (PS2 name)
+// FUNCTION: GAME 0x42e300
 C_car_ex::~C_car_ex()
 {
-    StubLog("C_car_ex::~C_car_ex");
 }
 
-// STUB: GAME 0x42e3a0
+// FUNCTION: GAME 0x42e3a0
 bool C_car_ex::Init(I3D_frame *frm)
 {
-    StubLog("C_car_ex::Init");
-    return C_car::Init(frm);
+    return C_car::Init(frm) ? true : false;
 }
 
 // STUB: GAME 0x42e3c0
@@ -45,18 +45,18 @@ void C_car_ex::GameDone()
     C_car::GameDone();
 }
 
-// STUB: GAME 0x42f110
-void C_car_ex::LoadData(C_chunk *chunk)
+// The car's data, normalized (PS2 name)
+// FUNCTION: GAME 0x42f110
+bool C_car_ex::LoadData(C_chunk *chunk)
 {
-    StubLog("C_car_ex::LoadData");
-    C_car::LoadData(chunk);
+    return C_car::LoadData(chunk) ? true : false;
 }
 
-// STUB: GAME 0x42f130
-void C_car_ex::SaveData(C_chunk *chunk)
+// The car's data, normalized (PS2 name)
+// FUNCTION: GAME 0x42f130
+bool C_car_ex::SaveData(C_chunk *chunk)
 {
-    StubLog("C_car_ex::SaveData");
-    C_car::SaveData(chunk);
+    return C_car::SaveData(chunk) ? true : false;
 }
 
 // STUB: GAME 0x42f390

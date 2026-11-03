@@ -4,7 +4,7 @@
 
 // The rail vehicles (PS2 C_railway, with doors, windows and seats; C_railway.cpp, or C_rail_traffic.cpp, whose seats
 // they use), 0x370 bytes (PS2's 0x390). The constructor, which C_mission::CreateActor calls for ACTOR_RAILWAY, is a
-// stub; written: DuplicateFrom, SaveGameGetSize and GetMaterialID.
+// stub; written: DuplicateFrom, SaveGameGetSize, GetMaterialID, SaveData and LoadData.
 // VTABLE: GAME 0x624a70
 class C_railway : public C_actor
 {
@@ -17,8 +17,8 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);
@@ -36,11 +36,14 @@ public:
     virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
 
     uchar unknown_70[0x138];            // 0x70
-    // DuplicateFrom's two copies
+    // DuplicateFrom's two copies and SaveData's values (the names are ours)
     int unknown_1a8;                    // 0x1a8
-    uchar unknown_1ac[8];               // 0x1ac
+    int unknown_1ac;                    // 0x1ac
+    int unknown_1b0;                    // 0x1b0
     int unknown_1b4;                    // 0x1b4
-    uchar unknown_1b8[0xf4];            // 0x1b8
+    int unknown_1b8;                    // 0x1b8
+    int unknown_1bc;                    // 0x1bc
+    uchar unknown_1c0[0xec];            // 0x1c0
     // GetMaterialID's, a materials.def index (materialList's; the name is ours)
     int material;                       // 0x2ac (PS2 0x330)
     uchar unknown_2b0[0xc0];            // 0x2b0

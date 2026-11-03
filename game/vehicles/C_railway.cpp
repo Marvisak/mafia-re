@@ -3,6 +3,7 @@
 // SaveGameGetSize and GetMaterialID; the constructor, which C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_railway.h"
+#include "C_chunk.h"
 
 #include "stub.h"
 
@@ -39,18 +40,34 @@ void C_railway::DuplicateFrom(C_actor *act)
     unknown_1b4 = ((C_railway *)act)->unknown_1b4;
 }
 
-// STUB: GAME 0x486920
-void C_railway::SaveData(C_chunk *chunk)
+// Writes the type byte and the six values (PS2 name)
+// FUNCTION: GAME 0x486920
+bool C_railway::SaveData(C_chunk *chunk)
 {
-    StubLog("C_railway::SaveData");
-    C_actor::SaveData(chunk);
+    uchar zero = 0;
+    chunk->Write(&zero, 1);
+    chunk->Write(&unknown_1a8, 4);
+    chunk->Write(&unknown_1b0, 4);
+    chunk->Write(&unknown_1ac, 4);
+    chunk->Write(&unknown_1b4, 4);
+    chunk->Write(&unknown_1b8, 4);
+    chunk->Write(&unknown_1bc, 4);
+    return true;
 }
 
-// STUB: GAME 0x486a20
-void C_railway::LoadData(C_chunk *chunk)
+// Reads the six values (PS2 name)
+// FUNCTION: GAME 0x486a20
+bool C_railway::LoadData(C_chunk *chunk)
 {
-    StubLog("C_railway::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_1a8, 4);
+    chunk->Read(&unknown_1b0, 4);
+    chunk->Read(&unknown_1ac, 4);
+    chunk->Read(&unknown_1b4, 4);
+    chunk->Read(&unknown_1b8, 4);
+    chunk->Read(&unknown_1bc, 4);
+    return true;
 }
 
 // STUB: GAME 0x488140

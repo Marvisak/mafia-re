@@ -76,12 +76,13 @@ void C_detector::GameDone()
 
 // A byte nothing reads, the dword at 0xd8, then the script, as PS2's
 // FUNCTION: GAME 0x432b20
-void C_detector::LoadData(C_chunk *chunk)
+bool C_detector::LoadData(C_chunk *chunk)
 {
     uchar unknown;
     chunk->Read(&unknown, sizeof(unknown));
     chunk->Read(&human_types, sizeof(human_types));
     LoadSourceCode(chunk);
+    return true;
 }
 
 #pragma auto_inline(off)
@@ -297,10 +298,11 @@ void C_detector::CreateUO(int unknown, bool unknown2)
 #pragma auto_inline(off)
 
 // STUB: GAME 0x432ac0
-void C_detector::SaveData(C_chunk *chunk)
+bool C_detector::SaveData(C_chunk *chunk)
 {
     StubLog("C_detector::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x433020

@@ -464,7 +464,12 @@ public:
     bool special_dynamic_colls;         // 0x1faa (car 0x201a, PS2 0x224b), SetSpecialDynamicColls'
     bool dynamic_colls_on;              // 0x1fab (car 0x201b), SetDynamicCollsOn's first flag
     bool unknown_1fac;                  // 0x1fac (car 0x201c), its second
-    uchar unknown_1fad[0x93];           // 0x1fad, to the car's own members at its 0x20b0
+    uchar unknown_1fad[0x63];           // 0x1fad
+    // GetAIPos' two model points and their world-space results (the names are ours)
+    S_vector ai_point_1;              // 0x2010 (car 0x2080)
+    S_vector ai_point_2;              // 0x201c (car 0x208c)
+    S_vector ai_point_1_world;              // 0x2028 (car 0x2098)
+    S_vector ai_point_2_world;              // 0x2034 (car 0x20a4)
 };
 
 // The tables' vector helpers the loaders and the Set functions call out of line: each push_back's insert(P, n, x) and the

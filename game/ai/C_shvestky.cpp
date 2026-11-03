@@ -2,8 +2,8 @@
 // the constructor and the destructor. Written so far: those two, which the game's constructor and destructor call,
 // GameInit and GameDone, which C_game's Init and Done call, and Tick, which C_game::Tick calls, with PS2's TestOverRed
 // and CreateShvestkyTest, which the PC inlines in it, and TickDoRiciActors, which both call; the records' destructor,
-// what TickDoRiciActors calls of the file's (FreeMyTempActor, GlobalDelNasrany), what Tick calls of it
-// (DobreMiPokuril_MuzeJitDom, VasekSelChlastatNaOslavu, the road blocks' CreateRoadBlock) and what the script's
+// what TickDoRiciActors calls of the file's (FreeMyTempActor, GlobalDelNasrany_RemoveAngryActor, which are written), what Tick calls of
+// it (DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman, which is written, VasekSelChlastatNaOslavu_SendPoliceToHuman, the road blocks' CreateRoadBlock) and what the script's
 // commands call are stubs.
 
 #include "ai/C_shvestky.h"
@@ -98,7 +98,7 @@ void C_shvestky::GameDone()
         for (j = C_actor::global_actors.size(); j--;)
         {
             if (C_actor::global_actors[j]->type == ACTOR_TRAFFIC_CAR)
-                ((C_traffic_car *)C_actor::global_actors[j])->VypraskeeeKaaaru(road_block_cars[i].car);
+                ((C_traffic_car *)C_actor::global_actors[j])->RemoveCar(road_block_cars[i].car);
         }
         if (road_block_cars[i].car)
         {
@@ -221,7 +221,7 @@ void C_shvestky::Tick(uint time)
     }
     if (AIManager.police.PanoveHrajeteSiNaPoldy())
     {
-        DobreMiPokuril_MuzeJitDom(act_mission->GetGame()->GetPlayer(), false);
+        DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman(act_mission->GetGame()->GetPlayer(), false);
         return;
     }
     if (red_light_timer.Tick(time))
@@ -342,7 +342,7 @@ void C_shvestky::Tick(uint time)
                     if (!records[i]->alerted)
                         records[i]->wanted_time = -1;
                     if (records[i]->wanted_time < 0)
-                        DobreMiPokuril_MuzeJitDom(records[i]->human, true);
+                        DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman(records[i]->human, true);
                     else
                     {
                         if (records[i]->fire_time > 2000)
@@ -674,12 +674,12 @@ inline void C_shvestky::CreateShvestkyTest()
         if (records[i]->alerted && records[i]->nevi)
         {
             if (records[i]->new_state > SHVSTATE_NONE && records[i]->state > SHVSTATE_NONE)
-                VasekSelChlastatNaOslavu(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false,
+                VasekSelChlastatNaOslavu_SendPoliceToHuman(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false,
                     records[i]->new_state < SHVSTATE_1);
         }
         else if (records[i]->alerted ? (bool)(records[i]->state > SHVSTATE_NONE) :
             (bool)(records[i]->new_state > SHVSTATE_NONE))
-            VasekSelChlastatNaOslavu(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false, false);
+            VasekSelChlastatNaOslavu_SendPoliceToHuman(records[i]->human, records[i]->human->GetWorldPos(), 150.0f, false, false);
         if (gone && !records[i]->nasrany.size())
         {
             records[i]->state = SHVSTATE_NONE;
@@ -727,7 +727,7 @@ inline void C_shvestky::CreateShvestkyTest()
                     if (records[i]->support_level < 1)
                     {
                         records[i]->support_level = 1;
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 4, 200.0f);
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie_SendPoliceBackup(records[i]->human, 4, 200.0f);
                     }
                 }
                 else if (level == 6)
@@ -735,8 +735,8 @@ inline void C_shvestky::CreateShvestkyTest()
                     if (records[i]->support_level < 2)
                     {
                         records[i]->support_level = 2;
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 0, 200.0f);
-                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie(records[i]->human, 0, 200.0f);
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie_SendPoliceBackup(records[i]->human, 0, 200.0f);
+                        act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie_SendPoliceBackup(records[i]->human, 0, 200.0f);
                     }
                 }
             }
@@ -896,7 +896,7 @@ void C_shvestky::TickDoRiciActors(bool all)
                                 again = true;
                             }
                             else
-                                GlobalDelNasrany(do_rici_actors[i]);
+                                GlobalDelNasrany_RemoveAngryActor(do_rici_actors[i]);
                         }
                     }
                     break;
@@ -936,13 +936,13 @@ void C_shvestky::TickDoRiciActors(bool all)
             }
             if (remove)
             {
-                GlobalDelNasrany(do_rici_actors[i]);
+                GlobalDelNasrany_RemoveAngryActor(do_rici_actors[i]);
                 if (do_rici_actors[i]->GetType() == ACTOR_CAR)
                 {
                     mafiaIndicators.RadarRemoveCar((C_car *)do_rici_actors[i]);
                     act_mission->GetGame()->GetSledovacka()->RemoveCar((C_car *)do_rici_actors[i]);
                     if (((C_car *)do_rici_actors[i])->police_car)
-                        C_traffic_car::ChlupatejVystrik();
+                        C_traffic_car::DecrementCount();
                 }
                 act_mission->GetGame()->InvalidateActor(do_rici_actors[i], false);
                 if (!FreeMyTempActor(do_rici_actors[i]))
@@ -964,28 +964,78 @@ void C_shvestky::TickDoRiciActors(bool all)
 #pragma auto_inline(off)
 
 // STUB: GAME 0x49eee0
-void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
+void C_shvestky::DalsiChalpiDoPartie_SendPoliceBackup(C_human *human, uint unknown, float unknown2)
 {
-    StubLog("C_shvestky::DalsiChalpiDoPartie");
+    StubLog("C_shvestky::DalsiChalpiDoPartie_SendPoliceBackup");
 }
 
-// STUB: GAME 0x49f540
-void C_shvestky::GlobalDelNasrany(C_actor *act)
+// Removes the actor from one record's list
+// FUNCTION: GAME 0x49f780
+void C_shvestky::S_shvestky::GlobalDelNasrany_RemoveAngryActor(C_actor *act)
 {
-    StubLog("C_shvestky::GlobalDelNasrany");
+    for (uint i = nasrany.size(); i--; )
+    {
+        if (nasrany[i] == act)
+        {
+            nasrany[i] = nasrany.back();
+            nasrany.pop_back();
+            return;
+        }
+    }
 }
 
-// STUB: GAME 0x49f850
-void C_shvestky::DobreMiPokuril_MuzeJitDom(C_human *human, bool unknown)
+// Removes the actor from every record's list
+// FUNCTION: GAME 0x49f540
+void C_shvestky::GlobalDelNasrany_RemoveAngryActor(C_actor *act)
 {
-    StubLog("C_shvestky::DobreMiPokuril_MuzeJitDom");
+    for (uint i = records.size(); i--; )
+        records[i]->GlobalDelNasrany_RemoveAngryActor(act);
+}
+
+// Lets the human go, clearing its record; with add_offense, a human who is not the player (or while unknown_38 is set)
+// keeps an offense
+// FUNCTION: GAME 0x49f850
+void C_shvestky::DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman(C_human *human, bool add_offense)
+{
+    for (int i = records.size(); i--; )
+    {
+        if (records[i]->human == human)
+        {
+            records[i]->flags = 0;
+            records[i]->flags2 = 0;
+            records[i]->car_steal_time = 0;
+            records[i]->fire_time = 0;
+            records[i]->illegal_path_time = 0;
+            records[i]->collision_time = 0;
+            records[i]->crash_time = 0;
+            records[i]->boxing_time = 0;
+            records[i]->signal_time = 0;
+            records[i]->block_way = false;
+            if (add_offense)
+            {
+                if (records[i]->human != act_mission->GetGame()->GetPlayer() || unknown_38)
+                    records[i]->offenses++;
+            }
+            records[i]->state = SHVSTATE_NONE;
+            records[i]->new_state = SHVSTATE_NONE;
+            records[i]->wanted_time = -1;
+            records[i]->hits_time = -1;
+            records[i]->hits = 0;
+            records[i]->run_over = 0;
+            records[i]->alerted = false;
+            records[i]->nevi = false;
+            records[i]->support_level = 0;
+            records[i]->rammed_car = 0;
+            return;
+        }
+    }
 }
 
 // STUB: GAME 0x49f980
-void C_shvestky::VasekSelChlastatNaOslavu(C_human *human, const S_vector &pos, float range, bool unknown,
+void C_shvestky::VasekSelChlastatNaOslavu_SendPoliceToHuman(C_human *human, const S_vector &pos, float range, bool unknown,
     bool unknown2)
 {
-    StubLog("C_shvestky::VasekSelChlastatNaOslavu");
+    StubLog("C_shvestky::VasekSelChlastatNaOslavu_SendPoliceToHuman");
 }
 
 #pragma auto_inline(on)
