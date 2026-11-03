@@ -83,7 +83,7 @@ public:
         // 0x40 and 0x4c: the humans the car hit (CarCollision's, below SHVSTATE_KILL) within 5000 ms of the first, which
         // Tick forgets once the time has run out (-1 from the constructor)
         int hits_time;
-        // 0x44, the time left until the police let the human go (DobreMiPokuril_MuzeJitDom) while nobody is angry at
+        // 0x44, the time left until the police let the human go (DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman) while nobody is angry at
         // him: 20000, 40000 or 60000 by the state (NabonzovalJsemHo's), the HUD's bar of the player's
         int wanted_time;
         int wanted_time_start;          // 0x48, wanted_time's start
@@ -99,7 +99,7 @@ public:
         C_car *known_car;
         bool known_on_foot;
         uchar unknown_59[3];            // 0x59
-        // 0x5c, the more policemen the player's states 5 and 6 brought (1 or 2), DalsiChalpiDoPartie's
+        // 0x5c, the more policemen the player's states 5 and 6 brought (1 or 2), DalsiChalpiDoPartie_SendPoliceBackup's
         int support_level;
         int rammed_car;                 // 0x60, StrcilJsemHoPoldumDoVyfuku's police car (a C_car *)
         int reason;                     // 0x64, SHVREASON_*
@@ -111,6 +111,9 @@ public:
         // 0x70, the actors angry at the human (PS2's AddNasrany's and DelNasrany's), the dead ones (C_actor::dead) taken
         // out by Tick
         std::vector<C_actor *> nasrany;
+
+        // Removes the actor from the list, if it is in it
+        void GlobalDelNasrany_RemoveAngryActor(C_actor *act);
 
         ~S_shvestky();
     };
@@ -178,10 +181,9 @@ public:
     // PS2 name (Czech, rudely, roughly "tick the actors gone to hell", "do riti"; the parameter's name is ours): those
     // of do_rici_actors that went far enough from the camera, or all of them, taken out of it and out of the game
     void TickDoRiciActors(bool all);
-    // PS2 names, which Tick calls (the parameters' names are ours): Czech, roughly "he smoked me well, he can go home"
-    // (the human let go) and "Vasek went boozing to the party"
-    void DobreMiPokuril_MuzeJitDom(C_human *human, bool unknown);
-    void VasekSelChlastatNaOslavu(C_human *human, const S_vector &pos, float range, bool unknown, bool unknown2);
+    // PS2 names, which Tick calls: the human let go, and a police party sent to it. The parameters' names are ours.
+    void DobreMiPokuril_MuzeJitDom_ReleaseWantedHuman(C_human *human, bool add_offense);
+    void VasekSelChlastatNaOslavu_SendPoliceToHuman(C_human *human, const S_vector &pos, float range, bool unknown, bool unknown2);
     // A road block of the game's set up for the human (PC only, the name is ours), which Tick calls once a police car
     // comes near it
     void CreateRoadBlock(int index, C_human *human);
@@ -209,13 +211,11 @@ public:
     // The actors TickDoRiciActors ticks (PS2 names): ACTOR_ADDDORICI's and DELDORICI's
     void AddDoRiciActor(C_actor *act);
     void DelDoRiciActor(C_actor *act);
-    // PS2 names, TickDoRiciActors': the actor taken out of the records' angry ones, and a road block's car, enemy or
-    // policeman freed (PS2's FreeTempCar, FreeTempEnemy and FreeTempIris by its type): false for any other actor
-    void GlobalDelNasrany(C_actor *act);
+    // Removes an actor from the records' lists of those angry at their humans
+    void GlobalDelNasrany_RemoveAngryActor(C_actor *act);
     bool FreeMyTempActor(C_actor *act);
-    // More policemen for the human (PS2 name, Czech for "more guys to the party"): POLICE_SUPPORT's (the parameters'
-    // names are ours)
-    void DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2);
+    // Sends policemen to the human (POLICE_SUPPORT's; the parameters' names are ours)
+    void DalsiChalpiDoPartie_SendPoliceBackup(C_human *human, uint unknown, float unknown2);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b4e0

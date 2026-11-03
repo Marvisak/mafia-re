@@ -9,7 +9,7 @@ class C_car;
 
 // The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). Written: the constructor, which
 // C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, the destructor, GetParkingCars, SaveGameGetSize, DuplicateFrom,
-// SaveGameSave, SaveGameLoad, ChlupatejVystrik and SaveData; LoadData is a stub.
+// SaveGameSave, SaveGameLoad, DecrementCount and SaveData; LoadData is a stub.
 // VTABLE: GAME 0x624c98
 class C_traffic_car : public C_actor
 {
@@ -37,13 +37,12 @@ public:
     // A virtual function of its own (the original's last slot)
     virtual bool vfunc_38(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l);
 
-    // PS2 name (Czech, roughly "so now I buy them all from you"; PS2's takes a bool)
-    void TakATedSiVasKupim_Vsecky();
-    // PS2 name (Czech, roughly "he'll beat the car up")
-    void VypraskeeeKaaaru(C_actor *act);
-    // A count of the traffic's down by one, at least 0 (PS2 name, Czech slang; static: C_shvestky::TickDoRiciActors
-    // calls it with nothing in ecx, PS2's with nothing in a0)
-    static void ChlupatejVystrik();
+    // Removes every active car from the traffic's lists
+    void RemoveAllCars();
+    // Removes an actor's traffic car from the lists and frees it
+    void RemoveCar(C_actor *act);
+    // Decrements the traffic's count, never below 0 (static: C_shvestky::TickDoRiciActors calls it with nothing in ecx)
+    static void DecrementCount();
 
     // A car of the traffic's lists (PS2 C_traffic_car::S_ELEMENT; the names are ours)
     struct S_ELEMENT
@@ -74,7 +73,7 @@ public:
     static std::vector<S_ELEMENT *> v_elems_parking;
     // The traffic's cars (PS2 name; the third of the file's six vectors, 0x63d844)
     static std::vector<S_ELEMENT *> v_elems;
-    // The traffic's count, which ChlupatejVystrik lowers and never below 0 (PS2 name, most likely; the
+    // The traffic's count, which DecrementCount lowers and never below 0 (PS2 name, most likely; the
     // addresses are ours)
     static int count;
     // Its accessor (the name is ours), whose copy is among C_sledovacka.cpp's

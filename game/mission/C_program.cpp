@@ -7326,7 +7326,7 @@ void C_program::Process(uint time)
                 break;
             if (actor_regs[s->value1]->GetType() != ACTOR_PLAYER && actor_regs[s->value1]->GetType() != ACTOR_ENTITY)
                 break;
-            act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie((C_human *)actor_regs[s->value1],
+            act_mission->GetGame()->GetShvestky()->DalsiChalpiDoPartie_SendPoliceBackup((C_human *)actor_regs[s->value1],
                 s->value2 ? 0 : 4, s->value);
         }
         break;

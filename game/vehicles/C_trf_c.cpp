@@ -1,8 +1,8 @@
 // The traffic's cars (PS2 C_trf_c.cpp, C_traffic_car's; the PC's file is the one at 0x4aa490-0x4bc35c,
 // docs/game-files.md), whose constructor (0x4aa7a0) comes after functions of its own. Written: the constructor, which
 // C_mission::CreateActor calls, the destructor, GetParkingCars, which C_traffic_generator::TryGoToAssHole calls,
-// SaveGameGetSize, DuplicateFrom, SaveGameSave, SaveGameLoad and ChlupatejVystrik, which C_shvestky::TickDoRiciActors
-// calls; TakATedSiVasKupim_Vsecky and VypraskeeeKaaaru are stubs.
+// SaveGameGetSize, DuplicateFrom, SaveGameSave, SaveGameLoad and DecrementCount, which C_shvestky::TickDoRiciActors
+// calls; RemoveAllCars and RemoveCar are stubs.
 
 #include "vehicles/C_trf_c.h"
 #include "C_chunk.h"
@@ -53,23 +53,26 @@ std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
 
 #pragma auto_inline(off)
 
+// Decrements the traffic's count, never below 0
 // FUNCTION: GAME 0x4b9560
-void C_traffic_car::ChlupatejVystrik()
+void C_traffic_car::DecrementCount()
 {
     if (--count < 0)
         count = 0;
 }
 
+// Removes every active car from the traffic's lists
 // STUB: GAME 0x4bad80
-void C_traffic_car::TakATedSiVasKupim_Vsecky()
+void C_traffic_car::RemoveAllCars()
 {
-    StubLog("C_traffic_car::TakATedSiVasKupim_Vsecky");
+    StubLog("C_traffic_car::RemoveAllCars");
 }
 
+// Removes an actor's traffic car from the lists and frees it
 // STUB: GAME 0x4bbe90
-void C_traffic_car::VypraskeeeKaaaru(C_actor *act)
+void C_traffic_car::RemoveCar(C_actor *act)
 {
-    StubLog("C_traffic_car::VypraskeeeKaaaru");
+    StubLog("C_traffic_car::RemoveCar");
 }
 
 #pragma auto_inline(on)

@@ -1133,7 +1133,7 @@ bool C_game::Done()
                 cars.push_back((C_traffic_car *)C_actor::global_actors[i]);
         }
         for (i = cars.size(); i--;)
-            cars[i]->TakATedSiVasKupim_Vsecky();
+            cars[i]->RemoveAllCars();
     }
     shvestky.GameDone();
     death_actors.clear();

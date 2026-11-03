@@ -247,7 +247,7 @@ public:
     uchar unknown_2100[4];              // 0x2100
     // 0x2104 (PS2 0x2473), a car in the police's service (the name is ours): PS2's C_shvestky sets it for the cars it
     // sends and its PocetPolicejnichPlechovekVRici ("the number of police cans in the region") counts the cars with it;
-    // a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
+    // a car leaving the police's faces with it set runs C_traffic_car::DecrementCount
     bool police_car;
     uchar unknown_2105[8];              // 0x2105
     bool break_motor;                   // 0x210d (PS2 0x2477), CAR_BREAKMOTOR's
