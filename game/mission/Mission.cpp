@@ -1,9 +1,10 @@
-// The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md). Written so far: the names' order
-// of OpenBin's map, the constructor, the destructor, Init, UnInit, CreateActor, AddActor, DelActors, Close, Tick,
-// ShowProgress, Open with its two helpers, OpenBin with its frames' callback, the video options' methods and
-// FrmActBuff_ClearAll; what C_game's Init and Done call: ClearGameAnimModels, DelNotMeActors, the GlobalProgram
-// functions, UpdateSettings, RestoreSettings and FrmActBuff_IsActiveActor; the rest is stubs, among them AddAnimModel
-// and DelAnimModel, which the scripts call.
+// The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md), written whole, in PS2's order
+// (PS2's InterCity, Garage and Freeride functions have no PC counterpart). Six functions nothing written calls yet are
+// kept with /INCLUDE (game/CMakeLists.txt): FindActorByName, AddTimeTransparentObject, FrmActBuff_StoreModel,
+// FrmActBuff_GetModel, FrmActBuff_StoreActorSound and FrmActBuff_GetActorSound.
+// Open: OpenBin (its inline budget, see its comment), and with it what the original calls out of line there and ours
+// inlines (C_str's buffer's operator new, 0x5454c0, which adds its two parameters where ours adds 9; a setter of 0x18
+// bytes at +0x140, 0x546d10; the time shift's Add, 0x545280) and the order of the inline copies after it.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -156,21 +157,36 @@ void C_mission::UnInit()
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x53f520
+// Unless it is there already, searched from the last one, and only a model with an animation set (PS2's the same)
+// FUNCTION: GAME 0x53f520
 void C_mission::AddAnimModel(I3D_model *model, bool game_model)
 {
-    StubLog("C_mission::AddAnimModel");
+    for (int i = anim_models.size(); i--;)
+    {
+        if (anim_models[i].model == model)
+            return;
+    }
+    if (!model->GetAnimationSet(0))
+        return;
+    S_anim_model am;
+    am.model = model;
+    am.game_model = game_model;
+    anim_models.push_back(am);
 }
 
-// STUB: GAME 0x53f710
+// Searched from the last one, as PS2's
+// FUNCTION: GAME 0x53f710
 void C_mission::DelAnimModel(I3D_model *model)
 {
-    StubLog("C_mission::DelAnimModel");
+    for (int i = anim_models.size(); i--;)
+    {
+        if (anim_models[i].model == model)
+        {
+            anim_models.erase(&anim_models[i]);
+            return;
+        }
+    }
 }
-
-#pragma auto_inline(on)
 
 // The flagged models leave the list, the last one taking each one's place, as PS2's
 // FUNCTION: GAME 0x53f770
@@ -309,27 +325,65 @@ void C_mission::AddActor(C_actor *actor, bool not_me)
     }
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x540080
-bool C_mission::RemoveActor(C_actor *actor)
+// Each list searched from its last actor, as PS2's
+// FUNCTION: GAME 0x540080
+bool C_mission::UnloadActor(C_actor *actor)
 {
-    StubLog("C_mission::RemoveActor");
-    return false;
+    bool found = false;
+    int i;
+    for (i = actors.size(); i--;)
+    {
+        if (actor == actors[i])
+        {
+            found = true;
+            actors.erase(&actors[i]);
+            break;
+        }
+    }
+    for (i = not_me_actors.size(); i--;)
+    {
+        if (actor == not_me_actors[i])
+        {
+            not_me_actors.erase(&not_me_actors[i]);
+            break;
+        }
+    }
+    return found;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x540130
+// Each list searched from its last actor, the frame made to forget the actor as DelActors' do (PS2's the same)
+// FUNCTION: GAME 0x540130
 bool C_mission::DelActor(C_actor *actor)
 {
-    StubLog("C_mission::DelActor");
-    return true;
+    for (int i = actors.size(); i--;)
+    {
+        if (actor == actors[i])
+        {
+            for (int j = not_me_actors.size(); j--;)
+            {
+                if (actor == not_me_actors[j])
+                {
+                    not_me_actors.erase(&not_me_actors[j]);
+                    break;
+                }
+            }
+            I3D_frame *frm = actor->frame;
+            if (frm)
+            {
+                C_actor **p = GetFrameActor(frm);
+                if (p && *p)
+                {
+                    *p = NULL;
+                    SetFrameActor(frm, p);
+                }
+            }
+            actors[i]->Release();
+            actors.erase(&actors[i]);
+            return true;
+        }
+    }
+    return false;
 }
-
-#pragma auto_inline(on)
 
 // From the last actor, as PS2's: each one's frame forgets it first, through a pointer to NULL, which SetFrameActor frees
 // FUNCTION: GAME 0x540240
@@ -382,16 +436,42 @@ void C_mission::DelNotMeActors()
     not_me_actors.clear();
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x540420
+// Each list searched from its last actor
+// FUNCTION: GAME 0x540420
 bool C_mission::IsOwnActor(C_actor *actor)
 {
-    StubLog("C_mission::IsOwnActor");
+    for (int i = actors.size(); i--;)
+    {
+        if (actors[i] == actor)
+        {
+            bool not_me = false;
+            for (int j = not_me_actors.size(); j--;)
+            {
+                if (actor == not_me_actors[j])
+                {
+                    not_me = true;
+                    break;
+                }
+            }
+            return !not_me;
+        }
+    }
     return false;
 }
 
-#pragma auto_inline(on)
+// From the last actor, as PS2's
+// FUNCTION: GAME 0x540490
+C_actor *C_mission::FindActorByName(const char *name)
+{
+    if (!name)
+        return NULL;
+    for (int i = actors.size(); i--;)
+    {
+        if (!strcmp(name, actors[i]->frame->GetName()))
+            return actors[i];
+    }
+    return NULL;
+}
 
 // From the last script, as PS2's
 // FUNCTION: GAME 0x540520
@@ -1628,15 +1708,34 @@ static I3DENUMRET __stdcall cbFrameMap(I3D_frame *frm, uint context)
     return I3DENUMRET_OK;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5459b0
-void C_mission::FinishTimeTransparentObjects()
+// The object kept until its fade ends (PS2's the same)
+// FUNCTION: GAME 0x5457a0
+void C_mission::AddTimeTransparentObject(I3D_object *object, short fade_time)
 {
-    StubLog("C_mission::FinishTimeTransparentObjects");
+    if (!object)
+        return;
+    if (fade_time < 83)
+        return;
+    object->m_RefCount++;
+    object->SetTransparency(0.0f);
+    S_t_transparent t;
+    t.object = object;
+    t.time = 0;
+    t.fade_time = fade_time;
+    t_transparent.push_back(t);
 }
 
-#pragma auto_inline(on)
+// From the last one, as Tick ends a fade
+// FUNCTION: GAME 0x5459b0
+void C_mission::FinishTimeTransparentObjects()
+{
+    for (int i = t_transparent.size(); i--;)
+    {
+        t_transparent[i].object->SetTransparency(1.0f);
+        t_transparent[i].object->Release();
+    }
+    t_transparent.clear();
+}
 
 // With the city's blocks open the camera sees the options' part of its range, and the level of detail can go below 1
 // (PS2's the same). The level's bits are read through its address, which keeps it in memory from its copy on, as the
@@ -1748,49 +1847,171 @@ void S_mission_options::SetParticles(int level)
         particles = OPTION_HIGH;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x545ce0
-bool C_mission::FrmActBuff_StoreActor(C_actor *actor, bool flag)
+// The car's seats emptied, from the last one (PS2 name; static, defined before its first caller as PS2 has it: VC6
+// emits it after StoreActor, Mission.h)
+static void ClearCarSeats(C_car *car)
 {
-    StubLog("C_mission::FrmActBuff_StoreActor");
-    // Kept, so that the callers don't release it
+    for (int i = car->seats.size(); i--;)
+        car->SetOwner(NULL, i, 0.0f);
+}
+
+// Taken out of the game first, a human deactivated, a car too with its seats emptied, the frame put back where the game
+// found it. The name is the model's file name without its folders. PS2's the same, with its inter-city actors.
+// FUNCTION: GAME 0x545ce0
+bool C_mission::FrmActBuff_StoreActor(C_actor *actor, bool release_frame)
+{
+    if (!actor)
+        return false;
+    I3D_frame *frm = actor->frame;
+    if (!frm || frm->GetType() != FRAME_MODEL || NewMissionActors[0] == actor || NewMissionActors[1] == actor)
+        return false;
+    for (int i = frame_actor_buffer.size(); i--;)
+    {
+        if (frame_actor_buffer[i].actor == actor)
+            return false;
+    }
+    switch (actor->type)
+    {
+    case ACTOR_PLAYER:
+    case ACTOR_ENTITY:
+        ((C_human *)actor)->Deactivate();
+        break;
+    case ACTOR_CAR:
+        ((C_car *)actor)->DeactivateCar(2);
+        ClearCarSeats((C_car *)actor);
+        break;
+    }
+    actor->ResetPlacement();
+    S_frame_actor_buffer b;
+    b.release_frame = release_frame;
+    b.actor = actor;
+    b.frame = actor->frame;
+    const char *name = ((I3D_model *)b.frame)->GetFileName();
+    const char *s = strrchr(name, '\\');
+    if (s)
+        s++;
+    else
+        s = name;
+    b.name = new char[strlen(s) + 1];
+    strcpy(b.name, s);
+    frame_actor_buffer.push_back(b);
     return true;
 }
 
-#pragma auto_inline(on)
+// Unless it is kept already (PS2's the same)
+// FUNCTION: GAME 0x546010
+void C_mission::FrmActBuff_StoreModel(I3D_model *model)
+{
+    if (!model)
+        return;
+    for (int i = frame_actor_buffer.size(); i--;)
+    {
+        if (frame_actor_buffer[i].frame == model)
+            return;
+    }
+    S_frame_actor_buffer b;
+    b.actor = NULL;
+    b.release_frame = false;
+    b.frame = model;
+    const char *name = model->GetFileName();
+    const char *s = strrchr(name, '\\');
+    if (s)
+        s++;
+    else
+        s = name;
+    b.name = new char[strlen(s) + 1];
+    strcpy(b.name, s);
+    frame_actor_buffer.push_back(b);
+}
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x546280
+// An actor of that type, from the last entry, which leaves the buffer (the last one taking its place). The actor is
+// reborn, a human activated, an entity's state reset first, a car reset with its tank full (PS2's the same).
+// FUNCTION: GAME 0x546280
 C_actor *C_mission::FrmActBuff_GetActor(const char *name, int type)
 {
-    StubLog("C_mission::FrmActBuff_GetActor %s", name);
+    for (int i = frame_actor_buffer.size(); i--;)
+    {
+        if (!_stricmp(frame_actor_buffer[i].name, name) && frame_actor_buffer[i].actor &&
+            frame_actor_buffer[i].actor->type == type)
+        {
+            C_actor *actor = frame_actor_buffer[i].actor;
+            actor->Rebirth();
+            delete[] frame_actor_buffer[i].name;
+            frame_actor_buffer[i] = frame_actor_buffer.back();
+            frame_actor_buffer.pop_back();
+            switch (actor->type)
+            {
+            case ACTOR_ENTITY:
+                ((C_entity *)actor)->ResetState();
+            case ACTOR_PLAYER:
+                ((C_human *)actor)->Activate();
+                break;
+            case ACTOR_CAR:
+                ((C_car *)actor)->Reset(0.0f, true);
+                ((C_car *)actor)->SetFuel(((C_car *)actor)->GetTankSize());
+                break;
+            }
+            return actor;
+        }
+    }
     return NULL;
 }
 
-#pragma auto_inline(on)
+// A model, an entry without an actor, as GetActor takes its entry (PS2's the same)
+// FUNCTION: GAME 0x5463d0
+I3D_model *C_mission::FrmActBuff_GetModel(const char *name)
+{
+    for (int i = frame_actor_buffer.size(); i--;)
+    {
+        if (!_stricmp(frame_actor_buffer[i].name, name) && frame_actor_buffer[i].frame && !frame_actor_buffer[i].actor)
+        {
+            I3D_model *model = (I3D_model *)frame_actor_buffer[i].frame;
+            delete[] frame_actor_buffer[i].name;
+            frame_actor_buffer[i] = frame_actor_buffer.back();
+            frame_actor_buffer.pop_back();
+            return model;
+        }
+    }
+    return NULL;
+}
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5464d0
+// Taken out of the game, as StoreActor takes its actor, a car's seats emptied before it is deactivated (PS2's the same)
+// FUNCTION: GAME 0x5464d0
 bool C_mission::FrmActBuff_StoreActiveActor(C_actor *actor)
 {
-    StubLog("C_mission::FrmActBuff_StoreActiveActor");
+    if (NewMissionActors[0] == actor || NewMissionActors[1] == actor)
+        return false;
+    for (int i = active_actors.size(); i--;)
+    {
+        if (active_actors[i] == actor)
+            return false;
+    }
+    if (actor->type == ACTOR_CAR)
+    {
+        ClearCarSeats((C_car *)actor);
+        ((C_car *)actor)->DeactivateCar(2);
+    }
+    actor->ResetPlacement();
+    active_actors.push_back(actor);
+    return true;
+}
+
+// The actor's GameDone first, as FrmActBuff_ClearAll's (PS2's the same)
+// FUNCTION: GAME 0x5466e0
+bool C_mission::FrmActBuff_RemoveActiveActor(C_actor *actor)
+{
+    for (int i = active_actors.size(); i--;)
+    {
+        if (active_actors[i] == actor)
+        {
+            active_actors[i]->GameDone();
+            active_actors[i] = active_actors.back();
+            active_actors.pop_back();
+            return true;
+        }
+    }
     return false;
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5466e0
-void C_mission::FrmActBuff_RemoveActiveActor(C_actor *actor)
-{
-    StubLog("C_mission::FrmActBuff_RemoveActiveActor");
-}
-
-#pragma auto_inline(on)
 
 // Whether the actor was kept active between missions: it leaves the list (the last one taking its place) and is reborn, a
 // car reset with its tank full first (PS2's the same)
@@ -1813,6 +2034,39 @@ bool C_mission::FrmActBuff_IsActiveActor(C_actor *actor)
         }
     }
     return false;
+}
+
+// Unless the actor has a sound of that number kept (PS2's the same)
+// FUNCTION: GAME 0x546830
+void C_mission::FrmActBuff_StoreActorSound(C_actor *actor, int number, I3D_sound *sound)
+{
+    for (int i = actor_sound_buffer.size(); i--;)
+    {
+        if (actor_sound_buffer[i].actor == actor && actor_sound_buffer[i].number == number)
+            return;
+    }
+    S_actor_sound_buffer b;
+    b.actor = actor;
+    b.number = number;
+    b.sound = sound;
+    actor_sound_buffer.push_back(b);
+}
+
+// The entry leaves the buffer, the last one taking its place (PS2's the same)
+// FUNCTION: GAME 0x546aa0
+I3D_sound *C_mission::FrmActBuff_GetActorSound(C_actor *actor, int number)
+{
+    for (int i = actor_sound_buffer.size(); i--;)
+    {
+        if (actor_sound_buffer[i].actor == actor && actor_sound_buffer[i].number == number)
+        {
+            I3D_sound *sound = actor_sound_buffer[i].sound;
+            actor_sound_buffer[i] = actor_sound_buffer.back();
+            actor_sound_buffer.pop_back();
+            return sound;
+        }
+    }
+    return NULL;
 }
 
 // Each buffer from its last entry, as PS2's. An entry's name is deleted before the entry is read again: the original

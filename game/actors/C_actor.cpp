@@ -3,10 +3,10 @@
 // frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
 // mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_recorder::Close calls,
 // GameInit and GameDone, which C_game::Init and Done call (with DebustizeFrame and NoShadowFrame), Tick, which
-// C_game::Tick calls, SetActState and Rebirth, and rnd's float one, which the script calls with GetWorldDir, AngleTo2
-// and RotateDir (stubs). Not written: PS2's InternalPlacementReset (0x405e60) and ResetPlacement (0x405ee0), between
-// Init and GameInit, which save and restore the frame's placement as GameInit and GameDone do. GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search, isn't called by anything
-// written yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
+// C_game::Tick calls, SetActState and Rebirth, rnd's float one, which the script calls with GetWorldDir, AngleTo2 and
+// RotateDir (stubs), and PS2's ResetPlacement, which C_mission's FrmActBuff functions call. Not written: PS2's
+// InternalPlacementReset (0x405e60), before ResetPlacement, which saves the frame's placement as GameInit does, and
+// GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search; nothing written calls them yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
 // order; seven of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
 // likely, or folded with another class's), and the empty ones but DuplicateFrom's aren't annotated (folded with the
 // other empty functions of their kinds). Release (0x4091d0) is inline (C_actor.h), its copy after DoneAnimIndex.
@@ -721,6 +721,24 @@ bool C_actor::Init(I3D_frame *frm)
     }
     act_state = ACTSTATE_0;
     return true;
+}
+
+// GameDone's placement, without its frame turned on first and its pointer to the actor kept
+// FUNCTION: GAME 0x405ee0
+void C_actor::ResetPlacement()
+{
+    if (!frame)
+        return;
+    frame->LinkTo(saved_parent, 0);
+    frame->SetPos(saved_pos);
+    // SetRot with a normalization, written out as GameDone's
+    I3D_frame *frm = frame;
+    frm->m_Rot = saved_rot;
+    frm->m_Rot.Normalize();
+    frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID | FRMFLAGS_MAT_VALID |
+        FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_QUAT_VALID;
+    frame->Update();
+    frame->SetOn(saved_on);
 }
 
 // Takes the actor into the game, at the mission's start (C_game::Init): the frame's placement saved for GameDone, the

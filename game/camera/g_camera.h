@@ -230,4 +230,4 @@ public:
 // GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
-// ?GetCar@G_Camera@@QBEPAVC_car@@XZ
+// ?GetTextID@GM_Component@@UAEIXZ

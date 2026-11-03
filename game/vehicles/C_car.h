@@ -112,6 +112,9 @@ public:
 
     // The model matrix's inverse, made from the frame's world matrix first with update (PS2 name)
     const S_matrix &GetInvModelMatrix(bool update);
+    // The car taken out of the game (PS2 name and parameter), which C_mission's FrmActBuff_StoreActor and
+    // FrmActBuff_StoreActiveActor call with 2 for a kept car
+    void DeactivateCar(uint unknown);
     // PS2 name and parameters, which C_mission::FrmActBuff_IsActiveActor calls with 0 and true
     void Reset(float unknown, bool unknown2);
     // PS2 name; the scripts' CAR_REPAIR passes true

@@ -186,21 +186,33 @@ public:
     void GlobalProgramGameInit();
     void GlobalProgramRun(const char *name);
     void GlobalProgramGameDone();
-    bool FrmActBuff_IsActiveActor(C_actor *actor);
-    // The kept actor of a frame's name and type, taken from the buffer (PS2 name), NULL for none
+    // What is kept between missions (PS2 names). StoreActor keeps the actor of a model frame, taken out of the game,
+    // under the model's file name (false where it doesn't: no model, a new mission's actor, kept already), StoreModel a
+    // model, StoreActiveActor an actor that stays in the game; GetActor and GetModel take one of that name back, NULL
+    // for none, and IsActiveActor and RemoveActiveActor an active actor, false for none. StoreActorSound keeps an
+    // actor's sound of a number (a sound kept for it already stays), GetActorSound takes it back.
+    bool FrmActBuff_StoreActor(C_actor *actor, bool release_frame);
+    void FrmActBuff_StoreModel(I3D_model *model);
     C_actor *FrmActBuff_GetActor(const char *name, int type);
-    // Keeps the actor of a model for the next mission (PS2 name and parameters)
-    // Keeps the actor of a model frame for the next mission (PS2 name): false where it doesn't
-    bool FrmActBuff_StoreActor(C_actor *actor, bool flag);
-    // Takes the actor from actors and not_me_actors (the name is ours): whether it was one of actors
-    bool RemoveActor(C_actor *actor);
-    // Whether the actor is one of actors but not of not_me_actors (the name is ours)
-    bool IsOwnActor(C_actor *actor);
+    I3D_model *FrmActBuff_GetModel(const char *name);
     bool FrmActBuff_StoreActiveActor(C_actor *actor);
-    void FrmActBuff_RemoveActiveActor(C_actor *actor);
+    bool FrmActBuff_RemoveActiveActor(C_actor *actor);
+    bool FrmActBuff_IsActiveActor(C_actor *actor);
+    void FrmActBuff_StoreActorSound(C_actor *actor, int number, I3D_sound *sound);
+    I3D_sound *FrmActBuff_GetActorSound(C_actor *actor, int number);
+    // Takes the actor from actors and not_me_actors (PS2 name): whether it was one of actors
+    bool UnloadActor(C_actor *actor);
+    // Takes the actor out of the mission and releases it (PS2 name): false for one that isn't the mission's
     bool DelActor(C_actor *actor);
     void DelNotMeActors();
+    // Whether the actor is one of actors but not of not_me_actors (the name is ours)
+    bool IsOwnActor(C_actor *actor);
+    // The mission's actor of a frame's name (PS2 name), NULL for none
+    C_actor *FindActorByName(const char *name);
     void ClearGameAnimModels();
+    // An object whose transparency goes from 0 to 1 over fade_time (PS2 name and parameters), which Tick raises and
+    // releases the object at 1; FinishTimeTransparentObjects ends every fade (PS2 name). Fades under 83 are left out.
+    void AddTimeTransparentObject(I3D_object *object, short fade_time);
     void FinishTimeTransparentObjects();
     // The video options' effects on the scene, and the scene's own back (PS2 names)
     void UpdateSettings();
@@ -289,7 +301,7 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@0@Z
+// ?erase@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@QAEPAPAUS_shvestky@C_shvestky@@PAPAU34@0@Z
 
 // TEMPLATE: GAME 0x538520
 // ?copy@std@@YIPAUai_group_member@@PBU2@0PAU2@@Z
@@ -297,8 +309,104 @@ extern C_mission *act_mission;
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
 // TEMPLATE: GAME 0x4a9930
-// ??A?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEAAPAVC_actor@@I@Z
+// ??A?$vector@PAUS_ELEMENT@C_traffic_car@@V?$allocator@PAUS_ELEMENT@C_traffic_car@@@std@@@std@@QAEAAPAUS_ELEMENT@C_traffic_car@@I@Z
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
 // ?GetOptions@C_mission@@QAEAAUS_mission_options@@XZ
+
+// What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
+// folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
+// TEMPLATE: GAME 0x404830
+// ?_Construct@std@@YIXPAUS_instruction@C_program@@ABU23@@Z
+
+// What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
+// type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
+// (this file's copies)
+// TEMPLATE: GAME 0x411000
+// ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
+
+// TEMPLATE: GAME 0x411040
+// ?_Ufill@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEXPAUS_Telephone@C_game@@IABU34@@Z
+
+// TEMPLATE: GAME 0x5470a0
+// ?size@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@QBEIXZ
+
+// TEMPLATE: GAME 0x5490b0
+// ?_Construct@std@@YIXPAUS_actor_sound_buffer@C_mission@@ABU23@@Z
+
+// What OpenBin calls out of line, its inline budget spent: the frames' map's destructor, operator[] and insert, its
+// tree's functions and the pair's, and the frames' vector's push_back, this file's copies; the 8-byte elements'
+// push_back and insert(P, x), folded with every other 8-byte type's (named after the copies our linker keeps)
+// TEMPLATE: GAME 0x5456e0
+// ??1?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE@XZ
+
+// TEMPLATE: GAME 0x546d30
+// ?push_back@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXABUS_instruction@C_program@@@Z
+
+// TEMPLATE: GAME 0x546ef0
+// ?push_back@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@QAEXABQAVI3D_frame@@@Z
+
+// TEMPLATE: GAME 0x547170
+// ??A?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAEAAPAVI3D_frame@@ABVC_str@@@Z
+
+// TEMPLATE: GAME 0x548040
+// ?insert@?$vector@US_sound_light_sector@@V?$allocator@US_sound_light_sector@@@std@@@std@@QAEPAUS_sound_light_sector@@PAU3@ABU3@@Z
+
+// TEMPLATE: GAME 0x5481f0
+// ?insert@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE?AU?$pair@Viterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3282db0e2
+
+// TEMPLATE: GAME 0x5482d0
+// ??0?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAE@ABU?$less@VC_str@@@1@_NABV?$allocator@PA3bd97113
+
+// TEMPLATE: GAME 0x548300
+// ?begin@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAE?AViterator@12@XZ
+
+// TEMPLATE: GAME 0x548310
+// ??0?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@QAE@ABVC_str@@ABQAVI3D_frame@@@Z
+
+// TEMPLATE: GAME 0x548590
+// ?insert@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAE?AU?$pair@Viterator@?$_Tree@VC_str@@af99994b
+
+// TEMPLATE: GAME 0x5487f0
+// ?erase@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAE?AViterator@12@V312@@Z
+
+// TEMPLATE: GAME 0x548be0
+// ?_Erase@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAEXPAU_Node@12@@Z
+
+// TEMPLATE: GAME 0x548c30
+// ?_Init@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAEXXZ
+
+// TEMPLATE: GAME 0x548cb0
+// ?_Insert@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAE?AViterator@12@PAU_Node@12@0ABU?$pa0c7b9762
+
+// TEMPLATE: GAME 0x548f20
+// ?_Lrotate@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAEXPAU_Node@12@@Z
+
+// TEMPLATE: GAME 0x548f80
+// ?_Rrotate@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAEXPAU_Node@12@@Z
+
+// TEMPLATE: GAME 0x548fe0
+// ?_Buynode@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@IAEPAU_Node@12@PAU312@W4_Redbl@12@@Z
+
+// TEMPLATE: GAME 0x549000
+// ?_Dec@const_iterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAEXXZ
+
+// TEMPLATE: GAME 0x549060
+// ?_Inc@const_iterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@3@U?$less@VC_str@@@3@V?$allocator@PAVI3D_frame@@@3@@std@@QAEXXZ
+
+// TEMPLATE: GAME 0x5490f0
+// ?_Construct@std@@YIXPAU?$pair@$$CBVC_str@@PAVI3D_frame@@@1@ABU21@@Z
+
+// The frames' map's tree's statics, in this file's .bss
+// GLOBAL: GAME 0x646db4
+// std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Nilrefs
+
+// GLOBAL: GAME 0x646db8
+// std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Nil
+
+// Mission.cpp's static ClearCarSeats (PS2's, defined before FrmActBuff_StoreActor), which VC6 emits after its first
+// caller, StoreActor, where its marker would be out of address order. It has no public symbol: the PDB's procedure
+// name.
+// FUNCTION: GAME 0x545fd0
+// ClearCarSeats

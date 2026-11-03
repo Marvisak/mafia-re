@@ -2,8 +2,8 @@
 // docs/game-files.md), whose constructor (0x5071a0) comes after functions of its own. Not written yet: the
 // constructor, which C_mission::CreateActor calls, the cutscene's block and wake, which C_game::EntityBlock calls,
 // what the script's commands call (the senses', the logs' and the jobs' functions, ForceScript, WeaponChoose,
-// AddUsingObject) and what the AI's following and fights and the police call (Event, hasAction, LockSubstate,
-// IsInDanger) are stubs.
+// AddUsingObject), what the AI's following and fights and the police call (Event, hasAction, LockSubstate,
+// IsInDanger) and ResetState, which C_mission::FrmActBuff_GetActor calls, are stubs.
 
 #include "ai/jp_ai_entity.h"
 
@@ -127,6 +127,12 @@ void C_entity::GameInit()
 {
     StubLog("C_entity::GameInit");
     C_human::GameInit();
+}
+
+// STUB: GAME 0x507c80
+void C_entity::ResetState()
+{
+    StubLog("C_entity::ResetState");
 }
 
 // STUB: GAME 0x507d30

@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ?vfunc_12@C_actor@@UAEXXZ
+// ?ForceUpdate@GM_Component@@UAEXXZ
 
 #include <settings.h>
 
@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVC_effect_subpart@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAVC_actor@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@PAUS_particle_subpart@@V?$allocator@PAUS_particle_subpart@@@std@@@std@@IAEXPAPAUS_particle_subpart@@0@Z
+// ?GetRangeDword@GM_Component@@UAEXAAI0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@IAEPAPAUtDynamicCollObject@@PBQAU3@0PAPAU3@@Z
+// ?_Ucopy@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEPAPAVIJoy@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@IAEXPAPAVI3D_frame@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z

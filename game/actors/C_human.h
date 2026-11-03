@@ -95,6 +95,10 @@ public:
     int Do_PlayAnim(const char *anim, bool simple, bool unknown);
     // The model changed for the named one
     void _intern_ChangeModel(char *name, bool unknown);
+    // The human taken out of the game and back into it (PS2 names), which C_mission's FrmActBuff_StoreActor and
+    // FrmActBuff_GetActor call for a kept human
+    void Activate();
+    void Deactivate();
     void ResetActions();
     // Whether the player or an entity is in the car or stealing it (PS2 name), which
     // C_traffic_generator::TryGoToAssHole asks

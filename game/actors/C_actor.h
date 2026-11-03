@@ -193,6 +193,9 @@ public:
     }
     // PS2 name, which C_mission::FrmActBuff_IsActiveActor calls for a kept actor
     void Rebirth();
+    // Puts the frame back where GameInit found it (PS2 name), which C_mission's FrmActBuff functions call for an actor
+    // they keep
+    void ResetPlacement();
     // The type, ACTOR_* (the name is ours): calls VC6 left out of line read it through it, a copy folded with
     // C_mission::GetScene, C_sound_table::GetSounds and GM_Component::GetText
     int GetType() const
@@ -343,13 +346,13 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?SaveGameGetSize@C_racecam@@UAEHXZ
+// ?GetPointer@GM_Component@@UAEPAXXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?DuplicateFrom@C_actor@@UAEXPAV1@@Z
+// ?NetDirect@C_traffic_car@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
@@ -361,29 +364,29 @@ public:
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
 
 // SYNTHETIC: GAME 0x4aa450
-// ?Collision@C_actor@@UAE_NPAV1@ABUS_vector@@11MPAVI3D_frame@@@Z
+// ?Collision@C_stone@@UAE_NPAVC_actor@@ABUS_vector@@11MPAVI3D_frame@@@Z
 
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
+// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_scatter@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_bridge@@UAEHXZ
+// ?SaveGameGetSize@C_stone@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?GetActFlags@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

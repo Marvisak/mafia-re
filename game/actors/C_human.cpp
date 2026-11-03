@@ -1,6 +1,7 @@
 // The humans (PS2 C_human.cpp; the PC's file is the one at 0x56b180-0x58e34c, docs/game-files.md), whose constructor
 // (0x56efd0) comes after functions of its own. Not written yet: the constructor, which the derived classes'
-// constructors call, and the functions the script calls are stubs.
+// constructors call, the functions the script calls, and Activate and Deactivate, which C_mission's FrmActBuff
+// functions call, are stubs.
 
 #include "actors/C_human.h"
 
@@ -119,6 +120,18 @@ void C_human::InitFFEffects()
 void C_human::DoneFFEffects()
 {
     StubLog("C_human::DoneFFEffects");
+}
+
+// STUB: GAME 0x58ac90
+void C_human::Activate()
+{
+    StubLog("C_human::Activate");
+}
+
+// STUB: GAME 0x58b330
+void C_human::Deactivate()
+{
+    StubLog("C_human::Deactivate");
 }
 
 // STUB: GAME 0x58b870

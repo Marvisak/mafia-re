@@ -1463,7 +1463,7 @@ void G_LoadSaveClass::GarageGameDone(std::vector<C_car *> *cars)
         if (!act_mission->IsOwnActor(garage[n].actor))
         {
             garage[n].actor->temporary = true;
-            act_mission->RemoveActor(garage[n].actor);
+            act_mission->UnloadActor(garage[n].actor);
             act_mission->FrmActBuff_StoreActor(garage[n].actor, false);
         }
         garage[n].actor = NULL;

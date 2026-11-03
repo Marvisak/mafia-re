@@ -226,3 +226,12 @@ public:
         return rep ? rep->data : (const char *)&rep;
     }
 };
+
+// The game's copies, by name: a marker line in the class moves LS3DF's /YX items (a body line from line 128 on weighs
+// more). operator+=(const char *) is Mission.cpp's (OpenBin's), the destructor m_cache.cpp's, folded with C_fstr's and
+// the frames' map's pair's (named after the copy our linker keeps, foldfix).
+// FUNCTION: GAME 0x5454d0
+// ??YC_str@@QAEAAV0@PBD@Z
+
+// FUNCTION: GAME 0x4033a0
+// ??1C_fstr@@QAE@XZ

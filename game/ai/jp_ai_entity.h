@@ -183,6 +183,8 @@ public:
     void ForceScript(bool unknown);
     // Takes the weapon of that id in its hand (PS2 name)
     void WeaponChoose(uint id);
+    // PS2 name, which C_mission::FrmActBuff_GetActor calls for a kept entity before it activates it
+    void ResetState();
     // Gives the game its action button object (PS2 name)
     void AddUsingObject();
     // PS2 names: the fights' Tick locks a substate with its member's state and passes the target's ai_blob through

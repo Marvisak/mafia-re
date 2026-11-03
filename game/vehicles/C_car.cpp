@@ -4,8 +4,9 @@
 // profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls,
 // GetOwner, which C_shvestky::TickDoRiciActors calls, the virtual GetActorSpeed, and what the scripts call:
 // GetLevelsCount, SetEnterProtect1, GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor
-// calls, SetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable, the scripts' other functions and
-// TryGoToAssHole's others (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
+// calls, SetOwner, SetActualLevel, the force feedback effects, DeactivateCar, which C_mission's FrmActBuff functions
+// call, Reset, IsCarUsable, the scripts' other functions and TryGoToAssHole's others (GetPlacementFromTCK1,
+// GetNavigationPoints) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -395,6 +396,12 @@ bool C_car::CarExplosion(uint unknown)
 {
     StubLog("C_car::CarExplosion");
     return false;
+}
+
+// STUB: GAME 0x422ad0
+void C_car::DeactivateCar(uint unknown)
+{
+    StubLog("C_car::DeactivateCar %u", unknown);
 }
 
 // STUB: GAME 0x422be0

@@ -228,4 +228,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QBEIXZ
+// ?size@?$vector@VC_str@@V?$allocator@VC_str@@@std@@@std@@QBEIXZ

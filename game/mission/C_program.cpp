@@ -3594,7 +3594,7 @@ void C_program::Process(uint time)
         for (int i = 0; i < 2; i++)
         {
             if (NewMissionActors[i])
-                act_mission->RemoveActor(NewMissionActors[i]);
+                act_mission->UnloadActor(NewMissionActors[i]);
         }
         if (!NewMissionActors[0])
             break;
