@@ -269,6 +269,8 @@ public:
     uint crew_quads;                    // 0x4454, the quads of _VtxCrew INDF_CREW draws
     float thief_indicator;              // 0x4458, PS2's ThiefIndicatorSetValue's, .5 from ResetValues (PS2 0x4b98)
     float refulling_indicator;          // 0x445c, PS2's RefullingIndicatorSetValue's (PS2 0x4b9c)
+    // Its setter (PS2 name)
+    void RefullingIndicatorSetValue(float value);
     uchar unknown_4460[0x18];
     uint fade_color;                    // 0x4478, PS2's FadeInOut's (PS2 0x4bb8), with its alpha
     uchar unknown_447c[4];

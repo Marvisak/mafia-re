@@ -1,9 +1,10 @@
 // The airplanes (PS2 C_airplane.cpp; the PC's file is the one at 0x409390-0x40df6c, docs/game-files.md), which
-// starts with the constructor. Written: the destructor, SaveGameGetSize, GetMaterialID and IsDestroyed; the
-// constructor, which C_mission::CreateActor calls, and the scripts' other functions are stubs.
+// starts with the constructor. Written: the destructor, SaveGameGetSize, GetMaterialID, IsDestroyed and
+// ShowDamageIndicator; the constructor, which C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
 #include "g_material.h"
+#include "ui/g_indicators.h"
 
 #include "stub.h"
 
@@ -34,10 +35,20 @@ bool C_airplane::IsDestroyed()
     return destroyed;
 }
 
-// STUB: GAME 0x40ddd0
+// The engines' energy as the HUD's refuelling bar, which the airplane's damage shares (PS2 name)
+// FUNCTION: GAME 0x40ddd0
 void C_airplane::ShowDamageIndicator(bool show)
 {
-    StubLog("C_airplane::ShowDamageIndicator %d", show);
+    damage_indicator = show;
+    if (show)
+    {
+        mafiaIndicators.RefullingIndicatorSetValue((engine_energy_2 + engine_energy_1) / (unknown_a8 * 2.0f));
+        mafiaIndicators.AddFlags(INDF_REFULLING);
+    }
+    else
+    {
+        mafiaIndicators.RemoveFlags(INDF_REFULLING);
+    }
 }
 
 #pragma auto_inline(on)

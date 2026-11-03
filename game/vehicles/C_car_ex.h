@@ -3,8 +3,7 @@
 #include "vehicles/C_car.h"
 
 // The cars with dynamic collisions (PS2 C_car_ex, C_car_ex.cpp, whose S_dyn_coll they are), a car, 0x227c bytes
-// (PS2's 0x24f0). Written: Init and what the scripts read; the constructor, which C_mission::CreateActor calls for
-// ACTOR_CAR_EX, is a stub.
+// (PS2's 0x24f0). Written: the constructor, destructor, Init and what the scripts read.
 // VTABLE: GAME 0x6237d4 C_Vehicle
 // VTABLE: GAME 0x6237d8 C_actor
 class C_car_ex : public C_car
@@ -35,11 +34,14 @@ public:
         return unknown_223c && unknown_2258;
     }
 
-    uchar unknown_221c[0x20];           // 0x221c
+    // The four vectors the destructor frees (the names are ours)
+    std::vector<void *> unknown_221c;   // 0x221c
+    std::vector<void *> unknown_222c;   // 0x222c
     bool unknown_223c;                  // 0x223c, CanUseTruck's
     uchar unknown_223d[0x1b];           // 0x223d
     uint unknown_2258;                  // 0x2258, CanUseTruck's, tested as a whole (a count or a pointer)
-    uchar unknown_225c[0x20];           // 0x225c
+    std::vector<void *> unknown_225c;   // 0x225c
+    std::vector<void *> unknown_226c;   // 0x226c
 };
 
 // SYNTHETIC: GAME 0x42e2e0

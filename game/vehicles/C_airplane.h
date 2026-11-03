@@ -3,8 +3,8 @@
 #include "actors/C_actor.h"
 
 // The airplanes (PS2 C_airplane, C_airplane.cpp), 0x3f0 bytes (PS2's 0x400). Written: the destructor, which frees
-// its two vectors, SaveGameGetSize, GetMaterialID and IsDestroyed; the constructor, which C_mission::CreateActor
-// calls for ACTOR_AIRPLANE, and the scripts' functions are stubs.
+// its two vectors, SaveGameGetSize, GetMaterialID, IsDestroyed and ShowDamageIndicator; the constructor, which
+// C_mission::CreateActor calls for ACTOR_AIRPLANE, and the scripts' functions are stubs.
 // VTABLE: GAME 0x623318
 class C_airplane : public C_actor
 {
@@ -39,11 +39,17 @@ public:
     // Shows the damage on the HUD's bar or hides it (PS2 name); the scripts' AIRPLANESHOWDAMAGE
     void ShowDamageIndicator(bool show);
 
-    uchar unknown_70[0xa8];             // 0x70
+    uchar unknown_70[0x38];             // 0x70
+    // ShowDamageIndicator's divisor, the two engines' full energy (the name is ours)
+    float unknown_a8;                   // 0xa8
+    uchar unknown_ac[0x6c];             // 0xac
     // The two vectors the destructor frees (the names are ours)
     std::vector<uint> unknown_118;      // 0x118
     std::vector<uint> unknown_128;      // 0x128
-    uchar unknown_138[0x90];            // 0x138
+    uchar unknown_138[0x32];            // 0x138
+    // ShowDamageIndicator's, whether the HUD's bar is on (the name is ours)
+    bool damage_indicator;              // 0x16a
+    uchar unknown_16b[0x5d];            // 0x16b
     // The two engines' energies (PS2 0x37c and 0x380, the names are ours): PS2's Hit lowers them down to 0, its
     // UpdateParticles smokes each at GetEnginesPos' engine below half; the plane is destroyed with both under 0.01
     float engine_energy_1;              // 0x1c8
