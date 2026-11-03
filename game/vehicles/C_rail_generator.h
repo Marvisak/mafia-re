@@ -2,8 +2,8 @@
 
 #include "actors/C_actor.h"
 
-// The rail vehicles' generator (PS2 C_rail_generator, C_rail_generator.cpp), 0x84 bytes (PS2's 0xa0). The constructor,
-// which C_mission::CreateActor calls for ACTOR_RAIL_GENERATOR, is a stub; written: Init.
+// The rail vehicles' generator (PS2 C_rail_generator, C_rail_generator.cpp), 0x84 bytes (PS2's 0xa0). Written: the
+// constructor, which C_mission::CreateActor calls for ACTOR_RAIL_GENERATOR, and Init.
 // VTABLE: GAME 0x6259e8
 class C_rail_generator : public C_actor
 {
@@ -20,7 +20,13 @@ public:
     virtual void GameInit();
     virtual void GameDone();
 
-    uchar unknown_70[0x14];             // 0x70
+    // The constructor's values (the names are ours)
+    int unknown_70;                     // 0x70
+    int unknown_74;                     // 0x74, 5000
+    float unknown_78;                   // 0x78, 130
+    int unknown_7c;                     // 0x7c
+    // The generator's count of the game's (the name is ours): its constructor sets 10
+    static int unknown_636ed4;
 };
 
 // SYNTHETIC: GAME 0x596660

@@ -1,5 +1,5 @@
 // The cars with dynamic collisions (PS2 C_car_ex.cpp; the PC's file is the one at 0x42e240-0x4307cc,
-// docs/game-files.md), which starts with the constructor. Not written yet: the constructor, which
+// docs/game-files.md), which starts with the constructor. Written: Init; the constructor, which
 // C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_car_ex.h"
@@ -24,11 +24,10 @@ C_car_ex::~C_car_ex()
     StubLog("C_car_ex::~C_car_ex");
 }
 
-// STUB: GAME 0x42e3a0
+// FUNCTION: GAME 0x42e3a0
 bool C_car_ex::Init(I3D_frame *frm)
 {
-    StubLog("C_car_ex::Init");
-    return C_car::Init(frm);
+    return C_car::Init(frm) ? true : false;
 }
 
 // STUB: GAME 0x42e3c0

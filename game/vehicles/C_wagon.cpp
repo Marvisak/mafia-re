@@ -1,5 +1,6 @@
 // The wagons (PS2 C_wagon.cpp; the PC's file is the one at 0x4f1b50-0x4f5dbc, docs/game-files.md), which starts with
-// the constructor. Written: SaveGameGetSize; the constructor, which C_mission::CreateActor calls, is a stub.
+// the constructor. Written: the destructor and SaveGameGetSize; the constructor, which C_mission::CreateActor calls,
+// is a stub.
 
 #include "vehicles/C_wagon.h"
 
@@ -17,10 +18,10 @@ C_wagon::C_wagon()
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x4f1c20
+// The three vectors' destructors follow the base's, which is all the body does (PS2 name)
+// FUNCTION: GAME 0x4f1c20
 C_wagon::~C_wagon()
 {
-    StubLog("C_wagon::~C_wagon");
 }
 
 // The original's is C_door's, folded: it logs that name, so ours folds too

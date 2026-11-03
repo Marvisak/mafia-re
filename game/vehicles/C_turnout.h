@@ -2,8 +2,8 @@
 
 #include "actors/C_actor.h"
 
-// The rails' turnouts (PS2 C_turnout, C_turnout.cpp), 0x1a0 bytes (PS2's 0x1d0). The constructor, which
-// C_mission::CreateActor calls for ACTOR_TURNOUT, is a stub; written: SaveGameGetSize.
+// The rails' turnouts (PS2 C_turnout, C_turnout.cpp), 0x1a0 bytes (PS2's 0x1d0). Written: SaveGameGetSize and
+// SaveGameSave; the constructor, which C_mission::CreateActor calls for ACTOR_TURNOUT, is a stub.
 // VTABLE: GAME 0x624d58
 class C_turnout : public C_actor
 {
@@ -24,7 +24,12 @@ public:
     virtual void GameInit();
     virtual void GameDone();
 
-    uchar unknown_70[0x130];            // 0x70
+    uchar unknown_70[0xd4];             // 0x70
+    // SaveGameSave's two values (the names are ours)
+    uint unknown_144;                   // 0x144
+    uchar unknown_148[0x48];            // 0x148
+    uint unknown_190;                   // 0x190
+    uchar unknown_194[0xc];             // 0x194
 };
 
 // SYNTHETIC: GAME 0x4bc470

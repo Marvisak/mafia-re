@@ -1,6 +1,6 @@
 // The airplanes (PS2 C_airplane.cpp; the PC's file is the one at 0x409390-0x40df6c, docs/game-files.md), which
-// starts with the constructor. Written: SaveGameGetSize, GetMaterialID and IsDestroyed; the constructor, which
-// C_mission::CreateActor calls, and the scripts' other functions are stubs.
+// starts with the constructor. Written: the destructor, SaveGameGetSize, GetMaterialID and IsDestroyed; the
+// constructor, which C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
 #include "g_material.h"
@@ -44,10 +44,10 @@ void C_airplane::ShowDamageIndicator(bool show)
 
 #pragma auto_inline(off)
 
-// STUB: GAME 0x409520
+// The two vectors' destructors follow the base's, which is all the body does (PS2 name)
+// FUNCTION: GAME 0x409520
 C_airplane::~C_airplane()
 {
-    StubLog("C_airplane::~C_airplane");
 }
 
 // STUB: GAME 0x409580

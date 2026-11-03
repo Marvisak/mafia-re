@@ -7,9 +7,9 @@ class C_car;
 // The size of each of C_traffic_car::names (the name is a guess)
 #define TRAFFIC_NAME_SIZE 0x20
 
-// The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). The constructor, which
-// C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, is a stub; written: GetParkingCars, SaveGameGetSize and
-// DuplicateFrom.
+// The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). Written: the constructor, which
+// C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, the destructor, GetParkingCars, SaveGameGetSize, DuplicateFrom,
+// SaveGameSave, SaveGameLoad and ChlupatejVystrik.
 // VTABLE: GAME 0x624c98
 class C_traffic_car : public C_actor
 {
@@ -58,12 +58,13 @@ public:
     static std::vector<S_ELEMENT *> &GetParkingCars();
 
     uchar unknown_70[0x1ac];            // 0x70
-    // DuplicateFrom's fields
     int unknown_21c;                    // 0x21c
-    uchar unknown_220[4];               // 0x220
-    int unknown_224;                    // 0x224
-    int unknown_228;                    // 0x228
-    int unknown_22c;                    // 0x22c
+    // The constructor's zero (the name is ours)
+    int unknown_220;                    // 0x220
+    // The constructor's 180, 150 and 170 (the names are ours)
+    float unknown_224;                  // 0x224
+    float unknown_228;                  // 0x228
+    float unknown_22c;                  // 0x22c
     uchar unknown_230[4];               // 0x230
     // The names PS2's LoadData reads and DuplicateFrom copies, TRAFFIC_NAME_SIZE bytes each (the names are ours)
     char *names;                        // 0x234
@@ -73,6 +74,9 @@ public:
     static std::vector<S_ELEMENT *> v_elems_parking;
     // The traffic's cars (PS2 name; the third of the file's six vectors, 0x63d844)
     static std::vector<S_ELEMENT *> v_elems;
+    // The traffic's count, which ChlupatejVystrik lowers and never below 0 (PS2 name, most likely; the
+    // addresses are ours)
+    static int count;
     // Its accessor (the name is ours), whose copy is among C_sledovacka.cpp's
     // FUNCTION: GAME 0x4a9ca0
     static std::vector<S_ELEMENT *> &GetElems()
@@ -80,10 +84,10 @@ public:
         return v_elems;
     }
 
-    // Two of the class's three coefficients (PS2 names, most likely: C_game::DoneIntern sets both to 1 after the
-    // pedestrians' two ratios, as PS2's sets elems_coefff and police_coefff; PS2's GameInit reads them, its
-    // G_LoadSaveClass::FreerideSetupFromScript sets them). The third, PS2's mafian_coefff, is most likely the original's
-    // 0x63d800, between them.
+    // The class's three coefficients (PS2 names: C_game::DoneIntern sets all to 1 after the pedestrians' two ratios,
+    // as PS2's sets elems_coefff and police_coefff; PS2's GameInit reads them, its G_LoadSaveClass::FreerideSetupFromScript
+    // sets them)
+    static float mafian_coefff;
     static float elems_coefff;
     static float police_coefff;
 };

@@ -1,17 +1,25 @@
 // The rail vehicles' generator (PS2 C_rail_generator.cpp; the PC's file is the one at 0x596420-0x5983dc,
-// docs/game-files.md), whose constructor (0x596620) comes after functions of its own. Written: Init; the constructor,
-// which C_mission::CreateActor calls, is a stub.
+// docs/game-files.md), whose constructor (0x596620) comes after functions of its own. Written: the constructor, which
+// C_mission::CreateActor calls, and Init.
 
 #include "vehicles/C_rail_generator.h"
 
 #include "stub.h"
 
+// GLOBAL: GAME 0x636ed4
+int C_rail_generator::unknown_636ed4;
+
 #pragma auto_inline(off)
 
-// STUB: GAME 0x596620
+// FUNCTION: GAME 0x596620
 C_rail_generator::C_rail_generator()
 {
-    StubLog("C_rail_generator::C_rail_generator");
+    unknown_7c = 1;
+    unknown_70 = 1;
+    unknown_74 = 5000;
+    type = ACTOR_RAIL_GENERATOR;
+    unknown_78 = 130.0f;
+    unknown_636ed4 = 10;
 }
 
 // Declared, empty: it stores the vtable again before the base's
