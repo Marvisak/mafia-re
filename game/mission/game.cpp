@@ -4215,3 +4215,26 @@ void C_game::LightnessDel(I3D_frame *frm)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5ac580
+void C_game::NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm)
+{
+    StubLog("C_game::NewGrenade");
+}
+
+// STUB: GAME 0x5b06c0
+void C_game::WFall_Player()
+{
+    StubLog("C_game::WFall_Player");
+}
+
+// STUB: GAME 0x5b1370
+void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float unknown1,
+    int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm)
+{
+    StubLog("C_game::CreateTrackEffect(direction)");
+}
+
+#pragma auto_inline(on)

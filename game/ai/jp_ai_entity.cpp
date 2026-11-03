@@ -267,3 +267,13 @@ void C_entity::cbHitInfo(int type, float f, C_actor *act)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5289b0
+void C_entity::InvalidateSelf()
+{
+    StubLog("C_entity::InvalidateSelf");
+}
+
+#pragma auto_inline(on)

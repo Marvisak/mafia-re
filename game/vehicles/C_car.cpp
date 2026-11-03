@@ -708,3 +708,14 @@ bool C_car::IsSeatLeft(int seat)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41dc30
+bool C_car::GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4)
+{
+    StubLog("C_car::GetSeatProperty");
+    return false;
+}
+
+#pragma auto_inline(on)

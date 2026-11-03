@@ -1005,3 +1005,20 @@ void C_shvestky::NextNaSrackySoudruh(C_human *human)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x49d030
+void C_shvestky::HumanBoxing(C_human *human)
+{
+    StubLog("C_shvestky::HumanBoxing");
+}
+
+// STUB: GAME 0x49d520
+int C_shvestky::PocetPrestupku(C_human *human)
+{
+    StubLog("C_shvestky::PocetPrestupku");
+    return 0;
+}
+
+#pragma auto_inline(on)

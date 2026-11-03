@@ -105,6 +105,11 @@ struct S_vehicle_seat
 // nothing
 #define VLIGHT_INDICATOR_AUTO 0x8
 #define VLIGHT_LIGHT 0x80
+// Set and cleared for the player getting into a car (C_human::Intern_UseCar; the names are ours, by value)
+#define VLIGHT_UNKNOWN_10 0x10
+#define VLIGHT_UNKNOWN_20 0x20
+#define VLIGHT_UNKNOWN_800 0x800
+#define VLIGHT_UNKNOWN_8000 0x8000
 #define VLIGHT_MAIN 0x10000
 #define VLIGHT_PROJECTOR_INDICATOR 0x100000
 #define VLIGHT_PROJECTOR_LIGHT 0x200000
@@ -185,6 +190,9 @@ public:
     void SetProjectorSize(uint projector, const S_vector &size);
     // Opens a door so far (PS2 name)
     void OpenDoor(int door, float open, bool unknown);
+    // The seat's window (PS2 names)
+    bool IsWindowOpen(int seat);
+    void OpenWindow(int seat, bool open);
     // Turns the special dynamic collisions on or off (PS2 name)
     bool SetSpecialDynamicColls(bool on);
     // Adds the dynamic collisions or takes them away (PS2 name)
@@ -276,6 +284,45 @@ public:
             lights |= VLIGHT_INDICATOR_AUTO;
         else
             lights &= ~VLIGHT_INDICATOR_AUTO;
+    }
+    // The lights' bits C_human::Intern_UseCar sets and clears for the player getting into a car (the names are ours, by
+    // value, as the bits'); no copies of them are left. 0x10 and 0x20 only while VLIGHT_LIGHT is off, waking the vehicle
+    // up.
+    void SetLightUnknown800(bool on)
+    {
+        if (on)
+            lights |= VLIGHT_UNKNOWN_800;
+        else
+            lights &= ~VLIGHT_UNKNOWN_800;
+    }
+    void SetLightUnknown8000(bool on)
+    {
+        if (on)
+            lights |= VLIGHT_UNKNOWN_8000;
+        else
+            lights &= ~VLIGHT_UNKNOWN_8000;
+    }
+    void SetLightUnknown10(bool on)
+    {
+        if (lights & VLIGHT_LIGHT)
+            return;
+        if (on)
+            lights |= VLIGHT_UNKNOWN_10;
+        else
+            lights &= ~VLIGHT_UNKNOWN_10;
+        if (wake_up)
+            wake_up(callback_context);
+    }
+    void SetLightUnknown20(bool on)
+    {
+        if (lights & VLIGHT_LIGHT)
+            return;
+        if (on)
+            lights |= VLIGHT_UNKNOWN_20;
+        else
+            lights &= ~VLIGHT_UNKNOWN_20;
+        if (wake_up)
+            wake_up(callback_context);
     }
     // FUNCTION: GAME 0x47b250
     void SetLight(bool on)
@@ -512,7 +559,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ

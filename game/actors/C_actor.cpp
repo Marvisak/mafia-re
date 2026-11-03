@@ -674,7 +674,7 @@ C_actor::C_actor() :
     type(ACTOR_ACTOR),
     subtype(1),
     net_direct(false),
-    unknown_60(0),
+    cutscene_link(0),
     from_mission(false),
     frame(NULL)
 {
@@ -1085,10 +1085,10 @@ void DoneAnimIndex()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x42cc20
-S_vector C_actor::vfunc_5(int a)
+S_quat C_actor::vfunc_5(int a)
 {
     StubLog("C_actor::vfunc_5");
-    return S_vector(0.0f, 0.0f, 0.0f);
+    return S_quat(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 // Empty: the vtable's entry is the linker's folded empty ret 4 of the out-of-line kind (0x4ab130, C_actor.h; 0x403db0

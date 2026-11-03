@@ -106,7 +106,7 @@ S_vector C_dyn_object::vfunc_4(int a)
 
 // The linker folded it with C_actor_shot's
 // STUB: GAME 0x41bb00 FOLDED
-S_vector C_dyn_object::vfunc_5(int a)
+S_quat C_dyn_object::vfunc_5(int a)
 {
     StubLog("C_dyn_object::vfunc_5");
     return C_actor::vfunc_5(a);

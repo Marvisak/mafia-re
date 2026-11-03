@@ -56,6 +56,15 @@ public:
     // The effect's gain and direction, set on its joystick effect (0x444c40 and 0x444c70; the names are ours)
     void SetGain(int id, float gain);
     void SetDirection(int id, float direction);
+    // An effect of the kind, JOY_EFFECT_*, for the human's joystick: its id (the names are ours, as the four effects
+    // C_human::InitFFEffects creates show them; the duration in microseconds)
+    int CreateEffect(int kind, float direction, uint duration, float gain, uint priority, bool unknown);
+    // The effects' forces by kind: a constant force's, a ramp's, a periodic one's (the names are ours)
+    void SetConstantForce(int id, float magnitude);
+    void SetRampForce(int id, float start, float end);
+    void SetPeriodicForce(int id, float magnitude, float offset, uint phase, uint period);
+    // Deletes the effect (the name is ours)
+    void DeleteEffect(int id);
     // The waiting effect of the highest priority, NULL for none (the name is ours)
     S_effect *GetWaiting();
     // The effects by the time passed, which C_game::Tick calls (PS2 name)
@@ -69,8 +78,8 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?Death@C_actor@@UAEXXZ
+// ?HideLegs@C_human@@SIXPAVI3D_model@@_N@Z
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670
-// ??1C_sledovacka@@QAE@XZ
+// ??1C_ff_manager@@QAE@XZ

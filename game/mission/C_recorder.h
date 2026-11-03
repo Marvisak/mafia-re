@@ -58,13 +58,26 @@ public:
     // Drops the records (first_block), nothing for NULL (the name is ours)
     void Reset();
 
-    uchar unknown_0[0x14];              // 0x0
-    int unknown_14;                     // 0x14, -666 from vfunc_5
+    // 0x0, the record the actor's vfunc_1 plays, the last one C_actor::AddRecord added while recording (the name is
+    // ours)
+    uchar *cur;
+    uchar *next;                        // 0x4, the next record to play (vfunc_2's), AddRecord's last too
+    uchar unknown_8[0xc];               // 0x8
+    // 0x14, the time of the last key recorded, -666 from vfunc_5 (the name is the dump's, C_human::vfunc_12)
+    int last_key_time;
     uchar *first_block;                 // 0x18
-    int unknown_1c;                     // 0x1c
+    uchar *last_block;                  // 0x1c, AddRecord's (the name is ours)
     char name[0x24];                    // 0x20
     int record_sizes[4];                // 0x44, by the records' type: 8, then vfunc_5's first three arguments
     uchar unknown_54[8];                // 0x54
+};
+
+// What every record starts with (the names are ours), 8 bytes: the time it was recorded at and its type (0 to 3), whose
+// size C_cutscene_records::record_sizes gives
+struct S_cutscene_record
+{
+    int time;                           // 0x0
+    int type;                           // 0x4
 };
 
 // An actor of the cutscene's recording (the names are ours), 0x58 bytes
@@ -113,11 +126,13 @@ public:
 // cutscene's LoadTCK (0x59bdf0) loads it: C_animations.h's S_track without the name, has_directions last (0x40)
 struct S_cutscene_tck
 {
-    int length;                         // 0x0, as C_animations_machine_de_luxe::S_track's, 0 where it isn't loaded
-    uchar unknown_4[0x1c];              // 0x4
-    std::vector<uint> positions;        // 0x20, the keys', 0xc bytes each (LoadTCK), as S_track's
-    std::vector<uint> directions;       // 0x30, the keys', 0xc bytes each (LoadTCK), as S_track's
-    uchar unknown_40[4];                // 0x40
+    uint length;                        // 0x0, as C_animations_machine_de_luxe::S_track's, 0 where it isn't loaded
+    int key_time;                       // 0x4, as S_track's (C_human::vfunc_4 divides by it)
+    uchar unknown_8[0x18];              // 0x8
+    std::vector<S_vector> positions;    // 0x20, the keys' (LoadTCK), as S_track's
+    std::vector<S_vector> directions;   // 0x30, the keys' (LoadTCK), as S_track's
+    bool has_directions;                // 0x40, as S_track's (C_human::vfunc_5 tests it)
+    uchar unknown_41[3];                // 0x41
 };
 
 // An animation of the cutscene (the names are ours), 0x48 bytes: the cutscene's CreateAnim (0x59bc20) creates it,
@@ -262,7 +277,7 @@ public:
     bool unknown_fc;                    // 0xfc
     uchar unknown_fd[0x1f];             // 0xfd
     int cur_time;                       // 0x11c, SetTime's, which Tick plays the keys by
-    int scaled_time;                    // 0x120, cur_time through the speed keys, which the tracks' items wait for
+    uint scaled_time;                   // 0x120, cur_time through the speed keys, which the tracks' items wait for
     float time_speed;                   // 0x124, the current speed key's (a float), 1.0 without them
     bool unknown_128;                   // 0x128, cleared by SetState(CUTSCENE_STATE_0) and Tick, set by Close
     bool speed_keys_on;                 // 0x129, SetTime goes by the speed keys (each a time, its scaled_time, a speed)

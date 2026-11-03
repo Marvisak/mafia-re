@@ -46,7 +46,8 @@ public:
 
     uchar unknown_70[0x50];             // 0x70
     uint unknown_c0;                    // 0xc0, 0x80000 for the models C_human::FreeHand drops
-    uchar unknown_c4[0x288];            // 0xc4
+    uchar unknown_c4[0x284];            // 0xc4
+    int unknown_348;                    // 0x348, 8 for the clip C_human::StartWeaponEffect drops
     int material;                       // 0x34c, an index of materialList, the shots' sound's (the name is ours)
     uchar unknown_350[0x3c];            // 0x350
 };

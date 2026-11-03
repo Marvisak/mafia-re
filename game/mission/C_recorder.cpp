@@ -864,3 +864,14 @@ void C_seagull::AI(uint time)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5c2730
+void *C_actor::AddRecord(C_cutscene_records *rec, int type)
+{
+    StubLog("C_actor::AddRecord");
+    return NULL;
+}
+
+#pragma auto_inline(on)

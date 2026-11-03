@@ -11,12 +11,17 @@ struct S_matrix;
 
 struct S_vector;
 
+struct tgcPanak2;
+
 // TestSphereB's flags (the names are ours, by value until the collisions' code shows their meanings): what the sphere
 // stops at, and the second flags
 #define COLF_UNKNOWN_2 2
 #define COLF_UNKNOWN_100 0x100
+#define COLF_UNKNOWN_80000 0x80000
 #define COLF_ALL 0xffffffff
 #define COLF2_UNKNOWN_100000 0x100000
+#define COLF2_UNKNOWN_80000 0x80000
+#define COLF2_UNKNOWN_800000 0x800000
 
 // tDynamicCollObject::type (the name is ours, by value): a human's two spheres
 #define DYNCOLL_UNKNOWN_42 0x42
@@ -56,6 +61,9 @@ struct tDynamicCollObject
 // glass or crash collision with 0x40 or 0x80
 #define COLLHF_UNKNOWN_40 0x40
 #define COLLHF_UNKNOWN_80 0x80
+// A moving object's collision most likely: C_human::MovementIntern tests the ground again on the next move where
+// it stands on one with it or 0x40 (the name is ours, by value)
+#define COLLHF_UNKNOWN_10000 0x10000
 // A control signal's collision: a shot at it runs C_game::DestroyControlSignal, which PS2's tests the flag in again
 #define COLLHF_CONTROL_SIGNAL 0x20000
 
@@ -112,7 +120,7 @@ public:
     // Its copy is the file's last function before the file's end (0x5c4fa0)
     // FUNCTION: GAME 0x5c4fa0
     g_collision() : level(0), dyn_grid(NULL), unknown_2b0(0), unknown_2b4(0), unknown_2b8(0), unknown_2bc(0),
-        unknown_2c4(0)
+        step_actor(NULL)
     {
     }
 
@@ -127,6 +135,10 @@ public:
     // nonzero for a hit, its place into pos and the surface's normal into normal. TestLineV is the wrapper of
     // _TestLineV, as TestSphereB is of _TestSphereB, which returns 0 at once without a level.
     int TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
+    // The same against the moving objects' collisions too (PS2 name; PS2's wrappers are in the PC's order): the
+    // collision hit, a g_collision_header, 0 for none, as TestLineV's
+    int TestLineVInnerDyn(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
     int _TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
@@ -149,6 +161,14 @@ public:
     // The objects the next test leaves out, and the callback it asks (PS2 names; the callback's type is ours)
     void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback);
     void DynSetNextCollOwner(tDynamicCollObject *obj, void *callback);
+    // A line from from along dir against the collisions of a vehicle a human is in (PS2 name): the collision hit, as
+    // TestLineV's
+    int TestLineInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
+        S_vector *pos, S_vector *normal, uint flags);
+    // The human's spheres moved (PS2 names): against the level and the moving objects, or against the collisions of a
+    // vehicle the human is in (the truck's, the rail vehicle's wagon's); nonzero for a hit
+    int TestPanak2(tgcPanak2 *p);
+    int TestPanak2InVehicle(std::vector<tDynamicCollObject *> *colls, tgcPanak2 *p);
     // Puts a moving object into the collisions (PS2 name)
     void DynInsert(tDynamicCollObject *obj);
     // Takes a moving object out of the collisions (PS2 name)
@@ -157,6 +177,8 @@ public:
     void DynUpdate(tDynamicCollObject *obj);
     // Takes a moving object out of a vector of them (PS2 name; the parameters' names are ours)
     void DynGetOut(tDynamicCollObject *obj, std::vector<tDynamicCollObject *> *colls);
+    // Puts a moving object into a vector of them (PS2 name; the parameters' names are ours)
+    void DynGetIn(tDynamicCollObject *obj, std::vector<tDynamicCollObject *> *colls);
     // The moving objects' collisions optimized each frame, which C_game::Tick calls (PS2 name)
     void DynOptimizeTick();
     // PS2 name (PS2's takes a bool)
@@ -179,7 +201,9 @@ public:
     int unknown_2b8;                    // 0x2b8
     int unknown_2bc;                    // 0x2bc
     uchar unknown_2c0[4];               // 0x2c0
-    int unknown_2c4;                    // 0x2c4
+    // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
+    // otherwise (the name is ours)
+    C_actor *step_actor;
 };
 
 // The implicit destructor (the two vectors'), which the initializer's atexit helper jumps to, after the initializer

@@ -319,10 +319,10 @@ public:
 // ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
 
 // SYNTHETIC: GAME 0x47a430
-// ?Mouse@GM_Component@@UAEIHHHII@Z
+// ?OnMouse@GM_Menu@@UAEHHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
-// ?OnKey@GM_MainMenu@@UAEHEI@Z
+// ?OnKey@GM_GunShop@@UAEHEI@Z
 
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md

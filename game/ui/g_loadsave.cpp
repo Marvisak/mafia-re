@@ -1758,3 +1758,53 @@ void G_LoadSaveClass::CarIsStolen(C_car *car)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x6082a0
+void G_Inventory::Holster(std::vector<S_GameItem> *dropped, bool unknown, bool player)
+{
+    StubLog("G_Inventory::Holster");
+}
+
+// STUB: GAME 0x609560
+void G_Inventory::RemoveInHand(std::vector<S_GameItem> *dropped, bool unknown)
+{
+    StubLog("G_Inventory::RemoveInHand");
+}
+
+// STUB: GAME 0x609b60
+void G_Inventory::SetInCar(bool in, std::vector<S_GameItem> *dropped)
+{
+    StubLog("G_Inventory::SetInCar");
+}
+
+// STUB: GAME 0x609d20
+uint G_Inventory::GetAmmo(int *spare)
+{
+    StubLog("G_Inventory::GetAmmo");
+    if (spare)
+        *spare = 0;
+    return 0;
+}
+
+// STUB: GAME 0x609e70
+void G_Inventory::Nabij()
+{
+    StubLog("G_Inventory::Nabij");
+}
+
+// STUB: GAME 0x609f00
+void G_Inventory::NabijJeden()
+{
+    StubLog("G_Inventory::NabijJeden");
+}
+
+// STUB: GAME 0x609f40
+bool G_Inventory::MuzeNabitJeden()
+{
+    StubLog("G_Inventory::MuzeNabitJeden");
+    return false;
+}
+
+#pragma auto_inline(on)

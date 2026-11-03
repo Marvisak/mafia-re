@@ -25,6 +25,7 @@ struct tDynamicCollObject;
 #define ACTOR_DYN_OBJECT 9
 #define ACTOR_BOTTLE 0xa
 #define ACTOR_TRAFFIC_CAR 0xc
+#define ACTOR_UNKNOWN_E 0xe               // C_human::MovementIntern pushes it as a bottle
 #define ACTOR_STONE 0xf                 // PC only, C_game::Init's 2stone.i3d
 #define ACTOR_CARTRIDGE 0x10            // C_game::Init's cartridges
 #define ACTOR_TRAFFIC_GENERATOR 0x12
@@ -76,9 +77,25 @@ struct tDynamicCollObject;
 // set (vfunc_7 sets and clears both)
 #define ACTF_UNKNOWN_1 0x1
 #define ACTF_UNKNOWN_4 0x4
+// Set with 8 while a cutscene records the actor (vfunc_6, which C_recorder's CUTSCENE_STATE_2 sets for the second
+// list's actors): only then C_human::SetCutsceneLink notes a link for the recording
+#define ACTF_UNKNOWN_2 0x2
 // A cutscene's actor: set on a cutscene's actors while it plays (C_recorder::SetState), cleared after; C_game::Init's
 // search for the player skips the players that have it
 #define ACTF_CUTSCENE 0x10
+
+// A human's link to another actor, for the cutscene's recording (the names are ours), 0x48 bytes:
+// C_human::SetCutsceneLink fills it while the human is recorded, and C_human::vfunc_0 records the kind and the actor
+// (by its frame's name, an item of the cutscene's anim_names) into its next record, which C_human::vfunc_3 plays back
+// through SetCutsceneLink
+struct S_cutscene_link
+{
+    bool is_new;                        // 0x0, set by SetCutsceneLink, cleared by the record that took it
+    int kind;                           // 0x4, 1 to 15 (4 bits in the record)
+    char name[0x24];                    // 0x8, the actor's frame's name, "" for none
+    S_vector pos;                       // 0x2c, the human's frame's position and rotation then
+    S_quat rot;                         // 0x38
+};
 
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 13 come before AI, Update and NetDirect, PS2's
@@ -98,7 +115,7 @@ public:
     virtual void vfunc_2(int a);
     virtual bool vfunc_3(int a);
     virtual S_vector vfunc_4(int a);
-    virtual S_vector vfunc_5(int a);
+    virtual S_quat vfunc_5(int a);
     // Set or clear the flags' 8 and 2 and their 4 and 1 (0x5c27b0, 0x5c27d0); the cutscenes call them
     virtual void vfunc_6(bool on);
     virtual void vfunc_7(bool on);
@@ -108,6 +125,9 @@ public:
     virtual void *vfunc_11(int a);
     // Empty here (the folded ret, 0x404990)
     virtual void vfunc_12() {}
+    // Adds a record of the type to the records (they are the actor's own) and returns it; it starts a new block where
+    // the last one is full (PC only, 0x5c2730 in the records' file; the name is ours)
+    void *AddRecord(C_cutscene_records *rec, int type);
     // The actor's frame of a tick (PS2 names): its own decisions, unless ACTF_UNKNOWN_1 or 4 stops them, or what the
     // network says instead where net_direct is set, then the update. Empty here, as PS2's (the original's slots point
     // at the folded ret 4, 0x403db0).
@@ -271,7 +291,9 @@ public:
     bool alive;                         // 0x5d, true from GameInit
     bool dead;                          // 0x5e, false from GameInit
     bool rendered;                      // 0x5f, false from GameInit
-    int unknown_60;                     // 0x60
+    // 0x60, a link to another actor that the recording takes into the human's next record (C_human::SetCutsceneLink's;
+    // the name is ours)
+    S_cutscene_link *cutscene_link;
     // 0x64, GameInit gave the frame its pointer to the actor, which GameDone takes back (the name is ours)
     bool frame_actor_set;
     // 0x65, set by GameInit for a plain actor (ACTOR_ACTOR), by C_clock's and by C_detector's for a script without
@@ -359,7 +381,7 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetFlags@GM_Component@@UAEIXZ
+// ?GetPointer@GM_Component@@UAEPAXXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
@@ -371,7 +393,7 @@ public:
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -382,21 +404,21 @@ public:
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
+// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameSave@C_actor_shot@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?vfunc_3@C_actor_shot@@UAE_NH@Z
+// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_bridge@@UAEHXZ
+// ?SaveGameGetSize@C_stone@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?Size@C_rep@C_str@@QBEHXZ
+// ?GetActFlags@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
 // ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z

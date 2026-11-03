@@ -8,6 +8,8 @@
 class C_player : public C_human
 {
 public:
+    // What the player's model change adds (PS2 name), which C_human::_intern_ChangeModel calls
+    void _intern_ChangeModel();
     C_player();
     virtual ~C_player();
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
@@ -53,6 +55,8 @@ public:
     void IndicatorSetAimed();
     // The player's controls locked or unlocked, the script's PLAYER_LOCKCONTROLS
     void LockControls(bool lock);
+    // The car the player strikes, whose damage the HUD shows (PS2 name)
+    void SetCarDamage(C_car *car);
 
     uchar unknown_a9c[0x1c];            // 0xa9c
     // The player's alpha and the one it fades to, 1 from C_game::Init and FadeReset: PS2's AI fades the first to the

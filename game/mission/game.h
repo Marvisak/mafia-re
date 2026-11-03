@@ -57,6 +57,9 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats that keeps the player and the humans of HUMAN_TYPE_UNKNOWN_2 from hits (C_human::Hit;
 // the name is a guess): no cheat word toggles it
 #define GAMEF_INVULNERABLE 0x1
+// The bit of C_game::cheats with which a reload takes no ammunition from the reserve (C_human::AI; the name is a
+// guess)
+#define GAMEF_INFINITE_AMMO 0x100
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -665,6 +668,13 @@ public:
     // facing normal, turned by angle (the name is PS2's, the parameters' names are ours; PS2's takes other ones)
     void CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1, int texture,
         bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm);
+    // The same turned by a direction instead of an angle (PS2's other overload): human_notify_callback's steps
+    void CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float unknown1,
+        int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm);
+    // A grenade of the type thrown from pos along dir, the model frm (PS2 name; the parameters' names are ours)
+#define NEWGRENADE_GRENADE 0            // the types human_notify_callback's throw gives (the names are ours)
+#define NEWGRENADE_MOLOTOV 3
+    void NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm);
     // A shot at a level's collision of control signals (the shot's coll, hit position, start, direction and shooter;
     // PS2 name, PS2's takes the collision as a uint *)
     void DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir, C_human *human);
@@ -697,6 +707,8 @@ public:
     // The sound played as it is set up, released once it ends (PS2 name, 0x5accb0): its number, which
     // Stop3DSound takes
     int Play3DSound(I3D_sound *sound);
+    // The player fell into a death collision: the script's event of it fired (PS2 name, 0x5b06c0)
+    void WFall_Player();
     // A shadow for the frame, type2 one of the shadow models (shadow_temp), type1 choosing the list (the cars' if not
     // 0), replaced_frame the frame it turns off: its number, 0 if it fails (the human keeps it)
     int AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
@@ -939,7 +951,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

@@ -67,3 +67,19 @@ void C_car_ex::Update(uint time)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x42f160
+void C_car_ex::DCAddPerson(C_human *human)
+{
+    StubLog("C_car_ex::DCAddPerson");
+}
+
+// STUB: GAME 0x42f320
+void C_car_ex::DCDelPerson(C_human *human)
+{
+    StubLog("C_car_ex::DCDelPerson");
+}
+
+#pragma auto_inline(on)

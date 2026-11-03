@@ -48,7 +48,7 @@ S_vector C_actor_shot::vfunc_4(int a)
 
 // The original's is C_dyn_object's, folded: it logs that name, so ours folds too
 // STUB: GAME 0x41bb00 FOLDED
-S_vector C_actor_shot::vfunc_5(int a)
+S_quat C_actor_shot::vfunc_5(int a)
 {
     StubLog("C_dyn_object::vfunc_5");
     return C_actor::vfunc_5(a);

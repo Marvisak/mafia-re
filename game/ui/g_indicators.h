@@ -353,6 +353,8 @@ public:
     // The needles and the odometer: the speed in metres per second (shown in km/h), the revs and the fuel from 0 to 1,
     // the odometer's distance
     void TachometrSetValues(float speed, float revs, float fuel, float odometer);
+    // The thief indicator's bar, 0 to 1 (PS2 name; PS2's sets thief_indicator, the PC's is out of line)
+    void ThiefIndicatorSetValue(float value);
     // The player's health, ammo and accuracy
     void PlayerSetLives(uint lives);
     void PlayerSetAmmo(uint ammo, uint spare);

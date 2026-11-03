@@ -147,3 +147,13 @@ void ai_animitem_manager::Init()
 {
     items.clear();
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x53cd20
+void ai_police_nastenka::PanoveKokotPremistujePrdel(C_actor *actor, C_actor *car, bool b)
+{
+    StubLog("ai_police_nastenka::PanoveKokotPremistujePrdel");
+}
+
+#pragma auto_inline(on)

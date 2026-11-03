@@ -27,8 +27,13 @@ public:
     void Init(C_actor *act);
     // Clears the machine's state, which the script's ACTOR_SETPLACEMENT calls
     void Reset();
+    // The animation's matrices moved by the matrix (PS2 name), which C_human::Intern_UseRailway passes the
+    // human's move into the wagon or out of it
+    void RecompileMatrix(S_matrix &m);
     // The active animation's time and length in ms (the parameters' names are guesses)
     void GetActiveAnimTime(uint &time, uint &length);
+    // PS2 name, which C_human::Movement calls while stage_blending is set
+    void StageBlendingTick(uint time);
     void StopAnims();
     void SetAnim(const char *name, bool b1, bool b2, bool b3, float f1, float f2, bool b4, bool b5, S_vector *v, bool b6,
         uint u);
@@ -54,7 +59,11 @@ public:
         return unknown_f4 && unknown_10c;
     }
 
-    uchar unknown_0[0x1c];              // 0x0
+    uchar unknown_0[0x12];              // 0x0
+    bool stage_blending;                // 0x12 (PS2 0xd2), StageBlendingTick runs while it is set (ours)
+    uchar unknown_13;                   // 0x13
+    float unknown_14;                   // 0x14 (PS2 0xd4), 1 or 0 from C_human::Movement by unknown_18's sign
+    float unknown_18;                   // 0x18 (PS2 0xd8)
     // 0x1c (PS2 0xdc), the active animation of the model, which C_human::Update keeps and C_human::Hit sets the time of
     // (the name is ours)
     uint anim_index;
@@ -67,7 +76,11 @@ public:
     bool unknown_f4;                    // 0xf4, cleared by Reset
     uchar unknown_f5[0x17];             // 0xf5
     bool unknown_10c;                   // 0x10c
-    uchar unknown_10d[7];               // 0x10d
+    uchar unknown_10d;                  // 0x10d
+    // 0x10e, 0xc while the reload's extended animation of the weapons of gun_anim 8 plays (C_human::AI)
+    ushort unknown_10e;
+    bool unknown_110;                   // 0x110, set by C_human::EineMeineKleineAutoInLuft and _intern_ForceDeath
+    uchar unknown_111[3];               // 0x111
     S_vector unknown_114;               // 0x114, which C_human::Update moves by what the collisions take off the track's move
     float unknown_120;                  // 0x120
     bool unknown_124;                   // 0x124

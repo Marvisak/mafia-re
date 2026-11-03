@@ -171,3 +171,19 @@ bool C_player::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vec
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x595570
+void C_player::_intern_ChangeModel()
+{
+    StubLog("C_player::_intern_ChangeModel");
+}
+
+// STUB: GAME 0x595c30
+void C_player::SetCarDamage(C_car *car)
+{
+    StubLog("C_player::SetCarDamage");
+}
+
+#pragma auto_inline(on)

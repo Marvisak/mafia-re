@@ -16,7 +16,7 @@ public:
     virtual void vfunc_2(int a) {}
     virtual bool vfunc_3(int a);
     virtual S_vector vfunc_4(int a);
-    virtual S_vector vfunc_5(int a);
+    virtual S_quat vfunc_5(int a);
     virtual bool vfunc_9();
     virtual void AI(uint time);
     virtual void Update(uint time);

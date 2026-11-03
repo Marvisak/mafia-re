@@ -4083,3 +4083,13 @@ void G_IndicatorsClass::RadarSetPlayerCar(C_car *car)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5fa030
+void G_IndicatorsClass::ThiefIndicatorSetValue(float value)
+{
+    StubLog("G_IndicatorsClass::ThiefIndicatorSetValue");
+}
+
+#pragma auto_inline(on)

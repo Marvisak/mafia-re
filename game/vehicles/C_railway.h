@@ -34,13 +34,32 @@ public:
     virtual int GetMaterialID(I3D_frame *frm);
     virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
     virtual bool GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm);
+    // The player's sounds of the vehicle, inside and outside, as he gets in and out (PS2 names, C_human::Intern_UseRailway)
+    void RemoveOuterEntries();
+    void AddInnerEntries();
+    void RemoveInnerEntries();
+    void AddOuterEntries();
+    // Counts lock_count down to 0 (the name is a guess: PS2's Intern_UseRailway calls ai_unlock_manager::Unlock at
+    // its place)
+    void Unlock();
+    // PS2 name; the parameters' names are ours
+    void SetRainDummy(bool in, I3D_frame *frm);
 
-    uchar unknown_70[0x138];            // 0x70
+    uchar unknown_70[0x54];             // 0x70
+    // The wagons' frames, the first wagon's [0]: C_human::wagon 1 and up indexes it from 1 (the name is ours)
+    I3D_frame **wagon_frames;           // 0xc4
+    uchar unknown_c8[0x34];             // 0xc8
+    // The dynamic collisions in the vehicle, the vehicle's own [0], then one a wagon, which C_human::Intern_UseRailway
+    // puts the human's into (the name is ours)
+    std::vector<tDynamicCollObject *> *dyn_colls;  // 0xfc
+    uchar unknown_100[0xa8];            // 0x100
     // DuplicateFrom's two copies
     int unknown_1a8;                    // 0x1a8
     uchar unknown_1ac[8];               // 0x1ac
     int unknown_1b4;                    // 0x1b4
-    uchar unknown_1b8[0xf4];            // 0x1b8
+    uchar unknown_1b8[0xd0];            // 0x1b8
+    int lock_count;                     // 0x288, Unlock's (the name is ours)
+    uchar unknown_28c[0x20];            // 0x28c
     // GetMaterialID's, a materials.def index (materialList's; the name is ours)
     int material;                       // 0x2ac (PS2 0x330)
     uchar unknown_2b0[0xc0];            // 0x2b0

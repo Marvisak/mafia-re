@@ -149,3 +149,38 @@ void C_ff_manager::SetDirection(int id, float direction)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x444810
+int C_ff_manager::CreateEffect(int kind, float direction, uint duration, float gain, uint priority, bool unknown)
+{
+    StubLog("C_ff_manager::CreateEffect");
+    return -1;
+}
+
+// STUB: GAME 0x444ae0
+void C_ff_manager::SetConstantForce(int id, float magnitude)
+{
+    StubLog("C_ff_manager::SetConstantForce");
+}
+
+// STUB: GAME 0x444b20
+void C_ff_manager::SetRampForce(int id, float start, float end)
+{
+    StubLog("C_ff_manager::SetRampForce");
+}
+
+// STUB: GAME 0x444b60
+void C_ff_manager::SetPeriodicForce(int id, float magnitude, float offset, uint phase, uint period)
+{
+    StubLog("C_ff_manager::SetPeriodicForce");
+}
+
+// STUB: GAME 0x444fb0
+void C_ff_manager::DeleteEffect(int id)
+{
+    StubLog("C_ff_manager::DeleteEffect");
+}
+
+#pragma auto_inline(on)

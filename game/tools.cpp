@@ -401,3 +401,13 @@ void soundArena::Init()
     unknown_200 = 0;
     unknown_204 = 0;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x55fa50
+void soundArena::SoundEmit(S_vector &pos, float range, float unknown, uint unknown2, C_actor *act)
+{
+    StubLog("soundArena::SoundEmit");
+}
+
+#pragma auto_inline(on)

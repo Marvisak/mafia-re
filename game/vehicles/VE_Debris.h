@@ -45,6 +45,8 @@ public:
     bool Done();
     // The debris and the flashes by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
+    // Debris thrown at pos (PS2 name; the parameters' names are ours)
+    void GenerateDebris(const S_vector &pos, int num, float size, float speed, float time, const S_vector *dir);
 
     std::vector<S_DEBRIS> debris;       // 0x0 (PS2 0x10, gif::vector<S_DEBRIS>)
     std::vector<S_FLASH> flashes;       // 0x10 (PS2 0x1c)

@@ -155,8 +155,8 @@ if (MSVC_VERSION EQUAL 1200)
     # files, the script's commands not written yet)
     target_link_options(game PRIVATE
         /INCLUDE:?GetBlob@ai_blob_log@@QAEPAUai_blob@@I@Z
+        /INCLUDE:?ThrowFromCarTruck@C_human@@QAEXUS_vector@@M@Z
         /INCLUDE:?ShiftAnimation@C_human@@QAEXH@Z
-        /INCLUDE:?DynSetNextCollOwnerMult@C_human@@QAEXXZ
         /INCLUDE:?Go_Front@C_human@@QAEX_N@Z
         /INCLUDE:?Go_Back@C_human@@QAEXXZ
         /INCLUDE:?Go_Left@C_human@@QAEX_N@Z
@@ -167,12 +167,16 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Go_BackRight@C_human@@QAEXXZ
         /INCLUDE:?GetAnimIDForUseCar@C_human@@SIH_N00000@Z
         /INCLUDE:?TozNaselJsemTenNejvyssiMost@C_human@@QAEPAVC_bridge@@XZ
+        /INCLUDE:?Can_SpecialStroke@C_human@@QAEPAV1@XZ
         /INCLUDE:?Do_Castrate@C_human@@QAE_NPAV1@@Z
         /INCLUDE:?Do_HardHead@C_human@@QAE_NPAV1@@Z
+        /INCLUDE:?Do_Jump@C_human@@QAEXXZ
         /INCLUDE:?Do_ShockStart@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockDown@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockUp@C_human@@QAEXXZ
         /INCLUDE:?Do_ShockStumble@C_human@@QAEXXZ
+        /INCLUDE:?EineMeineKleineAutoInLuft@C_human@@QAEXPAVC_car@@@Z
+        /INCLUDE:?Can_Aimed@C_human@@QAE_NXZ
         /INCLUDE:?Do_CornerBreath@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Do_CornerView@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Do_CornerFire@C_human@@QAE_NW4E_corner_view@1@@Z
@@ -181,31 +185,18 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ
         /INCLUDE:?BezZasobnikuWeaponEffect@C_human@@QAEXHPAVI3D_model@@@Z
         /INCLUDE:?FakeWeaponEffect@C_human@@QAEXPAVI3D_frame@@H_N@Z
-        /INCLUDE:?ThrowFromCarTruck@C_human@@QAEXUS_vector@@M@Z
-        /INCLUDE:?Unknown578e20@C_human@@QAEXHH@Z
-        /INCLUDE:?PoseSetPoseAimed@C_human@@QAEXUS_vector@@@Z
-        /INCLUDE:?MovementIntern@C_human@@QAEXI@Z
-        /INCLUDE:?Do_ChangeWeapon@C_human@@QAEXH_N@Z
         /INCLUDE:?Can_DropOutFromCar_Free@C_human@@QAE_NPAVC_car@@H@Z
         /INCLUDE:?Can_DropOutFromCar@C_human@@QAE_NH@Z
         /INCLUDE:?Can_EnterToCar@C_human@@QAE_NPAVC_car@@H_N@Z
         /INCLUDE:?ZasrateLezeniZAuta_ve2rano@C_human@@QAEXXZ
         /INCLUDE:?ZasrateVybliknutiZAuta_ve3rano@C_human@@QAEXXZ
-        /INCLUDE:?Do_ClimbInCarLR@C_human@@QAEXXZ
-        /INCLUDE:?Use_Actor@C_human@@QAE_NPAVC_actor@@HHH@Z
         /INCLUDE:?Do_Shoot@C_human@@QAEX_NPAUS_vector@@@Z
-        /INCLUDE:?Can_SpecialStroke@C_human@@QAE_NXZ
-        /INCLUDE:?Do_Reload@C_human@@QAEXXZ
-        /INCLUDE:?Do_Jump@C_human@@QAEXXZ
         /INCLUDE:?Do_Climb@C_human@@QAE_NXZ
         /INCLUDE:?Do_ThrowCocotFromCar@C_human@@QAEXPAVC_car@@H@Z
         /INCLUDE:?_intern_ThrowMeFromCar@C_human@@QAEXXZ
-        /INCLUDE:?EineMeineKleineAutoInLuft@C_human@@QAEXPAVC_car@@@Z
-        /INCLUDE:?Can_Aimed@C_human@@QAE_NXZ
         /INCLUDE:?Unknown58bf30@C_human@@QAEXH@Z
         /INCLUDE:?Unknown58c4f0@C_human@@QAEXH@Z
-        /INCLUDE:?Unknown58c980@C_human@@QAEXHHHHHHHHH@Z
-        /INCLUDE:?StartWeaponEffect@C_human@@QAEXH@Z)
+        /INCLUDE:?Unknown58c980@C_human@@QAEXHHHHHHHHH@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

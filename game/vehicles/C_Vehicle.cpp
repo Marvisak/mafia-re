@@ -300,3 +300,20 @@ void C_Vehicle::EnableSounds(bool on)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4d7a80
+void C_Vehicle::OpenWindow(int seat, bool open)
+{
+    StubLog("C_Vehicle::OpenWindow");
+}
+
+// STUB: GAME 0x4d7c80
+bool C_Vehicle::IsWindowOpen(int seat)
+{
+    StubLog("C_Vehicle::IsWindowOpen");
+    return false;
+}
+
+#pragma auto_inline(on)

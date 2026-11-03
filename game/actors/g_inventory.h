@@ -14,6 +14,9 @@ struct S_item_def;
 struct S_GameItem
 {
     ushort id;                          // 0x0, the item's index in gameItemTable (g_material.h)
+    // 0x2, the clip dropped or the revolver's shells out (C_human::StartWeaponEffect), once a reload; C_human::AI
+    // clears it at the right hand's fire's end (the name is ours)
+    ushort clip_out;
     // The weapon's ammunition, in it and in reserve: PS2's G_Inventory::Vystrel ("shot") takes one off the first,
     // NabijJeden ("load one") moves one from the second to the first, up to the weapon's gameItemTable count
     int ammo_loaded;                    // 0x4
@@ -43,6 +46,12 @@ public:
     // PS2 names, which the script calls; the parameters' names are ours. The items the hands drop go into the vector.
     // Selects the item for the hand
     bool SelectByID(uint id, std::vector<S_GameItem> *dropped);
+    // Puts the hand's weapon away, the items that don't fit into dropped (PS2 name; the bools' names are ours,
+    // C_human::Do_Holster passes false and whether the human is the player)
+    void Holster(std::vector<S_GameItem> *dropped, bool unknown, bool player);
+    // Takes the hand's item out (PS2 name; PS2's takes nothing, the PC's two arguments, NULL and false from
+    // human_notify_callback's throw: their types are guesses)
+    void RemoveInHand(std::vector<S_GameItem> *dropped, bool unknown);
     // Whether the hand's item, or without in_hand any item, is of gameItemTable's flags
     bool HaveSomeWeapon(bool in_hand, uint flags);
     bool IsIn(uint id, bool unknown);
@@ -50,12 +59,23 @@ public:
     bool Insert(S_GameItem *item, bool unknown);
     bool Remove(S_GameItem *item, std::vector<S_GameItem> *dropped);
     void SetCanHaveBigWeapon(bool can, std::vector<S_GameItem> *dropped);
+    // Into a car or out of it: the items the inventory can't keep in a car go into dropped (PS2 name; the
+    // parameters' names are ours)
+    void SetInCar(bool in, std::vector<S_GameItem> *dropped);
     // The right hand's item's gameItemTable entry, the table's first for an id past its end (PS2 name, 0x607b80)
     S_item_def *GetWeaponInRightHand();
     // The inventory in a saved game (the two return true)
     int SaveGameGetSize();
     bool SaveGameSave(void **buf);
     bool SaveGameLoad(void **buf);
+    // The right hand's weapon's ammunition in it, and in reserve into spare (PS2 names, C_human::AI's; the
+    // parameter's name is ours)
+    uint GetAmmo(int *spare);
+    // The weapon loaded from the reserve (Czech "load"), one round of it ("load one"), and whether one can be
+    // ("can load one")
+    void Nabij();
+    void NabijJeden();
+    bool MuzeNabitJeden();
 
     int unknown_0;                      // 0x0, 1 from Clear
     int unknown_4;                      // 0x4
@@ -105,3 +125,8 @@ public:
 // (docs/game-files.md) of its folded group
 // SYNTHETIC: GAME 0x53ea20
 // ??1G_Inventory@@QAE@XZ
+
+// The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
+// 0x438f00 of its folded group
+// TEMPLATE: GAME 0x438f00
+// ?insert@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEXPAUS_GameItem@@IABU3@@Z

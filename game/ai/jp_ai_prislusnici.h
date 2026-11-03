@@ -100,6 +100,9 @@ public:
     void PanoveZmenaZatkneteHoZmrda(C_actor *actor);
     void PanoveZmenaZabijteHoZmrda(C_actor *actor);
     void PanoveVytahneteBlokyAZapisteSiZmrda(C_actor *actor);
+    // The police told an actor moves on or off a car ("gentlemen, the dickhead is moving his ass"; the parameters'
+    // names are ours: the car he gets off, NULL for on)
+    void PanoveKokotPremistujePrdel(C_actor *actor, C_actor *car, bool b);
     // Whether someone goes after the actor ("gentlemen, is someone going after the bastard"; PS2's takes a bool more)
     // and whether they see him ("gentlemen, do you see the bastard or are you dumb")
     bool PanoveJdeteNekdoPoZmrdovi(C_actor *actor);

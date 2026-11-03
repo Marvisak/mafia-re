@@ -131,6 +131,9 @@ public:
     bool SetOwner(C_actor *act, int seat, float unknown);
     // Whether the seat is on the car's left (PS2 name, 0x42ba10)
     bool IsSeatLeft(int seat);
+    // False for a seat the car hasn't (PS2 name; the bools' meanings aren't known, the last opens the door in
+    // C_human::Movement)
+    bool GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4);
     // The cars' force feedback effects, which C_game's Init and Done create and free when the profile has them (PC
     // only, the names are ours)
     static void InitFFEffects();

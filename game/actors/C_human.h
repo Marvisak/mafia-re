@@ -6,6 +6,7 @@
 #include "tools.h"
 
 class C_bridge;
+struct g_collision_header;
 class C_car;
 class C_car_ex;
 class I3D_sound;
@@ -65,6 +66,17 @@ public:
 
 // The sound table's sound of a human a car or a train runs into (C_human::Collision; the name is ours)
 #define SOUND_RUN_OVER 0xb8
+// The sound table's sound of a weapon taken out, put away or thrown away (C_human::Do_ChangeWeapon; the name is
+// ours)
+#define SOUND_WEAPON_CHANGE 0xc2
+// MovementIntern's sounds (the names are ours): a drowning's splash and the landing after a fall
+#define SOUND_WATER_SPLASH 0xec
+#define SOUND_LANDING 0xc0
+// MovementIntern's particles of the effects (the names are ours)
+#define PARTICLE_WATER_SPLASH 0x25
+#define PARTICLE_LANDING 0x4b
+// The sound table's sound of a car stolen (Movement's action_state 10; the name is ours)
+#define SOUND_CAR_STOLEN 0x87
 #define HUMAN_PROPERTY_REACTIONS 6      // "Reactions"
 #define HUMAN_PROPERTY_SPEED 7          // "Speed", which the walks' speeds are multiplied by
 #define HUMAN_PROPERTY_AGGRESIVITY 8    // "Aggresivity"
@@ -83,6 +95,17 @@ public:
 // The version of the saved game's data SaveGameSave writes, the only one SaveGameLoad takes (the name is ours)
 #define HUMAN_SAVEGAME_VERSION 6
 
+// S_unknown_23c::unknown_0, what the step does (the names are ours): waits unknown_8 ms, plays the animation
+// unknown_4, goes on with the agony (action_state 7), ends the steps (Movement's case 6)
+#define HUMAN_STEP_WAIT 0
+#define HUMAN_STEP_ANIM 1
+#define HUMAN_STEP_AGONY 2
+#define HUMAN_STEP_END 3
+// S_unknown_23c::unknown_10's bits (the names are ours, by value but the wait): PersonAnim's second bool, and the
+// step waits the animation's length after it
+#define HUMAN_STEPF_1 0x1
+#define HUMAN_STEPF_WAIT 0x2
+
 // One of C_human's five entries at 0x23c (PS2 0x3dc), 0x14 bytes (the names are placeholders)
 struct S_unknown_23c
 {
@@ -94,18 +117,28 @@ struct S_unknown_23c
     int unknown_10;                     // 0x10
 };
 
-// A step of what a weapon's fire does (PS2's _fire_action_*_ lists, file statics of C_human.cpp; the struct's and the
-// members' names are ours): each list ends with FIRE_ACTION_END
-struct S_fire_action
-{
-    int action;                         // 0x0
-    int time;                           // 0x4, PS2's reads a ushort
-};
-#define FIRE_ACTION_END 3               // the lists' last step (the name is ours)
+// A step of a weapon's fire (g_material.h)
+struct S_fire_action;
 
-// gameItemTable's item 1 (g_material.h), which ChangeState puts on a dead body's using objects, with the values 0x7dc
-// and 0x7dd where a weapon has its ammunition (the name is ours, by value)
-#define GAMEITEM_UNKNOWN_1 1
+// The sounds of a strike that hits (C_human::AI; the names are ours, by value but the car's and the stab's from
+// behind): a human's by the weapon in the right hand, items 0 and 2, 3, 0x19, 0x1d and 0x1f, the others; a car's;
+// item 4's from behind
+#define SOUND_STRIKE_93 0x93
+#define SOUND_STRIKE_C4 0xc4
+#define SOUND_STRIKE_16 0x16
+#define SOUND_STRIKE_CAR 0x17
+#define SOUND_STRIKE_BACK 0xf0
+
+
+// The weapons' effects, StartWeaponEffect's argument, the animations' notes of the same ids (the names are ours): the
+// moves are also effect_step's values while TickWeaponEffect runs them
+#define WEAPON_EFFECT_OPEN 0x49         // the revolver's cylinder and the shotgun's barrels open, the clip drops out
+#define WEAPON_EFFECT_CLOSE 0x4a        // they close, the new clip is in
+#define WEAPON_EFFECT_PUMP 0x4b         // the pump-action's foregrip back and forth, the rifles' bolt sound
+#define WEAPON_EFFECT_SHELLS 0x4c       // the revolver's six empty shells
+#define WEAPON_EFFECT_NEW_CLIP 0x4d     // the new clip in the left hand
+#define WEAPON_EFFECT_SHOT 0x50         // the slide back and forth (Shooting, with ammunition left)
+#define WEAPON_EFFECT_LAST_SHOT 0x51    // the slide back, open (Shooting, the last shot)
 
 // What a human made of a pedestrian of the traffic keeps of it (PS2 0x750; the struct's and the members' names are
 // ours), which GameDone deletes: the pedestrian is put back at the human's place, and the frame isn't the scene's
@@ -218,7 +251,7 @@ struct S_human_savegame
     bool aimed;                         // 0x26
     bool anim_left;                   // 0x27
     bool unknown_1ec;                   // 0x28
-    S_vector unknown_200;               // 0x29
+    S_vector throw_dir;                 // 0x29
     int unknown_218;                    // 0x35
     bool unknown_21c;                   // 0x39
     int unknown_220;                    // 0x3a
@@ -226,18 +259,18 @@ struct S_human_savegame
     bool unknown_22c;                   // 0x42
     bool unknown_22d;                   // 0x43
     float tilt;                         // 0x44
-    bool unknown_2b0;                   // 0x48
-    S_vector unknown_2b4;               // 0x49
-    S_vector unknown_2c0;               // 0x55
-    S_vector unknown_2cc;               // 0x61
+    bool pose_moving;                   // 0x48
+    S_vector pose_back1_dir;            // 0x49
+    S_vector pose_back2_dir;            // 0x55
+    S_vector pose_neck_dir;             // 0x61
     ushort action_state;                // 0x6d
     ushort unknown_410;                 // 0x6f
     float fall;                         // 0x71
-    S_vector unknown_420;               // 0x75
+    S_vector velocity;               // 0x75
     float unknown_42c;                  // 0x81
     S_vector unknown_430;               // 0x85
     float unknown_43c;                  // 0x91
-    S_vector unknown_440;               // 0x95
+    S_vector ground_normal;               // 0x95
     int unknown_44c;                    // 0xa1
     int unknown_450;                    // 0xa5
     int agony_anim;                    // 0xa9
@@ -245,7 +278,7 @@ struct S_human_savegame
     int unknown_460;                    // 0xb1
     int unknown_464;                    // 0xb5
     S_vector unknown_468;               // 0xb9
-    int unknown_584;                    // 0xc5
+    int wagon;                          // 0xc5
     int idle_time;                    // 0xc9
     int breath_time;                    // 0xcd
     uchar unknown_d1[0x14];             // 0xd1, neither function touches it (PS2's struct has the gap too)
@@ -256,11 +289,74 @@ struct S_human_savegame
     uint wingman_name;                  // 0x16d
     int bleed_count;                    // 0x171
     int bleed_time;                    // 0x175
-    ushort unknown_6ec;                 // 0x179
-    ushort unknown_6ee;                 // 0x17b
-    uchar unknown_6f0;                  // 0x17d
+    short track_steps_max;              // 0x179
+    short track_steps;                  // 0x17b
+    uchar track_texture;                // 0x17d
 };
 #pragma pack(pop)
+
+// A human's record of a cutscene (the names are ours): types 1 to 3 are 0x28, 0x2c and 0x38 bytes (vfunc_9), type 2
+// and 3 with unknown_28, type 3 with pose_pos too
+struct S_human_record
+{
+    int time;                           // 0x0, S_cutscene_record's
+    int type;                           // 0x4
+    S_vector pos;                       // 0x8, the frame's position
+    S_quat rot;                         // 0x14, the frame's rotation
+    // 0x24: the animation (HUMAN_REC_ANIM) and its flags (HUMAN_REC_ANIM_FLAGS), the link's actor and kind
+    // (HUMAN_REC_LINK_*), the pose (HUMAN_REC_POSE_SHIFT)
+    uint anim;
+    uint unknown_28;                    // 0x28, types 2 and 3: an animation's time, in 40 ms (0xfff)
+    S_vector pose_pos;                  // 0x2c, type 3: unknown_a7c, the pose's
+};
+
+// C_human::pose_flags (the names are ours): a pose set since the last record (all three pose functions), the aimed pose
+// (PoseSetPoseAimed sets it, PoseSetPoseNormal and PoseNullRotate clear it), the null rotation (PoseNullRotate sets
+// it, PoseSetPoseNormal and PoseSetPoseAimed clear it), and 8, which forces a record too
+#define HUMAN_POSEF_NEW 0x1
+#define HUMAN_POSEF_AIMED 0x2
+#define HUMAN_POSEF_NULL_ROTATE 0x4
+#define HUMAN_POSEF_UNKNOWN_8 0x8
+
+// S_human_record::anim (the names are ours)
+#define HUMAN_REC_ANIM 0x7ff
+#define HUMAN_REC_ANIM_FLAGS 0xf800
+// The flags (the names are guesses): the "base" interpolators' animation of the other channel cleared, the cutscene
+// animation's .tck played too (tck_on), looping, the animation machine reset first for the human's own animation
+// and the other channel's blend (cutscene_blend) turned around for a cutscene's, and vfunc_3 places the frame as the
+// record has it, without blending to the next
+#define HUMAN_REC_ANIM_BASE 0x800
+#define HUMAN_REC_ANIM_TCK 0x1000
+#define HUMAN_REC_ANIM_LOOP 0x2000
+#define HUMAN_REC_ANIM_RESET 0x4000
+#define HUMAN_REC_ANIM_NO_BLEND 0x8000
+// The animations from it on are the cutscene's (C_recorder::GetAnimByIndex's, less it), those below it the human's
+#define HUMAN_REC_ANIM_CUTSCENE 0x400
+// The link's actor (an item of the cutscene's anim_names, less 0x100; HUMAN_REC_LINK_NONE for none) and kind
+#define HUMAN_REC_LINK_ID_SHIFT 16
+#define HUMAN_REC_LINK_NONE 0xff
+#define HUMAN_REC_LINK_KIND_SHIFT 24
+// The pose flags (HUMAN_POSEF_*) the record was made with, but HUMAN_POSEF_UNKNOWN_8
+#define HUMAN_REC_POSE_SHIFT 28
+
+// The spheres of a human moved together (PS2 tgcPanak2, Czech "panak", a little man; PS2's has its members in another
+// order), 0x8c bytes, g_collision::TestPanak2's and TestPanak2InVehicle's, which C_human's TestMoveColl and
+// TestMoveCollInOwner fill (the members' names are ours; here, as g_colls.h has no S_vector)
+struct tgcPanak2
+{
+    float radius[3];                    // 0x0, the spheres' radii, the legs' first
+    // The spheres' centres: three members, as an array of S_vector would be constructed (the original calls no
+    // vector constructor iterator)
+    S_vector legs;                      // 0xc
+    S_vector body;                      // 0x18
+    S_vector head;                      // 0x24
+    S_vector dir;                       // 0x30, the move
+    uint flags2;                        // 0x3c, TestSphereB's second flags (COLF2_*)
+    uint flags;                         // 0x40, TestSphereB's flags (COLF_*)
+    S_vector pos_out;                   // 0x44, where the legs' sphere stops, for a hit
+    S_vector normal;                    // 0x50, the surface's normal there
+    uchar unknown_5c[0x30];             // 0x5c
+};
 
 // The humans (PS2 C_human, C_human.cpp), the base of the player and of the AI's C_entity, 0xa9c bytes. Its file
 // (0x56b180-0x58e34c) starts with the PC only functions of the cutscenes and their helpers, then the constructor, then
@@ -278,18 +374,19 @@ public:
         CORNER_2,               // crouched only
     };
 
-    // The cutscenes' functions (PC only; the slots' names are C_actor's)
+    // The cutscenes' functions (PC only; the slots' names are C_actor's), on the human's records (S_human_record):
+    // it adds itself to the cutscene with its record sizes (vfunc_9), records a key for the time, -1 where it records
+    // none, else the record's type (vfunc_0), starts the current record's animation (vfunc_1), plays a step of the time
+    // (vfunc_2), places itself for a time, the last record's link and pose included (vfunc_3), writes the records to a
+    // file (vfunc_12), and gives the position and the rotation for a time (vfunc_4, vfunc_5)
     virtual bool vfunc_9();
-    virtual int vfunc_0(int a);
-    virtual void vfunc_1(int a);
-    virtual void vfunc_2(int a);
-    virtual bool vfunc_3(int a);
+    virtual int vfunc_0(int time);
+    virtual void vfunc_1(int time);
+    virtual void vfunc_2(int time);
+    virtual bool vfunc_3(int time);
     virtual void vfunc_12();
-    virtual S_vector vfunc_4(int a);
-    virtual S_vector vfunc_5(int a);
-    // A callback the animations call, which GameInit and _intern_ChangeModel pass (PC only, 0x56d130; four arguments on
-    // the stack)
-    static uint __stdcall Unknown56d130(I3D_frame *frm, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
+    virtual S_vector vfunc_4(int time);
+    virtual S_quat vfunc_5(int time);
 
     C_human();
     virtual ~C_human();
@@ -341,22 +438,25 @@ public:
     virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
         I3D_frame *frm);
     virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
-    // PC only, which vfunc_3 calls (0x578e20)
-    void Unknown578e20(int a, int b);
+    // Notes a link for the cutscene's recording (PC only, which vfunc_3 calls; the name is ours)
+    void SetCutsceneLink(C_actor *act, int kind);
     // The poses (PS2 names); the PC's take the vectors by value, PS2's by reference
     void PoseInterpolate(uint time);
-    void PoseSetPoseNormal(S_vector pos);
-    void PoseSetPoseAimed(S_vector pos);
+    // False where the poses can't turn to the position (in a car, without the neck, behind the human)
+    bool PoseSetPoseNormal(S_vector pos);
+    bool PoseSetPoseAimed(S_vector pos);
     void PoseNullRotate();
     void PoseValidate(bool valid);
     // PS2 name; static, as the PC's two arguments in registers show
     static int GetAnimIDForDeath(int i, bool b, const S_vector &v1, const S_vector &v2);
     void Movement(uint time);
     void MovementIntern(uint time);
-    // Nonzero if the move hits (the PC's tests eax)
-    int TestMoveColl(const S_vector &from, const S_vector &to, S_vector &result);
+    // The collision the move runs into, a g_collision_header as TestLineV's int (MovementIntern reads its material), 0
+    // for none
+    int TestMoveColl(const S_vector &from, const S_vector &dir, S_vector &result);
+    // Inline (defined so in the .cpp): MovementIntern has it expanded, TestMoveColl calls its copy
     void DynSetNextCollOwnerMult();
-    int TestMoveCollInOwner(const S_vector &from, const S_vector &to, S_vector &result);
+    int TestMoveCollInOwner(const S_vector &from, const S_vector &dir, S_vector &result);
     void Do_StopAnim();
     void Do_Breath();
     // The walks (PS2 names)
@@ -379,7 +479,7 @@ public:
     void Intern_FromCar(I3D_frame *frm);
     void RepairWeaponPosition();
     void ChangeWeaponModel();
-    void Do_ChangeWeapon(int i, bool b);
+    void Do_ChangeWeapon(int how, bool hide);
     void Do_Aimed(bool aim);
     void Do_Crouched(bool crouch);
     void InventoryTruncate();
@@ -400,7 +500,7 @@ public:
     void Do_Shoot(bool b, S_vector *dir);
     bool Do_ThrowGrenade(S_vector &dir);
     // PS2's takes a bool, the PC's nothing
-    bool Can_SpecialStroke();
+    C_human *Can_SpecialStroke();
     // The kicks between the legs and the head-butt at the human: false where he can't be hit so
     bool Do_Castrate(C_human *human);
     bool Do_HardHead(C_human *human);
@@ -413,9 +513,9 @@ public:
     // PS2 names; the PC's Do_Jump takes nothing, PS2's two bools
     void Do_Jump();
     bool Do_Climb();
-    void Do_SideJump(const S_vector &v1, const S_vector &v2);
+    void Do_SideJump(const S_vector &pos2, const S_vector &dir2);
     // The model changed for the named one
-    void _intern_ChangeModel(char *name, bool unknown);
+    void _intern_ChangeModel(char *name, bool restore);
     // The humans' force feedback effects, which C_game's Init and Done create and free when the profile has them (PC
     // only, the names are ours)
     static void InitFFEffects();
@@ -434,7 +534,7 @@ public:
     bool Do_FuckingBoxCancel();
     void Do_DeadBody(I3D_frame *frm);
     // PS2 name, German: "my little car in the air"
-    void EineMeineKleineAutoInLuft(C_car *car);
+    void EineMeineKleineAutoInLuft(C_car *wreck);
     // PS2's takes an int, the PC's nothing
     bool Can_Aimed();
     bool Do_CornerBreath(E_corner_view view);
@@ -472,8 +572,12 @@ public:
     static void HideLegs(I3D_model *model, bool hide);
     // Whether the shooter's shot can hit the human (PS2 name; the parameters' names are ours)
     static bool Can_Hit_FilterHumanType(C_human *shooter, C_human *human);
-    // The human's speed (0x51af20, in jp_ai_entity.cpp's range)
-    virtual void GetActorSpeed(S_vector &speed);
+    // The human's speed, the walk's (an inline function: the linker kept jp_ai_entity.cpp's copy)
+    // FUNCTION: GAME 0x51af20
+    virtual void GetActorSpeed(S_vector &speed)
+    {
+        speed = velocity;
+    }
 
     // The shot's line against the human's bones (C_ShotSkeleton::TestCollision), the line by value (the name is ours:
     // TickShoot's call copies both vectors first, as an inline function taking them by value does)
@@ -499,7 +603,8 @@ public:
     // it uses, _intern_ThrowMeFromCar to the car, the car functions clear it; C_shvestky::TickDoRiciActors keeps a car
     // in the police's faces while a player or an entity has it here or in car (the name is ours)
     C_car *using_car;
-    int unknown_a0;                     // 0xa0
+    // 0xa0 (PS2 0x22c), a car too, whose door the notes open and close after using_car's and car's
+    C_car *unknown_a0;
     // The cars the script's CAR_LOCK and CAR_LOCK_ALL lock to the human (the names are ours)
     C_car *locked_car;                  // 0xa4
     C_car *locked_vehicle;              // 0xa8
@@ -530,9 +635,11 @@ public:
     bool unknown_1fd;                   // 0x1fd
     bool unknown_1fe;                   // 0x1fe
     uchar unknown_1ff;                  // 0x1ff
-    S_vector unknown_200;               // 0x200
-    int unknown_20c;                    // 0x20c
-    int unknown_210;                    // 0x210
+    S_vector throw_dir;                 // 0x200, Do_ThrowGrenade's, the throw's direction (the name is ours)
+    I3D_frame *cartridge_frame;         // 0x20c, where the weapon throws its cartridges out (NewCartidge's; the name is ours)
+    // 0x210, ChangeWeaponModel's: Movement turns the car shots' animation by the angle from it to unknown_200 (the
+    // name is a guess)
+    I3D_frame *shot_frame;
     int unknown_214;                    // 0x214
     int unknown_218;                    // 0x218, saved as a dword
     bool unknown_21c;                   // 0x21c
@@ -542,9 +649,16 @@ public:
     int unknown_228;                    // 0x228
     bool unknown_22c;                   // 0x22c
     bool unknown_22d;                   // 0x22d
-    bool unknown_22e;                   // 0x22e
-    bool unknown_22f;                   // 0x22f
-    bool unknown_230;                   // 0x230
+    // 0x22e (PS2 0x3ce), MovementIntern tests the ground below even without a move while it is set: set where no
+    // ground was found or the ground is a moving object's, cleared on static ground and in a vehicle; Update and
+    // GameInit set it (the name is ours)
+    bool test_ground;
+    // 0x22f (PS2 0x3cf), set by MovementIntern's water death (MAT_WATER_DEATH), with the energy 0; GameInit clears
+    // it (the name is ours)
+    bool drowned;
+    // 0x230, set while a weapon change runs: Do_ChangeWeapon does nothing while it is set, the animations' note
+    // NOTE_CHANGE_WEAPON changes the model (the name is ours)
+    bool changing_weapon;
     uchar unknown_231[3];               // 0x231
     int unknown_234;                    // 0x234
     // 0x238 (PS2 0x3d8), the human's look up or down, which PS2's C_player::AI_walk moves: the camera's tilt for the
@@ -559,28 +673,39 @@ public:
     I3D_pose *pose_back1;               // 0x2a4
     I3D_pose *pose_back2;               // 0x2a8
     I3D_pose *pose_neck;                // 0x2ac
-    bool unknown_2b0;                   // 0x2b0
+    // 0x2b0, the poses are still turning: PoseInterpolate clears it and sets it again while one is short of its
+    // direction, Update calls it only while it is set, PoseNullRotate sets it (the name is ours)
+    bool pose_moving;
     uchar unknown_2b1[3];               // 0x2b1
-    S_vector unknown_2b4;               // 0x2b4
-    S_vector unknown_2c0;               // 0x2c0
-    S_vector unknown_2cc;               // 0x2cc
+    // The directions the poses turn to (pose_back1's, pose_back2's and pose_neck's), PoseInterpolate's: (0, 0, 1)
+    // from PoseNullRotate (the names are ours)
+    S_vector pose_back1_dir;            // 0x2b4
+    S_vector pose_back2_dir;            // 0x2c0
+    S_vector pose_neck_dir;             // 0x2cc
     I3D_frame *look_frame;              // 0x2d8 (PS2 0x454), SetLookFrame's (the name is ours)
     C_ShotSkeleton shot_skeleton;       // 0x2dc (PS2 0x458; the name is ours)
     // 0x40c (PS2 0x588), what the human does, which PS2's Go_*, Do_*, Hit* and car functions set and Movement switches
     // on: 1, 2 and 9 are ready, 9 keeps the car (the name is ours)
     int action_state;
     int unknown_410;                    // 0x410
-    int unknown_414;                    // 0x414
+    // 0x414 (PS2 0x590), the collision the last move (TestMoveColl) ran into, NULL for none (the name is ours)
+    g_collision_header *move_coll;
     // 0x418 (PS2 0x594), the human's fall, 0 while he stands: HUMAN_FORCEFALL adds 0.1, PS2's Movement starts one at
     // 0.05 and makes it 60 below a height of -30 (the name is ours)
     float fall;
-    bool unknown_41c;                   // 0x41c
+    // 0x41c (PS2 0x598), the fall started in a jump (action_state 11): the landing hurts only above 18, else 8, and
+    // less (the name is ours)
+    bool jump_fall;
     uchar unknown_41d[3];               // 0x41d
-    S_vector unknown_420;               // 0x420
+    // 0x420 (PS2 0xc0), the walk's velocity per second: MovementIntern moves by it, Update ramps it (the name is
+    // ours)
+    S_vector velocity;
     float unknown_42c;                  // 0x42c (PS2 0x59c), the turn's speed: Update turns dir by it times the time
     S_vector unknown_430;               // 0x430 (PS2 0xd0), cleared by Turn_Turn
     float unknown_43c;                  // 0x43c (PS2 0x5a0), cleared by Turn_Turn
-    S_vector unknown_440;               // 0x440
+    // 0x440 (PS2 0xe0), the ground's normal the collision tests give, which the move is projected along (the name
+    // is ours)
+    S_vector ground_normal;
     int unknown_44c;                    // 0x44c
     int unknown_450;                    // 0x450
     bool killed_by_shot;                // 0x454 (PS2 0x5ac), set by Hit for a death by HIT_SHOT (the name is ours)
@@ -594,7 +719,9 @@ public:
     // 0x468, the position the animation's track moves the human from: PersonAnim sets it with unknown_464 1, Update
     // moves it to where the collisions let him go
     S_vector unknown_468;
-    uchar unknown_474[4];               // 0x474
+    // 0x474, the time stealing the car takes, which the thief indicator's bar shows unknown_44c of (the name is
+    // ours)
+    int steal_time;
     C_car *stealing_car;                // 0x478 (PS2 0x5c4), IFPLAYERSTEALCAR's (the name is ours)
     int shadow;                         // 0x47c (PS2 0x5c8), C_game::AddFrameForShadow's (the name is ours)
     G_Inventory inventory;              // 0x480 (the name is ours)
@@ -607,15 +734,17 @@ public:
     I3D_frame *left_hand;               // 0x570
     // FRAME_TARGETs GameInit links to the left and the right hand, NULL without the hand (PS2 0x600 and 0x604;
     // the names are ours)
-    I3D_frame *left_hand_target;        // 0x574
-    I3D_frame *right_hand_target;       // 0x578
+    I3D_target *left_hand_target;       // 0x574
+    I3D_target *right_hand_target;      // 0x578
     // 0x57c (PS2 0x608), the model's frame "base", LightnessAdd's, whose world position Update gives the human's
     // frame's sector (the name is ours)
     I3D_frame *base_frame;
     bool unknown_580;                   // 0x580
     bool unknown_581;                   // 0x581
     uchar unknown_582[2];               // 0x582
-    int unknown_584;                    // 0x584
+    // 0x584, the rail vehicle's wagon the human is in, from 1, 0 for the vehicle itself (the name is ours): Intern_UseRailway
+    // links him to its frame and puts his collisions into its
+    int wagon;
     // The model's targets "targetE" and "targetN" (PS2 0x614 and 0x618), which Init turns off as C_actor::Init does
     // and GameDone links back to the model (the names are ours, after the frames')
     I3D_frame *target_e;                // 0x588
@@ -631,12 +760,13 @@ public:
     // at random when a timer runs out and it is set (the name is a guess)
     bool idle_anims;
     uchar unknown_599[3];               // 0x599
-    int unknown_59c;                    // 0x59c
-    int unknown_5a0;                    // 0x5a0
-    uchar unknown_5a4[0xc];             // 0x5a4
-    S_vector unknown_5b0;               // 0x5b0
-    uchar unknown_5bc[0x24];            // 0x5bc
-    bool unknown_5e0;                   // 0x5e0
+    // The frames a strike hits with and their positions of the last tick, while striking is set: AI tests the line
+    // each moved along against the collisions; human_notify_callback's NOTE_WEAPON_SOUND takes them and sets striking
+    // (the names are ours)
+    int num_strike_frames;              // 0x59c
+    I3D_frame *strike_frames[4];        // 0x5a0
+    S_vector strike_pos[4];             // 0x5b0
+    bool striking;                      // 0x5e0, cleared by the strike's first hit
     uchar unknown_5e1[3];               // 0x5e1
     int unknown_5e4;                    // 0x5e4
     int unknown_5e8;                    // 0x5e8
@@ -654,7 +784,9 @@ public:
     // the 15 _human_property_ names in 16 floats each
     float max_properties[16];           // 0x600
     float properties[16];               // 0x640, which C_game::Init caps at max_properties
-    int unknown_680;                    // 0x680, 0xc from the constructor
+    // 0x680, the human's voice, the index of the voices' sounds (S_voice_def::sounds) he says: 0xc from the
+    // constructor, saved with the mission's data (the name is ours)
+    int voice_type;
     bool shut_up;                       // 0x684 (PS2 0x6e8), HUMAN_SHUTUP's (the name is ours)
     uchar unknown_685[3];               // 0x685
     // The human's own collisions, which its shots leave out (the names are ours)
@@ -666,14 +798,16 @@ public:
     std::vector<tDynamicCollObject *> unknown_698;  // 0x698, collisions the tests leave out besides colls
     std::vector<tDynamicCollObject *> unknown_6a8;  // 0x6a8, DynSetNextCollOwnerMult's list of both
     // The human's sounds (FRAME_SOUNDs linked to the model, SoundsChange's)
-    I3D_sound *unknown_6b8;             // 0x6b8, 1.5 m high for the player, 0.1 m for the others
-    int unknown_6bc;                    // 0x6bc
-    I3D_sound *unknown_6c0;             // 0x6c0, 1 m high, of priority 0x60
+    // 0x6b8, the steps' sound, 1.5 m high for the player, 0.1 m for the others, and the game time of the last step
+    // (the names are ours)
+    I3D_sound *step_sound;
+    uint step_time;
+    I3D_sound *weapon_sound;            // 0x6c0, the weapon's sound (NOTE_WEAPON_SOUND), 1 m high (ours)
     I3D_sound *unknown_6c4;             // 0x6c4, 1 m high
     I3D_sound *unknown_6c8;             // 0x6c8, 1 m high
     // 0x6cc, the voice, NewScream's: 1.7 m high, at the speech volume (the name is ours)
     I3D_sound *voice;
-    int unknown_6d0;                    // 0x6d0
+    int voice_priority;                 // 0x6d0, the voice's priority (S_voice_def's), -1 for none (ours)
     int ground_material;                // 0x6d4, the surface's under the human, MAT_* (the name is ours)
     // The HUD's wingman indicator, -1 for none, and its name, 0 to 7 (PS2 0x734 and 0x738; the names are ours)
     int wingman;                        // 0x6d8
@@ -682,9 +816,11 @@ public:
     // The drops of blood left and the time to the next (the names are ours): Update adds them every 0.5 to 2.5 s
     int bleed_count;                    // 0x6e4
     int bleed_time;                     // 0x6e8
-    ushort unknown_6ec;                 // 0x6ec
-    ushort unknown_6ee;                 // 0x6ee
-    uchar unknown_6f0;                  // 0x6f0, 6 from cbCollTester
+    // The steps that leave a track (cbCollTester: 10 of the blood's), the count they started from, which fades the
+    // tracks, and the track's texture (C_game::track_textures' index; 6 from cbCollTester; the names are ours)
+    short track_steps_max;              // 0x6ec
+    short track_steps;                  // 0x6ee
+    uchar track_texture;                // 0x6f0
     uchar unknown_6f1[3];               // 0x6f1
     S_human_traffic *traffic;           // 0x6f4 (PS2 0x750), NULL for a human not made of a pedestrian (ours)
     // What the human carries (PS2 0x754, 0x758 and 0x75c, Do_FuckingBox's and Do_DeadBody's; the names are ours)
@@ -695,16 +831,21 @@ public:
     // ChangeDeadAnim sets (the name is ours)
     C_human *dead_body_human;
     int dead_body_time;                 // 0x708 (PS2 0x764), the ms the body's animation goes on after the drop (ours)
-    ushort unknown_70c;                 // 0x70c
+    // How far the human got in the last 100 ms (the player) or 500 ms (the others) against how far he should
+    // have, which Movement measures (the names are ours): the time since the last measure, the position there,
+    // and the ratio, averaged with the last, 1 where he shouldn't have moved
+    short move_time;                    // 0x70c
     uchar unknown_70e[2];               // 0x70e
-    S_vector unknown_710;               // 0x710
-    float unknown_71c;                  // 0x71c
+    S_vector move_pos;                  // 0x710
+    float move_ratio;                   // 0x71c
     bool no_anim_hit;                   // 0x720 (PS2 0x770), SetNoAnimHit's (the name is ours)
     uchar unknown_721[3];               // 0x721
     ai_loc loc;                         // 0x724 (PS2 0x780), which GameInit and Activate start (the name is ours)
     ai_blob_log blob_log;               // 0x758 (PS2 0x7c0), which GameInit and Activate clear (the name is ours)
     int unknown_99c;                    // 0x99c
-    ushort unknown_9a0;                 // 0x9a0
+    // 0x9a0, the scream areas the human is in, 1 for none, which GameInit and Activate set: NewScream says
+    // nothing out of the camera's (C_game::camera_scream_areas; the name is ours)
+    ushort scream_areas;
     uchar unknown_9a2[2];               // 0x9a2
     // The time (GetTickCount's) and the scene's render number of the last hit that played an animation: a hit within
     // 200 ms of it or in the same frame plays none (PS2 0xad8 and 0xadc; the names are ours)
@@ -727,12 +868,15 @@ public:
     int unknown_a50;                    // 0xa50
     int unknown_a54;                    // 0xa54
     int unknown_a58;                    // 0xa58
-    int unknown_a5c;                    // 0xa5c
-    int unknown_a60;                    // 0xa60
-    float unknown_a64;                  // 0xa64
-    float unknown_a68;                  // 0xa68
-    int unknown_a6c;                    // 0xa6c
-    I3D_frame *unknown_a70;             // 0xa70 (PS2 0xba4), unlinked and released by GameDone
+    I3D_frame *effect_frame;            // 0xa5c (PS2 0xb90), the weapon's part the effect moves (the name is ours)
+    int effect_step;                    // 0xa60 (PS2 0xb94), WEAPON_EFFECT_* of the move, 0 for none (ours)
+    // 0xa64 and 0xa68 (PS2 0xb98, 0xb9c), the move's position and its speed a ms (the names are ours)
+    float effect_pos;
+    float effect_speed;
+    int pump_time;                      // 0xa6c (PS2 0xba0), the time to the shotgun's pump, -1 for none (ours)
+    // 0xa70 (PS2 0xba4), the new clip in the left hand while the weapon is reloaded (WEAPON_EFFECT_NEW_CLIP),
+    // a copy of the weapon's "clip"; unlinked and released by GameDone and ResetWeaponEffects (the name is ours)
+    I3D_frame *hand_clip;
     C_actor *killer;                    // 0xa74 (PS2 0xba8), whom the death camera looks at (the name is ours)
     // 0xa78 (PS2 0xbac), the car's speed limiter: no limit (1000) without it, the HUD's INDF_SPEED_LIMITER with it
     // (the name is ours)
@@ -741,37 +885,31 @@ public:
     // name is a guess)
     bool score_bonus;
     bool unknown_a7a;                   // 0xa7a
-    uchar unknown_a7b[0xd];             // 0xa7b
-    int unknown_a88;                    // 0xa88
-    float unknown_a8c;                  // 0xa8c, 1 from GameInit
-    int unknown_a90;                    // 0xa90
-    int unknown_a94;                    // 0xa94
-    bool unknown_a98;                   // 0xa98
-    bool unknown_a99;                   // 0xa99
-    bool unknown_a9a;                   // 0xa9a
+    uchar unknown_a7b;                  // 0xa7b
+    // 0xa7c, the position the last pose was set to (PoseSetPoseNormal's, PoseSetPoseAimed's), which vfunc_0 records
+    // (the name is ours)
+    S_vector pose_pos;
+    // 0xa88, HUMAN_POSEF_*: what the poses set, for the cutscene's recording (vfunc_0); 0 from GameInit (the name is
+    // ours)
+    int pose_flags;
+    // 0xa8c, the blend of the model's channel 0 for the cutscene's animations, channel 1 gets the rest: vfunc_2 moves
+    // it 0.004 a ms towards the channel cutscene_channel_0 selects; 1 from GameInit (the name is ours)
+    float cutscene_blend;
+    // 0xa90, the time into the cutscene animation's .tck: vfunc_2 advances it, vfunc_3 to vfunc_5 set it (the name is
+    // ours)
+    int tck_time;
+    // 0xa94, the first time step vfunc_2 plays after vfunc_1 started an animation (the time since its record), -1 once
+    // taken (the name is ours)
+    int cutscene_step;
+    // 0xa98, vfunc_2 blends the channels (cutscene_blend) while it is set: vfunc_1 sets it, false from GameInit (the
+    // name is ours)
+    bool cutscene_blending;
+    // 0xa99, the cutscene's current animation is on the model's channel 0, else on 1: vfunc_1 switches them for each
+    // new animation; true from GameInit (the name is ours)
+    bool cutscene_channel_0;
+    // 0xa9a, the cutscene animation's .tck moves the frame (HUMAN_REC_ANIM_TCK with a .tck loaded; the name is ours)
+    bool tck_on;
     uchar unknown_a9b;                  // 0xa9b
-
-    // The properties' highest values a new human has (PS2's constructor's, in its order; the helper is ours, see the
-    // constructor)
-    void SetDefaultProperties()
-    {
-        max_properties[HUMAN_PROPERTY_STRENGTH] = 0.7f;
-        max_properties[HUMAN_PROPERTY_ENERGY] = 100.0f;
-        max_properties[HUMAN_PROPERTY_ENERGY_HAND_L] = 20.0f;
-        max_properties[HUMAN_PROPERTY_ENERGY_HAND_R] = 20.0f;
-        max_properties[HUMAN_PROPERTY_ENERGY_LEG_L] = 20.0f;
-        max_properties[HUMAN_PROPERTY_ENERGY_LEG_R] = 20.0f;
-        max_properties[HUMAN_PROPERTY_REACTIONS] = 0.7f;
-        max_properties[HUMAN_PROPERTY_SPEED] = 1.0f;
-        max_properties[HUMAN_PROPERTY_AGGRESIVITY] = 0.6f;
-        max_properties[HUMAN_PROPERTY_INTELLIGENCE] = 0.8f;
-        max_properties[HUMAN_PROPERTY_SHOOTING] = 0.7f;
-        max_properties[HUMAN_PROPERTY_SIGHT] = 1.0f;
-        max_properties[HUMAN_PROPERTY_HEARING] = 1.0f;
-        max_properties[HUMAN_PROPERTY_DRIVING] = 0.8f;
-        max_properties[HUMAN_PROPERTY_MASS] = 80.0f;
-        max_properties[HUMAN_PROPERTY_15] = 0.5f;
-    }
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b7a0
@@ -836,5 +974,51 @@ public:
 };
 
 
+// The notes of a human's animations (PS2 name), the callback of the model's "notify" frame, which GameInit and
+// _intern_ChangeModel set (a free function on PS2 too)
+uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE message, uint param1, uint param2);
+
+// The notes, human_notify_callback's param1 (the names are ours, by value where what they do doesn't say more): the
+// weapons' effects are WEAPON_EFFECT_*'s
+#define NOTE_STEP_R 1                   // a step of the right foot: its sound, and its track while the steps leave one
+#define NOTE_STEP_L 2                   // of the left
+#define NOTE_UNKNOWN_8 8                // SOUND_UNKNOWN_BC at the human
+#define NOTE_DOOR_OPEN 0x16             // the door of the human's car open
+#define NOTE_DOOR_CLOSE 0x18            // closed
+#define NOTE_UNKNOWN_1A 0x1a            // sets unknown_1ec and unknown_1ed
+#define NOTE_UNKNOWN_1B 0x1b            // clears them
+#define NOTE_WEAPON_TO_TARGET 0x1e      // the weapon into the left hand's target
+#define NOTE_WEAPON_FROM_TARGET 0x1f    // out of it
+#define NOTE_WEAPON_TO_LEFT_HAND 0x20   // out of it into the left hand
+#define NOTE_WEAPON_TO_RIGHT_HAND 0x21  // into the right hand
+#define NOTE_CHANGE_WEAPON 0x24         // ChangeWeaponModel while changing_weapon is set
+#define NOTE_WEAPON_SOUND 0x28          // the weapon's sound (S_item_def::unknown_54)
+#define NOTE_THROW 0x29                 // the grenade or the Molotov cocktail thrown
+#define NOTE_UNKNOWN_35 0x35            // the animation machine's unknown_14
+#define NOTE_UNKNOWN_50 0x50            // SOUND_UNKNOWN_B9, or SOUND_UNKNOWN_ED in the Formula
+#define NOTE_UNKNOWN_52 0x52            // SOUND_UNKNOWN_BB, and PARTICLE_UNKNOWN_4B at "back2"
+// The police's screams, by the offences of the player (C_shvestky::PocetPrestupku)
+#define NOTE_POLICE_SCREAM_1 0x5f
+#define NOTE_POLICE_SCREAM_2 0x60
+#define NOTE_POLICE_SCREAM_3 0x61
+#define NOTE_SCREAM_88 0x62             // NewScream(0x88)
+
+// The sound table's sounds the notes play at the human (the names are ours, by value)
+#define SOUND_UNKNOWN_B9 0xb9
+#define SOUND_UNKNOWN_BB 0xbb
+#define SOUND_UNKNOWN_BC 0xbc
+#define SOUND_UNKNOWN_ED 0xed
+
+// The effects' particle NOTE_UNKNOWN_52 makes at the frame "back2" (the name is ours, by value)
+#define PARTICLE_UNKNOWN_4B 0x4b
+
 // SYNTHETIC: GAME 0x56f1f0
 // C_human::`scalar deleting destructor'
+
+// TEMPLATE: GAME 0x58e2f0
+// std::vector<tDynamicCollObject *,std::allocator<tDynamicCollObject *> >::clear
+
+// The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
+// folded group (the vectors of 8-byte elements)
+// TEMPLATE: GAME 0x4eaa00
+// ?insert@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXPAUS_instruction@C_program@@IABU34@@Z

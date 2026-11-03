@@ -26,6 +26,9 @@ public:
     }
     virtual void GameInit();
     virtual void GameDone();
+    // A human onto the truck's back and off it (PS2 names; DC most likely the dynamic collisions)
+    void DCAddPerson(C_human *human);
+    void DCDelPerson(C_human *human);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): whether a
     // human can get into the truck, the scripts' HUMAN_ENTERTOTRUCK's test
@@ -37,7 +40,10 @@ public:
 
     uchar unknown_221c[0x20];           // 0x221c
     bool unknown_223c;                  // 0x223c, CanUseTruck's
-    uchar unknown_223d[0x1b];           // 0x223d
+    uchar unknown_223d[3];              // 0x223d
+    // Where C_human::_intern_UseCarTruck places a human on the truck, in its frame (the names are ours)
+    S_vector truck_pos;                 // 0x2240
+    S_vector truck_dir;                 // 0x224c
     // 0x2258 (PS2 0x24b4), the collisions on the truck, which C_human::GameDone takes a human's out of
     // (g_collision::DynGetOut; the name is ours)
     std::vector<tDynamicCollObject *> *dyn_colls;

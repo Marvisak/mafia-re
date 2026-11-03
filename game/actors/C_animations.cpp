@@ -165,3 +165,19 @@ bool C_animations_machine_de_luxe::GetPlacementFromTCK(const char *name, S_vecto
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x40e900
+void C_animations_machine_de_luxe::RecompileMatrix(S_matrix &m)
+{
+    StubLog("C_animations_machine_de_luxe::RecompileMatrix");
+}
+
+// STUB: GAME 0x4103d0
+void C_animations_machine_de_luxe::StageBlendingTick(uint time)
+{
+    StubLog("C_animations_machine_de_luxe::StageBlendingTick");
+}
+
+#pragma auto_inline(on)

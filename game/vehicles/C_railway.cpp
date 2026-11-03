@@ -157,3 +157,43 @@ void C_railway::NetDirect(uint time)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x495100
+void C_railway::AddOuterEntries()
+{
+    StubLog("C_railway::AddOuterEntries");
+}
+
+// STUB: GAME 0x495160
+void C_railway::AddInnerEntries()
+{
+    StubLog("C_railway::AddInnerEntries");
+}
+
+// STUB: GAME 0x4951c0
+void C_railway::RemoveOuterEntries()
+{
+    StubLog("C_railway::RemoveOuterEntries");
+}
+
+// STUB: GAME 0x495220
+void C_railway::RemoveInnerEntries()
+{
+    StubLog("C_railway::RemoveInnerEntries");
+}
+
+// STUB: GAME 0x497990
+void C_railway::Unlock()
+{
+    StubLog("C_railway::Unlock");
+}
+
+// STUB: GAME 0x4989a0
+void C_railway::SetRainDummy(bool in, I3D_frame *frm)
+{
+    StubLog("C_railway::SetRainDummy");
+}
+
+#pragma auto_inline(on)

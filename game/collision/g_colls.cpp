@@ -244,3 +244,43 @@ void g_collision::DynGetOut(tDynamicCollObject *obj, std::vector<tDynamicCollObj
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5c4020
+void g_collision::DynGetIn(tDynamicCollObject *obj, std::vector<tDynamicCollObject *> *colls)
+{
+    StubLog("g_collision::DynGetIn");
+}
+
+// STUB: GAME 0x5c9b80
+int g_collision::TestLineInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
+    S_vector *pos, S_vector *normal, uint flags)
+{
+    StubLog("g_collision::TestLineInVehicle");
+    return 0;
+}
+
+// STUB: GAME 0x5d5920
+int g_collision::TestLineVInnerDyn(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+    uint flags2)
+{
+    StubLog("g_collision::TestLineVInnerDyn");
+    return 0;
+}
+
+// STUB: GAME 0x5d59c0
+int g_collision::TestPanak2(tgcPanak2 *p)
+{
+    StubLog("g_collision::TestPanak2");
+    return 0;
+}
+
+// STUB: GAME 0x5d6430
+int g_collision::TestPanak2InVehicle(std::vector<tDynamicCollObject *> *colls, tgcPanak2 *p)
+{
+    StubLog("g_collision::TestPanak2InVehicle");
+    return 0;
+}
+
+#pragma auto_inline(on)

@@ -12,16 +12,22 @@
 // (C_airplane::GetMaterialID's) and those the shots treat apart
 #define MAT_METAL_STRUCTURE 0x13
 #define MAT_GLASS 0x18
+#define MAT_WATER_DEATH 0x1f            // "Voda Death": MovementIntern drowns the human
+#define MAT_DEATH 0x28                  // "DEATH COLLISION": the player's fall fails the game
 #define MAT_CRASH 0x29
+#define MAT_UNKNOWN_2B 0x2b            // a strike on it makes no debris (C_human::AI; by value)
 
 // A material of the scene's surfaces (materials.def), 0x170 bytes. The cars take their part (C_car::LoadMaterials);
 // their meanings aren't known, C_car::LoadMaterials clamps them.
 struct S_material_def
 {
     char name[0x20];                    // 0x0, the editor's, in Czech ("Asfalt", "Trava", ...)
-    int unknown_20;                     // 0x20
+    int step_sound;                     // 0x20, the sound of a step on it (C_sound_table's id), 0 for none (ours)
     int shot_sound;                     // 0x24, the sound of a shot's hit (C_sound_table's id), -1 for none
-    uchar unknown_28[0x14];             // 0x28
+    uchar unknown_28[8];                // 0x28
+    // 0x30, the sound of a strike on it (C_sound_table's id), by the weapon in the right hand: the others, items 3,
+    // 0x19, 0x1d and 0x1f, items 0 and 2 (C_human::AI; the name is ours)
+    int strike_sounds[3];
     // 0x3c, the texture of a shot's track on it (C_game::track_textures' index) and the model of its holes
     // (C_game::hole_models'), -1 for none
     int hole;
@@ -72,10 +78,12 @@ struct S_particle_def
     float color_end[3];                 // 0x98
 };
 
-// A voice (voices.def), 0xa4 bytes, not read yet
+// A voice (voices.def), 0xa4 bytes (the members' names are ours): what C_human::NewScream says
 struct S_voice_def
 {
-    uchar unknown_0[0xa4];
+    uint priority;                      // 0x0, a voice of a higher one interrupts it (50 for most)
+    // 0x4, its wave files' numbers ("%08lu.wav") in each of the humans' voices (C_human::voice_type), 0 for none
+    uint sounds[40];
 };
 
 // S_item_def::flags (the name is a guess): what G_Inventory::HaveSomeWeapon tests, which the scripts' ANYWEAPONINHAND
@@ -85,19 +93,58 @@ struct S_voice_def
 // down; the name is a guess)
 #define ITEMF_CLOSE_RANGE 0x2
 
+// Weapons of gameItemTable (predmety.def), by their names there: the parts of their models C_human's weapon effects
+// move ("cylinder", "zaver1", "clip", "foregrip", "hlavne") follow them
+#define GAMEITEM_MOLOTOV 5              // "Molotov cocktail"
+#define GAMEITEM_COLT_DETECTIVE 6       // "Colt Detective Special"
+#define GAMEITEM_SW_MAGNUM 7            // "S&W model 27 Magnum"
+#define GAMEITEM_SW_MP 8                // "S&W model 10 M&P"
+#define GAMEITEM_COLT_1911 9            // "Colt 1911"
+#define GAMEITEM_THOMPSON 10            // "Thompson 1928"
+#define GAMEITEM_SHOTGUN 11             // "Pump shotgun", which reloads a shell at a time
+#define GAMEITEM_SAWED_OFF 12           // "Saw off shotgun"
+#define GAMEITEM_SPRINGFIELD 13         // "US Rifle M1903 Springfield"
+#define GAMEITEM_MOSIN_NAGANT 14        // "Mosin-Nagant 1891/30"
+#define GAMEITEM_GRENADE 15             // "Grenade"
+
+// gameItemTable's first item, "Special Action (nesahat!!!)" ("don't touch"), which C_human::ChangeState puts on a dead
+// body's using objects, with the values 0x7dc and 0x7dd where a weapon has its ammunition (the name is ours)
+#define GAMEITEM_SPECIAL_ACTION 1
+
+// A step of what a weapon's fire does (the struct's and the members' names are ours): an item's list (S_item_def's
+// fire) and the hands' own, PS2's _fire_action_*_ lists, file statics of C_human.cpp; each list ends with
+// FIRE_ACTION_END. C_human keeps the step it is at and the time left of it.
+struct S_fire_action
+{
+    int action;                         // 0x0, FIRE_ACTION_*
+    ushort time;                        // 0x4, in milliseconds, as PS2's (C_human::AI and Do_Reload read a word)
+};
+#define FIRE_ACTION_END 3               // the lists' last step (the name is ours)
+// The other steps (C_human::AI; the names are guesses): the reload's animation and the ammunition reloaded at the
+// end, skipped while the weapon has rounds or there are none in reserve (the weapons' lists have it after the shot
+// with their reload's time, 3 to 4.2 seconds, the pump shotgun's 0.4 a shell); a cartridge thrown out; the time
+// counted again
+#define FIRE_ACTION_RELOAD 1
+#define FIRE_ACTION_CARTRIDGE 2
+#define FIRE_ACTION_RESTART 4
+
 // An item (predmety.def, "items"), 0xbc bytes, not read yet but its flags
 struct S_item_def
 {
     uchar unknown_0[0x20];              // 0x0
     uint flags;                         // 0x20, ITEMF_*
-    uchar unknown_24[0x2c];             // 0x24
+    uchar unknown_24[0x28];             // 0x24
+    int gun_anim;                       // 0x4c, the number of the reload's animations, gun0%i (the name is ours)
     int unknown_50;                     // 0x50, 4 for the weapons the corner fire has an animation of its own for
-    uchar unknown_54[0xc];              // 0x54
+    uint unknown_54;                    // 0x54, the sound table's sound of the weapon (NOTE_WEAPON_SOUND)
+    uchar unknown_58[4];                // 0x58
+    int unknown_5c;                     // 0x5c, a strike breaks crash objects with 7, glass but with 6 (C_human::AI)
     // The most ammunition in the weapon and in reserve, which C_human::InventoryTruncate cuts an item's to (the names
     // are ours)
     uint ammo_max;                      // 0x60
     uint spare_max;                     // 0x64
-    uchar unknown_68[0x54];             // 0x68
+    uchar unknown_68[0x24];             // 0x68
+    S_fire_action fire[6];              // 0x8c, the weapon's fire steps, which C_human's Shooting and Do_Reload follow
 };
 
 // The tables (PS2 names) and their sizes in entries
