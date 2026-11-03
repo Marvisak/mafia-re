@@ -137,17 +137,19 @@ void C_entity::GameDone()
 }
 
 // STUB: GAME 0x507dd0
-void C_entity::SaveData(C_chunk *chunk)
+bool C_entity::SaveData(C_chunk *chunk)
 {
     StubLog("C_entity::SaveData");
     C_human::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x507e20
-void C_entity::LoadData(C_chunk *chunk)
+bool C_entity::LoadData(C_chunk *chunk)
 {
     StubLog("C_entity::LoadData");
     C_human::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x507ec0

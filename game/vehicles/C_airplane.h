@@ -3,7 +3,7 @@
 #include "actors/C_actor.h"
 
 // The airplanes (PS2 C_airplane, C_airplane.cpp), 0x3f0 bytes (PS2's 0x400). Written: the destructor, which frees
-// its two vectors, SaveGameGetSize, GetMaterialID, IsDestroyed and ShowDamageIndicator; the constructor, which
+// its two vectors, SaveGameGetSize, GetMaterialID, IsDestroyed, ShowDamageIndicator, SaveData and LoadData; the constructor, which
 // C_mission::CreateActor calls for ACTOR_AIRPLANE, and the scripts' functions are stubs.
 // VTABLE: GAME 0x623318
 class C_airplane : public C_actor
@@ -17,8 +17,8 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);
@@ -39,10 +39,24 @@ public:
     // Shows the damage on the HUD's bar or hides it (PS2 name); the scripts' AIRPLANESHOWDAMAGE
     void ShowDamageIndicator(bool show);
 
-    uchar unknown_70[0x38];             // 0x70
-    // ShowDamageIndicator's divisor, the two engines' full energy (the name is ours)
+    // SaveData's values (the names are ours)
+    int unknown_70;                     // 0x70
+    int unknown_74;                     // 0x74
+    int unknown_78;                     // 0x78
+    int unknown_7c;                     // 0x7c
+    int unknown_80;                     // 0x80
+    int unknown_84;                     // 0x84
+    int unknown_88;                     // 0x88
+    int unknown_8c;                     // 0x8c
+    S_vector unknown_90;                // 0x90
+    int unknown_9c;                     // 0x9c
+    int unknown_a0;                     // 0xa0
+    int unknown_a4;                     // 0xa4
     float unknown_a8;                   // 0xa8
-    uchar unknown_ac[0x6c];             // 0xac
+    int unknown_ac;                     // 0xac
+    int unknown_b0;                     // 0xb0
+    int unknown_b4;                     // 0xb4
+    uchar unknown_b8[0x60];             // 0xb8
     // The two vectors the destructor frees (the names are ours)
     std::vector<uint> unknown_118;      // 0x118
     std::vector<uint> unknown_128;      // 0x128

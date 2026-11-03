@@ -466,10 +466,10 @@ public:
     bool unknown_1fac;                  // 0x1fac (car 0x201c), its second
     uchar unknown_1fad[0x63];           // 0x1fad
     // GetAIPos' two model points and their world-space results (the names are ours)
-    S_vector unknown_2010;              // 0x2010 (car 0x2080)
-    S_vector unknown_201c;              // 0x201c (car 0x208c)
-    S_vector unknown_2028;              // 0x2028 (car 0x2098)
-    S_vector unknown_2034;              // 0x2034 (car 0x20a4)
+    S_vector ai_point_1;              // 0x2010 (car 0x2080)
+    S_vector ai_point_2;              // 0x201c (car 0x208c)
+    S_vector ai_point_1_world;              // 0x2028 (car 0x2098)
+    S_vector ai_point_2_world;              // 0x2034 (car 0x20a4)
 };
 
 // The tables' vector helpers the loaders and the Set functions call out of line: each push_back's insert(P, n, x) and the

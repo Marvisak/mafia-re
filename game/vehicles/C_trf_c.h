@@ -9,7 +9,7 @@ class C_car;
 
 // The traffic's cars (PS2 C_traffic_car, C_trf_c.cpp), 0x26c bytes (PS2's 0x290). Written: the constructor, which
 // C_mission::CreateActor calls for ACTOR_TRAFFIC_CAR, the destructor, GetParkingCars, SaveGameGetSize, DuplicateFrom,
-// SaveGameSave, SaveGameLoad and ChlupatejVystrik.
+// SaveGameSave, SaveGameLoad, ChlupatejVystrik and SaveData; LoadData is a stub.
 // VTABLE: GAME 0x624c98
 class C_traffic_car : public C_actor
 {
@@ -22,8 +22,8 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);

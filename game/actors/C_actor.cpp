@@ -1117,14 +1117,16 @@ void C_actor::Death()
 }
 
 // The vtable's 0x4aa490, which returns true (a mov al, 1 and a ret 4), as LoadData's
-void C_actor::SaveData(C_chunk *chunk)
+bool C_actor::SaveData(C_chunk *chunk)
 {
     StubLog("C_actor::SaveData");
+    return true;
 }
 
-void C_actor::LoadData(C_chunk *chunk)
+bool C_actor::LoadData(C_chunk *chunk)
 {
     StubLog("C_actor::LoadData");
+    return true;
 }
 
 #pragma auto_inline(on)

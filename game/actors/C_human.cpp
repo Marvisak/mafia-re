@@ -234,17 +234,19 @@ void C_human::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x56f440
-void C_human::SaveData(C_chunk *chunk)
+bool C_human::SaveData(C_chunk *chunk)
 {
     StubLog("C_human::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x56f4e0
-void C_human::LoadData(C_chunk *chunk)
+bool C_human::LoadData(C_chunk *chunk)
 {
     StubLog("C_human::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x56f9e0

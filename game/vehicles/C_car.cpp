@@ -438,10 +438,10 @@ float C_car::ShowCarEnergy()
 const S_vector &C_car::GetAIPos(bool b)
 {
     if (b)
-        unknown_2028 = unknown_2010 * model_matrix;
+        ai_point_1_world = ai_point_1 * model_matrix;
     else
-        unknown_2034 = unknown_201c * model_matrix;
-    return b ? unknown_2028 : unknown_2034;
+        ai_point_2_world = ai_point_2 * model_matrix;
+    return b ? ai_point_1_world : ai_point_2_world;
 }
 
 // STUB: GAME 0x429580
@@ -498,16 +498,16 @@ bool C_car::IsCarUsable(uint flags)
 void C_car::GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4)
 {
     p1.x = -(unknown + pivot_pos_2.x);
-    p1.y = unknown_2010.y;
+    p1.y = ai_point_1.y;
     p1.z = vehicle_size_2.z - pivot_pos_2.z + unknown;
     p2.x = vehicle_size_2.x - pivot_pos_2.x + unknown;
-    p2.y = unknown_2010.y;
+    p2.y = ai_point_1.y;
     p2.z = vehicle_size_2.z - pivot_pos_2.z + unknown;
     p3.x = -(unknown + pivot_pos_2.x);
-    p3.y = unknown_2010.y;
+    p3.y = ai_point_1.y;
     p3.z = -(unknown + pivot_pos_2.z);
     p4.x = vehicle_size_2.x - pivot_pos_2.x + unknown;
-    p4.y = unknown_2010.y;
+    p4.y = ai_point_1.y;
     p4.z = -(unknown + pivot_pos_2.z);
 }
 
@@ -552,17 +552,19 @@ void C_car::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x41df80
-void C_car::SaveData(C_chunk *chunk)
+bool C_car::SaveData(C_chunk *chunk)
 {
     StubLog("C_car::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x41e070
-void C_car::LoadData(C_chunk *chunk)
+bool C_car::LoadData(C_chunk *chunk)
 {
     StubLog("C_car::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x41ed00

@@ -3,6 +3,7 @@
 // C_mission::CreateActor calls, and Init.
 
 #include "vehicles/C_rail_generator.h"
+#include "C_chunk.h"
 
 #include "stub.h"
 
@@ -44,18 +45,26 @@ bool C_rail_generator::Init(I3D_frame *frm)
     return true;
 }
 
-// STUB: GAME 0x5966a0
-void C_rail_generator::SaveData(C_chunk *chunk)
+// The two values the constructor sets (PS2 name)
+// FUNCTION: GAME 0x5966a0
+bool C_rail_generator::SaveData(C_chunk *chunk)
 {
-    StubLog("C_rail_generator::SaveData");
-    C_actor::SaveData(chunk);
+    uchar zero = 0;
+    chunk->Write(&zero, 1);
+    chunk->Write(&unknown_70, 4);
+    chunk->Write(&unknown_74, 4);
+    return true;
 }
 
-// STUB: GAME 0x596710
-void C_rail_generator::LoadData(C_chunk *chunk)
+// Reads the two values and the type byte (PS2 name)
+// FUNCTION: GAME 0x596710
+bool C_rail_generator::LoadData(C_chunk *chunk)
 {
-    StubLog("C_rail_generator::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_70, 4);
+    chunk->Read(&unknown_74, 4);
+    return true;
 }
 
 // STUB: GAME 0x596860

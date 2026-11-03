@@ -40,17 +40,19 @@ bool C_pumper::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x47c780
-void C_pumper::SaveData(C_chunk *chunk)
+bool C_pumper::SaveData(C_chunk *chunk)
 {
     StubLog("C_pumper::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x47c860
-void C_pumper::LoadData(C_chunk *chunk)
+bool C_pumper::LoadData(C_chunk *chunk)
 {
     StubLog("C_pumper::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x47ca60

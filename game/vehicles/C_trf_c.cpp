@@ -5,6 +5,7 @@
 // calls; TakATedSiVasKupim_Vsecky and VypraskeeeKaaaru are stubs.
 
 #include "vehicles/C_trf_c.h"
+#include "C_chunk.h"
 
 #include "stub.h"
 
@@ -115,18 +116,28 @@ void C_traffic_car::DuplicateFrom(C_actor *act)
         strcpy(names + TRAFFIC_NAME_SIZE * i, other->names + TRAFFIC_NAME_SIZE * i);
 }
 
-// STUB: GAME 0x4aabf0
-void C_traffic_car::SaveData(C_chunk *chunk)
+// Writes the type, the values and the names (PS2 name)
+// FUNCTION: GAME 0x4aabf0
+bool C_traffic_car::SaveData(C_chunk *chunk)
 {
-    StubLog("C_traffic_car::SaveData");
-    C_actor::SaveData(chunk);
+    int five = 5;
+    chunk->Write(&five, 4);
+    chunk->Write(&unknown_224, 4);
+    chunk->Write(&unknown_228, 4);
+    chunk->Write(&unknown_22c, 4);
+    chunk->Write(&unknown_21c, 4);
+    chunk->Write(&num_names, 4);
+    for (int i = 0; i < num_names; i++)
+        chunk->Write(names + i * TRAFFIC_NAME_SIZE, TRAFFIC_NAME_SIZE);
+    return true;
 }
 
 // STUB: GAME 0x4aad20
-void C_traffic_car::LoadData(C_chunk *chunk)
+bool C_traffic_car::LoadData(C_chunk *chunk)
 {
     StubLog("C_traffic_car::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // FUNCTION: GAME 0x4ab120

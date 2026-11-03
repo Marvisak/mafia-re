@@ -20,8 +20,8 @@ public:
         C_human::Update(time);
     }
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     // The base's: the original's jumps there
     // FUNCTION: GAME 0x58f290 FOLDED
     virtual void DuplicateFrom(C_actor *act)

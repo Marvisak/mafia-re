@@ -22,7 +22,7 @@ public:
     virtual void AI(uint time);
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
-    virtual void SaveData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
     virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
         uint u, I3D_frame *frm);
     // C_program's: the detector's commands first, which Process handles; the original's other three only call
@@ -34,7 +34,7 @@ public:
     virtual ~C_detector();
     // The script runs for the actor itself
     virtual bool Init(I3D_frame *frm);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);

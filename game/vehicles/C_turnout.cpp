@@ -3,6 +3,7 @@
 // C_mission::CreateActor calls, is a stub.
 
 #include "vehicles/C_turnout.h"
+#include "C_chunk.h"
 
 #include <string.h>
 
@@ -34,18 +35,40 @@ bool C_turnout::Init(I3D_frame *frm)
     return C_actor::Init(frm);
 }
 
-// STUB: GAME 0x4bc4a0
-void C_turnout::SaveData(C_chunk *chunk)
+// Writes the type byte, the flag and the two names' values (PS2 name)
+// FUNCTION: GAME 0x4bc4a0
+bool C_turnout::SaveData(C_chunk *chunk)
 {
-    StubLog("C_turnout::SaveData");
-    C_actor::SaveData(chunk);
+    uchar zero = 0;
+    chunk->Write(&zero, 1);
+    chunk->Write(&unknown_c8, 1);
+    chunk->Write(&unknown_70, 4);
+    chunk->Write(&unknown_74, 4);
+    chunk->Write(&unknown_78, 4);
+    chunk->Write(&unknown_7c, 4);
+    chunk->Write(&unknown_80, 4);
+    chunk->Write(&unknown_84, 4);
+    chunk->Write(unknown_88, 32);
+    chunk->Write(unknown_a8, 32);
+    return true;
 }
 
-// STUB: GAME 0x4bc600
-void C_turnout::LoadData(C_chunk *chunk)
+// Reads the flag and the two names' values (PS2 name)
+// FUNCTION: GAME 0x4bc600
+bool C_turnout::LoadData(C_chunk *chunk)
 {
-    StubLog("C_turnout::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_c8, 1);
+    chunk->Read(&unknown_70, 4);
+    chunk->Read(&unknown_74, 4);
+    chunk->Read(&unknown_78, 4);
+    chunk->Read(&unknown_7c, 4);
+    chunk->Read(&unknown_80, 4);
+    chunk->Read(&unknown_84, 4);
+    chunk->Read(unknown_88, 32);
+    chunk->Read(unknown_a8, 32);
+    return true;
 }
 
 // Copies the turnout's values and its two names (PS2 name)

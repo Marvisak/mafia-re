@@ -3,6 +3,7 @@
 // ShowDamageIndicator; the constructor, which C_mission::CreateActor calls, and the scripts' other functions are stubs.
 
 #include "vehicles/C_airplane.h"
+#include "C_chunk.h"
 #include "g_material.h"
 #include "ui/g_indicators.h"
 
@@ -61,18 +62,52 @@ C_airplane::~C_airplane()
 {
 }
 
-// STUB: GAME 0x409580
-void C_airplane::SaveData(C_chunk *chunk)
+// Writes the airplane's values (PS2 name)
+// FUNCTION: GAME 0x409580
+bool C_airplane::SaveData(C_chunk *chunk)
 {
-    StubLog("C_airplane::SaveData");
-    C_actor::SaveData(chunk);
+    uchar one = 1;
+    chunk->Write(&one, 1);
+    chunk->Write(&unknown_70, 4);
+    chunk->Write(&unknown_74, 4);
+    chunk->Write(&unknown_78, 4);
+    chunk->Write(&unknown_84, 4);
+    chunk->Write(&unknown_88, 4);
+    chunk->Write(&unknown_8c, 4);
+    chunk->Write(&unknown_90, 12);
+    chunk->Write(&unknown_9c, 4);
+    chunk->Write(&unknown_a0, 4);
+    chunk->Write(&unknown_a4, 4);
+    chunk->Write(&unknown_a8, 4);
+    chunk->Write(&unknown_ac, 4);
+    chunk->Write(&unknown_b0, 4);
+    chunk->Write(&unknown_7c, 4);
+    chunk->Write(&unknown_80, 4);
+    return true;
 }
 
-// STUB: GAME 0x4097c0
-void C_airplane::LoadData(C_chunk *chunk)
+// Reads the airplane's values (PS2 name)
+// FUNCTION: GAME 0x4097c0
+bool C_airplane::LoadData(C_chunk *chunk)
 {
-    StubLog("C_airplane::LoadData");
-    C_actor::LoadData(chunk);
+    uchar type;
+    chunk->Read(&type, 1);
+    chunk->Read(&unknown_70, 4);
+    chunk->Read(&unknown_74, 4);
+    chunk->Read(&unknown_78, 4);
+    chunk->Read(&unknown_84, 4);
+    chunk->Read(&unknown_88, 4);
+    chunk->Read(&unknown_8c, 4);
+    chunk->Read(&unknown_90, 12);
+    chunk->Read(&unknown_9c, 4);
+    chunk->Read(&unknown_a0, 4);
+    chunk->Read(&unknown_a4, 4);
+    chunk->Read(&unknown_a8, 4);
+    chunk->Read(&unknown_ac, 4);
+    chunk->Read(&unknown_b0, 4);
+    chunk->Read(&unknown_7c, 4);
+    chunk->Read(&unknown_80, 4);
+    return true;
 }
 
 // STUB: GAME 0x409a40

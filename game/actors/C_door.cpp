@@ -94,17 +94,19 @@ void C_door::GameDone()
 }
 
 // STUB: GAME 0x43ae50
-void C_door::SaveData(C_chunk *chunk)
+bool C_door::SaveData(C_chunk *chunk)
 {
     StubLog("C_door::SaveData");
     C_actor::SaveData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x43b030
-void C_door::LoadData(C_chunk *chunk)
+bool C_door::LoadData(C_chunk *chunk)
 {
     StubLog("C_door::LoadData");
     C_actor::LoadData(chunk);
+    return true;
 }
 
 // STUB: GAME 0x43b4f0

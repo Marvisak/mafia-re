@@ -301,8 +301,8 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk) {}
-    virtual void LoadData(C_chunk *chunk) {}
+    virtual bool SaveData(C_chunk *chunk) { return true; }
+    virtual bool LoadData(C_chunk *chunk) { return true; }
     virtual int SaveGameGetSize()
     {
         return 0;

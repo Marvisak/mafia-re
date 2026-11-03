@@ -45,18 +45,18 @@ void C_car_ex::GameDone()
     C_car::GameDone();
 }
 
-// STUB: GAME 0x42f110
-void C_car_ex::LoadData(C_chunk *chunk)
+// The car's data, normalized (PS2 name)
+// FUNCTION: GAME 0x42f110
+bool C_car_ex::LoadData(C_chunk *chunk)
 {
-    StubLog("C_car_ex::LoadData");
-    C_car::LoadData(chunk);
+    return C_car::LoadData(chunk) ? true : false;
 }
 
-// STUB: GAME 0x42f130
-void C_car_ex::SaveData(C_chunk *chunk)
+// The car's data, normalized (PS2 name)
+// FUNCTION: GAME 0x42f130
+bool C_car_ex::SaveData(C_chunk *chunk)
 {
-    StubLog("C_car_ex::SaveData");
-    C_car::SaveData(chunk);
+    return C_car::SaveData(chunk) ? true : false;
 }
 
 // STUB: GAME 0x42f390

@@ -84,6 +84,16 @@ public:
         return false;
     }
 
+    // Writes len bytes, if the chunk is open for writing (the name is ours)
+    void Write(const void *buffer, int len)
+    {
+        if (open)
+        {
+            if (write)
+                dtaWrite(handle, buffer, len);
+        }
+    }
+
     // Reads len bytes, if the current chunk has that many left
     // FUNCTION: GAME 0x404d80
     bool Read(void *buffer, int len)

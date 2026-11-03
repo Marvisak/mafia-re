@@ -63,7 +63,7 @@ public:
 
     // Reads the mission's road.bin (PS2 name): not virtual, as PS2's, C_mission::Open calls it directly. It ends with
     // the vtable's RecompileDistances.
-    void LoadData(C_chunk *chunk);
+    bool LoadData(C_chunk *chunk);
     // The node nearest to a position, 0xffff for none (PS2 name; PS2's takes a reference). Its top bit is a flag:
     // C_sledovacka::Init masks it off (NEARNODE_INDEX)
     ushort GetNearNode(S_vector pos);
@@ -82,7 +82,7 @@ public:
     // PS2's three virtual functions in PS2's order, and a second reader between the last two, PC only (the parameters
     // each one's ret takes). It reads what LoadData reads; the name is ours, after C_web_path's MergeNodes.
     virtual void SortNodesByX();
-    virtual void SaveData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
     virtual void MergeData(C_chunk *chunk);
     virtual void RecompileDistances();
 };

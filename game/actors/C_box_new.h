@@ -13,8 +13,8 @@ public:
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
     // linker's folded constant functions and those that only call the base's
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual void GameInit();
     // The base's: the original's jumps there

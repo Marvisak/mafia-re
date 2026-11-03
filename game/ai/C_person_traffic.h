@@ -74,8 +74,8 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);

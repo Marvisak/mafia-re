@@ -3,7 +3,7 @@
 #include "vehicles/C_car.h"
 
 // The cars with dynamic collisions (PS2 C_car_ex, C_car_ex.cpp, whose S_dyn_coll they are), a car, 0x227c bytes
-// (PS2's 0x24f0). Written: the constructor, destructor, Init and what the scripts read.
+// (PS2's 0x24f0). Written: the constructor, destructor, Init, SaveData, LoadData and what the scripts read.
 // VTABLE: GAME 0x6237d4 C_Vehicle
 // VTABLE: GAME 0x6237d8 C_actor
 class C_car_ex : public C_car
@@ -15,8 +15,8 @@ public:
     // linker's folded constant functions and those that only call the base's
     virtual void Update(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     // The base's: the original's jumps there
     // FUNCTION: GAME 0x42f150 FOLDED
     virtual void DuplicateFrom(C_actor *act)
