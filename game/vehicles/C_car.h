@@ -225,11 +225,13 @@ public:
     {
         unbreakable = flags;
     }
-    // The vehicle's dynamic collisions off while the car is invisible, its second flag kept
+    // The vehicle's dynamic collisions off, or on again, their second flag kept (read through its accessor: see
+    // GetUnknown1fac); the name is ours. The chases and CAR_INVISIBLE turn them off for an invisible car, each setting
+    // invisible itself: the copy stores nothing but negates the parameter.
     // FUNCTION: GAME 0x47b4b0
-    void SetInvisible(bool on)
+    void SetDynamicCollsOff(bool off)
     {
-        SetDynamicCollsOn(!on, unknown_1fac);
+        SetDynamicCollsOn(!off, GetUnknown1fac());
     }
 
     uchar unknown_20b0[2];              // 0x20b0

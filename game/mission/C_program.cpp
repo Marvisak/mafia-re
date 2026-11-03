@@ -6743,7 +6743,7 @@ void C_program::Process(uint time)
         if (num_actor_regs <= p[0] || p[0] < 0 || !actor_regs[p[0]] || actor_regs[p[0]]->GetType() != ACTOR_CAR)
             break;
         C_car *car = (C_car *)actor_regs[p[0]];
-        car->SetInvisible(p[1] != 0);
+        car->SetDynamicCollsOff(p[1] != 0);
         car->invisible = p[1] != 0;
         car->SetEnterProtect(p[1] != 0);
     }

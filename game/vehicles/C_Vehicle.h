@@ -218,6 +218,14 @@ public:
     {
         return tank_size;
     }
+    // SetDynamicCollsOn's second flag (the name is ours), which C_car::SetDynamicCollsOff passes on through it: where
+    // C_sledovacka::Tick inlines SetDynamicCollsOff, the value is a variable of its own, spilled to a stack slot and
+    // pushed from there (mov [esp + n], cl; mov edx, [esp + n]; push edx), as in the original; the member read in the
+    // call pushes the register. It also spends the inline budget Tick runs out of.
+    bool GetUnknown1fac() const
+    {
+        return unknown_1fac;
+    }
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours). The setters
     // wake the vehicle up through wake_up.

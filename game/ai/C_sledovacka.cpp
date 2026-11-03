@@ -5,9 +5,13 @@
 // AI's following and fights call (AddCarHunt, AddCarMoveTo, ActionStatus) are stubs.
 // Open: Tick (18 KB) is in VC6's large-function regime, where more source means less inlining at the end: the original
 // calls helpers out of line from the 0x800 branch's side search on (its first, an S_vector operator- at 0x4a76fc) that
-// ours inlines. About 250 dead statements anywhere in Tick give the original's decisions in the whole function (64% to
-// 86%), so the original had that much more source there, or a costlier helper; not found yet. Its frame is 0x6f8, the
-// original's 0x744.
+// ours inlines. C_car::SetDynamicCollsOff's read through C_Vehicle::GetUnknown1fac spends some of it (64% to 80%);
+// about 150 dead statements anywhere in Tick still give the original's decisions at the end (96%), but they also raise
+// the budget of its first nested calls (the path's clear() inlined, where the original calls erase), so what the
+// original had more of is most likely inline calls, not source: accessors at the members Tick reads directly
+// (world_pos, unknown_c3c, act_state, the target's car) or in the helpers it calls often (GetSpeed, GetType) each spend
+// a little and keep those decisions, about 30 of them a few calls' worth; GetVelocityRef in the chases beside the
+// target sends the 0x2 branch's erase out of line. Not found yet. Its frame is 0x714, the original's 0x744.
 
 #include "ai/C_sledovacka.h"
 
@@ -257,12 +261,12 @@ void C_sledovacka::Tick(uint time)
                 if (!e.car->GetRendered() && (e.chased->GetWorldPos() - e.car->world_pos).Square() > 10000.0f)
                 {
                     e.car->invisible = true;
-                    e.car->SetInvisible(true);
+                    e.car->SetDynamicCollsOff(true);
                 }
                 else
                 {
                     e.car->invisible = false;
-                    e.car->SetInvisible(false);
+                    e.car->SetDynamicCollsOff(false);
                 }
             }
             else
@@ -270,12 +274,12 @@ void C_sledovacka::Tick(uint time)
                 if (!e.car->GetRendered() && (e.target_pos - e.car->world_pos).Square() > 10000.0f)
                 {
                     e.car->invisible = true;
-                    e.car->SetInvisible(true);
+                    e.car->SetDynamicCollsOff(true);
                 }
                 else
                 {
                     e.car->invisible = false;
-                    e.car->SetInvisible(false);
+                    e.car->SetDynamicCollsOff(false);
                 }
             }
             if (e.chased)
@@ -446,12 +450,12 @@ void C_sledovacka::Tick(uint time)
                 if (!e.car->GetRendered() && (e.chased->GetWorldPos() - e.car->world_pos).Square() > 10000.0f)
                 {
                     e.car->invisible = true;
-                    e.car->SetInvisible(true);
+                    e.car->SetDynamicCollsOff(true);
                 }
                 else
                 {
                     e.car->invisible = false;
-                    e.car->SetInvisible(false);
+                    e.car->SetDynamicCollsOff(false);
                 }
             }
             else
@@ -459,12 +463,12 @@ void C_sledovacka::Tick(uint time)
                 if (!e.car->GetRendered() && (e.target_pos - e.car->world_pos).Square() > 10000.0f)
                 {
                     e.car->invisible = true;
-                    e.car->SetInvisible(true);
+                    e.car->SetDynamicCollsOff(true);
                 }
                 else
                 {
                     e.car->invisible = false;
-                    e.car->SetInvisible(false);
+                    e.car->SetDynamicCollsOff(false);
                 }
             }
             if (e.chased)
