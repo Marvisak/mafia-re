@@ -3,9 +3,10 @@
 // PS2's own), which the loaders hand to C_Vehicle in a local vector, and the PC's force feedback scales, which the
 // profiles set, GetInvModelMatrix, GetActualLevel and GetTimeParking, which C_traffic_generator::TryGoToAssHole calls,
 // GetOwner, which C_shvestky::TickDoRiciActors calls, the virtual GetActorSpeed, and what the scripts call:
-// GetLevelsCount, SetEnterProtect1, GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor
+// GetLevelsCount, SetEnterProtect1, GetCarWheelColl and SetCarWheelColl, and GetAIPos and GetNavigationPoints, which the
+// chases call. The constructor, which C_mission::CreateActor
 // calls, SetOwner, SetActualLevel, the force feedback effects, Reset, IsCarUsable, the scripts' other functions and
-// TryGoToAssHole's others (GetPlacementFromTCK1, GetNavigationPoints) are stubs.
+// TryGoToAssHole's GetPlacementFromTCK1 are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -433,11 +434,14 @@ float C_car::ShowCarEnergy()
     return 0.0f;
 }
 
-// STUB: GAME 0x429510
+// FUNCTION: GAME 0x429510
 const S_vector &C_car::GetAIPos(bool b)
 {
-    StubLog("C_car::GetAIPos");
-    return world_pos;
+    if (b)
+        unknown_2028 = unknown_2010 * model_matrix;
+    else
+        unknown_2034 = unknown_201c * model_matrix;
+    return b ? unknown_2028 : unknown_2034;
 }
 
 // STUB: GAME 0x429580
@@ -489,10 +493,22 @@ bool C_car::IsCarUsable(uint flags)
     return false;
 }
 
-// STUB: GAME 0x4299c0
+// The four corners of the car's footprint (PS2 name)
+// FUNCTION: GAME 0x4299c0
 void C_car::GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4)
 {
-    StubLog("C_car::GetNavigationPoints");
+    p1.x = -(unknown + pivot_pos_2.x);
+    p1.y = unknown_2010.y;
+    p1.z = vehicle_size_2.z - pivot_pos_2.z + unknown;
+    p2.x = vehicle_size_2.x - pivot_pos_2.x + unknown;
+    p2.y = unknown_2010.y;
+    p2.z = vehicle_size_2.z - pivot_pos_2.z + unknown;
+    p3.x = -(unknown + pivot_pos_2.x);
+    p3.y = unknown_2010.y;
+    p3.z = -(unknown + pivot_pos_2.z);
+    p4.x = vehicle_size_2.x - pivot_pos_2.x + unknown;
+    p4.y = unknown_2010.y;
+    p4.z = -(unknown + pivot_pos_2.z);
 }
 
 #pragma auto_inline(on)

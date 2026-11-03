@@ -55,7 +55,7 @@ struct S_car_seat
 // C_mission::CreateActor and the scripts (C_program::Process) use so far: its tables, which InitSystem loads once
 // (C_game::Init loads them again, with the game's tables loaded), and which C_Vehicle keeps, the force feedback's
 // scales, the constructor, a stub, and the scripts' functions and accessors (GetLevelsCount, GetOwner, SetEnterProtect1,
-// GetCarWheelColl, SetCarWheelColl and GetActorSpeed are written).
+// GetCarWheelColl, SetCarWheelColl, GetActorSpeed, GetAIPos and GetNavigationPoints are written).
 // VTABLE: GAME 0x623618 C_actor
 // VTABLE: GAME 0x6236b0 C_Vehicle
 class C_car : public C_actor, public C_Vehicle
