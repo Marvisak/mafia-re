@@ -1847,6 +1847,15 @@ public:
         return inv_matrix;
     }
 
+#ifndef LS3DF_EXPORTS
+    // The game's (the name is a guess): C_mission::OpenBin calls the copy in Mission.cpp's range
+    // FUNCTION: GAME 0x546d10
+    void SetBBox(const I3D_bbox &bb)
+    {
+        bbox = bb;
+    }
+#endif
+
     I3D_bbox bbox;                      // 0x140, in local space
     S_matrix inv_matrix;                // 0x158, PC only
     uint dummy_flags;                   // 0x198, DUMMYF_*
@@ -2995,6 +3004,36 @@ public:
     float far_dist;                     // 0x270, beyond it a single glow shrinks to nothing at range
     float range;                        // 0x274, 300
     float near_scale;                   // 0x278
+
+#ifndef LS3DF_EXPORTS
+    // The game's (the names are guesses): C_mission::OpenBin passes the values through the FPU into the members, as an
+    // inline setter's parameter does, and each fade stores the other one again, so one setter takes both
+    void SetSize(float f)
+    {
+        size = f;
+    }
+
+    void SetIntensity(float f)
+    {
+        intensity = f;
+    }
+
+    void SetTestInterval(uint t)
+    {
+        test_interval = t;
+    }
+
+    void SetFade(float in, float out)
+    {
+        fade_in = in;
+        fade_out = out;
+    }
+
+    void SetRange(float r)
+    {
+        range = r;
+    }
+#endif
 };
 
 // SYNTHETIC: LS3DF 0x10009610

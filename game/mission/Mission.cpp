@@ -2,9 +2,9 @@
 // (PS2's InterCity, Garage and Freeride functions have no PC counterpart). Six functions nothing written calls yet are
 // kept with /INCLUDE (game/CMakeLists.txt): FindActorByName, AddTimeTransparentObject, FrmActBuff_StoreModel,
 // FrmActBuff_GetModel, FrmActBuff_StoreActorSound and FrmActBuff_GetActorSound.
-// Open: OpenBin (its inline budget, see its comment), and with it what the original calls out of line there and ours
-// inlines (C_str's buffer's operator new, 0x5454c0, which adds its two parameters where ours adds 9; a setter of 0x18
-// bytes at +0x140, 0x546d10; the time shift's Add, 0x545280) and the order of the inline copies after it.
+// Open: OpenBin (see its comment); C_str's buffer's operator new, whose copy OpenBin calls (0x5454c0: the original's
+// adds its two parameters, the size 9, so its buffer is packed, where ours adds 9 to the length; a packed C_rep moves
+// LS3DF); the time shift's Add (0x545280) and the order of the inline copies after OpenBin.
 
 #include "mission/Mission.h"
 #include "mission/game.h"
@@ -830,7 +830,7 @@ typedef std::map<C_str, I3D_frame *> t_frame_map;
 static I3DENUMRET __stdcall cbFrameMap(I3D_frame *frm, uint context);
 
 // The chunk's data, which it then leaves (PS2 names: PS2 has them out of line, the quaternion's components in another
-// order)
+// order). PS2's ReadBBoxOld isn't the PC's: the original reads the dummy's box with Read and Descend written out
 static inline S_vector ReadVector3(C_chunk &chunk)
 {
     S_vector v;
@@ -847,12 +847,6 @@ static inline S_quat ReadQuatOld(C_chunk &chunk)
     return q;
 }
 
-static inline void ReadBBoxOld(C_chunk &chunk, I3D_bbox &bbox)
-{
-    chunk.Read(&bbox, sizeof(bbox));
-    chunk.Descend();
-}
-
 // A copy of a string, deleted with delete[] (the name is ours; PS2 copies the names the same way)
 static inline char *CopyString(const char *s)
 {
@@ -866,14 +860,15 @@ static inline char *CopyString(const char *s)
 // PS2's has the frames found by FindFrame and more chunks (the inter-city missions' among them); the PC's finds them in
 // a map of its own, which the models' frames are added to.
 // The cases are in PS2's order, which its compare chains give (reversed): VC6 lays the case bodies out by value but
-// spends the inline budget in source order, and in that order the original's budget runs out at the model's chunk, as
-// ours does. A single value is read through the chunk's ReadDword and ReadFloat, whose nested Read and Descend the
-// budget leaves out of line (PS2's the same).
-// Open: the frame (0x2004 bytes, the original's 0x2008) and most stack slots; which later calls are inlined (the
-// original calls accessors of the frames by reference, GetType, GetParent, NumChildren, GetName and the visual's type,
-// which LS3DF's header doesn't have or returns by value; the light's mode read inlined; the occluder's and area's
-// arrays constructed by the vector constructor iterator, the S_vector constructor out of line); the strings' copy
-// loop's registers; the lens flare's values pass through the FPU into its members, as inline setters' parameters do.
+// spends the inline budget in source order, and in that order the original's budget runs out at the model's chunk. From
+// the dummy's box on it calls every inline function out of line (GetType, GetParent, the box's constructor and setter,
+// GetHandle, GetTShift, ...), which shows the calls the source makes there; where a member is read or written
+// directly, no call can have been. The chunk methods' accessors (C_chunk.h) give the budget the rest of the function
+// spends. A single value is read through the chunk's ReadDword and ReadFloat, whose nested Read and Descend the budget
+// leaves out of line (PS2's the same), the light's mode too.
+// Open: a little budget before the model's chunk: the original inlines the frame name's Release, the light's cone's and
+// range's size() and the model's name[i - 1] and name = (const char *)name (all but the new buffer's operator new),
+// which ours call; the strings' copy loop's registers; most stack slots.
 // FUNCTION: GAME 0x541030
 int C_mission::OpenBin(const char *dir, uint flags)
 {
@@ -887,10 +882,10 @@ int C_mission::OpenBin(const char *dir, uint flags)
         return OPENBIN_NOFILE;
     t_frame_map frames;
     scene->EnumFrames(cbFrameMap, (uint)&frames, ENUMF_ALL | ENUMF_BACKDROP, NULL);
-    frames[scene->primary_sector->GetName()] = scene->primary_sector;
+    frames[scene->GetPrimarySector()->GetName()] = scene->GetPrimarySector();
     frames[scene->backdrop_sector->GetName()] = scene->backdrop_sector;
     frames[scene->omni_sector->GetName()] = scene->omni_sector;
-    I3D_camera *cam = scene->current_camera;
+    I3D_camera *cam = scene->GetActiveCamera();
     if (!cam)
     {
         cam = (I3D_camera *)driver->CreateFrame(FRAME_CAMERA);
@@ -1086,9 +1081,7 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                         // Files before 5.10 lack a mode bit
                                         case CT_LIGHT_MODE:
                                         {
-                                            uint mode;
-                                            chunk.Read(&mode, sizeof(mode));
-                                            chunk.Descend();
+                                            uint mode = chunk.ReadDword();
                                             if (version * 100 + version_minor < 510)
                                                 mode |= 0x40;
                                             light->SetMode(mode);
@@ -1247,7 +1240,8 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                 }
                                 chunk.Descend();
                                 break;
-                            // The same, with 12 bytes of data for indices 20 and 21, passed by address
+                            // The same, with 12 bytes of data for indices 20 and 21, passed by address. A switch: the
+                            // original compares the index as an int range (PS2 tests 20 and 21) and shares the call
                             case CT_SECTOR_SOUND_DATA2:
                                 if (frm && frm->GetType() == FRAME_SECTOR)
                                 {
@@ -1257,14 +1251,15 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                         chunk.RAscend(index);
                                         uint data;
                                         S_vector v;
-                                        if (index >= 20 && index <= 21)
+                                        switch (index)
                                         {
+                                        case 20:
+                                        case 21:
                                             chunk.Read(&v, sizeof(v));
                                             ((I3D_sector *)frm)->SetSoundData((I3D_SECTOR_SOUND_DATA_INDEX)index,
                                                 (uint)&v);
-                                        }
-                                        else
-                                        {
+                                            break;
+                                        default:
                                             chunk.Read(&data, sizeof(data));
                                             ((I3D_sector *)frm)->SetSoundData((I3D_SECTOR_SOUND_DATA_INDEX)index, data);
                                         }
@@ -1277,6 +1272,8 @@ int C_mission::OpenBin(const char *dir, uint flags)
                             case CT_UNKNOWN_B100:
                                 chunk.Descend();
                                 break;
+                            // Through the lens flare's setters: the values pass through the FPU into the members, and
+                            // each fade stores the other one again
                             case CT_LENSFLARE:
                                 if (frm && version >= 5)
                                 {
@@ -1285,38 +1282,37 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                     obj_flags |= OBJF_VISUAL;
                                     while (chunk.Size())
                                     {
-                                        if (chunk.Size())
-                                            chunk.RAscend(lf_type);
+                                        chunk.RAscend(lf_type);
                                         switch (lf_type)
                                         {
                                         case CT_LENSFLARE_SIZE:
                                         {
-                                            lf->size = chunk.ReadFloat();
+                                            lf->SetSize(chunk.ReadFloat());
                                             break;
                                         }
                                         case CT_LENSFLARE_INTENSITY:
                                         {
-                                            lf->intensity = chunk.ReadFloat();
+                                            lf->SetIntensity(chunk.ReadFloat());
                                             break;
                                         }
                                         case CT_LENSFLARE_TEST_INTERVAL:
                                         {
-                                            lf->test_interval = (uint)chunk.ReadFloat();
+                                            lf->SetTestInterval((uint)chunk.ReadFloat());
                                             break;
                                         }
                                         case CT_LENSFLARE_FADE_IN:
                                         {
-                                            lf->fade_in = chunk.ReadFloat();
+                                            lf->SetFade(chunk.ReadFloat(), lf->fade_out);
                                             break;
                                         }
                                         case CT_LENSFLARE_FADE_OUT:
                                         {
-                                            lf->fade_out = chunk.ReadFloat();
+                                            lf->SetFade(lf->fade_in, chunk.ReadFloat());
                                             break;
                                         }
                                         case CT_LENSFLARE_RANGE:
                                         {
-                                            lf->range = chunk.ReadFloat();
+                                            lf->SetRange(chunk.ReadFloat());
                                             break;
                                         }
                                         }
@@ -1377,13 +1373,15 @@ int C_mission::OpenBin(const char *dir, uint flags)
                             case CT_DUMMY_BBOX:
                             {
                                 I3D_bbox bbox;
-                                ReadBBoxOld(chunk, bbox);
+                                chunk.Read(&bbox, sizeof(bbox));
+                                chunk.Descend();
                                 if (frm && frm->GetType() == FRAME_DUMMY)
-                                    ((I3D_dummy *)frm)->bbox = bbox;
+                                    ((I3D_dummy *)frm)->SetBBox(bbox);
                                 break;
                             }
                             // A visual of the new type takes the frame's place: its copy, linked where the frame was,
-                            // with its children
+                            // with its children. The model that owns the frame is searched for in the loop's condition:
+                            // the original's loop is unrotated, one GetParent call, the found case right after it
                             case CT_CHANGE_VISUAL_TYPE:
                             {
                                 int new_type = chunk.ReadDword();
@@ -1395,23 +1393,22 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                     {
                                         if (vis->Duplicate(frm) >= I3D_OK)
                                         {
-                                            vis->LinkTo(frm->m_pParent, 0);
+                                            vis->LinkTo(frm->GetParent(), 0);
                                             while (frm->NumChildren())
                                                 frm->GetChild(0)->LinkTo(vis, 0);
                                             vis->Update();
                                             frm->LinkTo(NULL, 0);
                                             frames[frm->GetName()] = vis;
                                             I3D_frame *owner = vis;
-                                            while ((owner = owner->m_pParent) != NULL)
+                                            while ((owner = owner->GetParent()) != NULL &&
+                                                owner->GetType() != FRAME_MODEL)
+                                                ;
+                                            if (owner)
                                             {
-                                                if (owner->GetType() == FRAME_MODEL)
-                                                {
-                                                    ((I3D_model *)owner)->DeleteFrame(frm);
-                                                    ((I3D_model *)owner)->AddFrame(vis);
-                                                    break;
-                                                }
+                                                ((I3D_model *)owner)->DeleteFrame(frm);
+                                                ((I3D_model *)owner)->AddFrame(vis);
                                             }
-                                            if (!owner)
+                                            else
                                             {
                                                 scene->DeleteFrame(frm);
                                                 scene->AddFrame(vis);
@@ -1499,7 +1496,7 @@ int C_mission::OpenBin(const char *dir, uint flags)
                                 anim_models.push_back(m);
                             }
                             if (obj_flags & OBJF_CREATED && !(obj_flags & OBJF_PARENT))
-                                scene->SetFrameSectorPos(frm, frm->GetWorldPos());
+                                scene->SetFrameSector(frm);
                         }
                     }
                     chunk.Descend();
@@ -1523,15 +1520,19 @@ int C_mission::OpenBin(const char *dir, uint flags)
                         chunk.Read(&len, sizeof(len));
                         chunk.Read(frame_name, len);
                         frame_name[len] = 0;
-                        I3D_frame *frm = frames[frame_name];
+                        // A string of its own: the original destroys it at the block's end, after the time shift's
+                        // Add, where a temporary would go right after the lookup
+                        C_str fname = frame_name;
+                        I3D_frame *frm = frames[fname];
                         if (frm && frm->GetType() == FRAME_VISUAL)
                         {
                             I3D_VISUAL_TYPE vt = ((I3D_visual *)frm)->GetVisualType();
+                            I3D_mesh_object *mesh;
                             if ((vt == I3D_VISUAL_LIT_OBJECT || vt == I3D_VISUAL_OBJECT) &&
-                                ((I3D_object *)frm)->GetMesh())
+                                (mesh = ((I3D_object *)frm)->GetMesh()) != NULL)
                             {
                                 S_tshift_elem elem;
-                                elem.Init((I3D_visual *)frm, ((I3D_object *)frm)->GetMesh(), b, c, a);
+                                elem.Init((I3D_visual *)frm, mesh, b, c, a);
                                 GetTShift()->Add(elem);
                             }
                         }

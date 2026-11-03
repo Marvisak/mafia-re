@@ -346,39 +346,39 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetPointer@GM_Component@@UAEPAXXZ
+// ?GetProgram@C_actor@@UAEPAV?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@XZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_traffic_car@@UAEXI@Z
+// ?NetDirect@C_railway@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
 
 // SYNTHETIC: GAME 0x4aa450
-// ?Collision@C_stone@@UAE_NPAVC_actor@@ABUS_vector@@11MPAVI3D_frame@@@Z
+// ?Collision@C_actor@@UAE_NPAV1@ABUS_vector@@11MPAVI3D_frame@@@Z
 
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
+// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z
+// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_stone@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)

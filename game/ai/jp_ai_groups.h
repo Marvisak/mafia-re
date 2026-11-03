@@ -242,16 +242,16 @@ public:
 // The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
 // streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
 // TEMPLATE: GAME 0x537050
-// ?_Ucopy@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEPAUS_i_show@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
 // ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
+// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUai_fight_member@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -261,7 +261,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
@@ -270,4 +270,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_actor@@PBQAV2@0PAPAV2@@Z
+// ?copy@std@@YIPAPAVC_fire@@PAPAV2@00@Z

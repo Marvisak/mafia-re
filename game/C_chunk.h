@@ -50,6 +50,25 @@ public:
 
     C_chunk() : open(false), handle(DTA_INVALID_HANDLE), write(false) {}
 
+    // The methods read the state and the position through these (the names are ours): each nested call costs inline
+    // budget in every inlined copy of a method. C_mission::OpenBin shows it: with the members read directly it inlines
+    // far more than the original before its budget runs out, which only some 160 more statements or 220 more inline
+    // calls of its own would make up for.
+    bool IsOpen() const
+    {
+        return open;
+    }
+
+    bool IsWrite() const
+    {
+        return write;
+    }
+
+    int GetPos() const
+    {
+        return dtaSeek(handle, 0, SEEK_CUR);
+    }
+
     // Opens a file for reading or writing; the only method that isn't inline (C_chunk.cpp)
     bool OpenFile(const char *name, bool for_write);
 
@@ -65,13 +84,13 @@ public:
     // FUNCTION: GAME 0x404ce0
     bool Descend()
     {
-        if (open)
+        if (IsOpen())
         {
-            if (!write)
+            if (!IsWrite())
                 dtaSeek(handle, stack.back(), SEEK_SET);
             else
             {
-                int pos = dtaSeek(handle, 0, SEEK_CUR);
+                int pos = GetPos();
                 int start = stack.back();
                 int size = pos - start;
                 dtaSeek(handle, start + 2, SEEK_SET);
@@ -88,13 +107,13 @@ public:
     // FUNCTION: GAME 0x404d80
     bool Read(void *buffer, int len)
     {
-        if (!open)
+        if (!IsOpen())
             return false;
-        if (!write)
+        if (!IsWrite())
         {
             if (stack.size())
             {
-                if (len > Max(0, stack.back() - dtaSeek(handle, 0, SEEK_CUR)))
+                if (len > Max(0, stack.back() - GetPos()))
                     return false;
             }
             if ((int)dtaRead(handle, buffer, len) < len)
@@ -114,9 +133,9 @@ public:
     // FUNCTION: GAME 0x411d40
     bool Close()
     {
-        if (open)
+        if (IsOpen())
         {
-            if (write)
+            if (IsWrite())
                 while (stack.size())
                     Descend();
             dtaClose(handle);
@@ -135,12 +154,12 @@ public:
     // FUNCTION: GAME 0x44b4d0
     bool RAscend(ushort &type)
     {
-        if (!open)
+        if (!IsOpen())
             return false;
         S_chunk_header header;
         if (dtaRead(handle, &header, sizeof(header)) == sizeof(header))
         {
-            stack.push_back(dtaSeek(handle, 0, SEEK_CUR) + header.size - sizeof(header));
+            stack.push_back(GetPos() + header.size - sizeof(header));
             type = header.type;
             return true;
         }
@@ -151,9 +170,9 @@ public:
     // FUNCTION: GAME 0x44b6a0
     int Size() const
     {
-        if (!open)
+        if (!IsOpen())
             return 0;
-        int pos = dtaSeek(handle, 0, SEEK_CUR);
+        int pos = GetPos();
         if (pos == -1)
             return 0;
         return stack.back() - pos;
@@ -165,11 +184,11 @@ public:
     // FUNCTION: GAME 0x44b6d0
     void ReadString(C_str &s)
     {
-        if (open)
+        if (IsOpen())
         {
             char buf[1000];
             int end = stack.back();
-            Read(buf, Min(999, end - dtaSeek(handle, 0, SEEK_CUR)));
+            Read(buf, Min(999, end - GetPos()));
             s = buf;
             Descend();
         }
@@ -228,4 +247,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@VC_str@@V?$allocator@VC_str@@@std@@@std@@QBEIXZ
+// ?size@?$vector@PAUS_ELEMENT@C_traffic_car@@V?$allocator@PAUS_ELEMENT@C_traffic_car@@@std@@@std@@QBEIXZ
