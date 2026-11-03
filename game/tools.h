@@ -9,6 +9,7 @@
 
 class I3D_frame;
 class I3D_sound;
+class C_actor;
 
 // A period ticked with the game's time (the name is ours; PS2 has it inline, without a symbol), 8 bytes: the game, the
 // police (C_shvestky) and the force feedback have them, 200 ms unless set otherwise. PS2's C_shvestky::Tick adds the
@@ -60,13 +61,13 @@ public:
         int unknown_10;                 // 0x10
         uint flags;                     // 0x14, USINGF_*
         I3D_frame *frame;               // 0x18 (PS2 0x1c)
-        int unknown_1c;                 // 0x1c
+        C_actor *actor;                 // 0x1c, the dead human whose body it is, NULL for a weapon (the name is ours)
         I3D_frame *sector;              // 0x20, the frame's nearest FRAME_SECTOR parent
         bool unknown_24;                // 0x24
         S_GameItem item;                // 0x28, the item the player gets, whose using_object is the object itself
 
         // FUNCTION: GAME 0x47aef0
-        S_using_object() : unknown_10(0), frame(NULL), unknown_1c(0), sector(NULL), unknown_24(false) {}
+        S_using_object() : unknown_10(0), frame(NULL), actor(NULL), sector(NULL), unknown_24(false) {}
     };
 
     std::vector<S_using_object *> objects;  // 0x0 (PS2's first, destroyed last)
@@ -218,7 +219,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetMode@G_Camera@@QBEIXZ
+// ?GetText@GM_Component@@UAEPAEXZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

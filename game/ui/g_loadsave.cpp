@@ -1720,3 +1720,41 @@ void G_LoadSaveClass::FreerideSetupAfter()
 G_LoadSaveClass::~G_LoadSaveClass()
 {
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x607b80
+S_item_def *G_Inventory::GetWeaponInRightHand()
+{
+    StubLog("G_Inventory::GetWeaponInRightHand");
+    return NULL;
+}
+
+// STUB: GAME 0x60a000
+int G_Inventory::SaveGameGetSize()
+{
+    StubLog("G_Inventory::SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x60a010
+bool G_Inventory::SaveGameSave(void **buf)
+{
+    StubLog("G_Inventory::SaveGameSave");
+    return true;
+}
+
+// STUB: GAME 0x60a130
+bool G_Inventory::SaveGameLoad(void **buf)
+{
+    StubLog("G_Inventory::SaveGameLoad");
+    return true;
+}
+
+// STUB: GAME 0x60dec0
+void G_LoadSaveClass::CarIsStolen(C_car *car)
+{
+    StubLog("G_LoadSaveClass::CarIsStolen");
+}
+
+#pragma auto_inline(on)

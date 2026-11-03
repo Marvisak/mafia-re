@@ -4067,3 +4067,19 @@ void G_IndicatorsClass::ParheliaSetCenter(bool center)
             cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
     }
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f9e10
+void G_IndicatorsClass::AddBloodSplash(float x, float y, float size)
+{
+    StubLog("G_IndicatorsClass::AddBloodSplash");
+}
+
+// STUB: GAME 0x5fa500
+void G_IndicatorsClass::RadarSetPlayerCar(C_car *car)
+{
+    StubLog("G_IndicatorsClass::RadarSetPlayerCar");
+}
+
+#pragma auto_inline(on)

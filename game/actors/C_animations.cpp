@@ -96,3 +96,72 @@ void C_animations_machine_de_luxe::Reset()
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x40e010
+C_animations_machine_de_luxe::C_animations_machine_de_luxe()
+{
+    StubLog("C_animations_machine_de_luxe::C_animations_machine_de_luxe");
+}
+
+// STUB: GAME 0x40e660
+void C_animations_machine_de_luxe::Init(C_actor *act)
+{
+    StubLog("C_animations_machine_de_luxe::Init");
+}
+
+// STUB: GAME 0x40e890
+void C_animations_machine_de_luxe::GetActiveAnimTime(uint &time, uint &length)
+{
+    StubLog("C_animations_machine_de_luxe::GetActiveAnimTime");
+    time = length = 0;
+}
+
+// STUB: GAME 0x40e8e0
+void C_animations_machine_de_luxe::StopAnims()
+{
+    StubLog("C_animations_machine_de_luxe::StopAnims");
+}
+
+// STUB: GAME 0x40e950
+void C_animations_machine_de_luxe::SetAnim(const char *name, bool b1, bool b2, bool b3, float f1, float f2, bool b4,
+    bool b5, S_vector *v, bool b6, uint u)
+{
+    StubLog("C_animations_machine_de_luxe::SetAnim");
+}
+
+// STUB: GAME 0x40f170
+bool C_animations_machine_de_luxe::IsActive()
+{
+    StubLog("C_animations_machine_de_luxe::IsActive");
+    return false;
+}
+
+// STUB: GAME 0x40f1b0
+uint C_animations_machine_de_luxe::Tick(uint time)
+{
+    StubLog("C_animations_machine_de_luxe::Tick");
+    return 0;
+}
+
+// STUB: GAME 0x410060
+void C_animations_machine_de_luxe::SetExtendedAnim(I3D_animation_set *set, float f1, float f2, bool b)
+{
+    StubLog("C_animations_machine_de_luxe::SetExtendedAnim");
+}
+
+// STUB: GAME 0x410150
+void C_animations_machine_de_luxe::DelExtendedAnim(float f)
+{
+    StubLog("C_animations_machine_de_luxe::DelExtendedAnim");
+}
+
+// STUB: GAME 0x4101d0
+bool C_animations_machine_de_luxe::GetPlacementFromTCK(const char *name, S_vector &pos, S_vector &dir)
+{
+    StubLog("C_animations_machine_de_luxe::GetPlacementFromTCK");
+    return false;
+}
+
+#pragma auto_inline(on)

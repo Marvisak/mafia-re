@@ -990,4 +990,18 @@ void C_shvestky::VasekSelChlastatNaOslavu(C_human *human, const S_vector &pos, f
 
 #pragma auto_inline(on)
 
+#pragma auto_inline(off)
 
+// STUB: GAME 0x49d0b0
+void C_shvestky::CarSteal(C_human *human, bool a, bool b)
+{
+    StubLog("C_shvestky::CarSteal");
+}
+
+// STUB: GAME 0x49d220
+void C_shvestky::NextNaSrackySoudruh(C_human *human)
+{
+    StubLog("C_shvestky::NextNaSrackySoudruh");
+}
+
+#pragma auto_inline(on)

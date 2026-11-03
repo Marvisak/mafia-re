@@ -16,6 +16,16 @@ public:
     std::vector<uint> unknown_10;       // 0x10
 };
 
+// The AI's paths (PS2 ai_path, PS2's jp_ai_checkpoints.cpp, most likely the PC's file at 0x4f8490-0x5053fc). Only what
+// the humans' file calls.
+class ai_path
+{
+public:
+    // Whether pos is in the connection from a to b, the widths around them those given (PS2 name; static: the PC's
+    // takes a and b in ecx and edx; the parameters' names are ours)
+    static bool isInConnection(const S_vector &a, const S_vector &b, const S_vector &pos, float width_a, float width_b);
+};
+
 // The AI's way finding (PS2 ai_wayfind, PS2's jp_ai_checkpoints.cpp, most likely the PC's file at 0x4f8490-0x5053fc,
 // whose methods take AIManager's as their object), AIManager's member at 0xc (PS2's at 0x10), 0x84 bytes. Only what
 // its absolute addresses in that file and C_dog's show; nothing written uses it yet. AIManager's constructor (0x538760)
@@ -40,6 +50,9 @@ public:
     S_vector unknown_60;                // 0x60
     S_vector unknown_6c;                // 0x6c
     S_vector unknown_78;                // 0x78
+
+    // The web's node at pos (PS2 name; the parameters' names are ours): found's bit 1 set if there is one
+    void GetPosition(S_vector &pos, uint *node, uint *found, uint mode);
 };
 
 // The AI (PS2 ai_manager, AIManager; PS2's jp_ai_main.cpp, the PC's file at 0x538580-0x538c7c, whose initializer

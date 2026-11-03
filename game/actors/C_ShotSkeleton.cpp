@@ -16,3 +16,13 @@ int C_ShotSkeleton::TestCollision(const S_vector &from, const S_vector &dir, flo
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5d6f80
+void C_ShotSkeleton::Init(I3D_frame *frm)
+{
+    StubLog("C_ShotSkeleton::Init");
+}
+
+#pragma auto_inline(on)

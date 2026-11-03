@@ -4108,7 +4108,7 @@ void C_program::Process(uint time)
         obj->unknown_10 = 0;
         obj->flags = USINGF_DELETE | USINGF_FRAME;
         obj->frame = weapon;
-        obj->unknown_1c = 0;
+        obj->actor = NULL;
         obj->unknown_24 = true;
         // The sector the copy is in
         for (obj->sector = weapon->GetParent(); obj->sector; obj->sector = obj->sector->GetParent())
@@ -4298,7 +4298,7 @@ void C_program::Process(uint time)
                 if (human->car && human->car->GetType() == ACTOR_CAR)
                     human->Hit(HIT_UNKNOWN_5, back, pos, dir, 10.0f, NULL, 5, NULL);
                 else
-                    human->Hit(HIT_UNKNOWN_6, back, pos, dir, 10.0f, NULL, 5, NULL);
+                    human->Hit(HIT_LANDING, back, pos, dir, 10.0f, NULL, 5, NULL);
             }
             if (human == act_mission->GetGame()->GetPlayer())
             {

@@ -18,15 +18,25 @@ struct S_vector;
 #define COLF_ALL 0xffffffff
 #define COLF2_UNKNOWN_100000 0x100000
 
+// tDynamicCollObject::type (the name is ours, by value): a human's two spheres
+#define DYNCOLL_UNKNOWN_42 0x42
+// tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
+// one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
+// of a dead human only and leaves out the lower one while the human's 0xa35 is set
+#define DYNCOLLF_LOWER 0x1
+#define DYNCOLLF_UPPER 0x2
+#define DYNCOLLF_UNKNOWN_100 0x100
+
 // A moving object's collision (PS2 tDynamicCollObject, 0x60 bytes), 0x48 bytes by the game's arrays of them; what it
 // holds is known only in part
 struct tDynamicCollObject
 {
-    uchar unknown_0[4];
+    uint type;                          // 0x0, DYNCOLL_* (the name is ours)
     I3D_frame *frame;                   // 0x4, the frame it is the collision of (the name is ours)
-    uchar unknown_8[8];
+    uint flags;                         // 0x8, DYNCOLLF_* (the name is ours)
+    uchar unknown_c[4];
     // 0x10, the sphere around it, an I3D_bsphere (bytes, as the box): the detector's Update sets it, DynUpdate finds
-    // the object's cell by its position (the name is ours)
+    // the object's cell by its position (the name is ours); its radius is the float at 0xc
     uchar bsphere[0x10];
     uchar unknown_20[4];
     // 0x24, the box the radar draws, an I3D_bbox as PS2's: bytes here, as including the engine's math would give each
@@ -109,9 +119,9 @@ public:
     // A sphere of that radius moved from from along dir (PS2 names; the parameters' names are ours): where it stops
     // into pos, the surface's normal into normal where it isn't NULL. PS2 has TestSphereB in g_colls.cpp, the wrapper of
     // _TestSphereB, another file's.
-    bool TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
+    int TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
         uint flags, uint flags2);
-    bool _TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
+    int _TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
         uint flags, uint flags2);
     // A line from from along dir (PS2 names; the parameters' names are ours, its flags most likely TestSphereB's):
     // nonzero for a hit, its place into pos and the surface's normal into normal. TestLineV is the wrapper of
@@ -139,10 +149,14 @@ public:
     // The objects the next test leaves out, and the callback it asks (PS2 names; the callback's type is ours)
     void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback);
     void DynSetNextCollOwner(tDynamicCollObject *obj, void *callback);
+    // Puts a moving object into the collisions (PS2 name)
+    void DynInsert(tDynamicCollObject *obj);
     // Takes a moving object out of the collisions (PS2 name)
     void DynErase(tDynamicCollObject *obj);
     // A moving object's collision moved: its cell found again by its sphere's position (PS2 name)
     void DynUpdate(tDynamicCollObject *obj);
+    // Takes a moving object out of a vector of them (PS2 name; the parameters' names are ours)
+    void DynGetOut(tDynamicCollObject *obj, std::vector<tDynamicCollObject *> *colls);
     // The moving objects' collisions optimized each frame, which C_game::Tick calls (PS2 name)
     void DynOptimizeTick();
     // PS2 name (PS2's takes a bool)

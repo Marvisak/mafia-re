@@ -225,7 +225,7 @@ inline void C_game::SetActiveTrafficP(uint time)
 inline void C_game::PreloadAnims()
 {
     timeGetTime();
-    for (S_anim_file *a = _anim_info_; a->id != 0xffff; a++)
+    for (S_anim_info *a = _anim_info_; a->id != 0xffff; a++)
     {
         const char *name;
         if (strchr(a->name, '?'))
@@ -4186,3 +4186,32 @@ void C_game::InterCity_GameDoneInGameDone()
         delete[] inter_city_frames;
     inter_city_frames = NULL;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5accb0
+int C_game::Play3DSound(I3D_sound *sound)
+{
+    StubLog("C_game::Play3DSound(I3D_sound *)");
+    return 0;
+}
+
+// STUB: GAME 0x5afdb0
+void C_game::InvalidateColl(tDynamicCollObject *coll)
+{
+    StubLog("C_game::InvalidateColl");
+}
+
+// STUB: GAME 0x5b5450
+void C_game::LightnessAdd(C_actor *act, I3D_frame *frm, ushort unknown, S_vector &pos)
+{
+    StubLog("C_game::LightnessAdd");
+}
+
+// STUB: GAME 0x5b56f0
+void C_game::LightnessDel(I3D_frame *frm)
+{
+    StubLog("C_game::LightnessDel");
+}
+
+#pragma auto_inline(on)

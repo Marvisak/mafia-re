@@ -360,6 +360,8 @@ public:
     void GarageShowResults();
     void GarageAddLastStolen();
     void CarCantGetOut(C_car *car);
+    // Sets last_stolen (PS2's G_GarageClass::CarIsStolen)
+    void CarIsStolen(C_car *car);
     void EnableSteal(uchar c);
     bool CanSteal(uchar *model);
     // The mission's objectives, texts of the text database (PS2 names)

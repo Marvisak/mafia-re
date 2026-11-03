@@ -33,7 +33,9 @@ public:
     // The bridge shut down or not (PS2 name): the flag stored, the bridge's collision taken from the game's
     void ShutDown(bool shut);
 
-    uchar unknown_70[0x124];            // 0x70
+    uchar unknown_70[0xd4];             // 0x70
+    int unknown_144;                    // 0x144, 3 to 5 while a human's car can be on it most likely
+    uchar unknown_148[0x4c];            // 0x148
 };
 
 // SYNTHETIC: GAME 0x567e00

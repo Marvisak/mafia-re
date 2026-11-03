@@ -123,6 +123,13 @@ public:
         return false;
     }
 
+    // Writes len bytes into a file open for writing (the name is ours)
+    void Write(const void *buffer, int len)
+    {
+        if (IsOpen() && IsWrite())
+            dtaWrite(handle, buffer, len);
+    }
+
     // FUNCTION: GAME 0x411c50
     ~C_chunk()
     {

@@ -37,12 +37,26 @@ public:
     // The names are ours
     ushort flags;                       // 0xc, WEBF_*, PS2 C_web_path::AddNode's
     ushort id;                          // 0xe (PS2 0xe), what PS2's C_web_path::FindNodeID finds, C_wagon::GetLastNode's
-    uchar unknown_10[8];                // 0x10
+    // 0x10, the width around the node in centimetres (ai_loc::Update tests the connections with it; the name is a guess):
+    // both builds read it as the low 16 bits of a dword, converted as unsigned
+    uint width : 16;
+    uchar unknown_14[4];                // 0x14
     S_web_conn *conns;                  // 0x18
     uchar max_conns;                    // 0x1c
     uchar num_conns;                    // 0x1d
 
     ~C_web_node();
+
+    // PS2 name (PS2's is out of line, returning the vector by value)
+    S_vector GetPos() const
+    {
+        return S_vector(pos.x, pos.y, pos.z);
+    }
+    // The connection, NULL past the last (the name is ours; PS2's ai_loc::Update has the same test inline)
+    S_web_conn *GetConn(ushort i) const
+    {
+        return i < num_conns ? &conns[i] : NULL;
+    }
 };
 
 // VTABLE: GAME 0x6251f8

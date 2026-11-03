@@ -43,7 +43,7 @@ struct S_car_level
 // A seat of the car (the name is ours; GetOwner's members only)
 struct S_car_seat
 {
-    uchar unknown_0[0xc];
+    S_vector pos;                       // 0x0, in the car's frame (C_human::Update seats the human there)
     bool occupied;                      // 0xc
     uchar unknown_d[3];
     C_human *owner;                     // 0x10
@@ -129,6 +129,8 @@ public:
     // The actor into a seat, NULL to empty it (PS2 name and parameters; the names are ours): false for a seat the car
     // hasn't
     bool SetOwner(C_actor *act, int seat, float unknown);
+    // Whether the seat is on the car's left (PS2 name, 0x42ba10)
+    bool IsSeatLeft(int seat);
     // The cars' force feedback effects, which C_game's Init and Done create and free when the profile has them (PC
     // only, the names are ours)
     static void InitFFEffects();
@@ -260,7 +262,10 @@ public:
     // 0x2119 (PS2 0x2479), set with the camera's CAMPF_HIDE_CAR, which turns the car's frame off (G_Camera::Begin),
     // cleared by G_Camera::End (the name is ours)
     bool hidden_by_camera;
-    uchar unknown_211a[0x3a];           // 0x211a
+    uchar unknown_211a[0x17];
+    // 0x2131 (PS2 0x247a), set by C_human::HitInCar when the human in the driver's seat dies (the name is a guess)
+    bool driver_killed;
+    uchar unknown_2132[0x22];           // 0x211a
     // SetTankHitCount's (PS2 0x23f0 and 0x23f4, the names are ours): PS2's Hit counts the first down, GameInit and Reset
     // set it to the second again
     int tank_hits_left;                 // 0x2154

@@ -133,3 +133,19 @@ bool C_ff_manager::Start(int id)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x444c40
+void C_ff_manager::SetGain(int id, float gain)
+{
+    StubLog("C_ff_manager::SetGain");
+}
+
+// STUB: GAME 0x444c70
+void C_ff_manager::SetDirection(int id, float direction)
+{
+    StubLog("C_ff_manager::SetDirection");
+}
+
+#pragma auto_inline(on)

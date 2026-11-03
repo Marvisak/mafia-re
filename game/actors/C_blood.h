@@ -21,6 +21,8 @@ public:
     void GameDone();
     // The stains by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
+    // A stain (PS2 name and parameters; the names are ours), which C_human::Hit adds where a hit's blood falls
+    void AddBlood(S_vector &pos, S_vector &dir, float size, int unknown, bool unknown2);
 };
 
 // The destructor, folded with C_tshift's: the name our PDB keeps for the two changes with the build (foldfix)

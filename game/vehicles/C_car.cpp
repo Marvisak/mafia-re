@@ -697,3 +697,14 @@ S_vector C_car::vfunc_4(int a)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x42ba10
+bool C_car::IsSeatLeft(int seat)
+{
+    StubLog("C_car::IsSeatLeft");
+    return false;
+}
+
+#pragma auto_inline(on)

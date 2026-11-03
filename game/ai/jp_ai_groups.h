@@ -159,18 +159,6 @@ struct ai_fight_member
     int unknown_10;                     // 0x10
 };
 
-// What the fights' Tick tells the members of a party in a car about its target (PS2 ai_blob, 0x30 bytes, its
-// vectors 0x10), 0x24 bytes: each member's C_entity::Event gets a copy. PS2's has an operator new of its own, the
-// PC's original calls the global one.
-struct ai_blob
-{
-    S_vector pos;                       // 0x0, the target's position
-    S_vector dir;                       // 0xc, its direction
-    uint time;                          // 0x18, the game's time
-    int unknown_1c;                     // 0x1c, 0
-    C_actor *actor;                     // 0x20, the target
-};
-
 // ai_fight_followship::type (the names are guesses): the party on foot or in its car
 #define FIGHTPARTY_ON_FOOT 0
 #define FIGHTPARTY_IN_CAR 1
@@ -248,10 +236,10 @@ public:
 // ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
+// ?_Construct@std@@YIXPAUai_fight_member@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -270,4 +258,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_fire@@PAPAV2@00@Z
+// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z

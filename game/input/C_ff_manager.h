@@ -53,6 +53,9 @@ public:
     // Starts the effect of the id, moved to effects_2: false if it doesn't start, where another one of a priority as
     // high plays (it then waits) (the name is ours)
     bool Start(int id);
+    // The effect's gain and direction, set on its joystick effect (0x444c40 and 0x444c70; the names are ours)
+    void SetGain(int id, float gain);
+    void SetDirection(int id, float direction);
     // The waiting effect of the highest priority, NULL for none (the name is ours)
     S_effect *GetWaiting();
     // The effects by the time passed, which C_game::Tick calls (PS2 name)

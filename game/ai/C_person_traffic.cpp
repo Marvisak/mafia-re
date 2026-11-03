@@ -492,3 +492,13 @@ bool C_don_ocas::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x456fa0
+void C_traffic_element::ActivateFree(bool b1, bool b2)
+{
+    StubLog("C_traffic_element::ActivateFree");
+}
+
+#pragma auto_inline(on)

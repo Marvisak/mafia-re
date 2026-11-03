@@ -279,4 +279,24 @@ void C_Vehicle::CalmVehicle(uint time)
 
 #pragma auto_inline(on)
 
+#pragma auto_inline(off)
 
+// STUB: GAME 0x4cb570
+void C_Vehicle::SetSteeringLinearity(float linearity)
+{
+    StubLog("C_Vehicle::SetSteeringLinearity");
+}
+
+// STUB: GAME 0x4cb6a0
+void C_Vehicle::SetSpeedLimit(float limit)
+{
+    StubLog("C_Vehicle::SetSpeedLimit");
+}
+
+// STUB: GAME 0x4cb780
+void C_Vehicle::EnableSounds(bool on)
+{
+    StubLog("C_Vehicle::EnableSounds");
+}
+
+#pragma auto_inline(on)

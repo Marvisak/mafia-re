@@ -17,6 +17,9 @@ public:
     void Tick(uint time);
     // PS2 name; TryGoToAssHole calls it once it has set way
     void SetNewNode();
+    // PS2 name, which C_human::GameDone calls for the pedestrian a human was made of (the parameters' names are
+    // ours)
+    void ActivateFree(bool b1, bool b2);
 
     // The name is a guess. TryGoToAssHole's comparison of the navigation points reads the position through it: the two
     // inline calls still to come starve its first nested Dot, which the original calls out of line.
@@ -53,7 +56,9 @@ public:
     uchar way_index;                    // 0xb4 (PS2 0x1c8)
     uchar unknown_b5[0xe9];
     bool fleeing;
-    uchar unknown_19f[9];
+    uchar unknown_19f[6];
+    bool unknown_1a5;                   // 0x1a5 (PS2 0x225), C_human::GameDone clears it
+    uchar unknown_1a6[2];
     C_car *car;                         // 0x1a8 (PS2 0x228), the parked car it walks to
     uchar unknown_1ac[0x52];
     bool waving;                        // 0x1fe (PS2 0x246), waving at a taxi

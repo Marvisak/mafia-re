@@ -81,13 +81,23 @@ struct S_voice_def
 // S_item_def::flags (the name is a guess): what G_Inventory::HaveSomeWeapon tests, which the scripts' ANYWEAPONINHAND
 // and ANYWEAPONININVENTORY pass
 #define ITEMF_WEAPON 0x20
+// The weapons that kill at close range (C_human::Hit: a shot from within 3 kills, from within 5 throws the human
+// down; the name is a guess)
+#define ITEMF_CLOSE_RANGE 0x2
 
 // An item (predmety.def, "items"), 0xbc bytes, not read yet but its flags
 struct S_item_def
 {
     uchar unknown_0[0x20];              // 0x0
     uint flags;                         // 0x20, ITEMF_*
-    uchar unknown_24[0x98];             // 0x24
+    uchar unknown_24[0x2c];             // 0x24
+    int unknown_50;                     // 0x50, 4 for the weapons the corner fire has an animation of its own for
+    uchar unknown_54[0xc];              // 0x54
+    // The most ammunition in the weapon and in reserve, which C_human::InventoryTruncate cuts an item's to (the names
+    // are ours)
+    uint ammo_max;                      // 0x60
+    uint spare_max;                     // 0x64
+    uchar unknown_68[0x54];             // 0x68
 };
 
 // The tables (PS2 names) and their sizes in entries

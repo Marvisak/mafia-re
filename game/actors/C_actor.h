@@ -52,6 +52,7 @@ struct tDynamicCollObject;
 
 // C_actor::subtype: 1 from C_actor's constructor (the names are ours)
 #define ACTORSUB_CAR_EX 3               // a C_car_ex's, whose type stays ACTOR_CAR
+#define ACTORSUB_HUMAN 2                // C_human's constructor
 
 // The actors' states (C_actor::act_state, PS2's C_actor::E_act_state; the names are ours, by value)
 #define ACTSTATE_0 0
@@ -61,8 +62,15 @@ struct tDynamicCollObject;
 // Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, by value): the script's HUMAN_SETPROPERTY
 // hits a human whose energy runs out with them, in a car and on foot
 #define HIT_SHOT 0                      // C_game::TickShoot's
+#define HIT_STROKE 1                    // C_human::Hit's stroke (HitStroke)
+#define HIT_UNKNOWN_2 2                 // C_human::Hit: a fall above 100, a heavy hit on a random part above 50
+#define HIT_UNKNOWN_3 3                 // C_human::Hit: the hands and legs lose energy too
+#define HIT_UNKNOWN_4 4                 // C_human::Hit: a leg, blood and SHOTPARTICLE_BODY
 #define HIT_UNKNOWN_5 5
-#define HIT_UNKNOWN_6 6
+#define HIT_LANDING 6                   // C_human::Hit's landing (HitLanding)
+#define HIT_UNKNOWN_7 7                 // C_human::Hit: no energy left, a fall and a particle
+#define HIT_UNKNOWN_8 8                 // C_human::Hit: a fall, aside, for a direction longer than 3
+#define HIT_UNKNOWN_9 9
 
 // C_actor::act_flags (the names are ours, by value where the meaning isn't known): Tick leaves out AI where 1 or 4 is
 // set (vfunc_7 sets and clears both)
@@ -127,6 +135,11 @@ public:
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);
     virtual bool SaveGameLoad(void **buf);
+    // An actor in a saved game, by its frame's name, NULL for none (PS2 names; static, the arguments in
+    // registers)
+    static int Actor_SaveGameGetSize(C_actor *act);
+    static void Actor_SaveGameSave(void **buf, C_actor *act);
+    static C_actor *Actor_SaveGameLoad(void **buf);
     // The actor taken into the game and out of it (PS2 names), C_game::Init's and Done's; C_mission::FrmActBuff_ClearAll
     // calls GameDone before releasing a kept actor
     virtual void GameInit();
@@ -346,19 +359,19 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetProgram@C_actor@@UAEPAV?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@XZ
+// ?GetFlags@GM_Component@@UAEIXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_railway@@UAEXI@Z
+// ?DuplicateFrom@C_actor@@UAEXPAV1@@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -372,10 +385,10 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
+// ?SaveGameSave@C_actor_shot@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
+// ?vfunc_3@C_actor_shot@@UAE_NH@Z
 
 // SYNTHETIC: GAME 0x4aa430
 // ?SaveGameGetSize@C_bridge@@UAEHXZ
@@ -383,7 +396,7 @@ public:
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?GetActFlags@C_actor@@QBEHXZ
+// ?Size@C_rep@C_str@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
 // ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
@@ -409,15 +422,16 @@ inline void SetFrameActor(I3D_frame *frm, C_actor **actor)
     frm->m_UserData = (uint)actor;
 }
 
-// An animation's file and its id (the struct's name is ours)
-struct S_anim_file
+// An animation's file and its id (PS2 S_anim_info, 8 bytes): _anim_info_'s entries, and the animations a human replaces
+// them with (C_human::anims, PS2's vector<S_anim_info>)
+struct S_anim_info
 {
-    const char *name;
+    char *name;                         // 0x0, a literal in _anim_info_, new[]'s in C_human::anims
     uint id;
 };
 
 // The actors' animations by id (PS2 name), not in the ids' order, ended by an id of 0xffff
-extern S_anim_file _anim_info_[];
+extern S_anim_info _anim_info_[];
 
 // An id and its animation's place in _anim_info_ (the struct's name is ours)
 struct S_anim_index
@@ -438,8 +452,9 @@ float rnd();
 float AngleTo2(const S_vector2 &a, const S_vector2 &b);
 // Turns the vector about the y axis (PS2 name)
 void RotateDir(S_vector &v, float angle);
-
 // Builds the animations' index and sorts it (PS2 C_actor.cpp), once, for InitSystem
 void InitAnimIndex();
 // Frees the index, at CloseSystem
 void DoneAnimIndex();
+// The index of the animation of that id in _anim_info_, -1 for none (PS2 name), a binary search of _anim_index_
+int GetAnimIndex(uint id);

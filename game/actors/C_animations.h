@@ -6,26 +6,73 @@
 
 #include "I3D/I3d_math.h"
 
+class C_actor;
+
 // The version of the .tck files LoadTrack reads (the name is ours)
 #define TCK_VERSION 4
+
+class I3D_animation_set;
 
 // The actors' animations (PS2 C_animations_machine_de_luxe, C_animations.cpp), 0x128 bytes (the traffic's new, C_human
 // has one at 0xbc). Only what CloseSystem, C_game and the script use so far.
 class C_animations_machine_de_luxe
 {
 public:
+    // Out of line (C_human's constructor and nine others call it)
+    C_animations_machine_de_luxe();
     // Empty, out of line (C_traffic_generator::ClearElements calls it before its delete)
     ~C_animations_machine_de_luxe();
 
-    // Clears the machine's state (PS2 name), which the script's ACTOR_SETPLACEMENT calls
+    // PS2 names, in PS2's order, the types PS2's but where noted
+    void Init(C_actor *act);
+    // Clears the machine's state, which the script's ACTOR_SETPLACEMENT calls
     void Reset();
+    // The active animation's time and length in ms (the parameters' names are guesses)
+    void GetActiveAnimTime(uint &time, uint &length);
+    void StopAnims();
+    void SetAnim(const char *name, bool b1, bool b2, bool b3, float f1, float f2, bool b4, bool b5, S_vector *v, bool b6,
+        uint u);
+    bool IsActive();
+    // The animations' frame: flags, the end of the animation in bit 1 (C_human::Update tests it)
+    uint Tick(uint time);
+    void SetExtendedAnim(I3D_animation_set *set, float f1, float f2, bool b);
+    void DelExtendedAnim(float f);
+    static bool GetPlacementFromTCK(const char *name, S_vector &pos, S_vector &dir);
 
-    uchar unknown_0[0xf4];              // 0x0
+    // The height a jump lands at, relative to the track's end (the name is ours): PersonAnim's, whose stores address
+    // the machine through its own pointer, as an inline method's do (PS2's has the same three stores)
+    void SetLandHeight(float height)
+    {
+        unknown_120 = height;
+        unknown_124 = false;
+        unknown_125 = (uchar)anim_index;
+    }
+    // Both set, the human isn't ready (C_human::IsReady; the name is ours): an inline method, whose object a caller
+    // that goes on with the machine keeps in a register (C_human::Do_ThrowGrenade)
+    bool IsBlocking() const
+    {
+        return unknown_f4 && unknown_10c;
+    }
+
+    uchar unknown_0[0x1c];              // 0x0
+    // 0x1c (PS2 0xdc), the active animation of the model, which C_human::Update keeps and C_human::Hit sets the time of
+    // (the name is ours)
+    uint anim_index;
+    uchar unknown_20[0xc];              // 0x20
+    int track;                          // 0x2c, the track playing, an index into tracks, -1 for none (the name is ours)
+    uchar unknown_30[0x50];             // 0x30
+    int unknown_80;                     // 0x80, -1 for none
+    uchar unknown_84[0x70];             // 0x84
     // Both set, the human isn't ready (C_human::IsReady)
     bool unknown_f4;                    // 0xf4, cleared by Reset
     uchar unknown_f5[0x17];             // 0xf5
     bool unknown_10c;                   // 0x10c
-    uchar unknown_10d[0x1b];            // 0x10d
+    uchar unknown_10d[7];               // 0x10d
+    S_vector unknown_114;               // 0x114, which C_human::Update moves by what the collisions take off the track's move
+    float unknown_120;                  // 0x120
+    bool unknown_124;                   // 0x124
+    uchar unknown_125;                  // 0x125
+    uchar unknown_126[2];               // 0x126
 
     // A loaded track, 0x64 bytes (PS2's, 0x60 bytes, keeps its two lists as arrays; the names are ours), as its
     // implicit destructor and assignment show (0x40e470, 0x4116d0): the name's 32 bytes one by one, the two lists by

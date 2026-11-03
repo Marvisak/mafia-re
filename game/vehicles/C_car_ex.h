@@ -32,13 +32,15 @@ public:
     // FUNCTION: GAME 0x47b6d0
     bool CanUseTruck() const
     {
-        return unknown_223c && unknown_2258;
+        return unknown_223c && dyn_colls;
     }
 
     uchar unknown_221c[0x20];           // 0x221c
     bool unknown_223c;                  // 0x223c, CanUseTruck's
     uchar unknown_223d[0x1b];           // 0x223d
-    uint unknown_2258;                  // 0x2258, CanUseTruck's, tested as a whole (a count or a pointer)
+    // 0x2258 (PS2 0x24b4), the collisions on the truck, which C_human::GameDone takes a human's out of
+    // (g_collision::DynGetOut; the name is ours)
+    std::vector<tDynamicCollObject *> *dyn_colls;
     uchar unknown_225c[0x20];           // 0x225c
 };
 

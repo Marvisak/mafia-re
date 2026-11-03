@@ -188,6 +188,11 @@ public:
     // Changes the camera to a CAMERA_* or, with CAMERA_NEXT, to the camera's next one, which the profile then keeps; with
     // begin, the old camera ends and the new one begins (PS2 names)
     void SetMode(uint m, bool begin);
+    // PS2 name, Czech: "climbs into the Toyota": mode 7 (CAMERA_C_BEHIND_HELLBOY) when on, the one at 0x6d4b20 when off
+    void LezeDoToyoty(bool on);
+    // The free look on or off (PS2 name; the parameters' names are guesses): C_human::Hit turns it off for the player
+    // hit while he steals a car
+    void EnableFreeLook(bool on, bool unknown);
     // Sets the I3D camera up for the mode, from its cameraParams entry: its values and flags, its parent and position
     // (PS2 name)
     void Begin();
@@ -230,4 +235,4 @@ public:
 // GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
-// ?GetCar@G_Camera@@QBEPAVC_car@@XZ
+// ?GetTextID@GM_Component@@UAEIXZ

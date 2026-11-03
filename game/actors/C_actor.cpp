@@ -24,7 +24,7 @@
 // bits with at most one bit above them for its set: the eight sets of breathing, running and walking, the corner
 // animations' weapons and stances.
 // GLOBAL: GAME 0x62e488
-S_anim_file _anim_info_[] = {
+S_anim_info _anim_info_[] = {
     {"breath01a.i3d", 0x0001},
     {"breath01b.i3d", 0x0002},
     {"breath01c.i3d", 0x0003},
@@ -1143,6 +1143,37 @@ void C_actor::SaveData(C_chunk *chunk)
 void C_actor::LoadData(C_chunk *chunk)
 {
     StubLog("C_actor::LoadData");
+}
+
+#pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x406590
+int C_actor::Actor_SaveGameGetSize(C_actor *act)
+{
+    StubLog("C_actor::Actor_SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x4065f0
+void C_actor::Actor_SaveGameSave(void **buf, C_actor *act)
+{
+    StubLog("C_actor::Actor_SaveGameSave");
+}
+
+// STUB: GAME 0x4066a0
+C_actor *C_actor::Actor_SaveGameLoad(void **buf)
+{
+    StubLog("C_actor::Actor_SaveGameLoad");
+    return NULL;
+}
+
+// STUB: GAME 0x408760
+int GetAnimIndex(uint id)
+{
+    StubLog("GetAnimIndex");
+    return -1;
 }
 
 #pragma auto_inline(on)

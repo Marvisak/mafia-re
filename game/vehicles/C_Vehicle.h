@@ -93,7 +93,8 @@ struct S_wheel
 // vectors and three floats, the seat's mass the first of them (SetSeatMass); the members are unknown.
 struct S_vehicle_seat
 {
-    uchar unknown_0[0x24];
+    uchar unknown_0[0x20];
+    void *unknown_20;                   // 0x20, NULL in the Formula's driver's seat (C_Vehicle::IsFormula)
 };
 
 // C_Vehicle::lights' bits (the names are ours), which the setters at 0x47b220-0x47b380 and the scripts' CARLIGHT_*
@@ -190,6 +191,19 @@ public:
     void SetDynamicCollsOn(bool on, bool unknown);
     // The engine started or stopped (PS2 name)
     void SetEngineOn(bool on, bool unknown);
+    // PS2 names
+    void EnableSounds(bool on);
+    void SetSpeedLimit(float limit);
+    void SetSteeringLinearity(float linearity);
+    // Whether the driver sits as in the Formula (FormuleStativ.i3d), the first seat's unknown_20 NULL (the name is a
+    // guess; PS2's C_human::Update has the same test inline)
+    bool IsFormula()
+    {
+        uint n = seats.size();
+        if (n && !seats[0].unknown_20)
+            return true;
+        return false;
+    }
     // PS2 names
     void SetBrake(float brake);
     void SetPower(float power, bool unknown);
@@ -416,7 +430,14 @@ public:
     // SirenSnd (the names are ours): the chases sound the horn, unless the siren is on
     bool horn;
     bool siren;
-    uchar unknown_432[0x92];            // 0x432
+    uchar unknown_432[0x5e];            // 0x432
+    // 0x490 (car 0x500, PS2 0x229f), what C_human::Update copies from the camera's unknown_22 for the player's car
+    bool unknown_490;
+    uchar unknown_491[0x13];            // 0x491
+    // 0x4a4 (car 0x514, PS2's car 0x7bc): below 800 the HUD's INDF_SPEED_LIMITER light is on (C_human::SaveGameLoad
+    // after getting into the car)
+    float unknown_4a4;
+    uchar unknown_4a8[0x1c];            // 0x4a8
     int num_wheels;                    // 0x4c4 (car 0x534)
     uchar unknown_4c8[4];               // 0x4c8
     // 0x4cc (car 0x53c, PS2 0x2225), the gearing, automatic most likely while it is set (the name is a guess): the HUD's
@@ -491,7 +512,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
+// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -500,7 +521,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z

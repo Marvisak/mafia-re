@@ -165,6 +165,8 @@ struct G_MIIntroSubtitlesWaiting
 class G_IndicatorsClass
 {
 public:
+    // The radar's car, the player's (PS2 name)
+    void RadarSetPlayerCar(C_car *car);
     // A car and a thing on the radar (PS2's names; their members are unknown), 8 bytes each
     struct G_RadarCar
     {
@@ -358,6 +360,9 @@ public:
     // A wingman's name (0 to 7) and health
     void PlayerSetWingmanName(uint wingman, uint name);
     void PlayerSetWingmanLives(uint wingman, uint lives);
+    // A blood stain on the screen at x, y of that size, in 800x600 (PC only, 0x5f9e10; the name is ours), which
+    // C_human::Hit adds for each shot on the player
+    void AddBloodSplash(float x, float y, float size);
     // An intro's subtitle, the text of that id (PS2 names; the parameters' meaning isn't known)
     void IntroSubtitlesAdd(uint a, uint b);
     void IntroSubtitlesAddSimple(uint id);

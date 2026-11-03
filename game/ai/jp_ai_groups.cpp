@@ -620,7 +620,7 @@ void ai_fight_manager::Tick()
                     blob->pos = party.target->GetWorldPos();
                     blob->dir = party.target->GetWorldDir();
                     blob->time = time;
-                    blob->unknown_1c = 0;
+                    blob->flags = 0;
                     blob->actor = party.target;
                     uint num = party.members.size();
                     for (uint j = 0; j < num; j++)

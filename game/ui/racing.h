@@ -58,7 +58,9 @@ public:
     C_opponent *opponents[0x18];        // 0x238 (PS2 0xa3c)
     int opponent_count;                 // 0x298
     uint num_opponents;                 // 0x29c (PS2 0xac8)
-    uchar unknown_2a0[0x3e8];           // 0x2a0
+    uchar unknown_2a0[0x27];
+    bool unknown_2c7;                   // 0x2c7 (PS2 0xb07), the humans take hits only while it is set
+    uchar unknown_2c8[0x3c0];           // 0x2a0
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours; the count's
     // most likely PS2's, an accessor of 0xac0)

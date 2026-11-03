@@ -54,6 +54,9 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats that turns on DoubleKiss, the guns on the player's car (the name is ours): no code of the
 // PC's sets it, the cheats' toggles (0x5a8030) have no case for it
 #define GAMEF_DOUBLEKISS 0x8
+// The bit of C_game::cheats that keeps the player and the humans of HUMAN_TYPE_UNKNOWN_2 from hits (C_human::Hit;
+// the name is a guess): no cheat word toggles it
+#define GAMEF_INVULNERABLE 0x1
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -691,11 +694,20 @@ public:
     int Play3DSound(I3D_frame *frm, const char *name, I3D_SOUNDTYPE type, S_vector pos, float near_range,
         float far_range, float volume, bool fade_in, float fade, bool unknown3);
     void Stop3DSound(int sound, bool fade, float time);
+    // The sound played as it is set up, released once it ends (PS2 name, 0x5accb0): its number, which
+    // Stop3DSound takes
+    int Play3DSound(I3D_sound *sound);
     // A shadow for the frame, type2 one of the shadow models (shadow_temp), type1 choosing the list (the cars' if not
     // 0), replaced_frame the frame it turns off: its number, 0 if it fails (the human keeps it)
     int AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
         char *name);
     void DelFrameForShadow(I3D_frame *frm, E_shadow_type type);
+    // A moving collision gone: the entities that keep it forget it (PS2 name, PS2's takes a uint *)
+    void InvalidateColl(tDynamicCollObject *coll);
+    // The actor's lightness taken at its frame, offset by pos, and forgotten (PS2 names; the parameters' names
+    // are ours): C_human::Death has its "base" frame's taken away
+    void LightnessAdd(C_actor *act, I3D_frame *frm, ushort unknown, S_vector &pos);
+    void LightnessDel(I3D_frame *frm);
     // The city's music (the IShow of city_music) faded out and forgotten, or paused
     void CityMusicOff();
     void CityMusicPaused(bool paused);
@@ -927,7 +939,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

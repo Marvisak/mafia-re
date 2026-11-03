@@ -828,7 +828,7 @@ public:
 // DecompileCommand's folded group: the empty ret 8 of the out-of-line kind (C_web_path::DebugFindPath's and
 // C_seagull's vfunc_38 too), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x46ca70
-// ?vfunc_38@C_seagull@@UAEXHH@Z
+// ?DebugFindPath@C_web_path@@UAEXGG@Z
 
 // Loads one of the patch's script files, patch\a1.bin to a4.bin, into C_program::change_progs (PC only, the name is
 // ours)

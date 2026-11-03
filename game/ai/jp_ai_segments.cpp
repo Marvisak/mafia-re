@@ -4,6 +4,7 @@
 // decisions (its comment).
 
 #include "ai/jp_ai_segments.h"
+#include "stub.h"
 
 #include "mission/Mission.h"
 
@@ -215,3 +216,35 @@ bool check_seg_clusters::Load()
     dtaClose(file);
     return true;
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x53e4b0
+bool check_seg::existIndex(uint value, uint lo, uint hi)
+{
+    StubLog("check_seg::existIndex");
+    return false;
+}
+
+// STUB: GAME 0x53e570
+bool check_seg::isInSpecial(S_vector &pos)
+{
+    StubLog("check_seg::isInSpecial");
+    return false;
+}
+
+// STUB: GAME 0x53e660
+check_seg *check_seg_clusters::GetSegment(uint index)
+{
+    StubLog("check_seg_clusters::GetSegment");
+    return NULL;
+}
+
+// STUB: GAME 0x53e6a0
+uint check_seg_clusters::NumSegments()
+{
+    StubLog("check_seg_clusters::NumSegments");
+    return 0;
+}
+
+#pragma auto_inline(on)

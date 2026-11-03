@@ -5,6 +5,10 @@
 #include <string.h>
 #include <vector>
 
+struct S_item_def;
+
+struct S_item_def;
+
 // An item an actor carries (PS2 S_GameItem), 0x10 bytes (std::vector<S_GameItem>'s size divides by 16): the script's
 // HUMAN_ADDWEAPON fills the first three, its CREATEWEAPONFROMFRAME all four (the names are ours but for id)
 struct S_GameItem
@@ -46,6 +50,12 @@ public:
     bool Insert(S_GameItem *item, bool unknown);
     bool Remove(S_GameItem *item, std::vector<S_GameItem> *dropped);
     void SetCanHaveBigWeapon(bool can, std::vector<S_GameItem> *dropped);
+    // The right hand's item's gameItemTable entry, the table's first for an id past its end (PS2 name, 0x607b80)
+    S_item_def *GetWeaponInRightHand();
+    // The inventory in a saved game (the two return true)
+    int SaveGameGetSize();
+    bool SaveGameSave(void **buf);
+    bool SaveGameLoad(void **buf);
 
     int unknown_0;                      // 0x0, 1 from Clear
     int unknown_4;                      // 0x4
@@ -86,6 +96,10 @@ public:
         return right_hand.id;
     }
 };
+
+// The arrays' constructions, which C_human's constructor calls for the inventory's (the compiler's helper)
+// SYNTHETIC: GAME 0x403d80
+// `vector constructor iterator'
 
 // Its destructor's copy, which C_game::InventoryStackClear calls: the original kept the copy of the range at 0x53e4b0
 // (docs/game-files.md) of its folded group

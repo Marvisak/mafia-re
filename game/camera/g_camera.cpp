@@ -1347,5 +1347,18 @@ void G_Camera::SetSniperMode(bool on)
 
 #pragma auto_inline(on)
 
+#pragma auto_inline(off)
 
+// STUB: GAME 0x5ed460
+void G_Camera::LezeDoToyoty(bool on)
+{
+    StubLog("G_Camera::LezeDoToyoty");
+}
 
+// STUB: GAME 0x5f34c0
+void G_Camera::EnableFreeLook(bool on, bool unknown)
+{
+    StubLog("G_Camera::EnableFreeLook");
+}
+
+#pragma auto_inline(on)

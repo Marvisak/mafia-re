@@ -192,8 +192,14 @@ public:
     void AddPerson(C_human *human);
     void DelPerson(C_human *human);
     void DriveCar(C_human *human, C_car *car);
+    // The human's car ran over another human (PS2 name, 0x49d220): C_human::Collision calls it with the car's
+    // driver, which counts S_shvestky::run_over
+    void NextNaSrackySoudruh(C_human *human);
     // PS2 name: POLICEMANAGER_FORCEARREST's (the parameters' names are ours)
     void ForceArrest(C_human *human, bool a, bool b);
+    // The car the human gets out of stolen (PS2 name; the bools' meaning isn't known): C_human::Hit calls it with
+    // false, false for the player hit while he steals a car
+    void CarSteal(C_human *human, bool a, bool b);
     // What the police know of a human (PS2 names), the GET_PM_ commands': its status bits, its record's state, the
     // times of its crash and of its fire, the number of people angry at it ("pocet nasranych") and of those alive
     // ("zivych"); JakPicusNaTomJest is Czech, rudely, for "how is the guy doing", 0 without a record

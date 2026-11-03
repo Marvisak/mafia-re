@@ -257,3 +257,13 @@ bool C_entity::SaveGameLoad(void **buf)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5080e0
+void C_entity::cbHitInfo(int type, float f, C_actor *act)
+{
+    StubLog("C_entity::cbHitInfo");
+}
+
+#pragma auto_inline(on)

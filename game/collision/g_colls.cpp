@@ -186,7 +186,7 @@ uint g_collision::FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_heade
 
 // PS2's is another file's than TestSphereB; the PC's is in the file at 0x5cafb0 (docs/game-files.md)
 // STUB: GAME 0x5d39a0
-bool g_collision::_TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos,
+int g_collision::_TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos,
     S_vector *normal, uint flags, uint flags2)
 {
     StubLog("g_collision::_TestSphereB");
@@ -223,8 +223,24 @@ int g_collision::TestLineH(const S_vector &from, const S_vector &dir, S_vector *
 // PS2's g_colls.cpp has it after g_camera.cpp's functions (12 bytes, a jump with this); the PC's is in the file at
 // 0x5d5900 and loads gifCollision whatever it is called on
 // FUNCTION: GAME 0x5d5940
-bool g_collision::TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
+int g_collision::TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
     uint flags, uint flags2)
 {
     return gifCollision._TestSphereB(from, dir, radius, pos, normal, flags, flags2);
 }
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5c36c0
+void g_collision::DynInsert(tDynamicCollObject *obj)
+{
+    StubLog("g_collision::DynInsert");
+}
+
+// STUB: GAME 0x5c41d0
+void g_collision::DynGetOut(tDynamicCollObject *obj, std::vector<tDynamicCollObject *> *colls)
+{
+    StubLog("g_collision::DynGetOut");
+}
+
+#pragma auto_inline(on)

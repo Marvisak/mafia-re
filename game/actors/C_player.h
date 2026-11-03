@@ -63,7 +63,13 @@ public:
     // 0xad0 (PS2 0xc50), the shots' recoil: PS2's ShootDeAimed adds the weapon's, AI lets it down with the time, and a
     // tenth of it comes off the camera's tilt (C_game::Tick; the name is ours)
     float recoil;
-    uchar unknown_ad4[0x2c];            // 0xad4
+    uchar unknown_ad4[7];               // 0xad4
+    bool unknown_adb;                   // 0xadb (PS2 0xc5b), the car's automatic gearing off (C_human::Update)
+    uchar unknown_adc[0x19];            // 0xadc
+    bool unknown_af5;                   // 0xaf5, C_human::SaveGameLoad clears it with the aim
+    uchar unknown_af6[2];               // 0xaf6
+    I3D_sound *unknown_af8;             // 0xaf8, C_human::SoundsChange turns it off
+    uchar unknown_afc[4];               // 0xafc
 
     // C_game::Init clears it, the script's CARDAMAGEVISIBLE sets it (PS2 name)
     static bool can_car_damage;

@@ -798,7 +798,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?GetBool@GM_Component@@UAE_NXZ
+// ?CanBeParent@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9530
 // ?GetType@GM_Window@@UAEIXZ
@@ -814,7 +814,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_WindowClean@@UAE_NXZ
+// ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
 // ??1GM_Window@@UAE@XZ
@@ -865,11 +865,11 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_MenuItem@@UAEIII@Z
+// ?Key@GM_Button@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db7a0
 // ?GetType@GM_Button@@UAEIXZ
@@ -936,7 +936,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_ProgressBar@@UAEPAXI@Z
+// ??_GGM_Window@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

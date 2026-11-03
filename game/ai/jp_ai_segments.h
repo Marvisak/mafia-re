@@ -93,6 +93,10 @@ public:
 
     // PS2 names
     uint NumSpecials();
+    // Whether value is among unknown_c's from lo to hi, a binary search (PS2 name; the parameters' names are ours)
+    bool existIndex(uint value, uint lo, uint hi);
+    // Whether pos is within one of the specials (PS2 name)
+    bool isInSpecial(S_vector &pos);
     void GetType(uint *type, void **data);
     void GetSpecial(uint index, uint *type, void **data);
 };
@@ -116,6 +120,9 @@ public:
     void Clear();
     // Reads the mission's clusters.seg: false if it isn't one
     bool Load();
+    // The segments' count, and one of them, NULL for a free slot or past the end (PS2 names)
+    uint NumSegments();
+    check_seg *GetSegment(uint index);
 };
 
 // The cluster's implicit constructor and destructor, which Init's new[] and Clear's delete[] pass to the CRT's

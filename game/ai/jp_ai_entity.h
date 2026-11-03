@@ -88,7 +88,8 @@ public:
 // far, which PS2's ai_logs::Tick sets (the names are ours)
 struct ai_character_log
 {
-    uchar unknown_0[0x24];              // 0x0
+    C_actor *character;                 // 0x0, whom the log is of (the name is ours)
+    uchar unknown_4[0x20];              // 0x4
     uint seen_time;                     // 0x24, the game's time the entity last saw the character (isVisible)
     uchar unknown_28[0xc];              // 0x28, the times it was last heard, smelled and seen armed (PS2's)
     // 0x34, the game's time the character last shot where the entity saw or heard it (GetShootingWeight's)
@@ -105,6 +106,8 @@ public:
 
     // The log of the actor, NULL for none (PS2 name)
     ai_character_log *GetLog(C_actor *act);
+    // The log of the character the entity is angriest with, NULL for none (PS2 name)
+    ai_character_log *GetMaxAngryCharacter();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): PS2 clears
     // the vector itself
@@ -148,6 +151,8 @@ class C_entity : public C_human, public C_program
 {
 public:
     C_entity();
+    // The entity's hit on the human told to it (PS2 name, 0x5080e0)
+    void cbHitInfo(int type, float f, C_actor *act);
     virtual ~C_entity();
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
     // linker's folded constant functions and those that only call the base's
