@@ -324,10 +324,10 @@ extern C_mission *act_mission;
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEPAUS_Telephone@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEXPAUS_Telephone@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEXPAUS_vector@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
 // ?size@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@QBEIXZ
