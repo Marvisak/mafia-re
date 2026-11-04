@@ -277,3 +277,13 @@ void C_entity::InvalidateSelf()
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x528610
+void C_entity::WeaponGetInfo()
+{
+    StubLog("C_entity::WeaponGetInfo");
+}
+
+#pragma auto_inline(on)

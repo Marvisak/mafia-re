@@ -44,6 +44,12 @@ public:
     // A count of the traffic's down by one, at least 0 (PS2 name, Czech slang; static: C_shvestky::TickDoRiciActors
     // calls it with nothing in ecx, PS2's with nothing in a0)
     static void ChlupatejVystrik();
+    // The model of a traffic car's driver the player throws out of the car (PS2 name, Czech), which the traffic
+    // gives up, NULL for a car not of the traffic's (static: the car in ecx)
+    static I3D_frame *Corovacka(C_car *car);
+    // The car the human gets into, the traffic's car he takes over (PS2 name, Czech slang: "they took my car, the
+    // swine"; static, the car in ecx): NULL where he can't have it
+    static C_car *SebraliMiKaaaruSvine(C_car *car);
 
     // A car of the traffic's lists (PS2 C_traffic_car::S_ELEMENT; the names are ours)
     struct S_ELEMENT

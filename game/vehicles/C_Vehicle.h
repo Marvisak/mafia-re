@@ -118,6 +118,7 @@ struct S_vehicle_seat
 
 // C_Vehicle::vehicle_flags' bits (the names are ours)
 #define VEHF_UNSTABLE 0x8               // IsVehicleUnstable's
+#define VEHF_UNKNOWN_2000000 0x2000000 // C_human::TozNaselJsemTenNejvyssiMost looks for a bridge only with it
 #define VEHF_LOCKED 0x10000000          // while LockVehicle's count is above 0
 
 // The vehicles' shared part (PS2 C_Vehicle, C_Vehicle.cpp and C_Vehicle_sounds.cpp), a base of C_car at 0x70 (the car
@@ -225,6 +226,11 @@ public:
     const S_vector &GetHeadPos();
     // While it is set, the car cameras' faktorStability falls (PS2 name)
     bool IsVehicleUnstable();
+    // Whether VEHF_UNKNOWN_2000000 is set, as a bool (PS2 materializes it; the name is ours)
+    bool IsUnknown2000000() const
+    {
+        return (vehicle_flags >> 25) & 1;
+    }
     // One of the vehicle's two sizes (PS2 name)
     const S_vector &GetVehicleSize(bool b);
     // The pivot's position in the vehicle (PS2 name), the same way
@@ -456,7 +462,12 @@ public:
     S_vector pivot_pos_2;               // 0x17c (car 0x1ec)
     uchar unknown_188[0x1c];            // 0x188
     uint vehicle_flags;                 // 0x1a4 (car 0x214, PS2 0x5c8), VEHF_*
-    uchar unknown_1a8[0x12c];           // 0x1a8
+    uchar unknown_1a8[0x84];            // 0x1a8
+    // 0x22c (car 0x29c, PS2's car 0x480), the vehicle's own moving collision, a tDynamicCollObject the constructor
+    // clears (bytes, as this header doesn't include g_colls.h): C_human's car tests leave it out (the name is ours)
+    uchar dyn_coll[0x48];
+    uchar unknown_274[0x48];            // 0x274, another one the constructor clears
+    uchar unknown_2bc[0x18];            // 0x2bc
     S_vector head_pos;                  // 0x2d4 (car 0x344), the driver's head (GetHeadPos)
     uchar unknown_2e0[0x28];            // 0x2e0
     // 0x308 (car 0x378), what wakes the vehicle up, given callback_context (PS2's SetCallbackWU sets one of this type,
@@ -574,7 +585,7 @@ public:
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z
+// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z

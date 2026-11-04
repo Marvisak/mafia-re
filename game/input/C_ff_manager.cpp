@@ -184,3 +184,13 @@ void C_ff_manager::DeleteEffect(int id)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x444ca0
+void C_ff_manager::SetDuration(int id, uint duration)
+{
+    StubLog("C_ff_manager::SetDuration");
+}
+
+#pragma auto_inline(on)

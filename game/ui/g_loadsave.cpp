@@ -1808,3 +1808,28 @@ bool G_Inventory::MuzeNabitJeden()
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x607bb0
+S_item_def *G_Inventory::GetWeaponInLeftHand()
+{
+    StubLog("G_Inventory::GetWeaponInLeftHand");
+    return gameItemTable;
+}
+
+// STUB: GAME 0x609e50
+bool G_Inventory::Vystrel()
+{
+    StubLog("G_Inventory::Vystrel");
+    return false;
+}
+
+// STUB: GAME 0x60a510
+const char *G_CarDatabase::GetCarName(uint index)
+{
+    StubLog("G_CarDatabase::GetCarName");
+    return "";
+}
+
+#pragma auto_inline(on)

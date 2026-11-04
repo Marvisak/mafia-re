@@ -4238,3 +4238,58 @@ void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5ad640
+void C_game::SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2)
+{
+    StubLog("C_game::SetFrameForShadow");
+}
+
+// STUB: GAME 0x5b33f0
+int C_game::BoxPlacementDestSetOU(bool on, I3D_frame *frm)
+{
+    StubLog("C_game::BoxPlacementDestSetOU");
+    return 0;
+}
+
+// STUB: GAME 0x5b3b10
+void C_game::BoxPlacement_RestoreInfo(I3D_frame *frm)
+{
+    StubLog("C_game::BoxPlacement_RestoreInfo");
+}
+
+// STUB: GAME 0x5b3c00
+bool C_game::BoxPlacement_GetStartPoint(I3D_frame *frm, S_vector &pos)
+{
+    StubLog("C_game::BoxPlacement_GetStartPoint");
+    return false;
+}
+
+// STUB: GAME 0x5b3c80
+void C_game::BoxPlacementGetNextDest(I3D_frame *frm, I3D_frame *dest)
+{
+    StubLog("C_game::BoxPlacementGetNextDest");
+}
+
+// STUB: GAME 0x5b4010
+I3D_frame *C_game::BoxPlacementGetEnemyDest(C_human *human, int index)
+{
+    StubLog("C_game::BoxPlacementGetEnemyDest");
+    return NULL;
+}
+
+// STUB: GAME 0x5b5b40
+void C_game::AddShootLight(S_vector &pos, float range, int time, ushort unknown)
+{
+    StubLog("C_game::AddShootLight");
+}
+
+// STUB: GAME 0x5b9690
+void C_game::AddDeadHumanForTick(C_human *human)
+{
+    StubLog("C_game::AddDeadHumanForTick");
+}
+
+#pragma auto_inline(on)

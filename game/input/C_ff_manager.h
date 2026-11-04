@@ -56,6 +56,8 @@ public:
     // The effect's gain and direction, set on its joystick effect (0x444c40 and 0x444c70; the names are ours)
     void SetGain(int id, float gain);
     void SetDirection(int id, float direction);
+    // The effect's duration in microseconds (the name is ours)
+    void SetDuration(int id, uint duration);
     // An effect of the kind, JOY_EFFECT_*, for the human's joystick: its id (the names are ours, as the four effects
     // C_human::InitFFEffects creates show them; the duration in microseconds)
     int CreateEffect(int kind, float direction, uint duration, float gain, uint priority, bool unknown);
@@ -71,6 +73,13 @@ public:
     void Tick(uint time);
     // Starts the waiting effects, the highest priority first, until one can't start (the name is ours)
     void StartWaiting();
+
+    // Whether the human's or the car's effects are created (the name is ours): C_human::Shooting calls the copy
+    // FUNCTION: GAME 0x585b20
+    bool HasEffects(bool human)
+    {
+        return human ? human_effects : car_effects;
+    }
 };
 
 extern C_ff_manager ff_manager;
@@ -78,7 +87,7 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?HideLegs@C_human@@SIXPAVI3D_model@@_N@Z
+// ?Death@C_actor@@UAEXXZ
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670

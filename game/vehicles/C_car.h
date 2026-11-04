@@ -156,6 +156,9 @@ public:
     // PS2 names and parameters, which C_traffic_generator::TryGoToAssHole calls: a place by the car and its direction,
     // false for none; the four points around the car, in its model's space; and the time it has been parked, in ms
     bool GetPlacementFromTCK1(int unknown, S_vector &pos, S_vector &dir, bool unknown2);
+    // Where the animation of getting into the seat starts, and its direction (PS2 name; the parameters' names are
+    // ours): false where the seat has no such place
+    bool GetPlacementFromTCK(int seat, int anim, S_vector &pos, S_vector &dir);
     void GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4);
     // A point of the car in world space: one of the model's two points (0x2080, 0x208c) times the model matrix,
     // kept in 0x2098 or 0x20a4 (PS2 name and parameter; which point the parameter picks isn't known)
@@ -259,7 +262,10 @@ public:
     // sends and its PocetPolicejnichPlechovekVRici ("the number of police cans in the region") counts the cars with it;
     // a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
     bool police_car;
-    uchar unknown_2105[8];              // 0x2105
+    uchar unknown_2105[3];              // 0x2105
+    // 0x2108 (PS2 0x23d4), 2000 from C_human::Use_Actor's getting out, 2500 from _intern_ThrowMeFromCar's throw
+    int unknown_2108;
+    uchar unknown_210c;                 // 0x210c
     bool break_motor;                   // 0x210d (PS2 0x2477), CAR_BREAKMOTOR's
     uchar unknown_210e[0xb];            // 0x210e
     // 0x2119 (PS2 0x2479), set with the camera's CAMPF_HIDE_CAR, which turns the car's frame off (G_Camera::Begin),

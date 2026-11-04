@@ -49,6 +49,9 @@ public:
     // PS2 names
     void UpdateControls();
     void SetSniperMode(bool on);
+    // The frames the player's camera fades with him, the weapons' models (PS2 names)
+    void AddAlphaObject(I3D_frame *frm);
+    void DelAlphaObject(I3D_frame *frm);
     void SetAlpha(float alpha);
     void FadeReset();
     // Which the script's DIALOG_END calls on the game's player
@@ -57,6 +60,8 @@ public:
     void LockControls(bool lock);
     // The car the player strikes, whose damage the HUD shows (PS2 name)
     void SetCarDamage(C_car *car);
+    // The player's shot of the weapon (PS2 name; C_human::Shooting): its recoil added, the HUD's accuracy
+    void ShootDeAimed(S_item_def *weapon);
 
     uchar unknown_a9c[0x1c];            // 0xa9c
     // The player's alpha and the one it fades to, 1 from C_game::Init and FadeReset: PS2's AI fades the first to the
@@ -67,7 +72,10 @@ public:
     // 0xad0 (PS2 0xc50), the shots' recoil: PS2's ShootDeAimed adds the weapon's, AI lets it down with the time, and a
     // tenth of it comes off the camera's tilt (C_game::Tick; the name is ours)
     float recoil;
-    uchar unknown_ad4[7];               // 0xad4
+    // 0xad4 (PS2 0xc54), the time the weapon stays aimed after a shot or a strike: C_human::Do_Shoot sets 3000,
+    // PS2's AI counts it down and lowers the aim at 0 (the name is ours)
+    int aim_time;
+    uchar unknown_ad8[3];               // 0xad8
     bool unknown_adb;                   // 0xadb (PS2 0xc5b), the car's automatic gearing off (C_human::Update)
     uchar unknown_adc[0x19];            // 0xadc
     bool unknown_af5;                   // 0xaf5, C_human::SaveGameLoad clears it with the aim

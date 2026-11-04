@@ -187,3 +187,25 @@ void C_player::SetCarDamage(C_car *car)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x595390
+void C_player::ShootDeAimed(S_item_def *weapon)
+{
+    StubLog("C_player::ShootDeAimed");
+}
+
+// STUB: GAME 0x595cb0
+void C_player::AddAlphaObject(I3D_frame *frm)
+{
+    StubLog("C_player::AddAlphaObject");
+}
+
+// STUB: GAME 0x595d70
+void C_player::DelAlphaObject(I3D_frame *frm)
+{
+    StubLog("C_player::DelAlphaObject");
+}
+
+#pragma auto_inline(on)

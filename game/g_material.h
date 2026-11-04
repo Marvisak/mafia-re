@@ -92,9 +92,15 @@ struct S_voice_def
 // The weapons that kill at close range (C_human::Hit: a shot from within 3 kills, from within 5 throws the human
 // down; the name is a guess)
 #define ITEMF_CLOSE_RANGE 0x2
+// The weapon has a sniper's scope (the Mosin-Nagant's): C_human::ChangeWeaponModel turns the player's sniper mode off
+// for any other (the name is a guess)
+#define ITEMF_SCOPE 0x4000
 
 // Weapons of gameItemTable (predmety.def), by their names there: the parts of their models C_human's weapon effects
 // move ("cylinder", "zaver1", "clip", "foregrip", "hlavne") follow them
+#define GAMEITEM_KNUCKLEDUSTER 2        // "Knuckleduster"
+#define GAMEITEM_KNIFE 3                // "Knife"
+#define GAMEITEM_BASEBALL_BAT 4         // "Baseball Bat"
 #define GAMEITEM_MOLOTOV 5              // "Molotov cocktail"
 #define GAMEITEM_COLT_DETECTIVE 6       // "Colt Detective Special"
 #define GAMEITEM_SW_MAGNUM 7            // "S&W model 27 Magnum"
@@ -106,6 +112,14 @@ struct S_voice_def
 #define GAMEITEM_SPRINGFIELD 13         // "US Rifle M1903 Springfield"
 #define GAMEITEM_MOSIN_NAGANT 14        // "Mosin-Nagant 1891/30"
 #define GAMEITEM_GRENADE 15             // "Grenade"
+// Other items C_human::DropOutItems gives a falling sound of their own
+#define GAMEITEM_BUCKET 17              // "Bucket"
+#define GAMEITEM_FLASHLIGHT 18          // "Flashlight"
+#define GAMEITEM_BAR 20                 // "Bar"
+#define GAMEITEM_CROWBAR 25             // "Crowbar"
+#define GAMEITEM_BOARD 28               // "Deska"
+#define GAMEITEM_BOTTLE 29              // "Bottle"
+#define GAMEITEM_UNKNOWN_31 31          // its name is a single byte, 0x85
 
 // gameItemTable's first item, "Special Action (nesahat!!!)" ("don't touch"), which C_human::ChangeState puts on a dead
 // body's using objects, with the values 0x7dc and 0x7dd where a weapon has its ammunition (the name is ours)
@@ -133,17 +147,30 @@ struct S_item_def
 {
     uchar unknown_0[0x20];              // 0x0
     uint flags;                         // 0x20, ITEMF_*
-    uchar unknown_24[0x28];             // 0x24
+    char model[0x28];                   // 0x24, the weapon's model, the file ChangeWeaponModel opens (the name is ours)
     int gun_anim;                       // 0x4c, the number of the reload's animations, gun0%i (the name is ours)
-    int unknown_50;                     // 0x50, 4 for the weapons the corner fire has an animation of its own for
+    // 0x50, the number of the fire's animations, gun0%i ... Fire.i3d (C_human::Shooting), 4 for the weapons the corner
+    // fire has an animation of its own for (the name is ours)
+    int fire_anim;
     uint unknown_54;                    // 0x54, the sound table's sound of the weapon (NOTE_WEAPON_SOUND)
-    uchar unknown_58[4];                // 0x58
-    int unknown_5c;                     // 0x5c, a strike breaks crash objects with 7, glass but with 6 (C_human::AI)
+    uint unknown_58;                    // 0x58, the sound table's sound C_human::ChangeWeaponModel gives unknown_6c4
+    // 0x5c, the weapon's kind, C_human::weapon_kind's: 0 (the fists) and 5 to 7 strike, 7 the bat, 1 to 3 shoot (2
+    // and 3 with both hands), 4 is thrown; a strike breaks crash objects with 7, glass but with 6 (the name is ours)
+    int kind;
     // The most ammunition in the weapon and in reserve, which C_human::InventoryTruncate cuts an item's to (the names
     // are ours)
     uint ammo_max;                      // 0x60
     uint spare_max;                     // 0x64
-    uchar unknown_68[0x24];             // 0x68
+    uchar unknown_68[0xc];              // 0x68
+    // The shot's (C_human::Shooting; the names are ours): its range, the length of the line C_game::NewShoot follows,
+    // and its power, NewShoot's and a railway vehicle's hit's damage
+    float range;                        // 0x74
+    float power;                        // 0x78
+    uchar unknown_7c[8];                // 0x7c
+    // What a shot adds to the player's recoil (C_player::ShootDeAimed), and the weapon's accuracy: a shot strays
+    // from its line by up to 1 - accuracy times the human's shooting (HUMAN_PROPERTY_SHOOTING; the names are ours)
+    float recoil;                       // 0x84
+    float accuracy;                     // 0x88
     S_fire_action fire[6];              // 0x8c, the weapon's fire steps, which C_human's Shooting and Do_Reload follow
 };
 

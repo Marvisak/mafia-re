@@ -381,19 +381,19 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetPointer@GM_Component@@UAEPAXXZ
+// ?SaveGameGetSize@C_racecam@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?DuplicateFrom@C_actor@@UAEXPAV1@@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -404,24 +404,24 @@ public:
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
+// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_clock@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_stone@@UAEHXZ
+// ?vfunc_53@C_recorder@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?GetActFlags@C_actor@@QBEHXZ
+// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
+// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
@@ -470,6 +470,8 @@ extern int _anim_index_count_;
 int rnd(int n);
 // A random number from 0 to 1 (PS2 name)
 float rnd();
+// Unlinks the frame's children (PS2 name, C_actor.cpp's range): C_human::ChangeWeaponModel empties the weapon's model
+void UnlinkAllFrameChild(I3D_frame *frm);
 // The angle from one 2D direction to the other, from -pi to pi (PS2 name)
 float AngleTo2(const S_vector2 &a, const S_vector2 &b);
 // Turns the vector about the y axis (PS2 name)

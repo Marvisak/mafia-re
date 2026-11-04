@@ -1022,3 +1022,25 @@ int C_shvestky::PocetPrestupku(C_human *human)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x49a140
+void C_shvestky::DezoSebralGumyIRadio(C_car *car)
+{
+    StubLog("C_shvestky::DezoSebralGumyIRadio");
+}
+
+// STUB: GAME 0x49cb20
+void C_shvestky::Firing(C_human *human)
+{
+    StubLog("C_shvestky::Firing");
+}
+
+// STUB: GAME 0x4a0230
+void C_shvestky::RenamePoliceCar(C_car *car)
+{
+    StubLog("C_shvestky::RenamePoliceCar");
+}
+
+#pragma auto_inline(on)

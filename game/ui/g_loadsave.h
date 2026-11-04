@@ -461,6 +461,8 @@ public:
     uint GetIdxByModel(const char *model);
     // The index of a model's file, "<id><variant>.i3d" with a path, and its variant (PS2 name); 0 for none
     uint GetIdxByModelLong(const char *model, uint &variant);
+    // A car's name by its index (PS2 name; PS2's returns a uchar *)
+    const char *GetCarName(uint car);
     // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it
     uint GetIDByActor(C_car *car);
     // The masks of a car's id (from the second car) and of a player's model (from the first), whatever the case, 0 for

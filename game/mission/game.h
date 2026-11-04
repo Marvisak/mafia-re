@@ -60,6 +60,9 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats with which a reload takes no ammunition from the reserve (C_human::AI; the name is a
 // guess)
 #define GAMEF_INFINITE_AMMO 0x100
+// The bit of C_game::cheats with which the Magnum fires grenades (C_human::Shooting; the name is ours): no cheat word
+// toggles it
+#define GAMEF_GRENADE_GUN 0x4
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -656,6 +659,8 @@ public:
     // PS2 names, of what Tick calls
     void FindActorsVect();
     void TickDeadHumanForTick(uint time);
+    // Adds a dead human to those TickDeadHumanForTick ticks (PS2 name), which C_human::_intern_ThrowMeFromCar calls
+    void AddDeadHumanForTick(C_human *human);
     void DeathActorProcess();
     void _RemoveTemporaryActor(C_actor *act);
     void TickShoot(uint time);
@@ -674,7 +679,10 @@ public:
     // A grenade of the type thrown from pos along dir, the model frm (PS2 name; the parameters' names are ours)
 #define NEWGRENADE_GRENADE 0            // the types human_notify_callback's throw gives (the names are ours)
 #define NEWGRENADE_MOLOTOV 3
+#define NEWGRENADE_SHOT 1               // C_human::Shooting's, the Magnum's with GAMEF_GRENADE_GUN
     void NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm);
+    // A shot's light at pos (PS2 name; the parameters' names are ours): C_human::Shooting's, 7 m for 50 ms
+    void AddShootLight(S_vector &pos, float range, int time, ushort unknown);
     // A shot at a level's collision of control signals (the shot's coll, hit position, start, direction and shooter;
     // PS2 name, PS2's takes the collision as a uint *)
     void DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir, C_human *human);
@@ -714,6 +722,8 @@ public:
     int AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
         char *name);
     void DelFrameForShadow(I3D_frame *frm, E_shadow_type type);
+    // The frame's shadow back to the given types (PS2 name)
+    void SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2);
     // A moving collision gone: the entities that keep it forget it (PS2 name, PS2's takes a uint *)
     void InvalidateColl(tDynamicCollObject *coll);
     // The actor's lightness taken at its frame, offset by pos, and forgotten (PS2 names; the parameters' names
@@ -746,6 +756,16 @@ public:
     void BoxPlacementAdd(I3D_frame *frm, int unknown);
     void BoxPlacementRecompile();
     void BoxPlacementDestAdd(I3D_frame *frm, int unknown);
+    // The box the player takes (on) or puts down (PS2 name): taken, its index (C_human::box_index)
+    int BoxPlacementDestSetOU(bool on, I3D_frame *frm);
+    // The destination the human takes the box of the index to (PS2 name)
+    I3D_frame *BoxPlacementGetEnemyDest(C_human *human, int index);
+    // Where the box was taken from: false if it isn't one of the boxes (PS2 name)
+    bool BoxPlacement_GetStartPoint(I3D_frame *frm, S_vector &pos);
+    // The box put down at its destination dest (PS2 name)
+    void BoxPlacementGetNextDest(I3D_frame *frm, I3D_frame *dest);
+    // The box put back where it was taken from (PS2 name)
+    void BoxPlacement_RestoreInfo(I3D_frame *frm);
     void BoxPlacement_DelInfo(I3D_frame *frm);
     int BoxPlacement_GetBox(int index);
     int BoxPlacement_GetBoxDest(int index);
@@ -951,7 +971,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

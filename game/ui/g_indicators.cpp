@@ -4093,3 +4093,13 @@ void G_IndicatorsClass::ThiefIndicatorSetValue(float value)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f9d50
+void G_IndicatorsClass::ConsoleAddText(const char *text, uint color)
+{
+    StubLog("G_IndicatorsClass::ConsoleAddText");
+}
+
+#pragma auto_inline(on)

@@ -101,3 +101,13 @@ bool C_turnout::SaveGameLoad(void **buf)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4bd210
+void C_turnout::Start()
+{
+    StubLog("C_turnout::Start");
+}
+
+#pragma auto_inline(on)

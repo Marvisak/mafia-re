@@ -719,3 +719,14 @@ bool C_car::GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x41c550
+bool C_car::GetPlacementFromTCK(int a, int b, S_vector &pos, S_vector &dir)
+{
+    StubLog("C_car::GetPlacementFromTCK");
+    return false;
+}
+
+#pragma auto_inline(on)

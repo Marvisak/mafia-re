@@ -373,6 +373,8 @@ public:
     // A line of the HUD's console in the colour (0xrrggbb), the text database's text of that id, if it has one (PS2
     // name)
     void ConsoleAddTextByID(uint id, uint color);
+    // A line of the HUD's console in the colour (PS2 name; PS2's takes a uchar *)
+    void ConsoleAddText(const char *text, uint color);
     // The frame INDF_COMPASS points to (PS2 name)
     void CompassSetDestination(I3D_frame *frm);
     // The black bars above and below the picture, the picture's height a ratio of the screen's width

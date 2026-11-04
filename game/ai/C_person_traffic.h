@@ -94,6 +94,8 @@ public:
     static void EnableTaxiDriver(bool enable);
     static void ZrusVsechnyMavajici();
     static void PlayerInTaxi(C_car *car);
+    // The pedestrians walking to the car sent away (PS2 name, Czech: "blow off from that machine")
+    static void VyfunOdTeMasiny(C_car *car);
     static void SetVisible(bool visible);
     static void ClearElements();
     static void FreeDynCollElements();

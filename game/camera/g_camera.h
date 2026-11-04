@@ -201,6 +201,10 @@ public:
     // The last pushed state back, the mode through SetMode and the I3D camera's view; clear clears mode_changed (PS2
     // names)
     void PopMode(bool clear);
+    // Pushes the mode and the I3D camera's view, which PopMode takes back (PS2 name)
+    void PushMode();
+    // Mode 0x15 at the position, looking at the frame (PS2 name; PS2's takes the position by reference)
+    void SetLookTo(S_vector pos, I3D_frame *frm);
     void SetSniperMode(bool on);
     // CAMERA_C_LOCK at the position, looking along the direction, unless it is the mode already (PS2 name; the
     // parameters' names are guesses)

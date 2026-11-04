@@ -43,13 +43,19 @@ public:
     void SetExtendedAnim(I3D_animation_set *set, float f1, float f2, bool b);
     void DelExtendedAnim(float f);
     static bool GetPlacementFromTCK(const char *name, S_vector &pos, S_vector &dir);
+    // The track's position at its end, false where it doesn't load (PS2 name; static: the name in ecx, pos in edx),
+    // which C_human's car functions call
+    static bool GetEndPointOfTCK(const char *name, S_vector &pos);
+    // The track's position at its mixing point, 250 ms before its end (PS2 name; the parameters' names and the
+    // result's meaning are ours): false without the track or for a shorter one
+    static bool GetMixingPointOfTCK(const char *name, S_vector &pos);
 
     // The height a jump lands at, relative to the track's end (the name is ours): PersonAnim's, whose stores address
     // the machine through its own pointer, as an inline method's do (PS2's has the same three stores)
-    void SetLandHeight(float height)
+    void SetLandHeight(float height, bool unknown = false)
     {
         unknown_120 = height;
-        unknown_124 = false;
+        unknown_124 = unknown;
         unknown_125 = (uchar)anim_index;
     }
     // Both set, the human isn't ready (C_human::IsReady; the name is ours): an inline method, whose object a caller
@@ -57,6 +63,18 @@ public:
     bool IsBlocking() const
     {
         return unknown_f4 && unknown_10c;
+    }
+    // unknown_14 1 or 0 by unknown_18's sign while stage_blending is set (the name is ours): an inline method, whose
+    // object C_human::ZasrateLezeniZAuta_ve2rano keeps in ecx for the GetActiveAnimTime after it (Movement and the
+    // note's callback have the same code written out)
+    void SetStageBlendingDir()
+    {
+        if (stage_blending) {
+            if (unknown_18 > 0.0f)
+                unknown_14 = 1.0f;
+            else
+                unknown_14 = 0.0f;
+        }
     }
 
     uchar unknown_0[0x12];              // 0x0

@@ -191,6 +191,8 @@ public:
     // The police's people and their cars (PS2 names): POLICEMANAGER_ADD's and DEL's
     void AddPerson(C_human *human);
     void DelPerson(C_human *human);
+    // The human firing (PS2 name; C_human::Shooting): SHVF_FIRE set, fire_time
+    void Firing(C_human *human);
     void DriveCar(C_human *human, C_car *car);
     // The human's car ran over another human (PS2 name, 0x49d220): C_human::Collision calls it with the car's
     // driver, which counts S_shvestky::run_over
@@ -219,6 +221,10 @@ public:
     // The actors TickDoRiciActors ticks (PS2 names): ACTOR_ADDDORICI's and DELDORICI's
     void AddDoRiciActor(C_actor *act);
     void DelDoRiciActor(C_actor *act);
+    // The car the human takes from another driver (PS2 name, Czech: roughly "he took the tyres and the radio") and
+    // a police car he gets into (PS2 name), which C_human::Use_Actor tells the police of
+    void DezoSebralGumyIRadio(C_car *car);
+    void RenamePoliceCar(C_car *car);
     // PS2 names, TickDoRiciActors': the actor taken out of the records' angry ones, and a road block's car, enemy or
     // policeman freed (PS2's FreeTempCar, FreeTempEnemy and FreeTempIris by its type): false for any other actor
     void GlobalDelNasrany(C_actor *act);

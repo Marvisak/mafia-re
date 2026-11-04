@@ -24,6 +24,9 @@ public:
     virtual void GameInit();
     virtual void GameDone();
 
+    // Switches the turnout (PS2 name), which C_human::Use_Actor calls
+    void Start();
+
     uchar unknown_70[0x130];            // 0x70
 };
 

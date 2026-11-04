@@ -1177,3 +1177,13 @@ int GetAnimIndex(uint id)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4087b0
+void UnlinkAllFrameChild(I3D_frame *frm)
+{
+    StubLog("UnlinkAllFrameChild");
+}
+
+#pragma auto_inline(on)

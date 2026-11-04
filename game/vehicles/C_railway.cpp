@@ -197,3 +197,27 @@ void C_railway::SetRainDummy(bool in, I3D_frame *frm)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x495d30
+bool C_railway::GetEntry(C_actor *act, S_vector *pos, S_vector *dir, uint *entry)
+{
+    StubLog("C_railway::GetEntry");
+    return false;
+}
+
+// STUB: GAME 0x496e10
+I3D_frame *C_railway::GetVagon(uint wagon)
+{
+    StubLog("C_railway::GetVagon");
+    return NULL;
+}
+
+// STUB: GAME 0x497980
+void C_railway::Lock()
+{
+    StubLog("C_railway::Lock");
+}
+
+#pragma auto_inline(on)

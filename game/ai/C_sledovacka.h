@@ -91,7 +91,7 @@ public:
 // ?_Ucopy@?$vector@US_t_transparent@C_mission@@V?$allocator@US_t_transparent@C_mission@@@std@@@std@@IAEPAUS_t_transparent@C_mission@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x604e00
-// ?_Ufill@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@IAEXPAUS_vector2@@IABU3@@Z
+// ?_Ufill@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@IAEXPAUS_anim_model@C_mission@@IABU34@@Z
 
 // What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
 // TEMPLATE: GAME 0x4a9940

@@ -181,3 +181,21 @@ void C_animations_machine_de_luxe::StageBlendingTick(uint time)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x410310
+bool C_animations_machine_de_luxe::GetEndPointOfTCK(const char *name, S_vector &pos)
+{
+    StubLog("C_animations_machine_de_luxe::GetEndPointOfTCK");
+    return false;
+}
+
+// STUB: GAME 0x410350
+bool C_animations_machine_de_luxe::GetMixingPointOfTCK(const char *name, S_vector &pos)
+{
+    StubLog("C_animations_machine_de_luxe::GetMixingPointOfTCK");
+    return false;
+}
+
+#pragma auto_inline(on)

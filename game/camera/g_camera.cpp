@@ -1362,3 +1362,19 @@ void G_Camera::EnableFreeLook(bool on, bool unknown)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x5f3ff0
+void G_Camera::PushMode()
+{
+    StubLog("G_Camera::PushMode");
+}
+
+// STUB: GAME 0x5f4a00
+void G_Camera::SetLookTo(S_vector pos, I3D_frame *frm)
+{
+    StubLog("G_Camera::SetLookTo");
+}
+
+#pragma auto_inline(on)

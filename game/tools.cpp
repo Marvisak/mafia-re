@@ -411,3 +411,19 @@ void soundArena::SoundEmit(S_vector &pos, float range, float unknown, uint unkno
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x55e410
+void C_using_object::AddInvalidItem(uint id)
+{
+    StubLog("C_using_object::AddInvalidItem");
+}
+
+// STUB: GAME 0x55e5c0
+void C_using_object::DelInvalidItem(uint id)
+{
+    StubLog("C_using_object::DelInvalidItem");
+}
+
+#pragma auto_inline(on)

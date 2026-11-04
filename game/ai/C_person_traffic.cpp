@@ -502,3 +502,13 @@ void C_traffic_element::ActivateFree(bool b1, bool b2)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4512a0
+void C_traffic_generator::VyfunOdTeMasiny(C_car *car)
+{
+    StubLog("C_traffic_generator::VyfunOdTeMasiny");
+}
+
+#pragma auto_inline(on)

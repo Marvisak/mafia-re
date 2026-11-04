@@ -188,3 +188,21 @@ bool C_traffic_car::SaveGameLoad(void **buf)
 }
 
 #pragma auto_inline(on)
+
+#pragma auto_inline(off)
+
+// STUB: GAME 0x4b8480
+I3D_frame *C_traffic_car::Corovacka(C_car *car)
+{
+    StubLog("C_traffic_car::Corovacka");
+    return NULL;
+}
+
+// STUB: GAME 0x4ba300
+C_car *C_traffic_car::SebraliMiKaaaruSvine(C_car *car)
+{
+    StubLog("C_traffic_car::SebraliMiKaaaruSvine");
+    return NULL;
+}
+
+#pragma auto_inline(on)

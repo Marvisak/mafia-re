@@ -142,6 +142,8 @@ public:
 #define ENTITY_EVENT_DISMISS 0x13
 // C_human::MovementIntern sends it to an entity the player's move runs into (the name is ours, by value)
 #define ENTITY_EVENT_UNKNOWN_8 0x8
+// C_human::Do_ThrowCocotFromCar sends it to an entity the player throws out of its car (the name is ours)
+#define ENTITY_EVENT_THROWN_FROM_CAR 0x15
 
 // The AI's humans (PS2 C_entity, jp_ai_entity.cpp), 0x128c bytes (PS2's 0x14a0): C_program is the second base (at
 // 0xa9c, PS2's 0xbf0, whose this adjustors PS2 names @3056@), the entity's own script, as C_detector's. Only the
@@ -192,6 +194,8 @@ public:
     void WeaponChoose(uint id);
     // PS2 name, which C_mission::FrmActBuff_GetActor calls for a kept entity before it activates it
     void ResetState();
+    // What the entity's AI takes of the weapon in its hand (PS2 name), which C_human::ChangeWeaponModel calls
+    void WeaponGetInfo();
     // Forgets what the entity's AI keeps of its model (PS2 name), which C_human::_intern_ChangeModel calls
     void InvalidateSelf();
     // Gives the game its action button object (PS2 name)

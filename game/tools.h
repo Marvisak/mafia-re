@@ -44,6 +44,19 @@ struct S_timer
 #define USINGF_DELETE 0x1               // the object, which C_using_object allocated
 #define USINGF_FRAME 0x2                // its frame, which the game forgets, unlinks and releases
 
+// The special actions' ids (S_GameItem::ammo_loaded of a GAMEITEM_SPECIAL_ACTION's using object), which
+// C_using_object's invalid items hold: those C_human::Do_FuckingBox and Do_DeadBody turn off while the player
+// carries something (the names are ours, by value but the dead body's, which C_human::ChangeState gives its two
+// using objects)
+#define USING_ACTION_UNKNOWN_7D3 0x7d3
+#define USING_ACTION_UNKNOWN_7D4 0x7d4
+#define USING_ACTION_UNKNOWN_7D7 0x7d7
+#define USING_ACTION_UNKNOWN_7D9 0x7d9
+#define USING_ACTION_UNKNOWN_7DA 0x7da
+#define USING_ACTION_DEAD_BODY_0 0x7dc
+#define USING_ACTION_DEAD_BODY_1 0x7dd
+#define USING_ACTION_UNKNOWN_7DF 0x7df
+
 // The objects the player can use (PS2 C_using_object, tools.cpp): only its two vectors are known, which the game's
 // inline constructor constructs (PS2's also clears its 0x18 and 0x1c). Its methods are in the PC's tools.cpp
 // (0x55dd60, 0x55df10).
@@ -80,6 +93,10 @@ public:
     void DelObject(S_using_object *obj);
     void ClearObjects();
     void ClearInvalidItems();
+    // The special actions (S_GameItem::ammo_loaded of a GAMEITEM_SPECIAL_ACTION) the player can't use, added and
+    // taken out again (PS2 names)
+    void AddInvalidItem(uint id);
+    void DelInvalidItem(uint id);
 };
 
 // The compass of the game's HUD (PS2 C_compass, tools.cpp), the game's 0x26c, 0x14 bytes. Its destructor is declared: the
@@ -221,7 +238,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetText@GM_Component@@UAEPAEXZ
+// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

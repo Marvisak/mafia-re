@@ -1,6 +1,7 @@
-// The humans (PS2 C_human.cpp; the PC's file is the one at 0x56b180-0x58e34c, docs/game-files.md). The PC's starts with
-// the cutscenes' virtual functions and their helpers, then the constructor (0x56efd0), then PS2's functions in PS2's
-// order. Each "// C_HUMAN" line is the place of a function not written yet, whose stub follows the written functions.
+// The humans (PS2 C_human.cpp; the PC's file is the one at 0x56b180-0x58e34c, docs/game-files.md), written whole. The
+// PC's starts with the cutscenes' virtual functions, their helpers and the animations' callback, then the constructor
+// (0x56efd0), then PS2's functions in PS2's order (PS2's Hit* helpers and SetWaitAnim are inline). RecompileDeathPos's
+// three static helpers come after their first callers, where VC6 puts a static function it doesn't inline.
 
 #include "actors/C_human.h"
 
@@ -22,6 +23,7 @@
 #include "mission/m_cache.h"
 #include "vehicles/C_car_ex.h"
 #include "vehicles/C_railway.h"
+#include "vehicles/C_trf_c.h"
 #include "vehicles/C_railway.h"
 
 #include "ai/jp_ai_main.h"
@@ -35,6 +37,9 @@
 #include "actors/C_crash_obj.h"
 #include "actors/C_public_physics.h"
 #include "mission/C_recorder.h"
+#include "actors/C_door.h"
+#include "vehicles/C_trf_c.h"
+#include "vehicles/C_turnout.h"
 #include "stub.h"
 
 // Adds the human to the cutscene, with the sizes of its three kinds of records (C_actor's: 0x5c, 0, 0)
@@ -877,37 +882,37 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
             human->unknown_a0->OpenDoor(human->seat, 0.0f, false);
         break;
     case NOTE_UNKNOWN_1A:
-        human->unknown_1ec = true;
+        human->fire_held = true;
         human->unknown_1ed = true;
         break;
     case NOTE_UNKNOWN_1B:
-        human->unknown_1ec = false;
+        human->fire_held = false;
         human->unknown_1ed = false;
         break;
     case NOTE_WEAPON_TO_TARGET:
-        if ((human->unknown_1e8 == 2 || human->unknown_1e8 == 3) && human->left_hand_target && !human->unknown_1fe)
+        if ((human->weapon_kind == 2 || human->weapon_kind == 3) && human->left_hand_target && !human->unknown_1fe)
             ((I3D_target *)human->left_hand_target)->AddToTarget(human->weapon_model);
         break;
     case NOTE_WEAPON_FROM_TARGET:
-        if (human->left_hand_target && (human->unknown_1e8 == 2 || human->unknown_1e8 == 3)) {
+        if (human->left_hand_target && (human->weapon_kind == 2 || human->weapon_kind == 3)) {
             ((I3D_target *)human->left_hand_target)->DeleteFromTarget(human->weapon_model);
             human->unknown_580 = true;
         }
         break;
     case NOTE_WEAPON_TO_LEFT_HAND:
-        if ((human->unknown_1e8 == 2 || human->unknown_1e8 == 3) && human->left_hand_target && human->weapon_model) {
+        if ((human->weapon_kind == 2 || human->weapon_kind == 3) && human->left_hand_target && human->weapon_model) {
             ((I3D_target *)human->left_hand_target)->DeleteFromTarget(human->weapon_model);
             human->weapon_model->LinkTo(human->left_hand, I3DLINK_UPDMATRIX);
             human->unknown_580 = true;
         }
         break;
     case NOTE_WEAPON_TO_RIGHT_HAND:
-        if (!human->unknown_1fe && human->left_hand_target && human->weapon_model && human->unknown_1e8) {
+        if (!human->unknown_1fe && human->left_hand_target && human->weapon_model && human->weapon_kind) {
             human->weapon_model->SetPos(S_vector(0.0f, 0.0f, 0.0f));
             human->weapon_model->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
             human->weapon_model->LinkTo(human->right_hand, 0);
             human->weapon_model->Update();
-            if (human->unknown_1e8 == 2 || human->unknown_1e8 == 3)
+            if (human->weapon_kind == 2 || human->weapon_kind == 3)
                 ((I3D_target *)human->left_hand_target)->AddToTarget(human->weapon_model);
         }
         break;
@@ -1181,7 +1186,7 @@ void ai_blob_log::Blob(void *owner)
     b.flags = 0;
     if (((C_human *)owner)->crouching)
         b.flags = AIBLOB_CROUCHING;
-    if (((C_human *)owner)->unknown_1ec)
+    if (((C_human *)owner)->fire_held)
         b.flags |= AIBLOB_UNKNOWN_4;
     switch (((C_human *)owner)->anim_id & 0x1ff) {
     case 5:
@@ -1434,12 +1439,12 @@ bool C_human::SaveGameSave(void **buf)
     s->crouching = crouching;
     s->aimed = aimed;
     s->anim_left = anim_left;
-    s->unknown_1ec = unknown_1ec;
+    s->fire_held = fire_held;
     s->throw_dir = throw_dir;
-    s->unknown_218 = unknown_218;
-    s->unknown_21c = unknown_21c;
-    s->unknown_220 = unknown_220;
-    s->unknown_228 = unknown_228;
+    s->throw_time = throw_time;
+    s->throw_swung = throw_swung;
+    s->strike_time = strike_time;
+    s->strike_index = strike_index;
     s->unknown_22c = unknown_22c;
     s->unknown_22d = unknown_22d;
     s->tilt = tilt;
@@ -1528,12 +1533,12 @@ bool C_human::SaveGameLoad(void **buf)
     crouching = s->crouching;
     aimed = s->aimed;
     anim_left = s->anim_left;
-    unknown_1ec = s->unknown_1ec;
+    fire_held = s->fire_held;
     throw_dir = s->throw_dir;
-    unknown_218 = s->unknown_218;
-    unknown_21c = s->unknown_21c;
-    unknown_220 = s->unknown_220;
-    unknown_228 = s->unknown_228;
+    throw_time = s->throw_time;
+    throw_swung = s->throw_swung;
+    strike_time = s->strike_time;
+    strike_index = s->strike_index;
     unknown_22c = s->unknown_22c;
     unknown_22d = s->unknown_22d;
     tilt = s->tilt;
@@ -1759,12 +1764,12 @@ void C_human::AI(uint time)
         act_mission->game->camera.EnableFreeLook(false, false);
     }
     if (unknown_9c0 >= 0) {
-        unknown_9bc = unknown_9b0 / unknown_9ac;
+        hit_ratio = hits / shots;
         unknown_9c0 -= time;
         if (unknown_9c0 < 0) {
             unknown_9c0 = 5000;
-            unknown_9ac = unknown_9b4 = unknown_9ac - unknown_9b4 + 1.0f;
-            unknown_9b0 = unknown_9b8 = unknown_9b0 - unknown_9b8 + 1.0f;
+            shots = unknown_9b4 = shots - unknown_9b4 + 1.0f;
+            hits = unknown_9b8 = hits - unknown_9b8 + 1.0f;
         }
     }
 
@@ -1843,7 +1848,7 @@ void C_human::AI(uint time)
         int spare;
         if ((bool)(act_mission->game->cheats & GAMEF_INFINITE_AMMO) && item)
             spare = item->ammo_spare;
-        if (id == 0xb)
+        if (id == GAMEITEM_SHOTGUN)
             inventory.NabijJeden();
         else
             inventory.Nabij();
@@ -1859,7 +1864,7 @@ void C_human::AI(uint time)
         if (!aimed)
             aimed = true;
         if (fire_action[fire_step].action == FIRE_ACTION_END) {
-            if (inventory.right_hand.id == 0xb && inventory.MuzeNabitJeden())
+            if (inventory.right_hand.id == GAMEITEM_SHOTGUN && inventory.MuzeNabitJeden())
                 Do_Reload();
             else {
                 unknown_1fe = false;
@@ -1942,15 +1947,16 @@ void C_human::AI(uint time)
                         if (Can_Hit_FilterHumanType(this, (C_human *)act) &&
                             ((C_human *)act)->TestShotCollision(strike_pos[i], d, FLT_MAX)) {
                             damage *= properties[HUMAN_PROPERTY_STRENGTH];
-                            if (unknown_228 == -1) {
+                            if (strike_index == -1) {
                                 damage *= 2.0f;
                                 // From behind with these: the human's energy and more
-                                if (inventory.right_hand.id == 4 || inventory.right_hand.id == 3) {
+                                if (inventory.right_hand.id == GAMEITEM_BASEBALL_BAT ||
+                                    inventory.right_hand.id == GAMEITEM_KNIFE) {
                                     float angle = GetWorldDir().AngleTo(act->GetWorldDir());
                                     float angle_to = GetWorldDir().AngleTo(act->GetWorldPos() - GetWorldPos());
                                     if (angle < PI * .4f && angle_to < PI * .3f) {
                                         damage = ((C_human *)act)->properties[HUMAN_PROPERTY_ENERGY] + 1.0f;
-                                        if (inventory.right_hand.id == 4)
+                                        if (inventory.right_hand.id == GAMEITEM_BASEBALL_BAT)
                                             sound = SOUND_STRIKE_BACK;
                                     }
                                 }
@@ -1978,7 +1984,7 @@ void C_human::AI(uint time)
                 // The level's: crash objects, glass, the surface's sound
                 S_item_def *weapon = inventory.GetWeaponInRightHand();
                 if (coll->material == MAT_CRASH) {
-                    if (weapon->unknown_5c == 7) {
+                    if (weapon->kind == 7) {
                         S_vector crash_dir = d;
                         crash_dir.Normalize();
                         crash_dir *= 2.0f;
@@ -1998,12 +2004,12 @@ void C_human::AI(uint time)
                             break;
                         }
                         float power = f * properties[HUMAN_PROPERTY_STRENGTH];
-                        if (unknown_228 == -1)
+                        if (strike_index == -1)
                             power *= 2.0f;
                         CreateCrashModel(coll->frame, strike_pos[i], crash_dir, power);
                     }
                 } else if (coll->material == MAT_GLASS) {
-                    if (weapon->unknown_5c != 6) {
+                    if (weapon->kind != 6) {
                         coll->flags |= COLLHF_DISABLED;
                         S_vector glass_dir = d;
                         glass_dir.Normalize();
@@ -2335,13 +2341,13 @@ void C_human::Update(uint time)
         unknown_a58 -= time;
         return;
     }
-    if (unknown_234 >= 0)
-        unknown_234 -= time;
+    if (strike_anim_time >= 0)
+        strike_anim_time -= time;
     if (act_flags & (ACTF_UNKNOWN_1 | ACTF_UNKNOWN_4)) {
         C_human::AI(time);
         if (base_frame)
             act_mission->scene->SetFrameSectorPos(frame, base_frame->GetWorldPos());
-        if (unknown_1e8 > 0 && unknown_1e8 <= 3 && unknown_1ec)
+        if (weapon_kind > 0 && weapon_kind <= 3 && fire_held)
             Shooting();
         return;
     }
@@ -2514,7 +2520,7 @@ void C_human::Update(uint time)
                     next_anim_id = 0xfd;
                     if (!car->IsSeatLeft(seat))
                         next_anim_id += 3;
-                    if (unknown_1e8 != 1)
+                    if (weapon_kind != 1)
                         next_anim_id += 6;
                     if (!seat)
                         next_anim_id = 0x109;
@@ -2591,11 +2597,11 @@ void C_human::Update(uint time)
     }
 
     // The weapon in hand
-    switch (unknown_1e8) {
+    switch (weapon_kind) {
     case 1:
     case 2:
     case 3:
-        if (unknown_1ec)
+        if (fire_held)
             Shooting();
         break;
     case 0:
@@ -2603,9 +2609,9 @@ void C_human::Update(uint time)
     case 6:
     case 7:
         if ((!car || car->type != ACTOR_CAR || seat == -1) && aimed && !anim_machine.unknown_f4 && action_state != 5 &&
-            !unknown_1ec) {
+            !fire_held) {
             I3D_animation_set *as = NULL;
-            switch (unknown_1e8) {
+            switch (weapon_kind) {
             case 0:
             case 5:
                 // STRING: GAME 0x636a44
@@ -2630,7 +2636,7 @@ void C_human::Update(uint time)
     }
 
     // The frame placed
-    if (!unknown_a36) {
+    if (!death_pos_set) {
         frame->SetPos(pos);
         dir.y = 0.0f;
         dir.Normalize();
@@ -2663,7 +2669,7 @@ void C_human::Update(uint time)
     // The death's position
     if (dead) {
         if (action_state != 4 && (anim_id < 0x93 || anim_id > 0xa2)) {
-            if (unknown_a36)
+            if (death_pos_set)
                 ProcessDeathPos(time);
             else
                 RecompileDeathPos();
@@ -2738,18 +2744,18 @@ void C_human::PersonAnim(float f, bool b1, bool b2)
     bool walk = next_anim_id >= 5 && next_anim_id <= 0x14;
     if (next_anim_id <= 0x5d && b1) {
         if (crouching) {
-            if (unknown_1e8 == 2 || unknown_1e8 == 3)
+            if (weapon_kind == 2 || weapon_kind == 3)
                 add = 0x8000;
-            else if (unknown_1e8 == 1 && aimed)
+            else if (weapon_kind == 1 && aimed)
                 add = 0x4000;
             else
                 add = 0x2000;
-        } else if (unknown_1e8 == 2)
+        } else if (weapon_kind == 2)
             add = aimed ? 0x400 : 0x1000;
-        else if (unknown_1e8 == 3)
+        else if (weapon_kind == 3)
             add = aimed ? 0x800 : 0x1000;
         else
-            add = unknown_1e8 == 1 && aimed ? 0x200 : 0;
+            add = weapon_kind == 1 && aimed ? 0x200 : 0;
     }
     bool idle = next_anim_id == 1;
     bool breath = next_anim_id >= 2 && next_anim_id <= 4;
@@ -2949,11 +2955,11 @@ void C_human::PersonAnim(float f, bool b1, bool b2)
         *side = anim_left ? 'L' : 'R';
     if (next_anim_id == 0x68 || next_anim_id == 0x69) {
         // Onto the box, of the height and length Do_Climb found
-        S_vector scale(unknown_90, unknown_8c, 1.0f);
+        S_vector scale(climb_reach, climb_scale, 1.0f);
         anim_machine.SetAnim(buff, false, false, b2, 4.0f, f, true, false, &scale, true, (uint)-1);
     } else if (next_anim_id == 0x130 || next_anim_id == 0x131) {
         // Over the car
-        S_vector scale(unknown_8c, 1.0f, 1.0f);
+        S_vector scale(climb_scale, 1.0f, 1.0f);
         anim_machine.SetAnim(buff, false, false, b2, 4.0f, f, true, false, &scale, true, (uint)-1);
     } else
         anim_machine.SetAnim(buff, false, false, b2, 4.0f, f, true, false, NULL, true, anim_id);
@@ -3207,7 +3213,7 @@ void C_human::GameInit()
     dead_body_time = -1;
     unknown_a35 = false;
     killed_by_shot = false;
-    unknown_a36 = false;
+    death_pos_set = false;
     stealing_car = NULL;
     unknown_a58 = -1;
     effect_step = 0;
@@ -3221,7 +3227,7 @@ void C_human::GameInit()
     unknown_b4 = 0;
     unknown_b8 = -1;
     speed_limiter = false;
-    unknown_234 = -1;
+    strike_anim_time = -1;
     score_bonus = false;
     unknown_a7a = false;
     unknown_a0 = 0;
@@ -3229,11 +3235,11 @@ void C_human::GameInit()
     unknown_581 = false;
     shut_up = false;
     ab_created = true;
-    unknown_220 = 0;
+    strike_time = 0;
     locked_car = NULL;
     locked_vehicle = NULL;
-    unknown_9ac = 1.0f;
-    unknown_9b0 = 1.0f;
+    shots = 1.0f;
+    hits = 1.0f;
     unknown_9b4 = 1.0f;
     unknown_9b8 = 1.0f;
     unknown_9c0 = 5000;
@@ -3315,11 +3321,11 @@ void C_human::GameInit()
         delete[] anims[i].name;
     anims.clear();
     aimed = false;
-    unknown_21c = false;
-    unknown_1ec = false;
+    throw_swung = false;
+    fire_held = false;
     crouching = false;
-    unknown_228 = 0;
-    unknown_1e8 = 0;
+    strike_index = 0;
+    weapon_kind = 0;
     ground_material = 0;
     tilt = .5f;
     shadow = act_mission->GetGame()->AddFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
@@ -3752,10 +3758,10 @@ bool C_human::Hit(int type, const S_vector &dir, const S_vector &pos, const S_ve
         Do_FuckingBoxDrop();
     if (dead_body)
         Do_DeadBodyDrop();
-    unknown_21c = false;
+    throw_swung = false;
     anim_machine.DelExtendedAnim(4.0f);
     unknown_1fe = false;
-    unknown_1ec = false;
+    fire_held = false;
     aimed = false;
     PoseNullRotate();
     ResetWeaponEffects();
@@ -3950,7 +3956,7 @@ bool C_human::Hit(int type, const S_vector &dir, const S_vector &pos, const S_ve
         if (act->GetType() == ACTOR_ENTITY)
             ((C_entity *)act)->cbHitInfo(type, f, this);
         if (act->GetType() == ACTOR_ENTITY || act->GetType() == ACTOR_PLAYER)
-            ((C_human *)act)->unknown_9b0 += 1.0f;
+            ((C_human *)act)->hits += 1.0f;
     }
     if (properties[HUMAN_PROPERTY_ENERGY] < .01f) {
         act_mission->GetGame()->DeathHumanTalk(this);
@@ -3986,7 +3992,7 @@ bool C_human::Hit(int type, const S_vector &dir, const S_vector &pos, const S_ve
         properties[HUMAN_PROPERTY_ENERGY_LEG_R] = 0.0f;
     if (heavy && part > HIT_PART_LEG_L)
         fall = true;
-    unknown_1ec = false;
+    fire_held = false;
     if (ff_manager.human_effects && act_mission->GetGame()->GetPlayer() == this) {
         float gain = f * .033333f;
         if (gain > 1.0f)
@@ -4255,7 +4261,7 @@ inline void C_human::HitGunHPT(const S_vector &dir, uint part, bool heavy)
 {
     float angle = dir.AngleTo(this->dir);
     int id = -1;
-    switch (unknown_1e8) {
+    switch (weapon_kind) {
     case 0:
         id = 0xe2;
         break;
@@ -4356,7 +4362,7 @@ bool C_human::HitInCar(int type, const S_vector &dir, const S_vector &pos, const
             next_anim_id = car->IsSeatLeft(seat) ? 0x10d : 0x10e;
         else if (!seat)
             next_anim_id = 0x10a;
-        else if (unknown_1e8 == 2 || unknown_1e8 == 3)
+        else if (weapon_kind == 2 || weapon_kind == 3)
             next_anim_id = 0x10c;
         else
             next_anim_id = 0x10b;
@@ -4918,14 +4924,14 @@ void C_human::Movement(uint time)
             break;
         if (aimed) {
             bool can_aim;
-            if (unknown_5e4 != 2 && (can_aim = seat ? unknown_1e8 == 1 || unknown_1e8 == 3 : unknown_1e8 == 1)) {
+            if (unknown_5e4 != 2 && (can_aim = seat ? weapon_kind == 1 || weapon_kind == 3 : weapon_kind == 1)) {
                 if (!car->IsWindowOpen(seat))
                     car->OpenWindow(seat, true);
                 unknown_5e4 = 2;
                 next_anim_id = 0xfb;
                 if (!car->IsSeatLeft(seat))
                     next_anim_id += 3;
-                if (unknown_1e8 != 1)
+                if (weapon_kind != 1)
                     next_anim_id += 6;
                 if (!seat)
                     next_anim_id = 0x107;
@@ -4948,7 +4954,7 @@ void C_human::Movement(uint time)
             next_anim_id = 0xfc;
             if (!car->IsSeatLeft(seat))
                 next_anim_id += 3;
-            if (unknown_1e8 != 1)
+            if (weapon_kind != 1)
                 next_anim_id += 6;
             if (!seat)
                 next_anim_id = 0x108;
@@ -5542,8 +5548,156 @@ int C_human::GetAnimIDForUseCar(bool b1, bool b2, bool b3, bool b4, bool b5, boo
     return id + 0x10f;
 }
 
-// C_HUMAN 0x57e020 Intern_UseCar(C_car *, int)
-// C_HUMAN 0x57e500 Intern_FromCar
+
+// Into the car's seat at once, without the animation (the scripts, the police, the traffic, the saved games): out of
+// his animations, aim and collisions, seated as Intern_UseCar(true) seats him at the animation's end
+// FUNCTION: GAME 0x57e020
+void C_human::Intern_UseCar(C_car *c, int s)
+{
+    if (c->GetNumSeats() <= s || box || dead_body)
+        return;
+    c->SetOwner(this, s, properties[HUMAN_PROPERTY_MASS]);
+    unknown_464 = 0;
+    if (this == act_mission->game->player)
+        C_traffic_generator::PlayerInTaxi(c);
+    C_traffic_generator::VyfunOdTeMasiny(c);
+    anim_machine.DelExtendedAnim(4.0f);
+    Do_Aimed(false);
+    PoseNullRotate();
+    PoseInterpolate(1000);
+    DeactivateColls(false);
+    fire_held = false;
+    next_anim_id = !s ? (c->IsFormula() ? 0xf7 : 0xf6) : 0xf8;
+    PersonAnim(0.0f, true, false);
+    anim_machine.Tick(500);
+    frame->Tick(500);
+    DeactivateColls(false);
+    unknown_b0 = 0;
+    car = c;
+    unknown_a0 = c;
+    if (!s) {
+        c->SetEngineOn(true, false);
+        c->SetSpeedLimit(speed_limiter ? 16 : 1000);
+        if (act_mission->game->player == this)
+            c->auto_gearing = !((C_player *)this)->unknown_adb;
+        else
+            c->auto_gearing = true;
+    }
+    act_mission->game->DelFrameForShadow(frame, SHADOW_TYPE_0);
+    shadow = 0;
+    seat = s;
+    dir = S_vector(0.0f, 0.0f, 1.0f);
+    const S_vector &seat_pos = c->v_seats[s].pos;
+    pos = seat_pos;
+    frame->SetPos(seat_pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    frame->LinkTo(car->frame, 0);
+    frame->Update();
+    action_state = 9;
+    if (act_mission->game->player == this) {
+        act_mission->game->camera.SetCar(c);
+        c->unknown_490 = act_mission->game->camera.unknown_22;
+        c->SetSteeringLinearity(mafiaLoadSave.settings.steering_linearity);
+        if (!seat) {
+            mafiaIndicators.show_flags |= INDF_RADAR | INDF_TACHOMETR;
+            if (speed_limiter)
+                mafiaIndicators.show_flags |= INDF_SPEED_LIMITER;
+            if (C_player::can_car_damage)
+                mafiaIndicators.show_flags |= INDF_CAR_DAMAGE;
+            mafiaIndicators.show_flags &= ~INDF_CROSSHAIR;
+            mafiaIndicators.RadarSetPlayerCar(c);
+        }
+        ((C_player *)this)->fade_alpha = 1.0f;
+        ((C_player *)this)->SetAlpha(1.0f);
+        // The car's lights for the player
+        c->SetIndicatorAuto(true);
+        c->SetLightUnknown800(true);
+        c->SetLightUnknown8000(true);
+        c->SetLight(false);
+        c->SetLightUnknown10(false);
+        c->SetLightUnknown20(false);
+        c->invisible = false;
+        c->SetDynamicCollsOn(true, c->GetUnknown1fac());
+    }
+    inventory.SetInCar(true, NULL);
+    if (weapon_kind == 2 || weapon_kind == 3) {
+        if (!car->IsSeatLeft(seat))
+            ChangeWeaponModel();
+    }
+    if (!seat && weapon_kind == 1 && car->IsSeatLeft(seat))
+        ChangeWeaponModel();
+    if (weapon_model)
+        weapon_model->SetOn(false);
+    if (weapon_model2)
+        weapon_model2->SetOn(false);
+    if (!seat && act_mission->game->shvestky.active)
+        act_mission->game->shvestky.DriveCar(this, c);
+    HideLegs((I3D_model *)frame, true);
+}
+
+
+// Out of the car at once onto the frame (the scripts, the traffic, the garage): placed at its world position and
+// direction, back in the scene with his collisions and shadow, the items the inventory can't keep in hand dropped
+// FUNCTION: GAME 0x57e500
+void C_human::Intern_FromCar(I3D_frame *frm)
+{
+    if (!frm || !car || car->type != ACTOR_CAR || seat == -1)
+        return;
+    if (this == act_mission->GetGame()->player)
+        C_traffic_generator::PlayerInTaxi(NULL);
+    if (act_mission->GetGame()->player == this && aimed) {
+        Do_Aimed(false);
+        ((C_player *)this)->unknown_af5 = false;
+        act_mission->GetGame()->GetCamera().EnableFreeLook(false, false);
+    }
+    C_car *c = car;
+    action_state = 1;
+    if (!seat) {
+        c->SetEngineOn(false, false);
+        if (act_mission->GetGame()->shvestky.active)
+            act_mission->GetGame()->shvestky.DriveCar(this, NULL);
+    }
+    car = NULL;
+    using_car = NULL;
+    pos = frm->GetWorldPos();
+    dir = frm->GetWorldDir();
+    frame->SetPos(pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    frame->LinkTo(act_mission->GetScene()->primary_sector, 0);
+    if (base_frame)
+        act_mission->scene->SetFrameSectorPos(frame, base_frame->GetWorldPos());
+    if (act_mission->GetGame()->player == this)
+        mafiaIndicators.show_flags &= ~(INDF_RADAR | INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE);
+    c->SetOwner(NULL, seat, 0.0f);
+    if (act_mission->GetGame()->initialized) {
+        ActivateColls(0);
+        shadow = act_mission->GetGame()->AddFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
+    }
+    if (act_mission->GetGame()->player == this) {
+        ((C_player *)this)->IndicatorSetAimed();
+        act_mission->GetGame()->GetCamera().SetCar(NULL);
+    }
+    std::vector<S_GameItem> dropped;
+    inventory.SetInCar(false, &dropped);
+    if (dropped.size())
+        DropOutItems(dropped);
+    ChangeWeaponModel();
+    if (weapon_model)
+        weapon_model->SetOn(true);
+    if (weapon_model2)
+        weapon_model2->SetOn(true);
+    anim_machine.StopAnims();
+    anim_machine.Reset();
+    if (alive) {
+        anim_id = 0;
+        next_anim_id = 1;
+        PersonAnim(0.0f, true, false);
+    }
+    HideLegs((I3D_model *)frame, false);
+}
+
 
 // The weapon back in the hands after a reload let it go (PS2 name): in the right hand, a two-handed one held by the
 // left hand's target too, by the right hand's on a car's right seat
@@ -5558,7 +5712,7 @@ void C_human::RepairWeaponPosition()
     if (!unknown_580)
         return;
     unknown_580 = false;
-    if (unknown_1e8 != 2 && unknown_1e8 != 3)
+    if (weapon_kind != 2 && weapon_kind != 3)
         return;
     if (!left_hand || !right_hand)
         return;
@@ -5568,7 +5722,7 @@ void C_human::RepairWeaponPosition()
     weapon_model->Update();
     if (seat != -1 && (using_car && using_car->GetType() == ACTOR_CAR || car && car->GetType() == ACTOR_CAR))
     {
-        if (unknown_1e8 == 2 || unknown_1e8 == 3)
+        if (weapon_kind == 2 || weapon_kind == 3)
         {
             bool left = false;
             if (using_car && using_car->GetType() == ACTOR_CAR && using_car->GetNumSeats() > seat)
@@ -5587,18 +5741,233 @@ void C_human::RepairWeaponPosition()
         }
         else
         {
-            if (unknown_1e8 == 1 && !seat)
+            if (weapon_kind == 1 && !seat)
                 weapon_model->LinkTo(left_hand, 0);
             return;
         }
     }
-    else if (unknown_1e8 != 2 && unknown_1e8 != 3)
+    else if (weapon_kind != 2 && weapon_kind != 3)
         return;
     if (left_hand_target)
         left_hand_target->AddToTarget(weapon_model);
 }
 
-// C_HUMAN 0x57ec20 ChangeWeaponModel
+
+// The weapons in the hands as their models, after the inventory changed (PS2 name): the right hand's weapon, a pistol
+// in the left as the second model, the sounds, the frames a strike hits with, the hands' targets holding a
+// two-handed weapon (as RepairWeaponPosition) and the fire's steps ready
+// FUNCTION: GAME 0x57ec20
+void C_human::ChangeWeaponModel()
+{
+    changing_weapon = false;
+    ResetWeaponEffects();
+    unknown_581 = false;
+    aimed = false;
+    fire_held = false;
+    throw_swung = false;
+    if (this == act_mission->GetGame()->player && action_state != 10)
+        mafiaIndicators.show_flags &= ~INDF_THIEF;
+    anim_machine.DelExtendedAnim(4.0f);
+    unknown_1fc = false;
+    unknown_1fd = false;
+    unknown_1fe = false;
+    strike_anim_time = -1;
+    unknown_580 = false;
+    unknown_581 = false;
+    bool player = act_mission->GetGame()->player == this;
+    if (player && ((C_player *)this)->unknown_af5)
+    {
+        ((C_player *)this)->unknown_af5 = false;
+        act_mission->GetGame()->camera.EnableFreeLook(false, false);
+    }
+    if (type == ACTOR_ENTITY)
+        ((C_entity *)this)->WeaponGetInfo();
+    S_item_def *item = inventory.GetWeaponInRightHand();
+    if (act_mission->GetGame()->player == this && !(item->flags & ITEMF_SCOPE))
+        ((C_player *)this)->SetSniperMode(false);
+    if (act_mission->GetGame()->player == this)
+    {
+        int spare;
+        uint ammo = inventory.GetAmmo(&spare);
+        mafiaIndicators.PlayerSetAmmo(ammo, spare);
+    }
+    if (!weapon_model)
+        return;
+    if (player)
+        ((C_player *)this)->DelAlphaObject(weapon_model);
+    if ((!car || car->GetType() != ACTOR_CAR || seat == -1) && !box && !dead_body)
+    {
+        weapon_model->SetOn(true);
+        weapon_model2->SetOn(true);
+    }
+    if (left_hand_target)
+        left_hand_target->DeleteFromTarget(weapon_model);
+    if (right_hand_target)
+        right_hand_target->DeleteFromTarget(weapon_model);
+    weapon_model->LinkTo(NULL, 0);
+    if (weapon_model2)
+        weapon_model2->LinkTo(NULL, 0);
+    S_item_def *item2 = NULL;
+    if (weapon_model2)
+        item2 = inventory.GetWeaponInLeftHand();
+    weapon_kind = item->kind;
+    if (weapon_sound)
+    {
+        weapon_sound->SetOn(false);
+        sound_table.ConstructSound(weapon_sound, item->unknown_54);
+    }
+    if (unknown_6c4)
+    {
+        unknown_6c4->SetOn(false);
+        sound_table.ConstructSound(unknown_6c4, item->unknown_58);
+    }
+    if (unknown_6c8)
+    {
+        unknown_6c8->SetOn(false);
+        switch (inventory.GetItemInRightHand(NULL))
+        {
+        case GAMEITEM_SHOTGUN:
+            sound_table.ConstructSound(unknown_6c8, SOUND_SHOTGUN_PUMP);
+            break;
+        case GAMEITEM_SPRINGFIELD:
+        case GAMEITEM_MOSIN_NAGANT:
+            sound_table.ConstructSound(unknown_6c8, SOUND_RIFLE_BOLT);
+            break;
+        }
+    }
+    weapon_model->Close();
+    UnlinkAllFrameChild(weapon_model);
+    bool loaded = false;
+    if (strlen(item->model))
+    {
+        loaded = model_cache.Open(weapon_model, item->model, 0, NULL, NULL, NULL) == I3D_OK;
+        if (loaded)
+            weapon_model->SetName("weapon");
+    }
+    S_GameItem *in_hand;
+    inventory.GetItemInRightHand(&in_hand);
+    if (in_hand && in_hand->clip_out)
+        BezZasobnikuWeaponEffect(in_hand->id, weapon_model);
+    if (weapon_model2)
+    {
+        if (player)
+            ((C_player *)this)->DelAlphaObject(weapon_model2);
+        if (strlen(item2->model))
+        {
+            if (model_cache.Open(weapon_model2, item2->model, 0, NULL, NULL, NULL) == I3D_OK)
+            {
+                weapon_model2->SetPos(S_vector(0.0f, 0.0f, 0.0f));
+                weapon_model2->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+                weapon_model2->LinkTo(left_hand, 0);
+                weapon_model2->Update();
+                DebustizeFrame(weapon_model2);
+                NoShadowFrame(weapon_model2);
+                if (player)
+                    ((C_player *)this)->AddAlphaObject(weapon_model2);
+            }
+        }
+    }
+    muzzle = -1;
+    if (!loaded || !left_hand || !right_hand)
+    {
+        cartridge_frame = NULL;
+        shot_frame = NULL;
+    }
+    else
+    {
+        DebustizeFrame(weapon_model);
+        NoShadowFrame(weapon_model);
+        weapon_model->SetPos(S_vector(0.0f, 0.0f, 0.0f));
+        weapon_model->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        weapon_model->LinkTo(right_hand, 0);
+        weapon_model->Update();
+        if (player)
+            ((C_player *)this)->AddAlphaObject(weapon_model);
+        // STRING: GAME 0x636bb0
+        cartridge_frame = weapon_model->FindChildFrame("zaver", ENUMF_ALL);
+        // STRING: GAME 0x636ba8
+        shot_frame = weapon_model->FindChildFrame("muzzle", ENUMF_ALL);
+        if (shot_frame)
+        {
+            muzzle = atoi(shot_frame->GetProperty());
+            if (act_mission->GetGame()->night_mission)
+                muzzle++;
+        }
+        if (seat == -1 || (!using_car || using_car->GetType() != ACTOR_CAR) && (!car || car->GetType() != ACTOR_CAR))
+        {
+            if (weapon_kind == 2 || weapon_kind == 3)
+            {
+            left_target:
+                if (left_hand_target)
+                    left_hand_target->AddToTarget(weapon_model);
+            }
+        }
+        else if (weapon_kind == 2 || weapon_kind == 3)
+        {
+            // On a car's right seat the right hand's target holds it
+            bool left = false;
+            if (using_car && using_car->GetType() == ACTOR_CAR && using_car->GetNumSeats() > seat)
+                left = using_car->IsSeatLeft(seat);
+            if (car && car->GetType() == ACTOR_CAR && car->GetNumSeats() > seat)
+                left = car->IsSeatLeft(seat);
+            if (left)
+                goto left_target;
+            if (right_hand_target)
+            {
+                weapon_model->LinkTo(left_hand, 0);
+                right_hand_target->AddToTarget(weapon_model);
+            }
+        }
+        else if (weapon_kind == 1 && !seat)
+            weapon_model->LinkTo(left_hand, 0);
+    }
+    fire_action = _fire_action_ready_;
+    fire_step = 0;
+    fire_time = 0;
+    if (act_mission->GetGame()->player == this && ff_manager.human_effects)
+    {
+        uint id = inventory.GetItemInRightHand(NULL);
+        if (id == GAMEITEM_SHOTGUN || id == GAMEITEM_SAWED_OFF || id == GAMEITEM_SW_MAGNUM)
+            ff_manager.SetDuration(ff_shot, 120000);
+        else
+            ff_manager.SetDuration(ff_shot, 80000);
+    }
+    striking = false;
+    num_strike_frames = 0;
+    if (!weapon_kind || weapon_kind == 5)
+    {
+        strike_frames[num_strike_frames] = left_hand;
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+        strike_frames[num_strike_frames] = right_hand;
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+    }
+    else if (loaded && (weapon_kind == 6 || weapon_kind == 7))
+    {
+        // STRING: GAME 0x636ba0
+        strike_frames[num_strike_frames] = weapon_model->FindChildFrame("hit1", ENUMF_DUMMY);
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+        // STRING: GAME 0x636b98
+        strike_frames[num_strike_frames] = weapon_model->FindChildFrame("hit2", ENUMF_DUMMY);
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+        // STRING: GAME 0x636b90
+        strike_frames[num_strike_frames] = weapon_model->FindChildFrame("hit3", ENUMF_DUMMY);
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+        // STRING: GAME 0x636b88
+        strike_frames[num_strike_frames] = weapon_model->FindChildFrame("hit4", ENUMF_DUMMY);
+        if (strike_frames[num_strike_frames])
+            num_strike_frames++;
+    }
+    if (!car)
+        act_mission->GetGame()->SetFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0);
+    if (act_mission->GetGame()->player == this)
+        ((C_player *)this)->IndicatorSetAimed();
+}
+
 
 // The weapon taken out or put away (how 0) or thrown away (how 1), with the hands' animation and a sound near the
 // camera (PS2 name; the parameters' names are ours: hide turns the old weapon's model off)
@@ -5620,15 +5989,15 @@ void C_human::Do_ChangeWeapon(int how, bool hide)
         ResetWeaponEffects();
         unknown_581 = false;
         aimed = false;
-        unknown_1ec = false;
-        unknown_21c = false;
+        fire_held = false;
+        throw_swung = false;
         if (this == act_mission->GetGame()->player)
             mafiaIndicators.show_flags &= ~INDF_THIEF;
         anim_machine.DelExtendedAnim(4.0f);
         unknown_1fc = false;
         unknown_1fd = false;
         unknown_1fe = false;
-        unknown_234 = -1;
+        strike_anim_time = -1;
         idle_time = rnd(5000) + 5000;
         breath_time = -1;
         if (act_mission->GetGame()->initialized)
@@ -5757,12 +6126,126 @@ void C_human::InventoryTruncate()
         TruncateAmmo(inventory.unknown_30[i]);
 }
 
-// C_HUMAN 0x57faa0 DropOutItems
+
+// The items thrown out of the hands as dropped weapons where the human stands (PS2 name): each one's model on a
+// C_drop_in_weapon of the game's temporary actors, its ammunition cut to its table's most; true if any was dropped
+// FUNCTION: GAME 0x57faa0
+bool C_human::DropOutItems(std::vector<S_GameItem> &items)
+{
+    if (!right_hand || !left_hand)
+        return false;
+    if (!items.size())
+        return false;
+    idle_time = rnd(5000) + 5000;
+    breath_time = -1;
+    aimed = false;
+    fire_held = false;
+    throw_swung = false;
+    if (this == act_mission->GetGame()->player)
+        mafiaIndicators.show_flags &= ~INDF_THIEF;
+    bool dropped = false;
+    for (int i = items.size(); i--;)
+    {
+        const char *name = gameItemTable[items[i].id].model;
+        if (strlen(name))
+        {
+            I3D_model *model = (I3D_model *)driver->CreateFrame(FRAME_MODEL);
+            if (model)
+            {
+                if (model_cache.Open(model, name, 0, NULL, NULL, NULL) == I3D_OK)
+                {
+                    DebustizeFrame(model);
+                    NoShadowFrame(model);
+                    if (!crouching)
+                        model->SetPos(right_hand->GetWorldPos());
+                    else
+                    {
+                        const S_vector &pos = frame->GetWorldPos();
+                        model->SetPos(S_vector(pos.x, pos.y + .6f, pos.z));
+                    }
+                    model->SetDir(dir, 0.0f);
+                    model->SetScale(S_vector(1.0f, 1.0f, 1.0f));
+                    model->Update();
+                    act_mission->GetScene()->SetFrameSectorPos(model, model->GetWorldPos());
+                    if (!items[i].ammo_loaded)
+                        FakeWeaponEffect(model, items[i].id, true);
+                    if (items[i].clip_out)
+                        BezZasobnikuWeaponEffect(items[i].id, model);
+                    C_drop_in_weapon *weapon = new C_drop_in_weapon;
+                    if (weapon->Init(model))
+                    {
+                    // The sound of the item falling, by its kind
+                    switch (items[i].id)
+                    {
+                    case GAMEITEM_KNUCKLEDUSTER:
+                    case GAMEITEM_KNIFE:
+                    case GAMEITEM_BAR:
+                    case GAMEITEM_CROWBAR:
+                    case GAMEITEM_BOTTLE:
+                    case GAMEITEM_UNKNOWN_31:
+                        weapon->unknown_348 = 0xb;
+                        break;
+                    case GAMEITEM_BASEBALL_BAT:
+                    case GAMEITEM_BOARD:
+                        weapon->unknown_348 = 0xa;
+                        break;
+                    case GAMEITEM_COLT_DETECTIVE:
+                    case GAMEITEM_SW_MAGNUM:
+                    case GAMEITEM_SW_MP:
+                    case GAMEITEM_COLT_1911:
+                        weapon->unknown_348 = 9;
+                        break;
+                    case GAMEITEM_MOLOTOV:
+                    case GAMEITEM_THOMPSON:
+                    case GAMEITEM_SHOTGUN:
+                    case GAMEITEM_SAWED_OFF:
+                    case GAMEITEM_SPRINGFIELD:
+                    case GAMEITEM_MOSIN_NAGANT:
+                        weapon->unknown_348 = 0xc;
+                        break;
+                    case GAMEITEM_GRENADE:
+                        weapon->unknown_348 = 0;
+                        break;
+                    case GAMEITEM_BUCKET:
+                        weapon->unknown_348 = 3;
+                        break;
+                    case GAMEITEM_FLASHLIGHT:
+                        weapon->unknown_348 = 8;
+                        break;
+                    default:
+                        weapon->unknown_348 = -1;
+                        break;
+                    }
+                    S_THING_BOX thing_box;
+                    thing_box.weight = 10.0f;
+                    thing_box.velocity = S_vector(dir.z, .2f, -dir.x);
+                    thing_box.unknown_10 = .45f;
+                    weapon->InitBox(&thing_box);
+                    weapon->item = items[i];
+                    TruncateAmmo(weapon->item);
+                    act_mission->GetGame()->AddTemporaryActor(weapon);
+                    dropped = true;
+                    }
+                    else
+                    {
+                        weapon->Release();
+                        model->LinkTo(NULL, 0);
+                        model->Release();
+                    }
+                }
+                else
+                    model->Release();
+            }
+        }
+    }
+    return dropped;
+}
+
 
 // FUNCTION: GAME 0x5801f0
 C_bridge *C_human::TozNaselJsemTenNejvyssiMost()
 {
-    if (car && car->type == ACTOR_CAR && (car->vehicle_flags >> 25) & 1)
+    if (car && car->type == ACTOR_CAR && car->IsUnknown2000000())
     {
         std::vector<C_actor *> &actors = C_actor::GetGlobalActors();
         for (int i = actors.size(); i--; )
@@ -5780,14 +6263,891 @@ C_bridge *C_human::TozNaselJsemTenNejvyssiMost()
     return NULL;
 }
 
-// C_HUMAN 0x5802f0 Can_DropOutFromCar_Free
-// C_HUMAN 0x5805c0 Can_DropOutFromCar
-// C_HUMAN 0x5808c0 Can_EnterToCar
-// C_HUMAN 0x580ca0 ZasrateLezeniZAuta_ve2rano
-// C_HUMAN 0x581220 ZasrateVybliknutiZAuta_ve3rano
-// C_HUMAN 0x581eb0 Do_ClimbInCarLR
-// C_HUMAN 0x582180 Use_Actor
-// C_HUMAN 0x583590 Do_Shoot
+
+// Whether the human can get out of the car's seat on its free side (Do_ThrowCocotFromCar): the ground found below a
+// point 2.5 m to the seat's side (GetSeatProperty's first flag, +x with it), and room for a sphere there and on the way
+// out, the car's own collision left out
+// FUNCTION: GAME 0x5802f0
+bool C_human::Can_DropOutFromCar_Free(C_car *c, int s)
+{
+    if (!c)
+        return false;
+    bool b1, b2, b3, b4;
+    if (!c->GetSeatProperty(s, b1, b2, b3, b4))
+        return false;
+    S_vector off(2.5f, 0.0f, 0.0f);
+    if (!b1)
+        off.x *= -1.0f;
+    S_matrix m = c->frame->GetMatrix();
+    m(3).x = m(3).y = m(3).z = 0.0f;
+    off *= m;
+    off.y = 0.0f;
+    unknown_6a8.clear();
+    unknown_6a8.push_back((tDynamicCollObject *)c->dyn_coll);
+    gifCollision.DynSetNextCollOwnerMult(&unknown_6a8[0], unknown_6a8.size(), NULL);
+    S_vector pos = c->v_seats[s].pos * c->GetFrame()->GetMatrix();
+    S_vector hit;
+    if (gifCollision.TestLineV(pos + off + S_vector(0.0f, 1.0f, 0.0f), S_vector(0.0f, -2.0f, 0.0f), &hit, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0))
+        pos.y = hit.y + .7f;
+    else
+        pos.y += 1.0f;
+    if (gifCollision.TestSphereB(pos, off, .3f, NULL, NULL, COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    if (gifCollision.TestSphereB(pos + off, S_vector(0.0f, .3f, 0.0f), .3f, NULL, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    return true;
+}
+
+
+// Whether the human can get out of the car he is in from the seat (his own for -1, Use_Actor's): the ground found
+// below a point 1.2 m to the seat's side of him, and room for a sphere there and on the way out, his own collisions
+// and the car's left out
+// FUNCTION: GAME 0x5805c0
+bool C_human::Can_DropOutFromCar(int s)
+{
+    if (s < 0)
+        s = seat;
+    C_car *c = car;
+    if (!c)
+        return false;
+    bool b1, b2, b3, b4;
+    if (!c->GetSeatProperty(s, b1, b2, b3, b4))
+        return false;
+    S_vector off(1.2f, 0.0f, 0.0f);
+    if (!b1)
+        off.x *= -1.0f;
+    S_matrix m = frame->GetMatrix();
+    m(3).x = m(3).y = m(3).z = 0.0f;
+    off *= m;
+    off.y = 0.0f;
+    unknown_6a8.clear();
+    for (int i = num_colls; i--; )
+        unknown_6a8.push_back(colls[i]);
+    unknown_6a8.push_back((tDynamicCollObject *)c->dyn_coll);
+    gifCollision.DynSetNextCollOwnerMult(&unknown_6a8[0], unknown_6a8.size(), NULL);
+    S_vector pos = frame->GetWorldPos();
+    S_vector hit;
+    if (gifCollision.TestLineV(pos + off + S_vector(0.0f, 1.0f, 0.0f), S_vector(0.0f, -2.0f, 0.0f), &hit, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0))
+        pos.y = hit.y + .7f;
+    else
+        pos.y += 1.0f;
+    if (gifCollision.TestSphereB(pos, off, .3f, NULL, NULL, COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    if (gifCollision.TestSphereB(pos + off, S_vector(0.0f, .3f, 0.0f), .3f, NULL, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    return true;
+}
+
+
+// Whether the human, in no car, can get into the car's seat (Use_Actor, the entities' AI): the ground found below a
+// point 1.3 m to the seat's side of the car, room for him there, and with test_line no part of the car between that
+// point and a metre above his own position (the name is ours)
+// FUNCTION: GAME 0x5808c0
+bool C_human::Can_EnterToCar(C_car *c, int s, bool test_line)
+{
+    if (car)
+        return false;
+    bool b1, b2, b3, b4;
+    if (!c->GetSeatProperty(s, b1, b2, b3, b4))
+        return false;
+    S_vector off(1.3f, 0.0f, 0.0f);
+    if (!b1)
+        off.x *= -1.0f;
+    S_matrix m = c->frame->GetMatrix();
+    m(3).x = m(3).y = m(3).z = 0.0f;
+    off *= m;
+    off.y = 0.0f;
+    S_vector pos = c->v_seats[s].pos;
+    pos *= c->frame->GetMatrix();
+    unknown_6a8.clear();
+    for (int i = num_colls; i--; )
+        unknown_6a8.push_back(colls[i]);
+    unknown_6a8.push_back((tDynamicCollObject *)c->dyn_coll);
+    gifCollision.DynSetNextCollOwnerMult(&unknown_6a8[0], unknown_6a8.size(), NULL);
+    S_vector hit;
+    if (gifCollision.TestLineV(pos + off + S_vector(0.0f, 1.0f, 0.0f), S_vector(0.0f, -2.0f, 0.0f), &hit, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0))
+        pos.y = hit.y + .7f;
+    else
+        pos.y += 1.0f;
+    if (gifCollision.TestLineH(pos, off, NULL, NULL, COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    if (gifCollision.TestSphereB(pos + off, S_vector(0.0f, .5f, 0.0f), .3f, NULL, NULL,
+        COLF_UNKNOWN_100 | COLF_UNKNOWN_2, 0)) {
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        return false;
+    }
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (test_line) {
+        // The line from there to a metre above him, in hit again
+        pos += off;
+        I3D_COLLISION col;
+        hit = frame->GetWorldPos() + S_vector(0.0f, 1.0f, 0.0f) - pos;
+        if (act_mission->scene->TestColHierarchy(pos, hit, c->GetFrame(), col, 0, NULL, 0, NULL))
+            return false;
+    }
+    return true;
+}
+
+
+// Getting out of the car the human sits in, beside his seat (Czech: "the crappy climbing out of the car in the
+// morning"): false where he isn't in a car's seat. A car on its roof or side, or a wall beside the seat, throws him out
+// instead (ZasrateVybliknutiZAuta_ve3rano). Out, the car loses its owner, the human his place in it, and the player
+// the car's indicators; the camera looks at him from where it is
+// FUNCTION: GAME 0x580ca0
+bool C_human::ZasrateLezeniZAuta_ve2rano()
+{
+    C_car *c = car;
+    if (!c || c->type != ACTOR_CAR || seat == -1)
+        return false;
+    S_matrix m = c->frame->GetMatrix();
+    m(3).x = m(3).y = m(3).z = 0.0f;
+    S_vector v(0.0f, 1.0f, 0.0f);
+    v *= m;
+    // The car on its side or roof
+    if (v.AngleTo(S_vector(0.0f, -1.0f, 0.0f)) > .55f) {
+        if (v.AngleTo(S_vector(0.0f, 1.0f, 0.0f)) > .7f) {
+            ZasrateVybliknutiZAuta_ve3rano();
+            return true;
+        }
+        return false;
+    }
+    // Beside the seat, on its side of the car
+    v = pos = c->v_seats[seat].pos;
+    if (pos.x < 0.0f) {
+        pos.x = -2.5f;
+        dir = S_vector(-1.0f, 0.0f, 0.0f);
+    } else {
+        pos.x = 2.5f;
+        dir = S_vector(1.0f, 0.0f, 0.0f);
+    }
+    v *= c->frame->GetMatrix();
+    pos *= c->frame->GetMatrix();
+    dir *= m;
+    pos.y += _get_delta_y_(pos);
+    S_vector d = pos - v;
+    d.y = 0.0f;
+    v.y = pos.y + .5f;
+    if (gifCollision.TestLineH(v, d, NULL, NULL, 0, 0)) {
+        ZasrateVybliknutiZAuta_ve3rano();
+        return true;
+    }
+    if (!seat) {
+        c->SetEngineOn(false, false);
+        if (act_mission->game->shvestky.active)
+            act_mission->GetGame()->shvestky.DriveCar(this, NULL);
+    }
+    car = NULL;
+    using_car = NULL;
+    AIManager.police.PanoveKokotPremistujePrdel(this, c, false);
+    frame->SetPos(pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    frame->LinkTo(act_mission->GetScene()->primary_sector, 0);
+    if (base_frame)
+        act_mission->scene->SetFrameSectorPos(frame, base_frame->GetWorldPos());
+    c->SetOwner(NULL, seat, 0.0f);
+    if (act_mission->GetGame()->initialized) {
+        ActivateColls(0);
+        shadow = act_mission->GetGame()->AddFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
+    }
+    if (act_mission->GetGame()->player == this) {
+        ((C_player *)this)->IndicatorSetAimed();
+        mafiaIndicators.show_flags &= ~(INDF_RADAR | INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE | INDF_MAP);
+        act_mission->GetGame()->camera.PushMode();
+        act_mission->GetGame()->camera.SetLookTo(act_mission->GetScene()->GetActiveCamera()->GetWorldPos(), frame);
+    }
+    std::vector<S_GameItem> dropped;
+    inventory.SetInCar(false, &dropped);
+    if (dropped.size())
+        DropOutItems(dropped);
+    ChangeWeaponModel();
+    if (weapon_model)
+        weapon_model->SetOn(true);
+    if (weapon_model2)
+        weapon_model2->SetOn(true);
+    next_anim_id = 0x12f;
+    PersonAnim(0.0f, true, false);
+    anim_machine.SetStageBlendingDir();
+    uint time, length;
+    anim_machine.GetActiveAnimTime(time, length);
+    if (length > 250) {
+        unknown_44c = length - 250;
+        unknown_430.Zero();
+        unknown_43c = 0.0f;
+        action_state = 5;
+    }
+    HideLegs((I3D_model *)frame, false);
+    return true;
+}
+
+
+// Thrown out of the car the human sits in (Czech: "the crappy throwing up out of the car in the morning"): beside the
+// car's front AI point, on the seat's side; where the spheres hit something there, beside the other point on the
+// other side, and failing that on the car's roof above the seat. Out, the car loses its owner, the human his place in
+// it, and the player the car's indicators and camera
+// FUNCTION: GAME 0x581220
+void C_human::ZasrateVybliknutiZAuta_ve3rano()
+{
+    S_vector d;
+    C_car *c = car;
+    if (!c || c->type != ACTOR_CAR || seat == -1)
+        return;
+    const S_vector &ai_front = c->GetAIPos(true);
+    const S_vector &ai_back = c->GetAIPos(false);
+    S_vector wpos = c->GetWorldPos();
+    dir = c->GetWorldDir();
+    d = ai_front - wpos;
+    float len = d.Magnitude();
+    d.Normalize();
+    d *= len + .5f;
+    pos = wpos + d;
+    d.Normalize();
+    d *= .4f;
+    S_vector side = S_vector(-d.z, 0.0f, d.x);
+    if (!c->IsSeatLeft(seat))
+        side *= -1.0f;
+    pos += side;
+    pos.y += _get_delta_y_(pos);
+    S_vector from = pos + S_vector(0.0f, .5f, 0.0f) - dir * 1.3f;
+    int coll1 = gifCollision.TestSphereB(from, dir * 1.6f, .25f, NULL, NULL, COLF_UNKNOWN_2, 0);
+    int coll2 = gifCollision.TestSphereB(pos + S_vector(0.0f, .5f, 0.0f), S_vector(0.0f, .5f, 0.0f), .3f, NULL, NULL,
+        COLF_UNKNOWN_2, 0);
+    if (coll1 || coll2) {
+        // Beside the other point, on the other side
+        d = ai_back - wpos;
+        len = d.Magnitude();
+        d.Normalize();
+        d *= len + .5f;
+        pos = wpos + d;
+        d.Normalize();
+        d *= .4f;
+        S_vector side = S_vector(-d.z, 0.0f, d.x);
+        if (c->IsSeatLeft(seat))
+            side *= -1.0f;
+        pos += side;
+        pos.y += _get_delta_y_(pos);
+        from = pos + S_vector(0.0f, .5f, 0.0f) + dir * 1.3f;
+        coll1 = gifCollision.TestSphereB(from, dir * -1.6f, .25f, NULL, NULL, COLF_UNKNOWN_2, 0);
+        coll2 = gifCollision.TestSphereB(pos + S_vector(0.0f, .5f, 0.0f), S_vector(0.0f, .5f, 0.0f), .3f, NULL, NULL,
+            COLF_UNKNOWN_2, 0);
+        if (coll1 || coll2) {
+            // On the roof
+            pos = c->v_seats[seat].pos;
+            pos *= c->GetFrame()->GetMatrix();
+            pos.y += 1.5f;
+            pos.y += _get_delta_y_(pos);
+        }
+    }
+    if (!seat) {
+        c->SetEngineOn(false, false);
+        if (act_mission->GetGame()->shvestky.active)
+            act_mission->GetGame()->shvestky.DriveCar(this, NULL);
+    }
+    car = NULL;
+    using_car = NULL;
+    AIManager.police.PanoveKokotPremistujePrdel(this, c, false);
+    GetFrame()->SetPos(pos);
+    GetFrame()->SetDir(dir, 0.0f);
+    GetFrame()->Update();
+    GetFrame()->LinkTo(act_mission->GetScene()->primary_sector, 0);
+    if (base_frame)
+        act_mission->scene->SetFrameSectorPos(GetFrame(), base_frame->GetWorldPos());
+    if (act_mission->GetGame()->player == this)
+        mafiaIndicators.show_flags &= ~(INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE | INDF_MAP);
+    c->SetOwner(NULL, seat, 0.0f);
+    if (act_mission->GetGame()->initialized) {
+        ActivateColls(0);
+        shadow = act_mission->GetGame()->AddFrameForShadow(GetFrame(), SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
+    }
+    if (act_mission->GetGame()->player == this) {
+        ((C_player *)this)->IndicatorSetAimed();
+        act_mission->GetGame()->camera.SetCar(NULL);
+        mafiaIndicators.show_flags &= ~(INDF_RADAR | INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE | INDF_MAP);
+    }
+    std::vector<S_GameItem> dropped;
+    inventory.SetInCar(false, &dropped);
+    if (dropped.size())
+        DropOutItems(dropped);
+    ChangeWeaponModel();
+    if (weapon_model)
+        weapon_model->SetOn(true);
+    if (weapon_model2)
+        weapon_model2->SetOn(true);
+    action_state = 1;
+    Do_Breath();
+    PersonAnim(0.0f, true, false);
+    anim_machine.SetStageBlendingDir();
+    HideLegs((I3D_model *)GetFrame(), false);
+}
+
+
+// Over to the seat beside his own in the car (the other of the pair, 0 and 1, 2 and 3), when it is free: false where
+// he can't. Seated at once, he plays the climbing over (0x130 or 0x131), stretched along x by the seats' distance
+// against the track's mixing point; the seat taken at the animation's end (unknown_410 6)
+// FUNCTION: GAME 0x581eb0
+bool C_human::Do_ClimbInCarLR()
+{
+    C_car *c = car;
+    if (!c)
+        return false;
+    if (c->type != ACTOR_CAR)
+        return false;
+    if (seat < 0)
+        return false;
+    int other = seat & 1 ? seat - 1 : seat + 1;
+    if (c->GetOwner(other))
+        return false;
+    if (!seat) {
+        c->SetEngineOn(false, false);
+        if (act_mission->game->shvestky.active)
+            act_mission->game->shvestky.DriveCar(this, NULL);
+        if (act_mission->game->player == this)
+            mafiaIndicators.show_flags &= ~(INDF_RADAR | INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE | INDF_MAP);
+    }
+    dir = S_vector(0.0f, 0.0f, 1.0f);
+    const S_vector &seat_pos = c->v_seats[seat].pos;
+    pos = seat_pos;
+    frame->SetPos(seat_pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    c->SetOwner(NULL, seat, 0.0f);
+    next_anim_id = seat & 1 | 0x130;
+    int index = GetAnimIndex(next_anim_id);
+    if (index >= 0) {
+        char buff[128];
+        strcpy(buff, _anim_info_[index].name);
+        char *ext = strrchr(buff, '.');
+        if (ext)
+            *ext = 0;
+        strcat(buff, ".tck");
+        S_vector mix;
+        C_animations_machine_de_luxe::GetMixingPointOfTCK(buff, mix);
+        float len = (float)fabs(mix.x);
+        S_vector d = c->v_seats[seat].pos - c->v_seats[other].pos;
+        if (len > .1f)
+            climb_scale = (float)fabs(d.x) / len;
+        else
+            climb_scale = 1.0f;
+    }
+    PersonAnim(0.0f, true, false);
+    unknown_410 = 6;
+    c->SetOwner(NULL, seat, 0.0f);
+    c->SetOwner(this, other, properties[HUMAN_PROPERTY_MASS]);
+    seat = other;
+    if (weapon_kind == 2 || weapon_kind == 3)
+        ChangeWeaponModel();
+    if (!seat && weapon_kind == 1)
+        ChangeWeaponModel();
+    return true;
+}
+
+
+// The human uses the actor: a door opens or closes, a turnout switches; a car: into its seat b (how 1, the animation
+// to the seat played, the human the seat's owner; with c the car's own collisions are kept off for a while, unknown_b4)
+// or out of the seat he is in (another how: beside the car, thrown out, or over to the next seat); a rail vehicle: in
+// or out through its nearest entry
+// FUNCTION: GAME 0x582180
+void C_human::Use_Actor(C_actor *act, int how, int b, int c)
+{
+    PoseNullRotate();
+    switch (act->type) {
+    case ACTOR_DOOR: {
+        C_door *door = (C_door *)act;
+        switch (door->state) {
+        case C_door::STATE_CLOSED:
+            door->SetState(C_door::STATE_OPENING, this, true, true);
+            UniversalUse();
+            break;
+        case C_door::STATE_OPEN:
+            door->SetState(C_door::STATE_CLOSING, this, true, true);
+            UniversalUse();
+            break;
+        }
+        car = NULL;
+        break;
+    }
+    case ACTOR_TURNOUT:
+        ((C_turnout *)act)->Start();
+        UniversalUse();
+        break;
+    case ACTOR_CAR: {
+        C_car *vehicle = (C_car *)act;
+        if (act_mission->game->player == this)
+            ((C_player *)this)->SetSniperMode(false);
+        throw_swung = false;
+        if (this == act_mission->game->player)
+            mafiaIndicators.show_flags &= ~INDF_THIEF;
+        if (how == 1) {
+            // Into the seat b
+            if (!vehicle || box || dead_body)
+                break;
+            if (type != ACTOR_ENTITY && !Can_EnterToCar(vehicle, b, true))
+                break;
+            bool b1, b2, b3, door;
+            vehicle->GetSeatProperty(b, b1, b2, b3, door);
+            C_car *c2 = C_traffic_car::SebraliMiKaaaruSvine(vehicle);
+            if (!c2)
+                break;
+            if (c2 != vehicle) {
+                if (door)
+                    c2->OpenDoor(b, 1.0f, true);
+                act_mission->game->shvestky.DezoSebralGumyIRadio(c2);
+            }
+            vehicle = c2;
+            act_mission->game->shvestky.RenamePoliceCar(c2);
+            c2->GetSeatProperty(b, b1, b2, b3, door);
+            seat = b;
+            bool s1, s2, s3, s4;
+            if (!c2->GetSeatProperty(seat, s1, s2, s3, s4))
+                break;
+            int id = GetAnimIDForUseCar(s1, s2, s3, s4, false, c2->seats.size() && !c2->seats[0].unknown_20);
+            S_vector p, d;
+            if (!c2->GetPlacementFromTCK(seat, id, p, d))
+                break;
+            if (this == act_mission->game->player) {
+                C_traffic_generator::PlayerInTaxi(c2);
+                mafiaIndicators.ConsoleAddText(mafiaCarDatabase.GetCarName(mafiaCarDatabase.GetIdxByModel(
+                    c2->model_name)), 0xffffff);
+            }
+            unknown_b4 = c != 0;
+            C_traffic_generator::VyfunOdTeMasiny(c2);
+            anim_machine.DelExtendedAnim(4.0f);
+            Do_Aimed(false);
+            PoseNullRotate();
+            PoseInterpolate(1000);
+            DeactivateColls(false);
+            fire_held = false;
+            using_car = c2;
+            unknown_a0 = c2;
+            pos = p;
+            dir = d;
+            frame->SetPos(p);
+            frame->SetDir(dir, 0.0f);
+            frame->Update();
+            next_anim_id = id;
+            PersonAnim(0.0f, true, false);
+            if (door) {
+                do_snd_car_door = false;
+                ShiftAnimation(0x56);
+                do_snd_car_door = true;
+            }
+            anim_machine.SetLandHeight(_get_delta_nodyn_y_(pos), true);
+            c2->SetOwner(this, seat, properties[HUMAN_PROPERTY_MASS]);
+            c2->LockVehicle(true);
+            c2->SetEnterProtect1(seat, false);
+            unknown_410 = 1;
+            if (act_mission->game->initialized) {
+                act_mission->game->DelFrameForShadow(frame, SHADOW_TYPE_0);
+                shadow = 0;
+            }
+            if (act_mission->game->player == this) {
+                c2->unknown_65 = false;
+                mafiaIndicators.show_flags &= ~INDF_CROSSHAIR;
+                act_mission->game->camera.SetCar(c2);
+                act_mission->game->camera.LezeDoToyoty(true);
+                mafiaIndicators.RadarAddCar(c2, 0xffffffff);
+                ((C_player *)this)->fade_alpha = 1.0f;
+                ((C_player *)this)->SetAlpha(1.0f);
+                mafiaLoadSave.CarIsStolen(c2);
+                act_mission->game->shvestky.DelDoRiciActor(c2);
+            }
+            inventory.SetInCar(true, NULL);
+            if ((weapon_kind == 2 || weapon_kind == 3) && !c2->IsSeatLeft(seat))
+                ChangeWeaponModel();
+            if (!seat && weapon_kind == 1 && c2->IsSeatLeft(0))
+                ChangeWeaponModel();
+            if (weapon_model)
+                weapon_model->SetOn(false);
+            if (weapon_model2)
+                weapon_model2->SetOn(false);
+            if (!seat) {
+                if (act_mission->game->player == this)
+                    c2->auto_gearing = !((C_player *)this)->unknown_adb;
+                else
+                    c2->auto_gearing = true;
+                if (act_mission->game->shvestky.active)
+                    act_mission->game->shvestky.DriveCar(this, c2);
+            }
+        } else {
+            // Out of the seat he is in
+            if (this == act_mission->game->player)
+                C_traffic_generator::PlayerInTaxi(NULL);
+            if (!car || car->type != ACTOR_CAR || seat == -1)
+                break;
+            if (TozNaselJsemTenNejvyssiMost())
+                break;
+            if (act_mission->game->player == this && aimed) {
+                Do_Aimed(false);
+                ((C_player *)this)->unknown_af5 = false;
+                act_mission->game->camera.EnableFreeLook(false, false);
+            }
+            if (ZasrateLezeniZAuta_ve2rano())
+                break;
+            if (Can_DropOutFromCar(-1)) {
+                bool s1, s2, s3, s4;
+                if (!vehicle->GetSeatProperty(seat, s1, s2, s3, s4))
+                    break;
+                action_state = 1;
+                if (!seat) {
+                    vehicle->SetEngineOn(false, false);
+                    if (act_mission->game->shvestky.active)
+                        act_mission->game->shvestky.DriveCar(this, NULL);
+                }
+                vehicle->SetOwner(NULL, seat, 0.0f);
+                vehicle->unknown_2108 = 2000;
+                vehicle->SetEnterProtect1(seat, false);
+                car = NULL;
+                AIManager.police.PanoveKokotPremistujePrdel(this, vehicle, false);
+                using_car = vehicle;
+                S_matrix m = vehicle->frame->GetMatrix();
+                pos = frame->GetPos();
+                dir = frame->GetDir();
+                pos *= m;
+                m(3).x = m(3).y = m(3).z = 0.0f;
+                dir *= m;
+                frame->SetPos(pos);
+                frame->SetDir(dir, 0.0f);
+                frame->Update();
+                frame->LinkTo(act_mission->scene->primary_sector, 0);
+                act_mission->scene->SetFrameSectorPos(frame, base_frame->GetWorldPos());
+                next_anim_id = GetAnimIDForUseCar(s1, s2, s3, s4, true,
+                    vehicle->seats.size() && !vehicle->seats[0].unknown_20);
+                int index = GetAnimIndex(next_anim_id);
+                PersonAnim(0.0f, true, false);
+                unknown_410 = 2;
+                if (act_mission->game->initialized) {
+                    ActivateColls(1);
+                    unknown_a35 = true;
+                }
+                if (index >= 0) {
+                    // The landing's height by the track's end
+                    char name[128];
+                    strcpy(name, _anim_info_[index].name);
+                    char *ext = strrchr(name, '.');
+                    if (ext)
+                        *ext = 0;
+                    strcat(name, ".tck");
+                    S_vector end = pos;
+                    C_animations_machine_de_luxe::GetEndPointOfTCK(name, end);
+                    end *= frame->GetMatrix();
+                    anim_machine.SetLandHeight(_get_delta_nodyn_y_(end));
+                }
+                if (act_mission->game->player == this) {
+                    mafiaIndicators.show_flags &= ~(INDF_RADAR | INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_CAR_DAMAGE |
+                        INDF_MAP);
+                    act_mission->game->camera.LezeDoToyoty(true);
+                }
+                HideLegs((I3D_model *)frame, false);
+            } else {
+                // Over to the next seat, if it is free and he can get out there, else thrown out
+                C_car *c3 = car;
+                int other = seat & 1 ? seat - 1 : seat + 1;
+                if (c3->GetNumSeats() > other && !c3->GetOwner(other) && Can_DropOutFromCar(other)) {
+                    Do_ClimbInCarLR();
+                    unknown_b4 = 2;
+                    return;
+                }
+                ZasrateVybliknutiZAuta_ve3rano();
+                return;
+            }
+        }
+        break;
+    }
+    case ACTOR_RAILWAY: {
+        C_railway *rail = (C_railway *)act;
+        if (act_mission->game->player == this)
+            ((C_player *)this)->SetSniperMode(false);
+        throw_swung = false;
+        if (this == act_mission->game->player)
+            mafiaIndicators.show_flags &= ~INDF_THIEF;
+        S_vector p;
+        if (how == 1) {
+            // In through the nearest entry
+            S_vector d;
+            if (!rail->GetEntry(this, &p, &d, (uint *)&wagon))
+                break;
+            PoseNullRotate();
+            anim_machine.DelExtendedAnim(4.0f);
+            aimed = false;
+            rail->Lock();
+            using_car = (C_car *)rail;
+            pos = p;
+            d.y = 0.0f;
+            d.Normalize();
+            dir = d;
+            frame->SetPos(p);
+            frame->SetDir(dir, 0.0f);
+            frame->Update();
+            if (act_mission->game->initialized) {
+                act_mission->game->DelFrameForShadow(frame, SHADOW_TYPE_0);
+                shadow = 0;
+            }
+            if (rail->unknown_1d8) {
+                next_anim_id = 6;
+                unknown_430 = frame->GetDir();
+                unknown_430.Magnitude();
+                unknown_430 *= 1.5f;
+                unknown_44c = 800;
+                action_state = 5;
+            } else
+                next_anim_id = 0x140;
+            PersonAnim(0.0f, true, false);
+            unknown_410 = 3;
+        } else {
+            // Out through the nearest entry
+            S_vector d;
+            if (!rail->GetEntry(this, &p, &d, (uint *)&wagon))
+                break;
+            rail->Lock();
+            pos = p;
+            d.y = 0.0f;
+            d.Normalize();
+            dir = d;
+            frame->SetPos(p);
+            frame->SetDir(dir, 0.0f);
+            frame->Update();
+            if (rail->unknown_1d8) {
+                next_anim_id = 6;
+                unknown_430 = frame->GetDir();
+                unknown_430.Magnitude();
+                unknown_430 *= 1.5f;
+                unknown_44c = 800;
+                action_state = 5;
+            } else
+                next_anim_id = 0x141;
+            PersonAnim(0.0f, true, false);
+            unknown_410 = 4;
+        }
+        break;
+    }
+    }
+}
+
+
+// A shot or a strike started (b) or let go (PS2 name; the parameters' names are ours): the guns aim and then shoot
+// (Shooting), the thrown weapons swing and throw on the release with a force by how long they were held, the fists and
+// the melee weapons strike, the strikes of a series by the time between them; dir is the target, NULL to keep the last.
+// False while the human carries a box or a body.
+// FUNCTION: GAME 0x583590
+bool C_human::Do_Shoot(bool b, S_vector *dir)
+{
+    if (box || dead_body)
+        return false;
+    if (b) {
+        if (changing_weapon)
+            ChangeWeaponModel();
+        if (unknown_1fe)
+            anim_machine.DelExtendedAnim(4.0f);
+        unknown_1fe = false;
+        switch (weapon_kind) {
+        case 1:
+        case 2:
+        case 3:
+            if (dir)
+                throw_dir = *dir;
+            fire_held = true;
+            if (!aimed) {
+                aimed = true;
+                fire_action = _fire_action_aimed_;
+                fire_step = 0;
+                if (this == act_mission->GetGame()->player)
+                    ((C_player *)this)->aim_time = 3000;
+            } else
+                Shooting();
+            break;
+        case 4:
+            if (!car || car->type != ACTOR_CAR || seat == -1) {
+                if (dir)
+                    throw_dir = *dir;
+                if (!throw_swung) {
+                    throw_time = act_mission->GetGame()->game_time;
+                    I3D_animation_set *as = NULL;
+                    // STRING: GAME 0x636c28
+                    anim_cache.Create("hod vrchem mix75.i3d", &as, NULL, NULL);
+                    if (as) {
+                        anim_machine.SetExtendedAnim(as, .75f, 4.0f, false);
+                        as->Release();
+                    }
+                }
+                throw_swung = true;
+            }
+            break;
+        case 0:
+        case 5:
+        case 6:
+        case 7:
+            if ((!car || car->type != ACTOR_CAR || seat == -1) && strike_anim_time < 0) {
+                aimed = true;
+                if (this == act_mission->GetGame()->player)
+                    ((C_player *)this)->aim_time = 3000;
+                if (!fire_held) {
+                    uint dt = act_mission->GetGame()->game_time - strike_time;
+                    strike_time = act_mission->GetGame()->game_time;
+                    if (dt < 1200)
+                        strike_index++;
+                    else
+                        strike_index = 0;
+                    if (strike_index > 3)
+                        strike_index = 0;
+                }
+                fire_held = true;
+                if (act_mission->GetGame()->game_time - strike_time > 200) {
+                    if (weapon_kind == 7 && !backswing) {
+                        backswing = true;
+                        I3D_animation_set *as = NULL;
+                        // STRING: GAME 0x636c10
+                        anim_cache.Create("boj basb naprah HPT.i3d", &as, NULL, NULL);
+                        if (as) {
+                            anim_machine.SetExtendedAnim(as, .75f, 4.0f, false);
+                            as->Release();
+                        }
+                    }
+                } else
+                    backswing = false;
+            }
+            break;
+        }
+    } else {
+        switch (weapon_kind) {
+        case 1:
+        case 2:
+        case 3:
+            fire_held = false;
+            break;
+        case 4:
+            if (throw_swung) {
+                throw_swung = false;
+                if (this == act_mission->GetGame()->player)
+                    mafiaIndicators.show_flags &= ~INDF_THIEF;
+                int dt = act_mission->GetGame()->game_time - throw_time;
+                if (dt > 400) {
+                    if (dt > 2000)
+                        dt = 2000;
+                    throw_dir.Normalize();
+                    throw_dir *= (dt * .015f) * properties[HUMAN_PROPERTY_STRENGTH];
+                    anim_machine.DelExtendedAnim(4.0f);
+                    next_anim_id = 0xa3;
+                    PersonAnim(0.0f, true, false);
+                    unknown_460 = act_mission->GetGame()->game_time;
+                } else
+                    anim_machine.DelExtendedAnim(4.0f);
+            }
+            break;
+        case 0:
+        case 5:
+            if (fire_held) {
+                uint dt = act_mission->GetGame()->game_time - strike_time;
+                strike_time = act_mission->GetGame()->game_time;
+                if (dt <= 500 && (strike_index != 3 || action_state != 1)) {
+                    if (action_state == 1) {
+                        velocity.Zero();
+                        unknown_43c = 0.0f;
+                        next_anim_id = strike_index + 0xb9;
+                        anim_id = 0;
+                        SetWaitAnim();
+                        anim_machine.DelExtendedAnim(4.0f);
+                    } else if (!anim_machine.IsBlocking())
+                        SetFreeBoxingAnim(strike_index + 0xbf);
+                } else {
+                    velocity.Zero();
+                    unknown_43c = 0.0f;
+                    strike_index = -1;
+                    anim_machine.DelExtendedAnim(4.0f);
+                    C_human *human = NULL;
+                    if (!rnd(2)) {
+                        human = Can_SpecialStroke();
+                        if (human) {
+                            if (!rnd(2)) {
+                                if (!Do_Castrate(human))
+                                    human = NULL;
+                            } else if (!Do_HardHead(human))
+                                human = NULL;
+                            PersonAnim(0.0f, true, false);
+                        }
+                    }
+                    if (!human) {
+                        next_anim_id = 0xbc;
+                        anim_id = 0;
+                        SetWaitAnim();
+                    }
+                }
+            }
+            fire_held = false;
+            break;
+        case 6:
+            if (fire_held) {
+                uint dt = act_mission->GetGame()->game_time - strike_time;
+                strike_time = act_mission->GetGame()->game_time;
+                if (dt <= 500 && strike_index != 3) {
+                    if (action_state == 1) {
+                        velocity.Zero();
+                        unknown_43c = 0.0f;
+                        next_anim_id = strike_index + 0xb2;
+                        anim_id = 0;
+                        SetWaitAnim();
+                        anim_machine.DelExtendedAnim(4.0f);
+                    } else if (!anim_machine.IsBlocking())
+                        SetFreeBoxingAnim(strike_index + 0xb6);
+                } else {
+                    velocity.Zero();
+                    unknown_43c = 0.0f;
+                    strike_index = -1;
+                    next_anim_id = 0xb5;
+                    anim_id = 0;
+                    SetWaitAnim();
+                    anim_machine.DelExtendedAnim(4.0f);
+                }
+            }
+            fire_held = false;
+            break;
+        case 7:
+            if (fire_held) {
+                uint dt = act_mission->GetGame()->game_time - strike_time;
+                strike_time = act_mission->GetGame()->game_time;
+                if (dt <= 500 && strike_index != 3) {
+                    if (action_state == 1) {
+                        velocity.Zero();
+                        unknown_43c = 0.0f;
+                        next_anim_id = strike_index + 0xa9;
+                        anim_id = 0;
+                        SetWaitAnim();
+                        anim_machine.DelExtendedAnim(4.0f);
+                    } else if (!anim_machine.IsBlocking())
+                        SetFreeBoxingAnim(strike_index + 0xae);
+                } else {
+                    velocity.Zero();
+                    unknown_43c = 0.0f;
+                    strike_index = -1;
+                    next_anim_id = 0xac;
+                    anim_id = 0;
+                    SetWaitAnim();
+                    anim_machine.DelExtendedAnim(4.0f);
+                }
+            }
+            fire_held = false;
+            break;
+        }
+    }
+    return true;
+}
+
 
 // FUNCTION: GAME 0x583f40
 bool C_human::Do_ThrowGrenade(S_vector &dir)
@@ -5795,10 +7155,10 @@ bool C_human::Do_ThrowGrenade(S_vector &dir)
     if (!IsReady())
         return false;
     uint id = inventory.GetItemInRightHand(NULL);
-    if (id != 5 && id != 0xf)
+    if (id != GAMEITEM_MOLOTOV && id != GAMEITEM_GRENADE)
         return false;
     throw_dir = dir;
-    unknown_21c = false;
+    throw_swung = false;
     if (this == act_mission->GetGame()->player)
         mafiaIndicators.show_flags &= ~INDF_THIEF;
     anim_machine.DelExtendedAnim(4.0f);
@@ -5882,7 +7242,260 @@ bool C_human::Do_HardHead(C_human *human)
     return true;
 }
 
-// C_HUMAN 0x584620 Shooting
+
+// The strike's animation of the id as the hands' extended animation, for its length (PS2 name; inline on the PC, where
+// Do_Shoot has it expanded)
+inline void C_human::SetFreeBoxingAnim(uint id)
+{
+    int index = GetAnimIndex(id);
+    if (index > -1) {
+        I3D_animation_set *as = NULL;
+        anim_cache.Create(_anim_info_[index].name, &as, NULL, NULL);
+        if (as) {
+            strike_anim_time = as->GetEndTime();
+            anim_machine.SetExtendedAnim(as, 1.0f, 4.0f, true);
+            anim_machine.unknown_10c = true;
+            unknown_22c = false;
+            as->Release();
+        }
+    }
+}
+
+
+// The shot from a car's seat, to its side only (Shooting's; inline, as the starved nested calls of its vector
+// operators show: the name is ours)
+inline void C_human::ShootingInCar()
+{
+    if (unknown_5e8 < 0 && unknown_5e4 == 2) {
+        if (fire_target)
+            throw_dir = fire_target->GetWorldPos();
+        S_vector d = throw_dir - shot_frame->GetWorldPos();
+        S_vector2 d2(d.x, d.z);
+        S_vector dir = frame->GetWorldDir();
+        S_vector2 look2(dir.x, dir.z);
+        float angle = AngleTo2(look2, d2);
+        if (!car->IsSeatLeft(seat))
+            angle *= -1.0f;
+        if (angle < 0.0f)
+            return;
+        if (unknown_580)
+            RepairWeaponPosition();
+        if (act_mission->GetGame()->shvestky.GetActive())
+            act_mission->GetGame()->shvestky.Firing(this);
+        unknown_460 = act_mission->GetGame()->game_time;
+        S_item_def *weapon = inventory.GetWeaponInRightHand();
+        S_vector n = d;
+        n.Normalize();
+        S_vector up(n.z, n.y, -n.x);
+        S_vector side = n.Cross(up);
+        up = side.Cross(n);
+        float a = rnd() * (PI * 2.0f);
+        float r;
+        if (type == ACTOR_PLAYER)
+            r = rnd() * (1.0f - weapon->accuracy * properties[HUMAN_PROPERTY_SHOOTING]);
+        else
+            r = rnd() * (1.0f - weapon->accuracy * properties[HUMAN_PROPERTY_SHOOTING] * .95f);
+        float c = (float)cos(a);
+        float s = (float)sin(a);
+        dir = n + side * s * r + up * c * r;
+        dir.Normalize();
+        dir *= weapon->range;
+        act_mission->GetGame()->NewShoot(this, shot_frame->GetWorldPos(), dir, weapon->power, muzzle,
+            shot_frame, 1);
+        shots += 1.0f;
+        unknown_43c *= .3f;
+        if (act_mission->GetGame()->player == this)
+            ((C_player *)this)->ShootDeAimed(weapon);
+        fire_action = weapon->fire;
+        fire_step = 0;
+        fire_time = 0;
+        inventory.Vystrel();
+        if (inventory.GetItemInRightHand(NULL) == GAMEITEM_SHOTGUN && !inventory.GetAmmo(NULL) &&
+            inventory.MuzeNabitJeden())
+            unknown_1fe = true;
+        if (act_mission->GetGame()->player == this && ff_manager.HasEffects(true)) {
+            ff_manager.Start(ff_shot);
+            ff_manager.SetGain(ff_shot, mafiaLoadSave.settings.ff_player_movement);
+        }
+        if (weapon_sound) {
+            weapon_sound->SetPos(S_vector(0.0f, 1.0f, 0.0f));
+            weapon_sound->Update();
+            if (weapon_sound->IsPlaying(false))
+                weapon_sound->SetCurrTime(0);
+            else
+                weapon_sound->SetOn(true, true);
+        }
+    }
+}
+
+
+// The shot of the weapon in the right hand once its fire's last steps are over (PS2 name): without ammunition the
+// player reloads; from a car's seat only to the seat's side, else unless the target is behind the human (or
+// unknown_1ed), the shot spread about the line to throw_dir by the weapon's accuracy and the human's shooting, the
+// pellets of a close range weapon, the weapon's fire steps started, the round taken, the sound, the force feedback and
+// the hands' fire animation
+// FUNCTION: GAME 0x584620
+void C_human::Shooting()
+{
+    if (fire_action[fire_step].action != FIRE_ACTION_END)
+        return;
+    if (changing_weapon)
+        ChangeWeaponModel();
+    if (!inventory.GetAmmo(NULL)) {
+        if (type == ACTOR_PLAYER) {
+            int spare;
+            inventory.GetAmmo(&spare);
+            if (spare)
+                Do_Reload();
+        }
+        return;
+    }
+    if (!shot_frame)
+        return;
+    if (car && car->type == ACTOR_CAR && seat != -1) {
+        // From the car's seat, to its side only
+        ShootingInCar();
+    } else {
+        if (unknown_580)
+            RepairWeaponPosition();
+        idle_time = rnd(5000) + 5000;
+        breath_time = -1;
+        uint anim = anim_id & 0x1ff;
+        if (anim >= 2 && anim <= 4) {
+            fire_action = _fire_action_aimed_;
+            fire_step = 0;
+            return;
+        }
+        // The cheat's Magnum fires grenades
+        if (inventory.GetItemInRightHand(NULL) == GAMEITEM_SW_MAGNUM &&
+            (bool)(act_mission->GetGame()->cheats & GAMEF_GRENADE_GUN)) {
+            S_vector d = throw_dir - shot_frame->GetWorldPos();
+            d.Normalize();
+            S_vector pos = d + shot_frame->GetWorldPos();
+            d *= 50.0f;
+            act_mission->GetGame()->NewGrenade(NEWGRENADE_SHOT, pos, d, true, NULL);
+            fire_action = inventory.GetWeaponInRightHand()->fire;
+            fire_step = 0;
+            fire_time = 0;
+            return;
+        }
+        if (fire_target)
+            throw_dir = fire_target->GetWorldPos();
+        S_vector d = throw_dir - shot_frame->GetWorldPos();
+        // Not behind the human, unless unknown_1ed
+        if (d.AngleTo(frame->GetWorldDir()) > PI / 2 && !unknown_1ed)
+            return;
+        if (act_mission->GetGame()->shvestky.GetActive())
+            act_mission->GetGame()->shvestky.Firing(this);
+        unknown_460 = act_mission->GetGame()->game_time;
+        S_item_def *weapon = inventory.GetWeaponInRightHand();
+        S_vector n = d;
+        n.Normalize();
+        S_vector up(n.z, n.y, -n.x);
+        S_vector side = n.Cross(up);
+        up = side.Cross(n);
+        float a = rnd() * (PI * 2.0f);
+        float acc = weapon->accuracy;
+        if (act_mission->GetGame()->player == this)
+            acc = 1.0f - ((C_player *)this)->recoil * (1.0f - acc);
+        float r = rnd() * (1.0f - acc * properties[HUMAN_PROPERTY_SHOOTING]);
+        float c = (float)cos(a);
+        float s = (float)sin(a);
+        S_vector shot_dir = n + side * s * r + up * c * r;
+        shot_dir.Normalize();
+        shot_dir *= weapon->range;
+        // The player in the railway's vehicle shoots from the camera
+        I3D_frame *from;
+        if (act_mission->GetGame()->player == this && (unknown_22d || car && car->type == ACTOR_RAILWAY))
+            from = act_mission->GetScene()->GetActiveCamera();
+        else
+            from = shot_frame;
+        S_vector from_pos = from->GetWorldPos();
+        // In the railway's vehicle the shot hits its wagon first
+        C_railway *rail = (C_railway *)car;
+        int shots = (weapon->flags & ITEMF_CLOSE_RANGE) ? 10 : 1;
+        I3D_frame *wagon_frm;
+        if (!rail || rail->type != ACTOR_RAILWAY || !(wagon_frm = rail->GetVagon(wagon)) ||
+            !rail->Hit(HIT_SHOT, shot_dir, from_pos, -shot_dir, weapon->power, this, 0, wagon_frm)) {
+            act_mission->GetGame()->NewShoot(this, from_pos, shot_dir, weapon->power, muzzle, shot_frame,
+                shots);
+            if (!car && act_mission->options.game_effects >= 2)
+                act_mission->GetGame()->AddShootLight(from_pos, 7.0f, 50, 0);
+        }
+        shots += shots;
+        unknown_43c *= .3f;
+        if (act_mission->GetGame()->player == this)
+            ((C_player *)this)->ShootDeAimed(weapon);
+        fire_action = weapon->fire;
+        fire_step = 0;
+        fire_time = 0;
+        inventory.Vystrel();
+        unknown_1fd = false;
+        if (inventory.GetItemInRightHand(NULL) == GAMEITEM_SHOTGUN) {
+            if (inventory.GetAmmo(NULL))
+                pump_time = 500;
+            else if (inventory.MuzeNabitJeden())
+                unknown_1fe = true;
+        }
+        if (inventory.GetItemInRightHand(NULL) == GAMEITEM_COLT_1911) {
+            if (inventory.GetAmmo(NULL))
+                StartWeaponEffect(WEAPON_EFFECT_SHOT);
+            else
+                StartWeaponEffect(WEAPON_EFFECT_LAST_SHOT);
+        }
+        if (act_mission->GetGame()->player == this && ff_manager.human_effects) {
+            ff_manager.Start(ff_shot);
+            ff_manager.SetGain(ff_shot, mafiaLoadSave.settings.ff_player_movement);
+        }
+        if (weapon_sound) {
+            if (car && car->type == ACTOR_CAR && seat == -1)
+                weapon_sound->SetPos(S_vector(0.0f, 1.2f, 2.0f));
+            else if (crouching)
+                weapon_sound->SetPos(S_vector(0.0f, .6f, 1.0f));
+            else
+                weapon_sound->SetPos(S_vector(0.0f, 1.3f, 1.0f));
+            weapon_sound->Update();
+            weapon_sound->SetOn(false, true);
+            weapon_sound->SetOn(true, true);
+        }
+        S_GameItem *item;
+        uint id = inventory.GetItemInRightHand(&item);
+        if (item && !item->ammo_loaded && item->ammo_spare)
+            unknown_581 = true;
+        if (crouching && id == GAMEITEM_THOMPSON)
+            return;
+        // The hands' fire animation, sideways in the strafes
+        int gun = weapon->fire_anim;
+        uint walk = anim_id & 0x1ff;
+        bool strafe = walk == 0xb || walk == 0xc;
+        char name[56];
+        name[0] = 0;
+        if (crouching) {
+            if ((gun == 3 || gun == 4 || gun == 7) && strafe)
+                // STRING: GAME 0x636c8c
+                sprintf(name, "gun0%i drep Fire Straf.i3d", gun);
+            else
+                // STRING: GAME 0x636c74
+                sprintf(name, "gun0%i drep Fire.i3d", gun);
+        } else {
+            if ((gun == 3 || gun == 4 || gun == 7 || gun == 8) && strafe)
+                // STRING: GAME 0x636c58
+                sprintf(name, "gun0%i stoj Fire Straf.i3d", gun);
+            else
+                // STRING: GAME 0x636c40
+                sprintf(name, "gun0%i stoj Fire.i3d", gun);
+        }
+        if (strlen(name)) {
+            I3D_animation_set *as = NULL;
+            anim_cache.Create(name, &as, NULL, NULL);
+            if (as) {
+                anim_machine.SetExtendedAnim(as, .25f, 4.0f, true);
+                as->Release();
+            }
+        }
+    }
+}
+
 
 // FUNCTION: GAME 0x585b40
 void C_human::Do_Reload()
@@ -5891,7 +7504,7 @@ void C_human::Do_Reload()
         return;
     if (fire_action[fire_step].action != FIRE_ACTION_END)
         return;
-    if (unknown_1e8 <= 0 || unknown_1e8 > 3)
+    if (weapon_kind <= 0 || weapon_kind > 3)
         return;
     int spare;
     inventory.GetAmmo(&spare);
@@ -5987,7 +7600,7 @@ int C_human::Do_PlayAnim(const char *anim, bool simple, bool unknown)
     unknown_43c = 0.0f;
     test_ground = false;
     fall = 0.0f;
-    unknown_21c = false;
+    throw_swung = false;
     if (this == act_mission->GetGame()->player)
         mafiaIndicators.show_flags &= ~INDF_THIEF;
     anim_machine.SetAnim(anim, false, false, simple, 4.0f, 0.0f, true, unknown, NULL, true, (uint)-1);
@@ -6018,7 +7631,7 @@ void C_human::Do_Jump()
 {
     if (box || dead_body || car)
         return;
-    unknown_1ec = false;
+    fire_held = false;
     uint id = anim_id & 0x1ff;
     if (id == 5)
     {
@@ -6056,7 +7669,7 @@ void C_human::Do_Jump()
     }
     else if (id == 0xb || id == 0xd)
     {
-        if (unknown_1e8 == 2 || unknown_1e8 == 3)
+        if (weapon_kind == 2 || weapon_kind == 3)
             next_anim_id = 0x64;
         else
             next_anim_id = 0x62;
@@ -6069,7 +7682,7 @@ void C_human::Do_Jump()
     }
     else if (id == 0xc || id == 0xe)
     {
-        if (unknown_1e8 == 2 || unknown_1e8 == 3)
+        if (weapon_kind == 2 || weapon_kind == 3)
             next_anim_id = 0x65;
         else
             next_anim_id = 0x63;
@@ -6082,7 +7695,7 @@ void C_human::Do_Jump()
     }
     if (anim_id != next_anim_id)
     {
-        unknown_21c = false;
+        throw_swung = false;
         idle_time = -1;
         breath_time = -1;
         if (this == act_mission->GetGame()->player)
@@ -6094,7 +7707,129 @@ void C_human::Do_Jump()
     }
 }
 
-// C_HUMAN 0x586400 Do_Climb
+
+// A wall within reach climbed (Do_Jump's): a horizontal line ahead at the knees, else at the waist, finds the wall,
+// none ahead at the head; a line down from above the wall's top finds its top, flat enough and 0.3 to 1.1 m above the
+// feet, with room for the human above him and above the top; he turns to the wall where there is room there too, and
+// climbs with the low or the high animation (0x68 below 0.8 m, else 0x69)
+// FUNCTION: GAME 0x586400
+bool C_human::Do_Climb()
+{
+    if (box || dead_body)
+        return false;
+    S_vector from = pos + S_vector(0.0f, .3f, 0.0f);
+    S_vector wall_dir(0.0f, 0.0f, 0.0f);
+    S_vector d = dir * .7f;
+    S_vector hit_pos, normal, delta;
+    d.Normalize();
+    gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+    g_collision_header *coll = (g_collision_header *)gifCollision.TestLineH(from, d, &hit_pos, &normal,
+        COLF_UNKNOWN_2, 0);
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (!coll) {
+        S_vector from2 = pos + S_vector(0.0f, .7f, 0.0f);
+        gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+        coll = (g_collision_header *)gifCollision.TestLineH(from2, d, &hit_pos, &normal, COLF_UNKNOWN_2, 0);
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        if (!coll)
+            return false;
+        delta = hit_pos - from2;
+        wall_dir = -normal;
+        wall_dir.y = 0.0f;
+        wall_dir.Normalize();
+    } else {
+        // Written in both branches, as PS2 has them (VC6 merges the copies from the delta's copy on)
+        delta = hit_pos - from;
+        wall_dir = -normal;
+        wall_dir.y = 0.0f;
+        wall_dir.Normalize();
+    }
+    // Not onto a human
+    if (coll->flags & COLLHF_UNKNOWN_40) {
+        C_actor *owner = coll->owner;
+        if (owner && (owner->type == ACTOR_PLAYER || owner->type == ACTOR_ENTITY))
+            return false;
+    }
+    from = pos + S_vector(0.0f, 1.2f, 0.0f);
+    d = dir * .5f;
+    d.Normalize();
+    gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+    int hit = gifCollision.TestLineH(from, d, &hit_pos, &normal, COLF_UNKNOWN_2, 0);
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (hit)
+        return false;
+    d.Normalize();
+    from = pos + S_vector(0.0f, 1.2f, 0.0f) + d * .8f;
+    d = S_vector(0.0f, -1.2f, 0.0f);
+    gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+    hit = gifCollision.TestLineV(from, d, &hit_pos, &normal, COLF_UNKNOWN_2, 0);
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (!hit)
+        return false;
+    if (normal.AngleTo(S_vector(0.0f, 1.0f, 0.0f)) > .5f)
+        return false;
+    float height = hit_pos.y - pos.y;
+    if (height < .3f)
+        return false;
+    if (height > 1.1f)
+        return false;
+    from = pos;
+    from.y += .5f;
+    d = S_vector(0.0f, height + 1.0f, 0.0f);
+    gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+    hit = gifCollision.TestSphereB(from, d, .3f, NULL, NULL, COLF_UNKNOWN_2, 0);
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (hit)
+        return false;
+    from = dir * .5f + pos;
+    from.y += height + .5f;
+    d = S_vector(0.0f, 1.0f, 0.0f);
+    gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+    hit = gifCollision.TestSphereB(from, d, .3f, NULL, NULL, COLF_UNKNOWN_2, 0);
+    gifCollision.DynSetNextCollOwner(NULL, NULL);
+    if (hit) {
+        // No room ahead: turned to the wall, if there is room that way
+        from = wall_dir * .5f + pos;
+        from.y += height + .5f;
+        gifCollision.DynSetNextCollOwnerMult(colls, num_colls, NULL);
+        hit = gifCollision.TestSphereB(from, d, .3f, NULL, NULL, COLF_UNKNOWN_2, 0);
+        gifCollision.DynSetNextCollOwner(NULL, NULL);
+        if (hit)
+            return false;
+        dir = wall_dir;
+        frame->SetDir(wall_dir, 0.0f);
+        frame->Update();
+    }
+    float dist = delta.Magnitude();
+    climb_reach = dist < .5f ? 1.0f : dist * 2.5f;
+    if (height < .8f) {
+        next_anim_id = 0x68;
+        climb_scale = height / .6f;
+    } else {
+        next_anim_id = 0x69;
+        climb_scale = height;
+    }
+    if (anim_id != next_anim_id) {
+        throw_swung = false;
+        idle_time = -1;
+        breath_time = -1;
+        if (this == act_mission->GetGame()->player)
+            mafiaIndicators.show_flags &= ~INDF_THIEF;
+        anim_machine.DelExtendedAnim(4.0f);
+        ResetWeaponEffects();
+        unknown_581 = false;
+        if (unknown_6c4)
+            unknown_6c4->SetOn(false);
+        if (unknown_6c8)
+            unknown_6c8->SetOn(false);
+        unknown_43c = 0.0f;
+        unknown_430.Zero();
+        velocity.Zero();
+        PersonAnim(0.0f, true, false);
+    }
+    return true;
+}
+
 
 // FUNCTION: GAME 0x587040
 void C_human::Do_SideJump(const S_vector &pos2, const S_vector &dir2)
@@ -6305,8 +8040,6 @@ void C_human::DoneFFEffects()
     ff_manager.DeleteEffect(ff_fall);
 }
 
-// C_HUMAN 0x587880 DoneFFEffects
-
 // The human dies at once (PS2 name): one of the nine deaths standing, set to its last frame, his weapon dropped and
 // his blood spilt one to three times
 // FUNCTION: GAME 0x5878d0
@@ -6431,11 +8164,671 @@ void C_human::cbCollTester(tDynamicCollObject *obj)
     }
 }
 
-// C_HUMAN 0x587d70 Do_ThrowCocotFromCar
-// C_HUMAN 0x588b40 _intern_ThrowMeFromCar
-// C_HUMAN 0x589140 Do_FuckingBox
-// C_HUMAN 0x589680 Do_FuckingBoxCancel
-// C_HUMAN 0x589c20 Do_DeadBody
+
+// The human (the player) throws the driver out of the car's seat ("cocot", Czech slang for an idiot): placed by the
+// seat's door, outside the car, turned to the side the door opens to, he plays the throw. A player's or an entity's
+// driver is thrown out (an entity gets the event and its script), and screams unless dead; a car of the traffic gets a
+// driver made of the traffic's model, an entity in the car's seat thrown out, dead if the car's driver was killed,
+// else perhaps armed and swearing. False where the seat can't be reached.
+// FUNCTION: GAME 0x587d70
+bool C_human::Do_ThrowCocotFromCar(C_car *car, int seat)
+{
+    if (box || dead_body)
+        return false;
+    if (!Can_DropOutFromCar_Free(car, seat))
+        return false;
+    bool b1, b2, b3, b4;
+    if (!car->GetSeatProperty(seat, b1, b2, b3, b4))
+        return false;
+    S_vector car_dir;
+    car_dir = car->GetWorldDir();
+    S_vector side;
+    side = S_vector(car_dir.z, 0.0f, -car_dir.x);
+    if (b1)
+        side *= -1.0f;
+    side.Normalize();
+    // Beside the seat's door
+    S_vector p;
+    if (b2) {
+        switch (seat) {
+        case 1:
+        case 3:
+            p = S_vector(1.581f, 0.0f, .251f);
+            break;
+        case 2:
+        default:
+            p = S_vector(-1.2517f, 0.0f, -.6723f);
+        }
+    } else {
+        switch (seat) {
+        case 1:
+        case 3:
+            p = S_vector(1.343f, 0.0f, 1.148f);
+            break;
+        case 2:
+        default:
+            p = S_vector(-1.364f, 0.0f, .231f);
+        }
+    }
+    p += car->v_seats[seat].pos;
+    p *= car->frame->GetMatrix();
+    pos = p;
+    dir = side;
+    pos.y += _get_delta_nodyn_y_(pos);
+    frame->SetPos(pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    aimed = false;
+    anim_machine.DelExtendedAnim(4.0f);
+    anim_id = 0;
+    if (b1)
+        next_anim_id = b2 ? 0x133 : 0x132;
+    else
+        next_anim_id = b2 ? 0x132 : 0x133;
+    PersonAnim(0.0f, true, false);
+    if (act_mission->game->shvestky.active)
+        act_mission->game->shvestky.CarSteal(this, true, true);
+    if (car->GetOwner(seat)) {
+        // A player's or an entity's driver
+        if (car->GetOwner(seat)->type == ACTOR_PLAYER || car->GetOwner(seat)->type == ACTOR_ENTITY) {
+            C_human *owner = car->GetOwner(seat);
+            act_mission->game->sledovacka.RemoveCar(car);
+            if (car->GetOwner(seat)->type == ACTOR_ENTITY)
+                ((C_entity *)car->GetOwner(seat))->ForceScript(false);
+            if (car->GetOwner(seat)->type == ACTOR_ENTITY)
+                ((C_entity *)car->GetOwner(seat))->Event(this, ENTITY_EVENT_THROWN_FROM_CAR, NULL);
+            car->GetOwner(seat)->_intern_ThrowMeFromCar();
+            if (!owner->dead)
+                owner->NewScream(rnd(7) + 0xa1);
+        }
+    } else {
+        // A car of the traffic: its driver made an entity
+        bool killed = car->driver_killed;
+        I3D_frame *model = C_traffic_car::Corovacka(car);
+        if (model) {
+            bool male = true;
+            char name[64];
+            I3D_frame *back = model->FindChildFrame("back1", ENUMF_ALL);
+            if (back) {
+                strcpy(name, back->m_pProperty ? back->m_pProperty : "");
+                if (strlen(name) >= 3 && (uchar)(name[0] - 'A') == 1)
+                    male = false;
+            }
+            I3D_model *driver_model = (I3D_model *)driver->CreateFrame(FRAME_MODEL);
+            driver_model->Duplicate(model);
+            driver_model->SetPos(S_vector(0.0f, 0.0f, 0.0f));
+            driver_model->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+            driver_model->Update();
+            driver_model->SetOn(true);
+            act_mission->scene->SetFrameSector(driver_model);
+            C_entity *entity = new C_entity;
+            bool armed = false;
+            if (male) {
+                if (!rnd(3))
+                    armed = true;
+                entity->max_properties[HUMAN_PROPERTY_AGGRESIVITY] = armed ? .75f : .25f;
+            } else
+                entity->max_properties[HUMAN_PROPERTY_AGGRESIVITY] = .25f;
+            if (entity->Init(driver_model)) {
+                entity->voice_type = (male ? 0x1a : 0x1d) + rnd(3);
+                entity->human_type = armed ? 0x40 : 0x80;
+                act_mission->game->AddTemporaryActor(entity);
+                entity->unknown_a7a = true;
+                if (!entity->traffic)
+                    entity->traffic = new S_human_traffic;
+                memset(entity->traffic, 0, sizeof(S_human_traffic));
+                entity->traffic->traffic_frame = true;
+                entity->Intern_UseCar(car, seat);
+                if (killed) {
+                    // Dead in the seat: killed by the hit, his voice kept quiet
+                    int priority = entity->voice_priority;
+                    entity->voice_priority = 1000;
+                    entity->Hit(HIT_UNKNOWN_5, car->GetDir(), car->GetPos(), car->GetDir(),
+                        entity->properties[HUMAN_PROPERTY_ENERGY] + 1.0f, NULL, HIT_PART_BODY, NULL);
+                    entity->SetActState(ACTSTATE_2);
+                    entity->anim_machine.Tick(250);
+                    entity->frame->Tick(250);
+                    entity->anim_machine.Reset();
+                    entity->voice_priority = priority;
+                }
+                entity->_intern_ThrowMeFromCar();
+                entity->Event(this, ENTITY_EVENT_THROWN_FROM_CAR, NULL);
+                car->must_steal = false;
+                act_mission->game->shvestky.AddDoRiciActor(entity);
+                if (!killed) {
+                    if (armed) {
+                        // The item table's 6 with 5 rounds loaded and 30 spare, or its 4
+                        if (!rnd(5)) {
+                            S_GameItem item;
+                            item.id = 6;
+                            item.ammo_loaded = 5;
+                            item.ammo_spare = 30;
+                            item.using_object = NULL;
+                            entity->inventory.Insert(&item, false);
+                        } else if (!rnd(2)) {
+                            S_GameItem item;
+                            item.id = 4;
+                            item.ammo_loaded = 0;
+                            item.ammo_spare = 0;
+                            item.using_object = NULL;
+                            entity->inventory.Insert(&item, false);
+                        }
+                        std::vector<S_GameItem> dropped;
+                        entity->inventory.SetCanHaveBigWeapon(true, &dropped);
+                        entity->inventory.Holster(&dropped, false, false);
+                        entity->ChangeWeaponModel();
+                    }
+                    // He swears: one of the voices 0xa1 to 0xa7 (NewScream's ids) at the driver's model
+                    uint sound = gameVoices[rnd(7) + 0xa1 - 2].sounds[entity->voice_type];
+                    if (sound) {
+                        sprintf(name, "%08lu.wav", sound);
+                        I3D_sound *snd = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+                        if (snd) {
+                            if (sound_cache.Open(snd, name, 0, NULL, NULL, NULL) == I3D_OK) {
+                                snd->SetLoop(false);
+                                snd->SetPos(driver_model->GetWorldPos());
+                                snd->Update();
+                                snd->SetSoundType(I3DSOUND_POINT);
+                                snd->SetRange(1.0f, 30.0f, .4f, .25f);
+                                snd->SetVolume(mafiaLoadSave.settings.speech_volume /
+                                    (mafiaLoadSave.settings.sound_volume + .01f) * .95f + .05f);
+                                snd->SetOutVol(0.0f);
+                                snd->SetOn(true, true);
+                                act_mission->game->Play3DSound(snd);
+                            } else
+                                snd->Release();
+                        }
+                    }
+                }
+            } else {
+                entity->Release();
+                driver_model->Release();
+            }
+        }
+    }
+    return true;
+}
+
+
+// The human thrown out of his car (Do_ThrowCocotFromCar's): the seat emptied (the driver's leaves the car without power
+// or brake), back in the scene where he sits, turned as he sits, and the throw's animation by the seat's side (dead
+// humans their own, and the dead ones left to the game to tick); its track's end gives the landing's height; the
+// player's car indicators and aim off, the police told, the items the car held dropped
+// FUNCTION: GAME 0x588b40
+void C_human::_intern_ThrowMeFromCar()
+{
+    C_car *c = car;
+    if (!c || c->type != ACTOR_CAR)
+        return;
+    if (seat == -1)
+        return;
+    bool b1, b2, b3, b4;
+    if (!c->GetSeatProperty(seat, b1, b2, b3, b4))
+        return;
+    action_state = 1;
+    if (!seat) {
+        c->SetPower(0.0f, true);
+        c->SetBrake(0.0f);
+        if (act_mission->GetGame()->shvestky.active)
+            act_mission->GetGame()->shvestky.DriveCar(this, NULL);
+    }
+    c->SetOwner(NULL, seat, 0.0f);
+    c->unknown_2108 = 2500;
+    using_car = c;
+    car = NULL;
+    S_matrix m = c->frame->GetMatrix();
+    pos = frame->GetPos();
+    dir = frame->GetDir();
+    pos *= m;
+    m(3).x = m(3).y = m(3).z = 0.0f;
+    dir *= m;
+    frame->SetPos(pos);
+    frame->SetDir(dir, 0.0f);
+    frame->Update();
+    frame->LinkTo(act_mission->scene->primary_sector, 0);
+    if (base_frame)
+        act_mission->scene->SetFrameSectorPos(frame, base_frame->GetWorldPos());
+    anim_id = 0;
+    if (alive) {
+        if (act_mission->game->initialized)
+            ActivateColls(0);
+        if (b1)
+            next_anim_id = b2 ? 0x135 : 0x137;
+        else
+            next_anim_id = b2 ? 0x134 : 0x136;
+    } else {
+        act_mission->game->AddDeadHumanForTick(this);
+        c->SetOwner(NULL, seat, 0.0f);
+        car = NULL;
+        if (b1)
+            next_anim_id = b2 ? 0x139 : 0x13b;
+        else
+            next_anim_id = b2 ? 0x138 : 0x13a;
+    }
+    PersonAnim(0.0f, true, false);
+    unknown_410 = 5;
+    int index = GetAnimIndex(next_anim_id);
+    if (index >= 0) {
+        // The landing's height at the end of the throw's track
+        char name[128];
+        strcpy(name, _anim_info_[index].name);
+        char *ext = strrchr(name, '.');
+        if (ext)
+            *ext = 0;
+        strcat(name, ".tck");
+        S_vector end = pos;
+        C_animations_machine_de_luxe::GetEndPointOfTCK(name, end);
+        end *= frame->GetMatrix();
+        anim_machine.SetLandHeight(_get_delta_nodyn_y_(end));
+    }
+    if (act_mission->game->player == this) {
+        mafiaIndicators.show_flags &= ~(INDF_TACHOMETR | INDF_SPEED_LIMITER | INDF_MAP | INDF_CAR_DAMAGE | INDF_RADAR);
+        act_mission->GetGame()->GetCamera().SetCar(NULL);
+        if (aimed) {
+            Do_Aimed(false);
+            ((C_player *)this)->unknown_af5 = false;
+            act_mission->GetGame()->GetCamera().EnableFreeLook(false, false);
+        }
+    }
+    AIManager.police.PanoveKokotPremistujePrdel(this, c, false);
+    HideLegs((I3D_model *)frame, false);
+    std::vector<S_GameItem> dropped;
+    inventory.SetInCar(false, &dropped);
+    if (dropped.size())
+        DropOutItems(dropped);
+    ChangeWeaponModel();
+}
+
+
+// FUNCTION: GAME 0x589140
+bool C_human::Do_FuckingBox(I3D_frame *frm)
+{
+    if (dead_body)
+        return false;
+    if (frm && box)
+        return false;
+    if (!frm && !box)
+        return false;
+    if (!right_hand)
+        return false;
+    if (box)
+    {
+        if (act_mission->GetGame()->GetPlayer() == this)
+            act_mission->GetGame()->BoxPlacementDestSetOU(false, box);
+        box = NULL;
+        // STRING: GAME 0x632228
+        ChangeAnim("breath01a.i3d", NULL);
+        // STRING: GAME 0x632218
+        ChangeAnim("breath01b.i3d", NULL);
+        // STRING: GAME 0x632208
+        ChangeAnim("breath01c.i3d", NULL);
+        // STRING: GAME 0x6321f8
+        ChangeAnim("breath01d.i3d", NULL);
+        // STRING: GAME 0x6321e0
+        ChangeAnim("walk1.i3d", NULL);
+        // STRING: GAME 0x6321d4
+        ChangeAnim("back1.i3d", NULL);
+        // STRING: GAME 0x6321c8
+        ChangeAnim("left1.i3d", NULL);
+        // STRING: GAME 0x6321bc
+        ChangeAnim("right1.i3d", NULL);
+        // STRING: GAME 0x6321a4
+        ChangeAnim("strafL1.i3d", NULL);
+        // STRING: GAME 0x632198
+        ChangeAnim("strafR1.i3d", NULL);
+        // STRING: GAME 0x632154
+        ChangeAnim("walkL1.i3d", NULL);
+        // STRING: GAME 0x632148
+        ChangeAnim("walkR1.i3d", NULL);
+        // STRING: GAME 0x63213c
+        ChangeAnim("backL1.i3d", NULL);
+        // STRING: GAME 0x632130
+        ChangeAnim("backR1.i3d", NULL);
+        anim_id = 0;
+        if (weapon_model)
+            weapon_model->SetOn(true);
+        if (weapon_model2)
+            weapon_model2->SetOn(true);
+        if (act_mission->GetGame()->GetPlayer() == this)
+        {
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D3);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D4);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D7);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D9);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DA);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_0);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_1);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DF);
+        }
+    }
+    else
+    {
+        if (act_mission->GetGame()->GetPlayer() == this)
+            box_index = act_mission->GetGame()->BoxPlacementDestSetOU(true, frm);
+        box = frm;
+        box->SetPos(0.0f, 0.0f, 0.0f);
+        box->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        box->Update();
+        box->LinkTo(right_hand, 0);
+        ChangeAnim("breath01a.i3d",
+            // STRING: GAME 0x636d48
+            "BednaStativ.i3d");
+        ChangeAnim("breath01b.i3d", "BednaStativ.i3d");
+        ChangeAnim("breath01c.i3d", "BednaStativ.i3d");
+        ChangeAnim("breath01d.i3d", "BednaStativ.i3d");
+        ChangeAnim("walk1.i3d",
+            // STRING: GAME 0x636d38
+            "BednaWalk.i3d");
+        ChangeAnim("back1.i3d",
+            // STRING: GAME 0x636d28
+            "BednaBack.i3d");
+        ChangeAnim("left1.i3d",
+            // STRING: GAME 0x636d18
+            "BednaLeft.i3d");
+        ChangeAnim("right1.i3d",
+            // STRING: GAME 0x636d08
+            "BednaRight.i3d");
+        ChangeAnim("strafL1.i3d",
+            // STRING: GAME 0x636cf8
+            "BednaStrafL.i3d");
+        ChangeAnim("strafR1.i3d",
+            // STRING: GAME 0x636ce8
+            "BednaStrafR.i3d");
+        ChangeAnim("walkL1.i3d",
+            // STRING: GAME 0x636cd8
+            "BednaWalkL.i3d");
+        ChangeAnim("walkR1.i3d",
+            // STRING: GAME 0x636cc8
+            "BednaWalkR.i3d");
+        ChangeAnim("backL1.i3d",
+            // STRING: GAME 0x636cb8
+            "BednaBackL.i3d");
+        ChangeAnim("backR1.i3d",
+            // STRING: GAME 0x636ca8
+            "BednaBackR.i3d");
+        anim_id = 0;
+        if (weapon_model)
+            weapon_model->SetOn(false);
+        if (weapon_model2)
+            weapon_model2->SetOn(false);
+        throw_swung = false;
+        if (this == act_mission->GetGame()->GetPlayer())
+            mafiaIndicators.show_flags &= ~INDF_THIEF;
+        anim_machine.DelExtendedAnim(4.0f);
+        ResetWeaponEffects();
+        unknown_581 = false;
+        Do_Aimed(false);
+        fire_held = false;
+        if (act_mission->GetGame()->GetPlayer() == this)
+        {
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D3);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D4);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D7);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D9);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7DA);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_DEAD_BODY_0);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_DEAD_BODY_1);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7DF);
+        }
+    }
+    if (act_mission->GetGame()->GetPlayer() == this)
+        ((C_player *)this)->IndicatorSetAimed();
+    if (!GetCar())
+        act_mission->GetGame()->SetFrameForShadow(GetFrame(), SHADOW_TYPE_0, SHADOW_TYPE_0);
+    return true;
+}
+
+
+// FUNCTION: GAME 0x589680
+bool C_human::Do_FuckingBoxCancel()
+{
+    if (!box || !right_hand)
+        return false;
+    bool found = false;
+    S_vector pos = box->GetWorldPos();
+    std::vector<C_actor *> &actors = C_actor::global_actors;
+    for (int i = actors.size(); i--; )
+    {
+        if (actors[i]->type != ACTOR_CAR)
+            continue;
+        if (actors[i]->act_state == ACTSTATE_2)
+            continue;
+        if ((actors[i]->GetFrame()->GetWorldPos() - pos).Square() < 100.0f)
+        {
+            I3D_bvolume vol = actors[i]->GetFrame()->GetHRBoundVolume();
+            S_matrix m = actors[i]->GetFrame()->GetMatrix();
+            m.Invert();
+            S_vector p = pos;
+            p *= m;
+            if (vol.bbox.min.x - .4f <= p.x && vol.bbox.max.x + .4f >= p.x && vol.bbox.min.y - .4f <= p.y &&
+                vol.bbox.max.y + .4f >= p.y && vol.bbox.min.z - .4f <= p.z && vol.bbox.max.z + .4f >= p.z)
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+    if (found)
+    {
+        I3D_frame *dest = act_mission->GetGame()->BoxPlacementGetEnemyDest(this, box_index);
+        S_vector start;
+        if (!act_mission->GetGame()->BoxPlacement_GetStartPoint(box, start))
+            start = S_vector(0.0f, -10000.0f, 0.0f);
+        S_vector d = pos - start;
+        S_vector e = pos - dest->GetWorldPos();
+        if (d.Square() > e.Square())
+        {
+            if (dest)
+                act_mission->GetGame()->BoxPlacementGetNextDest(box, dest);
+        }
+        else
+        {
+            act_mission->GetGame()->BoxPlacement_RestoreInfo(box);
+            act_mission->GetGame()->BoxPlacementAdd(box, box_index);
+            act_mission->GetGame()->BoxPlacementRecompile();
+        }
+        if (act_mission->GetGame()->GetPlayer() == this)
+            act_mission->GetGame()->BoxPlacementDestSetOU(false, box);
+        box = NULL;
+        ChangeAnim("breath01a.i3d", NULL);
+        ChangeAnim("breath01b.i3d", NULL);
+        ChangeAnim("breath01c.i3d", NULL);
+        ChangeAnim("breath01d.i3d", NULL);
+        ChangeAnim("walk1.i3d", NULL);
+        ChangeAnim("back1.i3d", NULL);
+        ChangeAnim("left1.i3d", NULL);
+        ChangeAnim("right1.i3d", NULL);
+        ChangeAnim("strafL1.i3d", NULL);
+        ChangeAnim("strafR1.i3d", NULL);
+        ChangeAnim("walkL1.i3d", NULL);
+        ChangeAnim("walkR1.i3d", NULL);
+        ChangeAnim("backL1.i3d", NULL);
+        ChangeAnim("backR1.i3d", NULL);
+        anim_id = 0;
+        if (weapon_model)
+            weapon_model->SetOn(true);
+        if (weapon_model2)
+            weapon_model2->SetOn(true);
+        if (act_mission->GetGame()->GetPlayer() == this)
+        {
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D3);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D4);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D7);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D9);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DA);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_0);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_1);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DF);
+        }
+        if (act_mission->GetGame()->GetPlayer() == this)
+            ((C_player *)this)->IndicatorSetAimed();
+        if (!GetCar())
+            act_mission->GetGame()->SetFrameForShadow(GetFrame(), SHADOW_TYPE_0, SHADOW_TYPE_0);
+        return true;
+    }
+    return false;
+}
+
+
+// FUNCTION: GAME 0x589c20
+bool C_human::Do_DeadBody(I3D_frame *frm)
+{
+    if (box)
+        return false;
+    if (frm && dead_body)
+        return false;
+    if (!frm && !dead_body)
+        return false;
+    if (!right_hand)
+        return false;
+    if (dead_body)
+    {
+        dead_body->LinkTo(act_mission->GetScene()->GetPrimarySector(), 1);
+        act_mission->GetScene()->SetFrameSector(dead_body);
+        if (dead_body_human)
+        {
+            dead_body_human->SetPos(dead_body->GetPos());
+            dead_body_human->SetDir(dead_body->GetDir());
+            dead_body_human->using_objects[0].pos = dead_body->GetWorldPos();
+            dead_body_human->using_objects[0].pos.y += .5f;
+            dead_body_human->using_objects[1].pos = dead_body->GetWorldPos();
+            dead_body_human->using_objects[1].pos.y += .5f;
+            act_mission->GetGame()->GetUsingObject().AddObject(&dead_body_human->using_objects[0]);
+            dead_body_time = dead_body_human->Do_PlayAnim("NoseniMrtvolyMrtShozeni.I3D", true, false);
+        }
+        dead_body = NULL;
+        ChangeAnim("breath01a.i3d", NULL);
+        ChangeAnim("breath01b.i3d", NULL);
+        ChangeAnim("breath01c.i3d", NULL);
+        ChangeAnim("breath01d.i3d", NULL);
+        ChangeAnim("walk1.i3d", NULL);
+        ChangeAnim("back1.i3d", NULL);
+        ChangeAnim("left1.i3d", NULL);
+        ChangeAnim("right1.i3d", NULL);
+        ChangeAnim("strafL1.i3d", NULL);
+        ChangeAnim("strafR1.i3d", NULL);
+        ChangeAnim("walkL1.i3d", NULL);
+        ChangeAnim("walkR1.i3d", NULL);
+        ChangeAnim("backL1.i3d", NULL);
+        ChangeAnim("backR1.i3d", NULL);
+        anim_id = 0;
+        if (weapon_model)
+            weapon_model->SetOn(true);
+        if (weapon_model2)
+            weapon_model2->SetOn(true);
+        if (act_mission->GetGame()->GetPlayer() == this)
+        {
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D3);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D4);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D7);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7D9);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DA);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_0);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_DEAD_BODY_1);
+            act_mission->GetGame()->GetUsingObject().DelInvalidItem(USING_ACTION_UNKNOWN_7DF);
+        }
+    }
+    else
+    {
+        dead_body = frm;
+        dead_body->SetPos(0.0f, 0.0f, 0.0f);
+        dead_body->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+        dead_body->Update();
+        dead_body->LinkTo(frame, 0);
+        dead_body_human = NULL;
+        dead_body_time = -1;
+        C_actor **p = GetFrameActor(frm);
+        if (p && *p && ((*p)->type == ACTOR_PLAYER || (*p)->type == ACTOR_ENTITY))
+        {
+            dead_body_human = (C_human *)*p;
+            dead_body_human->anim_machine.Reset();
+            act_mission->GetGame()->GetUsingObject().DelObject(&dead_body_human->using_objects[0]);
+            act_mission->GetGame()->GetUsingObject().DelObject(&dead_body_human->using_objects[1]);
+        }
+        ChangeAnim("breath01a.i3d",
+            // STRING: GAME 0x636e70
+            "NoseniMrtvolyTomStat.I3D");
+        ChangeAnim("breath01b.i3d", "NoseniMrtvolyTomStat.I3D");
+        ChangeAnim("breath01c.i3d", "NoseniMrtvolyTomStat.I3D");
+        ChangeAnim("breath01d.i3d", "NoseniMrtvolyTomStat.I3D");
+        ChangeAnim("walk1.i3d",
+            // STRING: GAME 0x636e54
+            "NoseniMrtvolyTomWalk.I3D");
+        ChangeAnim("back1.i3d",
+            // STRING: GAME 0x636e38
+            "NoseniMrtvolyTomBack.I3D");
+        ChangeAnim("left1.i3d",
+            // STRING: GAME 0x636e1c
+            "NoseniMrtvolyTomLeft.I3D");
+        ChangeAnim("right1.i3d",
+            // STRING: GAME 0x636e00
+            "NoseniMrtvolyTomRight.I3D");
+        ChangeAnim("strafL1.i3d",
+            // STRING: GAME 0x636de4
+            "NoseniMrtvolyTomStrafL.I3D");
+        ChangeAnim("strafR1.i3d",
+            // STRING: GAME 0x636dc8
+            "NoseniMrtvolyTomStrafR.I3D");
+        ChangeAnim("walkL1.i3d",
+            // STRING: GAME 0x636dac
+            "NoseniMrtvolyTomWalkL.I3D");
+        ChangeAnim("walkR1.i3d",
+            // STRING: GAME 0x636d90
+            "NoseniMrtvolyTomWalkR.I3D");
+        ChangeAnim("backL1.i3d",
+            // STRING: GAME 0x636d74
+            "NoseniMrtvolyTomBackL.I3D");
+        ChangeAnim("backR1.i3d",
+            // STRING: GAME 0x636d58
+            "NoseniMrtvolyTomBackR.I3D");
+        anim_id = 0;
+        next_anim_id = 0xa7;
+        PersonAnim(0.0f, true, false);
+        if (weapon_model)
+            weapon_model->SetOn(false);
+        if (weapon_model2)
+            weapon_model2->SetOn(false);
+        S_vector d = act_mission->GetScene()->GetActiveCamera()->GetWorldPos() - GetWorldPos();
+        if (act_mission->options.game_sounds >= 2 && d.Square() < 400.0f)
+        {
+            I3D_sound *sound = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+            if (sound)
+            {
+                sound->SetPos(pos);
+                sound->Update();
+                if (sound_table.ConstructSound(sound, SOUND_UNKNOWN_9F))
+                    act_mission->GetGame()->Play3DSound(sound);
+                else
+                    sound->Release();
+            }
+        }
+        throw_swung = false;
+        if (this == act_mission->GetGame()->GetPlayer())
+            mafiaIndicators.show_flags &= ~INDF_THIEF;
+        anim_machine.DelExtendedAnim(4.0f);
+        ResetWeaponEffects();
+        unknown_581 = false;
+        Do_Aimed(false);
+        fire_held = false;
+        if (act_mission->GetGame()->GetPlayer() == this)
+        {
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D3);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D4);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D7);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7D9);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7DA);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_DEAD_BODY_0);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_DEAD_BODY_1);
+            act_mission->GetGame()->GetUsingObject().AddInvalidItem(USING_ACTION_UNKNOWN_7DF);
+        }
+    }
+    if (act_mission->GetGame()->GetPlayer() == this)
+        ((C_player *)this)->IndicatorSetAimed();
+    if (!GetCar())
+        act_mission->GetGame()->SetFrameForShadow(GetFrame(), SHADOW_TYPE_0, SHADOW_TYPE_0);
+    return true;
+}
+
 
 // The car the human sits in blew up (PS2 name, "my little car in the air"; the parameter's name is ours): the human
 // goes with the wreck, burnt and dead, the death's animation set to its last frame
@@ -6465,7 +8858,7 @@ void C_human::EineMeineKleineAutoInLuft(C_car *wreck)
         next_anim_id = in->IsSeatLeft(seat) ? 0x10d : 0x10e;
     else if (!seat)
         next_anim_id = 0x10a;
-    else if (unknown_1e8 == 2 || unknown_1e8 == 3)
+    else if (weapon_kind == 2 || weapon_kind == 3)
         next_anim_id = 0x10c;
     else
         next_anim_id = 0x10b;
@@ -6556,18 +8949,18 @@ bool C_human::Do_CornerFire(E_corner_view view)
 {
     if (box || dead_body)
         return false;
-    if (unknown_1e8 == 2 || unknown_1e8 == 0)
+    if (weapon_kind == 2 || weapon_kind == 0)
         return false;
     switch (view)
     {
     case CORNER_0:
         next_anim_id = 0x53;
-        if (!crouching && inventory.GetWeaponInRightHand()->unknown_50 == 4)
+        if (!crouching && inventory.GetWeaponInRightHand()->fire_anim == 4)
             next_anim_id = 0x54;
         break;
     case CORNER_1:
         next_anim_id = 0x55;
-        if (!crouching && inventory.GetWeaponInRightHand()->unknown_50 == 4)
+        if (!crouching && inventory.GetWeaponInRightHand()->fire_anim == 4)
             next_anim_id = 0x56;
         break;
     case CORNER_2:
@@ -6588,18 +8981,18 @@ bool C_human::Do_CornerFireAimed(E_corner_view view)
 {
     if (box || dead_body)
         return false;
-    if (unknown_1e8 == 2 || unknown_1e8 == 0)
+    if (weapon_kind == 2 || weapon_kind == 0)
         return false;
     switch (view)
     {
     case CORNER_0:
         next_anim_id = 0x58;
-        if (!crouching && inventory.GetWeaponInRightHand()->unknown_50 == 4)
+        if (!crouching && inventory.GetWeaponInRightHand()->fire_anim == 4)
             next_anim_id = 0x59;
         break;
     case CORNER_1:
         next_anim_id = 0x5a;
-        if (!crouching && inventory.GetWeaponInRightHand()->unknown_50 == 4)
+        if (!crouching && inventory.GetWeaponInRightHand()->fire_anim == 4)
             next_anim_id = 0x5b;
         break;
     case CORNER_2:
@@ -6689,8 +9082,8 @@ void C_human::Activate()
     unknown_2a0 = 0;
     unknown_23c[0].unknown_0 = 3;
     last_hit_time = 0;
-    unknown_9ac = 1.0f;
-    unknown_9b0 = 1.0f;
+    shots = 1.0f;
+    hits = 1.0f;
     unknown_9b4 = 1.0f;
     unknown_9b8 = 1.0f;
     last_hit_render = 0;
@@ -6702,7 +9095,7 @@ void C_human::Activate()
     dead_body_time = -1;
     unknown_a35 = false;
     killed_by_shot = false;
-    unknown_a36 = false;
+    death_pos_set = false;
     stealing_car = NULL;
     unknown_a58 = -1;
     effect_step = 0;
@@ -6716,7 +9109,7 @@ void C_human::Activate()
     unknown_b4 = 0;
     unknown_b8 = -1;
     speed_limiter = false;
-    unknown_234 = -1;
+    strike_anim_time = -1;
     score_bonus = false;
     unknown_a7a = false;
     unknown_a0 = 0;
@@ -6724,7 +9117,7 @@ void C_human::Activate()
     unknown_581 = false;
     shut_up = false;
     ab_created = true;
-    unknown_220 = 0;
+    strike_time = 0;
     locked_car = NULL;
     locked_vehicle = NULL;
     CreateDynColls();
@@ -6732,11 +9125,11 @@ void C_human::Activate()
         delete[] anims[i].name;
     anims.clear();
     aimed = false;
-    unknown_21c = false;
-    unknown_1ec = false;
+    throw_swung = false;
+    fire_held = false;
     crouching = false;
-    unknown_228 = 0;
-    unknown_1e8 = 0;
+    strike_index = 0;
+    weapon_kind = 0;
     ground_material = 0;
     tilt = .5f;
     shadow = act_mission->GetGame()->AddFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
@@ -6875,7 +9268,7 @@ void C_human::ResetActions()
 {
     Do_Crouched(false);
     aimed = false;
-    unknown_1ec = false;
+    fire_held = false;
     if (alive)
     {
         anim_id = 0;
@@ -6890,22 +9283,293 @@ void C_human::ResetActions()
     }
 }
 
-// C_HUMAN 0x58b8d0 RecompileDeathPos
-// C_HUMAN 0x58bf30 Unknown58bf30
-// C_HUMAN 0x58c4f0 Unknown58c4f0
-// C_HUMAN 0x58c980 Unknown58c980
+
+// RecompileDeathPos's helpers, static (PC only, the names are ours; PS2 has their code in RecompileDeathPos): VC6
+// places each after its first caller
+static void SettleOnGround(I3D_frame *frm, S_vector *pts, int num);
+static bool PushOutOfWalls(I3D_frame *frm, S_vector *pts, int num);
+static bool SlideOffEdge(I3D_frame *frm, S_vector neck, S_vector base, S_vector feet);
+
+// The dead body settled onto the ground (PS2 name): the death's animation at its last frame gives the bones neck,
+// r_foot, l_foot and base, a dummy frame in the human's place is moved and turned until they lie on the ground and
+// out of the walls, and the human's frame takes the dummy's rotation and moves to its position in death_length ms
+// (ProcessDeathPos), a third of the animation, at once without one
+// FUNCTION: GAME 0x58b8d0
+void C_human::RecompileDeathPos()
+{
+    static char buff[128];
+    I3D_model *model = (I3D_model *)frame;
+    death_pos_set = true;
+    S_anim_info *af = NULL;
+    int i = anims.size();
+    while (i--) {
+        if (anims[i].id == anim_id) {
+            af = &anims[i];
+            break;
+        }
+    }
+    if (!af) {
+        int index = GetAnimIndex(anim_id);
+        if (index > -1)
+            af = &_anim_info_[index];
+    }
+    bool anim = false;
+    if (af) {
+        strcpy(buff, af->name);
+        char *side = strchr(buff, '?');
+        if (side)
+            *side = anim_left ? 'L' : 'R';
+        I3D_animation_set *set = NULL;
+        anim_cache.Create(buff, &set, NULL, NULL);
+        if (set) {
+            set->SetOptions(I3DANIMOP_ONCE);
+            int end = set->GetEndTime() - 1;
+            death_length = end / 3;
+            model->SetAnimation(set, 3, 1.0f, 0);
+            model->SetAnimBlend(3, 1.0f);
+            set->Release();
+            model->SetAnimTime(3, end);
+            model->Tick(0);
+            model->Update();
+            anim = true;
+        }
+    }
+    bool ok = true;
+    S_vector pts[4];
+    I3D_frame *frm = frame->FindChildFrame("neck", ENUMF_ALL);
+    if (frm)
+        pts[0] = frm->GetWorldPos();
+    else
+        ok = false;
+    frm = frame->FindChildFrame("r_foot", ENUMF_ALL);
+    if (frm)
+        pts[1] = frm->GetWorldPos();
+    else
+        ok = false;
+    frm = frame->FindChildFrame("l_foot", ENUMF_ALL);
+    if (frm)
+        pts[2] = frm->GetWorldPos();
+    else
+        ok = false;
+    frm = frame->FindChildFrame("base", ENUMF_ALL);
+    if (frm)
+        pts[3] = frm->GetWorldPos();
+    else
+        ok = false;
+    S_matrix m = frame->GetMatrix();
+    m.Invert();
+    for (i = 4; i--; )
+        pts[i] *= m;
+    if (anim) {
+        model->SetAnimBlend(3, 0.0f);
+        model->StopAnimation(3);
+        model->Tick(0);
+        model->Update();
+    }
+    death_pos = frame->GetPos();
+    death_move.Zero();
+    death_time = 0;
+    if (ok) {
+        I3D_frame *dummy = driver->CreateFrame(FRAME_DUMMY);
+        if (dummy) {
+            dummy->SetPos(frame->GetPos());
+            dummy->SetRot(frame->GetRot());
+            dummy->Update();
+            dummy->LinkTo(frame->GetParent(), 0);
+            for (i = 2; i--; ) {
+                int j;
+                for (j = 0; j < 2; j++)
+                    SettleOnGround(dummy, pts, 4);
+                if (!PushOutOfWalls(dummy, pts, 4))
+                    break;
+                for (j = 0; j < 2; j++)
+                    SettleOnGround(dummy, pts, 4);
+            }
+            S_vector feet = pts[1] + pts[2];
+            feet *= .5f;
+            if (SlideOffEdge(dummy, pts[0], pts[3], feet))
+                SettleOnGround(dummy, pts, 4);
+            death_move = dummy->GetPos() - death_pos;
+            frame->SetRot(dummy->GetRot());
+            frame->Update();
+            dummy->Release();
+            if (!anim) {
+                death_length = 1;
+                ProcessDeathPos(1);
+            }
+        }
+    } else
+        death_length = -1;
+    if (death_move.Square() > 1.0f && death_move.AngleTo(S_vector(0.0f, 1.0f, 0.0f)) < PI * .2f)
+        death_move.y = 0.0f;
+}
+
+
+// The frame lifted or lowered by the ground's mean height under the points (in its space, 1 above them to 2 below)
+// and turned to the mean normal of the ground less than 63 degrees steep
+// FUNCTION: GAME 0x58bf30
+static void SettleOnGround(I3D_frame *frm, S_vector *pts, int num)
+{
+    S_vector normal(0.0f, 0.0f, 0.0f);
+    float height = 0.0f;
+    float count = 0.0f;
+    for (int i = num; i--; ) {
+        S_vector p = pts[i];
+        p *= frm->GetMatrix();
+        float y = p.y;
+        p.y += 1.0f;
+        S_vector pos, n;
+        if (gifCollision.TestLineV(p, S_vector(0.0f, -3.0f, 0.0f), &pos, &n, (uint)-1, 0)) {
+            height += pos.y - y + pts[i].y;
+            count += 1.0f;
+            if (n.AngleTo(S_vector(0.0f, 1.0f, 0.0f)) < PI * .35f)
+                normal += n;
+        }
+    }
+    if (!(normal.Square() < 1e-16f)) {
+        normal.Normalize();
+        S_matrix m = frm->GetParent()->GetMatrix();
+        m.Invert();
+        m(3).Zero();
+        normal *= m;
+        S_vector dir = frm->GetDir();
+        S_vector side = dir.Cross(normal);
+        dir = normal.Cross(side);
+        frm->m_LocalMatrix.SetDir3(dir, normal);
+        frm->m_FrmFlags = (frm->m_FrmFlags & ~(FRMFLAGS_HR_BOUND_W_VALID | FRMFLAGS_WMAT_VALID |
+            FRMFLAGS_QUAT_VALID | FRMFLAGS_ROT_VALID)) | FRMFLAGS_UPDATE | FRMFLAGS_MAT_VALID;
+    }
+    if (count > 0.0f)
+        height /= count;
+    S_vector p = frm->GetPos();
+    p.y += height;
+    frm->SetPos(p);
+    frm->Update();
+}
+
+
+// The frame moved out of the walls (steeper than 45 degrees) between it and the points: back from the point deepest
+// in one by its depth and 0.3 more; false where no point is in a wall
+// FUNCTION: GAME 0x58c4f0
+static bool PushOutOfWalls(I3D_frame *frm, S_vector *pts, int num)
+{
+    int best = -1;
+    float best_dist = -1.0f;
+    S_vector dir, hit;
+    for (int i = num; i--; ) {
+        S_vector p = pts[i];
+        p *= frm->GetMatrix();
+        S_vector from = frm->GetWorldPos();
+        dir = p - from;
+        from.y += .1f;
+        S_vector pos, normal;
+        if (gifCollision.TestLineH(from, dir, &pos, &normal, (uint)-1, 0) &&
+            normal.AngleTo(S_vector(0.0f, 1.0f, 0.0f)) > PI * .25f) {
+            dir = pos - p;
+            float sq = dir.Square();
+            if (sq > best_dist) {
+                best = i;
+                best_dist = sq;
+                hit = pos;
+            }
+        }
+    }
+    if (best > -1) {
+        S_vector fpos = frm->GetPos();
+        S_vector p = pts[best];
+        p *= frm->GetMatrix();
+        dir = hit - p;
+        float len = dir.Magnitude();
+        dir.Normalize();
+        dir *= len + .3f;
+        fpos += dir;
+        frm->SetPos(fpos);
+        frm->Update();
+        return true;
+    }
+    return false;
+}
+
+
+// The body over an edge (ground within 0.5 under the neck, the base or the feet, but not under all): the frame moved
+// from the side on the ground towards the other as far as a wall lets it; with no ground under any, lowered to the
+// nearest ground within 50 (false for none, or nearer than 0.3); false where the neck and the feet are both on ground
+// FUNCTION: GAME 0x58c980
+static bool SlideOffEdge(I3D_frame *frm, S_vector neck, S_vector base, S_vector feet)
+{
+    neck *= frm->GetMatrix();
+    base *= frm->GetMatrix();
+    feet *= frm->GetMatrix();
+    bool on_neck = gifCollision.TestLineV(neck, S_vector(0.0f, -.5f, 0.0f), NULL, NULL, (uint)-1, 0) != 0;
+    bool on_base = gifCollision.TestLineV(base, S_vector(0.0f, -.5f, 0.0f), NULL, NULL, (uint)-1, 0) != 0;
+    bool on_feet = gifCollision.TestLineV(feet, S_vector(0.0f, -.5f, 0.0f), NULL, NULL, (uint)-1, 0) != 0;
+    if (on_neck && on_base && on_feet)
+        return false;
+    if (on_neck && on_feet)
+        return false;
+    if (!on_neck && !on_base && !on_feet) {
+        float best = 10000.0f;
+        S_vector pos;
+        if (gifCollision.TestLineV(neck, S_vector(0.0f, -50.0f, 0.0f), &pos, NULL, (uint)-1, 0)) {
+            float d = (neck - pos).Square();
+            if (d < best)
+                best = d;
+        }
+        if (gifCollision.TestLineV(base, S_vector(0.0f, -50.0f, 0.0f), &pos, NULL, (uint)-1, 0)) {
+            float d = (base - pos).Square();
+            if (d < best)
+                best = d;
+        }
+        if (gifCollision.TestLineV(feet, S_vector(0.0f, -50.0f, 0.0f), &pos, NULL, (uint)-1, 0)) {
+            float d = (feet - pos).Square();
+            if (d < best)
+                best = d;
+        }
+        if (best < 9999.0f && best > .1f) {
+            S_vector p = frm->GetPos();
+            p.y -= (float)sqrt(best);
+            frm->SetPos(p);
+            frm->Update();
+            return true;
+        }
+        return false;
+    }
+    S_vector from, dir;
+    if (on_neck) {
+        from = neck;
+        if (on_base)
+            dir = base - feet;
+        else
+            dir = neck - feet;
+    } else {
+        from = feet;
+        if (on_base)
+            dir = base - neck;
+        else
+            dir = feet - neck;
+    }
+    S_vector pos;
+    if (gifCollision.TestLineH(from, dir, &pos, NULL, (uint)-1, 0))
+        dir = pos - from;
+    S_vector p = frm->GetPos();
+    p += dir;
+    frm->SetPos(p);
+    frm->Update();
+    return true;
+}
+
 
 // FUNCTION: GAME 0x58cec0
 void C_human::ProcessDeathPos(uint time)
 {
-    int length = unknown_a54;
-    if (length < 0 || unknown_a50 >= length)
+    int length = death_length;
+    if (length < 0 || death_time >= length)
         return;
-    unknown_a50 += time;
-    if (unknown_a50 > length)
-        unknown_a50 = length;
-    float t = (float)unknown_a50 / length;
-    frame->SetPos(unknown_a38 + unknown_a44 * t);
+    death_time += time;
+    if (death_time > length)
+        death_time = length;
+    float t = (float)death_time / length;
+    frame->SetPos(death_pos + death_move * t);
     frame->Update();
 }
 
@@ -7395,6 +10059,11 @@ void C_human::HideLegs(I3D_model *model, bool hide)
 {
 }
 
+// Empty on the PC: its calls go to the empty function the linker folded it into (0x4aabe0)
+void C_human::UniversalUse()
+{
+}
+
 // FUNCTION: GAME 0x58e270
 bool C_human::Can_Hit_FilterHumanType(C_human *shooter, C_human *human)
 {
@@ -7446,150 +10115,5 @@ bool C_human::Can_Hit_FilterHumanType(C_human *shooter, C_human *human)
 // The stubs of the functions not written yet, after all their callers in the file
 
 #pragma auto_inline(off)
-
-// STUB: GAME 0x57e020
-void C_human::Intern_UseCar(C_car *car, int seat)
-{
-    StubLog("C_human::Intern_UseCar");
-}
-
-// STUB: GAME 0x57e500
-void C_human::Intern_FromCar(I3D_frame *frm)
-{
-    StubLog("C_human::Intern_FromCar");
-}
-
-// STUB: GAME 0x57ec20
-void C_human::ChangeWeaponModel()
-{
-    StubLog("C_human::ChangeWeaponModel");
-}
-
-// STUB: GAME 0x57faa0
-bool C_human::DropOutItems(std::vector<S_GameItem> &items)
-{
-    StubLog("C_human::DropOutItems");
-    return false;
-}
-
-// STUB: GAME 0x5802f0
-bool C_human::Can_DropOutFromCar_Free(C_car *car, int i)
-{
-    StubLog("C_human::Can_DropOutFromCar_Free");
-    return false;
-}
-
-// STUB: GAME 0x5805c0
-bool C_human::Can_DropOutFromCar(int i)
-{
-    StubLog("C_human::Can_DropOutFromCar");
-    return false;
-}
-
-// STUB: GAME 0x5808c0
-bool C_human::Can_EnterToCar(C_car *car, int i, bool b)
-{
-    StubLog("C_human::Can_EnterToCar");
-    return false;
-}
-
-// STUB: GAME 0x580ca0
-void C_human::ZasrateLezeniZAuta_ve2rano()
-{
-    StubLog("C_human::ZasrateLezeniZAuta_ve2rano");
-}
-
-// STUB: GAME 0x581220
-void C_human::ZasrateVybliknutiZAuta_ve3rano()
-{
-    StubLog("C_human::ZasrateVybliknutiZAuta_ve3rano");
-}
-
-// STUB: GAME 0x581eb0
-void C_human::Do_ClimbInCarLR()
-{
-    StubLog("C_human::Do_ClimbInCarLR");
-}
-
-// STUB: GAME 0x582180
-bool C_human::Use_Actor(C_actor *act, int a, int b, int c)
-{
-    StubLog("C_human::Use_Actor");
-    return false;
-}
-
-// STUB: GAME 0x583590
-void C_human::Do_Shoot(bool b, S_vector *dir)
-{
-    StubLog("C_human::Do_Shoot");
-}
-
-// STUB: GAME 0x584620
-void C_human::Shooting()
-{
-    StubLog("C_human::Shooting");
-}
-
-// STUB: GAME 0x586400
-bool C_human::Do_Climb()
-{
-    StubLog("C_human::Do_Climb");
-    return false;
-}
-
-// STUB: GAME 0x587d70
-void C_human::Do_ThrowCocotFromCar(C_car *car, int i)
-{
-    StubLog("C_human::Do_ThrowCocotFromCar");
-}
-
-// STUB: GAME 0x588b40
-void C_human::_intern_ThrowMeFromCar()
-{
-    StubLog("C_human::_intern_ThrowMeFromCar");
-}
-
-// STUB: GAME 0x589140
-void C_human::Do_FuckingBox(I3D_frame *frm)
-{
-    StubLog("C_human::Do_FuckingBox");
-}
-
-// STUB: GAME 0x589680
-bool C_human::Do_FuckingBoxCancel()
-{
-    StubLog("C_human::Do_FuckingBoxCancel");
-    return false;
-}
-
-// STUB: GAME 0x589c20
-void C_human::Do_DeadBody(I3D_frame *frm)
-{
-    StubLog("C_human::Do_DeadBody");
-}
-
-// STUB: GAME 0x58b8d0
-void C_human::RecompileDeathPos()
-{
-    StubLog("C_human::RecompileDeathPos");
-}
-
-// STUB: GAME 0x58bf30
-void C_human::Unknown58bf30(int a)
-{
-    StubLog("C_human::Unknown58bf30");
-}
-
-// STUB: GAME 0x58c4f0
-void C_human::Unknown58c4f0(int a)
-{
-    StubLog("C_human::Unknown58c4f0");
-}
-
-// STUB: GAME 0x58c980
-void C_human::Unknown58c980(int a, int b, int c, int d, int e, int f, int g, int h, int i)
-{
-    StubLog("C_human::Unknown58c980");
-}
 
 #pragma auto_inline(on)

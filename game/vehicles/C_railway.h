@@ -44,6 +44,13 @@ public:
     void Unlock();
     // PS2 name; the parameters' names are ours
     void SetRainDummy(bool in, I3D_frame *frm);
+    // The wagon's frame, from 1 (C_human::wagon), the vehicle's own for 0, NULL past the last (PS2 name)
+    I3D_frame *GetVagon(uint wagon);
+    // The entry nearest the actor: its position and direction, and the wagon it leads into, from 1, 0 for the
+    // vehicle itself (PS2 name; the parameters' names are ours); false for none
+    bool GetEntry(C_actor *act, S_vector *pos, S_vector *dir, uint *wagon);
+    // Counts lock_count up (PS2 name), which Unlock counts down
+    void Lock();
 
     uchar unknown_70[0x54];             // 0x70
     // The wagons' frames, the first wagon's [0]: C_human::wagon 1 and up indexes it from 1 (the name is ours)
@@ -57,7 +64,11 @@ public:
     int unknown_1a8;                    // 0x1a8
     uchar unknown_1ac[8];               // 0x1ac
     int unknown_1b4;                    // 0x1b4
-    uchar unknown_1b8[0xd0];            // 0x1b8
+    uchar unknown_1b8[0x20];            // 0x1b8
+    // 0x1d8 (PS2 0x368): set, C_human::Use_Actor walks the human in or out along the frame's direction (animation 6
+    // for 800 ms), else plays animation 0x140 or 0x141
+    bool unknown_1d8;
+    uchar unknown_1d9[0xaf];            // 0x1d9
     int lock_count;                     // 0x288, Unlock's (the name is ours)
     uchar unknown_28c[0x20];            // 0x28c
     // GetMaterialID's, a materials.def index (materialList's; the name is ours)

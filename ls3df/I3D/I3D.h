@@ -619,6 +619,13 @@ public:
     {
         return m_numChildren;
     }
+
+    // The frame's property string, "" for none (the name is ours; the game's alone: C_human::ChangeWeaponModel reads
+    // the number of the weapon's muzzle from it)
+    const char *GetProperty() const
+    {
+        return m_pProperty ? m_pProperty : "";
+    }
 #endif
 
     // Insanity3D's name; the game's, defined at the file's end

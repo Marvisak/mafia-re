@@ -64,6 +64,8 @@ public:
     void SetInCar(bool in, std::vector<S_GameItem> *dropped);
     // The right hand's item's gameItemTable entry, the table's first for an id past its end (PS2 name, 0x607b80)
     S_item_def *GetWeaponInRightHand();
+    // The left hand's (PS2 name)
+    S_item_def *GetWeaponInLeftHand();
     // The inventory in a saved game (the two return true)
     int SaveGameGetSize();
     bool SaveGameSave(void **buf);
@@ -75,6 +77,8 @@ public:
     // ("can load one")
     void Nabij();
     void NabijJeden();
+    // A round taken off the right hand's weapon (Czech "shot", PS2 name): false where it has none
+    bool Vystrel();
     bool MuzeNabitJeden();
 
     int unknown_0;                      // 0x0, 1 from Clear
