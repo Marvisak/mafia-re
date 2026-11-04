@@ -25,7 +25,14 @@ class ITexture;
 // Tick's buttons, which reach the components' Mouse: the buttons down, those pressed shifted by 4 and those released by
 // 8, IGraph's bits (the names are ours)
 #define MENUMOUSE_LEFT 0x1
+#define MENUMOUSE_LEFT_PRESSED 0x10
 #define MENUMOUSE_LEFT_RELEASED 0x100
+
+// RectangleBB's style (the names are ours): the bits that sink its outer and its inner border, lit at the bottom right
+// instead of the top left
+#define BEVEL_RAISED 0x0
+#define BEVEL_OUTER_SUNK 0x1
+#define BEVEL_INNER_SUNK 0x2
 
 // SetCameraTargetID's ids besides those of the main menu's items, which _GM_MainMenuTargets gives a frame each (the
 // names are ours)
@@ -48,6 +55,11 @@ void Rectangle(float x, float y, float sx, float sy, uint color);
 void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
 void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture);
 void Triangle(float x, float y, float sx, float sy, uint direction, uint color);
+// A bevelled frame on the rectangle (PS2's, a global function of g_menu.cpp, 0x5e91b0, a stub in g_m_comps.cpp for
+// now): an outer border on its edges and an inner one a pixel inside, each a line list lit at the top left
+// (0x3fffffff, the bottom and right 0xaf000000), or the other way round where the style (BEVEL_*) sinks it. PS2's
+// RectangleBB__FffffUi; the PC's takes the style in ecx (/Gr) and pops the four floats (ret 0x10).
+void RectangleBB(float x, float y, float sx, float sy, uint style);
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
 
@@ -322,7 +334,7 @@ public:
 // ?OnMouse@GM_Menu@@UAEHHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
-// ?OnKey@GM_GunShop@@UAEHEI@Z
+// ?Key@GM_NetPlayer@@UAEIII@Z
 
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md

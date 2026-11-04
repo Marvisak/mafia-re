@@ -374,6 +374,9 @@
 // LIBRARY: GAME 0x611d52 SYMBOL
 // __exit
 
+// LIBRARY: GAME 0x611f31 SYMBOL
+// __snprintf
+
 // LIBRARY: GAME 0x6120c0 SYMBOL
 // __CIpow
 
