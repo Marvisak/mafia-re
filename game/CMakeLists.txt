@@ -86,6 +86,10 @@ add_executable(game WIN32
     ui/Load_progress.cpp
     Main.cpp
     mission/C_cutscene_records.cpp
+    collision/g_c_glob.cpp
+    collision/g_c_line.cpp
+    collision/g_c_linebs.cpp
+    collision/g_c_sph.cpp
     collision/g_colls.cpp
     g_lines.cpp
     actors/C_ShotSkeleton.cpp
@@ -188,6 +192,9 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
     # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
     target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
+    # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
+    # (g_c_glob.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)
     # The bottles' AbsoluteImpulse, which C_game's NewExplosion, NewCartidge and NewGrenade call (C_bottle.cpp)
     target_link_options(game PRIVATE /INCLUDE:?AbsoluteImpulse@C_bottle@@QAEXAAUS_vector@@@Z)
     # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the saved games', the AI's, the animations'),

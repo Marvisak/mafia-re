@@ -481,10 +481,10 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameSave@C_stone@@UAE_NPAPAX@Z
+// ?LoadData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveData@C_actor@@UAE_NPAVC_chunk@@@Z
+// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
 // ?SaveGameGetSize@C_stone@@UAEHXZ

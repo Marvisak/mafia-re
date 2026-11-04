@@ -7,9 +7,21 @@
 
 class I3D_frame;
 
+struct I3D_bbox;
+
 struct S_matrix;
 
 struct S_vector;
+
+struct tCBoxParam;
+
+struct tCollTreeLevel;
+
+struct tCollisionLevel;
+
+struct tDynamicPolicko;
+
+struct g_volume_triface;
 
 struct tgcPanak2;
 
@@ -26,6 +38,11 @@ struct tgcPanak2;
 
 // tDynamicCollObject::type (the name is ours, by value): a human's two spheres
 #define DYNCOLL_UNKNOWN_42 0x42
+// The other types BoxInDynamic tests (the names are ours, by value): 0x40 and 0x44 by the sphere, as 0x42, and 0x41
+// by the box
+#define DYNCOLL_UNKNOWN_40 0x40
+#define DYNCOLL_UNKNOWN_41 0x41
+#define DYNCOLL_UNKNOWN_44 0x44
 // tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
 // one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
 // of a dead human only and leaves out the lower one while the human's lower_coll_off is set
@@ -42,7 +59,9 @@ struct tDynamicCollObject
     uint type;                          // 0x0, DYNCOLL_* (the name is ours)
     I3D_frame *frame;                   // 0x4, the frame it is the collision of (the name is ours)
     uint flags;                         // 0x8, DYNCOLLF_* (the name is ours)
-    uchar unknown_c[4];
+    // 0xc, the cell of the moving objects' grid it is in, NULL while it is in none (the name is ours): DynInsert puts it
+    // into the cell of its sphere's position, DynErase takes it out
+    tDynamicPolicko *cell;
     // 0x10, the sphere around it, an I3D_bsphere (bytes, as the box): the detector's Update sets it, DynUpdate finds
     // the object's cell by its position (the name is ours); its radius is the float at 0xc
     uchar bsphere[0x10];
@@ -97,22 +116,15 @@ struct tDynamicPolicko
     std::vector<tDynamicCollObject *> objects; // 0x8
 };
 
-// The grid of the moving objects' cells (the names are ours): only what DynOptimizeTick, DynWipeOut and
-// DeleteCollsLevel use is known so far
+// The grid of the moving objects' cells (0x1c bytes, the names are ours), which LoadCollision lays over the level's
+// bounds: an object's cell is the one its sphere's position falls in, the last row and column taking what lies beyond
 struct S_dyn_grid
 {
-    uchar unknown_0[0x10];
-    int width;                          // 0x10, the cells in a row
-    int height;                         // 0x14, the rows
+    float min_x, min_z;                 // 0x0, the level's
+    float cell_size_x, cell_size_z;     // 0x8
+    uint width;                         // 0x10, the cells in a row
+    uint height;                        // 0x14, the rows
     tDynamicPolicko **cells;            // 0x18, row by row, NULL where a cell has no objects
-};
-
-// The level's collisions, LoadCollision's (PS2 0x3e4, the names are ours): only what DeleteCollsLevel frees is known so
-// far
-struct S_coll_level
-{
-    uchar unknown_0[0x2c];
-    uchar *unknown_2c;                  // 0x2c, an array
 };
 
 // The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2c8 bytes (the constructor's last
@@ -122,8 +134,8 @@ class g_collision
 public:
     // Its copy is the file's last function before the file's end (0x5c4fa0)
     // FUNCTION: GAME 0x5c4fa0
-    g_collision() : level(0), dyn_grid(NULL), unknown_2b0(0), unknown_2b4(0), unknown_2b8(0), unknown_2bc(0),
-        step_actor(NULL)
+    g_collision() : level(0), dyn_grid(NULL), next_coll_callback(0), next_coll_owner(0), next_coll_owners(0),
+        num_next_coll_owners(0), step_actor(NULL)
     {
     }
 
@@ -143,6 +155,8 @@ public:
     // collision hit, a g_collision_header, 0 for none, as TestLineV's
     int TestLineVInnerDyn(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
+    int _TestLineVInnerDyn(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
+        uint flags2);
     int _TestLineV(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
     // A horizontal line (PS2 names), the same way; TestLineH is the wrapper of _TestLineH
@@ -155,13 +169,25 @@ public:
     int TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags);
     // The level's collisions of a frame into colls (PS2 name), and their number
     uint FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls);
-    // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize")
-    bool LoadCollision(const char *name, bool);
+    // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize"), and with dyn the moving objects'
+    // grid over it (the parameters' names are ours; PS2's returns nothing either)
+    void LoadCollision(const char *name, bool dyn);
+    // A box moved from one matrix to the other (PS2 names and parameters, their names ours): nonzero where it hits the
+    // level or a moving object. TestDBox is the wrapper of _TestDBox, PS2's g_colls.cpp's as the other wrappers.
+    bool TestDBox(const I3D_bbox &bbox, const S_matrix &m0, const S_matrix &m1, const S_vector &dir,
+        const S_vector &v1, const S_vector &v2, uint flags, uint flags2);
+    bool _TestDBox(const I3D_bbox &bbox, const S_matrix &m0, const S_matrix &m1, const S_vector &dir,
+        const S_vector &v1, const S_vector &v2, uint flags, uint flags2);
+    // _TestDBox's tests of the moving objects, a cell's volumes and a volume that isn't a face (PS2 names)
+    bool BoxInDynamic(tCBoxParam &p);
+    bool BoxInTreeLevel(tCollTreeLevel *cell, tCBoxParam &p);
+    bool BoxInNonFace(g_volume_triface *vol, tCBoxParam &p);
     // A line from from along dir against the moving objects' collisions (PS2 name; PS2's takes one more uint): the
     // object hit, NULL for none, its place into pos and the normal into normal
     tDynamicCollObject *TestLineHDynamic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal,
         uint flags);
-    // The objects the next test leaves out, and the callback it asks (PS2 names; the callback's type is ours)
+    // The objects the next test leaves out, and the callback it asks (PS2 names; PS2's callback takes the object and the
+    // sphere test's tCSphereParam and returns a gcCallbackRet, ours is a void * until the tests show its values)
     void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback);
     void DynSetNextCollOwner(tDynamicCollObject *obj, void *callback);
     // A line from from along dir against the collisions of a vehicle a human is in (PS2 name): the collision hit, as
@@ -192,17 +218,19 @@ public:
     void DeleteCollsLevel();
 
     uchar unknown_0[0x284];
-    S_coll_level *level;                // 0x284 (PS2 0x3e4; the name is ours)
-    uchar unknown_288[4];               // 0x288
+    tCollisionLevel *level;             // 0x284 (PS2 0x3e4; the name is ours)
+    uint level_size;                    // 0x288, the bytes LoadCollision read into it (the name is ours)
     S_dyn_grid *dyn_grid;               // 0x28c (PS2 0x3ec; the names are ours, as the next two's)
     // 0x290, the cells taken out of the grid once empty (PS2 0x3f0, its gif::vector<tDynamicPolicko *, 8>)
     std::vector<tDynamicPolicko *> free_cells;
     // 0x2a0, the cells to check, which DynOptimizeTick empties (PS2 0x3fc)
     std::vector<tDynamicPolicko *> dyn_queue;
-    int unknown_2b0;                    // 0x2b0
-    int unknown_2b4;                    // 0x2b4
-    int unknown_2b8;                    // 0x2b8
-    int unknown_2bc;                    // 0x2bc
+    // 0x2b0, what DynSetNextCollOwner and DynSetNextCollOwnerMult set (the names are ours, after them): the callback,
+    // the one object (0x2b4) that DynSetNextCollOwner points the list at, the list (0x2b8) and its count (0x2bc)
+    void *next_coll_callback;
+    tDynamicCollObject *next_coll_owner;
+    tDynamicCollObject **next_coll_owners;
+    uint num_next_coll_owners;
     uchar unknown_2c0[4];               // 0x2c0
     // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
     // otherwise (the name is ours)
