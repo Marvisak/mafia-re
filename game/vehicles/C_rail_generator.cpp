@@ -37,17 +37,17 @@ bool C_rail_generator::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x5966a0
-void C_rail_generator::SaveData(C_chunk *chunk)
+bool C_rail_generator::SaveData(C_chunk *chunk)
 {
     StubLog("C_rail_generator::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x596710
-void C_rail_generator::LoadData(C_chunk *chunk)
+bool C_rail_generator::LoadData(C_chunk *chunk)
 {
     StubLog("C_rail_generator::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x596860

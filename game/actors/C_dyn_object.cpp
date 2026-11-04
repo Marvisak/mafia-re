@@ -62,17 +62,17 @@ void C_dyn_object::GameDone()
 }
 
 // STUB: GAME 0x419b20
-void C_dyn_object::SaveData(C_chunk *chunk)
+bool C_dyn_object::SaveData(C_chunk *chunk)
 {
     StubLog("C_dyn_object::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x419b80
-void C_dyn_object::LoadData(C_chunk *chunk)
+bool C_dyn_object::LoadData(C_chunk *chunk)
 {
     StubLog("C_dyn_object::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x419c70

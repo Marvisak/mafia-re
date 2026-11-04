@@ -43,17 +43,17 @@ bool C_racecam::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x5962b0
-void C_racecam::SaveData(C_chunk *chunk)
+bool C_racecam::SaveData(C_chunk *chunk)
 {
     StubLog("C_racecam::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x5962e0
-void C_racecam::LoadData(C_chunk *chunk)
+bool C_racecam::LoadData(C_chunk *chunk)
 {
     StubLog("C_racecam::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x596360

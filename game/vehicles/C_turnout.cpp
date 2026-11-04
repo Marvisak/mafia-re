@@ -32,17 +32,17 @@ bool C_turnout::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x4bc4a0
-void C_turnout::SaveData(C_chunk *chunk)
+bool C_turnout::SaveData(C_chunk *chunk)
 {
     StubLog("C_turnout::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x4bc600
-void C_turnout::LoadData(C_chunk *chunk)
+bool C_turnout::LoadData(C_chunk *chunk)
 {
     StubLog("C_turnout::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x4bc830

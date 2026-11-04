@@ -46,17 +46,17 @@ void C_car_ex::GameDone()
 }
 
 // STUB: GAME 0x42f110
-void C_car_ex::LoadData(C_chunk *chunk)
+bool C_car_ex::LoadData(C_chunk *chunk)
 {
     StubLog("C_car_ex::LoadData");
-    C_car::LoadData(chunk);
+    return C_car::LoadData(chunk);
 }
 
 // STUB: GAME 0x42f130
-void C_car_ex::SaveData(C_chunk *chunk)
+bool C_car_ex::SaveData(C_chunk *chunk)
 {
     StubLog("C_car_ex::SaveData");
-    C_car::SaveData(chunk);
+    return C_car::SaveData(chunk);
 }
 
 // STUB: GAME 0x42f390

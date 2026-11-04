@@ -463,7 +463,7 @@ void C_car::SetEnterProtect1(int seat, bool on)
     else
         enter_protect &= ~bit;
     wake_request = true;
-    SetActState(ACTSTATE_0);
+    SetActState(ACTSTATE_ACTIVE);
 }
 
 // Each wheel's collision flag into colls or out of it, at most num of them (PS2 names)
@@ -543,17 +543,17 @@ void C_car::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x41df80
-void C_car::SaveData(C_chunk *chunk)
+bool C_car::SaveData(C_chunk *chunk)
 {
     StubLog("C_car::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x41e070
-void C_car::LoadData(C_chunk *chunk)
+bool C_car::LoadData(C_chunk *chunk)
 {
     StubLog("C_car::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x41ed00

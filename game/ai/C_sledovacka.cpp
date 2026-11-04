@@ -117,9 +117,9 @@ void C_sledovacka::Tick(uint time)
     for (i = elements.size(); i--;)
     {
         S_ELEMENT &e = elements[i];
-        if (e.car->act_state == ACTSTATE_1)
+        if (e.car->act_state == ACTSTATE_INACTIVE)
             continue;
-        if (e.car->act_state == ACTSTATE_2)
+        if (e.car->act_state == ACTSTATE_NONE)
             e.status = 2;
         if (e.status)
             continue;

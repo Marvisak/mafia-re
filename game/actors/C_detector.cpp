@@ -76,12 +76,12 @@ void C_detector::GameDone()
 
 // A byte nothing reads, the dword at 0xd8, then the script, as PS2's
 // FUNCTION: GAME 0x432b20
-void C_detector::LoadData(C_chunk *chunk)
+bool C_detector::LoadData(C_chunk *chunk)
 {
     uchar unknown;
     chunk->Read(&unknown, sizeof(unknown));
     chunk->Read(&human_types, sizeof(human_types));
-    LoadSourceCode(chunk);
+    return LoadSourceCode(chunk);
 }
 
 #pragma auto_inline(off)
@@ -205,7 +205,7 @@ void C_detector::Process(uint time)
     // Inactive where the script runs no other's code
     case CMD_PROGRAM_STORAGE:
         if (!saved_code)
-            SetActState(ACTSTATE_2);
+            SetActState(ACTSTATE_NONE);
         else
             NextCommand(NULL);
         break;
@@ -246,7 +246,7 @@ void C_detector::Process(uint time)
         if (!dyn_colls)
         {
             wait_for_hit = true;
-            SetActState(ACTSTATE_1);
+            SetActState(ACTSTATE_INACTIVE);
             EraseColls();
             CreateColls(false);
         }
@@ -297,10 +297,10 @@ void C_detector::CreateUO(int unknown, bool unknown2)
 #pragma auto_inline(off)
 
 // STUB: GAME 0x432ac0
-void C_detector::SaveData(C_chunk *chunk)
+bool C_detector::SaveData(C_chunk *chunk)
 {
     StubLog("C_detector::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x433020

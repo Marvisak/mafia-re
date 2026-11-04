@@ -141,7 +141,7 @@ public:
 #define HUMAN_ACTION_WAIT 5             // waiting action_time out, still moved by last_velocity (SetWaitAnim's)
 #define HUMAN_ACTION_STEPS 6            // the animation steps, anim_steps: the hits, the agony and the deaths
 #define HUMAN_ACTION_AGONY 7            // the agony, action_time long, then agony_count more or the death
-#define HUMAN_ACTION_DEAD 8             // dead: ACTSTATE_2 once dead_time is out
+#define HUMAN_ACTION_DEAD 8             // dead: ACTSTATE_NONE once dead_time is out
 #define HUMAN_ACTION_CAR 9              // seated in the car: only then the script's car tests count him in it
 #define HUMAN_ACTION_STEAL 10           // stealing stealing_car (C_player), action_time more
 #define HUMAN_ACTION_JUMP 11            // a jump (Do_Jump) until he lands or falls
@@ -322,7 +322,7 @@ float _get_delta_y_(S_vector &pos);
 float _get_delta_nodyn_y_(S_vector &pos);
 
 // SYNTHETIC: GAME 0x56f330
-// ??1ai_loc@@QAE@XZ
+// ??1ai_logs@@QAE@XZ
 
 // The saved game's data of a human, after C_actor's (C_human::SaveGameSave's and SaveGameLoad's), 0x17e bytes, packed:
 // the members the fields copy, in their order but for the properties, each field with its member's name (PS2's has the
@@ -485,8 +485,8 @@ public:
     virtual ~C_human();
     virtual bool Init(I3D_frame *frm);
     virtual void DuplicateFrom(C_actor *act);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);
     virtual bool SaveGameLoad(void **buf);
@@ -855,7 +855,7 @@ public:
     // 0x44c, the action's time left in ms: HUMAN_ACTION_WAIT's, HUMAN_ACTION_AGONY's and HUMAN_ACTION_STEAL's (the
     // name is ours)
     int action_time;
-    // 0x450, the time HUMAN_ACTION_DEAD waits before ACTSTATE_2: the death's animation in a car (HitInCar), 500
+    // 0x450, the time HUMAN_ACTION_DEAD waits before ACTSTATE_NONE: the death's animation in a car (HitInCar), 500
     // from GameInit, 1500 from Activate (the name is ours)
     int dead_time;
     bool killed_by_shot;                // 0x454 (PS2 0x5ac), set by Hit for a death by HIT_SHOT (the name is ours)
@@ -1222,7 +1222,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
 // folded group (the vectors of 8-byte elements)
 // TEMPLATE: GAME 0x4eaa00
-// ?insert@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXPAUS_instruction@C_program@@IABU34@@Z
+// ?insert@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@QAEXPAUS_vector2@@IABU3@@Z
 
 // The animations' file names PersonAnim and RecompileDeathPos build in a static buffer each: VC6's PDB names both
 // buff, so the markers are by name and pair with ours in address order (RecompileDeathPos's first)

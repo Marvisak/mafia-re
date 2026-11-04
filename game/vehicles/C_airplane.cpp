@@ -51,17 +51,17 @@ C_airplane::~C_airplane()
 }
 
 // STUB: GAME 0x409580
-void C_airplane::SaveData(C_chunk *chunk)
+bool C_airplane::SaveData(C_chunk *chunk)
 {
     StubLog("C_airplane::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x4097c0
-void C_airplane::LoadData(C_chunk *chunk)
+bool C_airplane::LoadData(C_chunk *chunk)
 {
     StubLog("C_airplane::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x409a40

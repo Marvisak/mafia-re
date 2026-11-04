@@ -40,17 +40,17 @@ void C_railway::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x486920
-void C_railway::SaveData(C_chunk *chunk)
+bool C_railway::SaveData(C_chunk *chunk)
 {
     StubLog("C_railway::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x486a20
-void C_railway::LoadData(C_chunk *chunk)
+bool C_railway::LoadData(C_chunk *chunk)
 {
     StubLog("C_railway::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // STUB: GAME 0x488140

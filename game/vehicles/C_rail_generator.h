@@ -15,8 +15,8 @@ public:
     virtual void AI(uint time);
     virtual void Update(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    virtual void LoadData(C_chunk *chunk);
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     virtual void GameInit();
     virtual void GameDone();
 

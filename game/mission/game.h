@@ -107,8 +107,8 @@ public:
     {
         uchar unknown_0[0x20];
     };
-    // An actor Tick wakes (ACTSTATE_0 to ACTSTATE_1) or puts back to ACTSTATE_0 once it is seen, at most every sixth
-    // frame (the members' names are ours)
+    // An actor Tick wakes (ACTSTATE_ACTIVE to ACTSTATE_INACTIVE) or puts back to ACTSTATE_ACTIVE once it is seen, at
+    // most every sixth frame (the members' names are ours)
     struct S_invisible_actor
     {
         C_actor *actor;                 // 0x0
@@ -118,7 +118,10 @@ public:
     struct S_RoadBlock
     {
         ushort node;                    // 0x0, the roads' node nearest to the road block's dummy (the name is ours)
-        bool unknown_2;                 // 0x2
+        // 0x2, the road block is up: C_shvestky::Tick sets it as a police car comes near and creates the block,
+        // and clears it once none is near; C_actor::IsPossibleCollAll tests moves against those up (the name is
+        // ours)
+        bool active;
         std::vector<uint> unknown_4;    // 0x4, 4-byte values
     };
     // A telephone, a model of alarm01.i3d (the police's alarm boxes) or PHbox01.i3d (the phone boxes), in the scene or
@@ -305,9 +308,9 @@ public:
     // 0xe8 (PS2 0x154), the human the camera follows: the player after Init, then SetHuman's (PS2 name, 0x5a07e0, which
     // takes a player or an entity and gives the camera him too; the name is ours)
     C_human *camera_human;
-    // The actors Tick ticks, those in ACTSTATE_0 (PS2's AddNewActorToActive adds to it), the last one first, and
-    // those in ACTSTATE_1 (ACT_SETSTATE INACTIVE), the garage's cars among them: ChangeActState moves them between the
-    // two (the names are ours)
+    // The actors Tick ticks, those in ACTSTATE_ACTIVE (PS2's AddNewActorToActive adds to it), the last one first, and
+    // those in ACTSTATE_INACTIVE (ACT_SETSTATE INACTIVE), the garage's cars among them: ChangeActState moves them
+    // between the two (the names are ours)
     std::vector<C_actor *> active_actors;  // 0xec (PS2 0x158)
     std::vector<C_actor *> inactive_actors;  // 0xfc (PS2 0x164)
     bool act_state_changed;             // 0x10c, an actor's state changed (C_actor::SetActState's; the name is ours)
@@ -606,7 +609,7 @@ public:
     void ScoreSetOn(bool on);
     void LightnessClear();
     void ChangeActState();
-    // A temporary actor to remove: its state ACTSTATE_2, once (PS2 name)
+    // A temporary actor to remove: its state ACTSTATE_NONE, once (PS2 name)
     void RemoveTemporaryActor(C_actor *act);
     // Takes a temporary actor out of the game's lists, unless it is being removed (PS2 name)
     void InternTempActDel(C_actor *act);
@@ -987,4 +990,4 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z

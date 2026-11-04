@@ -1312,15 +1312,15 @@ void C_human::DuplicateFrom(C_actor *act)
     human_type = human->human_type;
 }
 
-// The original returns true (mov al, 1), as C_actor's does: the base's is void here
 // FUNCTION: GAME 0x56f440
-void C_human::SaveData(C_chunk *chunk)
+bool C_human::SaveData(C_chunk *chunk)
 {
     uchar version = HUMAN_DATA_VERSION;
     chunk->Write(&version, sizeof(version));
     chunk->Write(&human_type, sizeof(human_type));
     chunk->Write(&voice_type, sizeof(voice_type));
     chunk->Write(max_properties, sizeof(max_properties));
+    return true;
 }
 
 // The first versions' 16 floats: the second scaled the energies (1 / (1 - it), where it lies in (0, 1]) and went, the
@@ -1376,9 +1376,9 @@ static void _ReadOldCharStructVer4(C_chunk *chunk, C_human *human)
 }
 
 // The versions SaveData has written: 1 had two more dwords first, 3 and 4 the type, 5 and 6 the properties as they
-// are. The original returns true (mov al, 1) at each case's end, as C_actor's does: the base's is void here
+// are; true for any version
 // FUNCTION: GAME 0x56f4e0
-void C_human::LoadData(C_chunk *chunk)
+bool C_human::LoadData(C_chunk *chunk)
 {
     char version;
     chunk->Read(&version, sizeof(version));
@@ -1390,29 +1390,30 @@ void C_human::LoadData(C_chunk *chunk)
         chunk->Read(&unknown1, sizeof(unknown1));
         chunk->Read(&unknown2, sizeof(unknown2));
         _ReadOldCharStruct(chunk, this);
-        return;
+        return true;
     }
     case 2:
         _ReadOldCharStruct(chunk, this);
-        return;
+        return true;
     case 3:
         chunk->Read(&human_type, sizeof(human_type));
         _ReadOldCharStruct(chunk, this);
-        return;
+        return true;
     case 4:
         chunk->Read(&human_type, sizeof(human_type));
         _ReadOldCharStructVer4(chunk, this);
-        return;
+        return true;
     case 5:
         chunk->Read(&human_type, sizeof(human_type));
         chunk->Read(max_properties, sizeof(max_properties));
-        return;
+        return true;
     case HUMAN_DATA_VERSION:
         chunk->Read(&human_type, sizeof(human_type));
         chunk->Read(&voice_type, sizeof(voice_type));
         chunk->Read(max_properties, sizeof(max_properties));
-        return;
+        return true;
     }
+    return true;
 }
 
 // The sizes added one by one, as PS2's: one expression calls them in another order
@@ -1658,9 +1659,9 @@ bool C_human::SaveGameLoad(void **buf)
     }
     if (!car && properties[HUMAN_PROPERTY_ENERGY] < .01f)
         _intern_ForceDeath();
-    if (act_state == ACTSTATE_0 && !colls_active)
+    if (act_state == ACTSTATE_ACTIVE && !colls_active)
         ActivateColls(HUMAN_COLLS_ALL);
-    else if (act_state != ACTSTATE_0 && colls_active)
+    else if (act_state != ACTSTATE_ACTIVE && colls_active)
         DeactivateColls(false);
     if (car && car->type == ACTOR_CAR)
         mafiaLoadSave.CarIsStolen(car);
@@ -3088,14 +3089,14 @@ void C_human::ChangeState()
 {
     switch (act_state)
     {
-    case ACTSTATE_0:
+    case ACTSTATE_ACTIVE:
         ActivateColls(HUMAN_COLLS_ALL);
         if (type == ACTOR_ENTITY && ((C_entity *)this)->IsEventID(EVENT_USE_AB, NULL) && ab_created)
             act_mission->GetGame()->GetUsingObject().AddObject(&((C_entity *)this)->using_object);
         if (!shadow && !car)
             shadow = act_mission->GetGame()->AddFrameForShadow(frame, SHADOW_TYPE_0, SHADOW_TYPE_0, NULL, NULL);
         break;
-    case ACTSTATE_2:
+    case ACTSTATE_NONE:
         if (dead)
         {
             if (!car && !using_car)
@@ -3147,7 +3148,7 @@ void C_human::ChangeState()
             }
             PoseValidate(false);
         }
-    case ACTSTATE_1:
+    case ACTSTATE_INACTIVE:
         DeactivateColls(dead);
         if (type == ACTOR_ENTITY)
             act_mission->GetGame()->GetUsingObject().DelObject(&((C_entity *)this)->using_object);
@@ -4770,7 +4771,7 @@ void C_human::Movement(uint time)
             properties[HUMAN_PROPERTY_ENERGY] = 0.0f;
             alive = false;
             Death();
-            SetActState(ACTSTATE_2);
+            SetActState(ACTSTATE_NONE);
         }
     case HUMAN_ACTION_WALK:
         if (striking)
@@ -4838,7 +4839,7 @@ void C_human::Movement(uint time)
         dead_time -= time;
         if (dead_time > 0)
             break;
-        SetActState(ACTSTATE_2);
+        SetActState(ACTSTATE_NONE);
         if (killed_by_shot) {
             I3D_frame *back = frame->FindChildFrame("back2", ENUMF_ALL);
             if (back) {
@@ -8091,7 +8092,7 @@ void C_human::_intern_ForceDeath()
     alive = false;
     anim_machine.unknown_110 = true;
     Death();
-    SetActState(ACTSTATE_2);
+    SetActState(ACTSTATE_NONE);
     PoseValidate(false);
     InventoryTruncate();
     Do_WeaponDrop();
@@ -8303,7 +8304,7 @@ bool C_human::Do_ThrowCocotFromCar(C_car *car, int seat)
                     entity->voice_priority = 1000;
                     entity->Hit(HIT_IN_CAR, car->GetDir(), car->GetPos(), car->GetDir(),
                         entity->properties[HUMAN_PROPERTY_ENERGY] + 1.0f, NULL, HIT_PART_BODY, NULL);
-                    entity->SetActState(ACTSTATE_2);
+                    entity->SetActState(ACTSTATE_NONE);
                     entity->anim_machine.Tick(250);
                     entity->frame->Tick(250);
                     entity->anim_machine.Reset();
@@ -8609,7 +8610,7 @@ bool C_human::Do_FuckingBoxCancel()
     {
         if (actors[i]->type != ACTOR_CAR)
             continue;
-        if (actors[i]->act_state == ACTSTATE_2)
+        if (actors[i]->act_state == ACTSTATE_NONE)
             continue;
         if ((actors[i]->GetFrame()->GetWorldPos() - pos).Square() < 100.0f)
         {
@@ -8868,7 +8869,7 @@ void C_human::EineMeineKleineAutoInLuft(C_car *wreck)
         alive = false;
         anim_machine.unknown_110 = true;
         Death();
-        SetActState(ACTSTATE_2);
+        SetActState(ACTSTATE_NONE);
     }
     if (wingman > -1)
         mafiaIndicators.PlayerSetWingmanLives(wingman, 0);
@@ -9050,7 +9051,7 @@ void C_human::Activate()
     frame->SetOn(true);
     pos = frame->GetPos();
     dir = frame->GetDir();
-    act_state = ACTSTATE_0;
+    act_state = ACTSTATE_ACTIVE;
     vehicle_action = 0;
     action_state = HUMAN_ACTION_STAND;
     anim_machine.Init(this);

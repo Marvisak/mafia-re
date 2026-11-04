@@ -215,7 +215,7 @@ inline void C_game::SetActiveTrafficP(uint time)
     }
     if (gen)
     {
-        gen->SetActState(ACTSTATE_0);
+        gen->SetActState(ACTSTATE_ACTIVE);
         gen->active = true;
     }
 }
@@ -569,7 +569,7 @@ bool C_game::Init()
     for (i = 0; i < (int)actors.size(); i++)
     {
         if (act_mission->FrmActBuff_IsActiveActor(actors[i]))
-            actors[i]->SetActState(ACTSTATE_0);
+            actors[i]->SetActState(ACTSTATE_ACTIVE);
         else
             actors[i]->GameInit();
         if (actors[i]->type == ACTOR_CAR)
@@ -1008,7 +1008,7 @@ bool C_game::Init()
                     // STRING: GAME 0x637174
                     "deuseJco"))
             {
-                global[i]->SetActState(ACTSTATE_2);
+                global[i]->SetActState(ACTSTATE_NONE);
                 global[i]->GetFrame()->SetOn(false);
                 break;
             }
@@ -1237,7 +1237,7 @@ bool C_game::Done()
         C_actor *act = actors[i];
         if (!act->from_mission || act->type != ACTOR_CAR)
             act->GameDone();
-        else if (act->act_state != ACTSTATE_2)
+        else if (act->act_state != ACTSTATE_NONE)
         {
             if (!act_mission->FrmActBuff_StoreActiveActor(actors[i]))
                 actors[i]->GameDone();
@@ -1814,9 +1814,9 @@ inline void C_game::TickDriverMan()
     }
 }
 
-// The actors whose state changed moved between the two lists (PS2 name): each actor out of ACTSTATE_0 from
-// active_actors, each out of ACTSTATE_1 from inactive_actors, told by ChangeState and put into the other list unless it
-// is in ACTSTATE_2, the list's last actor in its place
+// The actors whose state changed moved between the two lists (PS2 name): each actor out of ACTSTATE_ACTIVE from
+// active_actors, each out of ACTSTATE_INACTIVE from inactive_actors, told by ChangeState and put into the other list
+// unless it is in ACTSTATE_NONE, the list's last actor in its place
 // FUNCTION: GAME 0x5a5070
 void C_game::ChangeActState()
 {
@@ -1824,10 +1824,10 @@ void C_game::ChangeActState()
     uint i;
     for (i = 0; i < active_actors.size();)
     {
-        if (active_actors[i]->GetActState() != ACTSTATE_0)
+        if (active_actors[i]->GetActState() != ACTSTATE_ACTIVE)
         {
             active_actors[i]->ChangeState();
-            if (active_actors[i]->GetActState() != ACTSTATE_2)
+            if (active_actors[i]->GetActState() != ACTSTATE_NONE)
                 inactive_actors.push_back(active_actors[i]);
             active_actors[i] = active_actors.back();
             active_actors.pop_back();
@@ -1837,10 +1837,10 @@ void C_game::ChangeActState()
     }
     for (i = 0; i < inactive_actors.size();)
     {
-        if (inactive_actors[i]->GetActState() != ACTSTATE_1)
+        if (inactive_actors[i]->GetActState() != ACTSTATE_INACTIVE)
         {
             inactive_actors[i]->ChangeState();
-            if (inactive_actors[i]->GetActState() != ACTSTATE_2)
+            if (inactive_actors[i]->GetActState() != ACTSTATE_NONE)
                 active_actors.push_back(inactive_actors[i]);
             inactive_actors[i] = inactive_actors.back();
             inactive_actors.pop_back();
@@ -1977,14 +1977,14 @@ void C_game::Tick(uint time)
         C_actor *act = invisible_actors[j].actor;
         switch (act->act_state)
         {
-        case ACTSTATE_0:
+        case ACTSTATE_ACTIVE:
             if (!act->rendered)
             {
-                act->SetActState(ACTSTATE_1);
+                act->SetActState(ACTSTATE_INACTIVE);
                 invisible_actors[j].frame = game_frames;
             }
             break;
-        case ACTSTATE_1:
+        case ACTSTATE_INACTIVE:
             I3D_frame *f = act->frame;
             if (f)
             {
@@ -1995,7 +1995,7 @@ void C_game::Tick(uint time)
                     seen = f->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
                 if (seen)
                 {
-                    act->SetActState(ACTSTATE_0);
+                    act->SetActState(ACTSTATE_ACTIVE);
                     invisible_actors[j].frame = game_frames;
                 }
             }
@@ -2356,7 +2356,7 @@ void C_game::DoubleKiss(uint time)
                                 switch (actors[i]->type)
                                 {
                                 case ACTOR_CAR:
-                                    if (actors[i] != player->car && actors[i]->act_state != ACTSTATE_2)
+                                    if (actors[i] != player->car && actors[i]->act_state != ACTSTATE_NONE)
                                     {
                                         S_vector d = actors[i]->frame->GetWorldPos();
                                         d -= pos;
@@ -2369,7 +2369,7 @@ void C_game::DoubleKiss(uint time)
                                     }
                                     break;
                                 case ACTOR_ENTITY:
-                                    if (actors[i]->act_state == ACTSTATE_0)
+                                    if (actors[i]->act_state == ACTSTATE_ACTIVE)
                                     {
                                         S_vector d = actors[i]->frame->GetWorldPos();
                                         d -= pos;
@@ -2435,7 +2435,7 @@ void C_game::RemoveTemporaryActor(C_actor *act)
         if (removed_actors[i] == act)
             return;
     }
-    act->SetActState(ACTSTATE_2);
+    act->SetActState(ACTSTATE_NONE);
     removed_actors.push_back(act);
 }
 
@@ -3638,7 +3638,7 @@ void C_game::LoadRoadBlocks()
 I3DENUMRET __stdcall C_game::S_hlp::cbRoadBlock(I3D_frame *frm, uint user)
 {
     S_RoadBlock rb;
-    rb.unknown_2 = false;
+    rb.active = false;
     rb.node = act_mission->roads->GetNearNode(frm->GetWorldPos());
     if (rb.node != 0xffff)
         ((std::vector<S_RoadBlock> *)user)->push_back(rb);

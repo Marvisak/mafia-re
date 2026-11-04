@@ -80,7 +80,7 @@ void ai_groups::Tick()
                 ((C_car *)act)->SetDynamicCollsOn(false, ((C_car *)act)->unknown_1fac);
                 act->Update(1);
             }
-            free_actors[j]->SetActState(ACTSTATE_2);
+            free_actors[j]->SetActState(ACTSTATE_NONE);
             free_actors.erase(free_actors.begin() + j);
         }
     }

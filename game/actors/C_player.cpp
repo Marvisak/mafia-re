@@ -99,17 +99,17 @@ bool C_player::Init(I3D_frame *frm)
 }
 
 // STUB: GAME 0x58f2a0
-void C_player::SaveData(C_chunk *chunk)
+bool C_player::SaveData(C_chunk *chunk)
 {
     StubLog("C_player::SaveData");
-    C_human::SaveData(chunk);
+    return C_human::SaveData(chunk);
 }
 
 // STUB: GAME 0x58f2c0
-void C_player::LoadData(C_chunk *chunk)
+bool C_player::LoadData(C_chunk *chunk)
 {
     StubLog("C_player::LoadData");
-    C_human::LoadData(chunk);
+    return C_human::LoadData(chunk);
 }
 
 // STUB: GAME 0x58f2e0

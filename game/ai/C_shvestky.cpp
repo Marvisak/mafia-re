@@ -394,7 +394,7 @@ void C_shvestky::Tick(uint time)
                     S_vector d = records[i]->car->GetFrame()->GetWorldPos() -
                         act_mission->roads->links[road_blocks[j].node].pos;
                     float dist = d.Square();
-                    if (!road_blocks[j].unknown_2 && dist < 150.0f * 150.0f)
+                    if (!road_blocks[j].active && dist < 150.0f * 150.0f)
                         continue;
                     if (dist < 200.0f * 200.0f)
                     {
@@ -404,9 +404,9 @@ void C_shvestky::Tick(uint time)
                     }
                 }
             }
-            if (road_blocks[j].unknown_2 && !near_block)
+            if (road_blocks[j].active && !near_block)
             {
-                road_blocks[j].unknown_2 = false;
+                road_blocks[j].active = false;
                 for (int k = road_blocks[j].unknown_4.size(); k--;)
                 {
                     C_actor *act = (C_actor *)road_blocks[j].unknown_4[k];
@@ -416,9 +416,9 @@ void C_shvestky::Tick(uint time)
                 }
                 road_blocks[j].unknown_4.clear();
             }
-            else if (!road_blocks[j].unknown_2 && near_block)
+            else if (!road_blocks[j].active && near_block)
             {
-                road_blocks[j].unknown_2 = true;
+                road_blocks[j].active = true;
                 CreateRoadBlock(j, human);
             }
         }

@@ -47,16 +47,19 @@ public:
 };
 
 // What C_recorder::vfunc_5 creates for an actor of a cutscene (the names are ours), 0x5c bytes: the actor holds it
-// (C_actor::records), and so does its entry in the cutscene's recording. Records in blocks of 0x1800 bytes (0x5c2700
-// makes one) that end in 0xeeeeeeee, each a dword the walks compare with unknown_14, its type and as many bytes as
-// record_sizes gives for the type; C_actor's GetRecordsSize and GetBlockRecordsSize walk them. Its name is the actor
-// type's prefix and a count ("act%d", "hum%d", "car%d", ...). Its functions are at 0x5c25b0-0x5c283c, with C_actor's
-// SetCutsceneRecord, SetCutscenePlay, UpdateCutsceneFlags, GetRecordsSize and GetBlockRecordsSize.
+// (C_actor::records), and so does its entry in the cutscene's recording. Records in blocks of 0x1800 bytes
+// (C_actor::NewRecordBlock makes one: the next block, the end its records stay below, then the records) that end in
+// RECORDS_BLOCK_END, each its time (S_cutscene_record), which the walks compare with last_key_time, its type and as
+// many bytes as record_sizes gives for the type; C_actor's GetRecordsSize and GetBlockRecordsSize walk them. Its name
+// is the actor type's prefix and a count ("act%d", "hum%d", "car%d", ...). Its functions are at 0x5c25b0-0x5c283c, with
+// C_actor's SetCutsceneRecord, SetCutscenePlay, UpdateCutsceneFlags, GetRecordsSize and GetBlockRecordsSize.
 class C_cutscene_records
 {
 public:
     // Drops the records (first_block), nothing for NULL (the name is ours)
     void Reset();
+    // The size of the records up to the last key (the name is ours), as C_actor::GetRecordsSize
+    int GetRecordsSize();
 
     // 0x0, the record the actor's PlayRecord plays, the last one C_actor::AddRecord added while recording (the name is
     // ours)
@@ -74,6 +77,9 @@ public:
 
 // What every record starts with (the names are ours), 8 bytes: the time it was recorded at and its type (0 to 3), whose
 // size C_cutscene_records::record_sizes gives
+// The end of a block's records, where the next block's start (the name is ours)
+#define RECORDS_BLOCK_END 0xeeeeeeee
+
 struct S_cutscene_record
 {
     int time;                           // 0x0
@@ -276,8 +282,12 @@ public:
     uchar *unknown_f0;                  // 0xf0, new[]: Close deletes it, as the two below
     uchar *unknown_f4;                  // 0xf4
     uchar *unknown_f8;                  // 0xf8
-    bool unknown_fc;                    // 0xfc
-    uchar unknown_fd[0x1f];             // 0xfd
+    // 0xfc, the camera's placement where C_actor::PlaceAtTime placed a camera's actor (ACTOR_REC_CAMERA):
+    // the actor's frame's world position and rotation (the names are ours)
+    bool camera_placed;
+    uchar unknown_fd[3];                // 0xfd
+    S_vector camera_pos;                // 0x100
+    S_quat camera_rot;                  // 0x10c
     int cur_time;                       // 0x11c, SetTime's, which Tick plays the keys by
     uint scaled_time;                   // 0x120, cur_time through the speed keys, which the tracks' items wait for
     float time_speed;                   // 0x124, the current speed key's (a float), 1.0 without them
@@ -298,6 +308,9 @@ struct S_cutscene_placement
 
 // The one object
 extern C_recorder cutscene;
+// The ease of a key's interpolation, u from 0 to 1 eased by a (out of the first key) and b (into the next),
+// as 3D Studio's keys have it (the name is ours, after 3D Studio's)
+float Ease(float u, float a, float b);
 // Ticks the cutscene still counts as playing (the name is ours): 5 from RecLoadFull, Tick counts it down to 0
 extern int cutscene_play_ticks;
 // The placements RecLoadFull makes and Close puts back and frees (the name is ours)
@@ -318,8 +331,14 @@ public:
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk) {}
-    virtual void LoadData(C_chunk *chunk) {}
+    virtual bool SaveData(C_chunk *chunk)
+    {
+        return true;
+    }
+    virtual bool LoadData(C_chunk *chunk)
+    {
+        return true;
+    }
     virtual int SaveGameGetSize()
     {
         return 0;

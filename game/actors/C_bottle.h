@@ -38,8 +38,8 @@ public:
     S_vector move_dir;                  // 0x70
     float speed;                        // 0x7c
     float fall_speed;                   // 0x80
-    // 0x84, true from GameInit (the cartridges' clears it): AI sets the actor's state where it stops, ACTSTATE_1 at
-    // rest and ACTSTATE_2 for the fast fall (the name is a guess)
+    // 0x84, true from GameInit (the cartridges' clears it): AI sets the actor's state where it stops, ACTSTATE_INACTIVE
+    // at rest and ACTSTATE_NONE for the fast fall (the name is a guess)
     bool set_states;
     uchar unknown_85[3];                // 0x85
     // 0x88, the share of the speed a bounce keeps, .4 from GameInit (the shotgun shells' .2; the name is ours)

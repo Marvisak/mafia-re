@@ -100,17 +100,17 @@ void C_traffic_car::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x4aabf0
-void C_traffic_car::SaveData(C_chunk *chunk)
+bool C_traffic_car::SaveData(C_chunk *chunk)
 {
     StubLog("C_traffic_car::SaveData");
-    C_actor::SaveData(chunk);
+    return C_actor::SaveData(chunk);
 }
 
 // STUB: GAME 0x4aad20
-void C_traffic_car::LoadData(C_chunk *chunk)
+bool C_traffic_car::LoadData(C_chunk *chunk)
 {
     StubLog("C_traffic_car::LoadData");
-    C_actor::LoadData(chunk);
+    return C_actor::LoadData(chunk);
 }
 
 // FUNCTION: GAME 0x4ab120

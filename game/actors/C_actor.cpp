@@ -1,23 +1,30 @@
-// The actors (PS2 C_actor.cpp, which has InitAnimIndex; the PC's file is most likely the one at 0x404ce0-0x40938c,
-// docs/game-files.md). Written so far: the animations' table and their index, which InitSystem builds and CloseSystem
-// frees, the constructor with global_actors and AddActorToGlobal, Init, which C_mission::OpenBin calls for the
-// mission's actors, the destructor with DelActorFromGlobal, IsGlobalActor (PC only), which C_recorder::Close calls,
-// GameInit and GameDone, which C_game::Init and Done call (with DebustizeFrame and NoShadowFrame), Tick, which
-// C_game::Tick calls, SetActState and Rebirth, rnd's float one, which the script calls with GetWorldDir, AngleTo2 and
-// RotateDir (stubs), and PS2's ResetPlacement, which C_mission's FrmActBuff functions call. Not written: PS2's
-// InternalPlacementReset (0x405e60), before ResetPlacement, which saves the frame's placement as GameInit does, and
-// GetAnimIndex (0x408760, after DoneAnimIndex), the index's binary search; nothing written calls them yet. The other virtual functions, which the actors' classes need, are stubs, in the vtable's addresses'
-// order; seven of those addresses lie in other files' ranges, where the linker kept a copy (inline functions most
-// likely, or folded with another class's), and the empty ones but DuplicateFrom's aren't annotated (folded with the
-// other empty functions of their kinds). Release (0x4091d0) is inline (C_actor.h), its copy after DoneAnimIndex.
+// The actors (PS2 C_actor.cpp; the PC's file is the one at 0x404ce0-0x40938c, docs/game-files.md), written whole: the
+// animations' table and their index, which InitSystem builds and CloseSystem frees, the cutscenes' recording and
+// playing of an actor (PC only, C_actor's first slots, with C_actor_shot's two whose copies lie here), the global
+// actors' list, the constructor, Init, GameInit and GameDone, Tick, the saved games, the possible collisions with the
+// frames of posscoll_frame, the 2D bounds, the world direction and the free helpers (rnd, AngleTo2, RotateDir). The
+// out-of-line copies after UnlinkAllFrameChild are the headers' (the model cache's Open, I3D_cache.h, and its helpers;
+// Release and the class's constant functions, C_actor.h). Open: IsPossibleCollAll (see its comment), whose S_vector
+// copies the original compiled before it and ours at the file's end (/YX), the model cache's Open and the order of the
+// copies after UnlinkAllFrameChild. GetRecordRot, whose copy lies in C_car.cpp's range, is at the end; C_actor's
+// records functions are in C_cutscene_records.cpp.
 
 #include "actors/C_actor.h"
 
+#include <float.h>
+#include <math.h>
 #include <stdlib.h>
+
+#include "actors/C_actor_shot.h"
+#include "ai/C_person_traffic.h"
+#include "ai/road_web.h"
+
+#include "I3D_cache.h"
 
 #include "mission/Mission.h"
 #include "mission/game.h"
 #include "mission/C_recorder.h"
+#include "mission/C_effects.h"
 #include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
@@ -614,58 +621,278 @@ S_anim_index *_anim_index_ = NULL;
 // GLOBAL: GAME 0x63d2d0
 int _anim_index_count_ = 0;
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x404e00
+// Adds the actor to the cutscene, with the size of its records (one kind)
+// FUNCTION: GAME 0x404e00
 bool C_actor::AddToCutscene()
 {
-    StubLog("C_actor::AddToCutscene");
-    return false;
+    cutscene.AddActor(this, sizeof(S_actor_record), 0, 0);
+    return true;
 }
 
-// STUB: GAME 0x404f30
-int C_actor::RecordKey(int a)
+// C_actor_shot's (its copies are among C_actor.cpp's)
+// FUNCTION: GAME 0x404e20
+bool C_actor_shot::AddToCutscene()
 {
-    StubLog("C_actor::RecordKey");
+    cutscene.AddActor(this, sizeof(S_actor_shot_record), 0, 0);
+    return true;
+}
+
+// Plays the current record: a particle started at the frame or stopped, or else the weapon and the shooting set
+// FUNCTION: GAME 0x404e40
+void C_actor_shot::PlayRecord(int time)
+{
+    S_actor_shot_record *rec = (S_actor_shot_record *)records->cur;
+    if (rec->flags & (SHOT_REC_PARTICLE_START | SHOT_REC_PARTICLE_STOP))
+    {
+        if (rec->flags & SHOT_REC_PARTICLE_START)
+        {
+            if (particle >= 0)
+                act_mission->effects->DestroyParticle(particle);
+            particle = act_mission->GetEffects()->CreateParticle(rec->id, S_vector(0.0f, 0.0f, 0.0f),
+                S_vector(0.0f, 0.0f, 1.0f), 0, frame);
+        }
+        else
+        {
+            if (particle >= 0)
+                act_mission->effects->DestroyParticle(particle);
+            particle = -1;
+        }
+        return;
+    }
+    if (rec->flags & SHOT_REC_WEAPON)
+        SetWeapon(rec->id);
+    bool s = (rec->flags & SHOT_REC_SHOOTS) != 0;
+    bool f = (rec->flags & SHOT_REC_FIRING) != 0;
+    shot_time = -1;
+    firing = f;
+    shoots = s;
+}
+
+// FUNCTION: GAME 0x404f30
+int C_actor::RecordKey(int time)
+{
     return -1;
 }
 
-// STUB: GAME 0x404f40
-void C_actor::PlayRecord(int a)
+// Plays the current record's animation on a model, from the time it was at when the record was made
+// FUNCTION: GAME 0x404f40
+void C_actor::PlayRecord(int time)
 {
-    StubLog("C_actor::PlayRecord");
+    S_actor_record *rec = (S_actor_record *)records->cur;
+    uint flags = rec->anim;
+    if (!(flags & ACTOR_REC_ANIMATED))
+        return;
+    I3D_model *model = (I3D_model *)frame;
+    if (model->GetType() != FRAME_MODEL)
+        return;
+    S_cutscene_anim *a = cutscene.GetAnimByIndex(flags & ACTOR_REC_ANIM);
+    if (a)
+    {
+        uint start = (rec->anim >> ACTOR_REC_ANIM_TIME_SHIFT) * 40;
+        uint t;
+        if (flags & ACTOR_REC_LOOP)
+        {
+            t = (start - rec->time + time) % a->anim_set->GetEndTime();
+            a->anim_set->SetOptions(I3DANIMOP_LOOP);
+        }
+        else
+        {
+            t = start - rec->time + time;
+            a->anim_set->SetOptions(I3DANIMOP_ONCE);
+        }
+        model->SetAnimation(a->anim_set, 0, 1.0f, 0);
+        model->SetAnimTime(0, t);
+    }
+    model->Tick(0);
+    model->Update();
 }
 
-// STUB: GAME 0x405010
-void C_actor::PlayStep(int a)
+// Plays the records for a step of the time: the frame between the current record and the next by the cutscene's time,
+// on the spline (Ease's ease, Hermite's basis functions) and slerped, a model ticked, the frame's sector set where its
+// parent is the scene's, and the scene's camera put where the frame is for a camera's record
+// FUNCTION: GAME 0x405010
+void C_actor::PlayStep(int time)
 {
-    StubLog("C_actor::PlayStep");
+    S_actor_record *rec = (S_actor_record *)records->cur;
+    S_actor_record *next = (S_actor_record *)records->next;
+    if (cutscene.scaled_time > rec->time && !(rec->anim & ACTOR_REC_NO_BLEND))
+    {
+        if (next != rec && cutscene.scaled_time <= next->time)
+        {
+            float f = (float)(cutscene.scaled_time - rec->time) / (next->time - rec->time);
+            float t = Ease(f, rec->rot_ease_from, next->rot_ease_to);
+            float s = Ease(f, rec->ease_from, next->ease_to);
+            float s2 = s * s;
+            float s3 = s2 * s;
+            S_vector pos;
+            pos = rec->pos * (2.0f * s3 - 3.0f * s2 + 1.0f);
+            pos += next->pos * (3.0f * s2 - 2.0f * s3);
+            pos += rec->tangent_out * (s3 - 2.0f * s2 + s);
+            pos += next->tangent_in * (s3 - s2);
+            frame->SetPos(pos);
+            S_quat rot = rec->rot;
+            rot = rot.Slerp(next->rot, t, true);
+            frame->SetRot(rot);
+        }
+        else
+        {
+            frame->SetPos(next->pos);
+            frame->SetRot(next->rot);
+        }
+    }
+    else
+    {
+        frame->SetPos(rec->pos);
+        frame->SetRot(rec->rot);
+    }
+    if (frame->GetType() == FRAME_MODEL)
+        frame->Tick(time);
+    frame->Update();
+    if (!frame->GetParent() || frame->GetParent()->GetType() == FRAME_SECTOR)
+        act_mission->scene->SetFrameSector(frame);
+    if (rec->anim & ACTOR_REC_CAMERA)
+    {
+        I3D_camera *camera = act_mission->scene->GetActiveCamera();
+        camera->SetPos(frame->GetWorldPos());
+        camera->SetRot(frame->GetWorldRot());
+        camera->Update();
+    }
 }
 
-// STUB: GAME 0x4054c0
-bool C_actor::PlaceAtTime(int a)
+// Places a plain actor (ACTOR_ACTOR) as the records give it for the time (a jump in the cutscene): the frame between
+// the last record up to the time and the next, as PlayStep does, the record's animation as PlayRecord does, and for a
+// camera's record the frame's world placement kept for the cutscene's camera
+// FUNCTION: GAME 0x4054c0
+bool C_actor::PlaceAtTime(int time)
 {
-    StubLog("C_actor::PlaceAtTime");
-    return false;
+    if (!records || type != ACTOR_ACTOR || !records->first_block)
+        return true;
+    S_actor_record *rec = (S_actor_record *)(records->first_block + 8);
+    S_actor_record *prev = rec;
+    while (rec && rec->time <= records->last_key_time)
+    {
+        if (rec->time <= time)
+            prev = rec;
+        if (rec->time >= records->last_key_time)
+            break;
+        rec = (S_actor_record *)((uchar *)rec + records->record_sizes[rec->type]);
+    }
+    S_actor_record *next = prev->time < records->last_key_time ?
+        (S_actor_record *)((uchar *)prev + records->record_sizes[prev->type]) : prev;
+    if (time > prev->time && !(prev->anim & ACTOR_REC_NO_BLEND))
+    {
+        if (next != prev && time <= next->time)
+        {
+            float f = (float)(time - prev->time) / (next->time - prev->time);
+            float t = Ease(f, prev->rot_ease_from, next->rot_ease_to);
+            float s = Ease(f, prev->ease_from, next->ease_to);
+            float s2 = s * s;
+            float s3 = s2 * s;
+            S_vector pos;
+            pos = prev->pos * (2.0f * s3 - 3.0f * s2 + 1.0f);
+            pos += next->pos * (3.0f * s2 - 2.0f * s3);
+            pos += prev->tangent_out * (s3 - 2.0f * s2 + s);
+            pos += next->tangent_in * (s3 - s2);
+            frame->SetPos(pos);
+            S_quat rot = prev->rot;
+            rot = rot.Slerp(next->rot, t, true);
+            frame->SetRot(rot);
+        }
+        else
+        {
+            frame->SetPos(next->pos);
+            frame->SetRot(next->rot);
+        }
+    }
+    else
+    {
+        frame->SetPos(prev->pos);
+        frame->SetRot(prev->rot);
+    }
+    uint flags = prev->anim;
+    if ((flags & ACTOR_REC_ANIMATED) && frame->GetType() == FRAME_MODEL)
+    {
+        I3D_model *model = (I3D_model *)frame;
+        S_cutscene_anim *a = cutscene.GetAnimByIndex(flags & ACTOR_REC_ANIM);
+        if (a)
+        {
+            uint start = (prev->anim >> ACTOR_REC_ANIM_TIME_SHIFT) * 40;
+            uint t;
+            if (flags & ACTOR_REC_LOOP)
+            {
+                t = (start - prev->time + time) % a->anim_set->GetEndTime();
+                a->anim_set->SetOptions(I3DANIMOP_LOOP);
+            }
+            else
+            {
+                t = start - prev->time + time;
+                a->anim_set->SetOptions(I3DANIMOP_ONCE);
+            }
+            model->SetAnimation(a->anim_set, 0, 1.0f, 0);
+            model->SetAnimTime(0, t);
+        }
+        model->Tick(0);
+        model->Update();
+    }
+    frame->Update();
+    if (!frame->GetParent() || frame->GetParent()->GetType() == FRAME_SECTOR)
+        act_mission->scene->SetFrameSector(frame);
+    if (prev->anim & ACTOR_REC_CAMERA)
+    {
+        cutscene.camera_placed = true;
+        cutscene.camera_pos = frame->GetWorldPos();
+        cutscene.camera_rot = frame->GetWorldRot();
+    }
+    return true;
 }
 
-// STUB: GAME 0x405a00
-S_vector C_actor::GetRecordPos(int a)
+// The position the records give for the time, as PlaceAtTime places the frame (0 without records)
+// FUNCTION: GAME 0x405a00
+S_vector C_actor::GetRecordPos(int time)
 {
-    StubLog("C_actor::GetRecordPos");
-    return S_vector(0.0f, 0.0f, 0.0f);
+    if (!records->first_block)
+        return S_vector(0.0f, 0.0f, 0.0f);
+    S_actor_record *rec = (S_actor_record *)(records->first_block + 8);
+    S_actor_record *prev = rec;
+    while (rec && rec->time <= records->last_key_time)
+    {
+        if (rec->time <= time)
+            prev = rec;
+        if (rec->time >= records->last_key_time)
+            break;
+        rec = (S_actor_record *)((uchar *)rec + records->record_sizes[rec->type]);
+    }
+    S_actor_record *next = prev->time < records->last_key_time ?
+        (S_actor_record *)((uchar *)prev + records->record_sizes[prev->type]) : prev;
+    if (time <= prev->time)
+        return prev->pos;
+    if (next != prev && time <= next->time)
+    {
+        float f = (float)(time - prev->time) / (next->time - prev->time);
+        // the rotation's ease too, not used
+        float t = Ease(f, prev->rot_ease_from, next->rot_ease_to);
+        float s = Ease(f, prev->ease_from, next->ease_to);
+        float s2 = s * s;
+        float s3 = s2 * s;
+        S_vector pos;
+        pos = prev->pos * (2.0f * s3 - 3.0f * s2 + 1.0f);
+        pos += next->pos * (3.0f * s2 - 2.0f * s3);
+        pos += prev->tangent_out * (s3 - 2.0f * s2 + s);
+        pos += next->tangent_in * (s3 - s2);
+        return pos;
+    }
+    return next->pos;
 }
 
-#pragma auto_inline(on)
-
-// Its initializer (0x405c20) comes before the constructor. PS2's posscoll_frame, a vector too (0x63d2a4), follows it
-// with its own (0x405ca0). Open: their destructors (0x405c60, 0x405ce0) test and set a guard byte (0x63d2b4) they share,
-// a bit each, as C_program::change_progs' does.
-// GLOBAL: GAME 0x63d2a4
-std::vector<uint> C_actor::posscoll_frame;
-
+// Their initializers come before the constructor, global_actors' (0x405c20) first, then posscoll_frame's (0x405ca0).
+// Their destructors (0x405c60, 0x405ce0) test and set a guard byte they share (0x63d2b4), a bit each: VC6's code for
+// these definitions, ours the same. Open: reccmp scores the initializers' first halves 50%, as nothing names the
+// atexit registrations they jump to (0x405c50, 0x405cd0; ours $E numbers).
 // GLOBAL: GAME 0x63d2b8
 std::vector<C_actor *> C_actor::global_actors;
+
+// GLOBAL: GAME 0x63d2a4
+std::vector<C_actor::S_posscoll_frame> C_actor::posscoll_frame;
 
 // FUNCTION: GAME 0x405d20
 C_actor::C_actor() :
@@ -694,6 +921,12 @@ C_actor::~C_actor()
     DelActorFromGlobal(this);
 }
 
+// Empty: the vtable's entry is the linker's folded empty ret 4 of the out-of-line kind (0x4ab130, C_actor.h; 0x403db0
+// is the inline one's), which C_clock's DuplicateFrom jumps to
+void C_actor::DuplicateFrom(C_actor *act)
+{
+}
+
 // The frame's user data cleared, though it may point to the actor already
 // FUNCTION: GAME 0x405dd0
 bool C_actor::Init(I3D_frame *frm)
@@ -719,8 +952,20 @@ bool C_actor::Init(I3D_frame *frm)
         if (target)
             target->SetOn(false);
     }
-    act_state = ACTSTATE_0;
+    act_state = ACTSTATE_ACTIVE;
     return true;
+}
+
+// GameInit's saving of the frame's placement, but for whether it is on (C_cartridge::GameDone has it written out);
+// called from 0x5bd910 (Main.cpp's range, not written yet)
+// FUNCTION: GAME 0x405e60
+void C_actor::InternalPlacementReset()
+{
+    if (!frame)
+        return;
+    saved_pos = frame->GetPos();
+    saved_rot = frame->GetRot();
+    saved_parent = frame->m_pParent;
 }
 
 // GameDone's placement, without its frame turned on first and its pointer to the actor kept
@@ -750,7 +995,7 @@ void C_actor::ResetPlacement()
 // FUNCTION: GAME 0x405fa0
 void C_actor::GameInit()
 {
-    act_state = ACTSTATE_0;
+    act_state = ACTSTATE_ACTIVE;
     unknown_65 = type == ACTOR_ACTOR;
     if (frame)
     {
@@ -874,56 +1119,496 @@ void C_actor::Tick(uint time)
     }
 }
 
-#pragma auto_inline(off)
+// A string of a saved game, a word of its length and its characters (the names are ours): SaveGameSave writes the
+// models' three this way and SaveGameLoad reads the last two, the same code in each copy. The length is taken before
+// the test for NULL, as in the original (PS2's the same).
+inline void SaveGameSaveString(void **buf, const char *s)
+{
+    ushort len = strlen(s);
+    *(ushort *)*buf = len;
+    *buf = (uchar *)*buf + sizeof(ushort);
+    if (s)
+    {
+        memcpy(*buf, s, len);
+        *buf = (uchar *)*buf + len;
+    }
+}
 
-// STUB: GAME 0x406770
+// Reads one into s, ended with a zero
+inline void SaveGameLoadString(void **buf, char *s)
+{
+    ushort len = *(ushort *)*buf;
+    *buf = (uchar *)*buf + sizeof(ushort);
+    memcpy(s, *buf, len);
+    s[len] = 0;
+    *buf = (uchar *)*buf + len;
+}
+
+// An actor in a saved game (the human's cars): the length of its frame's name with its end and the actor's type, then
+// the name; two zeros for none, or for an actor whose frame has no name. PS2's rounds each size up to 4 bytes
+// (ZatocToNa4, a static function of PS2's file), the PC's doesn't.
+// FUNCTION: GAME 0x406590
+int C_actor::Actor_SaveGameGetSize(C_actor *act)
+{
+    if (!act || !act->frame || !strlen(act->frame->GetName()))
+        return sizeof(int) * 2;
+    return sizeof(int) * 2 + strlen(act->frame->GetName()) + 1;
+}
+
+// FUNCTION: GAME 0x4065f0
+bool C_actor::Actor_SaveGameSave(void **buf, C_actor *act)
+{
+    if (!act || !act->frame || !strlen(act->frame->GetName()))
+    {
+        int *p = (int *)*buf;
+        *buf = p + 2;
+        p[0] = 0;
+        p[1] = 0;
+        return true;
+    }
+    int len = strlen(act->frame->GetName()) + 1;
+    int *p = (int *)*buf;
+    *p++ = len;
+    *p++ = act->type;
+    memcpy(p, act->frame->GetName(), len);
+    *buf = (uchar *)*buf + sizeof(int) * 2 + len;
+    return true;
+}
+
+// The first of global_actors whose frame has the name and that has the type, NULL where none has. act is set before
+// the pointer is moved on, the order that gives its zero the loop counter's register from the start (PS2 sets it after
+// the buffer).
+// FUNCTION: GAME 0x4066a0
+C_actor *C_actor::Actor_SaveGameLoad(void **buf)
+{
+    int *p = (int *)*buf;
+    int len = *p;
+    if (!len)
+    {
+        *buf = (uchar *)*buf + sizeof(int) * 2;
+        return NULL;
+    }
+    C_actor *act = NULL;
+    p++;
+    int type = *p++;
+    *buf = (uchar *)*buf + sizeof(int) * 2 + len;
+    for (uint i = 0; i < global_actors.size(); i++)
+    {
+        if (global_actors[i]->frame && !strcmp(global_actors[i]->frame->GetName(), (const char *)p) &&
+            global_actors[i]->type == type)
+        {
+            act = global_actors[i];
+            break;
+        }
+    }
+    return act;
+}
+
+// The struct, and for a car the models the script put into its model (SETMODELTOCAR), from its frames' last: each
+// one's file's name without the folder, its name and its parent's, each a word of its length and the characters, then
+// its scale, position and rotation. PS2's rounds each size up to 4 bytes (ZatocToNa4), and its parts are 2 bytes
+// longer.
+// FUNCTION: GAME 0x406770
 int C_actor::SaveGameGetSize()
 {
-    StubLog("C_actor::SaveGameGetSize");
-    return 0;
+    int size = sizeof(S_actor_savegame);
+    if (frame && type == ACTOR_CAR)
+    {
+        I3D_model *model = (I3D_model *)frame;
+        int i = model->frames.size();
+        I3D_frame **frames = model->frames.array;
+        while (i--)
+        {
+            if (frames[i]->GetType() != FRAME_MODEL)
+                continue;
+            char name[256];
+            strcpy(name, ((I3D_model *)frames[i])->GetFileName());
+            char *s = strrchr(name, '\\');
+            if (s)
+                s++;
+            size += sizeof(ushort);
+            if (s)
+                size += strlen(s);
+            size += sizeof(ushort);
+            size += strlen(frames[i]->GetName());
+            size += sizeof(ushort);
+            if (frames[i]->GetParent())
+                size += strlen(frames[i]->GetParent()->GetName());
+            size += sizeof(S_vector) * 2 + sizeof(S_quat);
+        }
+    }
+    return size;
 }
 
-// STUB: GAME 0x406870
+// A file's name without a backslash would be saved through NULL (strlen of it), as PS2's (whose strrchr takes the
+// whole name then); PS2 also saves a player's frame as on
+// FUNCTION: GAME 0x406870
 bool C_actor::SaveGameSave(void **buf)
 {
-    StubLog("C_actor::SaveGameSave");
-    return false;
+    S_actor_savegame *s = (S_actor_savegame *)*buf;
+    s->version = ACTOR_SAVEGAME_VERSION;
+    s->act_state = act_state;
+    s->number = number;
+    s->dead = dead;
+    s->alive = alive;
+    s->num_models = 0;
+    if (frame)
+        s->frame_on = frame->IsOn();
+    else
+        s->frame_on = false;
+    *buf = (uchar *)*buf + sizeof(S_actor_savegame);
+    if (frame && type == ACTOR_CAR)
+    {
+        I3D_model *model = (I3D_model *)frame;
+        int i = model->frames.size();
+        I3D_frame **frames = model->frames.array;
+        while (i--)
+        {
+            if (frames[i]->GetType() != FRAME_MODEL)
+                continue;
+            s->num_models++;
+            char name[256];
+            strcpy(name, ((I3D_model *)frames[i])->GetFileName());
+            char *p = strrchr(name, '\\');
+            if (p)
+                p++;
+            SaveGameSaveString(buf, p);
+            SaveGameSaveString(buf, frames[i]->GetName());
+            if (frames[i]->GetParent())
+                SaveGameSaveString(buf, frames[i]->GetParent()->GetName());
+            else
+            {
+                *(ushort *)*buf = 0;
+                *buf = (uchar *)*buf + sizeof(ushort);
+            }
+            *(S_vector *)*buf = frames[i]->GetScale();
+            *buf = (uchar *)*buf + sizeof(S_vector);
+            *(S_vector *)*buf = frames[i]->GetPos();
+            *buf = (uchar *)*buf + sizeof(S_vector);
+            *(S_quat *)*buf = frames[i]->GetRot();
+            *buf = (uchar *)*buf + sizeof(S_quat);
+        }
+    }
+    return true;
 }
 
-// STUB: GAME 0x406b00
+// Each model is created again, added to the actor's model and loaded through the model cache, then named, linked to
+// the scene's frame of its parent's name and placed. A model saved without a file's name is skipped after its word
+// only, the rest of its data left in the buffer (PS2's the same). The state is read first and set after the frame
+// (PS2's order); PS2's inlines the cache's Open.
+// FUNCTION: GAME 0x406b00
 bool C_actor::SaveGameLoad(void **buf)
 {
-    StubLog("C_actor::SaveGameLoad");
-    return false;
+    S_actor_savegame *s = (S_actor_savegame *)*buf;
+    if (s->version != ACTOR_SAVEGAME_VERSION)
+        return false;
+    int state = s->act_state;
+    number = s->number;
+    dead = s->dead;
+    alive = s->alive;
+    if (frame)
+        frame->SetOn(s->frame_on);
+    SetActState(state);
+    *buf = (uchar *)*buf + sizeof(S_actor_savegame);
+    for (int i = s->num_models; i; i--)
+    {
+        char name[256];
+        ushort len = *(ushort *)*buf;
+        *buf = (uchar *)*buf + sizeof(ushort);
+        if (len < 1)
+            continue;
+        memcpy(name, *buf, len);
+        name[len] = 0;
+        *buf = (uchar *)*buf + len;
+        I3D_model *model = (I3D_model *)driver->CreateFrame(FRAME_MODEL);
+        ((I3D_model *)frame)->AddFrame(model);
+        model->Release();
+        model_cache.Open(model, name, 0, NULL, NULL, NULL);
+        SaveGameLoadString(buf, name);
+        model->SetName(name);
+        SaveGameLoadString(buf, name);
+        I3D_frame *parent = act_mission->GetScene()->FindFrame(name, ENUMF_ALL);
+        model->LinkTo(parent, 0);
+        model->SetScale(*(S_vector *)*buf);
+        *buf = (uchar *)*buf + sizeof(S_vector);
+        model->SetPos(*(S_vector *)*buf);
+        *buf = (uchar *)*buf + sizeof(S_vector);
+        model->SetRot(*(S_quat *)*buf);
+        *buf = (uchar *)*buf + sizeof(S_quat);
+        model->Update();
+    }
+    return true;
 }
 
-// STUB: GAME 0x4075a0
-bool C_actor::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
+// The buffer stays where it is
+// FUNCTION: GAME 0x406d80
+void C_actor::SaveGameLoadGuid(void **buf)
 {
-    StubLog("C_actor::GetBoundPoints2D");
-    return false;
+    S_actor_savegame *s = (S_actor_savegame *)*buf;
+    if (s->version == ACTOR_SAVEGAME_VERSION)
+        number = s->number;
 }
 
-#pragma auto_inline(on)
+// Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)
+void C_actor::Death()
+{
+}
 
-// From the last one, which the actor most likely is if anything
+// An actor in ACTSTATE_NONE stays in it (only Rebirth takes it back), as PS2's
 // FUNCTION: GAME 0x406da0
 void C_actor::SetActState(int state)
 {
-    if (act_state != ACTSTATE_2 && act_state != state)
-        act_mission->game->act_state_changed = true;
+    if (act_state == ACTSTATE_NONE || act_state == state)
+        return;
+    act_mission->game->act_state_changed = true;
     act_state = state;
 }
 
-// An actor in ACTSTATE_2 goes back to ACTSTATE_0, which the game is told of as of SetActState's changes
+// An actor in ACTSTATE_NONE goes back to ACTSTATE_ACTIVE, which the game is told of as of SetActState's changes
 // FUNCTION: GAME 0x406dd0
 void C_actor::Rebirth()
 {
-    if (act_state == ACTSTATE_2)
+    if (act_state == ACTSTATE_NONE)
     {
-        act_state = ACTSTATE_0;
+        act_state = ACTSTATE_ACTIVE;
         act_mission->game->act_state_changed = true;
     }
+}
+
+// The part of the move from pos by dir after which a sphere of radius + add around center is first met, 0 where it is
+// met already, negative where it isn't: C_human::IsPossibleColl's test, the sphere not moving (the name is ours; PS2
+// inlines it too). An inline function: its two copies in IsPossibleCollAll inline different calls (the frames' more),
+// as nested calls get shares of the budget, where code written out twice inlines every call. The arguments are
+// evaluated right to left: center is copied before the frame's radius is read, which comes after the constructor's
+// calls. move is a local: its zero stores come before the road block's center is copied, where a temporary in
+// move - dir has them after d's constructor call.
+static inline float PossibleCollSphere(float add, S_vector center, const S_vector &pos, const S_vector &dir,
+    float radius)
+{
+    S_vector move(0.0f, 0.0f, 0.0f);
+    S_vector d = center - pos;
+    S_vector v = move - dir;
+    float r = radius + add;
+    float rr = r * r;
+    float t;
+    if (d.Dot(d) <= rr)
+        t = 0.0f;
+    else
+    {
+        float a = v.Dot(v);
+        if (a <= 0.0f)
+            t = -1.0f;
+        else
+        {
+            float b = v.Dot(d) * 2.0f;
+            float disc = b * b - (d.Dot(d) - rr) * a * 4.0f;
+            if (disc < 0.0f)
+                t = disc;
+            else
+            {
+                float s = (float)sqrt(disc);
+                float inv = 1.0f / (a * 2.0f);
+                float t1 = (s - b) * inv;
+                t = (-b - s) * inv;
+                if (t1 < t)
+                    t = t1;
+            }
+        }
+    }
+    return t;
+}
+
+// Whether the actor at pos, moving by dir, may run into something within the move: the active actors, the inactive
+// cars and the don's tail (each one's IsPossibleColl, its part of the move at most 1), and while the police are
+// active their road blocks that are up (a sphere of radius + 40 around each one's node) and the frames of
+// posscoll_frame (a sphere of radius + the frame's), each list from the last one. out is the nearest such place, coll
+// the actor there (the don's tail for the road blocks and the frames, as PS2's). The vectors by value, PS2's by
+// reference. Open: the road blocks' loop holds the block in eax where the original has ecx, and loads the mission's
+// roads before the node; the frames' loop reads the radius after the S_vector constructor's call only where VC6 has
+// compiled the constructor's copy before this function, which /YX does in the original (its S_vector copies come right
+// after it, 0x407540) and at the file's end in ours.
+// FUNCTION: GAME 0x406df0
+bool C_actor::IsPossibleCollAll(S_vector pos, S_vector dir, float radius, S_vector &out, C_actor **coll)
+{
+    float best = FLT_MAX;
+    bool ret = false;
+    if (coll)
+        *coll = NULL;
+    std::vector<C_actor *> &active = act_mission->game->active_actors;
+    C_actor *act;
+    int i;
+    for (i = active.size(); i--;)
+    {
+        if (active[i] == this)
+            continue;
+        act = NULL;
+        float dist;
+        bool hit = active[i]->IsPossibleColl(this, pos, dir, radius, dist, &act);
+        if (hit && dist > 1.0f)
+            hit = false;
+        ret |= hit;
+        if (hit && dist < best)
+        {
+            best = dist;
+            if (coll)
+                *coll = act;
+        }
+    }
+    std::vector<C_actor *> &inactive = act_mission->game->inactive_actors;
+    for (i = inactive.size(); i--;)
+    {
+        if (inactive[i]->type == ACTOR_CAR && inactive[i] != this)
+        {
+            act = NULL;
+            float dist;
+            bool hit = inactive[i]->IsPossibleColl(this, pos, dir, radius, dist, &act);
+            if (hit && dist > 1.0f)
+                hit = false;
+            ret |= hit;
+            if (hit && dist < best)
+            {
+                best = dist;
+                if (coll)
+                    *coll = act;
+            }
+        }
+    }
+    {
+        act = NULL;
+        float dist;
+        bool hit = act_mission->game->don_ocas->IsPossibleColl(this, pos, dir, radius, dist, &act);
+        if (hit && dist > 1.0f)
+            hit = false;
+        ret |= hit;
+        if (hit && dist < best)
+        {
+            best = dist;
+            if (coll)
+                *coll = act_mission->game->don_ocas;
+        }
+    }
+    C_game *game = act_mission->game;
+    if (game->shvestky.active)
+    {
+        for (i = game->road_blocks.size(); i--;)
+        {
+            C_game::S_RoadBlock &rb = game->road_blocks[i];
+            if (!rb.active)
+                continue;
+            float t = PossibleCollSphere(40.0f, act_mission->roads->links[rb.node].pos, pos, dir, radius);
+            if (t < best && t >= 0.0f)
+            {
+                best = t;
+                ret = true;
+                if (coll)
+                    *coll = act_mission->game->don_ocas;
+            }
+        }
+    }
+    for (i = posscoll_frame.size(); i--;)
+    {
+        float t = PossibleCollSphere(posscoll_frame[i].radius, posscoll_frame[i].frame->GetWorldPos(), pos, dir,
+            radius);
+        if (t < best && t >= 0.0f)
+        {
+            best = t;
+            ret = true;
+            if (coll)
+                *coll = act_mission->game->don_ocas;
+        }
+    }
+    if (ret)
+        out = pos + dir * best;
+    return ret;
+}
+
+// The frame's outline seen from above, as world points in x and z (PS2 name; frm unused, as PS2's), false without a
+// frame. An upright frame (its y axis within 45 degrees of the world's) gives the four corners of its hierarchy's box
+// at half its height, 0.2 out on each side; any other the four of the box's eight corners that lie furthest in +x, -x,
+// +z and -z, every coordinate 0.2 lower (the maximum's too: PS2's the same). PS2's CompletionBoudVolume, after
+// RotateDirNoNorm there, has no PC copy and no part in it. The centre goes through S_vector's operators though only its
+// y is used: written (min.y + max.y) * .5f, VC6 inlines more of the last push_back (its size() and the second _Ucopy)
+// than the original. The upright points go through a local assigned from a temporary, the others straight into
+// push_back (PS2 copies the same ones twice). Open: the original schedules the matrix copy's setup before the centre's
+// product, ours after it.
+// FUNCTION: GAME 0x4075a0
+bool C_actor::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm)
+{
+    if (!frame)
+        return false;
+    if (frame->GetMatrix()(1).Dot(S_vector(0.0f, 1.0f, 0.0f)) > .7071f)
+    {
+        I3D_bvolume bvol = frame->GetHRBoundVolume();
+        S_matrix m = frame->GetMatrix();
+        S_vector center = (bvol.bbox.min + bvol.bbox.max) * .5f;
+        float y = center.y;
+        S_vector corners[4];
+        corners[0] = S_vector(bvol.bbox.min.x - .2f, y, bvol.bbox.min.z - .2f);
+        corners[1] = S_vector(bvol.bbox.max.x + .2f, y, bvol.bbox.min.z - .2f);
+        corners[2] = S_vector(bvol.bbox.max.x + .2f, y, bvol.bbox.max.z + .2f);
+        corners[3] = S_vector(bvol.bbox.min.x - .2f, y, bvol.bbox.max.z + .2f);
+        S_vector2 p;
+        for (int i = 0; i < 4; i++)
+        {
+            corners[i] = corners[i] * m;
+            p = S_vector2(corners[i].x, corners[i].z);
+            points.push_back(p);
+        }
+    }
+    else
+    {
+        I3D_bvolume bvol = frame->GetHRBoundVolume();
+        S_matrix m = frame->GetMatrix();
+        S_vector c[8];
+        c[0] = S_vector(bvol.bbox.min.x - .2f, bvol.bbox.min.y - .2f, bvol.bbox.min.z - .2f) * m;
+        c[1] = S_vector(bvol.bbox.min.x - .2f, bvol.bbox.max.y - .2f, bvol.bbox.min.z - .2f) * m;
+        c[2] = S_vector(bvol.bbox.min.x - .2f, bvol.bbox.min.y - .2f, bvol.bbox.max.z - .2f) * m;
+        c[3] = S_vector(bvol.bbox.min.x - .2f, bvol.bbox.max.y - .2f, bvol.bbox.max.z - .2f) * m;
+        c[4] = S_vector(bvol.bbox.max.x - .2f, bvol.bbox.min.y - .2f, bvol.bbox.min.z - .2f) * m;
+        c[5] = S_vector(bvol.bbox.max.x - .2f, bvol.bbox.max.y - .2f, bvol.bbox.min.z - .2f) * m;
+        c[6] = S_vector(bvol.bbox.max.x - .2f, bvol.bbox.min.y - .2f, bvol.bbox.max.z - .2f) * m;
+        c[7] = S_vector(bvol.bbox.max.x - .2f, bvol.bbox.max.y - .2f, bvol.bbox.max.z - .2f) * m;
+        // The corners furthest in +x, -x, +z and -z, starting from the last one
+        int idx[4];
+        int i = 4;
+        while (i--)
+            idx[i] = 7;
+        float xs[2], zs[2];
+        i = 2;
+        while (i--)
+        {
+            xs[i] = c[7].x;
+            zs[i] = c[7].z;
+        }
+        i = 7;
+        while (i--)
+        {
+            if (c[i].x > xs[0])
+            {
+                idx[0] = i;
+                xs[0] = c[i].x;
+            }
+            if (c[i].x < xs[1])
+            {
+                idx[1] = i;
+                xs[1] = c[i].x;
+            }
+            if (c[i].z > zs[0])
+            {
+                idx[2] = i;
+                zs[0] = c[i].z;
+            }
+            if (c[i].z < zs[1])
+            {
+                idx[3] = i;
+                zs[1] = c[i].z;
+            }
+        }
+        i = 4;
+        while (i--)
+            points.push_back(S_vector2(c[idx[i]].x, c[idx[i]].z));
+    }
+    return true;
 }
 
 // Turns the projectors off on the frame's visuals, the frame's and its children's, from the last child (PS2's order)
@@ -1003,16 +1688,49 @@ S_vector C_actor::GetWorldPos()
     return pos;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x408040
+// The same for the direction, normalized (PS2 name)
+// FUNCTION: GAME 0x408040
 S_vector C_actor::GetWorldDir()
 {
-    StubLog("C_actor::GetWorldDir");
+    if (frame)
+        return frame->GetWorldDir();
     return dir;
 }
 
-#pragma auto_inline(on)
+// The frame's radius replaced where it is there already (PS2 name)
+// FUNCTION: GAME 0x4081d0
+void C_actor::AddFrameForPossibleColl(I3D_frame *frm, float radius)
+{
+    if (!frm)
+        return;
+    for (int i = posscoll_frame.size(); i--;)
+    {
+        if (posscoll_frame[i].frame == frm)
+        {
+            posscoll_frame[i].radius = radius;
+            return;
+        }
+    }
+    S_posscoll_frame pf;
+    pf.frame = frm;
+    pf.radius = radius;
+    posscoll_frame.push_back(pf);
+}
+
+// The last one in its place, as DelActorFromGlobal (PS2 name)
+// FUNCTION: GAME 0x4083e0
+void C_actor::DelFrameForPossibleColl(I3D_frame *frm)
+{
+    for (int i = posscoll_frame.size(); i--;)
+    {
+        if (posscoll_frame[i].frame == frm)
+        {
+            posscoll_frame[i] = posscoll_frame.back();
+            posscoll_frame.pop_back();
+            return;
+        }
+    }
+}
 
 // FUNCTION: GAME 0x408450
 int rnd(int n)
@@ -1028,22 +1746,47 @@ float rnd()
     return rand() * (1.0f / RAND_MAX);
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x408490
+// The difference of the two directions' atan2s, brought into -pi to pi (PS2 name)
+// FUNCTION: GAME 0x408490
 float AngleTo2(const S_vector2 &a, const S_vector2 &b)
 {
-    StubLog("AngleTo2");
-    return 0.0f;
+    float aa = (float)atan2(a.y, a.x);
+    float ab = (float)atan2(b.y, b.x);
+    float angle = ab - aa;
+    if (angle < -PI)
+        angle += PI * 2.0f;
+    if (angle > PI)
+        angle -= PI * 2.0f;
+    return angle;
 }
 
-// STUB: GAME 0x408630
+// The rotation about y as C_human::Movement writes it, but for the sine taken into a local first (computed before the
+// cosine, where PS2 calls cosf first). RotateDir keeps the vector horizontal: its y taken out before the normalization.
+// FUNCTION: GAME 0x4084d0
 void RotateDir(S_vector &v, float angle)
 {
-    StubLog("RotateDir");
+    S_matrix m;
+    m.Identity();
+    float s = (float)sin(angle);
+    float c = (float)cos(angle);
+    m(0, 0) = m(2, 2) = c;
+    m(2, 0) = -(m(0, 2) = s);
+    v = v.RotateByMatrix(m);
+    v.y = 0.0f;
+    v.Normalize();
 }
 
-#pragma auto_inline(on)
+// FUNCTION: GAME 0x408630
+void RotateDirNoNorm(S_vector &v, float angle)
+{
+    S_matrix m;
+    m.Identity();
+    float s = (float)sin(angle);
+    float c = (float)cos(angle);
+    m(0, 0) = m(2, 2) = c;
+    m(2, 0) = -(m(0, 2) = s);
+    v = v.RotateByMatrix(m);
+}
 
 // qsort's, by id
 // FUNCTION: GAME 0x408690
@@ -1082,108 +1825,81 @@ void DoneAnimIndex()
     delete[] _anim_index_;
 }
 
-#pragma auto_inline(off)
-
-// STUB: GAME 0x42cc20
-S_quat C_actor::GetRecordRot(int a)
-{
-    StubLog("C_actor::GetRecordRot");
-    return S_quat(0.0f, 0.0f, 0.0f, 0.0f);
-}
-
-// Empty: the vtable's entry is the linker's folded empty ret 4 of the out-of-line kind (0x4ab130, C_actor.h; 0x403db0
-// is the inline one's), which C_clock's DuplicateFrom jumps to
-void C_actor::DuplicateFrom(C_actor *act)
-{
-}
-
-// STUB: GAME 0x5c2650
-void *C_actor::GetBlockRecordsSize(int a)
-{
-    StubLog("C_actor::GetBlockRecordsSize");
-    return NULL;
-}
-
-// STUB: GAME 0x5c26a0
-void *C_actor::GetRecordsSize()
-{
-    StubLog("C_actor::GetRecordsSize");
-    return NULL;
-}
-
-// STUB: GAME 0x5c27b0
-void C_actor::SetCutsceneRecord(bool on)
-{
-    StubLog("C_actor::SetCutsceneRecord");
-}
-
-// STUB: GAME 0x5c27d0
-void C_actor::SetCutscenePlay(bool on)
-{
-    StubLog("C_actor::SetCutscenePlay");
-}
-
-// STUB: GAME 0x5c27f0
-void C_actor::UpdateCutsceneFlags()
-{
-    StubLog("C_actor::UpdateCutsceneFlags");
-}
-
-// Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)
-void C_actor::Death()
-{
-}
-
-// The vtable's 0x4aa490, which returns true (a mov al, 1 and a ret 4), as LoadData's
-void C_actor::SaveData(C_chunk *chunk)
-{
-    StubLog("C_actor::SaveData");
-}
-
-void C_actor::LoadData(C_chunk *chunk)
-{
-    StubLog("C_actor::LoadData");
-}
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x406590
-int C_actor::Actor_SaveGameGetSize(C_actor *act)
-{
-    StubLog("C_actor::Actor_SaveGameGetSize");
-    return 0;
-}
-
-// STUB: GAME 0x4065f0
-void C_actor::Actor_SaveGameSave(void **buf, C_actor *act)
-{
-    StubLog("C_actor::Actor_SaveGameSave");
-}
-
-// STUB: GAME 0x4066a0
-C_actor *C_actor::Actor_SaveGameLoad(void **buf)
-{
-    StubLog("C_actor::Actor_SaveGameLoad");
-    return NULL;
-}
-
-// STUB: GAME 0x408760
+// FUNCTION: GAME 0x408760
 int GetAnimIndex(uint id)
 {
-    StubLog("GetAnimIndex");
-    return -1;
+    if (!_anim_index_)
+        return -1;
+    int lo = 0;
+    int hi = _anim_index_count_ - 1;
+    while (true)
+    {
+        int mid = (lo + hi) / 2;
+        if (_anim_index_[mid].id == id)
+            return _anim_index_[mid].index;
+        if (lo >= hi)
+            return -1;
+        if (_anim_index_[mid].id > id)
+            hi = mid - 1;
+        else
+            lo = mid + 1;
+    }
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x4087b0
+// Each child linked to nothing, the next one taken first (PS2's the same)
+// FUNCTION: GAME 0x4087b0
 void UnlinkAllFrameChild(I3D_frame *frm)
 {
-    StubLog("UnlinkAllFrameChild");
+    I3D_frame *child = frm->GetChild(0);
+    while (child)
+    {
+        I3D_frame *f = child;
+        child = child->m_pNext;
+        f->LinkTo(NULL, 0);
+    }
 }
 
-#pragma auto_inline(on)
+// Its copy lies in C_car.cpp's range: where it was defined is open (C_actor's other cutscene functions there are
+// C_cutscene_records.cpp's)
+
+// The rotation the records give for the time: slerped between the keys without their ease (0 without records)
+// FUNCTION: GAME 0x42cc20
+S_quat C_actor::GetRecordRot(int time)
+{
+    if (!records->first_block)
+        return S_quat(0.0f, 0.0f, 0.0f, 0.0f);
+    S_actor_record *rec = (S_actor_record *)(records->first_block + 8);
+    S_actor_record *prev = rec;
+    while (rec && rec->time <= records->last_key_time)
+    {
+        if (rec->time <= time)
+            prev = rec;
+        if (rec->time >= records->last_key_time)
+            break;
+        rec = (S_actor_record *)((uchar *)rec + records->record_sizes[rec->type]);
+    }
+    S_actor_record *next = prev->time < records->last_key_time ?
+        (S_actor_record *)((uchar *)prev + records->record_sizes[prev->type]) : prev;
+    if (time <= prev->time)
+        return prev->rot;
+    if (next != prev && time <= next->time)
+    {
+        float len = (float)(next->time - prev->time);
+        float f = (time - prev->time) / len;
+        S_quat rot = prev->rot;
+        rot = rot.Slerp(next->rot, f, true);
+        return rot;
+    }
+    return next->rot;
+}
+
+// True here (PS2's the same); the original's slots point at the folded copy of the out-of-line kind (0x4aa490, C_actor.h)
+bool C_actor::SaveData(C_chunk *chunk)
+{
+    return true;
+}
+
+bool C_actor::LoadData(C_chunk *chunk)
+{
+    return true;
+}

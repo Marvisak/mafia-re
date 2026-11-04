@@ -2756,7 +2756,7 @@ void C_program::ClearAfterEnd()
         delete code;
     }
     if (actor)
-        actor->SetActState(ACTSTATE_2);
+        actor->SetActState(ACTSTATE_NONE);
 }
 
 // FUNCTION: GAME 0x46cd90
@@ -2787,7 +2787,7 @@ bool C_program::SetEvent(int id)
     event_time = act_mission->GetGame()->GetGameTime();
     command_time = 0;
     if (actor)
-        actor->SetActState(ACTSTATE_0);
+        actor->SetActState(ACTSTATE_ACTIVE);
     return true;
 }
 
@@ -3334,13 +3334,13 @@ void C_program::Process(uint time)
             switch (p[1])
             {
             case ACT_STATE_NONE:
-                act->SetActState(ACTSTATE_2);
+                act->SetActState(ACTSTATE_NONE);
                 break;
             case ACT_STATE_ACTIVE:
-                act->SetActState(ACTSTATE_0);
+                act->SetActState(ACTSTATE_ACTIVE);
                 break;
             case ACT_STATE_INACTIVE:
-                act->SetActState(ACTSTATE_1);
+                act->SetActState(ACTSTATE_INACTIVE);
                 break;
             }
         }
@@ -6348,9 +6348,9 @@ void C_program::Process(uint time)
                 break;
             S_vector v(float_regs[p->reg], float_regs[p->reg + 1], float_regs[p->reg + 2]);
             if (p->value_reg == -1)
-                RotateDir(v, p->value);
+                RotateDirNoNorm(v, p->value);
             else
-                RotateDir(v, float_regs[p->value_reg]);
+                RotateDirNoNorm(v, float_regs[p->value_reg]);
             float_regs[p->reg] = v.x;
             float_regs[p->reg + 1] = v.y;
             float_regs[p->reg + 2] = v.z;

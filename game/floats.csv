@@ -11,9 +11,11 @@ address|type|size
 0x6232f4|float|4
 0x6232f8|float|4
 0x6232fc|float|4
+0x623300|float|4
 0x623304|float|4
 0x623308|float|4
 0x62330c|float|4
+0x623310|float|4
 0x6233b0|float|4
 0x6233b4|float|4
 0x6233b8|float|4

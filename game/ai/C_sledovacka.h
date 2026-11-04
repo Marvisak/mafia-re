@@ -88,7 +88,7 @@ public:
 // What Init's inlined push_back calls out of line: the bridges' _Ucopy and _Ufill, folded with other vectors' of 8-byte
 // elements (the original kept g_indicators.cpp's copies)
 // TEMPLATE: GAME 0x604dd0
-// ?_Ucopy@?$vector@US_anim_info@@V?$allocator@US_anim_info@@@std@@@std@@IAEPAUS_anim_info@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_scream_area@C_game@@V?$allocator@US_scream_area@C_game@@@std@@@std@@IAEPAUS_scream_area@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x604e00
 // ?_Ufill@?$vector@US_anim_info@@V?$allocator@US_anim_info@@@std@@@std@@IAEXPAUS_anim_info@@IABU3@@Z

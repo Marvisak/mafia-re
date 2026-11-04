@@ -304,12 +304,12 @@ extern C_mission *act_mission;
 // ?erase@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEPAPAUtDynamicCollObject@@PAPAU3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
 // TEMPLATE: GAME 0x4a9930
-// ??A?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAEAAPAUg_collision_header@@I@Z
+// ??A?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEAAPAVC_actor@@I@Z
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
@@ -318,7 +318,7 @@ extern C_mission *act_mission;
 // What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
 // folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
 // TEMPLATE: GAME 0x404830
-// ?_Construct@std@@YIXPAUS_sound_light_sector@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_posscoll_frame@C_actor@@ABU23@@Z
 
 // What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
@@ -327,7 +327,7 @@ extern C_mission *act_mission;
 // ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEXPAUS_Telephone@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@IAEXPAUS_actor_sound_buffer@C_mission@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5470a0
 // ?size@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QBEIXZ

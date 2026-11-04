@@ -319,7 +319,7 @@ public:
 // ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
 
 // SYNTHETIC: GAME 0x47a430
-// ?Mouse@GM_Component@@UAEIHHHII@Z
+// ?OnMouse@GM_Menu@@UAEHHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
 // ?OnKey@GM_GunShop@@UAEHEI@Z

@@ -6,9 +6,9 @@
 // calls, with the recording's, Close, which C_mission::Close calls, with what it calls of the cutscene (RemoveActors,
 // ReleaseAnims), of its animations' names (Clear) and of the recording (Clear, ReleaseUnknown0), and IsPlaying; the
 // vtable's getters, setters and the functions that pass on to the animations' names and the recording (the
-// recordings', which the scripts call, among them), and the names' constructor. Stubs: the vtable's other
-// functions, the two objects' functions those pass on to, the seagulls' constructor, which C_mission::CreateActor
-// calls, and the actors' records' Reset, which lies in another file's range.
+// recordings', which the scripts call, among them), the names' constructor, and the keys' ease, which C_actor's
+// cutscene functions call. Stubs: the vtable's other functions, the two objects' functions those pass on to, and the
+// seagulls' constructor, which C_mission::CreateActor calls.
 
 #include "mission/C_recorder.h"
 #include "mission/Mission.h"
@@ -32,6 +32,29 @@ std::vector<S_cutscene_placement> *saved_placements;
 // The cutscene's time at which its show starts (the name is ours): SetShowStart sets it, OpenShow clears it
 // GLOBAL: GAME 0x647a54
 int cutscene_show_start;
+
+// The time between two keys eased: accelerated over a, at constant speed, then slowed over b (a and b scaled down to
+// a sum of 1); the time itself where they add up to nothing
+// FUNCTION: GAME 0x598410
+float Ease(float u, float a, float b)
+{
+    float s = a + b;
+    if (s < .001)
+        return u;
+    if (s > 1.0f)
+    {
+        a = a / s;
+        b = b / s;
+    }
+    float k = 1.0f / (2.0f - a - b);
+    if (u < a)
+        return k / a * u * u;
+    if (u < 1.0f - b)
+        return k * (2.0f * u - a);
+    u = 1.0f - u;
+    float r = 1.0f - k / b * u * u;
+    return r;
+}
 
 #pragma auto_inline(off)
 
@@ -775,12 +798,6 @@ C_seagull::C_seagull()
 }
 
 // The records' file is the one at 0x5c25b0-0x5c283c, which has no source yet
-// STUB: GAME 0x5c25e0
-void C_cutscene_records::Reset()
-{
-    StubLog("C_cutscene_records::Reset");
-}
-
 #pragma auto_inline(on)
 
 #pragma auto_inline(off)
@@ -861,17 +878,6 @@ void C_seagull::AI(uint time)
 {
     StubLog("C_seagull::AI");
     C_actor::AI(time);
-}
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x5c2730
-void *C_actor::AddRecord(C_cutscene_records *rec, int type)
-{
-    StubLog("C_actor::AddRecord");
-    return NULL;
 }
 
 #pragma auto_inline(on)

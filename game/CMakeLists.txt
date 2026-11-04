@@ -85,6 +85,7 @@ add_executable(game WIN32
     mission/game.cpp
     ui/Load_progress.cpp
     Main.cpp
+    mission/C_cutscene_records.cpp
     collision/g_colls.cpp
     g_lines.cpp
     actors/C_ShotSkeleton.cpp
@@ -187,6 +188,16 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
     # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
     target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
+    # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the saved games', the AI's, the animations'),
+    # and the records' walk (C_cutscene_records.cpp), which the recorder's saves call
+    target_link_options(game PRIVATE
+        /INCLUDE:?InternalPlacementReset@C_actor@@QAEXXZ
+        /INCLUDE:?SaveGameLoadGuid@C_actor@@QAEXPAPAX@Z
+        /INCLUDE:?IsPossibleCollAll@C_actor@@QAE_NUS_vector@@0MAAU2@PAPAV1@@Z
+        /INCLUDE:?AddFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@M@Z
+        /INCLUDE:?DelFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@@Z
+        /INCLUDE:?RotateDir@@YIXAAUS_vector@@M@Z
+        /INCLUDE:?GetRecordsSize@C_cutscene_records@@QAEHXZ)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

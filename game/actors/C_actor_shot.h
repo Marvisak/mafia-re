@@ -2,6 +2,24 @@
 
 #include "actors/C_actor.h"
 
+// A shot actor's record (C_actor_shot::AddToCutscene gives its size; the names are ours), 0x10 bytes
+struct S_actor_shot_record
+{
+    int time;                           // 0x0, S_cutscene_record's
+    int type;                           // 0x4
+    // 0x8, the effect a particle starts with (C_effects::CreateParticle), or the item SetWeapon takes
+    int id;
+    uint flags;                         // 0xc, SHOT_REC_*
+};
+
+// S_actor_shot_record::flags (the names are ours): a particle started or stopped (and nothing else), or the
+// weapon set, the shooting turned on (C_actor_shot::firing) and its shots fired (shoots)
+#define SHOT_REC_PARTICLE_START 0x1
+#define SHOT_REC_PARTICLE_STOP 0x2
+#define SHOT_REC_FIRING 0x1000
+#define SHOT_REC_WEAPON 0x2000
+#define SHOT_REC_SHOOTS 0x8000
+
 // PS2's C_actor_shot (C_actor_shot.cpp), 0x8c bytes (PS2's 0xa0). Only the constructor so far, which
 // C_mission::CreateActor calls for ACTOR_ACTOR_SHOT.
 // VTABLE: GAME 0x625458
@@ -33,8 +51,18 @@ public:
     }
     virtual void GameInit();
     virtual void GameDone();
+    // The weapon the shots are of, an item (gameItemTable): its sound, and the frame's name's count (PS2 name)
+    void SetWeapon(int weapon);
 
-    uchar unknown_70[0x1c];             // 0x70
+    uchar unknown_70[8];                // 0x70
+    // 0x78, -1 (GameInit, PlayRecord) has Update start a shot, the item's times summed (the name is a guess)
+    int shot_time;
+    bool firing;                        // 0x7c, Update does nothing without it (the name is a guess)
+    uchar unknown_7d[7];                // 0x7d
+    bool shoots;                        // 0x84, Update fires C_game::NewShoot (the name is a guess)
+    uchar unknown_85[3];                // 0x85
+    // 0x88, the record's particle (CreateParticle's number), -1 from Init and for none (the name is ours)
+    int particle;
 };
 
 // SYNTHETIC: GAME 0x566f60

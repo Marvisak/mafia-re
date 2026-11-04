@@ -20,24 +20,6 @@ C_actor_shot::~C_actor_shot()
 {
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// STUB: GAME 0x404e20
-bool C_actor_shot::AddToCutscene()
-{
-    StubLog("C_actor_shot::AddToCutscene");
-    return C_actor::AddToCutscene();
-}
-
-// STUB: GAME 0x404e40
-void C_actor_shot::PlayRecord(int a)
-{
-    StubLog("C_actor_shot::PlayRecord");
-    C_actor::PlayRecord(a);
-}
-
 // The original's is C_dyn_object's, folded: it logs that name, so ours folds too
 // STUB: GAME 0x41bae0 FOLDED
 S_vector C_actor_shot::GetRecordPos(int a)
@@ -102,6 +84,12 @@ void C_actor_shot::GameDone()
 int C_actor_shot::SaveGameGetSize()
 {
     return 0;
+}
+
+// STUB: GAME 0x567430
+void C_actor_shot::SetWeapon(int weapon)
+{
+    StubLog("C_actor_shot::SetWeapon");
 }
 
 #pragma auto_inline(on)

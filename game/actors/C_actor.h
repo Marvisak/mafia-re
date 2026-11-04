@@ -55,10 +55,12 @@ struct tDynamicCollObject;
 #define ACTORSUB_CAR_EX 3               // a C_car_ex's, whose type stays ACTOR_CAR
 #define ACTORSUB_HUMAN 2                // C_human's constructor
 
-// The actors' states (C_actor::act_state, PS2's C_actor::E_act_state; the names are ours, by value)
-#define ACTSTATE_0 0
-#define ACTSTATE_1 1                    // the script's ACT_SETSTATE INACTIVE
-#define ACTSTATE_2 2
+// The actors' states (C_actor::act_state, PS2's C_actor::E_act_state; the names are ours, after the script's
+// ACT_SETSTATE, which sets them for its ACT_STATE_ACTIVE, ACT_STATE_INACTIVE and ACT_STATE_NONE): C_game::Tick ticks
+// the active and the inactive actors, and one in ACTSTATE_NONE leaves it only through Rebirth
+#define ACTSTATE_ACTIVE 0
+#define ACTSTATE_INACTIVE 1
+#define ACTSTATE_NONE 2
 
 // Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, after their callers, by value where none
 // passes it): the script's HUMAN_SETPROPERTY hits a human whose energy runs out with HIT_IN_CAR or HIT_LANDING
@@ -97,37 +99,92 @@ struct S_cutscene_link
     S_quat rot;                         // 0x38
 };
 
-// The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
+// An actor's record (C_actor::AddToCutscene gives its size; the names are ours), 0x5c bytes: a key of a spline through
+// the frame's positions, with its tangents and the ease of the position and of the rotation into the key and out of it
+// (Ease's, 3D Studio's keys'), and an animation of the cutscene. PlayStep, PlaceAtTime and GetRecordPos move the
+// frame between two keys by Hermite's basis functions, GetRecordRot slerps the rotation without the ease.
+struct S_actor_record
+{
+    int time;                           // 0x0, S_cutscene_record's
+    int type;                           // 0x4
+    S_vector pos;                       // 0x8, the frame's position
+    S_quat rot;                         // 0x14, the frame's rotation
+    S_vector tangent_out;               // 0x24, the spline's tangent towards the next key
+    S_vector tangent_in;                // 0x30, its tangent from the previous key
+    uchar unknown_3c[0xc];              // 0x3c
+    float ease_to;                      // 0x48, the position's ease into the key
+    float ease_from;                    // 0x4c, and out of it
+    float rot_ease_to;                  // 0x50, the same for the rotation
+    float rot_ease_from;                // 0x54
+    // 0x58: the animation (ACTOR_REC_ANIM), its flags (ACTOR_REC_ANIMATED ...), and from bit ACTOR_REC_ANIM_TIME_SHIFT
+    // on its time when the record was made, in 40 ms
+    uint anim;
+};
+
+// S_actor_record::anim (the names are ours): the animation, an index of the cutscene's animations (GetAnimByIndex's),
+// played on a model's first channel where ACTOR_REC_ANIMATED is set, looping or once; the frame stays at the record's
+// placement up to the next key (no blending), and a camera's record puts the scene's camera where the frame is
+#define ACTOR_REC_ANIM 0x7ff
+#define ACTOR_REC_ANIMATED 0x1000
+#define ACTOR_REC_LOOP 0x2000
+#define ACTOR_REC_CAMERA 0x4000
+#define ACTOR_REC_NO_BLEND 0x8000
+#define ACTOR_REC_ANIM_TIME_SHIFT 16
+
+// The saved game's data of an actor (C_actor::SaveGameSave's; the names are ours), 0xd bytes, packed; a car's models
+// follow it (SaveGameSave). PS2's has the same fields, 0x10 bytes: version, number and num_models as ints, then the
+// bytes.
+#pragma pack(push, 1)
+struct S_actor_savegame
+{
+    uchar version;                      // 0x0, ACTOR_SAVEGAME_VERSION
+    uchar act_state;                    // 0x1
+    int number;                         // 0x2, which SaveGameLoadGuid reads alone
+    bool alive;                         // 0x6
+    bool dead;                          // 0x7
+    bool frame_on;                      // 0x8, the frame's FRMFLAGS_ON, false without a frame
+    int num_models;                     // 0x9, the car's models saved after it
+};
+#pragma pack(pop)
+
+// The version of the saved game's data SaveGameSave writes, the only one SaveGameLoad and SaveGameLoadGuid take (the
+// name is ours)
+#define ACTOR_SAVEGAME_VERSION 3
+
+// The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80).
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 13 come before AI, Update and NetDirect, PS2's
 // first three; from those on the PC's are PS2's in PS2's order, but for PS2's last two (ChangeSceneInit and
 // ChangeSceneDone). The first 13 are PC only, the cutscenes', on the actor's records (the names are ours; their
-// parameters and results by the original's code, the types are guesses).
-// Not written yet: the virtual functions declared here but the destructor, Init, Release, GameInit and GameDone, which
-// the actors' classes need, are stubs (C_actor.cpp). Each actor class declares the slots its vtable overrides.
+// parameters and results by the original's code). Each actor class declares the slots its vtable overrides.
 // VTABLE: GAME 0x623248
 class C_actor
 {
 public:
     C_actor();
 
-    virtual int RecordKey(int a);       // -1 here
-    virtual void PlayRecord(int a);
-    virtual void PlayStep(int a);
-    virtual bool PlaceAtTime(int a);
-    virtual S_vector GetRecordPos(int a);
-    virtual S_quat GetRecordRot(int a);
+    // The record made for the time: its type, -1 for none (always here)
+    virtual int RecordKey(int time);
+    virtual void PlayRecord(int time);
+    virtual void PlayStep(int time);
+    virtual bool PlaceAtTime(int time);
+    virtual S_vector GetRecordPos(int time);
+    virtual S_quat GetRecordRot(int time);
     // ACTF_CUTSCENE_*: ask for the marks or take them back (0x5c27b0, 0x5c27d0), the asked ones made marks (0x5c27f0)
     virtual void SetCutsceneRecord(bool on);
     virtual void SetCutscenePlay(bool on);
     virtual void UpdateCutsceneFlags();
     virtual bool AddToCutscene();
-    virtual void *GetRecordsSize();
-    virtual void *GetBlockRecordsSize(int a);
+    // The size of the records up to the last key, and of a block's (their bytes, without the blocks' headers)
+    virtual int GetRecordsSize();
+    virtual int GetBlockRecordsSize(uchar *block);
     // Empty here (the folded ret, 0x404990)
     virtual void DumpRecords() {}
     // Adds a record of the type to the records (they are the actor's own) and returns it; it starts a new block where
     // the last one is full (PC only, 0x5c2730 in the records' file; the name is ours)
     void *AddRecord(C_cutscene_records *rec, int type);
+    // A new block of records (0x5c2700, the name is ours), linked after prev where there is one: it doesn't use
+    // the actor, but AddRecord calls it with the actor in ecx and its argument on the stack, as a member
+    uchar *NewRecordBlock(uchar *prev);
     // The actor's frame of a tick (PS2 names): its own decisions, unless a cutscene plays the actor (ACTF_CUTSCENE_*),
     // or what the network says instead where net_direct is set, then the update. Empty here, as PS2's (the original's
     // slots point at the folded ret 4, 0x403db0).
@@ -147,25 +204,28 @@ public:
     // Takes the actor's frame from the scene: false if it can't be the actor, where the frame has another one (PS2
     // name). It gives the actor the mission's next number and turns the frame's targets off.
     virtual bool Init(I3D_frame *frm);
-    virtual void SaveData(C_chunk *chunk);
-    // The actor's data of the mission's scene2.bin (PS2 name)
-    virtual void LoadData(C_chunk *chunk);
+    // The actor's data of the mission's scene2.bin, written and read (PS2 names): true for done (the overrides
+    // return false where the data isn't theirs, C_car's, C_dyn_object's LoadData)
+    virtual bool SaveData(C_chunk *chunk);
+    virtual bool LoadData(C_chunk *chunk);
     // PS2 names, the types PS2's; the save functions return true (mov al, 1)
     virtual void DuplicateFrom(C_actor *act);
     virtual int SaveGameGetSize();
     virtual bool SaveGameSave(void **buf);
     virtual bool SaveGameLoad(void **buf);
-    // An actor in a saved game, by its frame's name, NULL for none (PS2 names; static, the arguments in
-    // registers)
+    // An actor in a saved game, by its frame's name and its type, NULL for none (PS2 names; static, the arguments in
+    // registers): the save returns true too
     static int Actor_SaveGameGetSize(C_actor *act);
-    static void Actor_SaveGameSave(void **buf, C_actor *act);
+    static bool Actor_SaveGameSave(void **buf, C_actor *act);
     static C_actor *Actor_SaveGameLoad(void **buf);
+    // The actor's number from a saved game's record (PS2 name), which G_LoadSaveClass::SaveGameLoad calls
+    void SaveGameLoadGuid(void **buf);
     // The actor taken into the game and out of it (PS2 names), C_game::Init's and Done's; C_mission::FrmActBuff_ClearAll
     // calls GameDone before releasing a kept actor
     virtual void GameInit();
     virtual void GameDone();
     // PS2 names from here on, the types PS2's but where noted: empty or constant here, each slot a folded copy, but for
-    // GetBoundPoints2D (a stub)
+    // GetBoundPoints2D (C_actor.cpp)
     virtual void ChangeState() {}
     // The actor's speed, none here
     virtual void GetActorSpeed(S_vector &speed)
@@ -215,8 +275,8 @@ public:
         from_mission = true;
     }
 
-    // Sets the actor's state; a change from any but ACTSTATE_2 tells the game (PS2 name, its parameter a
-    // C_actor::E_act_state)
+    // Sets the actor's state and tells the game of the change, but for an actor in ACTSTATE_NONE, which stays in it
+    // (PS2 name, its parameter a C_actor::E_act_state)
     void SetActState(int state);
     // The state (the name is ours, after SetActState): C_game::ChangeActState reads it through it, which leaves the
     // first push_back's insert out of line there, as the original
@@ -229,6 +289,8 @@ public:
     // Puts the frame back where GameInit found it (PS2 name), which C_mission's FrmActBuff functions call for an actor
     // they keep
     void ResetPlacement();
+    // Saves the frame's placement as GameInit does (PS2 name)
+    void InternalPlacementReset();
     // The type, ACTOR_* (the name is ours): calls VC6 left out of line read it through it, a copy folded with
     // C_mission::GetScene, C_sound_table::GetSounds and GM_Component::GetText
     int GetType() const
@@ -245,6 +307,11 @@ public:
     static void DelActorFromGlobal(C_actor *act);
     // Whether the actor is one of global_actors, so still exists: false for NULL (PC only, the name is ours)
     static bool IsGlobalActor(C_actor *act);
+    // The frames the actors' possible collisions test against, in posscoll_frame, with a radius each (PS2 names; the
+    // parameters' types are guesses)
+    bool IsPossibleCollAll(S_vector v1, S_vector v2, float f, S_vector &out, C_actor **coll);
+    static void AddFrameForPossibleColl(I3D_frame *frm, float radius);
+    static void DelFrameForPossibleColl(I3D_frame *frm);
     // The actor's frame (PS2 name), which C_game::Tick runs for the mission's actors and the script for a car it puts on
     void Tick(uint time);
     // The frame's world position, or pos without a frame (PS2 name)
@@ -312,8 +379,15 @@ public:
     static int global_refs;
     // Every actor, which the constructor adds itself to (PS2 name, its gif::vector<C_actor *, 8>)
     static std::vector<C_actor *> global_actors;
-    // PS2 name (a vector of PS2's S_posscoll_frame), which C_game::Init clears; its type is ours
-    static std::vector<uint> posscoll_frame;
+    // A frame the actors' possible collisions test against, with its radius (PS2 name, 8 bytes; the members' names
+    // are ours)
+    struct S_posscoll_frame
+    {
+        I3D_frame *frame;               // 0x0
+        float radius;                   // 0x4
+    };
+    // The frames AddFrameForPossibleColl and DelFrameForPossibleColl keep, which C_game::Init clears (PS2 name)
+    static std::vector<S_posscoll_frame> posscoll_frame;
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47af20
@@ -381,13 +455,13 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?OnCreate@GM_Menu@@UAEHXZ
+// ?CreateNew@?$C_I3D_cache_base@VI3D_sound@@@@UBEPAVI3D_sound@@XZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_railway@@UAEXI@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
@@ -407,10 +481,10 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
+// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_racecam@@UAE_NPAPAX@Z
+// ?SaveData@C_actor@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa430
 // ?SaveGameGetSize@C_stone@@UAEHXZ
@@ -421,7 +495,7 @@ public:
 // ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
@@ -697,8 +771,9 @@ float rnd();
 void UnlinkAllFrameChild(I3D_frame *frm);
 // The angle from one 2D direction to the other, from -pi to pi (PS2 name)
 float AngleTo2(const S_vector2 &a, const S_vector2 &b);
-// Turns the vector about the y axis (PS2 name)
+// Turns the vector about the y axis (PS2 names); RotateDir makes it horizontal and normalizes it after
 void RotateDir(S_vector &v, float angle);
+void RotateDirNoNorm(S_vector &v, float angle);
 // Builds the animations' index and sorts it (PS2 C_actor.cpp), once, for InitSystem
 void InitAnimIndex();
 // Frees the index, at CloseSystem
