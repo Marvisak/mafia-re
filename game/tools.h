@@ -46,16 +46,16 @@ struct S_timer
 
 // The special actions' ids (S_GameItem::ammo_loaded of a GAMEITEM_SPECIAL_ACTION's using object), which
 // C_using_object's invalid items hold: those C_human::Do_FuckingBox and Do_DeadBody turn off while the player
-// carries something (the names are ours, by value but the dead body's, which C_human::ChangeState gives its two
-// using objects)
-#define USING_ACTION_UNKNOWN_7D3 0x7d3
-#define USING_ACTION_UNKNOWN_7D4 0x7d4
-#define USING_ACTION_UNKNOWN_7D7 0x7d7
-#define USING_ACTION_UNKNOWN_7D9 0x7d9
-#define USING_ACTION_UNKNOWN_7DA 0x7da
-#define USING_ACTION_DEAD_BODY_0 0x7dc
-#define USING_ACTION_DEAD_BODY_1 0x7dd
-#define USING_ACTION_UNKNOWN_7DF 0x7df
+// carries something, and the dead body's two, which C_human::ChangeState gives its using objects (the names are
+// ours, after the labels the text database has for the same ids)
+#define USING_ACTION_GET_IN_FRONT 0x7d3          // "Get in the front"
+#define USING_ACTION_GET_IN_BACK 0x7d4           // "Get in the back"
+#define USING_ACTION_BOARD_TRAIN 0x7d7           // "Board train"
+#define USING_ACTION_HIJACK_CAR 0x7d9            // "Hijack car"
+#define USING_ACTION_PICK_UP_BOX 0x7da           // "Pick up box"
+#define USING_ACTION_SEARCH_DEAD_BODY 0x7dc      // "Search dead body"
+#define USING_ACTION_MOVE_DEAD_BODY 0x7dd        // "Move dead body"
+#define USING_ACTION_GET_IN_AS_DRIVER 0x7df      // "Get in the car as the driver"
 
 // The objects the player can use (PS2 C_using_object, tools.cpp): only its two vectors are known, which the game's
 // inline constructor constructs (PS2's also clears its 0x18 and 0x1c). Its methods are in the PC's tools.cpp

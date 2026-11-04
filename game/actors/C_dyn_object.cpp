@@ -83,44 +83,44 @@ void C_dyn_object::AI(uint time)
 }
 
 // STUB: GAME 0x41b6b0
-bool C_dyn_object::vfunc_9()
+bool C_dyn_object::AddToCutscene()
 {
-    StubLog("C_dyn_object::vfunc_9");
-    return C_actor::vfunc_9();
+    StubLog("C_dyn_object::AddToCutscene");
+    return C_actor::AddToCutscene();
 }
 
 // STUB: GAME 0x41b6d0
-int C_dyn_object::vfunc_0(int a)
+int C_dyn_object::RecordKey(int a)
 {
-    StubLog("C_dyn_object::vfunc_0");
-    return C_actor::vfunc_0(a);
+    StubLog("C_dyn_object::RecordKey");
+    return C_actor::RecordKey(a);
 }
 
 // The linker folded it with C_actor_shot's
 // STUB: GAME 0x41bae0 FOLDED
-S_vector C_dyn_object::vfunc_4(int a)
+S_vector C_dyn_object::GetRecordPos(int a)
 {
-    StubLog("C_dyn_object::vfunc_4");
-    return C_actor::vfunc_4(a);
+    StubLog("C_dyn_object::GetRecordPos");
+    return C_actor::GetRecordPos(a);
 }
 
 // The linker folded it with C_actor_shot's
 // STUB: GAME 0x41bb00 FOLDED
-S_quat C_dyn_object::vfunc_5(int a)
+S_quat C_dyn_object::GetRecordRot(int a)
 {
-    StubLog("C_dyn_object::vfunc_5");
-    return C_actor::vfunc_5(a);
+    StubLog("C_dyn_object::GetRecordRot");
+    return C_actor::GetRecordRot(a);
 }
 
 // STUB: GAME 0x443ff0
-void C_dyn_object::vfunc_2(int a)
+void C_dyn_object::PlayStep(int a)
 {
-    StubLog("C_dyn_object::vfunc_2");
-    C_actor::vfunc_2(a);
+    StubLog("C_dyn_object::PlayStep");
+    C_actor::PlayStep(a);
 }
 
 // The linker's folded empty function of the out-of-line kind (0x4ab130)
-void C_dyn_object::vfunc_1(int a)
+void C_dyn_object::PlayRecord(int a)
 {
 }
 

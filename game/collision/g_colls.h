@@ -15,6 +15,7 @@ struct tgcPanak2;
 
 // TestSphereB's flags (the names are ours, by value until the collisions' code shows their meanings): what the sphere
 // stops at, and the second flags
+#define COLF_UNKNOWN_1 1
 #define COLF_UNKNOWN_2 2
 #define COLF_UNKNOWN_100 0x100
 #define COLF_UNKNOWN_80000 0x80000
@@ -27,7 +28,7 @@ struct tgcPanak2;
 #define DYNCOLL_UNKNOWN_42 0x42
 // tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
 // one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
-// of a dead human only and leaves out the lower one while the human's 0xa35 is set
+// of a dead human only and leaves out the lower one while the human's lower_coll_off is set
 #define DYNCOLLF_LOWER 0x1
 #define DYNCOLLF_UPPER 0x2
 #define DYNCOLLF_UNKNOWN_100 0x100

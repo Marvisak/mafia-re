@@ -65,12 +65,12 @@ public:
     virtual ~C_car();
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
     // linker's folded constant functions and those that only call the base's
-    virtual int vfunc_0(int a);
-    virtual void vfunc_1(int a);
-    virtual void vfunc_2(int a);
-    virtual bool vfunc_3(int a);
-    virtual S_vector vfunc_4(int a);
-    virtual bool vfunc_9();
+    virtual int RecordKey(int a);
+    virtual void PlayRecord(int a);
+    virtual void PlayStep(int a);
+    virtual bool PlaceAtTime(int a);
+    virtual S_vector GetRecordPos(int a);
+    virtual bool AddToCutscene();
     virtual void AI(uint time);
     virtual void Update(uint time);
     virtual bool Init(I3D_frame *frm);

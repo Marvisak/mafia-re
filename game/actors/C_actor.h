@@ -25,11 +25,11 @@ struct tDynamicCollObject;
 #define ACTOR_DYN_OBJECT 9
 #define ACTOR_BOTTLE 0xa
 #define ACTOR_TRAFFIC_CAR 0xc
-#define ACTOR_UNKNOWN_E 0xe               // C_human::MovementIntern pushes it as a bottle
+#define ACTOR_GRENADE 0xe               // PS2 C_grenade's constructor; C_human::MovementIntern pushes it as a bottle
 #define ACTOR_STONE 0xf                 // PC only, C_game::Init's 2stone.i3d
 #define ACTOR_CARTRIDGE 0x10            // C_game::Init's cartridges
 #define ACTOR_TRAFFIC_GENERATOR 0x12
-#define ACTOR_UNKNOWN_11 0x11            // a C_PhThing's (TickShoot takes its material)
+#define ACTOR_DROP_OUT 0x11             // PS2 C_DropOut's constructor, a C_PhThing's (TickShoot takes its material)
 #define ACTOR_DON_OCAS 0x13
 #define ACTOR_BRIDGE 0x14
 #define ACTOR_DOG 0x15
@@ -60,34 +60,34 @@ struct tDynamicCollObject;
 #define ACTSTATE_1 1                    // the script's ACT_SETSTATE INACTIVE
 #define ACTSTATE_2 2
 
-// Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, by value): the script's HUMAN_SETPROPERTY
-// hits a human whose energy runs out with them, in a car and on foot
+// Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, after their callers, by value where none
+// passes it): the script's HUMAN_SETPROPERTY hits a human whose energy runs out with HIT_IN_CAR or HIT_LANDING
 #define HIT_SHOT 0                      // C_game::TickShoot's
 #define HIT_STROKE 1                    // C_human::Hit's stroke (HitStroke)
-#define HIT_UNKNOWN_2 2                 // C_human::Hit: a fall above 100, a heavy hit on a random part above 50
-#define HIT_UNKNOWN_3 3                 // C_human::Hit: the hands and legs lose energy too
-#define HIT_UNKNOWN_4 4                 // C_human::Hit: a leg, blood and SHOTPARTICLE_BODY
-#define HIT_UNKNOWN_5 5
+#define HIT_EXPLOSION 2                 // C_game::NewExplosion's, a train's or a plane's: a fall above 100 (Hit)
+#define HIT_FIRE 3                      // C_fire::Tick's: the hands and legs lose energy too (C_human::Hit)
+#define HIT_DOG_BITE 4                  // C_dog's: a leg, blood and SHOTPARTICLE_BODY (C_human::Hit)
+#define HIT_IN_CAR 5                    // C_car's damage to its seats' owners: only C_human::HitInCar counts it
 #define HIT_LANDING 6                   // C_human::Hit's landing (HitLanding)
-#define HIT_UNKNOWN_7 7                 // C_human::Hit: no energy left, a fall and a particle
-#define HIT_UNKNOWN_8 8                 // C_human::Hit: a fall, aside, for a direction longer than 3
+#define HIT_AIRPLANE 7                  // C_airplane::AI's: no energy left, a fall and HITPARTICLE_AIRPLANE
+#define HIT_CAR 8                       // a car run into a human (C_human::Collision): a fall aside above 3
 #define HIT_UNKNOWN_9 9
 
-// C_actor::act_flags (the names are ours, by value where the meaning isn't known): Tick leaves out AI where 1 or 4 is
-// set (vfunc_7 sets and clears both)
-#define ACTF_UNKNOWN_1 0x1
-#define ACTF_UNKNOWN_4 0x4
-// Set with 8 while a cutscene records the actor (vfunc_6, which C_recorder's CUTSCENE_STATE_2 sets for the second
-// list's actors): only then C_human::SetCutsceneLink notes a link for the recording
-#define ACTF_UNKNOWN_2 0x2
+// C_actor::act_flags (the names are ours): the cutscene's marks, the actor played and recorded (the names are guesses),
+// which SetCutscenePlay and SetCutsceneRecord ask for (4, 8) and UpdateCutsceneFlags makes the marks (1, 2): Tick
+// leaves out AI while the actor is played or asked to be, C_human::SetCutsceneLink notes a link only while recorded
+#define ACTF_CUTSCENE_PLAYED 0x1
+#define ACTF_CUTSCENE_RECORDED 0x2
+#define ACTF_CUTSCENE_PLAY 0x4
+#define ACTF_CUTSCENE_RECORD 0x8
 // A cutscene's actor: set on a cutscene's actors while it plays (C_recorder::SetState), cleared after; C_game::Init's
 // search for the player skips the players that have it
 #define ACTF_CUTSCENE 0x10
 
 // A human's link to another actor, for the cutscene's recording (the names are ours), 0x48 bytes:
-// C_human::SetCutsceneLink fills it while the human is recorded, and C_human::vfunc_0 records the kind and the actor
-// (by its frame's name, an item of the cutscene's anim_names) into its next record, which C_human::vfunc_3 plays back
-// through SetCutsceneLink
+// C_human::SetCutsceneLink fills it while the human is recorded, and C_human::RecordKey records the kind and the
+// actor (by its frame's name, an item of the cutscene's anim_names) into its next record, which C_human::PlaceAtTime
+// plays back through SetCutsceneLink
 struct S_cutscene_link
 {
     bool is_new;                        // 0x0, set by SetCutsceneLink, cleared by the record that took it
@@ -100,8 +100,8 @@ struct S_cutscene_link
 // The actors (PS2 C_actor), 0x70 bytes (PS2's 0x80). Only what the mission uses so far.
 // The PC's vtable (0x623248) has 38 functions, PS2's 27: the PC's first 13 come before AI, Update and NetDirect, PS2's
 // first three; from those on the PC's are PS2's in PS2's order, but for PS2's last two (ChangeSceneInit and
-// ChangeSceneDone). The first 13 are PC only, most of them the cutscenes' (they read records): placeholders, their
-// parameters and results by the original's code (the types are guesses).
+// ChangeSceneDone). The first 13 are PC only, the cutscenes', on the actor's records (the names are ours; their
+// parameters and results by the original's code, the types are guesses).
 // Not written yet: the virtual functions declared here but the destructor, Init, Release, GameInit and GameDone, which
 // the actors' classes need, are stubs (C_actor.cpp). Each actor class declares the slots its vtable overrides.
 // VTABLE: GAME 0x623248
@@ -110,27 +110,27 @@ class C_actor
 public:
     C_actor();
 
-    virtual int vfunc_0(int a);         // -1 here
-    virtual void vfunc_1(int a);
-    virtual void vfunc_2(int a);
-    virtual bool vfunc_3(int a);
-    virtual S_vector vfunc_4(int a);
-    virtual S_quat vfunc_5(int a);
-    // Set or clear the flags' 8 and 2 and their 4 and 1 (0x5c27b0, 0x5c27d0); the cutscenes call them
-    virtual void vfunc_6(bool on);
-    virtual void vfunc_7(bool on);
-    virtual void vfunc_8();
-    virtual bool vfunc_9();
-    virtual void *vfunc_10();
-    virtual void *vfunc_11(int a);
+    virtual int RecordKey(int a);       // -1 here
+    virtual void PlayRecord(int a);
+    virtual void PlayStep(int a);
+    virtual bool PlaceAtTime(int a);
+    virtual S_vector GetRecordPos(int a);
+    virtual S_quat GetRecordRot(int a);
+    // ACTF_CUTSCENE_*: ask for the marks or take them back (0x5c27b0, 0x5c27d0), the asked ones made marks (0x5c27f0)
+    virtual void SetCutsceneRecord(bool on);
+    virtual void SetCutscenePlay(bool on);
+    virtual void UpdateCutsceneFlags();
+    virtual bool AddToCutscene();
+    virtual void *GetRecordsSize();
+    virtual void *GetBlockRecordsSize(int a);
     // Empty here (the folded ret, 0x404990)
-    virtual void vfunc_12() {}
+    virtual void DumpRecords() {}
     // Adds a record of the type to the records (they are the actor's own) and returns it; it starts a new block where
     // the last one is full (PC only, 0x5c2730 in the records' file; the name is ours)
     void *AddRecord(C_cutscene_records *rec, int type);
-    // The actor's frame of a tick (PS2 names): its own decisions, unless ACTF_UNKNOWN_1 or 4 stops them, or what the
-    // network says instead where net_direct is set, then the update. Empty here, as PS2's (the original's slots point
-    // at the folded ret 4, 0x403db0).
+    // The actor's frame of a tick (PS2 names): its own decisions, unless a cutscene plays the actor (ACTF_CUTSCENE_*),
+    // or what the network says instead where net_direct is set, then the update. Empty here, as PS2's (the original's
+    // slots point at the folded ret 4, 0x403db0).
     virtual void AI(uint time) {}
     virtual void Update(uint time) {}
     virtual void NetDirect(uint time) {}
@@ -454,6 +454,229 @@ struct S_anim_info
 
 // The actors' animations by id (PS2 name), not in the ids' order, ended by an id of 0xffff
 extern S_anim_info _anim_info_[];
+
+// _anim_info_'s ids: the low nine bits are the animation (ANIM_BASE), at most one bit above them its set (ANIM_SET_*),
+// in which PersonAnim plays the walks, the stances and the corners' animations of the ids up to ANIM_SET_LAST (the
+// names are ours, after the sets' files)
+#define ANIM_BASE 0x1ff
+#define ANIM_SET_PISTOL 0x200           // "pis": a pistol aimed (breath02a.i3d, walk2.i3d, ...)
+#define ANIM_SET_RIFLE 0x400            // "puska": a rifle aimed
+#define ANIM_SET_SMG 0x800              // "sapik": the Thompson or a shotgun aimed (the corners' "brok", "sap")
+#define ANIM_SET_TWO_HANDED 0x1000      // a two-handed weapon not aimed
+#define ANIM_SET_CROUCH 0x2000          // "drep": crouched
+#define ANIM_SET_CROUCH_PISTOL 0x4000   // "pis drep": crouched, a pistol aimed
+#define ANIM_SET_CROUCH_RIFLE 0x8000    // "puska drep": crouched with a two-handed weapon
+#define ANIM_SET_LAST 0x5d
+// _anim_info_'s last entry's id (the name is ours)
+#define ANIM_INFO_END 0xffff
+// The animations by their base ids, those the humans' code uses (the names are the files', the lowest set's or what
+// the sets' files share, without '!', '?' and the extension; JUMPRX1's X is its '?')
+#define ANIM_BREATH01A 0x1              // "breath01a.i3d"
+#define ANIM_BREATH01B 0x2              // "breath01b.i3d"
+#define ANIM_BREATH01C 0x3              // "breath01c.i3d"
+#define ANIM_BREATH01D 0x4              // "breath01d.i3d"
+#define ANIM_RUN1 0x5                   // "run1.i3d"
+#define ANIM_WALK1 0x6                  // "walk1.i3d"
+#define ANIM_BACK1 0x7                  // "back1.i3d"
+#define ANIM_LEFT1 0x8                  // "left1.i3d"
+#define ANIM_RIGHT1 0x9                 // "right1.i3d"
+#define ANIM_TURN1 0xa                  // "turn1.i3d"
+#define ANIM_STRAFL1 0xb                // "strafL1.i3d"
+#define ANIM_STRAFR1 0xc                // "strafR1.i3d"
+#define ANIM_STRAFRL1 0xd               // "strafRL1.i3d"
+#define ANIM_STRAFRR1 0xe               // "strafRR1.i3d"
+#define ANIM_RUNL1 0xf                  // "runL1.i3d"
+#define ANIM_RUNR1 0x10                 // "runR1.i3d"
+#define ANIM_WALKL1 0x11                // "walkL1.i3d"
+#define ANIM_WALKR1 0x12                // "walkR1.i3d"
+#define ANIM_BACKL1 0x13                // "backL1.i3d"
+#define ANIM_BACKR1 0x14                // "backR1.i3d"
+#define ANIM_ENM_KLID_STAT_A 0x15       // "enm klid stat A.i3d"
+#define ANIM_ENM_KLID_STAT_B 0x16       // "enm klid stat B.i3d"
+#define ANIM_ENM_KLID_STAT_C 0x17       // "enm klid stat C.i3d"
+#define ANIM_ENM_KLID_WALK 0x18         // "enm klid walk.i3d"
+#define ANIM_ENM_KLID_BACK 0x19         // "enm klid back.i3d"
+#define ANIM_ENM_KLID_LEFT 0x1a         // "enm klid left.i3d"
+#define ANIM_ENM_KLID_RIGHT 0x1b        // "enm klid right.i3d"
+#define ANIM_ENM_KLID_STRAFL 0x1c       // "enm klid strafL.i3d"
+#define ANIM_ENM_KLID_STRAFR 0x1d       // "enm klid strafR.i3d"
+#define ANIM_ENM_KLID_WALKL 0x1e        // "enm klid walkL.i3d"
+#define ANIM_ENM_KLID_WALKR 0x1f        // "enm klid walkR.i3d"
+#define ANIM_ENM_KLID_BACKL 0x20        // "enm klid backL.i3d"
+#define ANIM_ENM_KLID_BACKR 0x21        // "enm klid backR.i3d"
+#define ANIM_ENM_STREH_STAT_A 0x22      // "enm streh pis stat A.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_STAT_B 0x23      // "enm streh pis stat B.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_STAT_C 0x24      // "enm streh pis stat C.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_WALK 0x25        // "enm streh pis walk.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_BACK 0x26        // "enm streh pis back.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_LEFT 0x27        // "enm streh pis left.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_RIGHT 0x28       // "enm streh pis right.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_STRAFL 0x29      // "enm streh pis strafL.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_STRAFR 0x2a      // "enm streh pis strafR.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_WALKL 0x2b       // "enm streh pis walkL.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_WALKR 0x2c       // "enm streh pis walkR.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_BACKL 0x2d       // "enm streh pis backL.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_ENM_STREH_BACKR 0x2e       // "enm streh pis backR.i3d" (set 0x200; 0x400, 0x800)
+#define ANIM_PANIKA_LEKNUTI01L 0x2f     // "panika leknuti01L.i3d"
+#define ANIM_PANIKA_LEKNUTI02L 0x33     // "panika leknuti02L.i3d"
+#define ANIM_X_PANIKA_DREP_DOLU 0x3d    // "x panika drep dolu.i3d"
+#define ANIM_X_PANIKA_DREP_STATIV 0x3e  // "x panika drep stativ.i3d"
+#define ANIM_X_PANIKA_NA4_DOLU 0x40     // "x panika na4 dolu.i3d"
+#define ANIM_X_PANIKA_NA4_STATIV 0x41   // "x panika na4 stativ.i3d"
+#define ANIM_X_PANIKA_LEH_DOLU 0x43     // "x panika leh dolu.i3d"
+#define ANIM_X_PANIKA_LEH_STATIV 0x44   // "x panika leh stativ.i3d"
+#define ANIM_X_PANIKA_LEH_NAHORU 0x45   // "x panika leh nahoru.i3d"
+#define ANIM_PANIKA_RUN01A 0x46         // "panika run01a.i3d"
+#define ANIM_PANIKA_RUN03A 0x48         // "panika run03a.i3d"
+#define ANIM_PANIKA_RUN02A 0x4a         // "panika run02a.i3d"
+#define ANIM_ENM_ROH_STOJ_STAT_L 0x4e   // "enm roh stoj stat L.i3d"
+#define ANIM_ENM_ROH_STOJ_STAT_R 0x4f   // "enm roh stoj stat R.i3d"
+#define ANIM_ENM_ROH_STOJ_NAHL_L 0x50   // "enm roh stoj nahl L.i3d"
+#define ANIM_ENM_ROH_STOJ_NAHL_R 0x51   // "enm roh stoj nahl R.i3d"
+#define ANIM_ENM_ROH_DREP_NAHL_T 0x52   // "enm roh drep nahl T.i3d" (set 0x2000; 0x4000, 0x8000)
+#define ANIM_ENM_ROH_FIRE01_L 0x53      // "enm roh pis stoj fire01 L.i3d" (set 0x200; 0x800, 0x1000, 0x4000, 0x8000)
+#define ANIM_ENM_ROH_SAP_STOJ_FIRE01_L 0x54 // "enm roh sap stoj fire01 L.i3d" (set 0x800; 0x1000)
+#define ANIM_ENM_ROH_FIRE01_R 0x55      // "enm roh pis stoj fire01 R.i3d" (set 0x200; 0x800, 0x1000, 0x4000, 0x8000)
+#define ANIM_ENM_ROH_SAP_STOJ_FIRE01_R 0x56 // "enm roh sap stoj fire01 R.i3d" (set 0x800; 0x1000)
+#define ANIM_ENM_ROH_DREP_FIRE01_T 0x57 // "enm roh pis drep fire01 T.i3d" (set 0x4000; 0x8000)
+#define ANIM_ENM_ROH_FIRE02_L 0x58      // "enm roh pis stoj fire02 L.i3d" (set 0x200; 0x800, 0x1000, 0x4000, 0x8000)
+#define ANIM_ENM_ROH_SAP_STOJ_FIRE02_L 0x59 // "enm roh sap stoj fire02 L.i3d" (set 0x800; 0x1000)
+#define ANIM_ENM_ROH_FIRE02_R 0x5a      // "enm roh pis stoj fire02 R.i3d" (set 0x200; 0x800, 0x1000, 0x4000, 0x8000)
+#define ANIM_ENM_ROH_SAP_STOJ_FIRE02_R 0x5b // "enm roh sap stoj fire02 R.i3d" (set 0x800; 0x1000)
+#define ANIM_ENM_ROH_DREP_FIRE02_T 0x5c // "enm roh pis drep fire02 T.i3d" (set 0x4000; 0x8000)
+// Not in _anim_info_ (the name is ours, by value): the AI's log and PersonAnim take it for a jump with 0x5f and 0x60
+#define ANIM_UNKNOWN_5E 0x5e
+#define ANIM_JUMP1 0x5f                 // "jump1.i3d"
+#define ANIM_JUMPRX1 0x60               // "jumpR?1.i3d"
+#define ANIM_JUMPSTAT 0x61              // "jumpstat?.i3d"
+#define ANIM_JUMPL1 0x62                // "jumpL1.i3d"
+#define ANIM_JUMPR1 0x63                // "jumpR1.i3d"
+#define ANIM_JUMPL3 0x64                // "jumpL3.i3d"
+#define ANIM_JUMPR3 0x65                // "jumpR3.i3d"
+#define ANIM_PLACHTENI 0x66             // "!plachteni.i3d"
+#define ANIM_DOSKOK 0x67                // "!doskok.i3d"
+#define ANIM_NA_BEDNU_06M 0x68          // "na bednu 06m.i3d"
+#define ANIM_NA_BEDNU_1M 0x69           // "na bednu 1m.i3d"
+#define ANIM_SMRT_PAD_DOZADU 0x6a       // "smrt pad dozadu.I3D"
+#define ANIM_SMRT_PAD_VLEVO 0x6b        // "smrt pad vlevo.I3D"
+#define ANIM_SMRT_PAD_VPRAVO 0x6c       // "smrt pad vpravo.I3D"
+#define ANIM_SMRT_PAD_END_A 0x6d        // "smrt pad end A.I3D"
+#define ANIM_SMRT_PAD_END_B 0x6e        // "smrt pad end B.I3D"
+#define ANIM_SMRT_PAD_END_VSTAVANI 0x6f // "smrt pad end vstavani.I3D"
+#define ANIM_SMRT_PAD_DOPREDU_A 0x70    // "smrt pad dopredu A.i3d"
+#define ANIM_SMRT_PAD_DOPREDU_B 0x71    // "smrt pad dopredu B.i3d"
+#define ANIM_SMRT_PAD_DOPREDU_C 0x72    // "smrt pad dopredu C.i3d"
+#define ANIM_SMRT_STOJ_ZADA_A 0x83      // "smrt stoj zada A.I3D"
+#define ANIM_SMRT_STOJ_BRICHO_A 0x86    // "smrt stoj bricho A.i3d"
+#define ANIM_SMRT_STOJ_HLAVA_ZEZADU 0x89 // "smrt stoj hlava zezadu.i3d"
+#define ANIM_SMRT_STOJ_HLAVA_ZEPREDU 0x8a // "smrt stoj hlava zepredu.I3D"
+#define ANIM_SMRT_DREP_ZADA_A 0x8c      // "smrt drep zada A.I3D"
+#define ANIM_SMRT_DREP_BRICHO_A 0x8e    // "smrt drep bricho A.I3D"
+#define ANIM_SMRT_DREP_HLAVA_ZEZADU 0x90 // "smrt drep hlava zezadu.I3D"
+#define ANIM_SMRT_DREP_HLAVA_ZEPREDU 0x91 // "smrt drep hlava zepredu.I3D"
+#define ANIM_SMRT_STOJ_BRICHO_T_PAD 0x93 // "smrt stoj bricho T pad.I3D"
+#define ANIM_SMRT_STOJ_BRICHO_T_PLAZENI 0x94 // "smrt stoj bricho T plazeni.I3D"
+#define ANIM_SMRT_STOJ_BRICHO_T_STATIV 0x95 // "smrt stoj bricho T stativ.I3D"
+#define ANIM_SMRT_STOJ_BRICHO_T_END 0x96 // "smrt stoj bricho T end.I3D"
+#define ANIM_SMRT_DREP_ZADA_T_END 0xa2  // "smrt drep zada T end.I3D"
+#define ANIM_HOD_VRCHEM_HOD 0xa3        // "hod vrchem hod.i3d"
+#define ANIM_NOSENI_MRTVOLY_TOM_NAHOZENI 0xa7 // "NoseniMrtvolyTomNahozeni.i3d"
+#define ANIM_NOSENI_MRTVOLY_TOM_SHOZENI 0xa8 // "NoseniMrtvolyTomShozeni.i3d"
+#define ANIM_BOJ_BASB_Z_LH 0xa9         // "boj basb z LH.i3d"
+#define ANIM_BOJ_BASB_Z_RH 0xac         // "boj basb z RH.i3d"
+#define ANIM_BOJ_HPT_BASB_LH 0xae       // "boj HPT basb LH.i3d"
+#define ANIM_BOJ_NUZ_BOD 0xb2           // "boj nuz bod.i3d"
+#define ANIM_BOJ_NUZ_KOMBO 0xb5         // "boj nuz kombo.i3d"
+#define ANIM_BOJ_HPT_NUZ_BOD 0xb6       // "boj HPT nuz bod.i3d"
+#define ANIM_BOJ_BOX_L_DIRECT 0xb9      // "boj box L direct.i3d"
+#define ANIM_BOJ_BOX_L_HAK_SPODEK 0xbc  // "boj box L hak spodek.i3d"
+#define ANIM_BOJ_HPT_BOX_L_DIRECT 0xbf  // "boj HPT box L direct.i3d"
+#define ANIM_ZASAH_SM_RAMENO_FR 0xc4    // "zasah Sm rameno FR.i3d"
+#define ANIM_ZASAH_SM_RAMENO_BR 0xc5    // "zasah Sm rameno BR.i3d"
+#define ANIM_ZASAH_SM_RAMENO_FL 0xc6    // "zasah Sm rameno FL.i3d"
+#define ANIM_ZASAH_SM_RAMENO_BL 0xc7    // "zasah Sm rameno BL.i3d"
+#define ANIM_ZASAH_SM_NOHA_R 0xc8       // "zasah Sm noha R.i3d"
+#define ANIM_ZASAH_SM_NOHA_L 0xc9       // "zasah Sm noha L.i3d"
+#define ANIM_ZASAH_SM_BRICHO 0xca       // "zasah Sm bricho.i3d"
+#define ANIM_ZASAH_SM_ZADA 0xcb         // "zasah Sm zada.i3d"
+#define ANIM_ZASAH_SM_HLAVA_F 0xcc      // "zasah Sm hlava F.i3d" and "zasah Lg hlava F.i3d" of the same id
+#define ANIM_ZASAH_SM_HLAVA_B 0xcd      // "zasah Sm hlava B.i3d" and "zasah Lg hlava B.i3d" of the same id
+#define ANIM_ZASAH_LG_RAMENO_FR 0xce    // "zasah Lg rameno FR.i3d"
+#define ANIM_ZASAH_LG_RAMENO_BR 0xcf    // "zasah Lg rameno BR.i3d"
+#define ANIM_ZASAH_LG_RAMENO_FL 0xd0    // "zasah Lg rameno FL.i3d"
+#define ANIM_ZASAH_LG_RAMENO_BL 0xd1    // "zasah Lg rameno BL.i3d"
+#define ANIM_ZASAH_LG_NOHA_R 0xd2       // "zasah Lg noha R.i3d"
+#define ANIM_ZASAH_LG_NOHA_L 0xd3       // "zasah Lg noha L.i3d"
+// Not in _anim_info_, whose "zasah Lg hlava F.i3d" has the light hit's 0xcc: HitGun's heavy hit in the head from the
+// front (the name is a guess, after the file)
+#define ANIM_ZASAH_LG_HLAVA_F 0xd4
+#define ANIM_ZASAH_LG_HLAVA_B 0xd5      // from behind ("zasah Lg hlava B.i3d" has 0xcd)
+#define ANIM_ZASAH_DREP_RAMENO_FR 0xd6  // "zasah Drep rameno FR.i3d"
+#define ANIM_ZASAH_DREP_RAMENO_BR 0xd7  // "zasah Drep rameno BR.i3d"
+#define ANIM_ZASAH_DREP_RAMENO_FL 0xd8  // "zasah Drep rameno FL.i3d"
+#define ANIM_ZASAH_DREP_RAMENO_BL 0xd9  // "zasah Drep rameno BL.i3d"
+#define ANIM_ZASAH_DREP_NOHA_R 0xda     // "zasah Drep noha R.i3d"
+#define ANIM_ZASAH_DREP_NOHA_L 0xdb     // "zasah Drep noha L.i3d"
+#define ANIM_ZASAH_DREP_BRICHO 0xdc     // "zasah Drep bricho.i3d"
+#define ANIM_ZASAH_DREP_ZADA 0xdd       // "zasah Drep zada.i3d"
+#define ANIM_ZASAH_SM_DREP_HLAVA_F 0xde // "zasah Sm Drep hlava F.i3d"
+#define ANIM_ZASAH_SM_DREP_HLAVA_B 0xdf // "zasah Sm Drep hlava B.i3d"
+#define ANIM_ZASAH_LG_DREP_HLAVA_F 0xe0 // "zasah Lg Drep hlava F.i3d"
+#define ANIM_ZASAH_LG_DREP_HLAVA_B 0xe1 // "zasah Lg Drep hlava B.i3d"
+#define ANIM_ZASAH_HPT_NOGUNF 0xe2      // "zasah HPT nogunF.i3d"
+#define ANIM_ZASAH_HPT_PISTOL1F 0xe4    // "zasah HPT pistol1F.i3d"
+#define ANIM_ZASAH_HPT_PUSKA1F 0xe6     // "zasah HPT puska1F.i3d"
+#define ANIM_ZASAH_HPT_SAPIKF 0xe8      // "zasah HPT sapikF.i3d"
+#define ANIM_ZASAH_HPT_PUSKA2F 0xea     // "zasah HPT puska2F.i3d"
+#define ANIM_BOJ_ZASAH_HL_D 0xec        // "boj zasah hl D.i3d"
+#define ANIM_BOJ_ZASAH_HL_L 0xed        // "boj zasah hl L.i3d"
+#define ANIM_BOJ_ZASAH_HL_R 0xee        // "boj zasah hl R.i3d"
+#define ANIM_BOJ_ZASAH_BR_L 0xef        // "boj zasah br L.i3d"
+#define ANIM_BOJ_ZASAH_BR_R 0xf0        // "boj zasah br R.i3d"
+#define ANIM_BOJ_BOX_ROZKROK 0xf1       // "boj box rozkrok.i3d"
+#define ANIM_BOJ_ZASAH_ROZKROK_SM 0xf2  // "boj zasah rozkrok sm.i3d"
+#define ANIM_BOJ_BOX_HLAVICKA 0xf3      // "boj box hlavicka.i3d"
+#define ANIM_BOJ_ZASAH_HLAVICKA 0xf4    // "boj zasah hlavicka.i3d"
+#define ANIM_AUTO_RIDIC_STATIV 0xf6     // "AutoRidicStativ.i3d"
+#define ANIM_FORMULE_STATIV 0xf7        // "FormuleStativ.i3d"
+#define ANIM_AUTO_SPOL_STATIV 0xf8      // "AutoSpolStativ.i3d"
+#define ANIM_AUTO_RIDIC_VOLANT 0xf9     // "AutoRidicVolant.i3d"
+#define ANIM_FORMULE_VOLANT 0xfa        // "FormuleVolant.i3d"
+#define ANIM_AUTO_FIRE01_L_ON 0xfb      // "Auto fire01 L On.i3d"
+#define ANIM_AUTO_FIRE01_L_OFF 0xfc     // "Auto fire01 L Off.i3d"
+#define ANIM_AUTO_FIRE01_L 0xfd         // "Auto fire01 L.i3d"
+#define ANIM_AUTO_FIRE03_ON 0x107       // "Auto fire03 On.i3d"
+#define ANIM_AUTO_FIRE03_OFF 0x108      // "Auto fire03 Off.i3d"
+#define ANIM_AUTO_FIRE03_L 0x109        // "Auto fire03 L.i3d"
+#define ANIM_SMRT_AUTO_RIDIC01 0x10a    // "smrt auto ridic01.i3d"
+#define ANIM_SMRT_AUTO_SPOL_IN01 0x10b  // "smrt auto spol IN01.i3d"
+#define ANIM_SMRT_AUTO_SPOL_IN02 0x10c  // "smrt auto spol IN02.i3d"
+#define ANIM_SMRT_AUTO_SPOL_OUTL 0x10d  // "smrt auto spol OutL.i3d"
+#define ANIM_SMRT_AUTO_SPOL_OUTR 0x10e  // "smrt auto spol OutR.i3d"
+#define ANIM_AUTO_SM_NAS_FL 0x10f       // "AutoSmNas FL.i3d"
+#define ANIM_AUTO_LEZENI_Z_VRAKU 0x12f  // "Auto lezeni z vraku.i3d"
+#define ANIM_AUTO_PRELEZ_L_TO_R 0x130   // "AutoPrelezLtoR.i3d"
+#define ANIM_AUTO_PRELEZ_R_TO_L 0x131   // "AutoPrelezRtoL.i3d"
+#define ANIM_VYHOZ_MAN_FRONT_L 0x132    // "VyhozManFrontL.i3d"
+#define ANIM_VYHOZ_MAN_BACK_L 0x133     // "VyhozManBackL.i3d"
+#define ANIM_VYHOZ_FRONT_L 0x134        // "VyhozFrontL.i3d"
+#define ANIM_VYHOZ_FRONT_R 0x135        // "VyhozFrontR.i3d"
+#define ANIM_VYHOZ_BACK_L 0x136         // "VyhozBackL.i3d"
+#define ANIM_VYHOZ_BACK_R 0x137         // "VyhozBackR.i3d"
+#define ANIM_VYHOZ_MRT_FRONT_L 0x138    // "VyhozMrtFrontL.i3d"
+#define ANIM_VYHOZ_MRT_FRONT_R 0x139    // "VyhozMrtFrontR.i3d"
+#define ANIM_VYHOZ_MRT_BACK_L 0x13a     // "VyhozMrtBackL.i3d"
+#define ANIM_VYHOZ_MRT_BACK_R 0x13b     // "VyhozMrtBackR.i3d"
+#define ANIM_FORMULE_NASTUP_L 0x13c     // "FormuleNastupL.i3d"
+#define ANIM_FORMULE_VYSTUP_L 0x13d     // "FormuleVystupL.i3d"
+#define ANIM_FORMULE_VYSTUP_R 0x13f     // "FormuleVystupR.i3d"
+#define ANIM_SALINA_NASTUP 0x140        // "salina nastup.i3d"
+#define ANIM_SALINA_VYSTUP 0x141        // "salina vystup.i3d"
+#define ANIM_USKOK_RIGHT_FRONT 0x142    // "Uskok Right Front.I3D"
+#define ANIM_USKOK_LEFT_BACK 0x144      // "Uskok Left Back.I3D"
+#define ANIM_USKOK_FRONT_LEFT 0x146     // "Uskok Front Left.I3D"
+#define ANIM_USKOK_BACK_RIGHT 0x148     // "Uskok Back Right.I3D"
+#define ANIM_USKOK_FRONT_RIGHT 0x149    // "Uskok Front Right.I3D"
 
 // An id and its animation's place in _anim_info_ (the struct's name is ours)
 struct S_anim_index

@@ -2798,7 +2798,7 @@ void C_game::TickShoot(uint time)
                 case ACTOR_ENTITY:
                     shoots[i].sound = SHOTSOUND_BODY;
                     break;
-                case ACTOR_UNKNOWN_11:
+                case ACTOR_DROP_OUT:
                 case ACTOR_CRASH_OBJ:
                 case ACTOR_PUBLIC_PHYSICS:
                 case ACTOR_BOX_NEW:

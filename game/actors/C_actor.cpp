@@ -617,42 +617,42 @@ int _anim_index_count_ = 0;
 #pragma auto_inline(off)
 
 // STUB: GAME 0x404e00
-bool C_actor::vfunc_9()
+bool C_actor::AddToCutscene()
 {
-    StubLog("C_actor::vfunc_9");
+    StubLog("C_actor::AddToCutscene");
     return false;
 }
 
 // STUB: GAME 0x404f30
-int C_actor::vfunc_0(int a)
+int C_actor::RecordKey(int a)
 {
-    StubLog("C_actor::vfunc_0");
+    StubLog("C_actor::RecordKey");
     return -1;
 }
 
 // STUB: GAME 0x404f40
-void C_actor::vfunc_1(int a)
+void C_actor::PlayRecord(int a)
 {
-    StubLog("C_actor::vfunc_1");
+    StubLog("C_actor::PlayRecord");
 }
 
 // STUB: GAME 0x405010
-void C_actor::vfunc_2(int a)
+void C_actor::PlayStep(int a)
 {
-    StubLog("C_actor::vfunc_2");
+    StubLog("C_actor::PlayStep");
 }
 
 // STUB: GAME 0x4054c0
-bool C_actor::vfunc_3(int a)
+bool C_actor::PlaceAtTime(int a)
 {
-    StubLog("C_actor::vfunc_3");
+    StubLog("C_actor::PlaceAtTime");
     return false;
 }
 
 // STUB: GAME 0x405a00
-S_vector C_actor::vfunc_4(int a)
+S_vector C_actor::GetRecordPos(int a)
 {
-    StubLog("C_actor::vfunc_4");
+    StubLog("C_actor::GetRecordPos");
     return S_vector(0.0f, 0.0f, 0.0f);
 }
 
@@ -858,7 +858,7 @@ void C_actor::Tick(uint time)
         rendered = frame->m_RenderNumber == act_mission->GetScene()->m_RenderNumber;
     else
         rendered = true;
-    if (!(act_flags & (ACTF_UNKNOWN_1 | ACTF_UNKNOWN_4)))
+    if (!(act_flags & (ACTF_CUTSCENE_PLAYED | ACTF_CUTSCENE_PLAY)))
     {
         if (net_direct)
             NetDirect(time);
@@ -1060,13 +1060,13 @@ int __cdecl compare_anim_index(const S_anim_index *a, const S_anim_index *b)
 void InitAnimIndex()
 {
     int i;
-    for (i = 0; _anim_info_[i].id != 0xffff; i++)
+    for (i = 0; _anim_info_[i].id != ANIM_INFO_END; i++)
         ;
     _anim_index_count_ = i;
     if (!_anim_index_count_)
         return;
     _anim_index_ = new S_anim_index[_anim_index_count_];
-    for (i = 0; _anim_info_[i].id != 0xffff; i++)
+    for (i = 0; _anim_info_[i].id != ANIM_INFO_END; i++)
     {
         _anim_index_[i].id = _anim_info_[i].id;
         _anim_index_[i].index = i;
@@ -1085,9 +1085,9 @@ void DoneAnimIndex()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x42cc20
-S_quat C_actor::vfunc_5(int a)
+S_quat C_actor::GetRecordRot(int a)
 {
-    StubLog("C_actor::vfunc_5");
+    StubLog("C_actor::GetRecordRot");
     return S_quat(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
@@ -1098,35 +1098,35 @@ void C_actor::DuplicateFrom(C_actor *act)
 }
 
 // STUB: GAME 0x5c2650
-void *C_actor::vfunc_11(int a)
+void *C_actor::GetBlockRecordsSize(int a)
 {
-    StubLog("C_actor::vfunc_11");
+    StubLog("C_actor::GetBlockRecordsSize");
     return NULL;
 }
 
 // STUB: GAME 0x5c26a0
-void *C_actor::vfunc_10()
+void *C_actor::GetRecordsSize()
 {
-    StubLog("C_actor::vfunc_10");
+    StubLog("C_actor::GetRecordsSize");
     return NULL;
 }
 
 // STUB: GAME 0x5c27b0
-void C_actor::vfunc_6(bool on)
+void C_actor::SetCutsceneRecord(bool on)
 {
-    StubLog("C_actor::vfunc_6");
+    StubLog("C_actor::SetCutsceneRecord");
 }
 
 // STUB: GAME 0x5c27d0
-void C_actor::vfunc_7(bool on)
+void C_actor::SetCutscenePlay(bool on)
 {
-    StubLog("C_actor::vfunc_7");
+    StubLog("C_actor::SetCutscenePlay");
 }
 
 // STUB: GAME 0x5c27f0
-void C_actor::vfunc_8()
+void C_actor::UpdateCutsceneFlags()
 {
-    StubLog("C_actor::vfunc_8");
+    StubLog("C_actor::UpdateCutsceneFlags");
 }
 
 // Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)

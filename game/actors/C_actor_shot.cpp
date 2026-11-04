@@ -25,37 +25,37 @@ C_actor_shot::~C_actor_shot()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x404e20
-bool C_actor_shot::vfunc_9()
+bool C_actor_shot::AddToCutscene()
 {
-    StubLog("C_actor_shot::vfunc_9");
-    return C_actor::vfunc_9();
+    StubLog("C_actor_shot::AddToCutscene");
+    return C_actor::AddToCutscene();
 }
 
 // STUB: GAME 0x404e40
-void C_actor_shot::vfunc_1(int a)
+void C_actor_shot::PlayRecord(int a)
 {
-    StubLog("C_actor_shot::vfunc_1");
-    C_actor::vfunc_1(a);
+    StubLog("C_actor_shot::PlayRecord");
+    C_actor::PlayRecord(a);
 }
 
 // The original's is C_dyn_object's, folded: it logs that name, so ours folds too
 // STUB: GAME 0x41bae0 FOLDED
-S_vector C_actor_shot::vfunc_4(int a)
+S_vector C_actor_shot::GetRecordPos(int a)
 {
-    StubLog("C_dyn_object::vfunc_4");
-    return C_actor::vfunc_4(a);
+    StubLog("C_dyn_object::GetRecordPos");
+    return C_actor::GetRecordPos(a);
 }
 
 // The original's is C_dyn_object's, folded: it logs that name, so ours folds too
 // STUB: GAME 0x41bb00 FOLDED
-S_quat C_actor_shot::vfunc_5(int a)
+S_quat C_actor_shot::GetRecordRot(int a)
 {
-    StubLog("C_dyn_object::vfunc_5");
-    return C_actor::vfunc_5(a);
+    StubLog("C_dyn_object::GetRecordRot");
+    return C_actor::GetRecordRot(a);
 }
 
 // The linker's folded copy (0x4aa490)
-bool C_actor_shot::vfunc_3(int a)
+bool C_actor_shot::PlaceAtTime(int a)
 {
     return true;
 }

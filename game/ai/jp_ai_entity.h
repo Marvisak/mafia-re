@@ -140,8 +140,9 @@ public:
 // road block that ends.
 #define ENTITY_EVENT_SNIFF 0xb
 #define ENTITY_EVENT_DISMISS 0x13
-// C_human::MovementIntern sends it to an entity the player's move runs into (the name is ours, by value)
-#define ENTITY_EVENT_UNKNOWN_8 0x8
+// C_human::MovementIntern sends it to an entity the player's move runs into: PS2's Event makes the entity step away
+// (ai_action_manager::NewStepAway; the name is ours)
+#define ENTITY_EVENT_STEP_AWAY 0x8
 // C_human::Do_ThrowCocotFromCar sends it to an entity the player throws out of its car (the name is ours)
 #define ENTITY_EVENT_THROWN_FROM_CAR 0x15
 

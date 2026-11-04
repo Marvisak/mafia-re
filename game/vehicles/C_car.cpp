@@ -655,45 +655,45 @@ bool C_car::SaveGameLoad(void **buf)
 }
 
 // STUB: GAME 0x42c010
-int C_car::vfunc_0(int a)
+int C_car::RecordKey(int a)
 {
-    StubLog("C_car::vfunc_0");
-    return C_actor::vfunc_0(a);
+    StubLog("C_car::RecordKey");
+    return C_actor::RecordKey(a);
 }
 
 // STUB: GAME 0x42c220
-void C_car::vfunc_1(int a)
+void C_car::PlayRecord(int a)
 {
-    StubLog("C_car::vfunc_1");
-    C_actor::vfunc_1(a);
+    StubLog("C_car::PlayRecord");
+    C_actor::PlayRecord(a);
 }
 
 // STUB: GAME 0x42c3e0
-void C_car::vfunc_2(int a)
+void C_car::PlayStep(int a)
 {
-    StubLog("C_car::vfunc_2");
-    C_actor::vfunc_2(a);
+    StubLog("C_car::PlayStep");
+    C_actor::PlayStep(a);
 }
 
 // STUB: GAME 0x42c7b0
-bool C_car::vfunc_9()
+bool C_car::AddToCutscene()
 {
-    StubLog("C_car::vfunc_9");
-    return C_actor::vfunc_9();
+    StubLog("C_car::AddToCutscene");
+    return C_actor::AddToCutscene();
 }
 
 // STUB: GAME 0x42c7d0
-bool C_car::vfunc_3(int a)
+bool C_car::PlaceAtTime(int a)
 {
-    StubLog("C_car::vfunc_3");
-    return C_actor::vfunc_3(a);
+    StubLog("C_car::PlaceAtTime");
+    return C_actor::PlaceAtTime(a);
 }
 
 // STUB: GAME 0x42cad0
-S_vector C_car::vfunc_4(int a)
+S_vector C_car::GetRecordPos(int a)
 {
-    StubLog("C_car::vfunc_4");
-    return C_actor::vfunc_4(a);
+    StubLog("C_car::GetRecordPos");
+    return C_actor::GetRecordPos(a);
 }
 
 #pragma auto_inline(on)

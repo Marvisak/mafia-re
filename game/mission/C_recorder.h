@@ -49,21 +49,21 @@ public:
 // What C_recorder::vfunc_5 creates for an actor of a cutscene (the names are ours), 0x5c bytes: the actor holds it
 // (C_actor::records), and so does its entry in the cutscene's recording. Records in blocks of 0x1800 bytes (0x5c2700
 // makes one) that end in 0xeeeeeeee, each a dword the walks compare with unknown_14, its type and as many bytes as
-// record_sizes gives for the type; C_actor's vfunc_10 and vfunc_11 walk them. Its name is the actor type's prefix and
-// a count ("act%d", "hum%d", "car%d", ...). Its functions are in the range of the file at 0x5c25b0-0x5c283c, with
-// C_actor's vfunc_6, vfunc_7, vfunc_8, vfunc_10 and vfunc_11.
+// record_sizes gives for the type; C_actor's GetRecordsSize and GetBlockRecordsSize walk them. Its name is the actor
+// type's prefix and a count ("act%d", "hum%d", "car%d", ...). Its functions are at 0x5c25b0-0x5c283c, with C_actor's
+// SetCutsceneRecord, SetCutscenePlay, UpdateCutsceneFlags, GetRecordsSize and GetBlockRecordsSize.
 class C_cutscene_records
 {
 public:
     // Drops the records (first_block), nothing for NULL (the name is ours)
     void Reset();
 
-    // 0x0, the record the actor's vfunc_1 plays, the last one C_actor::AddRecord added while recording (the name is
+    // 0x0, the record the actor's PlayRecord plays, the last one C_actor::AddRecord added while recording (the name is
     // ours)
     uchar *cur;
-    uchar *next;                        // 0x4, the next record to play (vfunc_2's), AddRecord's last too
+    uchar *next;                        // 0x4, the next record to play (PlayStep's), AddRecord's last too
     uchar unknown_8[0xc];               // 0x8
-    // 0x14, the time of the last key recorded, -666 from vfunc_5 (the name is the dump's, C_human::vfunc_12)
+    // 0x14, the time of the last key recorded, -666 from vfunc_5 (the name is the dump's, C_human::DumpRecords)
     int last_key_time;
     uchar *first_block;                 // 0x18
     uchar *last_block;                  // 0x1c, AddRecord's (the name is ours)
@@ -127,11 +127,11 @@ public:
 struct S_cutscene_tck
 {
     uint length;                        // 0x0, as C_animations_machine_de_luxe::S_track's, 0 where it isn't loaded
-    int key_time;                       // 0x4, as S_track's (C_human::vfunc_4 divides by it)
+    int key_time;                       // 0x4, as S_track's (C_human::GetRecordPos divides by it)
     uchar unknown_8[0x18];              // 0x8
     std::vector<S_vector> positions;    // 0x20, the keys' (LoadTCK), as S_track's
     std::vector<S_vector> directions;   // 0x30, the keys' (LoadTCK), as S_track's
-    bool has_directions;                // 0x40, as S_track's (C_human::vfunc_5 tests it)
+    bool has_directions;                // 0x40, as S_track's (C_human::GetRecordRot tests it)
     uchar unknown_41[3];                // 0x41
 };
 
@@ -158,8 +158,8 @@ class C_recorder
 {
 public:
     // The vtable has 54 functions, the unknown ones named by their slots (the names are ours). From CUTSCENE_STATE_0
-    // on, CUTSCENE_STATE_1 and CUTSCENE_STATE_2 set the two lists' actors' ACTF_CUTSCENE and C_actor::vfunc_6 and
-    // vfunc_7 by the state, CUTSCENE_STATE_0 clears them.
+    // on, CUTSCENE_STATE_1 and CUTSCENE_STATE_2 set the two lists' actors' ACTF_CUTSCENE and C_actor::SetCutsceneRecord
+    // and SetCutscenePlay by the state, CUTSCENE_STATE_0 clears them.
     virtual void SetState(int new_state);
     virtual int GetState();
     // Sets cur_time from the argument (through 0x605560), and scaled_time and time_speed from it
@@ -172,8 +172,9 @@ public:
     // Clears a 0x20-byte struct, its member at 0x14 to -666
     virtual void vfunc_6(void *p);
     virtual void vfunc_7(int unknown);
-    // Adds the actor to the cutscene's lists, which RemoveActor takes it from
-    virtual bool vfunc_8(C_actor *actor, int a, int b, int c);
+    // Adds the actor to the cutscene's lists, which RemoveActor takes it from, with records of the three sizes
+    // (vfunc_5's; the name is ours)
+    virtual bool AddActor(C_actor *actor, int a, int b, int c);
     // Takes the actor from the cutscene's lists (the recording's, which takes the flag too, actors and actors_2), from
     // actors with its ACTF_CUTSCENE: true if one of those two held it (C_actor's destructor calls it)
     virtual bool RemoveActor(C_actor *actor, bool unknown);
@@ -213,11 +214,12 @@ public:
     // The recording's (an actor off its entry, an actor onto the entry of a name), the last one with vfunc_24 after it
     virtual void DetachActor(int unknown);
     virtual void AttachActor(C_actor *actor, int unknown);
-    virtual int vfunc_34(const char *name);
-    // anim_names's
-    virtual const char *vfunc_35(int id);
-    virtual int vfunc_36(int id);
-    virtual void vfunc_37(int id, int value);
+    // The id of the name's item of anim_names, added where it has none, -1 where that fails (the name is ours)
+    virtual int AddAnimName(const char *name);
+    // anim_names's (the names are ours): C_human::PlaceAtTime takes the value as the actor linked by the name
+    virtual const char *GetAnimName(int id);
+    virtual int GetAnimValue(int id);
+    virtual void SetAnimValue(int id, int value);
     // The recording's
     virtual void vfunc_38();
     // Unloads the cutscene and gives the HUD and the player's controls back (C_mission::Close, C_game::Done, the racing

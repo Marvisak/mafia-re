@@ -4248,7 +4248,8 @@ void C_program::Process(uint time)
             {
                 label = c->name2;
                 C_car *car = ((C_human *)actor_regs[c->value1])->GetCar();
-                if (car && car->GetType() == ACTOR_CAR && ((C_human *)actor_regs[c->value1])->action_state != 9 &&
+                if (car && car->GetType() == ACTOR_CAR &&
+                    ((C_human *)actor_regs[c->value1])->action_state != HUMAN_ACTION_CAR &&
                     ((C_human *)actor_regs[c->value1])->seat > -1)
                     car = NULL;
                 if (car == actor_regs[c->value2])
@@ -4296,7 +4297,7 @@ void C_program::Process(uint time)
                 S_vector back = -dir;
                 human->properties[HUMAN_PROPERTY_ENERGY] = 1.0f;
                 if (human->car && human->car->GetType() == ACTOR_CAR)
-                    human->Hit(HIT_UNKNOWN_5, back, pos, dir, 10.0f, NULL, 5, NULL);
+                    human->Hit(HIT_IN_CAR, back, pos, dir, 10.0f, NULL, 5, NULL);
                 else
                     human->Hit(HIT_LANDING, back, pos, dir, 10.0f, NULL, 5, NULL);
             }
@@ -4338,7 +4339,7 @@ void C_program::Process(uint time)
                 break;
             C_human *human = (C_human *)actor_regs[p[0]];
             actor_regs[p[1]] = human->GetCar();
-            if (human->GetCar() && human->GetCar()->GetType() == ACTOR_CAR && human->action_state != 9 &&
+            if (human->GetCar() && human->GetCar()->GetType() == ACTOR_CAR && human->action_state != HUMAN_ACTION_CAR &&
                 human->seat > -1)
                 actor_regs[p[1]] = NULL;
         }
@@ -4449,7 +4450,7 @@ void C_program::Process(uint time)
             }
             if (actor_regs[p[0]]->GetType() == ACTOR_PLAYER || actor_regs[p[0]]->GetType() == ACTOR_ENTITY)
             {
-                ((C_human *)actor_regs[p[0]])->unknown_464 = 0;
+                ((C_human *)actor_regs[p[0]])->track_test = 0;
                 ((C_human *)actor_regs[p[0]])->anim_machine.Reset();
             }
             if (actor_regs[p[0]]->GetFrame())

@@ -54,7 +54,7 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats that turns on DoubleKiss, the guns on the player's car (the name is ours): no code of the
 // PC's sets it, the cheats' toggles (0x5a8030) have no case for it
 #define GAMEF_DOUBLEKISS 0x8
-// The bit of C_game::cheats that keeps the player and the humans of HUMAN_TYPE_UNKNOWN_2 from hits (C_human::Hit;
+// The bit of C_game::cheats that keeps the player and the humans of HUMAN_TYPE_FRIEND from hits (C_human::Hit;
 // the name is a guess): no cheat word toggles it
 #define GAMEF_INVULNERABLE 0x1
 // The bit of C_game::cheats with which a reload takes no ammunition from the reserve (C_human::AI; the name is a
@@ -89,6 +89,9 @@ struct S_shoot
 #define SHOTSOUND_CAR 0x1a
 // The effects' particle of a shot's hit on a human or an animal (materials.def's "Telo" has it too; the name is ours)
 #define SHOTPARTICLE_BODY 0
+// C_game::track_textures' index of a bloody footprint, "2bfootprint.bmp", which C_human::cbCollTester gives the
+// steps of a human through blood (the name is ours, after the file)
+#define TRACK_TEXTURE_BFOOTPRINT 6
 
 // The game of the loaded mission (PS2 game.cpp), 0x36ac bytes, the size C_mission::Init creates it with. PS2's Init
 // takes two bools and loads the mission's collisions itself; the PC's takes none, main loads them before it.

@@ -52,34 +52,41 @@ public:
 #define HIT_PART_BODY 5
 #define HIT_PART_HEAD 6
 
-// C_human::human_type's values (the names are ours, by value where the meaning isn't known): Hit leaves out the type 2
-// humans while the game's GAMEF_INVULNERABLE is set; the police (C_shvestky::TickDoRiciActors dismisses the type 4
-// entities) give the score for a kill without a bonus
-#define HUMAN_TYPE_UNKNOWN_2 2
+// C_human::human_type's values (the names are ours; the player's is 1, C_player::Init's): the player's friends most
+// likely (a guess: Hit spares them with the player under GAMEF_INVULNERABLE; they shoot the player only as their
+// angriest enemy); the police (C_shvestky::TickDoRiciActors dismisses type 4) give a kill's score without a bonus
+#define HUMAN_TYPE_FRIEND 2
 #define HUMAN_TYPE_POLICE 4
+// The types _intern_ThrowMeFromCar gives a traffic's driver it makes an entity of, armed and unarmed (the names
+// are ours, by value)
+#define HUMAN_TYPE_UNKNOWN_40 0x40
+#define HUMAN_TYPE_UNKNOWN_80 0x80
 
-// C_human::unknown_94's bit with which an entity gets EVENT_HIT_FROM_PLAYER when the player hits it (the name is ours)
+// C_human::human_flags's bits (the names are ours): PersonAnim starts every other walk animation with its f .5, the
+// bit marking the walk between (the name is a guess); an entity gets EVENT_HIT_FROM_PLAYER when the player hits it
+// (C_entity's constructor sets it by its program)
+#define HUMANF_WALK_HALF 0x1
 #define HUMANF_EVENT_HIT_FROM_PLAYER 0x2
 
-// The effects' particle of Hit's type 7 at the human's frame (the name is ours, by value)
-#define HITPARTICLE_UNKNOWN_28 0x28
+// The effects' particle of the airplane's hit (Hit's HIT_AIRPLANE) at the human's frame (the name is ours)
+#define HITPARTICLE_AIRPLANE 0x28
 
 // The sound table's sound of a human a car or a train runs into (C_human::Collision; the name is ours)
 #define SOUND_RUN_OVER 0xb8
 // The sound table's sound of a weapon taken out, put away or thrown away (C_human::Do_ChangeWeapon; the name is
 // ours)
 #define SOUND_WEAPON_CHANGE 0xc2
-// The sound table's sounds ChangeWeaponModel gives unknown_6c8 for the pump shotgun and for the two rifles, the
+// The sound table's sounds ChangeWeaponModel gives pump_sound for the pump shotgun and for the two rifles, the
 // weapons with a pump or a bolt (the names are guesses)
 #define SOUND_SHOTGUN_PUMP 0xd7
 #define SOUND_RIFLE_BOLT 0xbe
 // MovementIntern's sounds (the names are ours): a drowning's splash and the landing after a fall
 #define SOUND_WATER_SPLASH 0xec
 #define SOUND_LANDING 0xc0
-// MovementIntern's particles of the effects (the names are ours)
+// MovementIntern's particles of the effects, the landing's also NOTE_FALL_UPPER's at "back2" (the names are ours)
 #define PARTICLE_WATER_SPLASH 0x25
 #define PARTICLE_LANDING 0x4b
-// The sound table's sound of a car stolen (Movement's action_state 10; the name is ours)
+// The sound table's sound of a car stolen (Movement's HUMAN_ACTION_STEAL; the name is ours)
 #define SOUND_CAR_STOLEN 0x87
 #define HUMAN_PROPERTY_REACTIONS 6      // "Reactions"
 #define HUMAN_PROPERTY_SPEED 7          // "Speed", which the walks' speeds are multiplied by
@@ -94,42 +101,101 @@ public:
 // ours, by index)
 #define HUMAN_PROPERTY_15 15
 
+// C_human::voice_type's, S_voice_def::sounds' index (the names are ours): the constructor's, and the first of the
+// three male and of the three female voices _intern_ThrowMeFromCar gives a traffic's driver it makes an entity of
+#define HUMAN_VOICE_DEFAULT 0xc
+#define HUMAN_VOICE_TRAFFIC_MALE 0x1a
+#define HUMAN_VOICE_TRAFFIC_FEMALE 0x1d
+// NewScream's voices, gameVoices' entries from 2 (voices.def; the names are ours): a heavy hit in a leg, the hits'
+// seven cries from VOICE_HIT, the deaths' two from VOICE_DEATH, the agony's three from VOICE_AGONY, and the seven
+// a driver swears with, thrown out of his car, from VOICE_SWEAR
+#define VOICE_HIT_LEG 0x54
+#define VOICE_HIT 0x55
+#define VOICE_DEATH 0x5c
+#define VOICE_AGONY 0x5e
+#define VOICE_SWEAR 0xa1
+// The police's calls by the player's offences (human_notify_callback's NOTE_POLICE_SCREAM_1 to 3: 0x98 to 0x9a
+// for one, 0x9b to 0x9d for two, 0xa2, 0x9c and 0xa3 for three; the police's voices have the same file in 0xa2
+// as in 0x98) and NOTE_SCREAM_88's (the names are ours, by value)
+#define VOICE_UNKNOWN_88 0x88
+#define VOICE_UNKNOWN_98 0x98
+#define VOICE_UNKNOWN_99 0x99
+#define VOICE_UNKNOWN_9A 0x9a
+#define VOICE_UNKNOWN_9B 0x9b
+#define VOICE_UNKNOWN_9C 0x9c
+#define VOICE_UNKNOWN_9D 0x9d
+#define VOICE_UNKNOWN_A2 0xa2
+#define VOICE_UNKNOWN_A3 0xa3
+
 // The version of the mission's character data SaveData writes and LoadData reads (scene2.bin; the name is ours)
 #define HUMAN_DATA_VERSION 6
 // The version of the saved game's data SaveGameSave writes, the only one SaveGameLoad takes (the name is ours)
 #define HUMAN_SAVEGAME_VERSION 6
 
-// S_unknown_23c::unknown_0, what the step does (the names are ours): waits unknown_8 ms, plays the animation
-// unknown_4, goes on with the agony (action_state 7), ends the steps (Movement's case 6)
+// C_human::action_state's values, what the human does, which Movement switches on (the names are ours): IsReady
+// takes STAND, WALK and CAR
+#define HUMAN_ACTION_STAND 1            // on foot, no action: Movement starts a fall while test_ground is set
+#define HUMAN_ACTION_WALK 2             // walking (PS2's Go_*), and slowing down after the walk (Update)
+#define HUMAN_ACTION_FALL 3             // falling (MovementIntern) until he lands
+#define HUMAN_ACTION_TRACK 4            // an animation whose track moves him (PersonAnim, Do_PlayAnim) until it ends
+#define HUMAN_ACTION_WAIT 5             // waiting action_time out, still moved by last_velocity (SetWaitAnim's)
+#define HUMAN_ACTION_STEPS 6            // the animation steps, anim_steps: the hits, the agony and the deaths
+#define HUMAN_ACTION_AGONY 7            // the agony, action_time long, then agony_count more or the death
+#define HUMAN_ACTION_DEAD 8             // dead: ACTSTATE_2 once dead_time is out
+#define HUMAN_ACTION_CAR 9              // seated in the car: only then the script's car tests count him in it
+#define HUMAN_ACTION_STEAL 10           // stealing stealing_car (C_player), action_time more
+#define HUMAN_ACTION_JUMP 11            // a jump (Do_Jump) until he lands or falls
+
+// C_human::vehicle_action's values, the use of a vehicle an animation's end finishes (the names are ours): into
+// the car's seat and out of it (Use_Actor), into the rail vehicle and out of it (Use_Actor, at the end of
+// HUMAN_ACTION_WAIT), thrown out of the car (_intern_ThrowMeFromCar), over to the other seat (Do_ClimbInCarLR)
+#define HUMAN_VEHICLE_CAR_IN 1
+#define HUMAN_VEHICLE_CAR_OUT 2
+#define HUMAN_VEHICLE_RAILWAY_IN 3
+#define HUMAN_VEHICLE_RAILWAY_OUT 4
+#define HUMAN_VEHICLE_CAR_THROWN_OUT 5
+#define HUMAN_VEHICLE_SEAT_CHANGE 6
+
+// C_human::next_car_action's values, what the human does once seated in the car (the names are ours): over to the
+// other seat of the pair (Do_ClimbInCarLR, after Use_Actor's getting in with c), out of the car (Use_Actor, after
+// the climb over to a seat he can get out at); at the seat it gets HUMAN_CAR_ACTION_DUE added, which AI waits for
+#define HUMAN_CAR_ACTION_CLIMB_OVER 1
+#define HUMAN_CAR_ACTION_GET_OUT 2
+#define HUMAN_CAR_ACTION_DUE 100
+
+// S_anim_step::type, what the step does (the names are ours): waits wait ms out, plays the animation anim_id, goes
+// on with the agony (HUMAN_ACTION_AGONY), ends the steps (Movement's HUMAN_ACTION_STEPS)
 #define HUMAN_STEP_WAIT 0
 #define HUMAN_STEP_ANIM 1
 #define HUMAN_STEP_AGONY 2
 #define HUMAN_STEP_END 3
-// S_unknown_23c::unknown_10's bits (the names are ours, by value but the wait): PersonAnim's second bool, and the
-// step waits the animation's length after it
-#define HUMAN_STEPF_1 0x1
+// S_anim_step::flags (the names are ours): the animation plays once, not looped (PersonAnim's second bool, which
+// goes on to C_animations_machine_de_luxe::SetAnim's third, where ChangeDeadAnim gives Do_PlayAnim !loop; the name
+// is a guess), and the step waits the animation's length after it
+#define HUMAN_STEPF_ONCE 0x1
 #define HUMAN_STEPF_WAIT 0x2
 
-// One of C_human's five entries at 0x23c (PS2 0x3dc), 0x14 bytes (the names are placeholders)
-struct S_unknown_23c
+// One of C_human's animation steps (anim_steps, PS2 0x3dc), 0x14 bytes, which the hits, the agony and the deaths
+// fill in and Movement plays in HUMAN_ACTION_STEPS (the names are ours)
+struct S_anim_step
 {
-    int unknown_0;                      // 0x0, 3: Update ends the animation with the human's action
-    int unknown_4;                      // 0x4
-    int unknown_8;                      // 0x8
-    bool unknown_c;                     // 0xc
+    int type;                           // 0x0, HUMAN_STEP_*
+    int anim_id;                        // 0x4, HUMAN_STEP_ANIM's animation, as C_human::next_anim_id
+    int wait;                           // 0x8, HUMAN_STEP_WAIT's time left in ms
+    bool stance;                        // 0xc, PersonAnim's first bool: in the weapon's and the crouch's stance
     uchar unknown_d[3];                 // 0xd
-    int unknown_10;                     // 0x10
+    int flags;                          // 0x10, HUMAN_STEPF_*
 };
 
 // A step of a weapon's fire (g_material.h)
 struct S_fire_action;
 
-// The sounds of a strike that hits (C_human::AI; the names are ours, by value but the car's and the stab's from
-// behind): a human's by the weapon in the right hand, items 0 and 2, 3, 0x19, 0x1d and 0x1f, the others; a car's;
-// item 4's from behind
-#define SOUND_STRIKE_93 0x93
-#define SOUND_STRIKE_C4 0xc4
-#define SOUND_STRIKE_16 0x16
+// The sounds of a strike that hits (C_human::AI; the names are ours, after the sound table's "Body" of "Hit punch",
+// "Hit knife" and "Hit baseball bat"): a human's by the weapon in the right hand, the fists and the knuckleduster,
+// the knife, crowbar, bottle and sword, the others; a car's; the bat's from behind ("omraceni", stunning)
+#define SOUND_STRIKE_PUNCH 0x93
+#define SOUND_STRIKE_KNIFE 0xc4
+#define SOUND_STRIKE_BAT 0x16
 #define SOUND_STRIKE_CAR 0x17
 #define SOUND_STRIKE_BACK 0xf0
 
@@ -202,11 +268,11 @@ struct ai_blob
     C_actor *actor;                     // 0x20, the human (Blob's owner), the fights' target
 };
 
-// ai_blob::flags (the names are guesses, by value but the crouch): the human's state when he was logged
-#define AIBLOB_UNKNOWN_1 0x1            // animation 5
+// ai_blob::flags (the names are ours, after the animations and the members): the human's state when he was logged
+#define AIBLOB_RUNNING 0x1              // run1.i3d (5), and the running jump jumpR?1.i3d (0x60)
 #define AIBLOB_CROUCHING 0x2            // C_human::crouching
-#define AIBLOB_UNKNOWN_4 0x4            // C_human::fire_held
-#define AIBLOB_UNKNOWN_8 0x8            // animations 0x5e and 0x5f; 0x60 sets 9
+#define AIBLOB_FIRING 0x4               // C_human::fire_held
+#define AIBLOB_JUMPING 0x8              // the jumps: jump1.i3d (0x5f), 0x5e, and with AIBLOB_RUNNING jumpR?1.i3d
 
 // The last 16 positions of a human, logged at most every 500 ms (PS2 ai_blob_log, whose methods are at the start of
 // PS2's C_human.cpp, as the PC's), 0x244 bytes, C_human's at 0x758; Main.cpp and jp_ai_entity.cpp use them too (the
@@ -231,6 +297,25 @@ public:
 #define HUMAN_ANIMSET_2 2
 #define HUMAN_ANIMSET_PANIC 3
 
+// C_human::car_stance (the names are ours): seated, the seat's own animation; the driver's hands on the wheel,
+// whose animation follows the car's steering; aimed out of the window, Movement's car shots
+#define HUMAN_CARSTANCE_SEATED 0
+#define HUMAN_CARSTANCE_STEERING 1
+#define HUMAN_CARSTANCE_AIMED 2
+
+// C_human::ActivateColls' modes (the names are ours): the upper sphere, and the lower one while the human is
+// alive; the upper one only, the lower one only, both while he is alive
+#define HUMAN_COLLS_ALL 0
+#define HUMAN_COLLS_UPPER 1
+#define HUMAN_COLLS_LOWER 2
+// C_human::Use_Actor's how (the names are ours): into the car's seat or the rail vehicle, out of it (any other)
+#define HUMAN_USE_IN 1
+#define HUMAN_USE_OUT 2
+// C_human::Do_ChangeWeapon's how (the names are ours, after the animations "gun stoj on off.i3d" and "gun stoj
+// zahozeni.i3d"): the weapon taken out or put away, thrown away
+#define HUMAN_WEAPON_ON_OFF 0
+#define HUMAN_WEAPON_THROW_AWAY 1
+
 // The height of the ground below pos, from a metre above it down 6 metres, relative to pos: 0 for none (PS2 names, in
 // PS2's C_human.cpp after ai_blob_log; the second leaves the moving objects out). The player's file calls them too.
 float _get_delta_y_(S_vector &pos);
@@ -241,7 +326,8 @@ float _get_delta_nodyn_y_(S_vector &pos);
 
 // The saved game's data of a human, after C_actor's (C_human::SaveGameSave's and SaveGameLoad's), 0x17e bytes, packed:
 // the members the fields copy, in their order but for the properties, each field with its member's name (PS2's has the
-// same fields, the bytes and shorts last; the struct's name is ours). action_state and unknown_410 are saved as words.
+// same fields, the bytes and shorts last; the struct's name is ours). action_state and vehicle_action are saved as
+// words.
 #pragma pack(push, 1)
 struct S_human_savegame
 {
@@ -260,28 +346,28 @@ struct S_human_savegame
     bool throw_swung;                   // 0x39
     int strike_time;                    // 0x3a
     int strike_index;                    // 0x3e
-    bool unknown_22c;                   // 0x42
-    bool unknown_22d;                   // 0x43
+    bool guarding;                      // 0x42
+    bool sniper_mode;                   // 0x43
     float tilt;                         // 0x44
     bool pose_moving;                   // 0x48
     S_vector pose_back1_dir;            // 0x49
     S_vector pose_back2_dir;            // 0x55
     S_vector pose_neck_dir;             // 0x61
     ushort action_state;                // 0x6d
-    ushort unknown_410;                 // 0x6f
+    ushort vehicle_action;              // 0x6f
     float fall;                         // 0x71
     S_vector velocity;               // 0x75
-    float unknown_42c;                  // 0x81
-    S_vector unknown_430;               // 0x85
-    float unknown_43c;                  // 0x91
+    float turn_speed;                   // 0x81
+    S_vector last_velocity;             // 0x85
+    float velocity_ramp;                // 0x91
     S_vector ground_normal;               // 0x95
-    int unknown_44c;                    // 0xa1
-    int unknown_450;                    // 0xa5
+    int action_time;                    // 0xa1
+    int dead_time;                      // 0xa5
     int agony_anim;                    // 0xa9
-    int unknown_45c;                    // 0xad
-    int unknown_460;                    // 0xb1
-    int unknown_464;                    // 0xb5
-    S_vector unknown_468;               // 0xb9
+    int agony_count;                    // 0xad
+    int last_fire_time;                 // 0xb1
+    int track_test;                     // 0xb5
+    S_vector track_test_pos;            // 0xb9
     int wagon;                          // 0xc5
     int idle_time;                    // 0xc9
     int breath_time;                    // 0xcd
@@ -299,8 +385,8 @@ struct S_human_savegame
 };
 #pragma pack(pop)
 
-// A human's record of a cutscene (the names are ours): types 1 to 3 are 0x28, 0x2c and 0x38 bytes (vfunc_9), type 2
-// and 3 with unknown_28, type 3 with pose_pos too
+// A human's record of a cutscene (the names are ours): types 1 to 3 are 0x28, 0x2c and 0x38 bytes (AddToCutscene),
+// type 2 and 3 with unknown_28, type 3 with pose_pos too
 struct S_human_record
 {
     int time;                           // 0x0, S_cutscene_record's
@@ -327,8 +413,8 @@ struct S_human_record
 #define HUMAN_REC_ANIM_FLAGS 0xf800
 // The flags (the names are guesses): the "base" interpolators' animation of the other channel cleared, the cutscene
 // animation's .tck played too (tck_on), looping, the animation machine reset first for the human's own animation
-// and the other channel's blend (cutscene_blend) turned around for a cutscene's, and vfunc_3 places the frame as the
-// record has it, without blending to the next
+// and the other channel's blend (cutscene_blend) turned around for a cutscene's, and PlaceAtTime places the frame as
+// the record has it, without blending to the next
 #define HUMAN_REC_ANIM_BASE 0x800
 #define HUMAN_REC_ANIM_TCK 0x1000
 #define HUMAN_REC_ANIM_LOOP 0x2000
@@ -342,6 +428,11 @@ struct S_human_record
 #define HUMAN_REC_LINK_KIND_SHIFT 24
 // The pose flags (HUMAN_POSEF_*) the record was made with, but HUMAN_POSEF_UNKNOWN_8
 #define HUMAN_REC_POSE_SHIFT 28
+// S_human_record::type (the names are ours, after vfunc_1's and vfunc_3's records timed and posed): the frame and
+// the animation, with the animation's time too (unknown_28), and with the pose's position too
+#define HUMAN_REC_TYPE_PLAIN 1
+#define HUMAN_REC_TYPE_TIMED 2
+#define HUMAN_REC_TYPE_POSED 3
 
 // The spheres of a human moved together (PS2 tgcPanak2, Czech "panak", a little man; PS2's has its members in another
 // order), 0x8c bytes, g_collision::TestPanak2's and TestPanak2InVehicle's, which C_human's TestMoveColl and
@@ -378,19 +469,17 @@ public:
         CORNER_2,               // crouched only
     };
 
-    // The cutscenes' functions (PC only; the slots' names are C_actor's), on the human's records (S_human_record):
-    // it adds itself to the cutscene with its record sizes (vfunc_9), records a key for the time, -1 where it records
-    // none, else the record's type (vfunc_0), starts the current record's animation (vfunc_1), plays a step of the time
-    // (vfunc_2), places itself for a time, the last record's link and pose included (vfunc_3), writes the records to a
-    // file (vfunc_12), and gives the position and the rotation for a time (vfunc_4, vfunc_5)
-    virtual bool vfunc_9();
-    virtual int vfunc_0(int time);
-    virtual void vfunc_1(int time);
-    virtual void vfunc_2(int time);
-    virtual bool vfunc_3(int time);
-    virtual void vfunc_12();
-    virtual S_vector vfunc_4(int time);
-    virtual S_quat vfunc_5(int time);
+    // The cutscenes' functions (PC only, C_actor's slots), on the human's records (S_human_record): AddToCutscene
+    // gives their sizes, RecordKey returns the record's type, PlayRecord starts the current record's animation,
+    // PlaceAtTime places the last record's link and pose too, DumpRecords writes them to "<name>.dump"
+    virtual bool AddToCutscene();
+    virtual int RecordKey(int time);
+    virtual void PlayRecord(int time);
+    virtual void PlayStep(int time);
+    virtual bool PlaceAtTime(int time);
+    virtual void DumpRecords();
+    virtual S_vector GetRecordPos(int time);
+    virtual S_quat GetRecordRot(int time);
 
     C_human();
     virtual ~C_human();
@@ -442,7 +531,7 @@ public:
     virtual bool Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
         I3D_frame *frm);
     virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
-    // Notes a link for the cutscene's recording (PC only, which vfunc_3 calls; the name is ours)
+    // Notes a link for the cutscene's recording (PC only, which PlaceAtTime calls; the name is ours)
     void SetCutsceneLink(C_actor *act, int kind);
     // The poses (PS2 names); the PC's take the vectors by value, PS2's by reference
     void PoseInterpolate(uint time);
@@ -614,22 +703,26 @@ public:
     // 0x90, the scale of the climb's track along x: 2.5 times the distance to the wall, at least 1 (Do_Climb;
     // the name is ours)
     float climb_reach;
-    int unknown_94;                     // 0x94
+    int human_flags;                    // 0x94, HUMANF_* (the name is ours)
     C_car *car;                         // 0x98, the car the human is in (the name is ours)
     // 0x9c (PS2 0x228), the car the human is getting into or was thrown out of: PS2's Use_Actor sets it to the car
     // it uses, _intern_ThrowMeFromCar to the car, the car functions clear it; C_shvestky::TickDoRiciActors keeps a car
     // in the police's faces while a player or an entity has it here or in car (the name is ours)
     C_car *using_car;
-    // 0xa0 (PS2 0x22c), a car too, whose door the notes open and close after using_car's and car's
-    C_car *unknown_a0;
+    // 0xa0 (PS2 0x22c), the car the human last got into (Use_Actor, Intern_UseCar), kept after he leaves it: the
+    // notes open and close its door after using_car's and car's (the name is ours)
+    C_car *last_car;
     // The cars the script's CAR_LOCK and CAR_LOCK_ALL lock to the human (the names are ours)
     C_car *locked_car;                  // 0xa4
     C_car *locked_vehicle;              // 0xa8
     // 0xac (PS2 0x238), the seat in the car most likely, -1 for none (the name is a guess)
     int seat;
     int unknown_b0;                     // 0xb0
-    int unknown_b4;                     // 0xb4
-    int unknown_b8;                     // 0xb8
+    // 0xb4, HUMAN_CAR_ACTION_*, what the human does once seated in the car, 0 for nothing (Use_Actor's c gives the
+    // climb over): Update and Intern_UseCar add HUMAN_CAR_ACTION_DUE at the seat, AI does it on its next tick (it
+    // tests car_action_time -= time, not its sign; the name is ours)
+    int next_car_action;
+    int car_action_time;                // 0xb8, 250 ms for next_car_action, -1 from GameInit (the name is ours)
     // 0xbc (PS2 0x250), whose Reset the script's ACTOR_SETPLACEMENT calls (the name is ours)
     C_animations_machine_de_luxe anim_machine;
     bool crouching;                     // 0x1e4 (PS2 0x390), the camera drops while it is set (the name is ours)
@@ -643,16 +736,25 @@ public:
     int weapon_kind;
     // 0x1ec, the shot or strike held: Do_Shoot sets it on the press and clears it on the release (the name is ours)
     bool fire_held;
-    bool unknown_1ed;                   // 0x1ed
+    // 0x1ed, the fire the animation's notes hold: NOTE_UNKNOWN_1A sets it with fire_held, NOTE_UNKNOWN_1B clears
+    // both; Shooting shoots behind the human only while it is set (the name is ours)
+    bool note_fire;
     uchar unknown_1ee[2];               // 0x1ee
     // What the weapon's fire does (PS2 0x39c, 0x3a0 and 0x3a4; the names are ours): GameInit, Activate and
     // ResetWeaponEffects set _fire_action_ready_ and clear the step and its time
     const S_fire_action *fire_action;   // 0x1f0
     int fire_step;                      // 0x1f4
     int fire_time;                      // 0x1f8
-    bool unknown_1fc;                   // 0x1fc
-    bool unknown_1fd;                   // 0x1fd
-    bool unknown_1fe;                   // 0x1fe
+    // 0x1fc, the reload under way: AI sets it at the fire's FIRE_ACTION_RELOAD step, and at the fire's end reloads
+    // the weapon and clears it (the name is ours)
+    bool reloading;
+    // 0x1fd, the reload Do_Reload asks for: the fire's reload step runs though the clip isn't empty, and no
+    // cartridge is thrown out; cleared at the fire's end and by a shot (the name is ours)
+    bool reload_forced;
+    // 0x1fe, the pump shotgun loaded a shell at a time (Do_Reload, or Shooting's last shell): AI keeps the weapon
+    // aimed and reloads again at each fire's end while a shell fits, and the left hand's target lets go of the
+    // weapon meanwhile; a shot or a strike started ends it (the name is ours)
+    bool loading_shells;
     uchar unknown_1ff;                  // 0x1ff
     S_vector throw_dir;                 // 0x200, Do_ThrowGrenade's, the throw's direction (the name is ours)
     I3D_frame *cartridge_frame;         // 0x20c, where the weapon throws its cartridges out (NewCartidge's; the name is ours)
@@ -675,8 +777,13 @@ public:
     // 0x228, the strike's place in its series, 0 to 3, -1 after the series ended, which AI's strike doubles the damage
     // at (the name is ours)
     int strike_index;
-    bool unknown_22c;                   // 0x22c
-    bool unknown_22d;                   // 0x22d
+    // 0x22c, the melee guard played: the fists', the knife's or the bat's "boj HPT ... kryt.i3d" (Czech: guard),
+    // which Update plays as the hands' extended animation while aimed; Do_Aimed(false) ends it, SetFreeBoxingAnim's
+    // strike takes its place (the name is ours)
+    bool guarding;
+    // 0x22d, the player's sniper mode, which C_player::SetSniperMode sets and clears: Shooting shoots from the
+    // camera while it is set (the name is ours)
+    bool sniper_mode;
     // 0x22e (PS2 0x3ce), MovementIntern tests the ground below even without a move while it is set: set where no
     // ground was found or the ground is a moving object's, cleared on static ground and in a vehicle; Update and
     // GameInit set it (the name is ours)
@@ -694,10 +801,10 @@ public:
     // 0x238 (PS2 0x3d8), the human's look up or down, which PS2's C_player::AI_walk moves: the camera's tilt for the
     // player (C_game::Tick; the name is ours, after the camera's)
     float tilt;
-    // 0x23c (PS2 0x3dc), five entries of 0x14 bytes, the one unknown_2a0 indexes: Update ends the animation with the
-    // action of its unknown_0 3, else sets action_state 6
-    S_unknown_23c unknown_23c[5];
-    int unknown_2a0;                    // 0x2a0
+    // 0x23c (PS2 0x3dc), the animation steps HUMAN_ACTION_STEPS plays from the first: an animation's end goes on
+    // with them, or at a HUMAN_STEP_END with the human's own end of it (Update; the name is ours)
+    S_anim_step anim_steps[5];
+    int anim_step;                      // 0x2a0, the step of anim_steps HUMAN_ACTION_STEPS plays (the name is ours)
     // The poses of the model's frames "back1", "back2" and "neck" (PS2 0x444, 0x448 and 0x44c), which GameInit
     // creates and GameDone releases (the names are ours)
     I3D_pose *pose_back1;               // 0x2a4
@@ -714,49 +821,69 @@ public:
     S_vector pose_neck_dir;             // 0x2cc
     I3D_frame *look_frame;              // 0x2d8 (PS2 0x454), SetLookFrame's (the name is ours)
     C_ShotSkeleton shot_skeleton;       // 0x2dc (PS2 0x458; the name is ours)
-    // 0x40c (PS2 0x588), what the human does, which PS2's Go_*, Do_*, Hit* and car functions set and Movement switches
-    // on: 1, 2 and 9 are ready, 9 keeps the car (the name is ours)
+    // 0x40c (PS2 0x588), HUMAN_ACTION_*, what the human does, which PS2's Go_*, Do_*, Hit* and car functions set and
+    // Movement switches on (the name is ours)
     int action_state;
-    int unknown_410;                    // 0x410
+    // 0x410, HUMAN_VEHICLE_*, the use of a vehicle an animation's end finishes, 0 for none: set where the getting
+    // in or out starts, finished by Update, at once by Hit and C_player::LockControls (the name is ours)
+    int vehicle_action;
     // 0x414 (PS2 0x590), the collision the last move (TestMoveColl) ran into, NULL for none (the name is ours)
     g_collision_header *move_coll;
     // 0x418 (PS2 0x594), the human's fall, 0 while he stands: HUMAN_FORCEFALL adds 0.1, PS2's Movement starts one at
     // 0.05 and makes it 60 below a height of -30 (the name is ours)
     float fall;
-    // 0x41c (PS2 0x598), the fall started in a jump (action_state 11): the landing hurts only above 18, else 8, and
+    // 0x41c (PS2 0x598), the fall started in a jump (HUMAN_ACTION_JUMP): the landing hurts only above 18, else 8, and
     // less (the name is ours)
     bool jump_fall;
     uchar unknown_41d[3];               // 0x41d
     // 0x420 (PS2 0xc0), the walk's velocity per second: MovementIntern moves by it, Update ramps it (the name is
     // ours)
     S_vector velocity;
-    float unknown_42c;                  // 0x42c (PS2 0x59c), the turn's speed: Update turns dir by it times the time
-    S_vector unknown_430;               // 0x430 (PS2 0xd0), cleared by Turn_Turn
-    float unknown_43c;                  // 0x43c (PS2 0x5a0), cleared by Turn_Turn
+    // 0x42c (PS2 0x59c), the turn's speed in radians a second: Update turns dir by it times the time, the side
+    // walks and Do_Breath stop it (the name is ours)
+    float turn_speed;
+    // 0x430 (PS2 0xd0), the walk's last velocity, which Update keeps while he walks: once he stops MovementIntern
+    // moves him on by it times velocity_ramp, and HUMAN_ACTION_WAIT by it alone (Use_Actor's 1.5 along the
+    // frame's direction); Turn_Turn and the actions clear it (the name is ours)
+    S_vector last_velocity;
+    // 0x43c (PS2 0x5a0), the walk's speed from 0 to 1, which Update ramps up while he walks (velocity scaled by
+    // it) and down after; a shot multiplies it by 0.3, Turn_Turn and the actions clear it (the name is ours)
+    float velocity_ramp;
     // 0x440 (PS2 0xe0), the ground's normal the collision tests give, which the move is projected along (the name
     // is ours)
     S_vector ground_normal;
-    int unknown_44c;                    // 0x44c
-    int unknown_450;                    // 0x450
+    // 0x44c, the action's time left in ms: HUMAN_ACTION_WAIT's, HUMAN_ACTION_AGONY's and HUMAN_ACTION_STEAL's (the
+    // name is ours)
+    int action_time;
+    // 0x450, the time HUMAN_ACTION_DEAD waits before ACTSTATE_2: the death's animation in a car (HitInCar), 500
+    // from GameInit, 1500 from Activate (the name is ours)
+    int dead_time;
     bool killed_by_shot;                // 0x454 (PS2 0x5ac), set by Hit for a death by HIT_SHOT (the name is ours)
     uchar unknown_455[3];               // 0x455
     // 0x458 (PS2 0x5b0), the agony's animation, 0 to 12 by 4, added to 0x93 for its first (PS2's HitAgony sets it), -1
     // for none: Hit plays its death on a hit in the agony (the name is ours)
     int agony_anim;
-    int unknown_45c;                    // 0x45c, saved as a dword
-    int unknown_460;                    // 0x460
-    int unknown_464;                    // 0x464 (PS2 0x5bc), ACTOR_SETPLACEMENT clears it
-    // 0x468, the position the animation's track moves the human from: PersonAnim sets it with unknown_464 1, Update
-    // moves it to where the collisions let him go
-    S_vector unknown_468;
-    // 0x474, the time stealing the car takes, which the thief indicator's bar shows unknown_44c of (the name is
+    // 0x45c, saved as a dword, the agonies after this one: HitAgony sets 5 to 12, Movement plays another while it
+    // counts down, then the death (the name is ours)
+    int agony_count;
+    // 0x460, the game time of the human's last shot or throw (Shooting, ShootingInCar, Do_Shoot's throws,
+    // Do_ThrowGrenade), which ai_logs takes for a shot within 250 ms (0x4f6b10; the name is ours)
+    int last_fire_time;
+    // 0x464 (PS2 0x5bc), 1 while Update tests the move of a track PersonAnim plays (but the car's and the climbs')
+    // from track_test_pos against the collisions, until the track ends; ACTOR_SETPLACEMENT clears it (the name is
+    // ours)
+    int track_test;
+    // 0x468, where the track's move is tested from: PersonAnim sets it to pos with track_test, Update tests the move
+    // from it to pos and puts both where the collisions let him go (the name is ours)
+    S_vector track_test_pos;
+    // 0x474, the time stealing the car takes, which the thief indicator's bar shows action_time of (the name is
     // ours)
     int steal_time;
     C_car *stealing_car;                // 0x478 (PS2 0x5c4), IFPLAYERSTEALCAR's (the name is ours)
     int shadow;                         // 0x47c (PS2 0x5c8), C_game::AddFrameForShadow's (the name is ours)
     G_Inventory inventory;              // 0x480 (the name is ours)
     // The weapons' models, FRAME_MODELs named "weapon" (PS2 0x5f0 and 0x5f4): Update turns them off in a car, Hit
-    // on in action_state 10 (the names are ours)
+    // on in HUMAN_ACTION_STEAL (the names are ours)
     I3D_model *weapon_model;            // 0x564
     I3D_model *weapon_model2;           // 0x568
     // The frames the hands hold things by, LINKTOHAND's (PS2 0x5f8 and 0x5fc; the names are ours)
@@ -769,8 +896,16 @@ public:
     // 0x57c (PS2 0x608), the model's frame "base", LightnessAdd's, whose world position Update gives the human's
     // frame's sector (the name is ours)
     I3D_frame *base_frame;
-    bool unknown_580;                   // 0x580
-    bool unknown_581;                   // 0x581
+    // 0x580, the weapon out of its place in the hands: the reload's notes NOTE_WEAPON_FROM_TARGET and
+    // NOTE_WEAPON_TO_LEFT_HAND, and Do_Reload's shell by shell, take it out of the left hand's target or into the
+    // left hand; RepairWeaponPosition, which PersonAnim and the shots call while it is set, puts it back and clears
+    // it, and C_game::RecPrepareHumans sets it to have it put back (the name is ours)
+    bool weapon_displaced;
+    // 0x581, a reload's weapon effects play: the animations' notes start the effects but the pump
+    // (WEAPON_EFFECT_PUMP) only while it is set; Do_Reload sets it, and Shooting at the last round with rounds in
+    // reserve; the fire's end and whatever resets the weapon effects (ResetWeaponEffects) clear it (the name is
+    // ours)
+    bool reload_effects;
     uchar unknown_582[2];               // 0x582
     // 0x584, the rail vehicle's wagon the human is in, from 1, 0 for the vehicle itself (the name is ours): Intern_UseRailway
     // links him to its frame and puts his collisions into its
@@ -798,11 +933,18 @@ public:
     S_vector strike_pos[4];             // 0x5b0
     bool striking;                      // 0x5e0, cleared by the strike's first hit
     uchar unknown_5e1[3];               // 0x5e1
-    int unknown_5e4;                    // 0x5e4
-    int unknown_5e8;                    // 0x5e8
-    int unknown_5ec;                    // 0x5ec
-    float unknown_5f0;                  // 0x5f0, the length of the car's shot animation (Update)
-    float unknown_5f4;                  // 0x5f4, 0.5 from Update's car shot animation
+    // The shots from a car's seat (Update, Movement's action_state 9; the names are ours): the stance in the seat,
+    // HUMAN_CARSTANCE_*; the time left of its change, an animation Update ticks the frame through (250 ms after
+    // getting in, the aiming's animation less 250 ms, HitInCar's death): Movement changes nothing while it isn't
+    // below 0, Update counts it down and plays the stance's own animation where it runs out; the animation
+    // SetAnimTime moves by hand (anim_machine.anim_index: the steering wheel's by the steering, the aimed one's by
+    // the angle to the target), its length, and the aim's place in it, 0 to 1 (0.5 ahead, which it turns to at
+    // 0.003 a ms)
+    int car_stance;                     // 0x5e4
+    int car_stance_time;                // 0x5e8
+    int car_anim_index;                 // 0x5ec
+    float car_anim_length;              // 0x5f0
+    float car_aim;                      // 0x5f4
     // 0x5f8 (PS2 0x65c), the model's name before _intern_ChangeModel changed it, new[]'s: GameDone and Deactivate
     // change it back and free it (the name is ours)
     char *orig_model;
@@ -825,16 +967,25 @@ public:
     int num_colls;                      // 0x690 (PS2 0x6f4)
     bool colls_active;                  // 0x694 (PS2 0x6f8), ActivateColls sets it (the name is ours)
     uchar unknown_695[3];               // 0x695
-    std::vector<tDynamicCollObject *> unknown_698;  // 0x698, collisions the tests leave out besides colls
-    std::vector<tDynamicCollObject *> unknown_6a8;  // 0x6a8, DynSetNextCollOwnerMult's list of both
+    // 0x698, the collisions the move's tests leave out besides colls: the AI's ghosts' (C_entity's ai_ghost at
+    // 0x1268, PS2's ai_ghost_actor items: an actor, its collision, a time and a radius), which C_entity puts here
+    // whenever the ghosts change (0x52f920); C_entity's GameInit and 0x507b50 empty it (the name is ours)
+    std::vector<tDynamicCollObject *> ghost_colls;
+    // 0x6a8, the collisions the next test leaves out, the list g_collision::DynSetNextCollOwnerMult takes: colls
+    // and ghost_colls (DynSetNextCollOwnerMult), a car's (the name is ours, after the function)
+    std::vector<tDynamicCollObject *> next_coll_owners;
     // The human's sounds (FRAME_SOUNDs linked to the model, SoundsChange's)
     // 0x6b8, the steps' sound, 1.5 m high for the player, 0.1 m for the others, and the game time of the last step
     // (the names are ours)
     I3D_sound *step_sound;
     uint step_time;
     I3D_sound *weapon_sound;            // 0x6c0, the weapon's sound (NOTE_WEAPON_SOUND), 1 m high (ours)
-    I3D_sound *unknown_6c4;             // 0x6c4, 1 m high
-    I3D_sound *unknown_6c8;             // 0x6c8, 1 m high
+    // 0x6c4, the weapon's reload sound (S_item_def::reload_sound, the sound table's "Reload" group), 1 m high,
+    // which the fire's FIRE_ACTION_RELOAD plays (the name is ours)
+    I3D_sound *reload_sound;
+    // 0x6c8, the pump shotgun's or the rifles' bolt sound (SOUND_SHOTGUN_PUMP, SOUND_RIFLE_BOLT), 1 m high, which
+    // WEAPON_EFFECT_PUMP plays (the name is ours)
+    I3D_sound *pump_sound;
     // 0x6cc, the voice, NewScream's: 1.7 m high, at the speech volume (the name is ours)
     I3D_sound *voice;
     int voice_priority;                 // 0x6d0, the voice's priority (S_voice_def's), -1 for none (ours)
@@ -872,7 +1023,10 @@ public:
     uchar unknown_721[3];               // 0x721
     ai_loc loc;                         // 0x724 (PS2 0x780), which GameInit and Activate start (the name is ours)
     ai_blob_log blob_log;               // 0x758 (PS2 0x7c0), which GameInit and Activate clear (the name is ours)
-    int unknown_99c;                    // 0x99c
+    // 0x99c, the number (C_game::Play3DSound's) of the car stealing's sound, the sound table's car_unlock (0x86),
+    // which the player's stealing starts (C_player, 0x5955f0) and AI, Hit and Movement stop; -1 from
+    // C_player::GameInit (the name is ours)
+    int steal_sound;
     // 0x9a0, the scream areas the human is in, 1 for none, which GameInit and Activate set: NewScream says
     // nothing out of the camera's (C_game::camera_scream_areas; the name is ours)
     ushort scream_areas;
@@ -883,14 +1037,19 @@ public:
     int last_hit_render;                // 0x9a8
     float shots;                        // 0x9ac, the shots fired, the pellets for a shotgun (Shooting; ours)
     float hits;                         // 0x9b0, the shots that hit, AI's hit_ratio's numerator (the name is ours)
-    float unknown_9b4;                  // 0x9b4
-    float unknown_9b8;                  // 0x9b8
+    // shots and hits at the counts' last restart: every 5000 ms (ratio_time) AI restarts them from the shots and
+    // hits since the restart before, plus 1 each, so hit_ratio covers the last 5 to 10 seconds (the names are ours)
+    float prev_shots;                   // 0x9b4
+    float prev_hits;                    // 0x9b8
     float hit_ratio;                    // 0x9bc, hits / shots, which AI computes (the name is ours)
-    int unknown_9c0;                    // 0x9c0
+    int ratio_time;                     // 0x9c0, the time to the counts' next restart, 5000 ms (the name is ours)
     // The using objects of the dead body (the name is ours): ChangeState fills them for a dead human
     C_using_object::S_using_object using_objects[2];  // 0x9c4
     bool ab_created;                    // 0xa34 (PS2 0xb80), HUMAN_CREATEAB sets it, HUMAN_ERASEAB clears it (ours)
-    bool unknown_a35;                   // 0xa35
+    // 0xa35, out of a car (Use_Actor) only the upper sphere's collision (DYNCOLLF_UPPER) is active and
+    // UpdateDynColl doesn't move the lower one; the next animation (PersonAnim) activates it (ActivateColls(2))
+    // and clears it; GameInit and Activate clear it (the name is ours)
+    bool lower_coll_off;
     // 0xa36, the dead body's position is settled (RecompileDeathPos sets it; Update then plays ProcessDeathPos, else
     // calls RecompileDeathPos); GameInit and Activate clear it (the name is ours)
     bool death_pos_set;
@@ -902,7 +1061,9 @@ public:
     S_vector death_move;                // 0xa44
     int death_time;                     // 0xa50
     int death_length;                   // 0xa54
-    int unknown_a58;                    // 0xa58
+    // 0xa58, while above 0 the human's Update only counts it down and AI does nothing: nothing sets it above 0 (PS2
+    // alike), -1 from GameInit and Activate (the name is a guess)
+    int freeze_time;
     I3D_frame *effect_frame;            // 0xa5c (PS2 0xb90), the weapon's part the effect moves (the name is ours)
     int effect_step;                    // 0xa60 (PS2 0xb94), WEAPON_EFFECT_* of the move, 0 for none (ours)
     // 0xa64 and 0xa68 (PS2 0xb98, 0xb9c), the move's position and its speed a ms (the names are ours)
@@ -919,28 +1080,31 @@ public:
     // 0xa79 (PS2 0xbad), a kill of the human by the player adds 500 to the game's score (Hit, HitInCar; the
     // name is a guess)
     bool score_bonus;
-    bool unknown_a7a;                   // 0xa7a
+    // 0xa7a, the driver of a traffic car Do_ThrowCocotFromCar made an entity, a temporary actor
+    // (C_game::AddTemporaryActor): the police's 0x49ede0 frees such entities among do_rici_actors (the name is
+    // ours)
+    bool temp_driver;
     uchar unknown_a7b;                  // 0xa7b
-    // 0xa7c, the position the last pose was set to (PoseSetPoseNormal's, PoseSetPoseAimed's), which vfunc_0 records
-    // (the name is ours)
+    // 0xa7c, the position the last pose was set to (PoseSetPoseNormal's, PoseSetPoseAimed's), which RecordKey
+    // records (the name is ours)
     S_vector pose_pos;
-    // 0xa88, HUMAN_POSEF_*: what the poses set, for the cutscene's recording (vfunc_0); 0 from GameInit (the name is
-    // ours)
+    // 0xa88, HUMAN_POSEF_*: what the poses set, for the cutscene's recording (RecordKey); 0 from GameInit (the name
+    // is ours)
     int pose_flags;
-    // 0xa8c, the blend of the model's channel 0 for the cutscene's animations, channel 1 gets the rest: vfunc_2 moves
-    // it 0.004 a ms towards the channel cutscene_channel_0 selects; 1 from GameInit (the name is ours)
+    // 0xa8c, the blend of the model's channel 0 for the cutscene's animations, channel 1 gets the rest: PlayStep
+    // moves it 0.004 a ms towards the channel cutscene_channel_0 selects; 1 from GameInit (the name is ours)
     float cutscene_blend;
-    // 0xa90, the time into the cutscene animation's .tck: vfunc_2 advances it, vfunc_3 to vfunc_5 set it (the name is
-    // ours)
+    // 0xa90, the time into the cutscene animation's .tck: PlayStep advances it,
+    // PlaceAtTime, GetRecordPos and GetRecordRot set it (the name is ours)
     int tck_time;
-    // 0xa94, the first time step vfunc_2 plays after vfunc_1 started an animation (the time since its record), -1 once
-    // taken (the name is ours)
+    // 0xa94, the first time step PlayStep plays after PlayRecord started an animation (the time since its record),
+    // -1 once taken (the name is ours)
     int cutscene_step;
-    // 0xa98, vfunc_2 blends the channels (cutscene_blend) while it is set: vfunc_1 sets it, false from GameInit (the
-    // name is ours)
+    // 0xa98, PlayStep blends the channels (cutscene_blend) while it is set: PlayRecord sets it, false from GameInit
+    // (the name is ours)
     bool cutscene_blending;
-    // 0xa99, the cutscene's current animation is on the model's channel 0, else on 1: vfunc_1 switches them for each
-    // new animation; true from GameInit (the name is ours)
+    // 0xa99, the cutscene's current animation is on the model's channel 0, else on 1: PlayRecord switches them for
+    // each new animation; true from GameInit (the name is ours)
     bool cutscene_channel_0;
     // 0xa9a, the cutscene animation's .tck moves the frame (HUMAN_REC_ANIM_TCK with a .tck loaded; the name is ours)
     bool tck_on;
@@ -982,8 +1146,8 @@ public:
     // FUNCTION: GAME 0x47b810
     bool IsReady() const
     {
-        return alive && (action_state == 1 || action_state == 2 || action_state == 9) &&
-            !anim_machine.IsBlocking();
+        return alive && (action_state == HUMAN_ACTION_STAND || action_state == HUMAN_ACTION_WALK ||
+            action_state == HUMAN_ACTION_CAR) && !anim_machine.IsBlocking();
     }
     // FUNCTION: GAME 0x47b850
     void SetShutUp(bool b)
@@ -1000,10 +1164,10 @@ public:
         anim_machine.GetActiveAnimTime(time, length);
         if (length > 250)
         {
-            unknown_44c = length - 250;
-            unknown_430.Zero();
-            unknown_43c = 0.0f;
-            action_state = 5;
+            action_time = length - 250;
+            last_velocity.Zero();
+            velocity_ramp = 0.0f;
+            action_state = HUMAN_ACTION_WAIT;
         }
     }
 };
@@ -1017,11 +1181,12 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // weapons' effects are WEAPON_EFFECT_*'s
 #define NOTE_STEP_R 1                   // a step of the right foot: its sound, and its track while the steps leave one
 #define NOTE_STEP_L 2                   // of the left
-#define NOTE_UNKNOWN_8 8                // SOUND_UNKNOWN_BC at the human
+#define NOTE_FALL_LOWER 8               // SOUND_FALL_LOWER at the human
 #define NOTE_DOOR_OPEN 0x16             // the door of the human's car open
 #define NOTE_DOOR_CLOSE 0x18            // closed
-#define NOTE_UNKNOWN_1A 0x1a            // sets fire_held and unknown_1ed
-#define NOTE_UNKNOWN_1B 0x1b            // clears them
+#define NOTE_SKIP_DOOR 0x56             // Use_Actor's ShiftAnimation: the getting in past an open door (a guess)
+#define NOTE_FIRE_HOLD 0x1a             // sets fire_held and note_fire (the name is a guess)
+#define NOTE_FIRE_RELEASE 0x1b          // clears them (the name is a guess)
 #define NOTE_WEAPON_TO_TARGET 0x1e      // the weapon into the left hand's target
 #define NOTE_WEAPON_FROM_TARGET 0x1f    // out of it
 #define NOTE_WEAPON_TO_LEFT_HAND 0x20   // out of it into the left hand
@@ -1029,25 +1194,24 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 #define NOTE_CHANGE_WEAPON 0x24         // ChangeWeaponModel while changing_weapon is set
 #define NOTE_WEAPON_SOUND 0x28          // the weapon's sound (S_item_def::unknown_54)
 #define NOTE_THROW 0x29                 // the grenade or the Molotov cocktail thrown
-#define NOTE_UNKNOWN_35 0x35            // the animation machine's unknown_14
-#define NOTE_UNKNOWN_50 0x50            // SOUND_UNKNOWN_B9, or SOUND_UNKNOWN_ED in the Formula
-#define NOTE_UNKNOWN_52 0x52            // SOUND_UNKNOWN_BB, and PARTICLE_UNKNOWN_4B at "back2"
+#define NOTE_STAGE_BLEND_END 0x35       // the animation machine's stage blend (unknown_14) to its end (a guess)
+#define NOTE_CAR_SIT 0x50               // SOUND_CAR_SIT, or SOUND_SPORTCAR_SIT in the Formula
+#define NOTE_FALL_UPPER 0x52            // SOUND_FALL_UPPER, and PARTICLE_LANDING at "back2"
 // The police's screams, by the offences of the player (C_shvestky::PocetPrestupku)
 #define NOTE_POLICE_SCREAM_1 0x5f
 #define NOTE_POLICE_SCREAM_2 0x60
 #define NOTE_POLICE_SCREAM_3 0x61
 #define NOTE_SCREAM_88 0x62             // NewScream(0x88)
 
-// The sound table's sounds the notes play at the human (the names are ours, by value), and the one Do_DeadBody
-// plays where the camera is near (0x9f)
-#define SOUND_UNKNOWN_9F 0x9f
-#define SOUND_UNKNOWN_B9 0xb9
-#define SOUND_UNKNOWN_BB 0xbb
-#define SOUND_UNKNOWN_BC 0xbc
-#define SOUND_UNKNOWN_ED 0xed
-
-// The effects' particle NOTE_UNKNOWN_52 makes at the frame "back2" (the name is ours, by value)
-#define PARTICLE_UNKNOWN_4B 0x4b
+// The sound table's sounds the notes play at the human (the names are ours, after the table's "postava - in/out
+// car", "in/out sportcar", "pad na zem (horni)" and "(dolni)": a character's fall to the ground, the upper body's
+// and the legs'), and the one Do_DeadBody plays where the camera is near ("player - zvedani mrtvol", picking up
+// the dead)
+#define SOUND_DEAD_BODY_PICKUP 0x9f
+#define SOUND_CAR_SIT 0xb9
+#define SOUND_FALL_UPPER 0xbb
+#define SOUND_FALL_LOWER 0xbc
+#define SOUND_SPORTCAR_SIT 0xed
 
 // SYNTHETIC: GAME 0x56f1f0
 // C_human::`scalar deleting destructor'

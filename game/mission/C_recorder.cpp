@@ -65,13 +65,13 @@ void C_recorder::SetState(int new_state)
         for (i = 0; i < actors_2.size(); i++)
         {
             actors_2[i]->act_flags &= ~ACTF_CUTSCENE;
-            actors_2[i]->vfunc_6(false);
-            actors_2[i]->vfunc_7(false);
+            actors_2[i]->SetCutsceneRecord(false);
+            actors_2[i]->SetCutscenePlay(false);
         }
         for (i = 0; i < actors.size(); i++)
         {
             actors[i]->act_flags &= ~ACTF_CUTSCENE;
-            actors[i]->vfunc_7(false);
+            actors[i]->SetCutscenePlay(false);
         }
         unknown_128 = false;
         break;
@@ -79,26 +79,26 @@ void C_recorder::SetState(int new_state)
         for (i = 0; i < actors_2.size(); i++)
         {
             actors_2[i]->act_flags |= ACTF_CUTSCENE;
-            actors_2[i]->vfunc_6(false);
-            actors_2[i]->vfunc_7(true);
+            actors_2[i]->SetCutsceneRecord(false);
+            actors_2[i]->SetCutscenePlay(true);
         }
         for (i = 0; i < actors.size(); i++)
         {
             actors[i]->act_flags |= ACTF_CUTSCENE;
-            actors[i]->vfunc_7(true);
+            actors[i]->SetCutscenePlay(true);
         }
         break;
     case CUTSCENE_STATE_2:
         for (i = 0; i < actors_2.size(); i++)
         {
             actors_2[i]->act_flags &= ~ACTF_CUTSCENE;
-            actors_2[i]->vfunc_7(false);
-            actors_2[i]->vfunc_6(true);
+            actors_2[i]->SetCutscenePlay(false);
+            actors_2[i]->SetCutsceneRecord(true);
         }
         for (i = 0; i < actors.size(); i++)
         {
             actors[i]->act_flags |= ACTF_CUTSCENE;
-            actors[i]->vfunc_7(true);
+            actors[i]->SetCutscenePlay(true);
         }
         break;
     }
@@ -135,9 +135,9 @@ int C_recorder::GetScaledTime()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x598db0
-bool C_recorder::vfunc_8(C_actor *actor, int a, int b, int c)
+bool C_recorder::AddActor(C_actor *actor, int a, int b, int c)
 {
-    StubLog("C_recorder::vfunc_8");
+    StubLog("C_recorder::AddActor");
     return false;
 }
 
@@ -426,9 +426,9 @@ void C_recorder::ReleaseAnims()
 #pragma auto_inline(off)
 
 // STUB: GAME 0x59c580
-int C_recorder::vfunc_34(const char *name)
+int C_recorder::AddAnimName(const char *name)
 {
-    StubLog("C_recorder::vfunc_34 %s", name);
+    StubLog("C_recorder::AddAnimName %s", name);
     return -1;
 }
 
@@ -442,19 +442,19 @@ const char *C_recorder::vfunc_19(int id)
 }
 
 // FUNCTION: GAME 0x59c5c0 FOLDED
-const char *C_recorder::vfunc_35(int id)
+const char *C_recorder::GetAnimName(int id)
 {
     return anim_names.GetName(id);
 }
 
 // FUNCTION: GAME 0x59c5d0
-int C_recorder::vfunc_36(int id)
+int C_recorder::GetAnimValue(int id)
 {
     return anim_names.GetValue(id);
 }
 
 // FUNCTION: GAME 0x59c5e0
-void C_recorder::vfunc_37(int id, int value)
+void C_recorder::SetAnimValue(int id, int value)
 {
     anim_names.SetValue(id, value);
 }

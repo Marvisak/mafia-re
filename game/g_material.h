@@ -15,7 +15,7 @@
 #define MAT_WATER_DEATH 0x1f            // "Voda Death": MovementIntern drowns the human
 #define MAT_DEATH 0x28                  // "DEATH COLLISION": the player's fall fails the game
 #define MAT_CRASH 0x29
-#define MAT_UNKNOWN_2B 0x2b            // a strike on it makes no debris (C_human::AI; by value)
+#define MAT_MASLOVKA 0x2b              // "Maslovka": a strike on it makes no debris (C_human::AI)
 
 // A material of the scene's surfaces (materials.def), 0x170 bytes. The cars take their part (C_car::LoadMaterials);
 // their meanings aren't known, C_car::LoadMaterials clamps them.
@@ -122,7 +122,10 @@ struct S_voice_def
 #define GAMEITEM_CROWBAR 25             // "Crowbar"
 #define GAMEITEM_BOARD 28               // "Deska"
 #define GAMEITEM_BOTTLE 29              // "Bottle"
-#define GAMEITEM_UNKNOWN_31 31          // its name is a single byte, 0x85
+#define GAMEITEM_SWORD 31               // its name is a single byte, 0x85: the text database's "Sword", 2swr.i3d
+
+// gameItemTable's item 0, "Prazdne ruce" (empty hands): no item, the fists (the name is ours)
+#define GAMEITEM_NONE 0
 
 // gameItemTable's first item, "Special Action (nesahat!!!)" ("don't touch"), which C_human::ChangeState puts on a dead
 // body's using objects, with the values 0x7dc and 0x7dd where a weapon has its ammunition (the name is ours)
@@ -145,6 +148,26 @@ struct S_fire_action
 #define FIRE_ACTION_CARTRIDGE 2
 #define FIRE_ACTION_RESTART 4
 
+// S_item_def::kind, C_human::weapon_kind (the names are ours, after the items of each kind and their animations):
+// the fists strike, and so do the knuckleduster, the knife and the bat; the pistols, the rifles and the Thompson or
+// a shotgun shoot (the last two with both hands), a grenade or a Molotov cocktail is thrown
+#define WEAPON_KIND_FISTS 0             // "Prazdne ruce" (empty hands) and the items that aren't weapons
+#define WEAPON_KIND_PISTOL 1            // the revolvers and the Colt 1911
+#define WEAPON_KIND_RIFLE 2             // the Springfield and the Mosin-Nagant ("puska")
+#define WEAPON_KIND_SMG 3               // the Thompson and the shotguns ("sapik")
+#define WEAPON_KIND_THROWN 4            // the Molotov cocktail and the grenade
+#define WEAPON_KIND_KNUCKLEDUSTER 5     // boxes, as the fists
+#define WEAPON_KIND_KNIFE 6             // the knife and the bottle ("nuz"): breaks no glass
+#define WEAPON_KIND_BAT 7               // the bat, the bar, the crowbar, the board ("basb"): breaks crash objects
+// S_item_def::gun_anim and fire_anim, the number of the weapons' animations gun0%i (the names are ours, after the
+// items that have them)
+#define GUN_ANIM_COLT_1911 1
+#define GUN_ANIM_REVOLVER 2             // the Colt Detective Special and the two S&W
+#define GUN_ANIM_RIFLE 3
+#define GUN_ANIM_THOMPSON 4             // fire_anim: the corner fire has an animation of its own for it
+#define GUN_ANIM_SAWED_OFF 7
+#define GUN_ANIM_SHOTGUN 8              // the pump shotgun, which reloads a shell at a time
+
 // An item (predmety.def, "items"), 0xbc bytes, not read yet but its flags
 struct S_item_def
 {
@@ -152,13 +175,14 @@ struct S_item_def
     uint flags;                         // 0x20, ITEMF_*
     char model[0x28];                   // 0x24, the weapon's model, the file ChangeWeaponModel opens (the name is ours)
     int gun_anim;                       // 0x4c, the number of the reload's animations, gun0%i (the name is ours)
-    // 0x50, the number of the fire's animations, gun0%i ... Fire.i3d (C_human::Shooting), 4 for the weapons the corner
-    // fire has an animation of its own for (the name is ours)
+    // 0x50, the number of the fire's animations, gun0%i ... Fire.i3d (C_human::Shooting), GUN_ANIM_*: the corner fire
+    // has an animation of its own for GUN_ANIM_THOMPSON (the name is ours)
     int fire_anim;
     uint unknown_54;                    // 0x54, the sound table's sound of the weapon (NOTE_WEAPON_SOUND)
-    uint unknown_58;                    // 0x58, the sound table's sound C_human::ChangeWeaponModel gives unknown_6c4
-    // 0x5c, the weapon's kind, C_human::weapon_kind's: 0 (the fists) and 5 to 7 strike, 7 the bat, 1 to 3 shoot (2
-    // and 3 with both hands), 4 is thrown; a strike breaks crash objects with 7, glass but with 6 (the name is ours)
+    // 0x58, the weapon's reload sound, one of the sound table's "Reload" group, which C_human::ChangeWeaponModel
+    // gives C_human::reload_sound (the name is ours)
+    uint reload_sound;
+    // 0x5c, the weapon's kind, WEAPON_KIND_*, C_human::weapon_kind's (the name is ours)
     int kind;
     // The most ammunition in the weapon and in reserve, which C_human::InventoryTruncate cuts an item's to (the names
     // are ours)
