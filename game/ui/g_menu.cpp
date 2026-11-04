@@ -1,9 +1,9 @@
 // The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
 // with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, TickCamera,
-// the wrappers by id the loading screen, the profiles' menus and the controls call, ActivateByID, the components'
-// ForceUpdate, PridejComponentPod, and of the components what the classes written so far use (the drawing functions
-// but RectangleBB, the constructors, the children's insertion and SetTextID).
+// the wrappers by id the loading screen, the profiles' menus, the controls and the car encyclopedia call, ActivateByID,
+// the components' ForceUpdate, PridejComponentPod, and of the components what the classes written so far use (the
+// drawing functions but RectangleBB, the constructors, the children's insertion and SetTextID).
 
 // The engine's math first: under /YX the copies of S_vector's inline functions then come due before TickCamera, as
 // the original's do. Compiled after it, the out-of-line constructor that SetCameraTargetID calls is unknown to VC6 when
@@ -987,7 +987,15 @@ void GM_Menu::SetDword(uint id, uint value)
         component->SetDword(value);
 }
 
-// The original's code between this and SetDword (0x5eb0e0-0x5eb0fb) is PS2's GetDword
+// FUNCTION: GAME 0x5eb0e0
+uint GM_Menu::GetDword(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        return component->GetDword();
+    return 0;
+}
+
 // FUNCTION: GAME 0x5eb100
 void GM_Menu::SetBool(uint id, bool value)
 {
@@ -1005,7 +1013,22 @@ bool GM_Menu::GetBool(uint id)
     return false;
 }
 
-// The original's code between this and GetBool (0x5eb140-0x5eb17f) is PS2's SetPointer and GetRangeFloat
+// FUNCTION: GAME 0x5eb140
+void GM_Menu::SetPointer(uint id, void *value)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->SetPointer(value);
+}
+
+// FUNCTION: GAME 0x5eb160
+void GM_Menu::GetRangeFloat(uint id, float &min, float &max)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+        component->GetRangeFloat(min, max);
+}
+
 // FUNCTION: GAME 0x5eb190
 void GM_Menu::SetRangeDword(uint id, uint min, uint max)
 {

@@ -293,7 +293,7 @@ void G_Camera::Tick(uint time)
     if (time > MAX_TICK_TIME)
         time = MAX_TICK_TIME;
     float dt = time / 1000.0f;
-    if (mode == CAMERA_UNKNOWN_24 && !unknown_20)
+    if (mode == CAMERA_MENU && !unknown_20)
         return;
     if (unknown_20)
         return;

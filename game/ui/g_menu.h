@@ -231,10 +231,17 @@ public:
     float GetFloat(uint id);
     // Sets the dword of the component of that id, if the menu has one (a text edit's length)
     void SetDword(uint id, uint value);
+    // The dword of the component of that id, 0 where the menu has none (a list's selection; PS2's name)
+    uint GetDword(uint id);
     // Sets the bool of the component of that id, if the menu has one (a yes or no selection's)
     void SetBool(uint id, bool value);
     // The bool of the component of that id, false where the menu has none
     bool GetBool(uint id);
+    // Sets the pointer of the component of that id, if the menu has one (a list's texts; PS2's name)
+    void SetPointer(uint id, void *value);
+    // The range of the component of that id, if the menu has one, left as it was otherwise (a view scroll's drag;
+    // PS2's name)
+    void GetRangeFloat(uint id, float &min, float &max);
     // Sets the range of the component of that id, if the menu has one (a selection's texts)
     void SetRangeDword(uint id, uint min, uint max);
     // Activates the component of that id, if it can be activated, and else none
@@ -335,10 +342,10 @@ public:
 // ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
 
 // SYNTHETIC: GAME 0x47a430
-// ?OnMouse@GM_Menu@@UAEHHHHII@Z
+// ?Mouse@GM_Component@@UAEIHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
-// ?OnKey@GM_GunShop@@UAEHEI@Z
+// ?Key@GM_Component@@UAEIII@Z
 
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md

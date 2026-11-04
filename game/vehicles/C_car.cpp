@@ -5,8 +5,8 @@
 // GetOwner, which C_shvestky::TickDoRiciActors calls, the virtual GetActorSpeed, and what the scripts call:
 // GetLevelsCount, SetEnterProtect1, GetCarWheelColl and SetCarWheelColl. The constructor, which C_mission::CreateActor
 // calls, SetOwner, SetActualLevel, the force feedback effects, DeactivateCar, which C_mission's FrmActBuff functions
-// call, Reset, IsCarUsable, the scripts' other functions and TryGoToAssHole's others (GetPlacementFromTCK1,
-// GetNavigationPoints) are stubs.
+// call, Reset, IsCarUsable, the scripts' other functions, TryGoToAssHole's others (GetPlacementFromTCK1,
+// GetNavigationPoints) and the car encyclopedia's (PrepareCarToShow, OdjebajTuStrechu) are stubs.
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
@@ -631,6 +631,20 @@ void C_car::SoundsChange(int i)
 {
     StubLog("C_car::SoundsChange");
     C_actor::SoundsChange(i);
+}
+
+// The car encyclopedia's (g_m_carc.cpp)
+// STUB: GAME 0x429e70
+void C_car::PrepareCarToShow(I3D_model *model)
+{
+    StubLog("C_car::PrepareCarToShow");
+}
+
+// STUB: GAME 0x42ba70
+bool C_car::OdjebajTuStrechu(I3D_model *model, bool off)
+{
+    StubLog("C_car::OdjebajTuStrechu");
+    return false;
 }
 
 // STUB: GAME 0x42bbd0

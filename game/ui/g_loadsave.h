@@ -384,6 +384,8 @@ public:
     // The free ride's cars, a bit for each letter (A to Z, either case), and how much of it is open, FREERIDE_* (PS2
     // names)
     void FreerideEnableCar(uchar c);
+    // The cars' bits (PS2 name), which the car encyclopedia shows
+    uint FreerideGetEnabledCars();
     void FreerideEnable(uint level);
     // The free ride's state (PS2's names)
     void FreerideStoreA(uint a, uint b, float c, float d, float e);
@@ -426,6 +428,19 @@ struct S_player_index
     uint flags;                         // GetPlayerCivilMaskByModel's
 };
 
+// A car's details of tables\carcyclopedia.def, the car encyclopedia's (the names are ours), 0xcc bytes: one for each
+// car of tables\carindex.def, by the same index
+struct S_car_details
+{
+    uchar unknown_0[0xa8];
+    uint num_colors;                    // 0xa8, the variants, GetCarMaxColor's
+    uint unknown_ac;                    // 0xac
+    uint carcyclopedia_mask;            // 0xb0, GetCarsByCarcyclopediaMask's
+    // 0xb4, the variants' names, of the text database (GetCarSecondName; the first for variant 0 and those above 4)
+    uint color_names[5];
+    uint text_id;                       // 0xc8, the description, of the text database
+};
+
 // The cars and the players' models (PS2 G_CarDatabase, in g_loadsave.cpp as on PC), 0xc4 bytes
 class G_CarDatabase
 {
@@ -435,9 +450,12 @@ public:
     uint num_players;                   // 0x8
     S_player_index *players;            // 0xc, tables\playerindex.def
     S_car_index none;                   // 0x10, what PS2's GetCar returns for an index out of range
-    uint unknown_b8;                    // 0xb8
-    uint unknown_bc;                    // 0xbc
-    uint unknown_c0;                    // 0xc0
+    // 0xb8, LoadDetails' count, 1 once the details are loaded; UnloadDetails clears it whatever it was, so after the
+    // car encyclopedia's two LoadDetails it frees nothing, and the next LoadDetails reads the file again over the old
+    // details (PS2's is a flag UnloadDetails tests)
+    int details_ref;
+    uint num_details;                   // 0xbc
+    S_car_details *details;             // 0xc0, tables\carcyclopedia.def
 
     G_CarDatabase();
     ~G_CarDatabase() { Close(); }
@@ -454,6 +472,8 @@ public:
     bool GetCarParams(uint car, uint *index, uint *level, uint *variant);
     // A car descriptor's car (PS2 name): the first car for an index out of range, none without the table
     S_car_index *GetCar(uint car);
+    // A car descriptor's details (PS2 name), NULL for an index out of range or without them
+    S_car_details *GetCarDetails(uint car);
     // A player's model of tables\playerindex.def, "-" for an index out of range or without the table (PS2 name)
     char *GetPlayerModel(uint id);
     // The index of the first car (from 1) whose id is the model, whatever the case, 0 for none (PS2 name; PS2's takes
@@ -463,6 +483,21 @@ public:
     uint GetIdxByModelLong(const char *model, uint &variant);
     // A car's name by its index (PS2 name; PS2's returns a uchar *)
     const char *GetCarName(uint car);
+    // A variant's name, of the text database, the descriptor's variant for color 0 (PS2 name); 0 for an index out of
+    // range or without the details
+    uint GetCarSecondName(uint car, uint color);
+    // A car's highest variant, 0 for one without variants, for an index out of range or without the details (PS2 name)
+    uint GetCarMaxColor(uint car);
+    // A car descriptor of the car's index and the variant (PS2 name and parameters): the level isn't kept, as
+    // GetCarParams doesn't read it
+    uint GetIDByParams(uint car, uint level, uint color);
+    // The indices of the cars whose details have a bit of the mask (PS2 name), in the vector, and their number; 0 and
+    // none without the details
+    uint GetCarsByCarcyclopediaMask(uint mask, std::vector<uint> *list);
+    // Reads tables\carcyclopedia.def for the car encyclopedia, if no other LoadDetails did, and frees it (PS2 names;
+    // see details_ref)
+    void LoadDetails();
+    void UnloadDetails();
     // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it
     uint GetIDByActor(C_car *car);
     // The masks of a car's id (from the second car) and of a player's model (from the first), whatever the case, 0 for

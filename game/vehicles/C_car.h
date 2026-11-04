@@ -131,6 +131,11 @@ public:
     bool SetOwner(C_actor *act, int seat, float unknown);
     // Whether the seat is on the car's left (PS2 name, 0x42ba10)
     bool IsSeatLeft(int seat);
+    // A car's model made ready for the car encyclopedia (PS2 name): its lights, wheels and axes
+    static void PrepareCarToShow(I3D_model *model);
+    // Takes the roof of a model off, or puts it back (PS2 name, Czech slang for "rip the roof off"): its frames switched
+    // off or on; false for a model without them
+    static bool OdjebajTuStrechu(I3D_model *model, bool off);
     // False for a seat the car hasn't (PS2 name; the bools' meanings aren't known, the last opens the door in
     // C_human::Movement)
     bool GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4);

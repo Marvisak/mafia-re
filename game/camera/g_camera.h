@@ -55,7 +55,8 @@ struct G_RaceCamera
 #define CAMERA_C_LOOK_TO 21                 // "C LookTo"
 #define CAMERA_C_LOCK 22                    // "C Lock"
 #define CAMERA_P_BEHIND_23 23               // "P Behind", as C RailwayIn lower
-#define CAMERA_UNKNOWN_24 24                // Tick does nothing in it
+#define CAMERA_MENU 24                      // the car encyclopedia's, which moves the camera itself: Tick does nothing in it
+                                            // (the name is a guess)
 // SetMode's: the camera's next one, G_Camera::next_mode (the name is ours)
 #define CAMERA_NEXT ((uint)-1)
 // The ranges of cameras the profile keeps, which SetMode stores there: the on-foot ones, the profile's camera, and the
@@ -239,4 +240,4 @@ public:
 // GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
-// ?GetCar@G_Camera@@QBEPAVC_car@@XZ
+// ?GetTextID@GM_Component@@UAEIXZ

@@ -9,8 +9,10 @@
 // ProfileDelete; and of what the scripts call, the car database's GetPlayerModel and GetIdxByModel, the garage's
 // GarageAddLastStolen, GarageShowResults, CarCantGetOut and EnableSteal, FreerideEnableCar and FreerideEnable, and the
 // car database's GetCivilMaskByModel and GetPlayerCivilMaskByModel, which C_traffic_generator::TryGoToAssHole calls,
-// and what the controls menu calls: the PC's SetOppositeBinding, RemoveBinding and GetControlTextID; the rest of what
-// they and main call is stubs.
+// and what the controls menu calls: the PC's SetOppositeBinding, RemoveBinding and GetControlTextID, and what the car
+// encyclopedia calls: the car database's details (LoadDetails, UnloadDetails, GetCarDetails,
+// GetCarsByCarcyclopediaMask), GetCarName, GetCarSecondName, GetCarMaxColor, GetIDByParams and FreerideGetEnabledCars;
+// the rest of what they and main call is stubs.
 
 #include "ui/g_loadsave.h"
 #include "ui/g_indicators.h"
@@ -680,9 +682,9 @@ G_CarDatabase::G_CarDatabase()
     strcpy(none.id, "none");
     // STRING: GAME 0x639658
     strcpy(none.name, "Spatny c|p-index.def");
-    unknown_bc = 0;
-    unknown_c0 = 0;
-    unknown_b8 = 0;
+    num_details = 0;
+    details = NULL;
+    details_ref = 0;
 }
 
 // FUNCTION: GAME 0x60a350
@@ -741,6 +743,18 @@ S_car_index *G_CarDatabase::GetCar(uint car)
     return &cars[index];
 }
 
+// FUNCTION: GAME 0x60a4a0
+S_car_details *G_CarDatabase::GetCarDetails(uint car)
+{
+    if (details)
+    {
+        uint index = car & CAR_INDEX_MASK;
+        if (index < num_details)
+            return &details[index];
+    }
+    return NULL;
+}
+
 // FUNCTION: GAME 0x60a4e0
 char *G_CarDatabase::GetPlayerModel(uint id)
 {
@@ -752,6 +766,51 @@ char *G_CarDatabase::GetPlayerModel(uint id)
     }
     // STRING: GAME 0x638144
     return "-";
+}
+
+// FUNCTION: GAME 0x60a510
+const char *G_CarDatabase::GetCarName(uint car)
+{
+    uint index = car & CAR_INDEX_MASK;
+    if (index >= num_cars)
+        // STRING: GAME 0x6396a4
+        return "Car out of range";
+    return cars[index].name;
+}
+
+// The details are by the car's index as the cars are, but the index is tested against the cars' number
+// FUNCTION: GAME 0x60a540
+uint G_CarDatabase::GetCarSecondName(uint car, uint color)
+{
+    uint index = car & CAR_INDEX_MASK;
+    if (index >= num_cars)
+        return 0;
+    if (!details)
+        return 0;
+    if (!color)
+        color = car >> CAR_VARIANT_SHIFT;
+    switch (color)
+    {
+    case 1:
+        return details[index].color_names[1];
+    case 2:
+        return details[index].color_names[2];
+    case 3:
+        return details[index].color_names[3];
+    case 4:
+        return details[index].color_names[4];
+    default:
+        return details[index].color_names[0];
+    }
+}
+
+// FUNCTION: GAME 0x60a660
+uint G_CarDatabase::GetCarMaxColor(uint car)
+{
+    uint index = car & CAR_INDEX_MASK;
+    if (index < num_cars && details && details[index].num_colors)
+        return details[index].num_colors - 1;
+    return 0;
 }
 
 // FUNCTION: GAME 0x60a6a0
@@ -796,6 +855,12 @@ bool G_CarDatabase::GetCarParams(uint car, uint *index, uint *level, uint *varia
             *variant = 0;
     }
     return true;
+}
+
+// FUNCTION: GAME 0x60a7c0
+uint G_CarDatabase::GetIDByParams(uint car, uint level, uint color)
+{
+    return (car & CAR_INDEX_MASK) | color << CAR_VARIANT_SHIFT;
 }
 
 // The first car, index 0, is never found (as GetIdxByModelLong's)
@@ -868,6 +933,20 @@ uint G_CarDatabase::GetCivilMaskByModel(const char *model)
     return 0;
 }
 
+// FUNCTION: GAME 0x60aca0
+uint G_CarDatabase::GetCarsByCarcyclopediaMask(uint mask, std::vector<uint> *list)
+{
+    list->clear();
+    if (!details)
+        return 0;
+    for (int i = 0; i < num_details; i++)
+    {
+        if (details[i].carcyclopedia_mask & mask)
+            list->push_back(i);
+    }
+    return list->size();
+}
+
 // FUNCTION: GAME 0x60aea0
 uint G_CarDatabase::GetPlayerCivilMaskByModel(const char *model)
 {
@@ -877,6 +956,38 @@ uint G_CarDatabase::GetPlayerCivilMaskByModel(const char *model)
             return players[i].flags;
     }
     return 0;
+}
+
+// FUNCTION: GAME 0x60af70
+void G_CarDatabase::LoadDetails()
+{
+    if (++details_ref > 1)
+        return;
+    details_ref = 0;
+    // STRING: GAME 0x6396c8
+    int file = dtaOpen("tables\\carcyclopedia.def", false);
+    num_details = 0;
+    if (file < 0)
+        return;
+    uint size = dtaSeek(file, 0, SEEK_END);
+    dtaSeek(file, 0, SEEK_SET);
+    details = (S_car_details *)new char[size];
+    dtaRead(file, details, size);
+    dtaClose(file);
+    details_ref = 1;
+    num_details = size / sizeof(S_car_details);
+}
+
+// FUNCTION: GAME 0x60b000
+void G_CarDatabase::UnloadDetails()
+{
+    if (--details_ref <= 0 && details)
+    {
+        num_details = 0;
+        delete[] details;
+        details = NULL;
+    }
+    details_ref = 0;
 }
 
 // FUNCTION: GAME 0x60b050
@@ -1618,6 +1729,12 @@ void G_LoadSaveClass::FreerideEnableCar(uchar c)
     freeride_cars |= 1 << bit;
 }
 
+// FUNCTION: GAME 0x60dfd0
+uint G_LoadSaveClass::FreerideGetEnabledCars()
+{
+    return freeride_cars;
+}
+
 // PS2's sets the sound driver's volume, the videos' and the screen's offset. The cars' volume is relative to the sounds',
 // the gamma ramp a power curve, steeper with more gamma.
 // FUNCTION: GAME 0x60dfe0
@@ -1823,13 +1940,6 @@ bool G_Inventory::Vystrel()
 {
     StubLog("G_Inventory::Vystrel");
     return false;
-}
-
-// STUB: GAME 0x60a510
-const char *G_CarDatabase::GetCarName(uint index)
-{
-    StubLog("G_CarDatabase::GetCarName");
-    return "";
 }
 
 #pragma auto_inline(on)

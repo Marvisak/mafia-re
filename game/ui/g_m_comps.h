@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_WindowScroll@@UAE@XZ
+// ??1GM_ButtonSelect@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2070,7 +2070,7 @@ public:
 // ?SetDword@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da3f0
-// ?Draw@GM_StaticTextNum@@UAEXI@Z
+// ?Draw@GM_StaticTextTime@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da560
 // ?GetType@GM_StaticTextTime@@UAEIXZ
@@ -2121,10 +2121,10 @@ public:
 // ?GetType@GM_MenuItem@@UAEIXZ
 
 // FUNCTION: GAME 0x5dadc0
-// ?Draw@GM_MenuItem@@UAEXI@Z
+// ?Draw@GM_MenuItemMem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItemMem@@UAEIHHHII@Z
+// ?Mouse@GM_RaceRoundItem@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5daf50
 // ?GetType@GM_MenuItemMem@@UAEIXZ
@@ -2215,7 +2215,7 @@ public:
 // ?Draw@GM_NetPlayer@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dc700
-// ?Mouse@GM_ButtonClean@@UAEIHHHII@Z
+// ?Mouse@GM_NetPlayer@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5dc850
 // ?GetType@GM_TextEdit@@UAEIXZ
@@ -2307,11 +2307,11 @@ public:
 
 // The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
 // FUNCTION: GAME 0x5df350
-// ?SetPointer@GM_ListCars@@UAEXPAX@Z
+// ?SetFloat@GM_ProgressBar@@UAEXM@Z
 
 // The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_ListCars@@UAEIXZ
+// ?GetDword@GM_MenuItemNum@@UAEIXZ
 
 // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
