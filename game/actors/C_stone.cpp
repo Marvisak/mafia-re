@@ -1,9 +1,11 @@
 // The stones (PC only; the file is the one at 0x4aa2b0-0x4aa48c, between C_sledovacka.cpp and C_trf_c.cpp, its name
-// ours, docs/game-files.md), which starts with the constructor. Written so far: the constructor, which C_game::Init
-// calls, and Init, which is C_cartridge's.
+// ours, docs/game-files.md), which starts with the constructor: a bottle's physics, the frame ticked with it, and out
+// of the game once the stone rests or falls too fast.
 
 #include "actors/C_stone.h"
-#include "stub.h"
+
+#include "mission/Mission.h"
+#include "mission/game.h"
 
 // FUNCTION: GAME 0x4aa2b0
 C_stone::C_stone()
@@ -19,8 +21,6 @@ C_stone::~C_stone()
 {
 }
 
-#pragma auto_inline(off)
-
 // C_cartridge's code, which the linker folded it with
 // FUNCTION: GAME 0x430830 FOLDED
 bool C_stone::Init(I3D_frame *frm)
@@ -30,32 +30,47 @@ bool C_stone::Init(I3D_frame *frm)
     return C_bottle::Init(frm) ? true : false;
 }
 
-// STUB: GAME 0x4aa310
+// The bottle's step, and the stone out of the game where the bottle's stops it
+// FUNCTION: GAME 0x4aa310
 void C_stone::AI(uint time)
 {
-    StubLog("C_stone::AI");
     C_bottle::AI(time);
+    if (speed <= MRG_ZERO && fall_speed <= MRG_ZERO || fall_speed > 50.0f)
+    {
+        act_mission->game->InvalidateActor(this, false);
+        act_mission->game->RemoveTemporaryActor(this);
+    }
 }
 
-// STUB: GAME 0x4aa380
+// FUNCTION: GAME 0x4aa380
 void C_stone::Update(uint time)
 {
-    StubLog("C_stone::Update");
     C_bottle::Update(time);
+    frame->Tick(time);
 }
 
-// STUB: GAME 0x4aa3a0
+// The bottle's, with a stone's radius and axis and no states
+// FUNCTION: GAME 0x4aa3a0
 void C_stone::GameInit()
 {
-    StubLog("C_stone::GameInit");
     C_bottle::GameInit();
+    axis = S_vector(0.0f, 1.0f, 0.0f);
+    set_states = false;
+    radius = .1f;
+    unknown_65 = true;
 }
 
-// STUB: GAME 0x4aa400
+// The bottle's, then the frame turned off, unlinked and released
+// FUNCTION: GAME 0x4aa400
 void C_stone::GameDone()
 {
-    StubLog("C_stone::GameDone");
     C_bottle::GameDone();
+    if (frame)
+    {
+        frame->SetOn(false);
+        frame->LinkTo(NULL, 0);
+        frame->Release();
+    }
 }
 
 // The linker's folded copy of the out-of-line kind (0x4aa430)
@@ -63,5 +78,3 @@ int C_stone::SaveGameGetSize()
 {
     return 0;
 }
-
-#pragma auto_inline(on)

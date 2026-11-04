@@ -188,6 +188,8 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
     # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
     target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
+    # The bottles' AbsoluteImpulse, which C_game's NewExplosion, NewCartidge and NewGrenade call (C_bottle.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?AbsoluteImpulse@C_bottle@@QAEXAAUS_vector@@@Z)
     # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the saved games', the AI's, the animations'),
     # and the records' walk (C_cutscene_records.cpp), which the recorder's saves call
     target_link_options(game PRIVATE

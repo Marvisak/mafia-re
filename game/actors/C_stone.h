@@ -3,15 +3,15 @@
 #include "actors/C_bottle.h"
 
 // The stones (PC only; the names are ours), ACTOR_STONE, 0x138 bytes: a bottle's physics. C_game::Init creates the game's
-// from 2stone.i3d. Only the constructor so far.
+// from 2stone.i3d.
 // VTABLE: GAME 0x624c00
 class C_stone : public C_bottle
 {
 public:
     C_stone();
     virtual ~C_stone();
-    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
-    // linker's folded constant functions and those that only call the base's
+    // The vtable's other overrides (the slots' names are C_actor's), but the linker's folded constant functions and
+    // those that only call the base's
     virtual void AI(uint time);
     virtual void Update(uint time);
     // The base's: the original's jumps there, a copy the linker folded

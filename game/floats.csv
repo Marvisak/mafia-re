@@ -21,9 +21,11 @@ address|type|size
 0x6233b8|float|4
 0x6233bc|float|4
 0x6233c0|float|4
+0x6233d0|float|8
 0x6233e4|float|4
 0x6233e8|float|4
 0x6233ec|float|4
+0x623488|float|4
 0x62348c|float|4
 0x623490|float|4
 0x623498|float|8

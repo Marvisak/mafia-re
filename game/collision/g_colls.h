@@ -32,6 +32,8 @@ struct tgcPanak2;
 #define DYNCOLLF_LOWER 0x1
 #define DYNCOLLF_UPPER 0x2
 #define DYNCOLLF_UNKNOWN_100 0x100
+// A bottle's (C_bottle::GameInit)
+#define DYNCOLLF_UNKNOWN_400 0x400
 
 // A moving object's collision (PS2 tDynamicCollObject, 0x60 bytes), 0x48 bytes by the game's arrays of them; what it
 // holds is known only in part

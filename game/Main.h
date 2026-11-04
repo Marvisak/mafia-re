@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1S_web_conn@@QAE@XZ
+// ?DumpRecords@C_actor@@UAEXXZ
 
 #include <settings.h>
 
@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVC_program@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAUtDynamicCollObject@@ABQAU2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_sound_group@@V?$allocator@US_sound_group@@@std@@@std@@IAEXPAUS_sound_group@@0@Z
+// ?_Destroy@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@IAEXPAUS_vector2@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@IAEPAPAVC_ParticleEmitter@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEPAPAVC_actor@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@IAEXPAPAVC_ParticleEmitter@@IABQAV3@@Z
+// ?_Ufill@?$vector@IV?$allocator@I@std@@@std@@IAEXPAIIABI@Z
