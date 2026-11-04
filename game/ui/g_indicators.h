@@ -456,7 +456,7 @@ public:
     // FUNCTION: GAME 0x47a0c0
     bool IsShown(uint flags) const
     {
-        return flags & show_flags ? true : false;
+        return flags & show_flags;
     }
     // FUNCTION: GAME 0x47a0e0
     uint PushFlags()

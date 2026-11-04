@@ -1218,7 +1218,7 @@ bool G_IndicatorsClass::FadeInOutGetState()
 // FUNCTION: GAME 0x5fa400
 bool G_IndicatorsClass::FadeInOutIsDark()
 {
-    return show_flags & INDF_FADE ? true : false;
+    return show_flags & INDF_FADE;
 }
 
 // FUNCTION: GAME 0x5fa410

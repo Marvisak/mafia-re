@@ -1827,7 +1827,7 @@ void C_human::AI(uint time)
                     bool close_range = false;
                     S_item_def *weapon = inventory.GetWeaponInRightHand();
                     if (weapon)
-                        close_range = (weapon->flags & ITEMF_CLOSE_RANGE) ? true : false;
+                        close_range = weapon->flags & ITEMF_CLOSE_RANGE;
                     act_mission->game->NewCartidge(cartridge_frame, dir, close_range, false);
                 }
                 break;
@@ -3853,7 +3853,7 @@ bool C_human::Hit(int type, const S_vector &dir, const S_vector &pos, const S_ve
         if (act && (act->GetType() == ACTOR_PLAYER || act->GetType() == ACTOR_ENTITY)) {
             S_item_def *weapon = ((C_human *)act)->inventory.GetWeaponInRightHand();
             if (weapon)
-                close_range = weapon->flags & ITEMF_CLOSE_RANGE ? true : false;
+                close_range = weapon->flags & ITEMF_CLOSE_RANGE;
         }
         if (close_range) {
             // Written out with the parentheses: Square() or another grouping orders the FPU's squares otherwise

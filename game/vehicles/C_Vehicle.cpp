@@ -178,7 +178,7 @@ const S_vector &C_Vehicle::GetHeadPos()
 // FUNCTION: GAME 0x4cd5b0
 bool C_Vehicle::IsVehicleUnstable()
 {
-    return vehicle_flags & VEHF_UNSTABLE ? true : false;
+    return vehicle_flags & VEHF_UNSTABLE;
 }
 
 // FUNCTION: GAME 0x4cd5c0

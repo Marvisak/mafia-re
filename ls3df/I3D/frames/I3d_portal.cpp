@@ -104,7 +104,7 @@ void I3D_portal::SetOn(bool on)
 // FUNCTION: LS3DF11 0x1003fa50
 bool I3D_portal::IsOn() const
 {
-    return portal_flags & PORTALF_ON ? true : false;
+    return portal_flags & PORTALF_ON;
 }
 
 // The vertices in world space, the box's center and the sphere around it, and the plane (its normal out of the sector),
