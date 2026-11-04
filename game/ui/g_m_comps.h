@@ -167,7 +167,7 @@ public:
             parent->GetClientOrigin(x, y);
     }
     virtual bool CanBeParent() { return true; }
-    // The original kept the copy of 'vidc' (g_m_comps2.cpp), the same code
+    // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
     virtual void Draw(uint draw_flags)
     {
         Rectangle(x, y, sx, sy, 0x7f00ff7f);
@@ -1959,21 +1959,6 @@ public:
     char buffer[MENUITEMNUM_SIZE];      // 0x4c
 };
 
-// The factory of a component's class not written yet (ours, not the original's): it registers the class's type as
-// G_Factory does, but makes nothing, so a menu skips the item as it would without a factory, and logs the item through
-// StubLog. The components' files have one for each such class, under the name of the original's factory. Its functions
-// are in g_m_comps.cpp, out of line: declared alone, it leaves the other files that include this header as they were.
-class G_StubFactory : public G_FactoryItem
-{
-public:
-    G_StubFactory(uint type, const char *name);
-
-    static GM_Component *Make(GM_DesignStruct *design, GM_Component *parent);
-    static GM_Component *MakeDup(GM_Component *component);
-
-    const char *name;                   // 0x10, the class's
-};
-
 // The copies of the classes' functions, by name: the original's come in the order the factories first need them
 // (docs/game-files.md), so not in the order of the classes above. Those not listed folded with other files' functions
 // of the same code (the empty ones, GetTextID's and GetText's accessors). The destructors and scalar deleting
@@ -1982,7 +1967,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverActive@GM_Component@@UAE_NMM@Z
+// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -2025,7 +2010,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_ButtonClean@@UAE_NXZ
+// ?CanBeParent@GM_Nahrada@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9a20
 // ?GetType@GM_WindowScroll@@UAEIXZ
@@ -2061,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_WindowClean@@UAE@XZ
+// ??1GM_MenuItem@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2085,7 +2070,7 @@ public:
 // ?SetDword@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da3f0
-// ?Draw@GM_StaticTextTime@@UAEXI@Z
+// ?Draw@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da560
 // ?GetType@GM_StaticTextTime@@UAEIXZ
@@ -2146,7 +2131,7 @@ public:
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_MenuItemMem@@UAEIII@Z
+// ?Key@GM_Button@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db0a0
 // ?GetType@GM_MenuItemNum@@UAEIXZ
@@ -2324,17 +2309,17 @@ public:
 // FUNCTION: GAME 0x5df350
 // ?SetFloat@GM_ProgressBar@@UAEXM@Z
 
-// The original kept another class's copy in g_m_comps2.cpp's range, the same code (returns the member at 0x48)
+// The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_MenuItemNum@@UAEIXZ
+// ?GetDword@GM_EditNum@@UAEIXZ
 
-// The original kept another class's copy in g_m_comps2.cpp's range ('vidc''s neighbour), the same code
+// The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
-// ?Draw@GM_Nahrada@@UAEXI@Z
+// ?Draw@GM_TextInput@@UAEXI@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_EditNum@@UAEPAXI@Z
+// ??_GGM_Rectangle@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

@@ -3690,6 +3690,43 @@ float G_IndicatorsClass::TextSize(const char *text, float size, uint font, const
     return width + spacing;
 }
 
+// TextSize's measure, the width less the last character's overlap
+// FUNCTION: GAME 0x603780
+const char *G_IndicatorsClass::HledejZlom(const char *text, float sx, float size, uint font, const char *stop)
+{
+    if (!text)
+        return NULL;
+    const char *space = NULL;
+    ushort *trans = fontTranstable[font];
+    G_Font *f = &fonts[font];
+    float spacing = size * f->spacing;
+    float char_size = size * f->width;
+    sx -= spacing;
+    float width = 0.0f;
+    for (; *text; text++)
+    {
+        if (stop && text >= stop)
+            return stop;
+        uchar c = *text;
+        if (c == ' ')
+            space = text;
+        else if (c == '~')
+            break;
+        c = (uchar)trans[c];
+        if (f->chars[c].width < .001)
+            width += char_size * .3f;
+        else
+            width += char_size * f->chars[c].width - spacing;
+        if (width > sx)
+        {
+            if (space)
+                return space;
+            return text;
+        }
+    }
+    return text;
+}
+
 // The PC's: PS2's also draws the icons of the codes under 0x20, the text's background and skips texts off the screen.
 // A code above 0xff that fontTranstable gives is two characters, an accent (the high byte, lowered with 0x8000)
 // centered over a letter (the low byte, none for 0). The characters are quads of the font's texture, OUTTEXT_MAX_CHARS

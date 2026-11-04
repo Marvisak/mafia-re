@@ -2,9 +2,12 @@
 // factories of 29 components' classes, each a global whose initializer registers it, in PS2's order without PS2's own
 // classes. The classes are in g_m_comps.h, their functions in the class: the file's code is the factories' Make and
 // MakeDup, each class's functions after the first one that needs its vtable. The two other files of components,
-// g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written whole: every factory with its class. After them the
-// functions of the stub factories (G_StubFactory), ours, which the other two files' classes not written yet still have,
-// and a stub of g_menu.cpp's RectangleBB.
+// g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written whole: every factory with its class. After them a stub of
+// g_menu.cpp's RectangleBB.
+
+// No precompiled header (#pragma hdrstop before the includes): the copies of each class's in-class functions follow
+// its factory's Make, as the original's do, where under /YX they came after all the factories' functions.
+#pragma hdrstop
 
 #include "ui/g_m_comps.h"
 
@@ -72,39 +75,6 @@ G_Factory<GM_ButtonSelectBool> GM_ButtonSelectBoolFactory;
 G_Factory<GM_EditNum> GM_EditNumFactory;
 
 #pragma auto_inline(off)
-
-G_StubFactory::G_StubFactory(uint type, const char *name) : name(name)
-{
-    this->type = type;
-    G_FactoryItem::Make = Make;
-    G_FactoryItem::MakeDup = MakeDup;
-    globalFactory.Register(this);
-}
-
-// The stub factory of the type, which MakeComponent found first
-static G_StubFactory *FindStubFactory(uint type)
-{
-    G_FactoryItem *item = G_GlobalFactory::first;
-    while (item->type != type)
-        item = item->next;
-    return (G_StubFactory *)item;
-}
-
-// The class, its type and the item's id, which the menu then skips
-GM_Component *G_StubFactory::Make(GM_DesignStruct *design, GM_Component *)
-{
-    uint type = design->type;
-    StubLog("%s ('%c%c%c%c'): menu item 0x%x", FindStubFactory(type)->name, (type >> 24) & 0xff, (type >> 16) & 0xff,
-        (type >> 8) & 0xff, type & 0xff, design->id);
-    return NULL;
-}
-
-// Never reached: no component of a stub factory's class exists to be copied
-GM_Component *G_StubFactory::MakeDup(GM_Component *component)
-{
-    StubLog("%s::MakeDup", FindStubFactory(component->GetType())->name);
-    return NULL;
-}
 
 // g_menu.cpp's (0x5e91b0, between RectangleProgress and Triangle), here for now: only the player row calls it
 // STUB: GAME 0x5e91b0

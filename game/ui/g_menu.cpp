@@ -1160,6 +1160,50 @@ inline GM_Component *G_GlobalFactory::MakeDup(GM_Component *component)
     return NULL;
 }
 
+// As PridejComponentPod, the window's component not tested for NULL. The failures share the last return.
+// FUNCTION: GAME 0x5eb550
+float GM_Menu::PridejComponent(float y, uint id, uint new_id, uint grow_id, uint move_id1, uint move_id2, uint move_id3)
+{
+    GM_Component *src = FindComponentByID(id);
+    if (src)
+    {
+        GM_Component *dup = G_GlobalFactory::MakeDup(src);
+        if (dup)
+        {
+            components.push_back(dup);
+            dup->rel_y = y;
+            dup->id = new_id;
+            dup->AfterMove(0);
+            if (grow_id)
+            {
+                GM_Component *window = FindComponentByID(grow_id);
+                window->sy += dup->sy;
+            }
+            GM_Component *component;
+            if (move_id1)
+            {
+                component = FindComponentByID(move_id1);
+                if (component)
+                    component->rel_y += dup->sy;
+            }
+            if (move_id2)
+            {
+                component = FindComponentByID(move_id2);
+                if (component)
+                    component->rel_y += dup->sy;
+            }
+            if (move_id3)
+            {
+                component = FindComponentByID(move_id3);
+                if (component)
+                    component->rel_y += dup->sy;
+            }
+            return dup->rel_y + dup->sy;
+        }
+    }
+    return y;
+}
+
 // The window's component isn't tested for NULL, the others are (PS2 tests all four)
 // FUNCTION: GAME 0x5eb7d0
 void GM_Menu::PridejComponentPod(uint id, uint new_id, uint grow_id, uint move_id1, uint move_id2, uint move_id3)

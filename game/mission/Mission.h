@@ -301,7 +301,7 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEPAPAUtDynamicCollObject@@PAPAU3@0@Z
+// ?erase@?$vector@PAVC_car@@V?$allocator@PAVC_car@@@std@@@std@@QAEPAPAVC_car@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
 // ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
@@ -318,7 +318,7 @@ extern C_mission *act_mission;
 // What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
 // folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
 // TEMPLATE: GAME 0x404830
-// ?_Construct@std@@YIXPAUS_instruction@C_program@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_shadow_temp@C_game@@ABU23@@Z
 
 // What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct

@@ -415,6 +415,10 @@ public:
     void MapEnable(bool enable);
     // A text's width in a font at a size, up to stop if not NULL (PS2 name)
     float TextSize(const char *text, float size, uint font, const char *stop);
+    // Where a line of the text in the width sx ends, in a font at a size (PS2 name, Czech for "look for the break"): at
+    // the last space before the text grows wider, or where it does if it has no space, at a '~', at stop if not NULL
+    // or at the text's end. NULL for no text.
+    const char *HledejZlom(const char *text, float sx, float size, uint font, const char *stop);
     // Writes a text at x, y in a font, up to stop if not NULL, the characters sy high: OUTTEXT_* place it in the width
     // sx (PS2 name). Returns where it ends.
     float OutText(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font,

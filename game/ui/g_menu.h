@@ -252,6 +252,10 @@ public:
     GM_Component *FindComponentPrev(uint id);
     // The one after it, around from the list's start (PC only, the name is ours: the right arrow's and Tab's)
     GM_Component *FindComponentNext(uint id);
+    // Adds a copy of the component of that id, with the new id, at y in its parent, and makes room for it as
+    // PridejComponentPod does (PS2's name, Czech for "add a component"). Returns where the copy ends, the next one's y;
+    // y where there is no copy.
+    float PridejComponent(float y, uint id, uint new_id, uint grow_id, uint move_id1, uint move_id2, uint move_id3);
     // Adds a copy of the component of that id, with the new id, right below it (PS2's name, Czech for "add a component
     // below"), and makes room for it: the component of grow_id (the window around) grows by its height, and those of
     // the other three ids (the items below) move down by it. An id of 0 is none.
@@ -334,7 +338,7 @@ public:
 // ?OnMouse@GM_Menu@@UAEHHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
-// ?Key@GM_NetPlayer@@UAEIII@Z
+// ?OnKey@GM_MainMenu@@UAEHEI@Z
 
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md
