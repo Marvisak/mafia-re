@@ -24,7 +24,10 @@ struct S_material_def
     char name[0x20];                    // 0x0, the editor's, in Czech ("Asfalt", "Trava", ...)
     int step_sound;                     // 0x20, the sound of a step on it (C_sound_table's id), 0 for none (ours)
     int shot_sound;                     // 0x24, the sound of a shot's hit (C_sound_table's id), -1 for none
-    uchar unknown_28[8];                // 0x28
+    // 0x28, the sounds of a cartridge case and of a shotgun shell falling on it (C_sound_table's ids, C_cartridge::AI;
+    // the names are ours)
+    int cartridge_sound;
+    int shell_sound;                    // 0x2c
     // 0x30, the sound of a strike on it (C_sound_table's id), by the weapon in the right hand: the others, items 3,
     // 0x19, 0x1d and 0x1f, items 0 and 2 (C_human::AI; the name is ours)
     int strike_sounds[3];

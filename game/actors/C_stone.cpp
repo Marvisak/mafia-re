@@ -1,6 +1,6 @@
 // The stones (PC only; the file is the one at 0x4aa2b0-0x4aa48c, between C_sledovacka.cpp and C_trf_c.cpp, its name
 // ours, docs/game-files.md), which starts with the constructor. Written so far: the constructor, which C_game::Init
-// calls.
+// calls, and Init, which is C_cartridge's.
 
 #include "actors/C_stone.h"
 #include "stub.h"
@@ -8,7 +8,7 @@
 // FUNCTION: GAME 0x4aa2b0
 C_stone::C_stone()
 {
-    unknown_fc = false;
+    use_coll = false;
     unknown_6d = false;
     type = ACTOR_STONE;
 }
@@ -21,12 +21,13 @@ C_stone::~C_stone()
 
 #pragma auto_inline(off)
 
-// The original's is C_cartridge's, folded: it logs that name, so ours folds too
-// STUB: GAME 0x430830 FOLDED
+// C_cartridge's code, which the linker folded it with
+// FUNCTION: GAME 0x430830 FOLDED
 bool C_stone::Init(I3D_frame *frm)
 {
-    StubLog("C_cartridge::Init");
-    return C_bottle::Init(frm);
+    if (!frm)
+        return false;
+    return C_bottle::Init(frm) ? true : false;
 }
 
 // STUB: GAME 0x4aa310

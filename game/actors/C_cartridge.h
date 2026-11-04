@@ -4,22 +4,18 @@
 
 // The cartridge cases the guns throw out (PS2 C_cartridge, C_cartridge.cpp, whose code the PS2 build doesn't have),
 // ACTOR_CARTRIDGE, 0x13c bytes: a bottle's physics. C_game::Init creates the game's from 2nabojnice.i3d and
-// 2nabojniceb.i3d ("nabojnice" is Czech for a cartridge case). Only the constructor so far.
+// 2nabojniceb.i3d ("nabojnice" is Czech for a cartridge case; the second ones are the shotguns' shells, which
+// C_game::NewCartidge throws out for a close-range weapon).
 // VTABLE: GAME 0x623880
 class C_cartridge : public C_bottle
 {
 public:
     C_cartridge();
     virtual ~C_cartridge();
-    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
-    // linker's folded constant functions and those that only call the base's
+    // The vtable's other overrides (the slots' names are C_actor's), but the linker's folded constant functions and
+    // those that only call the base's
     virtual void AI(uint time);
-    // The base's: the original's jumps there
-    // FUNCTION: GAME 0x430a60 FOLDED
-    virtual void Update(uint time)
-    {
-        C_bottle::Update(time);
-    }
+    virtual void Update(uint time);
     // The base's: the original's jumps there, a copy the linker folded
     // FUNCTION: GAME 0x443860 FOLDED
     virtual void NetDirect(uint time)
@@ -49,7 +45,12 @@ public:
         return false;
     }
 
-    uint unknown_138;                   // 0x138
+    // C_game::NewCartidge's, for the case it throws out (the name is ours)
+    void SetShotgunShell(bool on);
+
+    // 0x138, a shotgun's shell (cartridges_b's), which sounds as one and bounces less (the name is ours)
+    bool shotgun_shell;
+    uchar unknown_139[3];               // 0x139
 
     // The cases' sounds, which C_game::Init creates and DoneIntern releases (PS2 name)
     static I3D_sound *sounds[3];

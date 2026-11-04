@@ -33,13 +33,42 @@ public:
     virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
         uint u, I3D_frame *frm);
 
-    uchar unknown_70[0x44];             // 0x70
+    // The motion AI steps (the names are ours): along move_dir at speed and down at fall_speed. AI stops at rest
+    // (both at most a small value) and where the fall is faster than 50.
+    S_vector move_dir;                  // 0x70
+    float speed;                        // 0x7c
+    float fall_speed;                   // 0x80
+    // 0x84, true from GameInit (the cartridges' clears it): AI sets the actor's state where it stops, ACTSTATE_1 at
+    // rest and ACTSTATE_2 for the fast fall (the name is a guess)
+    bool set_states;
+    uchar unknown_85[3];                // 0x85
+    // 0x88, the share of the speed a bounce keeps, .4 from GameInit (the shotgun shells' .2; the name is ours)
+    float bounce;
+    uchar unknown_8c[0x18];             // 0x8c
+    // 0xa4, GameInit's from the frame's bounding box (the cartridges' .1), which scales the step AI tests for
+    // collisions (the name is a guess)
+    float radius;
+    // 0xa8, the frame's up axis in the world from GameInit, (0, 1, 0) for the cartridges (the name is a guess)
+    S_vector axis;
     // Its constructor clears it before the vtable is stored (PS2's 0x60 bytes at 0x100)
     tDynamicCollObject coll;            // 0xb4 (the name is ours)
-    bool unknown_fc;                    // 0xfc, true from the constructor
-    uchar unknown_fd[0x2b];             // 0xfd
+    // 0xfc, true from the constructor (the cartridges' and stones' clear it): GameInit fills coll and DynInserts it
+    // only where it is set (the name is ours)
+    bool use_coll;
+    uchar unknown_fd[3];                // 0xfd
+    // AI's collision test of each step (the names are ours): the hits so far (the cartridges stop after 15), whether
+    // the last test hit, and the material it hit
+    int bounces;                        // 0x100
+    bool hit;                           // 0x104
+    uchar unknown_105[0x23];            // 0x105
     bool unknown_128;                   // 0x128, true from the constructor
-    uchar unknown_129[0xf];             // 0x129
+    uchar unknown_129[3];               // 0x129
+    int hit_material;                   // 0x12c, materialList's index
+    uchar unknown_130[4];               // 0x130
+    // 0x134, false from GameInit (the cartridges' sets it): AI's TestLineV takes every collision where it is set, the
+    // flags 2 otherwise (the name is a guess)
+    bool test_all;
+    uchar unknown_135[3];               // 0x135
 };
 
 // SYNTHETIC: GAME 0x412390

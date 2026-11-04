@@ -234,4 +234,4 @@ public:
 // ??YC_str@@QAEAAV0@PBD@Z
 
 // FUNCTION: GAME 0x4033a0
-// ??1C_str@@QAE@XZ
+// ??1?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@QAE@XZ

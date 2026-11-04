@@ -185,6 +185,8 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Do_CornerFireAimed@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Force_CanWorking@C_human@@QAEXXZ
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
+    # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

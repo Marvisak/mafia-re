@@ -8,7 +8,7 @@
 // FUNCTION: GAME 0x412350
 C_bottle::C_bottle()
 {
-    unknown_fc = true;
+    use_coll = true;
     type = ACTOR_BOTTLE;
     unknown_6d = true;
     unknown_128 = true;
