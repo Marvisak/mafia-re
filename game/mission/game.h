@@ -990,4 +990,4 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z

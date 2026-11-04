@@ -391,7 +391,7 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_subpart@@UAEPAXI@Z
+// ??_EC_effect_item@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
@@ -411,13 +411,13 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_particle_in_use@C_effects@@V?$allocator@US_particle_in_use@C_effects@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEPAPAVC_ParticleEmitter@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@QAEPAPAUtDynamicPolicko@@PAPAU3@ABQAU3@@Z
 
 // TEMPLATE: GAME 0x5479c0
 // ??0?$vector@Uai_anim_item@@V?$allocator@Uai_anim_item@@@std@@@std@@QAE@ABV?$allocator@Uai_anim_item@@@1@@Z

@@ -1,6 +1,6 @@
 // The graphics interface (PS2 IGraph.cpp): the window, Direct3D 8, DirectInput 8 and the timer, at
 // 0x1006bd40-0x10073398 in the original. The file defines all of IGraph's globals; the header's zero vector has its
-// $E in the middle (0x1006deb0, after WindowProc; ours comes before it: see tools/autopch.py). The copies of C_str's
+// $E in the middle (0x1006deb0, after WindowProc; see tools/autopch.py). The copies of C_str's
 // inline functions (common/C_str.h) come after Init's SortModesCallback (from 0x1006fe20), ours earlier: the
 // constructor after GetMainHWND, Release after GetAppName, operator[] after ResetRenderProps.
 //
@@ -1228,18 +1228,10 @@ LS3D_RESULT IGraph::DrawIndexedPrimitiveList(PRIMITIVE_TYPE type, uint num_verts
         stride) >= 0 ? I3D_OK : I3DERR_GENERIC;
 }
 
-// Gives the I3D driver its render states again, after the device lost them
-static inline void RestoreRenderStates()
-{
-    for (int i = 0; i < RS_LAST; i++) {
-        int value = renderState[i];
-        renderState[i] = -1;
-        pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
-    }
-}
-
 // The engine's window. While it is inactive or minimized, the engine sleeps (IGRAPH_SLEEP): it adds " ..zzZZ" to the
-// title and suspends the game's render thread.
+// title and suspends the game's render thread. The loop that gives the I3D driver its render states again is written
+// out at each place, as in ResetDevice: as an inline helper it costs WindowProc the budget for its last copy, which
+// the original inlines (and the source it adds puts the zero vector's $E after WindowProc, the original's place).
 // FUNCTION: LS3DF 0x1006da60
 // FUNCTION: LS3DF11 0x1006aaf0
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -1257,7 +1249,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 pGlobalIGraph->SetAppName(m_SleepAppName);
                 m_Sleeping = false;
                 if (m_pD3DDevice8)
-                    RestoreRenderStates();
+                    for (int i = 0; i < RS_LAST; i++) {
+                        int value = renderState[i];
+                        renderState[i] = -1;
+                        pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
+                    }
                 if (m_RenderThread)
                     ResumeThread(m_RenderThread);
             }
@@ -1280,7 +1276,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     pGlobalIGraph->SetAppName(m_SleepAppName);
                     m_Sleeping = false;
                     if (m_pD3DDevice8)
-                        RestoreRenderStates();
+                        for (int i = 0; i < RS_LAST; i++) {
+                            int value = renderState[i];
+                            renderState[i] = -1;
+                            pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
+                        }
                     if (m_RenderThread)
                         ResumeThread(m_RenderThread);
                 }
@@ -1299,11 +1299,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             pGlobalIGraph->SetAppName(m_SleepAppName);
             m_Sleeping = false;
             if (m_pD3DDevice8 && I3DIsInit)
-                RestoreRenderStates();
+                for (int i = 0; i < RS_LAST; i++) {
+                    int value = renderState[i];
+                    renderState[i] = -1;
+                    pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
+                }
             if (m_RenderThread)
                 ResumeThread(m_RenderThread);
         } else if (m_pD3DDevice8 && I3DIsInit)
-            RestoreRenderStates();
+            for (int i = 0; i < RS_LAST; i++) {
+                int value = renderState[i];
+                renderState[i] = -1;
+                pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
+            }
         break;
     }
     case WM_ERASEBKGND:
@@ -1453,7 +1461,11 @@ LS3D_RESULT ResetDevice(bool reset)
                 dbgPrintf("Error creating Global Index Buffer !");
         }
         if (m_pD3DDevice8)
-            RestoreRenderStates();
+            for (int i = 0; i < RS_LAST; i++) {
+                int value = renderState[i];
+                renderState[i] = -1;
+                pI3DDriver->SetState((I3D_RENDERSTATE)i, value);
+            }
     }
     DWORD decl[] = {D3DVSD_STREAM(0), D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3), D3DVSD_END()};
     hr = m_pD3DDevice8->CreateVertexShader(decl, NULL, &m_VertexVS, D3DUSAGE_SOFTWAREPROCESSING);

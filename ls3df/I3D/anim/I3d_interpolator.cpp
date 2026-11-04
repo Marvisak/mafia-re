@@ -1,7 +1,7 @@
 // The interpolators (PS2 I3d_interpolator.cpp), at 0x1001d2f0-0x1001ed30 in the original: I3D_interpolator, then
 // I3D_IPolSet, each in PS2's order. The header's zero vector has its $E after I3D_IPolSet::SetPose(const char *,
-// I3D_pose *) (0x1001e840); ours comes two functions earlier, after SetAnimation (the original's headers had more
-// inline code before the vector, see autopch.py). Names are the PS2 build's unless noted.
+// I3D_pose *) (0x1001e840); ours comes one function later, after SetPose(I3D_pose_set *) (the game's C_str bodies in
+// common/C_str.h count, see autopch.py). Names are the PS2 build's unless noted.
 #include "I3D/I3D.h"
 #include "IGraph/IGraph.h"
 

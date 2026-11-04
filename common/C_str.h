@@ -168,8 +168,8 @@ public:
     }
 
     // The game's: the caches' DelDir and Open use them, LS3DF doesn't. Open: their bodies count for LS3DF's /YX
-    // (tools/autopch.py), which puts 15 files' deferred items later (the interpolator's, occluder's and math's $E at
-    // the original's places, the driver's, sound's and particles' one function past them), and they reorder 1.1's
+    // (tools/autopch.py), which puts 15 files' deferred items later (the occluder's $E at the original's place, the
+    // interpolator's, math's, driver's, sound's and particles' one function past theirs), and they reorder 1.1's
     // I3D_lit_object::m_AddFGroups (equivalent, not identical).
 
     // The same buffer, or the same size and bytes
@@ -183,19 +183,22 @@ public:
     }
 
     // A letter's upper case. A member, though it doesn't use the string: its out-of-line copy (0x408ca0) is
-    // __thiscall. The name is ours.
+    // __thiscall. The name is ours. The result in a local of its own: c += 'A' - 'a' gives sub 0x20 where the original
+    // adds -0x20, and its body is small enough for VC6 to inline it wherever it is nested in an inlined function,
+    // whatever the budget; the original's wasn't (the caches' Open and Create call it out of line in their Match).
+    // Open: the local put the interpolator's and math's $E one function past the original's place (see above); every
+    // spelling longer than c += moves the interpolator's.
     int ToUpper(int c) const
     {
+        int r = c;
         if (c >= 'a' && c <= 'z')
-            c += 'A' - 'a';
-        return c;
+            r += 'A' - 'a';
+        return r;
     }
 
     // The string against a mask: * matches the rest, ? any one character, the others ignore case. An empty string
     // matches only an empty mask. The name is ours. The switch gives the original's layout (the ? case after the
     // others' test).
-    // Open: the original's upper case adds -0x20 (add ecx, -0x20), ours subtracts 0x20 in every spelling and type
-    // tried.
     // FUNCTION: GAME 0x4035d0
     bool Match(const C_str &mask) const
     {
@@ -221,9 +224,12 @@ public:
         return !*cp;
     }
 
+    // != NULL makes the body big enough that a call nested in an inlined function goes by the budget, as the game's
+    // originals have it (the mask in the caches' Match, the folder's path in LoadParticles' Open); rep ? … is inlined
+    // there whatever the budget. LS3DF's WindowProc then matches with the render states' loop written out.
     operator const char *() const
     {
-        return rep ? rep->data : (const char *)&rep;
+        return rep != NULL ? rep->data : (const char *)&rep;
     }
 };
 
@@ -235,3 +241,10 @@ public:
 
 // FUNCTION: GAME 0x4033a0
 // ??1?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@QAE@XZ
+
+// The conversion's first copy is m_cache.cpp's, ToUpper's C_actor.cpp's (the model cache's Open)
+// FUNCTION: GAME 0x4033c0
+// ??BC_str@@QBEPBDXZ
+
+// FUNCTION: GAME 0x408ca0
+// ?ToUpper@C_str@@QBEHH@Z

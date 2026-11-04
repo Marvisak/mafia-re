@@ -455,19 +455,19 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?CreateNew@?$C_I3D_cache_base@VI3D_sound@@@@UBEPAVI3D_sound@@XZ
+// ?OnClose@GM_Menu@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?Update@C_rail_generator@@UAEXI@Z
+// ?NetDirect@C_railway@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -481,7 +481,7 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
+// ?SaveGameSave@C_stone@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
 // ?SaveData@C_actor@@UAE_NPAVC_chunk@@@Z
@@ -492,7 +492,7 @@ public:
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
+// ?GetActFlags@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
 // ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z

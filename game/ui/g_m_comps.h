@@ -817,7 +817,7 @@ public:
 // ?CanBeParent@GM_Window@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_Window@@UAE@XZ
+// ??1GM_Vidc@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ

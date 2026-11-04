@@ -611,26 +611,14 @@ void ShowProgress(C_chunk *chunk)
 static void __stdcall __SceneErrFnc(LS3D_CALLBACK_MESSAGE msg, uint prm1, uint prm2, void *context);
 static void cbSectorBitFill(I3D_frame *frm);
 
-// Replaces a string with a copy of another (the name is ours). PS2's Open copies its two names with this code twice,
-// and as an inline call it gives Open the original's budget: its chunk destructors' calls out of line
-static inline void CopyString(char *&dst, const char *src)
-{
-    if (dst)
-    {
-        delete[] dst;
-        dst = NULL;
-    }
-    dst = new char[strlen(src) + 1];
-    strcpy(dst, src);
-}
-
 // PS2's also copies the name into a buffer of its own first (with a prefix under a flag), opens its scripts' file
 // (OpenFQLFile), shows the loading screen itself (InitProgressScreen, whose code the PC's load callback has at the
 // load's start), reads the actors of a fourth file and the map after cache.bin's test; the PC's mutes the sound around
-// OpenBin. The chunk files are closed through the chunk's inline Close. The inline calls of CopyString, SetScene and
-// ROpen give the original's budget for the chunk's destructors: the one at the early return calls Close and the stack's
-// destructor out of line (the last ROpen is the inline call still to come there), the one at the end inlines both but
-// Descend. The scene in a local of its own gives the scratch registers' rotation from there on.
+// OpenBin. The chunk files are closed through the chunk's inline Close. The name's copy written out (PS2 copies its two
+// names with this code) and the inline calls of SetScene and ROpen give the original's budget for the chunk's
+// destructors: the one at the early return calls Close and the stack's destructor out of line (the last ROpen is the
+// inline call still to come there), the one at the end inlines both but Descend. The scene in a local of its own gives
+// the scratch registers' rotation from there on.
 // Open: the inlined strcpy addresses [ecx + edx] where ours has [edx + ecx]; no spelling of the copy moved it.
 // FUNCTION: GAME 0x5409d0
 int C_mission::Open(const char *name, bool log, uint flags, bool progress)
@@ -643,7 +631,13 @@ int C_mission::Open(const char *name, bool log, uint flags, bool progress)
     if (!WaitForCD())
         return MISSION_OPEN_NO_CD;
     C_Vehicle::SetScene(scene);
-    CopyString(mission_name, name);
+    if (mission_name)
+    {
+        delete[] mission_name;
+        mission_name = NULL;
+    }
+    mission_name = new char[strlen(name) + 1];
+    strcpy(mission_name, name);
     if (progress && !mafiaLoadSave.progress)
         mafiaLoadSave.progress = new GM_LoadProgress(0, .7f, NULL);
     // STRING: GAME 0x6361f4
