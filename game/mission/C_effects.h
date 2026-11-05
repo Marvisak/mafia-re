@@ -411,7 +411,7 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAVC_effect_subpart@@V?$allocator@PAVC_effect_subpart@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAUS_using_object@C_using_object@@V?$allocator@PAUS_using_object@C_using_object@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
@@ -420,7 +420,7 @@ public:
 // ?insert@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEPAPAUtDynamicCollObject@@PAPAU3@ABQAU3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@PAUS_particle_subpart@@V?$allocator@PAUS_particle_subpart@@@std@@@std@@QAE@ABV?$allocator@PAUS_particle_subpart@@@1@@Z
+// ??0?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAE@ABV?$allocator@PAVC_ParticleType@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

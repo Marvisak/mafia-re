@@ -20,9 +20,10 @@ struct S_vector2 {
     S_vector2();
     S_vector2(float x, float y);
 
-    // The lit object file's copy
+    // The lit object file's copy; the game's is the base blocks' file's
     // FUNCTION: LS3DF 0x100268e0
     // FUNCTION: LS3DF11 0x10026380
+    // FUNCTION: GAME 0x4032f0
     float Dot(const S_vector2 &v) const
     {
         return x * v.x + y * v.y;
@@ -524,6 +525,7 @@ inline S_vector2::S_vector2() {}
 
 // FUNCTION: LS3DF 0x100268c0
 // FUNCTION: LS3DF11 0x10026360
+// FUNCTION: GAME 0x402550
 inline float S_vector2::Magnitude() const
 {
     return (float)sqrt(x * x + y * y);
@@ -569,13 +571,24 @@ inline S_vector2 &S_vector2::operator+=(const S_vector2 &v)
 inline void S_vector2::Normalize()
 {
     float len = Magnitude();
+#ifdef LS3DF_EXPORTS
     if (len > MRG_ZERO) {
         float r = 1.0f / len;
         x *= r;
         y *= r;
     }
+#else
+    // The game's divides: C_cache_base_block::IsBlockInRange's copy (0x402f90) keeps the reciprocal for y's multiply
+    // only so, and PS2 divides too (two div.s). LS3DF's own code keeps the multiplies.
+    if (len > MRG_ZERO) {
+        x /= len;
+        y /= len;
+    }
+#endif
 }
 
+// The base blocks' file's copy (game/mission/m_cache.cpp)
+// FUNCTION: GAME 0x402570
 inline float S_vector2::DistanceToLine(const S_vector2 &p, const S_vector2 &dir) const
 {
     S_vector2 n(-dir.y, dir.x);

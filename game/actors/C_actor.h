@@ -461,13 +461,13 @@ public:
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_seagull@@UAEXI@Z
+// ?NetDirect@C_wagon@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnClick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -481,10 +481,10 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?LoadData@C_seagull@@UAE_NPAVC_chunk@@@Z
+// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z
+// ?SaveData@C_actor@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa430
 // ?vfunc_53@C_recorder@@UAEHXZ
@@ -492,10 +492,10 @@ public:
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?GetActFlags@C_actor@@QBEHXZ
+// ?begin@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
+// ?end@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEPAUG_MISubtitleStruct@@XZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

@@ -63,6 +63,9 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats with which the Magnum fires grenades (C_human::Shooting; the name is ours): no cheat word
 // toggles it
 #define GAMEF_GRENADE_GUN 0x4
+// The bit of C_game::cheats with which the city's blocks are active farther from the camera (C_cache_base_block::Tick;
+// the name is ours): CUMDAL toggles it
+#define GAMEF_FAR_BLOCKS 0x200
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -984,7 +987,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_cache_model_set@@QAE@XZ
@@ -997,4 +1000,4 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z

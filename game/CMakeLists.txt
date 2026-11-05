@@ -150,6 +150,9 @@ if (MSVC_VERSION EQUAL 1200)
     # The animations' Init of a pedestrian and of a model (C_animations.cpp)
     target_link_options(game PRIVATE /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVC_traffic_element@@@Z
         /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVI3D_model@@@Z)
+    # The base blocks' FindModel and DestroyFrame, which C_game::DestroyControlSignal calls (m_cache.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?FindModel@C_cache_base_block@@QAEPAVI3D_frame@@GG@Z
+        /INCLUDE:?DestroyFrame@C_cache_base_block@@QAE_NPAUS_cache_model_inbb@@@Z)
     target_link_options(game PRIVATE /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
         /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z
         /INCLUDE:?AddTimeTransparentObject@C_mission@@QAEXPAVI3D_object@@F@Z
