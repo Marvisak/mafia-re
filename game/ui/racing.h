@@ -47,6 +47,8 @@ public:
     void GameDone();
     // The race by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
+    // The race's part of a replay, size bytes, which G_LoadSaveClass::ReplayLoad reads (PS2 name)
+    void LoadReplay(uint size, void *data);
 
     uchar unknown_0;
     // 0x1, set by RacingMisse06, which creates the racing for mission 6's race: C_game::Done deletes the racing then

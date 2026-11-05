@@ -3436,6 +3436,34 @@ C_actor *C_game::GetActorFromGUID(uint id)
     return NULL;
 }
 
+// STUB: GAME 0x5b4d10
+bool C_game::SaveGameLoad(void **buf)
+{
+    StubLog("C_game::SaveGameLoad");
+    return false;
+}
+
+// STUB: GAME 0x5b5410
+bool C_game::SaveGameLoadBefore(void **buf)
+{
+    StubLog("C_game::SaveGameLoadBefore");
+    return false;
+}
+
+// STUB: GAME 0x5b47d0
+uint C_game::SaveGameGetSize(bool full)
+{
+    StubLog("C_game::SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x5b4920
+bool C_game::SaveGameSave(void **buf, bool full)
+{
+    StubLog("C_game::SaveGameSave");
+    return true;
+}
+
 #pragma auto_inline(on)
 
 // Deletes the lightness entries (PS2 name)

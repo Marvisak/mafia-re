@@ -2010,7 +2010,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_Nahrada@@UAE_NXZ
+// ?CanBeParent@GM_Grid@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9a20
 // ?GetType@GM_WindowScroll@@UAEIXZ
@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_ButtonSelect@@UAE@XZ
+// ??1GM_Rectangle@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2058,7 +2058,7 @@ public:
 // ?GetType@GM_StaticTextMem@@UAEIXZ
 
 // FUNCTION: GAME 0x5da1f0
-// ?SetText@GM_MenuItemMem@@UAEXPAE@Z
+// ?SetText@GM_StaticTextMem@@UAEXPAE@Z
 
 // FUNCTION: GAME 0x5da220
 // ?Draw@GM_StaticTextMem@@UAEXI@Z
@@ -2124,14 +2124,14 @@ public:
 // ?Draw@GM_MenuItemMem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_RaceRoundItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5daf50
 // ?GetType@GM_MenuItemMem@@UAEIXZ
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_Button@@UAEIII@Z
+// ?Key@GM_MenuItem@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db0a0
 // ?GetType@GM_MenuItemNum@@UAEIXZ
@@ -2307,19 +2307,19 @@ public:
 
 // The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
 // FUNCTION: GAME 0x5df350
-// ?SetFloat@GM_ProgressBar@@UAEXM@Z
+// ?SetPointer@GM_ListCars@@UAEXPAX@Z
 
 // The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_MenuItemNum@@UAEIXZ
+// ?GetDword@GM_ListCars@@UAEIXZ
 
 // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
-// ?Draw@GM_TextInput@@UAEXI@Z
+// ?Draw@GM_Nahrada@@UAEXI@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_Orezavac@@UAEPAXI@Z
+// ??_GGM_Rectangle@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

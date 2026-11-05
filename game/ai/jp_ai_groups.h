@@ -79,6 +79,11 @@ public:
     void Tick();
     // The group of that number, NULL for none (PS2 name)
     ai_group *GetGroup(uint id);
+    // The saved game's record of the groups, its size and the record (PS2 names)
+    uint GetSize();
+    bool Save(void **buf);
+    // The groups from a saved game's record (PS2 name; the result's type is a guess)
+    bool Load(void **buf);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): its copy
     // inlines push_back's insert
@@ -131,6 +136,11 @@ public:
     void Destroy();
     // The following's frame, which C_game::Tick calls (PS2 name)
     void Update();
+    // The saved game's record of the following, its size and the record (PS2 names)
+    uint GetSize();
+    bool Save(void **buf);
+    // The following from a saved game's record (PS2 name; the result's type is a guess)
+    bool Load(void **buf);
 };
 
 // A member's state in its party (ai_fight_member::state; the names are ours, by value): the fights' Tick moves the
@@ -233,13 +243,13 @@ public:
 // ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
+// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_i_show@C_game@@ABU23@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -258,4 +268,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAIPAI00@Z
+// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z

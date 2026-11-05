@@ -31,9 +31,32 @@ struct S_GameItem
     }
 };
 
+// G_Inventory's places, Select's kinds (the names are ours): the hand, a pocket, the big weapon's, an item's, the car's
+#define INVENTORY_HAND 0
+#define INVENTORY_POCKET 1
+#define INVENTORY_BIG_WEAPON 2
+#define INVENTORY_ITEM 3
+#define INVENTORY_CAR 4
+// How many pockets and items (the names are ours)
+#define INVENTORY_POCKETS 5
+#define INVENTORY_ITEMS 4
+
+// SaveGameSave's first dword: SetInCar's state with the big weapons' (the name is ours)
+#define SAVE_INVENTORY_IN_CAR 0x80
+
+// The items in a saved game, after the flags' dword (the names are ours)
+struct S_inventory_save
+{
+    S_GameItem right_hand;              // 0x0
+    S_GameItem car_item;                // 0x10
+    S_GameItem pockets[INVENTORY_POCKETS];  // 0x20
+    S_GameItem big_weapon;              // 0x70
+    S_GameItem items[INVENTORY_ITEMS];  // 0x80
+};
+
 // An actor's inventory (PS2 G_Inventory, g_inventory.cpp), 0xe4 bytes, the size C_game::InventoryStackPush (0x5b1e10)
-// allocates a copy of a human's (C_human's 0x480) with. PS2's starts with the items, a gif::vector. The functions the
-// script calls are stubs, in g_loadsave.cpp's range on the PC (ui/g_loadsave.cpp).
+// allocates a copy of a human's (C_human's 0x480) with. PS2's starts with the items, a gif::vector. Its functions lie in
+// g_loadsave.cpp's range on the PC (ui/g_loadsave.cpp).
 class G_Inventory
 {
 public:
@@ -48,15 +71,18 @@ public:
     bool SelectByID(uint id, std::vector<S_GameItem> *dropped);
     // Puts the hand's weapon away, the items that don't fit into dropped (PS2 name; the bools' names are ours,
     // C_human::Do_Holster passes false and whether the human is the player)
-    void Holster(std::vector<S_GameItem> *dropped, bool unknown, bool player);
-    // Takes the hand's item out (PS2 name; PS2's takes nothing, the PC's two arguments, NULL and false from
-    // human_notify_callback's throw: their types are guesses)
-    void RemoveInHand(std::vector<S_GameItem> *dropped, bool unknown);
+    void Holster(std::vector<S_GameItem> *dropped, bool keep, bool player);
+    // Clears the item at idx of the place where, INVENTORY_* (PS2 name; the parameters' names are ours), and closes
+    // up the gaps
+    void RemoveByIdx(uint idx, uint where);
     // Whether the hand's item, or without in_hand any item, is of gameItemTable's flags
     bool HaveSomeWeapon(bool in_hand, uint flags);
-    bool IsIn(uint id, bool unknown);
-    bool HaveSpaceFor(uint id, bool unknown);
-    bool Insert(S_GameItem *item, bool unknown);
+    // Whether the inventory has an item of the id, in the hand only with in_hand
+    bool IsIn(uint id, bool in_hand);
+    // Whether an item of the id has a place, or merges with one the inventory has; with_hand the empty hand counts
+    bool HaveSpaceFor(uint id, bool with_hand);
+    // Puts the item away: a weapon already there takes its ammunition, unless no_merge (the name is ours)
+    bool Insert(S_GameItem *item, bool no_merge);
     bool Remove(S_GameItem *item, std::vector<S_GameItem> *dropped);
     void SetCanHaveBigWeapon(bool can, std::vector<S_GameItem> *dropped);
     // Into a car or out of it: the items the inventory can't keep in a car go into dropped (PS2 name; the
@@ -75,40 +101,69 @@ public:
     uint GetAmmo(int *spare);
     // The weapon loaded from the reserve (Czech "load"), one round of it ("load one"), and whether one can be
     // ("can load one")
-    void Nabij();
-    void NabijJeden();
+    bool Nabij();
+    bool NabijJeden();
     // A round taken off the right hand's weapon (Czech "shot", PS2 name): false where it has none
     bool Vystrel();
     bool MuzeNabitJeden();
+    // PS2 names; the parameters' names are ours
+    // Takes the item of the place of that kind (INVENTORY_*) and index into the hand, the hand's item into the place
+    // or elsewhere, into dropped what has no place: false for a kind out of range
+    bool Select(uint index, uint kind, std::vector<S_GameItem> *dropped);
+    // Fills the list with the items of gameItemTable's flags, the car's but; their count
+    uint HaveItems(std::vector<S_GameItem> *list, uint flags);
+    // Brings cycle up to date, and the next or the previous weapon in it into the hand
+    void CyclePrepare();
+    bool CycleUp(std::vector<S_GameItem> *dropped);
+    bool CycleDown(std::vector<S_GameItem> *dropped);
+    // The ammunition of from added to the item's reserve, up to its most (Czech "top up the rounds"): true if from has
+    // none left
+    bool DobijNaboje(S_GameItem *item, S_GameItem *from);
+    // The item into a free place but the hand: big_weapon, a pocket or items, as its flags allow; false if there is
+    // none (InsertNew's and Insert's helper; the name is ours)
+    bool InsertFree(S_GameItem *item);
+    bool InsertNew(S_GameItem *item, std::vector<S_GameItem> *dropped);
+    // The items a body leaves to take into list (PS2 name)
+    void EnemyToList(std::vector<S_GameItem *> *list);
+    void RemoveByPtr(S_GameItem *item);
+    uint GetAmmoByID(uint id, int *spare);
+    void _Sesyp();
 
-    int unknown_0;                      // 0x0, 1 from Clear
-    int unknown_4;                      // 0x4
-    uint unknown_8;                     // 0x8, how many of unknown_90 hold items
-    std::vector<S_GameItem *> items;    // 0xc, 4-byte elements (Clear's erase), pointers most likely
-    uint unknown_1c;                    // 0x1c, 0xffffff from Clear
-    S_GameItem right_hand;              // 0x20, the item in the right hand (the name is ours)
-    S_GameItem unknown_30[5];           // 0x30
-    S_GameItem unknown_80;              // 0x80
-    S_GameItem unknown_90[4];           // 0x90
-    S_GameItem unknown_d0;              // 0xd0
-    bool unknown_e0;                    // 0xe0
+    // The inventory's places (the names are ours): the right hand, the pockets for the weapons that aren't big, the
+    // place for a big weapon, the other items' and, in a car, the car's for what has no other place (Select's kinds)
+    // 0x0, big_weapon takes a big weapon (SetCanHaveBigWeapon, 1 from Clear), an ITEMF_SHORT one even without it
+    int can_have_big_weapon;
+    int in_car;                         // 0x4, SetInCar's: car_item holds an item
+    uint num_items;                     // 0x8, how many of items hold one, at their front
+    // 0xc, the ids the weapons cycle through (CycleUp, CycleDown): the hand's weapon and the stored ones', in the
+    // order they came, which CyclePrepare brings up to date
+    std::vector<uint> cycle;
+    uint cycle_id;                      // 0x1c, the id the cycle is at, 0xffffff from Clear
+    S_GameItem right_hand;              // 0x20, the item in the right hand
+    S_GameItem pockets[INVENTORY_POCKETS];  // 0x30, the weapons (ITEMF_WEAPON or ITEMF_MELEE) that aren't big
+    S_GameItem big_weapon;              // 0x80, a big one (ITEMF_BIG)
+    S_GameItem items[INVENTORY_ITEMS];  // 0x90, the items that aren't weapons, num_items of them
+    S_GameItem car_item;                // 0xd0, in a car, the hand's item that has no other place
+    // 0xe0, the console's messages of Holster and DobijNaboje: no place to holster the weapon, a weapon the
+    // inventory has already, or whose ammunition it took
+    bool messages;
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // Empties the inventory, the script's INVENTORY_CLEAR (PS2's goes on with an empty item and CyclePrepare)
     // FUNCTION: GAME 0x47b020
     void Clear()
     {
-        unknown_0 = 1;
-        unknown_4 = 0;
-        unknown_8 = 0;
-        unknown_1c = 0xffffff;
+        can_have_big_weapon = 1;
+        in_car = 0;
+        num_items = 0;
+        cycle_id = 0xffffff;
         memset(&right_hand, 0, sizeof(right_hand));
-        memset(unknown_30, 0, sizeof(unknown_30));
-        memset(&unknown_80, 0, sizeof(unknown_80));
-        memset(unknown_90, 0, sizeof(unknown_90));
-        memset(&unknown_d0, 0, sizeof(unknown_d0));
-        items.clear();
-        unknown_e0 = false;
+        memset(pockets, 0, sizeof(pockets));
+        memset(&big_weapon, 0, sizeof(big_weapon));
+        memset(items, 0, sizeof(items));
+        memset(&car_item, 0, sizeof(car_item));
+        cycle.clear();
+        messages = false;
     }
     // The right hand's item's id, and the item where asked for: a uint, which the copy widens (xor eax, eax; mov ax)
     // and the script's HUMAN_GETITEMINRHAND converts as unsigned (fild qword)

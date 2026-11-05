@@ -169,6 +169,8 @@ public:
     // kept in 0x2098 or 0x20a4 (PS2 name and parameter; which point the parameter picks isn't known)
     const S_vector &GetAIPos(bool b);
     uint GetTimeParking();
+    // The model's variant (the name is ours), which G_LoadSaveClass::AddCarByActor passes to the car database
+    uint GetColor() { return color; }
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, most after
     // the scripts' commands)
@@ -276,7 +278,9 @@ public:
     // 0x2119 (PS2 0x2479), set with the camera's CAMPF_HIDE_CAR, which turns the car's frame off (G_Camera::Begin),
     // cleared by G_Camera::End (the name is ours)
     bool hidden_by_camera;
-    uchar unknown_211a[0x17];
+    uchar unknown_211a[2];
+    uint color;                         // 0x211c, the model's variant, GetColor's (the name is ours)
+    uchar unknown_2120[0x11];
     // 0x2131 (PS2 0x247a), set by C_human::HitInCar when the human in the driver's seat dies (the name is a guess)
     bool driver_killed;
     uchar unknown_2132[0x22];           // 0x211a

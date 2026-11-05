@@ -301,15 +301,15 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@QAEPAPAUS_shvestky@C_shvestky@@PAPAU34@0@Z
+// ?erase@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEPAPAVC_actor@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUai_group_member@@PAU2@00@Z
+// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
 // TEMPLATE: GAME 0x4a9930
-// ??A?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAEAAPAUg_collision_header@@I@Z
+// ??A?$vector@PAUS_ELEMENT@C_traffic_car@@V?$allocator@PAUS_ELEMENT@C_traffic_car@@@std@@@std@@QAEAAPAUS_ELEMENT@C_traffic_car@@I@Z
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
@@ -324,13 +324,13 @@ extern C_mission *act_mission;
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEPAUS_Telephone@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEPAUS_garage_item@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEXPAUS_vector@@IABU3@@Z
+// ?_Ufill@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
 // ?_Construct@std@@YIXPAUS_con_register@@ABU2@@Z
@@ -342,7 +342,7 @@ extern C_mission *act_mission;
 // ??1?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE@XZ
 
 // TEMPLATE: GAME 0x546d30
-// ?push_back@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXABUS_instruction@C_program@@@Z
+// ?push_back@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QAEXABUS_anim_model@C_mission@@@Z
 
 // TEMPLATE: GAME 0x546ef0
 // ?push_back@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@QAEXABQAVI3D_frame@@@Z

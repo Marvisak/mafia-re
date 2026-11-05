@@ -609,6 +609,10 @@ public:
     void ScoreSetOn(bool on);
     void LightnessClear();
     void ChangeActState();
+    // The game's data of a saved game (PS2 names; G_LoadSaveClass::SaveGameLoad's): SaveGameLoadBefore takes the
+    // mission's number from it before the game's Init, SaveGameLoad the rest after it; false for another version
+    bool SaveGameLoad(void **buf);
+    bool SaveGameLoadBefore(void **buf);
     // A temporary actor to remove: its state ACTSTATE_NONE, once (PS2 name)
     void RemoveTemporaryActor(C_actor *act);
     // Takes a temporary actor out of the game's lists, unless it is being removed (PS2 name)
@@ -646,6 +650,9 @@ public:
     void InvalidateFrame(I3D_frame *frm);
     // The actor whose id is given, the scripts' FindActorLater's (PS2 name)
     C_actor *GetActorFromGUID(uint id);
+    // The saved game's record of the game, its size and the record (PS2 names), with full of every actor
+    uint SaveGameGetSize(bool full);
+    bool SaveGameSave(void **buf, bool full);
     // Runs the game's own script of that name (PS2's is C_mission's): false without one
     bool GlobalProgramRun(const char *name);
     // PS2's C_mission has these two
@@ -977,7 +984,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

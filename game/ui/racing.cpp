@@ -52,6 +52,12 @@ void C_racing::Tick(uint time)
     StubLog("C_racing::Tick");
 }
 
+// STUB: GAME 0x5571d0
+void C_racing::LoadReplay(uint size, void *data)
+{
+    StubLog("C_racing::LoadReplay");
+}
+
 #pragma auto_inline(on)
 
 

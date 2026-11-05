@@ -725,8 +725,6 @@ int GM_OptionsControls::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e1920
 int GM_FreeRide::OnCreate()
 {
@@ -748,8 +746,6 @@ int GM_FreeRide::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5e2170
 const char *GM_MessageBox::OnBeforeCreate()
 {
@@ -763,8 +759,6 @@ GM_MessageBox::GM_MessageBox(uint text_id, uint title_id)
     text = textDatabase.GetText(text_id);
     title = textDatabase.GetTextOrNULL(title_id);
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5e21f0
 int GM_MessageBox::OnCreate()
@@ -786,8 +780,6 @@ int GM_MessageBox::OnClick(uint id)
     StubLog("GM_MessageBox::OnClick");
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5e2310
 GM_QuestionBox::GM_QuestionBox(char *title, char *text) : title(title)
@@ -846,8 +838,6 @@ int GM_QuestionBox::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e2400
 int GM_LoadGame::OnCreate()
 {
@@ -900,8 +890,6 @@ int GM_GameFailed::OnCreate()
     return 0;
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5e2950
 int GM_GameFailed::OnClick(uint id)
 {
@@ -917,8 +905,6 @@ int GM_GameFailed::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e3610
 int GM_GunShop::OnCreate()
 {
@@ -932,8 +918,6 @@ int GM_GunShop::OnClick(uint id)
     StubLog("GM_GunShop::OnClick");
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // The menus' scale, relative to 800x600 (the HUD's screen of Parhelia's two or three): the constants are quotients, the
 // reciprocals of the sizes
@@ -1014,16 +998,12 @@ int GM_LoadProgress::OnTick(uint time)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e3cd0
 int GM_LoadProgress::OnKey(uchar key, uint)
 {
     StubLog("GM_LoadProgress::OnKey");
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // PS2's order of the sum: the mission's part, then the game's of the rest
 // FUNCTION: GAME 0x5e3cf0
@@ -1051,16 +1031,12 @@ void GM_LoadProgress::Present()
     igraph->Present();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e3da0
 int GM_GarageEndOfMission::OnCreate()
 {
     StubLog("GM_GarageEndOfMission::OnCreate");
     return 0;
 }
-
-#pragma auto_inline(on)
 
 // Empty, out of line: the original's copy, between OnCreate and OnClick, is the one the linker kept of its folded
 // group (C_web_path::SelectLine's)
@@ -1070,8 +1046,6 @@ int GM_GarageEndOfMission::OnKey(uchar key, uint)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5e3fe0
 int GM_GarageEndOfMission::OnClick(uint id)
 {
@@ -1079,31 +1053,47 @@ int GM_GarageEndOfMission::OnClick(uint id)
     return 0;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
-// The garage manager's menu's overrides: stubs that log and run the base's. Nothing constructs the menu yet, so the
-// linker drops them (no markers).
-// The original's: 0x5e41b0
+// The garage manager's menu's overrides: stubs that log and run the base's
+// STUB: GAME 0x5e41b0
 int GM_GarageManager::OnCreate()
 {
     StubLog("GM_GarageManager::OnCreate");
     return GM_Menu::OnCreate();
 }
 
-// The original's: 0x5e4450
+// STUB: GAME 0x5e4450
 int GM_GarageManager::OnKey(uchar key, uint u)
 {
     StubLog("GM_GarageManager::OnKey");
     return GM_Menu::OnKey(key, u);
 }
 
-// The original's: 0x5e4470
+// STUB: GAME 0x5e4470
 int GM_GarageManager::OnClick(uint id)
 {
     StubLog("GM_GarageManager::OnClick %u", id);
     return GM_Menu::OnClick(id);
 }
 
-#pragma auto_inline(on)
+// The garage's results' menu's overrides: stubs that log and run the base's
+// STUB: GAME 0x5e4690
+int GM_GarageSummary::OnCreate()
+{
+    StubLog("GM_GarageSummary::OnCreate");
+    return GM_Menu::OnCreate();
+}
+
+// STUB: GAME 0x5e48b0
+int GM_GarageSummary::OnKey(uchar key, uint u)
+{
+    StubLog("GM_GarageSummary::OnKey");
+    return GM_Menu::OnKey(key, u);
+}
+
+// Out of line, without a marker: the original's entry is the copy the linker kept of a folded group (0x5e4d50, which
+// GM_LoadProgress::OnTick's marker names)
+int GM_GarageSummary::OnClick(uint id)
+{
+    return 0;
+}
+

@@ -955,7 +955,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
         G_Inventory &inv = human->inventory;
         act_mission->GetGame()->NewGrenade(inv.right_hand.id == GAMEITEM_GRENADE ? NEWGRENADE_GRENADE :
             NEWGRENADE_MOLOTOV, pos, human->throw_dir, true, grenade);
-        inv.RemoveInHand(NULL, false);
+        inv.RemoveByIdx(0, INVENTORY_HAND);
         human->ChangeWeaponModel();
         break;
     }
@@ -6137,9 +6137,9 @@ static inline void TruncateAmmo(S_GameItem &item)
 void C_human::InventoryTruncate()
 {
     TruncateAmmo(inventory.right_hand);
-    TruncateAmmo(inventory.unknown_80);
-    for (int i = 5; i--; )
-        TruncateAmmo(inventory.unknown_30[i]);
+    TruncateAmmo(inventory.big_weapon);
+    for (int i = INVENTORY_POCKETS; i--; )
+        TruncateAmmo(inventory.pockets[i]);
 }
 
 

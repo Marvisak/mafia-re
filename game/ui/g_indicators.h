@@ -308,7 +308,9 @@ public:
     float race_flash_alpha;             // 0x4694
     int bonus_count;                    // 0x4698, BonusSetCount's (PS2 0x4dd0)
     char bonus_text[0x40];              // 0x469c, the count as text 0xb3 ("$%d") formats it
-    uint unknown_46dc;                  // 0x46dc, cleared by ResetValues (PS2 0x4e14)
+    // 0x46dc, the time played, in ms (PS2 0x4e14; the name is ours): cleared by ResetValues, saved with a game (the
+    // load menu shows it in hours, minutes and seconds)
+    uint play_time;
     // SetSymbol's, the scripts' PM_SHOWSYMBOL's, and SetProgress's, PM_SETPROGRESS's
     uint symbol_index;                  // 0x46e0, INDF_SYMBOL's part of 0textura.tga, 1 to 4
     int symbol_color;                   // 0x46e4, its colour, -1 from ResetValues
@@ -370,6 +372,11 @@ public:
     void IntroSubtitlesAddSimple(uint id);
     // Forgets the intro's subtitles
     void IntroSubtitlesClear();
+    // The mission's help, texts of the text database (PS2 names; the parameters' names are ours): forgets them,
+    // adds one, and sets how long each shows, in milliseconds
+    void MissionHelpClear();
+    void MissionHelpAdd(uint id);
+    void MissionHelpSetTime(uint time);
     // A line of the HUD's console in the colour (0xrrggbb), the text database's text of that id, if it has one (PS2
     // name)
     void ConsoleAddTextByID(uint id, uint color);
@@ -425,6 +432,10 @@ public:
         const char *stop);
     // The same for a text of several lines (PS2 name)
     void OutTextMultiLine(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font);
+    // OutText at a place of the 800x600 screen, scaled to the HUD's (the name is ours; RenderOneCredit's). Defined at
+    // the file's end, after levyOkraj.
+    void OutTextScaled(const char *text, float x, float y, float sx, float sy, uint color, uint flags, uint font,
+        const char *stop);
     // Lays the HUD out for the screen's resolution: Parhelia's screens, the scale and the dials' vertices
     void ResolutionChanged();
     // The mouse's cursor, which GM_Menu::Draw draws over the active menu: a square of 15 pixels from 1int.tga (PC only,
@@ -524,6 +535,14 @@ extern ITexture *textureIcons;          // PS2's ukakri.bmp, which the PC doesn'
 extern int parheliaIndex;
 extern S_vector2 pravyOkraj;
 extern S_vector2 levyOkraj;
+
+// FUNCTION: GAME 0x60e5c0
+inline void G_IndicatorsClass::OutTextScaled(const char *text, float x, float y, float sx, float sy, uint color,
+    uint flags, uint font, const char *stop)
+{
+    OutText(text, x * screen_scale.x + levyOkraj.x, y * screen_scale.y, sx * screen_scale.x, sy * screen_scale.y,
+        color, flags, font, stop);
+}
 
 // The engine's S_vector2 constructor and operators (I3d_math.h), which ResolutionChanged and DrawAll call out of line
 // where their budgets run out

@@ -207,6 +207,34 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?DelFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@@Z
         /INCLUDE:?RotateDir@@YIXAAUS_vector@@M@Z
         /INCLUDE:?GetRecordsSize@C_cutscene_records@@QAEHXZ)
+    # g_loadsave.cpp's functions that nothing written calls yet: the inventory's, the car database's and the replay's
+    # the menus and the races call, the saved games' list the load menu reads
+    target_link_options(game PRIVATE
+        /INCLUDE:?CycleDown@G_Inventory@@QAE_NPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@@Z
+        /INCLUDE:?CycleUp@G_Inventory@@QAE_NPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@@Z
+        /INCLUDE:?EnemyToList@G_Inventory@@QAEXPAV?$vector@PAUS_GameItem@@V?$allocator@PAUS_GameItem@@@std@@@std@@@Z
+        /INCLUDE:?FreerideGetState@G_LoadSaveClass@@QAEIXZ
+        /INCLUDE:?GetAmmoByID@G_Inventory@@QAEIIPAH@Z
+        /INCLUDE:?GetCarClass@G_CarDatabase@@QAEII@Z
+        /INCLUDE:?GetCarsByClass@G_CarDatabase@@QAEIIPAV?$vector@IV?$allocator@I@std@@@std@@PAVG_EnabledCars@@@Z
+        /INCLUDE:?GetCarsByManufacturer@G_CarDatabase@@QAEIIPAV?$vector@IV?$allocator@I@std@@@std@@PAVG_EnabledCars@@@Z
+        /INCLUDE:?GetPlayersByCivilMask@G_CarDatabase@@QAEIIPAV?$vector@PADV?$allocator@PAD@std@@@std@@@Z
+        /INCLUDE:?GetScreenShotIdx@G_LoadSaveClass@@QAEII@Z
+        /INCLUDE:?GetShadowByModel@G_CarDatabase@@QAEPBDPBD@Z
+        /INCLUDE:?GetStealTime@G_CarDatabase@@QAEIPBD@Z
+        /INCLUDE:?GetWreckageByModel@G_CarDatabase@@QAEPBDPBD@Z
+        /INCLUDE:?HaveItems@G_Inventory@@QAEIPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@I@Z
+        /INCLUDE:?IsEnabledForChampionship@G_CarDatabase@@QAE_NII@Z
+        /INCLUDE:?IsEnabledForFreeride@G_CarDatabase@@QAE_NII@Z
+        /INCLUDE:?IsEnabledForRace@G_CarDatabase@@QAE_NII@Z
+        /INCLUDE:?RaceCarsAddWin@G_LoadSaveClass@@QAEXI@Z
+        /INCLUDE:?RaceCarsGetEnabled@G_LoadSaveClass@@QAEIXZ
+        /INCLUDE:?RemoveByPtr@G_Inventory@@QAEXPAUS_GameItem@@@Z
+        /INCLUDE:?ReplayLoad@G_LoadSaveClass@@QAE_NI@Z
+        /INCLUDE:?ReplaySet@G_LoadSaveClass@@QAEX_N0@Z
+        /INCLUDE:?ReplayTick@G_LoadSaveClass@@QAEXAAH@Z
+        /INCLUDE:?SaveGameEnumFiles@G_LoadSaveClass@@QAEPAV?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@XZ
+        /INCLUDE:?SaveGameLoadHeader@G_LoadSaveClass@@QAEXIPAUG_SaveGame_FileHead@@PAUG_SaveGame_Info@@@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

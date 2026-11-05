@@ -178,7 +178,7 @@ void G_IndicatorsClass::ResetValues()
     race_time[0] = 0;
     race_position[0] = 0;
     race_laps[0] = 0;
-    unknown_46dc = 0;
+    play_time = 0;
     overlay_fade = 0.0f;
     overlay_texture = NULL;
     overlay_name = NULL;
@@ -1065,8 +1065,6 @@ void G_IndicatorsClass::SubtitlesClear()
     subtitles.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f9480
 void G_IndicatorsClass::IntroSubtitlesAdd(uint a, uint b)
 {
@@ -1079,13 +1077,29 @@ void G_IndicatorsClass::IntroSubtitlesAddSimple(uint id)
     StubLog("G_IndicatorsClass::IntroSubtitlesAddSimple");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5f9940
 void G_IndicatorsClass::IntroSubtitlesClear()
 {
     intro_subtitles.clear();
     intro_subtitles_waiting.clear();
+}
+
+// STUB: GAME 0x5f99b0
+void G_IndicatorsClass::MissionHelpClear()
+{
+    StubLog("G_IndicatorsClass::MissionHelpClear");
+}
+
+// STUB: GAME 0x5f9a00
+void G_IndicatorsClass::MissionHelpAdd(uint id)
+{
+    StubLog("G_IndicatorsClass::MissionHelpAdd");
+}
+
+// STUB: GAME 0x5f9ce0
+void G_IndicatorsClass::MissionHelpSetTime(uint time)
+{
+    StubLog("G_IndicatorsClass::MissionHelpSetTime");
 }
 
 // FUNCTION: GAME 0x5f9d10
@@ -1102,15 +1116,11 @@ void G_IndicatorsClass::ConsoleClear()
     console_count = 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f9de0
 void G_IndicatorsClass::ConsoleAddTextByID(uint id, uint color)
 {
     StubLog("G_IndicatorsClass::ConsoleAddTextByID");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5fa020
 void G_IndicatorsClass::CompassSetDestination(I3D_frame *frm)
@@ -1192,8 +1202,6 @@ void G_IndicatorsClass::WideScreenSetRatio(float ratio)
     _VtxWideScreen[11] = _VtxWideScreen[7];
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5fa300
 void G_IndicatorsClass::WideScreenSetOn(bool on, uint time)
 {
@@ -1212,8 +1220,6 @@ bool G_IndicatorsClass::FadeInOutGetState()
     StubLog("G_IndicatorsClass::FadeInOutGetState");
     return true;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5fa400
 bool G_IndicatorsClass::FadeInOutIsDark()
@@ -1251,15 +1257,11 @@ void G_IndicatorsClass::RadarClear()
     radar_items.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5fa510
 void G_IndicatorsClass::RadarAddCar(C_car *car, uint color)
 {
     StubLog("G_IndicatorsClass::RadarAddCar");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5fa720
 void G_IndicatorsClass::RadarRemoveCar(C_car *car)
@@ -4105,8 +4107,6 @@ void G_IndicatorsClass::ParheliaSetCenter(bool center)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f9e10
 void G_IndicatorsClass::AddBloodSplash(float x, float y, float size)
 {
@@ -4119,19 +4119,11 @@ void G_IndicatorsClass::RadarSetPlayerCar(C_car *car)
     StubLog("G_IndicatorsClass::RadarSetPlayerCar");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5fa030
 void G_IndicatorsClass::ThiefIndicatorSetValue(float value)
 {
     StubLog("G_IndicatorsClass::ThiefIndicatorSetValue");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5f9d50
 void G_IndicatorsClass::ConsoleAddText(const char *text, uint color)
@@ -4139,4 +4131,3 @@ void G_IndicatorsClass::ConsoleAddText(const char *text, uint color)
     StubLog("G_IndicatorsClass::ConsoleAddText");
 }
 
-#pragma auto_inline(on)

@@ -92,12 +92,28 @@ struct S_voice_def
 // S_item_def::flags (the name is a guess): what G_Inventory::HaveSomeWeapon tests, which the scripts' ANYWEAPONINHAND
 // and ANYWEAPONININVENTORY pass
 #define ITEMF_WEAPON 0x20
+// The weapons for close quarters: the knuckleduster, the knife, the bat and the like (the name is a guess). G_Inventory
+// keeps the items of ITEMF_WEAPON or ITEMF_MELEE in its pockets, the others in its items.
+#define ITEMF_MELEE 0x4
+// Each one an item of its own: of a weapon without it, one the inventory has already takes the new one's ammunition
+// (G_Inventory::DobijNaboje; the name is a guess)
+#define ITEMF_NO_MERGE 0x2000
+// A big item, which G_Inventory holds only in the hand or in big_weapon: the long weapons, the bat, the bucket (the
+// name is a guess)
+#define ITEMF_BIG 0x200000
+// A big weapon short enough for big_weapon where the inventory can't have a big one, the sawed-off shotgun (the name
+// is a guess)
+#define ITEMF_SHORT 0x40000
 // The weapons that kill at close range (C_human::Hit: a shot from within 3 kills, from within 5 throws the human
 // down; the name is a guess)
 #define ITEMF_CLOSE_RANGE 0x2
 // The weapon has a sniper's scope (the Mosin-Nagant's): C_human::ChangeWeaponModel turns the player's sniper mode off
 // for any other (the name is a guess)
 #define ITEMF_SCOPE 0x4000
+// The items that never go into the hand, the keys and the documents (G_Inventory's; the name is a guess)
+#define ITEMF_NOT_IN_HAND 0x100
+// The weapons whose reload (G_Inventory::Nabij) throws away what was left in them (the name is a guess)
+#define ITEMF_MAGAZINE 0x2000000
 
 // Weapons of gameItemTable (predmety.def), by their names there: the parts of their models C_human's weapon effects
 // move ("cylinder", "zaver1", "clip", "foregrip", "hlavne") follow them

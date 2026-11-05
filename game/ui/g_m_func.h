@@ -221,15 +221,56 @@ public:
     std::vector<C_car *> *cars;         // 0x38, the mission's cars GarageGameDone was given
 };
 
-// The garage manager's menu, "garagemanager" (the name is ours, after the menu): G_LoadSaveClass::CarManager runs it,
-// its vtable 0x627a3c. Only OnBeforeCreate is written; CarManager is a stub, so nothing constructs it and the vtable
-// isn't emitted (the overrides' addresses are in comments, the written function kept by /INCLUDE, game/CMakeLists.txt).
-// Its members aren't known yet.
+// GM_GarageManager's results (the names are ours): an item was clicked, CarManager runs the menu again; the button
+// 5000 closed it
+#define GARAGEMANAGER_AGAIN 0x4f9
+#define GARAGEMANAGER_DONE 0x4fa
+
+// The garage manager's menu, "garagemanager" (the name is ours, after the menu), 0x40 bytes: G_LoadSaveClass::CarManager
+// runs it with the cars it found, one item each (from 2000), until it ends with GARAGEMANAGER_DONE. A click on an item
+// adds it to destroy or takes it out again and ends the menu with GARAGEMANAGER_AGAIN. Its constructor is inline
+// (CarManager has it); OnBeforeCreate is in g_loadsave.cpp's range, the others in this file's.
+// VTABLE: GAME 0x627a3c
 class GM_GarageManager : public GM_Menu
 {
 public:
+    GM_GarageManager(std::vector<S_garage_item> *items, std::vector<uint> *destroy, uint *active, C_car *cant_get_out)
+        : items(items), destroy(destroy), active(active), cant_get_out(cant_get_out)
+    {
+    }
+
     virtual const char *OnBeforeCreate();
     virtual int OnCreate();
     virtual int OnKey(uchar key, uint);
     virtual int OnClick(uint id);
+
+    std::vector<S_garage_item> *items;  // 0x30, CarManager's cars (the names are ours)
+    std::vector<uint> *destroy;         // 0x34, the indices of the items chosen to destroy
+    uint *active;                       // 0x38, the item clicked last, active again when the menu runs again
+    C_car *cant_get_out;                // 0x3c, G_LoadSaveClass::cant_get_out, whose item is disabled
+};
+
+// The garage's results at a mission's end, "garagesummary" (PS2's GM_GarageSummary, in PS2's g_m_garage.cpp), 0x38
+// bytes: G_LoadSaveClass::GarageShowResultsProc runs it with the cars the garage got and lost since the last results.
+// Its constructor and OnBeforeCreate are inline, OnBeforeCreate's copy in g_loadsave.cpp's range; OnCreate and OnKey
+// are in this file's.
+// VTABLE: GAME 0x627a6c
+class GM_GarageSummary : public GM_Menu
+{
+public:
+    GM_GarageSummary(std::vector<uint> *added, std::vector<uint> *removed) : added(added), removed(removed) {}
+
+    // FUNCTION: GAME 0x60deb0
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x6397a0
+        return "garagesummary";
+    }
+    virtual int OnCreate();
+    virtual int OnKey(uchar key, uint);
+    // 0, as PS2's: the vtable's entry is a folded copy of another file's (0x5e4d50, GM_LoadProgress::OnTick's marker)
+    virtual int OnClick(uint id);
+
+    std::vector<uint> *added;           // 0x30, the cars' descriptors (the names are ours)
+    std::vector<uint> *removed;         // 0x34
 };

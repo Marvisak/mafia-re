@@ -94,6 +94,27 @@ void ai_group::ProcessEvents(uint time)
     StubLog("ai_group::ProcessEvents");
 }
 
+// STUB: GAME 0x5318f0
+bool ai_groups::Load(void **buf)
+{
+    StubLog("ai_groups::Load");
+    return false;
+}
+
+// STUB: GAME 0x5314d0
+uint ai_groups::GetSize()
+{
+    StubLog("ai_groups::GetSize");
+    return 0;
+}
+
+// STUB: GAME 0x5315b0
+bool ai_groups::Save(void **buf)
+{
+    StubLog("ai_groups::Save");
+    return true;
+}
+
 #pragma auto_inline(on)
 
 // The groups by their states, from the last group (PS2's the same): the followers get into the leader's car
@@ -335,6 +356,27 @@ void ai_follow_manager::Destroy()
     for (int i = groups.size() - 1; i >= 0; i--)
         groups[i].followers.clear();
     groups.clear();
+}
+
+// STUB: GAME 0x533530
+uint ai_follow_manager::GetSize()
+{
+    StubLog("ai_follow_manager::GetSize");
+    return 0;
+}
+
+// STUB: GAME 0x5335a0
+bool ai_follow_manager::Save(void **buf)
+{
+    StubLog("ai_follow_manager::Save");
+    return true;
+}
+
+// STUB: GAME 0x5337b0
+bool ai_follow_manager::Load(void **buf)
+{
+    StubLog("ai_follow_manager::Load");
+    return false;
 }
 
 #pragma auto_inline(off)

@@ -90,8 +90,12 @@
 #define CURSOR_CENTER_POINT 1
 #define CURSOR_BOTH 2                   // "Crosshair + Center Point"
 
+class C_actor;
 class C_car;
+class G_EnabledCars;
+class G_Stream;
 class GM_LoadProgress;
+struct S_garage_item;
 
 // G_Profile_FileHead::magic (the name is ours)
 #define PROFILE_MAGIC 'Prof'
@@ -111,13 +115,83 @@ struct G_Profile_FileHead
     uint race_cars;                     // 0x50, G_LoadSaveClass::race_cars
 };
 
-// A saved game's head (PS2's name), 0x18 bytes: the first record of its file, savegame\mafia<profile>.<number>
+// G_Stream::magic of the saved games' files, and G_SaveGame_FileHead::magic, the same letters the other way round (the
+// names are ours)
+#define SAVEGAME_MAGIC 'SavG'
+#define SAVEGAME_HEAD_MAGIC 'GvaS'
+
+// G_SaveGame_FileHead::version, the only one SaveGameEnumFiles and SaveGameLoadHeader take (the name is ours)
+#define SAVEGAME_VERSION 0x10
+
+// SaveGameCreate's numbers from this one take the lowest number no saved game has (the name is ours)
+#define SAVEGAME_NEW 100000
+
+// The text database's names of the saved games, by their numbers from this id (the name is ours): SaveGameEnumFiles
+// looks only for the numbers it has a name for, and a mission's script saves by the name's id (SaveGameFromScript)
+#define TEXT_SAVEGAME_NAMES 5000
+
+// SaveGameFromScript's console message, of the text database (the name is a guess)
+#define TEXT_GAME_SAVED 0x89b
+
+// A saved game's head (PS2's name; PS2's is 0x38 bytes, with G_SaveGame_Info's values), 0x18 bytes: the first record of
+// its file, savegame\mafia<profile>.<number>, which SaveGameEnumFiles reads into the list, numbered after the file
 struct G_SaveGame_FileHead
 {
-    uint unknown_0;
-    uint version;                       // 0x4, 0x10
+    uint magic;                         // 0x0, SAVEGAME_HEAD_MAGIC
+    uint version;                       // 0x4, SAVEGAME_VERSION
     uint number;                        // 0x8, the file's
-    uchar unknown_c[0xc];
+    uchar unknown_c[8];                 // 0xc, 0: SaveGameCreate clears them, nothing sets them
+    // 0x14, G_LoadSaveClass::mission_name_id when it was saved: the saved game's name, TEXT_SAVEGAME_NAMES + number from
+    // SaveGameFromScript (the name is ours)
+    uint mission_name_id;
+};
+
+// What the load menu shows of a saved game (the name is ours; PS2 keeps it in G_SaveGame_FileHead), 0x20 bytes: the
+// file's second record, which SaveGameLoadHeader reads with the head. The members' names are ours.
+struct G_SaveGame_Info
+{
+    uint number;                        // 0x0, the saved game's, which GetScreenShotIdx takes
+    uint unknown_4;                     // 0x4, 0
+    uint time;                          // 0x8, when it was saved: the hour << 16 | the minute << 8 | the second
+    uint date;                          // 0xc, the year << 16 | the month << 8 | the day
+    // 0x10, the player's energy in percent of his highest, at least 1 for a player not dead; 100 without a player or C_game
+    // not initialized
+    uint health;
+    uint play_time;                     // 0x14, G_IndicatorsClass::play_time, in ms
+    uint unknown_18;                    // 0x18, 0
+    uint steal_cars;                    // 0x1c, G_LoadSaveClass::steal_cars, which SaveGameLoad takes back
+};
+
+// The game's head of a saved game (PS2's name; PS2's is 0xb0 bytes, its mission's name 0x40), 0x108 bytes: the file's
+// third record, which the game's record (C_game::SaveGameSave's) and the AI's follow. The members' names are ours.
+struct G_SaveGame_GameHead
+{
+    char mission[0x20];                 // 0x0, the mission's name (C_mission::mission_name), which SaveGameLoad opens
+    uint size;                          // 0x20, the game's record's, C_game::SaveGameGetSize's
+    uint unknown_24;                    // 0x24, 0
+    // 0x28, G_LoadSaveClass::garage's cars and shown_cars, their levels cleared (PS2's G_GarageClass::SaveGameSave
+    // writes its 10 of each at 0x48 and 0x70)
+    uint garage_cars[MAX_GARAGE_CARS];
+    uint unknown_8c[MAX_GARAGE_CARS];   // 0x8c
+    uint groups_size;                   // 0xf0, AIManager's groups' record's (ai_groups::GetSize's), 0 for none
+    uint follow_size;                   // 0xf4, its following's (ai_follow_manager::GetSize's)
+    // The free ride's (S_freeride's), the densities in this order (PS2's too)
+    uint freeride_active;               // 0xf8
+    float freeride_police_density;      // 0xfc
+    float freeride_traffic_density;     // 0x100
+    float freeride_pedestrian_density;  // 0x104
+};
+
+// An actor's head in a saved game (PS2's name, the same 0x8c bytes; the members' names are ours), before its record
+// (the actor's SaveGameSave's), which _SaveProc writes
+struct G_SaveGame_ActorHead
+{
+    char name[0x40];                    // 0x0, the frame's
+    char model[0x40];                   // 0x40, the model's file without its path, empty for a frame not a model
+    int type;                           // 0x80, the actor's, ACTOR_*
+    uint size;                          // 0x84, the record's, the actor's SaveGameGetSize
+    // 0x88, the car's slot in G_LoadSaveClass::garage (PC only), -1 for none, which SaveGameLoad's unsigned test skips
+    uint garage_slot;
 };
 
 // The profile's options (the name is ours), 0x5c bytes, which ProfileSave writes after the controls; DefaultSettings
@@ -168,15 +242,26 @@ struct S_garage_car
     C_car *actor;                       // 0x4
 };
 
-// The free ride's state (PS2's name, the same 0x1c bytes; the members' names are ours), which PS2's FreerideStoreA
-// and FreerideStoreB set
+// S_freeride::flags, the free ride menu's check boxes (the names are ours)
+#define FREERIDE_ROOF_OFF 0x100         // the car without its roof (C_car::OdjebajTuStrechu)
+
+// The free ride's choices (PS2's name, the same 0x1c bytes; the members' names are ours), which the free ride menu
+// sets through PS2's FreerideStoreA and FreerideStoreB, the main menu resets, and FreerideSetup, FreerideSetupAfter and
+// FreerideSetupFromScript use
 struct S_freeride
 {
-    uint unknown_0;
-    uint unknown_4;
-    uint state;                         // 0x8, FreerideStoreB's, which PS2's FreerideGetState returns
-    float unknown_c[3];                 // 0xc, FreerideStoreA's floats
-    bool unknown_18;                    // 0x18, cleared by SaveGameNewGame
+    uint car;                           // the car database's descriptor of Tommy's car
+    uint flags;                         // 0x4, FREERIDE_*
+    // 0x8, the place the free ride starts at, the frame emeth_<location> (1 to 7, the free ride menu's locations; 0
+    // once FreerideSetupAfter has used it); PS2's FreerideGetState returns it
+    uint location;
+    // 0xc, the free ride menu's densities, which FreerideSetupFromScript gives the traffic in Free Ride Extreme
+    float traffic_density;
+    float pedestrian_density;           // 0x10
+    float police_density;               // 0x14
+    // 0x18, set by FreerideSetup, cleared by SaveGameNewGame, kept in the saved games: a free ride is on (the name is
+    // a guess)
+    bool active;
 };
 
 // G_LoadSaveClass::freeride_enabled, how much of the free ride is open (the names are ours, after the texts of the
@@ -185,10 +270,25 @@ struct S_freeride
 #define FREERIDE_SMALL_CITY 0
 #define FREERIDE_CITY 1
 #define FREERIDE_COUNTRYSIDE 2
+#define FREERIDE_EXTREME 3              // and the main menu's Free Ride Extreme, whose traffic takes the free ride
+                                        // menu's densities (FreerideSetupFromScript)
 
 // The keys G_Stream's encryption starts with (the names are ours): two dates, 23.10.1976 and 10.7.2002
 #define STREAM_KEY1 0x23101976
 #define STREAM_KEY2 0x10072002
+
+// G_LoadSaveClass::replay_mode (the names are ours): ReplaySet's, the first ReplayTick of a recording turning
+// REPLAY_RECORD_START into REPLAY_RECORD
+#define REPLAY_RECORD_START -2
+#define REPLAY_RECORD -1
+#define REPLAY_OFF 0
+#define REPLAY_PLAY 1
+
+// The replay's buffer, a dword for each tick (PS2's replayBuffer; the name is ours)
+#define REPLAY_LENGTH 0x4000
+
+// The keys a tick of the replay keeps, the low bits of its dword (the name is ours)
+#define REPLAY_KEYS 0x7f
 
 // The save files' stream (PS2 G_Stream, in g_loadsave.cpp as on PS2; the members' names are ours), 0x3c bytes: a file
 // read and written through the C library, the data encrypted with two running keys when crypt is set
@@ -217,6 +317,12 @@ public:
     // Creates the file and writes its head, with the keys reset
     bool OpenWrite(char *name);
     bool Close();
+    // A buffer of size bytes to write into, which Write writes (encrypted if crypt is set) and frees; Read reads
+    // size bytes into a new one (decrypted). Both return the buffer, NULL for no bytes, which the caller frees
+    // after Read (PS2 names).
+    void *WantWrite(uint size);
+    void Write();
+    void *Read(uint size);
     // Encrypts size bytes (whole dwords) in place, the keys running on, as Decrypt reverses it (PS2's is empty)
     void Crypt(void *data, uint size);
     void Decrypt(void *data, uint size);
@@ -227,17 +333,15 @@ public:
 };
 
 // The saved games, profiles and the game's progress (PS2 G_LoadSaveClass, g_loadsave.cpp), at least 0x5d8 bytes (the
-// constructor clears 0x5d4). Only what main, the camera and the start use so far.
+// constructor clears 0x5d4). The PC's has PS2's G_GarageClass in it too.
 class G_LoadSaveClass
 {
 public:
     std::vector<G_Profile_FileHead> profiles;   // 0x0, what ProfileEnumFiles found
     std::vector<G_SaveGame_FileHead> savegames; // 0x10, the profile's saved games
     G_Profile_FileHead profile;         // 0x20, the profile's head
-    uchar unknown_74[8];
-    uint mission;                       // 0x7c, the saved game's mission (the name is ours)
-    uchar unknown_80[0xc];
-    uint unknown_8c;                    // 0x8c
+    G_SaveGame_FileHead savegame;       // 0x74, the head SaveGameSelect copied (the name is ours)
+    int replay_mode;                    // 0x8c, REPLAY_* (PS2's 0x2ac; the name is ours)
     bool unknown_90;                    // 0x90, set by Init (PS2's 0x2b0 the same)
     // 0x91, set by the constructor and while ProfileLoad reads the profile, cleared once the whole profile was read: a
     // failed load leaves the defaults (the name is ours)
@@ -248,15 +352,18 @@ public:
     uint steal_cars;
     // 0x9c, FreerideEnableCar's bits, a bit for each letter, PS2's FreerideGetEnabledCars' (the name is ours)
     uint freeride_cars;
-    S_garage_car garage[MAX_GARAGE_CARS];   // 0xa0, the cars 0x60b9f0 adds
-    uint unknown_168[MAX_GARAGE_CARS];  // 0x168, cleared with them
+    S_garage_car garage[MAX_GARAGE_CARS];   // 0xa0, the cars AddCarByIdx and AddCarByActor add
+    // 0x168, the garage's cars when GarageShowResultsProc showed them last, cleared with them (the name is ours)
+    uint shown_cars[MAX_GARAGE_CARS];
     // Cleared by GarageGameInit, set by the scripts' GARAGE_SHOW and GARAGE_ADDLASTSTOLEN (the names are ours):
     // GarageGameDone then takes last_stolen into the garage, and with show_results runs GarageShowResultsProc
     bool show_results;                  // 0x1cc, GarageShowResults' (PS2's G_GarageClass 0x7c)
     bool add_last_stolen;               // 0x1cd, GarageAddLastStolen's (PS2's 0x7d)
     uchar unknown_1ce[2];
     uint mission_name_id;               // 0x1d0, SetMissionNameID's, of the text database (the name is ours)
-    bool unknown_1d4;                   // 0x1d4, cleared by ProfileLoad
+    // 0x1d4, set by SaveGameLoad, which runs the mission's script again from its save: SaveGameFromScript then skips
+    // the first save and clears it, as does ProfileLoad (the name is ours)
+    bool skip_save;
     std::vector<uint> objectives;       // 0x1d8, ObjectivesClear and ObjectivesRemove's
     // 0x1e8, the car the player stole last, PS2's G_GarageClass::CarIsStolen's (0x80, next to its CarCantGetOut's as
     // here): cleared by SaveGameNewGame, GarageGameDone adds it to the garage with show_results or add_last_stolen set
@@ -303,10 +410,27 @@ public:
     void ProfileLoad();
     // Writes the profile's file
     void ProfileSave();
+    // The profile's saved games (PS2 names; PS2's SaveGameEnumFiles takes a bool, its SaveGameCreate a second
+    // argument): SaveGameEnumFiles reads their heads into savegames, which it returns, SaveGameEnumRelease forgets
+    // them, SaveGameSelect copies the head of that index into savegame, SaveGameCreate selects the saved game of
+    // that number, a new one where there is none
+    std::vector<G_SaveGame_FileHead> *SaveGameEnumFiles();
+    void SaveGameEnumRelease();
+    void SaveGameSelect(uint index);
+    void SaveGameCreate(uint number);
     // A new game's progress: no saved position, an empty garage
     void SaveGameNewGame();
+    // Reads the head and the info of the list's saved game of that index (PS2 name; PS2's has no info)
+    void SaveGameLoadHeader(uint index, G_SaveGame_FileHead *head, G_SaveGame_Info *info);
     // Loads the saved game the player chose and opens its mission
     void SaveGameLoad();
+    // An actor's head and record of the saved game, the record size bytes, nothing for an actor without a frame (PS2
+    // name; PS2's takes a fifth parameter, a uint &, which it counts up)
+    void _SaveProc(G_Stream *stream, C_actor *actor, G_SaveGame_ActorHead *head, uint size);
+    // Writes the saved game savegame names (PS2 name; the parameter's name is a guess): with full every actor
+    void SaveGameSave(bool full);
+    // A saved game's screen shot (PS2 name): the index itself
+    uint GetScreenShotIdx(uint index);
     // Saves the game in the slot from a mission's script (PS2 name; the parameters' names are guesses): the profile
     // too, and with message the console says so
     void SaveGameFromScript(uint slot, bool full, bool message);
@@ -333,8 +457,21 @@ public:
     void ApplyControls();
     // The options' defaults: DEFAULTS_CLEAR clears them first, DEFAULTS_OTHER and DEFAULTS_AUDIO_VIDEO choose groups
     void DefaultSettings(uint flags);
+    // The replay (PS2 names; the parameters' names are guesses): ReplayTick records the keys of each tick, at most
+    // REPLAY_KEYS, or plays them back into keys; ReplaySet starts recording or playing it, or turns it off;
+    // ReplayLoad reads the profile's replay of that number, savegame\reply<profile>.r<number>, into the buffer
+    // and hands the race's part to the racing, if there is one
+    void ReplayTick(int &keys);
+    void ReplaySet(bool record, bool play);
+    bool ReplayLoad(uint number);
+    uint _replayGetNext();
+    void _replayPutNext(uint value);
     void RaceCarsEnable(uint cars);
     void RaceCarsDisable(uint cars);
+    // RaceCarsEnable's bits (PS2 name)
+    uint RaceCarsGetEnabled();
+    // Enables the race cars a car of the database enables (PS2 name)
+    void RaceCarsAddWin(uint car);
     // Empties the garage (PC only, the name is ours; PS2's SaveGameNewGame clears its G_GarageClass instead)
     void GarageClear();
     // PS2's G_GarageClass's (the PC has the garage here): IsCarIn, GameInit and GameDone
@@ -351,12 +488,14 @@ public:
     // (the calls go to a folded empty function, 0x4aabe0). CarManager is the garage's manager; GarageShowResults and
     // GarageAddLastStolen set the flags GarageGameDone reads at the mission's end. Then the car the player can't get
     // out of, and the cars that can be stolen, a letter each (A to Z, either case), and whether a model's car can.
-    void AddCarByIdx(uint car, uint unknown1, uint unknown2);
+    void AddCarByIdx(uint car, uint color, uint level);
     void AddCarByActor(C_car *car);
     void RemoveCar(char *model, int level);
     void GenerateCars();
     void ReleaseCars();
     void CarManager();
+    // A car the garage manager's player chose to destroy, an item of CarManager's (PS2's takes the car)
+    void DestroyCar(S_garage_item *item);
     void GarageShowResults();
     void GarageAddLastStolen();
     void CarCantGetOut(C_car *car);
@@ -368,11 +507,13 @@ public:
     void ObjectivesClear();
     void ObjectivesAdd(uint id);
     void ObjectivesRemove(uint id);
+    // Shows them in the HUD's mission help (PS2 name)
+    void ObjectivesDisplay();
     // The saved game's mission (PS2 name, a real function on PS2): the copy is in the file's range
     // FUNCTION: GAME 0x605e80
     uint SaveGameGetSelectedNumber() const
     {
-        return mission;
+        return savegame.number;
     }
     // Applies the options REFRESH_* chooses, and puts the cameras back in their ranges
     void Refresh(uint flags);
@@ -388,8 +529,9 @@ public:
     uint FreerideGetEnabledCars();
     void FreerideEnable(uint level);
     // The free ride's state (PS2's names)
-    void FreerideStoreA(uint a, uint b, float c, float d, float e);
-    void FreerideStoreB(uint state);
+    void FreerideStoreA(uint car, uint flags, float traffic, float pedestrians, float police);
+    void FreerideStoreB(uint location);
+    uint FreerideGetState();
     // The free ride set up from its mission's script (PS2 name)
     void FreerideSetupFromScript();
     void FreerideSetup();
@@ -408,17 +550,25 @@ public:
 struct S_car_index
 {
     char id[0x20];                      // 0x0, "fordttud"
-    char model[0x20];                   // 0x20, "fordTrun.I3D"
-    char shadow_model[0x20];            // 0x40, "fordTrunS.i3d"
+    char wreck_model[0x20];             // 0x20, "fordTrun.I3D", GetWreckageByModel's
+    char shadow_model[0x20];            // 0x40, "fordTrunS.i3d", GetShadowByModel's
     char name[0x20];                    // 0x60, "Bolt Ace Tudor"
-    uint unknown_80;
+    // 0x80, the car's manufacturer, a bit for each (GetCarsByManufacturer's 1 << the manufacturer's number: Bolt 1,
+    // Schubert 2, Falconer 4, ...)
+    uint manufacturer;
     // 0x84, the race cars the car enables (RaceCarsEnable's bits): GarageGameDone enables those of the cars it keeps,
-    // and PS2's AllDefault enables these too (the name is ours)
+    // and PS2's AllDefault enables these too; IsEnabledForRace tests them (the name is ours)
     uint race_cars;
-    uint unknown_88;                    // 0x88
-    uchar unknown_8c[0xc];
+    // 0x88, the car's class, GetCarClass's, which GetCarsByClass and IsEnabledForChampionship test with a mask
+    uint car_class;
+    // 0x8c, the letters' bits of EnableSteal the car has, one of which CanSteal wants (the name is ours)
+    uint steal_mask;
+    uint steal_time;                    // 0x90, in milliseconds, GetStealTime's
+    uint unknown_94;                    // 0x94
     uint civil_mask;                    // 0x98, GetCivilMaskByModel's (the name is ours)
-    uchar unknown_9c[0xc];
+    uint unknown_9c;                    // 0x9c
+    uint freeride_mask;                 // 0xa0, IsEnabledForFreeride's
+    uint unknown_a4;                    // 0xa4
 };
 
 // A player's model of tables\playerindex.def (the name is ours), 0x24 bytes
@@ -439,6 +589,19 @@ struct S_car_details
     // 0xb4, the variants' names, of the text database (GetCarSecondName; the first for variant 0 and those above 4)
     uint color_names[5];
     uint text_id;                       // 0xc8, the description, of the text database
+};
+
+// A set of cars (PS2 G_EnabledCars, in g_loadsave.cpp), 0x40 bytes: a bit for each car of the database by its index,
+// once for every level and once for each level (the names are ours)
+class G_EnabledCars
+{
+public:
+    uint cars[4];                       // 0x0
+    uint level_cars[3][4];              // 0x10, by the level (0 to 2)
+
+    // Whether the set has the car (PS2 name; the parameters' names are ours): with by_level in the set of the
+    // descriptor's level, false for a level above 2, otherwise in the set of every level
+    bool HaveCar(uint car, bool by_level);
 };
 
 // The cars and the players' models (PS2 G_CarDatabase, in g_loadsave.cpp as on PC), 0xc4 bytes
@@ -486,11 +649,15 @@ public:
     // A variant's name, of the text database, the descriptor's variant for color 0 (PS2 name); 0 for an index out of
     // range or without the details
     uint GetCarSecondName(uint car, uint color);
+    // Puts a car descriptor's index back into range (PS2 name)
+    void RepairIndex(uint &car);
     // A car's highest variant, 0 for one without variants, for an index out of range or without the details (PS2 name)
     uint GetCarMaxColor(uint car);
     // A car descriptor of the car's index and the variant (PS2 name and parameters): the level isn't kept, as
     // GetCarParams doesn't read it
     uint GetIDByParams(uint car, uint level, uint color);
+    // A car descriptor of a car's id and the variant (PC only, the name is ours), GetIDByParams' by the id
+    uint GetIDByModel(const char *model, uint level, uint color);
     // The indices of the cars whose details have a bit of the mask (PS2 name), in the vector, and their number; 0 and
     // none without the details
     uint GetCarsByCarcyclopediaMask(uint mask, std::vector<uint> *list);
@@ -500,12 +667,33 @@ public:
     void UnloadDetails();
     // A car actor's descriptor, from its model's file and level (PS2 name), the level cleared as GetCarParams reads it
     uint GetIDByActor(C_car *car);
+    // The wreck's and the shadow's models of a car's id (PS2 names)
+    const char *GetWreckageByModel(const char *model);
+    const char *GetShadowByModel(const char *model);
     // The masks of a car's id (from the second car) and of a player's model (from the first), whatever the case, 0 for
     // none (PS2 names; PS2's take a uchar *): C_traffic_generator::TryGoToAssHole sends a pedestrian only to a car the
     // two share a bit of
     uint GetCivilMaskByModel(const char *model);
+    // The cars of a class mask and of a manufacturer (its number), those of enabled only unless it is NULL, into
+    // the vector, and their number (PS2 names)
+    uint GetCarsByClass(uint car_class, std::vector<uint> *list, G_EnabledCars *enabled);
+    uint GetCarsByManufacturer(uint manufacturer, std::vector<uint> *list, G_EnabledCars *enabled);
+    // Whether a car is enabled for the race, the championship and the free ride (PS2 names)
+    bool IsEnabledForRace(uint car, uint mask);
+    bool IsEnabledForChampionship(uint car, uint mask);
+    bool IsEnabledForFreeride(uint car, uint mask);
+    // A car's class and the time a model's car takes to steal, STEAL_TIME_DEFAULT for an unknown model (PS2 names)
+    uint GetCarClass(uint car);
+    uint GetStealTime(const char *model);
     uint GetPlayerCivilMaskByModel(const char *model);
+    // The models of tables\playerindex.def whose mask has a bit of mask, into the vector, and their number (PC
+    // only, the name is ours; PS2's GetCarsByRaceMask is in its place there): C_traffic_car::GameInit picks a
+    // driver from them
+    uint GetPlayersByCivilMask(uint mask, std::vector<char *> *list);
 };
+
+// GetStealTime's for a model the database doesn't have, in milliseconds (the name is ours)
+#define STEAL_TIME_DEFAULT 15000
 
 // Cars GarageGameDone doesn't take into the garage (the names are ours, after tables\carindex.def's ids): the trucks,
 // and the racing Bugatti as the car of last_stolen
@@ -544,6 +732,22 @@ struct S_garage_item
 // ProfileCreate's push_back calls it; the original's copy is a folded one in the file at 0x4f6a60
 // TEMPLATE: GAME 0x4f7cf0
 // ?insert@?$vector@UG_Profile_FileHead@@V?$allocator@UG_Profile_FileHead@@@std@@@std@@QAEXPAUG_Profile_FileHead@@IABU3@@Z
+
+// The saved games' vector's helpers, which SaveGameEnumFiles' inlined push_back and SaveGameCreate call: the
+// original's copies are folded ones in other files' ranges
+// TEMPLATE: GAME 0x5bc800
+// ?_Ucopy@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEPAUG_SaveGame_FileHead@@PBU3@0PAU3@@Z
+
+// TEMPLATE: GAME 0x4d2a70
+// ?_Ufill@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEXPAUG_SaveGame_FileHead@@IABU3@@Z
+
+// TEMPLATE: GAME 0x430470
+// ?insert@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@QAEXPAUG_SaveGame_FileHead@@IABU3@@Z
+
+// The garage items' insert(P, x), which CarManager's push_backs call (their insert(P, n, x) is the folded copy at
+// 0x60f1f0, named after the controls')
+// TEMPLATE: GAME 0x60efd0
+// ?insert@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@ABU3@@Z
 
 // Set while the profile mustn't be saved: from the start until Init has loaded one, and when the player quit in the
 // profiles' menu (PS2's name)
