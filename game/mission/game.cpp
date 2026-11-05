@@ -242,8 +242,8 @@ inline void C_game::PreloadAnims()
             name = a->name;
         S_hlp::PreloadAnim(name);
     }
-    if (!C_animations_machine_de_luxe::base_tracks)
-        C_animations_machine_de_luxe::base_tracks = C_animations_machine_de_luxe::tracks.size();
+    if (!C_animations_machine_de_luxe::base_track)
+        C_animations_machine_de_luxe::base_track = C_animations_machine_de_luxe::tracks.size();
 }
 
 // PS2 has two bools, loads the mission's collisions itself and preloads more; false if it was done already

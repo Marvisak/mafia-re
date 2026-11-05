@@ -301,7 +301,7 @@ extern C_mission *act_mission;
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEPAPAVC_actor@@PAPAV3@0@Z
+// ?erase@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
 // ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
@@ -324,16 +324,16 @@ extern C_mission *act_mission;
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEPAUS_Telephone@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x411040
 // ?_Ufill@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEXPAUS_con_register@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
-// ?_Construct@std@@YIXPAUS_con_register@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_Telephone@C_game@@ABU23@@Z
 
 // What OpenBin calls out of line, its inline budget spent: the frames' map's destructor, operator[] and insert, its
 // tree's functions and the pair's, and the frames' vector's push_back, this file's copies; the 8-byte elements'

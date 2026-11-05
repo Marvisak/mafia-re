@@ -1194,7 +1194,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 #define NOTE_CHANGE_WEAPON 0x24         // ChangeWeaponModel while changing_weapon is set
 #define NOTE_WEAPON_SOUND 0x28          // the weapon's sound (S_item_def::unknown_54)
 #define NOTE_THROW 0x29                 // the grenade or the Molotov cocktail thrown
-#define NOTE_STAGE_BLEND_END 0x35       // the animation machine's stage blend (unknown_14) to its end (a guess)
+#define NOTE_STAGE_BLEND_END 0x35       // the animation machine's stage blend (blend) to its end (a guess)
 #define NOTE_CAR_SIT 0x50               // SOUND_CAR_SIT, or SOUND_SPORTCAR_SIT in the Formula
 #define NOTE_FALL_UPPER 0x52            // SOUND_FALL_UPPER, and PARTICLE_LANDING at "back2"
 // The police's screams, by the offences of the player (C_shvestky::PocetPrestupku)
@@ -1222,7 +1222,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
 // folded group (the vectors of 8-byte elements)
 // TEMPLATE: GAME 0x4eaa00
-// ?insert@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXPAUS_instruction@C_program@@IABU34@@Z
+// ?insert@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@QAEXPAUS_vector2@@IABU3@@Z
 
 // The animations' file names PersonAnim and RecompileDeathPos build in a static buffer each: VC6's PDB names both
 // buff, so the markers are by name and pair with ours in address order (RecompileDeathPos's first)

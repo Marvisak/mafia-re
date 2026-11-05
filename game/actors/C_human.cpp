@@ -958,10 +958,10 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
     }
     case NOTE_STAGE_BLEND_END:
         if (human->anim_machine.stage_blending) {
-            if (human->anim_machine.unknown_18 > 0.0f)
-                human->anim_machine.unknown_14 = 1.0f;
+            if (human->anim_machine.blend_speed > 0.0f)
+                human->anim_machine.blend = 1.0f;
             else
-                human->anim_machine.unknown_14 = 0.0f;
+                human->anim_machine.blend = 0.0f;
         }
         break;
     case WEAPON_EFFECT_OPEN:
@@ -2419,7 +2419,7 @@ void C_human::Update(uint time)
 
     // The animation's end
     if (anim_machine.IsActive()) {
-        if (anim_machine.Tick(time) & 1) {
+        if (anim_machine.Tick(time) & ANIMTICK_END) {
             if (anim_steps[anim_step].type == HUMAN_STEP_END) {
                 if (dead) {
                     action_state = HUMAN_ACTION_DEAD;
@@ -2588,13 +2588,13 @@ void C_human::Update(uint time)
             if (hit) {
                 S_vector off = to - (track_test_pos + d);
                 off.y = 0.0f;
-                anim_machine.unknown_114 += off;
+                anim_machine.track_offset += off;
             }
             pos = track_test_pos = to;
             }
             break;
         }
-        if (anim_machine.track == -1 && anim_machine.unknown_80 == -1) {
+        if (anim_machine.track == -1 && anim_machine.prev_track == -1) {
             track_test = 0;
             fall = .01f;
         }
@@ -2612,7 +2612,7 @@ void C_human::Update(uint time)
     case WEAPON_KIND_KNUCKLEDUSTER:
     case WEAPON_KIND_KNIFE:
     case WEAPON_KIND_BAT:
-        if ((!car || car->type != ACTOR_CAR || seat == -1) && aimed && !anim_machine.unknown_f4 &&
+        if ((!car || car->type != ACTOR_CAR || seat == -1) && aimed && !anim_machine.ext_on &&
             action_state != HUMAN_ACTION_WAIT && !fire_held) {
             I3D_animation_set *as = NULL;
             switch (weapon_kind) {
@@ -4987,10 +4987,10 @@ void C_human::Movement(uint time)
             PersonAnim(0.0f, true, false);
             car_anim_index = anim_machine.anim_index;
             if (anim_machine.stage_blending) {
-                if (anim_machine.unknown_18 > 0.0f)
-                    anim_machine.unknown_14 = 1.0f;
+                if (anim_machine.blend_speed > 0.0f)
+                    anim_machine.blend = 1.0f;
                 else
-                    anim_machine.unknown_14 = 0.0f;
+                    anim_machine.blend = 0.0f;
             }
         }
         // The steering wheel's animation by the car's steering
@@ -8087,7 +8087,7 @@ void C_human::_intern_ForceDeath()
     }
     properties[HUMAN_PROPERTY_ENERGY] = 0.0f;
     alive = false;
-    anim_machine.unknown_110 = true;
+    anim_machine.disabled = true;
     Death();
     SetActState(ACTSTATE_NONE);
     PoseValidate(false);
@@ -8864,7 +8864,7 @@ void C_human::EineMeineKleineAutoInLuft(C_car *wreck)
     {
         properties[HUMAN_PROPERTY_ENERGY] = 0.0f;
         alive = false;
-        anim_machine.unknown_110 = true;
+        anim_machine.disabled = true;
         Death();
         SetActState(ACTSTATE_NONE);
     }

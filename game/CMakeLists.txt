@@ -147,6 +147,9 @@ if (MSVC_VERSION EQUAL 1200)
     # Written functions whose callers aren't written yet, which /OPT:REF would drop: the scripts' InvalidateActorReg and
     # FindActorLater (C_program.cpp), and the mission's AddTimeTransparentObject and four FrmActBuff functions
     # (Mission.cpp)
+    # The animations' Init of a pedestrian and of a model (C_animations.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVC_traffic_element@@@Z
+        /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVI3D_model@@@Z)
     target_link_options(game PRIVATE /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
         /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z
         /INCLUDE:?AddTimeTransparentObject@C_mission@@QAEXPAVI3D_object@@F@Z

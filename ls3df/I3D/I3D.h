@@ -381,9 +381,11 @@ private:
 
 public:
     // Makes the local matrix from the scale and rotation, or the rotation from the matrix (PS2 name). The dummy file's
-    // copy is the one linked. Both branches scale the rows: the volume's UpdateV calls S_vector::operator*= in each.
+    // copy is the one linked (the game's, the airplane file's). Both branches scale the rows: the volume's UpdateV calls
+    // S_vector::operator*= in each.
     // FUNCTION: LS3DF 0x1001a6e0
     // FUNCTION: LS3DF11 0x1001a200
+    // FUNCTION: GAME 0x40de20
     void UpdateMatrix()
     {
         if (!(m_FrmFlags & FRMFLAGS_MAT_VALID)) {

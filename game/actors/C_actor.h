@@ -455,7 +455,7 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetProgram@C_actor@@UAEPAV?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@XZ
+// ?SaveGameGetSize@C_seagull@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
@@ -467,7 +467,7 @@ public:
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -481,7 +481,7 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
+// ?LoadData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
 // ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z

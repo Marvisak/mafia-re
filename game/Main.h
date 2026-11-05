@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVGM_Component@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAVC_actor@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_cutscene_rec_actor@@V?$allocator@US_cutscene_rec_actor@@@std@@@std@@IAEXPAUS_cutscene_rec_actor@@0@Z
+// ?_Destroy@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@IAEXPAPAVC_program@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEPAPAVIJoy@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAVI3D_sector@@V?$allocator@PAVI3D_sector@@@std@@@std@@IAEPAPAVI3D_sector@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z
+// ?_Ufill@?$vector@IV?$allocator@I@std@@@std@@IAEXPAIIABI@Z
