@@ -52,15 +52,11 @@ int DabingGetFreeChanel()
     return NUM_DABING_CHANELS - 1;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f4cd0
 void DabingSetHuman(int chanel, C_human *human)
 {
     StubLog("DabingSetHuman");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5f5060
 void DabingReset()
@@ -95,8 +91,6 @@ void DabingReset()
     G_DabingMorphActive.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f5570
 void DabingSpeak(int chanel, uint speech, bool subtitle, uint kind)
 {
@@ -109,8 +103,6 @@ bool DabingIsSpeaking(int chanel)
     StubLog("DabingIsSpeaking");
     return false;
 }
-
-#pragma auto_inline(on)
 
 // The speaking channels: a channel's time runs on by the time passed, or by its sound's position while the sound plays
 // (the speech ends when the sound stopped, or went back to its start near its end), and its data's frame at that time

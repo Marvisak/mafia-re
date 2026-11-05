@@ -73,8 +73,6 @@ void C_sledovacka::Done()
     bridges.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4a0760
 bool C_sledovacka::AddCarHunt(C_car *car, C_actor *target, uint unknown, uint unknown2, const S_vector &pos,
     float unknown3)
@@ -95,8 +93,6 @@ void C_sledovacka::RemoveCar(C_car *car)
 {
     StubLog("C_sledovacka::RemoveCar");
 }
-
-#pragma auto_inline(on)
 
 // What the paths' nodes' semaphore phases index (the name is ours): the semaphores' lights in each of their ten
 // phases, C_shvestky.cpp's semaphore_colors (red 1 for five, green 4 for four, then orange 2)
@@ -1174,8 +1170,6 @@ void C_sledovacka::Tick(uint time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4a1da0
 bool C_sledovacka::RecompilePath(int index)
 {
@@ -1209,5 +1203,3 @@ void C_sledovacka::SetActionStatus(C_car *car, E_STATUS status)
 {
     StubLog("C_sledovacka::SetActionStatus");
 }
-
-#pragma auto_inline(on)

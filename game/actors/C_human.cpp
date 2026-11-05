@@ -24,7 +24,6 @@
 #include "vehicles/C_car_ex.h"
 #include "vehicles/C_railway.h"
 #include "vehicles/C_trf_c.h"
-#include "vehicles/C_railway.h"
 
 #include "ai/jp_ai_main.h"
 #include "ai/pathweb.h"
@@ -38,9 +37,7 @@
 #include "actors/C_public_physics.h"
 #include "mission/C_recorder.h"
 #include "actors/C_door.h"
-#include "vehicles/C_trf_c.h"
 #include "vehicles/C_turnout.h"
-#include "stub.h"
 
 // Adds the human to the cutscene, with the sizes of its three kinds of records (C_actor's: 0x5c, 0, 0)
 // FUNCTION: GAME 0x56b180
@@ -10130,9 +10127,3 @@ bool C_human::Can_Hit_FilterHumanType(C_human *shooter, C_human *human)
     }
     return result;
 }
-
-// The stubs of the functions not written yet, after all their callers in the file
-
-#pragma auto_inline(off)
-
-#pragma auto_inline(on)

@@ -44,8 +44,6 @@ inline uint I3DBoolAsInt(const bool &b)
     return *(uint *)&t;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x41bb80
 C_car::C_car()
 {
@@ -58,8 +56,6 @@ bool C_car::GetPlacementFromTCK1(int unknown, S_vector &pos, S_vector &dir, bool
     StubLog("C_car::GetPlacementFromTCK1");
     return false;
 }
-
-#pragma auto_inline(on)
 
 // Materials 1 to 4 (asphalt, paving, pavement, concrete), 9, 10 and 38 (rock, rails and brick wall) get the two flags.
 // Without the table (InitSystem runs before G_LoadSaveClass::Init loads it) one default material.
@@ -319,8 +315,6 @@ void C_car::ConvertTyres(S_TSRFC *src, S_SRFC *dst)
     dst->curve[1].unknown_28 = src->curve[1].unknown_20;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x41d810
 bool C_car::SetOwner(C_actor *act, int seat, float unknown)
 {
@@ -350,15 +344,11 @@ int C_car::GetLevelsCount()
     return v_levels.size();
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x41e9f0
 int C_car::GetActualLevel()
 {
     return actual_level;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x41ea00
 bool C_car::SetActualLevel(int level)
@@ -367,29 +357,17 @@ bool C_car::SetActualLevel(int level)
     return false;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x41eb00
 void C_car::InitFFEffects()
 {
     StubLog("C_car::InitFFEffects");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x41eca0
 void C_car::DoneFFEffects()
 {
     StubLog("C_car::DoneFFEffects");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x421d60
 bool C_car::CarExplosion(uint unknown)
@@ -416,8 +394,6 @@ void C_car::ResetCar()
     StubLog("C_car::ResetCar");
 }
 
-#pragma auto_inline(on)
-
 // PS2's order: the frame's world matrix into the model matrix, that into the inverse, inverted from a copy
 // FUNCTION: GAME 0x4293e0
 const S_matrix &C_car::GetInvModelMatrix(bool update)
@@ -430,8 +406,6 @@ const S_matrix &C_car::GetInvModelMatrix(bool update)
     }
     return inv_model_matrix;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x429450
 float C_car::ShowCarEnergy()
@@ -502,8 +476,6 @@ void C_car::GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vec
     StubLog("C_car::GetNavigationPoints");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x429e50
 uint C_car::GetTimeParking()
 {
@@ -519,8 +491,6 @@ void C_car::SetForceFeedback(float volume, float tire_grip, float collisions, fl
     ff_suspension = suspension;
     ff_revs = revs;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x41bcb0
 C_car::~C_car()
@@ -710,20 +680,12 @@ S_vector C_car::GetRecordPos(int a)
     return C_actor::GetRecordPos(a);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x42ba10
 bool C_car::IsSeatLeft(int seat)
 {
     StubLog("C_car::IsSeatLeft");
     return false;
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x41dc30
 bool C_car::GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4)
@@ -732,15 +694,9 @@ bool C_car::GetSeatProperty(int seat, bool &b1, bool &b2, bool &b3, bool &b4)
     return false;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x41c550
 bool C_car::GetPlacementFromTCK(int a, int b, S_vector &pos, S_vector &dir)
 {
     StubLog("C_car::GetPlacementFromTCK");
     return false;
 }
-
-#pragma auto_inline(on)

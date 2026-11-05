@@ -6,17 +6,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x42e240
 C_car_ex::C_car_ex()
 {
     StubLog("C_car_ex::C_car_ex");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x42e300
 C_car_ex::~C_car_ex()
@@ -66,10 +60,6 @@ void C_car_ex::Update(uint time)
     C_car::Update(time);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x42f160
 void C_car_ex::DCAddPerson(C_human *human)
 {
@@ -81,5 +71,3 @@ void C_car_ex::DCDelPerson(C_human *human)
 {
     StubLog("C_car_ex::DCDelPerson");
 }
-
-#pragma auto_inline(on)

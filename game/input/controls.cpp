@@ -238,15 +238,11 @@ bool C_controls::GetControl(S_control *binding, int index)
     return true;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4f0620
 void C_controls::Update(bool update_input)
 {
     StubLog("C_controls::Update");
 }
-
-#pragma auto_inline(on)
 
 // Between Update and SaveJoyStates the original has more of the bindings' functions
 

@@ -87,17 +87,11 @@ void C_animations_machine_de_luxe::ClearNoBaseTracks()
         ClearTracks();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x40e7a0
 void C_animations_machine_de_luxe::Reset()
 {
     StubLog("C_animations_machine_de_luxe::Reset");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x40e010
 C_animations_machine_de_luxe::C_animations_machine_de_luxe()
@@ -164,10 +158,6 @@ bool C_animations_machine_de_luxe::GetPlacementFromTCK(const char *name, S_vecto
     return false;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x40e900
 void C_animations_machine_de_luxe::RecompileMatrix(S_matrix &m)
 {
@@ -179,10 +169,6 @@ void C_animations_machine_de_luxe::StageBlendingTick(uint time)
 {
     StubLog("C_animations_machine_de_luxe::StageBlendingTick");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x410310
 bool C_animations_machine_de_luxe::GetEndPointOfTCK(const char *name, S_vector &pos)
@@ -197,5 +183,3 @@ bool C_animations_machine_de_luxe::GetMixingPointOfTCK(const char *name, S_vecto
     StubLog("C_animations_machine_de_luxe::GetMixingPointOfTCK");
     return false;
 }
-
-#pragma auto_inline(on)

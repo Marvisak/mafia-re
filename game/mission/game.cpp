@@ -1035,16 +1035,12 @@ static void _show_progress_(float f)
     }
 }
 
-#pragma auto_inline(off)
-
 // Called at Init's end when the city's base blocks are open (the name is ours)
 // STUB: GAME 0x5a3990
 static void PrepareBaseBlocks()
 {
     StubLog("PrepareBaseBlocks (0x5a3990)");
 }
-
-#pragma auto_inline(on)
 
 // The sectors' lights (PS2's S_hlp, the name of Init's local struct)
 // FUNCTION: GAME 0x5a3b90
@@ -2257,8 +2253,6 @@ void C_game::Tick(uint time)
     console_1.Tick(time);
 }
 
-#pragma auto_inline(off)
-
 // The guns on the player's car (PS2 name; nothing of the PC's sets GAMEF_DOUBLEKISS or creates kiss_frame, so it
 // returns at once): kiss_frame, linked to the car, is turned to its target every 20 ms, the nearest enemy
 // (ACTOR_ENTITY) or other car more than 5 m and less than 40 m away (a car's squared distance counting 1.2 times),
@@ -2425,8 +2419,6 @@ void C_game::AddTemporaryActor(C_actor *act)
     StubLog("C_game::AddTemporaryActor");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5a79a0
 void C_game::RemoveTemporaryActor(C_actor *act)
 {
@@ -2439,15 +2431,11 @@ void C_game::RemoveTemporaryActor(C_actor *act)
     removed_actors.push_back(act);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5a7b70
 void C_game::InternTempActAdd(C_actor *act)
 {
     StubLog("C_game::InternTempActAdd");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5a7d40
 void C_game::InternTempActDel(C_actor *act)
@@ -2487,15 +2475,11 @@ void C_game::InternTempActDel(C_actor *act)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5a7ec0
 void C_game::_RemoveTemporaryActor(C_actor *act)
 {
     StubLog("C_game::_RemoveTemporaryActor");
 }
-
-#pragma auto_inline(on)
 
 // The temporary actors but the next mission's, each taken from the game's lists, ended and released (PS2 name)
 // FUNCTION: GAME 0x5a7f60
@@ -2526,8 +2510,6 @@ void C_game::UpdateControls()
 
 // The original's code between this and SetTrafficVisible (0x5a8030-0x5a846f) is more of the game's
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5a8470
 void C_game::SetTrafficVisible(bool visible)
 {
@@ -2541,8 +2523,6 @@ bool C_game::NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, i
     StubLog("C_game::NewShoot");
     return true;
 }
-
-#pragma auto_inline(on)
 
 // The shots in flight (PS2 name), each moved along its direction by 0.3 a ms: one that hits nothing goes on in the next
 // frame; one that hits an actor's collision hits the actor (its Hit), whose false lets the shot through, the actor's
@@ -2841,8 +2821,6 @@ void C_game::TickShoot(uint time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5aae10
 void C_game::NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float unknown2, bool unknown3, bool unknown4,
     bool unknown5, int unknown6)
@@ -2869,8 +2847,6 @@ void C_game::Stop3DSound(int sound, bool fade, float time)
 {
     StubLog("C_game::Stop3DSound");
 }
-
-#pragma auto_inline(on)
 
 // The sounds the game plays: stopped, unlinked and released (PS2 name)
 // FUNCTION: GAME 0x5acf00
@@ -2930,8 +2906,6 @@ void C_game::SetupShadow(S_shadow_item *item)
         item->model->Duplicate(shadow_temp[item->model_index].model);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ad2a0
 int C_game::AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
     char *name)
@@ -2945,8 +2919,6 @@ void C_game::DelFrameForShadow(I3D_frame *frm, E_shadow_type type)
 {
     StubLog("C_game::DelFrameForShadow");
 }
-
-#pragma auto_inline(on)
 
 // The semaphores: the models of semafor.i3d, with their lights; the direction the model faces chooses its phase
 // FUNCTION: GAME 0x5ad900
@@ -3056,8 +3028,6 @@ void C_game::CityMusicOff()
     city_music = -1;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ae1b0
 void C_game::CityMusicPaused(bool paused)
 {
@@ -3088,8 +3058,6 @@ void C_game::LoadDiffData(const char *name)
 {
     StubLog("C_game::LoadDiffData %s", name);
 }
-
-#pragma auto_inline(on)
 
 // What the game added to the mission (PS2 name): its actors taken out of the game's lists and deleted from the mission,
 // its frames deleted from the scene (a frame's actor too, and a light from its sectors' lists), its scripts ended and
@@ -3223,15 +3191,11 @@ bool C_game::GlobalProgramRun(const char *name)
     return false;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5afe40
 void C_game::InvalidateActor(C_actor *act, bool)
 {
     StubLog("C_game::InvalidateActor");
 }
-
-#pragma auto_inline(on)
 
 // A frame going away: its placements and its subtree's taken from the list (PS2 name)
 // FUNCTION: GAME 0x5b0210
@@ -3259,8 +3223,6 @@ void C_game::S_hlp::cbDelFrame(I3D_frame *frm, std::vector<S_frame_placement> &l
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b0300
 void C_game::AddFramePlacement(I3D_frame *frm)
 {
@@ -3286,8 +3248,6 @@ void C_game::ClearProjectorsForFrame(I3D_frame *frm)
     StubLog("C_game::ClearProjectorsForFrame");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5b1da0
 void C_game::InventoryStackClear()
 {
@@ -3295,8 +3255,6 @@ void C_game::InventoryStackClear()
         delete inventory_stack[i];
     inventory_stack.clear();
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5b1e10
 void C_game::InventoryStackPush(C_human *human)
@@ -3310,15 +3268,11 @@ void C_game::InventoryStackPop(C_human *human)
     StubLog("C_game::InventoryStackPop");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5b2320
 void C_game::FloatStackClear()
 {
     float_stack.clear();
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5b2350
 void C_game::FloatStackPush(float f)
@@ -3332,15 +3286,11 @@ void C_game::FloatStackPop(float *f)
     StubLog("C_game::FloatStackPop");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5b2590
 void C_game::CharacterStackClear()
 {
     character_stack.clear();
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5b25c0
 void C_game::CharacterStackPush(C_human *human)
@@ -3464,8 +3414,6 @@ bool C_game::SaveGameSave(void **buf, bool full)
     return true;
 }
 
-#pragma auto_inline(on)
-
 // Deletes the lightness entries (PS2 name)
 // FUNCTION: GAME 0x5b5780
 void C_game::LightnessClear()
@@ -3474,8 +3422,6 @@ void C_game::LightnessClear()
         delete lightness[i];
     lightness.clear();
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5b57e0
 void C_game::LightnessTick(uint time)
@@ -3564,8 +3510,6 @@ void C_game::DestroyIShow(int show)
     StubLog("C_game::DestroyIShow");
 }
 
-#pragma auto_inline(on)
-
 // The videos closed and released (PS2 name), and the lists emptied
 // FUNCTION: GAME 0x5b63b0
 void C_game::DestroyIShowAll()
@@ -3635,8 +3579,6 @@ void C_game::IShowSetVolume()
         i_shows[i].show->SetVolume(mafiaLoadSave.settings.music_volume * i_shows[i].volume);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b6660
 void C_game::IShowFadeDownAll(int time)
 {
@@ -3648,8 +3590,6 @@ void C_game::IShowFade(int id, float from, float to, int time)
 {
     StubLog("C_game::IShowFade");
 }
-
-#pragma auto_inline(on)
 
 // The road blocks, the dummies ROADBLOCK* (PS2 name)
 // FUNCTION: GAME 0x5b69d0
@@ -3691,16 +3631,12 @@ I3DENUMRET __stdcall C_game::S_hlp::cbFindTaxiPoints(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b6d10
 bool C_game::IsValidTaxiPassenger()
 {
     StubLog("C_game::IsValidTaxiPassenger");
     return false;
 }
-
-#pragma auto_inline(on)
 
 // The telephones, the models of alarm01.i3d and PHbox01.i3d: the scene's, and the base blocks' while those are open
 // (PS2 name)
@@ -3771,8 +3707,6 @@ I3DENUMRET __stdcall C_game::S_hlp::cbTelephones(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b7500
 bool C_game::IsTelephoneExist(I3D_frame *frm)
 {
@@ -3797,8 +3731,6 @@ void C_game::DeathHumanTalk(C_human *human)
 {
     StubLog("C_game::DeathHumanTalk");
 }
-
-#pragma auto_inline(on)
 
 // The base blocks' model sets of the traffic signs, dopravni1B.I3D to dopravni8B.I3D (PS2 name)
 // FUNCTION: GAME 0x5b7860
@@ -3836,16 +3768,12 @@ void C_game::CreateSignalMarkIDX()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b7be0
 void C_game::DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir,
     C_human *human)
 {
     StubLog("C_game::DestroyControlSignal");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5b7ed0
 void C_game::EntityBlock(bool block, bool unknown)
@@ -3873,8 +3801,6 @@ void C_game::EntityBlock(bool block, bool unknown)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b7f70
 void C_game::AddInvisibleActor(C_actor *act)
 {
@@ -3899,8 +3825,6 @@ void C_game::DestroyCutsceneParticles()
     StubLog("C_game::DestroyCutsceneParticles");
 }
 
-#pragma auto_inline(on)
-
 // Every actor's sounds off (PS2 name)
 // FUNCTION: GAME 0x5b83f0
 void C_game::StopAllSounds()
@@ -3908,8 +3832,6 @@ void C_game::StopAllSounds()
     for (int i = C_actor::global_actors.size(); i--;)
         C_actor::global_actors[i]->SoundsChange(0);
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5b8e70
 void C_game::AddCreatedFrameToVector(I3D_frame *frm)
@@ -3923,8 +3845,6 @@ bool C_game::DelCreatedFrameToVector(I3D_frame *frm)
     StubLog("C_game::DelCreatedFrameToVector");
     return false;
 }
-
-#pragma auto_inline(on)
 
 // The areas where the enemies scream (PS2 name)
 // FUNCTION: GAME 0x5b90b0
@@ -3964,15 +3884,11 @@ I3DENUMRET __stdcall C_game::S_hlp::cbScreamArea(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b9390
 void C_game::TickScreamAreas()
 {
     StubLog("C_game::TickScreamAreas");
 }
-
-#pragma auto_inline(on)
 
 // The weather (PS2 name: Czech for "deal with the weather"). With read, the scene's parameter param (WS_PARAM_ON or
 // WS_PARAM_COUNT) is taken as the mission's own first; then, while the mission has weather, its count by the "In Game
@@ -4015,15 +3931,11 @@ void C_game::OsefujPocasi(bool read, uint param)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5b98c0
 void C_game::TickDeadHumanForTick(uint time)
 {
     StubLog("C_game::TickDeadHumanForTick");
 }
-
-#pragma auto_inline(on)
 
 // The hydrants' water: the particles destroyed, the frames released (PS2 name)
 // FUNCTION: GAME 0x5b9ef0
@@ -4061,8 +3973,6 @@ void C_game::ScoreSet(int value)
         mafiaIndicators.BonusSetCount(score);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ba010
 void C_game::SetCameraRotRepair()
 {
@@ -4075,17 +3985,11 @@ void C_game::ClearCartridges()
     StubLog("C_game::ClearCartridges");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ba110
 void C_game::TickCarSoundManager()
 {
     StubLog("C_game::TickCarSoundManager");
 }
-
-#pragma auto_inline(on)
 
 // PS2 name
 // FUNCTION: GAME 0x5ba310
@@ -4096,8 +4000,6 @@ void C_game::ClearDeathHumanFade()
     death_human_fades.clear();
     item_blur = false;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5ba390
 void C_game::ItemBlurTick(uint time)
@@ -4116,8 +4018,6 @@ void C_game::RecPrepareHumans()
 {
     StubLog("C_game::RecPrepareHumans");
 }
-
-#pragma auto_inline(on)
 
 // The roads out of the city, closed by boxes of collision while the city's base blocks are open: nine, and four more in
 // the mission mise16-mesto (PS2's is C_mission's and another function)
@@ -4170,8 +4070,6 @@ void C_game::InterCity_GameInit()
     }
 }
 
-#pragma auto_inline(off)
-
 // A box of collision at pos, turned by angle degrees around axis and scaled by scale, as a dummy frame of the unit box
 // and a collision object of its matrix and inverse, added to the collisions as the n-th (the name is ours)
 // STUB: GAME 0x5bb570
@@ -4180,8 +4078,6 @@ static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_ma
 {
     StubLog("AddInterCityBox");
 }
-
-#pragma auto_inline(on)
 
 // What InterCity_GameInit created: the collisions taken out and deleted, the frames released, the arrays deleted (PS2
 // name, PS2's C_mission's)
@@ -4215,8 +4111,6 @@ void C_game::InterCity_GameDoneInGameDone()
     inter_city_frames = NULL;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5accb0
 int C_game::Play3DSound(I3D_sound *sound)
 {
@@ -4242,10 +4136,6 @@ void C_game::LightnessDel(I3D_frame *frm)
     StubLog("C_game::LightnessDel");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ac580
 void C_game::NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm)
 {
@@ -4264,10 +4154,6 @@ void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S
 {
     StubLog("C_game::CreateTrackEffect(direction)");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5ad640
 void C_game::SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2)
@@ -4319,5 +4205,3 @@ void C_game::AddDeadHumanForTick(C_human *human)
 {
     StubLog("C_game::AddDeadHumanForTick");
 }
-
-#pragma auto_inline(on)

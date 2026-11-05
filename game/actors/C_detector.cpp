@@ -35,15 +35,11 @@ bool C_detector::Init(I3D_frame *frm)
     return true;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4329c0
 void C_detector::DuplicateFrom(C_actor *act)
 {
     StubLog("C_detector::DuplicateFrom");
 }
-
-#pragma auto_inline(on)
 
 // The script compiled for the actor; one without instructions sets the actor's unknown_65, as a plain actor's
 // FUNCTION: GAME 0x432a00
@@ -84,8 +80,6 @@ bool C_detector::LoadData(C_chunk *chunk)
     return LoadSourceCode(chunk);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x432c10
 int C_detector::SaveGameGetSize()
 {
@@ -106,8 +100,6 @@ bool C_detector::SaveGameLoad(void **buf)
     StubLog("C_detector::SaveGameLoad");
     return false;
 }
-
-#pragma auto_inline(on)
 
 // The script, while it has a command to run; past its end, END's return (PS2's the same)
 // FUNCTION: GAME 0x432d70
@@ -278,8 +270,6 @@ void C_detector::Process(uint time)
         command_time += time;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4330b0
 void C_detector::CreateColls(bool dynamic)
 {
@@ -291,10 +281,6 @@ void C_detector::CreateUO(int unknown, bool unknown2)
 {
     StubLog("C_detector::CreateUO");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x432ac0
 bool C_detector::SaveData(C_chunk *chunk)
@@ -315,5 +301,3 @@ bool C_detector::Hit(int type, const S_vector &v1, const S_vector &v2, const S_v
 void C_detector::NetDirect(uint time)
 {
 }
-
-#pragma auto_inline(on)

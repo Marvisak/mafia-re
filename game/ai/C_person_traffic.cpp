@@ -59,8 +59,6 @@ C_don_ocas::~C_don_ocas()
 {
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x44d410
 C_traffic_generator::C_traffic_generator()
 {
@@ -72,8 +70,6 @@ void C_traffic_generator::PlayerHoMaVytaseneho()
 {
     StubLog("C_traffic_generator::PlayerHoMaVytaseneho");
 }
-
-#pragma auto_inline(on)
 
 // From the last one, as PS2's, which also gives the shown pedestrians their fake shadows and takes them from the hidden
 // ones
@@ -239,15 +235,11 @@ void C_traffic_generator::TryGoToAssHole()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x44f7d0
 void C_traffic_generator::GeneratePassengerForTaxi()
 {
     StubLog("C_traffic_generator::GeneratePassengerForTaxi");
 }
-
-#pragma auto_inline(on)
 
 // The PC's nine taxis, from the last one (PS2 has eleven, from a table of its own)
 // FUNCTION: GAME 0x44f740
@@ -327,8 +319,6 @@ void C_traffic_generator::FreeDynCollElements()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x450f00
 void C_traffic_generator::AddFreePerson(I3D_model *model, C_actor *act, bool unknown)
 {
@@ -358,10 +348,6 @@ void C_traffic_element::Deactivate()
 {
     StubLog("C_traffic_element::Deactivate");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x44d4a0
 C_traffic_generator::~C_traffic_generator()
@@ -450,10 +436,6 @@ void C_traffic_generator::NetDirect(uint time)
 {
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x44c690
 void C_don_ocas::GameInit()
 {
@@ -491,24 +473,14 @@ bool C_don_ocas::GetBoundPoints2D(std::vector<S_vector2> &points, I3D_frame *frm
     return C_actor::GetBoundPoints2D(points, frm);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x456fa0
 void C_traffic_element::ActivateFree(bool b1, bool b2)
 {
     StubLog("C_traffic_element::ActivateFree");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4512a0
 void C_traffic_generator::VyfunOdTeMasiny(C_car *car)
 {
     StubLog("C_traffic_generator::VyfunOdTeMasiny");
 }
-
-#pragma auto_inline(on)

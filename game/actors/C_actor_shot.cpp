@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x566f40
 C_actor_shot::C_actor_shot()
 {
@@ -91,5 +89,3 @@ void C_actor_shot::SetWeapon(int weapon)
 {
     StubLog("C_actor_shot::SetWeapon");
 }
-
-#pragma auto_inline(on)

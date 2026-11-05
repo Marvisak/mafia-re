@@ -144,13 +144,11 @@ if (MSVC_VERSION EQUAL 1200)
     # <string> asks for) and before LIBC, by the first object. rw_data comes from rw_data.h's #pragma comment(lib);
     # IJoy has no such request yet, so it is on the command line.
     target_link_libraries(game PRIVATE kernel32 user32 advapi32 winmm ls3df ijoy)
-    # Written functions whose callers aren't written yet, which /OPT:REF would drop: the scripts' IsEventID,
-    # InvalidateActorReg and FindActorLater (C_program.cpp), the garage manager's menu's OnBeforeCreate, whose vtable
-    # nothing constructs yet (g_loadsave.cpp), and the mission's FindActorByName, AddTimeTransparentObject and four
-    # FrmActBuff functions (Mission.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?IsEventID@C_program@@QAE_NHPAH@Z /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
-        /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z /INCLUDE:?OnBeforeCreate@GM_GarageManager@@UAEPBDXZ
-        /INCLUDE:?FindActorByName@C_mission@@QAEPAVC_actor@@PBD@Z
+    # Written functions whose callers aren't written yet, which /OPT:REF would drop: the scripts' InvalidateActorReg and
+    # FindActorLater (C_program.cpp), and the mission's AddTimeTransparentObject and four FrmActBuff functions
+    # (Mission.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
+        /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z
         /INCLUDE:?AddTimeTransparentObject@C_mission@@QAEXPAVI3D_object@@F@Z
         /INCLUDE:?FrmActBuff_StoreModel@C_mission@@QAEXPAVI3D_model@@@Z
         /INCLUDE:?FrmActBuff_GetModel@C_mission@@QAEPAVI3D_model@@PBD@Z
@@ -169,19 +167,13 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Go_FrontRight@C_human@@QAEX_N@Z
         /INCLUDE:?Go_BackLeft@C_human@@QAEXXZ
         /INCLUDE:?Go_BackRight@C_human@@QAEXXZ
-        /INCLUDE:?Can_DropOutFromCar_Free@C_human@@QAE_NPAVC_car@@H@Z
         /INCLUDE:?Do_Shoot@C_human@@QAE_N_NPAUS_vector@@@Z
-        /INCLUDE:?Can_SpecialStroke@C_human@@QAEPAV1@XZ
-        /INCLUDE:?Do_Castrate@C_human@@QAE_NPAV1@@Z
-        /INCLUDE:?Do_HardHead@C_human@@QAE_NPAV1@@Z
         /INCLUDE:?Do_Jump@C_human@@QAEXXZ
-        /INCLUDE:?Do_Climb@C_human@@QAE_NXZ
         /INCLUDE:?Do_ShockStart@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockDown@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockUp@C_human@@QAEXXZ
         /INCLUDE:?Do_ShockStumble@C_human@@QAEXXZ
         /INCLUDE:?Do_ThrowCocotFromCar@C_human@@QAE_NPAVC_car@@H@Z
-        /INCLUDE:?_intern_ThrowMeFromCar@C_human@@QAEXXZ
         /INCLUDE:?EineMeineKleineAutoInLuft@C_human@@QAEXPAVC_car@@@Z
         /INCLUDE:?Can_Aimed@C_human@@QAE_NXZ
         /INCLUDE:?Do_CornerBreath@C_human@@QAE_NW4E_corner_view@1@@Z
@@ -197,11 +189,10 @@ if (MSVC_VERSION EQUAL 1200)
     target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)
     # The bottles' AbsoluteImpulse, which C_game's NewExplosion, NewCartidge and NewGrenade call (C_bottle.cpp)
     target_link_options(game PRIVATE /INCLUDE:?AbsoluteImpulse@C_bottle@@QAEXAAUS_vector@@@Z)
-    # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the saved games', the AI's, the animations'),
-    # and the records' walk (C_cutscene_records.cpp), which the recorder's saves call
+    # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the AI's, the animations'), and the records'
+    # walk (C_cutscene_records.cpp), which the recorder's saves call
     target_link_options(game PRIVATE
         /INCLUDE:?InternalPlacementReset@C_actor@@QAEXXZ
-        /INCLUDE:?SaveGameLoadGuid@C_actor@@QAEXPAPAX@Z
         /INCLUDE:?IsPossibleCollAll@C_actor@@QAE_NUS_vector@@0MAAU2@PAPAV1@@Z
         /INCLUDE:?AddFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@M@Z
         /INCLUDE:?DelFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@@Z

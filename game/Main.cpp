@@ -232,15 +232,11 @@ uint __stdcall cbScene(SCN_CALLBACK_MESSAGE message, uint param1, uint param2)
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5be750
 void GameLoopSingle()
 {
     StubLog("GameLoopSingle");
 }
-
-#pragma auto_inline(on)
 
 // IGraph's error handler (PC only, the name is ours). Out of video memory, the game saves the settings without true
 // color textures for the next start, says so and quits.

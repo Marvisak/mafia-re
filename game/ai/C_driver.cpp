@@ -12,12 +12,8 @@ C_driver::~C_driver()
     path.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x43c4f0
 void C_driver::Tick(uint time)
 {
     StubLog("C_driver::Tick");
 }
-
-#pragma auto_inline(on)

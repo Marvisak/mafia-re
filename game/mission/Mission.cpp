@@ -1,7 +1,7 @@
 // The mission (PS2 Mission.cpp), the file at 0x53efb0-0x54913c (docs/game-files.md), written whole, in PS2's order
-// (PS2's InterCity, Garage and Freeride functions have no PC counterpart). Six functions nothing written calls yet are
-// kept with /INCLUDE (game/CMakeLists.txt): FindActorByName, AddTimeTransparentObject, FrmActBuff_StoreModel,
-// FrmActBuff_GetModel, FrmActBuff_StoreActorSound and FrmActBuff_GetActorSound.
+// (PS2's InterCity, Garage and Freeride functions have no PC counterpart). Five functions nothing written calls yet are
+// kept with /INCLUDE (game/CMakeLists.txt): AddTimeTransparentObject, FrmActBuff_StoreModel, FrmActBuff_GetModel,
+// FrmActBuff_StoreActorSound and FrmActBuff_GetActorSound.
 // Open: OpenBin (see its comment); C_str's buffer's operator new, whose copy OpenBin calls (0x5454c0: the original's
 // adds its two parameters, the size 9, so its buffer is packed, where ours adds 9 to the length; a packed C_rep moves
 // LS3DF); the time shift's Add (0x545280) and the order of the inline copies after OpenBin.
@@ -49,7 +49,6 @@
 #include "C_fstr.h"
 #include "I3D_cache.h"
 #include "Winstuff.h"
-#include "stub.h"
 
 #include <string.h>
 #include <map>

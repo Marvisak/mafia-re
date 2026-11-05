@@ -17,16 +17,12 @@
 #include "vehicles/C_car.h"
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5310d0
 ai_group *ai_groups::GetGroup(uint id)
 {
     StubLog("ai_groups::GetGroup");
     return NULL;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x531130
 void ai_groups::Init()
@@ -86,8 +82,6 @@ void ai_groups::Tick()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x530920
 void ai_group::ProcessEvents(uint time)
 {
@@ -114,8 +108,6 @@ bool ai_groups::Save(void **buf)
     StubLog("ai_groups::Save");
     return true;
 }
-
-#pragma auto_inline(on)
 
 // The groups by their states, from the last group (PS2's the same): the followers get into the leader's car
 // (FOLLOWSTATE_0), then, with FOLLOWF_HAS_POS and an entity driving, the car takes the group to its place, hunting
@@ -379,8 +371,6 @@ bool ai_follow_manager::Load(void **buf)
     return false;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x533c50
 void ai_fight_manager::LeaveParty(C_entity *e, C_actor *act)
 {
@@ -393,8 +383,6 @@ ai_fight_followship *ai_fight_manager::GetParty(C_entity *e, C_actor *act, uint 
     StubLog("ai_fight_manager::GetParty");
     return NULL;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x534ec0
 void ai_fight_manager::Init()
@@ -847,8 +835,6 @@ void ai_fight_manager::Tick()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x530a70
 float ai_group::GetCarFactor(C_car *car)
 {
@@ -888,5 +874,3 @@ void ai_fight_manager::DisbandCarParty(ai_fight_followship *party, bool unknown)
 {
     StubLog("ai_fight_manager::DisbandCarParty");
 }
-
-#pragma auto_inline(on)

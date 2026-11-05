@@ -24,6 +24,7 @@
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
 #include "rw_data.h"
+#include "stub.h"
 
 // Its initializer starts the file (0x5e8d10)
 // GLOBAL: GAME 0x6bd888
@@ -268,9 +269,14 @@ void RectangleProgress(float x, float y, float sx, float sy, uint color, float p
     igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
 }
 
-// The original's code between this and RectangleProgress (0x5e91b0-0x5e968f) is PS2's RectangleBB. Each direction
-// sets all three vertices, the base's first, as PS2's; another direction draws the vertices as they are. The texture's
-// corners follow the vertices.
+// STUB: GAME 0x5e91b0
+void RectangleBB(float x, float y, float sx, float sy, uint style)
+{
+    StubLog("RectangleBB");
+}
+
+// Each direction sets all three vertices, the base's first, as PS2's; another direction draws the vertices as they
+// are. The texture's corners follow the vertices.
 // FUNCTION: GAME 0x5e9690
 void Triangle(float x, float y, float sx, float sy, uint direction, uint color)
 {

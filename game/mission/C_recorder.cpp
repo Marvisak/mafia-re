@@ -56,8 +56,6 @@ float Ease(float u, float a, float b)
     return r;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5987f0
 void *C_recorder::vfunc_5(int a, int b, int c, int type)
 {
@@ -70,8 +68,6 @@ void C_recorder::vfunc_6(void *p)
 {
     StubLog("C_recorder::vfunc_6");
 }
-
-#pragma auto_inline(on)
 
 // Each case walks the second list, then the first one
 // FUNCTION: GAME 0x5989a0
@@ -133,15 +129,11 @@ int C_recorder::GetState()
     return state;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x598b80
 void C_recorder::SetTime(int unknown)
 {
     StubLog("C_recorder::SetTime");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x598d90
 int C_recorder::GetCurTime()
@@ -155,8 +147,6 @@ int C_recorder::GetScaledTime()
     return scaled_time;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x598db0
 bool C_recorder::AddActor(C_actor *actor, int a, int b, int c)
 {
@@ -169,8 +159,6 @@ void C_recorder::vfunc_7(int unknown)
 {
     StubLog("C_recorder::vfunc_7");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x599010
 bool C_recorder::RemoveActor(C_actor *actor, bool unknown)
@@ -225,8 +213,6 @@ void C_recorder::RemoveActors()
         recording.Clear();
     }
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5991e0
 bool C_recorder::HasActor(C_actor *actor)
@@ -302,8 +288,6 @@ void C_recorder::vfunc_44(const char *name)
     StubLog("C_recorder::vfunc_44 %s", name);
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59b5f0
 C_cutscene_anim_names::C_cutscene_anim_names()
 {
@@ -311,8 +295,6 @@ C_cutscene_anim_names::C_cutscene_anim_names()
     num_items = 0;
     items = NULL;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x59b7c0
 const char *C_cutscene_anim_names::GetName(int id)
@@ -364,8 +346,6 @@ void C_cutscene_anim_names::LoadDta(int handle)
     StubLog("C_cutscene_anim_names::LoadDta");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59bb50
 void C_cutscene_anim_names::Clear()
 {
@@ -374,8 +354,6 @@ void C_cutscene_anim_names::Clear()
     items = NULL;
     num_items = 0;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x59bb70
 int C_cutscene_anim_names::GetSaveSize()
@@ -429,8 +407,6 @@ void C_recorder::vfunc_22()
     StubLog("C_recorder::vfunc_22");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59c4e0
 void C_recorder::ReleaseAnims()
 {
@@ -446,16 +422,12 @@ void C_recorder::ReleaseAnims()
     anims.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x59c580
 int C_recorder::AddAnimName(const char *name)
 {
     StubLog("C_recorder::AddAnimName %s", name);
     return -1;
 }
-
-#pragma auto_inline(on)
 
 // The two have the same code: the original's slots point to one copy
 // FUNCTION: GAME 0x59c5c0 FOLDED
@@ -672,8 +644,6 @@ void C_cutscene_recording::ReleaseUnknown0()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x59d3c0
 void C_cutscene_recording::Unknown59d3c0()
 {
@@ -716,15 +686,11 @@ void C_recorder::vfunc_45(int unknown)
     StubLog("C_recorder::vfunc_45");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59e100
 int C_recorder::vfunc_46()
 {
     return 5;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x59e110
 void C_recorder::vfunc_47(int a, int b, int c, int d)
@@ -738,15 +704,11 @@ void C_recorder::vfunc_48(int a, int b, int c)
     StubLog("C_recorder::vfunc_48");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59e170
 void C_recorder::vfunc_49(uint time)
 {
     DabingTick(time);
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x59e180
 void C_recorder::OpenShow(int unknown)
@@ -754,23 +716,17 @@ void C_recorder::OpenShow(int unknown)
     StubLog("C_recorder::OpenShow");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x59e1e0
 void C_recorder::SetShowStart(int unknown)
 {
     cutscene_show_start = unknown;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x59e1f0
 void C_recorder::TickShow(int unknown)
 {
     StubLog("C_recorder::TickShow");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x59e2d0
 bool C_recorder::IsPlaying()
@@ -789,8 +745,6 @@ int C_recorder::vfunc_53()
     return 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x59e7e0
 C_seagull::C_seagull()
 {
@@ -798,10 +752,6 @@ C_seagull::C_seagull()
 }
 
 // The records' file is the one at 0x5c25b0-0x5c283c, which has no source yet
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x59e850
 C_seagull::~C_seagull()
 {
@@ -879,5 +829,3 @@ void C_seagull::AI(uint time)
     StubLog("C_seagull::AI");
     C_actor::AI(time);
 }
-
-#pragma auto_inline(on)

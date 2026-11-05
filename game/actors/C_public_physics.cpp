@@ -9,8 +9,6 @@
 // GLOBAL: GAME 0x63d78c
 std::vector<uint> C_public_physics::unknown_63d78c;
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x47c3a0
 C_public_physics::C_public_physics()
 {
@@ -22,10 +20,6 @@ C_public_physics::C_public_physics()
 C_public_physics::~C_public_physics()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x47c3f0
 void C_public_physics::GameInit()
@@ -56,5 +50,3 @@ bool C_public_physics::Hit(int type, const S_vector &v1, const S_vector &v2, con
     StubLog("C_public_physics::Hit");
     return C_PhThing::Hit(type, v1, v2, v3, f, act, u, frm);
 }
-
-#pragma auto_inline(on)

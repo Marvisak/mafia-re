@@ -252,8 +252,6 @@ void C_Break_plain_glass::Tick(uint time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5605c0
 void PrepareGlassSingleObject(S_DICE &dice)
 {
@@ -265,5 +263,3 @@ void C_Break_plain_glass::BreakGlass(I3D_frame *frm, const S_vector *dir, const 
 {
     StubLog("C_Break_plain_glass::BreakGlass");
 }
-
-#pragma auto_inline(on)

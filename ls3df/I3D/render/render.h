@@ -77,7 +77,7 @@ inline void SetVertexFormat(uint format)
 }
 
 // The second texture stage's color op (the name is a guess). The rendering calls it out of line; the copy the linker
-// keeps is in an I3D file not written yet.
+// keeps is I3d_lit_object.cpp's.
 // FUNCTION: LS3DF 0x10029f30
 // FUNCTION: LS3DF11 0x100295c0
 inline void SetColorOp1(uint op)
@@ -90,7 +90,7 @@ inline void SetColorOp1(uint op)
 }
 
 // D3DRS_CULLMODE, D3DCULL_CCW being the driver's m_CullMode (the billboards' rendering; the name is a guess). The
-// weather renderer calls it out of line; the copy the linker keeps is in an I3D file not written yet.
+// weather renderer calls it out of line; the original keeps I3d_lit_object.cpp's copy, ours I3d_driver.cpp's (open).
 // FUNCTION: LS3DF 0x10029ef0
 // FUNCTION: LS3DF11 0x10029580
 inline void SetCullState(uint cull)

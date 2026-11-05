@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x567d10
 C_bridge::C_bridge()
 {
@@ -19,10 +17,6 @@ void C_bridge::ShutDown(bool shut)
 {
     StubLog("C_bridge::ShutDown");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x567e20
 C_bridge::~C_bridge()
@@ -97,5 +91,3 @@ int C_bridge::SaveGameGetSize()
 {
     return 0;
 }
-
-#pragma auto_inline(on)

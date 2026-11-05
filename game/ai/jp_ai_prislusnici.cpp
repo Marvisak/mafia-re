@@ -23,15 +23,11 @@ void ai_police_nastenka::ZacatekSmeny()
     Init();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x53c550
 void ai_police_nastenka::AkceDokoncenaPlukovniku(ai_police_action *action)
 {
     StubLog("ai_police_nastenka::AkceDokoncenaPlukovniku");
 }
-
-#pragma auto_inline(on)
 
 // From the last action, then the time counted down to 0 (PS2's the same)
 // FUNCTION: GAME 0x53c890
@@ -45,8 +41,6 @@ void ai_police_nastenka::Tick(uint time)
         unknown_24 = 0;
 }
 
-#pragma auto_inline(off)
-
 // The PC's is in the file's range before AkceDokoncenaPlukovniku (PS2's order)
 // STUB: GAME 0x538df0
 void ai_police_action::Tick(uint time)
@@ -54,15 +48,11 @@ void ai_police_action::Tick(uint time)
     StubLog("ai_police_action::Tick");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x53c900
 bool ai_police_nastenka::PlukovnikuMasVChladkuPlajeraFrafera()
 {
     return unknown_24 <= 0 ? true : false;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x53cbf0
 void ai_police_nastenka::PanoveZmenaZatkneteHoZmrda(C_actor *actor)
@@ -103,8 +93,6 @@ bool ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi(C_actor *actor)
     return false;
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x53d480
 bool ai_police_nastenka::PanoveHrajeteSiNaPoldy()
 {
@@ -119,15 +107,11 @@ void ai_police_nastenka::KonecSmeny()
     Clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x53d7b0
 void ai_police_nastenka::ZastavMotorizovaneJednotky()
 {
     StubLog("ai_police_nastenka::ZastavMotorizovaneJednotky");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x53d8c0
 void ai_animitem_manager::Clear()
@@ -148,12 +132,8 @@ void ai_animitem_manager::Init()
     items.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x53cd20
 void ai_police_nastenka::PanoveKokotPremistujePrdel(C_actor *actor, C_actor *car, bool b)
 {
     StubLog("ai_police_nastenka::PanoveKokotPremistujePrdel");
 }
-
-#pragma auto_inline(on)

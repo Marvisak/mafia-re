@@ -8,7 +8,6 @@
 
 #include "mission/Mission.h"
 #include "rw_data.h"
-#include "stub.h"
 
 // GLOBAL: GAME 0x647f48
 g_collision gifCollision;

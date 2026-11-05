@@ -7,15 +7,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x434030
 C_dog::C_dog()
 {
     StubLog("C_dog::C_dog");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x434b50
 void C_dog::LoadTCK()
@@ -27,8 +23,6 @@ void C_dog::LoadTCK()
     // STRING: GAME 0x632454
     C_animations_machine_de_luxe::LoadTrack("Ddeath.tck");
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x434250
 C_dog::~C_dog()
@@ -142,5 +136,3 @@ bool C_dog::Init(I3D_frame *frm)
     StubLog("C_pumper::Init");
     return C_actor::Init(frm);
 }
-
-#pragma auto_inline(on)

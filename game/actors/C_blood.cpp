@@ -68,8 +68,6 @@ void C_blood_manager::Tick(uint time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x411e30
 bool C_blood::Tick(float time)
 {
@@ -77,14 +75,8 @@ bool C_blood::Tick(float time)
     return false;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x412140
 void C_blood_manager::AddBlood(S_vector &pos, S_vector &dir, float size, int unknown, bool unknown2)
 {
     StubLog("C_blood_manager::AddBlood");
 }
-
-#pragma auto_inline(on)

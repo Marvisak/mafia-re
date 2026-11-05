@@ -110,8 +110,6 @@ void C_compass::Activate(I3D_frame *frm)
     frame = frm;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x55d8a0
 C_fire::~C_fire()
 {
@@ -130,8 +128,6 @@ void C_using_object::AddObject(S_using_object *obj)
 {
     StubLog("C_using_object::AddObject");
 }
-
-#pragma auto_inline(on)
 
 // Looked for from the last object, its place taken by the last one. PS2's also releases a member at its 0x2c.
 // FUNCTION: GAME 0x55df10
@@ -213,8 +209,6 @@ void C_sound_table::FreeTables()
     tables.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x55ef30
 void C_sound_table::AddGroup(const char *name)
 {
@@ -257,8 +251,6 @@ void C_sound_table::OptimalizeTable(S_sound_table *table)
 {
     StubLog("C_sound_table::OptimalizeTable");
 }
-
-#pragma auto_inline(on)
 
 // Version 2 only. The file has the two counters, the groups and the sounds, each with its name, which the game skips
 // (only the editor needs them), its files and its parameters.
@@ -316,15 +308,11 @@ void C_sound_table::LoadTables(const char *name)
     dtaClose(h);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x55f5e0
 void C_sound_table::SaveTables(const char *name)
 {
     StubLog("C_sound_table::SaveTables %s", name);
 }
-
-#pragma auto_inline(on)
 
 // Picks one of the sound's files by their chances and one of its parameter sets at random. A file that doesn't open
 // hides the sound until ClearInvisibleFlag.
@@ -402,17 +390,11 @@ void soundArena::Init()
     unknown_204 = 0;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x55fa50
 void soundArena::SoundEmit(S_vector &pos, float range, float unknown, uint unknown2, C_actor *act)
 {
     StubLog("soundArena::SoundEmit");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x55e410
 void C_using_object::AddInvalidItem(uint id)
@@ -425,5 +407,3 @@ void C_using_object::DelInvalidItem(uint id)
 {
     StubLog("C_using_object::DelInvalidItem");
 }
-
-#pragma auto_inline(on)

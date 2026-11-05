@@ -5,17 +5,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4f1b50
 C_wagon::C_wagon()
 {
     StubLog("C_wagon::C_wagon");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4f1c20
 C_wagon::~C_wagon()
@@ -86,5 +80,3 @@ void C_wagon::GameDone()
     StubLog("C_wagon::GameDone");
     C_actor::GameDone();
 }
-
-#pragma auto_inline(on)

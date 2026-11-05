@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x439290
 C_door::C_door()
 {
@@ -37,10 +35,6 @@ void C_door::SetOpenAngle(float open)
 {
     StubLog("C_door::SetOpenAngle");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // The linker folded it with C_traffic_generator, C_wagon's
 // STUB: GAME 0x4393a0 FOLDED
@@ -146,5 +140,3 @@ void C_door::ChangeState()
 void C_door::Update(uint time)
 {
 }
-
-#pragma auto_inline(on)

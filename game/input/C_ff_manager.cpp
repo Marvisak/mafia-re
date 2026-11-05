@@ -123,18 +123,12 @@ void C_ff_manager::StartWaiting()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x444d20
 bool C_ff_manager::Start(int id)
 {
     StubLog("C_ff_manager::Start");
     return false;
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x444c40
 void C_ff_manager::SetGain(int id, float gain)
@@ -147,10 +141,6 @@ void C_ff_manager::SetDirection(int id, float direction)
 {
     StubLog("C_ff_manager::SetDirection");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x444810
 int C_ff_manager::CreateEffect(int kind, float direction, uint duration, float gain, uint priority, bool unknown)
@@ -183,14 +173,8 @@ void C_ff_manager::DeleteEffect(int id)
     StubLog("C_ff_manager::DeleteEffect");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x444ca0
 void C_ff_manager::SetDuration(int id, uint duration)
 {
     StubLog("C_ff_manager::SetDuration");
 }
-
-#pragma auto_inline(on)

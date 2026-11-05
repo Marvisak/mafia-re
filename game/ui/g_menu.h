@@ -55,7 +55,7 @@ void Rectangle(float x, float y, float sx, float sy, uint color);
 void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
 void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture);
 void Triangle(float x, float y, float sx, float sy, uint direction, uint color);
-// A bevelled frame on the rectangle (PS2's, a global function of g_menu.cpp, 0x5e91b0, a stub in g_m_comps.cpp for
+// A bevelled frame on the rectangle (PS2's, a global function of g_menu.cpp, 0x5e91b0, a stub there for
 // now): an outer border on its edges and an inner one a pixel inside, each a line list lit at the top left
 // (0x3fffffff, the bottom and right 0xaf000000), or the other way round where the style (BEVEL_*) sinks it. PS2's
 // RectangleBB__FffffUi; the PC's takes the style in ecx (/Gr) and pops the four floats (ret 0x10).

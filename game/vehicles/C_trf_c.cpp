@@ -20,23 +20,17 @@ std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems;
 // GLOBAL: GAME 0x63d834
 std::vector<C_traffic_car::S_ELEMENT *> C_traffic_car::v_elems_parking;
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4aa7a0
 C_traffic_car::C_traffic_car()
 {
     StubLog("C_traffic_car::C_traffic_car");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x4b8540
 std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
 {
     return v_elems_parking;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4b9560
 void C_traffic_car::ChlupatejVystrik()
@@ -55,10 +49,6 @@ void C_traffic_car::VypraskeeeKaaaru(C_actor *act)
 {
     StubLog("C_traffic_car::VypraskeeeKaaaru");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4aa830
 C_traffic_car::~C_traffic_car()
@@ -187,10 +177,6 @@ bool C_traffic_car::SaveGameLoad(void **buf)
     return C_actor::SaveGameLoad(buf);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4b8480
 I3D_frame *C_traffic_car::Corovacka(C_car *car)
 {
@@ -204,5 +190,3 @@ C_car *C_traffic_car::SebraliMiKaaaruSvine(C_car *car)
     StubLog("C_traffic_car::SebraliMiKaaaruSvine");
     return NULL;
 }
-
-#pragma auto_inline(on)

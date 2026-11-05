@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x47c540
 C_pumper::C_pumper()
 {
@@ -20,10 +18,6 @@ int C_pumper::ScriptCanPump(uint id)
     StubLog("C_pumper::ScriptCanPump");
     return 0;
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x47c700
 C_pumper::~C_pumper()
@@ -124,5 +118,3 @@ bool C_pumper::SaveGameLoad(void **buf)
     StubLog("C_pumper::SaveGameLoad");
     return C_actor::SaveGameLoad(buf);
 }
-
-#pragma auto_inline(on)

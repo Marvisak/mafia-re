@@ -11,8 +11,6 @@
 // GLOBAL: GAME 0x63d6d4
 int C_crash_obj::count;
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x431710
 void CreateCrashModel(I3D_frame *frm, S_vector &pos, S_vector &dir, float power)
 {
@@ -25,15 +23,11 @@ void C_crash_obj::DestroyOuterMostCrashObject()
     StubLog("C_crash_obj::DestroyOuterMostCrashObject");
 }
 
-#pragma auto_inline(on)
-
 // Declared, empty: it stores the vtable again before the base's
 // The original's: 0x431bd0
 C_crash_obj::~C_crash_obj()
 {
 }
-
-#pragma auto_inline(off)
 
 // The original's: 0x431be0
 void C_crash_obj::AI(uint time)
@@ -106,5 +100,3 @@ int C_crash_obj::GetMaterialID(I3D_frame *frm)
     StubLog("C_crash_obj::GetMaterialID");
     return C_PhThing::GetMaterialID(frm);
 }
-
-#pragma auto_inline(on)

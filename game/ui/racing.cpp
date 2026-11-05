@@ -8,8 +8,6 @@
 // GLOBAL: GAME 0x646dbc
 C_racing *CRacing;
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x551830
 C_racing::C_racing()
 {
@@ -22,29 +20,17 @@ C_racing::~C_racing()
     StubLog("C_racing::~C_racing");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x552e40
 void C_racing::GameInit()
 {
     StubLog("C_racing::GameInit");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x552f90
 void C_racing::GameDone()
 {
     StubLog("C_racing::GameDone");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x555e40
 void C_racing::Tick(uint time)
@@ -57,7 +43,3 @@ void C_racing::LoadReplay(uint size, void *data)
 {
     StubLog("C_racing::LoadReplay");
 }
-
-#pragma auto_inline(on)
-
-

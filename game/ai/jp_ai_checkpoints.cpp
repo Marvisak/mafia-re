@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4fbae0
 void ai_wayfind::GetPosition(S_vector &pos, uint *node, uint *found, uint mode)
 {
@@ -20,5 +18,3 @@ bool ai_path::isInConnection(const S_vector &a, const S_vector &b, const S_vecto
     StubLog("ai_path::isInConnection");
     return false;
 }
-
-#pragma auto_inline(on)

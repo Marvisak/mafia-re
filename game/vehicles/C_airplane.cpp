@@ -7,8 +7,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x409390
 C_airplane::C_airplane()
 {
@@ -39,10 +37,6 @@ void C_airplane::ShowDamageIndicator(bool show)
 {
     StubLog("C_airplane::ShowDamageIndicator %d", show);
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x409520
 C_airplane::~C_airplane()
@@ -152,5 +146,3 @@ bool C_airplane::Init(I3D_frame *frm)
 void C_airplane::NetDirect(uint time)
 {
 }
-
-#pragma auto_inline(on)

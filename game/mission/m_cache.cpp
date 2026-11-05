@@ -47,17 +47,11 @@ void C_cache_base_block::Close()
     model_sets.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4013f0
 void C_cache_base_block::Open(C_chunk *chunk, I3D_scene *scene)
 {
     StubLog("C_cache_base_block::Open");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4020b0
 void C_cache_base_block::Tick(int time)
@@ -65,16 +59,8 @@ void C_cache_base_block::Tick(int time)
     StubLog("C_cache_base_block::Tick");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x402dc0
 void C_cache_base_block::VisibleAllFrames()
 {
     StubLog("C_cache_base_block::VisibleAllFrames");
 }
-
-#pragma auto_inline(on)
-
-

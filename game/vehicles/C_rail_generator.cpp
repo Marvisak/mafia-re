@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x596620
 C_rail_generator::C_rail_generator()
 {
@@ -19,10 +17,6 @@ C_rail_generator::C_rail_generator()
 C_rail_generator::~C_rail_generator()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // The linker's folded empty function of the out-of-line kind (0x4ab130)
 void C_rail_generator::Update(uint time)
@@ -70,5 +64,3 @@ void C_rail_generator::AI(uint time)
     StubLog("C_rail_generator::AI");
     C_actor::AI(time);
 }
-
-#pragma auto_inline(on)

@@ -6,17 +6,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x418930
 C_dyn_object::C_dyn_object()
 {
     StubLog("C_dyn_object::C_dyn_object");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x418e00
 C_dyn_object::~C_dyn_object()
@@ -123,5 +117,3 @@ void C_dyn_object::PlayStep(int a)
 void C_dyn_object::PlayRecord(int a)
 {
 }
-
-#pragma auto_inline(on)

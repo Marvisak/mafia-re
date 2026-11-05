@@ -138,15 +138,11 @@ void C_shvestky::GameDone()
     road_block_enemies.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x49a120
 C_shvestky::S_shvestky::~S_shvestky()
 {
     StubLog("C_shvestky::S_shvestky::~S_shvestky");
 }
-
-#pragma auto_inline(on)
 
 // The semaphores' lights in each of their ten phases as numbers, the table game.cpp has as bitfields (red for five,
 // green for four, then orange): TestOverRed's test of a red light (the name is ours)
@@ -747,8 +743,6 @@ inline void C_shvestky::CreateShvestkyTest()
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x49b860
 void C_shvestky::SetActive(bool on, int text, bool unknown2)
 {
@@ -852,8 +846,6 @@ void C_shvestky::DelDoRiciActor(C_actor *act)
 {
     StubLog("C_shvestky::DelDoRiciActor");
 }
-
-#pragma auto_inline(on)
 
 // PS2's order and shapes. The distance is the camera's on the ground, 150 m: an entity goes once it is that far, or by
 // its AISTATEF_DISMISSED where its human_type is 4; one in a car (of ACTOR_CAR) goes only once that far, the car
@@ -961,8 +953,6 @@ void C_shvestky::TickDoRiciActors(bool all)
         do_rici_actors.clear();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x49eee0
 void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
 {
@@ -988,10 +978,6 @@ void C_shvestky::VasekSelChlastatNaOslavu(C_human *human, const S_vector &pos, f
     StubLog("C_shvestky::VasekSelChlastatNaOslavu");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x49d0b0
 void C_shvestky::CarSteal(C_human *human, bool a, bool b)
 {
@@ -1003,10 +989,6 @@ void C_shvestky::NextNaSrackySoudruh(C_human *human)
 {
     StubLog("C_shvestky::NextNaSrackySoudruh");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x49d030
 void C_shvestky::HumanBoxing(C_human *human)
@@ -1020,10 +1002,6 @@ int C_shvestky::PocetPrestupku(C_human *human)
     StubLog("C_shvestky::PocetPrestupku");
     return 0;
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x49a140
 void C_shvestky::DezoSebralGumyIRadio(C_car *car)
@@ -1042,5 +1020,3 @@ void C_shvestky::RenamePoliceCar(C_car *car)
 {
     StubLog("C_shvestky::RenamePoliceCar");
 }
-
-#pragma auto_inline(on)

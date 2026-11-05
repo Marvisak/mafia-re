@@ -101,16 +101,12 @@ C_program::~C_program()
         delete[] source;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x460ba0
 bool C_program::SaveSourceCode(C_chunk *chunk)
 {
     StubLog("C_program::SaveSourceCode");
     return true;
 }
-
-#pragma auto_inline(on)
 
 // A byte nothing reads, then the name and the source, each as its length and its bytes, as PS2's
 // FUNCTION: GAME 0x460c90
@@ -2822,8 +2818,6 @@ void C_program::InvalidateActorReg(C_actor *act)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x46cef0
 int C_program::SaveGameGetSize()
 {
@@ -2844,8 +2838,6 @@ bool C_program::SaveGameLoad(void **buf)
     StubLog("C_program::SaveGameLoad");
     return true;
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x46d380
 void C_program::FindActorLater(int reg, uint id)

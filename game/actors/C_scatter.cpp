@@ -6,17 +6,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x58e350
 C_scatter::C_scatter()
 {
     StubLog("C_scatter::C_scatter");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x58e3c0
 C_scatter::~C_scatter()
@@ -84,5 +78,3 @@ void C_scatter::AI(uint time)
     StubLog("C_scatter::AI");
     C_actor::AI(time);
 }
-
-#pragma auto_inline(on)

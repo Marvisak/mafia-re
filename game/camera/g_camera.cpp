@@ -245,15 +245,11 @@ void G_Camera::Link(I3D_frame *frm)
         SetMode(mafiaLoadSave.settings.camera, true);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5ed210
 void G_Camera::SetSwing(bool on, float amount, I3D_frame *frm)
 {
     StubLog("G_Camera::SetSwing");
 }
-
-#pragma auto_inline(on)
 
 // PS2's without its test of a lock (0xa5) at the start and the car camera it sets again after Begin, for the car of
 // the mission's player in a state of its own
@@ -1276,8 +1272,6 @@ void G_Camera::FreeLookBase(float x, float y, S_vector &dir, S_vector &up, S_vec
     camera->Update();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f39f0
 void G_Camera::LockAt(const S_vector &pos, const S_vector &dir)
 {
@@ -1289,8 +1283,6 @@ void G_Camera::SetCutscene(bool on)
 {
     StubLog("G_Camera::SetCutscene");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x5f4220
 void G_Camera::PopMode(bool clear)
@@ -1308,8 +1300,6 @@ void G_Camera::PopMode(bool clear)
         mode_changed = false;
     push_pop.pop_back();
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5f42e0
 void G_Camera::DialogLook(C_human *from, C_human *to)
@@ -1329,25 +1319,17 @@ void G_Camera::DialogStop()
     StubLog("G_Camera::DialogStop");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x5f4690
 bool G_Camera::IsInDialog()
 {
     return mode == CAMERA_C_DIALOG;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f4ab0
 void G_Camera::SetSniperMode(bool on)
 {
     StubLog("G_Camera::SetSniperMode");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5ed460
 void G_Camera::LezeDoToyoty(bool on)
@@ -1361,10 +1343,6 @@ void G_Camera::EnableFreeLook(bool on, bool unknown)
     StubLog("G_Camera::EnableFreeLook");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5f3ff0
 void G_Camera::PushMode()
 {
@@ -1376,5 +1354,3 @@ void G_Camera::SetLookTo(S_vector pos, I3D_frame *frm)
 {
     StubLog("G_Camera::SetLookTo");
 }
-
-#pragma auto_inline(on)

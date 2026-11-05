@@ -99,12 +99,8 @@ void C_Debris::Tick(uint time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x565060
 void C_Debris::GenerateDebris(const S_vector &pos, int num, float size, float speed, float time, const S_vector *dir)
 {
     StubLog("C_Debris::GenerateDebris");
 }
-
-#pragma auto_inline(on)

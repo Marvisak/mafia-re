@@ -9,8 +9,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x505d20
 void ai_sensors::Init(void *owner)
 {
@@ -97,10 +95,6 @@ void C_entity::VzbudSeUzSouTitulky()
 {
     StubLog("C_entity::VzbudSeUzSouTitulky");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x507310
 C_entity::~C_entity()
@@ -256,19 +250,11 @@ bool C_entity::SaveGameLoad(void **buf)
     return C_human::SaveGameLoad(buf);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5080e0
 void C_entity::cbHitInfo(int type, float f, C_actor *act)
 {
     StubLog("C_entity::cbHitInfo");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5289b0
 void C_entity::InvalidateSelf()
@@ -276,14 +262,8 @@ void C_entity::InvalidateSelf()
     StubLog("C_entity::InvalidateSelf");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x528610
 void C_entity::WeaponGetInfo()
 {
     StubLog("C_entity::WeaponGetInfo");
 }
-
-#pragma auto_inline(on)

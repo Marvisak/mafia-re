@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4435b0
 C_drop_in_weapon::C_drop_in_weapon()
 {
@@ -19,10 +17,6 @@ C_drop_in_weapon::C_drop_in_weapon()
 C_drop_in_weapon::~C_drop_in_weapon()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x443660
 void C_drop_in_weapon::Update(uint time)
@@ -51,5 +45,3 @@ void C_drop_in_weapon::GameDone()
     StubLog("C_drop_in_weapon::GameDone");
     C_PhThing::GameDone();
 }
-
-#pragma auto_inline(on)

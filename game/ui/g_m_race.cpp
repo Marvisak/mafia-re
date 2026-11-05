@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x549b80
 void ExecuteRacingMenu()
 {
@@ -26,5 +24,3 @@ uint RacingMisse06ExecuteLoop()
     StubLog("RacingMisse06ExecuteLoop");
     return 0;
 }
-
-#pragma auto_inline(on)

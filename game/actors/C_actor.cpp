@@ -25,7 +25,6 @@
 #include "mission/game.h"
 #include "mission/C_recorder.h"
 #include "mission/C_effects.h"
-#include "stub.h"
 
 // The file's only initialized data, and its literals come before its functions'. An id is the animation in its low nine
 // bits with at most one bit above them for its set: the eight sets of breathing, running and walking, the corner

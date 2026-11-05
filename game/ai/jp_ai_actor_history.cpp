@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4f77f0
 ai_character_log *ai_logs::GetLog(C_actor *act)
 {
@@ -15,15 +13,9 @@ ai_character_log *ai_logs::GetLog(C_actor *act)
     return NULL;
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4f7850
 ai_character_log *ai_logs::GetMaxAngryCharacter()
 {
     StubLog("ai_logs::GetMaxAngryCharacter");
     return NULL;
 }
-
-#pragma auto_inline(on)

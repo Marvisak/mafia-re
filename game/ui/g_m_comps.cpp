@@ -2,16 +2,13 @@
 // factories of 29 components' classes, each a global whose initializer registers it, in PS2's order without PS2's own
 // classes. The classes are in g_m_comps.h, their functions in the class: the file's code is the factories' Make and
 // MakeDup, each class's functions after the first one that needs its vtable. The two other files of components,
-// g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written whole: every factory with its class. After them a stub of
-// g_menu.cpp's RectangleBB.
+// g_m_comps2.cpp and g_m_compsm.cpp, have nine more. Written whole: every factory with its class.
 
 // No precompiled header (#pragma hdrstop before the includes): the copies of each class's in-class functions follow
 // its factory's Make, as the original's do, where under /YX they came after all the factories' functions.
 #pragma hdrstop
 
 #include "ui/g_m_comps.h"
-
-#include "stub.h"
 
 // The factories (PS2's names), in the original's order
 // GLOBAL: GAME 0x6bd70c
@@ -73,14 +70,3 @@ G_Factory<GM_ButtonSelect> GM_ButtonSelectFactory;
 G_Factory<GM_ButtonSelectBool> GM_ButtonSelectBoolFactory;
 // GLOBAL: GAME 0x6bd54c
 G_Factory<GM_EditNum> GM_EditNumFactory;
-
-#pragma auto_inline(off)
-
-// g_menu.cpp's (0x5e91b0, between RectangleProgress and Triangle), here for now: only the player row calls it
-// STUB: GAME 0x5e91b0
-void RectangleBB(float x, float y, float sx, float sy, uint style)
-{
-    StubLog("RectangleBB");
-}
-
-#pragma auto_inline(on)

@@ -5,8 +5,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4bc360
 C_turnout::C_turnout()
 {
@@ -18,10 +16,6 @@ C_turnout::C_turnout()
 C_turnout::~C_turnout()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // The original's is C_pumper's, folded: it logs that name, so ours folds too
 // STUB: GAME 0x47c760 FOLDED
@@ -100,14 +94,8 @@ bool C_turnout::SaveGameLoad(void **buf)
     return C_actor::SaveGameLoad(buf);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4bd210
 void C_turnout::Start()
 {
     StubLog("C_turnout::Start");
 }
-
-#pragma auto_inline(on)

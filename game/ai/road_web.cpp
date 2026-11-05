@@ -16,8 +16,6 @@ C_roads::~C_roads()
 {
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x559d40
 void C_roads::SaveData(C_chunk *chunk)
 {
@@ -61,5 +59,3 @@ void C_roads::SortNodesByX()
 {
     StubLog("C_roads::SortNodesByX");
 }
-
-#pragma auto_inline(on)

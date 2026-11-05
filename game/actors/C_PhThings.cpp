@@ -6,8 +6,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x459e90
 C_PhThing::C_PhThing()
 {
@@ -25,10 +23,6 @@ void C_PhThing::ExternalImpuls(const S_vector &impuls, const S_vector &pos)
 {
     StubLog("C_PhThing::ExternalImpuls");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x459f90
 C_PhThing::~C_PhThing()
@@ -119,5 +113,3 @@ bool C_PhThing::SaveGameLoad(void **buf)
 void C_PhThing::NetDirect(uint time)
 {
 }
-
-#pragma auto_inline(on)

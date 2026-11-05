@@ -5,8 +5,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x596200
 C_racecam::C_racecam()
 {
@@ -18,10 +16,6 @@ C_racecam::C_racecam()
 C_racecam::~C_racecam()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // The linker's folded copy (0x4aa490)
 bool C_racecam::SaveGameSave(void **buf)
@@ -76,5 +70,3 @@ void C_racecam::GameDone()
     StubLog("C_racecam::GameDone");
     C_actor::GameDone();
 }
-
-#pragma auto_inline(on)

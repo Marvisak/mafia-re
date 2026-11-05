@@ -5,8 +5,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5674f0
 C_box_new::C_box_new()
 {
@@ -18,10 +16,6 @@ C_box_new::C_box_new()
 C_box_new::~C_box_new()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x567540
 bool C_box_new::Init(I3D_frame *frm)
@@ -73,5 +67,3 @@ bool C_box_new::Hit(int type, const S_vector &v1, const S_vector &v2, const S_ve
     StubLog("C_box_new::Hit");
     return C_PhThing::Hit(type, v1, v2, v3, f, act, u, frm);
 }
-
-#pragma auto_inline(on)

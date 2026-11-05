@@ -12,17 +12,11 @@ bool C_player::can_car_damage;
 // GLOBAL: GAME 0x6478b4
 I3D_frame *C_player::navi_frame;
 
-#pragma auto_inline(off)
-
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x58f160
 void SetPlayerNaviPoint(I3D_frame *frm)
 {
     C_player::navi_frame = frm;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x58f170
 C_player::C_player()
@@ -30,19 +24,11 @@ C_player::C_player()
     StubLog("C_player::C_player");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x5942c0
 void C_player::UpdateControls()
 {
     StubLog("C_player::UpdateControls");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x5952f0
 void C_player::IndicatorSetAimed()
@@ -56,10 +42,6 @@ void C_player::SetSniperMode(bool on)
     StubLog("C_player::SetSniperMode");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x595e10
 void C_player::SetAlpha(float alpha)
 {
@@ -72,8 +54,6 @@ void C_player::LockControls(bool lock)
     StubLog("C_player::LockControls");
 }
 
-#pragma auto_inline(on)
-
 // The player fully visible again (PS2 name), which the camera's Begin calls for the cameras outside his eyes
 // FUNCTION: GAME 0x5961b0
 void C_player::FadeReset()
@@ -82,8 +62,6 @@ void C_player::FadeReset()
     fade_target = 1.0f;
     SetAlpha(fade_alpha);
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x58f220
 C_player::~C_player()
@@ -170,10 +148,6 @@ bool C_player::Hit(int type, const S_vector &v1, const S_vector &v2, const S_vec
     return C_human::Hit(type, v1, v2, v3, f, act, u, frm);
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x595570
 void C_player::_intern_ChangeModel()
 {
@@ -185,10 +159,6 @@ void C_player::SetCarDamage(C_car *car)
 {
     StubLog("C_player::SetCarDamage");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x595390
 void C_player::ShootDeAimed(S_item_def *weapon)
@@ -207,5 +177,3 @@ void C_player::DelAlphaObject(I3D_frame *frm)
 {
     StubLog("C_player::DelAlphaObject");
 }
-
-#pragma auto_inline(on)

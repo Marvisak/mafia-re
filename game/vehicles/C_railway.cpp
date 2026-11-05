@@ -6,17 +6,11 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4865b0
 C_railway::C_railway()
 {
     StubLog("C_railway::C_railway");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x486760
 C_railway::~C_railway()
@@ -156,10 +150,6 @@ void C_railway::NetDirect(uint time)
 {
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x495100
 void C_railway::AddOuterEntries()
 {
@@ -196,10 +186,6 @@ void C_railway::SetRainDummy(bool in, I3D_frame *frm)
     StubLog("C_railway::SetRainDummy");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x495d30
 bool C_railway::GetEntry(C_actor *act, S_vector *pos, S_vector *dir, uint *entry)
 {
@@ -219,5 +205,3 @@ void C_railway::Lock()
 {
     StubLog("C_railway::Lock");
 }
-
-#pragma auto_inline(on)

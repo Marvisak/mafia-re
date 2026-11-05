@@ -24,8 +24,6 @@ C_web_path::~C_web_path()
     delete[] pathfind;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x54a3b0
 void C_web_path::AddNode(float x, float y, float z, ushort)
 {
@@ -38,14 +36,10 @@ void C_web_path::DeleteNode(uint)
     StubLog("C_web_path::DeleteNode");
 }
 
-#pragma auto_inline(on)
-
 // Empty, as PS2's: the vtable's entry is the linker's folded empty function (0x4aabe0, input/C_ff_manager.h)
 void C_web_path::DrawConnections()
 {
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x54a550
 void C_web_path::CreateConnect(uint, uint)
@@ -66,16 +60,12 @@ void C_web_path::LoadNodes(C_chunk *chunk)
     StubLog("C_web_path::LoadNodes");
 }
 
-#pragma auto_inline(on)
-
 // Returns 0, as PS2's: the vtable's entry is a folded copy
 // FUNCTION: GAME 0x5e3fd0 FOLDED
 int C_web_path::SelectLine(int, int)
 {
     return 0;
 }
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x54ab40
 void C_web_path::SaveNodes(C_chunk *)
@@ -118,8 +108,6 @@ void C_web_path::SortNodesByX()
 {
     StubLog("C_web_path::SortNodesByX");
 }
-
-#pragma auto_inline(on)
 
 // Clears two flags of the nodes and their connections, from the last node, as PS2's
 // FUNCTION: GAME 0x54cd20

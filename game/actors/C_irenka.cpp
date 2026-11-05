@@ -5,8 +5,6 @@
 
 #include "stub.h"
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x445850
 C_irenka::C_irenka()
 {
@@ -18,10 +16,6 @@ C_irenka::C_irenka()
 C_irenka::~C_irenka()
 {
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4458b0
 void C_irenka::AI(uint time)
@@ -67,5 +61,3 @@ int C_irenka::SaveGameGetSize()
 {
     return 0;
 }
-
-#pragma auto_inline(on)

@@ -217,8 +217,6 @@ bool check_seg_clusters::Load()
     return true;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x53e4b0
 bool check_seg::existIndex(uint value, uint lo, uint hi)
 {
@@ -246,5 +244,3 @@ uint check_seg_clusters::NumSegments()
     StubLog("check_seg_clusters::NumSegments");
     return 0;
 }
-
-#pragma auto_inline(on)

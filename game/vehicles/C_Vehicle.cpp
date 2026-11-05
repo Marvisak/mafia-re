@@ -31,15 +31,11 @@ std::vector<I3D_sector *> C_Vehicle::v_light_sector;
 // GLOBAL: GAME 0x63d880
 std::vector<I3D_sector *> C_Vehicle::v_sound_sector;
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4c31e0
 void C_Vehicle::Deactivate(uint flags)
 {
     StubLog("C_Vehicle::Deactivate %u", flags);
 }
-
-#pragma auto_inline(on)
 
 // The user tyre first, then a copy of each, as PS2's
 // FUNCTION: GAME 0x4c5820
@@ -131,8 +127,6 @@ S_vector C_Vehicle::GetWheelCamPos(int wheel, const S_vector &offset)
     return pos;
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4cb130
 void C_Vehicle::SetPower(float power, bool unknown)
 {
@@ -167,8 +161,6 @@ void C_Vehicle::ExternalImpuls(const S_vector &impuls, const S_vector &pos, uint
     StubLog("C_Vehicle::ExternalImpuls");
 }
 
-#pragma auto_inline(on)
-
 // FUNCTION: GAME 0x4cc620
 const S_vector &C_Vehicle::GetHeadPos()
 {
@@ -192,8 +184,6 @@ const S_vector &C_Vehicle::GetVehiclePivotPos(bool b)
 {
     return b ? pivot_pos_2 : pivot_pos;
 }
-
-#pragma auto_inline(off)
 
 // Counts the locks up or down, the vehicle locked while there are any (PS2 name)
 // FUNCTION: GAME 0x4cd600
@@ -239,8 +229,6 @@ void C_Vehicle::SetDynamicCollsOn(bool on, bool unknown)
     StubLog("C_Vehicle::SetDynamicCollsOn %d", on);
 }
 
-#pragma auto_inline(on)
-
 // Unless it is there already, searched from the last one, as PS2's
 // FUNCTION: GAME 0x4ce560
 void C_Vehicle::AddSectorForProjectorLights(I3D_sector *sector)
@@ -269,17 +257,11 @@ void C_Vehicle::AddSectorForSounds(I3D_sector *sector)
         v_sound_sector.push_back(sector);
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4ce960
 void C_Vehicle::CalmVehicle(uint time)
 {
     StubLog("C_Vehicle::CalmVehicle");
 }
-
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
 
 // STUB: GAME 0x4cb570
 void C_Vehicle::SetSteeringLinearity(float linearity)
@@ -299,10 +281,6 @@ void C_Vehicle::EnableSounds(bool on)
     StubLog("C_Vehicle::EnableSounds");
 }
 
-#pragma auto_inline(on)
-
-#pragma auto_inline(off)
-
 // STUB: GAME 0x4d7a80
 void C_Vehicle::OpenWindow(int seat, bool open)
 {
@@ -315,5 +293,3 @@ bool C_Vehicle::IsWindowOpen(int seat)
     StubLog("C_Vehicle::IsWindowOpen");
     return false;
 }
-
-#pragma auto_inline(on)

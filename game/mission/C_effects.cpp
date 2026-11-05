@@ -116,16 +116,12 @@ void C_effects::Load()
     chunk.Close();
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x449690
 int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm)
 {
     StubLog("C_effects::CreateParticle");
     return -1;
 }
-
-#pragma auto_inline(on)
 
 // The static emitters, then, once a mission has started, those in use: one whose Tick ends is reset and goes back to
 // the free ones (PS2's particle manager's the same, with one counter). The counter's decrement in the erase's argument
@@ -149,8 +145,6 @@ void C_effects::ClientTick(int time)
     }
 }
 
-#pragma auto_inline(off)
-
 // STUB: GAME 0x44a240
 void C_effects::DestroyParticle(int particle)
 {
@@ -169,8 +163,6 @@ void C_effects::PauseParticle(int particle, bool emit)
 {
     StubLog("C_effects::PauseParticle");
 }
-
-#pragma auto_inline(on)
 
 // FUNCTION: GAME 0x44a2f0
 void C_effects::ClearEmitters()
@@ -355,4 +347,3 @@ void C_effects::LoadStaticParticles()
 end:
     ;
 }
-
