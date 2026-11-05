@@ -1988,7 +1988,7 @@ public:
 // ?GetClientOrigin@GM_Component@@UAEXAAM0@Z
 
 // FUNCTION: GAME 0x5d9360
-// ?CanBeParent@GM_Component@@UAE_NXZ
+// ?GetBool@GM_Component@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9430
 // ?GetType@GM_UpUp@@UAEIXZ
@@ -2010,7 +2010,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_WindowScroll@@UAE_NXZ
+// ?CanBeParent@GM_Grid@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9a20
 // ?GetType@GM_WindowScroll@@UAEIXZ
@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_WindowClean@@UAE@XZ
+// ??1GM_StaticTextNum@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2058,7 +2058,7 @@ public:
 // ?GetType@GM_StaticTextMem@@UAEIXZ
 
 // FUNCTION: GAME 0x5da1f0
-// ?SetText@GM_StaticTextMem@@UAEXPAE@Z
+// ?SetText@GM_MenuItemMem@@UAEXPAE@Z
 
 // FUNCTION: GAME 0x5da220
 // ?Draw@GM_StaticTextMem@@UAEXI@Z
@@ -2279,7 +2279,7 @@ public:
 
 // The original kept the copy of the yes or no selection ('bslb'), which draws the same, after its factory's Make
 // FUNCTION: GAME 0x5dd040
-// ?Draw@GM_ButtonSelectBool@@UAEXI@Z
+// ?Draw@GM_ButtonSelect@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dd0d0
 // ?Mouse@GM_ButtonSelectBool@@UAEIHHHII@Z
@@ -2311,7 +2311,7 @@ public:
 
 // The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_SliderInteger@@UAEIXZ
+// ?GetDword@GM_ListCars@@UAEIXZ
 
 // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
@@ -2319,7 +2319,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_GGM_StaticTextMem@@UAEPAXI@Z
+// ??_EGM_Nahrada@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

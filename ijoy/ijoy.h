@@ -264,3 +264,10 @@ enum {
 // have the JoyBase create its own. flags are JOY_BASE_*.
 extern "C" bool EXPORT CreateJoyBase(IJoyBase **joy_base, HINSTANCE hinstance, HWND hwnd, IDirectInput7A *direct_input,
     uint flags);
+
+// The game links the import library as a default library, which its first object asks for after the C++ library: the
+// thunks follow libcp's objects, before rw_data's. CMake defines ijoy_EXPORTS for the DLL's own build, which must not
+// ask for it.
+#ifndef ijoy_EXPORTS
+#pragma comment(lib, "IJoy.lib")
+#endif

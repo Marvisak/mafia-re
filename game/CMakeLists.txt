@@ -14,6 +14,7 @@ project(game)
 # race cameras), ui/ (the menus, the HUD, the saved games and the console); at the top the start (WinMain, main,
 # Winstuff), the chunks, the caches and the tools.
 add_executable(game WIN32
+    __mem_dbg__.cpp
     mission/m_cache.cpp
     actors/C_actor.cpp
     vehicles/C_airplane.cpp
@@ -120,9 +121,9 @@ if (MSVC_VERSION GREATER 1500)
     target_include_directories(game PRIVATE $ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}/shared)
 endif()
 target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty/dx81sdk/include)
-# rw_data.lib, which rw_data.h names, is our rw_data target's import library
-add_dependencies(game rw_data)
-target_link_directories(game PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data>)
+# rw_data.lib and IJoy.lib, which rw_data.h and ijoy.h name, are our rw_data and IJoy targets' import libraries
+add_dependencies(game rw_data ijoy)
+target_link_directories(game PRIVATE $<TARGET_LINKER_FILE_DIR:rw_data> $<TARGET_LINKER_FILE_DIR:ijoy>)
 
 if (MSVC_VERSION EQUAL 1200)
     # Original compile flags (/O2 comes from cmake/vc6-flags.cmake)
@@ -141,9 +142,9 @@ if (MSVC_VERSION EQUAL 1200)
     # The original's import directory lists KERNEL32, USER32, ADVAPI32, WINMM, LS3DF, IJoy and rw_data, in the order LINK
     # searched them. Its code has LS3DF's thunks right after the game code (0x60fc30), then libcp's objects, then IJoy's and
     # rw_data's thunks (0x6101f2), then LIBC's: so IJoy and rw_data were default libraries, asked for after libcp (which
-    # <string> asks for) and before LIBC, by the first object. rw_data comes from rw_data.h's #pragma comment(lib);
-    # IJoy has no such request yet, so it is on the command line.
-    target_link_libraries(game PRIVATE kernel32 user32 advapi32 winmm ls3df ijoy)
+    # <string> asks for) and before LIBC, by the first object (__mem_dbg__.cpp), through ijoy.h's and rw_data.h's
+    # #pragma comment(lib).
+    target_link_libraries(game PRIVATE kernel32 user32 advapi32 winmm ls3df)
     # Written functions whose callers aren't written yet, which /OPT:REF would drop: the scripts' InvalidateActorReg and
     # FindActorLater (C_program.cpp), and the mission's AddTimeTransparentObject and four FrmActBuff functions
     # (Mission.cpp)
