@@ -1086,7 +1086,7 @@ bool C_game::Done()
     if (cutscene.IsPlaying())
     {
         cutscene.Close();
-        camera.SetCutscene(false);
+        camera.Unlock(false);
     }
     mafiaIndicators.RadarClear();
     mafiaIndicators.SubtitlesClear();

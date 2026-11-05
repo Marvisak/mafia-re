@@ -2,13 +2,36 @@
 
 #include "Main.h"
 
-class C_car;
+#include <vector>
 
-// Where an opponent is in the race (the name is ours): what the race camera reads
-struct S_opponent_place
+class C_car;
+class C_web_node;
+
+// A gate of a circuit (PS2 C_racing_gate, which PS2's InternTestGate takes). Only what the race cameras read.
+class C_racing_gate
 {
+public:
     uchar unknown_0[0x1c];
-    int gate;                           // 0x1c (PS2 0x20), the number of the gate the opponent passed last (ours)
+    int number;                         // 0x1c (PS2 0x20), the gate's number on the circuit (the name is ours)
+};
+
+// One of a circuit's race cameras (PS2's name isn't known; ours): PS2's C_circuit::DetermineRaceCams gives it the
+// circuit's two gates nearest to its node, the lower number first
+struct S_circuit_race_cam
+{
+    C_web_node *node;                   // 0x0, the path web's node it stands by (the name is ours)
+    C_racing_gate *gate_from;           // 0x4
+    C_racing_gate *gate_to;             // 0x8
+};
+
+// A circuit of the races (PS2 C_circuit, racing.cpp). Only what the race cameras read; the vectors' names are ours.
+class C_circuit
+{
+public:
+    uchar unknown_0[0x40];
+    std::vector<C_racing_gate *> gates;             // 0x40 (PS2 0x50, a gif::vector)
+    uchar unknown_50[0x7c];
+    std::vector<S_circuit_race_cam *> race_cams;    // 0xcc (PS2 0x7c)
 };
 
 // A car in the race (PS2 C_opponent). Only what the race camera and the scripts read.
@@ -22,7 +45,8 @@ public:
     uchar unknown_24[4];
     C_car *car;                         // 0x28 (PS2 0x134)
     uchar unknown_2c[0x28];             // 0x2c
-    S_opponent_place *place;            // 0x54 (PS2 0x13c; the name is ours)
+    // 0x54 (PS2 0x13c), the gate the opponent passed last, which PS2's TestGate tests the next from (the name is ours)
+    C_racing_gate *gate;
     uchar unknown_58[8];
     int id;                             // 0x60, what RACING_CHANGE_MODEL looks the opponent up by (the name is ours)
 
@@ -49,12 +73,16 @@ public:
     void Tick(uint time);
     // The race's part of a replay, size bytes, which G_LoadSaveClass::ReplayLoad reads (PS2 name)
     void LoadReplay(uint size, void *data);
+    // The circuit raced (PS2 name): out of line, in racing.cpp
+    C_circuit *GetCurrentCircuit();
 
     uchar unknown_0;
     // 0x1, set by RacingMisse06, which creates the racing for mission 6's race: C_game::Done deletes the racing then
     // (the name is ours)
     bool mission_race;
-    uchar unknown_2[0x236];
+    uchar unknown_2[0x2a];
+    C_circuit *current_circuit;         // 0x2c (the name is ours, after PS2's GetCurrentCircuit)
+    uchar unknown_30[0x208];
     // The race's cars (the names are ours), two counts of them: RACING_CHANGE_MODEL walks opponent_count of them (most
     // likely PS2's GetOpponentCount's, 0xac0, which AddOpponents counts up), the race camera num_opponents
     C_opponent *opponents[0x18];        // 0x238 (PS2 0xa3c)

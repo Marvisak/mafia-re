@@ -463,8 +463,8 @@ public:
     }
 
     // Turns the local matrix to dir, with up as the up vector (the name is Insanity3D's as far as we know, not checked
-    // against its source; the game's out-of-line copy is at 0x4609c0 in Game.exe, SetWorldDir sets the flags the same
-    // way)
+    // against its source; SetWorldDir sets the flags the same way)
+    // FUNCTION: GAME 0x4609c0
     void SetDir1(const S_vector &dir, const S_vector &up)
     {
         m_LocalMatrix.SetDir3(dir, up);

@@ -324,13 +324,13 @@ extern C_mission *act_mission;
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEPAUS_garage_item@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEXPAUS_garage_item@@IABU3@@Z
+// ?_Ufill@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEXPAUS_con_register@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
 // ?_Construct@std@@YIXPAUS_con_register@@ABU2@@Z
@@ -342,10 +342,10 @@ extern C_mission *act_mission;
 // ??1?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE@XZ
 
 // TEMPLATE: GAME 0x546d30
-// ?push_back@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QAEXABUS_anim_model@C_mission@@@Z
+// ?push_back@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXABUS_instruction@C_program@@@Z
 
 // TEMPLATE: GAME 0x546ef0
-// ?push_back@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@QAEXABQAVI3D_frame@@@Z
+// ?push_back@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEXABQAVC_program@@@Z
 
 // TEMPLATE: GAME 0x547170
 // ??A?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAEAAPAVI3D_frame@@ABVC_str@@@Z

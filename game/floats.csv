@@ -184,6 +184,11 @@ address|type|size
 0x627884|float|4
 0x627888|float|8
 0x627890|float|4
+0x627894|float|4
+0x627898|float|4
+0x62789c|float|4
+0x6278a0|float|4
+0x6278a4|float|4
 0x6278a8|float|4
 0x6278ac|float|4
 0x6278b0|float|4

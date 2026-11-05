@@ -1,20 +1,26 @@
-// The game's camera (PS2 g_camera.cpp; the PC's file is the one at 0x5ece70-0x5f4b5c, docs/game-files.md): its
-// constructor, destructor and Reset, then Tick and what it calls, PS2's order. Written so far: those four, WantPosCar,
-// WantPos, FreeLook and FreeLookBase.
+// The game's camera (PS2 g_camera.cpp; the PC's file is the one at 0x5ece70-0x5f4b5c, docs/game-files.md), written
+// whole, PS2's functions in PS2's order: the constructor, destructor and Reset, the setters C_game, the humans and the
+// scripts call, Tick and what it calls, the free look, the locks, the pushed modes, the dialog's camera, the race
+// cameras and the sniper's. PS2's CalcUpDown, HardLockAt and HardUnlock have no PC copy.
 // The file's uninitialized globals lie in the exact reverse of PS2's definition order (Tick's local statics oldS and
 // oldSpeed lowest, then its three oldDirY, filteringBuffer, ..., oldDir, oldPos), with the zero-initialized ones after
 // them in PS2's order (naklon to filteringLastPos, then Tick's rot, kl, kl2, cameraDirRot, cameraDirUpDown): what a
 // precompiled header of another file (/Yu) gives (CLAUDE.md), as for g_indicators.cpp. They are defined here in that
-// order. Open: the build compiles the file with /YX, so the .bss order isn't the original's.
-// Also written: GameDone, SetCamera, SetPlayer, Link, SetMode, Begin, End and PopMode, which C_game's Init and Done
-// reach, and SetCar and IsInDialog, which the scripts call; their other calls are stubs (SetSwing, LockAt, the dialog's
-// DialogLook, DialogStart and DialogStop).
+// order. Open: the build compiles the file with /YX, so the .bss order isn't the original's; the original's .bss also
+// has 0xc bytes nothing reads between oldDir and oldDist and 8 between oldDist and camInPos (PS2 defines a
+// lastSphereDistance before oldDist), and its initializers construct six vectors where ours construct seven: four
+// before humansInDialog's, two after.
 
+// The engine's math first: under /YX the copies of S_vector's inline functions then come due before WantPos and
+// CumNaNe, as the original's do. Compiled after them, the out-of-line constructor they call is unknown to VC6 when it
+// compiles them, and each vector the constructor makes keeps a stack slot of its own (CumNaNe's temporaries share
+// five in the original).
+#include "I3D/I3d_math.h"
 #include "camera/g_camera.h"
 
-#include "stub.h"
 #include "actors/C_human.h"
 #include "actors/C_player.h"
+#include "ai/pathweb.h"
 #include "collision/g_colls.h"
 #include "input/controls.h"
 #include "mission/Mission.h"
@@ -23,6 +29,7 @@
 #include "ui/racing.h"
 #include "vehicles/C_car.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "IGraph/IGraph.h"
@@ -105,6 +112,20 @@ S_vector camBehindPos;
 // The race camera CAMERA_C_RACING shows (PS2's name)
 // GLOBAL: GAME 0x6bdaac
 G_RaceCamera *activeRaceCam;
+
+// One of the dialog's humans (PS2 G_CameraDialog, 0x14 bytes on PC, PS2's 0x30 with its aligned vector; the members'
+// names are ours): DialogStart gives them sides 1 and 2 in turn, and DialogLook's camera takes the side of the one of
+// its two humans listed first
+struct G_CameraDialog
+{
+    C_human *human;                     // 0x0
+    S_vector unknown_4;                 // 0x4, zero: nothing reads it
+    uint side;                          // 0x10, 1 or 2
+};
+
+// The dialog's humans, which DialogStart lists (PS2's name; PS2's is a gif::vector)
+// GLOBAL: GAME 0x6bda9c
+std::vector<G_CameraDialog> humansInDialog;
 
 // The death camera's position and the point it looked at (PS2's names), and how far it has turned to the killer
 // GLOBAL: GAME 0x6bda90
@@ -245,10 +266,55 @@ void G_Camera::Link(I3D_frame *frm)
         SetMode(mafiaLoadSave.settings.camera, true);
 }
 
-// STUB: GAME 0x5ed210
+// FUNCTION: GAME 0x5ed210
 void G_Camera::SetSwing(bool on, float amount, I3D_frame *frm)
 {
-    StubLog("G_Camera::SetSwing");
+    swing = on;
+    swing_amount = amount;
+    swing_frame = frm;
+    if (!swing && swing_frame)
+    {
+        act_mission->scene->backdrop_sector->SetDir1(S_vector(0.0f, 0.0f, 1.0f), S_vector(0.0f, 1.0f, 0.0f));
+        act_mission->scene->backdrop_sector->Update();
+        swing_frame->SetDir1(S_vector(0.0f, 0.0f, 1.0f), S_vector(0.0f, 1.0f, 0.0f));
+        swing_frame->Update();
+    }
+}
+
+// The PC's own: PS2's sets other angles, and none for a mission it looks the name of up
+// FUNCTION: GAME 0x5ed330
+void G_Camera::LookAround(int where)
+{
+    switch (where)
+    {
+    // From behind on the right the camera turns the short way, through the back
+    case LOOK_LEFT:
+        if (look_around > 0.5f)
+            look_around -= 2.0f;
+        look_around_want = -0.5f;
+        break;
+    case LOOK_AHEAD:
+        look_around_want = 0.0f;
+        break;
+    case LOOK_RIGHT:
+        if (look_around < -0.5f)
+            look_around += 2.0f;
+        look_around_want = 0.5f;
+        break;
+    // Behind, on the side the camera is turned to already
+    case LOOK_BEHIND:
+        if (look_around > 0.0f)
+            look_around_want = 1.0f;
+        else
+            look_around_want = -1.0f;
+        break;
+    }
+}
+
+// FUNCTION: GAME 0x5ed3e0
+bool G_Camera::LookFromEyes()
+{
+    return needLookFromEyes > 0.0f;
 }
 
 // PS2's without its test of a lock (0xa5) at the start and the car camera it sets again after Begin, for the car of
@@ -269,6 +335,29 @@ void G_Camera::SetMode(uint m, bool begin)
     mode = m;
     if (begin)
         Begin();
+}
+
+// Off, the profile's car camera as it is, where PS2's keeps it within the car cameras first
+// FUNCTION: GAME 0x5ed460
+void G_Camera::LezeDoToyoty(bool on)
+{
+    if (on)
+    {
+        if (mode != CAMERA_C_BEHIND_HELLBOY)
+        {
+            End();
+            mode = CAMERA_C_BEHIND_HELLBOY;
+            Begin();
+            mode_changed = true;
+        }
+    }
+    else if (mode != mafiaLoadSave.settings.car_camera)
+    {
+        End();
+        mode = mafiaLoadSave.settings.car_camera;
+        Begin();
+        mode_changed = true;
+    }
 }
 
 // The camera's frame, by its mode (the cameras' numbers, S_camera_params::id): PS2's cases in PS2's order. The car
@@ -655,7 +744,7 @@ void G_Camera::Tick(uint time)
                 {
                     if (CRacing->opponents[i]->car == car)
                     {
-                        gate = CRacing->opponents[i]->place->gate;
+                        gate = CRacing->opponents[i]->gate->number;
                         break;
                     }
                 }
@@ -1007,8 +1096,8 @@ void G_Camera::WantPos(const S_vector &target, const S_vector &pos, const S_vect
         if (swing)
         {
             // The blend reads the sum's temporary, not camBehindPos (the other branch and PS2 read the global): VC6
-            // drops behind. Open: the original shares the product's temporary with the sum's ([esp + 0x40]) and has
-            // pp at [esp + 0x58]; ours has them at [esp + 0x58] and [esp + 0x64] (the up vectors follow)
+            // drops behind. The product's temporary shares the sum's slot only with S_vector's copies compiled first
+            // (the math header first, at the file's top)
             S_vector behind = camBehindPos = cam_pos + target;
             S_vector pp = behind * (1.0f - faktorVOcich) + camInPos * faktorVOcich;
             S_vector d = player->GetDir();
@@ -1165,6 +1254,21 @@ void G_Camera::End()
     }
 }
 
+// The free look's angles start again from 0 when it turns on; with behind, the car cameras from "C Chase" on go back
+// to "C Beh. Hellboy" (PS2's tests in PS2's order)
+// FUNCTION: GAME 0x5f34c0
+void G_Camera::EnableFreeLook(bool on, bool behind)
+{
+    if (!free_look)
+    {
+        freeLookX = 0.0f;
+        freeLookZ = 0.0f;
+    }
+    free_look = on;
+    if (behind && mode > CAMERA_C_BEHIND_HELLBOY && mode < CAMERA_C_END && mode >= CAMERA_C_CHASE)
+        SetMode(CAMERA_C_BEHIND_HELLBOY, true);
+}
+
 // The mouse's free look (PS2 name): turns the camera by the mouse's movement (PS2's 800 steps of pi / 500 per unit),
 // times the profile's sensitivity and inverted with it (PS2 has neither), up and down to just short of straight.
 // VC6's choices it hangs on: dy as an if/else (a ?: of the two factors loads the factor first, and keeps dy
@@ -1272,16 +1376,75 @@ void G_Camera::FreeLookBase(float x, float y, S_vector &dir, S_vector &up, S_vec
     camera->Update();
 }
 
-// STUB: GAME 0x5f39f0
+// FUNCTION: GAME 0x5f39f0
 void G_Camera::LockAt(const S_vector &pos, const S_vector &dir)
 {
-    StubLog("G_Camera::LockAt");
+    if (mode != CAMERA_C_LOCK)
+    {
+        PushMode();
+        SetMode(CAMERA_C_LOCK, true);
+    }
+    if (camera)
+    {
+        camera->SetPos(pos);
+        camera->SetDir(dir, 0.0f);
+        camera->Update();
+    }
 }
 
-// STUB: GAME 0x5f3fd0
-void G_Camera::SetCutscene(bool on)
+// PS2's, the vectors declared first and then assigned, as there (initialized, VC6 constructs them in place)
+// FUNCTION: GAME 0x5f3a70
+void G_Camera::CumNaNe(C_human *from, C_human *to)
 {
-    StubLog("G_Camera::SetCutscene");
+    if (mode != CAMERA_C_LOCK)
+    {
+        PushMode();
+        SetMode(CAMERA_C_LOCK, true);
+    }
+    if (!camera)
+        return;
+    S_vector a, b, mid, pos;
+    a = from->GetWorldPos() + S_vector(0.0f, 0.75f, 0.0f);
+    b = to->GetWorldPos() + S_vector(0.0f, 0.75f, 0.0f);
+    mid = (a + b) * 0.5f;
+    // 1.55 up and four times the pair's distance away, beside it on one side, then on the other, then beyond from,
+    // else beyond to (untested): the first a sphere from mid reaches without a hit
+    pos = S_vector(0.0f, 1.0f, 0.0f).Cross(b - a) * 4.0f + mid + S_vector(0.0f, 1.55f, 0.0f);
+    if (gifCollision.TestSphereB(mid, pos - mid, 0.2f, NULL, NULL, COLF_UNKNOWN_100, 0))
+    {
+        pos = (b - a).Cross(S_vector(0.0f, 1.0f, 0.0f)) * 4.0f + mid + S_vector(0.0f, 1.55f, 0.0f);
+        if (gifCollision.TestSphereB(mid, pos - mid, 0.2f, NULL, NULL, COLF_UNKNOWN_100, 0))
+        {
+            pos = (a - b) * 4.0f + mid + S_vector(0.0f, 1.55f, 0.0f);
+            if (gifCollision.TestSphereB(mid, pos - mid, 0.2f, NULL, NULL, COLF_UNKNOWN_100, 0))
+                pos = (b - a) * 4.0f + mid + S_vector(0.0f, 1.55f, 0.0f);
+        }
+    }
+    camera->SetPos(pos);
+    camera->SetDir(mid - pos, 0.0f);
+    mafiaIndicators.SetCameraFOV(camera, PI / 4);
+    camera->Update();
+}
+
+// FUNCTION: GAME 0x5f3fd0
+void G_Camera::Unlock(bool clear)
+{
+    if (mode == CAMERA_C_LOCK)
+        PopMode(clear);
+}
+
+// PS2's push_back, which VC6 inlines here whole
+// FUNCTION: GAME 0x5f3ff0
+void G_Camera::PushMode()
+{
+    if (!camera)
+        return;
+    G_CameraPushPop pp;
+    pp.mode = mode;
+    pp.fov = camera->fov_a;
+    pp.ncp = camera->ncp;
+    pp.fcp = camera->fcp;
+    push_pop.push_back(pp);
 }
 
 // FUNCTION: GAME 0x5f4220
@@ -1301,22 +1464,68 @@ void G_Camera::PopMode(bool clear)
     push_pop.pop_back();
 }
 
-// STUB: GAME 0x5f42e0
+// The side is the side of whichever of the two humans DialogStart listed first, 1 for side 1, turned round for to's
+// FUNCTION: GAME 0x5f42e0
 void G_Camera::DialogLook(C_human *from, C_human *to)
 {
-    StubLog("G_Camera::DialogLook");
+    if (mode == CAMERA_C_RAILWAY_IN)
+        return;
+    dialogLookFrom = from;
+    dialogLookTo = to;
+    G_CameraDialog *d_to = NULL, *d_from = NULL;
+    for (G_CameraDialog *d = humansInDialog.begin(); d < humansInDialog.end(); d++)
+    {
+        if (d->human == from)
+            d_from = d;
+        if (d->human == to)
+            d_to = d;
+    }
+    if (d_from < d_to)
+    {
+        if (d_from && d_from->side > 1)
+            dialogSide = -1.0f;
+        else
+            dialogSide = 1.0f;
+    }
+    else if (d_to && d_to->side > 1)
+        dialogSide = 1.0f;
+    else
+        dialogSide = -1.0f;
 }
 
-// STUB: GAME 0x5f4370
+// PS2's without its reserve of 8 for an empty list
+// FUNCTION: GAME 0x5f4370
 void G_Camera::DialogStart(C_human **humans, uint count)
 {
-    StubLog("G_Camera::DialogStart");
+    if (mode == CAMERA_C_RAILWAY_IN)
+        return;
+    PushMode();
+    SetMode(CAMERA_C_DIALOG, true);
+    dialogLookFrom = NULL;
+    dialogLookTo = NULL;
+    bool first = true;
+    humansInDialog.clear();
+    for (uint i = 0; i < count; i++)
+    {
+        G_CameraDialog d;
+        d.human = humans[i];
+        d.unknown_4 = S_vector(0.0f, 0.0f, 0.0f);
+        d.side = first ? 1 : 2;
+        humansInDialog.push_back(d);
+        first = !first;
+    }
 }
 
-// STUB: GAME 0x5f4650
+// PS2's clears the list too
+// FUNCTION: GAME 0x5f4650
 void G_Camera::DialogStop()
 {
-    StubLog("G_Camera::DialogStop");
+    if (mode == CAMERA_C_RAILWAY_IN)
+        return;
+    camera->Update();
+    PopMode(false);
+    dialogLookFrom = NULL;
+    dialogLookTo = NULL;
 }
 
 // FUNCTION: GAME 0x5f4690
@@ -1325,32 +1534,99 @@ bool G_Camera::IsInDialog()
     return mode == CAMERA_C_DIALOG;
 }
 
-// STUB: GAME 0x5f4ab0
-void G_Camera::SetSniperMode(bool on)
+// FUNCTION: GAME 0x5f46a0
+void G_Camera::AddRaceCamera(G_RaceCamera *rc)
 {
-    StubLog("G_Camera::SetSniperMode");
+    if (!rc)
+        return;
+    for (G_RaceCamera **it = race_cameras.begin(); it < race_cameras.end(); it++)
+    {
+        if (*it == rc)
+            return;
+    }
+    race_cameras.push_back(rc);
 }
 
-// STUB: GAME 0x5ed460
-void G_Camera::LezeDoToyoty(bool on)
+// FUNCTION: GAME 0x5f4870
+void G_Camera::RemoveRaceCamera(G_RaceCamera *rc)
 {
-    StubLog("G_Camera::LezeDoToyoty");
+    if (activeRaceCam == rc)
+        activeRaceCam = NULL;
+    for (G_RaceCamera **it = race_cameras.begin(); it < race_cameras.end(); it++)
+    {
+        if (*it == rc)
+        {
+            race_cameras.erase(it);
+            return;
+        }
+    }
 }
 
-// STUB: GAME 0x5f34c0
-void G_Camera::EnableFreeLook(bool on, bool unknown)
+// Each race camera takes the gates of the circuit's race camera nearest to it; the one between the last gate and the
+// first shows the gates up to the first (from -1 to 0)
+// FUNCTION: GAME 0x5f48d0
+void G_Camera::InitRaceCameras()
 {
-    StubLog("G_Camera::EnableFreeLook");
+    std::vector<S_circuit_race_cam *> &cams = CRacing->GetCurrentCircuit()->race_cams;
+    for (G_RaceCamera **it = race_cameras.begin(); it < race_cameras.end(); it++)
+    {
+        float best = FLT_MAX;
+        for (S_circuit_race_cam **rc = cams.begin(); rc < cams.end(); rc++)
+        {
+            float dist = ((*it)->frame->GetPos() - (*rc)->node->GetPos()).Square();
+            if (dist < best)
+            {
+                best = dist;
+                if (!(*rc)->gate_from->number &&
+                    (*rc)->gate_to->number == CRacing->GetCurrentCircuit()->gates.size() - 1)
+                {
+                    (*it)->gate_from = -1;
+                    (*it)->gate_to = 0;
+                }
+                else
+                {
+                    (*it)->gate_from = (*rc)->gate_from->number;
+                    (*it)->gate_to = (*rc)->gate_to->number;
+                }
+            }
+        }
+    }
 }
 
-// STUB: GAME 0x5f3ff0
-void G_Camera::PushMode()
-{
-    StubLog("G_Camera::PushMode");
-}
-
-// STUB: GAME 0x5f4a00
+// FUNCTION: GAME 0x5f4a00
 void G_Camera::SetLookTo(S_vector pos, I3D_frame *frm)
 {
-    StubLog("G_Camera::SetLookTo");
+    look_to = frm;
+    SetMode(CAMERA_C_LOOK_TO, true);
+    if (camera)
+    {
+        camera->SetPos(pos);
+        camera->Update();
+    }
+}
+
+// FUNCTION: GAME 0x5f4a70
+void G_Camera::SetSniperFov(float fov)
+{
+    sniper_fov = fov;
+    if (mode == CAMERA_CP_SNIPER)
+    {
+        mafiaIndicators.SetCameraFOV(camera, fov);
+        camera->Update();
+    }
+}
+
+// FUNCTION: GAME 0x5f4ab0
+void G_Camera::SetSniperMode(bool on)
+{
+    if (on)
+    {
+        if (mode != CAMERA_CP_SNIPER)
+        {
+            PushMode();
+            SetMode(CAMERA_CP_SNIPER, true);
+        }
+    }
+    else if (mode == CAMERA_CP_SNIPER)
+        PopMode(false);
 }

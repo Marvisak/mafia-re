@@ -66,6 +66,13 @@ struct G_RaceCamera
 #define CAMERA_C_FIRST CAMERA_C_BEHIND_HELLBOY
 #define CAMERA_C_END 16
 
+// LookAround's: where the car cameras turn, LookAround's half turns -0.5, 0, 0.5 and +-1 (the names are ours; the angle
+// is the sine's, so -0.5 turns to the car's left)
+#define LOOK_LEFT -1
+#define LOOK_AHEAD 0
+#define LOOK_RIGHT 1
+#define LOOK_BEHIND 2
+
 // S_camera_params' flags (the names are ours, by value where the use isn't known): the code copies 1 into
 // G_Camera::unknown_22
 #define CAMPF_UNKNOWN_1 1
@@ -184,16 +191,21 @@ public:
     // The swing of WantPos on foot, by amount, with a frame swung along with the scene's backdrop; turned off, both are
     // set straight again (PS2 name)
     void SetSwing(bool on, float amount, I3D_frame *frm);
+    // Turns the car cameras to look_around_want's angle, by the player's keys (PS2 name; PS2's takes a mission's name
+    // into account and sets other angles): LOOK_* (the PC's own)
+    void LookAround(int where);
+    // Whether the camera is in the player's eyes (PS2 name)
+    bool LookFromEyes();
     // Pops the pushed states
     void GameDone();
     // Changes the camera to a CAMERA_* or, with CAMERA_NEXT, to the camera's next one, which the profile then keeps; with
     // begin, the old camera ends and the new one begins (PS2 names)
     void SetMode(uint m, bool begin);
-    // PS2 name, Czech: "climbs into the Toyota": mode 7 (CAMERA_C_BEHIND_HELLBOY) when on, the one at 0x6d4b20 when off
+    // PS2 name, Czech: "climbs into the Toyota": CAMERA_C_BEHIND_HELLBOY when on, the profile's car camera when off
     void LezeDoToyoty(bool on);
-    // The free look on or off (PS2 name; the parameters' names are guesses): C_human::Hit turns it off for the player
-    // hit while he steals a car
-    void EnableFreeLook(bool on, bool unknown);
+    // The free look on or off, with behind the car cameras from CAMERA_C_CHASE on back to CAMERA_C_BEHIND_HELLBOY (PS2
+    // name; the parameters' names are guesses): C_human::Hit turns it off for the player hit while he steals a car
+    void EnableFreeLook(bool on, bool behind);
     // Sets the I3D camera up for the mode, from its cameraParams entry: its values and flags, its parent and position
     // (PS2 name)
     void Begin();
@@ -210,8 +222,11 @@ public:
     // CAMERA_C_LOCK at the position, looking along the direction, unless it is the mode already (PS2 name; the
     // parameters' names are guesses)
     void LockAt(const S_vector &pos, const S_vector &dir);
-    // C_game::Done turns it off after a cutscene (PC only, the name is a guess)
-    void SetCutscene(bool on);
+    // CAMERA_C_LOCK beside two humans, looking at the point between them, on the first side the collision tests leave
+    // free (PS2 name, Czech: "stare at them")
+    void CumNaNe(C_human *from, C_human *to);
+    // The camera before LockAt or CumNaNe back, with PopMode(clear), if it is CAMERA_C_LOCK (PS2 name)
+    void Unlock(bool clear);
     // The dialog's camera between the humans (PS2 names): DialogStart for count humans, DialogLook from one to the
     // other (it sets dialogSide), DialogStop back to the mode before, unless it is CAMERA_C_RAILWAY_IN
     void DialogLook(C_human *from, C_human *to);
@@ -219,6 +234,13 @@ public:
     void DialogStop();
     // Whether the mode is CAMERA_C_DIALOG (PS2 name)
     bool IsInDialog();
+    // The race cameras (PS2 names): the race camera actors add and remove theirs, and C_racing::GameInit gives each the
+    // range of gates of the circuit's race camera nearest to it
+    void AddRaceCamera(G_RaceCamera *rc);
+    void RemoveRaceCamera(G_RaceCamera *rc);
+    void InitRaceCameras();
+    // The sniper camera's field of view, given to the HUD at once in CAMERA_CP_SNIPER (PS2 name)
+    void SetSniperFov(float fov);
     // The name is ours: its copy is in game.cpp's range
     void SetModeChanged()
     {
@@ -241,3 +263,8 @@ public:
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
 // ?GetCar@G_Camera@@QBEPAVC_car@@XZ
+
+// The dialog's list's size, which DialogStart calls out of line: the original kept the copy of the range at 0x401030
+// (docs/game-files.md) of the folded group of the vectors of 0x14-byte elements, named after the copy our linker keeps
+// TEMPLATE: GAME 0x403d20
+// std::vector<C_game::S_i_show,std::allocator<C_game::S_i_show> >::size

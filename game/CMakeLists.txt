@@ -226,6 +226,16 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?ReplayTick@G_LoadSaveClass@@QAEXAAH@Z
         /INCLUDE:?SaveGameEnumFiles@G_LoadSaveClass@@QAEPAV?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@XZ
         /INCLUDE:?SaveGameLoadHeader@G_LoadSaveClass@@QAEXIPAUG_SaveGame_FileHead@@PAUG_SaveGame_Info@@@Z)
+    # g_camera.cpp's functions that nothing written calls yet: the player's (C_player.cpp), the race cameras'
+    # (c_racecam.cpp), the racing's (racing.cpp) and the AI's (jp_ai_entity.cpp)
+    target_link_options(game PRIVATE
+        /INCLUDE:?LookAround@G_Camera@@QAEXH@Z
+        /INCLUDE:?LookFromEyes@G_Camera@@QAE_NXZ
+        /INCLUDE:?CumNaNe@G_Camera@@QAEXPAVC_human@@0@Z
+        /INCLUDE:?AddRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
+        /INCLUDE:?RemoveRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
+        /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ
+        /INCLUDE:?SetSniperFov@G_Camera@@QAEXM@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

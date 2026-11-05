@@ -1,5 +1,5 @@
 // The racing championship (PS2 racing.cpp; the PC's file is the one at 0x54d320-0x55997c, docs/game-files.md). Not
-// written yet: only what main and C_game need to link.
+// written yet: only what main and C_game need to link, and GetCurrentCircuit, which the camera calls.
 
 #include "ui/racing.h"
 
@@ -18,6 +18,12 @@ C_racing::C_racing()
 C_racing::~C_racing()
 {
     StubLog("C_racing::~C_racing");
+}
+
+// FUNCTION: GAME 0x552190
+C_circuit *C_racing::GetCurrentCircuit()
+{
+    return current_circuit;
 }
 
 // STUB: GAME 0x552e40

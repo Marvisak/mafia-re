@@ -3489,7 +3489,7 @@ void C_program::Process(uint time)
     case CMD_RECUNLOAD:
         act_mission->GetGame()->DestroyCutsceneParticles();
         cutscene.Close();
-        act_mission->GetGame()->GetCamera().SetCutscene(false);
+        act_mission->GetGame()->GetCamera().Unlock(false);
         mafiaIndicators.PopFlags();
         mafiaIndicators.WideScreenSetOn(false, 250);
         if (act_mission->GetGame()->GetPlayer())
@@ -4632,7 +4632,7 @@ void C_program::Process(uint time)
         break;
     }
     case CMD_CAMERA_UNLOCK:
-        act_mission->GetGame()->GetCamera().SetCutscene(false);
+        act_mission->GetGame()->GetCamera().Unlock(false);
         act_mission->GetGame()->RecomputeLightCache();
         break;
     case CMD_SETMISSIONNAMEID:
