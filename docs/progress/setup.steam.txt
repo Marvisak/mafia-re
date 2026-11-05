@@ -1,0 +1,18 @@
+# SETUPSTEAM: reccmp's score of each function and vtable of setup.steam.exe (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x00401000  100.00%   S_settings::S_settings
+0x00401080  100.00%   LoadSettings
+0x00401120  100.00%   SaveSettings
+0x00401190  100.00%   GetWindowHandles
+0x004011f0  100.00%   Error
+0x00401270  100.00%   SetText
+0x004012e0  100.00%   WinMain
+0x00401340  100.00%   HandleComboField
+0x00401370  100.00%   ToggleFields
+0x00401470  100.00%   ToggleExpertSettings
+0x00401550  100.00%   DialogFunc
+0x004026d0  100.00%   GetTotalVRAM
+0x00402750  100.00%   LoadAdapterRefreshRates
+0x00402930  100.00%   LoadAdapterModes
+0x00402ca0  100.00%   LoadAdapterData
+0x00402fe0  100.00%   LoadD3D8

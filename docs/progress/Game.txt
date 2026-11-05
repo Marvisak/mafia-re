@@ -1,0 +1,3069 @@
+# GAME: reccmp's score of each function and vtable of Game.exe (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x00401000  missing   $CRT_CPP_Initializer(1)
+0x00401030  50.00%    $CRT_CPP_Initializer(2)
+0x00401040  100.00%   $CRT_CPP_Initializer(3)
+0x00401070  100.00%   C_cache_base_block::C_cache_base_block
+0x004010a0  100.00%   C_cache_base_block::~C_cache_base_block
+0x004011f0  100.00%   C_cache_base_block::Close
+0x004012e0  100.00%   C_cache_base_block::PrepareScene
+0x00401310  100.00%   C_cache_base_block::S_hlp::cbDupl
+0x004013f0  94.99%    C_cache_base_block::Open
+0x00401c70  100.00%   S_cache_base_block::~S_cache_base_block
+0x00401ca0  99.67%    C_cache_base_block::OpenModel
+0x00402090  100.00%   S_cache_model_set::~S_cache_model_set
+0x004020b0  100.00%   C_cache_base_block::Tick
+0x00402550  100.00%   S_vector2::Magnitude
+0x00402570  100.00%   S_vector2::DistanceToLine
+0x004025d0  100.00%   C_cache_base_block::ActivateBlock
+0x00402a50  100.00%*  C_cache_base_block::DeactivateBlock
+0x00402b60  100.00%   TransparentModel
+0x00402cb0  100.00%   C_cache_base_block::FindModel
+0x00402cf0  100.00%   C_cache_base_block::DestroyFrame
+0x00402dc0  100.00%   C_cache_base_block::VisibleAllFrames
+0x00402f90  100.00%   C_cache_base_block::IsBlockInRange
+0x004032f0  100.00%   S_vector2::Dot
+0x00403310  100.00%   C_str::C_rep::Release
+0x00403320  100.00%   C_str::C_str
+0x004033a0  100.00%   C_str::~C_str
+0x004033c0  100.00%   C_str::operator char const *
+0x004033d0  100.00%   C_str::operator=(char const *)
+0x00403450  100.00%   C_str::operator+
+0x004035d0  100.00%   C_str::Match
+0x00403680  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::~vector<S_cache_base_block,std::allocator<S_cache_base_block> >
+0x004036c0  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::size
+0x004036f0  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::~vector<S_cache_model_set,std::allocator<S_cache_model_set> >
+0x00403730  100.00%   C_I3D_cache<I3D_model>::S_itm::S_itm
+0x00403740  93.17%    std::vector<int,C_chunk_allocator<int> >::insert(int *, int const &)
+0x004038e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::erase
+0x00403920  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::insert
+0x00403b20  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::_Destroy
+0x00403b50  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::insert
+0x00403d20  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::size
+0x00403d50  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::_Destroy
+0x00403d80  100.00%   `vector constructor iterator'
+0x00403db0  100.00%   std::allocator<S_cache_model_one>::destroy
+0x00403dc0  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::_Ucopy
+0x00403e00  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::_Ucopy
+0x00403e40  100.00%   std::vector<S_cache_base_block,std::allocator<S_cache_base_block> >::_Ufill
+0x00403e70  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::_Ucopy
+0x00403eb0  100.00%   std::vector<S_cache_model_set,std::allocator<S_cache_model_set> >::_Ufill
+0x00403ee0  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Ucopy
+0x00403f20  100.00%   std::copy(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
+0x004040d0  100.00%   std::fill(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block const &)
+0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
+0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
+0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
+0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
+0x00404830  100.00%   std::_Construct(struct C_game::S_shadow_temp *, struct C_game::S_shadow_temp const &)
+0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
+0x00404990  100.00%   std::ctype<unsigned short>::id
+0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
+0x00404a50  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::operator=
+0x00404cb0  missing   $CRT_CPP_Initializer(4)
+0x00404ce0  100.00%   C_chunk::Descend
+0x00404d80  100.00%   C_chunk::Read
+0x00404e00  100.00%   C_actor::AddToCutscene
+0x00404e20  100.00%   C_actor_shot::AddToCutscene
+0x00404e40  100.00%   C_actor_shot::PlayRecord
+0x00404f30  100.00%   C_actor::RecordKey
+0x00404f40  100.00%   C_actor::PlayRecord
+0x00405010  98.57%    C_actor::PlayStep
+0x004054c0  98.78%    C_actor::PlaceAtTime
+0x00405a00  100.00%   C_actor::GetRecordPos
+0x00405c20  50.00%    $CRT_CPP_Initializer(5)
+0x00405c30  100.00%   $CRT_CPP_Initializer(6)
+0x00405ca0  50.00%    $CRT_CPP_Initializer(7)
+0x00405cb0  100.00%   $CRT_CPP_Initializer(8)
+0x00405d20  100.00%   C_actor::C_actor
+0x00405d70  100.00%   C_actor::`scalar deleting destructor'
+0x00405d90  100.00%   C_actor::~C_actor
+0x00405dd0  100.00%   C_actor::Init
+0x00405e60  100.00%   C_actor::InternalPlacementReset
+0x00405ee0  100.00%   C_actor::ResetPlacement
+0x00405fa0  100.00%*  C_actor::GameInit
+0x004063e0  100.00%   C_actor::GameDone
+0x004064f0  100.00%   C_actor::Tick
+0x00406590  100.00%   C_actor::Actor_SaveGameGetSize
+0x004065f0  100.00%   C_actor::Actor_SaveGameSave
+0x004066a0  100.00%   C_actor::Actor_SaveGameLoad
+0x00406770  100.00%   C_actor::SaveGameGetSize
+0x00406870  100.00%   C_actor::SaveGameSave
+0x00406b00  100.00%   C_actor::SaveGameLoad
+0x00406d80  100.00%   C_actor::SaveGameLoadGuid
+0x00406da0  100.00%   C_actor::SetActState
+0x00406dd0  100.00%   C_actor::Rebirth
+0x00406df0  94.12%    C_actor::IsPossibleCollAll
+0x00407590  100.00%   C_actor::IsPossibleColl
+0x004075a0  100.00%*  C_actor::GetBoundPoints2D
+0x00407cd0  100.00%   C_actor::DebustizeFrame
+0x00407d10  100.00%   C_actor::NoShadowFrame
+0x00407d50  100.00%   C_actor::AddActorToGlobal
+0x00407f50  100.00%   C_actor::DelActorFromGlobal
+0x00407fb0  100.00%   C_actor::IsGlobalActor
+0x00407fe0  100.00%   C_actor::GetWorldPos
+0x00408040  100.00%   C_actor::GetWorldDir
+0x004081d0  100.00%   C_actor::AddFrameForPossibleColl
+0x004083e0  100.00%   C_actor::DelFrameForPossibleColl
+0x00408450  100.00%   rnd(int)
+0x00408470  100.00%   rnd(void)
+0x00408490  100.00%   AngleTo2
+0x004084d0  100.00%   RotateDir
+0x00408630  100.00%   RotateDirNoNorm
+0x00408690  100.00%   compare_anim_index
+0x004086b0  100.00%   InitAnimIndex
+0x00408750  100.00%   DoneAnimIndex
+0x00408760  100.00%   GetAnimIndex
+0x004087b0  100.00%   UnlinkAllFrameChild
+0x004087e0  85.85%    C_I3D_cache<I3D_model>::Open
+0x00408c50  100.00%   C_str::C_rep::C_rep(char const *, int)
+0x00408c90  100.00%   C_str::C_rep::operator delete
+0x00408ca0  100.00%   C_str::ToUpper
+0x00408cc0  100.00%   C_fstr::C_fstr
+0x00408d90  64.03%    C_I3D_cache<I3D_sound>::Open
+0x004091d0  100.00%   C_actor::Release
+0x004091f0  100.00%   C_actor::GetActorSpeed
+0x00409210  100.00%   C_actor::GetMaterialID
+0x00409220  100.00%   C_actor::GetProgram
+0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x00409360  missing   $CRT_CPP_Initializer(9)
+0x00409390  stub      C_airplane::C_airplane
+0x00409500  100.00%   C_airplane::`scalar deleting destructor'
+0x00409520  stub      C_airplane::~C_airplane
+0x00409580  stub      C_airplane::SaveData
+0x004097c0  stub      C_airplane::LoadData
+0x00409a40  stub      C_airplane::DuplicateFrom
+0x00409b00  stub      C_airplane::GameInit
+0x0040a800  stub      C_airplane::GameDone
+0x0040bc10  stub      C_airplane::AI
+0x0040bec0  stub      C_airplane::Update
+0x0040c610  stub      C_airplane::Start
+0x0040c7f0  stub      C_airplane::Start2
+0x0040c880  stub      C_airplane::Hit
+0x0040d6c0  100.00%   C_airplane::IsDestroyed
+0x0040d6f0  100.00%   C_airplane::SaveGameGetSize
+0x0040d700  stub      C_airplane::SaveGameSave
+0x0040d830  stub      C_airplane::SaveGameLoad
+0x0040dce0  stub      C_airplane::ChangeState
+0x0040ddd0  stub      C_airplane::ShowDamageIndicator
+0x0040de20  100.00%   I3D_frame::UpdateMatrix
+0x0040df30  100.00%   C_airplane::GetMaterialID
+0x0040df40  missing   $CRT_CPP_Initializer(10)
+0x0040df70  50.00%    $CRT_CPP_Initializer(11)
+0x0040df80  100.00%   $CRT_CPP_Initializer(12)
+0x0040e010  100.00%   C_animations_machine_de_luxe::C_animations_machine_de_luxe
+0x0040e020  100.00%   C_animations_machine_de_luxe::LoadTrack
+0x0040e470  100.00%   C_animations_machine_de_luxe::S_track::~S_track
+0x0040e4a0  100.00%   C_animations_machine_de_luxe::GetTrack
+0x0040e510  100.00%   C_animations_machine_de_luxe::ClearNoBaseTracks
+0x0040e660  100.00%   C_animations_machine_de_luxe::Init(class C_actor *)
+0x0040e6d0  100.00%   C_animations_machine_de_luxe::Init(class C_traffic_element *)
+0x0040e740  100.00%   C_animations_machine_de_luxe::Init(class I3D_model *)
+0x0040e7a0  100.00%   C_animations_machine_de_luxe::Reset
+0x0040e7f0  100.00%   C_animations_machine_de_luxe::EqualTime
+0x0040e890  100.00%   C_animations_machine_de_luxe::GetActiveAnimTime
+0x0040e8e0  100.00%   C_animations_machine_de_luxe::StopAnims
+0x0040e900  100.00%   C_animations_machine_de_luxe::RecompileMatrix
+0x0040e950  100.00%   C_animations_machine_de_luxe::SetAnim
+0x0040f170  100.00%   C_animations_machine_de_luxe::IsActive
+0x0040f1b0  100.00%   C_animations_machine_de_luxe::Tick
+0x00410060  100.00%   C_animations_machine_de_luxe::SetExtendedAnim
+0x00410150  100.00%   C_animations_machine_de_luxe::DelExtendedAnim
+0x004101d0  100.00%   C_animations_machine_de_luxe::GetPlacementFromTCK
+0x00410310  100.00%   C_animations_machine_de_luxe::GetEndPointOfTCK
+0x00410350  100.00%   C_animations_machine_de_luxe::GetMixingPointOfTCK
+0x004103d0  100.00%   C_animations_machine_de_luxe::StageBlendingTick
+0x004104f0  45.84%    C_I3D_cache<I3D_animation_set>::Create
+0x00410910  100.00%   std::vector<S_vector,std::allocator<S_vector> >::resize
+0x00410ba0  100.00%   std::vector<C_animations_machine_de_luxe::S_track,std::allocator<C_animations_machine_de_luxe::S_track> >::size
+0x00410bd0  100.00%   std::vector<int,C_chunk_allocator<int> >::vector<int,C_chunk_allocator<int> >
+0x00410c00  100.00%   C_chunk_allocator<int>::allocate
+0x00410c20  100.00%   C_chunk_allocator<int>::deallocate
+0x00410c30  100.00%   C_I3D_cache<I3D_model>::S_itm::~S_itm
+0x00410c50  100.00%   C_I3D_cache<I3D_model>::LoadCallback
+0x00410c70  100.00%   std::vector<C_animations_machine_de_luxe::S_track,std::allocator<C_animations_machine_de_luxe::S_track> >::insert
+0x00410e50  100.00%   std::vector<C_animations_machine_de_luxe::S_track,std::allocator<C_animations_machine_de_luxe::S_track> >::_Destroy
+0x00410e80  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::insert
+0x00411000  100.00%   std::vector<S_vector,std::allocator<S_vector> >::_Ucopy
+0x00411040  100.00%   std::vector<S_vector,std::allocator<S_vector> >::_Ufill
+0x00411080  100.00%   std::vector<C_animations_machine_de_luxe::S_track,std::allocator<C_animations_machine_de_luxe::S_track> >::_Ucopy
+0x004110c0  100.00%   std::vector<C_animations_machine_de_luxe::S_track,std::allocator<C_animations_machine_de_luxe::S_track> >::_Ufill
+0x004110f0  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Ufill
+0x00411120  97.95%    std::fill(struct C_animations_machine_de_luxe::S_track *, struct C_animations_machine_de_luxe::S_track *, struct C_animations_machine_de_luxe::S_track const &)
+0x00411340  91.86%    std::copy_backward(struct C_animations_machine_de_luxe::S_track *, struct C_animations_machine_de_luxe::S_track *, struct C_animations_machine_de_luxe::S_track *)
+0x00411550  100.00%   std::_Construct(struct C_animations_machine_de_luxe::S_track *, struct C_animations_machine_de_luxe::S_track const &)
+0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
+0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
+0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
+0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
+0x00411bb0  missing   $CRT_CPP_Initializer(13)
+0x00411be0  100.00%   C_chunk::OpenFile
+0x00411c50  100.00%   C_chunk::~C_chunk
+0x00411d40  100.00%   C_chunk::Close
+0x00411e30  stub      C_blood::Tick
+0x00412000  100.00%   C_blood_manager::~C_blood_manager
+0x00412020  100.00%   C_blood_manager::GameInit
+0x00412050  100.00%   C_blood_manager::GameDone
+0x004120a0  100.00%   C_blood_manager::Tick
+0x00412140  stub      C_blood_manager::AddBlood
+0x00412320  missing   $CRT_CPP_Initializer(14)
+0x00412350  100.00%   C_bottle::C_bottle
+0x00412390  100.00%   C_bottle::`scalar deleting destructor'
+0x004123b0  100.00%   C_bottle::~C_bottle
+0x004123c0  100.00%   C_bottle::Init
+0x004123f0  85.86%    C_bottle::AI
+0x00413040  100.00%   C_bottle::Update
+0x00413120  100.00%   C_bottle::GameInit
+0x00413440  100.00%   C_bottle::GameDone
+0x00413470  100.00%   C_bottle::SaveGameGetSize
+0x00413480  100.00%   C_bottle::SaveGameSave
+0x00413560  100.00%   C_bottle::SaveGameLoad
+0x004136a0  100.00%   C_bottle::AbsoluteImpulse
+0x00413840  100.00%   C_bottle::Collision
+0x00413ac0  100.00%   C_bottle::Hit
+0x00413d60  missing   $CRT_CPP_Initializer(15)
+0x00413d90  missing   $CRT_CPP_Initializer(16)
+0x00413da0  missing   $CRT_CPP_Initializer(17)
+0x00414aa0  stub      C_dyn_object::Collision
+0x00414e00  stub      C_dyn_object::Hit
+0x00416760  missing   $CRT_CPP_Initializer(18)
+0x00416770  missing   $CRT_CPP_Initializer(19)
+0x00416780  missing   $CRT_CPP_Initializer(20)
+0x00416790  missing   $CRT_CPP_Initializer(21)
+0x00418930  stub      C_dyn_object::C_dyn_object
+0x004189b0  100.00%   C_dyn_object::`scalar deleting destructor'
+0x004189d0  stub      C_dyn_object::Init
+0x00418e00  stub      C_dyn_object::~C_dyn_object
+0x004195f0  stub      C_dyn_object::GameInit
+0x00419b00  stub      C_dyn_object::GameDone
+0x00419b20  stub      C_dyn_object::SaveData
+0x00419b80  stub      C_dyn_object::LoadData
+0x00419c70  stub      C_dyn_object::AI
+0x0041b6b0  stub      C_dyn_object::AddToCutscene
+0x0041b6d0  stub      C_dyn_object::RecordKey
+0x0041bae0  stub      C_dyn_object::GetRecordPos
+0x0041bb00  stub      C_dyn_object::GetRecordRot
+0x0041bb20  missing   $CRT_CPP_Initializer(22)
+0x0041bb50  missing   $CRT_CPP_Initializer(23)
+0x0041bb60  missing   $CRT_CPP_Initializer(24)
+0x0041bb80  stub      C_car::C_car
+0x0041bc90  100.00%   C_car::`scalar deleting destructor'
+0x0041bcb0  stub      C_car::~C_car
+0x0041bd80  stub      C_car::Init
+0x0041c550  stub      C_car::GetPlacementFromTCK
+0x0041c680  stub      C_car::GetPlacementFromTCK1
+0x0041c7f0  100.00%   C_car::LoadMaterials
+0x0041ca80  72.34%    C_car::LoadParticles
+0x0041d480  100.00%   C_car::LoadTyres
+0x0041d770  100.00%   C_car::ConvertTyres
+0x0041d810  stub      C_car::SetOwner
+0x0041dc30  stub      C_car::GetSeatProperty
+0x0041dec0  100.00%   C_car::GetOwner
+0x0041df30  stub      C_car::DuplicateFrom
+0x0041df80  stub      C_car::SaveData
+0x0041e070  stub      C_car::LoadData
+0x0041e690  stub      C_car::_RepairPosition
+0x0041e9c0  100.00%   C_car::GetLevelsCount
+0x0041e9f0  100.00%   C_car::GetActualLevel
+0x0041ea00  stub      C_car::SetActualLevel
+0x0041eb00  stub      C_car::InitFFEffects
+0x0041eca0  stub      C_car::DoneFFEffects
+0x0041ed00  stub      C_car::GameInit
+0x0041f5e0  stub      C_car::GameDone
+0x0041f780  stub      C_car::AI
+0x0041fac0  stub      C_car::Update
+0x00421d60  stub      C_car::CarExplosion
+0x00422ad0  stub      C_car::DeactivateCar
+0x00422be0  stub      C_car::Reset
+0x00422ee0  stub      C_car::ResetCar
+0x00423540  stub      C_car::GetMaterialID
+0x00423600  stub      C_car::Hit
+0x004248e0  stub      C_car::IsPossibleColl
+0x00425040  stub      C_car::Collision
+0x004293e0  72.97%    C_car::GetInvModelMatrix
+0x00429450  stub      C_car::ShowCarEnergy
+0x00429510  stub      C_car::GetAIPos
+0x00429580  stub      C_car::SetEnterProtect
+0x00429770  100.00%   C_car::SetEnterProtect1
+0x004297b0  100.00%   C_car::GetCarWheelColl
+0x00429800  100.00%   C_car::SetCarWheelColl
+0x00429850  stub      C_car::IsCarUsable
+0x004299c0  stub      C_car::GetNavigationPoints
+0x00429a80  stub      C_car::ChangeState
+0x00429dd0  100.00%   C_car::GetActorSpeed
+0x00429df0  stub      C_car::SoundsChange
+0x00429e50  100.00%   C_car::GetTimeParking
+0x00429e70  stub      C_car::PrepareCarToShow
+0x0042ba10  stub      C_car::IsSeatLeft
+0x0042ba70  stub      C_car::OdjebajTuStrechu
+0x0042bb90  100.00%   C_car::SetForceFeedback
+0x0042bbd0  stub      C_car::SaveGameGetSize
+0x0042bbf0  stub      C_car::SaveGameSave
+0x0042bdc0  stub      C_car::SaveGameLoad
+0x0042c010  stub      C_car::RecordKey
+0x0042c220  stub      C_car::PlayRecord
+0x0042c3e0  stub      C_car::PlayStep
+0x0042c7b0  stub      C_car::AddToCutscene
+0x0042c7d0  stub      C_car::PlaceAtTime
+0x0042cad0  stub      C_car::GetRecordPos
+0x0042cc20  100.00%*  C_actor::GetRecordRot
+0x0042d1f0  100.00%   std::vector<S_VEH_PARTICLE,std::allocator<S_VEH_PARTICLE> >::insert
+0x0042d510  100.00%   std::vector<S_VEH_MATERIAL,std::allocator<S_VEH_MATERIAL> >::insert
+0x0042d800  100.00%   std::vector<S_TYRE,std::allocator<S_TYRE> >::insert
+0x0042de10  100.00%   std::vector<S_SRFC,std::allocator<S_SRFC> >::insert
+0x0042e140  100.00%   std::vector<S_VEH_PARTICLE,std::allocator<S_VEH_PARTICLE> >::size
+0x0042e210  missing   $CRT_CPP_Initializer(25)
+0x0042e240  stub      C_car_ex::C_car_ex
+0x0042e2e0  100.00%   C_car_ex::`scalar deleting destructor'
+0x0042e300  stub      C_car_ex::~C_car_ex
+0x0042e3a0  stub      C_car_ex::Init
+0x0042e3c0  stub      C_car_ex::GameInit
+0x0042ee30  stub      C_car_ex::GameDone
+0x0042f110  stub      C_car_ex::LoadData
+0x0042f130  stub      C_car_ex::SaveData
+0x0042f150  100.00%   C_car_ex::DuplicateFrom
+0x0042f160  stub      C_car_ex::DCAddPerson
+0x0042f320  stub      C_car_ex::DCDelPerson
+0x0042f390  stub      C_car_ex::Update
+0x00430470  100.00%   std::vector<G_SaveGame_FileHead,std::allocator<G_SaveGame_FileHead> >::insert
+0x004307a0  missing   $CRT_CPP_Initializer(26)
+0x004307d0  100.00%   C_cartridge::C_cartridge
+0x00430800  100.00%   C_cartridge::`scalar deleting destructor'
+0x00430820  100.00%   C_cartridge::~C_cartridge
+0x00430830  100.00%   C_cartridge::Init
+0x00430850  100.00%   C_cartridge::AI
+0x00430a60  100.00%   C_cartridge::Update
+0x00430a70  100.00%   C_cartridge::GameInit
+0x00430ad0  100.00%   C_cartridge::GameDone
+0x00430b50  100.00%   C_cartridge::SetShotgunShell
+0x00430b70  missing   $CRT_CPP_Initializer(27)
+0x00431710  stub      CreateCrashModel
+0x00431bb0  missing   C_crash_obj::`scalar deleting destructor'
+0x00432090  100.00%   C_public_physics::Update
+0x00432740  stub      C_crash_obj::DestroyOuterMostCrashObject
+0x00432840  missing   $CRT_CPP_Initializer(28)
+0x00432880  100.00%   C_detector::C_detector
+0x00432910  100.00%   C_detector::`scalar deleting destructor'
+0x00432930  100.00%   C_detector::~C_detector
+0x00432990  100.00%   C_detector::Init
+0x004329c0  stub      C_detector::DuplicateFrom
+0x00432a00  100.00%   C_detector::GameInit
+0x00432a80  100.00%   C_detector::GameDone
+0x00432ac0  stub      C_detector::SaveData
+0x00432b20  100.00%   C_detector::LoadData
+0x00432c10  stub      C_detector::SaveGameGetSize(void)
+0x00432c30  stub      C_detector::SaveGameSave(void **)
+0x00432ca0  stub      C_detector::SaveGameLoad(void **)
+0x00432d70  100.00%   C_detector::AI
+0x00432db0  100.00%   C_detector::Update
+0x00433020  stub      C_detector::Hit
+0x004330b0  stub      C_detector::CreateColls
+0x00433ae0  100.00%   C_detector::EraseColls
+0x00433b80  stub      C_detector::CreateUO
+0x00433ce0  100.00%   C_detector::DecodeParams
+0x00433cf0  100.00%   C_detector::DecodeInstruction
+0x00433d00  100.00%   C_detector::DecompileCommand
+0x00433d10  100.00%   C_detector::Process
+0x00433fb0  missing   $CRT_CPP_Initializer(29)
+0x00433fe0  100.00%   C_detector::`vector deleting destructor'
+0x00433ff0  100.00%   C_detector::SaveGameGetSize(void)
+0x00434000  100.00%   C_detector::SaveGameSave(void **)
+0x00434010  100.00%   C_detector::SaveGameLoad(void **)
+0x00434020  100.00%   C_detector::GetProgram
+0x00434030  stub      C_dog::C_dog
+0x00434230  100.00%   C_dog::`scalar deleting destructor'
+0x00434250  stub      C_dog::~C_dog
+0x004342d0  stub      C_dog::SaveData
+0x00434410  stub      C_dog::LoadData
+0x00434630  stub      C_dog::DuplicateFrom
+0x00434690  stub      C_dog::GameInit
+0x00434b50  100.00%   C_dog::LoadTCK
+0x00434b70  stub      C_dog::GameDone
+0x004352a0  stub      C_dog::Hit
+0x00435660  stub      C_dog::Death
+0x004356e0  stub      C_dog::AI
+0x00437070  stub      C_dog::Update
+0x00438960  stub      C_dog::SaveGameGetSize
+0x00438970  stub      C_dog::SaveGameSave
+0x00438b50  stub      C_dog::SaveGameLoad
+0x00438e20  stub      C_dog::Collision
+0x00438eb0  stub      C_dog::cbCollTester
+0x00438f00  100.00%   std::vector<S_GameItem,std::allocator<S_GameItem> >::insert
+0x00439210  missing   $CRT_CPP_Initializer(30)
+0x00439290  stub      C_door::C_door
+0x00439370  100.00%   C_door::`scalar deleting destructor'
+0x00439390  100.00%   C_door::~C_door
+0x004393a0  stub      C_door::Init
+0x004393c0  stub      C_door::DuplicateFrom
+0x00439480  stub      C_door::Hit
+0x00439610  stub      C_door::SetState
+0x004399c0  stub      C_door::AI
+0x00439e90  stub      C_door::NetDirect
+0x00439eb0  stub      C_door::GameInit
+0x0043ad60  stub      C_door::GameDone
+0x0043add0  stub      C_door::EnableUsingObject
+0x0043ae50  stub      C_door::SaveData
+0x0043b030  stub      C_door::LoadData
+0x0043b4f0  stub      C_door::SaveGameGetSize
+0x0043b500  stub      C_door::SaveGameSave
+0x0043b560  stub      C_door::SaveGameLoad
+0x0043b810  stub      C_door::SetOpenAngle
+0x0043bab0  stub      C_door::GetBoundPoints2D
+0x0043bcc0  stub      C_door::ChangeState
+0x0043bce0  100.00%   I3D_frame::SetRot
+0x0043bd60  missing   $CRT_CPP_Initializer(31)
+0x0043bee0  100.00%   C_driver::~C_driver
+0x0043c4f0  stub      C_driver::Tick
+0x004431d0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::insert(struct S_car_node *, unsigned int, struct S_car_node const &)
+0x00443580  missing   $CRT_CPP_Initializer(32)
+0x004435b0  stub      C_drop_in_weapon::C_drop_in_weapon
+0x00443620  100.00%   C_drop_in_weapon::`scalar deleting destructor'
+0x00443640  100.00%   C_drop_in_weapon::~C_drop_in_weapon
+0x00443650  100.00%   C_drop_in_weapon::AI
+0x00443660  stub      C_drop_in_weapon::Update
+0x004436c0  stub      C_drop_in_weapon::ChangeState
+0x00443850  100.00%   C_drop_in_weapon::Init
+0x00443860  100.00%   C_bottle::DuplicateFrom
+0x00443870  stub      C_drop_in_weapon::GameInit
+0x00443950  stub      C_drop_in_weapon::GameDone
+0x00443a00  missing   $CRT_CPP_Initializer(33)
+0x00443ff0  stub      C_dyn_object::PlayStep
+0x00444400  missing   $CRT_CPP_Initializer(34)
+0x00444630  100.00%   C_ff_manager::C_ff_manager
+0x00444670  100.00%   C_ff_manager::~C_ff_manager
+0x004446a0  100.00%   C_ff_manager::Reset
+0x004446b0  100.00%   C_ff_manager::GameInit
+0x00444740  100.00%   C_ff_manager::GameDone
+0x00444810  stub      C_ff_manager::CreateEffect
+0x00444ae0  stub      C_ff_manager::SetConstantForce
+0x00444b20  stub      C_ff_manager::SetRampForce
+0x00444b60  stub      C_ff_manager::SetPeriodicForce
+0x00444c40  stub      C_ff_manager::SetGain
+0x00444c70  stub      C_ff_manager::SetDirection
+0x00444ca0  stub      C_ff_manager::SetDuration
+0x00444d20  stub      C_ff_manager::Start
+0x00444fb0  stub      C_ff_manager::DeleteEffect
+0x004451a0  100.00%   C_ff_manager::GetWaiting
+0x004451e0  100.00%   C_ff_manager::Tick
+0x00445200  100.00%   C_ff_manager::StartWaiting
+0x00445230  missing   $CRT_CPP_Initializer(35)
+0x00445820  missing   $CRT_CPP_Initializer(36)
+0x00445850  stub      C_irenka::C_irenka
+0x00445880  100.00%   C_irenka::`scalar deleting destructor'
+0x004458a0  100.00%   C_irenka::~C_irenka
+0x004458b0  stub      C_irenka::AI
+0x004458c0  stub      C_irenka::GameInit
+0x00445b70  stub      C_irenka::GameDone
+0x00446000  missing   $CRT_CPP_Initializer(37)
+0x00446ef0  missing   $CRT_CPP_Initializer(38)
+0x00446f20  100.00%   SpreadDir
+0x00447150  100.00%   C_Particle::~C_Particle
+0x00447160  100.00%   C_Particle::Reset
+0x00447190  100.00%   C_Particle::Init
+0x004476c0  98.11%    C_Particle::SetPhase
+0x00447c20  94.67%    C_Particle::Tick
+0x00448540  missing   $CRT_CPP_Initializer(39)
+0x00448570  100.00%   C_ParticleEmitter::~C_ParticleEmitter
+0x00448610  100.00%   C_ParticleEmitter::Reset
+0x00448680  100.00%   C_ParticleEmitter::Init
+0x00448710  100.00%   C_ParticleEmitter::CreateParticle
+0x00448960  100.00%   C_ParticleEmitter::Tick
+0x00448cc0  100.00%   std::vector<C_Particle *,std::allocator<C_Particle *> >::insert
+0x00448ed0  missing   $CRT_CPP_Initializer(40)
+0x00448f00  50.00%    $CRT_CPP_Initializer(41)
+0x00448f10  100.00%   $CRT_CPP_Initializer(42)
+0x00448f60  50.00%    $CRT_CPP_Initializer(43)
+0x00448f70  100.00%   $CRT_CPP_Initializer(44)
+0x00448fc0  50.00%    $CRT_CPP_Initializer(45)
+0x00448fd0  100.00%   $CRT_CPP_Initializer(46)
+0x00449020  50.00%    $CRT_CPP_Initializer(47)
+0x00449030  100.00%   $CRT_CPP_Initializer(48)
+0x00449080  100.00%   C_effects::C_effects
+0x00449100  100.00%   C_effects::~C_effects
+0x00449180  100.00%   C_effects::Mission_Start
+0x004491d0  100.00%   C_effects::Mission_Done
+0x00449380  100.00%   C_effects::Load
+0x00449690  stub      C_effects::CreateParticle
+0x0044a0d0  100.00%   C_effects::ClientTick
+0x0044a240  stub      C_effects::DestroyParticle
+0x0044a2b0  stub      C_effects::IsParticleAlive
+0x0044a2d0  stub      C_effects::PauseParticle
+0x0044a2f0  100.00%   C_effects::ClearEmitters
+0x0044a350  100.00%   C_effects::Clear
+0x0044a3a0  45.21%    C_effects::CreateSParticle
+0x0044ad30  94.93%    C_effects::LoadStaticParticles
+0x0044b1f0  100.00%   std::vector<int,C_chunk_allocator<int> >::~vector<int,C_chunk_allocator<int> >
+0x0044b220  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::~vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >
+0x0044b240  100.00%   C_chunk_allocator<int>::C_chunk_allocator<int>
+0x0044b270  100.00%   std::vector<C_Particle *,std::allocator<C_Particle *> >::erase
+0x0044b2a0  100.00%   std::vector<int,C_chunk_allocator<int> >::insert(int *, unsigned int, int const &)
+0x0044b4a0  missing   $CRT_CPP_Initializer(49)
+0x0044b4d0  100.00%   C_chunk::RAscend
+0x0044b6a0  100.00%   C_chunk::Size
+0x0044b6d0  100.00%   C_chunk::ReadString
+0x0044b820  100.00%   C_effect_part::C_effect_part
+0x0044b8e0  100.00%   C_effect_part::Load
+0x0044be40  100.00%   std::vector<int,C_chunk_allocator<int> >::erase
+0x0044be70  100.00%   C_effect_item::C_effect_item
+0x0044be90  100.00%   C_effect_subpart::`scalar deleting destructor'
+0x0044beb0  100.00%   C_effect_subpart::~C_effect_subpart
+0x0044bed0  100.00%   C_effect_part::`scalar deleting destructor'
+0x0044bef0  100.00%   C_effect_part::~C_effect_part
+0x0044bfd0  100.00%   C_effect::`scalar deleting destructor'
+0x0044bff0  100.00%   C_effect::~C_effect
+0x0044c0d0  100.00%   C_ParticleType::~C_ParticleType
+0x0044c200  100.00%*  C_ParticleType::Reset
+0x0044c3e0  100.00%   C_ParticleType::Init
+0x0044c4f0  missing   $CRT_CPP_Initializer(50)
+0x0044c520  50.00%    $CRT_CPP_Initializer(51)
+0x0044c530  100.00%   $CRT_CPP_Initializer(52)
+0x0044c5a0  50.00%    $CRT_CPP_Initializer(53)
+0x0044c5b0  100.00%   $CRT_CPP_Initializer(54)
+0x0044c620  missing   $CRT_CPP_Initializer(55)
+0x0044c630  missing   $CRT_CPP_Initializer(56)
+0x0044c640  100.00%   C_don_ocas::C_don_ocas
+0x0044c660  100.00%   C_don_ocas::`scalar deleting destructor'
+0x0044c680  100.00%   C_don_ocas::~C_don_ocas
+0x0044c690  stub      C_don_ocas::GameInit
+0x0044c6a0  stub      C_don_ocas::IsPossibleColl
+0x0044ca50  stub      C_don_ocas::Collision
+0x0044ccf0  stub      C_don_ocas::Hit
+0x0044d1c0  stub      C_don_ocas::GetBoundPoints2D
+0x0044d410  stub      C_traffic_generator::C_traffic_generator
+0x0044d480  100.00%   C_traffic_generator::`scalar deleting destructor'
+0x0044d4a0  stub      C_traffic_generator::~C_traffic_generator
+0x0044d510  stub      C_traffic_generator::DuplicateFrom
+0x0044d670  stub      C_traffic_generator::SaveData
+0x0044d820  stub      C_traffic_generator::LoadData
+0x0044de00  stub      C_traffic_generator::SaveGameGetSize
+0x0044de20  stub      C_traffic_generator::SaveGameSave
+0x0044e120  stub      C_traffic_generator::SaveGameLoad
+0x0044e500  stub      C_traffic_generator::GameInit
+0x0044e7f0  stub      C_traffic_generator::GameDone
+0x0044e890  stub      C_traffic_generator::PlayerHoMaVytaseneho
+0x0044e960  100.00%   C_traffic_generator::SetVisible
+0x0044edb0  stub      C_traffic_generator::AI
+0x0044ef70  100.00%   C_traffic_generator::TickElements
+0x0044f090  100.00%   C_traffic_generator::IsCarHasOcas
+0x0044f0e0  75.58%    C_traffic_generator::TryGoToAssHole
+0x0044f740  100.00%   C_traffic_generator::PlayerInTaxi
+0x0044f7d0  stub      C_traffic_generator::GeneratePassengerForTaxi
+0x0044fcf0  100.00%   C_traffic_generator::EnableTaxiDriver
+0x0044fd10  100.00%   C_traffic_generator::ZrusVsechnyMavajici
+0x0044fd50  100.00%   C_traffic_generator::ClearElements
+0x00450860  100.00%   C_traffic_generator::FreeDynCollElements
+0x00450f00  stub      C_traffic_generator::AddFreePerson
+0x004512a0  stub      C_traffic_generator::VyfunOdTeMasiny
+0x00451860  stub      C_traffic_element::SetNewNode
+0x00452ca0  stub      C_traffic_element::EndMavaniNaTaxi
+0x00452cd0  stub      C_traffic_element::Tick
+0x00456fa0  stub      C_traffic_element::ActivateFree
+0x004587c0  stub      C_traffic_element::Deactivate
+0x00459e60  missing   $CRT_CPP_Initializer(57)
+0x00459e90  stub      C_PhThing::C_PhThing
+0x00459f70  100.00%   C_PhThing::`scalar deleting destructor'
+0x00459f90  stub      C_PhThing::~C_PhThing
+0x00459fd0  stub      C_PhThing::Init
+0x0045a120  stub      C_PhThing::GameInit
+0x0045a630  stub      C_PhThing::GameDone
+0x0045a690  stub      C_PhThing::AI
+0x0045a7a0  stub      C_PhThing::Update
+0x0045adc0  stub      C_PhThing::ChangeState
+0x0045ee90  stub      C_PhThing::InitBox
+0x0045f520  stub      C_PhThing::Collision
+0x0045f760  stub      C_PhThing::Hit
+0x00460000  stub      C_PhThing::ExternalImpuls
+0x004603b0  stub      C_PhThing::SaveGameGetSize
+0x004603c0  stub      C_PhThing::SaveGameSave
+0x004605a0  stub      C_PhThing::SaveGameLoad
+0x00460980  100.00%   I3D_frame::SetPos(struct S_vector const &)
+0x004609c0  100.00%   I3D_frame::SetDir1
+0x004609f0  missing   $CRT_CPP_Initializer(58)
+0x00460a20  missing   $CRT_CPP_Initializer(59)
+0x00460a50  50.00%    $CRT_CPP_Initializer(60)
+0x00460a60  100.00%   $CRT_CPP_Initializer(61)
+0x00460ad0  100.00%   C_program::C_program
+0x00460b20  100.00%   C_program::`scalar deleting destructor'
+0x00460b40  100.00%   C_program::~C_program
+0x00460ba0  stub      C_program::SaveSourceCode
+0x00460c90  100.00%   C_program::LoadSourceCode
+0x00460f20  100.00%   LoadPatchFile
+0x00461270  100.00%   ReadPatchString
+0x00461310  100.00%   UnloadPatchFiles
+0x004613c0  100.00%   EqualFinalPath
+0x00461420  100.00%   C_program::TryChangeProgramData
+0x00461530  100.00%   C_program::SetSourceCode
+0x00461580  100.00%   C_program::Init
+0x004616a0  99.18%    C_program::Done
+0x00461830  100.00%   C_program::ExtrudeParams
+0x00461900  100.00%   C_program::DecodeOperand
+0x004619b0  100.00%   C_program::DecodeOperandInt
+0x00461a60  100.00%   C_program::ExtrudeString
+0x00461aa0  100.00%   C_program::DecodeLet
+0x00461bd0  100.00%   C_program::DecodeIf
+0x00461c70  100.00%   C_program::DecodeParams
+0x00463960  29.30%    C_program::DecodeInstruction
+0x0046c770  93.96%    C_program::Compile
+0x0046ca70  100.00%   C_program::DecompileCommand
+0x0046ca80  100.00%   C_program::GetFloatReg
+0x0046caa0  100.00%   C_program::GetFrameReg
+0x0046cac0  100.00%   C_program::GetActorReg
+0x0046cae0  100.00%   C_program::SetFloatReg
+0x0046cb00  100.00%   C_program::SetFrameReg
+0x0046cb20  100.00%   C_program::SetActorReg
+0x0046cb40  100.00%   C_program::NextCommand
+0x0046cbc0  100.00%   C_program::CallSubroutine
+0x0046cc00  100.00%   C_program::LeaveCompactBlock
+0x0046ccb0  100.00%   C_program::CallProcess
+0x0046ccf0  100.00%   C_program::ClearAfterEnd
+0x0046cd90  98.81%    C_program::SetEvent
+0x0046ce70  100.00%   C_program::IsEventID
+0x0046cec0  100.00%   C_program::InvalidateActorReg
+0x0046cef0  stub      C_program::SaveGameGetSize
+0x0046cf70  stub      C_program::SaveGameSave
+0x0046d100  stub      C_program::SaveGameLoad
+0x0046d380  100.00%   C_program::FindActorLater
+0x0046d3b0  73.91%    C_program::Process
+0x0047a070  100.00%   G_IndicatorsClass::SetFlags
+0x0047a080  100.00%   G_IndicatorsClass::AddFlags
+0x0047a0a0  100.00%   G_IndicatorsClass::RemoveFlags
+0x0047a0c0  100.00%   G_IndicatorsClass::IsShown
+0x0047a0e0  100.00%   G_IndicatorsClass::PushFlags
+0x0047a2a0  100.00%   G_IndicatorsClass::PopFlags
+0x0047a300  100.00%   G_IndicatorsClass::SetSymbol
+0x0047a340  100.00%   G_IndicatorsClass::SetProgress
+0x0047a370  100.00%   C_opponent::GetId
+0x0047a380  100.00%   C_racing::GetOpponents
+0x0047a390  100.00%   C_racing::GetOpponentCount
+0x0047a3d0  100.00%   S_matrix::Zero
+0x0047a3e0  100.00%   GM_GameFailed::GM_GameFailed
+0x0047a400  100.00%   GM_Menu::OnBeforeExchange
+0x0047a410  100.00%   GM_Menu::OnExchange
+0x0047a420  100.00%   GM_Menu::OnCloseChild
+0x0047a430  100.00%   GM_Menu::OnMouse
+0x0047a440  100.00%   S_matrix::Invert
+0x0047a470  100.00%   GM_GameFailed::OnBeforeCreate
+0x0047a480  100.00%   GM_GunShop::GM_GunShop
+0x0047a4a0  100.00%   GM_GunShop::OnBeforeCreate
+0x0047a4b0  100.00%   S_quat::operator+
+0x0047a500  100.00%   S_quat::operator-
+0x0047a550  100.00%   S_quat::operator*=
+0x0047a640  100.00%   S_quat::operator*
+0x0047a690  100.00%   S_quat::Dot
+0x0047a6c0  100.00%   I3D_frame::GetType
+0x0047a6d0  100.00%   I3D_frame::SetPos(float const &, float const &, float const &)
+0x0047a720  100.00%   I3D_frame::GetPos
+0x0047a730  100.00%   I3D_frame::GetWorldPos
+0x0047a750  100.00%   I3D_frame::SetScale
+0x0047a7b0  100.00%   I3D_frame::GetWorldScale
+0x0047a810  100.00%   I3D_frame::GetRot
+0x0047a840  100.00%   I3D_frame::GetWorldRot
+0x0047a890  100.00%   I3D_frame::GetDir
+0x0047aa40  100.00%   I3D_frame::GetWorldDir
+0x0047abb0  100.00%   I3D_frame::GetLocalMatrix
+0x0047acd0  100.00%   I3D_frame::GetMatrix
+0x0047acf0  100.00%   I3D_frame::IsOn
+0x0047ad00  100.00%   I3D_frame::GetName
+0x0047ad10  100.00%   I3D_frame::GetParent
+0x0047ad20  100.00%   I3D_frame::NumChildren
+0x0047ad30  100.00%   I3D_animation_set::SetOptions
+0x0047ad40  100.00%   I3D_face_group::GetMaterial
+0x0047ad50  100.00%   I3D_mesh_level::NumFGroups
+0x0047ad60  100.00%   I3D_mesh_object::NumLODs
+0x0047ad70  100.00%   I3D_visual::GetVisualType
+0x0047ad80  100.00%   I3D_object::GetMesh
+0x0047ad90  100.00%   I3D_camera::GetFOV
+0x0047ada0  100.00%   I3D_lit_object::GetLevel
+0x0047adc0  100.00%   I3D_model::GetFileName
+0x0047add0  100.00%   I3D_scene::GetActiveCamera
+0x0047ade0  100.00%   I3D_scene::GetPrimarySector
+0x0047adf0  100.00%   I3D_scene::SetFrameSector
+0x0047ae20  100.00%   I3D_sound::GetVolume
+0x0047ae30  100.00%   S_mission_options::GetParticles
+0x0047ae40  100.00%   C_mission::GetActors
+0x0047ae60  100.00%   C_mission::GetEffects
+0x0047ae70  100.00%   C_mission::SetMissionNumber
+0x0047ae80  100.00%   C_mission::GetMissionNumber
+0x0047ae90  100.00%   C_mission::KeepMissionNumber
+0x0047aea0  100.00%   C_mission::SetSkipFrames
+0x0047aeb0  100.00%   C_mission::GetSkipFrames
+0x0047aec0  100.00%   C_mission::GetOptions
+0x0047aed0  100.00%   S_GameItem::S_GameItem
+0x0047aef0  100.00%   C_using_object::S_using_object::S_using_object
+0x0047af20  100.00%   C_actor::GetSubtype
+0x0047af30  100.00%   C_actor::GetPos
+0x0047af50  100.00%   C_actor::SetPos
+0x0047af70  100.00%   C_actor::GetDir
+0x0047af90  100.00%   C_actor::SetDir
+0x0047afb0  100.00%   C_mission::GetMissionName
+0x0047afc0  100.00%   C_actor::GetDead
+0x0047afd0  100.00%   C_actor::GetAlive
+0x0047afe0  100.00%   C_actor::SetOwnFrame
+0x0047aff0  100.00%   C_actor::SetUnknown65
+0x0047b000  100.00%   C_actor::GetGlobalActors
+0x0047b010  100.00%   C_program::SetAIPriority
+0x0047b020  100.00%   G_Inventory::Clear
+0x0047b0b0  100.00%   G_Inventory::GetItemInRightHand
+0x0047b0d0  100.00%   G_LoadSaveClass::SetMissionNameID
+0x0047b0e0  100.00%   C_Vehicle::GetSpecialDynamicColls
+0x0047b0f0  100.00%   C_Vehicle::GetSpeed
+0x0047b100  100.00%   C_Vehicle::SetVelocity
+0x0047b1b0  100.00%   C_Vehicle::SetAngularVelocity
+0x0047b1f0  100.00%   C_Vehicle::GetNumSeats
+0x0047b220  100.00%   C_Vehicle::SetIndicatorAuto
+0x0047b250  100.00%   C_Vehicle::SetLight
+0x0047b280  100.00%   C_Vehicle::SetIndicatorL
+0x0047b2c0  100.00%   C_Vehicle::SetIndicatorR
+0x0047b300  100.00%   C_Vehicle::SetMainLights
+0x0047b340  100.00%   C_Vehicle::SetProjectors
+0x0047b380  100.00%   C_Vehicle::GetProjectors
+0x0047b390  100.00%   C_Vehicle::GetNumWheels
+0x0047b3a0  100.00%   C_car::SetTankHitCount
+0x0047b3c0  100.00%   C_car::SetMustSteal
+0x0047b3d0  100.00%   C_car::SetDestroyMotor
+0x0047b3e0  100.00%   C_car::SetBreakMotor
+0x0047b3f0  100.00%   C_car::GetModelName
+0x0047b400  100.00%   C_car::SetShowDamage
+0x0047b410  100.00%   C_car::Lock
+0x0047b440  100.00%   C_car::SetTemporary
+0x0047b450  100.00%   C_car::SetShowEnergy
+0x0047b470  100.00%   C_car::SetUnknown217c
+0x0047b480  100.00%   C_car::SetAxis
+0x0047b490  100.00%   C_car::SetUnbreakable
+0x0047b4a0  100.00%   SetRecordPlaying
+0x0047b4b0  100.00%   C_car::SetDynamicCollsOff
+0x0047b4d0  100.00%   G_Camera::GetCar
+0x0047b4e0  100.00%   C_shvestky::GetActive
+0x0047b4f0  100.00%   C_shvestky::SetSpeed
+0x0047b510  100.00%   C_game::GetCamera
+0x0047b520  100.00%   C_game::GetPlayer
+0x0047b530  100.00%   C_game::GetUsingObject
+0x0047b540  100.00%   C_game::SetClearDiffData
+0x0047b550  100.00%   C_game::GetSledovacka
+0x0047b560  100.00%   C_game::GetGameTime
+0x0047b570  100.00%   C_game::GetInitFrames
+0x0047b580  100.00%   C_game::GetSoundArena
+0x0047b590  100.00%   C_game::SetNightMission
+0x0047b5a0  100.00%   C_game::SetTimeOutEvent
+0x0047b5c0  100.00%   C_game::SetPlayerFireEvent
+0x0047b5e0  100.00%   C_game::SetPlayerHornEvent
+0x0047b600  100.00%   C_game::SetPlayerWFallEvent
+0x0047b620  100.00%   C_game::GetShvestky
+0x0047b630  100.00%   C_game::SetMissionEnd
+0x0047b640  100.00%   C_game::SetRace6State
+0x0047b660  100.00%   C_game::GetRace6State
+0x0047b670  100.00%   C_game::SetRace6Result
+0x0047b680  100.00%   C_game::SetActorLightness
+0x0047b690  100.00%   C_game::SetAnimPreload
+0x0047b6a0  100.00%   C_game::SetWeatherBuffer
+0x0047b6b0  100.00%   C_game::GetScore
+0x0047b6c0  100.00%   C_game::SetMissionPassed
+0x0047b6d0  100.00%   C_car_ex::CanUseTruck
+0x0047b6f0  100.00%   C_wagon::SetEvent
+0x0047b710  100.00%   C_wagon::GetLastNode
+0x0047b750  100.00%   C_detector::GetSignal
+0x0047b760  100.00%   C_detector::SetSignal
+0x0047b780  100.00%   C_traffic_generator::SetGlobalValidScream
+0x0047b790  100.00%   C_door::GetState
+0x0047b7a0  100.00%   C_human::SetLookFrame
+0x0047b7b0  100.00%   C_human::GetCar
+0x0047b7c0  100.00%   C_human::SetWingman
+0x0047b7e0  100.00%   C_human::SetFireTarget
+0x0047b7f0  100.00%   C_human::SetNoAnimHit
+0x0047b800  100.00%   C_human::SetIdleAnims
+0x0047b810  100.00%   C_human::IsReady
+0x0047b850  100.00%   C_human::SetShutUp
+0x0047b860  100.00%   C_player::SetCanCarDamage
+0x0047b870  100.00%   ai_groups::AddFreeActor
+0x0047ba20  100.00%   ai_logs::Clear
+0x0047ba50  100.00%   C_entity::GetVisLogs
+0x0047ba60  100.00%   C_entity::GetSensors
+0x0047ba70  100.00%   C_entity::GetLogs
+0x0047ba80  100.00%   C_entity::GetAIState
+0x0047bac0  100.00%   C_entity::ReturnFromPanic
+0x0047baf0  100.00%   C_entity::SetNoStateSwitch
+0x0047bb20  100.00%   C_entity::DelUsingObject
+0x0047bb40  100.00%   S_help::SwitchLightMap
+0x0047bbb0  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::size
+0x0047bc00  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::size
+0x0047be20  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::size
+0x0047be40  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::insert
+0x0047c2f0  missing   $CRT_CPP_Initializer(62)
+0x0047c320  50.00%    $CRT_CPP_Initializer(63)
+0x0047c330  100.00%   $CRT_CPP_Initializer(64)
+0x0047c3a0  stub      C_public_physics::C_public_physics
+0x0047c3c0  100.00%   C_public_physics::`scalar deleting destructor'
+0x0047c3e0  100.00%   C_public_physics::~C_public_physics
+0x0047c3f0  stub      C_public_physics::GameInit
+0x0047c4d0  stub      C_public_physics::GameDone
+0x0047c4f0  stub      C_public_physics::Collision
+0x0047c500  stub      C_public_physics::Hit
+0x0047c510  missing   $CRT_CPP_Initializer(65)
+0x0047c540  stub      C_pumper::C_pumper
+0x0047c6e0  100.00%   C_pumper::`scalar deleting destructor'
+0x0047c700  stub      C_pumper::~C_pumper
+0x0047c760  stub      C_airplane::Init
+0x0047c780  stub      C_pumper::SaveData
+0x0047c860  stub      C_pumper::LoadData
+0x0047ca60  stub      C_pumper::DuplicateFrom
+0x0047caa0  stub      C_pumper::GameInit
+0x0047e6e0  stub      C_pumper::GameDone
+0x0047e940  stub      C_pumper::Collision
+0x0047e9c0  stub      C_pumper::Hit
+0x0047ea30  stub      C_pumper::AI
+0x0047f560  stub      C_pumper::Update
+0x00481190  stub      C_pumper::SaveGameGetSize
+0x004811a0  stub      C_pumper::SaveGameSave
+0x004813e0  stub      C_pumper::SaveGameLoad
+0x00481840  stub      C_pumper::ScriptCanPump
+0x00481890  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::erase
+0x00481900  missing   $CRT_CPP_Initializer(66)
+0x004824c0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::insert
+0x00482660  missing   $CRT_CPP_Initializer(67)
+0x00482690  missing   $CRT_CPP_Initializer(68)
+0x004863d0  missing   $CRT_CPP_Initializer(69)
+0x004863e0  missing   $CRT_CPP_Initializer(70)
+0x00486430  missing   $CRT_CPP_Initializer(71)
+0x00486440  missing   $CRT_CPP_Initializer(72)
+0x004864b0  missing   $CRT_CPP_Initializer(73)
+0x004864c0  missing   $CRT_CPP_Initializer(74)
+0x00486530  missing   $CRT_CPP_Initializer(75)
+0x00486540  missing   $CRT_CPP_Initializer(76)
+0x004865b0  stub      C_railway::C_railway
+0x00486740  100.00%   C_railway::`scalar deleting destructor'
+0x00486760  stub      C_railway::~C_railway
+0x004868c0  stub      C_railway::Init
+0x004868f0  100.00%   C_railway::DuplicateFrom
+0x00486920  stub      C_railway::SaveData
+0x00486a20  stub      C_railway::LoadData
+0x00488140  stub      C_railway::AI
+0x004894d0  stub      C_railway::Update
+0x0048a390  stub      C_railway::GameInit
+0x0048cfa0  stub      C_railway::GameDone
+0x0048d530  stub      C_railway::Collision
+0x0048d890  stub      C_railway::IsPossibleColl
+0x00490b40  stub      C_railway::Hit
+0x00495100  stub      C_railway::AddOuterEntries
+0x00495160  stub      C_railway::AddInnerEntries
+0x004951c0  stub      C_railway::RemoveOuterEntries
+0x00495220  stub      C_railway::RemoveInnerEntries
+0x00495d30  stub      C_railway::GetEntry
+0x00496e10  stub      C_railway::GetVagon
+0x00496e40  100.00%   C_railway::SaveGameGetSize
+0x00496e50  stub      C_railway::SaveGameSave
+0x00496f80  stub      C_railway::SaveGameLoad
+0x00497980  stub      C_railway::Lock
+0x00497990  stub      C_railway::Unlock
+0x00498060  stub      C_railway::ChangeState
+0x00498180  stub      C_railway::GetBoundPoints2D
+0x004989a0  stub      C_railway::SetRainDummy
+0x00498a70  100.00%   C_railway::GetMaterialID
+0x00498a80  stub      C_railway::GetActorSpeed
+0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
+0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
+0x00499050  100.00%   std::_Construct(class I3D_frame **, class I3D_frame *const &)
+0x00499060  missing   $CRT_CPP_Initializer(77)
+0x00499090  50.00%    $CRT_CPP_Initializer(78)
+0x004990a0  100.00%   $CRT_CPP_Initializer(79)
+0x004990d0  88.50%    RMRF_S_SETREF::LoadRAWSet
+0x00499280  100.00%   C_rmorf::C_rmorf
+0x00499290  100.00%   C_rmorf::~C_rmorf
+0x004992e0  100.00%   RMRF_S_SETREF::`scalar deleting destructor'
+0x00499330  100.00%   C_rmorf::Mission_Start
+0x00499450  100.00%   fstring::fstring
+0x00499560  100.00%   C_rmorf::Mission_Done
+0x004995b0  100.00%   C_rmorf::Tick
+0x004999b0  100.00%   std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Tidy
+0x00499a00  100.00%   std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Copy
+0x00499b10  missing   $CRT_CPP_Initializer(80)
+0x00499b40  100.00%   C_shvestky::C_shvestky
+0x00499c00  100.00%   C_shvestky::~C_shvestky
+0x00499cd0  100.00%   C_shvestky::GameInit
+0x00499dc0  88.01%    C_shvestky::GameDone
+0x0049a120  stub      C_shvestky::S_shvestky::~S_shvestky
+0x0049a140  stub      C_shvestky::DezoSebralGumyIRadio
+0x0049a300  98.47%    C_shvestky::Tick
+0x0049b860  stub      C_shvestky::SetActive
+0x0049c7e0  stub      C_shvestky::AddPerson
+0x0049ca50  stub      C_shvestky::DelPerson
+0x0049cb20  stub      C_shvestky::Firing
+0x0049cbb0  stub      C_shvestky::DriveCar
+0x0049d030  stub      C_shvestky::HumanBoxing
+0x0049d0b0  stub      C_shvestky::CarSteal
+0x0049d130  stub      C_shvestky::ForceArrest
+0x0049d220  stub      C_shvestky::NextNaSrackySoudruh
+0x0049d340  stub      C_shvestky::GetHumanStatus
+0x0049d390  stub      C_shvestky::JakPicusNaTomJest
+0x0049d3e0  stub      C_shvestky::GetCrashTime
+0x0049d420  stub      C_shvestky::GetFireTime
+0x0049d460  stub      C_shvestky::PocetNasranych
+0x0049d4b0  stub      C_shvestky::PocetNasranychZivych
+0x0049d520  stub      C_shvestky::PocetPrestupku
+0x0049d560  stub      C_shvestky::NeviDoKterePiceVlezl
+0x0049d980  stub      C_shvestky::CreateRoadBlock
+0x0049e7e0  stub      C_shvestky::FreeMyTempActor
+0x0049e820  stub      C_shvestky::AddDoRiciActor
+0x0049e9e0  stub      C_shvestky::DelDoRiciActor
+0x0049ea80  100.00%   C_shvestky::TickDoRiciActors
+0x0049eee0  stub      C_shvestky::DalsiChalpiDoPartie
+0x0049f540  stub      C_shvestky::GlobalDelNasrany
+0x0049f850  stub      C_shvestky::DobreMiPokuril_MuzeJitDom
+0x0049f980  stub      C_shvestky::VasekSelChlastatNaOslavu
+0x004a0230  stub      C_shvestky::RenamePoliceCar
+0x004a02a0  100.00%   C_roads::GetPos
+0x004a02f0  missing   $CRT_CPP_Initializer(81)
+0x004a0320  100.00%   C_sledovacka::C_sledovacka
+0x004a0360  100.00%   C_sledovacka::Init
+0x004a0660  100.00%   C_sledovacka::Done
+0x004a0760  stub      C_sledovacka::AddCarHunt
+0x004a1220  stub      C_sledovacka::AddCarMoveTo
+0x004a1c30  stub      C_sledovacka::RemoveCar
+0x004a1da0  stub      C_sledovacka::RecompilePath
+0x004a28c0  stub      C_sledovacka::PreparePath
+0x004a2a80  stub      C_sledovacka::TickDriver
+0x004a3e70  80.01%    C_sledovacka::Tick
+0x004a8670  stub      C_sledovacka::ActionStatus
+0x004a86d0  stub      C_sledovacka::SetActionStatus
+0x004a9930  100.00%   std::vector<g_collision_header *,std::allocator<g_collision_header *> >::operator[]
+0x004a9940  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::size
+0x004a9970  100.00%   std::vector<C_sledovacka::S_ELEMENT,std::allocator<C_sledovacka::S_ELEMENT> >::operator[]
+0x004a9990  100.00%   C_actor::GetRendered
+0x004a99a0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::operator[]
+0x004a99c0  96.59%    std::vector<S_car_node,std::allocator<S_car_node> >::insert(struct S_car_node *, struct S_car_node const &)
+0x004a9bf0  100.00%   C_Vehicle::GetEngineOn
+0x004a9c00  100.00%   C_Vehicle::SetAutoGearing
+0x004a9c10  100.00%   C_Vehicle::SetHorn
+0x004a9c20  100.00%   C_Vehicle::GetSiren
+0x004a9c30  100.00%   C_Vehicle::GetVelocityRef
+0x004a9c40  missing   Unknown FUNCTION
+0x004a9c70  missing   Unknown FUNCTION
+0x004a9c80  100.00%   C_Vehicle::GetUp
+0x004a9c90  100.00%   C_Vehicle::GetWheel
+0x004a9ca0  100.00%   C_traffic_car::GetElems
+0x004a9ec0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::erase
+0x004aa250  100.00%   std::copy(struct S_car_node *, struct S_car_node *, struct S_car_node *)
+0x004aa280  missing   $CRT_CPP_Initializer(82)
+0x004aa2b0  100.00%   C_stone::C_stone
+0x004aa2e0  100.00%   C_stone::`scalar deleting destructor'
+0x004aa300  100.00%   C_stone::~C_stone
+0x004aa310  100.00%   C_stone::AI
+0x004aa380  100.00%   C_stone::Update
+0x004aa3a0  100.00%   C_stone::GameInit
+0x004aa400  100.00%   C_stone::GameDone
+0x004aa430  100.00%   C_cartridge::SaveGameGetSize
+0x004aa440  100.00%   C_cartridge::SaveGameLoad
+0x004aa450  100.00%   C_actor::Collision
+0x004aa460  missing   $CRT_CPP_Initializer(83)
+0x004aa490  100.00%   C_actor::LoadData
+0x004aa4a0  missing   $CRT_CPP_Initializer(84)
+0x004aa4b0  missing   $CRT_CPP_Initializer(85)
+0x004aa520  missing   $CRT_CPP_Initializer(86)
+0x004aa530  missing   $CRT_CPP_Initializer(87)
+0x004aa5a0  50.00%    $CRT_CPP_Initializer(88)
+0x004aa5b0  100.00%   $CRT_CPP_Initializer(89)
+0x004aa620  50.00%    $CRT_CPP_Initializer(90)
+0x004aa630  100.00%   $CRT_CPP_Initializer(91)
+0x004aa6a0  missing   $CRT_CPP_Initializer(92)
+0x004aa6b0  missing   $CRT_CPP_Initializer(93)
+0x004aa720  missing   $CRT_CPP_Initializer(94)
+0x004aa730  missing   $CRT_CPP_Initializer(95)
+0x004aa7a0  stub      C_traffic_car::C_traffic_car
+0x004aa810  100.00%   C_traffic_car::`scalar deleting destructor'
+0x004aa830  stub      C_traffic_car::~C_traffic_car
+0x004aa860  stub      C_traffic_car::Init
+0x004aa8b0  stub      C_traffic_car::ChangeState
+0x004aab20  100.00%   C_traffic_car::DuplicateFrom
+0x004aabe0  100.00%   C_actor::Death
+0x004aabf0  stub      C_traffic_car::SaveData
+0x004aad20  stub      C_traffic_car::LoadData
+0x004ab120  100.00%   C_traffic_car::vfunc_38
+0x004ab130  100.00%   C_actor::DuplicateFrom
+0x004afc40  stub      C_traffic_car::AI
+0x004b5270  stub      C_traffic_car::Update
+0x004b54a0  stub      C_traffic_car::GameInit
+0x004b8010  stub      C_traffic_car::GameDone
+0x004b8480  stub      C_traffic_car::Corovacka
+0x004b8540  100.00%   C_traffic_car::GetParkingCars
+0x004b9560  stub      C_traffic_car::ChlupatejVystrik
+0x004ba300  stub      C_traffic_car::SebraliMiKaaaruSvine
+0x004ba9c0  stub      C_traffic_car::IsPossibleColl
+0x004baad0  stub      C_traffic_car::Hit
+0x004bad80  stub      C_traffic_car::TakATedSiVasKupim_Vsecky
+0x004bbe90  stub      C_traffic_car::VypraskeeeKaaaru
+0x004bc150  100.00%   C_traffic_car::SaveGameGetSize
+0x004bc160  stub      C_traffic_car::SaveGameSave
+0x004bc190  stub      C_traffic_car::SaveGameLoad
+0x004bc330  missing   $CRT_CPP_Initializer(96)
+0x004bc360  stub      C_turnout::C_turnout
+0x004bc470  100.00%   C_turnout::`scalar deleting destructor'
+0x004bc490  100.00%   C_turnout::~C_turnout
+0x004bc4a0  stub      C_turnout::SaveData
+0x004bc600  stub      C_turnout::LoadData
+0x004bc830  stub      C_turnout::DuplicateFrom
+0x004bc8c0  stub      C_turnout::GameInit
+0x004bcd40  stub      C_turnout::GameDone
+0x004bce10  stub      C_turnout::AI
+0x004bcfe0  stub      C_turnout::Update
+0x004bd210  stub      C_turnout::Start
+0x004bd260  100.00%   C_actor::Hit
+0x004bd420  100.00%   C_turnout::SaveGameGetSize
+0x004bd430  stub      C_turnout::SaveGameSave
+0x004bd470  stub      C_turnout::SaveGameLoad
+0x004bd620  missing   $CRT_CPP_Initializer(97)
+0x004bd650  missing   $CRT_CPP_Initializer(98)
+0x004bd660  missing   $CRT_CPP_Initializer(99)
+0x004bd670  50.00%    $CRT_CPP_Initializer(100)
+0x004bd680  100.00%   $CRT_CPP_Initializer(101)
+0x004bd6f0  50.00%    $CRT_CPP_Initializer(102)
+0x004bd700  100.00%   $CRT_CPP_Initializer(103)
+0x004bd770  50.00%    $CRT_CPP_Initializer(104)
+0x004bd780  100.00%   $CRT_CPP_Initializer(105)
+0x004bd7f0  50.00%    $CRT_CPP_Initializer(106)
+0x004bd800  100.00%   $CRT_CPP_Initializer(107)
+0x004bd870  50.00%    $CRT_CPP_Initializer(108)
+0x004bd880  100.00%   $CRT_CPP_Initializer(109)
+0x004c31e0  stub      C_Vehicle::Deactivate
+0x004c5820  100.00%   C_Vehicle::SetTyres
+0x004c5b80  100.00%   C_Vehicle::CloseTyres
+0x004c5c10  100.00%   C_Vehicle::SetVehicleMaterials
+0x004c5c80  100.00%   C_Vehicle::CloseVehicleMaterials
+0x004c5cc0  100.00%   C_Vehicle::SetParticles
+0x004c5f80  100.00%   C_Vehicle::CloseParticles
+0x004c6010  100.00%   C_Vehicle::GetWheelCamPos
+0x004cb130  stub      C_Vehicle::SetPower
+0x004cb2d0  stub      C_Vehicle::SetBrake
+0x004cb570  stub      C_Vehicle::SetSteeringLinearity
+0x004cb5b0  stub      C_Vehicle::SetEngineOn
+0x004cb6a0  stub      C_Vehicle::SetSpeedLimit
+0x004cb6e0  100.00%   C_Vehicle::SetFuel
+0x004cb780  stub      C_Vehicle::EnableSounds
+0x004cb7e0  stub      C_Vehicle::ExternalImpuls
+0x004cc620  100.00%   C_Vehicle::GetHeadPos
+0x004cd5b0  100.00%   C_Vehicle::IsVehicleUnstable
+0x004cd5c0  100.00%   C_Vehicle::GetVehicleSize
+0x004cd5e0  100.00%   C_Vehicle::GetVehiclePivotPos
+0x004cd600  100.00%   C_Vehicle::LockVehicle
+0x004cd640  stub      C_Vehicle::SetProjectorSize
+0x004cda20  stub      C_Vehicle::OpenDoor
+0x004cdb10  stub      C_Vehicle::SetSpecialDynamicColls
+0x004cdcc0  stub      C_Vehicle::SetDynamicCollsOn
+0x004ce560  100.00%   C_Vehicle::AddSectorForProjectorLights
+0x004ce760  100.00%   C_Vehicle::AddSectorForSounds
+0x004ce960  stub      C_Vehicle::CalmVehicle
+0x004d2010  100.00%   std::vector<S_SRFC,std::allocator<S_SRFC> >::size
+0x004d2040  100.00%   std::vector<int,C_chunk_allocator<int> >::_Destroy
+0x004d2a70  100.00%   std::vector<G_SaveGame_FileHead,std::allocator<G_SaveGame_FileHead> >::_Ufill
+0x004d2aa0  100.00%   std::vector<S_SRFC,std::allocator<S_SRFC> >::_Ufill
+0x004d3480  missing   $CRT_CPP_Initializer(110)
+0x004d7a80  stub      C_Vehicle::OpenWindow
+0x004d7c80  stub      C_Vehicle::IsWindowOpen
+0x004df970  missing   $CRT_CPP_Initializer(111)
+0x004eaa00  100.00%   std::vector<S_vector2,std::allocator<S_vector2> >::insert
+0x004eac40  missing   $CRT_CPP_Initializer(112)
+0x004ef0d0  100.00%   C_Vehicle::SetSoundVolume
+0x004ef0e0  100.00%   C_Vehicle::OpenSnd
+0x004ef480  100.00%   ISND_source::GetFileName
+0x004efb10  missing   $CRT_CPP_Initializer(113)
+0x004efb40  100.00%   C_controls::C_controls
+0x004efbd0  100.00%   C_controls::~C_controls
+0x004efc80  100.00%   C_controls::Close
+0x004efdb0  100.00%   C_controls::SetMouseScale
+0x004efde0  100.00%   C_controls::Init
+0x004f00f0  100.00%   C_controls::ClearControls
+0x004f01a0  100.00%   C_controls::GetValues
+0x004f0240  100.00%   C_controls::GetValue
+0x004f02b0  100.00%   C_controls::SetControl
+0x004f05b0  100.00%   C_controls::GetControl
+0x004f0620  stub      C_controls::Update
+0x004f1180  100.00%   C_controls::SaveJoyStates
+0x004f11f0  90.94%    C_controls::GetLastInput
+0x004f1830  100.00%   C_controls::GetControlName
+0x004f1a30  100.00%   WideToChar
+0x004f1a80  100.00%   std::vector<S_joy,std::allocator<S_joy> >::_Ucopy
+0x004f1ac0  100.00%   std::vector<S_joy,std::allocator<S_joy> >::_Ufill
+0x004f1b00  100.00%   std::_Construct(struct S_joy *, struct S_joy const &)
+0x004f1b20  missing   $CRT_CPP_Initializer(114)
+0x004f1b50  stub      C_wagon::C_wagon
+0x004f1c00  100.00%   C_wagon::`scalar deleting destructor'
+0x004f1c20  stub      C_wagon::~C_wagon
+0x004f1ca0  100.00%   C_wagon::SaveGameGetSize
+0x004f1cf0  stub      C_wagon::SaveGameSave
+0x004f1eb0  stub      C_wagon::SaveGameLoad
+0x004f3520  stub      C_wagon::AI
+0x004f48f0  stub      C_wagon::Update
+0x004f4d70  stub      C_wagon::GameInit
+0x004f5bc0  stub      C_wagon::GameDone
+0x004f5d90  missing   $CRT_CPP_Initializer(115)
+0x004f5dc0  50.00%    $CRT_CPP_Initializer(116)
+0x004f5dd0  100.00%   $CRT_CPP_Initializer(117)
+0x004f5e20  100.00%   C_console::C_console
+0x004f5e80  100.00%   C_console::~C_console
+0x004f5ed0  100.00%   C_console::Clear
+0x004f5f50  100.00%   C_console::Tick
+0x004f6040  68.84%    C_console::Render
+0x004f6590  100.00%   ConsoleReg
+0x004f67a0  100.00%   ConsoleUnReg
+0x004f6850  100.00%   ConsoleRender
+0x004f6920  100.00%   CreateFontTexture
+0x004f6980  100.00%   ConsolesInit
+0x004f6990  100.00%   ConsolesDone
+0x004f69a0  missing   $CRT_CPP_Initializer(118)
+0x004f69b0  missing   $CRT_CPP_Initializer(119)
+0x004f6a00  missing   $CRT_CPP_Initializer(120)
+0x004f6a30  missing   $CRT_CPP_Initializer(121)
+0x004f77f0  stub      ai_logs::GetLog
+0x004f7850  stub      ai_logs::GetMaxAngryCharacter
+0x004f7cf0  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::insert
+0x004f8000  missing   $CRT_CPP_Initializer(122)
+0x004f8460  missing   $CRT_CPP_Initializer(123)
+0x004f8490  missing   $CRT_CPP_Initializer(124)
+0x004f84a0  missing   $CRT_CPP_Initializer(125)
+0x004f85a0  missing   $CRT_CPP_Initializer(126)
+0x004f85b0  missing   $CRT_CPP_Initializer(127)
+0x004f86b0  missing   $CRT_CPP_Initializer(128)
+0x004f86c0  missing   $CRT_CPP_Initializer(129)
+0x004fbae0  stub      ai_wayfind::GetPosition
+0x00501ff0  stub      ai_path::isInConnection
+0x005053d0  missing   $CRT_CPP_Initializer(130)
+0x00505400  missing   $CRT_CPP_Initializer(131)
+0x00505410  missing   $CRT_CPP_Initializer(132)
+0x00505d20  stub      ai_sensors::Init
+0x00506340  stub      ai_vis_logs::Init
+0x005071a0  stub      C_entity::C_entity
+0x005072f0  100.00%   C_entity::`scalar deleting destructor'
+0x00507310  stub      C_entity::~C_entity
+0x00507470  stub      C_entity::Init
+0x00507490  stub      C_entity::DuplicateFrom
+0x005074d0  stub      C_entity::GameInit
+0x00507c80  stub      C_entity::ResetState
+0x00507d30  stub      C_entity::GameDone
+0x00507dd0  stub      C_entity::SaveData
+0x00507e20  stub      C_entity::LoadData
+0x00507ec0  stub      C_entity::Collision
+0x00507ed0  stub      C_entity::Hit
+0x005080e0  stub      C_entity::cbHitInfo
+0x00508150  stub      C_entity::AI
+0x0051adb0  missing   $CRT_CPP_Initializer(133)
+0x0051adc0  missing   $CRT_CPP_Initializer(134)
+0x0051af20  100.00%   C_human::GetActorSpeed
+0x0051b020  stub      C_entity::GetProgram
+0x0051b2f0  stub      C_entity::Update
+0x0051b3f0  stub      C_entity::Death
+0x0051b470  stub      C_entity::DecodeParams
+0x0051cdd0  stub      C_entity::DecodeInstruction
+0x0051f3e0  stub      C_entity::DecompileCommand
+0x0051fda0  stub      C_entity::Process
+0x00523f80  stub      C_entity::ForceScript
+0x00524070  stub      C_entity::CallBack
+0x005240a0  stub      C_entity::Event
+0x00524650  stub      ai_action_manager::Clear
+0x00527600  stub      ai_action_manager::GetBaseJob
+0x00527a50  stub      ai_action_manager::hasAction
+0x00528370  stub      C_entity::WeaponChoose
+0x00528610  stub      C_entity::WeaponGetInfo
+0x005289b0  stub      C_entity::InvalidateSelf
+0x00529100  stub      C_entity::AddUsingObject
+0x005299d0  stub      C_entity::LockSubstate
+0x0052db20  stub      C_entity::SaveGameGetSize(void)
+0x0052db80  stub      C_entity::SaveGameSave(void **)
+0x0052dc40  stub      C_entity::SaveGameLoad(void **)
+0x0052f850  stub      C_entity::IsInDanger
+0x0052ff50  stub      C_entity::SedniNaPrdelASledujKino
+0x0052ffe0  stub      C_entity::VzbudSeUzSouTitulky
+0x00530360  missing   $CRT_CPP_Initializer(135)
+0x00530390  100.00%   C_entity::`vector deleting destructor'
+0x005303a0  100.00%   C_entity::SaveGameGetSize(void)
+0x005303b0  100.00%   C_entity::SaveGameSave(void **)
+0x005303c0  100.00%   C_entity::SaveGameLoad(void **)
+0x00530920  stub      ai_group::ProcessEvents
+0x00530a70  stub      ai_group::GetCarFactor
+0x00530ad0  stub      ai_group::GetCarClosestAndUsable
+0x00531060  100.00%   ai_group::~ai_group
+0x005310d0  stub      ai_groups::GetGroup
+0x00531130  100.00%   ai_groups::Init
+0x005311a0  100.00%   ai_groups::Destroy
+0x00531340  100.00%   ai_groups::Tick
+0x005314d0  stub      ai_groups::GetSize
+0x005315b0  stub      ai_groups::Save
+0x005318f0  stub      ai_groups::Load
+0x005325a0  100.00%   ai_follow_manager::Update
+0x00532da0  100.00%   ai_follow_manager::Init
+0x00532e30  100.00%   ai_follow_manager::Destroy
+0x00533530  stub      ai_follow_manager::GetSize
+0x005335a0  stub      ai_follow_manager::Save
+0x005337b0  stub      ai_follow_manager::Load
+0x00533c50  stub      ai_fight_manager::LeaveParty
+0x00534270  stub      ai_fight_followship::TakeCar
+0x00534810  stub      ai_fight_followship::ComputePosition
+0x00534980  stub      ai_fight_followship::mustCarHunt
+0x00534b20  stub      ai_fight_manager::DisbandCarParty
+0x00534db0  stub      ai_fight_manager::GetParty
+0x00534ec0  100.00%   ai_fight_manager::Init
+0x00534f70  100.00%   ai_fight_manager::Destroy
+0x005350b0  92.45%    ai_fight_manager::Tick
+0x00536460  100.00%   std::vector<ai_group,std::allocator<ai_group> >::_Destroy
+0x00536690  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::_Destroy
+0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
+0x00537090  100.00%   std::vector<C_game::S_i_show,std::allocator<C_game::S_i_show> >::_Ufill
+0x00537130  100.00%   std::copy(struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *)
+0x00537910  100.00%   std::_Construct(struct C_game::S_i_show *, struct C_game::S_i_show const &)
+0x00537a50  99.49%    ai_group::operator=
+0x00537e10  100.00%   ai_fight_followship::operator=
+0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
+0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
+0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
+0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
+0x00538550  missing   $CRT_CPP_Initializer(136)
+0x00538580  50.00%    $CRT_CPP_Initializer(137)
+0x00538590  100.00%   $CRT_CPP_Initializer(138)
+0x005385c0  100.00%   ai_manager::~ai_manager
+0x00538760  100.00%   ai_manager::ai_manager
+0x00538880  100.00%   ai_wayfind::~ai_wayfind
+0x005388a0  100.00%   ai_police_nastenka::~ai_police_nastenka
+0x00538970  100.00%   ai_groups::~ai_groups
+0x00538a80  100.00%   ai_follow_manager::~ai_follow_manager
+0x00538af0  100.00%   ai_fight_manager::~ai_fight_manager
+0x00538b80  100.00%   std::vector<ai_group,std::allocator<ai_group> >::~vector<ai_group,std::allocator<ai_group> >
+0x00538bc0  100.00%   std::vector<ai_police_action,std::allocator<ai_police_action> >::_Destroy
+0x00538bf0  100.00%   ai_follow_group::`scalar deleting destructor'
+0x00538c10  100.00%   ai_fight_followship::`scalar deleting destructor'
+0x00538c30  100.00%   ai_fight_followship::~ai_fight_followship
+0x00538c50  missing   $CRT_CPP_Initializer(139)
+0x00538df0  stub      ai_police_action::Tick
+0x0053ba50  100.00%   ai_police_nastenka::ZacatekSmeny
+0x0053c550  stub      ai_police_nastenka::AkceDokoncenaPlukovniku
+0x0053c890  100.00%   ai_police_nastenka::Tick
+0x0053c900  100.00%   ai_police_nastenka::PlukovnikuMasVChladkuPlajeraFrafera
+0x0053cbf0  stub      ai_police_nastenka::PanoveZmenaZatkneteHoZmrda
+0x0053cc90  stub      ai_police_nastenka::PanoveZmenaZabijteHoZmrda
+0x0053cd20  stub      ai_police_nastenka::PanoveKokotPremistujePrdel
+0x0053d220  stub      ai_police_nastenka::PanoveViditeZmrdaNeboSteTupci
+0x0053d290  stub      ai_police_nastenka::PanoveVytahneteBlokyAZapisteSiZmrda
+0x0053d300  stub      ai_police_nastenka::PanoveMateOciNaZmrdoviNeboCumitePoBabach
+0x0053d3d0  stub      ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi
+0x0053d480  100.00%   ai_police_nastenka::PanoveHrajeteSiNaPoldy
+0x0053d750  100.00%   ai_police_nastenka::KonecSmeny
+0x0053d7b0  stub      ai_police_nastenka::ZastavMotorizovaneJednotky
+0x0053d8c0  100.00%   ai_animitem_manager::Clear
+0x0053d9c0  100.00%   ai_animitem_manager::Init
+0x0053e480  missing   $CRT_CPP_Initializer(140)
+0x0053e4b0  stub      check_seg::existIndex
+0x0053e510  100.00%   check_seg::NumSpecials
+0x0053e520  100.00%   check_seg::GetType
+0x0053e540  100.00%   check_seg::GetSpecial
+0x0053e570  stub      check_seg::isInSpecial
+0x0053e660  stub      check_seg_clusters::GetSegment
+0x0053e6a0  stub      check_seg_clusters::NumSegments
+0x0053e6e0  89.66%    check_seg_clusters::AddSegment
+0x0053e9d0  100.00%   check_seg_cluster::check_seg_cluster
+0x0053e9f0  100.00%   check_seg_cluster::~check_seg_cluster
+0x0053ea00  100.00%   check_seg::check_seg
+0x0053ea20  100.00%   check_seg::~check_seg
+0x0053ea40  100.00%   check_seg_clusters::Init
+0x0053eb00  100.00%   check_seg_clusters::Clear
+0x0053ec30  100.00%   check_seg_clusters::Load
+0x0053ef20  missing   $CRT_CPP_Initializer(141)
+0x0053ef50  missing   $CRT_CPP_Initializer(142)
+0x0053ef80  missing   $CRT_CPP_Initializer(143)
+0x0053efb0  100.00%   operator<
+0x0053f010  100.00%   C_mission::C_mission
+0x0053f110  100.00%   C_mission::~C_mission
+0x0053f230  100.00%   C_mission::Init
+0x0053f3b0  100.00%   C_mission::UnInit
+0x0053f520  100.00%   C_mission::AddAnimModel
+0x0053f710  100.00%   C_mission::DelAnimModel
+0x0053f770  100.00%   C_mission::ClearGameAnimModels
+0x0053f7d0  100.00%   C_mission::CreateActor
+0x0053fea0  100.00%   C_mission::AddActor
+0x00540080  100.00%   C_mission::UnloadActor
+0x00540130  100.00%   C_mission::DelActor
+0x00540240  100.00%   C_mission::DelActors
+0x00540300  100.00%   C_mission::DelNotMeActors
+0x00540420  100.00%   C_mission::IsOwnActor
+0x00540490  100.00%   C_mission::FindActorByName
+0x00540520  100.00%   C_mission::GlobalProgramGameInit
+0x00540550  100.00%   C_mission::GlobalProgramGameDone
+0x00540580  100.00%*  C_mission::GlobalProgramRun
+0x005405e0  100.00%   C_mission::Close
+0x005407e0  100.00%   C_mission::Tick
+0x00540950  100.00%   ShowProgress
+0x005409d0  100.00%   C_mission::Open
+0x00540fd0  100.00%   __SceneErrFnc
+0x00540ff0  100.00%   cbSectorBitFill
+0x00541030  77.41%    C_mission::OpenBin
+0x00545250  35.71%    S_tshift_elem::Init
+0x00545280  86.18%    C_tshift::Add
+0x005454d0  100.00%   C_str::operator+=
+0x005455e0  100.00%   cbFrameMap
+0x005456e0  100.00%   std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::~map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >
+0x005457a0  100.00%   C_mission::AddTimeTransparentObject
+0x005459b0  100.00%   C_mission::FinishTimeTransparentObjects
+0x00545a30  100.00%   C_mission::UpdateSettings
+0x00545ad0  100.00%   C_mission::RestoreSettings
+0x00545b20  100.00%   S_mission_options::SetLevelOfDetail
+0x00545b60  100.00%   S_mission_options::SetDrawDistance
+0x00545ba0  100.00%   S_mission_options::SetGameEffects
+0x00545bd0  100.00%   S_mission_options::SetGameSounds
+0x00545c00  100.00%   S_mission_options::SetShadows
+0x00545c60  100.00%   S_mission_options::GetShadows
+0x00545cb0  100.00%   S_mission_options::SetParticles
+0x00545ce0  100.00%   C_mission::FrmActBuff_StoreActor
+0x00545fd0  100.00%   ClearCarSeats
+0x00546010  100.00%   C_mission::FrmActBuff_StoreModel
+0x00546280  100.00%   C_mission::FrmActBuff_GetActor
+0x005463d0  100.00%   C_mission::FrmActBuff_GetModel
+0x005464d0  100.00%   C_mission::FrmActBuff_StoreActiveActor
+0x005466e0  100.00%   C_mission::FrmActBuff_RemoveActiveActor
+0x00546770  100.00%   C_mission::FrmActBuff_IsActiveActor
+0x00546830  100.00%   C_mission::FrmActBuff_StoreActorSound
+0x00546aa0  100.00%   C_mission::FrmActBuff_GetActorSound
+0x00546b70  100.00%   C_mission::FrmActBuff_ClearAll
+0x00546d10  100.00%   I3D_dummy::SetBBox
+0x00546d30  100.00%   std::vector<C_program::S_instruction,std::allocator<C_program::S_instruction> >::push_back
+0x00546ef0  100.00%   std::vector<C_program *,std::allocator<C_program *> >::push_back
+0x005470a0  100.00%   std::vector<S_vector,std::allocator<S_vector> >::size
+0x005470c0  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::size
+0x005470f0  100.00%   std::vector<S_road_link,std::allocator<S_road_link> >::clear
+0x00547120  100.00%   C_mission::GetTShift
+0x00547130  100.00%   SetFrameActor
+0x00547170  100.00%   std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::operator[]
+0x00547220  100.00%   C_actor::SetFromMission
+0x00547230  100.00%   std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::clear
+0x005472a0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::erase
+0x005472f0  100.00%   C_game::C_game
+0x005479c0  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >
+0x005479e0  100.00%   C_using_object::~C_using_object
+0x00547a10  100.00%   std::vector<S_tshift_elem,std::allocator<S_tshift_elem> >::erase
+0x00547a60  86.43%    C_game::~C_game
+0x00548040  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::insert
+0x005481f0  100.00%   std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::insert
+0x005482d0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D7ca7b671
+0x00548300  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::begin
+0x00548310  100.00%   std::pair<C_str const ,I3D_frame *>::pair<C_str const ,I3D_frame *>
+0x00548330  46.27%    std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::erase
+0x005483d0  100.00%   C_Break_plain_glass::~C_Break_plain_glass
+0x00548480  100.00%   C_chunk::GetHandle
+0x00548490  100.00%   C_chunk::ReadDword
+0x00548590  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::insert
+0x005487f0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::erase
+0x00548be0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Erase
+0x00548c30  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Init
+0x00548cb0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Insert
+0x00548f20  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Lrotate
+0x00548f80  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Rrotate
+0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
+0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
+0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
+0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
+0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
+0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
+0x00549110  missing   $CRT_CPP_Initializer(144)
+0x005498f0  100.00%   GM_Menu::OnKey
+0x00549b80  stub      ExecuteRacingMenu
+0x00549d00  stub      RacingMisse06
+0x00549e20  stub      RacingMisse06ExecuteLoop
+0x00549e70  missing   $CRT_CPP_Initializer(145)
+0x00549ea0  missing   $CRT_CPP_Initializer(146)
+0x00549ed0  missing   $CRT_CPP_Initializer(147)
+0x00549f00  missing   $CRT_CPP_Initializer(148)
+0x00549f30  missing   $CRT_CPP_Initializer(149)
+0x00549f60  missing   $CRT_CPP_Initializer(150)
+0x00549f90  100.00%   C_web_node::~C_web_node
+0x0054a1e0  100.00%   C_web_path::~C_web_path
+0x0054a3b0  stub      C_web_path::AddNode
+0x0054a410  stub      C_web_path::DeleteNode
+0x0054a550  stub      C_web_path::CreateConnect
+0x0054a790  stub      C_web_path::ControlNodeConn
+0x0054a8c0  stub      C_web_path::LoadNodes
+0x0054ab40  stub      C_web_path::SaveNodes
+0x0054ade0  stub      C_web_path::MergeNodes
+0x0054af10  stub      C_web_path::ReleaseSelect
+0x0054c5a0  stub      C_web_path::FindSelectedLine
+0x0054c620  stub      C_web_path::IncludeNode
+0x0054c8d0  stub      C_web_path::FlipOneWay
+0x0054cba0  stub      C_web_path::SortNodesByX
+0x0054cd20  100.00%   C_web_path::DeRiciConns
+0x0054d2f0  missing   $CRT_CPP_Initializer(151)
+0x00551830  stub      C_racing::C_racing
+0x00551a70  stub      C_racing::~C_racing
+0x00552190  100.00%   C_racing::GetCurrentCircuit
+0x00552e40  stub      C_racing::GameInit
+0x00552f90  stub      C_racing::GameDone
+0x00555e40  stub      C_racing::Tick
+0x005571d0  stub      C_racing::LoadReplay
+0x00559950  missing   $CRT_CPP_Initializer(152)
+0x00559ca0  missing   $CRT_CPP_Initializer(153)
+0x00559cd0  100.00%   C_roads::C_roads
+0x00559d00  100.00%   C_roads::~C_roads
+0x00559d40  stub      C_roads::SaveData
+0x00559e60  stub      C_roads::LoadData
+0x0055a210  stub      C_roads::MergeData
+0x0055a620  stub      C_roads::RecompileDistances
+0x0055b370  stub      C_roads::GetNearNode
+0x0055c4e0  stub      C_roads::FindPath
+0x0055c890  stub      C_roads::SortNodesByX
+0x0055cf10  missing   $CRT_CPP_Initializer(154)
+0x0055cf40  missing   $CRT_CPP_Initializer(155)
+0x0055cf50  missing   $CRT_CPP_Initializer(156)
+0x0055cf70  missing   $CRT_CPP_Initializer(157)
+0x0055cfa0  missing   $CRT_CPP_Initializer(158)
+0x0055cfb0  missing   $CRT_CPP_Initializer(159)
+0x0055d0b0  missing   $CRT_CPP_Initializer(160)
+0x0055d0c0  missing   $CRT_CPP_Initializer(161)
+0x0055d1c0  missing   $CRT_CPP_Initializer(162)
+0x0055d1d0  missing   $CRT_CPP_Initializer(163)
+0x0055d3c0  50.00%    $CRT_CPP_Initializer(164)
+0x0055d3d0  100.00%   $CRT_CPP_Initializer(165)
+0x0055d420  50.00%    $CRT_CPP_Initializer(166)
+0x0055d430  100.00%   $CRT_CPP_Initializer(167)
+0x0055d460  100.00%   PlayLogo
+0x0055d770  100.00%   C_compass::Activate
+0x0055d8a0  stub      C_fire::~C_fire
+0x0055da80  stub      C_fire::Tick
+0x0055dd60  stub      C_using_object::AddObject
+0x0055df10  100.00%   C_using_object::DelObject
+0x0055dfe0  100.00%   C_using_object::ClearObjects
+0x0055e3e0  100.00%   C_using_object::ClearInvalidItems
+0x0055e410  stub      C_using_object::AddInvalidItem
+0x0055e5c0  stub      C_using_object::DelInvalidItem
+0x0055edd0  100.00%   C_sound_table::C_sound_table
+0x0055ee00  100.00%   C_sound_table::~C_sound_table
+0x0055ee60  100.00%   C_sound_table::FreeTables
+0x0055ef30  stub      C_sound_table::AddGroup
+0x0055ef80  stub      C_sound_table::DelGroup
+0x0055f080  stub      C_sound_table::AddSound
+0x0055f120  stub      C_sound_table::DelSound
+0x0055f210  stub      C_sound_table::GetTableFromIDX
+0x0055f270  stub      C_sound_table::SetFileName
+0x0055f2d0  stub      C_sound_table::OptimalizeTable
+0x0055f390  100.00%   C_sound_table::LoadTables
+0x0055f5e0  stub      C_sound_table::SaveTables
+0x0055f820  100.00%   C_sound_table::ConstructSound
+0x0055fa00  100.00%   C_sound_table::TestConstructSound
+0x0055fa10  100.00%   C_sound_table::ClearInvisibleFlag
+0x0055fa50  stub      soundArena::SoundEmit
+0x0055fcf0  100.00%   soundArena::Init
+0x0055fd40  100.00%   std::vector<C_sound_table::S_sound_table,std::allocator<C_sound_table::S_sound_table> >::erase
+0x0055fd90  100.00%   C_sound_table::GetNumSounds
+0x005600c0  100.00%   std::vector<C_sound_table::S_sound_table,std::allocator<C_sound_table::S_sound_table> >::insert
+0x005603e0  missing   $CRT_CPP_Initializer(168)
+0x00560410  100.00%   S_tshift_elem::Tick
+0x005604f0  100.00%   C_blood_manager::C_blood_manager
+0x00560510  100.00%   C_tshift::Tick
+0x00560590  missing   $CRT_CPP_Initializer(169)
+0x005605c0  stub      PrepareGlassSingleObject
+0x00560db0  100.00%   C_Break_plain_glass::Init
+0x00560f20  100.00%   C_program::S_saved_code::S_saved_code
+0x00560f40  100.00%   C_Break_plain_glass::Done
+0x005611b0  98.40%    C_Break_plain_glass::Tick
+0x00562000  100.00%   S_DICE::operator=
+0x00562170  stub      C_Break_plain_glass::BreakGlass
+0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
+0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
+0x00564750  100.00%   std::copy(struct C_ff_manager::S_effect **, struct C_ff_manager::S_effect **, struct C_ff_manager::S_effect **)
+0x00564860  missing   $CRT_CPP_Initializer(170)
+0x00564890  100.00%   C_Debris::Init
+0x00564920  100.00%   C_Debris::Done
+0x005649d0  100.00%   C_Debris::Tick
+0x00565060  stub      C_Debris::GenerateDebris
+0x005660e0  100.00%   std::vector<S_DEBRIS,std::allocator<S_DEBRIS> >::erase
+0x00566130  missing   $CRT_CPP_Initializer(171)
+0x00566160  100.00%   WinMain
+0x005661c0  missing   $CRT_CPP_Initializer(172)
+0x005661f0  100.00%   MsgBox
+0x005662a0  100.00%   LoadResString
+0x005662c0  100.00%   SetWindowIcon
+0x005662e0  100.00%   FindGameFile
+0x005663d0  100.00%   WaitForCD
+0x00566410  100.00%   FileExists
+0x00566440  100.00%   CheckCD
+0x005665a0  100.00%*  C_I3D_cache<I3D_model>::AddDir
+0x00566780  100.00%   C_str::C_rep::C_rep(char const *, char const *, int, int)
+0x005667e0  100.00%   C_I3D_cache<I3D_sound>::AddDir
+0x00566990  100.00%   C_I3D_cache<I3D_animation_set>::AddDir
+0x00566c60  100.00%   std::vector<C_str,std::allocator<C_str> >::insert
+0x00566f00  100.00%   std::_Construct(class C_str *, class C_str const &)
+0x00566f10  missing   $CRT_CPP_Initializer(173)
+0x00566f40  stub      C_actor_shot::C_actor_shot
+0x00566f60  100.00%   C_actor_shot::`scalar deleting destructor'
+0x00566f80  100.00%   C_actor_shot::~C_actor_shot
+0x00566f90  stub      C_actor_shot::Init
+0x00566fd0  stub      C_actor_shot::Update
+0x00567330  stub      C_actor_shot::GameInit
+0x005673f0  stub      C_actor_shot::GameDone
+0x00567430  stub      C_actor_shot::SetWeapon
+0x005674c0  missing   $CRT_CPP_Initializer(174)
+0x005674f0  stub      C_box_new::C_box_new
+0x00567510  100.00%   C_box_new::`scalar deleting destructor'
+0x00567530  100.00%   C_box_new::~C_box_new
+0x00567540  stub      C_box_new::Init
+0x00567650  stub      C_box_new::GameInit
+0x00567720  100.00%   C_box_new::GameDone
+0x00567730  stub      C_box_new::LoadData
+0x00567ab0  stub      C_box_new::SaveData
+0x00567c20  stub      C_box_new::DuplicateFrom
+0x00567c80  stub      C_box_new::Collision
+0x00567ca0  stub      C_box_new::Hit
+0x00567cc0  missing   $CRT_CPP_Initializer(175)
+0x00567cf0  missing   $CRT_CPP_Initializer(176)
+0x00567d00  missing   $CRT_CPP_Initializer(177)
+0x00567d10  stub      C_bridge::C_bridge
+0x00567e00  100.00%   C_bridge::`scalar deleting destructor'
+0x00567e20  stub      C_bridge::~C_bridge
+0x00567e70  stub      C_bridge::Init
+0x00567fb0  stub      C_bridge::AI
+0x00568540  stub      C_bridge::Update
+0x00569510  stub      C_bridge::GameInit
+0x0056a600  stub      C_bridge::GameDone
+0x0056a6b0  stub      C_bridge::LoadData
+0x0056a790  stub      C_bridge::SaveGameSave
+0x0056a7b0  stub      C_bridge::ShutDown
+0x0056a7e0  stub      C_bridge::Collision
+0x0056ad70  missing   $CRT_CPP_Initializer(178)
+0x0056ada0  missing   $CRT_CPP_Initializer(179)
+0x0056add0  100.00%   C_clock::C_clock
+0x0056adf0  100.00%   C_clock::`scalar deleting destructor'
+0x0056ae10  100.00%   C_clock::~C_clock
+0x0056ae20  100.00%   C_clock::Init
+0x0056ae90  100.00%   C_clock::GameInit
+0x0056afd0  100.00%   C_clock::GameDone
+0x0056afe0  100.00%   C_clock::AI
+0x0056b150  missing   $CRT_CPP_Initializer(180)
+0x0056b180  100.00%   C_human::AddToCutscene
+0x0056b1a0  100.00%   C_human::RecordKey
+0x0056b670  100.00%   C_human::PlayRecord
+0x0056b8d0  89.24%    C_human::PlayStep
+0x0056bec0  80.84%    C_human::PlaceAtTime
+0x0056c6e0  100.00%   C_human::DumpRecords
+0x0056c7c0  56.63%    C_human::GetRecordPos
+0x0056cc70  66.23%    C_human::GetRecordRot
+0x0056d130  81.26%    human_notify_callback
+0x0056e370  100.00%   ai_loc::Init
+0x0056e3b0  87.78%    ai_loc::Update
+0x0056e6f0  100.00%   ai_loc::AddSegment
+0x0056e950  100.00%   ai_loc::SegListUpdate
+0x0056ea00  100.00%   ai_blob_log::Blob
+0x0056ee60  100.00%   ai_blob_log::GetBlob
+0x0056eeb0  100.00%   ai_blob_log::Clear
+0x0056eed0  100.00%   _get_delta_y_
+0x0056ef50  100.00%   _get_delta_nodyn_y_
+0x0056efd0  100.00%   C_human::C_human
+0x0056f1f0  100.00%   C_human::`scalar deleting destructor'
+0x0056f210  100.00%   C_human::~C_human
+0x0056f330  100.00%   ai_logs::~ai_logs
+0x0056f350  100.00%   C_human::Init
+0x0056f400  100.00%   C_human::DuplicateFrom
+0x0056f440  100.00%   C_human::SaveData
+0x0056f4e0  100.00%   C_human::LoadData
+0x0056f760  100.00%   _ReadOldCharStruct
+0x0056f8c0  100.00%   _ReadOldCharStructVer4
+0x0056f9e0  100.00%   C_human::SaveGameGetSize
+0x0056fa20  100.00%   C_human::SaveGameSave
+0x0056fd30  98.33%    C_human::SaveGameLoad
+0x00570570  100.00%   C_human::Death
+0x00570660  100.00%   C_human::Extern_AI_Update
+0x005706a0  100.00%   C_human::SoundsChange
+0x00570740  86.34%    C_human::AI
+0x005716d0  90.06%    C_human::Intern_UseCar(bool)
+0x00571b90  100.00%   C_human::Intern_UseRailway
+0x005721b0  100.00%   C_human::_intern_UseCarTruck
+0x00572530  100.00%   C_human::ThrowFromCarTruck
+0x00572b80  97.13%    C_human::Update
+0x00573ce0  100.00%   C_human::ChangeDeadAnim
+0x00573e50  100.00%   C_human::PersonAnim
+0x005747d0  100.00%   C_human::ShiftAnimation
+0x005748f0  100.00%   C_human::ChangeState
+0x00574bd0  100.00%   C_human::GameInit
+0x005757c0  100.00%   C_human::GameDone
+0x00575ca0  100.00%   C_human::CreateDynColls
+0x00575ed0  100.00%   C_human::EraseDynColls
+0x00575f60  100.00%   C_human::DeactivateColls
+0x00575fc0  100.00%   C_human::ActivateColls
+0x00576040  100.00%   C_human::UpdateDynColl
+0x005762a0  100.00%   C_human::Hit
+0x00578290  100.00%   C_human::HitInCar
+0x005784a0  100.00%   C_human::Collision
+0x00578c60  100.00%   C_human::IsPossibleColl
+0x00578e20  100.00%   C_human::SetCutsceneLink
+0x00578ee0  100.00%   C_human::PoseInterpolate
+0x00579630  100.00%   C_human::PoseSetPoseNormal
+0x00579ea0  96.30%    C_human::PoseSetPoseAimed
+0x0057a560  100.00%   C_human::PoseNullRotate
+0x0057a5f0  100.00%   C_human::PoseValidate
+0x0057a630  100.00%   C_human::GetAnimIDForDeath
+0x0057a710  93.87%    C_human::Movement
+0x0057b660  87.56%    C_human::MovementIntern
+0x0057cb60  100.00%   C_human::TestMoveColl
+0x0057cfe0  100.00%   C_human::DynSetNextCollOwnerMult
+0x0057d0e0  81.16%    C_human::TestMoveCollInOwner
+0x0057d2e0  100.00%   C_human::Do_StopAnim
+0x0057d310  100.00%   C_human::Do_Breath
+0x0057d360  100.00%   C_human::Go_Front
+0x0057d430  100.00%   C_human::Go_Back
+0x0057d4d0  100.00%   C_human::Go_Left
+0x0057d5a0  100.00%   C_human::Go_Right
+0x0057d670  100.00%   C_human::Go_FrontLeft
+0x0057d860  100.00%   C_human::Go_FrontRight
+0x0057da50  100.00%   C_human::Go_BackLeft
+0x0057dc10  100.00%   C_human::Go_BackRight
+0x0057dd00  100.00%   C_human::ChangeAnim
+0x0057dfc0  100.00%   C_human::GetAnimIDForUseCar
+0x0057e020  100.00%   C_human::Intern_UseCar(class C_car *, int)
+0x0057e500  100.00%   C_human::Intern_FromCar
+0x0057e980  100.00%   C_human::RepairWeaponPosition
+0x0057ec20  100.00%   C_human::ChangeWeaponModel
+0x0057f550  100.00%   C_human::Do_ChangeWeapon
+0x0057f830  100.00%   C_human::Do_Aimed
+0x0057f8a0  100.00%   C_human::Do_Crouched
+0x0057f9a0  100.00%   C_human::InventoryTruncate
+0x0057faa0  84.69%    C_human::DropOutItems
+0x005801f0  46.45%    C_human::TozNaselJsemTenNejvyssiMost
+0x005802f0  100.00%   C_human::Can_DropOutFromCar_Free
+0x005805c0  100.00%   C_human::Can_DropOutFromCar
+0x005808c0  100.00%   C_human::Can_EnterToCar
+0x00580ca0  100.00%   C_human::ZasrateLezeniZAuta_ve2rano
+0x00581220  72.61%    C_human::ZasrateVybliknutiZAuta_ve3rano
+0x00581eb0  95.02%    C_human::Do_ClimbInCarLR
+0x00582180  100.00%*  C_human::Use_Actor
+0x00583590  100.00%   C_human::Do_Shoot
+0x00583f40  100.00%   C_human::Do_ThrowGrenade
+0x00584010  82.95%    C_human::Can_SpecialStroke
+0x00584480  100.00%   C_human::Do_Castrate
+0x00584550  100.00%   C_human::Do_HardHead
+0x00584620  62.89%    C_human::Shooting
+0x00585b20  missing   Unknown FUNCTION
+0x00585b40  100.00%   C_human::Do_Reload
+0x00585c60  48.68%    C_human::Do_Holster
+0x00585d90  100.00%   C_human::Do_WeaponDrop
+0x00585e80  100.00%   C_human::Do_PlayAnim
+0x00585f40  100.00%   C_human::GetBoundPoints2D
+0x00586190  100.00%   C_human::Do_Jump
+0x00586400  98.93%    C_human::Do_Climb
+0x00587040  100.00%   C_human::Do_SideJump
+0x00587190  100.00%*  C_human::_intern_ChangeModel
+0x005877a0  100.00%   C_human::InitFFEffects
+0x00587880  100.00%   C_human::DoneFFEffects
+0x005878d0  100.00%   C_human::_intern_ForceDeath
+0x00587bc0  100.00%   C_human::Do_ShockStart
+0x00587c20  100.00%   C_human::Do_ShockDown
+0x00587cb0  100.00%   C_human::Do_ShockUp
+0x00587cf0  100.00%   C_human::Do_ShockStumble
+0x00587d30  100.00%   C_human::cbCollTester
+0x00587d70  64.63%    C_human::Do_ThrowCocotFromCar
+0x00588b40  85.20%    C_human::_intern_ThrowMeFromCar
+0x00589140  100.00%   C_human::Do_FuckingBox
+0x00589680  100.00%   C_human::Do_FuckingBoxCancel
+0x00589c20  100.00%   C_human::Do_DeadBody
+0x0058a5a0  100.00%   C_human::EineMeineKleineAutoInLuft
+0x0058a790  100.00%   C_human::Can_Aimed
+0x0058a960  100.00%   C_human::Do_CornerBreath
+0x0058a9a0  100.00%   C_human::Do_CornerView
+0x0058aa60  100.00%   C_human::Do_CornerFire
+0x0058ab80  100.00%   C_human::Do_CornerFireAimed
+0x0058ac50  100.00%   C_human::Force_CanWorking
+0x0058ac60  100.00%   C_human::Turn_Turn
+0x0058ac90  100.00%   C_human::Activate
+0x0058b330  100.00%   C_human::Deactivate
+0x0058b470  100.00%   C_human::NewScream
+0x0058b690  100.00%   C_human::Do_FuckingBoxDrop
+0x0058b7e0  100.00%   C_human::Do_DeadBodyDrop
+0x0058b870  100.00%   C_human::ResetActions
+0x0058b8d0  100.00%   C_human::RecompileDeathPos
+0x0058bf30  100.00%   SettleOnGround
+0x0058c4f0  97.20%    PushOutOfWalls
+0x0058c980  62.42%    SlideOffEdge
+0x0058cec0  100.00%   C_human::ProcessDeathPos
+0x0058cfb0  100.00%   C_human::IsThisCarStealing
+0x0058d020  100.00%   C_human::FreeHand
+0x0058d270  100.00%   C_human::BezZasobnikuWeaponEffect
+0x0058d2c0  100.00%   C_human::StartWeaponEffect
+0x0058da70  100.00%   C_human::TickWeaponEffect
+0x0058df60  100.00%   C_human::ResetWeaponEffects
+0x0058e210  100.00%   C_human::FakeWeaponEffect
+0x0058e270  100.00%   C_human::Can_Hit_FilterHumanType
+0x0058e2f0  100.00%   std::vector<tDynamicCollObject *,std::allocator<tDynamicCollObject *> >::clear
+0x0058e320  missing   $CRT_CPP_Initializer(181)
+0x0058e350  stub      C_scatter::C_scatter
+0x0058e3a0  100.00%   C_scatter::`scalar deleting destructor'
+0x0058e3c0  stub      C_scatter::~C_scatter
+0x0058e3f0  stub      C_scatter::Init
+0x0058e420  stub      C_scatter::SaveData
+0x0058e470  stub      C_scatter::LoadData
+0x0058e550  stub      C_scatter::DuplicateFrom
+0x0058e590  stub      C_scatter::GameInit
+0x0058e9d0  stub      C_scatter::GameDone
+0x0058ead0  stub      C_scatter::AI
+0x0058eda0  missing   $CRT_CPP_Initializer(182)
+0x0058edb0  missing   $CRT_CPP_Initializer(183)
+0x0058f130  missing   $CRT_CPP_Initializer(184)
+0x0058f160  100.00%   SetPlayerNaviPoint
+0x0058f170  stub      C_player::C_player
+0x0058f200  100.00%   C_player::`scalar deleting destructor'
+0x0058f220  stub      C_player::~C_player
+0x0058f260  stub      C_player::Init
+0x0058f290  100.00%   C_player::DuplicateFrom
+0x0058f2a0  stub      C_player::SaveData
+0x0058f2c0  stub      C_player::LoadData
+0x0058f2e0  stub      C_player::SaveGameGetSize
+0x0058f2f0  stub      C_player::SaveGameSave
+0x0058f380  stub      C_player::SaveGameLoad
+0x0058f4a0  100.00%   C_player::Death
+0x005937b0  stub      C_player::AI
+0x00594050  100.00%   C_player::Update
+0x00594060  stub      C_player::GameInit
+0x00594180  stub      C_player::GameDone
+0x005941c0  stub      C_player::Collision
+0x00594210  stub      C_player::Hit
+0x005942c0  stub      C_player::UpdateControls
+0x005952f0  stub      C_player::IndicatorSetAimed
+0x00595390  stub      C_player::ShootDeAimed
+0x00595440  stub      C_player::SetSniperMode
+0x00595570  stub      C_player::_intern_ChangeModel
+0x00595c30  stub      C_player::SetCarDamage
+0x00595cb0  stub      C_player::AddAlphaObject
+0x00595d70  stub      C_player::DelAlphaObject
+0x00595e10  stub      C_player::SetAlpha
+0x00595f00  stub      C_player::LockControls
+0x005961b0  100.00%   C_player::FadeReset
+0x005961d0  missing   $CRT_CPP_Initializer(185)
+0x00596200  stub      C_racecam::C_racecam
+0x00596220  100.00%   C_racecam::`scalar deleting destructor'
+0x00596240  100.00%   C_racecam::~C_racecam
+0x00596250  stub      C_racecam::Init
+0x005962b0  stub      C_racecam::SaveData
+0x005962e0  stub      C_racecam::LoadData
+0x00596360  stub      C_racecam::DuplicateFrom
+0x00596380  stub      C_racecam::GameInit
+0x005963d0  stub      C_racecam::GameDone
+0x005963f0  missing   $CRT_CPP_Initializer(186)
+0x00596420  missing   $CRT_CPP_Initializer(187)
+0x00596430  missing   $CRT_CPP_Initializer(188)
+0x005964a0  missing   $CRT_CPP_Initializer(189)
+0x005964b0  missing   $CRT_CPP_Initializer(190)
+0x00596520  missing   $CRT_CPP_Initializer(191)
+0x00596530  missing   $CRT_CPP_Initializer(192)
+0x005965a0  missing   $CRT_CPP_Initializer(193)
+0x005965b0  missing   $CRT_CPP_Initializer(194)
+0x00596620  stub      C_rail_generator::C_rail_generator
+0x00596660  100.00%   C_rail_generator::`scalar deleting destructor'
+0x00596680  100.00%   C_rail_generator::~C_rail_generator
+0x00596690  100.00%   C_rail_generator::Init
+0x005966a0  stub      C_rail_generator::SaveData
+0x00596710  stub      C_rail_generator::LoadData
+0x00596860  stub      C_rail_generator::GameInit
+0x00597a20  stub      C_rail_generator::GameDone
+0x00597bf0  stub      C_rail_generator::AI
+0x00598390  100.00%   std::vector<C_str,std::allocator<C_str> >::size
+0x005983b0  missing   $CRT_CPP_Initializer(195)
+0x005983e0  missing   $CRT_CPP_Initializer(196)
+0x005983f0  missing   $CRT_CPP_Initializer(197)
+0x00598410  100.00%   Ease
+0x005987f0  stub      C_recorder::vfunc_5
+0x00598970  stub      C_recorder::vfunc_6
+0x005989a0  100.00%   C_recorder::SetState
+0x00598b70  100.00%   C_recorder::GetState
+0x00598b80  stub      C_recorder::SetTime
+0x00598d90  100.00%   C_recorder::GetCurTime
+0x00598da0  100.00%   C_recorder::GetScaledTime
+0x00598db0  stub      C_recorder::AddActor
+0x00598fb0  stub      C_recorder::vfunc_7
+0x00599010  100.00%   C_recorder::RemoveActor
+0x005990e0  100.00%   C_recorder::RemoveActors
+0x005991e0  stub      C_recorder::HasActor
+0x00599240  stub      C_recorder::vfunc_13
+0x00599370  stub      C_recorder::HasActor2Only
+0x005993d0  stub      C_recorder::vfunc_11
+0x0059a240  stub      C_recorder::vfunc_24
+0x0059a3c0  stub      C_recorder::RecLoadFull
+0x0059ac30  stub      C_recorder::vfunc_26
+0x0059b210  stub      C_recorder::vfunc_40
+0x0059b2a0  stub      C_recorder::vfunc_41
+0x0059b430  stub      C_recorder::vfunc_42
+0x0059b570  stub      C_recorder::vfunc_43
+0x0059b5b0  stub      C_recorder::vfunc_44
+0x0059b5f0  100.00%   C_cutscene_anim_names::C_cutscene_anim_names
+0x0059b7c0  stub      C_cutscene_anim_names::GetName
+0x0059b800  stub      C_cutscene_anim_names::GetValue
+0x0059b840  stub      C_cutscene_anim_names::SetValue
+0x0059b8c0  stub      C_cutscene_anim_names::LoadBuffer
+0x0059b940  stub      C_cutscene_anim_names::SaveBuffer
+0x0059b9a0  stub      C_cutscene_anim_names::LoadFile
+0x0059ba40  stub      C_cutscene_anim_names::SaveFile
+0x0059bab0  stub      C_cutscene_anim_names::LoadDta
+0x0059bb50  100.00%   C_cutscene_anim_names::Clear
+0x0059bb70  stub      C_cutscene_anim_names::GetSaveSize
+0x0059bb90  stub      C_recorder::AddAnim
+0x0059bc20  stub      C_recorder::CreateAnim
+0x0059bd80  stub      C_recorder::GetAnimByIndex
+0x0059bdb0  stub      C_recorder::GetAnim
+0x0059bdf0  stub      C_recorder::LoadTCK
+0x0059c170  stub      C_recorder::vfunc_21
+0x0059c2f0  stub      C_recorder::vfunc_22
+0x0059c4e0  100.00%   C_recorder::ReleaseAnims
+0x0059c550  100.00%   S_cutscene_anim::~S_cutscene_anim
+0x0059c580  stub      C_recorder::AddAnimName
+0x0059c5c0  100.00%   C_recorder::GetAnimName
+0x0059c5d0  100.00%   C_recorder::GetAnimValue
+0x0059c5e0  100.00%   C_recorder::SetAnimValue
+0x0059c5f0  100.00%   C_recorder::ResetSpeedKeys
+0x0059c600  100.00%   C_recorder::SetSpeedKeysOn
+0x0059c610  100.00%   C_recorder::GetSpeedKeysOn
+0x0059c620  100.00%   C_recorder::RecClear
+0x0059c630  100.00%   C_recorder::RecAddActor
+0x0059c640  100.00%   C_recorder::RecLoad
+0x0059c650  100.00%   C_recorder::DetachActor
+0x0059c660  100.00%   C_recorder::AttachActor
+0x0059c690  100.00%   C_recorder::vfunc_38
+0x0059c6a0  100.00%   C_recorder::Close
+0x0059cc20  50.00%    $CRT_CPP_Initializer(198)
+0x0059cc30  50.00%    $CRT_CPP_Initializer(199)
+0x0059d1f0  100.00%   C_cutscene_recording::RemoveActor
+0x0059d2c0  100.00%   C_cutscene_recording::Clear
+0x0059d350  100.00%   C_cutscene_recording::ReleaseUnknown0
+0x0059d3c0  stub      C_cutscene_recording::Unknown59d3c0
+0x0059d4d0  stub      C_cutscene_recording::RecClear
+0x0059d500  stub      C_cutscene_recording::RecAddActor
+0x0059dcd0  stub      C_cutscene_recording::RecLoad
+0x0059df40  stub      C_cutscene_recording::DetachActor
+0x0059dfb0  stub      C_cutscene_recording::AttachActor
+0x0059e020  stub      C_recorder::vfunc_45
+0x0059e100  100.00%   C_recorder::vfunc_46
+0x0059e110  stub      C_recorder::vfunc_47
+0x0059e140  stub      C_recorder::vfunc_48
+0x0059e170  100.00%   C_recorder::vfunc_49
+0x0059e180  stub      C_recorder::OpenShow
+0x0059e1e0  100.00%   C_recorder::SetShowStart
+0x0059e1f0  stub      C_recorder::TickShow
+0x0059e2d0  100.00%   C_recorder::IsPlaying
+0x0059e6d0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ufill
+0x0059e7e0  stub      C_seagull::C_seagull
+0x0059e830  100.00%   C_seagull::`scalar deleting destructor'
+0x0059e850  stub      C_seagull::~C_seagull
+0x0059e890  stub      C_seagull::GameInit
+0x0059f6a0  stub      C_seagull::GameDone
+0x0059f710  stub      C_seagull::Collision
+0x0059f770  stub      C_seagull::Hit
+0x0059f920  stub      C_seagull::AI
+0x005a0730  missing   $CRT_CPP_Initializer(200)
+0x005a0760  50.00%    $CRT_CPP_Initializer(201)
+0x005a0770  100.00%   $CRT_CPP_Initializer(202)
+0x005a07a0  50.00%    $CRT_CPP_Initializer(203)
+0x005a07b0  100.00%   $CRT_CPP_Initializer(204)
+0x005a0810  29.40%    C_game::Init
+0x005a3960  100.00%   _show_progress_
+0x005a3990  stub      PrepareBaseBlocks
+0x005a3b90  100.00%   C_game::S_hlp::cbEnumSectors
+0x005a3bd0  100.00%   C_game::S_hlp::PreloadAnim
+0x005a3c60  63.49%    C_game::Done
+0x005a4d20  92.59%    C_game::DoneIntern
+0x005a5070  100.00%   C_game::ChangeActState
+0x005a51c0  82.43%    C_game::Tick
+0x005a6d60  100.00%   C_game::DoubleKiss
+0x005a77c0  stub      C_game::AddTemporaryActor
+0x005a79a0  100.00%   C_game::RemoveTemporaryActor
+0x005a7b70  stub      C_game::InternTempActAdd
+0x005a7d40  100.00%   C_game::InternTempActDel
+0x005a7ec0  stub      C_game::_RemoveTemporaryActor
+0x005a7f60  100.00%   C_game::ClearTemporaryActors
+0x005a7ff0  100.00%   C_game::UpdateControls
+0x005a8470  stub      C_game::SetTrafficVisible
+0x005a84a0  stub      C_game::NewShoot
+0x005a8e70  73.02%    C_game::TickShoot
+0x005aae10  stub      C_game::NewExplosion
+0x005abfb0  stub      C_game::NewCartidge
+0x005ac580  stub      C_game::NewGrenade
+0x005aca70  stub      C_game::Play3DSound(class I3D_frame *, char const *, enum I3D_SOUNDTYPE, struct S_vector, float, float, float, bool, float, bool)
+0x005acc00  stub      C_game::Stop3DSound
+0x005accb0  stub      C_game::Play3DSound(class I3D_sound *)
+0x005acf00  100.00%   C_game::ClearEffects
+0x005acfb0  100.00%   C_game::CompareShadows
+0x005acfe0  100.00%   C_game::AddShadowModel
+0x005ad210  100.00%   C_game::SetupShadow
+0x005ad2a0  stub      C_game::AddFrameForShadow
+0x005ad640  stub      C_game::SetFrameForShadow
+0x005ad7c0  stub      C_game::DelFrameForShadow
+0x005ad900  67.76%    C_game::S_hlp::cbFindSemaphores
+0x005add10  100.00%   C_game::LoadSemaphores
+0x005add70  100.00%   C_game::FreeSemaphores
+0x005ade20  100.00%   C_game::TickSemaphores
+0x005adee0  100.00%   C_game::LoadCityMusicAreas
+0x005adf30  96.10%    C_game::S_hlp::cbCityMusic
+0x005ae130  100.00%   C_game::CityMusicOff
+0x005ae1b0  stub      C_game::CityMusicPaused
+0x005ae1d0  stub      C_game::SetFilmMusic
+0x005ae390  stub      C_game::GetFilmMusic
+0x005ae3d0  stub      C_game::StreamDestroyAll
+0x005ae480  stub      C_game::LoadDiffData
+0x005af860  100.00%   C_game::ClearDiffData
+0x005afca0  100.00%   C_game::S_hlp::cbFreeFramePlacement
+0x005afd50  100.00%*  C_game::GlobalProgramRun
+0x005afdb0  stub      C_game::InvalidateColl
+0x005afe40  stub      C_game::InvalidateActor
+0x005b0210  100.00%   C_game::InvalidateFrame
+0x005b0230  100.00%   C_game::S_hlp::cbDelFrame
+0x005b0300  stub      C_game::AddFramePlacement
+0x005b06c0  stub      C_game::WFall_Player
+0x005b06e0  stub      C_game::AddNPCKillEvent
+0x005b0b60  stub      C_game::CreateTrackEffect(struct S_vector &, struct S_vector &, float, struct S_vector &, float, int, bool, float, bool, bool, class I3D_frame *)
+0x005b1370  stub      C_game::CreateTrackEffect(struct S_vector &, struct S_vector &, struct S_vector &, struct S_vector &, float, int, bool, float, bool, bool, class I3D_frame *)
+0x005b1d70  stub      C_game::ClearProjectorsForFrame
+0x005b1da0  100.00%   C_game::InventoryStackClear
+0x005b1e10  stub      C_game::InventoryStackPush
+0x005b20b0  stub      C_game::InventoryStackPop
+0x005b2320  100.00%   C_game::FloatStackClear
+0x005b2350  stub      C_game::FloatStackPush
+0x005b2530  stub      C_game::FloatStackPop
+0x005b2590  100.00%   C_game::CharacterStackClear
+0x005b25c0  stub      C_game::CharacterStackPush
+0x005b2740  stub      C_game::CharacterStackPop
+0x005b2a00  stub      C_game::BoxPlacementAdd
+0x005b2ee0  stub      C_game::BoxPlacementDel
+0x005b2fc0  stub      C_game::BoxPlacementRecompile
+0x005b3220  stub      C_game::BoxPlacementDestAdd
+0x005b33f0  stub      C_game::BoxPlacementDestSetOU
+0x005b3a90  stub      C_game::BoxPlacement_DelInfo
+0x005b3b10  stub      C_game::BoxPlacement_RestoreInfo
+0x005b3c00  stub      C_game::BoxPlacement_GetStartPoint
+0x005b3c80  stub      C_game::BoxPlacementGetNextDest
+0x005b4010  stub      C_game::BoxPlacementGetEnemyDest
+0x005b4190  stub      C_game::BoxPlacement_GetBox
+0x005b41d0  stub      C_game::BoxPlacement_GetBoxDest
+0x005b4210  stub      C_game::BoxPlacement_MoveBoxToDest
+0x005b42e0  stub      C_game::BoxRecompileBoxForCar
+0x005b44e0  stub      C_game::BoxPlacementPoPiciNaZkurvenemAute
+0x005b4560  stub      C_game::DeathActorAdd
+0x005b4720  stub      C_game::DeathActorProcess
+0x005b4790  stub      C_game::GetActorFromGUID
+0x005b47d0  stub      C_game::SaveGameGetSize
+0x005b4920  stub      C_game::SaveGameSave
+0x005b4d10  stub      C_game::SaveGameLoad
+0x005b5410  stub      C_game::SaveGameLoadBefore
+0x005b5450  stub      C_game::LightnessAdd
+0x005b56f0  stub      C_game::LightnessDel
+0x005b5780  100.00%   C_game::LightnessClear
+0x005b57e0  stub      C_game::LightnessTick
+0x005b5b40  stub      C_game::AddShootLight
+0x005b5c80  stub      C_game::UseLightCacheSystem
+0x005b5d40  stub      C_game::RecomputeLightCache
+0x005b5e90  100.00%   C_game::CreateIShow
+0x005b6110  100.00%   C_game::OpenIShow
+0x005b62c0  stub      C_game::DestroyIShow
+0x005b63b0  100.00%   C_game::DestroyIShowAll
+0x005b64c0  100.00%   C_game::GetIShow
+0x005b6520  100.00%   C_game::IShowStoreVolume
+0x005b6580  100.00%   C_game::IShowLoop
+0x005b6600  100.00%   C_game::IShowSetVolume
+0x005b6660  stub      C_game::IShowFadeDownAll
+0x005b6710  stub      C_game::IShowFade
+0x005b69d0  100.00%   C_game::LoadRoadBlocks
+0x005b6a50  64.71%    C_game::S_hlp::cbRoadBlock
+0x005b6b10  100.00%   C_game::LoadTaxiPoints
+0x005b6b60  100.00%   C_game::S_hlp::cbFindTaxiPoints
+0x005b6d10  stub      C_game::IsValidTaxiPassenger
+0x005b6e00  90.53%    C_game::LoadTelephones
+0x005b71b0  100.00%   C_game::S_hlp::cbTelephones
+0x005b7500  stub      C_game::IsTelephoneExist
+0x005b7560  stub      C_game::AddHumanTalk
+0x005b7730  stub      C_game::DelHumanTalk
+0x005b77c0  stub      C_game::DeathHumanTalk
+0x005b7860  95.86%    C_game::CreateSignalMarkIDX
+0x005b7be0  stub      C_game::DestroyControlSignal
+0x005b7ed0  100.00%   C_game::EntityBlock
+0x005b7f70  stub      C_game::AddInvisibleActor
+0x005b8150  stub      C_game::FindActorsVect
+0x005b81e0  stub      C_game::AddCutsceneParticle
+0x005b8390  stub      C_game::DestroyCutsceneParticles
+0x005b83f0  100.00%   C_game::StopAllSounds
+0x005b8e70  stub      C_game::AddCreatedFrameToVector
+0x005b9040  stub      C_game::DelCreatedFrameToVector
+0x005b90b0  100.00%   C_game::LoadScreamAreas
+0x005b9110  100.00%   C_game::S_hlp::cbScreamArea
+0x005b9390  stub      C_game::TickScreamAreas
+0x005b9540  100.00%   C_game::OsefujPocasi
+0x005b9690  stub      C_game::AddDeadHumanForTick
+0x005b98c0  stub      C_game::TickDeadHumanForTick
+0x005b9ef0  100.00%   C_game::DelAllHydrants
+0x005b9fa0  100.00%   C_game::ScoreSetOn
+0x005b9fe0  100.00%   C_game::ScoreSet
+0x005ba010  stub      C_game::SetCameraRotRepair
+0x005ba080  stub      C_game::ClearCartridges
+0x005ba110  stub      C_game::TickCarSoundManager
+0x005ba310  100.00%   C_game::ClearDeathHumanFade
+0x005ba390  stub      C_game::ItemBlurTick
+0x005baa40  stub      C_game::RemoveDeathHumanFade
+0x005bab20  stub      C_game::RecPrepareHumans
+0x005bab80  100.00%   C_game::InterCity_GameInit
+0x005bb570  stub      AddInterCityBox
+0x005bbb20  100.00%   C_game::InterCity_GameDoneInGameDone
+0x005bc050  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
+0x005bc780  100.00%   std::vector<S_SRFC,std::allocator<S_SRFC> >::_Ucopy
+0x005bc7c0  100.00%   std::vector<S_VEH_PARTICLE,std::allocator<S_VEH_PARTICLE> >::_Ucopy
+0x005bc800  100.00%   std::vector<G_SaveGame_FileHead,std::allocator<G_SaveGame_FileHead> >::_Ucopy
+0x005bc900  100.00%   std::copy(struct C_game::S_driver_man *, struct C_game::S_driver_man *, struct C_game::S_driver_man *)
+0x005bca00  100.00%   std::_Construct(struct C_mission::S_frame_actor_buffer *, struct C_mission::S_frame_actor_buffer const &)
+0x005bcbe0  missing   $CRT_CPP_Initializer(205)
+0x005bcc10  100.00%   cbLoadScene
+0x005bcdd0  missing   $CRT_CPP_Initializer(206)
+0x005bce00  100.00%   $CRT_CPP_Initializer(207)
+0x005bce10  100.00%   $CRT_CPP_Initializer(208)
+0x005bcee0  50.00%    $CRT_CPP_Initializer(209)
+0x005bcef0  100.00%   $CRT_CPP_Initializer(210)
+0x005bcf20  50.00%    $CRT_CPP_Initializer(211)
+0x005bcf30  50.00%    $CRT_CPP_Initializer(212)
+0x005bcf60  100.00%   C_I3D_model_cache::~C_I3D_model_cache
+0x005bd0c0  100.00%   C_I3D_model_cache::`scalar deleting destructor'
+0x005bd0e0  50.00%    $CRT_CPP_Initializer(213)
+0x005bd0f0  50.00%    $CRT_CPP_Initializer(214)
+0x005bd120  77.67%    C_I3D_sound_cache::~C_I3D_sound_cache
+0x005bd270  100.00%   C_I3D_sound_cache::`scalar deleting destructor'
+0x005bd290  50.00%    $CRT_CPP_Initializer(215)
+0x005bd2a0  50.00%    $CRT_CPP_Initializer(216)
+0x005bd2d0  77.67%    C_I3D_anim_cache::~C_I3D_anim_cache
+0x005bd420  100.00%   C_I3D_anim_cache::`scalar deleting destructor'
+0x005bd440  50.00%    $CRT_CPP_Initializer(217)
+0x005bd450  100.00%   $CRT_CPP_Initializer(218)
+0x005bd480  50.00%    $CRT_CPP_Initializer(219)
+0x005bd490  100.00%   $CRT_CPP_Initializer(220)
+0x005bd4e0  missing   $CRT_CPP_Initializer(221)
+0x005bd4f0  missing   $CRT_CPP_Initializer(222)
+0x005bd540  missing   $CRT_CPP_Initializer(223)
+0x005bd550  missing   $CRT_CPP_Initializer(224)
+0x005bd560  missing   $CRT_CPP_Initializer(225)
+0x005bd570  missing   $CRT_CPP_Initializer(226)
+0x005bd580  50.00%    $CRT_CPP_Initializer(227)
+0x005bd590  100.00%   $CRT_CPP_Initializer(228)
+0x005bd5c0  100.00%   SetWBuffer
+0x005bd5f0  100.00%   InitJoy
+0x005bd870  100.00%   CloseJoy
+0x005bd8d0  100.00%   cbScene
+0x005be750  stub      GameLoopSingle
+0x005beb00  100.00%   GraphErrorHandler
+0x005bebd0  100.00%   RacingInMainMenu
+0x005bebe0  100.00%   main
+0x005bf510  100.00%   GM_Carcyclopedia::OnBeforeCreate
+0x005bf520  100.00%   S_settings::S_settings
+0x005bf5a0  97.66%    InitSystem
+0x005bfec0  100.00%   InitErrorMessageBox
+0x005c0080  100.00%*  CloseSystem
+0x005c0290  41.98%    C_I3D_cache<I3D_model>::Create
+0x005c06a0  94.44%    C_I3D_cache<I3D_model>::DelDir
+0x005c08b0  100.00%   C_str::operator=(class C_str const &)
+0x005c0c40  41.98%    C_I3D_cache<I3D_sound>::Create
+0x005c1050  100.00%   C_I3D_cache<I3D_animation_set>::Clear
+0x005c10e0  94.21%    C_I3D_cache<I3D_sound>::DelDir
+0x005c1670  78.74%    C_I3D_cache<I3D_animation_set>::Open
+0x005c1aa0  94.44%    C_I3D_cache<I3D_animation_set>::DelDir
+0x005c1fb0  100.00%   C_I3D_cache<I3D_model>::`scalar deleting destructor'
+0x005c1fd0  78.82%    C_I3D_cache<I3D_model>::~C_I3D_cache<I3D_model>
+0x005c20e0  100.00%   C_I3D_cache_base<I3D_model>::`scalar deleting destructor'
+0x005c2100  100.00%   C_I3D_cache<I3D_sound>::`scalar deleting destructor'
+0x005c2120  78.82%    C_I3D_cache<I3D_sound>::~C_I3D_cache<I3D_sound>
+0x005c2230  100.00%   C_I3D_cache_base<I3D_sound>::`scalar deleting destructor'
+0x005c2250  100.00%   C_I3D_cache<I3D_animation_set>::`scalar deleting destructor'
+0x005c2270  78.82%    C_I3D_cache<I3D_animation_set>::~C_I3D_cache<I3D_animation_set>
+0x005c2380  100.00%   C_I3D_cache_base<I3D_animation_set>::`scalar deleting destructor'
+0x005c23a0  100.00%   C_I3D_model_cache::Duplicate
+0x005c23d0  100.00%   C_I3D_model_cache::cbClearData
+0x005c23e0  100.00%   C_I3D_model_cache::CreateNew
+0x005c23f0  100.00%   C_I3D_sound_cache::Duplicate
+0x005c2430  100.00%   C_I3D_sound_cache::CreateNew
+0x005c2440  100.00%   C_I3D_anim_cache::CreateNew
+0x005c2520  100.00%   C_animations_machine_de_luxe::S_track::`scalar deleting destructor'
+0x005c2540  100.00%   C_I3D_cache<I3D_model>::S_itm::operator=
+0x005c2580  missing   $CRT_CPP_Initializer(229)
+0x005c25b0  missing   $CRT_CPP_Initializer(230)
+0x005c25c0  missing   $CRT_CPP_Initializer(231)
+0x005c25e0  100.00%   C_cutscene_records::Reset
+0x005c25f0  100.00%   C_cutscene_records::GetRecordsSize
+0x005c2650  100.00%   C_actor::GetBlockRecordsSize
+0x005c26a0  100.00%   C_actor::GetRecordsSize
+0x005c2700  100.00%   C_actor::NewRecordBlock
+0x005c2730  100.00%   C_actor::AddRecord
+0x005c27b0  100.00%   C_actor::SetCutsceneRecord
+0x005c27d0  100.00%   C_actor::SetCutscenePlay
+0x005c27f0  100.00%   C_actor::UpdateCutsceneFlags
+0x005c2810  missing   $CRT_CPP_Initializer(232)
+0x005c2840  50.00%    $CRT_CPP_Initializer(233)
+0x005c2850  100.00%   $CRT_CPP_Initializer(234)
+0x005c2880  100.00%   g_collision::~g_collision
+0x005c28d0  100.00%   g_collision::DeleteCollsLevel
+0x005c2980  100.00%   GrantCoherence
+0x005c2b70  100.00%   g_collision::LoadCollision
+0x005c3610  100.00%   g_collision::DynOptimizeTick
+0x005c36c0  100.00%   g_collision::DynInsert
+0x005c38b0  100.00%   g_collision::DynErase
+0x005c3ac0  90.54%    g_collision::DynUpdate
+0x005c3d10  100.00%   g_collision::DynSetNextCollOwner
+0x005c3d60  100.00%   g_collision::DynSetNextCollOwnerMult
+0x005c3da0  86.37%    g_collision::DynWipeOut
+0x005c4020  100.00%   g_collision::DynGetIn
+0x005c41d0  100.00%   g_collision::DynGetOut
+0x005c4230  100.00%   g_collision::BoxInDynamic
+0x005c44b0  100.00%   g_collision::BoxInNonFace
+0x005c46c0  100.00%   g_collision::BoxInTreeLevel
+0x005c48b0  97.08%    g_collision::_TestDBox
+0x005c4fa0  100.00%   g_collision::g_collision
+0x005c5010  missing   $CRT_CPP_Initializer(235)
+0x005c6b10  stub      g_collision::_TestLineV
+0x005c6ff0  stub      g_collision::_TestLineVInnerDyn
+0x005c74d0  stub      g_collision::TestLineHStatic
+0x005c8440  stub      g_collision::TestLineHDynamic
+0x005c8770  stub      g_collision::_TestLineH
+0x005c9b80  stub      g_collision::TestLineInVehicle
+0x005c9e40  missing   $CRT_CPP_Initializer(236)
+0x005ca5c0  stub      g_collision::FindCollsByFrame
+0x005caf80  missing   $CRT_CPP_Initializer(237)
+0x005d39a0  stub      g_collision::_TestSphereB
+0x005d58d0  missing   $CRT_CPP_Initializer(238)
+0x005d5900  100.00%   g_collision::GameDone
+0x005d5910  100.00%   g_collision::TestLineV
+0x005d5920  100.00%   g_collision::TestLineVInnerDyn
+0x005d5930  100.00%   g_collision::TestLineH
+0x005d5940  100.00%   g_collision::TestSphereB
+0x005d59b0  100.00%   g_collision::TestDBox
+0x005d59c0  stub      g_collision::TestPanak2
+0x005d6430  stub      g_collision::TestPanak2InVehicle
+0x005d6e20  missing   $CRT_CPP_Initializer(239)
+0x005d6e50  100.00%   AddLine
+0x005d6ee0  100.00%   DrawLines
+0x005d6f30  100.00%   ClearLines
+0x005d6f50  missing   $CRT_CPP_Initializer(240)
+0x005d6f80  stub      C_ShotSkeleton::Init
+0x005d6fe0  stub      C_ShotSkeleton::TestCollision
+0x005d7650  missing   $CRT_CPP_Initializer(241)
+0x005d7680  100.00%   GM_Carcyclopedia::OnCreate
+0x005d7ae0  100.00%   GM_Carcyclopedia::OnClose
+0x005d7b10  100.00%*  GM_Carcyclopedia::OnTick
+0x005d80c0  100.00%   GM_Carcyclopedia::OnKey
+0x005d8400  100.00%   GM_Carcyclopedia::OnClick
+0x005d8450  100.00%   GM_Carcyclopedia::OnMouse
+0x005d8590  100.00%   GM_Carcyclopedia::RefreshCar
+0x005d87b0  missing   $CRT_CPP_Initializer(242)
+0x005d87e0  100.00%   $CRT_CPP_Initializer(243)
+0x005d87f0  100.00%   $CRT_CPP_Initializer(244)
+0x005d8830  100.00%   $CRT_CPP_Initializer(245)
+0x005d8840  100.00%   $CRT_CPP_Initializer(246)
+0x005d8880  100.00%   $CRT_CPP_Initializer(247)
+0x005d8890  100.00%   $CRT_CPP_Initializer(248)
+0x005d88d0  100.00%   $CRT_CPP_Initializer(249)
+0x005d88e0  100.00%   $CRT_CPP_Initializer(250)
+0x005d8920  100.00%   $CRT_CPP_Initializer(251)
+0x005d8930  100.00%   $CRT_CPP_Initializer(252)
+0x005d8970  100.00%   $CRT_CPP_Initializer(253)
+0x005d8980  100.00%   $CRT_CPP_Initializer(254)
+0x005d89c0  100.00%   $CRT_CPP_Initializer(255)
+0x005d89d0  100.00%   $CRT_CPP_Initializer(256)
+0x005d8a10  100.00%   $CRT_CPP_Initializer(257)
+0x005d8a20  100.00%   $CRT_CPP_Initializer(258)
+0x005d8a60  100.00%   $CRT_CPP_Initializer(259)
+0x005d8a70  100.00%   $CRT_CPP_Initializer(260)
+0x005d8ab0  100.00%   $CRT_CPP_Initializer(261)
+0x005d8ac0  100.00%   $CRT_CPP_Initializer(262)
+0x005d8b00  100.00%   $CRT_CPP_Initializer(263)
+0x005d8b10  100.00%   $CRT_CPP_Initializer(264)
+0x005d8b50  100.00%   $CRT_CPP_Initializer(265)
+0x005d8b60  100.00%   $CRT_CPP_Initializer(266)
+0x005d8ba0  100.00%   $CRT_CPP_Initializer(267)
+0x005d8bb0  100.00%   $CRT_CPP_Initializer(268)
+0x005d8bf0  100.00%   $CRT_CPP_Initializer(269)
+0x005d8c00  100.00%   $CRT_CPP_Initializer(270)
+0x005d8c40  100.00%   $CRT_CPP_Initializer(271)
+0x005d8c50  100.00%   $CRT_CPP_Initializer(272)
+0x005d8c90  100.00%   $CRT_CPP_Initializer(273)
+0x005d8ca0  100.00%   $CRT_CPP_Initializer(274)
+0x005d8ce0  100.00%   $CRT_CPP_Initializer(275)
+0x005d8cf0  100.00%   $CRT_CPP_Initializer(276)
+0x005d8d30  100.00%   $CRT_CPP_Initializer(277)
+0x005d8d40  100.00%   $CRT_CPP_Initializer(278)
+0x005d8d80  100.00%   $CRT_CPP_Initializer(279)
+0x005d8d90  100.00%   $CRT_CPP_Initializer(280)
+0x005d8dd0  100.00%   $CRT_CPP_Initializer(281)
+0x005d8de0  100.00%   $CRT_CPP_Initializer(282)
+0x005d8e20  100.00%   $CRT_CPP_Initializer(283)
+0x005d8e30  100.00%   $CRT_CPP_Initializer(284)
+0x005d8e70  100.00%   $CRT_CPP_Initializer(285)
+0x005d8e80  100.00%   $CRT_CPP_Initializer(286)
+0x005d8ec0  100.00%   $CRT_CPP_Initializer(287)
+0x005d8ed0  100.00%   $CRT_CPP_Initializer(288)
+0x005d8f10  100.00%   $CRT_CPP_Initializer(289)
+0x005d8f20  100.00%   $CRT_CPP_Initializer(290)
+0x005d8f60  100.00%   $CRT_CPP_Initializer(291)
+0x005d8f70  100.00%   $CRT_CPP_Initializer(292)
+0x005d8fb0  100.00%   $CRT_CPP_Initializer(293)
+0x005d8fc0  100.00%   $CRT_CPP_Initializer(294)
+0x005d9000  100.00%   $CRT_CPP_Initializer(295)
+0x005d9010  100.00%   $CRT_CPP_Initializer(296)
+0x005d9050  100.00%   $CRT_CPP_Initializer(297)
+0x005d9060  100.00%   $CRT_CPP_Initializer(298)
+0x005d90a0  100.00%   $CRT_CPP_Initializer(299)
+0x005d90b0  100.00%   $CRT_CPP_Initializer(300)
+0x005d90f0  100.00%   G_Factory<GM_Component>::Make
+0x005d9160  100.00%   G_Factory<GM_Component>::MakeDup
+0x005d91c0  100.00%   G_Factory<GM_Nahrada>::Make
+0x005d9220  100.00%   GM_Component::AfterMove
+0x005d9260  100.00%   GM_Component::IsOverActive
+0x005d92c0  100.00%   GM_Component::SetText
+0x005d92d0  100.00%   G_Camera::GetMode
+0x005d92e0  100.00%   GM_Component::GetFloat
+0x005d92f0  100.00%   GM_Nahrada::GetType
+0x005d9300  100.00%   GM_Nahrada::GetClientOrigin
+0x005d9330  100.00%   GM_Component::GetType
+0x005d9340  100.00%   GM_Component::GetClientOrigin
+0x005d9360  100.00%   GM_Component::CanBeParent
+0x005d9370  100.00%   G_Factory<GM_Nahrada>::MakeDup
+0x005d93d0  100.00%   G_Factory<GM_UpUp>::Make
+0x005d9430  100.00%   GM_UpUp::GetType
+0x005d9440  100.00%   GM_UpUp::Draw
+0x005d9470  100.00%   G_Factory<GM_UpUp>::MakeDup
+0x005d94d0  100.00%   G_Factory<GM_Window>::Make
+0x005d9530  100.00%   GM_Window::GetType
+0x005d9540  100.00%   GM_Window::GetClientOrigin
+0x005d9570  100.00%   GM_Window::Draw
+0x005d9840  100.00%   G_Factory<GM_Window>::MakeDup
+0x005d98a0  100.00%   G_Factory<GM_WindowClean>::Make
+0x005d9900  100.00%   GM_WindowClean::GetType
+0x005d9910  100.00%   GM_ButtonClean::CanBeParent
+0x005d9920  100.00%   G_Factory<GM_WindowClean>::MakeDup
+0x005d9980  100.00%   G_Factory<GM_WindowScroll>::Make
+0x005d9a20  100.00%   GM_WindowScroll::GetType
+0x005d9a30  100.00%   GM_WindowScroll::GetClientOrigin
+0x005d9a50  100.00%   GM_WindowScroll::IsOverActive
+0x005d9ab0  100.00%   GM_WindowScroll::SetFloat
+0x005d9af0  100.00%   GM_WindowScroll::SetRangeFloat
+0x005d9b50  100.00%   GM_WindowScroll::GetFloat
+0x005d9b60  100.00%   GM_WindowScroll::GetRangeFloat
+0x005d9b80  100.00%   GM_WindowScroll::Draw
+0x005d9d30  100.00%   GM_WindowScroll::Tick
+0x005d9e10  100.00%   GM_WindowScroll::Mouse
+0x005d9f00  100.00%   GM_WindowScroll::Key
+0x005d9f60  100.00%   GM_EditNum::~GM_EditNum
+0x005d9f90  100.00%   G_Factory<GM_WindowScroll>::MakeDup
+0x005da020  100.00%   G_Factory<GM_StaticText>::Make
+0x005da080  100.00%   GM_StaticText::GetType
+0x005da090  100.00%   GM_StaticText::Draw
+0x005da120  100.00%   G_Factory<GM_StaticText>::MakeDup
+0x005da180  100.00%   G_Factory<GM_StaticTextMem>::Make
+0x005da1e0  100.00%   GM_StaticTextMem::GetType
+0x005da1f0  100.00%   GM_MenuItemMem::SetText
+0x005da220  100.00%   GM_StaticTextMem::Draw
+0x005da2c0  100.00%   G_Factory<GM_StaticTextMem>::MakeDup
+0x005da320  100.00%   G_Factory<GM_StaticTextNum>::Make
+0x005da3a0  100.00%   GM_StaticTextNum::GetType
+0x005da3b0  100.00%   GM_StaticTextNum::SetDword
+0x005da3f0  100.00%   GM_StaticTextTime::Draw
+0x005da470  100.00%   G_Factory<GM_StaticTextNum>::MakeDup
+0x005da4e0  100.00%   G_Factory<GM_StaticTextTime>::Make
+0x005da560  100.00%   GM_StaticTextTime::GetType
+0x005da570  100.00%   GM_StaticTextTime::SetDword
+0x005da5f0  100.00%   G_Factory<GM_StaticTextTime>::MakeDup
+0x005da660  100.00%   G_Factory<GM_Line>::Make
+0x005da6c0  100.00%   GM_Line::GetType
+0x005da6d0  100.00%   GM_Line::Draw
+0x005da720  100.00%   G_Factory<GM_Line>::MakeDup
+0x005da780  100.00%   G_Factory<GM_Rectangle>::Make
+0x005da7e0  100.00%   GM_Rectangle::GetType
+0x005da7f0  100.00%   GM_Rectangle::Draw
+0x005da870  100.00%   G_Factory<GM_Rectangle>::MakeDup
+0x005da8d0  100.00%   G_Factory<GM_Orezavac>::Make
+0x005da930  100.00%   GM_Orezavac::GetType
+0x005da940  100.00%   GM_Orezavac::Draw
+0x005da980  100.00%   G_Factory<GM_Orezavac>::MakeDup
+0x005da9e0  100.00%   G_Factory<GM_RectangleTexture>::Make
+0x005daa60  100.00%   GM_RectangleTexture::GetType
+0x005daa70  100.00%   GM_RectangleTexture::SetString
+0x005daaa0  100.00%   GM_RectangleTexture::Draw
+0x005daad0  100.00%   GM_RectangleTexture::`scalar deleting destructor'
+0x005daaf0  100.00%   GM_RectangleTexture::~GM_RectangleTexture
+0x005dab60  100.00%   G_Factory<GM_RectangleTexture>::MakeDup
+0x005dabe0  100.00%   G_Factory<GM_ProgressBar>::Make
+0x005dac60  100.00%   GM_ProgressBar::GetType
+0x005dac70  100.00%   GM_ProgressBar::Draw
+0x005dacc0  100.00%   G_Factory<GM_ProgressBar>::MakeDup
+0x005dad40  100.00%   G_Factory<GM_MenuItem>::Make
+0x005dadb0  100.00%   GM_MenuItem::GetType
+0x005dadc0  100.00%   GM_MenuItemMem::Draw
+0x005dae60  100.00%   GM_Button::Mouse
+0x005dae80  100.00%   G_Factory<GM_MenuItem>::MakeDup
+0x005daee0  100.00%   G_Factory<GM_MenuItemMem>::Make
+0x005daf50  100.00%   GM_MenuItemMem::GetType
+0x005daf60  100.00%   GM_Button::Key
+0x005daf90  100.00%   G_Factory<GM_MenuItemMem>::MakeDup
+0x005daff0  100.00%   G_Factory<GM_MenuItemNum>::Make
+0x005db0a0  100.00%   GM_MenuItemNum::GetType
+0x005db0b0  100.00%   GM_MenuItemNum::SetRangeDword
+0x005db0f0  100.00%   GM_MenuItemNum::SetDword
+0x005db130  100.00%   GM_MenuItemNum::Draw
+0x005db2d0  100.00%   GM_MenuItemNum::Mouse
+0x005db370  100.00%   GM_MenuItemNum::Key
+0x005db3e0  100.00%   G_Factory<GM_MenuItemNum>::MakeDup
+0x005db480  100.00%   G_Factory<GM_RaceRoundItem>::Make
+0x005db510  100.00%   GM_RaceRoundItem::GetType
+0x005db520  100.00%   GM_RaceRoundItem::SetBool
+0x005db560  100.00%   GM_RaceRoundItem::Draw
+0x005db6b0  100.00%   G_Factory<GM_RaceRoundItem>::MakeDup
+0x005db730  100.00%   G_Factory<GM_Button>::Make
+0x005db7a0  100.00%   GM_Button::GetType
+0x005db7b0  100.00%   GM_Button::Draw
+0x005db890  100.00%   G_Factory<GM_Button>::MakeDup
+0x005db8f0  100.00%   G_Factory<GM_ButtonClean>::Make
+0x005db960  100.00%   GM_ButtonClean::GetType
+0x005db970  100.00%   G_Factory<GM_ButtonClean>::MakeDup
+0x005db9d0  100.00%   G_Factory<GM_Slider>::Make
+0x005dba40  100.00%   GM_Slider::GetType
+0x005dba50  100.00%   GM_Slider::SetFloat
+0x005dba60  100.00%   GM_Slider::GetFloat
+0x005dba70  100.00%   GM_Slider::Draw
+0x005dbc90  100.00%   GM_Slider::Mouse
+0x005dbda0  100.00%   GM_Slider::Key
+0x005dbe20  100.00%   G_Factory<GM_Slider>::MakeDup
+0x005dbe80  100.00%   G_Factory<GM_SliderInteger>::Make
+0x005dbf10  100.00%   GM_SliderInteger::GetType
+0x005dbf20  100.00%   GM_SliderInteger::SetDword
+0x005dbf30  100.00%   GM_SliderInteger::Draw
+0x005dc170  91.84%    GM_SliderInteger::Mouse
+0x005dc290  100.00%   GM_SliderInteger::Key
+0x005dc300  100.00%   G_Factory<GM_SliderInteger>::MakeDup
+0x005dc370  100.00%   G_Factory<GM_NetPlayer>::Make
+0x005dc450  100.00%   GM_NetPlayer::GetType
+0x005dc460  100.00%   GM_NetPlayer::SetPointer
+0x005dc470  100.00%   GM_NetPlayer::GetPointer
+0x005dc480  100.00%   GM_NetPlayer::Draw
+0x005dc700  100.00%   GM_NetPlayer::Mouse
+0x005dc740  100.00%   G_Factory<GM_NetPlayer>::MakeDup
+0x005dc7a0  100.00%   G_Factory<GM_TextEdit>::Make
+0x005dc850  100.00%   GM_TextEdit::GetType
+0x005dc860  100.00%   GM_TextEdit::SetText
+0x005dc8a0  100.00%   GM_TextEdit::GetText
+0x005dc8b0  100.00%   GM_TextEdit::SetDword
+0x005dc8f0  100.00%   GM_TextEdit::Key
+0x005dc950  100.00%   GM_TextEdit::Draw
+0x005dc9d0  100.00%   G_Factory<GM_TextEdit>::MakeDup
+0x005dca60  100.00%   G_Factory<GM_CheckBox>::Make
+0x005dcae0  100.00%   GM_CheckBox::GetType
+0x005dcaf0  60.61%    GM_CheckBox::Draw
+0x005dccc0  100.00%   GM_CheckBox::SetBool
+0x005dccd0  100.00%   GM_CheckBox::GetBool
+0x005dcce0  100.00%   GM_CheckBox::Key
+0x005dcd10  100.00%   GM_CheckBox::Mouse
+0x005dcd50  100.00%   G_Factory<GM_CheckBox>::MakeDup
+0x005dcdb0  100.00%   G_Factory<GM_ButtonSelect>::Make
+0x005dce20  100.00%   GM_ButtonSelect::GetType
+0x005dce30  100.00%   GM_ButtonSelect::SetRangeDword
+0x005dce50  100.00%   GM_ButtonSelect::Mouse
+0x005dce90  100.00%   GM_ButtonSelect::Key
+0x005dcee0  100.00%   G_Factory<GM_ButtonSelect>::MakeDup
+0x005dcf40  100.00%   G_Factory<GM_ButtonSelectBool>::Make
+0x005dcfc0  100.00%   GM_ButtonSelectBool::GetType
+0x005dcfd0  100.00%   GM_ButtonSelectBool::SetRangeDword
+0x005dd000  100.00%   GM_ButtonSelectBool::SetBool
+0x005dd030  100.00%   GM_ButtonSelectBool::GetBool
+0x005dd040  100.00%   GM_ButtonSelectBool::Draw
+0x005dd0d0  100.00%   GM_ButtonSelectBool::Mouse
+0x005dd120  100.00%   GM_ButtonSelectBool::Key
+0x005dd180  100.00%   G_Factory<GM_ButtonSelectBool>::MakeDup
+0x005dd1e0  100.00%   G_Factory<GM_EditNum>::Make
+0x005dd290  100.00%   GM_EditNum::GetType
+0x005dd2a0  100.00%   GM_EditNum::SetRangeDword
+0x005dd2e0  100.00%   GM_EditNum::SetDword
+0x005dd320  100.00%   GM_EditNum::Draw
+0x005dd420  100.00%   GM_EditNum::Mouse
+0x005dd4d0  100.00%   GM_EditNum::Key
+0x005dd590  100.00%   G_Factory<GM_EditNum>::MakeDup
+0x005dd630  missing   $CRT_CPP_Initializer(301)
+0x005dd660  100.00%   $CRT_CPP_Initializer(302)
+0x005dd670  100.00%   $CRT_CPP_Initializer(303)
+0x005dd6b0  100.00%   $CRT_CPP_Initializer(304)
+0x005dd6c0  100.00%   $CRT_CPP_Initializer(305)
+0x005dd700  100.00%   $CRT_CPP_Initializer(306)
+0x005dd710  100.00%   $CRT_CPP_Initializer(307)
+0x005dd750  100.00%   $CRT_CPP_Initializer(308)
+0x005dd760  100.00%   $CRT_CPP_Initializer(309)
+0x005dd7a0  100.00%   $CRT_CPP_Initializer(310)
+0x005dd7b0  100.00%   $CRT_CPP_Initializer(311)
+0x005dd7f0  100.00%   $CRT_CPP_Initializer(312)
+0x005dd800  100.00%   $CRT_CPP_Initializer(313)
+0x005dd840  100.00%   $CRT_CPP_Initializer(314)
+0x005dd850  100.00%   $CRT_CPP_Initializer(315)
+0x005dd890  100.00%   $CRT_CPP_Initializer(316)
+0x005dd8a0  100.00%   $CRT_CPP_Initializer(317)
+0x005dd8e0  100.00%   G_Factory<GM_Vidc>::Make
+0x005dda80  100.00%   GM_Vidc::GetType
+0x005dda90  100.00%   GM_Vidc::ForceUpdate
+0x005ddbd0  100.00%   GM_Vidc::Draw
+0x005ddcb0  100.00%   GM_Vidc::Mouse
+0x005ddd40  100.00%   GM_WaitForVid::OnBeforeCreate
+0x005ddd50  100.00%   GM_WaitForVid::OnCloseChild
+0x005ddd60  100.00%   GM_WaitForVid::OnCreate
+0x005ddd90  100.00%   GM_WaitForVid::OnClose
+0x005ddda0  100.00%   GM_WaitForVid::OnTick
+0x005de090  100.00%   GM_SetControlToVid::OnBeforeCreate
+0x005de0a0  100.00%   GM_SetControlToVid::OnCreate
+0x005de0d0  100.00%   GM_SetControlToVid::OnKey
+0x005de0f0  100.00%   GM_SetControlToVid::OnClick
+0x005de210  100.00%   GM_Vidc::Key
+0x005de3a0  100.00%   G_Factory<GM_Vidc>::MakeDup
+0x005de580  100.00%   G_Factory<GM_ComboBox>::Make
+0x005de610  100.00%   GM_ComboBox::GetType
+0x005de620  100.00%   GM_ComboBox::SetPointer
+0x005de650  100.00%   GM_ComboBox::SetDword
+0x005de690  100.00%   GM_ComboBox::GetDword
+0x005de6a0  100.00%   GM_ComboBox::GetText
+0x005de6b0  100.00%   GM_ComboBox::Draw
+0x005de880  100.00%   GM_ComboBox::Mouse
+0x005de930  100.00%   GM_ComboMenu::OnBeforeCreate
+0x005de940  100.00%   GM_ComboMenu::OnCreate
+0x005deaa0  100.00%   GM_ComboMenu::OnClose
+0x005deac0  100.00%   GM_ComboMenu::OnClick
+0x005deb30  100.00%   GM_ComboBox::Key
+0x005debd0  100.00%   G_Factory<GM_ComboBox>::MakeDup
+0x005dec50  100.00%   G_Factory<GM_ComboWindow>::Make
+0x005decb0  100.00%   GM_ComboWindow::GetType
+0x005decc0  100.00%   GM_ComboWindow::Draw
+0x005ded20  100.00%   G_Factory<GM_ComboWindow>::MakeDup
+0x005ded80  100.00%   G_Factory<GM_ListBox>::Make
+0x005dee10  100.00%   GM_ListBox::GetType
+0x005dee20  100.00%   GM_ListBox::SetPointer
+0x005deeb0  100.00%   GM_ListBox::GetPointer
+0x005deec0  100.00%   GM_ListBox::Draw
+0x005df0a0  100.00%   GM_ListBox::Mouse
+0x005df1c0  100.00%   GM_ListBox::Key
+0x005df220  100.00%   G_Factory<GM_ListBox>::MakeDup
+0x005df2a0  100.00%   G_Factory<GM_ListCars>::Make
+0x005df340  100.00%   GM_ListCars::GetType
+0x005df350  100.00%   GM_ProgressBar::SetFloat
+0x005df360  100.00%   GM_ListCars::SetDword
+0x005df370  100.00%   GM_EditNum::GetDword
+0x005df380  100.00%   GM_ListCars::Tick
+0x005df410  100.00%   GM_ListCars::Draw
+0x005df570  100.00%   GM_ListCars::Mouse
+0x005df650  100.00%   G_Factory<GM_ListCars>::MakeDup
+0x005df6e0  100.00%   G_Factory<GM_ViewScroll>::Make
+0x005df760  100.00%   GM_ViewScroll::GetType
+0x005df770  100.00%   GM_ViewScroll::GetRangeFloat
+0x005df790  100.00%   GM_ViewScroll::Mouse
+0x005df800  100.00%   G_Factory<GM_ViewScroll>::MakeDup
+0x005df880  100.00%   G_Factory<GM_TextInput>::Make
+0x005df8e0  100.00%   GM_TextInput::GetType
+0x005df8f0  100.00%   GM_Nahrada::Draw
+0x005df940  100.00%   G_Factory<GM_TextInput>::MakeDup
+0x005df9a0  100.00%   G_Factory<GM_StaticTextBig>::Make
+0x005dfab0  100.00%   GM_StaticTextBig::GetType
+0x005dfac0  100.00%   GM_StaticTextBig::SetText
+0x005dfb60  100.00%   GM_StaticTextBig::SetTextID
+0x005dfc10  100.00%   GM_StaticTextBig::GetFloat
+0x005dfc30  100.00%   GM_StaticTextBig::Draw
+0x005dfc70  100.00%   G_Factory<GM_StaticTextBig>::MakeDup
+0x005dfd80  missing   $CRT_CPP_Initializer(318)
+0x005dfdb0  100.00%   $CRT_CPP_Initializer(319)
+0x005dfdc0  100.00%   $CRT_CPP_Initializer(320)
+0x005dfe00  100.00%   GM_Grid::Create
+0x005dff60  100.00%   GM_Grid::Draw
+0x005e0340  100.00%   GM_Grid::UpdateScrollMax
+0x005e0360  100.00%   G_Factory<GM_Grid>::Make
+0x005e0420  100.00%   GM_Grid::GetType
+0x005e0430  100.00%   GM_Grid::GetClientOrigin
+0x005e0450  100.00%   GM_Grid::IsOverActive
+0x005e04b0  100.00%   GM_Grid::SetFloat
+0x005e04c0  100.00%   GM_Grid::Mouse
+0x005e0520  100.00%   GM_Grid::Key
+0x005e0580  100.00%   GM_EditNum::`scalar deleting destructor'
+0x005e05a0  100.00%   G_Factory<GM_Grid>::MakeDup
+0x005e0610  missing   $CRT_CPP_Initializer(321)
+0x005e0640  100.00%   GM_MainMenuExit::OnClick
+0x005e0670  100.00%   GM_MainMenu::OnBeforeCreate
+0x005e0690  100.00%   GM_MainMenu::OnCreate
+0x005e06e0  100.00%   GM_MainMenu::OnClick
+0x005e08e0  100.00%   GM_MainMenuExit::OnBeforeCreate
+0x005e08f0  100.00%   GM_MainMenuExit::OnCreate
+0x005e0900  100.00%   GM_Options::OnBeforeCreate
+0x005e0910  100.00%   GM_FreeRide::OnBeforeCreate
+0x005e0920  100.00%   GM_LoadGame::OnBeforeCreate
+0x005e0ad0  100.00%   GM_Options::OnClick
+0x005e0bb0  100.00%   GM_OptionsAudioVideo::OnBeforeCreate
+0x005e0bc0  100.00%   GM_OptionsAudioVideo::OnCreate
+0x005e0d40  100.00%   GM_OptionsAudioVideo::OnClick
+0x005e1480  100.00%   GM_OptionsControls::OnBeforeCreate
+0x005e14a0  100.00%   GM_OptionsControls::OnCreate
+0x005e1620  100.00%   GM_OptionsControls::OnClose
+0x005e1650  100.00%   GM_OptionsControls::OnClick
+0x005e1920  stub      GM_FreeRide::OnCreate
+0x005e1a20  stub      GM_FreeRide::OnCloseChild
+0x005e1b40  stub      GM_FreeRide::OnClick
+0x005e2170  100.00%   GM_MessageBox::OnBeforeCreate
+0x005e2180  100.00%   GM_MessageBox::GM_MessageBox
+0x005e21f0  stub      GM_MessageBox::OnCreate
+0x005e22d0  stub      GM_MessageBox::OnKey
+0x005e22f0  stub      GM_MessageBox::OnClick
+0x005e2310  100.00%   GM_QuestionBox::GM_QuestionBox
+0x005e2340  100.00%   GM_QuestionBox::OnBeforeCreate
+0x005e2350  100.00%   GM_QuestionBox::OnCreate
+0x005e2380  100.00%   GM_QuestionBox::OnKey
+0x005e23b0  100.00%   GM_QuestionBox::OnClick
+0x005e2400  stub      GM_LoadGame::OnCreate
+0x005e2570  stub      GM_LoadGame::OnTick
+0x005e26b0  stub      GM_LoadGame::OnKey
+0x005e2750  stub      GM_LoadGame::OnMouse
+0x005e2810  stub      GM_LoadGame::OnChange
+0x005e2840  stub      GM_LoadGame::OnClick
+0x005e2880  stub      GM_GameFailed::OnCreate
+0x005e2950  100.00%   GM_GameFailed::OnClick
+0x005e3610  stub      GM_GunShop::OnCreate
+0x005e3700  stub      GM_GunShop::OnClick
+0x005e3aa0  100.00%   GM_LoadProgress::GM_LoadProgress
+0x005e3b80  100.00%   GM_LoadProgress::OnBeforeCreate
+0x005e3b90  100.00%*  GM_LoadProgress::OnCreate
+0x005e3cd0  stub      GM_LoadProgress::OnKey
+0x005e3cf0  100.00%   GM_LoadProgress::SetProgressGameInit
+0x005e3d20  100.00%   GM_LoadProgress::SetProgressMissionOpen
+0x005e3d40  100.00%   GM_LoadProgress::Present
+0x005e3da0  stub      GM_GarageEndOfMission::OnCreate
+0x005e3fd0  100.00%   C_web_path::SelectLine
+0x005e3fe0  stub      GM_GarageEndOfMission::OnClick
+0x005e41b0  stub      GM_GarageManager::OnCreate
+0x005e4450  stub      GM_GarageManager::OnKey
+0x005e4470  stub      GM_GarageManager::OnClick
+0x005e4690  stub      GM_GarageSummary::OnCreate
+0x005e48b0  stub      GM_GarageSummary::OnKey
+0x005e48c0  missing   $CRT_CPP_Initializer(322)
+0x005e48f0  missing   $CRT_CPP_Initializer(323)
+0x005e4a50  100.00%   GM_MainMenu::OnChange
+0x005e4d50  100.00%   GM_GarageSummary::OnClick
+0x005e8490  missing   $CRT_CPP_Initializer(324)
+0x005e84c0  100.00%   GM_ProfileSelect::OnCreate
+0x005e86a0  100.00%   GM_ProfileSelect::OnCloseChild
+0x005e8760  100.00%   GM_ProfileSelect::OnTick
+0x005e88b0  100.00%   GM_ProfileCreate::OnBeforeCreate
+0x005e88c0  100.00%   GM_ProfileDelete::OnBeforeCreate
+0x005e88d0  100.00%   GM_ProfileSelect::OnClick
+0x005e8a40  100.00%   GM_ProfileCreate::OnCreate
+0x005e8a80  100.00%   GM_ProfileCreate::OnClose
+0x005e8aa0  100.00%   GM_ProfileCreate::OnClick
+0x005e8b10  100.00%   GM_ProfileDelete::OnCreate
+0x005e8c00  100.00%   GM_ProfileDelete::OnCloseChild
+0x005e8c40  100.00%   GM_ProfileDelete::OnClick
+0x005e8ce0  missing   $CRT_CPP_Initializer(325)
+0x005e8d10  100.00%   $CRT_CPP_Initializer(326)
+0x005e8d20  100.00%   $CRT_CPP_Initializer(327)
+0x005e8d40  missing   $CRT_CPP_Initializer(328)
+0x005e8d50  missing   $CRT_CPP_Initializer(329)
+0x005e8d60  100.00%   Line
+0x005e8e00  100.00%   Rectangle
+0x005e8f60  100.00%   RectangleFilled
+0x005e9080  100.00%   RectangleProgress
+0x005e91b0  stub      RectangleBB
+0x005e9690  100.00%   Triangle
+0x005e98a0  100.00%   SetViewport
+0x005e9960  100.00%   GM_Menu::LoadResources
+0x005e9b40  100.00%   GM_Menu::UnloadResources
+0x005e9be0  100.00%   GM_Component::GM_Component(struct GM_DesignStruct *, class GM_Component *)
+0x005e9cb0  100.00%   GM_Component::GM_Component(class GM_Component *)
+0x005e9d60  100.00%   GM_Component::BaseDraw
+0x005e9da0  100.00%   GM_Component::BaseAfterMove
+0x005e9de0  100.00%   GM_Component::FindComponentAt
+0x005e9e50  100.00%   GM_Component::InsertComponent
+0x005ea000  100.00%   GM_Component::InsertComponentAfter
+0x005ea1c0  100.00%   GM_Component::SetTextID
+0x005ea1f0  100.00%   GM_Menu::GM_Menu
+0x005ea270  100.00%   GM_Menu::~GM_Menu
+0x005ea2e0  100.00%   GM_Menu::Create
+0x005ea370  100.00%   GM_Menu::CreateCompsByDef
+0x005ea690  100.00%   GM_Menu::Destroy
+0x005ea6d0  100.00%   GM_Menu::ForceUpdate
+0x005ea7e0  100.00%   GM_Menu::Draw
+0x005ea8c0  100.00%   GM_Menu::Tick
+0x005ead50  100.00%   GM_Menu::MenuOpen
+0x005ead80  100.00%   GM_Menu::MenuExchange
+0x005eae10  100.00%   GM_Menu::MenuClose
+0x005eae40  100.00%   GM_Menu::MenuCloseAll
+0x005eaed0  100.00%   GM_Menu::SetDisabled
+0x005eaf20  100.00%   GM_Menu::SetHidden
+0x005eafd0  100.00%   GM_Menu::SetTextID
+0x005eaff0  100.00%   GM_Menu::GetTextID
+0x005eb010  100.00%   GM_Menu::SetText
+0x005eb030  100.00%   GM_Menu::SetString
+0x005eb050  100.00%   GM_Menu::GetText
+0x005eb070  100.00%   GM_Menu::SetFloat
+0x005eb090  100.00%   GM_Menu::GetFloat
+0x005eb0c0  100.00%   GM_Menu::SetDword
+0x005eb0e0  100.00%   GM_Menu::GetDword
+0x005eb100  100.00%   GM_Menu::SetBool
+0x005eb120  100.00%   GM_Menu::GetBool
+0x005eb140  100.00%   GM_Menu::SetPointer
+0x005eb160  100.00%   GM_Menu::GetRangeFloat
+0x005eb190  100.00%   GM_Menu::SetRangeDword
+0x005eb1c0  100.00%   GM_Menu::ActivateByID
+0x005eb210  100.00%   GM_Menu::ActivateByIDOrNext
+0x005eb2f0  100.00%   GM_Menu::FindComponentByID
+0x005eb320  100.00%   GM_Menu::FindComponentByIDPrev
+0x005eb3c0  100.00%   GM_Menu::FindComponentByIDNext
+0x005eb460  100.00%   GM_Menu::FindComponentPrev
+0x005eb4e0  100.00%   GM_Menu::FindComponentNext
+0x005eb550  100.00%   GM_Menu::PridejComponent
+0x005eb7d0  100.00%   GM_Menu::PridejComponentPod
+0x005eba40  100.00%   GM_Menu::ExecuteMenu
+0x005ebe00  missing   $CRT_CPP_Initializer(330)
+0x005ebe10  missing   $CRT_CPP_Initializer(331)
+0x005ebe20  missing   $CRT_CPP_Initializer(332)
+0x005ebe30  missing   $CRT_CPP_Initializer(333)
+0x005ebe40  missing   $CRT_CPP_Initializer(334)
+0x005ebe50  missing   $CRT_CPP_Initializer(335)
+0x005ebe60  missing   $CRT_CPP_Initializer(336)
+0x005ebe70  missing   $CRT_CPP_Initializer(337)
+0x005ebe80  76.85%    GM_Menu::SetCameraTargetID
+0x005ec8a0  100.00%   GM_Menu::TickCamera
+0x005ece40  missing   $CRT_CPP_Initializer(338)
+0x005ece70  missing   $CRT_CPP_Initializer(339)
+0x005ece80  missing   $CRT_CPP_Initializer(340)
+0x005ece90  missing   $CRT_CPP_Initializer(341)
+0x005ecea0  missing   $CRT_CPP_Initializer(342)
+0x005eceb0  missing   $CRT_CPP_Initializer(343)
+0x005ecec0  missing   $CRT_CPP_Initializer(344)
+0x005eced0  missing   $CRT_CPP_Initializer(345)
+0x005ecee0  missing   $CRT_CPP_Initializer(346)
+0x005ecef0  50.00%    $CRT_CPP_Initializer(347)
+0x005ecf00  100.00%   $CRT_CPP_Initializer(348)
+0x005ecf50  missing   $CRT_CPP_Initializer(349)
+0x005ecf60  missing   $CRT_CPP_Initializer(350)
+0x005ecf70  missing   $CRT_CPP_Initializer(351)
+0x005ecf80  missing   $CRT_CPP_Initializer(352)
+0x005ecf90  100.00%   G_Camera::G_Camera
+0x005ed000  100.00%   G_Camera::~G_Camera
+0x005ed040  100.00%   G_Camera::Reset
+0x005ed120  100.00%   G_Camera::GameDone
+0x005ed150  100.00%   G_Camera::SetCamera
+0x005ed170  100.00%   G_Camera::SetPlayer
+0x005ed190  100.00%   G_Camera::SetCar
+0x005ed1e0  100.00%   G_Camera::Link
+0x005ed210  100.00%   G_Camera::SetSwing
+0x005ed330  100.00%   G_Camera::LookAround
+0x005ed3e0  100.00%   G_Camera::LookFromEyes
+0x005ed400  100.00%   G_Camera::SetMode
+0x005ed460  100.00%   G_Camera::LezeDoToyoty
+0x005ed4c0  47.37%    G_Camera::Tick
+0x005f2100  100.00%   G_Camera::WantPosCar
+0x005f2580  100.00%   G_Camera::WantPos
+0x005f2ea0  87.00%    G_Camera::Begin
+0x005f3450  100.00%   G_Camera::End
+0x005f34c0  100.00%   G_Camera::EnableFreeLook
+0x005f3520  100.00%   G_Camera::FreeLook
+0x005f3810  100.00%   G_Camera::FreeLookBase
+0x005f39f0  100.00%   G_Camera::LockAt
+0x005f3a70  100.00%   G_Camera::CumNaNe
+0x005f3fd0  100.00%   G_Camera::Unlock
+0x005f3ff0  100.00%   G_Camera::PushMode
+0x005f4220  100.00%   G_Camera::PopMode
+0x005f42e0  100.00%   G_Camera::DialogLook
+0x005f4370  100.00%   G_Camera::DialogStart
+0x005f4650  100.00%   G_Camera::DialogStop
+0x005f4690  100.00%   G_Camera::IsInDialog
+0x005f46a0  100.00%   G_Camera::AddRaceCamera
+0x005f4870  100.00%   G_Camera::RemoveRaceCamera
+0x005f48d0  100.00%   G_Camera::InitRaceCameras
+0x005f4a00  100.00%   G_Camera::SetLookTo
+0x005f4a70  100.00%   G_Camera::SetSniperFov
+0x005f4ab0  100.00%   G_Camera::SetSniperMode
+0x005f4af0  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ufill
+0x005f4b30  missing   $CRT_CPP_Initializer(353)
+0x005f4b60  50.00%    $CRT_CPP_Initializer(354)
+0x005f4b70  100.00%   $CRT_CPP_Initializer(355)
+0x005f4bc0  100.00%   DabingInit
+0x005f4c10  98.04%    DabingDone
+0x005f4ca0  100.00%   DabingGetFreeChanel
+0x005f4cd0  stub      DabingSetHuman
+0x005f5060  99.43%    DabingReset
+0x005f5570  stub      DabingSpeak
+0x005f5c40  stub      DabingIsSpeaking
+0x005f5dd0  98.46%    DabingTick
+0x005f69f0  missing   $CRT_CPP_Initializer(356)
+0x005f6a20  missing   $CRT_CPP_Initializer(357)
+0x005f6a30  missing   $CRT_CPP_Initializer(358)
+0x005f6a40  50.00%    $CRT_CPP_Initializer(359)
+0x005f6a50  100.00%   $CRT_CPP_Initializer(360)
+0x005f6b70  100.00%   G_IndicatorsClass::G_IndicatorsClass
+0x005f6cf0  100.00%   G_IndicatorsClass::ResetValues
+0x005f6f30  100.00%   G_IndicatorsClass::LoadFont
+0x005f7000  100.00%   G_IndicatorsClass::LanguageSelect
+0x005f70d0  100.00%   G_IndicatorsClass::GetLanguage
+0x005f70e0  100.00%   G_IndicatorsClass::Create
+0x005f7250  100.00%   G_IndicatorsClass::Destroy
+0x005f73c0  100.00%   G_IndicatorsClass::GameInit
+0x005f74a0  100.00%   G_IndicatorsClass::GameDone
+0x005f7500  100.00%   G_IndicatorsClass::TimerSetTime
+0x005f7540  100.00%   G_IndicatorsClass::TimerSetInterval
+0x005f7620  100.00%   G_IndicatorsClass::TimerGetInterval
+0x005f7680  100.00%   G_IndicatorsClass::_SpocitejRafiku2
+0x005f7990  100.00%   G_IndicatorsClass::_PridejWingPodklad
+0x005f7ad0  100.00%   G_IndicatorsClass::_PridejAmmoPodklad
+0x005f7bc0  100.00%   G_IndicatorsClass::_PridejWingLives
+0x005f7f90  100.00%   G_IndicatorsClass::_PridejAmmo
+0x005f8690  100.00%   G_IndicatorsClass::TachometrSetGear
+0x005f86b0  95.62%    G_IndicatorsClass::TachometrSetValues
+0x005f88e0  100.00%   G_IndicatorsClass::PlayerSetLives
+0x005f8910  100.00%   G_IndicatorsClass::PlayerSetAmmo
+0x005f8940  100.00%   G_IndicatorsClass::PlayerSetAccuracy
+0x005f8950  100.00%   G_IndicatorsClass::PlayerSetWingmanName
+0x005f8970  100.00%   G_IndicatorsClass::PlayerSetWingmanLives
+0x005f8990  100.00%   G_IndicatorsClass::SubtitlesClear
+0x005f9480  stub      G_IndicatorsClass::IntroSubtitlesAdd
+0x005f9690  stub      G_IndicatorsClass::IntroSubtitlesAddSimple
+0x005f9940  100.00%   G_IndicatorsClass::IntroSubtitlesClear
+0x005f99b0  stub      G_IndicatorsClass::MissionHelpClear
+0x005f9a00  stub      G_IndicatorsClass::MissionHelpAdd
+0x005f9ce0  stub      G_IndicatorsClass::MissionHelpSetTime
+0x005f9d10  100.00%   G_IndicatorsClass::MapEnable
+0x005f9d40  100.00%   G_IndicatorsClass::ConsoleClear
+0x005f9d50  stub      G_IndicatorsClass::ConsoleAddText
+0x005f9de0  stub      G_IndicatorsClass::ConsoleAddTextByID
+0x005f9e10  stub      G_IndicatorsClass::AddBloodSplash
+0x005fa020  100.00%   G_IndicatorsClass::CompassSetDestination
+0x005fa030  stub      G_IndicatorsClass::ThiefIndicatorSetValue
+0x005fa050  100.00%   G_IndicatorsClass::WideScreenSetRatio
+0x005fa300  stub      G_IndicatorsClass::WideScreenSetOn
+0x005fa370  stub      G_IndicatorsClass::FadeInOut
+0x005fa3e0  stub      G_IndicatorsClass::FadeInOutGetState
+0x005fa400  100.00%   G_IndicatorsClass::FadeInOutIsDark
+0x005fa410  100.00%   G_IndicatorsClass::SetOverlayFade
+0x005fa430  100.00%   G_IndicatorsClass::SetOverlayTexture
+0x005fa4a0  100.00%   G_IndicatorsClass::RadarClear
+0x005fa500  stub      G_IndicatorsClass::RadarSetPlayerCar
+0x005fa510  stub      G_IndicatorsClass::RadarAddCar
+0x005fa720  100.00%   G_IndicatorsClass::RadarRemoveCar
+0x005fa9f0  100.00%   G_IndicatorsClass::RadarSetLeftEdge
+0x005fabf0  100.00%   G_IndicatorsClass::RadarSetRightEdge
+0x005fadf0  100.00%   G_IndicatorsClass::RaceSetStartFlag
+0x005fb010  100.00%   G_IndicatorsClass::BonusSetCount
+0x005fb060  49.53%    G_IndicatorsClass::DrawAll
+0x00601520  92.80%    G_IndicatorsClass::ResolutionChanged
+0x006025f0  100.00%   SetRectVertices
+0x006026d0  100.00%   SetDiamondVertices
+0x006036d0  100.00%   G_IndicatorsClass::TextSize
+0x00603780  100.00%   G_IndicatorsClass::HledejZlom
+0x00603880  45.94%    G_IndicatorsClass::OutText
+0x00604700  100.00%   G_IndicatorsClass::OutTextMultiLine
+0x00604770  100.00%   G_IndicatorsClass::DrawCursor
+0x00604890  100.00%   G_IndicatorsClass::SetCameraFOV
+0x00604a80  100.00%   G_IndicatorsClass::ParheliaSetCenter
+0x00604d80  100.00%   C_actor::GetActFlags
+0x00604d90  100.00%   GetFrameActor
+0x00604da0  100.00%   std::vector<S_VEH_PARTICLE,std::allocator<S_VEH_PARTICLE> >::_Ufill
+0x00604dd0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::_Ucopy
+0x00604e00  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::_Ufill
+0x00604e30  missing   $CRT_CPP_Initializer(361)
+0x00604e60  50.00%    $CRT_CPP_Initializer(362)
+0x00604e70  100.00%   $CRT_CPP_Initializer(363)
+0x00604ea0  50.00%    $CRT_CPP_Initializer(364)
+0x00604eb0  100.00%   $CRT_CPP_Initializer(365)
+0x00604ee0  100.00%   G_LoadSaveClass::Init
+0x00605010  100.00%   GM_ProfileSelect::OnBeforeCreate
+0x00605020  100.00%   GM_GunShop::OnKey
+0x00605030  100.00%   G_LoadSaveClass::Close
+0x00605070  100.00%   G_LoadSaveClass::ProfileChange
+0x00605140  100.00%   G_LoadSaveClass::G_LoadSaveClass
+0x006051e0  100.00%   G_LoadSaveClass::AllDefault
+0x00605260  100.00%   G_LoadSaveClass::ProfileEnumFiles
+0x00605530  100.00%   G_LoadSaveClass::ProfileEnumRelease
+0x00605560  100.00%   G_LoadSaveClass::ProfileGetList
+0x00605570  100.00%   G_LoadSaveClass::ProfileSelect
+0x006055c0  100.00%   G_LoadSaveClass::ProfileCreate
+0x00605740  100.00%   G_LoadSaveClass::ProfileDelete
+0x006057f0  100.00%   G_LoadSaveClass::ProfileLoad
+0x006059f0  100.00%   G_LoadSaveClass::ProfileSave
+0x00605b20  100.00%   G_LoadSaveClass::SaveGameEnumFiles
+0x00605e10  100.00%   G_LoadSaveClass::SaveGameEnumRelease
+0x00605e40  100.00%   G_LoadSaveClass::SaveGameSelect
+0x00605e80  100.00%   G_LoadSaveClass::SaveGameGetSelectedNumber
+0x00605e90  100.00%   G_LoadSaveClass::SaveGameCreate
+0x00605ff0  100.00%   G_LoadSaveClass::SaveGameNewGame
+0x00606020  100.00%   G_LoadSaveClass::SaveGameLoadHeader
+0x00606150  100.00%   G_LoadSaveClass::SaveGameLoad
+0x00606d80  100.00%   G_LoadSaveClass::_SaveProc
+0x00606ea0  58.19%    G_LoadSaveClass::SaveGameSave
+0x006072e0  100.00%   G_LoadSaveClass::GetScreenShotIdx
+0x006072f0  100.00%   G_LoadSaveClass::SaveGameFromScript
+0x00607360  100.00%   G_LoadSaveClass::LanguageSelect
+0x006073c0  100.00%   G_LoadSaveClass::SetBinding
+0x00607400  100.00%   G_LoadSaveClass::SetOppositeBinding
+0x00607460  100.00%   G_LoadSaveClass::FindBinding
+0x00607520  100.00%   G_LoadSaveClass::RemoveBinding
+0x00607600  100.00%   G_LoadSaveClass::DefaultControls
+0x00607a60  100.00%   G_LoadSaveClass::ApplyControls
+0x00607ab0  100.00%   G_LoadSaveClass::DefaultSettings
+0x00607b80  100.00%   G_Inventory::GetWeaponInRightHand
+0x00607bb0  100.00%   G_Inventory::GetWeaponInLeftHand
+0x00607bc0  51.00%    G_Inventory::Select
+0x006081d0  100.00%   G_Inventory::SelectByID
+0x006082a0  100.00%   G_Inventory::Holster
+0x00608520  100.00%   G_Inventory::HaveSomeWeapon
+0x006085f0  100.00%   G_Inventory::HaveItems
+0x00608770  100.00%   G_Inventory::CyclePrepare
+0x006088f0  100.00%   G_Inventory::CycleUp
+0x00608990  100.00%   G_Inventory::CycleDown
+0x00608a20  100.00%   G_Inventory::IsIn
+0x00608aa0  87.61%    G_Inventory::HaveSpaceFor
+0x00608c40  100.00%   G_Inventory::DobijNaboje
+0x00608ce0  93.85%    G_Inventory::InsertFree
+0x00608e20  92.99%    G_Inventory::InsertNew
+0x006092b0  100.00%   G_Inventory::Insert
+0x00609560  100.00%   G_Inventory::RemoveByIdx
+0x006095e0  100.00%   G_Inventory::Remove
+0x00609920  100.00%   G_Inventory::SetCanHaveBigWeapon
+0x00609b60  100.00%   G_Inventory::SetInCar
+0x00609bb0  100.00%   G_Inventory::EnemyToList
+0x00609cb0  100.00%   G_Inventory::RemoveByPtr
+0x00609d20  100.00%   G_Inventory::GetAmmo
+0x00609d60  100.00%   G_Inventory::GetAmmoByID
+0x00609e50  100.00%   G_Inventory::Vystrel
+0x00609e70  73.21%    G_Inventory::Nabij
+0x00609f00  100.00%   G_Inventory::NabijJeden
+0x00609f40  100.00%   G_Inventory::MuzeNabitJeden
+0x00609f80  100.00%   G_Inventory::_Sesyp
+0x0060a000  100.00%   G_Inventory::SaveGameGetSize
+0x0060a010  100.00%   G_Inventory::SaveGameSave
+0x0060a130  100.00%   G_Inventory::SaveGameLoad
+0x0060a250  100.00%   G_EnabledCars::HaveCar
+0x0060a2f0  100.00%   G_CarDatabase::G_CarDatabase
+0x0060a350  100.00%   G_CarDatabase::Init
+0x0060a420  100.00%   G_CarDatabase::Close
+0x0060a460  100.00%   G_CarDatabase::GetCar
+0x0060a4a0  100.00%   G_CarDatabase::GetCarDetails
+0x0060a4e0  100.00%   G_CarDatabase::GetPlayerModel
+0x0060a510  100.00%   G_CarDatabase::GetCarName
+0x0060a540  100.00%   G_CarDatabase::GetCarSecondName
+0x0060a600  100.00%   G_CarDatabase::RepairIndex
+0x0060a660  100.00%   G_CarDatabase::GetCarMaxColor
+0x0060a6a0  100.00%   G_CarDatabase::GetCarModel
+0x0060a730  100.00%   G_CarDatabase::GetCarParams
+0x0060a7c0  100.00%   G_CarDatabase::GetIDByParams
+0x0060a7e0  100.00%   G_CarDatabase::GetIDByModel
+0x0060a800  100.00%   G_CarDatabase::GetIdxByModel
+0x0060a850  100.00%   G_CarDatabase::GetIdxByModelLong
+0x0060a910  100.00%   G_CarDatabase::GetIDByActor
+0x0060a970  100.00%   G_CarDatabase::GetWreckageByModel
+0x0060aa20  100.00%   G_CarDatabase::GetShadowByModel
+0x0060aad0  100.00%   G_CarDatabase::GetCivilMaskByModel
+0x0060ab30  100.00%   G_CarDatabase::GetCarsByClass
+0x0060abe0  100.00%   G_CarDatabase::GetCarsByManufacturer
+0x0060aca0  100.00%   G_CarDatabase::GetCarsByCarcyclopediaMask
+0x0060ad40  100.00%   G_CarDatabase::IsEnabledForRace
+0x0060ad80  100.00%   G_CarDatabase::IsEnabledForChampionship
+0x0060adc0  100.00%   G_CarDatabase::IsEnabledForFreeride
+0x0060ae00  100.00%   G_CarDatabase::GetCarClass
+0x0060ae30  100.00%   G_CarDatabase::GetStealTime
+0x0060aea0  100.00%   G_CarDatabase::GetPlayerCivilMaskByModel
+0x0060aef0  100.00%   G_CarDatabase::GetPlayersByCivilMask
+0x0060af70  100.00%   G_CarDatabase::LoadDetails
+0x0060b000  100.00%   G_CarDatabase::UnloadDetails
+0x0060b050  100.00%   G_Stream::G_Stream
+0x0060b080  100.00%   G_Stream::~G_Stream
+0x0060b090  100.00%   G_Stream::SetParams
+0x0060b0b0  100.00%   G_Stream::OpenRead
+0x0060b100  100.00%   G_Stream::OpenWrite
+0x0060b170  100.00%   G_Stream::Close
+0x0060b1a0  100.00%   G_Stream::WantWrite
+0x0060b1d0  100.00%   G_Stream::Write
+0x0060b210  100.00%   G_Stream::Read
+0x0060b260  100.00%   G_Stream::Crypt
+0x0060b2b0  100.00%   G_Stream::Decrypt
+0x0060b2f0  100.00%   G_Stream::WriteAdr
+0x0060b380  100.00%   G_Stream::ReadAdr
+0x0060b400  100.00%   G_LoadSaveClass::ReplayTick
+0x0060b470  100.00%   G_LoadSaveClass::ReplaySet
+0x0060b4d0  100.00%   G_LoadSaveClass::ReplayLoad
+0x0060b5a0  100.00%   G_LoadSaveClass::_replayGetNext
+0x0060b5e0  100.00%   G_LoadSaveClass::_replayPutNext
+0x0060b610  100.00%   G_LoadSaveClass::RaceCarsEnable
+0x0060b630  100.00%   G_LoadSaveClass::RaceCarsDisable
+0x0060b650  100.00%   G_LoadSaveClass::RaceCarsGetEnabled
+0x0060b660  100.00%   G_LoadSaveClass::RaceCarsAddWin
+0x0060b690  100.00%   G_LoadSaveClass::ObjectivesClear
+0x0060b6c0  100.00%   G_LoadSaveClass::ObjectivesAdd
+0x0060b8a0  100.00%   G_LoadSaveClass::ObjectivesRemove
+0x0060b8f0  100.00%   G_LoadSaveClass::ObjectivesDisplay
+0x0060b940  100.00%   G_LoadSaveClass::GarageClear
+0x0060b970  100.00%   G_LoadSaveClass::AddCarByIdx
+0x0060b9f0  100.00%   G_LoadSaveClass::AddCarByActor
+0x0060baa0  100.00%   G_LoadSaveClass::RemoveCar
+0x0060baf0  87.42%    G_LoadSaveClass::GarageGameInit
+0x0060c640  84.65%    G_LoadSaveClass::GarageGameDone
+0x0060d480  100.00%   GM_GarageEndOfMission::OnBeforeCreate
+0x0060d490  99.78%    G_LoadSaveClass::CarManager
+0x0060da70  100.00%   GM_GarageManager::OnBeforeCreate
+0x0060da80  100.00%   G_LoadSaveClass::DestroyCar
+0x0060dc80  100.00%   G_LoadSaveClass::GarageAddLastStolen
+0x0060dc90  100.00%   G_LoadSaveClass::GarageShowResults
+0x0060dca0  100.00%   G_LoadSaveClass::GarageShowResultsProc
+0x0060deb0  100.00%   GM_GarageSummary::OnBeforeCreate
+0x0060dec0  100.00%   G_LoadSaveClass::CarIsStolen
+0x0060ded0  100.00%   G_LoadSaveClass::CarCantGetOut
+0x0060dee0  100.00%   G_LoadSaveClass::EnableSteal
+0x0060df20  100.00%   G_LoadSaveClass::CanSteal
+0x0060df60  100.00%   G_LoadSaveClass::IsCarIn
+0x0060df90  100.00%   G_LoadSaveClass::FreerideEnableCar
+0x0060dfd0  100.00%   G_LoadSaveClass::FreerideGetEnabledCars
+0x0060dfe0  100.00%   G_LoadSaveClass::Refresh
+0x0060e140  100.00%   G_LoadSaveClass::GetControlTextID
+0x0060e160  100.00%   RenderOneCredit
+0x0060e5c0  100.00%   G_IndicatorsClass::OutTextScaled
+0x0060e630  100.00%   ParseCredits
+0x0060e710  100.00%   G_LoadSaveClass::ExecuteCredits
+0x0060e910  100.00%   G_LoadSaveClass::FreerideEnable
+0x0060e920  100.00%   G_LoadSaveClass::FreerideStoreA
+0x0060e960  100.00%   G_LoadSaveClass::FreerideStoreB
+0x0060e970  100.00%   G_LoadSaveClass::FreerideGetState
+0x0060e980  100.00%   G_LoadSaveClass::FreerideSetupFromScript
+0x0060e9d0  98.46%    G_LoadSaveClass::FreerideSetup
+0x0060eef0  100.00%   G_LoadSaveClass::FreerideSetupAfter
+0x0060ef50  100.00%   G_LoadSaveClass::~G_LoadSaveClass
+0x0060efa0  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::size
+0x0060efd0  100.00%   std::vector<S_garage_item,std::allocator<S_garage_item> >::insert
+0x0060f1f0  100.00%   std::vector<S_control,std::allocator<S_control> >::insert
+0x0060f520  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::_Ucopy
+0x0060f560  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::_Ufill
+0x0060f590  missing   $CRT_CPP_Initializer(366)
+0x0060f5c0  100.00%   LoadMaterialsFromBin
+0x0060f780  100.00%   UnloadMaterials
+0x0060f800  missing   $CRT_CPP_Initializer(367)
+0x0060f830  missing   $CRT_CPP_Initializer(368)
+0x0060f840  missing   $CRT_CPP_Initializer(369)
+0x0060f870  missing   $CRT_CPP_Initializer(370)
+0x0060f8a0  missing   $CRT_CPP_Initializer(371)
+0x0060f8b0  missing   $CRT_CPP_Initializer(372)
+0x0060f9d0  missing   $CRT_CPP_Initializer(373)
+0x0060fa00  50.00%    $CRT_CPP_Initializer(374)
+0x0060fa10  100.00%   $CRT_CPP_Initializer(375)
+0x0060fa40  100.00%   G_TextDatabase::G_TextDatabase
+0x0060fa50  100.00%   G_TextDatabase::~G_TextDatabase
+0x0060fa60  100.00%   G_TextDatabase::LoadDatabase
+0x0060fb10  100.00%   G_TextDatabase::Unload
+0x0060fb40  100.00%   G_TextDatabase::GetText
+0x0060fba0  100.00%   G_TextDatabase::GetTextOrNULL
+0x0060fc00  missing   $CRT_CPP_Initializer(376)
+0x00623248  100.00%   vtable C_actor::`vftable'
+0x00623318  100.00%   vtable C_airplane::`vftable'
+0x006233dc  100.00%   vtable C_chunk_allocator<int>::`vftable'
+0x006233f0  100.00%   vtable C_bottle::`vftable'
+0x006234f8  100.00%   vtable C_dyn_object::`vftable'
+0x00623618  100.00%   vtable C_car::`vftable'{for `C_actor'}
+0x006236b0  100.00%   vtable C_car::`vftable'{for `C_Vehicle'}
+0x006237d4  100.00%   vtable C_car_ex::`vftable'{for `C_Vehicle'}
+0x006237d8  100.00%   vtable C_car_ex::`vftable'{for `C_actor'}
+0x00623880  100.00%   vtable C_cartridge::`vftable'
+0x006239b0  100.00%   vtable C_detector::`vftable'{for `C_actor'}
+0x00623a48  100.00%   vtable C_detector::`vftable'{for `C_program'}
+0x00623a70  100.00%   vtable C_dog::`vftable'
+0x00623b20  100.00%   vtable C_door::`vftable'
+0x00623c28  100.00%   vtable C_drop_in_weapon::`vftable'
+0x00623e08  100.00%   vtable C_irenka::`vftable'
+0x00623ee8  100.00%   vtable C_effect::`vftable'
+0x00623eec  100.00%   vtable C_effect_item::`vftable'
+0x00623ef0  100.00%   vtable C_effect_part::`vftable'
+0x00623ef4  100.00%   vtable C_effect_subpart::`vftable'
+0x00623ef8  100.00%   vtable C_don_ocas::`vftable'
+0x00623fa0  100.00%   vtable C_traffic_generator::`vftable'
+0x00624088  100.00%   vtable C_PhThing::`vftable'
+0x00624858  100.00%   vtable C_program::`vftable'
+0x00624898  100.00%   vtable GM_GameFailed::`vftable'
+0x006248c8  100.00%   vtable GM_GunShop::`vftable'
+0x006248f8  100.00%   vtable C_public_physics::`vftable'
+0x00624990  100.00%   vtable C_pumper::`vftable'
+0x00624a70  100.00%   vtable C_railway::`vftable'
+0x00624b50  100.00%   vtable C_rmorf::`vftable'
+0x00624c00  100.00%   vtable C_stone::`vftable'
+0x00624c98  100.00%   vtable C_traffic_car::`vftable'
+0x00624d58  100.00%   vtable C_turnout::`vftable'
+0x00624df0  100.00%   vtable C_Vehicle::`vftable'
+0x00624e78  100.00%   vtable C_wagon::`vftable'
+0x00625064  100.00%   vtable C_entity::`vftable'{for `C_program'}
+0x00625090  100.00%   vtable C_entity::`vftable'{for `C_human'}
+0x006251f8  100.00%   vtable C_web_path::`vftable'
+0x00625370  100.00%   vtable C_roads::`vftable'
+0x00625410  100.00%   vtable C_sound_table::`vftable'
+0x00625458  100.00%   vtable C_actor_shot::`vftable'
+0x006254f0  100.00%   vtable C_box_new::`vftable'
+0x00625588  100.00%   vtable C_bridge::`vftable'
+0x00625648  100.00%   vtable C_clock::`vftable'
+0x006256f8  100.00%   vtable C_human::`vftable'
+0x006257d0  100.00%   vtable C_scatter::`vftable'
+0x00625878  100.00%   vtable C_player::`vftable'
+0x00625950  100.00%   vtable C_racecam::`vftable'
+0x006259e8  100.00%   vtable C_rail_generator::`vftable'
+0x00625ac0  100.00%   vtable C_cutscene_anim_names::`vftable'
+0x00625ad8  100.00%   vtable C_recorder::`vftable'
+0x00625bb0  100.00%   vtable C_seagull::`vftable'
+0x00625c90  100.00%   vtable C_I3D_cache_base<I3D_model>::`vftable'
+0x00625cc0  61.54%    vtable C_I3D_cache<I3D_model>::`vftable'
+0x00625cf4  61.54%    vtable C_I3D_model_cache::`vftable'
+0x00625d28  100.00%   vtable C_I3D_cache_base<I3D_sound>::`vftable'
+0x00625d58  61.54%    vtable C_I3D_cache<I3D_sound>::`vftable'
+0x00625d8c  61.54%    vtable C_I3D_sound_cache::`vftable'
+0x00625dc0  100.00%   vtable C_I3D_cache_base<I3D_animation_set>::`vftable'
+0x00625df0  61.54%    vtable C_I3D_cache<I3D_animation_set>::`vftable'
+0x00625e24  61.54%    vtable C_I3D_anim_cache::`vftable'
+0x00625e88  100.00%   vtable GM_Carcyclopedia::`vftable'
+0x00625eb8  100.00%   vtable GM_MainMenu::`vftable'
+0x00625f78  100.00%   vtable GM_Nahrada::`vftable'
+0x00625ff8  100.00%   vtable GM_Component::`vftable'
+0x00626078  100.00%   vtable GM_UpUp::`vftable'
+0x006260f8  100.00%   vtable GM_Window::`vftable'
+0x00626180  100.00%   vtable GM_WindowClean::`vftable'
+0x00626200  100.00%   vtable GM_WindowScroll::`vftable'
+0x00626280  100.00%   vtable GM_StaticText::`vftable'
+0x00626300  100.00%   vtable GM_StaticTextMem::`vftable'
+0x00626380  100.00%   vtable GM_StaticTextNum::`vftable'
+0x00626400  100.00%   vtable GM_StaticTextTime::`vftable'
+0x00626480  100.00%   vtable GM_Line::`vftable'
+0x00626500  100.00%   vtable GM_Rectangle::`vftable'
+0x00626580  100.00%   vtable GM_Orezavac::`vftable'
+0x00626600  100.00%   vtable GM_RectangleTexture::`vftable'
+0x00626680  100.00%   vtable GM_ProgressBar::`vftable'
+0x00626700  100.00%   vtable GM_MenuItem::`vftable'
+0x00626780  100.00%   vtable GM_MenuItemMem::`vftable'
+0x00626800  100.00%   vtable GM_MenuItemNum::`vftable'
+0x00626880  100.00%   vtable GM_RaceRoundItem::`vftable'
+0x00626900  100.00%   vtable GM_Button::`vftable'
+0x00626980  100.00%   vtable GM_ButtonClean::`vftable'
+0x00626a00  100.00%   vtable GM_Slider::`vftable'
+0x00626a80  100.00%   vtable GM_SliderInteger::`vftable'
+0x00626b00  100.00%   vtable GM_NetPlayer::`vftable'
+0x00626b80  100.00%   vtable GM_TextEdit::`vftable'
+0x00626c00  100.00%   vtable GM_CheckBox::`vftable'
+0x00626c80  100.00%   vtable GM_ButtonSelect::`vftable'
+0x00626d00  100.00%   vtable GM_ButtonSelectBool::`vftable'
+0x00626d80  100.00%   vtable GM_EditNum::`vftable'
+0x00626e00  100.00%   vtable GM_Vidc::`vftable'
+0x00626e80  100.00%   vtable GM_WaitForVid::`vftable'
+0x00626eb0  100.00%   vtable GM_SetControlToVid::`vftable'
+0x00626ee0  100.00%   vtable GM_ComboBox::`vftable'
+0x00626f5c  100.00%   vtable GM_ComboMenu::`vftable'
+0x00626f90  100.00%   vtable GM_ComboWindow::`vftable'
+0x00627010  100.00%   vtable GM_ListBox::`vftable'
+0x00627090  100.00%   vtable GM_ListCars::`vftable'
+0x00627110  100.00%   vtable GM_ViewScroll::`vftable'
+0x00627190  100.00%   vtable GM_TextInput::`vftable'
+0x00627210  100.00%   vtable GM_StaticTextBig::`vftable'
+0x00627290  100.00%   vtable GM_Grid::`vftable'
+0x0062730c  100.00%   vtable GM_MainMenuExit::`vftable'
+0x0062733c  100.00%   vtable GM_Options::`vftable'
+0x0062736c  100.00%   vtable GM_FreeRide::`vftable'
+0x0062739c  100.00%   vtable GM_LoadGame::`vftable'
+0x006273fc  100.00%   vtable GM_OptionsControls::`vftable'
+0x0062742c  100.00%   vtable GM_OptionsAudioVideo::`vftable'
+0x00627524  100.00%   vtable GM_MessageBox::`vftable'
+0x00627554  100.00%   vtable GM_QuestionBox::`vftable'
+0x006275c0  100.00%   vtable GM_LoadProgress::`vftable'
+0x006277d0  100.00%   vtable GM_ProfileCreate::`vftable'
+0x00627800  100.00%   vtable GM_ProfileDelete::`vftable'
+0x00627834  100.00%   vtable GM_Menu::`vftable'
+0x006279dc  100.00%   vtable GM_ProfileSelect::`vftable'
+0x00627a0c  100.00%   vtable GM_GarageEndOfMission::`vftable'
+0x00627a3c  100.00%   vtable GM_GarageManager::`vftable'
+0x00627a6c  100.00%   vtable GM_GarageSummary::`vftable'
+0x00627ac4  100.00%   vtable std::length_error::`vftable'
+0x00627ae4  100.00%   vtable std::logic_error::`vftable'
+0x00627af8  100.00%   vtable std::out_of_range::`vftable'
+0x00627b68  100.00%   vtable exception::`vftable'
+0x00627b88  50.00%    vtable type_info::`vftable'

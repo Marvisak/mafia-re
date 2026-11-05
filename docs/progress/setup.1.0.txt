@@ -1,0 +1,17 @@
+# SETUP10: reccmp's score of each function and vtable of Setup.1.0.exe (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x00401000  100.00%   WinMain
+0x00401170  100.00%   ToggleFields
+0x00401270  100.00%   ToggleExpertSettings
+0x00401330  100.00%   DialogFunc
+0x00402180  100.00%   Error
+0x004021b0  100.00%   $CRT_CPP_Initializer(1)
+0x004021c0  100.00%   $CRT_CPP_Initializer(2)
+0x00402200  100.00%   $CRT_CPP_Initializer(3)
+0x00402210  100.00%   $CRT_CPP_Initializer(4)
+0x004022e0  100.00%   GetTotalVRAM
+0x00402370  100.00%   LoadAdapterRefreshRates
+0x004024f0  100.00%   LoadAdapterModes
+0x00402800  100.00%   LoadAdapterData
+0x00402ac0  100.00%   LoadD3D8
+0x00402bd0  100.00%   FreeD3D8

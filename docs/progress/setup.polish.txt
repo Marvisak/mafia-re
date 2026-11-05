@@ -1,0 +1,19 @@
+# SETUPPL: reccmp's score of each function and vtable of setup.polish.exe (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x00401000  100.00%   SetText
+0x00401050  100.00%   SetDialogText
+0x004010b0  100.00%   WinMain
+0x00401220  100.00%   ToggleFields
+0x00401320  100.00%   ToggleExpertSettings
+0x004013e0  100.00%   DialogFunc
+0x00402520  100.00%   Error
+0x00402590  100.00%   $CRT_CPP_Initializer(1)
+0x004025a0  100.00%   $CRT_CPP_Initializer(2)
+0x004025e0  100.00%   $CRT_CPP_Initializer(3)
+0x004025f0  100.00%   $CRT_CPP_Initializer(4)
+0x004026c0  100.00%   GetTotalVRAM
+0x00402750  100.00%   LoadAdapterRefreshRates
+0x00402910  100.00%   LoadAdapterModes
+0x00402c50  100.00%   LoadAdapterData
+0x00402f60  100.00%   LoadD3D8
+0x00403070  100.00%   FreeD3D8

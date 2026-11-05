@@ -1,0 +1,1442 @@
+# LS3DF11: reccmp's score of each function and vtable of LS3DF.dll (patch 1.1) (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x10001000  100.00%   $CRT_CPP_Initializer(1)
+0x10001010  100.00%   SetClipParams
+0x100010c0  100.00%   ResetClipArrays
+0x100010f0  100.00%   ReserveClipArrays
+0x10001340  100.00%   `vector constructor iterator'
+0x10001370  100.00%   FreeClipArrays
+0x100013c0  100.00%   $CRT_CPP_Initializer(2)
+0x100013e0  100.00%   ClipFacesOrtho
+0x10002530  100.00%   ClipFacesPersp
+0x10003b40  100.00%   ClipMesh
+0x10003dc0  100.00%   ClipFacegroups
+0x10004110  92.73%    ClipMeshW
+0x10004370  100.00%   ClipSingleMesh
+0x100045f0  92.73%    ClipSingleMeshW
+0x10004850  100.00%   $CRT_CPP_Initializer(3)
+0x10004870  100.00%   $CRT_CPP_Initializer(4)
+0x10004890  100.00%   I3D_animation_set::I3D_animation_set
+0x100048b0  100.00%   I3D_animation_set::Release
+0x10004900  100.00%   I3D_animation_set::Open
+0x10004a00  100.00%   I3D_animation_set::NumAnimations
+0x10004a20  100.00%   I3D_animation_set::GetEndTime
+0x10004a40  100.00%   I3D_animation_set::GetAnimLink
+0x10004a70  100.00%   I3D_animation_set::GetAnims
+0x10004a80  100.00%   I3D_animation_set::GetAnimIndex
+0x10004af0  100.00%   I3D_animation_set::NumRotKeys
+0x10004b30  100.00%   I3D_animation_set::GetRotKey
+0x10004bf0  100.00%   I3D_animation_set::NumPosKeys
+0x10004c50  100.00%   I3D_animation_set::GetPosKey
+0x10004d30  100.00%   I3D_animation_set::NumSclKeys
+0x10004db0  100.00%   I3D_animation_set::GetSclKey
+0x10004ea0  100.00%   I3D_animation_set::NumNoteKeys
+0x10004f50  100.00%   I3D_animation_set::GetNoteKey
+0x10005050  100.00%   I3D_animation_set::GetNoteKeyStr
+0x10005160  100.00%   $CRT_CPP_Initializer(5)
+0x10005180  100.00%   $CRT_CPP_Initializer(6)
+0x100051a0  100.00%   I3D_area::I3D_area
+0x10005240  100.00%   I3D_area::SetSwitchFadeTime
+0x10005270  100.00%   I3D_area::GetSwitchFadeTime
+0x10005280  100.00%   I3D_area::`scalar deleting destructor'
+0x100052a0  100.00%   I3D_area::~I3D_area
+0x10005430  100.00%   I3D_area::AddToRemoveFromSceneRing
+0x10005540  100.00%   I3D_area::LinkTo
+0x100055c0  100.00%   I3D_area::UpdateV
+0x10005810  100.00%   I3D_area::Duplicate
+0x10005870  100.00%   I3D_area::Build
+0x100059c0  100.00%   I3D_area::CheckPoint
+0x10005a20  100.00%   I3D_area::AddSound
+0x10005b80  100.00%   I3D_area::DeleteSound
+0x10005c90  100.00%   I3D_area::SaveImage
+0x10005cd0  100.00%   I3D_area::LoadImage
+0x10005d10  100.00%   C_list<I3D_sound *>::remove
+0x10005da0  100.00%   I3D_billboard::I3D_billboard
+0x10005de0  100.00%   I3D_billboard::`scalar deleting destructor'
+0x10005e00  100.00%   I3D_billboard::~I3D_billboard
+0x10005e20  100.00%   I3D_billboard::UpdateBoundProc
+0x10005f20  100.00%   I3D_billboard::SetMesh
+0x10005f40  100.00%   I3D_billboard::Duplicate
+0x10006070  96.82%    I3D_billboard::ProductBillMatrix
+0x100073a0  100.00%   I3D_billboard::m_AddFGroups
+0x10008010  100.00%   $CRT_CPP_Initializer(7)
+0x10008030  100.00%   I3D_billboard::m_RenderFGroup
+0x10009150  100.00%   I3D_billboard::LoadImage
+0x100091a0  100.00%   I3D_lensflare::I3D_lensflare
+0x10009290  100.00%   I3D_lensflare::`scalar deleting destructor'
+0x100092b0  100.00%   I3D_lensflare::~I3D_lensflare
+0x10009360  100.00%   I3D_lensflare::SetSpace
+0x10009370  100.00%   I3D_lensflare::Duplicate
+0x10009520  70.54%    I3D_lensflare::Draw
+0x1000a6c0  100.00%   SetAlphaState
+0x1000a7d0  100.00%   SetBlendState
+0x1000a8c0  100.00%   SetColorOp
+0x1000a8f0  100.00%   SetAlphaOp
+0x1000a920  100.00%   I3D_lensflare::LoadImage
+0x1000aae0  100.00%   SetVertexFormat
+0x1000abb0  100.00%   C_list<GLOW_STRUCT>::reserve
+0x1000ac10  100.00%   C_VBuffer::Lock
+0x1000ac40  100.00%   C_VBuffer::Unlock
+0x1000ac60  100.00%   I3D_camera::I3D_camera
+0x1000adf0  100.00%   I3D_camera::`scalar deleting destructor'
+0x1000ae10  100.00%   I3D_camera::~I3D_camera
+0x1000ae30  100.00%   I3D_camera::Duplicate
+0x1000afa0  100.00%*  I3D_camera::UpdateProjMatrix
+0x1000b230  100.00%   I3D_camera::SetFOV
+0x1000b2c0  100.00%   I3D_camera::SetNearFOV
+0x1000b350  100.00%   I3D_camera::SetRange
+0x1000b3e0  100.00%   I3D_camera::SetNearRange
+0x1000b470  100.00%   I3D_camera::SetOrthoScale
+0x1000b4d0  100.00%   I3D_camera::SetOrthogonal
+0x1000b4f0  100.00%   I3D_camera::SetAspectRatio
+0x1000b570  100.00%   I3D_camera::UpdateSector
+0x1000b5d0  48.12%    I3D_camera::UpdateV
+0x1000d900  100.00%   S_vector::S_vector
+0x1000d920  100.00%   S_vector::operator-
+0x1000d950  100.00%   S_vector::Dot
+0x1000d970  100.00%   S_vector::GetNormal
+0x1000d9f0  100.00%   $CRT_CPP_Initializer(8)
+0x1000da10  100.00%   $CRT_CPP_Initializer(9)
+0x1000da20  100.00%   $CRT_CPP_Initializer(10)
+0x1000da30  100.00%   $CRT_CPP_Initializer(11)
+0x1000da40  100.00%   $CRT_CPP_Initializer(12)
+0x1000da60  100.00%   I3D_scene::TestColGeo
+0x1000df10  100.00%*  testSubtree
+0x1000e320  55.68%    testVisual
+0x10010dc0  100.00%   S_vector::operator*(float const &)
+0x10010df0  100.00%   S_vector::operator+
+0x10010e20  100.00%   DefaultTexelCallback
+0x10010f50  100.00%   I3D_scene::TestColGeo1
+0x10011400  100.00%   I3D_scene::TestColHierarchy
+0x10011830  100.00%   $E19(1)
+0x10011840  100.00%   $CRT_CPP_Initializer(13)
+0x10011850  100.00%   $CRT_CPP_Initializer(14)
+0x10011860  100.00%   $CRT_CPP_Initializer(15)
+0x10011870  100.00%   $CRT_CPP_Initializer(16)
+0x10011880  100.00%   I3D_scene::TestColSphere
+0x10011c60  93.42%    sphTestSubtree
+0x10012020  100.00%   S_vector::Square
+0x10012040  62.26%    sphTestVisual
+0x10014490  100.00%   S_vector::SetNormalized
+0x100145c0  100.00%   I3D_scene::TestColSphereHierarchy
+0x100148f0  100.00%   I3D_bbox::Absorb
+0x10014970  100.00%*  I3D_scene::TestColSphereVisual
+0x10014dc0  100.00%   SphereIntersect
+0x10014ed0  100.00%   I3D_scene::SphereToSphereD
+0x10015050  100.00%   $CRT_CPP_Initializer(17)
+0x10015080  100.00%   $E10(1)
+0x100150a0  100.00%   $CRT_CPP_Initializer(18)
+0x100150d0  100.00%   $E15
+0x100150f0  100.00%   $CRT_CPP_Initializer(19)
+0x10015120  100.00%   $E20
+0x10015140  100.00%   I3D_driver::I3D_driver
+0x10015190  100.00%   I3D_driver::~I3D_driver
+0x10015250  100.00%   I3D_driver::Tick
+0x10015270  100.00%   I3D_driver::GetTickTime
+0x10015280  100.00%   I3D_driver::Init
+0x10015450  100.00%   I3D_driver::Close
+0x100154d0  100.00%   I3D_driver::GetStats
+0x10015540  100.00%   I3D_driver::SetState
+0x10015970  100.00%   I3D_driver::GetState
+0x100159a0  100.00%   I3D_driver::DrawShadowTriangles
+0x10015bf0  100.00%   I3D_driver::DrawShadowTrianglesSW
+0x10015e30  100.00%   I3D_driver::RenderShadowTexture
+0x10016100  100.00%   $E25(1)
+0x10016120  100.00%   I3D_driver::GetIcon
+0x100161e0  100.00%   I3D_driver::DrawPoint
+0x10016410  100.00%   I3D_driver::DrawPoint2D
+0x10016640  100.00%   I3D_driver::DrawLine
+0x10016890  100.00%   I3D_driver::DrawLines
+0x10016af0  100.00%   $CRT_CPP_Initializer(20)
+0x10016b10  98.02%    I3D_driver::DrawTriangles
+0x100170a0  100.00%   I3D_driver::DrawCircle2D
+0x100173b0  100.00%   I3D_driver::DrawText
+0x10017860  100.00%   I3D_driver::DrawText2D
+0x10017e10  100.00%*  I3D_driver::DrawSprite
+0x100181c0  100.00%   I3D_driver::DrawBox
+0x100183c0  100.00%   $CRT_CPP_Initializer(21)
+0x100187e0  100.00%   I3D_driver::DrawSphere
+0x100188a0  100.00%   I3D_driver::CreateVisual
+0x10018bb0  100.00%   I3D_driver::CreateMaterial
+0x10018c20  100.00%   I3D_driver::CreateAnimMaterial
+0x10018ca0  100.00%   I3D_driver::CreateTrifaceArray
+0x10018cc0  100.00%   I3D_driver::CreateFaceGroup
+0x10018d20  100.00%   I3D_driver::CreateMeshLevel
+0x10018d80  100.00%   I3D_driver::CreateMesh
+0x10018de0  100.00%   I3D_driver::CreateAnimationSet
+0x10018e40  100.00%   I3D_driver::CreatePose
+0x10018ea0  100.00%   I3D_driver::CreatePoseSet
+0x10018f00  100.00%   I3D_driver::CreateFrame
+0x100193a0  100.00%   I3D_driver::EnumVisualTypes
+0x10019450  100.00%   FrameType2StringFunc
+0x10019530  100.00%   I3D_driver::FrameType2String
+0x10019540  100.00%   I3D_driver::VisualType2String
+0x10019630  100.00%   I3D_driver::FindFrameFast
+0x10019730  100.00%   I3D_driver::FindFrameFast_
+0x10019850  100.00%   I3D_driver::OptimalizeFastFindData
+0x100198e0  100.00%   I3D_driver::OFFD_RebuildBranchOfFFTree_
+0x10019af0  100.00%   I3D_driver::EnumFFTree
+0x10019b70  100.00%   `I3D_driver::EnumFFTree'::`2'::_hlp::enumSubtree
+0x10019bc0  100.00%   I3D_driver::DeleteFromSceneTickList
+0x10019c00  100.00%   I3D_driver::DeleteFromAllShadows
+0x10019c10  100.00%   I3D_driver::DeleteFromAllTargets
+0x10019c20  100.00%   C_list<TLVERTEX>::reserve
+0x10019c90  100.00%   C_list<LVERTEX>::reserve
+0x10019d00  100.00%   I3D_dummy::I3D_dummy
+0x10019d60  100.00%   I3D_dummy::`scalar deleting destructor'
+0x10019d80  100.00%   I3D_dummy::~I3D_dummy
+0x10019e00  100.00%   I3D_dummy::Duplicate
+0x10019e50  100.00%   I3D_dummy::UpdateV
+0x10019e70  100.00%   I3D_dummy::Normalize
+0x1001a1c0  100.00%   I3D_dummy::LoadImage
+0x1001a1e0  100.00%   $CRT_CPP_Initializer(22)
+0x1001a200  100.00%   I3D_frame::UpdateMatrix
+0x1001a310  100.00%   I3D_frame::I3D_frame
+0x1001a4a0  100.00%   I3D_frame::`scalar deleting destructor'
+0x1001a4c0  100.00%   I3D_frame::~I3D_frame
+0x1001a600  100.00%   I3D_frame::Release
+0x1001a620  100.00%   I3D_frame::DeleteFromOwner
+0x1001a670  100.00%*  I3D_frame::SetDir
+0x1001ab60  100.00%   I3D_frame::SetWorldDir
+0x1001ac80  100.00%   I3D_frame::SetWorldPos
+0x1001ad50  100.00%   I3D_frame::SetWorldPosDir
+0x1001aee0  100.00%   I3D_frame::SetCallback
+0x1001af20  100.00%   I3D_frame::SetOn
+0x1001af50  100.00%   I3D_frame::RemoveFromFFTree
+0x1001b020  100.00%   I3D_frame::AddToFFTree
+0x1001b120  100.00%   I3D_frame::OFFD_CountFrames
+0x1001b1a0  100.00%   I3D_frame::OFFD_CountFrames_
+0x1001b1d0  100.00%   I3D_frame::AlphabeticalListOfFrames_
+0x1001b210  100.00%   I3D_frame::SetName
+0x1001b320  100.00%   I3D_frame::SetModelName
+0x1001b410  100.00%   I3D_frame::ResetModelName
+0x1001b4f0  100.00%   I3D_frame::LinkTo
+0x1001b960  100.00%   `I3D_frame::LinkTo'::`2'::EnumHelp::I3D_EnumProc
+0x1001b980  100.00%   `I3D_frame::LinkTo'::`2'::EnumHelp1::I3D_EnumProc
+0x1001b9a0  100.00%   `I3D_frame::LinkTo'::`2'::EnumHelp2::I3D_EnumProc
+0x1001b9c0  100.00%   I3D_frame::AddChild
+0x1001ba40  100.00%   I3D_frame::RemoveChild
+0x1001baf0  100.00%   I3D_frame::GetChild
+0x1001bb40  100.00%   I3D_frame::EnumSubtree
+0x1001bda0  100.00%   $CRT_CPP_Initializer(23)
+0x1001bdc0  100.00%   I3D_frame::EnumFrames
+0x1001be30  100.00%   FindChildCallBack
+0x1001be50  100.00%   I3D_frame::FindChildFrame
+0x1001be80  100.00%   I3D_frame::GetChildFrame
+0x1001c0d0  100.00%   I3D_frame::Duplicate
+0x1001c220  100.00%   I3D_frame::SetProperty
+0x1001c2a0  100.00%   $CRT_CPP_Initializer(24)
+0x1001c2d0  100.00%   $E5(1)
+0x1001c2f0  100.00%   I3D_frame::UpdateWMatrixProc
+0x1001c4c0  100.00%   I3D_frame::UpdateChildren
+0x1001c580  100.00%   I3D_frame::Update
+0x1001c720  100.00%   I3D_frame::DiscardHRBoundVol
+0x1001c770  100.00%   I3D_frame::UpdateHRBoundVol
+0x1001c9a0  100.00%   I3D_frame::SetBoundVolume
+0x1001cab0  100.00%   I3D_frame::UpdateHRBoundVolW
+0x1001cce0  100.00%   I3D_frame::LoadImage
+0x1001ce10  100.00%   I3D_interpolator::SetPoseBlend
+0x1001ce20  100.00%   I3D_interpolator::ClearAnimation
+0x1001ce40  55.89%    I3D_interpolator::Update
+0x1001dd50  100.00%   I3D_interpolator::SetPose
+0x1001dda0  100.00%   I3D_IPolSet::~I3D_IPolSet
+0x1001de00  100.00%   I3D_IPolSet::Clear
+0x1001de80  100.00%   I3D_IPolSet::Tick(int const *)
+0x1001df90  100.00%   I3D_IPolSet::Tick(int)
+0x1001e0a0  100.00%   I3D_IPolSet::SetAnimation
+0x1001e300  100.00%   I3D_IPolSet::SetPose(class I3D_frame *, class I3D_pose *)
+0x1001e330  100.00%   I3D_IPolSet::SetPose(char const *, class I3D_pose *)
+0x1001e360  100.00%   $CRT_CPP_Initializer(25)
+0x1001e380  100.00%   I3D_IPolSet::SetPose(class I3D_pose_set *)
+0x1001e3e0  100.00%   I3D_IPolSet::SetPoseBlend(float)
+0x1001e420  100.00%   I3D_IPolSet::SetPoseBlend(float, class I3D_pose_set *)
+0x1001e480  100.00%   I3D_IPolSet::GetPoseBlend
+0x1001e4c0  100.00%   I3D_IPolSet::ResetAllPoses
+0x1001e500  100.00%   I3D_IPolSet::m_releaseUnusedInterpolators
+0x1001e580  100.00%   I3D_IPolSet::GetFrameInterpolator(class I3D_frame *)
+0x1001e6c0  100.00%   I3D_IPolSet::GetFrameInterpolator(char const *)
+0x1001e850  100.00%   I3D_joint::I3D_joint
+0x1001e8e0  100.00%   I3D_joint::`scalar deleting destructor'
+0x1001e900  100.00%   I3D_joint::~I3D_joint
+0x1001e950  100.00%   I3D_joint::UpdateV
+0x1001e9d0  100.00%   I3D_joint::Duplicate
+0x1001ea30  100.00%   I3D_joint::LoadImage
+0x1001ea60  100.00%   $CRT_CPP_Initializer(26)
+0x1001ea80  100.00%   $CRT_CPP_Initializer(27)
+0x1001ea90  100.00%   I3D_landpatch::I3D_landpatch
+0x1001eac0  100.00%   I3D_landpatch::`scalar deleting destructor'
+0x1001eae0  100.00%   I3D_landpatch::~I3D_landpatch
+0x1001eb00  100.00%   I3D_landpatch::Split
+0x1001ec60  100.00%   I3D_landpatch::RecursTessellate
+0x1001ed00  100.00%   I3D_landpatch::RecursRender
+0x1001f090  100.00%   I3D_landpatch::RecursComputeVariance
+0x1001f1b0  85.62%    I3D_landpatch::Init
+0x1001f400  100.00%   I3D_landpatch::Reset
+0x1001f440  100.00%   I3D_landpatch::ComputeVariance
+0x1001f4d0  100.00%   I3D_landpatch::Tessellate
+0x1001f5e0  100.00%   I3D_landpatch::Render
+0x1001f6d0  100.00%   CBaseRenderer::OnRenderEnd
+0x1001f6e0  100.00%   I3D_landscape::I3D_landscape
+0x1001f7d0  100.00%   I3D_landscape::`scalar deleting destructor'
+0x1001f7f0  100.00%   I3D_landscape::~I3D_landscape
+0x1001f8c0  100.00%   I3D_landscape::Init
+0x1001fa60  100.00%   I3D_landscape::Reset
+0x1001fb40  100.00%   I3D_landscape::Tessellate
+0x1001fb70  100.00%   I3D_landscape::Render
+0x1001fce0  100.00%   $CRT_CPP_Initializer(28)
+0x1001fd00  100.00%   I3D_landscape::GetHeight
+0x1001fd20  100.00%   I3D_light::I3D_light
+0x10020270  100.00%   I3D_light::`scalar deleting destructor'
+0x10020290  100.00%   I3D_light::~I3D_light
+0x10020330  100.00%   I3D_light::SetLightType
+0x10020460  100.00%   I3D_light::SetDiffuse(struct S_vector const &)
+0x10020510  100.00%   I3D_light::SetDiffuse(float, float, float)
+0x100205c0  100.00%   I3D_light::SetDiffusePower
+0x10020650  100.00%   I3D_light::SetRange
+0x10020760  100.00%   I3D_light::SetCone
+0x10020840  100.00%   I3D_light::UpdateV
+0x10020f30  100.00%   I3D_light::SetOn
+0x10020f70  100.00%   I3D_light::SetMode
+0x10020fc0  100.00%   I3D_light::Duplicate
+0x10021060  100.00%   I3D_light::LoadImage
+0x10021080  100.00%   $CRT_CPP_Initializer(29)
+0x100210a0  100.00%   I3D_lit_object::I3D_lit_object
+0x10021110  100.00%   I3D_lit_object::`scalar deleting destructor'
+0x10021130  100.00%   I3D_lit_object::~I3D_lit_object
+0x100211d0  100.00%   I3D_lit_object::SetActiveLevel
+0x10021270  100.00%   I3D_lit_object::UpdateVertices(void)
+0x100212c0  100.00%   I3D_lit_object::UpdateVertices(int)
+0x10021300  100.00%   I3D_lit_object::GetNumRectInfos
+0x10021330  100.00%   I3D_lit_object::GetRectInfos
+0x10021360  77.06%    I3D_lit_object::UpdateLMFromRectInfos
+0x10021600  100.00%   I3D_lit_object::GetRectInfoFlags
+0x10021650  38.60%    I3D_lit_object::Construct
+0x10026360  100.00%   S_vector2::Magnitude
+0x10026380  100.00%   S_vector2::Dot
+0x100263a0  100.00%   $CRT_CPP_Initializer(30)
+0x100263d0  100.00%   I3D_lit_object::Destruct
+0x10026420  100.00%*  I3D_lit_object::Load
+0x10026f60  100.00%   I3D_lit_object::Save
+0x10026f80  100.00%   I3D_lit_object::SetMode
+0x10026fb0  100.00%   I3D_lit_object::Duplicate
+0x10027140  100.00%   I3D_lit_object::SetMesh
+0x10027210  100.00%   I3D_lit_object::GetTotalLMMemory
+0x10027260  100.00%   I3D_lit_object::m_AddFGroups
+0x100283b0  100.00%   $E14(1)
+0x100283d0  100.00%   I3D_lit_object::m_RenderFGroup
+0x10029580  100.00%   SetCullState
+0x100295c0  100.00%   SetColorOp1
+0x100295f0  100.00%   litLod::`scalar deleting destructor'
+0x10029610  100.00%   litLod::~litLod
+0x10029770  100.00%   litLod::Create
+0x10029b10  100.00%   litLod::postProcess
+0x10029fd0  100.00%   I3D_visual::GetRenderMatrix
+0x1002a000  100.00%   C_list<NEW_FACE_STRUCT>::C_list<NEW_FACE_STRUCT>
+0x1002a020  100.00%   C_list<S_texture_slot>::C_list<S_texture_slot>
+0x1002a0d0  100.00%   I3D_material::I3D_material
+0x1002a170  100.00%   I3D_material::`scalar deleting destructor'
+0x1002a1b0  100.00%   I3D_material::~I3D_material
+0x1002a1e0  100.00%   I3D_material::Release
+0x1002a210  100.00%   I3D_material::SetAmbient
+0x1002a230  100.00%   I3D_material::SetDiffuse
+0x1002a250  100.00%   I3D_material::SetEmissive
+0x1002a270  100.00%   I3D_material::SetAlpha
+0x1002a280  100.00%   I3D_material::SetTexture
+0x1002a2f0  100.00%   I3D_material::SetEnvTexture(class ITexture *)
+0x1002a330  100.00%   I3D_material::SetEnvTexture(class ITexture *, unsigned int, unsigned int, float)
+0x1002a3a0  100.00%   I3D_material::Duplicate
+0x1002a410  100.00%   I3D_material::Set2Sided
+0x1002a420  100.00%   I3D_material::SetEnvType
+0x1002a440  100.00%   I3D_material::SetEnvMode
+0x1002a460  100.00%   I3D_material::SetEnvScale
+0x1002a480  100.00%   I3D_material::SetEnvAlpha
+0x1002a490  100.00%   I3D_anim_material::I3D_anim_material
+0x1002a730  100.00%   I3D_anim_material::`scalar deleting destructor'
+0x1002a750  100.00%   I3D_anim_material::~I3D_anim_material
+0x1002a880  100.00%   I3D_anim_material::UpdateTexture
+0x1002a9d0  100.00%   I3D_anim_material::UpdateEnvTexture
+0x1002ab30  88.64%    I3D_anim_material::Duplicate
+0x1002af50  100.00%   I3D_anim_material::SetCurrentFrame
+0x1002afd0  100.00%   I3D_anim_material::SetEnvCurrentFrame
+0x1002b050  100.00%   I3D_material::LoadImage
+0x1002b300  100.00%   I3D_anim_material::LoadImage
+0x1002bba0  100.00%   $CRT_CPP_Initializer(31)
+0x1002bbc0  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::~vector<ITexture *,std::allocator<ITexture *> >
+0x1002bbe0  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::size
+0x1002bc00  missing   Unknown FUNCTION
+0x1002bda0  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::erase
+0x1002bdd0  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::insert
+0x1002bff0  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::_Ucopy
+0x1002c020  100.00%   std::vector<ITexture *,std::allocator<ITexture *> >::_Ufill
+0x1002c050  100.00%   std::copy
+0x1002c080  100.00%   I3D_material::IsCkey
+0x1002c090  100.00%   I3D_material::IsAnimated
+0x1002c0a0  100.00%   RandFloat
+0x1002c0c0  100.00%   RotateXMatrix
+0x1002c110  100.00%   RotateYMatrix
+0x1002c160  100.00%   RotateZMatrix
+0x1002c1b0  100.00%   S_vector2::AngleTo
+0x1002c220  100.00%   S_matrix::Identity
+0x1002c240  100.00%   S_matrix::RotateByMatrix
+0x1002c3b0  96.40%    S_matrix::Inverse
+0x1002c520  100.00%   S_matrix::operator*=
+0x1002c6a0  100.00%   S_matrix::operator*
+0x1002c820  100.00%   S_matrix::Mult4X4
+0x1002ca80  100.00%   S_matrix::Make4X4
+0x1002ccd0  100.00%   S_matrix::SetDir(struct S_vector const &)
+0x1002cff0  100.00%   S_matrix::SetDir3
+0x1002d330  100.00%   S_matrix::SetDir(struct S_vector const &, struct S_vector const &)
+0x1002d370  100.00%   S_matrix::SetRot3
+0x1002d4c0  100.00%   S_matrix::SetRot(struct S_quat const &)
+0x1002d4f0  100.00%   S_matrix::SetRot(struct S_matrix const &)
+0x1002d660  100.00%   S_vector::Cross
+0x1002d6a0  100.00%   S_matrix::GetScale
+0x1002d810  100.00%   S_matrix::GetScale2
+0x1002d880  100.00%   S_matrix::GetUScale
+0x1002da10  100.00%   S_vector::CosAngleTo
+0x1002daa0  100.00%   S_vector::AngleTo
+0x1002dc20  100.00%   S_vector::operator*=(struct S_matrix const &)
+0x1002dc80  100.00%   S_vector::operator*(struct S_matrix const &)
+0x1002dd10  100.00%   S_vector::RotateByMatrix
+0x1002dd90  100.00%   $CRT_CPP_Initializer(32)
+0x1002ddb0  100.00%   S_vector::RotateByNormMatrix
+0x1002df00  100.00%   S_quat::RotationMatrix
+0x1002e060  100.00%   S_quat::GetDir
+0x1002e100  100.00%   S_quat::Make(struct S_vector const &, float)
+0x1002e1f0  92.62%    S_quat::Make(struct S_matrix const &)
+0x1002ecf0  100.00%   S_vector::Magnitude
+0x1002ed70  100.00%   S_quat::operator*
+0x1002ee50  100.00%   S_quat::SetDir
+0x1002f070  100.00%   S_quat::Inverse
+0x1002f1e0  100.00%   S_quat::Slerp
+0x1002f340  100.00%   S_quat::RotateByMatrix
+0x1002f440  100.00%   S_quat::Normalize
+0x1002f590  100.00%   S_plane::IntersectionLine
+0x1002f740  100.00%   LineLineIntersect
+0x1002f860  100.00%   I3D_face_group::I3D_face_group
+0x1002f880  100.00%   I3D_face_group::SetMaterial
+0x1002f8b0  100.00%   I3D_face_group::SetFaces
+0x1002f920  100.00%   I3D_face_group::CreateFaces
+0x1002f9a0  100.00%   I3D_face_group::GetFaces
+0x1002f9f0  100.00%   I3D_face_group::UnlockFaces
+0x1002fa10  100.00%   I3D_face_group::Duplicate
+0x1002fa70  100.00%   I3D_face_group::DetachMaterial
+0x1002fb10  100.00%   I3D_mesh_level::I3D_mesh_level
+0x1002fb70  100.00%   I3D_face_group::`scalar deleting destructor'
+0x1002fbc0  100.00%   I3D_mesh_level::Release
+0x1002fc60  100.00%   I3D_mesh_level::UpdateBBox
+0x1002fd50  100.00%   I3D_mesh_level::SetVertexMesh
+0x1002fe70  100.00%   I3D_mesh_level::CreateVertexMesh
+0x1002ff60  100.00%   I3D_mesh_level::LockVertices
+0x1002ffa0  100.00%   I3D_mesh_level::UnlockVertices
+0x1002ffc0  100.00%   I3D_mesh_level::Duplicate
+0x10030150  100.00%   I3D_mesh_level::GetFGroup
+0x10030190  100.00%   I3D_mesh_level::NumFaces
+0x100301b0  100.00%   I3D_mesh_level::GetStats
+0x100301f0  100.00%   I3D_mesh_level::AddFGroup
+0x100302f0  100.00%   I3D_mesh_object::I3D_mesh_object
+0x10030370  100.00%   I3D_mesh_object::Release
+0x100303c0  100.00%   I3D_mesh_object::GetLOD
+0x100303d0  100.00%   I3D_mesh_object::UpdateBoundVolume
+0x10030520  100.00%   I3D_mesh_object::SetLOD
+0x100305b0  100.00%   I3D_mesh_object::Duplicate
+0x100306d0  100.00%   I3D_mesh_object::DetachMaterials
+0x10030720  100.00%   I3D_mesh_object::IsCompatible
+0x10030770  100.00%   I3D_mesh_object::GetStats
+0x100307d0  100.00%   $CRT_CPP_Initializer(33)
+0x100307f0  100.00%   I3D_mirror::I3D_mirror
+0x100308c0  100.00%   I3D_mirror::`scalar deleting destructor'
+0x100308e0  100.00%   I3D_mirror::~I3D_mirror
+0x100309c0  100.00%   I3D_mirror::SetColor
+0x10030a80  100.00%   I3D_mirror::Duplicate
+0x10030c40  100.00%   I3D_mirror::Draw
+0x10030fd0  100.00%   I3D_mirror::LinkTo
+0x10031030  100.00%   I3D_mirror::UpdateV
+0x100310c0  100.00%   I3D_mirror::Tick
+0x10031180  100.00%   I3D_mirror::UpdateVisibility
+0x10031480  100.00%   $CRT_CPP_Initializer(34)
+0x100314b0  100.00%   $E6(1)
+0x100314d0  100.00%   I3D_mirror::CollectVisuals
+0x10031700  100.00%   I3D_mirror::PrepareReflection
+0x10032180  100.00%   I3D_mirror::SetViewBox
+0x100322b0  100.00%   I3D_mirror::LoadImage
+0x10032380  100.00%   $CRT_CPP_Initializer(35)
+0x100323a0  100.00%   SetClipping
+0x100323e0  100.00%   I3D_model::I3D_model
+0x10032430  100.00%   I3D_model::`scalar deleting destructor'
+0x10032450  100.00%   I3D_model::~I3D_model
+0x100324d0  100.00%   I3D_model::Close
+0x10032570  100.00%   I3D_model::Open
+0x10032660  100.00%   I3D_model::AddFrame
+0x10032700  100.00%   I3D_model::DeleteFrame
+0x100327b0  100.00%   I3D_model::SetAnimation
+0x10032870  100.00%   I3D_model::GetAnimationSet
+0x100328a0  100.00%   I3D_model::StopAnimation
+0x100328d0  100.00%   I3D_model::StartAnimation
+0x10032900  100.00%   I3D_model::SetAnimBlend
+0x10032980  100.00%   I3D_model::GetAnimBlend
+0x100329c0  100.00%   I3D_model::SetAnimTime
+0x10032a00  100.00%   I3D_model::GetAnimTime
+0x10032a30  100.00%   I3D_model::SetAnimOptions
+0x10032a70  100.00%   I3D_model::GetAnimOptions
+0x10032aa0  100.00%   I3D_model::AnimIsOn
+0x10032ad0  100.00%   I3D_model::SetName(void)
+0x10032b40  100.00%   I3D_model::SetName(char const *)
+0x10032b60  100.00%   $CRT_CPP_Initializer(36)
+0x10032b90  100.00%   $E5(2)
+0x10032bb0  100.00%   $CRT_CPP_Initializer(37)
+0x10032be0  100.00%   $E10(2)
+0x10032c00  100.00%   duplicateChildren
+0x10032e50  100.00%   I3D_model::DuplicateHierarchy
+0x10033050  100.00%   I3D_model::Duplicate
+0x10033090  100.00%   I3D_model::Tick(int)
+0x100330c0  100.00%   I3D_model::Tick(int const *)
+0x100330f0  100.00%   I3D_model::ResetAllPoses
+0x10033110  100.00%   I3D_model::NumInterpolators
+0x10033130  100.00%   I3D_model::GetInterpolators
+0x10033150  100.00%   I3D_model::SetPose(class I3D_pose_set *)
+0x100331f0  100.00%   I3D_model::SetPose(class I3D_frame *, class I3D_pose *)
+0x10033290  100.00%   I3D_model::SetPose(char const *, class I3D_pose *)
+0x10033330  100.00%   I3D_model::SetPoseBlend(float)
+0x10033360  100.00%   I3D_model::SetPoseBlend(float, class I3D_pose_set *)
+0x10033390  100.00%   I3D_model::GetPoseBlend
+0x100333b0  100.00%   $CRT_CPP_Initializer(38)
+0x100333d0  100.00%   morphBase::morphBase
+0x100333f0  100.00%   morphBase::Clear
+0x100334c0  100.00%   morphBase::SetWeightB
+0x100334f0  100.00%   morphBase::GetWeightB
+0x10033510  100.00%   morphBase::NormalizeWeights
+0x100335d0  97.99%    morphBase::UpdateMorphLod(int, class I3D_mesh_object *)
+0x10033840  100.00%*  morphBase::UpdateMorphLod(void *, unsigned int, int, class I3D_mesh_object *)
+0x10033ad0  100.00%   morphBase::DuplicateMorphDef
+0x10033bd0  100.00%   morphBase::LoadImageB
+0x10033e30  100.00%   I3D_morph::I3D_morph
+0x10033e90  100.00%   I3D_morph::`scalar deleting destructor'
+0x10033eb0  100.00%   I3D_morph::~I3D_morph
+0x10033fe0  100.00%   I3D_morph::NumLevels
+0x10033ff0  100.00%   I3D_morph::NumRegions
+0x10034000  100.00%   I3D_morph::SetWeight
+0x100340b0  100.00%   I3D_morph::GetWeight
+0x10034130  100.00%   I3D_morph::SetMesh
+0x10034180  100.00%   I3D_morph::Duplicate
+0x100344f0  100.00%   I3D_visual::UpdateBoundProc
+0x10034510  100.00%*  I3D_morph::m_AddFGroups
+0x10035280  100.00%   $CRT_CPP_Initializer(39)
+0x100352a0  100.00%   S_morph_unknown::~S_morph_unknown
+0x100352e0  100.00%   MorphDef::MorphDef
+0x10035410  100.00%   MorphDef::Release
+0x10035470  100.00%   morph_region::morph_region
+0x10035480  100.00%   morph_region::~morph_region
+0x100354b0  100.00%   I3D_morph::LoadImage
+0x10035510  100.00%   I3D_object::I3D_object
+0x10035580  100.00%   I3D_object::`scalar deleting destructor'
+0x100355a0  100.00%   I3D_object::~I3D_object
+0x10035640  100.00%   I3D_object::SetMesh
+0x10035780  100.00%   I3D_object::UpdateVertices(void)
+0x100357b0  100.00%   I3D_object::UpdateVertices(int)
+0x100357d0  100.00%   I3D_object::DetachMesh
+0x10035870  100.00%   I3D_object::Duplicate
+0x100359d0  100.00%   lod::lod
+0x10035a10  100.00%   lod::`scalar deleting destructor'
+0x10035a40  100.00%   lod::~lod
+0x10035a60  100.00%   lod::SetUV
+0x10035c30  100.00%   lod::Create
+0x10036160  100.00%   I3D_object::SetSpace
+0x10036600  100.00%   I3D_object::SetLightness
+0x10036680  100.00%   I3D_object::SetTransparency
+0x10036710  100.00%   I3D_object::ResetLightInfo
+0x10036750  100.00%   I3D_object::SetFade
+0x100367e0  100.00%   I3D_object::LockVertices
+0x10036830  100.00%   I3D_object::m_AddFGroups
+0x100377a0  100.00%   $CRT_CPP_Initializer(40)
+0x100377c0  100.00%   I3D_object::m_RenderFGroup
+0x10038940  100.00%   I3D_object::LoadImage
+0x10038970  100.00%   I3D_occluder::I3D_occluder
+0x10038a40  100.00%   I3D_occluder::`scalar deleting destructor'
+0x10038a60  100.00%   I3D_occluder::~I3D_occluder
+0x10038b90  100.00%   I3D_occluder::AddToRemoveFromSceneRing
+0x10038cb0  100.00%   I3D_occluder::LinkTo
+0x10038d40  85.81%    I3D_occluder::UpdateV
+0x10039140  100.00%   I3D_occluder::Duplicate
+0x100391a0  100.00%   I3D_occluder::Build(struct S_vector const *, unsigned int, unsigned short const *, unsigned int, unsigned int)
+0x100392d0  100.00%   I3D_occluder::Build(void)
+0x10039670  93.29%    I3D_occluder::UpdateShadow
+0x1003a400  100.00%   UOL_EnumProc
+0x1003a470  100.00%   OCCL_UpdateOcclLists
+0x1003a590  100.00%   $CRT_CPP_Initializer(41)
+0x1003a5b0  82.52%    ProcessOccluders
+0x1003a820  79.18%    CullOcclsEachOther
+0x1003a9c0  100.00%   POIS_EnumProc
+0x1003ab50  98.50%    OCCL_PrepareSector2
+0x1003aef0  100.00%   I3D_occluder::LoadImage
+0x1003b020  100.00%   XSBTree<TRISIDE2>::~XSBTree<TRISIDE2>
+0x1003b030  100.00%   XSBTree<TRISIDE2>::Add_r
+0x1003b0f0  100.00%   InitParticle
+0x1003b1b0  100.00%   CloseParticle
+0x1003b1c0  100.00%   I3D_part_renderer::`scalar deleting destructor'
+0x1003b1e0  100.00%   I3D_part_renderer::~I3D_part_renderer
+0x1003b290  100.00%   I3D_part_renderer::m_AddFGroups
+0x1003b630  100.00%   I3D_part_renderer::m_RenderFGroup
+0x1003c140  100.00%   I3D_emitor::I3D_emitor
+0x1003c1f0  100.00%   I3D_emitor::`scalar deleting destructor'
+0x1003c210  100.00%   I3D_emitor::~I3D_emitor
+0x1003c2b0  100.00%   I3D_emitor::SetMesh
+0x1003c2e0  100.00%   I3D_emitor::SetParam
+0x1003c950  100.00%   I3D_emitor::GetParam
+0x1003cc20  100.00%   I3D_emitor::Reset
+0x1003cd90  100.00%   $CRT_CPP_Initializer(42)
+0x1003cdb0  100.00%   I3D_emitor::SetOn
+0x1003ce00  100.00%   I3D_emitor::UpdateV
+0x1003ce20  100.00%*  I3D_emitor::Tick
+0x1003d9a0  100.00%   I3D_emitor::Duplicate
+0x1003dc00  100.00%   I3D_emitor::KillElements
+0x1003dc50  100.00%   I3D_emitor::TickElements
+0x1003dca0  100.00%   I3D_emitor::SetElementsOn
+0x1003dce0  100.00%   I3D_emitor::LoadImage
+0x1003dd10  100.00%   I3D_part_element::I3D_part_element
+0x1003ded0  100.00%   I3D_part_element::`scalar deleting destructor'
+0x1003def0  100.00%   I3D_part_element::~I3D_part_element
+0x1003df90  100.00%   I3D_part_element::Duplicate
+0x1003e130  100.00%*  I3D_part_element::Tick
+0x1003e9b0  100.00%   I3D_part_base::I3D_part_base
+0x1003ea30  100.00%   I3D_part_base::`scalar deleting destructor'
+0x1003ea50  100.00%   I3D_part_base::~I3D_part_base
+0x1003ea60  100.00%   I3D_part_base::Duplicate
+0x1003eb10  100.00%   I3D_part_base::m_AddFGroups
+0x1003f410  100.00%   I3D_part_base::m_RenderFGroup
+0x1003f7f0  100.00%   C_sort_list<int>::ReAllocate
+0x1003f850  100.00%   I3D_part_base::SetSector
+0x1003f870  100.00%   I3D_part_base::GetSector
+0x1003f880  100.00%   I3D_portal::I3D_portal
+0x1003f8d0  100.00%   I3D_portal::~I3D_portal
+0x1003f910  100.00%   I3D_portal::AddToSceneRing
+0x1003fa00  100.00%   I3D_portal::SetOn
+0x1003fa50  100.00%   I3D_portal::IsOn
+0x1003fa60  100.00%   I3D_portal::UpdatePortal
+0x1003fe60  100.00%   $CRT_CPP_Initializer(43)
+0x1003fe70  65.63%    CTP_EnumProcFirst
+0x10041080  100.00%   CTP_EnumProc
+0x10041850  100.00%   $CRT_CPP_Initializer(44)
+0x10041870  36.48%    CullThruPortal
+0x10042680  98.53%    ParsePortal
+0x10042e20  100.00%   ParsePortalsInSector
+0x10043120  100.00%   UpdatePortalInterconnection
+0x10043780  100.00%   ProcessPortals
+0x10043970  100.00%   I3D_portal::LoadImage
+0x100439b0  100.00%   I3D_pose::I3D_pose
+0x10043a00  100.00%   I3D_pose::Release
+0x10043a50  100.00%   I3D_pose::Clear
+0x10043a60  100.00%   I3D_pose::SetRot
+0x10043ab0  100.00%   I3D_pose::SetRotAbs
+0x10043b00  100.00%   I3D_pose::SetDir(struct S_vector const *, float)
+0x10043b40  100.00%   I3D_pose::SetDir(struct S_vector const &, float)
+0x10043b60  100.00%   I3D_pose::SetDirAbs
+0x10043b90  100.00%   I3D_pose::SetPos
+0x10043bd0  100.00%   I3D_pose::SetScale
+0x10043c10  100.00%   I3D_pose_set::I3D_pose_set
+0x10043c40  100.00%   I3D_pose_set::~I3D_pose_set
+0x10043cc0  100.00%   I3D_pose_set::Release
+0x10043d00  100.00%   I3D_pose_set::GetFrameName
+0x10043d30  100.00%   I3D_pose_set::AddPose
+0x10043e00  100.00%   I3D_pose_set::DeletePose
+0x10043e90  100.00%   $CRT_CPP_Initializer(45)
+0x10043eb0  100.00%   I3D_projector::I3D_projector
+0x10044060  100.00%   I3D_projector::`scalar deleting destructor'
+0x10044080  100.00%   I3D_projector::~I3D_projector
+0x10044150  100.00%   I3D_projector::Duplicate
+0x100442d0  100.00%   I3D_projector::SetTexture
+0x10044300  100.00%   I3D_projector::SetMaterial
+0x10044330  100.00%   I3D_projector::SetOrthogonal
+0x10044350  100.00%   I3D_projector::SetColor
+0x10044430  100.00%   I3D_projector::SetAlpha
+0x10044480  100.00%   I3D_projector::SetReverseFactor
+0x100444f0  100.00%   I3D_projector::SetMode
+0x10044510  100.00%   I3D_projector::SetProjectorLock
+0x10044530  100.00%   I3D_projector::UpdateV
+0x10044560  100.00%   I3D_projector::AddFGroups
+0x100447c0  100.00%   $CRT_CPP_Initializer(46)
+0x100447f0  100.00%   $E14(2)
+0x10044810  100.00%   I3D_projector::m_AddFGroups
+0x100449c0  100.00%   ProcessProjectors
+0x100449f0  100.00%   I3D_projector::ProcessRecList
+0x10045f90  100.00%   $CRT_CPP_Initializer(47)
+0x10045fb0  100.00%   I3D_projector::ProcessShadow
+0x10046210  100.00%   I3D_projector::MakeProjection
+0x10046330  100.00%   I3D_projector::CollectReceivers
+0x10046540  100.00%   I3D_projector::m_RenderFGroup
+0x100468b0  100.00%   I3D_projector::LoadImage
+0x10046950  100.00%   $CRT_CPP_Initializer(48)
+0x10046980  100.00%   $E14(3)
+0x100469a0  100.00%   $CRT_CPP_Initializer(49)
+0x100469d0  100.00%   $E19(2)
+0x100469f0  100.00%   $CRT_CPP_Initializer(50)
+0x10046a00  100.00%   I3D_scene::I3D_scene
+0x10046df0  100.00%   $E27
+0x10046e00  100.00%   I3D_scene::`scalar deleting destructor'
+0x10046e20  100.00%   I3D_scene::~I3D_scene
+0x10047080  100.00%   I3D_scene::SetCallback
+0x100470c0  100.00%   I3D_scene::Render
+0x100470e0  100.00%   I3D_scene::EnumFrames
+0x10047170  100.00%   I3D_scene::FindFrame
+0x100471f0  100.00%   I3D_scene::AddFrame
+0x10047360  100.00%   I3D_scene::DeleteFrame
+0x10047480  100.00%   I3D_scene::SetGlobalColor
+0x100474c0  100.00%   I3D_scene::GetLightness
+0x10047900  100.00%   I3D_scene::SetActiveCamera
+0x10047990  100.00%   I3D_scene::UnmapScreenPoint
+0x10047dc0  100.00%   I3D_scene::TransformPoints
+0x10047ef0  100.00%   I3D_scene::AddTickFrame
+0x10047fb0  100.00%   I3D_scene::DeleteTickFrame
+0x10048040  100.00%   I3D_scene::Tick
+0x100480a0  100.00%   I3D_scene::CreateSector
+0x10048130  100.00%   I3D_scene::GetSector(struct S_vector const &, class I3D_sector *)
+0x100481a0  100.00%   I3D_scene::GetSector(struct S_vector const &, class I3D_sector **, int)
+0x100481e0  100.00%   I3D_scene::SetFrameSectorPos
+0x10048260  100.00%   I3D_scene::Open
+0x100482f0  100.00%   I3D_scene::Close
+0x10048500  100.00%   I3D_scene::AddShadow
+0x100485a0  100.00%   I3D_scene::DeleteShadow
+0x10048650  100.00%   I3D_scene::AddMirror
+0x100486f0  100.00%   I3D_scene::DeleteMirror
+0x100487a0  100.00%   I3D_scene::SetBackdropRange
+0x100487c0  100.00%   $CRT_CPP_Initializer(51)
+0x100487e0  100.00%   I3D_scene::MakeReadySectors
+0x10048820  100.00%   `I3D_scene::MakeReadySectors'::`2'::EnumHelp::I3D_EnumProc
+0x10048830  100.00%   I3D_scene::SetSpace
+0x100488b0  100.00%   sceneSS
+0x10048920  100.00%   I3D_scene::SetViewport
+0x100489b0  100.00%   I3D_scene::SetViewProjMatrix
+0x10048a00  100.00%   I3D_scene::m_UpdateSoundProperties
+0x10049050  100.00%   I3D_scene::SetAnimation
+0x10049110  100.00%   I3D_scene::GetAnimationSet
+0x10049140  100.00%   I3D_scene::StopAnimation
+0x10049170  100.00%   I3D_scene::SetAnimBlend
+0x100491f0  100.00%   I3D_scene::GetAnimBlend
+0x10049230  100.00%   I3D_scene::SetAnimTime
+0x10049270  100.00%   I3D_scene::GetAnimTime
+0x100492a0  100.00%   I3D_scene::AnimIsOn
+0x100492d0  100.00%   I3D_scene::NumInterpolators
+0x100492f0  100.00%   I3D_scene::GetInterpolators
+0x10049310  100.00%*  I3D_scene::WeatherSystemReset
+0x10049470  78.04%    m_PrepareDummyStruct
+0x10049b20  100.00%   I3D_scene::WeatherSystemAddDummy
+0x10049b90  100.00%   I3D_scene::WeatherSystemDelDummy
+0x10049c20  100.00%   I3D_scene::WeatherSystemGetDummyCnt
+0x10049c30  100.00%   I3D_scene::WeatherSystemGetDumies
+0x10049c40  97.52%    I3D_scene::SetWeatherSystemParam
+0x1004a390  100.00%   I3D_scene::GetWeatherSystemParam
+0x1004a520  86.39%    I3D_scene::m_UpdateWeatherSystem
+0x1004bc50  100.00%   $E30
+0x1004bc60  100.00%   I3D_scene::m_RenderWeatherSystem
+0x1004c220  100.00%   SetFog
+0x1004c3e0  100.00%*  I3D_scene::TestVisibility
+0x1004c570  100.00%   C_list<WE_STRUCT>::reserve
+0x1004c630  100.00%   C_list<WE_STRUCT>::push_back
+0x1004c710  100.00%   C_list<DUMMY_STRUCT>::push_back
+0x1004c7f0  100.00%   VERTEX_STRUCT::VERTEX_STRUCT
+0x1004c800  100.00%   I3D_scene::LinkTo
+0x1004c810  100.00%   S_sector_sound_properties::SetupDefaults
+0x1004c8b0  94.92%    S_sector_sound_properties::MakeBlend
+0x1004cb90  100.00%   I3D_sector::I3D_sector
+0x1004ccc0  100.00%   I3D_sector::`scalar deleting destructor'
+0x1004cce0  100.00%   I3D_sector::~I3D_sector
+0x1004d090  100.00%   I3D_sector::SetName
+0x1004d0c0  100.00%   I3D_sector::AddToRemoveFromSceneRing
+0x1004d230  100.00%   I3D_sector::AddLight
+0x1004d3b0  100.00%   I3D_sector::DeleteLight
+0x1004d530  100.00%   I3D_sector::UpdateV
+0x1004d570  94.87%    I3D_sector::UpdateCHPlanesW
+0x1004d9a0  100.00%   I3D_sector::MakeReady
+0x1004db20  100.00%   I3D_sector::CheckPoint
+0x1004dc10  100.00%   I3D_sector::SetSoundData
+0x1004dfa0  100.00%   I3D_sector::GetSoundData
+0x1004dfe0  100.00%   I3D_sector::AddSound
+0x1004e150  100.00%   I3D_sector::DeleteSound
+0x1004e290  100.00%   I3D_sector::Duplicate
+0x1004e420  100.00%   I3D_sector::LoadImage
+0x1004e6f0  100.00%   $CRT_CPP_Initializer(52)
+0x1004e710  100.00%   I3D_sector::SetGroupBits
+0x1004e730  100.00%   C_list<I3D_sound *>::find
+0x1004e760  100.00%   C_list<I3D_sound *>::~C_list<I3D_sound *>
+0x1004e780  100.00%   $CRT_CPP_Initializer(53)
+0x1004e7b0  100.00%   $E14(4)
+0x1004e7d0  100.00%   I3D_shadow::I3D_shadow
+0x1004e9f0  100.00%   I3D_shadow::`scalar deleting destructor'
+0x1004ea10  100.00%   I3D_shadow::~I3D_shadow
+0x1004eae0  100.00%   I3D_shadow::Duplicate
+0x1004ebb0  100.00%   $CRT_CPP_Initializer(54)
+0x1004ebe0  100.00%   $E19(3)
+0x1004ec00  96.14%    I3D_shadow::SetTo
+0x1004f0e0  100.00%   FindParts
+0x1004f250  100.00%   I3D_shadow::LinkTo
+0x1004f280  100.00%   I3D_shadow::SetShadowLock
+0x1004f2b0  100.00%   I3D_shadow::UpdateV
+0x1004f300  100.00%   I3D_shadow::DeleteFromAnyShadow
+0x1004f360  100.00%   I3D_shadow::Close
+0x1004f460  100.00%   I3D_shadow::Open
+0x1004f680  100.00%   I3D_shadow::SetRange
+0x1004f6c0  100.00%   I3D_shadow::SetMaxTextureDistance
+0x1004f730  100.00%   I3D_shadow::SetColor
+0x1004f800  100.00%   I3D_shadow::SetReverseFactor
+0x1004f860  100.00%   I3D_shadow::SetOrthogonal
+0x1004f8a0  100.00%   I3D_shadow::SetTextureSize
+0x1004f930  100.00%   I3D_shadow::UpdateVertices
+0x1004fa80  96.54%    I3D_shadow::UpdateLight
+0x10050820  100.00%   $CRT_CPP_Initializer(55)
+0x10050840  100.00%   I3D_shadow::RenderTexture
+0x10050910  100.00%   I3D_shadow::Prepare
+0x10050af0  100.00%   ShadowDef::~ShadowDef
+0x10050b60  100.00%   I3D_shadow_visual::I3D_shadow_visual
+0x10050cf0  100.00%   I3D_shadow_visual::`scalar deleting destructor'
+0x10050d10  100.00%   I3D_shadow_visual::~I3D_shadow_visual
+0x10050db0  100.00%   $CRT_CPP_Initializer(56)
+0x10050de0  100.00%   $E25(2)
+0x10050e00  100.00%   I3D_shadow_visual::m_AddFGroups
+0x10050ee0  100.00%   I3D_shadow_visual::AddFGroups
+0x100510d0  100.00%   ProcessShadows
+0x10051100  100.00%   I3D_shadow_visual::ProcessShadow
+0x10051c30  100.00%   I3D_shadow_visual::m_RenderFGroup
+0x10051f90  100.00%   I3D_scene::vfunc_66
+0x10051fa0  100.00%   I3D_frame::Tick
+0x10051fb0  100.00%   I3D_scene::Duplicate
+0x10051fc0  100.00%   I3D_singlemesh::I3D_singlemesh
+0x10052010  100.00%   I3D_singlemesh::`scalar deleting destructor'
+0x10052030  100.00%   I3D_singlemesh::~I3D_singlemesh
+0x100520f0  100.00%   I3D_singlemesh::UpdateVertices(void)
+0x10052110  100.00%   I3D_singlemesh::UpdateVertices(int)
+0x10052130  100.00%   I3D_singlemesh::GetJointBBox
+0x10052180  100.00%   I3D_singlemesh::DuplicateSinglemeshDef
+0x10052250  100.00%   I3D_singlemesh::Duplicate
+0x10052560  100.00%   I3D_singlemesh::UpdateBoundProc
+0x10052590  100.00%   I3D_singlemesh::UpdateBVolumeProc
+0x100529a0  100.00%   I3D_singlemesh::DBuild
+0x10052b00  100.00%   findJoint
+0x10052b50  100.00%   I3D_singlemesh::GetVertexJoint
+0x10052bb0  100.00%   I3D_singlemesh::GetVertexPos
+0x10052c40  100.00%   I3D_singlemesh::UpdateLodVertices
+0x10053420  100.00%   S_vector::operator*=(float const &)
+0x10053440  100.00%   I3D_singlemesh::CopyRigidPositions
+0x10053510  100.00%   I3D_singlemesh::CopyMovedPositions
+0x100535d0  93.42%    I3D_singlemesh::m_AddFGroups
+0x100541e0  100.00%   $CRT_CPP_Initializer(57)
+0x10054200  100.00%   I3D_singlemesh::LoadImage
+0x10054470  100.00%   SMeshLod::`scalar deleting destructor'
+0x10054490  100.00%   SMeshLod::~SMeshLod
+0x10054540  100.00%   I3D_singlemorph::I3D_singlemorph
+0x100545b0  100.00%   I3D_singlemorph::`scalar deleting destructor'
+0x100545d0  100.00%   I3D_singlemorph::~I3D_singlemorph
+0x10054630  100.00%   I3D_singlemorph::NumLevels
+0x10054640  100.00%   I3D_singlemorph::NumRegions
+0x10054650  100.00%   I3D_singlemorph::SetWeight
+0x100546f0  100.00%   I3D_singlemorph::GetWeight
+0x10054770  100.00%   I3D_singlemorph::SetMesh
+0x100547c0  100.00%   I3D_singlemorph::Duplicate
+0x10054c40  100.00%   I3D_singlemorph::UpdateBoundProc
+0x10054c50  100.00%   I3D_singlemorph::UpdateLodVertices
+0x10054c90  100.00%   I3D_singlemorph::LoadImage
+0x10054cf0  100.00%   $CRT_CPP_Initializer(58)
+0x10054d10  100.00%   I3D_sound::I3D_sound
+0x10054e80  100.00%   I3D_sound::`scalar deleting destructor'
+0x10054ea0  100.00%   I3D_sound::~I3D_sound
+0x10055000  100.00%   I3D_sound::Open
+0x10055300  100.00%   I3D_sound::IsPlaying
+0x100553f0  100.00%   I3D_sound::SetSoundType
+0x10055490  100.00%   I3D_sound::SetRange
+0x10055570  100.00%   I3D_sound::SetCone
+0x10055650  100.00%   I3D_sound::SetOutVol
+0x10055690  100.00%   I3D_sound::SetVolume
+0x100556d0  100.00%   I3D_sound::SetLoop
+0x10055720  100.00%   I3D_sound::SetCurrTime
+0x100557a0  100.00%   I3D_sound::SetFrequency
+0x100557e0  100.00%   I3D_sound::SetVelocity
+0x10055890  100.00%   I3D_sound::GetRange
+0x100558d0  100.00%   I3D_sound::GetCone
+0x100558f0  100.00%   I3D_sound::GetCurrTime
+0x10055910  100.00%   I3D_sound::GetPlayTime
+0x10055940  100.00%   I3D_sound::SetOn(bool, bool)
+0x10055bf0  100.00%   I3D_sound::ForceUpdate
+0x10055c00  97.66%    I3D_sound::m_UpdateSound
+0x100568f0  100.00%   $CRT_CPP_Initializer(59)
+0x10056910  100.00%   I3D_sound::Duplicate
+0x10056a20  100.00%   I3D_sound::m_SetState
+0x10056a30  100.00%   ISND_source::GetFileName
+0x10056ae0  100.00%   I3D_sound::SetOn(bool)
+0x10056b00  100.00%   $CRT_CPP_Initializer(60)
+0x10056b30  100.00%   $E5(3)
+0x10056b50  100.00%   I3D_target::I3D_target
+0x10056c50  100.00%   I3D_target::`scalar deleting destructor'
+0x10056c70  100.00%   I3D_target::~I3D_target
+0x10056d40  100.00%   I3D_target::Duplicate
+0x10056d90  100.00%   I3D_target::SetTargetFlags
+0x10056db0  100.00%   I3D_target::AddToTarget
+0x10056eb0  100.00%   I3D_target::DeleteFromTarget
+0x10056f40  100.00%   I3D_target::GetTarget
+0x10056f90  100.00%   I3D_target::DeleteFromAnyTarget
+0x10056fe0  100.00%   I3D_target::UpdateV
+0x10057070  100.00%   I3D_target::UpdateFrames
+0x100575d0  100.00%   I3D_target::LoadImage
+0x100577e0  100.00%   $CRT_CPP_Initializer(61)
+0x10057800  100.00%   I3D_user::I3D_user
+0x10057830  100.00%   I3D_user::`scalar deleting destructor'
+0x10057850  100.00%   I3D_user::~I3D_user
+0x10057860  100.00%   I3D_user::Duplicate
+0x100578a0  100.00%   $CRT_CPP_Initializer(62)
+0x100578c0  100.00%   I3D_visual::I3D_visual
+0x10057a10  100.00%   I3D_visual::`scalar deleting destructor'
+0x10057a30  100.00%   I3D_visual::~I3D_visual
+0x10057a50  100.00%   I3D_visual::UpdateV
+0x10057a80  100.00%   I3D_visual::SetSpace
+0x10057ad0  100.00%   I3D_visual::SetShadowMode
+0x10057b20  100.00%   I3D_visual::GetShadowMode
+0x10057b40  100.00%   I3D_visual::SetProjectorMode
+0x10057b90  100.00%   I3D_visual::GetProjectorMode
+0x10057bb0  100.00%   I3D_visual::UpdateWBoundProc
+0x10057dd0  100.00%   I3D_visual::SetBoundVolume
+0x10057e10  100.00%   I3D_void_interface::SetWeight
+0x10057e20  100.00%   I3D_void_interface::GetWeight
+0x10057e30  100.00%   $CRT_CPP_Initializer(63)
+0x10057e50  100.00%   I3D_volume::I3D_volume
+0x10057ed0  100.00%   I3D_volume::`scalar deleting destructor'
+0x10057ef0  100.00%   I3D_volume::~I3D_volume
+0x10057f00  100.00%   I3D_volume::GetVolumeType
+0x10057f10  73.31%    I3D_volume::UpdateV
+0x10058160  100.00%   $CRT_CPP_Initializer(64)
+0x10058180  100.00%   $CRT_CPP_Initializer(65)
+0x100581a0  100.00%   $E10(3)
+0x100581b0  100.00%   std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::~multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >
+0x100582a0  100.00%   C_IBuffer::~C_IBuffer
+0x100584a0  100.00%   C_IBuffer::m_Init
+0x10058670  100.00%   C_IBuffer::m_Alloc
+0x10058810  100.00%   C_IBuffer::m_Free
+0x100589c0  100.00%   C_IBManager::C_IBManager
+0x10058a70  78.71%    C_IBManager::~C_IBManager
+0x10058bd0  100.00%   std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::~multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >
+0x10058cc0  100.00%   C_IBManager::m_Alloc
+0x10058f30  100.00%   C_IBManager::m_UnlockAllIBuffers
+0x10058fa0  100.00%   C_IBManager::m_FreeAllUnusedIBuffers
+0x10059000  100.00%   C_IBManager::m_FreeAllIBuffers
+0x10059070  100.00%   C_IBManager::m_FreeAllVRAMIBuffers
+0x100590f0  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::erase
+0x10059500  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::const_iterator::_Inc
+0x10059550  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::erase(class std::_Tree<class C_IBuffer *, class C_IBuffer *, struct std::multiset<class C_IBuffer *, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::_Kfn, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::iterator)
+0x10059960  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::erase(class std::_Tree<class C_IBuffer *, class C_IBuffer *, struct std::multiset<class C_IBuffer *, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::_Kfn, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::iterator, class std::_Tree<class C_IBuffer *, class C_IBuffer *, struct std::multiset<class C_IBuffer *, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::_Kfn, struct S_IBuffer_less, class std::allocator<class C_IBuffer *>>::iterator)
+0x10059a30  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::const_iterator::_Inc
+0x10059a80  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::_Erase
+0x10059ac0  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::_Init
+0x10059b50  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::_Insert
+0x10059dc0  100.00%   $CRT_CPP_Initializer(66)
+0x10059de0  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::_Min
+0x10059e00  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::iterator::operator++
+0x10059e60  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Erase
+0x10059ea0  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Insert
+0x1005a110  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Min
+0x1005a130  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::iterator::operator++
+0x1005a190  100.00%   std::pair<std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::iterator,bool>::pair<std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer9393d433
+0x1005a1b0  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::const_iterator::_Dec
+0x1005a210  100.00%   std::_Tree<C_IBuffer *,C_IBuffer *,std::multiset<C_IBuffer *,S_IBuffer_less,std::allocator<C_IBuffer *> >::_Kfn,S_IBuffer_less,std::allocator<C_IBuffer *> >::const_iterator::_Dec
+0x1005a270  100.00%   std::_Construct
+0x1005a280  100.00%   $CRT_CPP_Initializer(67)
+0x1005a2b0  100.00%   $E5(4)
+0x1005a300  100.00%   LightMap::m_ConvertRGB
+0x1005a790  100.00%   LightMap::LightMap
+0x1005a7c0  91.51%    LightMap::~LightMap
+0x1005acc0  100.00%   TEXBL_STRUCT::TEXBL_STRUCT
+0x1005ace0  100.00%   TEXBL_STRUCT::~TEXBL_STRUCT
+0x1005ad00  100.00%   LightMap::m_AddRectToRectList
+0x1005ae20  100.00%   LightMap::m_ReplaceRectFromRectList
+0x1005af10  100.00%   LightMap::m_DuplicateRectList
+0x1005afb0  100.00%   LightMap::m_AddTexture
+0x1005b5a0  100.00%   LightMap::m_FillLineRGB
+0x1005b5f0  100.00%   $CRT_CPP_Initializer(68)
+0x1005b610  100.00%   LightMap::m_Resize
+0x1005b660  80.46%    LightMap::m_CreateLM
+0x1005cf00  100.00%   C_list<TEXBL_STRUCT>::~C_list<TEXBL_STRUCT>
+0x1005cf40  100.00%   C_list<TEXBL_STRUCT>::push_back(struct TEXBL_STRUCT const &)
+0x1005d1e0  100.00%   TEXBL_STRUCT::`vector deleting destructor'
+0x1005d240  100.00%   TEXBL_STRUCT::operator=
+0x1005d340  100.00%   C_list<OFFSET_STRUCT>::operator=
+0x1005d400  100.00%   C_list<TEXBL_STRUCT>::push_back(void)
+0x1005d600  100.00%   C_list<OFFSET_STRUCT>::reserve
+0x1005d670  100.00%   LoadProgress
+0x1005d6c0  100.00%   LoadHierarchy
+0x1005db20  100.00%   LoadAnimation
+0x1005dd30  100.00%   LoadShadow
+0x1005dee0  100.00%   $CRT_CPP_Initializer(69)
+0x1005df00  100.00%   $CRT_CPP_Initializer(70)
+0x1005df20  100.00%   $CRT_CPP_Initializer(71)
+0x1005df40  100.00%   $CRT_CPP_Initializer(72)
+0x1005df70  100.00%   $E6(2)
+0x1005df90  100.00%   LoadImage(char const *, struct _FILETIME const *)
+0x1005e400  100.00%   LoadMeshImage
+0x1005e730  100.00%   LoadShadowImage
+0x1005ea70  100.00%   LoadAnimation5ds
+0x1005ebe0  100.00%   $CRT_CPP_Initializer(73)
+0x1005ec00  100.00%   $CRT_CPP_Initializer(74)
+0x1005ec20  100.00%   RadixSort32
+0x1005ef40  100.00%   $CRT_CPP_Initializer(75)
+0x1005ef70  100.00%   $E14(5)
+0x1005ef90  100.00%   $CRT_CPP_Initializer(76)
+0x1005efc0  100.00%   $E19(4)
+0x1005efe0  100.00%   $CRT_CPP_Initializer(77)
+0x1005f000  100.00%   $E24(1)
+0x1005f010  100.00%   ADD_FG_HELP_STRUCT::~ADD_FG_HELP_STRUCT
+0x1005f040  100.00%   $CRT_CPP_Initializer(78)
+0x1005f060  100.00%   $E29(1)
+0x1005f070  100.00%   PARTICLE_HLP_STRUCT::~PARTICLE_HLP_STRUCT
+0x1005f0a0  100.00%   GetObjectLOD
+0x1005f280  100.00%   I3D_driver::initRender
+0x1005f290  100.00%   I3D_driver::closeRender
+0x1005f2a0  100.00%   I3D_driver::Render
+0x100627d0  100.00%   VisualProc
+0x100629e0  100.00%   NextFFrameProc
+0x10062b40  100.00%   $CRT_CPP_Initializer(79)
+0x10062b60  100.00%   I3D_driver::BuildAllVBuffers
+0x10062c10  100.00%   C_list<I3D_area *>::push_back
+0x10062c80  100.00%   ADD_FG_HELP_STRUCT::ADD_FG_HELP_STRUCT
+0x10062cb0  100.00%   PARTICLE_HLP_STRUCT::PARTICLE_HLP_STRUCT
+0x10062cd0  100.00%   SetZBias
+0x10062cf0  100.00%   $CRT_CPP_Initializer(80)
+0x10062d10  100.00%   $CRT_CPP_Initializer(81)
+0x10062d40  100.00%   LightingSetSector
+0x10062d50  99.84%    PrepareLights
+0x10063e20  100.00%   $E11
+0x10063e30  100.00%   SetVertexAlpha
+0x10063ec0  68.97%    TexelCallback
+0x10064170  83.43%    VertexLightingProcess
+0x10064fe0  100.00%   $CRT_CPP_Initializer(82)
+0x10065000  100.00%   EnvProcess
+0x10065640  100.00%   TransformVertices
+0x10065710  100.00%   TransformVerticesBlend
+0x100658b0  100.00%   FogProcess
+0x10065a40  100.00%   SwapVertexBytes
+0x10065b20  100.00%   I3D_dummy::GetInvMatrix
+0x10065b60  100.00%   $CRT_CPP_Initializer(83)
+0x10065b80  100.00%   $E10(4)
+0x10065b90  100.00%   std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::~multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >
+0x10065c80  100.00%   C_VBuffer::~C_VBuffer
+0x10065e80  100.00%   C_VBuffer::m_Init
+0x10066080  100.00%   C_VBuffer::m_Alloc
+0x10066220  100.00%   C_VBuffer::m_Free
+0x100663e0  100.00%   C_VBManager::C_VBManager
+0x10066490  78.71%    C_VBManager::~C_VBManager
+0x100665f0  100.00%   std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::~multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >
+0x100666e0  100.00%   C_VBManager::m_Alloc
+0x10066980  100.00%   C_VBManager::m_UnlockAllVBuffers
+0x100669f0  100.00%   C_VBManager::m_FreeAllUnusedVBuffers
+0x10066ab0  100.00%   C_VBManager::m_FreeAllVBuffers
+0x10066b20  100.00%   C_VBManager::m_FreeAllVRAMVBuffers
+0x10066ba0  100.00%   std::list<S_IB_block *,std::allocator<S_IB_block *> >::~list<S_IB_block *,std::allocator<S_IB_block *> >
+0x10066bf0  100.00%   std::list<S_IB_block *,std::allocator<S_IB_block *> >::erase
+0x10066c30  100.00%   $CRT_CPP_Initializer(84)
+0x10066c50  100.00%   std::_Tree<S_IB_block *,S_IB_block *,std::multiset<S_IB_block *,S_IB_block_less,std::allocator<S_IB_block *> >::_Kfn,S_IB_block_less,std::allocator<S_IB_block *> >::begin
+0x10066c60  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::erase
+0x10067070  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::const_iterator::_Inc
+0x100670c0  100.00%   std::list<S_IB_block *,std::allocator<S_IB_block *> >::_Buynode
+0x100670f0  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::erase(class std::_Tree<class C_VBuffer *, class C_VBuffer *, struct std::multiset<class C_VBuffer *, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::_Kfn, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::iterator)
+0x10067500  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::erase(class std::_Tree<class C_VBuffer *, class C_VBuffer *, struct std::multiset<class C_VBuffer *, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::_Kfn, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::iterator, class std::_Tree<class C_VBuffer *, class C_VBuffer *, struct std::multiset<class C_VBuffer *, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::_Kfn, struct S_VBuffer_less, class std::allocator<class C_VBuffer *>>::iterator)
+0x100675d0  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::const_iterator::_Inc
+0x10067620  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Erase
+0x10067660  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Init
+0x100676f0  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Insert
+0x10067960  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::_Min
+0x10067980  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::iterator::operator++
+0x100679e0  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Erase
+0x10067a20  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Insert
+0x10067c90  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Min
+0x10067cb0  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::iterator::operator++
+0x10067d10  100.00%   std::_Tree<S_VB_block *,S_VB_block *,std::multiset<S_VB_block *,S_VB_block_less,std::allocator<S_VB_block *> >::_Kfn,S_VB_block_less,std::allocator<S_VB_block *> >::const_iterator::_Dec
+0x10067d70  100.00%   std::_Tree<C_VBuffer *,C_VBuffer *,std::multiset<C_VBuffer *,S_VBuffer_less,std::allocator<C_VBuffer *> >::_Kfn,S_VBuffer_less,std::allocator<C_VBuffer *> >::const_iterator::_Dec
+0x10067dd0  100.00%   IsCPUID
+0x10067e50  100.00%   map_mname
+0x10068330  100.00%   _cpuid
+0x10068440  100.00%   GetCPUSpeed
+0x100684c0  100.00%   $CRT_CPP_Initializer(85)
+0x100684e0  100.00%   BreBre::BreBre
+0x100686f0  100.00%   $E5(5)
+0x10068760  100.00%   GetEngineVersion
+0x10068770  100.00%   TEV
+0x100687d0  100.00%   GetIGraph
+0x100687e0  100.00%   ISndGetDriver
+0x100687f0  100.00%   I3DGetDriver
+0x10068800  100.00%   I3DGetResultMessage
+0x10068920  100.00%   dbgPrintf
+0x10068a10  100.00%   dbgPrintf1
+0x10068b00  100.00%   dbgPrintGuid
+0x10068c10  100.00%   $CRT_CPP_Initializer(86)
+0x10068c90  100.00%   BBoxVertices
+0x10068d20  100.00%   $E13
+0x10068d30  100.00%   $CRT_CPP_Initializer(87)
+0x10068d50  100.00%   $CRT_CPP_Initializer(88)
+0x10068d70  100.00%   ErrorHandler
+0x10068db0  100.00%   $CRT_CPP_Initializer(89)
+0x10068dd0  100.00%   $CRT_CPP_Initializer(90)
+0x10068e00  100.00%   $E14(6)
+0x10068e20  100.00%   $CRT_CPP_Initializer(91)
+0x10068e40  100.00%   $E19(5)
+0x10068e70  100.00%   $CRT_CPP_Initializer(92)
+0x10068ea0  100.00%   $E24(2)
+0x10068ec0  100.00%   $CRT_CPP_Initializer(93)
+0x10068ef0  100.00%   $E29(2)
+0x10068f10  100.00%   $CRT_CPP_Initializer(94)
+0x10068f40  100.00%   $E34
+0x10068f60  100.00%   $CRT_CPP_Initializer(95)
+0x10068f90  100.00%   $E39
+0x10068fb0  100.00%   $CRT_CPP_Initializer(96)
+0x10068fe0  100.00%   $E44
+0x10069000  100.00%   $CRT_CPP_Initializer(97)
+0x10069010  100.00%   IGraph::IGraph
+0x10069230  100.00%   IGraph::~IGraph
+0x10069260  100.00%   IGraph::CreateIShow
+0x100692c0  100.00%   IGraph::CreateITexture(void)
+0x10069350  100.00%*  IGraph::CreateITexture(char const *, char const *, unsigned int, class ITexture **)
+0x10069850  100.00%   IGraph::SetTexture
+0x10069890  100.00%   IGraph::GetMainHWND
+0x100698a0  100.00%   IGraph::GetChildHWND
+0x100698b0  100.00%   IGraph::SetAppName
+0x10069940  100.00%   IGraph::SetAppNameDebug
+0x10069980  100.00%   IGraph::GetAppName
+0x100699a0  100.00%   IGraph::AddDlgHWND
+0x10069a30  100.00%   IGraph::DeleteDlgHWND
+0x10069ad0  100.00%   IGraph::ProcessWinMessages
+0x10069ce0  100.00%   IGraph::Clear
+0x10069d30  100.00%   IGraph::ResetRenderProps
+0x10069dd0  100.00%   IGraph::SetState
+0x1006a3e0  100.00%   IGraph::GetState
+0x1006a4e0  100.00%   IGraph::SetWorldMatrix
+0x1006a500  100.00%   IGraph::BeginScene
+0x1006a530  100.00%   IGraph::EndScene
+0x1006a550  100.00%   IGraph::Present
+0x1006a6d0  100.00%   IGraph::DrawPrimitiveList
+0x1006a7e0  100.00%   IGraph::DrawIndexedPrimitiveList
+0x1006aaf0  100.00%   WindowProc
+0x1006af40  100.00%   $CRT_CPP_Initializer(98)
+0x1006af60  100.00%   IGraph::GetFormatName
+0x1006b230  100.00%   ResetDevice
+0x1006b7d0  100.00%   IGraph::SetViewPort
+0x1006b810  100.00%   IGraph::GetViewPort
+0x1006b820  100.00%   IGraph::Init
+0x1006ce50  100.00%   SortModesCallback
+0x1006ceb0  100.00%   C_str::C_rep::C_rep(char const *, int)
+0x1006cef0  100.00%   C_str::C_rep::C_rep(char const *, char const *, int, int)
+0x1006cf50  100.00%   C_str::C_rep::Release
+0x1006cf60  100.00%   C_str::C_rep::operator delete
+0x1006cf70  100.00%   C_str::~C_str
+0x1006cf90  100.00%   C_str::operator=
+0x1006d010  100.00%   C_str::operator+
+0x1006d190  100.00%   C_str::operator[]
+0x1006d210  100.00%   IGraph::IsInit
+0x1006d220  100.00%   IGraph::GetResInitDesc
+0x1006d230  100.00%   IGraph::Close
+0x1006d570  100.00%   IGraph::Scrn_sx
+0x1006d590  100.00%   IGraph::Scrn_sy
+0x1006d5b0  100.00%   IGraph::BPP
+0x1006d5c0  100.00%   IGraph::GetD3DFormat
+0x1006d5d0  100.00%   IGraph::GetImageInfo
+0x1006d760  100.00%   EncodeRLAChannel
+0x1006d920  100.00%   IGraph::SaveShot
+0x1006e730  100.00%   IGraph::KeyboardInit
+0x1006e840  100.00%   IGraph::IsKeyboardInit
+0x1006e850  100.00%   IGraph::KeyboardClose
+0x1006e880  100.00%   IGraph::UpdateKeyboardData
+0x1006e9a0  100.00%   IGraph::ReadCharBuffer
+0x1006e9d0  100.00%   IGraph::ClearCharBuffer
+0x1006e9f0  100.00%   IGraph::ReadKey
+0x1006eaa0  100.00%   IGraph::ReadChar
+0x1006eac0  100.00%   IGraph::TestKey
+0x1006eae0  100.00%   IGraph::DefineKeys
+0x1006eb30  100.00%   IGraph::ReadKeys
+0x1006eb80  100.00%   IGraph::KeyShift
+0x1006eba0  100.00%   IGraph::KeyCtrl
+0x1006ebc0  100.00%   IGraph::KeyAlt
+0x1006ebe0  100.00%   IGraph::GetShiftKeys
+0x1006ec90  100.00%   IGraph::TranslateKey
+0x1006ecd0  100.00%   IGraph::GetKeyName
+0x1006ed30  100.00%   IGraph::MouseInit
+0x1006ee50  100.00%   IGraph::IsMouseInit
+0x1006ee60  100.00%   IGraph::MouseClose
+0x1006eeb0  100.00%   IGraph::UpdateMouseData
+0x1006f020  100.00%   IGraph::Mouse_rx
+0x1006f030  100.00%   IGraph::Mouse_ry
+0x1006f040  100.00%   IGraph::Mouse_rz
+0x1006f050  100.00%   IGraph::SetMousePos
+0x1006f130  100.00%   IGraph::Mouse_x
+0x1006f140  100.00%   IGraph::Mouse_y
+0x1006f150  100.00%   IGraph::GetMouseButtons
+0x1006f180  100.00%   IGraph::NullTimer
+0x1006f190  100.00%   IGraph::GetTimer
+0x1006f1e0  100.00%   FindMapFile
+0x1006f470  100.00%   m_AddNameToList
+0x1006f680  100.00%   IGraph::AddMapsDir
+0x1006f6a0  100.00%   IGraph::DeleteMapsDir
+0x1006f700  100.00%   IGraph::ClearMapDirs
+0x1006f760  100.00%   IGraph::GetCachedTextures
+0x1006f770  100.00%   IGraph::GetCachedTextureCnt
+0x1006f780  100.00%   IGraph::GetUncachedTextures
+0x1006f790  100.00%   IGraph::GetUncachedTextureCnt
+0x1006f7a0  100.00%   IGraph::SetGammaRamp
+0x1006f7e0  100.00%   IGraph::GetGammaRamp
+0x1006f860  99.36%    IGraph::ResizeImage
+0x10070430  100.00%   IShow::IShow
+0x10070550  100.00%   IShow::~IShow
+0x10070600  100.00%   IShow::AddRef
+0x10070610  100.00%   IShow::Release
+0x10070660  100.00%   IShow::m_FillBuffer
+0x100707c0  100.00%   CreateRegions
+0x100709b0  100.00%   CopyFrameToAllTextures
+0x10070ac0  100.00%   IShow::Open
+0x10070f00  100.00%   OggThreadProc
+0x10070f80  100.00%   read_func
+0x10070fa0  100.00%   seek_func
+0x10070fd0  100.00%   close_func
+0x10070fe0  100.00%   tell_func
+0x10071000  100.00%   IShow::Close
+0x100710d0  100.00%   IShow::Play
+0x10071180  100.00%   IShow::Stop
+0x100711f0  100.00%   IShow::Pause
+0x10071270  100.00%   IShow::m_PrepareVerts
+0x10071490  100.00%   IShow::SetRect
+0x10071530  100.00%   IShow::GetRect
+0x10071570  100.00%   IShow::GetVideoRect
+0x100715c0  100.00%   IShow::GetEvent
+0x100716c0  100.00%   IShow::SetCurrentPos
+0x10071820  100.00%   IShow::GetCurrentPos
+0x100718f0  100.00%   IShow::SetVolume
+0x100719a0  100.00%   IShow::GetRegionCnt
+0x100719b0  100.00%   IShow::GetRegions
+0x100719d0  100.00%   IShow::RenderCurrentFrame
+0x10071bd0  100.00%   IShow::RenderVideoUntilKeyPressOrEnd
+0x10071da0  99.46%    IShow::m_CreateCTextureRenderer
+0x10072240  100.00%   CTextureRenderer::`scalar deleting destructor'
+0x10072260  100.00%   CTextureRenderer::~CTextureRenderer
+0x100722e0  100.00%   CTextureRenderer::CheckMediaType
+0x10072390  100.00%   CTextureRenderer::SetMediaType
+0x10072420  95.74%    CTextureRenderer::DoRenderSample
+0x10072660  100.00%   $CRT_CPP_Initializer(99)
+0x10072680  100.00%   IShow::GetVolume
+0x10072690  100.00%   IShow::GetDecodedFrameNum
+0x100726a0  100.00%   IShow::IsStreamPlaying
+0x100726d0  100.00%   I3D_material::UpdateEnvTexture
+0x10072720  100.00%   $CRT_CPP_Initializer(100)
+0x10072750  100.00%   $E5(6)
+0x10072770  100.00%   StreamCallback
+0x100727b0  100.00%   IShow::OpenStream
+0x100728b0  100.00%   IShow::CloseStream
+0x10072960  100.00%   IShow::PlayStream
+0x100729c0  100.00%   IShow::StopStream
+0x100729f0  100.00%   IShow::PauseStream
+0x10072a20  100.00%   IShow::SetStreamVolume
+0x10072a50  100.00%   IShow::SetStreamPan
+0x10072a80  100.00%   $CRT_CPP_Initializer(101)
+0x10072aa0  100.00%   ITexture::ITexture
+0x10072ae0  100.00%   ITexture::~ITexture
+0x10072b60  100.00%   ITexture::Release
+0x10072ba0  100.00%   ITexture::Duplicate
+0x10072dc0  100.00%   ITexture::Reload
+0x10072de0  77.94%    ITexture::Create
+0x10074fe0  100.00%   $CRT_CPP_Initializer(102)
+0x10075000  100.00%   ITexture::m_TryPresavedDXT
+0x100752a0  100.00%   ITexture::m_TryPresaved_555_565
+0x100754e0  100.00%   ITexture::IsInit
+0x100754f0  100.00%   ITexture::Close
+0x10075630  100.00%   ITexture::Lock
+0x10075690  100.00%   ITexture::Unlock
+0x100756c0  100.00%   ITexture::AddDirtyRect
+0x100756d0  100.00%   ITexture::Preload
+0x100757b0  84.14%    ITexture::Fill
+0x100759e0  100.00%   ITexture::Draw(int, int)
+0x10075b60  100.00%   ITexture::Draw(struct tagRECT, unsigned int, unsigned int, unsigned int, unsigned int)
+0x10075cb0  100.00%   ITexture::SaveToTGA
+0x10075fc0  100.00%   LoadImage(char const *, unsigned int, unsigned int, unsigned int, void **, void **, struct tagBITMAPINFOHEADER *, bool, struct _FILETIME *, int)
+0x10076730  100.00%   ITexture::m_Convert
+0x100771f0  100.00%   CompressTexture
+0x100773e0  100.00%   $CRT_CPP_Initializer(103)
+0x10077410  100.00%   $E5(7)
+0x10077430  100.00%   $CRT_CPP_Initializer(104)
+0x10077460  100.00%   $E10(5)
+0x10077480  100.00%   ReleaseManagedTextures
+0x10077580  86.98%    RestoreManagedTextures
+0x10077780  100.00%   ITexture::Request
+0x10077820  100.00%*  RenderThreadProc
+0x10077b90  100.00%   AddTextureToTextureManager
+0x10077d50  100.00%   RemoveTextureFromTextureManager
+0x10077e50  100.00%   UnloadManagedTextures
+0x10077eb0  100.00%   ISND_3Dlistener::ISND_3Dlistener
+0x10077ef0  100.00%   ISND_3Dlistener::~ISND_3Dlistener
+0x10077f00  100.00%   ISND_3Dlistener::AddRef
+0x10077f10  100.00%   ISND_3Dlistener::Release
+0x10077f50  100.00%   ISND_3Dlistener::SetPos
+0x10077f70  100.00%   ISND_3Dlistener::SetDir
+0x10077fb0  100.00%   ISND_3Dlistener::SetVelocity
+0x10077fd0  100.00%   ISND_3Dlistener::SetDopplerFactor
+0x10077fe0  100.00%   ISND_3Dlistener::SetRolloffFactor
+0x10077ff0  100.00%   ISND_3Dlistener::Update
+0x10078020  100.00%   ISND_3Dlistener::SetEAXProperty
+0x100780c0  100.00%   ISND_3Dlistener::SetEAX3Property
+0x10078110  100.00%   ISND_3Dlistener::GetEAX3Property
+0x10078160  100.00%   ISND_3Dlistener::CommitDeferredSettings
+0x10078190  100.00%   $CRT_CPP_Initializer(105)
+0x100781b0  100.00%   ISND_3Dsound::ISND_3Dsound
+0x100781d0  100.00%   ISND_3Dsound::`scalar deleting destructor'
+0x100781f0  100.00%   ISND_3Dsound::~ISND_3Dsound
+0x10078260  100.00%   IShow::IsInit
+0x10078270  100.00%   ISND_3Dsound::SetPos
+0x100782b0  100.00%   ISND_3Dsound::SetDir
+0x100782f0  100.00%   ISND_3Dsound::SetVelocity
+0x10078330  100.00%   ISND_3Dsound::SetDistances
+0x10078380  100.00%   ISND_3Dsound::SetCone
+0x100783d0  100.00%   ISND_3Dsound::SetOutVolume
+0x10078410  100.00%   ISND_3Dsound::Open
+0x10078470  100.00%   ISND_3Dsound::Close
+0x100784a0  100.00%   $CRT_CPP_Initializer(106)
+0x100784c0  100.00%   ISND_sound::GetSource
+0x100784d0  100.00%   ISND_driver::ISND_driver
+0x10078520  100.00%   ISND_driver::~ISND_driver
+0x10078570  100.00%   ISND_driver::IsInit
+0x10078580  100.00%   ISND_driver::Close
+0x10078650  100.00%   ISND_driver::InitBuffer
+0x100786e0  100.00%   ISND_driver::SetVolume
+0x10078790  100.00%   ISND_driver::CreateSource(void)
+0x100787f0  100.00%   ISND_driver::CreateSource(class ISND_source **)
+0x10078830  100.00%   ISND_driver::CreateSound(void)
+0x10078890  100.00%   ISND_driver::CreateSound(class ISND_sound **)
+0x100788d0  100.00%   ISND_driver::Create3DSound(void)
+0x10078930  100.00%   ISND_driver::Create3DSound(class ISND_3Dsound **)
+0x10078970  100.00%   ISND_driver::CreateListener(void)
+0x10078a00  100.00%   ISND_driver::CreateListener(class ISND_3Dlistener **)
+0x10078a40  100.00%   ISND_driver::InitEAX
+0x10078c50  100.00%   ISND_driver::InitDSound
+0x10079020  100.00%   ISND_driver::Init(void *, int, int, int, unsigned int)
+0x10079070  100.00%   ISND_driver::Init(struct ISND_INIT *)
+0x100790b0  100.00%   $CRT_CPP_Initializer(107)
+0x100790d0  100.00%   $CRT_CPP_Initializer(108)
+0x10079100  100.00%   $E5(8)
+0x10079120  100.00%   $CRT_CPP_Initializer(109)
+0x10079150  100.00%   $E10(6)
+0x10079170  92.55%    UpdateAllTerminatedBuffs
+0x10079500  100.00%   TraceDSErrors
+0x10079710  100.00%   ISND_sound::ISND_sound
+0x10079740  100.00%   ISND_sound::`scalar deleting destructor'
+0x10079790  100.00%   ISND_sound::~ISND_sound
+0x100797d0  100.00%   ISND_sound::Release
+0x10079800  100.00%   ISND_sound::Open
+0x10079860  100.00%   ISND_sound::Close
+0x100798a0  100.00%   ISND_sound::Play(class ISND_source *, unsigned int)
+0x100798d0  100.00%   ISND_sound::Play(unsigned int, unsigned int)
+0x10079d80  100.00%   ISND_sound::Stop
+0x10079e70  100.00%   ISND_sound::GetCurrTime
+0x10079ec0  100.00%   ISND_sound::SetCurrTime
+0x10079f90  100.00%   ISND_sound::SetVolume
+0x1007a020  100.00%   ISND_sound::SetVolumeLOG(float)
+0x1007a070  100.00%   ISND_sound::SetVolumeLOG(int)
+0x1007a0e0  100.00%   ISND_sound::SetFrequency
+0x1007a170  100.00%   ISND_sound::SetPanning
+0x1007a210  100.00%   ISND_sound::IsPlaying
+0x1007a240  100.00%   $CRT_CPP_Initializer(110)
+0x1007a260  100.00%   ISND_source::ISND_source
+0x1007a2b0  100.00%   ISND_source::~ISND_source
+0x1007a380  100.00%   ISND_source::Release
+0x1007a3c0  100.00%   ISND_source::Open
+0x1007a6c0  100.00%   ISND_source::Close
+0x1007a6f0  100.00%   ISND_source::IsOpen
+0x1007a700  100.00%   ISND_source::GetPlayTime
+0x1007a740  100.00%   ISND_source::GetFormat
+0x1007a770  100.00%   ISND_source::Lock
+0x1007a7b0  100.00%   ISND_source::Unlock
+0x1007a7e0  100.00%   $CRT_CPP_Initializer(111)
+0x100983e0  100.00%   vtable I3D_animation_set::`vftable'
+0x10098460  100.00%   vtable I3D_area::`vftable'
+0x10098510  100.00%   vtable I3D_billboard::`vftable'{for `I3D_void_interface'}
+0x10098520  100.00%   vtable I3D_billboard::`vftable'{for `I3D_frame'}
+0x100985b8  100.00%   vtable I3D_lensflare::`vftable'{for `I3D_void_interface'}
+0x100985c8  100.00%   vtable I3D_lensflare::`vftable'{for `I3D_frame'}
+0x100986d0  100.00%   vtable I3D_camera::`vftable'
+0x10098830  100.00%   vtable I3D_driver::`vftable'
+0x10098920  100.00%   vtable I3D_dummy::`vftable'
+0x100989b8  100.00%   vtable I3D_frame::`vftable'
+0x10098a58  100.00%   vtable I3D_interpolator::`vftable'
+0x10098aa8  100.00%   vtable I3D_joint::`vftable'
+0x10098b38  100.00%   vtable I3D_landpatch::`vftable'{for `I3D_void_interface'}
+0x10098b48  100.00%   vtable I3D_landpatch::`vftable'{for `I3D_frame'}
+0x10098be8  100.00%   vtable I3D_landscape::`vftable'
+0x10098c88  100.00%   vtable I3D_light::`vftable'
+0x10098d5c  100.00%   vtable I3D_lit_object::`vftable'{for `I3D_void_interface'}
+0x10098d70  100.00%   vtable I3D_lit_object::`vftable'{for `I3D_frame'}
+0x10098e5c  100.00%   vtable litLod::`vftable'
+0x10098ea0  100.00%   vtable I3D_material::`vftable'
+0x10098ef0  100.00%   vtable I3D_anim_material::`vftable'
+0x10098fe0  100.00%   vtable I3D_face_group::`vftable'
+0x10098ffc  100.00%   vtable I3D_mesh_level::`vftable'
+0x10099030  100.00%   vtable I3D_mesh_object::`vftable'
+0x10099090  100.00%   vtable I3D_mirror::`vftable'{for `I3D_void_interface'}
+0x100990a0  100.00%   vtable I3D_mirror::`vftable'{for `I3D_frame'}
+0x10099160  100.00%   vtable I3D_model::`vftable'
+0x10099258  100.00%   vtable I3D_morph::`vftable'{for `I3D_void_interface'}
+0x10099268  100.00%   vtable I3D_morph::`vftable'{for `I3D_frame'}
+0x10099338  100.00%   vtable I3D_object::`vftable'{for `I3D_void_interface'}
+0x10099348  100.00%   vtable I3D_object::`vftable'{for `I3D_frame'}
+0x100993d8  100.00%   vtable lod::`vftable'
+0x10099420  100.00%   vtable I3D_occluder::`vftable'
+0x100994b8  100.00%   vtable I3D_part_renderer::`vftable'{for `I3D_void_interface'}
+0x100994c8  100.00%   vtable I3D_part_renderer::`vftable'{for `I3D_frame'}
+0x10099538  100.00%   vtable I3D_emitor::`vftable'
+0x100995a4  100.00%   vtable I3D_part_element::`vftable'{for `I3D_void_interface'}
+0x100995b8  100.00%   vtable I3D_part_element::`vftable'{for `I3D_frame'}
+0x10099650  100.00%   vtable I3D_part_base::`vftable'{for `I3D_void_interface'}
+0x10099660  100.00%   vtable I3D_part_base::`vftable'{for `I3D_frame'}
+0x10099738  100.00%   vtable I3D_portal::`vftable'
+0x10099790  100.00%   vtable I3D_pose::`vftable'
+0x100997b4  100.00%   vtable I3D_pose_set::`vftable'
+0x10099808  100.00%   vtable I3D_projector::`vftable'{for `I3D_void_interface'}
+0x10099818  100.00%   vtable I3D_projector::`vftable'{for `I3D_frame'}
+0x100998f8  100.00%   vtable I3D_scene::`vftable'
+0x10099a88  100.00%   vtable I3D_sector::`vftable'
+0x10099b40  100.00%   vtable I3D_shadow::`vftable'
+0x10099bc4  100.00%   vtable I3D_shadow_visual::`vftable'{for `I3D_void_interface'}
+0x10099bd8  100.00%   vtable I3D_shadow_visual::`vftable'{for `I3D_frame'}
+0x10099c88  100.00%   vtable I3D_singlemesh::`vftable'{for `I3D_void_interface'}
+0x10099c98  100.00%   vtable I3D_singlemesh::`vftable'{for `I3D_frame'}
+0x10099d38  100.00%   vtable SMeshLod::`vftable'
+0x10099d80  100.00%   vtable I3D_singlemorph::`vftable'{for `I3D_void_interface'}
+0x10099d90  100.00%   vtable I3D_singlemorph::`vftable'{for `I3D_frame'}
+0x10099e78  100.00%   vtable I3D_sound::`vftable'
+0x10099f58  100.00%   vtable I3D_target::`vftable'
+0x10099ff8  100.00%   vtable I3D_user::`vftable'
+0x1009a088  100.00%   vtable I3D_visual::`vftable'{for `I3D_void_interface'}
+0x1009a098  100.00%   vtable I3D_visual::`vftable'{for `I3D_frame'}
+0x1009a108  100.00%   vtable I3D_void_interface::`vftable'
+0x1009a158  100.00%   vtable I3D_volume::`vftable'
+0x1009a500  100.00%   vtable IGraph::`vftable'
+0x1009a670  100.00%   vtable IShow::`vftable'
+0x1009a6fc  100.00%   vtable CTextureRenderer::`vftable'{for `IQualityControl'}
+0x1009a710  100.00%   vtable CTextureRenderer::`vftable'{for `IQualProp'}
+0x1009a734  100.00%   vtable CTextureRenderer::`vftable'{for `IAMovieSetup'}
+0x1009a748  100.00%   vtable CTextureRenderer::`vftable'{for `IBaseFilter'}
+0x1009a788  100.00%   vtable CTextureRenderer::`vftable'{for `CUnknown'}
+0x1009a8d4  100.00%   vtable ITexture::`vftable'
+0x1009a968  100.00%   vtable ISND_3Dlistener::`vftable'
+0x1009a9e0  100.00%   vtable ISND_3Dsound::`vftable'
+0x1009aa88  100.00%   vtable ISND_driver::`vftable'
+0x1009ab08  100.00%   vtable ISND_sound::`vftable'
+0x1009ab90  100.00%   vtable ISND_source::`vftable'
+0x1009ec20  100.00%   vtable CBaseRenderer::`vftable'{for `IAMovieSetup'}
+0x1009ec34  100.00%   vtable CBaseRenderer::`vftable'{for `IBaseFilter'}
+0x1009ec70  100.00%   vtable CBaseRenderer::`vftable'{for `CUnknown'}
+0x1009ed24  100.00%   vtable CRendererInputPin::`vftable'
+0x1009ed48  100.00%   vtable CRendererInputPin::`vftable'{for `IQualityControl'}
+0x1009ed5c  94.44%    vtable CRendererInputPin::`vftable'{for `IPin'}
+0x1009eda4  93.33%    vtable CRendererInputPin::`vftable'{for `CUnknown'}
+0x1009ede0  100.00%   vtable CBaseVideoRenderer::`vftable'{for `IQualityControl'}
+0x1009edf4  100.00%   vtable CBaseVideoRenderer::`vftable'{for `IQualProp'}
+0x1009ee18  100.00%   vtable CBaseVideoRenderer::`vftable'{for `IAMovieSetup'}
+0x1009ee2c  100.00%   vtable CBaseVideoRenderer::`vftable'{for `IBaseFilter'}
+0x1009ee68  100.00%   vtable CBaseVideoRenderer::`vftable'{for `CUnknown'}
+0x1009ef2c  100.00%   vtable IQualProp::`vftable'
+0x1009ef50  100.00%   vtable CEnumPins::`vftable'
+0x1009ef70  100.00%   vtable CEnumMediaTypes::`vftable'
+0x1009efa0  100.00%   vtable INonDelegatingUnknown::`vftable'
+0x1009efe0  100.00%   vtable CPosPassThru::`vftable'{for `CUnknown'}
+0x1009eff0  100.00%   vtable CPosPassThru::`vftable'{for `IMediaPosition'}
+0x1009f038  100.00%   vtable CPosPassThru::`vftable'
+0x1009f08c  100.00%   vtable CRendererPosPassThru::`vftable'{for `CUnknown'}
+0x1009f09c  100.00%   vtable CRendererPosPassThru::`vftable'{for `IMediaPosition'}
+0x1009f0e4  100.00%   vtable CRendererPosPassThru::`vftable'

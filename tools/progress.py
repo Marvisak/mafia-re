@@ -1,4 +1,4 @@
-"""Draw the README's progress cards: one SVG per target binary, with reccmp's percentages.
+"""Draw the README's progress cards, one SVG per target binary, and write each target's score list.
 
 The numbers count each binary's own functions and leave the CRT out, as reccmp's --nolib does:
 
@@ -7,21 +7,31 @@ The numbers count each binary's own functions and leave the CRT out, as reccmp's
 - Progress (the bar, and the number next to the binary's name): the scores summed over every function
   of the original, so a function without source counts as 0.
 
-It builds each card's preset first (vc6-pdb), because reccmp reads the
-PDB and a stale one gives wrong numbers.
-Run it from the repository root and commit the cards with the change that moved them:
+The score list (docs/progress/<name>.txt, next to the card) has a line for every function and vtable reccmp knows,
+by the original's address: reccmp's score, `100.00%*` for equivalent code, `stub` for a STUB marker, `missing` where
+no function of ours matched. Committed with the cards, it shows each change's effect function by function:
+the script prints what got worse than in the list it replaces (and what was dropped from it), and `git diff
+docs/progress` shows the rest. The secondary setups have a list but no card.
 
-    .venv/Scripts/python tools/progress.py
+It builds each target's preset first (vc6-pdb, vs2008 for Steam's setup), because reccmp reads the
+PDB and a stale one gives wrong numbers.
+Run it from the repository root and commit the cards and lists with the change that moved them:
+
+    .venv/Scripts/python tools/progress.py                 # every target
+    .venv/Scripts/python tools/progress.py GAME LS3DF      # some targets
+    .venv/Scripts/python tools/progress.py GAME --check    # compare with the lists, write nothing
 """
 
+import argparse
 import logging
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 from reccmp.compare import Compare
-from reccmp.compare.report import report_function_accuracy
+from reccmp.compare.report import ReccmpComparedEntity, ReccmpStatusReport, report_function_accuracy
 from reccmp.project.detect import RecCmpProject
 from reccmp.types import EntityType
 
@@ -33,13 +43,17 @@ OUT = REPO / "docs" / "progress"
 class Target:
     binary: str  # the card's title
     reccmp_id: str | None  # None until the binary has a reccmp target
-    functions: int  # functions in the original's own code
+    functions: int | None  # functions in the original's own code; None: no card, only the score list
     preset: str = "vc6-pdb"  # the build reccmp reads, in build/<preset>
-    svg: str | None = None  # the card's file name in docs/progress, if not the binary's
+    stem: str | None = None  # the card's and the list's file name in docs/progress, if not the binary's
 
     @property
-    def path(self) -> Path:
-        return OUT / f"{self.svg or Path(self.binary).stem}.svg"
+    def card_path(self) -> Path:
+        return OUT / f"{self.stem or Path(self.binary).stem}.svg"
+
+    @property
+    def list_path(self) -> Path:
+        return OUT / f"{self.stem or Path(self.binary).stem}.txt"
 
 
 # The function counts come from Binary Ninja: its functions from the start of .text up to the first import
@@ -60,9 +74,13 @@ TARGETS = [
     Target("rw_data.dll", "RWDATA", 62),  # 0x10005cc0
     Target("setup.exe", "SETUP", 15),  # 0x403110
     Target("LS3DF.dll", "LS3DF", 1361),  # 0x1007d9d0
-    Target("LS3DF.dll (patch 1.1)", "LS3DF11", 1355, svg="LS3DF.1.1"),  # 0x1007a800
+    Target("LS3DF.dll (patch 1.1)", "LS3DF11", 1355, stem="LS3DF.1.1"),  # 0x1007a800
     Target("Game.exe", "GAME", 5037),  # 0x60fc30, in Game.orig.exe
     Target("IJoy.dll", "IJOY", 97),  # 0x100060f0
+    Target("Setup.1.0.exe", "SETUP10", None, stem="setup.1.0"),
+    Target("setup.polish.exe", "SETUPPL", None, stem="setup.polish"),
+    Target("setup.czech.exe", "SETUPCZ", None, stem="setup.czech"),
+    Target("setup.steam.exe", "SETUPSTEAM", None, preset="vs2008", stem="setup.steam"),
 ]
 
 BAR_WIDTH = 352
@@ -98,9 +116,8 @@ CARD = """\
 """
 
 
-def score(project: RecCmpProject, target_id: str) -> tuple[int, float, int]:
-    """The implemented functions, their summed score and the number of functions reccmp knows, counted
-    the way reccmp-reccmp --nolib counts them."""
+def compare(project: RecCmpProject, target_id: str) -> ReccmpStatusReport:
+    """reccmp's report of the target, filtered the way reccmp-reccmp --nolib filters it."""
     target = project.get(target_id)
     ignored = set(target.report_config.ignore_functions)
 
@@ -110,9 +127,8 @@ def score(project: RecCmpProject, target_id: str) -> tuple[int, float, int]:
         return not (entity.entity_type == EntityType.FUNCTION and entity.name in ignored)
 
     report = Compare.from_target(target).to_report(filename=target.original_path.name, filter_fn=keep)
-    implemented, _, matched = report_function_accuracy(report)
     report.update_function_count()
-    return implemented, matched, report.function_count
+    return report
 
 
 def card(name: str, implemented: int, matched: float, total: int) -> str:
@@ -128,8 +144,87 @@ def card(name: str, implemented: int, matched: float, total: int) -> str:
     )
 
 
+# A score list's line: the original's address, the status, then the name (vtables' prefixed with "vtable").
+LINE = re.compile(r"^(0x[0-9a-f]+)\s+(\S+)\s+(.*)$")
+
+
+def status(entity: ReccmpComparedEntity) -> str:
+    if not entity.is_matched():
+        return "missing"
+    if entity.is_stub:
+        return "stub"
+    if entity.accuracy == 1.0:
+        return "100.00%"
+    if entity.is_effective_match:
+        return "100.00%*"
+    return f"{entity.accuracy:.2%}"
+
+
+def rank(text: str) -> tuple[int, float]:
+    """Orders the statuses: missing, stub, a score, equivalent, identical."""
+    if text == "missing":
+        return (0, 0.0)
+    if text == "stub":
+        return (1, 0.0)
+    if text.endswith("*"):
+        return (3, 1.0)
+    value = float(text.rstrip("%"))
+    return (4, 1.0) if value == 100.0 else (2, value)
+
+
+def score_list(target: Target, report: ReccmpStatusReport) -> str:
+    lines = [
+        f"# {target.reccmp_id}: reccmp's score of each function and vtable of {target.binary} (--nolib), by the"
+        " original's address.",
+        "# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no"
+        " function of ours matched.",
+    ]
+    for addr in sorted(report.entities):
+        entity = report.entities[addr]
+        name = f"vtable {entity.name}" if entity.type == EntityType.VTABLE else entity.name
+        lines.append(f"{addr:#010x}  {status(entity):<9} {name}")
+    return "\n".join(lines) + "\n"
+
+
+def parse_list(text: str) -> dict[str, tuple[str, str]]:
+    """address -> (status, name)."""
+    entries = {}
+    for line in text.splitlines():
+        m = LINE.match(line)
+        if m:
+            entries[m.group(1)] = (m.group(2), m.group(3))
+    return entries
+
+
+def changes(old: dict[str, tuple[str, str]], new: dict[str, tuple[str, str]]) -> None:
+    """Print what got worse from the old list to the new one and count the rest."""
+    worse, better, added = [], 0, 0
+    for addr, (text, name) in new.items():
+        if addr not in old:
+            added += 1
+        elif rank(text) < rank(old[addr][0]):
+            worse.append(f"    {addr}  {old[addr][0]:>8} -> {text:<8}  {name}")
+        elif rank(text) > rank(old[addr][0]):
+            better += 1
+    dropped = [f"    {addr}  {text:>8} -> gone      {name}" for addr, (text, name) in old.items() if addr not in new]
+    for line in worse + dropped:
+        print(line)
+    print(f"    {len(worse)} worse, {len(dropped)} gone, {better} better, {added} new")
+
+
 def main() -> None:
-    presets = dict.fromkeys(t.preset for t in TARGETS if t.reccmp_id)
+    parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
+    parser.add_argument("targets", nargs="*", metavar="TARGET", help="reccmp target ids (default: all)")
+    parser.add_argument("--check", action="store_true", help="compare with the score lists and write nothing")
+    args = parser.parse_args()
+
+    known = {t.reccmp_id for t in TARGETS if t.reccmp_id}
+    unknown = set(args.targets) - known
+    if unknown:
+        parser.error(f"unknown targets: {', '.join(sorted(unknown))} (known: {', '.join(sorted(known))})")
+    targets = [t for t in TARGETS if not args.targets or t.reccmp_id in args.targets]
+
+    presets = dict.fromkeys(t.preset for t in targets if t.reccmp_id)
     for preset in presets:
         if not (REPO / "build" / preset).exists():
             subprocess.run(["cmake", "--preset", preset], cwd=REPO, check=True)
@@ -138,14 +233,30 @@ def main() -> None:
     logging.basicConfig(level=logging.ERROR)
     projects = {preset: RecCmpProject.from_directory(REPO / "build" / preset) for preset in presets}
     OUT.mkdir(parents=True, exist_ok=True)
-    for target in TARGETS:
-        implemented, matched, total = 0, 0.0, target.functions
+    for target in targets:
+        implemented, matched, total = 0, 0.0, target.functions or 0
+        report = None
         if target.reccmp_id:
-            implemented, matched, known = score(projects[target.preset], target.reccmp_id)
-            total = max(total, known)
-        target.path.write_text(card(target.binary, implemented, matched, total), encoding="utf-8", newline="\n")
+            report = compare(projects[target.preset], target.reccmp_id)
+            implemented, _, matched = report_function_accuracy(report)
+            total = max(total, report.function_count)
+
+        written = []
+        if target.functions is not None:
+            if not args.check:
+                target.card_path.write_text(card(target.binary, implemented, matched, total), encoding="utf-8",
+                                            newline="\n")
+            written.append(target.card_path.relative_to(REPO).as_posix())
         print(f"{target.binary:22} {implemented:5} / {total:5} implemented, progress {matched / total:7.2%}"
-              f"  -> {target.path.relative_to(REPO).as_posix()}")
+              + ("" if args.check else f"  -> {', '.join(written + [target.list_path.relative_to(REPO).as_posix()])}"))
+
+        if report is None:
+            continue
+        text = score_list(target, report)
+        if target.list_path.exists():
+            changes(parse_list(target.list_path.read_text(encoding="utf-8")), parse_list(text))
+        if not args.check:
+            target.list_path.write_text(text, encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

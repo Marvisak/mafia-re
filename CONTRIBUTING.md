@@ -60,8 +60,10 @@ So most of C++ features everybody is used to and comfortable with are off the ta
    cd ../..
    .venv/Scripts/python tools/funcdiff.py dtaRead                             # what kind of differences are left
    .venv/Scripts/python tools/filediff.py                                     # the whole file: headers, layout, data
-   .venv/Scripts/python tools/progress.py                                     # redraw the README's progress cards
+   .venv/Scripts/python tools/progress.py GAME --check                        # what got worse than in the score list
+   .venv/Scripts/python tools/progress.py                                     # redraw the progress cards and score lists
    ```
+   `docs/progress/` holds a score list for every target next to its card: one line per function and vtable, by the original's address, with reccmp's score. `--check` builds, compares the build with the lists and prints what got worse or went missing, without writing anything; run it before committing, and commit the redrawn cards and lists with the change.
    Steam's language setups have the code of `SETUP` (Russian) or `SETUPSTEAM` (the others), so filediff compares them with that target and the original named by `--orig`:
    ```bash
    .venv/Scripts/python tools/filediff.py --target SETUP --orig target/setup.russian.exe --ours build/vc6/setup_russian/setup.exe

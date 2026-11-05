@@ -1,0 +1,66 @@
+# RWDATA: reccmp's score of each function and vtable of rw_data.dll (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x10001000  100.00%   $CRT_CPP_Initializer(1)
+0x10001010  100.00%   $CRT_CPP_Initializer(2)
+0x10001030  100.00%   $E4
+0x10001040  100.00%   $E3
+0x10001060  100.00%   $CRT_CPP_Initializer(3)
+0x10001070  100.00%   $CRT_CPP_Initializer(4)
+0x10001090  100.00%   $E9
+0x100010a0  100.00%   $E8
+0x100010f0  100.00%   $CRT_CPP_Initializer(5)
+0x10001100  100.00%   $CRT_CPP_Initializer(6)
+0x10001110  100.00%   $E14
+0x10001120  100.00%   $E13
+0x10001130  100.00%   $CRT_CPP_Initializer(7)
+0x10001140  100.00%   $CRT_CPP_Initializer(8)
+0x10001150  100.00%   $E19
+0x10001160  100.00%   $E18
+0x10001170  100.00%   dtaCreate
+0x100011e0  100.00%   C_rw_data_inter::C_rw_data_inter
+0x10001330  100.00%   C_rw_data::~C_rw_data
+0x10001340  100.00%   C_rw_data::`scalar deleting destructor'
+0x10001360  100.00%   C_rw_data_inter::`scalar deleting destructor'
+0x10001380  100.00%   S_HANDLE::~S_HANDLE
+0x100013b0  100.00%   C_rw_data_inter::UnlockPack
+0x10001640  100.00%   C_rw_data_inter::~C_rw_data_inter
+0x10001820  100.00%   C_rw_data_inter::AddRef
+0x10001850  100.00%   C_rw_data_inter::Release
+0x100018a0  100.00%   dtaOpen
+0x10001b90  100.00%   OpenFromDTA
+0x100023e0  100.00%   dtaClose
+0x100025a0  100.00%   dtaDelete
+0x100025c0  100.00%   dtaRead
+0x10003730  100.00%   dtaSeek
+0x10003900  100.00%   dtaBin2Text
+0x100039f0  100.00%   dtaOpenWrite
+0x10003f50  100.00%   dtaWrite
+0x10004040  100.00%   dtaGetTime
+0x10004120  100.00%   C_multithrerad_protection::C_multithrerad_protection
+0x10004130  100.00%   C_multithrerad_protection::~C_multithrerad_protection
+0x10004140  100.00%   dtaDumpMemoryLeaks
+0x10004150  100.00%   C_leak_detector::C_leak_detector
+0x10004160  100.00%   C_leak_detector::~C_leak_detector
+0x10004250  100.00%   WavDecompression
+0x10004690  100.00%   DeCrypt
+0x10004720  100.00%   dtaSetDtaFirstForce
+0x10004730  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::size
+0x10004760  100.00%   std::vector<unsigned int,std::allocator<unsigned int> >::insert
+0x10004970  100.00%   std::vector<S_FILES_IN,std::allocator<S_FILES_IN> >::insert
+0x10004c90  100.00%   std::vector<S_FILES_IN,std::allocator<S_FILES_IN> >::erase
+0x10004ce0  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::insert(struct S_FILEHANDLE *, struct S_FILEHANDLE const &)
+0x10004ef0  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::_Destroy
+0x10004f00  100.00%   std::vector<S_HANDLE,std::allocator<S_HANDLE> >::_Destroy
+0x10004f30  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::insert(struct S_FILEHANDLE *, unsigned int, struct S_FILEHANDLE const &)
+0x10005230  100.00%   std::vector<S_HANDLE,std::allocator<S_HANDLE> >::insert
+0x100055c0  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::_Ucopy
+0x10005600  100.00%   std::vector<S_FILEHANDLE,std::allocator<S_FILEHANDLE> >::_Ufill
+0x10005630  100.00%   std::_Construct(struct S_FILEHANDLE *, struct S_FILEHANDLE const &)
+0x10005650  100.00%   std::_Construct(struct S_HANDLE *, struct S_HANDLE const &)
+0x10005740  100.00%   operator delete
+0x10005750  100.00%   S_HANDLE::operator=
+0x100059f0  100.00%   std::vector<S_FILES_IN,std::allocator<S_FILES_IN> >::_Ucopy
+0x10005a30  100.00%   std::_Construct(struct S_FILES_IN *, struct S_FILES_IN const &)
+0x10005a50  100.00%   std::vector<S_FILES_IN,std::allocator<S_FILES_IN> >::operator=
+0x1000b0f8  100.00%   vtable C_rw_data_inter::`vftable'
+0x1000b108  100.00%   vtable C_rw_data::`vftable'

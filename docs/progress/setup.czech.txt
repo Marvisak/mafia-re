@@ -1,0 +1,19 @@
+# SETUPCZ: reccmp's score of each function and vtable of setup.czech.exe (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x00401000  100.00%   SetText
+0x00401050  100.00%   SetDialogText
+0x004010a0  100.00%   WinMain
+0x00401210  100.00%   ToggleFields
+0x00401410  100.00%   ToggleExpertSettings
+0x004014f0  100.00%   DialogFunc
+0x00402bf0  100.00%   Error
+0x00402c70  100.00%   $CRT_CPP_Initializer(1)
+0x00402c80  100.00%   $E1
+0x00402cf0  100.00%   $CRT_CPP_Initializer(2)
+0x00402d00  100.00%   $E4
+0x00402e00  100.00%   GetTotalVRAM
+0x00402ea0  100.00%   LoadAdapterRefreshRates
+0x00403100  100.00%   LoadAdapterModes
+0x004035f0  100.00%   LoadAdapterData
+0x00403ac0  100.00%   LoadD3D8
+0x00403c40  100.00%   FreeD3D8

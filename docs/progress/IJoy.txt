@@ -1,0 +1,105 @@
+# IJOY: reccmp's score of each function and vtable of IJoy.dll (--nolib), by the original's address.
+# Written by tools/progress.py. `100.00%*` is equivalent code, `stub` a STUB marker, `missing` no function of ours matched.
+0x10001000  100.00%   $CRT_CPP_Initializer(1)
+0x10001010  100.00%   $CRT_CPP_Initializer(2)
+0x10001020  100.00%   $E3
+0x10001030  100.00%   $E2
+0x10001040  100.00%   CreateJoyBase
+0x100010d0  100.00%   C_joy_base::~C_joy_base
+0x10001130  100.00%   C_joy_base::`scalar deleting destructor'
+0x10001150  100.00%   C_joy_base::Close
+0x100011f0  100.00%   C_joy_base::C_joy_base
+0x100012c0  100.00%   C_joy_base::Release
+0x100012f0  100.00%   C_joy_base::AddRef
+0x10001310  100.00%   C_joy_base::EnumDevices
+0x100013b0  100.00%   C_joy_base::GetDeviceInfo
+0x100014b0  100.00%   C_joy_base::NumDevices
+0x100014c0  100.00%   C_joy_base::GetButtonName
+0x10001540  100.00%   C_joy_base::GetAxisName
+0x10001600  100.00%   C_joy_base::GetAxisInfo
+0x10001770  100.00%   IJoyBase::~IJoyBase
+0x10001780  100.00%   IJoyBase::`scalar deleting destructor'
+0x100017a0  100.00%   C_joy_base::GetPOVName
+0x10001850  100.00%   C_joy_base::GetDirectInput
+0x10001860  100.00%   C_joy_base::RunControlPanel
+0x10001880  100.00%   C_joy_base::CreateJoy
+0x10001a40  100.00%   C_joy_base::RemoveJoy
+0x10001a90  100.00%   C_joy::C_joy
+0x100023a0  100.00%   IJoy::~IJoy
+0x100023b0  100.00%   IJoy::`scalar deleting destructor'
+0x100023d0  100.00%   C_joy::`scalar deleting destructor'
+0x100023f0  100.00%   C_joy::~C_joy
+0x10002470  100.00%   C_joy::RunControlPanel
+0x10002490  100.00%   C_joy::SetDeadZone
+0x100024e0  100.00%   C_joy::GetDeadZone
+0x10002500  100.00%   C_joy::SetDIDeadZone
+0x10002600  100.00%   C_joy::GetDIDeadZone
+0x100026e0  100.00%   C_joy::SetSaturation
+0x10002730  100.00%   C_joy::GetSaturation
+0x10002750  100.00%   C_joy::SetDISaturation
+0x10002850  100.00%   C_joy::GetDISaturation
+0x10002930  100.00%   C_joy::SetAutoCenter
+0x10002990  100.00%   C_joy::SetGain
+0x10002a20  100.00%   C_joy::GetGain
+0x10002a90  100.00%   C_joy::SetAxisMode
+0x10002c70  100.00%   C_joy::GetAxisMode
+0x10002c90  100.00%   C_joy::Update
+0x10003a60  100.00%   C_joy::Acquire
+0x10003a90  100.00%   C_joy::GetState
+0x10003ac0  100.00%   C_joy::GetStateChanges
+0x10003b70  100.00%   C_joy::GetPOV
+0x10003bb0  100.00%   C_joy::GetPOVChanged
+0x10003bf0  100.00%   C_joy::GetButtons
+0x10003c40  100.00%   C_joy::GetButtonsPressed
+0x10003cb0  100.00%   C_joy::GetAxis
+0x10003d40  100.00%   C_joy::IsButtonDown
+0x10003df0  100.00%   C_joy::IsButtonPressed
+0x10003ec0  100.00%   C_joy::GetInfo
+0x10003fa0  100.00%   C_joy::GetButtonName
+0x10004000  100.00%   C_joy::GetAxisName
+0x10004090  100.00%   C_joy::GetAxisInfo
+0x100041e0  100.00%   C_joy::GetPOVName
+0x10004270  100.00%   C_joy::Release
+0x100042a0  100.00%   C_joy::AddRef
+0x100042c0  100.00%   C_joy::GetFFState
+0x10004370  100.00%   C_joy::SendFFCommand
+0x10004430  100.00%   C_joy::CreateEffect
+0x100044e0  100.00%   C_joy_effect::C_joy_effect
+0x100045a0  100.00%   IJoyEffect::~IJoyEffect
+0x100045b0  100.00%   IJoyEffect::`scalar deleting destructor'
+0x100045d0  100.00%   C_joy_effect::`scalar deleting destructor'
+0x100045f0  100.00%   C_joy_effect::~C_joy_effect
+0x10004690  100.00%   C_joy_effect::Release
+0x100046c0  100.00%   C_joy_effect::AddRef
+0x100046e0  100.00%   C_joy_effect::SetAxes
+0x100047f0  100.00%   C_joy_effect::SetType
+0x10004b90  100.00%   C_joy_effect::Start
+0x10004c70  100.00%   C_joy_effect::Stop
+0x10004cf0  100.00%   C_joy_effect::SetDirection
+0x10004d90  100.00%   C_joy_effect::ApplyDirection
+0x10004de0  100.00%   C_joy_effect::SetGain
+0x10004e90  100.00%   C_joy_effect::ApplyGain
+0x10004ee0  100.00%   C_joy_effect::SetDuration
+0x10004f60  100.00%   C_joy_effect::ApplyDuration
+0x10004fb0  100.00%   C_joy_effect::SetEnvelope
+0x100050c0  100.00%   C_joy_effect::ApplyEnvelope
+0x10005110  100.00%   C_joy_effect::SetConstantForce
+0x100051c0  100.00%   C_joy_effect::ApplyTypeSpecific
+0x10005210  100.00%   C_joy_effect::SetRampForce
+0x10005310  100.00%   C_joy_effect::SetPeriodic
+0x10005470  100.00%   C_joy_effect::SetCondition
+0x10005920  100.00%   C_joy_effect::GetEffectCaps
+0x10005a60  100.00%   C_joy_effect::GetStatus
+0x10005b30  100.00%   C_joy_effect::GetType
+0x10005b40  100.00%   EnumDevicesCallback
+0x10005c20  100.00%   EnumObjectsCallback
+0x10005cd0  100.00%   EnumEffectsCallback
+0x10005f10  100.00%   EnumEffectsInFileCallback
+0x10005f80  100.00%   C_leak_detector::C_leak_detector
+0x10005fa0  100.00%   C_leak_detector::~C_leak_detector
+0x1000d0d0  100.00%   vtable IJoyBase::`vftable'
+0x1000d100  100.00%   vtable C_joy_base::`vftable'
+0x1000d134  100.00%   vtable C_joy::`vftable'
+0x1000d1c0  100.00%   vtable IJoy::`vftable'
+0x1000d278  100.00%   vtable C_joy_effect::`vftable'
+0x1000d2d4  100.00%   vtable IJoyEffect::`vftable'
