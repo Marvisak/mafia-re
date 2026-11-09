@@ -11,6 +11,14 @@
 // GLOBAL: GAME 0x63d6d4
 int C_crash_obj::count;
 
+// STUB: GAME 0x430c50
+bool CreateCrashActors(I3D_frame *frm, S_vector &pos, S_vector &dir, float power, char *name, bool unknown1,
+    uchar unknown2, int unknown3, bool unknown4, bool unknown5)
+{
+    StubLog("CreateCrashActors");
+    return false;
+}
+
 // STUB: GAME 0x431710
 void CreateCrashModel(I3D_frame *frm, S_vector &pos, S_vector &dir, float power)
 {

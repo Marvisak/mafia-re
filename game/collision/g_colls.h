@@ -47,6 +47,8 @@ struct tgcPanak2;
 #define DYNCOLL_UNKNOWN_40 0x40
 #define DYNCOLL_UNKNOWN_41 0x41
 #define DYNCOLL_UNKNOWN_44 0x44
+// The tracks' (C_game::CreateTrackEffect's, by value): the blood's, which the humans' steps through take blood from
+#define DYNCOLL_UNKNOWN_48 0x48
 // tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
 // one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
 // of a dead human only and leaves out the lower one while the human's lower_coll_off is set
@@ -55,6 +57,12 @@ struct tgcPanak2;
 #define DYNCOLLF_UNKNOWN_100 0x100
 // A bottle's (C_bottle::GameInit)
 #define DYNCOLLF_UNKNOWN_400 0x400
+// A box's (C_game::BoxPlacementAdd)
+#define DYNCOLLF_UNKNOWN_1000 0x1000
+// The inter-city boxes' (C_game::InterCity_GameInit's)
+#define DYNCOLLF_UNKNOWN_4000 0x4000
+// The tracks' (C_game::CreateTrackEffect's, with DYNCOLLF_LOWER; by value)
+#define DYNCOLLF_UNKNOWN_200000 0x200000
 
 // A moving object's collision (PS2 tDynamicCollObject, 0x60 bytes), 0x48 bytes by the game's arrays of them; what it
 // holds is known only in part
@@ -74,7 +82,7 @@ struct tDynamicCollObject
     // includer the engine header's statics, which the original's game files don't have
     uchar bbox[0x18];
     S_matrix *matrix;                   // 0x3c, the radar places the box by it
-    uchar unknown_40[4];
+    S_matrix *inv_matrix;               // 0x40, matrix's inverse, a box's (C_game::BoxPlacementAdd; the name is ours)
     C_actor *owner;                     // 0x44, the actor whose collision it is (the name is ours)
 
     // PS2's, which clears it
@@ -173,6 +181,10 @@ public:
     int TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags);
     // The level's collisions of a frame into colls (PS2 name), and their number
     uint FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls);
+    // The level's static collisions within radius of pos whose material is from mat_min to mat_max, into colls (PS2
+    // name; the parameters' names are ours), which C_game::NewExplosion calls
+    void FindStaticCollsInLocality(const S_vector &pos, float radius, uint mat_min, uint mat_max,
+        std::vector<g_collision_header *> &colls);
     // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize"), and with dyn the moving objects'
     // grid over it (the parameters' names are ours; PS2's returns nothing either)
     void LoadCollision(const char *name, bool dyn);

@@ -9,7 +9,7 @@ class C_actor;
 class C_car;
 class C_human;
 
-// The police (PS2 C_shvestky, C_shvestky.cpp), the game's 0x2da0, 0xb0 bytes. PS2's has the same members, its offsets in
+// The police (PS2 C_shvestky, C_shvestky.cpp), the game's 0x2da0, 0xac bytes. PS2's has the same members, its offsets in
 // the comments. Only the constructor, the destructor, GameInit, GameDone, Tick and TickDoRiciActors are written so far,
 // and the accessors the script's commands use.
 // The records' flags (S_shvestky::flags; the names are ours), the most set by the PS2 function their comment names
@@ -160,8 +160,6 @@ public:
     std::vector<C_car *> temp_cars;
     // 0x9c (PS2 0x88), SetActive's: the nodes nearest to the mission's bridges, whose red lights TestOverRed leaves out
     std::vector<ushort> bridge_nodes;
-    bool unknown_ac;                    // 0xac, which C_game::Init sets
-    uchar unknown_ad[3];
 
     C_shvestky();
     ~C_shvestky();
@@ -199,6 +197,9 @@ public:
     void NextNaSrackySoudruh(C_human *human);
     // PS2 name: POLICEMANAGER_FORCEARREST's (the parameters' names are ours)
     void ForceArrest(C_human *human, bool a, bool b);
+    // A traffic sign the human destroyed (PS2 name), C_game::DestroyControlSignal's: SHVF_SIGNAL_MARK set, and
+    // signal_time 4000 more, at most 20000
+    void DestroySignalMark(C_human *human);
     // The car the human gets out of stolen (PS2 name; the bools' meaning isn't known): C_human::Hit calls it with
     // false, false for the player hit while he steals a car
     void CarSteal(C_human *human, bool a, bool b);

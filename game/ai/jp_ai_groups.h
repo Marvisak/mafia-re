@@ -79,6 +79,8 @@ public:
     void Tick();
     // The group of that number, NULL for none (PS2 name)
     ai_group *GetGroup(uint id);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void InvalidateActor(C_actor *act);
     // The saved game's record of the groups, its size and the record (PS2 names)
     uint GetSize();
     bool Save(void **buf);
@@ -139,6 +141,8 @@ public:
     // An actor's event for his followers (PS2 name; the player's Do_AB_OwnerCar gives 4 for a passenger's action
     // button)
     void Event(uint event, C_actor *actor);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void Invalidate(C_actor *act);
     // The saved game's record of the following, its size and the record (PS2 names)
     uint GetSize();
     bool Save(void **buf);
@@ -224,6 +228,8 @@ public:
     ai_fight_followship *GetParty(C_entity *e, C_actor *act, uint *unknown);
     // The party in a car goes apart (PS2 name)
     void DisbandCarParty(ai_fight_followship *party, bool unknown);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void Invalidate(C_actor *act);
 };
 
 // The copies of the implicit functions and the vectors' helpers that the managers' Init and Destroy call out of line:
@@ -243,7 +249,7 @@ public:
 // The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
 // streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
 // TEMPLATE: GAME 0x537050
-// ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEPAUG_CameraDialog@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
 // ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
@@ -271,4 +277,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z
+// ?copy@std@@YIPAPAUtDynamicCollObject@@PAPAU2@00@Z

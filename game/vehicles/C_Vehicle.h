@@ -202,6 +202,12 @@ public:
     void SetEngineOn(bool on, bool unknown);
     // PS2 names
     void EnableSounds(bool on);
+    // Whether the sounds are on (the name is ours, after EnableSounds): C_game::TickCarSoundManager tests them through
+    // it, an inline call still to come after its push_back, whose nested insert the original calls out of line
+    bool SoundsEnabled() const
+    {
+        return sounds_enabled;
+    }
     void SetSpeedLimit(float limit);
     void SetSteeringLinearity(float linearity);
     // Whether the driver sits as in the Formula (FormuleStativ.i3d), the first seat's unknown_20 NULL (the name is a
@@ -523,7 +529,10 @@ public:
     // SirenSnd (the names are ours): the chases sound the horn, unless the siren is on
     bool horn;
     bool siren;
-    uchar unknown_432[0x5e];            // 0x432
+    // 0x432 (car 0x4a2), the sounds are on: EnableSounds sets it (turning them off first where it clears a set one),
+    // C_game::TickCarSoundManager tests it (the name is ours, after EnableSounds)
+    bool sounds_enabled;
+    uchar unknown_433[0x5d];            // 0x433
     // 0x490 (car 0x500, PS2 0x229f), what C_human::Update copies from the camera's unknown_22 for the player's car
     bool unknown_490;
     uchar unknown_491[0x13];            // 0x491
@@ -554,7 +563,11 @@ public:
     int gear;                           // 0x55c (car 0x5cc, PS2's car 0x89c), TachometrSetGear's (the name is ours)
     uchar unknown_560[0x3c];            // 0x560
     float speed;                        // 0x59c (car 0x60c), in m/s: velocity's magnitude (SetVelocity)
-    uchar unknown_5a0[0x70];            // 0x5a0
+    uchar unknown_5a0[0x54];            // 0x5a0
+    // 0x5f4 (car 0x664), the mass most likely (the name is a guess): C_game::ScratchAdd divides a hit's force by it
+    // where it is above 1
+    float mass;
+    uchar unknown_5f8[0x18];            // 0x5f8
     // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely (the names are guesses):
     // C_game::TickDriverMan turns the driver's steering wheel by their ratio
     float steer_max;
@@ -608,13 +621,13 @@ public:
 // parts of it the inlined copies call. The size, copy, fill and construct helpers have a copy for each element size, so
 // the linker folded them with other vectors' of that size; the original kept other files' copies of most.
 // TEMPLATE: GAME 0x42d1f0
-// ?insert@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QAEXPAUS_VEH_PARTICLE@@IABU3@@Z
+// ?insert@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QAEXPAUS_shadow_item@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x42d510
 // ?insert@?$vector@US_VEH_MATERIAL@@V?$allocator@US_VEH_MATERIAL@@@std@@@std@@QAEXPAUS_VEH_MATERIAL@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42d800
-// ?insert@?$vector@US_TYRE@@V?$allocator@US_TYRE@@@std@@@std@@QAEXPAUS_TYRE@@IABU3@@Z
+// ?insert@?$vector@US_npc_kill_event@C_game@@V?$allocator@US_npc_kill_event@C_game@@@std@@@std@@QAEXPAUS_npc_kill_event@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x42de10
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
@@ -623,10 +636,10 @@ public:
 // ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
-// ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2aa0
-// ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
+// ?_Ufill@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEXPAUS_shoot@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
 // ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
@@ -635,7 +648,7 @@ public:
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEPAUS_VEH_PARTICLE@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEPAUS_shadow_item@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEXPAUS_shadow_item@C_game@@IABU34@@Z

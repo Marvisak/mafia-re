@@ -86,6 +86,12 @@ bool C_bridge::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, c
     return C_actor::Collision(act, v1, v2, v3, f, frm);
 }
 
+// STUB: GAME 0x56a840
+void C_bridge::SetTitanic(bool on)
+{
+    StubLog("C_bridge::SetTitanic");
+}
+
 // The linker's folded copy of the out-of-line kind (0x4aa430)
 int C_bridge::SaveGameGetSize()
 {

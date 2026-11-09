@@ -24,6 +24,9 @@ struct tDynamicCollObject;
 #define ACTOR_RAILWAY 8
 #define ACTOR_DYN_OBJECT 9
 #define ACTOR_BOTTLE 0xa
+// C_game::NewExplosion hits it as a traffic car, whatever the distance (the name is ours, by value: no class of
+// C_mission::CreateActor's has it)
+#define ACTOR_UNKNOWN_B 0xb
 #define ACTOR_TRAFFIC_CAR 0xc
 #define ACTOR_GRENADE 0xe               // PS2 C_grenade's constructor; C_human::MovementIntern pushes it as a bottle
 #define ACTOR_STONE 0xf                 // PC only, C_game::Init's 2stone.i3d
@@ -461,13 +464,13 @@ public:
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_railway@@UAEXI@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -481,21 +484,21 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveData@C_wagon@@UAE_NPAVC_chunk@@@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_scatter@@UAE_NPAPAX@Z
+// ?SaveGameSave@C_racecam@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_stone@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?GetActFlags@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.

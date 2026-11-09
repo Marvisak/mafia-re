@@ -36,9 +36,7 @@ public:
     // player's (forward's secondary binding) and the car's controls (steer left's) are on a joystick with force feedback
     bool human_effects;
     bool car_effects;
-    uchar unknown_2e[0x46];
-    bool unknown_74;                    // 0x74, cleared by C_game::Init
-    uchar unknown_75[0x47];
+    uchar unknown_2e[0x8e];
 
     C_ff_manager();
     ~C_ff_manager();
@@ -87,8 +85,8 @@ extern C_ff_manager ff_manager;
 // The empty functions of the out-of-line kind the linker folded into one (0x4aabe0): Close above, C_web_path::
 // DrawConnections, C_human::HideLegs and ~C_animations_machine_de_luxe, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x4aabe0
-// ?Death@C_actor@@UAEXXZ
+// ?HideLegs@C_human@@SIXPAVI3D_model@@_N@Z
 
 // The destructor, folded with C_sledovacka's, named after the copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x444670
-// ??1C_sledovacka@@QAE@XZ
+// ??1C_ff_manager@@QAE@XZ

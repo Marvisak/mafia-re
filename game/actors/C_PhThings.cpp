@@ -113,3 +113,9 @@ bool C_PhThing::SaveGameLoad(void **buf)
 void C_PhThing::NetDirect(uint time)
 {
 }
+
+// STUB: GAME 0x460140
+void C_PhThing::InvalidateActor(C_actor *act)
+{
+    StubLog("C_PhThing::InvalidateActor");
+}

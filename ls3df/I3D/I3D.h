@@ -628,6 +628,13 @@ public:
     {
         return m_pProperty ? m_pProperty : "";
     }
+
+    // The first child (the name is ours; the game's alone): C_game's walks of a subtree test it after their push_back,
+    // whose nested insert the original calls out of line, as an inline call still to come gives it
+    I3D_frame *const &GetFirstChild() const
+    {
+        return m_pChild;
+    }
 #endif
 
     // Insanity3D's name; the game's, defined at the file's end
@@ -1996,6 +2003,15 @@ public:
 
     // The game's (defined at the file's end)
     const float &GetFOV() const;
+#ifndef LS3DF_EXPORTS
+    // The game's (Insanity3D's name): C_game::CheatKey's, whose push of near1 goes through the FPU as an inline
+    // function's result does
+    void GetRange(float &near1, float &far1) const
+    {
+        near1 = ncp;
+        far1 = fcp;
+    }
+#endif
 
     float fov_a;                        // 0x140, the field of view
     float ncp, fcp;                     // 0x144, the clipping planes

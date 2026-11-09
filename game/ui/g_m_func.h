@@ -253,6 +253,14 @@ public:
     void Present();
 };
 
+// The scalar deleting destructor and the implicit destructor (a jump to GM_Menu's) of C_game::Init's delete, in
+// game.cpp's range
+// SYNTHETIC: GAME 0x5a3c30
+// ??_GGM_LoadProgress@@QAEPAXI@Z
+
+// SYNTHETIC: GAME 0x5a3c50
+// ??1GM_LoadProgress@@QAE@XZ
+
 class C_car;
 struct S_garage_item;
 

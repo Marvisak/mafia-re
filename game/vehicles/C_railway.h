@@ -52,6 +52,10 @@ public:
     // Counts lock_count up (PS2 name), which Unlock counts down
     void Lock();
 
+    // Set while the traffic is hidden (C_game::SetTrafficVisible's; PS2 name, Czech slang: "the tram in the
+    // cinema"); the constructor and other functions of the file set it too
+    static bool salina_v_kine;
+
     uchar unknown_70[0x54];             // 0x70
     // The wagons' frames, the first wagon's [0]: C_human::wagon 1 and up indexes it from 1 (the name is ours)
     I3D_frame **wagon_frames;           // 0xc4

@@ -112,6 +112,11 @@ public:
     // Whether a valid object in the frame's sector (or in none) is within reach of pos: 1.5 m up or down, and
     // horizontally within its radius (PS2 name; dir isn't read)
     bool IsAnyObjectNear(const S_vector &pos, const S_vector &dir, I3D_frame *sector);
+    // The objects in a saved game (PS2 names), which C_game's SaveGame functions call: the save and the load
+    // return true
+    int SaveGameGetSize();
+    bool SaveGameSave(void **buf);
+    bool SaveGameLoad(void **buf);
 };
 
 // The compass of the game's HUD (PS2 C_compass, tools.cpp), the game's 0x26c, 0x14 bytes. Its destructor is declared: the
@@ -147,18 +152,32 @@ public:
     void Init();
     // A sound the humans hear at pos (PS2 name; the parameters' names are ours): human_notify_callback's steps
     void SoundEmit(S_vector &pos, float range, float unknown, uint unknown2, C_actor *act);
+    // Forgets an actor's sounds (PS2 name), which C_game::InvalidateActor calls
+    void InvalidateActor(C_actor *act);
 };
 
-// A fire (PS2 C_fire, tools.cpp), which the game keeps (its 0x314) and deletes at Done; only the destructor and Tick
-// are known
+// A fire (PS2 C_fire, tools.cpp), 0x30 bytes (C_game::NewFire's new), which the game keeps (its 0x314) and deletes at
+// Done; only the constructor, the destructor, Init and Tick are known
 class C_fire
 {
 public:
+    C_fire();
     ~C_fire();
+    // Starts the fire at pos on frm (PS2 name; the parameters' names are ours), which C_game::NewFire calls
+    void Init(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3);
 
     // The fire by the time passed, which C_game::Tick calls (PS2 name): false when it has burnt out, and C_game::Tick
     // deletes it
     bool Tick(uint time);
+
+    uchar unknown_0[0xc];               // 0x0
+    // 0xc (PS2 0x10), the frame it burns on: C_game::InvalidateActor deletes the fires of an actor's frame (the
+    // name is ours)
+    I3D_frame *frame;
+    uchar unknown_10[0xc];              // 0x10
+    int unknown_1c;                     // 0x1c, 0 from the constructor (PS2 0x20)
+    int unknown_20;                     // 0x20, 200 from the constructor (PS2 0x24)
+    uchar unknown_24[0xc];              // 0x24
 };
 
 // A group of the sound table's sounds (PS2 S_sound_group), 0x24 bytes: the editor's, which the game skips in the file
@@ -253,7 +272,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetText@GM_Component@@UAEPAEXZ
+// ?GetMode@G_Camera@@QBEIXZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

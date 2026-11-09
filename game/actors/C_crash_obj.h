@@ -52,6 +52,10 @@ public:
     static int count;
 };
 
+// The crash actors of a model, broken off at pos along dir with the power (PS2 name; the parameters' names are ours,
+// the last five's meaning isn't known), which C_game::DestroyControlSignal calls with the model's file name
+bool CreateCrashActors(I3D_frame *frm, S_vector &pos, S_vector &dir, float power, char *name, bool unknown1,
+    uchar unknown2, int unknown3, bool unknown4, bool unknown5);
 // The crash model a shot breaks off the frame (PS2 name; the parameters' names are ours): at pos along dir, with
 // the shot's power
 void CreateCrashModel(I3D_frame *frm, S_vector &pos, S_vector &dir, float power);

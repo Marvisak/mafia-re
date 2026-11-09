@@ -7,6 +7,13 @@
 
 #include "stub.h"
 
+// STUB: GAME 0x5ca410
+void g_collision::FindStaticCollsInLocality(const S_vector &pos, float radius, uint mat_min, uint mat_max,
+    std::vector<g_collision_header *> &colls)
+{
+    StubLog("g_collision::FindStaticCollsInLocality");
+}
+
 // STUB: GAME 0x5ca5c0
 uint g_collision::FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls)
 {

@@ -6,6 +6,9 @@
 
 #include "stub.h"
 
+// GLOBAL: GAME 0x63d7ac
+bool C_railway::salina_v_kine;
+
 // STUB: GAME 0x4865b0
 C_railway::C_railway()
 {

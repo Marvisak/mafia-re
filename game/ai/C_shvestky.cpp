@@ -773,6 +773,12 @@ void C_shvestky::ForceArrest(C_human *human, bool a, bool b)
     StubLog("C_shvestky::ForceArrest");
 }
 
+// STUB: GAME 0x49d1a0
+void C_shvestky::DestroySignalMark(C_human *human)
+{
+    StubLog("C_shvestky::DestroySignalMark");
+}
+
 // STUB: GAME 0x49d340
 uint C_shvestky::GetHumanStatus(C_human *human)
 {

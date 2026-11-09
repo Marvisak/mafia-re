@@ -22,6 +22,7 @@ class C_human;
 class C_car;
 class C_stone;
 class C_cartridge;
+class C_grenade;
 class C_don_ocas;
 class IShow;
 class ITexture;
@@ -33,7 +34,9 @@ struct S_cache_model_inbb;
 // are ours)
 struct S_semaphore
 {
-    uint unknown_0;                     // 0x0, LoadSemaphores leaves it
+    // 0x0, the semaphore's model, which DelSemaphore looks for: LoadSemaphores leaves it (PS2's too), so it holds
+    // whatever the stack had (the name is ours)
+    I3D_frame *model;
     I3D_frame *red;                     // 0x4
     I3D_frame *orange;                  // 0x8
     I3D_frame *green;                   // 0xc
@@ -52,13 +55,13 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 #define RACE6_STATE_END 10
 
 // The bit of C_game::cheats that turns on DoubleKiss, the guns on the player's car (the name is ours): no code of the
-// PC's sets it, the cheats' toggles (0x5a8030) have no case for it
+// PC's sets it, CheatKey's toggles have no case for it
 #define GAMEF_DOUBLEKISS 0x8
 // The bit of C_game::cheats that keeps the player and the humans of HUMAN_TYPE_FRIEND from hits (C_human::Hit;
 // the name is a guess): no cheat word toggles it
 #define GAMEF_INVULNERABLE 0x1
 // The bit of C_game::cheats with which a reload takes no ammunition from the reserve (C_human::AI; the name is a
-// guess)
+// guess): MUNICAK (Czech munice, ammunition) toggles it
 #define GAMEF_INFINITE_AMMO 0x100
 // The bit of C_game::cheats with which the Magnum fires grenades (C_human::Shooting; the name is ours): no cheat word
 // toggles it
@@ -69,6 +72,12 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats with which the player steals and hijacks any car, those the garage's profile can't steal
 // too (C_player's Can_UseCar and Do_AB_OwnerNULL; the name is ours): CORNUFSE toggles it
 #define GAMEF_STEAL_ALL 0x20
+// The bit of C_game::cheats with which the player's hands are twice their size (C_player::SetBoxer; the name is
+// ours): BOXER toggles it
+#define GAMEF_BOXER 0x10
+// The bit of C_game::cheats with which Leonardo and Kate stand on the bridges' boat (C_bridge::SetTitanic; the
+// name is ours): PARNIK toggles it
+#define GAMEF_TITANIC 0x80
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -95,9 +104,59 @@ struct S_shoot
 #define SHOTSOUND_CAR 0x1a
 // The effects' particle of a shot's hit on a human or an animal (materials.def's "Telo" has it too; the name is ours)
 #define SHOTPARTICLE_BODY 0
+// The effects' particles of C_game::NewExplosion (with big: a car's, the code's at 0x59f920) and of NewSmallFires'
+// fires, and the sound table's sound of NewFire (the names are ours)
+#define PARTICLE_EXPLOSION_BIG 0x14
+#define PARTICLE_EXPLOSION 7
+#define PARTICLE_SMALL_FIRE 0x16
+#define SOUND_FIRE 0x15
 // C_game::track_textures' index of a bloody footprint, "2bfootprint.bmp", which C_human::cbCollTester gives the
 // steps of a human through blood (the name is ours, after the file)
 #define TRACK_TEXTURE_BFOOTPRINT 6
+// C_game::track_textures' index of the cars' scratches, "skrob.tga" (ScratchAdd's; the name is ours)
+#define TRACK_TEXTURE_SCRATCH 9
+
+// The game's record in a saved game (C_game::SaveGameSave's; the names are ours), 0x43 bytes, packed. PS2's has the same
+// fields as ints (version 11, 0x48 bytes). The chases' record follows it, then with full the videos' (each an
+// S_i_show_savegame and its name) and their fades, then the stacks' items and the using objects' record.
+#pragma pack(push, 1)
+struct S_game_savegame
+{
+    uchar version;                      // 0x0, GAME_SAVEGAME_VERSION
+    int game_time;                      // 0x1
+    int game_frames;                    // 0x5
+    int mission_number;                 // 0x9, C_mission's, which SaveGameLoadBefore takes back
+    bool timer;                         // 0xd, the HUD shows the clock (INDF_TIMER)
+    uint timer_interval;                // 0xe, G_IndicatorsClass::TimerGetInterval's
+    uint timer_hour;                    // 0x12, TimerGetTime's
+    uint timer_minute;                  // 0x16
+    uint timer_second;                  // 0x1a
+    int num_inventories;                // 0x1e, inventory_stack's
+    int num_characters;                 // 0x22, character_stack's
+    int num_floats;                     // 0x26, float_stack's
+    int num_i_shows;                    // 0x2a, the videos saved, all but the city's music; 0 without full
+    int num_i_show_fades;               // 0x2e, 0 without full
+    int next_i_show_id;                 // 0x32, 0 without full
+    int city_music;                     // 0x36, -1 without full
+    int city_music_old;                 // 0x3a, -1 without full
+    bool score_on;                      // 0x3e
+    int score;                          // 0x3f
+};
+// A video's record (the names are ours), 0x19 bytes, packed: its file's name follows it, name_len characters
+struct S_i_show_savegame
+{
+    int id;                             // 0x0
+    uint flags;                         // 0x4, ISHOWF_*
+    uint name_len;                      // 0x8, the name's length without its 0, 0 for none
+    bool playing;                       // 0xc, the video had no event (IShow::GetEvent's 0): it plays again from pos
+    uint pos;                           // 0xd, IShow::GetCurrentPos's
+    int unknown_11;                     // 0x11, 0
+    float volume;                       // 0x15, its volume relative to the music's, at most 1 (0 with the music off)
+};
+#pragma pack(pop)
+
+// S_game_savegame::version, the only one SaveGameLoad and SaveGameLoadBefore take (the name is ours)
+#define GAME_SAVEGAME_VERSION 10
 
 // The game of the loaded mission (PS2 game.cpp), 0x36ac bytes, the size C_mission::Init creates it with. PS2's Init
 // takes two bools and loads the mission's collisions itself; the PC's takes none, main loads them before it.
@@ -109,9 +168,14 @@ class C_game
 {
 public:
     // PS2's names of the vectors' elements
+    // Where a box was when it was taken (BoxPlacement_SaveInfo's), which BoxPlacement_RestoreInfo puts it back to (the
+    // members' names are ours)
     struct S_box_placement_temp
     {
-        uchar unknown_0[0x20];
+        I3D_frame *frame;               // 0x0
+        I3D_frame *parent;              // 0x4
+        S_vector pos;                   // 0x8, the local position
+        S_vector dir;                   // 0x14, the local direction
     };
     // An actor Tick wakes (ACTSTATE_ACTIVE to ACTSTATE_INACTIVE) or puts back to ACTSTATE_ACTIVE once it is seen, at
     // most every sixth frame (the members' names are ours)
@@ -157,6 +221,9 @@ public:
     };
     // A hydrant's water (the members' names are ours): TickHydrant stops the particle while the line up from it hits
     // something but an actor other than a car, and destroys it 150 m from the camera
+    // AddHydrant's effects' particle and sound table's sound (the names are ours)
+#define PARTICLE_HYDRANT 0x57
+#define SOUND_HYDRANT 0x147
     struct S_hydrant
     {
         int particle;                   // 0x0, the effects' particle (C_effects::DestroyParticle's)
@@ -164,23 +231,32 @@ public:
         S_vector pos;                   // 0x8
         I3D_frame *frame;               // 0x14
     };
+    // A sound PauseAllSounds turned off, which PlayAllSounds turns on again as it was (PS2 name, PS2's 0x24 bytes with
+    // the sound's name; the members' names are ours)
     struct S_stop_sounds
     {
-        uchar unknown_0[0x14];
+        I3D_sound *sound;               // 0x0
+        float volume;                   // 0x4
+        float volume_out;               // 0x8
+        bool loop;                      // 0xc
+        uint time;                      // 0x10, its position (GetCurrTime's)
     };
     // A sound the game plays, released once it has stopped (the members' names are ours)
     struct S_sound_play
     {
         I3D_sound *sound;               // 0x0
-        uchar unknown_4[4];             // 0x4, its number, next_sound_number's (an int, Play3DSound's)
+        int number;                     // 0x4, next_sound_number's, which Play3DSound returns
         float volume;                   // 0x8, the volume a fade in goes to
         float fade;                     // 0xc, the volume's change per ms, in while positive, out to silence otherwise
         bool fading;                    // 0x10, counted by sounds_fading
         uint time;                      // 0x14, the sound's GetCurrTime at the last tick, if it doesn't loop
     };
+    // A script's event fired when an NPC of that name is killed (SETNPCKILLEVENT's; the members' names are ours)
     struct S_npc_kill_event
     {
-        uchar unknown_0[0x28];
+        C_program *program;             // 0x0
+        int event;                      // 0x4
+        char name[0x20];                // 0x8, the NPC's frame's name, compared without case
     };
     // A driver's model of a car (PS2 AddDriverMan's; the members' names are ours)
     struct S_driver_man
@@ -192,6 +268,8 @@ public:
     };
     // A video playing in the mission (the members' names are ours)
 #define ISHOWF_LOOP 0x1                 // Tick starts it again at its end (IShowLoop's; the name is ours)
+// The city's music (TickCityMusic's), which the saved games leave out (the name is ours)
+#define ISHOWF_CITY_MUSIC 0x2
     struct S_i_show
     {
         IShow *show;                    // 0x0
@@ -209,24 +287,59 @@ public:
         short time;                     // 0xc, in ms, signed (Tick compares and converts them so)
         short length;                   // 0xe
     };
+    // A human speaking on a dubbing channel (AddHumanTalk's; the members' names are ours)
     struct S_enemy_talk
     {
-        uchar unknown_0[8];
+        C_human *human;                 // 0x0
+        int chanel;                     // 0x4, the dubbing's (g_dabing.h)
     };
+    // A script's actor register waiting for the actor of an id, which FindActorsVect fills through
+    // C_program::FindActorLater (the members' names are ours). PS2 has no insert of the type: nothing adds them there.
     struct S_find_actor
     {
-        uchar unknown_0[0xc];
+        C_program *program;             // 0x0
+        int reg;                        // 0x4
+        uint id;                        // 0x8, the actor's (GetActorFromGUID's)
     };
 
     // The types PS2 doesn't name (the names are ours, but where said; those by an offset are the member's)
-    // What LightnessClear deletes (PS2's Lightness functions'); what it holds isn't known yet
+    // The lightness of an actor's frame (LightnessAdd's; PS2's Lightness functions', empty there; the members' names are
+    // ours), 0x24 bytes: LightnessTick measures the scene's lightness at the actor's frame, offset by pos, and moves the
+    // frame's lightness (its visual's, or its subtree's visuals') towards it
     struct S_lightness
     {
+        C_actor *actor;                 // 0x0
+        I3D_frame *frame;               // 0x4
+        ushort flags;                   // 0x8, LIGHTNESSF_*
+        S_vector pos;                   // 0xc, from the actor's frame's world position
+        float lightness;                // 0x18, the frame's, 1 at first
+        float target;                   // 0x1c, the scene's lightness at pos, 1 at first
+        uint time;                      // 0x20, the game's game_time when target was measured, 0 at first
     };
-    // A box BoxPlacementAdd placed, which BoxPlacementDel is given the frame of (PS2's BoxPlacement functions')
+    // S_lightness::flags (the name is ours): the lightness goes to the visuals of the frame's subtree (S_hlp::cbLightness),
+    // whatever the frame is, and isn't measured for an actor
+#define LIGHTNESSF_SUBTREE 0x1
+    // A box the scripts placed (FUCKINGBOX_ADD, BoxPlacementAdd's; PS2's BoxPlacement functions'), 0x98 bytes, PS2's
+    // 0xc0 (the members' names are ours)
     struct S_box_placement
     {
         I3D_frame *frame;               // 0x0
+        // 0x4, its "Pick up box" (GAMEITEM_SPECIAL_ACTION, USING_ACTION_PICK_UP_BOX), which BoxPlacementRecompile adds
+        // while the box can be picked up
+        C_using_object::S_using_object *using_object;
+        // 0x8, DYNCOLL_UNKNOWN_40, of the frame's bound volume: in the collisions unless the box lies on an actor
+        tDynamicCollObject coll;
+        S_matrix inv_matrix;            // 0x50, the inverse of the frame's world matrix, coll's
+#define BOXID_NONE 121212               // S_box_placement::id: a box put down, which goes to no destination (the name is ours)
+        int id;                         // 0x90, the id of its destinations (S_box_dest::id), the scripts' register
+        // 0x94, the box can be picked up: cleared while it lies on a car whose special dynamic collisions are off
+        bool on;
+    };
+    // A destination of the boxes (FUCKINGBOX_ADD_DEST, BoxPlacementDestAdd's; the names are ours)
+    struct S_box_dest
+    {
+        I3D_frame *frame;               // 0x0
+        int id;                         // 0x4, the boxes' (S_box_placement::id)
     };
     // A frame's state, which Done puts back (PS2 name, PS2's 0x40 bytes; the members' names are ours)
     struct S_frame_placement
@@ -248,25 +361,20 @@ public:
         bool in_collision;              // 0x4c, whether coll is among gifCollision's dynamic objects
         bool growing;                   // 0x4d, Tick scales the projector up to scale 1, then clears it
         uchar unknown_4e[2];            // 0x4e
-        float scale;                    // 0x50
-        uchar unknown_54[4];            // 0x54
+        float scale;                    // 0x50, of the size, 0.1 to 1 while growing
+        // 0x54, the frame the track is on (CreateTrackEffect's frm, a shot's glass or crash collision's), whose tracks
+        // ClearProjectorsForFrame turns off (the name is ours)
+        I3D_frame *hit_frame;
 
         S_track_projector() {}
-    };
-    // Cleared through a register of its own after the other members' zero stores (the game's 0x2ec8, PS2 0x12f0): an
-    // inlined memset
-    struct S_unknown_2ec8
-    {
-        int unknown_0[4];
-
-        S_unknown_2ec8() { memset(this, 0, sizeof(*this)); }
     };
     // A shot's light (after PS2's AddShootLight and ShootLightTick; the members' names are ours)
     struct S_shoot_light
     {
         I3D_light *light;               // 0x0
-        int time;                       // 0x4, -1 from Init: the time left, after which the light goes off
-        int flags;                      // 0x8, with 1 the light flickers, and fades in its last 500 ms
+        int time;                       // 0x4, -1 from Init: the time left, after which the light goes off (free at 0 or less)
+#define SHOOTLIGHTF_FLICKER 0x1         // S_shoot_light::flags: the light flickers, and fades in its last 500 ms (ours)
+        ushort flags;                   // 0x8, SHOOTLIGHTF_*
     };
     // A sound turned on once its time is up (the names are ours): Init gives each of the three sound 0xbf
     struct S_delayed_sound
@@ -281,18 +389,27 @@ public:
         I3D_frame *frame;               // 0x0, the projector
         C_car *car;                     // 0x4, whose scratches ScratchDeleteFromCar turns off
         I3D_frame *car_frame;           // 0x8, the car's frame the projector projects on (ScratchRecompile's)
-        int unknown_c;                  // 0xc
+        // 0xc, the hits near it since it was taken (ScratchGetFreeIdx's), up to five of which make it more opaque
+        int hits;
     };
     // An area where the enemies scream (PS2 name; enm_scrm_..., the members' names are ours)
     struct S_scream_area
     {
-        I3D_frame *area;                // 0x0
+        I3D_area *area;                 // 0x0
         ushort id;                      // 0x4, the hexadecimal number in the name's parentheses
     };
-    // PS2 name
-    struct S_death_human_fade
+    // An item's blur (ItemBlurTick's; PS2's ItemBlur functions', whose list nothing of the PC's or PS2's fills, PS2's
+    // elements 0x30 bytes; the names are ours): copies of the item's frame trailing behind it
+    struct S_item_blur
     {
-        uchar unknown_0[0x28];
+        C_actor *actor;                 // 0x0, whose frame's movement the blur follows (InvalidateActor's)
+        I3D_frame *frame;               // 0x4, whose position and rotation the copies take
+        I3D_frame **frames;             // 0x8, the copies and their array, which ItemBlurDelItem releases and deletes
+        int num_frames;                 // 0xc
+        S_vector last_pos;              // 0x10, the actor's frame's position in the camera's space at the last tick
+        float speed;                    // 0x1c, its speed there, per second, averaged over the ticks
+        bool on;                        // 0x20, the copies are placed (ItemBlurTick unlinks them as it clears it)
+        float spread;                   // 0x24, the most the copies spread over
     };
 
     std::vector<S_frame_placement> frame_placements;  // 0x0 (PS2 0x0, a gif::vector; the name is ours)
@@ -331,7 +448,7 @@ public:
     bool actor_lightness;               // 0x164, ACTORLIGHTNESSON's (the name is ours)
     // The lights LightCacheTick turns on near the camera (PS2's LightCache functions'), which Done turns on again, and
     // the time left until it checks them again (the names are ours)
-    std::vector<I3D_frame *> light_cache;  // 0x168 (PS2 0x1b8)
+    std::vector<I3D_light *> light_cache;  // 0x168 (PS2 0x1b8)
     int light_cache_time;               // 0x178
     std::vector<S_invisible_actor> invisible_actors;  // 0x17c (PS2 0x1c8)
     // The periods of the traffic generators' choice and of the semaphores' phases (the names are ours)
@@ -367,9 +484,9 @@ public:
     C_rmorf rmorf;                      // 0x2bc (PS2 0x2f4)
     std::vector<S_hydrant> hydrants;    // 0x2c4 (PS2 0x2fc, a gif::vector)
     std::vector<S_stop_sounds> stop_sounds;  // 0x2d4 (PS2 0x308, a gif::vector)
-    // 0x2e4 (PS2 0x314), the ids of the videos PS2's PauseAllSounds (0x5b8430) paused, which PlayAllSounds plays again
-    // most likely (the name is ours)
-    std::vector<uint> paused_i_shows;
+    // 0x2e4 (PS2 0x314), the ids of the videos PauseAllSounds paused, which PlayAllSounds plays again (S_i_show::id's,
+    // signed: a vector of another type converts each id into a temporary; the name is ours)
+    std::vector<int> paused_i_shows;
     std::vector<S_sound_play> sound_play;  // 0x2f4 (PS2 0x320)
     // TickEffects' period while no sound fades, the number Play3DSound (0x5aca70) gives its next sound, and the count
     // of sound_play's sounds fading (the names are ours)
@@ -378,7 +495,8 @@ public:
     int sounds_fading;                  // 0x310
     std::vector<C_fire *> fires;        // 0x314 (PS2 0x33c), Done deletes them
     // The actors Init creates for the game from 2stone.i3d (PC only) and the cartridges' models, each with a count
-    C_stone *stones[32];                // 0x324
+#define MAX_STONES 32                   // stones' size (the name is ours)
+    C_stone *stones[MAX_STONES];        // 0x324
     int num_stones;                     // 0x3a4
     C_cartridge *cartridges[100];       // 0x3a8, 2nabojnice.i3d
     int num_cartridges;                 // 0x538
@@ -440,24 +558,23 @@ public:
     float wheel_anim_time_formula;      // 0x2d8c
     C_blood_manager blood_manager;      // 0x2d90 (PS2 0x11d4)
     C_shvestky shvestky;                // 0x2da0 (PS2 0x11e0)
+    // 0x2e4c (PS2 0x1274), set by Init: the first push onto the stacks after it empties them all first (the name
+    // is ours)
+    bool stacks_clear;
+    uchar unknown_2e4d[3];
     // What InventoryStackPush, CharacterStackPush and FloatStackPush keep of the player between missions (PS2's
-    // functions' names; the members' are ours): copies of inventories, a human's values, floats
+    // functions' names; the members' are ours): copies of inventories, a human's properties, floats
     std::vector<G_Inventory *> inventory_stack;  // 0x2e50 (PS2 0x1278)
-    std::vector<uint> character_stack;  // 0x2e60 (PS2 0x1284)
+    std::vector<float> character_stack;  // 0x2e60 (PS2 0x1284)
     std::vector<float> float_stack;     // 0x2e70 (PS2 0x1290)
     // The boxes the scripts place and their destinations (PS2's BoxPlacementAdd, BoxPlacement_GetBox, and
-    // BoxPlacementDestAdd, BoxPlacement_GetBoxDest, 0x5b2a00 to 0x5b41d0, the names are ours): Done takes the boxes out
+    // BoxPlacementDestAdd, BoxPlacement_GetBoxDest, 0x5b2a00 to 0x5b4547, the names are ours): Done takes the boxes out
     // and deletes the destinations
     std::vector<S_box_placement *> boxes;  // 0x2e80 (PS2 0x129c)
-    std::vector<uchar *> box_dests;     // 0x2e90 (PS2 0x12a8)
-    uchar unknown_2ea0[0x10];           // 0x2ea0
-    int unknown_2eb0;                   // 0x2eb0 (PS2 0x12d4)
-    int unknown_2eb4;                   // 0x2eb4
-    int unknown_2eb8;                   // 0x2eb8
-    int unknown_2ebc;                   // 0x2ebc
-    int unknown_2ec0;                   // 0x2ec0
-    bool unknown_2ec4;                  // 0x2ec4 (PS2 0x12e8)
-    S_unknown_2ec8 unknown_2ec8;        // 0x2ec8 (PS2 0x12f0)
+    std::vector<S_box_dest *> box_dests;  // 0x2e90 (PS2 0x12a8)
+    // 0x2ea0 (PS2 0x12c0), the "Drop box" (GAMEITEM_SPECIAL_ACTION, USING_ACTION_DROP_BOX) at the destination of the box
+    // the player carries (BoxPlacementDestSetOU's and BoxPlacementReposeDestPlayer's; the name is ours)
+    C_using_object::S_using_object dest_object;
     bool game_done;                     // 0x2ed8, set by Done, cleared by Init (C_human reads it; the name is ours)
     // RACING_MISSION6_START's race (the names are ours): its state, RACE6_STATE_*, and the float register of the script
     // Tick writes the race's result into
@@ -465,7 +582,7 @@ public:
     float *race6_result;                // 0x2ee0
     // 0x2ee4 (PS2 0x130c), the actors DeathActorProcess processes (PS2's DeathActorAdd adds to it; the name is ours)
     std::vector<uint> death_actors;
-    // The cheats (0x5a8030 takes the keys typed; the names are ours): the letters typed so far,
+    // The cheats (CheatKey takes the keys typed; the names are ours): the letters typed so far,
     // upper case and complemented as the table of the cheats' words (0x637000: BOXER, PARNIK, JIZDA, KREFJEZIVOT,
     // MUNICAK, POLIFUCK, CORNUFSE, ROZMAZ, CUMDAL), empty from Init, and the bits the words toggle (BOXER 0x10,
     // CORNUFSE 0x20, PARNIK 0x80, MUNICAK 0x100, CUMDAL 0x200), which the game reads with a shift and a test,
@@ -488,8 +605,9 @@ public:
     int kiss_shoot_time;                // 0x2f74, the time until the guns shoot again
     int kiss_find_time;                 // 0x2f78, the time until the target is aimed at or looked for again
     std::vector<S_find_actor> find_actors;  // 0x2f7c (PS2 0x1394)
-    // 0x2f8c (PS2 0x13a0), the particles the cutscene's EMITPARTICLE emitted (AddCutsceneParticle's, the name is ours)
-    std::vector<uint> cutscene_particles;
+    // 0x2f8c (PS2 0x13a0), the effects' particles EMITPARTICLE created while a recording plays (AddCutsceneParticle's),
+    // which RECUNLOAD destroys (the name is ours)
+    std::vector<int> cutscene_particles;
     bool anim_preload;                  // 0x2f9c, NOANIMPRELOAD clears it (the name is ours)
     std::vector<I3D_frame *> city_music_areas;  // 0x2fa0 (PS2 0x13b0), the areas city_music_*
     // The city's music (TickCityMusic's; the names are ours): the time left until the areas are checked again, the
@@ -502,7 +620,7 @@ public:
     bool city_music_paused;             // 0x2fc0
     uchar unknown_2fc1[3];              // 0x2fc1
     // 0x2fc4, the film music's streams, IShow ids: GetFilmMusic's index, StreamDestroyAll's (the name is ours)
-    std::vector<uint> film_music_streams;
+    std::vector<int> film_music_streams;
     // 0x2fd4, 7000 from Init: the time before the player's death fades to the menu (the name is ours)
     int death_fade_time;
     S_scratch scratches[100];           // 0x2fd8 (the name is ours)
@@ -535,7 +653,7 @@ public:
     I3D_model *sheet;                   // 0x3658, 9sheet.i3d
     I3D_frame *unknown_365c;            // 0x365c
     I3D_model *money;                   // 0x3660, 9money.i3d
-    // 0x3664, set by Init: the cheat KREFJEZIVOT heals the player while it is set, and clears it (0x5a8030; the name
+    // 0x3664, set by Init: the cheat KREFJEZIVOT heals the player while it is set, and clears it (CheatKey; the name
     // is ours)
     bool heal_cheat;
     // 0x3665, the mission passed (ENDOFMISSION's with its first value, CHANGE_MISSION's), cleared by Init: the garage's
@@ -543,16 +661,20 @@ public:
     bool mission_passed;
     // The cars' sounds (TickCarSoundManager's; the names are ours): on while positive, the time left until the next
     // tick, and which of the two periods runs, 200 ms while set, else 800 ms
+    // The value of C_actor::SoundsChange that turns a car's sounds on, any other turns them off (C_car::SoundsChange;
+    // the name is ours)
+#define SOUNDS_ON 0x7b
     int car_sounds;                     // 0x3668
     int car_sounds_time;                // 0x366c
     bool car_sounds_short;              // 0x3670
     uchar unknown_3671[3];              // 0x3671
-    // 0x3674, spare buffers for the shadows' names: AddFrameForShadow (0x5ad2a0) takes the last for a name shorter than
-    // 31 characters, Done deletes them (the name is ours)
-    std::vector<uchar *> free_shadow_names;
+    // 0x3674, spare buffers for the shadows' names, of at least SHADOW_NAME_SIZE bytes: DelFrameForShadow adds the name's,
+    // AddFrameForShadow takes the last for a name that fits, Done deletes them (the names are ours)
+#define SHADOW_NAME_SIZE 32
+    std::vector<char *> free_shadow_names;
     bool item_blur;                     // 0x3684, ItemBlurTick runs while it is set (the name is ours)
     uchar unknown_3685[3];              // 0x3685
-    std::vector<S_death_human_fade> death_human_fades;  // 0x3688 (PS2's DeathHumanFade functions')
+    std::vector<S_item_blur> item_blurs;  // 0x3688 (PS2 0x156c, its ItemBlur functions'; the name is ours)
     // The inter-city's collisions, frames and their arrays, which InterCity_GameInit creates with the city's base blocks
     // (the names and types are ours)
     tDynamicCollObject **inter_city_colls;  // 0x3698
@@ -565,12 +687,7 @@ public:
     // Mission.cpp's range. The stores come in the members' order: an initializer list.
     // FUNCTION: GAME 0x5472f0
     C_game() :
-        initialized(false),
-        unknown_2eb0(0),
-        unknown_2eb8(0),
-        unknown_2ebc(0),
-        unknown_2ec0(0),
-        unknown_2ec4(false)
+        initialized(false)
     {
     }
 
@@ -647,11 +764,11 @@ public:
     // The weather (PS2 name: Czech for "deal with the weather")
     void OsefujPocasi(bool read, uint param);
     void DelAllHydrants();
-    void ClearDeathHumanFade();
-    // Takes a death fade's human back (the name is ours)
-    void RemoveDeathHumanFade(int index, bool);
+    // The items' blurs ended, and one taken away, the last one put in its place with remove (PS2 names)
+    void ItemBlurDone();
+    void ItemBlurDelItem(int index, bool remove);
     // Takes an actor out of everything that refers to it (PS2 name)
-    void InvalidateActor(C_actor *act, bool);
+    void InvalidateActor(C_actor *act, bool keep_regs);
     // A frame going away: its placements and its subtree's taken from the list (PS2 name)
     void InvalidateFrame(I3D_frame *frm);
     // The actor whose id is given, the scripts' FindActorLater's (PS2 name)
@@ -684,24 +801,34 @@ public:
     void _RemoveTemporaryActor(C_actor *act);
     void TickShoot(uint time);
     // A shot from pos along dir, which TickShoot moves (PS2 name; the vectors by value, PS2's by reference; the
-    // parameters' names are ours): true
-    bool NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int unknown1, I3D_frame *frm, int unknown2);
-    // A cartridge thrown out at the frame (PS2 name; the parameters' names are ours)
-    void NewCartidge(I3D_frame *&frm, S_vector &dir, bool unknown1, bool unknown2);
+    // parameters' names are ours): count shots (a shotgun's), the effects' particle on frm (the muzzle's); true
+    bool NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int particle, I3D_frame *frm, int count);
+    // A cartridge thrown out at the frame, a shotgun's shell with shell, or dropped along dir with drop (the
+    // revolver's cylinder emptied; PS2 name; the parameters' names are ours)
+    void NewCartidge(I3D_frame *&frm, S_vector &dir, bool shell, bool drop);
     // A track on a surface (a shot's, on the hit level's frame or NULL): the texture of track_textures' index, at pos
-    // facing normal, turned by angle (the name is PS2's, the parameters' names are ours; PS2's takes other ones)
-    void CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1, int texture,
-        bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm);
+    // facing normal, turned by angle; fitted to the surface (fit), with a collision for the steps' blood (collision),
+    // growing (grow) (PS2 name and types; the parameters' names are ours): the projector, NULL if there is none
+    I3D_frame *CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float size_rnd,
+        int texture, bool fit, float alpha, bool collision, bool grow, I3D_frame *frm);
     // The same turned by a direction instead of an angle (PS2's other overload): human_notify_callback's steps
-    void CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float unknown1,
-        int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm);
-    // A grenade of the type thrown from pos along dir, the model frm (PS2 name; the parameters' names are ours)
+    I3D_frame *CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float size_rnd,
+        int texture, bool fit, float alpha, bool collision, bool grow, I3D_frame *frm);
+    // CreateTrackEffect's helpers (the names are ours): the two axes perpendicular to a normal, the next projector, and
+    // the track fitted to the surface (inline, game.cpp)
+    void GetTangents(const S_vector &normal, S_vector &u, S_vector &v);
+    void NextTrackProjector();
+    void FitTrack(S_vector &pos, S_vector &normal);
+    // A grenade of the type from pos, the model frm or the type's own, thrown along dir where thrown is set (PS2 name;
+    // the parameters' names are ours): the grenade, NULL if it fails
 #define NEWGRENADE_GRENADE 0            // the types human_notify_callback's throw gives (the names are ours)
 #define NEWGRENADE_MOLOTOV 3
 #define NEWGRENADE_SHOT 1               // C_human::Shooting's, the Magnum's with GAMEF_GRENADE_GUN
-    void NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm);
-    // A shot's light at pos (PS2 name; the parameters' names are ours): C_human::Shooting's, 7 m for 50 ms
-    void AddShootLight(S_vector &pos, float range, int time, ushort unknown);
+#define NEWGRENADE_INCENDIARY 2         // a fire after the grenade's fuse, which no caller gives (the name is ours)
+    C_grenade *NewGrenade(int type, S_vector &pos, S_vector &dir, bool thrown, I3D_frame *frm);
+    // A shot's light at pos (PS2 name; the parameters' names are ours), SHOOTLIGHTF_*: C_human::Shooting's, 7 m for
+    // 50 ms; none if the ten are on
+    void AddShootLight(S_vector &pos, float range, int time, ushort flags);
     // A shot at a level's collision of control signals (the shot's coll, hit position, start, direction and shooter;
     // PS2 name, PS2's takes the collision as a uint *)
     void DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir, C_human *human);
@@ -723,14 +850,20 @@ public:
     void InternTempActAdd(C_actor *act);
     // The traffic generators' cars shown or hidden
     void SetTrafficVisible(bool visible);
-    // An explosion of the actor at the position (EXPLOSION's)
-    void NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float unknown2, bool unknown3, bool unknown4,
-        bool unknown5, int unknown6);
+    // An explosion of the actor at the position (EXPLOSION's, a car's, a crash object's; the parameters' names are
+    // ours): with damage the actors, the pedestrians, the glass and the crash collisions within range are hit (power
+    // at the centre), big takes the larger particle, smoke throws the smoke trails, sound is the sound table's
+    void NewExplosion(C_actor *actor, S_vector &pos, float range, float power, bool damage, bool big, bool smoke,
+        int sound);
+    // A piece thrown from an explosion at pos, one of the stones, at min_speed to max_speed (PS2 name; the parameters'
+    // names are ours): NewExplosion's smoke trails
+    void NewSmokeTrail(S_vector &pos, float min_speed, float max_speed);
     // A sound of the sound cache played at the frame (the vector by value, PS2's by reference): its number, which
     // Stop3DSound takes, -1 if it fails. With fade_in it starts silent and fades in by fade a ms (S_sound_play's).
     int Play3DSound(I3D_frame *frm, const char *name, I3D_SOUNDTYPE type, S_vector pos, float near_range,
-        float far_range, float volume, bool fade_in, float fade, bool unknown3);
-    void Stop3DSound(int sound, bool fade, float time);
+        float far_range, float volume, bool fade_in, float fade, bool loop);
+    // Stops it, fading out by speed a ms with fade, else at once
+    void Stop3DSound(int sound, bool fade, float speed);
     // The sound played as it is set up, released once it ends (PS2 name, 0x5accb0): its number, which
     // Stop3DSound takes
     int Play3DSound(I3D_sound *sound);
@@ -741,17 +874,18 @@ public:
     // The player fell into a death collision: the script's event of it fired (PS2 name, 0x5b06c0)
     void WFall_Player();
     // A shadow for the frame, type2 one of the shadow models (shadow_temp), type1 choosing the list (the cars' if not
-    // 0), replaced_frame the frame it turns off: its number, 0 if it fails (the human keeps it)
+    // 0), replaced_frame the frame it turns off: the shadow (an I3D_shadow *), 0 if it fails (the human keeps it)
     int AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
         char *name);
-    void DelFrameForShadow(I3D_frame *frm, E_shadow_type type);
-    // The frame's shadow back to the given types (PS2 name)
-    void SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2);
+    // The frame's shadow taken away: false if it has none
+    bool DelFrameForShadow(I3D_frame *frm, E_shadow_type type);
+    // The frame's shadow given another shadow model (PS2 name): false if it has none
+    bool SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2);
     // A moving collision gone: the entities that keep it forget it (PS2 name, PS2's takes a uint *)
     void InvalidateColl(tDynamicCollObject *coll);
     // The actor's lightness taken at its frame, offset by pos, and forgotten (PS2 names; the parameters' names
     // are ours): C_human::Death has its "base" frame's taken away
-    void LightnessAdd(C_actor *act, I3D_frame *frm, ushort unknown, S_vector &pos);
+    void LightnessAdd(C_actor *act, I3D_frame *frm, ushort flags, S_vector &pos);
     void LightnessDel(I3D_frame *frm);
     // The city's music (the IShow of city_music) faded out and forgotten, or paused
     void CityMusicOff();
@@ -767,7 +901,7 @@ public:
     // The frame's state kept in frame_placements, which Done puts back
     void AddFramePlacement(I3D_frame *frm);
     // SETNPCKILLEVENT's: the script, its value and the name
-    void AddNPCKillEvent(C_program *prog, int unknown, char *label);
+    void AddNPCKillEvent(C_program *prog, int event, char *name);
     void ClearProjectorsForFrame(I3D_frame *frm);
     // What the player keeps between missions (inventory_stack, float_stack, character_stack)
     void InventoryStackPush(C_human *human);
@@ -776,13 +910,27 @@ public:
     void FloatStackPop(float *f);
     void CharacterStackPush(C_human *human);
     void CharacterStackPop(C_human *human);
-    void BoxPlacementAdd(I3D_frame *frm, int unknown);
+    // PS2 names: what the scripts' FUCKINGBOX_ commands, C_human's and C_player's carrying of the boxes call
+    void BoxPlacementAdd(I3D_frame *frm, int id);
     void BoxPlacementRecompile();
-    void BoxPlacementDestAdd(I3D_frame *frm, int unknown);
+    void BoxPlacementDestAdd(I3D_frame *frm, int id);
+    void BoxPlacementReposeDestPlayer();
+    void BoxPlacement_SaveInfo(I3D_frame *frm);
+    // The last destination of the id, its index in box_dests, -1 for none (the name is ours): inline, as
+    // BoxPlacementDestSetOU shows, which compares the destinations with its copy of the box's id, not with the
+    // id it returns
+    int FindBoxDest(int id)
+    {
+        int i;
+        for (i = box_dests.size(); i--; )
+            if (id == box_dests[i]->id)
+                break;
+        return i;
+    }
     // The box the player takes (on) or puts down (PS2 name): taken, its index (C_human::box_index)
     int BoxPlacementDestSetOU(bool on, I3D_frame *frm);
     // The destination the human takes the box of the index to (PS2 name)
-    I3D_frame *BoxPlacementGetEnemyDest(C_human *human, int index);
+    I3D_frame *BoxPlacementGetEnemyDest(C_human *human, int id);
     // Where the box was taken from: false if it isn't one of the boxes (PS2 name)
     bool BoxPlacement_GetStartPoint(I3D_frame *frm, S_vector &pos);
     // The box put down at its destination dest (PS2 name)
@@ -790,11 +938,11 @@ public:
     // The box put back where it was taken from (PS2 name)
     void BoxPlacement_RestoreInfo(I3D_frame *frm);
     void BoxPlacement_DelInfo(I3D_frame *frm);
-    int BoxPlacement_GetBox(int index);
-    int BoxPlacement_GetBoxDest(int index);
-    void BoxPlacement_MoveBoxToDest(int index);
-    void BoxRecompileBoxForCar(C_car *car, bool unknown);
-    int BoxPlacementPoPiciNaZkurvenemAute(C_car *car, int unknown);
+    int BoxPlacement_GetBox(int id);
+    int BoxPlacement_GetBoxDest(int id);
+    void BoxPlacement_MoveBoxToDest(int id);
+    void BoxRecompileBoxForCar(C_car *car, bool on);
+    int BoxPlacementPoPiciNaZkurvenemAute(C_car *car, int id);
     void DeathActorAdd(C_actor *act);
     void UseLightCacheSystem();
     void RecomputeLightCache();
@@ -821,9 +969,9 @@ public:
     // the names are ours: cutscene_particles)
     void AddCutsceneParticle(int particle);
     void DestroyCutsceneParticles();
-    // A frame the scripts created (created_frames, which Done unlinks and releases), and taken from it: false if it
-    // isn't there
-    void AddCreatedFrameToVector(I3D_frame *frm);
+    // A frame the scripts created (created_frames, which Done unlinks and releases), and taken from it: false for none,
+    // a frame there already, or one that isn't there
+    bool AddCreatedFrameToVector(I3D_frame *frm);
     bool DelCreatedFrameToVector(I3D_frame *frm);
     // The score, which the HUD's bonus counter shows while it is on
     void ScoreSet(int value);
@@ -833,6 +981,33 @@ public:
     // Every global actor of ACTOR_PLAYER or ACTOR_ENTITY set up for a recording (PC only, the name is ours: RECLOAD's
     // and RECLOADFULL's)
     void RecPrepareHumans();
+
+    // The file's functions nothing written calls yet (stubs; PS2 names but where said, Unknown_<address> for those
+    // whose role isn't settled)
+    void SetHuman(C_actor *act);
+    bool CheatKey(char key);
+    // count small fires around pos (PS2 name), which the code at 0x4452bb calls
+    void NewSmallFires(S_vector &pos, int count);
+    // A fire at pos in frm's space, burning time ms (PS2 name; the parameters' names are ours, time a guess), which
+    // the code at 0x431bdb (a crash object's) and 0x4452bb calls
+    void NewFire(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3);
+    void ClearFrameFromFireHole(I3D_frame *frm);
+    void DelFramePlacement(I3D_frame *frm);
+    void Timer_TimeOut();
+    void Do_NPCKillEvent(char *label);
+    void AddDriverMan(I3D_model *model, C_car *car, int anim, bool formula);
+    void DelDriverMan(I3D_model *model);
+    void CreateTrackEffect_Grenade(S_vector &pos);
+    void DelSemaphore(I3D_frame *frm);
+    void DelTelephones(I3D_frame *frm);
+    void PauseAllSounds();
+    void PlayAllSounds(bool i_shows_too);
+    void ScratchAdd(C_car *car, I3D_frame *frm, uint part_type, const S_vector &pos, const S_vector &force);
+    void ScratchRecompile(C_car *car, I3D_frame *frm);
+    void ScratchDeleteFromCar(C_car *car);
+    int ScratchGetFreeIdx(C_car *car, I3D_frame *frm, const S_vector &pos);
+    void DelDeadHumanForTick(C_human *human);
+    void AddHydrant(I3D_frame *frm);
 
     // The name is ours. C_mission::Open sets both through one load of its game, so through a method: written out, VC6
     // reloads the pointer after the first store.
@@ -984,6 +1159,10 @@ public:
         static I3DENUMRET __stdcall cbFindTaxiPoints(I3D_frame *frm, uint user);
         static I3DENUMRET __stdcall cbTelephones(I3D_frame *frm, uint user);
         static I3DENUMRET __stdcall cbScreamArea(I3D_frame *frm, uint user);
+        // Stubs: LightnessTick's and PauseAllSounds' walks (the names are ours) and the lights of a subtree (PS2 name)
+        static void cbLightness(I3D_frame *frm, float lightness);
+        static void cbLight(I3D_frame *frm, std::vector<I3D_light *> &lights);
+        static void cbPauseSounds(I3D_frame *frm, std::vector<S_stop_sounds> &list);
         // The frame's placements and its children's taken from the list (PS2 name; PS2's is a gif::vector)
         static void cbFreeFramePlacement(I3D_frame *frm, std::vector<S_frame_placement> &list);
         // The same for InvalidateFrame (PS2 name), which walks only the children that have children of their own
@@ -1008,3 +1187,61 @@ public:
 
 // TEMPLATE: GAME 0x5bc900
 // ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
+
+// The templates and compiler-generated functions after the file's last function, in the original's order (folded
+// groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
+// ours instantiates yet, and its 0x5bcbc0 S_RoadBlock's scalar deleting destructor, which Done calls with 0 to
+// destroy the road blocks, where ours destroys them inline (Done's inline budget)
+// TEMPLATE: GAME 0x5bbbf0
+// ?size@?$vector@US_frame_placement@C_game@@V?$allocator@US_frame_placement@C_game@@@std@@@std@@QBEIXZ
+
+// TEMPLATE: GAME 0x5bbc20
+// ?clear@?$vector@US_item_blur@C_game@@V?$allocator@US_item_blur@C_game@@@std@@@std@@QAEXXZ
+
+// TEMPLATE: GAME 0x5bbc50
+// ?back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEAAUS_itm@?$C_I3D_cache@VI3D_model@@@@XZ
+
+// TEMPLATE: GAME 0x5bbc60
+// ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
+
+// TEMPLATE: GAME 0x5bbde0
+// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
+
+// TEMPLATE: GAME 0x5bbe30
+// ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
+
+// TEMPLATE: GAME 0x5bc0a0
+// ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
+
+// TEMPLATE: GAME 0x5bc0f0
+// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
+
+// TEMPLATE: GAME 0x5bc3f0
+// ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z
+
+// TEMPLATE: GAME 0x5bc700
+// ?_Ucopy@?$vector@US_frame_placement@C_game@@V?$allocator@US_frame_placement@C_game@@@std@@@std@@IAEPAUS_frame_placement@C_game@@PBU34@0PAU34@@Z
+
+// TEMPLATE: GAME 0x5bc740
+// ?_Ucopy@?$vector@US_box_placement_temp@C_game@@V?$allocator@US_box_placement_temp@C_game@@@std@@@std@@IAEPAUS_box_placement_temp@C_game@@PBU34@0PAU34@@Z
+
+// TEMPLATE: GAME 0x5bc840
+// ?copy@std@@YIPAUS_frame_placement@C_game@@PAU23@00@Z
+
+// TEMPLATE: GAME 0x5bc870
+// ?copy@std@@YIPAUS_box_placement_temp@C_game@@PAU23@00@Z
+
+// TEMPLATE: GAME 0x5bc8d0
+// ?copy@std@@YIPAUS_npc_kill_event@C_game@@PAU23@00@Z
+
+// TEMPLATE: GAME 0x5bc940
+// ?_Construct@std@@YIXPAUS_RoadBlock@C_game@@ABU23@@Z
+
+// TEMPLATE: GAME 0x5bc9e0
+// ?_Construct@std@@YIXPAUS_shoot@@ABU2@@Z
+
+// SYNTHETIC: GAME 0x5bca20
+// ??4S_RoadBlock@C_game@@QAEAAU01@ABU01@@Z
+
+// SYNTHETIC: GAME 0x5bcbc0
+// ??_GS_RoadBlock@C_game@@QAEPAXI@Z

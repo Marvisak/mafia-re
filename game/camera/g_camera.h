@@ -249,7 +249,8 @@ public:
     void InitRaceCameras();
     // The sniper camera's field of view, given to the HUD at once in CAMERA_CP_SNIPER (PS2 name)
     void SetSniperFov(float fov);
-    // The name is ours: its copy is in game.cpp's range
+    // The name is ours: its copy is in game.cpp's range (C_game::Init, its only caller)
+    // FUNCTION: GAME 0x5b4550
     void SetModeChanged()
     {
         mode_changed = true;
@@ -270,7 +271,7 @@ public:
 // GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
-// ?GetTextID@GM_Component@@UAEIXZ
+// ?GetCar@G_Camera@@QBEPAVC_car@@XZ
 
 // The dialog's list's size, which DialogStart calls out of line: the original kept the copy of the range at 0x401030
 // (docs/game-files.md) of the folded group of the vectors of 0x14-byte elements, named after the copy our linker keeps

@@ -114,6 +114,12 @@ public:
     static void PlayerHoMaVytaseneho();
     // Gives a pedestrian of that model, or the actor, to the generators (PS2 name; the bool's name is ours)
     static void AddFreePerson(I3D_model *model, C_actor *act, bool unknown);
+    // The pedestrians within range of an explosion at pos hit (PS2 name; the parameters' names are ours), which
+    // C_game::NewExplosion calls
+    static void Explosion(S_vector &pos, float range, float power);
+    // The pedestrians' panic at a shot or an explosion at pos (PS2 name), which C_game's NewShoot, NewExplosion and
+    // NewFire call
+    static void NewPanic(S_vector &pos);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): NPC_SHUTUP's
     // FUNCTION: GAME 0x47b780

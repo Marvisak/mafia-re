@@ -1203,3 +1203,30 @@ void C_sledovacka::SetActionStatus(C_car *car, E_STATUS status)
 {
     StubLog("C_sledovacka::SetActionStatus");
 }
+
+// STUB: GAME 0x4a8790
+void C_sledovacka::VypicujMiToyotu(C_actor *act)
+{
+    StubLog("C_sledovacka::VypicujMiToyotu");
+}
+
+// STUB: GAME 0x4a8940
+int C_sledovacka::SaveGameGetSize()
+{
+    StubLog("C_sledovacka::SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x4a8a50
+bool C_sledovacka::SaveGameSave(void **buf)
+{
+    StubLog("C_sledovacka::SaveGameSave");
+    return true;
+}
+
+// STUB: GAME 0x4a8fa0
+bool C_sledovacka::SaveGameLoad(void **buf)
+{
+    StubLog("C_sledovacka::SaveGameLoad");
+    return true;
+}

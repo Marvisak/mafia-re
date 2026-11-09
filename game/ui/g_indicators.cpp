@@ -426,6 +426,14 @@ void G_IndicatorsClass::TimerSetInterval(uint interval)
     timer_seconds.value = -1.0f;
 }
 
+// FUNCTION: GAME 0x5f75f0
+void G_IndicatorsClass::TimerGetTime(uint *hour, uint *minute, uint *second)
+{
+    *hour = timer_hour;
+    *minute = timer_minute;
+    *second = timer_second;
+}
+
 // FUNCTION: GAME 0x5f7620
 void G_IndicatorsClass::TimerGetInterval(uint *interval)
 {

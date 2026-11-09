@@ -33,6 +33,7 @@ add_executable(game WIN32
     ai/C_driver.cpp
     actors/C_drop_in_weapon.cpp
     input/C_ff_manager.cpp
+    actors/C_grenade.cpp
     actors/C_irenka.cpp
     mission/C_Particle.cpp
     mission/C_ParticleEmitter.cpp
@@ -176,17 +177,32 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Do_CornerFireAimed@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Force_CanWorking@C_human@@QAEXXZ
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
-    # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage and the cheats' SetBoxer
-    # (C_game's, 0x5a8030)
-    target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z
-        /INCLUDE:?SetBoxer@C_player@@QAEX_N@Z)
-    # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
+    # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
+    target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
     # (g_c_glob.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)
-    # The bottles' AbsoluteImpulse, which C_game's NewExplosion, NewCartidge and NewGrenade call (C_bottle.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?AbsoluteImpulse@C_bottle@@QAEXAAUS_vector@@@Z)
+    # game.cpp's functions that nothing written calls yet (the racing's, the scripts', the effects', the vehicles'),
+    # with the functions only they call (C_bridge::SetTitanic, C_fire, DabingPauseSounds)
+    target_link_options(game PRIVATE
+        /INCLUDE:?SetHuman@C_game@@QAEXPAVC_actor@@@Z
+        /INCLUDE:?CheatKey@C_game@@QAE_ND@Z
+        /INCLUDE:?NewSmallFires@C_game@@QAEXAAUS_vector@@H@Z
+        /INCLUDE:?NewFire@C_game@@QAEXAAUS_vector@@PAVI3D_frame@@HMM_N@Z
+        /INCLUDE:?ClearFrameFromFireHole@C_game@@QAEXPAVI3D_frame@@@Z
+        /INCLUDE:?DelFramePlacement@C_game@@QAEXPAVI3D_frame@@@Z
+        /INCLUDE:?Timer_TimeOut@C_game@@QAEXXZ
+        /INCLUDE:?Do_NPCKillEvent@C_game@@QAEXPAD@Z
+        /INCLUDE:?AddDriverMan@C_game@@QAEXPAVI3D_model@@PAVC_car@@H_N@Z
+        /INCLUDE:?DelDriverMan@C_game@@QAEXPAVI3D_model@@@Z
+        /INCLUDE:?DelSemaphore@C_game@@QAEXPAVI3D_frame@@@Z
+        /INCLUDE:?DelTelephones@C_game@@QAEXPAVI3D_frame@@@Z
+        /INCLUDE:?PauseAllSounds@C_game@@QAEXXZ
+        /INCLUDE:?PlayAllSounds@C_game@@QAEX_N@Z
+        /INCLUDE:?ScratchAdd@C_game@@QAEXPAVC_car@@PAVI3D_frame@@IABUS_vector@@2@Z
+        /INCLUDE:?ScratchRecompile@C_game@@QAEXPAVC_car@@PAVI3D_frame@@@Z
+        /INCLUDE:?ScratchGetFreeIdx@C_game@@QAEHPAVC_car@@PAVI3D_frame@@ABUS_vector@@@Z
+        /INCLUDE:?AddHydrant@C_game@@QAEXPAVI3D_frame@@@Z)
     # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the AI's, the animations'), and the records'
     # walk (C_cutscene_records.cpp), which the recorder's saves call
     target_link_options(game PRIVATE

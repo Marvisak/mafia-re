@@ -76,6 +76,8 @@ public:
     void Tick(uint time);
     // PS2 names: a car taken from the chases (CAR_REMOVE_DRIVER's), and a car's action
     void RemoveCar(C_car *car);
+    // A car gone, taken from the chases (PS2 name, Czech slang), which C_game::InvalidateActor calls for a car
+    void VypicujMiToyotu(C_actor *act);
     // PS2 names: a car sent after the target or to the place, false without a car (PS2's AddCarMoveTo takes a float
     // more), and the status of its chase, STATUS_* (the element's, STATUS_DONE for a car without one; unsigned:
     // ai_follow_manager::Update's switch compares it so). Update calls them for a group's car.
@@ -83,15 +85,20 @@ public:
     bool AddCarMoveTo(C_car *car, const S_vector &pos, bool unknown, bool unknown2, uint unknown3);
     uint ActionStatus(C_car *car);
     void SetActionStatus(C_car *car, E_STATUS status);
+    // The chases in a saved game (PS2 names), which C_game's SaveGame functions call: the save and the load false
+    // where they fail
+    int SaveGameGetSize();
+    bool SaveGameSave(void **buf);
+    bool SaveGameLoad(void **buf);
 };
 
 // What Init's inlined push_back calls out of line: the bridges' _Ucopy and _Ufill, folded with other vectors' of 8-byte
 // elements (the original kept g_indicators.cpp's copies)
 // TEMPLATE: GAME 0x604dd0
-// ?_Ucopy@?$vector@US_anim_info@@V?$allocator@US_anim_info@@@std@@@std@@IAEPAUS_anim_info@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@IAEPAUS_cache_model_one@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604e00
-// ?_Ufill@?$vector@US_anim_info@@V?$allocator@US_anim_info@@@std@@@std@@IAEXPAUS_anim_info@@IABU3@@Z
+// ?_Ufill@?$vector@US_shadow_temp@C_game@@V?$allocator@US_shadow_temp@C_game@@@std@@@std@@IAEXPAUS_shadow_temp@C_game@@IABU34@@Z
 
 // What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
 // TEMPLATE: GAME 0x4a9940

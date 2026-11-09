@@ -308,6 +308,12 @@ void C_traffic_generator::ClearElements()
     anims.clear();
 }
 
+// STUB: GAME 0x450450
+void C_traffic_generator::Explosion(S_vector &pos, float range, float power)
+{
+    StubLog("C_traffic_generator::Explosion");
+}
+
 // The active pedestrians taken out of the game, from the last one
 // FUNCTION: GAME 0x450860
 void C_traffic_generator::FreeDynCollElements()
@@ -317,6 +323,12 @@ void C_traffic_generator::FreeDynCollElements()
         if (array[i]->active)
             array[i]->Deactivate();
     }
+}
+
+// STUB: GAME 0x4509d0
+void C_traffic_generator::NewPanic(S_vector &pos)
+{
+    StubLog("C_traffic_generator::NewPanic");
 }
 
 // STUB: GAME 0x450f00

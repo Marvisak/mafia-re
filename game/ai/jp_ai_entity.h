@@ -199,6 +199,8 @@ public:
     void WeaponGetInfo();
     // Forgets what the entity's AI keeps of its model (PS2 name), which C_human::_intern_ChangeModel calls
     void InvalidateSelf();
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void InvalidateActor(C_actor *act);
     // Gives the game its action button object (PS2 name)
     void AddUsingObject();
     // PS2 names: the fights' Tick locks a substate with its member's state and passes the target's ai_blob through

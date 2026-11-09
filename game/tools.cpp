@@ -110,10 +110,24 @@ void C_compass::Activate(I3D_frame *frm)
     frame = frm;
 }
 
+// FUNCTION: GAME 0x55d880
+C_fire::C_fire()
+{
+    unknown_1c = 0;
+    unknown_20 = 200;
+}
+
 // STUB: GAME 0x55d8a0
 C_fire::~C_fire()
 {
     StubLog("C_fire::~C_fire");
+}
+
+// STUB: GAME 0x55d8d0
+void C_fire::Init(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2,
+    bool unknown3)
+{
+    StubLog("C_fire::Init");
 }
 
 // STUB: GAME 0x55da80
@@ -420,4 +434,31 @@ void C_using_object::FindNearObjects(const S_vector &pos, const S_vector &dir,
     std::vector<S_GameItem> &items, I3D_frame *sector)
 {
     StubLog("C_using_object::FindNearObjects");
+}
+
+// STUB: GAME 0x55fd10
+void soundArena::InvalidateActor(C_actor *act)
+{
+    StubLog("soundArena::InvalidateActor");
+}
+
+// STUB: GAME 0x55e660
+int C_using_object::SaveGameGetSize()
+{
+    StubLog("C_using_object::SaveGameGetSize");
+    return 0;
+}
+
+// STUB: GAME 0x55e6e0
+bool C_using_object::SaveGameSave(void **buf)
+{
+    StubLog("C_using_object::SaveGameSave");
+    return true;
+}
+
+// STUB: GAME 0x55e980
+bool C_using_object::SaveGameLoad(void **buf)
+{
+    StubLog("C_using_object::SaveGameLoad");
+    return true;
 }

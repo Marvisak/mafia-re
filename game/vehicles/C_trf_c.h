@@ -44,6 +44,8 @@ public:
     // A count of the traffic's down by one, at least 0 (PS2 name, Czech slang; static: C_shvestky::TickDoRiciActors
     // calls it with nothing in ecx, PS2's with nothing in a0)
     static void ChlupatejVystrik();
+    // The traffic's cars hidden or shown (PS2 name, Czech slang; static, the bool in cl): C_game::SetTrafficVisible's
+    static void Scipni(bool hide);
     // The model of a traffic car's driver the player throws out of the car (PS2 name, Czech), which the traffic
     // gives up, NULL for a car not of the traffic's (static: the car in ecx)
     static I3D_frame *Corovacka(C_car *car);

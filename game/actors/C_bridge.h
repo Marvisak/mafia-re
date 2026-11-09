@@ -35,6 +35,9 @@ public:
 
     // The bridge shut down or not (PS2 name): the flag stored, the bridge's collision taken from the game's
     void ShutDown(bool shut);
+    // Leonardo (Tommy.i3d) and Kate (czena06.i3d) put on the boat's bow, or taken off (PC only, the name is ours):
+    // the cheat PARNIK's (GAMEF_TITANIC)
+    void SetTitanic(bool on);
 
     uchar unknown_70[0xd4];             // 0x70
     int unknown_144;                    // 0x144, 3 to 5 while a human's car can be on it most likely

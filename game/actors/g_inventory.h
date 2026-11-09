@@ -65,6 +65,24 @@ public:
     {
         Clear();
     }
+    // A copy of the inventory's items, not of its cycle (C_game::InventoryStackPush's, as PS2's): the copy's cycle is
+    // Clear's
+    G_Inventory(const G_Inventory &inv)
+    {
+        Clear();
+        can_have_big_weapon = inv.can_have_big_weapon;
+        in_car = inv.in_car;
+        num_items = inv.num_items;
+        right_hand = inv.right_hand;
+        int i;
+        for (i = 0; i < INVENTORY_POCKETS; i++)
+            pockets[i] = inv.pockets[i];
+        big_weapon = inv.big_weapon;
+        for (i = 0; i < INVENTORY_ITEMS; i++)
+            items[i] = inv.items[i];
+        car_item = inv.car_item;
+        messages = inv.messages;
+    }
 
     // PS2 names, which the script calls; the parameters' names are ours. The items the hands drop go into the vector.
     // Selects the item for the hand
@@ -188,4 +206,4 @@ public:
 // The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
 // 0x438f00 of its folded group
 // TEMPLATE: GAME 0x438f00
-// ?insert@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEXPAUS_GameItem@@IABU3@@Z
+// ?insert@?$vector@US_i_show_fade@C_game@@V?$allocator@US_i_show_fade@C_game@@@std@@@std@@QAEXPAUS_i_show_fade@C_game@@IABU34@@Z

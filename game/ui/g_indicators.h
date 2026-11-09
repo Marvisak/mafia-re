@@ -345,6 +345,8 @@ public:
     void TimerSetInterval(uint interval);
     // The interval in seconds (PS2 name)
     void TimerGetInterval(uint *interval);
+    // The clock's time, TimerSetTime's (PS2 name)
+    void TimerGetTime(uint *hour, uint *minute, uint *second);
     // A needle's corners for its value, on the dial at pos (PS2's name: "compute the needle")
     void _SpocitejRafiku2(G_RafickaDef *def, G_RafickaValue *value, S_vector2 &pos, TLVERTEX *verts);
     // The player's panel, quads added to verts from *count on, which they advance (PS2's names: "add the wingman's

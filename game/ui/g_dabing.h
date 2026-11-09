@@ -85,8 +85,16 @@ void DabingDone();
 // type and range), and whether the channel still speaks
 int DabingGetFreeChanel();
 void DabingSetHuman(int chanel, C_human *human);
+// The channels forget a human (PS2 name), which C_game::InvalidateActor calls
+void DabingInvalidate(C_human *human);
 void DabingSpeak(int chanel, uint speech, bool subtitle, uint kind);
 bool DabingIsSpeaking(int chanel);
+// The channels' sounds paused, or played again (PS2 name; PS2's ignores the second parameter, the names are ours),
+// which C_game::PauseAllSounds and PlayAllSounds call
+void DabingPauseSounds(bool pause, bool unknown);
+// The channel's speech ended, its sound stopped (PS2 name), but a scene sound's (DABING_STATE_SCENE_SOUND), which
+// C_game::DeathHumanTalk calls
+void DabingStop(int chanel);
 // The channels' speech and the faces' morphs moved on by the time passed, which C_game::Tick calls (PS2 name)
 void DabingTick(uint time);
 // Each channel's face gets its weights back, in each of three regions the first level 1, the other four 0; then the

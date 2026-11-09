@@ -1,30 +1,21 @@
-// The game of the loaded mission (PS2 game.cpp; the PC's file is the one at 0x5a0760-0x5bcc0c, docs/game-files.md).
-// Written so far: Init, which main calls, and Done and DoneIntern, which C_mission::Close calls, with the file's static
-// helpers they call and the functions of the game they call that the main menu's run reaches (the shadows' models,
-// ClearDiffData, the semaphores, the city's music areas, the road blocks, the taxis' stops, the telephones, the traffic
-// signs, the scream areas, the weather, the inter-city boxes, GlobalProgramRun, and the Clear functions); the stacks'
-// Clear functions, which the destructor calls (the constructor and the destructor are game.h's), IShowSetVolume, which
-// the profiles call, ScoreSetOn, LightnessClear and EntityBlock, which C_recorder::Close calls, and ScoreSet, which the
-// scripts call; Tick, which C_mission::Tick runs every frame of the main menu, with PS2's functions it inlines (its
-// TickEffects, ShootLightTick, LightCacheTick, TickHydrant, TickCityMusic and TickDriverMan, inline here, defined before
-// it), TickShoot, the shots in flight, and DoubleKiss, the guns on the player's car (dead code on the PC), which Tick
-// calls every frame, CreateIShow, OpenIShow, GetIShow, IShowStoreVolume and IShowLoop, the streams the city's music and
-// the scripts play, CityMusicOff, which the scripts call, and ChangeActState, which Init and Tick call once an actor's
-// state has changed. Stubs: what the run doesn't reach
-// (PrepareBaseBlocks and the inter-city boxes' helper, both behind the base blocks, which stay closed while
-// C_cache_base_block::Open is a stub; InvalidateActor, BoxPlacementDel, RemoveDeathHumanFade),
-// the other functions the scripts call (C_program::Process, the streams' others), what DoubleKiss calls (NewShoot,
-// NewCartidge), and what Tick calls out of line when their lists or flags are set (FindActorsVect,
-// TickDeadHumanForTick, DeathActorProcess, _RemoveTemporaryActor, ItemBlurTick, TickScreamAreas, TickCarSoundManager
-// and LightnessTick).
-// Open: the consoles' globals (0x647a74, 0x647ab0) are here for now; Init, Done, DoneIntern and Tick aren't matched yet.
-// Tick's remaining differences are mostly registers and the inline budget: the original calls TickEffects' size() and
-// the second clear()'s std::copy out of line, but inlines the second clear()'s erase and the city music's i_shows.size().
-// The speed (player_speed) is the Magnitude of a named difference, whose squares the original sums x, z, y (a nested
-// Square() most likely, which the engine's Magnitude doesn't have), and the city music reads the area's two letters
-// through a pointer it advances (add eax, 11), where ours folds the offset. TickShoot's remaining differences are
-// registers and its sorted frame (frm at 0xc8, the original's 0x2c), and the order of the x87 loads in two Normalize
-// copies and in the hole's position.
+// The game of the loaded mission (PS2 game.cpp; the PC's file is the one at 0x5a0760-0x5bcc0c, docs/game-files.md),
+// written whole: the game's Init, Done and Tick, the shots, explosions, fires and grenades, the tracks, the 3D sounds,
+// the shadows, the film music and the videos, the diff data, the temporary actors, the cheats, the frame placements,
+// the scripts' events, the stacks the player keeps between missions, the box placements, the saved game's record, the
+// lightness and the lights, the talks, the scratches on the cars, the dead humans, the hydrants, the cars' sounds, the
+// item blur and the inter-city boxes, in the original's order; PS2's names but where said.
+// Open: the consoles' globals (0x647a74, 0x647ab0) are here for now; the templates after the file's last function
+// (0x5bbbf0-0x5bcbc0) aren't annotated yet. Init's remaining differences are the inline budget (about 60 statements'
+// worth of pending inline calls before its first anim cache Create, which its early erases and the push_back of
+// I3D_frame pointers, 0x546ef0, the original calls out of line, would take) and with it its frame (0xe8, the
+// original's 0xc8). cbLight, cbPauseSounds and TickCarSoundManager each lack one pending inline call after their
+// push_back (the original calls its insert out of line). Tick's remaining differences are mostly registers and the
+// inline budget: the original calls TickEffects' size() and the second clear()'s std::copy out of line, but inlines the
+// second clear()'s erase and the city music's i_shows.size(). The speed (player_speed) is the Magnitude of a named
+// difference, whose squares the original sums x, z, y (a nested Square() most likely, which the engine's Magnitude
+// doesn't have), and the city music reads the area's two letters through a pointer it advances (add eax, 11), where
+// ours folds the offset. TickShoot's remaining differences are registers and its sorted frame (frm at 0xc8, the
+// original's 0x2c), and the order of the x87 loads in two Normalize copies and in the hole's position.
 
 #include "mission/game.h"
 #include "mission/Mission.h"
@@ -34,10 +25,13 @@
 #include "mission/m_cache.h"
 #include "actors/C_actor.h"
 #include "actors/C_animations.h"
+#include "actors/C_bridge.h"
 #include "actors/C_cartridge.h"
 #include "actors/C_crash_obj.h"
+#include "actors/C_detector.h"
 #include "actors/C_dog.h"
 #include "actors/C_door.h"
+#include "actors/C_grenade.h"
 #include "actors/C_human.h"
 #include "actors/C_player.h"
 #include "actors/C_public_physics.h"
@@ -57,12 +51,14 @@
 #include "ui/g_textdb.h"
 #include "ui/racing.h"
 #include "vehicles/C_car.h"
+#include "vehicles/C_railway.h"
 #include "vehicles/C_trf_c.h"
 #include "vehicles/C_Vehicle.h"
 #include "g_material.h"
 #include "I3D_cache.h"
 #include "stub.h"
 
+#include <float.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -110,9 +106,9 @@ const char *hole_model_names[3] = {
 // The file's static helpers, defined after Init (where VC6 puts a static function it doesn't inline: after its first
 // caller)
 static void _show_progress_(float f);
-static void PrepareBaseBlocks();
-static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_matrix *inv_matrices, int *n,
-    I3D_frame **frames, S_vector pos, S_vector axis, float angle, S_vector scale);
+static void AddCheatCarDetector();
+// NewExplosion's, defined after it
+static void _explosion(C_actor *act, float dist2, C_actor *exploder, S_vector &pos, float range, float power);
 
 // The shadows' tick (PS2 name; PS2's is empty): at each period it sorts the next of the two lists by the distance from a
 // point ahead of the camera, and puts the shadows' models on the nearest ones, as many as the video options allow
@@ -225,13 +221,13 @@ inline void C_game::SetActiveTrafficP(uint time)
 inline void C_game::PreloadAnims()
 {
     timeGetTime();
-    for (S_anim_info *a = _anim_info_; a->id != 0xffff; a++)
+    for (int i = 0; _anim_info_[i].id != 0xffff; i++)
     {
         const char *name;
-        if (strchr(a->name, '?'))
+        if (strchr(_anim_info_[i].name, '?'))
         {
             char buf[128];
-            strcpy(buf, a->name);
+            strcpy(buf, _anim_info_[i].name);
             char *side = strchr(buf, '?');
             *side = 'L';
             S_hlp::PreloadAnim(buf);
@@ -239,11 +235,22 @@ inline void C_game::PreloadAnims()
             name = buf;
         }
         else
-            name = a->name;
+            name = _anim_info_[i].name;
         S_hlp::PreloadAnim(name);
     }
     if (!C_animations_machine_de_luxe::base_track)
         C_animations_machine_de_luxe::base_track = C_animations_machine_de_luxe::tracks.size();
+}
+
+// The human the camera follows: the player or an entity, the camera given him too (PS2 name)
+// FUNCTION: GAME 0x5a07e0
+void C_game::SetHuman(C_actor *act)
+{
+    if (act && (act->type == ACTOR_PLAYER || act->type == ACTOR_ENTITY))
+    {
+        camera_human = (C_human *)act;
+        camera.SetPlayer(camera_human);
+    }
 }
 
 // PS2 has two bools, loads the mission's collisions itself and preloads more; false if it was done already
@@ -254,13 +261,13 @@ bool C_game::Init()
         return false;
     mission_passed = false;
     car_sounds = 0;
-    weather_on = act_mission->scene->GetWeatherSystemParam(WS_PARAM_ON) != 0;
-    weather_count = act_mission->scene->GetWeatherSystemParam(WS_PARAM_COUNT);
+    weather_on = act_mission->GetScene()->GetWeatherSystemParam(WS_PARAM_ON) != 0;
+    weather_count = act_mission->GetScene()->GetWeatherSystemParam(WS_PARAM_COUNT);
     weather_buffer = -1;
     if (isound)
     {
         isound->SetVolume(0.0f);
-        act_mission->scene->Render();
+        act_mission->GetScene()->Render();
         act_mission->restore_volume = true;
     }
     stop_sounds.clear();
@@ -271,7 +278,7 @@ bool C_game::Init()
     score = 0;
     camera_rot_repair = false;
     heal_cheat = true;
-    shvestky.unknown_ac = true;
+    stacks_clear = true;
     death_fade_time = 7000;
     actor_lightness = false;
     unknown_140.clear();
@@ -286,7 +293,7 @@ bool C_game::Init()
     {
         C_Vehicle::v_light_sector.clear();
         C_Vehicle::v_sound_sector.clear();
-        S_hlp::cbEnumSectors(act_mission->scene->primary_sector);
+        S_hlp::cbEnumSectors(act_mission->GetScene()->primary_sector);
     }
     C_public_physics::unknown_63d78c.clear();
     strcpy(cheat_keys, "");
@@ -382,7 +389,7 @@ bool C_game::Init()
     console_2.lines = 20;
     ConsoleReg(&console_2, CONREG_CLEAR | CONREG_RENDER);
     AIManager.segments.Load();
-    ff_manager.unknown_74 = false;
+    ActiveNewMission = false;
     if (intern_load)
     {
         C_car::LoadTyres();
@@ -505,12 +512,12 @@ bool C_game::Init()
     _show_progress_(.1f);
 
     // The player: the last of the players that isn't a cutscene's
-    std::vector<C_actor *> &actors = act_mission->actors;
+    std::vector<C_actor *> &actors = act_mission->GetActors();
     player = NULL;
     int i;
     for (i = actors.size(); i--;)
     {
-        if (actors[i]->type == ACTOR_PLAYER && !(actors[i]->act_flags & ACTF_CUTSCENE))
+        if (actors[i]->GetType() == ACTOR_PLAYER && !(actors[i]->GetActFlags() & ACTF_CUTSCENE))
         {
             player = (C_human *)actors[i];
             break;
@@ -518,14 +525,14 @@ bool C_game::Init()
     }
     for (i = actors.size(); i--;)
     {
-        if (actors[i]->type == ACTOR_CAR)
+        if (actors[i]->GetType() == ACTOR_CAR)
             mafiaIndicators.RadarAddCar((C_car *)actors[i], (uint)-1);
     }
-    I3D_camera *cam = act_mission->scene->current_camera;
+    I3D_camera *cam = act_mission->GetScene()->GetActiveCamera();
     player_pos = S_vector(0.0f, 0.0f, 0.0f);
     if (player)
     {
-        I3D_frame *frm = player->frame;
+        I3D_frame *frm = player->GetFrame();
         if (frm)
             player_pos = frm->GetWorldPos();
     }
@@ -535,13 +542,11 @@ bool C_game::Init()
     // The camera behind the player
     if (player && cam)
     {
-        I3D_frame *frm = player->frame;
+        I3D_frame *frm = player->GetFrame();
         S_vector pos = frm->GetPos();
         S_vector dir = frm->GetDir();
         cam->SetDir(dir, 0.0f);
-        S_vector p = pos - (dir + dir);
-        p.y += 2.0f;
-        cam->SetPos(p);
+        cam->SetPos(pos - dir * 2.0f + S_vector(0.0f, 2.0f, 0.0f));
         cam->Update();
     }
     camera_human = player;
@@ -551,7 +556,7 @@ bool C_game::Init()
     C_traffic_generator::ClearElements();
     for (i = actors.size(); i--;)
     {
-        if (actors[i]->type == ACTOR_DOOR)
+        if (actors[i]->GetType() == ACTOR_DOOR)
             ((C_door *)actors[i])->ResetUnknown110();
     }
 
@@ -566,13 +571,13 @@ bool C_game::Init()
         memset(holes, 0, sizeof(holes));
         memset(scratches, 0, sizeof(scratches));
     }
-    for (i = 0; i < (int)actors.size(); i++)
+    for (i = 0; i < actors.size(); i++)
     {
-        if (act_mission->FrmActBuff_IsActiveActor(actors[i]))
-            actors[i]->SetActState(ACTSTATE_ACTIVE);
-        else
+        if (!act_mission->FrmActBuff_IsActiveActor(actors[i]))
             actors[i]->GameInit();
-        if (actors[i]->type == ACTOR_CAR)
+        else
+            actors[i]->SetActState(ACTSTATE_ACTIVE);
+        if (actors[i]->GetType() == ACTOR_CAR)
             ((C_car *)actors[i])->CalmVehicle(20);
         if (++count >= every)
         {
@@ -588,12 +593,11 @@ bool C_game::Init()
     if (act_state_changed)
         ChangeActState();
     InterCity_GameInit();
-    traffic_timer.time = 0;
-    traffic_timer.period = 6000;
+    traffic_timer.Reset(6000);
     SetActiveTrafficP(traffic_timer.period + 1);
     fires.clear();
     camera.Reset();
-    camera.SetCamera(act_mission->scene->current_camera);
+    camera.SetCamera(act_mission->GetScene()->GetActiveCamera());
     camera.SetPlayer(player);
     if (anim_preload)
         PreloadAnims();
@@ -624,8 +628,7 @@ bool C_game::Init()
     LoadScreamAreas();
     scream_areas_time = -1;
     camera_scream_areas = 1;
-    shadow_timer.time = 0;
-    shadow_timer.period = 823;
+    shadow_timer.Reset(823);
     human_shadows_next = true;
     TickShadows(shadow_timer.period + 1);
     _show_progress_(.7f);
@@ -702,10 +705,9 @@ bool C_game::Init()
             p.frame = driver->CreateVisual(I3D_VISUAL_PROJECTOR);
             if (p.frame)
             {
-                I3D_projector *proj = (I3D_projector *)p.frame;
-                proj->SetOn(false);
-                proj->SetMode((PROJECTOR_MODE)1);
-                proj->SetOrthogonal(true);
+                p.frame->SetOn(false);
+                ((I3D_projector *)p.frame)->SetMode(PROJECTOR_MODE_BLEND);
+                ((I3D_projector *)p.frame)->SetOrthogonal(true);
             }
         }
         for (i = 100; i--;)
@@ -716,10 +718,9 @@ bool C_game::Init()
             p.frame = driver->CreateVisual(I3D_VISUAL_PROJECTOR);
             if (p.frame)
             {
-                I3D_projector *proj = (I3D_projector *)p.frame;
-                proj->SetOn(false);
-                proj->SetMode((PROJECTOR_MODE)1);
-                proj->SetOrthogonal(true);
+                p.frame->SetOn(false);
+                ((I3D_projector *)p.frame)->SetMode(PROJECTOR_MODE_BLEND);
+                ((I3D_projector *)p.frame)->SetOrthogonal(true);
             }
         }
         _show_progress_(.78f);
@@ -737,20 +738,23 @@ bool C_game::Init()
                     mod->GetChild(0)->GetType() == FRAME_VISUAL)
                 {
                     I3D_frame *vis = mod->GetChild(0);
-                    for (i = 0; i < 32; i++)
+                    if (vis)
                     {
-                        I3D_frame *obj = driver->CreateVisual(I3D_VISUAL_OBJECT);
-                        if (!obj)
-                            continue;
-                        obj->Duplicate(vis);
-                        C_stone *stone = new C_stone;
-                        if (!stone->Init(obj))
-                            stone->Release();
-                        else
+                        for (i = 0; i < 32; i++)
                         {
-                            obj->SetOn(false);
-                            stone->GameInit();
-                            stones[i] = stone;
+                            I3D_frame *obj = driver->CreateVisual(I3D_VISUAL_OBJECT);
+                            if (!obj)
+                                continue;
+                            obj->Duplicate(vis);
+                            C_stone *stone = new C_stone;
+                            if (stone->Init(obj))
+                            {
+                                obj->SetOn(false);
+                                stone->GameInit();
+                                stones[i] = stone;
+                            }
+                            else
+                                stone->Release();
                         }
                     }
                 }
@@ -781,13 +785,13 @@ bool C_game::Init()
                                 continue;
                             obj->Duplicate(line);
                             C_cartridge *c = new C_cartridge;
-                            if (!c->Init(obj))
-                                c->Release();
-                            else
+                            if (c->Init(obj))
                             {
                                 c->GameInit();
                                 cartridges[i] = c;
                             }
+                            else
+                                c->Release();
                         }
                     }
                 }
@@ -814,13 +818,13 @@ bool C_game::Init()
                                 continue;
                             obj->Duplicate(line);
                             C_cartridge *c = new C_cartridge;
-                            if (!c->Init(obj))
-                                c->Release();
-                            else
+                            if (c->Init(obj))
                             {
                                 c->GameInit();
                                 cartridges_b[i] = c;
                             }
+                            else
+                                c->Release();
                         }
                     }
                 }
@@ -831,10 +835,10 @@ bool C_game::Init()
 
         // The holes: a dUra_fiRe of each model, and the copies that are shown
         hole_models.clear();
-        for (const char **name = hole_model_names; name < hole_model_names + 3; name++)
+        for (i = 0; i < 3; i++)
         {
             I3D_model *mod = (I3D_model *)driver->CreateFrame(FRAME_MODEL);
-            const char *n = *name;
+            const char *n = hole_model_names[i];
             if (model_cache.Open(mod, n, 0, NULL, NULL, NULL) == I3D_OK)
             {
                 // STRING: GAME 0x6371a8
@@ -905,30 +909,30 @@ bool C_game::Init()
         if (sheet)
         {
             // STRING: GAME 0x636164
-            if (!model_cache.Open(sheet, "9sheet.i3d", 0, NULL, NULL, NULL))
-            {
-                C_actor::DebustizeFrame(sheet);
-                C_actor::NoShadowFrame(sheet);
-            }
-            else
+            if (model_cache.Open(sheet, "9sheet.i3d", 0, NULL, NULL, NULL) != I3D_OK)
             {
                 sheet->Release();
                 sheet = NULL;
+            }
+            else
+            {
+                C_actor::DebustizeFrame(sheet);
+                C_actor::NoShadowFrame(sheet);
             }
         }
         money = (I3D_model *)driver->CreateFrame(FRAME_MODEL);
         if (money)
         {
             // STRING: GAME 0x636158
-            if (!model_cache.Open(money, "9money.i3d", 0, NULL, NULL, NULL))
-            {
-                C_actor::DebustizeFrame(money);
-                C_actor::NoShadowFrame(money);
-            }
-            else
+            if (model_cache.Open(money, "9money.i3d", 0, NULL, NULL, NULL) != I3D_OK)
             {
                 money->Release();
                 money = NULL;
+            }
+            else
+            {
+                C_actor::DebustizeFrame(money);
+                C_actor::NoShadowFrame(money);
             }
         }
     }
@@ -978,7 +982,7 @@ bool C_game::Init()
         camera.Tick(1);
         base_cache.Tick(0xfffffff);
         act_mission->FinishTimeTransparentObjects();
-        PrepareBaseBlocks();
+        AddCheatCarDetector();
     }
     initialized = true;
     OsefujPocasi(false, (uint)-1);
@@ -988,7 +992,7 @@ bool C_game::Init()
         ((C_player *)player)->fade_target = 1.0f;
         ((C_player *)player)->SetAlpha(1.0f);
     }
-    death_human_fades.clear();
+    item_blurs.clear();
     item_blur = false;
     act_mission->FrmActBuff_ClearAll();
     igraph->ResetRenderProps();
@@ -1035,11 +1039,32 @@ static void _show_progress_(float f)
     }
 }
 
-// Called at Init's end when the city's base blocks are open (the name is ours)
-// STUB: GAME 0x5a3990
-static void PrepareBaseBlocks()
+// The developers' car (the name is ours): a detector in the city, a box of 1 x 1 x 1 at -1517, 9.5, -294.7, whose script
+// waits for a hit, fades the screen out and runs DAN_INTERNAL_1, which puts a Thunderbird at a place of the city (see
+// C_program::Process). The detector owns its frame and is the game's temporary actor
+// FUNCTION: GAME 0x5a3990
+static void AddCheatCarDetector()
 {
-    StubLog("PrepareBaseBlocks (0x5a3990)");
+    I3D_dummy *frm = (I3D_dummy *)driver->CreateFrame(FRAME_DUMMY);
+    if (!frm)
+        return;
+    C_detector *det = new C_detector;
+    if (!det)
+    {
+        frm->Release();
+        return;
+    }
+    frm->SetBBox(I3D_bbox(S_vector(-.5f, -.5f, -.5f), S_vector(.5f, .5f, .5f)));
+    frm->SetPos(-1517.0f, 9.5f, -294.7f);
+    frm->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+    frm->SetScale(S_vector(1.0f, 1.0f, 1.0f));
+    frm->Update();
+    det->Init(frm);
+    // STRING: GAME 0x6376f0
+    det->SetSourceCode("Detector_WaitForHit\r\nZatmySe 0, 500\r\nDan_Internal_1\r\nEnd\r\n");
+    det->GameInit();
+    det->own_frame = true;
+    act_mission->GetGame()->InternTempActAdd(det);
 }
 
 // The sectors' lights (PS2's S_hlp, the name of Init's local struct)
@@ -1073,7 +1098,7 @@ bool C_game::Done()
     if (!initialized)
         return false;
     StopAllSounds();
-    ClearDeathHumanFade();
+    ItemBlurDone();
     // A last frame with "please wait" (PS2's PleaseWait)
     igraph->ResetRenderProps();
     igraph->Clear(0, 1.0f, 3);
@@ -1559,7 +1584,6 @@ void C_game::DoneIntern()
     }
 }
 
-
 // The sounds of sound_play (PS2 name): a sound that has stopped, or gone back to its start without looping, is
 // released; a fading one has its volume moved by its fade, up to its volume or down to silence, where it is turned
 // off. While none fades the list is checked only at sound_play_timer's periods.
@@ -1632,7 +1656,7 @@ inline void C_game::ShootLightTick(uint time)
                 l.light->LinkTo(NULL, 0);
                 l.light->SetOn(false);
             }
-            else if (l.flags & 1)
+            else if (l.flags & SHOOTLIGHTF_FLICKER)
             {
                 if (l.time > 500)
                     l.light->SetDiffusePower(rnd() * .4f + .8f);
@@ -1661,9 +1685,9 @@ inline void C_game::LightCacheTick(uint time)
     for (int i = light_cache.size(); i--;)
     {
         S_vector dir = light_cache[i]->GetWorldPos() - pos;
-        I3D_light *lt = (I3D_light *)light_cache[i];
+        I3D_light *lt = light_cache[i];
         float r = (lt->far_range + range + 15.0f) * (lt->far_range + range + 15.0f);
-        if (dir.Square() < r)
+        if (r > dir.Square())
             lt->SetOn(true);
         else
             lt->SetOn(false);
@@ -1779,7 +1803,7 @@ inline void C_game::TickCityMusic(uint time)
                     IShowLoop(city_music_old, false);
                     IShowFade(city_music_old, .5f, 0.0f, 5000);
                 }
-                city_music = CreateIShow(2);
+                city_music = CreateIShow(ISHOWF_CITY_MUSIC);
                 OpenIShow(file, city_music);
                 IShow *show = GetIShow(city_music);
                 if (show)
@@ -2413,10 +2437,22 @@ void C_game::DoubleKiss(uint time)
     }
 }
 
-// STUB: GAME 0x5a77c0
+// A temporary actor taken into the game (PS2 name): its GameInit, then the list of its state and temporary_actors,
+// once
+// FUNCTION: GAME 0x5a77c0
 void C_game::AddTemporaryActor(C_actor *act)
 {
-    StubLog("C_game::AddTemporaryActor");
+    for (int i = temporary_actors.size(); i--;)
+    {
+        if (temporary_actors[i] == act)
+            return;
+    }
+    act->GameInit();
+    if (act->act_state == ACTSTATE_ACTIVE)
+        active_actors.push_back(act);
+    else if (act->act_state == ACTSTATE_INACTIVE)
+        inactive_actors.push_back(act);
+    temporary_actors.push_back(act);
 }
 
 // FUNCTION: GAME 0x5a79a0
@@ -2431,10 +2467,20 @@ void C_game::RemoveTemporaryActor(C_actor *act)
     removed_actors.push_back(act);
 }
 
-// STUB: GAME 0x5a7b70
+// The same without the GameInit, for an actor already in the game (PS2 name)
+// FUNCTION: GAME 0x5a7b70
 void C_game::InternTempActAdd(C_actor *act)
 {
-    StubLog("C_game::InternTempActAdd");
+    for (int i = temporary_actors.size(); i--;)
+    {
+        if (temporary_actors[i] == act)
+            return;
+    }
+    if (act->act_state == ACTSTATE_ACTIVE)
+        active_actors.push_back(act);
+    else if (act->act_state == ACTSTATE_INACTIVE)
+        inactive_actors.push_back(act);
+    temporary_actors.push_back(act);
 }
 
 // FUNCTION: GAME 0x5a7d40
@@ -2475,10 +2521,27 @@ void C_game::InternTempActDel(C_actor *act)
     }
 }
 
-// STUB: GAME 0x5a7ec0
+// A temporary actor removed for good (PS2 name; RemoveTemporaryActor's list, which Tick empties through it): taken from
+// temporary_actors, out of everything that refers to it, ended and released
+// FUNCTION: GAME 0x5a7ec0
 void C_game::_RemoveTemporaryActor(C_actor *act)
 {
-    StubLog("C_game::_RemoveTemporaryActor");
+    int index = -1;
+    for (int i = temporary_actors.size(); i--;)
+    {
+        if (temporary_actors[i] == act)
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0)
+        return;
+    temporary_actors[index] = temporary_actors.back();
+    temporary_actors.pop_back();
+    InvalidateActor(act, false);
+    act->GameDone();
+    act->Release();
 }
 
 // The temporary actors but the next mission's, each taken from the game's lists, ended and released (PS2 name)
@@ -2508,19 +2571,283 @@ void C_game::UpdateControls()
     }
 }
 
-// The original's code between this and SetTrafficVisible (0x5a8030-0x5a846f) is more of the game's
-
-// STUB: GAME 0x5a8470
-void C_game::SetTrafficVisible(bool visible)
+// A cheat's word and its number, the case of CheatKey's switch (PC only, the names are ours): the word's letters upper
+// case and complemented, as CheatKey keeps the keys typed. POLIFUCK's and ROZMAZ's numbers have no case.
+#define CHEAT_BOXER 4
+#define CHEAT_CORNUFSE 7
+#define CHEAT_POLIFUCK 8
+#define CHEAT_PARNIK 0xb
+#define CHEAT_JIZDA 0xc
+#define CHEAT_KREFJEZIVOT 0xd
+#define CHEAT_MUNICAK 0xe
+#define CHEAT_ROZMAZ 0xf
+#define CHEAT_CUMDAL 0x10
+struct S_cheat_word
 {
-    StubLog("C_game::SetTrafficVisible");
+    char word[0x20];
+    int cheat;                          // CHEAT_*
+};
+
+// The cheats' words, which CheatKey searches from the last
+// GLOBAL: GAME 0x637000
+static S_cheat_word cheat_words[] = {
+    {{~'B', ~'O', ~'X', ~'E', ~'R'}, CHEAT_BOXER},
+    {{~'P', ~'A', ~'R', ~'N', ~'I', ~'K'}, CHEAT_PARNIK},
+    {{~'J', ~'I', ~'Z', ~'D', ~'A'}, CHEAT_JIZDA},
+    {{~'K', ~'R', ~'E', ~'F', ~'J', ~'E', ~'Z', ~'I', ~'V', ~'O', ~'T'}, CHEAT_KREFJEZIVOT},
+    {{~'M', ~'U', ~'N', ~'I', ~'C', ~'A', ~'K'}, CHEAT_MUNICAK},
+    {{~'P', ~'O', ~'L', ~'I', ~'F', ~'U', ~'C', ~'K'}, CHEAT_POLIFUCK},
+    {{~'C', ~'O', ~'R', ~'N', ~'U', ~'F', ~'S', ~'E'}, CHEAT_CORNUFSE},
+    {{~'R', ~'O', ~'Z', ~'M', ~'A', ~'Z'}, CHEAT_ROZMAZ},
+    {{~'C', ~'U', ~'M', ~'D', ~'A', ~'L'}, CHEAT_CUMDAL},
+};
+
+// A key typed, for the cheats' words (PC only, the name is ours; GameLoopSingle's): it is added to cheat_keys, which
+// are cleared once they begin no word, and a word typed whole does its cheat. True where the key was a cheat's, which
+// clears the controls' input: a word typed whole, or two letters or more of one.
+// FUNCTION: GAME 0x5a8030
+bool C_game::CheatKey(char key)
+{
+    if (strlen(cheat_keys) >= sizeof(cheat_keys) - 1)
+        strcpy(cheat_keys, "");
+    if (key >= 'a' && key <= 'z')
+        key += 'A' - 'a';
+    int len = strlen(cheat_keys);
+    cheat_keys[len++] = ~key;
+    cheat_keys[len] = 0;
+    // The word the keys begin: its number where they are all of it, -2 where they are less, -1 for none
+    int cheat = -1;
+    for (int i = sizeof(cheat_words) / sizeof(cheat_words[0]); i--;)
+    {
+        int word_len = strlen(cheat_words[i].word);
+        if (!memcmp(cheat_keys, cheat_words[i].word, min(len, word_len)))
+        {
+            cheat = word_len == len ? cheat_words[i].cheat : -2;
+            break;
+        }
+    }
+    if (cheat == -1)
+    {
+        strcpy(cheat_keys, "");
+        return false;
+    }
+    if (cheat < 0)
+        return strlen(cheat_keys) > 1;
+    mafiaIndicators.FadeInOut(false, 500, 0);
+    strcpy(cheat_keys, "");
+    switch (cheat)
+    {
+    case CHEAT_BOXER:
+        if (cheats & GAMEF_BOXER)
+            cheats &= ~GAMEF_BOXER;
+        else
+            cheats |= GAMEF_BOXER;
+        if (player)
+            ((C_player *)player)->SetBoxer((bool)(cheats & GAMEF_BOXER));
+        break;
+    case CHEAT_CORNUFSE:
+        if (cheats & GAMEF_STEAL_ALL)
+            cheats &= ~GAMEF_STEAL_ALL;
+        else
+            cheats |= GAMEF_STEAL_ALL;
+        break;
+    case CHEAT_PARNIK:
+        {
+            if (cheats & GAMEF_TITANIC)
+                cheats &= ~GAMEF_TITANIC;
+            else
+                cheats |= GAMEF_TITANIC;
+            std::vector<C_actor *> &actors = act_mission->game->active_actors;
+            for (int i = actors.size(); i--;)
+            {
+                if (actors[i]->type == ACTOR_BRIDGE)
+                    ((C_bridge *)actors[i])->SetTitanic((bool)(cheats & GAMEF_TITANIC));
+            }
+        }
+        break;
+    case CHEAT_JIZDA:
+        if (player && player->car && player->car->type == ACTOR_CAR)
+            C_car::OdjebajTuStrechu((I3D_model *)player->car->frame, true);
+        break;
+    case CHEAT_KREFJEZIVOT:
+        if (heal_cheat && player)
+        {
+            player->properties[HUMAN_PROPERTY_ENERGY] = player->max_properties[HUMAN_PROPERTY_ENERGY];
+            player->properties[HUMAN_PROPERTY_ENERGY_HAND_L] = player->max_properties[HUMAN_PROPERTY_ENERGY_HAND_L];
+            player->properties[HUMAN_PROPERTY_ENERGY_HAND_R] = player->max_properties[HUMAN_PROPERTY_ENERGY_HAND_R];
+            player->properties[HUMAN_PROPERTY_ENERGY_LEG_L] = player->max_properties[HUMAN_PROPERTY_ENERGY_LEG_L];
+            player->properties[HUMAN_PROPERTY_ENERGY_LEG_R] = player->max_properties[HUMAN_PROPERTY_ENERGY_LEG_R];
+            mafiaIndicators.PlayerSetLives(100);
+            heal_cheat = false;
+        }
+        break;
+    case CHEAT_MUNICAK:
+        if (cheats & GAMEF_INFINITE_AMMO)
+            cheats &= ~GAMEF_INFINITE_AMMO;
+        else
+            cheats |= GAMEF_INFINITE_AMMO;
+        break;
+    case CHEAT_CUMDAL:
+        // Only in 32 bits, with the city's blocks open: the camera sees 600 m, or the options' distance again
+        if (setting.bit_depth == 32 && base_cache.open)
+        {
+            if (cheats & GAMEF_FAR_BLOCKS)
+                cheats &= ~GAMEF_FAR_BLOCKS;
+            else
+                cheats |= GAMEF_FAR_BLOCKS;
+            if ((bool)(cheats & GAMEF_FAR_BLOCKS))
+            {
+                I3D_camera *cam = act_mission->scene->GetActiveCamera();
+                if (cam)
+                {
+                    float near_range, far_range;
+                    cam->GetRange(near_range, far_range);
+                    cam->SetRange(near_range, 600.0f);
+                    cam->Update();
+                }
+            }
+            else
+                act_mission->options.SetDrawDistance(act_mission->options.GetDrawDistance());
+            base_cache.cam_pos = S_vector(0.0f, -1000.0f, 0.0f);
+            base_cache.timer = 10000;
+            base_cache.Tick(1);
+        }
+        break;
+    }
+    return true;
 }
 
-// STUB: GAME 0x5a84a0
-bool C_game::NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int unknown1, I3D_frame *frm,
-    int unknown2)
+// The traffic's pedestrians and cars and the trams shown or hidden (PS2 name; the script's)
+// FUNCTION: GAME 0x5a8470
+void C_game::SetTrafficVisible(bool visible)
 {
-    StubLog("C_game::NewShoot");
+    C_traffic_generator::SetVisible(visible);
+    visible = !visible;
+    C_traffic_car::Scipni(visible);
+    C_railway::salina_v_kine = visible;
+}
+
+// The distance from the plane through p with the normal n (Insanity3D's, as VE_BreakageGlass.cpp's, which defines it
+// for its own use): NewShoot inlines it, its first Dot too, and calls the second; its copy follows its first out-of-line
+// caller, CreateTrackEffect
+// FUNCTION: GAME 0x5b1330
+inline float S_vector::DistanceToPlane(const S_vector &p, const S_vector &n) const
+{
+    return Dot(n) - p.Dot(n);
+}
+
+// A shot from pos along dir, as far as dir's length, which TickShoot moves (PS2 name): one that passes the camera
+// more than 12 m from pos and nearer than 10 m to it turns on the free whizzing sounds (delayed_sounds) at the point
+// it passes, each after the time the shot takes to get there (0.3 m a ms), with the in game sounds at High. With count
+// above 1 (a shotgun) it is count shots of power / count each, their directions scattered around dir by up to a
+// twentieth of its length up and to the side. Each shot is tested against the level's static collision: the
+// collision it hits gives its end, its sound and its material, and a glass or crash collision with COLLHF_UNKNOWN_40
+// or COLLHF_UNKNOWN_80 its frame. Then the muzzle's particle on frm, the sound the humans hear and the pedestrians'
+// panic.
+// FUNCTION: GAME 0x5a84a0
+bool C_game::NewShoot(C_actor *actor, S_vector pos, S_vector dir, float power, int particle, I3D_frame *frm,
+    int count)
+{
+    S_shoot s;
+    s.pos = pos;
+    s.curr_pos = pos;
+    s.power = power;
+    s.actor = actor;
+    s.frame = NULL;
+    s.range = dir.Magnitude();
+    s.sound = -1;
+    s.material = 0;
+    S_vector n = dir;
+    n.Normalize();
+
+    // The whizzing past the camera
+    if (act_mission->GetOptions().game_sounds >= OPTION_HIGH)
+    {
+        S_vector cam = act_mission->scene->GetActiveCamera()->GetWorldPos();
+        float t = cam.DistanceToPlane(pos, n);
+        if (t > 12.0f)
+        {
+            S_vector p = pos + n * t;
+            if ((p - cam).Square() < 100.0f)
+            {
+                for (int i = 3; i--;)
+                {
+                    if (delayed_sounds[i].sound && delayed_sounds[i].time < 0 &&
+                        !delayed_sounds[i].sound->IsPlaying(false))
+                    {
+                        delayed_sounds[i].time = (int)(t * 3.3333f);
+                        delayed_sounds[i].sound->SetPos(p);
+                        delayed_sounds[i].sound->Update();
+                        delayed_sounds[i].sound->LinkTo(NULL, 0);
+                        act_mission->scene->SetFrameSector(delayed_sounds[i].sound);
+                    }
+                }
+            }
+        }
+    }
+
+    if (count > 1)
+    {
+        // A shotgun's shots, scattered
+        s.power /= count;
+        S_vector d = n;
+        S_vector up(d.z, d.y, -d.x);
+        S_vector side = d.Cross(up);
+        up = side.Cross(d);
+        float len = dir.Magnitude();
+        d *= len;
+        len *= .05f;
+        side *= len;
+        up *= len;
+        for (int i = 0; i < count; i++)
+        {
+            dir = d + side * (rnd() * 2.0f - 1.0f) + up * (rnd() * 2.0f - 1.0f);
+            s.coll = (g_collision_header *)gifCollision.TestLineHStatic(pos, dir, &s.hit_pos, &s.hit_normal,
+                COLF2_UNKNOWN_200000 | COLF2_UNKNOWN_400000);
+            s.hit = s.coll ? true : false;
+            if (s.coll)
+            {
+                s.sound = materialList[s.coll->material].shot_sound;
+                s.material = s.coll->material;
+                s.dir = s.hit_pos - pos;
+                // Glass and crash collisions keep their frame
+                int mat = s.coll->material;
+                if ((mat == MAT_GLASS || mat == MAT_CRASH) &&
+                    (s.coll->flags & (COLLHF_UNKNOWN_40 | COLLHF_UNKNOWN_80)))
+                    s.frame = s.coll->frame;
+            }
+            else
+                s.dir = dir;
+            shoots.push_back(s);
+        }
+    }
+    else
+    {
+        s.coll = (g_collision_header *)gifCollision.TestLineHStatic(pos, dir, &s.hit_pos, &s.hit_normal,
+            COLF2_UNKNOWN_200000 | COLF2_UNKNOWN_400000);
+        s.hit = s.coll ? true : false;
+        if (s.coll)
+        {
+            s.sound = materialList[s.coll->material].shot_sound;
+            s.material = s.coll->material;
+            s.dir = s.hit_pos - pos;
+            // Glass and crash collisions keep their frame
+            int mat = s.coll->material;
+            if ((mat == MAT_GLASS || mat == MAT_CRASH) &&
+                (s.coll->flags & (COLLHF_UNKNOWN_40 | COLLHF_UNKNOWN_80)))
+                s.frame = s.coll->frame;
+        }
+        else
+            s.dir = dir;
+        shoots.push_back(s);
+    }
+
+    // The muzzle's particle, the sound the humans hear, the pedestrians' panic
+    if (particle > 0 && act_mission->GetOptions().particles >= OPTION_MEDIUM)
+        act_mission->GetEffects()->CreateParticle(particle, S_vector(0.0f, 0.0f, 0.0f), S_vector(0.0f, 0.0f, 1.0f), 0,
+            frm);
+    sound_arena.SoundEmit(pos, 50.0f, 1.0f, 2, actor);
+    C_traffic_generator::NewPanic(pos);
     return true;
 }
 
@@ -2821,31 +3148,445 @@ void C_game::TickShoot(uint time)
     }
 }
 
-// STUB: GAME 0x5aae10
-void C_game::NewExplosion(C_actor *actor, S_vector &pos, float unknown1, float unknown2, bool unknown3, bool unknown4,
-    bool unknown5, int unknown6)
+// An explosion of actor at pos (PS2 name; EXPLOSION's, a car's, a crash object's): with damage every other active and
+// inactive actor hit (the traffic's cars and actors of ACTOR_UNKNOWN_B whatever the distance, the others within range,
+// _explosion), the pedestrians' (C_traffic_generator::Explosion), the level's glass within range * .3 broken and its
+// crash collisions there broken off; then its particle (big's the larger one), with the in game effects at High and
+// smoke 8 to 13 smoke trails, its track, the pedestrians' panic, its sound (the sound table's) and its light.
+// FUNCTION: GAME 0x5aae10
+void C_game::NewExplosion(C_actor *actor, S_vector &pos, float range, float power, bool damage, bool big, bool smoke,
+    int sound)
 {
-    StubLog("C_game::NewExplosion");
+    float range2 = range * range;
+    if (damage)
+    {
+        int i;
+        for (i = active_actors.size(); i--;)
+        {
+            if (active_actors[i] == actor)
+                continue;
+            if (active_actors[i]->type == ACTOR_TRAFFIC_CAR || active_actors[i]->type == ACTOR_UNKNOWN_B)
+                active_actors[i]->Hit(HIT_EXPLOSION, pos, pos, S_vector(range, range, range), power, actor, 0, NULL);
+            else
+            {
+                float dist2 = (active_actors[i]->frame->GetWorldPos() - pos).Square();
+                if (dist2 < range2)
+                    _explosion(active_actors[i], dist2, actor, pos, range, power);
+            }
+        }
+        for (i = inactive_actors.size(); i--;)
+        {
+            if (inactive_actors[i] == actor)
+                continue;
+            if (inactive_actors[i]->type == ACTOR_TRAFFIC_CAR || inactive_actors[i]->type == ACTOR_UNKNOWN_B)
+                inactive_actors[i]->Hit(HIT_EXPLOSION, pos, pos, S_vector(range, range, range), power, actor, 0, NULL);
+            else
+            {
+                float dist2 = (inactive_actors[i]->frame->GetWorldPos() - pos).Square();
+                if (dist2 < range2)
+                    _explosion(inactive_actors[i], dist2, actor, pos, range, power);
+            }
+        }
+        C_traffic_generator::Explosion(pos, range, power);
+
+        // The level's glass near it broken
+        std::vector<g_collision_header *> colls;
+        float r = range * .3f;
+        gifCollision.FindStaticCollsInLocality(pos, r, MAT_GLASS, MAT_GLASS, colls);
+        int j;
+        for (j = colls.size(); j--;)
+        {
+            if (colls[j]->frame)
+            {
+                S_vector dir = colls[j]->frame->GetWorldPos() - pos;
+                dir.Normalize();
+                dir *= 2.0f;
+                colls[j]->flags |= COLLHF_DISABLED;
+                glass.BreakGlass(colls[j]->frame, &dir, "lustr1.wav", true);
+            }
+        }
+
+        // The crash collisions near it broken off, with power less by the distance
+        colls.clear();
+        gifCollision.FindStaticCollsInLocality(pos, r, MAT_CRASH, MAT_CRASH, colls);
+        for (j = colls.size(); j--;)
+        {
+            if (colls[j]->frame && !(colls[j]->flags & COLLHF_DISABLED))
+            {
+                S_vector dir = colls[j]->frame->GetWorldPos() - pos;
+                dir.Normalize();
+                dir *= 5.0f;
+                float f = 1.0f - (pos - colls[j]->frame->GetWorldPos()).Magnitude() / r;
+                if (f < 0.0f)
+                    f = 0.0f;
+                f *= power;
+                CreateCrashModel(colls[j]->frame, pos, dir, f);
+            }
+        }
+    }
+
+    act_mission->GetEffects()->CreateParticle(big ? PARTICLE_EXPLOSION_BIG : PARTICLE_EXPLOSION, pos,
+        S_vector(0.0f, 0.0f, 1.0f), 0, NULL);
+    if (act_mission->GetOptions().game_effects >= OPTION_HIGH && smoke)
+    {
+        int n = rnd(6) + 8;
+        for (int i = 0; i < n; i++)
+            NewSmokeTrail(pos, 10.0f, 15.0f);
+    }
+    CreateTrackEffect_Grenade(pos);
+    C_traffic_generator::NewPanic(pos);
+    if (act_mission->GetOptions().game_sounds >= OPTION_MEDIUM)
+    {
+        I3D_sound *snd = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+        if (snd)
+        {
+            snd->SetPos(pos);
+            snd->Update();
+            if (sound_table.ConstructSound(snd, sound))
+                act_mission->GetGame()->Play3DSound(snd);
+            else
+                snd->Release();
+        }
+    }
+    AddShootLight(pos, 12.0f, 100, 0);
 }
 
-// STUB: GAME 0x5abfb0
-void C_game::NewCartidge(I3D_frame *&frm, S_vector &dir, bool unknown1, bool unknown2)
+// An actor in an explosion's range hit by it (PS2 name): unless the level's static collision is between the actor's
+// frame and the explosion, and between each of its visuals and joints and the explosion, it is hit along the
+// direction from the explosion with power less by the distance (none at range). exploder isn't used.
+// FUNCTION: GAME 0x5ab680
+static void _explosion(C_actor *act, float dist2, C_actor *exploder, S_vector &pos, float range, float power)
 {
-    StubLog("C_game::NewCartidge");
+    S_vector dir = act->frame->GetWorldPos() - pos;
+    S_vector hit_pos, hit_normal;
+    int col = gifCollision.TestLineHStatic(pos, dir, &hit_pos, &hit_normal, 0);
+    if (col)
+    {
+        I3D_frame *frm = act->frame;
+        int n = frm->NumChildren();
+        for (int i = 0; i < n; i++)
+        {
+            I3D_frame *child = frm->GetChild(i);
+            if (child->GetType() == FRAME_VISUAL || child->GetType() == FRAME_JOINT)
+            {
+                col = gifCollision.TestLineHStatic(pos, child->GetWorldPos() - pos, &hit_pos, &hit_normal, 0);
+                if (!col)
+                    break;
+            }
+        }
+        if (col)
+            return;
+    }
+    float f = 1.0f - (float)sqrt(dist2) / range;
+    if (f < 0.0f)
+        f = 0.0f;
+    dir.Normalize();
+    act->Hit(HIT_EXPLOSION, dir, pos, pos, f * power, NULL, 0, NULL);
 }
 
-// STUB: GAME 0x5aca70
+// A piece thrown from an explosion at pos (PS2 name; NewExplosion's smoke trails): the game's next stone (num_stones,
+// 2stone.i3d) unless it flies already, thrown upwards in a random direction at a random speed from min_speed to
+// max_speed, as a temporary actor with a reference more on it and its frame
+// FUNCTION: GAME 0x5ab8f0
+void C_game::NewSmokeTrail(S_vector &pos, float min_speed, float max_speed)
+{
+    if (!stones[num_stones])
+        return;
+    for (int i = temporary_actors.size(); i--;)
+    {
+        if (temporary_actors[i] == stones[num_stones])
+            return;
+    }
+    S_vector dir(rnd() * 2.0f - 1.0f, rnd() + .3f, rnd() * 2.0f - 1.0f);
+    if (dir.y < .4f)
+        dir.y += .4f;
+    dir.Normalize();
+    dir *= rnd() * (max_speed - min_speed) + min_speed;
+    AddTemporaryActor(stones[num_stones]);
+    stones[num_stones]->ref++;
+    stones[num_stones]->frame->m_RefCount++;
+    stones[num_stones]->frame->SetOn(true);
+    stones[num_stones]->SetPos(pos);
+    stones[num_stones]->AbsoluteImpulse(dir);
+    if (++num_stones >= MAX_STONES)
+        num_stones = 0;
+}
+
+// count small fires around pos, with the particles at High (PS2 name): each where a line from half a random direction
+// (upwards, from .1 to 2.1 long) away from pos along that direction hits the level, or else where the line from its
+// end down and five times as far does; none where neither hits
+// FUNCTION: GAME 0x5abb90
+void C_game::NewSmallFires(S_vector &pos, int count)
+{
+    if (act_mission->GetOptions().particles >= OPTION_HIGH)
+    {
+        while (count--)
+        {
+            S_vector dir(rnd() * 2.0f - 1.0f, .5f, rnd() * 2.0f - 1.0f);
+            dir.Normalize();
+            dir *= rnd() * 2.0f + .1f;
+            S_vector from = pos + dir * .5f;
+            S_vector hit_pos, hit_normal;
+            if (!gifCollision.TestLineV(from, dir, &hit_pos, &hit_normal, COLF_ALL, 0))
+            {
+                // Missed: from the end of the line, down and farther
+                from += dir;
+                dir.y *= -1.0f;
+                dir *= 5.0f;
+                if (!gifCollision.TestLineV(from, dir, &hit_pos, &hit_normal, COLF_ALL, 0))
+                    continue;
+            }
+            act_mission->GetEffects()->CreateParticle(PARTICLE_SMALL_FIRE, hit_pos, hit_normal, 0, NULL);
+        }
+    }
+}
+
+// A fire at pos, in frm's space where frm isn't NULL (PS2 name): a C_fire (fires), its light for time ms, its track,
+// its sound and the pedestrians' panic
+// FUNCTION: GAME 0x5abe10
+void C_game::NewFire(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3)
+{
+    S_vector p = pos;
+    if (frm)
+        p *= frm->GetMatrix();
+    C_fire *fire = new C_fire;
+    fire->Init(pos, frm, time, unknown1, unknown2, unknown3);
+    AddShootLight(p, 10.0f, time, SHOOTLIGHTF_FLICKER);
+    fires.push_back(fire);
+    CreateTrackEffect_Grenade(p);
+    if (act_mission->GetOptions().game_sounds >= OPTION_MEDIUM)
+    {
+        I3D_sound *snd = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+        if (snd)
+        {
+            snd->SetPos(p);
+            snd->Update();
+            if (sound_table.ConstructSound(snd, SOUND_FIRE))
+                act_mission->GetGame()->Play3DSound(snd);
+            else
+                snd->Release();
+        }
+    }
+    C_traffic_generator::NewPanic(p);
+}
+
+// A cartridge case thrown out at the frame (PS2 name; the parameters' names are ours): DoubleKiss's guns and C_human's
+// shots throw one out of the weapon, a shotgun's shell (cartridges_b's) for a close-range weapon; the revolver's
+// cylinder drops its six along dir. The next case of the two arrays (they wrap) taken into the game's ticks at the
+// frame's position, thrown along dir where it drops, else the frame's direction, a little at random. Not with the
+// game's effects low.
+// FUNCTION: GAME 0x5abfb0
+void C_game::NewCartidge(I3D_frame *&frm, S_vector &dir, bool shell, bool drop)
+{
+    if (act_mission->GetOptions().game_effects < OPTION_MEDIUM)
+        return;
+    if (shell) {
+        C_cartridge *&cartridge = cartridges_b[num_cartridges_b];
+        if (!cartridge)
+            return;
+        AddTemporaryActor(cartridge);
+        cartridges_b[num_cartridges_b]->SetShotgunShell(shell);
+        cartridges_b[num_cartridges_b]->ref++;
+        cartridges_b[num_cartridges_b]->SetPos(frm->GetWorldPos());
+        cartridges_b[num_cartridges_b]->SetDir(dir);
+        S_vector v;
+        if (drop)
+            v = dir;
+        else
+            v = frm->GetWorldDir();
+        S_vector r;
+        r.x = rnd();
+        r.y = rnd();
+        r.z = rnd();
+        v += r * .3f;
+        v *= 3.0f;
+        cartridges_b[num_cartridges_b]->AbsoluteImpulse(v);
+        if (++num_cartridges_b >= 30)
+            num_cartridges_b = 0;
+    } else {
+        C_cartridge *&cartridge = cartridges[num_cartridges];
+        if (!cartridge)
+            return;
+        AddTemporaryActor(cartridge);
+        cartridges[num_cartridges]->SetShotgunShell(shell);
+        cartridges[num_cartridges]->ref++;
+        cartridges[num_cartridges]->SetPos(frm->GetWorldPos());
+        cartridges[num_cartridges]->SetDir(dir);
+        S_vector v;
+        if (drop)
+            v = dir;
+        else
+            v = frm->GetWorldDir();
+        S_vector r;
+        r.x = rnd();
+        r.y = rnd();
+        r.z = rnd();
+        v += r * .3f;
+        v *= 3.0f;
+        cartridges[num_cartridges]->AbsoluteImpulse(v);
+        if (++num_cartridges >= 100)
+            num_cartridges = 0;
+    }
+}
+
+// A grenade of the type thrown from pos (PS2 name; the parameters' names are ours): the model frm, or else the type's
+// own, loaded through the model cache (NULL for another type); put at pos, upright and unscaled, into its sector, and a
+// new C_grenade of it taken into the game's ticks. Thrown, it flies along dir, and its type sets it to go off: the
+// grenade 5 s after the throw and the cheat Magnum's shot at its first hit, exploding, the incendiary 5 s after the
+// throw and the Molotov cocktail at its first hit, setting a fire. The grenade, NULL if it fails. It reaches the game
+// through act_mission, as the actors do. The ifs nest to one return: the failed Init's grenade is NULL there.
+// Open: the original calls the inlined Open's C_str conversion out of line, as one more pending inline call anywhere
+// after it gives, but then ours moves the folders' loop out of line, where the original keeps it in place; and the
+// registers (the type in ebp, reloaded after the Open, ours eax; the name in its dead parameter's slot, ours ebp).
+// FUNCTION: GAME 0x5ac580
+C_grenade *C_game::NewGrenade(int type, S_vector &pos, S_vector &dir, bool thrown, I3D_frame *frm)
+{
+    if (!frm) {
+        const char *name;
+        switch (type) {
+        case NEWGRENADE_GRENADE:
+        case NEWGRENADE_SHOT:
+            // STRING: GAME 0x637774
+            name = "2grenade.i3d";
+            break;
+        case NEWGRENADE_INCENDIARY:
+        case NEWGRENADE_MOLOTOV:
+            // STRING: GAME 0x637768
+            name = "2mol.i3d";
+            break;
+        default:
+            return NULL;
+        }
+        frm = driver->CreateFrame(FRAME_MODEL);
+        if (!frm)
+            return NULL;
+        if (model_cache.Open((I3D_model *)frm, name, 0, NULL, NULL, NULL) != I3D_OK) {
+            frm->Release();
+            return NULL;
+        }
+    }
+    C_actor::DebustizeFrame(frm);
+    C_actor::NoShadowFrame(frm);
+    frm->SetPos(pos);
+    frm->SetDir(S_vector(0.0f, 0.0f, 1.0f), 0.0f);
+    frm->SetScale(S_vector(1.0f, 1.0f, 1.0f));
+    frm->Update();
+    act_mission->scene->SetFrameSector(frm);
+    C_grenade *grenade = new C_grenade;
+    if (grenade) {
+        if (grenade->Init(frm)) {
+            act_mission->game->AddTemporaryActor(grenade);
+            if (thrown) {
+                grenade->AbsoluteImpulse(dir);
+                switch (type) {
+                case NEWGRENADE_GRENADE:
+                    grenade->timer = true;
+                    grenade->fuse_time = 5000;
+                    grenade->explode = true;
+                    grenade->explosion_radius = 15.0f;
+                    grenade->explosion_power = 400.0f;
+                    break;
+                case NEWGRENADE_SHOT:
+                    grenade->impact = true;
+                    grenade->explode = true;
+                    grenade->explosion_radius = 15.0f;
+                    grenade->explosion_power = 400.0f;
+                    break;
+                case NEWGRENADE_INCENDIARY:
+                    grenade->timer = true;
+                    grenade->fuse_time = 5000;
+                    grenade->SetFire(true, 5000, 2.5f, 50.0f);
+                    break;
+                case NEWGRENADE_MOLOTOV:
+                    grenade->impact = true;
+                    grenade->SetFire(true, 5000, 2.5f, 50.0f);
+                    break;
+                }
+            }
+        } else {
+            grenade->Release();
+            grenade = NULL;
+        }
+    }
+    return grenade;
+}
+
+// A sound of the sound cache played at the frame (in the primary sector without one) at pos, with its type, ranges and
+// volume (PS2 name, the vector by value, PS2's by reference): its number, which Stop3DSound takes, -1 if it can't be
+// created or opened. Its cone is all around, its volume falls to 0.3 at 0.4 of the way from the near range to the far
+// one. With fade_in it starts silent and fades in to its volume by fade a ms (S_sound_play's).
+// FUNCTION: GAME 0x5aca70
 int C_game::Play3DSound(I3D_frame *frm, const char *name, I3D_SOUNDTYPE type, S_vector pos, float near_range,
-    float far_range, float volume, bool fade_in, float fade, bool unknown3)
+    float far_range, float volume, bool fade_in, float fade, bool loop)
 {
-    StubLog("C_game::Play3DSound %s", name);
-    return -1;
+    I3D_sound *snd = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+    if (!snd)
+        return -1;
+    if (sound_cache.Open(snd, name, 0, NULL, NULL, NULL) != I3D_OK)
+    {
+        snd->Release();
+        return -1;
+    }
+    snd->SetPos(pos);
+    snd->LinkTo(frm ? frm : act_mission->GetScene()->primary_sector, 0);
+    snd->SetSoundType(type);
+    snd->SetRange(near_range, far_range, .4f, .3f);
+    snd->SetCone(PI * 2, PI * 2);
+    snd->SetOutVol(0.0f);
+    snd->SetVolume(volume);
+    snd->Update();
+    snd->SetOn(true);
+    snd->SetLoop(loop);
+    S_sound_play sp;
+    sp.sound = snd;
+    sp.number = next_sound_number++;
+    sp.fading = fade_in;
+    sp.time = 0;
+    if (fade_in)
+    {
+        sp.fade = fade;
+        sp.volume = volume;
+        snd->SetVolume(0.0f);
+        sounds_fading++;
+    }
+    sound_play.push_back(sp);
+    return sound_play.back().number;
 }
 
-// STUB: GAME 0x5acc00
-void C_game::Stop3DSound(int sound, bool fade, float time)
+// A sound Play3DSound played, by its number, stopped (PS2 name): with fade it fades out by speed a ms, else it stops at
+// once (TickEffects releases it)
+// FUNCTION: GAME 0x5acc00
+void C_game::Stop3DSound(int sound, bool fade, float speed)
 {
-    StubLog("C_game::Stop3DSound");
+    for (int i = sound_play.size(); i--;)
+    {
+        if (sound_play[i].number == sound)
+        {
+            sound_play[i].fading = fade;
+            if (fade)
+            {
+                sound_play[i].fade = -speed;
+                sounds_fading++;
+            }
+            else
+                sound_play[i].sound->SetOn(false, true);
+            return;
+        }
+    }
+}
+
+// The sound played as it is set up, released once it ends (PS2 name): its number, which Stop3DSound takes
+// FUNCTION: GAME 0x5accb0
+int C_game::Play3DSound(I3D_sound *sound)
+{
+    sound->SetOn(true);
+    S_sound_play sp;
+    sp.sound = sound;
+    sp.number = next_sound_number++;
+    sp.fading = false;
+    sp.time = 0;
+    sound_play.push_back(sp);
+    return sp.number;
 }
 
 // The sounds the game plays: stopped, unlinked and released (PS2 name)
@@ -2889,7 +3630,7 @@ void C_game::AddShadowModel(const char *name)
 
 // A frame's shadow copied from the shadow model of its name, or else of its index
 // FUNCTION: GAME 0x5ad210
-void C_game::SetupShadow(S_shadow_item *item)
+inline void C_game::SetupShadow(S_shadow_item *item)
 {
     if (item->name)
     {
@@ -2906,18 +3647,124 @@ void C_game::SetupShadow(S_shadow_item *item)
         item->model->Duplicate(shadow_temp[item->model_index].model);
 }
 
-// STUB: GAME 0x5ad2a0
+// A shadow for the frame (the name is ours): a copy of the shadow model of type2's index, or of the model of the name
+// where one is given, in the cars' list if type1 isn't 0, else the humans', which TickShadows puts on the frame once it
+// is among the nearest. replaced_frame is the frame it turns off while it is on, on until then. The name goes into one
+// of the spare buffers where one is left and it fits. The shadow (the human keeps it), 0 if the frame has one in that
+// list already, or for no frame or a model that isn't there
+// FUNCTION: GAME 0x5ad2a0
 int C_game::AddFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2, I3D_frame *replaced_frame,
     char *name)
 {
-    StubLog("C_game::AddFrameForShadow");
-    return 0;
+    if ((uint)type2 >= shadow_temp.size())
+        return 0;
+    if (!frm)
+        return 0;
+    std::vector<S_shadow_item> *list;
+    if (!type1)
+        list = &shadow_items;
+    else
+        list = &car_shadow_items;
+    for (int i = list->size(); i--;)
+    {
+        if ((*list)[i].frame == frm)
+            return 0;
+    }
+    S_shadow_item item;
+    item.frame = frm;
+    if (name)
+    {
+        if (strlen(name) < SHADOW_NAME_SIZE - 1 && free_shadow_names.size())
+        {
+            item.name = free_shadow_names.back();
+            free_shadow_names.pop_back();
+        }
+        else
+            item.name = new char[Max(SHADOW_NAME_SIZE, (int)strlen(name) + 1)];
+        strcpy(item.name, name);
+    }
+    else
+        item.name = NULL;
+    item.replaced_frame = replaced_frame;
+    item.on = false;
+    item.model = (I3D_shadow *)driver->CreateFrame(FRAME_SHADOW);
+    if (!item.model)
+        return 0;
+    item.model_index = type2;
+    if (!type1)
+        shadow_items.push_back(item);
+    else
+        car_shadow_items.push_back(item);
+    if (item.replaced_frame)
+        item.replaced_frame->SetOn(true);
+    return (int)item.model;
 }
 
-// STUB: GAME 0x5ad7c0
-void C_game::DelFrameForShadow(I3D_frame *frm, E_shadow_type type)
+// The frame's shadow made a copy of the shadow model of type2's index (PC only, PS2's is empty): put on the frame again at
+// once where it is on. False if type2 isn't a shadow model's index or the frame has no shadow in type1's list.
+// FUNCTION: GAME 0x5ad640
+bool C_game::SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2)
 {
-    StubLog("C_game::DelFrameForShadow");
+    if ((uint)type2 >= shadow_temp.size())
+        return false;
+    std::vector<S_shadow_item> *list = &shadow_items;
+    if (type1)
+        list = &car_shadow_items;
+    for (int i = list->size(); i--;)
+    {
+        if ((*list)[i].frame == frm)
+        {
+            (*list)[i].model_index = type2;
+            if ((*list)[i].on)
+            {
+                (*list)[i].model->LinkTo(NULL, 0);
+                (*list)[i].model->Close();
+                (*list)[i].frame->Update();
+                SetupShadow(&(*list)[i]);
+                (*list)[i].model->LinkTo((*list)[i].frame, 0);
+                (*list)[i].frame->Update();
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+// The frame's shadow taken from type's list (the cars' if it isn't 0, else the humans'; the name is ours): the shadow off
+// and released, its name's buffer kept for another, the replaced frame on again. False if the frame has none.
+// FUNCTION: GAME 0x5ad7c0
+bool C_game::DelFrameForShadow(I3D_frame *frm, E_shadow_type type)
+{
+    std::vector<S_shadow_item> *list;
+    if (!type)
+        list = &shadow_items;
+    else
+        list = &car_shadow_items;
+    for (int i = list->size(); i--;)
+    {
+        if ((*list)[i].frame == frm)
+        {
+            if ((*list)[i].model)
+            {
+                (*list)[i].model->LinkTo(NULL, 0);
+                (*list)[i].model->Close();
+                (*list)[i].model->Release();
+                (*list)[i].model = NULL;
+                if ((*list)[i].name)
+                {
+                    free_shadow_names.push_back((*list)[i].name);
+                    (*list)[i].name = NULL;
+                }
+                (*list)[i].frame->Update();
+                if ((*list)[i].replaced_frame)
+                    (*list)[i].replaced_frame->SetOn(false);
+            }
+            (*list)[i] = list->back();
+            list->pop_back();
+            return true;
+        }
+    }
+    return false;
 }
 
 // The semaphores: the models of semafor.i3d, with their lights; the direction the model faces chooses its phase
@@ -3028,35 +3875,319 @@ void C_game::CityMusicOff()
     city_music = -1;
 }
 
-// STUB: GAME 0x5ae1b0
+// The city's music paused, its areas not checked (PS2 name): pausing fades it out as CityMusicOff does
+// FUNCTION: GAME 0x5ae1b0
 void C_game::CityMusicPaused(bool paused)
 {
-    StubLog("C_game::CityMusicPaused");
+    city_music_paused = paused;
+    if (paused)
+        CityMusicOff();
 }
 
-// STUB: GAME 0x5ae1d0
+// A stream of the film music (an IShow id) added to film_music_streams, unless it is there (PS2 name, PS2's is empty)
+// FUNCTION: GAME 0x5ae1d0
 void C_game::SetFilmMusic(int music)
 {
-    StubLog("C_game::SetFilmMusic");
+    for (int i = film_music_streams.size(); i--;)
+    {
+        if (film_music_streams[i] == music)
+            return;
+    }
+    film_music_streams.push_back(music);
 }
 
-// STUB: GAME 0x5ae390
+// The film music's stream of the index, -1 for none (PS2 name, PS2's returns -1)
+// FUNCTION: GAME 0x5ae390
 int C_game::GetFilmMusic(int index)
 {
-    StubLog("C_game::GetFilmMusic");
+    if (film_music_streams.size() > (uint)index && index >= 0)
+        return film_music_streams[index];
     return -1;
 }
 
-// STUB: GAME 0x5ae3d0
+// The film music's streams destroyed, from the last, and forgotten (RECUNLOAD's; the name is ours)
+// FUNCTION: GAME 0x5ae3d0
 void C_game::StreamDestroyAll()
 {
-    StubLog("C_game::StreamDestroyAll");
+    for (int i = film_music_streams.size(); i--;)
+        DestroyIShow(film_music_streams[i]);
+    film_music_streams.clear();
 }
 
-// STUB: GAME 0x5ae480
+// The holes (the shots' marks) in the frame's subtree unlinked, as the frame goes away (PS2 name, PS2's is empty)
+// FUNCTION: GAME 0x5ae430
+void C_game::ClearFrameFromFireHole(I3D_frame *frm)
+{
+    for (int i = 0; i < 100; i++)
+    {
+        if (!holes[i])
+            continue;
+        for (I3D_frame *p = holes[i]->m_pParent; p; p = p->m_pParent)
+        {
+            if (p == frm)
+            {
+                holes[i]->LinkTo(NULL, 0);
+                break;
+            }
+        }
+    }
+}
+
+// The diff data's chunk file (the names are ours): its root, and the chunks in it. A frame of the scene, found by its
+// name or created (its type, position, scale, rotation, name and parent, then its type's data: a light's values and
+// sectors, a sound's file and values, a model's file); an actor for that frame (its type, then its LoadData's data);
+// an actor for a frame of the scene by its name (the name, then its type); the game's own scripts (LoadSourceCode's).
+#define CT_DIFF 0x4d2
+#define CT_DIFF_FRAME 0x64
+#define CT_DIFF_FRAME_ACTOR 0xc8
+#define CT_DIFF_ACTOR 0x190
+#define CT_DIFF_PROGRAMS 0x1f4
+
+static C_actor **NewFrameActor(I3D_frame *frm);
+
+// ClearDiffData, then the diff data of the name, the chunk file diff\<name> (PC only, the name is ours), whose frames,
+// actors and scripts it adds to the mission and to diff_frames, diff_actors (but those of CT_DIFF_FRAME_ACTOR) and
+// diff_programs, which ClearDiffData deletes again. A frame that has an actor already ends the file. A player's actor
+// becomes an entity that reads a human's data. The frame's types come in the order model, sound, light (the original
+// inlines the model's and the sound's cache Open and calls the light's Reads out of line), and the scale's vector, the
+// name's length and the light's type and count are one variable each, as the original's frame has them.
+// Open: the original has about seven more pending inline calls after the sound's type (seven calls of an empty inline
+// function there give its out-of-line size() in the frame's fifth Read, its inlined Read of the sound's type and its
+// out-of-line ~C_chunk at the end: 83.60%, masked 97.21%); and it puts the created frame's block after the model Open's
+// first loop, where ours follows the found frame's
+// FUNCTION: GAME 0x5ae480
 void C_game::LoadDiffData(const char *name)
 {
-    StubLog("C_game::LoadDiffData %s", name);
+    I3D_frame *frm = NULL;
+    ClearDiffData();
+    C_chunk ck;
+    char buf[256];
+    int len;
+    // STRING: GAME 0x6377b0
+    sprintf(buf, "diff\\%s", name);
+    if (!ck.OpenFile(buf, false))
+        return;
+    ushort type;
+    if (!ck.RAscend(type))
+        goto fail;
+    if (type != CT_DIFF)
+        ck.Descend();
+    else
+    {
+        while (ck.Size())
+        {
+            if (!ck.RAscend(type))
+                goto fail;
+            if (type == CT_DIFF_FRAME)
+            {
+                int frame_type;
+                S_vector pos, vec;              // vec: the scale, a light's color
+                S_quat rot;
+                ck.Read(&frame_type, sizeof(frame_type));
+                ck.Read(&pos, sizeof(pos));
+                ck.Read(&vec, sizeof(vec));
+                ck.Read(&rot, sizeof(rot));
+                ck.Read(&len, sizeof(len));
+                ck.Read(buf, len);
+                buf[len] = 0;
+                bool created = true;
+                frm = act_mission->GetScene()->FindFrame(buf, ENUMF_ALL);
+                if (frm)
+                {
+                    C_actor **p = GetFrameActor(frm);
+                    if (p && *p)
+                        frm = NULL;
+                    else
+                        created = false;
+                }
+                else
+                    frm = driver->CreateFrame((I3D_FRAME_TYPE)frame_type);
+                if (!frm)
+                    goto fail;
+                frm->SetPos(pos);
+                frm->SetScale(vec);
+                frm->SetRot(rot);
+                frm->SetName(buf);
+                ck.Read(&len, sizeof(len));
+                ck.Read(buf, len);
+                buf[len] = 0;
+                I3D_frame *parent = act_mission->GetScene()->FindFrame(buf, ENUMF_ALL);
+                if (!parent)
+                    parent = act_mission->GetScene()->primary_sector;
+                frm->LinkTo(parent, 0);
+                switch (frm->GetType())
+                {
+                case FRAME_MODEL:
+                    ck.Read(&len, sizeof(len));
+                    ck.Read(buf, len);
+                    buf[len] = 0;
+                    model_cache.Open((I3D_model *)frm, buf, 0, NULL, NULL, NULL);
+                    break;
+                case FRAME_SOUND:
+                {
+                    I3D_sound *snd = (I3D_sound *)frm;
+                    ck.Read(&len, sizeof(len));
+                    ck.Read(buf, len);
+                    buf[len] = 0;
+                    sound_cache.Open(snd, buf, 0, NULL, NULL, NULL);
+                    int stype;
+                    ck.Read(&stype, sizeof(stype));
+                    snd->SetSoundType((I3D_SOUNDTYPE)stype);
+                    bool b;
+                    ck.Read(&b, sizeof(b));
+                    snd->SetOn(b);
+                    float f1, f2, f3, f4;
+                    ck.Read(&f1, sizeof(f1));
+                    ck.Read(&f2, sizeof(f2));
+                    ck.Read(&f3, sizeof(f3));
+                    ck.Read(&f4, sizeof(f4));
+                    snd->SetRange(f1, f2, f3, f4);
+                    ck.Read(&f1, sizeof(f1));
+                    ck.Read(&f2, sizeof(f2));
+                    snd->SetCone(f1, f2);
+                    ck.Read(&f1, sizeof(f1));
+                    snd->SetVolume(f1);
+                    ck.Read(&f1, sizeof(f1));
+                    snd->SetOutVol(f1);
+                    ck.Read(&b, sizeof(b));
+                    snd->SetLoop(b);
+                    ck.Read(&f1, sizeof(f1));
+                    snd->SetFrequency(f1);
+                    break;
+                }
+                case FRAME_LIGHT:
+                {
+                    I3D_light *lt = (I3D_light *)frm;
+                    int n;
+                    ck.Read(&n, sizeof(n));
+                    lt->SetLightType((I3D_LIGHTTYPE)n);
+                    ck.Read(&vec, sizeof(vec));
+                    lt->SetDiffuse(vec);
+                    float f1, f2;
+                    ck.Read(&f1, sizeof(f1));
+                    lt->SetDiffusePower(f1);
+                    bool on;
+                    ck.Read(&on, sizeof(on));
+                    lt->SetOn(on);
+                    ck.Read(&f1, sizeof(f1));
+                    ck.Read(&f2, sizeof(f2));
+                    lt->SetRange(f1, f2);
+                    ck.Read(&f1, sizeof(f1));
+                    ck.Read(&f2, sizeof(f2));
+                    lt->SetCone(f1, f2);
+                    uint mode;
+                    ck.Read(&mode, sizeof(mode));
+                    lt->SetMode(mode);
+                    // The sectors it lights, by their names
+                    ck.Read(&n, sizeof(n));
+                    while (n--)
+                    {
+                        int name_len;
+                        ck.Read(&name_len, sizeof(name_len));
+                        char *sector_name = new char[name_len + 1];
+                        ck.Read(sector_name, name_len + 1);
+                        I3D_sector *sct = (I3D_sector *)act_mission->GetScene()->FindFrame(sector_name, ENUMF_SECTOR);
+                        if (sct)
+                            sct->AddLight(lt);
+                        delete[] sector_name;
+                    }
+                    lt->Update();
+                    break;
+                }
+                }
+                diff_frames.push_back(frm);
+                act_mission->GetScene()->AddFrame(frm);
+                if (created)
+                    frm->Release();
+            }
+            else if (type == CT_DIFF_FRAME_ACTOR)
+            {
+                if (frm)
+                {
+                    int act_type;
+                    ck.Read(&act_type, sizeof(act_type));
+                    int file_type = act_type;
+                    if (act_type == ACTOR_PLAYER)
+                        act_type = ACTOR_ENTITY;
+                    C_actor *act = act_mission->CreateActor(act_type);
+                    if (act)
+                    {
+                        if (act->Init(frm))
+                        {
+                            C_actor **p = NewFrameActor(frm);
+                            *p = act;
+                            SetFrameActor(frm, p);
+                            if (file_type == ACTOR_PLAYER)
+                                ((C_human *)act)->C_human::LoadData(&ck);
+                            else
+                                act->LoadData(&ck);
+                            act->GameInit();
+                            active_actors.push_back(act);
+                            act_mission->AddActor(act, true);
+                            act->unknown_65 = true;
+                        }
+                        else
+                            act->Release();
+                    }
+                }
+            }
+            else if (type == CT_DIFF_ACTOR)
+            {
+                ck.Read(&len, sizeof(len));
+                ck.Read(buf, len);
+                buf[len] = 0;
+                I3D_frame *f = act_mission->GetScene()->FindFrame(buf, ENUMF_ALL);
+                if (f)
+                {
+                    C_actor **p = GetFrameActor(f);
+                    if (!p || !*p)
+                    {
+                        int act_type;
+                        ck.Read(&act_type, sizeof(act_type));
+                        C_actor *act = act_mission->CreateActor(act_type);
+                        if (act && act->Init(f))
+                        {
+                            C_actor **q = NewFrameActor(f);
+                            *q = act;
+                            SetFrameActor(f, q);
+                            act->GameInit();
+                            active_actors.push_back(act);
+                            act_mission->AddActor(act, true);
+                            diff_actors.push_back(act);
+                            act->unknown_65 = true;
+                        }
+                    }
+                }
+            }
+            else if (type == CT_DIFF_PROGRAMS)
+            {
+                while (ck.Size())
+                {
+                    C_program *prog = new C_program;
+                    prog->LoadSourceCode(&ck);
+                    prog->Init();
+                    diff_programs.push_back(prog);
+                }
+            }
+            ck.Descend();
+        }
+        ck.Descend();
+    }
+fail:
+    ck.Close();
+}
+
+// The frame's pointer to its actor, allocated for it where the frame has none (LoadDiffData's; the name is ours)
+// FUNCTION: GAME 0x5af840
+static C_actor **NewFrameActor(I3D_frame *frm)
+{
+    C_actor **p = GetFrameActor(frm);
+    if (!p)
+    {
+        p = new C_actor *;
+        frm->m_UserData = (uint)p;
+    }
+    return p;
 }
 
 // What the game added to the mission (PS2 name): its actors taken out of the game's lists and deleted from the mission,
@@ -3191,10 +4322,134 @@ bool C_game::GlobalProgramRun(const char *name)
     return false;
 }
 
-// STUB: GAME 0x5afe40
-void C_game::InvalidateActor(C_actor *act, bool)
+// A moving collision gone: the entities whose last move ran into it forget it (PS2 name, PS2's takes a uint *)
+// FUNCTION: GAME 0x5afdb0
+void C_game::InvalidateColl(tDynamicCollObject *coll)
 {
-    StubLog("C_game::InvalidateActor");
+    int i;
+    for (i = active_actors.size(); i--;)
+    {
+        C_human *h = (C_human *)active_actors[i];
+        if (h->type == ACTOR_ENTITY && h->move_coll == (g_collision_header *)coll)
+            h->move_coll = NULL;
+    }
+    for (i = inactive_actors.size(); i--;)
+    {
+        C_human *h = (C_human *)inactive_actors[i];
+        if (h->type == ACTOR_ENTITY && h->move_coll == (g_collision_header *)coll)
+            h->move_coll = NULL;
+    }
+}
+
+// Takes an actor out of everything that refers to it (PS2 name): the actors' (the scripts' registers but with
+// keep_regs, the entities', the humans' killer and cars, the physical things'), the shots', the sounds the humans hear,
+// the player's car damage, the scratches, the fires on its frame, the AI's groups, fights and followers, the chases,
+// a human's car seat, speech and dead tick, the possible collisions, the player, the scripts that wait for the game's
+// events, the taxi's passenger and the item blur's (the parameter's name is ours)
+// FUNCTION: GAME 0x5afe40
+void C_game::InvalidateActor(C_actor *act, bool keep_regs)
+{
+    if (!act)
+        return;
+    int i;
+    for (i = C_actor::global_actors.size(); i--;)
+    {
+        switch (C_actor::global_actors[i]->type)
+        {
+        case ACTOR_DETECTOR:
+            if (!keep_regs)
+                ((C_detector *)C_actor::global_actors[i])->InvalidateActorReg(act);
+            break;
+        case ACTOR_ENTITY:
+            if (!keep_regs)
+                ((C_entity *)C_actor::global_actors[i])->InvalidateActorReg(act);
+            ((C_entity *)C_actor::global_actors[i])->InvalidateActor(act);
+            ((C_entity *)C_actor::global_actors[i])->move_coll = NULL;
+            if (((C_entity *)C_actor::global_actors[i])->killer == act)
+                ((C_entity *)C_actor::global_actors[i])->killer = NULL;
+            // and as a player's
+        case ACTOR_PLAYER:
+            if (((C_human *)C_actor::global_actors[i])->killer == act)
+                ((C_human *)C_actor::global_actors[i])->killer = NULL;
+            if (((C_human *)C_actor::global_actors[i])->car == act)
+                ((C_human *)C_actor::global_actors[i])->car = NULL;
+            if (((C_human *)C_actor::global_actors[i])->using_car == act)
+                ((C_human *)C_actor::global_actors[i])->using_car = NULL;
+            break;
+        case ACTOR_DROP_OUT:
+        case ACTOR_BOX_NEW:
+        case ACTOR_CRASH_OBJ:
+        case ACTOR_PUBLIC_PHYSICS:
+        case ACTOR_DROP_IN_WEAPON:
+            ((C_PhThing *)C_actor::global_actors[i])->InvalidateActor(act);
+            break;
+        }
+    }
+    for (i = shoots.size(); i--;)
+    {
+        if (shoots[i].actor == act)
+            shoots[i].actor = NULL;
+    }
+    sound_arena.InvalidateActor(act);
+    if (player && act->type == ACTOR_CAR)
+        ((C_player *)player)->InvalidateCarDamage((C_car *)act);
+    if (act->type == ACTOR_CAR)
+        ScratchDeleteFromCar((C_car *)act);
+    // The pop_back's _Destroy called out of line, as the original, only with the accessors' pending inline calls
+    // after it (GetType, GetCar)
+    for (uint j = 0; j < fires.size();)
+    {
+        if (fires[j]->frame == act->frame)
+        {
+            delete fires[j];
+            fires[j] = fires.back();
+            fires.pop_back();
+        }
+        else
+            j++;
+    }
+    AIManager.groups.InvalidateActor(act);
+    AIManager.fight.Invalidate(act);
+    AIManager.follow.Invalidate(act);
+    if (act->GetType() == ACTOR_CAR)
+        sledovacka.VypicujMiToyotu(act);
+    if (act->GetType() == ACTOR_PLAYER || act->GetType() == ACTOR_ENTITY)
+    {
+        C_human *human = (C_human *)act;
+        if (human->GetCar() && human->GetCar()->GetType() == ACTOR_CAR)
+            human->GetCar()->SetOwner(NULL, human->seat, 0.0f);
+        DabingInvalidate(human);
+        DelDeadHumanForTick(human);
+    }
+    C_actor::DelFrameForPossibleColl(act->frame);
+    if (act == player)
+        player = NULL;
+    if (act->GetType() == ACTOR_DETECTOR || act->GetType() == ACTOR_ENTITY)
+    {
+        C_program *prog = NULL;
+        if (act->GetType() == ACTOR_DETECTOR)
+            prog = (C_detector *)act;
+        else if (act->GetType() == ACTOR_ENTITY)
+            prog = (C_entity *)act;
+        if (prog == timeout_program)
+            timeout_program = NULL;
+        if (prog == player_fire_program)
+            player_fire_program = NULL;
+        if (prog == player_horn_program)
+            player_horn_program = NULL;
+        if (prog == player_wfall_program)
+            player_wfall_program = NULL;
+    }
+    if (taxi_passenger == act)
+        taxi_passenger = NULL;
+    for (i = item_blurs.size(); i--;)
+    {
+        if (act == item_blurs[i].actor)
+        {
+            ItemBlurDelItem(i, true);
+            break;
+        }
+    }
 }
 
 // A frame going away: its placements and its subtree's taken from the list (PS2 name)
@@ -3223,29 +4478,359 @@ void C_game::S_hlp::cbDelFrame(I3D_frame *frm, std::vector<S_frame_placement> &l
     }
 }
 
-// STUB: GAME 0x5b0300
+// The frame's state kept in frame_placements, which Done puts back (PS2 name): once, and not for an actor's frame
+// FUNCTION: GAME 0x5b0300
 void C_game::AddFramePlacement(I3D_frame *frm)
 {
-    StubLog("C_game::AddFramePlacement");
+    if (!frm)
+        return;
+    C_actor **act = GetFrameActor(frm);
+    if (act && *act)
+        return;
+    for (int i = frame_placements.size(); i--;)
+    {
+        if (frame_placements[i].frame == frm)
+            return;
+    }
+    // The parent second, as PS2's (whose struct has it after the frame): its load comes first
+    S_frame_placement fp;
+    fp.frame = frm;
+    fp.parent = frm->GetParent();
+    fp.pos = frm->GetPos();
+    fp.rot = frm->GetRot();
+    fp.scale = frm->GetScale();
+    fp.on = frm->IsOn();
+    frame_placements.push_back(fp);
 }
 
-// STUB: GAME 0x5b06e0
-void C_game::AddNPCKillEvent(C_program *prog, int unknown, char *label)
+// The frame's placement taken from frame_placements (PS2 name), the last one in its place
+// FUNCTION: GAME 0x5b05d0
+void C_game::DelFramePlacement(I3D_frame *frm)
 {
-    StubLog("C_game::AddNPCKillEvent");
+    for (int i = frame_placements.size(); i--;)
+    {
+        if (frame_placements[i].frame == frm)
+        {
+            frame_placements[i] = frame_placements.back();
+            frame_placements.pop_back();
+            break;
+        }
+    }
 }
 
-// STUB: GAME 0x5b0b60
-void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float unknown1,
-    int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm)
+// The scripts' events the game fires (PS2 names): each in its script, if one waits for it
+// FUNCTION: GAME 0x5b0660
+void C_game::Timer_TimeOut()
 {
-    StubLog("C_game::CreateTrackEffect");
+    if (timeout_program)
+        timeout_program->SetEvent(timeout_event);
 }
 
-// STUB: GAME 0x5b1d70
+// FUNCTION: GAME 0x5b0680
+void C_game::PFire_Fire()
+{
+    if (player_fire_program)
+        player_fire_program->SetEvent(player_fire_event);
+}
+
+// FUNCTION: GAME 0x5b06a0
+void C_game::PHorn_Horn()
+{
+    if (player_horn_program)
+        player_horn_program->SetEvent(player_horn_event);
+}
+
+// FUNCTION: GAME 0x5b06c0
+void C_game::WFall_Player()
+{
+    if (player_wfall_program)
+        player_wfall_program->SetEvent(player_wfall_event);
+}
+
+// SETNPCKILLEVENT's (PS2 name): the script's event fired when the NPC of that name is killed (Do_NPCKillEvent)
+// FUNCTION: GAME 0x5b06e0
+void C_game::AddNPCKillEvent(C_program *prog, int event, char *name)
+{
+    S_npc_kill_event e;
+    memset(&e, 0, sizeof(e));
+    npc_kill_events.push_back(e);
+    npc_kill_events.back().program = prog;
+    npc_kill_events.back().event = event;
+    strcpy(npc_kill_events.back().name, name);
+}
+
+// An NPC's kill (PS2 name): the events of npc_kill_events of his name, without its path, fired
+// FUNCTION: GAME 0x5b0750
+void C_game::Do_NPCKillEvent(char *label)
+{
+    char *name = strrchr(label, '\\');
+    if (name)
+        name++;
+    else
+        name = label;
+    for (int i = npc_kill_events.size(); i--;)
+    {
+        if (!_stricmp(name, npc_kill_events[i].name))
+            npc_kill_events[i].program->SetEvent(npc_kill_events[i].event);
+    }
+}
+
+// A driver's model for the car (PS2 name), once: the steering wheel's animation (FormuleVolant.I3D's for a formula,
+// else AutoRidicVolant.I3D's) set as the model's animation of the index, which TickDriverMan moves by the car's
+// steering, and the legs hidden
+// FUNCTION: GAME 0x5b07e0
+void C_game::AddDriverMan(I3D_model *model, C_car *car, int anim, bool formula)
+{
+    if (!car)
+        return;
+    if (!model)
+        return;
+    for (int i = driver_men.size(); i--;)
+    {
+        if (driver_men[i].model == model)
+            return;
+    }
+    I3D_animation_set *set = NULL;
+    if (formula)
+        anim_cache.Create("FormuleVolant.I3D", &set, NULL, NULL);
+    else
+        anim_cache.Create("AutoRidicVolant.I3D", &set, NULL, NULL);
+    if (!set)
+        return;
+    model->SetAnimation(set, anim, 1.0f, 0);
+    set->Release();
+    C_human::HideLegs(model, true);
+    S_driver_man dm;
+    dm.model = model;
+    dm.car = car;
+    dm.anim = anim;
+    dm.formula = formula;
+    driver_men.push_back(dm);
+}
+
+// The driver's model taken from driver_men (PS2 name): its animation stopped, its legs shown, the last one in its place
+// FUNCTION: GAME 0x5b0a80
+void C_game::DelDriverMan(I3D_model *model)
+{
+    for (int i = driver_men.size(); i--;)
+    {
+        if (driver_men[i].model == model)
+        {
+            driver_men[i].model->StopAnimation(driver_men[i].anim);
+            C_human::HideLegs(driver_men[i].model, false);
+            driver_men[i] = driver_men.back();
+            driver_men.pop_back();
+            break;
+        }
+    }
+}
+
+// A track fitted to the surface it is on (the name is ours): a line from pos along each of the axes perpendicular to
+// the normal, both ways; where one hits something, the normal turns toward it and pos is moved off it to 0.707. Inline:
+// both CreateTrackEffect overloads call its operators out of line, as nested calls starved by the inline calls after
+// it (the scene's accessor twice), where written out in them, they inline every one.
+inline void C_game::FitTrack(S_vector &pos, S_vector &normal)
+{
+    S_vector dirs[4];
+    GetTangents(normal, dirs[0], dirs[1]);
+    dirs[2] = -dirs[0];
+    dirs[3] = -dirs[1];
+    for (int i = 4; i--;) {
+        S_vector dir = dirs[i];
+        S_vector hit_pos, hit_normal;
+        if (gifCollision.TestLineV(pos, dir, &hit_pos, &hit_normal, COLF_ALL, 0)) {
+            normal += dir;
+            float dist = pos.DistanceToPlane(hit_pos, hit_normal);
+            if (dist < .707f) {
+                float d = .707f - dist;
+                pos += hit_normal * d;
+            }
+        }
+    }
+    normal.Normalize();
+}
+
+// A track on a surface (PS2 name; PS2's is empty; the parameters' names are ours): the next of the tracks' projectors
+// (track_projector_next, which wraps at 100), its blood's collision taken out first, projects the texture of
+// track_textures' index at pos along normal, turned by angle (a hole's at random), sized size with x and y varied
+// together by up to size_rnd, faded by alpha and lit as the scene is at pos. With collision it puts a collision in the
+// game around pos (half a meter lower), which the humans' steps through it take blood from (cbCollTester); with fit
+// the track is fitted to the surface, moved off what a line along each of its axes hits, its direction turned to that;
+// with grow it grows from a tenth to its size (Tick), else its receivers are locked at once. frm is the frame it is on
+// (the shot's level's, for ClearProjectorsForFrame). The projector, NULL without a texture or a projector.
+// FUNCTION: GAME 0x5b0b60
+I3D_frame *C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, float angle, S_vector &size, float size_rnd,
+    int texture, bool fit, float alpha, bool collision, bool grow, I3D_frame *frm)
+{
+    if (texture < 0 || texture >= 10 || !track_textures[texture])
+        return NULL;
+    if (track_projectors[track_projector_next].in_collision) {
+        gifCollision.DynErase(&track_projectors[track_projector_next].coll);
+        track_projectors[track_projector_next].in_collision = false;
+    }
+    I3D_frame *ret = NULL;
+    if (track_projectors[track_projector_next].frame) {
+        if (collision) {
+            track_projectors[track_projector_next].in_collision = true;
+            memset(&track_projectors[track_projector_next].coll, 0, sizeof(tDynamicCollObject));
+            track_projectors[track_projector_next].coll.type = DYNCOLL_UNKNOWN_48;
+            track_projectors[track_projector_next].coll.flags = DYNCOLLF_UNKNOWN_200000 | DYNCOLLF_LOWER;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).pos = pos;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).pos.y -= .5f;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).radius = .3f;
+            track_projectors[track_projector_next].coll.frame = NULL;
+            track_projectors[track_projector_next].coll.owner = NULL;
+            gifCollision.DynInsert(&track_projectors[track_projector_next].coll);
+        }
+        if (fit)
+            FitTrack(pos, normal);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetProjectorLock(I3DLOCK_NONE);
+        track_projectors[track_projector_next].frame->SetOn(true);
+        track_projectors[track_projector_next].frame->SetPos(pos);
+        track_projectors[track_projector_next].frame->SetDir(normal, angle);
+        float r = (rnd() * 2.0f - 1.0f) * size_rnd;
+        track_projectors[track_projector_next].frame->SetScale(S_vector(size.x + r, size.y + r, size.z));
+        track_projectors[track_projector_next].frame->Update();
+        act_mission->GetScene()->SetFrameSector(track_projectors[track_projector_next].frame);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetMode(PROJECTOR_MODE_BLEND);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetOrthogonal(true);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetTexture(track_textures[texture]);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetAlpha(alpha);
+        float light = act_mission->GetScene()->GetLightness(pos, NULL, 0, NULL);
+        S_vector color(light, light, light);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetColor(color);
+        if (grow) {
+            track_projectors[track_projector_next].growing = true;
+            track_projectors[track_projector_next].scale = .1f;
+            growing_projectors++;
+            S_vector scale = track_projectors[track_projector_next].frame->GetScale();
+            scale.x *= track_projectors[track_projector_next].scale;
+            scale.y *= track_projectors[track_projector_next].scale;
+            track_projectors[track_projector_next].frame->SetScale(scale);
+            track_projectors[track_projector_next].frame->Update();
+        } else {
+            track_projectors[track_projector_next].growing = false;
+            ((I3D_projector *)track_projectors[track_projector_next].frame)->SetProjectorLock(I3DLOCK_RECEIVERS);
+        }
+        track_projectors[track_projector_next].hit_frame = frm;
+        ret = track_projectors[track_projector_next].frame;
+    }
+    NextTrackProjector();
+    return ret;
+}
+
+// The same turned by a direction instead of an angle (PS2's other overload, also empty): its local z axis along normal,
+// the y axis toward dir (human_notify_callback's steps)
+// FUNCTION: GAME 0x5b1370
+I3D_frame *C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float size_rnd,
+    int texture, bool fit, float alpha, bool collision, bool grow, I3D_frame *frm)
+{
+    if (texture < 0 || texture >= 10 || !track_textures[texture])
+        return NULL;
+    if (track_projectors[track_projector_next].in_collision) {
+        gifCollision.DynErase(&track_projectors[track_projector_next].coll);
+        track_projectors[track_projector_next].in_collision = false;
+    }
+    I3D_frame *ret = NULL;
+    if (track_projectors[track_projector_next].frame) {
+        if (collision) {
+            track_projectors[track_projector_next].in_collision = true;
+            memset(&track_projectors[track_projector_next].coll, 0, sizeof(tDynamicCollObject));
+            track_projectors[track_projector_next].coll.type = DYNCOLL_UNKNOWN_48;
+            track_projectors[track_projector_next].coll.flags = DYNCOLLF_UNKNOWN_200000 | DYNCOLLF_LOWER;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).pos = pos;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).pos.y -= .5f;
+            ((I3D_bsphere &)track_projectors[track_projector_next].coll.bsphere).radius = .3f;
+            track_projectors[track_projector_next].coll.frame = NULL;
+            track_projectors[track_projector_next].coll.owner = NULL;
+            gifCollision.DynInsert(&track_projectors[track_projector_next].coll);
+        }
+        if (fit)
+            FitTrack(pos, normal);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetProjectorLock(I3DLOCK_NONE);
+        track_projectors[track_projector_next].frame->SetOn(true);
+        track_projectors[track_projector_next].frame->SetPos(pos);
+        track_projectors[track_projector_next].frame->SetDir1(normal, dir);
+        float r = (rnd() * 2.0f - 1.0f) * size_rnd;
+        track_projectors[track_projector_next].frame->SetScale(S_vector(size.x + r, size.y + r, size.z));
+        track_projectors[track_projector_next].frame->Update();
+        act_mission->GetScene()->SetFrameSector(track_projectors[track_projector_next].frame);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetMode(PROJECTOR_MODE_BLEND);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetOrthogonal(true);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetTexture(track_textures[texture]);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetAlpha(alpha);
+        float light = act_mission->GetScene()->GetLightness(pos, NULL, 0, NULL);
+        S_vector color(light, light, light);
+        ((I3D_projector *)track_projectors[track_projector_next].frame)->SetColor(color);
+        if (grow) {
+            track_projectors[track_projector_next].growing = true;
+            track_projectors[track_projector_next].scale = .1f;
+            growing_projectors++;
+            S_vector scale = track_projectors[track_projector_next].frame->GetScale();
+            scale.x *= track_projectors[track_projector_next].scale;
+            scale.y *= track_projectors[track_projector_next].scale;
+            track_projectors[track_projector_next].frame->SetScale(scale);
+            track_projectors[track_projector_next].frame->Update();
+        } else {
+            track_projectors[track_projector_next].growing = false;
+            ((I3D_projector *)track_projectors[track_projector_next].frame)->SetProjectorLock(I3DLOCK_RECEIVERS);
+        }
+        track_projectors[track_projector_next].hit_frame = frm;
+        ret = track_projectors[track_projector_next].frame;
+    }
+    NextTrackProjector();
+    return ret;
+}
+
+// Two axes perpendicular to the normal and to each other (the name is ours): u horizontal, v completing them, the world's
+// x and z for a vertical normal
+// FUNCTION: GAME 0x5b1b60
+void C_game::GetTangents(const S_vector &normal, S_vector &u, S_vector &v)
+{
+    if ((float)fabs(normal.x) < MRG_ZERO && (float)fabs(normal.z) < MRG_ZERO) {
+        u.x = 1.0f;
+        u.y = 0.0f;
+        u.z = 0.0f;
+        v.x = 0.0f;
+        v.y = 0.0f;
+        v.z = 1.0f;
+        return;
+    }
+    u = normal.Cross(S_vector(0.0f, 1.0f, 0.0f));
+    v = u.Cross(normal);
+    u = normal.Cross(v);
+}
+
+// A grenade's track where it exploded (PS2 name): a stain (track_textures' 1) 1 m above pos, projected down and fitted to
+// the ground, 0.8 m wide at random turns. The direction both builds compute from two random numbers isn't used: the
+// PC's keeps only the calls.
+// FUNCTION: GAME 0x5b1ca0
+void C_game::CreateTrackEffect_Grenade(S_vector &pos)
+{
+    S_vector p = pos;
+    p.y += 1.0f;
+    S_vector normal(0.0f, -1.0f, 0.0f);
+    S_vector size(.8f, .8f, 1.45f);
+    S_vector dir(rnd() + .001f, 0.0f, rnd() + .001f);
+    CreateTrackEffect(p, normal, rnd() * (2.0f * PI), size, .2f, 1, true, 1.0f, false, false, NULL);
+}
+
+// track_projector_next to the next projector, wrapping at 100 (the name is ours)
+// FUNCTION: GAME 0x5b1d50
+void C_game::NextTrackProjector()
+{
+    if (++track_projector_next >= 100)
+        track_projector_next = 0;
+}
+
+// The tracks on the frame turned off (a frame the scripts take away)
+// FUNCTION: GAME 0x5b1d70
 void C_game::ClearProjectorsForFrame(I3D_frame *frm)
 {
-    StubLog("C_game::ClearProjectorsForFrame");
+    for (int i = 100; i--;) {
+        if (track_projectors[i].hit_frame == frm)
+            track_projectors[i].frame->SetOn(false);
+    }
 }
 
 // FUNCTION: GAME 0x5b1da0
@@ -3256,16 +4841,43 @@ void C_game::InventoryStackClear()
     inventory_stack.clear();
 }
 
-// STUB: GAME 0x5b1e10
+// The player's inventory kept for a later mission (PS2 name; ENTITY_PUSHINVENTORY's most likely): a copy of it but its
+// cycle. The first push after Init empties the stacks first.
+// FUNCTION: GAME 0x5b1e10
 void C_game::InventoryStackPush(C_human *human)
 {
-    StubLog("C_game::InventoryStackPush");
+    if (!human)
+        return;
+    if (stacks_clear)
+    {
+        stacks_clear = false;
+        FloatStackClear();
+        CharacterStackClear();
+        InventoryStackClear();
+    }
+    inventory_stack.push_back(new G_Inventory(human->inventory));
 }
 
-// STUB: GAME 0x5b20b0
+// The last inventory pushed given back to the human and taken off the stack (PS2 name); the player's is then put into
+// his car's state or out of it
+// FUNCTION: GAME 0x5b20b0
 void C_game::InventoryStackPop(C_human *human)
 {
-    StubLog("C_game::InventoryStackPop");
+    if (!human || !inventory_stack.size())
+        return;
+    human->inventory = *inventory_stack.back();
+    delete inventory_stack.back();
+    inventory_stack.pop_back();
+    if (GetPlayer() == human)
+    {
+        if (human->car && human->car->type == ACTOR_CAR && human->seat != -1)
+            human->inventory.SetInCar(true, NULL);
+        else
+        {
+            std::vector<S_GameItem> dropped;
+            human->inventory.SetInCar(false, &dropped);
+        }
+    }
 }
 
 // FUNCTION: GAME 0x5b2320
@@ -3274,16 +4886,28 @@ void C_game::FloatStackClear()
     float_stack.clear();
 }
 
-// STUB: GAME 0x5b2350
+// A float kept for a later mission (PS2 name), and the last one taken back
+// FUNCTION: GAME 0x5b2350
 void C_game::FloatStackPush(float f)
 {
-    StubLog("C_game::FloatStackPush");
+    if (stacks_clear)
+    {
+        stacks_clear = false;
+        FloatStackClear();
+        CharacterStackClear();
+        InventoryStackClear();
+    }
+    float_stack.push_back(f);
 }
 
-// STUB: GAME 0x5b2530
+// FUNCTION: GAME 0x5b2530
 void C_game::FloatStackPop(float *f)
 {
-    StubLog("C_game::FloatStackPop");
+    if (float_stack.size())
+    {
+        *f = float_stack.back();
+        float_stack.pop_back();
+    }
 }
 
 // FUNCTION: GAME 0x5b2590
@@ -3292,126 +4916,883 @@ void C_game::CharacterStackClear()
     character_stack.clear();
 }
 
-// STUB: GAME 0x5b25c0
+// The human's properties kept for a later mission (PS2 name), all 16 in the order Pop takes them off in reverse
+// FUNCTION: GAME 0x5b25c0
 void C_game::CharacterStackPush(C_human *human)
 {
-    StubLog("C_game::CharacterStackPush");
+    if (!human)
+        return;
+    if (stacks_clear)
+    {
+        stacks_clear = false;
+        FloatStackClear();
+        CharacterStackClear();
+        InventoryStackClear();
+    }
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_STRENGTH]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_SPEED]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_SIGHT]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_SHOOTING]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_REACTIONS]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_15]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_MASS]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_INTELLIGENCE]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_HEARING]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_ENERGY_LEG_R]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_ENERGY_LEG_L]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_ENERGY_HAND_R]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_ENERGY_HAND_L]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_ENERGY]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_DRIVING]);
+    character_stack.push_back(human->properties[HUMAN_PROPERTY_AGGRESIVITY]);
 }
 
-// STUB: GAME 0x5b2740
+// The last properties pushed taken off the stack (PS2 name): only the energies are given back, the human dies without
+// energy, and the HUD shows the player's or the wingman's lives again
+// FUNCTION: GAME 0x5b2740
 void C_game::CharacterStackPop(C_human *human)
 {
-    StubLog("C_game::CharacterStackPop");
+    if (!human || character_stack.size() < 16)
+        return;
+    character_stack.pop_back();
+    character_stack.pop_back();
+    human->properties[HUMAN_PROPERTY_ENERGY] = character_stack.back();
+    character_stack.pop_back();
+    human->properties[HUMAN_PROPERTY_ENERGY_HAND_L] = character_stack.back();
+    character_stack.pop_back();
+    human->properties[HUMAN_PROPERTY_ENERGY_HAND_R] = character_stack.back();
+    character_stack.pop_back();
+    human->properties[HUMAN_PROPERTY_ENERGY_LEG_L] = character_stack.back();
+    character_stack.pop_back();
+    human->properties[HUMAN_PROPERTY_ENERGY_LEG_R] = character_stack.back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    character_stack.pop_back();
+    if (human->properties[HUMAN_PROPERTY_ENERGY] < .01f)
+        human->_intern_ForceDeath();
+    if (act_mission->GetGame()->GetPlayer() == human)
+    {
+        uint lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] / human->max_properties[HUMAN_PROPERTY_ENERGY] *
+            100.0f);
+        if (!human->GetDead() && lives < 1)
+            lives = 1;
+        mafiaIndicators.PlayerSetLives(lives);
+    }
+    if (human->wingman > -1)
+    {
+        int lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] / human->max_properties[HUMAN_PROPERTY_ENERGY] *
+            100.0f);
+        if (!human->GetDead())
+            lives = Max(lives, 1);
+        mafiaIndicators.PlayerSetWingmanLives(human->wingman, lives);
+    }
 }
 
-// STUB: GAME 0x5b2a00
-void C_game::BoxPlacementAdd(I3D_frame *frm, int unknown)
+// A box the scripts place (PS2 name; FUCKINGBOX_ADD's, and a box put down again): an actor of its frame unloaded
+// from the mission, a collision of its bound volume (in the collisions unless the box lies on an actor), and the id
+// of its destinations. A box placed already only gets the id, if it has none.
+// FUNCTION: GAME 0x5b2a00
+void C_game::BoxPlacementAdd(I3D_frame *frm, int id)
 {
-    StubLog("C_game::BoxPlacementAdd");
+    for (int i = boxes.size(); i--; )
+        if (boxes[i]->frame == frm)
+        {
+            if (boxes[i]->id == BOXID_NONE)
+                boxes[i]->id = id;
+            return;
+        }
+    C_actor **p = GetFrameActor(frm);
+    if (p)
+    {
+        C_actor *act = *p;
+        if (act && act_mission->UnloadActor(act))
+        {
+            *p = NULL;
+            SetFrameActor(frm, p);
+            InternTempActAdd(act);
+            RemoveTemporaryActor(act);
+        }
+    }
+    S_box_placement *box = new S_box_placement;
+    C_actor::DebustizeFrame(frm);
+    bool on_actor = false;
+    for (I3D_frame *f = frm->GetParent(); f; f = f->GetParent())
+        if (GetFrameActor(f) && *GetFrameActor(f))
+        {
+            on_actor = true;
+            break;
+        }
+    memset(&box->coll, 0, sizeof(box->coll));
+    box->coll.type = DYNCOLL_UNKNOWN_40;
+    box->coll.frame = frm;
+    box->coll.owner = NULL;
+    I3D_bvolume vol = frm->GetHRBoundVolume();
+    (I3D_bbox &)box->coll.bbox = vol.bbox;
+    S_vector scale = frm->GetWorldScale();
+    ((I3D_bsphere &)box->coll.bsphere).radius = Max(scale.x, Max(scale.y, scale.z)) * vol.bsphere.radius;
+    ((I3D_bsphere &)box->coll.bsphere).pos = vol.bsphere.pos * frm->GetMatrix();
+    box->coll.flags = DYNCOLLF_UNKNOWN_1000;
+    box->coll.matrix = (S_matrix *)&frm->GetMatrix();
+    box->inv_matrix = frm->GetMatrix();
+    S_matrix &m = box->inv_matrix;
+    m.Inverse(S_matrix(m));
+    box->coll.inv_matrix = &box->inv_matrix;
+    if (!on_actor)
+        gifCollision.DynInsert(&box->coll);
+    box->frame = frm;
+    box->id = id;
+    box->on = true;
+    box->using_object = new C_using_object::S_using_object;
+    memset(box->using_object, 0, sizeof(*box->using_object));
+    boxes.push_back(box);
 }
 
-// STUB: GAME 0x5b2ee0
+// The box taken out of the placements (PS2 name): its collision and its using object gone, the last box in its place
+// FUNCTION: GAME 0x5b2ee0
 void C_game::BoxPlacementDel(I3D_frame *frm)
 {
-    StubLog("C_game::BoxPlacementDel");
+    for (int i = boxes.size(); i--; )
+        if (boxes[i]->frame == frm)
+        {
+            gifCollision.DynErase(&boxes[i]->coll);
+            act_mission->GetGame()->GetUsingObject().DelObject(boxes[i]->using_object);
+            delete boxes[i]->using_object;
+            delete boxes[i];
+            boxes[i] = boxes.back();
+            boxes.pop_back();
+            return;
+        }
 }
 
-// STUB: GAME 0x5b2fc0
+// Which boxes the player can pick up (PS2 name; FUCKINGBOX_RECOMPILE's): those with an id, which can be taken, and
+// that no other box lies on (one 0.2 to 1 m higher, less than about 0.63 m away horizontally) get their "Pick up
+// box", the others lose it
+// FUNCTION: GAME 0x5b2fc0
 void C_game::BoxPlacementRecompile()
 {
-    StubLog("C_game::BoxPlacementRecompile");
+    for (int i = boxes.size(); i--; )
+    {
+        if (boxes[i]->id == BOXID_NONE)
+            continue;
+        bool covered = false;
+        for (int j = boxes.size(); j--; )
+        {
+            if (i == j || !boxes[i]->on || !boxes[j]->on)
+                continue;
+            S_vector d = boxes[j]->frame->GetWorldPos() - boxes[i]->frame->GetWorldPos();
+            if (d.y > .2f && d.y < 1.0f && d.x * d.x + d.z * d.z < .4f)
+            {
+                covered = true;
+                break;
+            }
+        }
+        if (!covered && boxes[i]->on)
+        {
+            boxes[i]->using_object->pos = boxes[i]->frame->GetWorldPos();
+            boxes[i]->using_object->unknown_c = .5f;
+            boxes[i]->using_object->unknown_10 = 0;
+            boxes[i]->using_object->flags = 0;
+            boxes[i]->using_object->frame = boxes[i]->frame;
+            boxes[i]->using_object->actor = NULL;
+            boxes[i]->using_object->item.id = GAMEITEM_SPECIAL_ACTION;
+            boxes[i]->using_object->item.ammo_loaded = USING_ACTION_PICK_UP_BOX;
+            boxes[i]->using_object->item.using_object = boxes[i]->using_object;
+            boxes[i]->using_object->sector = NULL;
+            act_mission->GetGame()->GetUsingObject().AddObject(boxes[i]->using_object);
+        }
+        else
+            act_mission->GetGame()->GetUsingObject().DelObject(boxes[i]->using_object);
+    }
 }
 
-// STUB: GAME 0x5b3220
-void C_game::BoxPlacementDestAdd(I3D_frame *frm, int unknown)
+// A destination of the boxes of the id (PS2 name; FUCKINGBOX_ADD_DEST's), once
+// FUNCTION: GAME 0x5b3220
+void C_game::BoxPlacementDestAdd(I3D_frame *frm, int id)
 {
-    StubLog("C_game::BoxPlacementDestAdd");
+    for (int i = box_dests.size(); i--; )
+        if (box_dests[i]->frame == frm)
+            return;
+    S_box_dest *dest = new S_box_dest;
+    dest->frame = frm;
+    dest->id = id;
+    box_dests.push_back(dest);
 }
 
-// STUB: GAME 0x5b3a90
+// The player takes the box (on) or puts it down (PS2 name): "Drop box" at the last destination of the box's id while
+// he carries it, where the box was saved (BoxPlacement_SaveInfo), and the box's id returned; -1 and no "Drop box" when
+// he puts it down or the box has no destination. The destinations are compared with a copy of the box's id
+// (FindBoxDest's parameter): VC6 doesn't share it with the id returned, which stays in memory.
+// FUNCTION: GAME 0x5b33f0
+int C_game::BoxPlacementDestSetOU(bool on, I3D_frame *frm)
+{
+    int id = -1;
+    using_object.DelObject(&dest_object);
+    if (!box_dests.size())
+        return id;
+    if (!on)
+        return id;
+    int index = -1;
+    for (int i = boxes.size(); i--; )
+        if (boxes[i]->frame == frm)
+        {
+            id = boxes[i]->id;
+            index = i;
+            break;
+        }
+    if (index < 0)
+        return -1;
+    int j = FindBoxDest(boxes[index]->id);
+    if (j < 0)
+        return -1;
+    dest_object.pos = box_dests[j]->frame->GetWorldPos();
+    dest_object.unknown_c = 1.0f;
+    dest_object.unknown_10 = 0;
+    dest_object.flags = 0;
+    dest_object.frame = box_dests[j]->frame;
+    dest_object.actor = NULL;
+    dest_object.item.id = GAMEITEM_SPECIAL_ACTION;
+    dest_object.item.ammo_loaded = USING_ACTION_DROP_BOX;
+    dest_object.item.using_object = &dest_object;
+    dest_object.sector = NULL;
+    using_object.AddObject(&dest_object);
+    BoxPlacement_SaveInfo(frm);
+    return id;
+}
+
+// "Drop box" again at the last destination of the player's box's id, while he carries one (PS2 name)
+// FUNCTION: GAME 0x5b3590
+void C_game::BoxPlacementReposeDestPlayer()
+{
+    if (!act_mission->GetGame()->GetPlayer()->box)
+        return;
+    using_object.DelObject(&dest_object);
+    int j;
+    for (j = box_dests.size(); j--; )
+        if (act_mission->GetGame()->GetPlayer()->box_index == box_dests[j]->id)
+            break;
+    if (j < 0)
+        return;
+    dest_object.pos = box_dests[j]->frame->GetWorldPos();
+    dest_object.unknown_c = 1.0f;
+    dest_object.unknown_10 = 0;
+    dest_object.flags = 0;
+    dest_object.frame = box_dests[j]->frame;
+    dest_object.actor = NULL;
+    dest_object.item.id = GAMEITEM_SPECIAL_ACTION;
+    dest_object.item.ammo_loaded = USING_ACTION_DROP_BOX;
+    dest_object.item.using_object = &dest_object;
+    dest_object.sector = NULL;
+    using_object.AddObject(&dest_object);
+}
+
+// Where the box is, kept for BoxPlacement_RestoreInfo and BoxPlacement_GetStartPoint (PS2 name), with its frame's
+// placement for Done: its parent, local position and direction, once
+// FUNCTION: GAME 0x5b36b0
+void C_game::BoxPlacement_SaveInfo(I3D_frame *frm)
+{
+    AddFramePlacement(frm);
+    for (int i = box_placement_temp.size(); i--; )
+        if (box_placement_temp[i].frame == frm)
+        {
+            box_placement_temp[i] = box_placement_temp.back();
+            box_placement_temp.pop_back();
+        }
+    S_box_placement_temp temp;
+    temp.frame = frm;
+    temp.parent = frm->GetParent();
+    temp.pos = frm->GetPos();
+    temp.dir = frm->GetDir();
+    box_placement_temp.push_back(temp);
+}
+
+// What BoxPlacement_SaveInfo kept of the box forgotten (PS2 name; SETMODELTOCAR's, before the frame goes into a model)
+// FUNCTION: GAME 0x5b3a90
 void C_game::BoxPlacement_DelInfo(I3D_frame *frm)
 {
-    StubLog("C_game::BoxPlacement_DelInfo");
+    for (int i = box_placement_temp.size(); i--; )
+        if (box_placement_temp[i].frame == frm)
+        {
+            box_placement_temp[i] = box_placement_temp.back();
+            box_placement_temp.pop_back();
+            return;
+        }
 }
 
-// STUB: GAME 0x5b4190
-int C_game::BoxPlacement_GetBox(int index)
+// The box put back where BoxPlacement_SaveInfo found it (PS2 name), and that forgotten
+// FUNCTION: GAME 0x5b3b10
+void C_game::BoxPlacement_RestoreInfo(I3D_frame *frm)
 {
-    StubLog("C_game::BoxPlacement_GetBox");
-    return 0;
+    for (int i = box_placement_temp.size(); i--; )
+        if (box_placement_temp[i].frame == frm)
+        {
+            frm->SetPos(box_placement_temp[i].pos);
+            frm->SetDir(box_placement_temp[i].dir, 0.0f);
+            frm->Update();
+            frm->LinkTo(box_placement_temp[i].parent, 0);
+            box_placement_temp[i] = box_placement_temp.back();
+            box_placement_temp.pop_back();
+            return;
+        }
 }
 
-// STUB: GAME 0x5b41d0
-int C_game::BoxPlacement_GetBoxDest(int index)
+// Where the box was taken from, in world space: false if BoxPlacement_SaveInfo didn't keep it (PS2 name)
+// FUNCTION: GAME 0x5b3c00
+bool C_game::BoxPlacement_GetStartPoint(I3D_frame *frm, S_vector &pos)
 {
-    StubLog("C_game::BoxPlacement_GetBoxDest");
-    return 0;
+    for (int i = box_placement_temp.size(); i--; )
+        if (box_placement_temp[i].frame == frm)
+        {
+            pos = box_placement_temp[i].pos;
+            pos *= box_placement_temp[i].parent->GetMatrix();
+            return true;
+        }
+    return false;
 }
 
-// STUB: GAME 0x5b4210
-void C_game::BoxPlacement_MoveBoxToDest(int index)
+// The box put down at the destination dest (PS2 name): placed as dest, which is used up, and placed again with no id.
+// On a car the box rides along: placed only if the car's special dynamic collisions are on, else it can't be taken,
+// out of the collisions; on another actor it isn't placed.
+// FUNCTION: GAME 0x5b3c80
+void C_game::BoxPlacementGetNextDest(I3D_frame *frm, I3D_frame *dest)
 {
-    StubLog("C_game::BoxPlacement_MoveBoxToDest");
+    if (!dest || !frm)
+        return;
+    frm->SetPos(dest->GetPos());
+    frm->SetDir(dest->GetDir(), 0.0f);
+    frm->Update();
+    frm->LinkTo(dest->GetParent(), 0);
+    int i;
+    for (i = box_dests.size(); i--; )
+        if (box_dests[i]->frame == dest)
+        {
+            box_dests.erase(box_dests.begin() + i);
+            break;
+        }
+    C_actor *act = NULL;
+    for (I3D_frame *f = dest; f; f = f->GetParent())
+    {
+        C_actor **p = GetFrameActor(f);
+        if (p && *p)
+        {
+            act = *p;
+            break;
+        }
+    }
+    if (act)
+    {
+        if (act->GetType() == ACTOR_CAR)
+        {
+            BoxPlacementAdd(frm, BOXID_NONE);
+            if (!((C_car *)act)->GetSpecialDynamicColls())
+            {
+                for (i = boxes.size(); i--; )
+                    if (boxes[i]->frame == frm)
+                    {
+                        boxes[i]->on = false;
+                        gifCollision.DynErase(&boxes[i]->coll);
+                        break;
+                    }
+            }
+            else
+            {
+                for (i = boxes.size(); i--; )
+                    if (boxes[i]->frame == frm)
+                    {
+                        gifCollision.DynInsert(&boxes[i]->coll);
+                        break;
+                    }
+            }
+        }
+    }
+    else
+        BoxPlacementAdd(frm, BOXID_NONE);
 }
 
-// STUB: GAME 0x5b42e0
-void C_game::BoxRecompileBoxForCar(C_car *car, bool unknown)
+// Where the human takes a box of the id (PS2 name): carrying one, the last destination of the id; else the box of
+// the id nearest to him by twice the squared distance plus the square of its height under 10 m (the higher ones first;
+// PS2's sums the same); NULL for none
+// FUNCTION: GAME 0x5b4010
+I3D_frame *C_game::BoxPlacementGetEnemyDest(C_human *human, int id)
 {
-    StubLog("C_game::BoxRecompileBoxForCar");
-}
-
-// STUB: GAME 0x5b44e0
-int C_game::BoxPlacementPoPiciNaZkurvenemAute(C_car *car, int unknown)
-{
-    StubLog("C_game::BoxPlacementPoPiciNaZkurvenemAute");
-    return 0;
-}
-
-// STUB: GAME 0x5b4560
-void C_game::DeathActorAdd(C_actor *act)
-{
-    StubLog("C_game::DeathActorAdd");
-}
-
-// STUB: GAME 0x5b4720
-void C_game::DeathActorProcess()
-{
-    StubLog("C_game::DeathActorProcess");
-}
-
-// STUB: GAME 0x5b4790
-C_actor *C_game::GetActorFromGUID(uint id)
-{
-    StubLog("C_game::GetActorFromGUID");
+    if (human->box)
+    {
+        for (int i = box_dests.size(); i--; )
+            if (box_dests[i]->id == id)
+                return box_dests[i]->frame;
+        return NULL;
+    }
+    int found = -1;
+    float best = FLT_MAX;
+    for (int i = boxes.size(); i--; )
+    {
+        if (boxes[i]->id != id)
+            continue;
+        S_vector pos = boxes[i]->frame->GetWorldPos();
+        float h = 10.0f - pos.y;
+        S_vector d = pos - human->GetFrame()->GetWorldPos();
+        float dist = d.Square();
+        dist += h * h;
+        dist += d.Square();
+        if (dist < best)
+        {
+            best = dist;
+            found = i;
+        }
+    }
+    if (found >= 0)
+        return boxes[found]->frame;
     return NULL;
 }
 
-// STUB: GAME 0x5b4d10
-bool C_game::SaveGameLoad(void **buf)
+// How many boxes and destinations have the id (PS2 names; FUCKINGBOX_GETNUMBOX's and FUCKINGBOX_GETNUMDEST's)
+// FUNCTION: GAME 0x5b4190
+int C_game::BoxPlacement_GetBox(int id)
 {
-    StubLog("C_game::SaveGameLoad");
-    return false;
+    int count = 0;
+    for (int i = boxes.size(); i--; )
+        if (boxes[i]->id == id)
+            count++;
+    return count;
 }
 
-// STUB: GAME 0x5b5410
-bool C_game::SaveGameLoadBefore(void **buf)
+// FUNCTION: GAME 0x5b41d0
+int C_game::BoxPlacement_GetBoxDest(int id)
 {
-    StubLog("C_game::SaveGameLoadBefore");
-    return false;
+    int count = 0;
+    for (int i = box_dests.size(); i--; )
+        if (box_dests[i]->id == id)
+            count++;
+    return count;
 }
 
-// STUB: GAME 0x5b47d0
+// The first box of the id put down at the last destination of the id, as the player would (PS2 name;
+// FUCKINGBOX_MOVE's)
+// FUNCTION: GAME 0x5b4210
+void C_game::BoxPlacement_MoveBoxToDest(int id)
+{
+    I3D_frame *box = NULL;
+    for (int i = boxes.size(); i--; )
+        if (boxes[i]->id == id)
+            box = boxes[i]->frame;
+    I3D_frame *dest = NULL;
+    for (uint j = 0; j < box_dests.size(); j++)
+        if (box_dests[j]->id == id)
+            dest = box_dests[j]->frame;
+    if (box && dest)
+    {
+        act_mission->GetGame()->BoxPlacementDestSetOU(true, box);
+        act_mission->GetGame()->BoxPlacementDel(box);
+        act_mission->GetGame()->BoxPlacementRecompile();
+        act_mission->GetGame()->BoxPlacementGetNextDest(box, dest);
+        act_mission->GetGame()->BoxPlacementDestSetOU(false, box);
+        BoxPlacementReposeDestPlayer();
+    }
+}
+
+// The car's special dynamic collisions turned on or off (PS2 name; CAR_SETSPECCOLL's): the boxes on it can be taken
+// and are in the collisions where they are now, or neither
+// FUNCTION: GAME 0x5b42e0
+void C_game::BoxRecompileBoxForCar(C_car *car, bool on)
+{
+    if (!car)
+        return;
+    int i;
+    I3D_frame *f;
+    if (on)
+    {
+        for (i = boxes.size(); i--; )
+            for (f = boxes[i]->frame; f; f = f->GetParent())
+                if (f == car->GetFrame())
+                {
+                    boxes[i]->on = true;
+                    I3D_bvolume vol = boxes[i]->frame->GetHRBoundVolume();
+                    ((I3D_bsphere &)boxes[i]->coll.bsphere).pos = vol.bsphere.pos * boxes[i]->frame->GetMatrix();
+                    boxes[i]->inv_matrix = boxes[i]->frame->GetMatrix();
+                    S_matrix &m = boxes[i]->inv_matrix;
+                    m.Inverse(S_matrix(m));
+                    boxes[i]->coll.inv_matrix = &boxes[i]->inv_matrix;
+                    gifCollision.DynInsert(&boxes[i]->coll);
+                    break;
+                }
+    }
+    else
+    {
+        for (i = boxes.size(); i--; )
+            for (f = boxes[i]->frame; f; f = f->GetParent())
+                if (f == car->GetFrame())
+                {
+                    boxes[i]->on = false;
+                    gifCollision.DynErase(&boxes[i]->coll);
+                    break;
+                }
+    }
+    BoxPlacementRecompile();
+}
+
+// How many boxes of the id lie on the car (PS2 name, Czech and rude for that; POCZKURVENYCHBEDENCAR's)
+// FUNCTION: GAME 0x5b44e0
+int C_game::BoxPlacementPoPiciNaZkurvenemAute(C_car *car, int id)
+{
+    int count = 0;
+    for (int i = boxes.size(); i--; )
+    {
+        if (boxes[i]->id != id)
+            continue;
+        for (I3D_frame *f = boxes[i]->frame; f; f = f->GetParent())
+            if (GetFrameActor(f) && *GetFrameActor(f) && *GetFrameActor(f) == car)
+            {
+                count++;
+                break;
+            }
+    }
+    return count;
+}
+
+// An actor DeathActorProcess kills, once (PS2 name): DEATHACTOR_ADD's
+// FUNCTION: GAME 0x5b4560
+void C_game::DeathActorAdd(C_actor *act)
+{
+    for (int i = death_actors.size(); i--;)
+        if (death_actors[i] == (uint)act)
+            return;
+    death_actors.push_back((uint &)act);
+}
+
+// The actors DeathActorAdd added killed, the humans among them (ACTOR_PLAYER, ACTOR_ENTITY), and the list emptied (PS2
+// name)
+// FUNCTION: GAME 0x5b4720
+void C_game::DeathActorProcess()
+{
+    for (int i = death_actors.size(); i--;)
+    {
+        C_actor *act = (C_actor *)death_actors[i];
+        switch (act->type)
+        {
+        case ACTOR_PLAYER:
+        case ACTOR_ENTITY:
+            ((C_human *)act)->_intern_ForceDeath();
+        }
+    }
+    death_actors.clear();
+}
+
+// The actor of the number (C_actor::number), the last of global_actors that has it, NULL for none (PS2 name)
+// FUNCTION: GAME 0x5b4790
+C_actor *C_game::GetActorFromGUID(uint id)
+{
+    for (int i = C_actor::global_actors.size(); i--;)
+        if (C_actor::global_actors[i]->number == id)
+            return C_actor::global_actors[i];
+    return NULL;
+}
+
+// The size of the game's record in a saved game (PS2 name): S_game_savegame, the chases', the stacks' items, the using
+// objects' and with full the videos' (each name with a byte more than SaveGameSave writes)
+// FUNCTION: GAME 0x5b47d0
 uint C_game::SaveGameGetSize(bool full)
 {
-    StubLog("C_game::SaveGameGetSize");
-    return 0;
+    uint size = sizeof(S_game_savegame) + sledovacka.SaveGameGetSize();
+    size += character_stack.size() * sizeof(float);
+    for (uint i = 0; i < inventory_stack.size(); i++)
+        size += inventory_stack[i]->SaveGameGetSize();
+    size += float_stack.size() * sizeof(float);
+    if (full)
+    {
+        size += i_show_fades.size() * sizeof(S_i_show_fade);
+        size += i_shows.size() * sizeof(S_i_show_savegame);
+        for (int i = i_shows.size(); i--;)
+            if (!(i_shows[i].flags & ISHOWF_CITY_MUSIC) && i_shows[i].name)
+                size += strlen(i_shows[i].name) + 1;
+    }
+    size += using_object.SaveGameGetSize();
+    return size;
 }
 
-// STUB: GAME 0x5b4920
+// The game's record of a saved game into *buf, which it advances (PS2 name): S_game_savegame, the chases', with full
+// the videos (but the city's music: a playing one with its position and its volume relative to the music's) and their
+// fades, then the stacks' items and the using objects'; false if the chases' fails
+// FUNCTION: GAME 0x5b4920
 bool C_game::SaveGameSave(void **buf, bool full)
 {
-    StubLog("C_game::SaveGameSave");
+    S_game_savegame *rec = (S_game_savegame *)*buf;
+    rec->version = GAME_SAVEGAME_VERSION;
+    rec->game_time = game_time;
+    rec->game_frames = game_frames;
+    rec->mission_number = act_mission->GetMissionNumber();
+    rec->timer = mafiaIndicators.show_flags & INDF_TIMER ? true : false;
+    rec->num_inventories = inventory_stack.size();
+    rec->num_characters = character_stack.size();
+    rec->num_floats = float_stack.size();
+    rec->num_i_shows = 0;
+    if (full)
+    {
+        rec->num_i_show_fades = i_show_fades.size();
+        rec->next_i_show_id = next_i_show_id;
+        rec->city_music = city_music;
+        rec->city_music_old = city_music_old;
+    }
+    else
+    {
+        rec->num_i_show_fades = 0;
+        rec->next_i_show_id = 0;
+        rec->city_music = -1;
+        rec->city_music_old = -1;
+    }
+    rec->score_on = score_on;
+    rec->score = score;
+    mafiaIndicators.TimerGetInterval(&rec->timer_interval);
+    mafiaIndicators.TimerGetTime(&rec->timer_hour, &rec->timer_minute, &rec->timer_second);
+    *buf = (uchar *)*buf + sizeof(S_game_savegame);
+    if (!sledovacka.SaveGameSave(buf))
+        return false;
+    if (full)
+    {
+        uint i;
+        for (i = 0; i < i_shows.size(); i++)
+        {
+            if (i_shows[i].flags & ISHOWF_CITY_MUSIC)
+                continue;
+            rec->num_i_shows++;
+            S_i_show_savegame *s = (S_i_show_savegame *)*buf;
+            s->flags = i_shows[i].flags;
+            s->id = i_shows[i].id;
+            s->playing = false;
+            s->pos = 0;
+            s->unknown_11 = 0;
+            s->volume = 1.0f;
+            if (i_shows[i].show)
+            {
+                i_shows[i].show->GetEvent();
+                s->playing = !i_shows[i].show->GetEvent();
+                if (s->playing)
+                {
+                    if (mafiaLoadSave.settings.music_volume > .01f)
+                    {
+                        s->volume = i_shows[i].show->GetVolume();
+                        s->volume /= mafiaLoadSave.settings.music_volume;
+                        if (s->volume > 1.0f)
+                            s->volume = 1.0f;
+                    }
+                    else
+                        s->volume = 0.0f;
+                    uint pos;
+                    i_shows[i].show->GetCurrentPos(&pos);
+                    s->unknown_11 = 0;
+                    s->pos = pos;
+                }
+            }
+            if (i_shows[i].name)
+                s->name_len = strlen(i_shows[i].name);
+            else
+                s->name_len = 0;
+            *buf = (uchar *)*buf + sizeof(S_i_show_savegame);
+            if (s->name_len)
+            {
+                memcpy(*buf, i_shows[i].name, s->name_len);
+                *buf = (uchar *)*buf + s->name_len;
+            }
+        }
+        for (i = 0; i < i_show_fades.size(); i++)
+        {
+            memcpy(*buf, &i_show_fades[i], sizeof(S_i_show_fade));
+            *buf = (uchar *)*buf + sizeof(S_i_show_fade);
+        }
+    }
+    if (rec->num_characters)
+    {
+        memcpy(*buf, &character_stack[0], rec->num_characters * sizeof(float));
+        *buf = (uchar *)*buf + character_stack.size() * sizeof(float);
+    }
+    if (rec->num_inventories)
+        for (int i = 0; i < rec->num_inventories; i++)
+            inventory_stack[i]->SaveGameSave(buf);
+    if (rec->num_floats)
+    {
+        memcpy(*buf, &float_stack[0], rec->num_floats * sizeof(float));
+        *buf = (uchar *)*buf + float_stack.size() * sizeof(float);
+    }
+    using_object.SaveGameSave(buf);
     return true;
+}
+
+// The game's record of a saved game from *buf, which it advances (PS2 name): SaveGameSave's, the videos opened again
+// (the stacks emptied first); false for another version or if the chases' fails
+// FUNCTION: GAME 0x5b4d10
+bool C_game::SaveGameLoad(void **buf)
+{
+    S_game_savegame *rec = (S_game_savegame *)*buf;
+    if (rec->version != GAME_SAVEGAME_VERSION)
+        return false;
+    city_music = rec->city_music;
+    city_music_old = rec->city_music_old;
+    game_time = rec->game_time;
+    game_frames = rec->game_frames;
+    if (rec->timer)
+    {
+        mafiaIndicators.show_flags |= INDF_TIMER;
+        mafiaIndicators.TimerSetTime(rec->timer_hour, rec->timer_minute, rec->timer_second);
+        mafiaIndicators.TimerSetInterval(rec->timer_interval);
+    }
+    else
+        mafiaIndicators.show_flags &= ~INDF_TIMER;
+    *buf = (uchar *)*buf + sizeof(S_game_savegame);
+    if (!sledovacka.SaveGameLoad(buf))
+        return false;
+    FloatStackClear();
+    InventoryStackClear();
+    CharacterStackClear();
+    score_on = rec->score_on;
+    score = rec->score;
+    ScoreSetOn(score_on);
+    if (score_on)
+        ScoreSet(score);
+    int i;
+    for (i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].show)
+        {
+            delete[] i_shows[i].name;
+            i_shows[i].show->Close();
+            i_shows[i].show->Release();
+        }
+    }
+    i_shows.clear();
+    i_show_fades.clear();
+    next_i_show_id = rec->next_i_show_id;
+    if (rec->num_i_shows)
+    {
+        i_shows.resize(rec->num_i_shows);
+        for (i = 0; i < rec->num_i_shows; i++)
+        {
+            S_i_show_savegame *s = (S_i_show_savegame *)*buf;
+            *buf = (uchar *)*buf + sizeof(S_i_show_savegame);
+            i_shows[i].flags = s->flags;
+            i_shows[i].id = s->id;
+            i_shows[i].show = igraph->CreateIShow();
+            if (s->name_len)
+            {
+                i_shows[i].name = new char[s->name_len + 1];
+                memcpy(i_shows[i].name, *buf, s->name_len);
+                i_shows[i].name[s->name_len] = 0;
+                *buf = (uchar *)*buf + s->name_len;
+                i_shows[i].show->Open(i_shows[i].name, 0);
+                if (s->playing)
+                {
+                    i_shows[i].show->Play();
+                    i_shows[i].show->SetCurrentPos(s->pos);
+                    i_shows[i].show->SetVolume(mafiaLoadSave.settings.music_volume * s->volume);
+                }
+            }
+            else
+                i_shows[i].name = NULL;
+        }
+    }
+    if (rec->num_i_show_fades)
+    {
+        i_show_fades.resize(rec->num_i_show_fades);
+        for (i = 0; i < rec->num_i_show_fades; i++)
+        {
+            i_show_fades[i] = *(S_i_show_fade *)*buf;
+            *buf = (uchar *)*buf + sizeof(S_i_show_fade);
+        }
+    }
+    if (rec->num_characters)
+    {
+        character_stack.resize(rec->num_characters);
+        memcpy(&character_stack[0], *buf, rec->num_characters * sizeof(float));
+        *buf = (uchar *)*buf + rec->num_characters * sizeof(float);
+    }
+    if (rec->num_inventories)
+        for (i = 0; i < rec->num_inventories; i++)
+        {
+            G_Inventory *inv = new G_Inventory;
+            inv->SaveGameLoad(buf);
+            inventory_stack.push_back(inv);
+        }
+    if (rec->num_floats)
+    {
+        float_stack.resize(rec->num_floats);
+        memcpy(&float_stack[0], *buf, rec->num_floats * sizeof(float));
+        *buf = (uchar *)*buf + rec->num_floats * sizeof(float);
+    }
+    GetUsingObject().SaveGameLoad(buf);
+    return true;
+}
+
+// The mission's number from a saved game's record, before the game's Init (PS2 name): false for another version
+// FUNCTION: GAME 0x5b5410
+bool C_game::SaveGameLoadBefore(void **buf)
+{
+    S_game_savegame *rec = (S_game_savegame *)*buf;
+    if (rec->version != GAME_SAVEGAME_VERSION)
+        return false;
+    act_mission->SetMissionNumber(rec->mission_number);
+    act_mission->KeepMissionNumber();
+    return true;
+}
+
+// An actor's frame whose lightness LightnessTick keeps up (PS2 name; PS2's is empty), once: a visual of a type that has
+// SetLightness, or with LIGHTNESSF_SUBTREE any frame
+// FUNCTION: GAME 0x5b5450
+void C_game::LightnessAdd(C_actor *act, I3D_frame *frm, ushort flags, S_vector &pos)
+{
+    if (!frm)
+        return;
+    for (int i = lightness.size(); i--;)
+        if (lightness[i]->frame == frm)
+            return;
+    if (!(flags & LIGHTNESSF_SUBTREE))
+    {
+        if (frm->GetType() != FRAME_VISUAL)
+            return;
+        switch (((I3D_visual *)frm)->GetVisualType())
+        {
+        case I3D_VISUAL_OBJECT:
+        case I3D_VISUAL_LIT_OBJECT:
+        case I3D_VISUAL_SINGLEMESH:
+        case I3D_VISUAL_LENSF:
+        case I3D_VISUAL_MORPH:
+        case I3D_VISUAL_SINGLEMORPH:
+        case I3D_VISUAL_PART_BASE:
+        case I3D_VISUAL_PART_ELEMENT:
+        case I3D_VISUAL_LANDPATCH:
+            break;
+        default:
+            return;
+        }
+    }
+    S_lightness *l = new S_lightness;
+    l->actor = act;
+    l->frame = frm;
+    l->flags = flags;
+    l->pos = pos;
+    l->lightness = 1.0f;
+    l->target = 1.0f;
+    l->time = 0;
+    lightness.push_back(l);
+}
+
+// The frame's lightness forgotten (PS2 name), the last entry taking its place
+// FUNCTION: GAME 0x5b56f0
+void C_game::LightnessDel(I3D_frame *frm)
+{
+    for (int i = lightness.size(); i--;)
+    {
+        if (lightness[i]->frame == frm)
+        {
+            delete lightness[i];
+            lightness[i] = lightness.back();
+            lightness.pop_back();
+            return;
+        }
+    }
 }
 
 // Deletes the lightness entries (PS2 name)
@@ -3423,22 +5804,153 @@ void C_game::LightnessClear()
     lightness.clear();
 }
 
-// STUB: GAME 0x5b57e0
+// The frames' lightness (PS2 name; PS2's is empty): one entry a frame, in turn, measures the scene's lightness at its
+// actor's frame (offset by pos, the frame itself turned off meanwhile), at most every 250 ms and within 40 m of the
+// camera, while the actor is rendered and active (an entry without an actor would read a NULL frame); every frame's
+// lightness moves towards its target by 4 a second. One vector for the camera's distance and the point: the second is
+// passed by reference, so the first is stored too.
+// FUNCTION: GAME 0x5b57e0
 void C_game::LightnessTick(uint time)
 {
-    StubLog("C_game::LightnessTick");
+    if (lightness_next >= lightness.size())
+        lightness_next = 0;
+    S_vector pos = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
+    pos -= lightness[lightness_next]->frame->GetWorldPos();
+    if (act_mission->GetGame()->GetGameTime() - lightness[lightness_next]->time > 250 && pos.Square() < 1600.0f)
+    {
+        lightness[lightness_next]->time = act_mission->GetGame()->GetGameTime();
+        I3D_frame *frm = NULL;
+        I3D_frame *sector = NULL;
+        pos = lightness[lightness_next]->pos;
+        bool measure = true;
+        if (lightness[lightness_next]->actor)
+        {
+            frm = lightness[lightness_next]->actor->GetFrame();
+            if (frm)
+            {
+                pos += frm->GetWorldPos();
+                sector = lightness[lightness_next]->actor->GetFrame();
+                while (sector)
+                {
+                    if (sector->GetType() == FRAME_SECTOR)
+                        break;
+                    sector = sector->GetParent();
+                }
+            }
+            if (!lightness[lightness_next]->actor->GetRendered() ||
+                lightness[lightness_next]->actor->GetActState() != ACTSTATE_ACTIVE ||
+                lightness[lightness_next]->flags & LIGHTNESSF_SUBTREE)
+                measure = false;
+        }
+        if (measure)
+        {
+            bool on = frm->IsOn();
+            frm->SetOn(false);
+            lightness[lightness_next]->target = act_mission->GetScene()->GetLightness(pos, (I3D_sector *)sector,
+                I3D_LIGHTNESS_TESTCOL, lightness[lightness_next]->frame);
+            frm->SetOn(on);
+        }
+    }
+    lightness_next++;
+    float step = time * .004f;
+    for (int i = lightness.size(); i--;)
+    {
+        if ((float)fabs(lightness[i]->target - lightness[i]->lightness) > MRG_ZERO)
+        {
+            if ((float)fabs(lightness[i]->target - lightness[i]->lightness) < step)
+                lightness[i]->lightness = lightness[i]->target;
+            else if (lightness[i]->target > lightness[i]->lightness)
+                lightness[i]->lightness += step;
+            else
+                lightness[i]->lightness -= step;
+            if (lightness[i]->flags & LIGHTNESSF_SUBTREE)
+                S_hlp::cbLightness(lightness[i]->frame, lightness[i]->lightness);
+            else
+                ((I3D_object *)lightness[i]->frame)->SetLightness(lightness[i]->lightness);
+        }
+    }
 }
 
-// STUB: GAME 0x5b5c80
+// LightnessTick's walk (the name is ours): the lightness given to the subtree's visuals of the types that have it
+// FUNCTION: GAME 0x5b5ad0
+void C_game::S_hlp::cbLightness(I3D_frame *frm, float lightness)
+{
+    if (frm->GetType() == FRAME_VISUAL)
+    {
+        switch (((I3D_visual *)frm)->GetVisualType())
+        {
+        case I3D_VISUAL_OBJECT:
+        case I3D_VISUAL_LIT_OBJECT:
+        case I3D_VISUAL_SINGLEMESH:
+        case I3D_VISUAL_MORPH:
+        case I3D_VISUAL_SINGLEMORPH:
+            ((I3D_object *)frm)->SetLightness(lightness);
+        }
+    }
+    for (int i = frm->NumChildren(); i--;)
+        cbLightness(frm->GetChild(i), lightness);
+}
+
+// A shot's light at pos (PS2 name; PS2's is empty): the first of the ten that is off, from the last, linked into the
+// scene's sector there at range (from half of it), with a random power, for time ms
+// FUNCTION: GAME 0x5b5b40
+void C_game::AddShootLight(S_vector &pos, float range, int time, ushort flags)
+{
+    for (int i = 10; i--;)
+    {
+        if (shoot_lights[i].time < 1)
+        {
+            shoot_lights[i].light->SetRange(range * .5f, range);
+            shoot_lights[i].light->SetPos(pos);
+            shoot_lights[i].light->Update();
+            shoot_lights[i].light->LinkTo(NULL, 0);
+            act_mission->GetScene()->SetFrameSector(shoot_lights[i].light);
+            I3D_frame *parent = shoot_lights[i].light->GetParent();
+            if (parent && parent->GetType() == FRAME_SECTOR)
+                ((I3D_sector *)parent)->AddLight(shoot_lights[i].light);
+            shoot_lights[i].light->SetOn(true);
+            shoot_lights[i].light->SetDiffusePower(rnd() * .4f + .8f);
+            shoot_lights[i].time = time;
+            shoot_lights[i].flags = flags;
+            return;
+        }
+    }
+}
+
+// The light cache filled again (PS2 name): the point and spot lights of the scene's primary sector's subtree, which
+// LightCacheTick turns on near the camera
+// FUNCTION: GAME 0x5b5c80
 void C_game::UseLightCacheSystem()
 {
-    StubLog("C_game::UseLightCacheSystem");
+    light_cache.clear();
+    light_cache_time = -1;
+    S_hlp::cbLight(act_mission->GetScene()->GetPrimarySector(), light_cache);
 }
 
-// STUB: GAME 0x5b5d40
+// The point and spot lights of the frame's subtree added to the list, but for an actor's frames and their subtrees (PS2
+// name)
+// FUNCTION: GAME 0x5b5cd0
+void C_game::S_hlp::cbLight(I3D_frame *frm, std::vector<I3D_light *> &lights)
+{
+    for (I3D_frame *child = frm->GetFirstChild(); child; child = child->m_pNext)
+    {
+        if (GetFrameActor(child) && *GetFrameActor(child))
+            continue;
+        if (child->GetType() == FRAME_LIGHT && ((I3D_light *)child)->ltype > I3DLIGHT_NULL &&
+            ((I3D_light *)child)->ltype <= I3DLIGHT_SPOT)
+            lights.push_back((I3D_light *)child);
+        if (child->GetFirstChild())
+            cbLight(child, lights);
+    }
+}
+
+// The light cache's lights turned on or off at once by the camera (PS2 name), the next check as before
+// FUNCTION: GAME 0x5b5d40
 void C_game::RecomputeLightCache()
 {
-    StubLog("C_game::RecomputeLightCache");
+    light_cache_time = -1;
+    LightCacheTick(0);
+    light_cache_time = -1;
 }
 
 // A new stream of IGraph's in the list, at the music's volume: its id, -1 without sound or if IGraph makes none
@@ -3504,10 +6016,27 @@ bool C_game::OpenIShow(const char *name, int id)
     return false;
 }
 
-// STUB: GAME 0x5b62c0
+// The stream of the id stopped, closed and released, and taken from the list, the last one taking its place (PS2
+// name), from the last one
+// FUNCTION: GAME 0x5b62c0
 void C_game::DestroyIShow(int show)
 {
-    StubLog("C_game::DestroyIShow");
+    for (int i = i_shows.size(); i--;)
+    {
+        if (i_shows[i].id == show)
+        {
+            if (i_shows[i].show)
+            {
+                i_shows[i].show->Stop();
+                i_shows[i].show->Close();
+                i_shows[i].show->Release();
+            }
+            delete[] i_shows[i].name;
+            i_shows[i] = i_shows.back();
+            i_shows.pop_back();
+            return;
+        }
+    }
 }
 
 // The videos closed and released (PS2 name), and the lists emptied
@@ -3579,16 +6108,51 @@ void C_game::IShowSetVolume()
         i_shows[i].show->SetVolume(mafiaLoadSave.settings.music_volume * i_shows[i].volume);
 }
 
-// STUB: GAME 0x5b6660
+// Every video playing faded out over time ms (PS2 name), stopped at once while the music is all but off, from the last
+// one
+// FUNCTION: GAME 0x5b6660
 void C_game::IShowFadeDownAll(int time)
 {
-    StubLog("C_game::IShowFadeDownAll");
+    for (int i = i_shows.size(); i--;)
+    {
+        i_shows[i].show->GetEvent();
+        if (i_shows[i].show->GetEvent() == ISHOW_EVENT_PLAYING)
+        {
+            if (mafiaLoadSave.settings.music_volume < .1f)
+                i_shows[i].show->Stop();
+            else
+                IShowFade(i_shows[i].id, i_shows[i].volume, 0.0f, time);
+        }
+    }
 }
 
-// STUB: GAME 0x5b6710
+// The stream's volume faded from from to to over time ms (PS2 name), which Tick runs: another fade of the stream is
+// dropped, and the stream set to from at once
+// FUNCTION: GAME 0x5b6710
 void C_game::IShowFade(int id, float from, float to, int time)
 {
-    StubLog("C_game::IShowFade");
+    if (time < 1)
+        return;
+    for (int i = i_show_fades.size(); i--;)
+    {
+        if (i_show_fades[i].id == id)
+        {
+            i_show_fades[i] = i_show_fades.back();
+            i_show_fades.pop_back();
+            break;
+        }
+    }
+    IShow *show = GetIShow(id);
+    if (!show)
+        return;
+    show->SetVolume(mafiaLoadSave.settings.music_volume * from);
+    S_i_show_fade f;
+    f.id = id;
+    f.from = from;
+    f.to = to;
+    f.time = 0;
+    f.length = time;
+    i_show_fades.push_back(f);
 }
 
 // The road blocks, the dummies ROADBLOCK* (PS2 name)
@@ -3631,11 +6195,33 @@ I3DENUMRET __stdcall C_game::S_hlp::cbFindTaxiPoints(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-// STUB: GAME 0x5b6d10
+// The taxi's passenger is alive in a car, the player's car if the player is in one (PS2 name)
+// FUNCTION: GAME 0x5b6d10
 bool C_game::IsValidTaxiPassenger()
 {
-    StubLog("C_game::IsValidTaxiPassenger");
-    return false;
+    if (!taxi_passenger || taxi_passenger->dead || !taxi_passenger->car || !player)
+        return false;
+    if (player->car && player->car != taxi_passenger->car)
+        return false;
+    return true;
+}
+
+// The semaphore of the model taken from the semaphores (PS2 name), which a crash object's destruction calls with its
+// model. Nothing sets the semaphores' models (PS2's neither), so it finds none.
+// FUNCTION: GAME 0x5b6d50
+void C_game::DelSemaphore(I3D_frame *frm)
+{
+    if (!frm)
+        return;
+    for (int i = semaphores.size(); i--;)
+    {
+        if (frm == semaphores[i].model)
+        {
+            semaphores[i] = semaphores.back();
+            semaphores.pop_back();
+            return;
+        }
+    }
 }
 
 // The telephones, the models of alarm01.i3d and PHbox01.i3d: the scene's, and the base blocks' while those are open
@@ -3707,29 +6293,81 @@ I3DENUMRET __stdcall C_game::S_hlp::cbTelephones(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-// STUB: GAME 0x5b7500
+// The frame's telephone taken from the telephones, the last one taking its place (PS2 name)
+// FUNCTION: GAME 0x5b7440
+void C_game::DelTelephones(I3D_frame *frm)
+{
+    if (!frm)
+        return;
+    for (int i = telephones.size(); i--;)
+    {
+        if (frm == telephones[i].frame)
+        {
+            telephones[i] = telephones.back();
+            telephones.pop_back();
+            return;
+        }
+    }
+}
+
+// Whether the frame is one of the telephones (PS2 name), the scripts' question
+// FUNCTION: GAME 0x5b7500
 bool C_game::IsTelephoneExist(I3D_frame *frm)
 {
-    StubLog("C_game::IsTelephoneExist");
+    if (!frm)
+        return false;
+    for (int i = telephones.size(); i--;)
+    {
+        if (frm == telephones[i].frame)
+            return true;
+    }
     return false;
 }
 
-// STUB: GAME 0x5b7560
+// A human speaking on a dubbing channel (PS2 name), the scripts' (C_program's), whose speech DeathHumanTalk stops when he
+// dies
+// FUNCTION: GAME 0x5b7560
 void C_game::AddHumanTalk(C_human *human, int chanel)
 {
-    StubLog("C_game::AddHumanTalk");
+    S_enemy_talk t;
+    t.human = human;
+    t.chanel = chanel;
+    enemy_talks.push_back(t);
 }
 
-// STUB: GAME 0x5b7730
+// The talks on the channel taken from the list, the last one taking each one's place (PS2 name; the human isn't
+// compared). An entry that stays skips the next one, PS2's too.
+// FUNCTION: GAME 0x5b7730
 void C_game::DelHumanTalk(C_human *human, int chanel)
 {
-    StubLog("C_game::DelHumanTalk");
+    for (uint i = 0; i < enemy_talks.size(); i++)
+    {
+        if (enemy_talks[i].chanel == chanel)
+        {
+            enemy_talks[i] = enemy_talks.back();
+            enemy_talks.pop_back();
+        }
+        else
+            i++;
+    }
 }
 
-// STUB: GAME 0x5b77c0
+// The dead human's speech stopped and his talks taken from the list (PS2 name), as DelHumanTalk does it, the entry
+// after each one that stays skipped too
+// FUNCTION: GAME 0x5b77c0
 void C_game::DeathHumanTalk(C_human *human)
 {
-    StubLog("C_game::DeathHumanTalk");
+    for (uint i = 0; i < enemy_talks.size(); i++)
+    {
+        if (enemy_talks[i].human == human)
+        {
+            DabingStop(enemy_talks[i].chanel);
+            enemy_talks[i] = enemy_talks.back();
+            enemy_talks.pop_back();
+        }
+        else
+            i++;
+    }
 }
 
 // The base blocks' model sets of the traffic signs, dopravni1B.I3D to dopravni8B.I3D (PS2 name)
@@ -3768,11 +6406,66 @@ void C_game::CreateSignalMarkIDX()
     }
 }
 
-// STUB: GAME 0x5b7be0
+// A shot at a level's collision of control signals (PS2 name): the nearest visible model of the base blocks' traffic
+// signs (signal_mark_idx) within 5 m of the hit in height and 10 m along the ground is broken into crash actors along
+// the shot, then hidden for good, the collision disabled, and the police told of the shooter. The shot's start isn't
+// used (PS2's neither).
+// FUNCTION: GAME 0x5b7be0
 void C_game::DestroyControlSignal(g_collision_header *coll, S_vector &pos, S_vector &from, S_vector &dir,
     C_human *human)
 {
-    StubLog("C_game::DestroyControlSignal");
+    if (!coll || !(coll->flags & COLLHF_CONTROL_SIGNAL) || (coll->flags & COLLHF_DISABLED))
+        return;
+    float best = FLT_MAX;
+    S_cache_model_inbb *found = NULL;
+    if (!base_cache.IsOpen())
+        return;
+    for (int i = base_cache.blocks.size(); i--;)
+    {
+        if (!base_cache.blocks[i].active)
+            continue;
+        for (int j = base_cache.blocks[i].models.size(); j--;)
+        {
+            if (!base_cache.blocks[i].models[j].visible)
+                continue;
+            for (int k = signal_mark_idx.size(); k--;)
+            {
+                if (base_cache.blocks[i].models[j].model == signal_mark_idx[k] &&
+                    base_cache.blocks[i].models[j].visible)
+                {
+                    S_vector d = base_cache.blocks[i].models[j].pos;
+                    d -= pos;
+                    if (d.y * d.y < 25.0f)
+                    {
+                        d.y = 0.0f;
+                        float dist = d.Square();
+                        if (dist < best)
+                        {
+                            found = &base_cache.blocks[i].models[j];
+                            best = dist;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    if (found && best < 100.0f)
+    {
+        I3D_frame *frm = base_cache.FindModel(found->model, found->instance);
+        if (frm)
+        {
+            char *name = ((I3D_model *)frm)->file_name ? ((I3D_model *)frm)->file_name : "";
+            char *file = strrchr(name, '\\');
+            if (file)
+                name = file + 1;
+            CreateCrashActors(frm, pos, dir, dir.Magnitude(), name, false, 0, 0, true, true);
+        }
+        coll->flags |= COLLHF_DISABLED;
+        base_cache.DestroyFrame(found);
+        if (act_mission->game->shvestky.active)
+            act_mission->game->shvestky.DestroySignalMark(human);
+    }
 }
 
 // FUNCTION: GAME 0x5b7ed0
@@ -3801,28 +6494,51 @@ void C_game::EntityBlock(bool block, bool unknown)
     }
 }
 
-// STUB: GAME 0x5b7f70
+// The actor added to invisible_actors unless it is there (PS2 name), RACING_AUTOINVISIBLE's: Tick changes its state by
+// whether it is seen
+// FUNCTION: GAME 0x5b7f70
 void C_game::AddInvisibleActor(C_actor *act)
 {
-    StubLog("C_game::AddInvisibleActor");
+    if (!act)
+        return;
+    for (int i = invisible_actors.size(); i--;)
+    {
+        if (invisible_actors[i].actor == act)
+            return;
+    }
+    S_invisible_actor ia;
+    ia.actor = act;
+    ia.frame = 0;
+    invisible_actors.push_back(ia);
 }
 
-// STUB: GAME 0x5b8150
+// The scripts' actor registers waiting for an actor, filled through C_program::FindActorLater and forgotten (PS2 name),
+// from the last
+// FUNCTION: GAME 0x5b8150
 void C_game::FindActorsVect()
 {
-    StubLog("C_game::FindActorsVect");
+    for (int i = find_actors.size(); i--;)
+    {
+        if (find_actors[i].program)
+            find_actors[i].program->FindActorLater(find_actors[i].reg, find_actors[i].id);
+    }
+    find_actors.clear();
 }
 
-// STUB: GAME 0x5b81e0
+// A particle EMITPARTICLE created while the cutscene plays, which RECUNLOAD destroys (PC only, the name is ours)
+// FUNCTION: GAME 0x5b81e0
 void C_game::AddCutsceneParticle(int particle)
 {
-    StubLog("C_game::AddCutsceneParticle");
+    cutscene_particles.push_back(particle);
 }
 
-// STUB: GAME 0x5b8390
+// The cutscene's particles destroyed and forgotten, RECUNLOAD's (PC only, the name is ours)
+// FUNCTION: GAME 0x5b8390
 void C_game::DestroyCutsceneParticles()
 {
-    StubLog("C_game::DestroyCutsceneParticles");
+    for (std::vector<int>::iterator it = cutscene_particles.begin(); it < cutscene_particles.end(); it++)
+        act_mission->GetEffects()->DestroyParticle(*it);
+    cutscene_particles.clear();
 }
 
 // Every actor's sounds off (PS2 name)
@@ -3833,16 +6549,274 @@ void C_game::StopAllSounds()
         C_actor::global_actors[i]->SoundsChange(0);
 }
 
-// STUB: GAME 0x5b8e70
-void C_game::AddCreatedFrameToVector(I3D_frame *frm)
+// Every sound paused, the videos' too (PS2 name): the dubbing's, then the scene's playing sounds (the primary and the
+// backdrop sector's subtrees: PS2 walks a list of the sounds instead), each kept in stop_sounds with its volumes, loop
+// and position and turned off; then each video that hasn't ended (no event), whose id goes to paused_i_shows. The scene
+// through its accessors, whose pending calls leave the clears' copy out of line, as the original has it
+// FUNCTION: GAME 0x5b8430
+void C_game::PauseAllSounds()
 {
-    StubLog("C_game::AddCreatedFrameToVector");
+    stop_sounds.clear();
+    paused_i_shows.clear();
+    DabingPauseSounds(true, false);
+    S_hlp::cbPauseSounds(act_mission->GetScene()->GetPrimarySector(), stop_sounds);
+    S_hlp::cbPauseSounds(act_mission->GetScene()->backdrop_sector, stop_sounds);
+    for (int i = i_shows.size(); i--;)
+    {
+        if (!i_shows[i].show->GetEvent())
+        {
+            paused_i_shows.push_back(i_shows[i].id);
+            i_shows[i].show->Pause();
+        }
+    }
 }
 
-// STUB: GAME 0x5b9040
+// PauseAllSounds' walk of a frame's subtree, recursive (the name is ours): each playing sound kept in the list, then
+// turned off
+// FUNCTION: GAME 0x5b8540
+void C_game::S_hlp::cbPauseSounds(I3D_frame *frm, std::vector<S_stop_sounds> &list)
+{
+    for (I3D_frame *child = frm->GetFirstChild(); child; child = child->m_pNext)
+    {
+        if (child->GetType() == FRAME_SOUND && ((I3D_sound *)child)->IsPlaying(false))
+        {
+            S_stop_sounds s;
+            s.sound = (I3D_sound *)child;
+            s.time = s.sound->GetCurrTime();
+            s.volume = s.sound->volume;
+            s.volume_out = s.sound->volume_out;
+            s.loop = s.sound->loop;
+            s.sound->SetOn(false, true);
+            list.push_back(s);
+        }
+        if (child->GetFirstChild())
+            cbPauseSounds(child, list);
+    }
+}
+
+// What PauseAllSounds paused played again (PS2 name): the sounds with their volumes, loop and position, with i_shows
+// the videos too (those still there), then the dubbing's (the parameter's name is ours)
+// FUNCTION: GAME 0x5b85f0
+void C_game::PlayAllSounds(bool i_shows_too)
+{
+    for (int i = stop_sounds.size(); i--;)
+    {
+        stop_sounds[i].sound->SetLoop(stop_sounds[i].loop);
+        stop_sounds[i].sound->SetVolume(stop_sounds[i].volume);
+        stop_sounds[i].sound->SetOutVol(stop_sounds[i].volume_out);
+        stop_sounds[i].sound->SetOn(true);
+        stop_sounds[i].sound->SetOn(true, true);
+        stop_sounds[i].sound->SetCurrTime(stop_sounds[i].time);
+        stop_sounds[i].sound->Update();
+        stop_sounds[i].sound->ForceUpdate();
+    }
+    if (i_shows_too)
+    {
+        for (int j = paused_i_shows.size(); j--;)
+        {
+            IShow *show = GetIShow(paused_i_shows[j]);
+            if (show)
+                show->Play();
+        }
+    }
+    stop_sounds.clear();
+    paused_i_shows.clear();
+    DabingPauseSounds(false, false);
+}
+
+// A scratch on the car's frame (PS2 name; C_car's Deform_Vehicle_Part, the vehicle's callback, passes the hit): on an
+// object of the car but for its parts of types 2 to 5 and 7, the scratch ScratchGetFreeIdx gives is put where the hit
+// was, turned toward the car's position (around its axis at random while the car stands, else up along its velocity),
+// sized by the force (divided by the car's mass above 1, 1/55 of it, 0.2 to 1) and as opaque as it was hit there (0.3
+// and 0.1 for each of the first five hits), and projected on the frame alone, which takes it as projector mode 1
+// meanwhile. Where it lands on no face it is given back (the parameters' names are ours)
+// FUNCTION: GAME 0x5b8780
+void C_game::ScratchAdd(C_car *car, I3D_frame *frm, uint part_type, const S_vector &pos, const S_vector &force)
+{
+    if (!car || !frm)
+        return;
+    if (frm->GetType() != FRAME_VISUAL || ((I3D_visual *)frm)->GetVisualType() != I3D_VISUAL_OBJECT)
+        return;
+    switch (part_type)
+    {
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+        return;
+    }
+    int idx = ScratchGetFreeIdx(car, frm, pos);
+    if (idx < 0)
+        return;
+    if (!scratches[idx].frame)
+        return;
+    if (scratches[idx].car_frame)
+        scratches[idx].frame->LinkTo(NULL, 0);
+    scratches[idx].car = car;
+    scratches[idx].car_frame = frm;
+    SHADOW_MODE mode = ((I3D_visual *)frm)->GetProjectorMode();
+    ((I3D_visual *)frm)->SetProjectorMode(SHADOW_MODE_1);
+    ScratchRecompile(car, frm);
+    scratches[idx].frame->SetOn(true);
+    scratches[idx].frame->SetPos(pos);
+    S_vector dir = car->world_pos - pos;
+    S_vector vel = car->GetVelocity();
+    if (vel.Square() < .1f)
+        scratches[idx].frame->SetDir(dir, rnd() * (2.0f * PI));
+    else
+        scratches[idx].frame->SetDir1(dir, vel);
+    float scale = force.Magnitude();
+    if (car->mass > 1.0f)
+        scale /= car->mass;
+    scale /= 55.0f;
+    if (scale > 1.0f)
+        scale = 1.0f;
+    else if (scale < .2f)
+        scale = .2f;
+    scratches[idx].frame->SetScale(S_vector(scale, scale, 1.0f));
+    scratches[idx].frame->Update();
+    scratches[idx].frame->LinkTo(frm, I3DLINK_UPDMATRIX);
+    ((I3D_projector *)scratches[idx].frame)->SetMode(PROJECTOR_MODE_BLEND);
+    ((I3D_projector *)scratches[idx].frame)->SetOrthogonal(true);
+    ((I3D_projector *)scratches[idx].frame)->SetTexture(track_textures[TRACK_TEXTURE_SCRATCH]);
+    ((I3D_projector *)scratches[idx].frame)->SetAlpha(min(5, scratches[idx].hits) * .1f + .3f);
+    float light = act_mission->scene->GetLightness(pos, NULL, 0, NULL);
+    S_vector color(light, light, light);
+    ((I3D_projector *)scratches[idx].frame)->SetColor(color);
+    ((I3D_projector *)scratches[idx].frame)->MakeProjection(PROJF_NO_CHILDREN, frm);
+    if (!(((I3D_projector *)scratches[idx].frame)->num_faces + ((I3D_projector *)scratches[idx].frame)->num_faces_t))
+    {
+        scratches[idx].car = NULL;
+        scratches[idx].car_frame = NULL;
+        scratches[idx].frame->SetOn(false);
+        scratches[idx].frame->LinkTo(NULL, 0);
+    }
+    ((I3D_visual *)frm)->SetProjectorMode(mode);
+}
+
+// The car's scratches on the frame projected again (PS2 name), the frame taken as projector mode 1 meanwhile. The
+// frame the scratch has in a local, as PS2's keeps it too: compared with frm, its calls go through it
+// FUNCTION: GAME 0x5b8bb0
+void C_game::ScratchRecompile(C_car *car, I3D_frame *frm)
+{
+    for (int i = 100; i--;)
+    {
+        if (scratches[i].car == car)
+        {
+            I3D_visual *vis = (I3D_visual *)scratches[i].car_frame;
+            if (vis == frm)
+            {
+                SHADOW_MODE mode = vis->GetProjectorMode();
+                vis->SetProjectorMode(SHADOW_MODE_1);
+                ((I3D_projector *)scratches[i].frame)->MakeProjection(PROJF_NO_CHILDREN, scratches[i].car_frame);
+                vis->SetProjectorMode(mode);
+            }
+        }
+    }
+}
+
+// The car's scratches unlinked and turned off (PS2 name); they stay the car's until another hit takes them
+// FUNCTION: GAME 0x5b8c20
+void C_game::ScratchDeleteFromCar(C_car *car)
+{
+    for (int i = 100; i--;)
+    {
+        if (scratches[i].car == car && scratches[i].frame)
+        {
+            scratches[i].frame->LinkTo(NULL, 0);
+            scratches[i].frame->SetOn(false);
+        }
+    }
+}
+
+// The scratch to use for a hit at pos on the car's frame (PS2 name): once three of its scratches there are within 0.4
+// m, the one of them hit least, its hits counted; else a scratch no car has, its hits cleared; else the farthest from
+// the camera, if one of another car is more than 5 m from it, its hits cleared (-1 if none is)
+// FUNCTION: GAME 0x5b8c60
+int C_game::ScratchGetFreeIdx(C_car *car, I3D_frame *frm, const S_vector &pos)
+{
+    int near_idx[3] = { -1, -1, -1 };
+    int num_near = 0;
+    int i;
+    for (i = 100; i--;)
+    {
+        if (scratches[i].car == car && scratches[i].car_frame == frm)
+        {
+            if ((pos - scratches[i].frame->GetWorldPos()).Square() < .4f * .4f)
+            {
+                near_idx[num_near] = i;
+                num_near++;
+                if (num_near > 2)
+                {
+                    int m = 0;
+                    if (scratches[near_idx[1]].hits < scratches[near_idx[m]].hits)
+                        m = 1;
+                    if (scratches[near_idx[2]].hits < scratches[near_idx[m]].hits)
+                        m = 2;
+                    scratches[near_idx[m]].hits++;
+                    return near_idx[m];
+                }
+            }
+        }
+    }
+    for (i = 100; i--;)
+    {
+        if (!scratches[i].car)
+        {
+            scratches[i].hits = 0;
+            return i;
+        }
+    }
+    int best = -1;
+    float best_dist = 5.0f * 5.0f;
+    S_vector cam_pos = act_mission->scene->GetActiveCamera()->GetWorldPos();
+    for (i = 100; i--;)
+    {
+        if (scratches[i].car == car)
+            continue;
+        float dist = (cam_pos - scratches[i].frame->GetWorldPos()).Square();
+        if (dist > best_dist)
+        {
+            best_dist = dist;
+            best = i;
+        }
+    }
+    scratches[best].hits = 0;
+    return best;
+}
+
+// A frame the scripts created (MODEL_CREATE's), kept in created_frames (PS2 name): false for none or one there already
+// FUNCTION: GAME 0x5b8e70
+bool C_game::AddCreatedFrameToVector(I3D_frame *frm)
+{
+    if (!frm)
+        return false;
+    for (int i = created_frames.size(); i--;)
+    {
+        if (created_frames[i] == frm)
+            return false;
+    }
+    created_frames.push_back(frm);
+    return true;
+}
+
+// The frame taken from created_frames (PS2 name; MODEL_DESTROY's, which releases it then), the last one in its place:
+// false if it isn't there
+// FUNCTION: GAME 0x5b9040
 bool C_game::DelCreatedFrameToVector(I3D_frame *frm)
 {
-    StubLog("C_game::DelCreatedFrameToVector");
+    if (!frm)
+        return false;
+    for (int i = created_frames.size(); i--;)
+    {
+        if (created_frames[i] == frm)
+        {
+            created_frames[i] = created_frames.back();
+            created_frames.pop_back();
+            return true;
+        }
+    }
     return false;
 }
 
@@ -3865,7 +6839,7 @@ I3DENUMRET __stdcall C_game::S_hlp::cbScreamArea(I3D_frame *frm, uint user)
         if (strlen(name) > 9 && !_strnicmp(name, "enm_scrm_", 9))
         {
             S_scream_area a;
-            a.area = frm;
+            a.area = (I3D_area *)frm;
             a.id = 0;
             char buf[256];
             strcpy(buf, frm->GetName());
@@ -3884,10 +6858,47 @@ I3DENUMRET __stdcall C_game::S_hlp::cbScreamArea(I3D_frame *frm, uint user)
     return I3DENUMRET_OK;
 }
 
-// STUB: GAME 0x5b9390
+// Which scream areas the camera is in, their ids ORed into camera_scream_areas (1 in none), and the same for each active
+// player and entity, a meter above his position, into his scream_areas (PS2 name; Tick runs it every 513 ms). One
+// position variable for both, as PS2's (one stack slot) and the original's frame have it
+// FUNCTION: GAME 0x5b9390
 void C_game::TickScreamAreas()
 {
-    StubLog("C_game::TickScreamAreas");
+    S_vector pos = act_mission->scene->GetActiveCamera()->GetWorldPos();
+    bool none = true;
+    camera_scream_areas = 0;
+    int i;
+    for (i = scream_areas.size(); i--;)
+    {
+        if (scream_areas[i].area->CheckPoint(pos))
+        {
+            camera_scream_areas |= scream_areas[i].id;
+            none = false;
+        }
+    }
+    if (none)
+        camera_scream_areas = 1;
+    for (i = active_actors.size(); i--;)
+    {
+        if (active_actors[i]->type == ACTOR_PLAYER || active_actors[i]->type == ACTOR_ENTITY)
+        {
+            bool human_none = true;
+            ushort ids = 0;
+            pos = active_actors[i]->frame->GetWorldPos();
+            pos.y += 1.0f;
+            for (int j = scream_areas.size(); j--;)
+            {
+                if (scream_areas[j].area->CheckPoint(pos))
+                {
+                    human_none = false;
+                    ids |= scream_areas[j].id;
+                }
+            }
+            if (human_none)
+                ids = 1;
+            ((C_human *)active_actors[i])->scream_areas = ids;
+        }
+    }
 }
 
 // The weather (PS2 name: Czech for "deal with the weather"). With read, the scene's parameter param (WS_PARAM_ON or
@@ -3931,10 +6942,103 @@ void C_game::OsefujPocasi(bool read, uint param)
     }
 }
 
-// STUB: GAME 0x5b98c0
+// Adds a dead human to those TickDeadHumanForTick ticks, unless he is there already (PS2 name)
+// FUNCTION: GAME 0x5b9690
+void C_game::AddDeadHumanForTick(C_human *human)
+{
+    for (int i = dead_humans.size(); i--;)
+        if (dead_humans[i] == (uint)human)
+            return;
+    // the parameter itself pushed, no temporary: a reference cast
+    dead_humans.push_back((uint &)human);
+}
+
+// The human taken from dead_humans, the last one put in his place (PS2 name)
+// FUNCTION: GAME 0x5b9850
+void C_game::DelDeadHumanForTick(C_human *human)
+{
+    for (int i = dead_humans.size(); i--;)
+    {
+        if (dead_humans[i] == (uint)human)
+        {
+            dead_humans[i] = dead_humans.back();
+            dead_humans.pop_back();
+            return;
+        }
+    }
+}
+
+// The dead humans thrown out of a car (PS2 name): each one's model ticked, and his animations while they run, the
+// frame following the human; once the active animation has ended, his body gets its "Search dead body" at the frame
+// back1 (the using object the player searches it through, given to the player's using objects unless the human is in a
+// car), and he is taken from the list
+// FUNCTION: GAME 0x5b98c0
 void C_game::TickDeadHumanForTick(uint time)
 {
-    StubLog("C_game::TickDeadHumanForTick");
+    for (uint i = 0; i < dead_humans.size();)
+    {
+        I3D_model *model = (I3D_model *)((C_human *)dead_humans[i])->frame;
+        model->Tick(time);
+        if (((C_human *)dead_humans[i])->anim_machine.IsActive())
+        {
+            ((C_human *)dead_humans[i])->anim_machine.Tick(time);
+            ((C_human *)dead_humans[i])->frame->SetPos(((C_human *)dead_humans[i])->GetPos());
+            ((C_human *)dead_humans[i])->frame->SetDir(((C_human *)dead_humans[i])->GetDir(), 0.0f);
+            ((C_human *)dead_humans[i])->frame->Update();
+        }
+        uint index = ((C_human *)dead_humans[i])->anim_machine.anim_index;
+        if (model->AnimIsOn(index))
+        {
+            i++;
+            continue;
+        }
+        I3D_frame *back = ((C_human *)dead_humans[i])->frame->FindChildFrame("back1", ENUMF_ALL);
+        if (back)
+        {
+            ((C_human *)dead_humans[i])->using_objects[0].pos = back->GetWorldPos();
+            ((C_human *)dead_humans[i])->using_objects[0].pos.y += .5f;
+            ((C_human *)dead_humans[i])->using_objects[0].unknown_c = .7f;
+            ((C_human *)dead_humans[i])->using_objects[0].unknown_10 = 0;
+            ((C_human *)dead_humans[i])->using_objects[0].flags = 0;
+            ((C_human *)dead_humans[i])->using_objects[0].frame = NULL;
+            ((C_human *)dead_humans[i])->using_objects[0].actor = (C_human *)dead_humans[i];
+            ((C_human *)dead_humans[i])->using_objects[0].item.id = GAMEITEM_SPECIAL_ACTION;
+            ((C_human *)dead_humans[i])->using_objects[0].item.ammo_loaded = USING_ACTION_SEARCH_DEAD_BODY;
+            ((C_human *)dead_humans[i])->using_objects[0].item.using_object =
+                &((C_human *)dead_humans[i])->using_objects[0];
+            if (!((C_human *)dead_humans[i])->car)
+                act_mission->GetGame()->GetUsingObject().AddObject(&((C_human *)dead_humans[i])->using_objects[0]);
+        }
+        dead_humans[i] = dead_humans.back();
+        dead_humans.pop_back();
+    }
+}
+
+// A hydrant's water at the frame (PS2 name), only with the particles at High and within 150 m of the camera: the
+// effects' particle at the frame's position, spraying up, and a looping sound there
+// FUNCTION: GAME 0x5b9b90
+void C_game::AddHydrant(I3D_frame *frm)
+{
+    if (act_mission->options.particles < OPTION_HIGH)
+        return;
+    S_vector pos = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
+    if ((pos - frm->GetWorldPos()).Square() > 22500.0f)
+        return;
+    S_hydrant h;
+    h.pos = frm->GetWorldPos();
+    h.blocked = false;
+    h.particle = act_mission->GetEffects()->CreateParticle(PARTICLE_HYDRANT, h.pos, S_vector(0.0f, 0.0f, 1.0f), 0,
+        NULL);
+    h.frame = driver->CreateFrame(FRAME_SOUND);
+    if (h.frame)
+    {
+        sound_table.ConstructSound((I3D_sound *)h.frame, SOUND_HYDRANT);
+        ((I3D_sound *)h.frame)->SetLoop(true);
+        h.frame->SetPos(h.pos);
+        h.frame->Update();
+        h.frame->SetOn(true);
+    }
+    hydrants.push_back(h);
 }
 
 // The hydrants' water: the particles destroyed, the frames released (PS2 name)
@@ -3973,50 +7077,268 @@ void C_game::ScoreSet(int value)
         mafiaIndicators.BonusSetCount(score);
 }
 
-// STUB: GAME 0x5ba010
+// The active camera's rotation kept, which Tick sets again in the seventh frame since Init (PS2 name; CAMERA_LOCK's)
+// FUNCTION: GAME 0x5ba010
 void C_game::SetCameraRotRepair()
 {
-    StubLog("C_game::SetCameraRotRepair");
+    I3D_camera *cam = act_mission->GetScene()->GetActiveCamera();
+    if (cam)
+    {
+        camera_rot_repair = true;
+        camera_rot = cam->GetRot();
+    }
 }
 
-// STUB: GAME 0x5ba080
+// The cartridges' frames unlinked (PS2 name)
+// FUNCTION: GAME 0x5ba080
 void C_game::ClearCartridges()
 {
-    StubLog("C_game::ClearCartridges");
+    int i;
+    for (i = 0; i < 100; i++)
+    {
+        if (cartridges[i] && cartridges[i]->frame)
+            cartridges[i]->frame->LinkTo(NULL, 0);
+    }
+    for (i = 0; i < 30; i++)
+    {
+        if (cartridges_b[i] && cartridges_b[i]->frame)
+            cartridges_b[i]->frame->LinkTo(NULL, 0);
+    }
 }
 
-// STUB: GAME 0x5ba110
+// A car and the square of its distance from the camera (PS2 name, TickCarSoundManager's list; the members' names are
+// ours)
+struct S_car_snd
+{
+    C_car *car;
+    float dist;
+};
+
+// The cars' order for qsort, the nearest first (PS2 name; not static, as PS2's, so in its place before its user)
+// FUNCTION: GAME 0x5ba0e0
+int __cdecl compare_car_snd(const void *a, const void *b)
+{
+    if (((S_car_snd *)a)->dist == ((S_car_snd *)b)->dist)
+        return 0;
+    if (((S_car_snd *)a)->dist < ((S_car_snd *)b)->dist)
+        return -1;
+    return 1;
+}
+
+// The cars' sounds (PS2 name), every 200 ms or 800 ms while car_sounds is positive: the cars in the game sorted by
+// their distance from the camera, the nearest car_sounds of them get their sounds on in the short period, the others'
+// go off in the long one
+// FUNCTION: GAME 0x5ba110
 void C_game::TickCarSoundManager()
 {
-    StubLog("C_game::TickCarSoundManager");
+    if (car_sounds < 1)
+        return;
+    std::vector<S_car_snd> cars;
+    S_vector pos = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
+    for (int i = C_actor::global_actors.size(); i--;)
+    {
+        C_actor *act = C_actor::global_actors[i];
+        if (act->type == ACTOR_CAR && act->act_state != ACTSTATE_NONE)
+        {
+            S_car_snd s;
+            s.car = (C_car *)act;
+            s.dist = (s.car->frame->GetWorldPos() - pos).Square();
+            cars.push_back(s);
+        }
+    }
+    qsort(cars.begin(), cars.size(), sizeof(S_car_snd), compare_car_snd);
+    if (car_sounds_short)
+    {
+        int n = car_sounds;
+        if ((uint)n > cars.size())
+            n = cars.size();
+        for (int j = 0; j < n; j++)
+        {
+            if (!cars[j].car->SoundsEnabled())
+                cars[j].car->SoundsChange(SOUNDS_ON);
+        }
+    }
+    else
+    {
+        int n = cars.size();
+        for (int j = car_sounds; j < n; j++)
+        {
+            if (cars[j].car->SoundsEnabled())
+                cars[j].car->SoundsChange(0);
+        }
+    }
 }
 
-// PS2 name
+// The items' blurs ended (PS2 name): each one's copies released, the list emptied
 // FUNCTION: GAME 0x5ba310
-void C_game::ClearDeathHumanFade()
+void C_game::ItemBlurDone()
 {
-    for (int i = death_human_fades.size(); i--;)
-        RemoveDeathHumanFade(i, false);
-    death_human_fades.clear();
+    for (int i = item_blurs.size(); i--;)
+        ItemBlurDelItem(i, false);
+    item_blurs.clear();
     item_blur = false;
 }
 
-// STUB: GAME 0x5ba390
+// The items' blurs (PS2 name; nothing of the PC's fills the list): an item whose actor is rendered, on, linked and
+// within 30 m of the camera gets copies of its frame trailing behind it, along the way its actor moved in the camera's
+// space since the last tick, while that speed averages 1 or more per second: num_frames copies spread over the speed
+// times its average a hundredth, at most spread. Otherwise the copies are unlinked.
+// FUNCTION: GAME 0x5ba390
 void C_game::ItemBlurTick(uint time)
 {
-    StubLog("C_game::ItemBlurTick");
+    if (time < 1)
+        return;
+    float dt = time * .001f;
+    S_vector cam_pos = act_mission->GetScene()->GetActiveCamera()->GetWorldPos();
+    S_matrix m = act_mission->GetScene()->GetActiveCamera()->GetMatrix();
+    S_matrix inv = m;
+    inv.Inverse(S_matrix(m));
+    m(3).Zero();
+    for (int i = item_blurs.size(); i--;)
+    {
+        bool ok = item_blurs[i].actor->rendered && item_blurs[i].actor->frame->IsOn() &&
+            item_blurs[i].actor->frame->GetParent() &&
+            (item_blurs[i].actor->frame->GetWorldPos() - cam_pos).Square() < 900.0f;
+        if (!ok)
+        {
+            if (item_blurs[i].on)
+            {
+                for (int j = item_blurs[i].num_frames; j--;)
+                {
+                    if (item_blurs[i].frames[j])
+                        item_blurs[i].frames[j]->LinkTo(NULL, 0);
+                }
+                item_blurs[i].on = false;
+            }
+            continue;
+        }
+        S_vector p = item_blurs[i].actor->frame->GetWorldPos();
+        p *= inv;
+        S_vector d = p - item_blurs[i].last_pos;
+        item_blurs[i].last_pos = p;
+        float v = d.Magnitude() / dt;
+        item_blurs[i].speed += v;
+        item_blurs[i].speed *= .5f;
+        d *= m;
+        if (item_blurs[i].speed < 1.0f)
+        {
+            if (item_blurs[i].on)
+            {
+                for (int j = item_blurs[i].num_frames; j--;)
+                {
+                    if (item_blurs[i].frames[j])
+                        item_blurs[i].frames[j]->LinkTo(NULL, 0);
+                }
+                item_blurs[i].on = false;
+            }
+            continue;
+        }
+        int j;
+        for (j = item_blurs[i].num_frames; j--;)
+        {
+            if (item_blurs[i].frames[j])
+                item_blurs[i].frames[j]->LinkTo(NULL, 0);
+        }
+        item_blurs[i].on = true;
+        float s = v * item_blurs[i].speed * .01f;
+        if (s > item_blurs[i].spread)
+            s = item_blurs[i].spread;
+        d.Normalize();
+        d *= s;
+        d *= 1.0f / item_blurs[i].num_frames;
+        S_vector pos = item_blurs[i].frame->GetWorldPos();
+        S_quat q;
+        q.Make(item_blurs[i].frame->GetMatrix());
+        for (j = 0; j < item_blurs[i].num_frames; j++)
+        {
+            pos -= d;
+            item_blurs[i].frames[j]->SetPos(pos);
+            item_blurs[i].frames[j]->SetRot(q);
+            item_blurs[i].frames[j]->Update();
+            act_mission->GetScene()->SetFrameSector(item_blurs[i].frames[j]);
+        }
+    }
 }
 
-// STUB: GAME 0x5baa40
-void C_game::RemoveDeathHumanFade(int index, bool)
+// An item's blur taken away (PS2 name; the parameters' names are ours): its copies released and their array deleted,
+// and with remove the last item put in its place
+// FUNCTION: GAME 0x5baa40
+void C_game::ItemBlurDelItem(int index, bool remove)
 {
-    StubLog("C_game::RemoveDeathHumanFade");
+    if (index < 0 || index >= item_blurs.size())
+        return;
+    for (int i = item_blurs[index].num_frames; i--;)
+    {
+        if (item_blurs[index].frames[i])
+            item_blurs[index].frames[i]->Release();
+    }
+    delete[] item_blurs[index].frames;
+    if (remove)
+    {
+        item_blurs[index] = item_blurs.back();
+        item_blurs.pop_back();
+    }
 }
 
-// STUB: GAME 0x5bab20
+// Every global actor of ACTOR_PLAYER or ACTOR_ENTITY set up for a recording (PC only, the name is ours: RECLOAD's and
+// RECLOADFULL's): his weapon effects reset and his weapon put back into its place in the hands
+// FUNCTION: GAME 0x5bab20
 void C_game::RecPrepareHumans()
 {
-    StubLog("C_game::RecPrepareHumans");
+    for (int i = C_actor::global_actors.size(); i--;)
+    {
+        switch (C_actor::global_actors[i]->type)
+        {
+        case ACTOR_PLAYER:
+        case ACTOR_ENTITY:
+            ((C_human *)C_actor::global_actors[i])->ResetWeaponEffects();
+            ((C_human *)C_actor::global_actors[i])->weapon_displaced = true;
+            ((C_human *)C_actor::global_actors[i])->RepairWeaponPosition();
+            break;
+        }
+    }
+}
+
+// A box of collision at pos, turned by angle degrees around axis and scaled by scale, as a dummy frame of the unit box
+// and a collision object of its matrix and inverse, added to the collisions as the n-th (the name is ours; static,
+// defined before its caller, VC6 puts it after it)
+// FUNCTION: GAME 0x5bb570
+static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_matrix *inv_matrices, int *n,
+    I3D_frame **frames, S_vector pos, S_vector axis, float angle, S_vector scale)
+{
+    I3D_frame *frm = driver->CreateFrame(FRAME_DUMMY);
+    ((I3D_dummy *)frm)->SetBBox(I3D_bbox(S_vector(-.5f, -.5f, -.5f), S_vector(.5f, .5f, .5f)));
+    frm->SetPos(pos);
+    S_quat q;
+    q.Make(axis, angle * PI / 180.0f);
+    frm->SetRot(q);
+    frm->SetScale(scale);
+    frm->Update();
+    frames[*n] = frm;
+    I3D_bbox bb = ((I3D_dummy *)frm)->bbox;
+    float radius = (bb.max - bb.min).Magnitude() * .5f;
+    S_vector ws = frm->GetWorldScale();
+    radius = radius * (ws.Magnitude() * .5f);
+    colls[*n] = new tDynamicCollObject;
+    memset(colls[*n], 0, sizeof(tDynamicCollObject));
+    colls[*n]->type = DYNCOLL_UNKNOWN_40;
+    colls[*n]->flags = DYNCOLLF_UNKNOWN_4000;
+    ((I3D_bsphere &)colls[*n]->bsphere).pos = frm->GetWorldPos();
+    ((I3D_bsphere &)colls[*n]->bsphere).radius = radius;
+    bb.min *= frm->GetWorldScale();
+    bb.max *= frm->GetWorldScale();
+    (I3D_bbox &)colls[*n]->bbox = bb;
+    S_matrix m = frm->GetWorldRot().RotationMatrix();
+    m(3) = frm->GetWorldPos();
+    matrices[*n] = m;
+    colls[*n]->matrix = &matrices[*n];
+    inv_matrices[*n] = m;
+    inv_matrices[*n].Inverse(S_matrix(inv_matrices[*n]));
+    colls[*n]->inv_matrix = &inv_matrices[*n];
+    colls[*n]->frame = NULL;
+    colls[*n]->owner = NULL;
+    gifCollision.DynInsert(colls[*n]);
+    (*n)++;
 }
 
 // The roads out of the city, closed by boxes of collision while the city's base blocks are open: nine, and four more in
@@ -4070,14 +7392,6 @@ void C_game::InterCity_GameInit()
     }
 }
 
-// A box of collision at pos, turned by angle degrees around axis and scaled by scale, as a dummy frame of the unit box
-// and a collision object of its matrix and inverse, added to the collisions as the n-th (the name is ours)
-// STUB: GAME 0x5bb570
-static void AddInterCityBox(tDynamicCollObject **colls, S_matrix *matrices, S_matrix *inv_matrices, int *n,
-    I3D_frame **frames, S_vector pos, S_vector axis, float angle, S_vector scale)
-{
-    StubLog("AddInterCityBox");
-}
 
 // What InterCity_GameInit created: the collisions taken out and deleted, the frames released, the arrays deleted (PS2
 // name, PS2's C_mission's)
@@ -4111,109 +7425,6 @@ void C_game::InterCity_GameDoneInGameDone()
     inter_city_frames = NULL;
 }
 
-// STUB: GAME 0x5accb0
-int C_game::Play3DSound(I3D_sound *sound)
-{
-    StubLog("C_game::Play3DSound(I3D_sound *)");
-    return 0;
-}
 
-// STUB: GAME 0x5afdb0
-void C_game::InvalidateColl(tDynamicCollObject *coll)
-{
-    StubLog("C_game::InvalidateColl");
-}
 
-// STUB: GAME 0x5b5450
-void C_game::LightnessAdd(C_actor *act, I3D_frame *frm, ushort unknown, S_vector &pos)
-{
-    StubLog("C_game::LightnessAdd");
-}
 
-// STUB: GAME 0x5b56f0
-void C_game::LightnessDel(I3D_frame *frm)
-{
-    StubLog("C_game::LightnessDel");
-}
-
-// STUB: GAME 0x5ac580
-void C_game::NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3D_frame *frm)
-{
-    StubLog("C_game::NewGrenade");
-}
-
-// STUB: GAME 0x5b0680
-void C_game::PFire_Fire()
-{
-    StubLog("C_game::PFire_Fire");
-}
-
-// STUB: GAME 0x5b06a0
-void C_game::PHorn_Horn()
-{
-    StubLog("C_game::PHorn_Horn");
-}
-
-// STUB: GAME 0x5b06c0
-void C_game::WFall_Player()
-{
-    StubLog("C_game::WFall_Player");
-}
-
-// STUB: GAME 0x5b1370
-void C_game::CreateTrackEffect(S_vector &pos, S_vector &normal, S_vector &dir, S_vector &size, float unknown1,
-    int texture, bool unknown2, float unknown3, bool unknown4, bool unknown5, I3D_frame *frm)
-{
-    StubLog("C_game::CreateTrackEffect(direction)");
-}
-
-// STUB: GAME 0x5ad640
-void C_game::SetFrameForShadow(I3D_frame *frm, E_shadow_type type1, E_shadow_type type2)
-{
-    StubLog("C_game::SetFrameForShadow");
-}
-
-// STUB: GAME 0x5b33f0
-int C_game::BoxPlacementDestSetOU(bool on, I3D_frame *frm)
-{
-    StubLog("C_game::BoxPlacementDestSetOU");
-    return 0;
-}
-
-// STUB: GAME 0x5b3b10
-void C_game::BoxPlacement_RestoreInfo(I3D_frame *frm)
-{
-    StubLog("C_game::BoxPlacement_RestoreInfo");
-}
-
-// STUB: GAME 0x5b3c00
-bool C_game::BoxPlacement_GetStartPoint(I3D_frame *frm, S_vector &pos)
-{
-    StubLog("C_game::BoxPlacement_GetStartPoint");
-    return false;
-}
-
-// STUB: GAME 0x5b3c80
-void C_game::BoxPlacementGetNextDest(I3D_frame *frm, I3D_frame *dest)
-{
-    StubLog("C_game::BoxPlacementGetNextDest");
-}
-
-// STUB: GAME 0x5b4010
-I3D_frame *C_game::BoxPlacementGetEnemyDest(C_human *human, int index)
-{
-    StubLog("C_game::BoxPlacementGetEnemyDest");
-    return NULL;
-}
-
-// STUB: GAME 0x5b5b40
-void C_game::AddShootLight(S_vector &pos, float range, int time, ushort unknown)
-{
-    StubLog("C_game::AddShootLight");
-}
-
-// STUB: GAME 0x5b9690
-void C_game::AddDeadHumanForTick(C_human *human)
-{
-    StubLog("C_game::AddDeadHumanForTick");
-}

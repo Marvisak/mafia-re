@@ -880,3 +880,21 @@ void ai_fight_manager::DisbandCarParty(ai_fight_followship *party, bool unknown)
 {
     StubLog("ai_fight_manager::DisbandCarParty");
 }
+
+// STUB: GAME 0x531dc0
+void ai_groups::InvalidateActor(C_actor *act)
+{
+    StubLog("ai_groups::InvalidateActor");
+}
+
+// STUB: GAME 0x5331c0
+void ai_follow_manager::Invalidate(C_actor *act)
+{
+    StubLog("ai_follow_manager::Invalidate");
+}
+
+// STUB: GAME 0x536200
+void ai_fight_manager::Invalidate(C_actor *act)
+{
+    StubLog("ai_fight_manager::Invalidate");
+}

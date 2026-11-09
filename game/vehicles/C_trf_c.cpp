@@ -32,6 +32,12 @@ std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
     return v_elems_parking;
 }
 
+// STUB: GAME 0x4aaa00
+void C_traffic_car::Scipni(bool hide)
+{
+    StubLog("C_traffic_car::Scipni");
+}
+
 // STUB: GAME 0x4b9560
 void C_traffic_car::ChlupatejVystrik()
 {

@@ -267,3 +267,9 @@ void C_entity::WeaponGetInfo()
 {
     StubLog("C_entity::WeaponGetInfo");
 }
+
+// STUB: GAME 0x528890
+void C_entity::InvalidateActor(C_actor *act)
+{
+    StubLog("C_entity::InvalidateActor");
+}

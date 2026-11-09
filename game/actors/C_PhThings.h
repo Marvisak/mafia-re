@@ -43,6 +43,8 @@ public:
     void InitBox(S_THING_BOX *box);
     // An impulse at the position
     void ExternalImpuls(const S_vector &impuls, const S_vector &pos);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void InvalidateActor(C_actor *act);
 
     uchar unknown_70[0x50];             // 0x70
     uint unknown_c0;                    // 0xc0, 0x80000 for the models C_human::FreeHand drops
