@@ -2,6 +2,7 @@
 
 #include "actors/C_actor.h"
 #include "actors/C_animations.h"
+#include "actors/C_ShotSkeleton.h"
 #include "actors/g_inventory.h"
 #include "tools.h"
 
@@ -12,26 +13,6 @@ class C_car_ex;
 class I3D_sound;
 class C_human;
 class C_traffic_element;
-
-// The bones the shots test against (PS2 C_ShotSkeleton; its file's name isn't known, PC 0x5d6f80-0x5d767c), 0x130 bytes
-// as far as C_human shows
-class C_ShotSkeleton
-{
-public:
-    // The line from from along dir, of that length squared: the bone hit, 0 for none (PS2 name; the parameters' names
-    // and the result are ours)
-    int TestCollision(const S_vector &from, const S_vector &dir, float dist2);
-
-    // Empty, in the class: C_human's constructor and destructor unwind the skeleton through the linker's folded
-    // empty function of that kind (0x404990), and construct nothing
-    ~C_ShotSkeleton()
-    {
-    }
-    // Takes the bones of the human's model (PS2 name), which GameInit and _intern_ChangeModel call
-    void Init(I3D_frame *frm);
-
-    uchar unknown_0[0x130];
-};
 
 // The humans' properties, max_properties' and properties' indices: _human_property_'s (C_program.cpp), whose names
 // the script's HUMAN_GETPROPERTY and HUMAN_SETPROPERTY take (the name is ours)
