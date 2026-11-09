@@ -407,3 +407,17 @@ void C_using_object::DelInvalidItem(uint id)
 {
     StubLog("C_using_object::DelInvalidItem");
 }
+
+// STUB: GAME 0x55e080
+bool C_using_object::IsAnyObjectNear(const S_vector &pos, const S_vector &dir, I3D_frame *sector)
+{
+    StubLog("C_using_object::IsAnyObjectNear");
+    return false;
+}
+
+// STUB: GAME 0x55e180
+void C_using_object::FindNearObjects(const S_vector &pos, const S_vector &dir,
+    std::vector<S_GameItem> &items, I3D_frame *sector)
+{
+    StubLog("C_using_object::FindNearObjects");
+}

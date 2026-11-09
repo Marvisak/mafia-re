@@ -55,6 +55,8 @@ public:
     // What the player can use, DETECTOR_WAITFORUSE's (PS2 name; the parameters' meaning isn't known: the command's two
     // integers, the second as whether it is 0)
     void CreateUO(int unknown, bool unknown2);
+    // The player uses the detector (PS2 name): its using object taken away, the script's waiting for it ended
+    void UseDetector();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b750

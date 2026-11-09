@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ?ForceUpdate@GM_Component@@UAEXXZ
+// ??1S_web_conn@@QAE@XZ
 
 #include <settings.h>
 
@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAUtDynamicCollObject@@ABQAU2@@Z
+// ?_Construct@std@@YIXPAPAVC_program@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@IAEXPAUS_cache_model_one@@0@Z
+// ?_Destroy@?$vector@US_cutscene_rec_actor@@V?$allocator@US_cutscene_rec_actor@@@std@@@std@@IAEXPAUS_cutscene_rec_actor@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEPAPAVIJoy@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@IAEPAPAUtDynamicCollObject@@PBQAU3@0PAPAU3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@IAEXPAPAUtDynamicPolicko@@IABQAU3@@Z
+// ?_Ufill@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@IAEXPAPAUtDynamicCollObject@@IABQAU3@@Z

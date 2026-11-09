@@ -1506,7 +1506,7 @@ bool C_human::SaveGameLoad(void **buf)
                 if (aimed)
                 {
                     Do_Aimed(false);
-                    ((C_player *)this)->unknown_af5 = false;
+                    ((C_player *)this)->car_free_look = false;
                     act_mission->game->camera.EnableFreeLook(false, false);
                 }
                 act_mission->game->camera.LezeDoToyoty(false);
@@ -1583,7 +1583,7 @@ bool C_human::SaveGameLoad(void **buf)
     if (car && car->type == ACTOR_CAR)
     {
         Intern_UseCar(car, seat);
-        if (car->unknown_4a4 < 800.0f)
+        if (car->speed_limit < 800.0f)
             mafiaIndicators.show_flags |= INDF_SPEED_LIMITER;
         else
             mafiaIndicators.show_flags &= ~INDF_SPEED_LIMITER;
@@ -1610,7 +1610,7 @@ bool C_human::SaveGameLoad(void **buf)
             car->LockVehicle(false);
             car->OpenDoor(seat, 0.0f, true);
             Intern_UseCar(car, seat);
-            if (car->unknown_4a4 < 800.0f)
+            if (car->speed_limit < 800.0f)
                 mafiaIndicators.show_flags |= INDF_SPEED_LIMITER;
             else
                 mafiaIndicators.show_flags &= ~INDF_SPEED_LIMITER;
@@ -1719,8 +1719,8 @@ void C_human::SoundsChange(int i)
         pump_sound->SetOn(false, true);
     if (voice)
         voice->SetOn(false, true);
-    if (type == ACTOR_PLAYER && ((C_player *)this)->unknown_af8)
-        ((C_player *)this)->unknown_af8->SetOn(false, true);
+    if (type == ACTOR_PLAYER && ((C_player *)this)->horn_sound)
+        ((C_player *)this)->horn_sound->SetOn(false, true);
 }
 
 
@@ -2074,7 +2074,7 @@ void C_human::Intern_UseCar(bool in)
         PersonAnim(0.0f, true, false);
         car_stance_time = 250;
         car_stance = HUMAN_CARSTANCE_SEATED;
-        unknown_b0 = 0;
+        no_fuel_car = 0;
         car = c;
         if (!seat) {
             if (type != ACTOR_PLAYER) {
@@ -2463,7 +2463,7 @@ void C_human::Update(uint time)
                                 PersonAnim(0.0f, true, false);
                                 car_stance_time = 250;
                                 car_stance = HUMAN_CARSTANCE_SEATED;
-                                unknown_b0 = 0;
+                                no_fuel_car = 0;
                                 if (!seat) {
                                     if (type != ACTOR_PLAYER) {
                                         c->EnableSounds(false);
@@ -2491,7 +2491,7 @@ void C_human::Update(uint time)
                                         if (C_player::can_car_damage)
                                             mafiaIndicators.show_flags |= INDF_CAR_DAMAGE;
                                         mafiaIndicators.RadarSetPlayerCar(c);
-                                        c->auto_gearing = !((C_player *)this)->unknown_adb;
+                                        c->auto_gearing = !((C_player *)this)->manual_gearing;
                                     }
                                 } else
                                     c->auto_gearing = true;
@@ -3231,7 +3231,7 @@ void C_human::GameInit()
     drowned = false;
     changing_weapon = false;
     scream_areas = 1;
-    unknown_b0 = 0;
+    no_fuel_car = 0;
     next_car_action = 0;
     car_action_time = -1;
     speed_limiter = false;
@@ -5585,14 +5585,14 @@ void C_human::Intern_UseCar(C_car *c, int s)
     anim_machine.Tick(500);
     frame->Tick(500);
     DeactivateColls(false);
-    unknown_b0 = 0;
+    no_fuel_car = 0;
     car = c;
     last_car = c;
     if (!s) {
         c->SetEngineOn(true, false);
         c->SetSpeedLimit(speed_limiter ? 16 : 1000);
         if (act_mission->game->player == this)
-            c->auto_gearing = !((C_player *)this)->unknown_adb;
+            c->auto_gearing = !((C_player *)this)->manual_gearing;
         else
             c->auto_gearing = true;
     }
@@ -5661,7 +5661,7 @@ void C_human::Intern_FromCar(I3D_frame *frm)
         C_traffic_generator::PlayerInTaxi(NULL);
     if (act_mission->GetGame()->player == this && aimed) {
         Do_Aimed(false);
-        ((C_player *)this)->unknown_af5 = false;
+        ((C_player *)this)->car_free_look = false;
         act_mission->GetGame()->GetCamera().EnableFreeLook(false, false);
     }
     C_car *c = car;
@@ -5788,9 +5788,9 @@ void C_human::ChangeWeaponModel()
     weapon_displaced = false;
     reload_effects = false;
     bool player = act_mission->GetGame()->player == this;
-    if (player && ((C_player *)this)->unknown_af5)
+    if (player && ((C_player *)this)->car_free_look)
     {
-        ((C_player *)this)->unknown_af5 = false;
+        ((C_player *)this)->car_free_look = false;
         act_mission->GetGame()->camera.EnableFreeLook(false, false);
     }
     if (type == ACTOR_ENTITY)
@@ -6793,7 +6793,7 @@ void C_human::Use_Actor(C_actor *act, int how, int b, int c)
                 weapon_model2->SetOn(false);
             if (!seat) {
                 if (act_mission->game->player == this)
-                    c2->auto_gearing = !((C_player *)this)->unknown_adb;
+                    c2->auto_gearing = !((C_player *)this)->manual_gearing;
                 else
                     c2->auto_gearing = true;
                 if (act_mission->game->shvestky.active)
@@ -6809,7 +6809,7 @@ void C_human::Use_Actor(C_actor *act, int how, int b, int c)
                 break;
             if (act_mission->game->player == this && aimed) {
                 Do_Aimed(false);
-                ((C_player *)this)->unknown_af5 = false;
+                ((C_player *)this)->car_free_look = false;
                 act_mission->game->camera.EnableFreeLook(false, false);
             }
             if (ZasrateLezeniZAuta_ve2rano())
@@ -8442,7 +8442,7 @@ void C_human::_intern_ThrowMeFromCar()
         act_mission->GetGame()->GetCamera().SetCar(NULL);
         if (aimed) {
             Do_Aimed(false);
-            ((C_player *)this)->unknown_af5 = false;
+            ((C_player *)this)->car_free_look = false;
             act_mission->GetGame()->GetCamera().EnableFreeLook(false, false);
         }
     }
@@ -9121,7 +9121,7 @@ void C_human::Activate()
     drowned = false;
     changing_weapon = false;
     scream_areas = 1;
-    unknown_b0 = 0;
+    no_fuel_car = 0;
     next_car_action = 0;
     car_action_time = -1;
     speed_limiter = false;
@@ -9277,6 +9277,11 @@ void C_human::Do_DeadBodyDrop()
     next_anim_id = ANIM_NOSENI_MRTVOLY_TOM_SHOZENI;
     PersonAnim(0.0f, true, false);
     SetWaitAnim();
+}
+
+// The linker's folded empty function of the out-of-line kind (0x4ab130)
+void C_human::PickObject(S_vector &pos)
+{
 }
 
 // FUNCTION: GAME 0x58b870

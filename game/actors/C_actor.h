@@ -455,19 +455,19 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?GetFlags@GM_Component@@UAEIXZ
+// ?SaveGameGetSize@C_seagull@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_wagon@@UAEXI@Z
+// ?NetDirect@C_bridge@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -481,13 +481,13 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?LoadData@C_wagon@@UAE_NPAVC_chunk@@@Z
+// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
+// ?SaveGameSave@C_clock@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_irenka@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
@@ -495,7 +495,7 @@ public:
 // ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?end@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@XZ
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
@@ -711,6 +711,7 @@ extern S_anim_info _anim_info_[];
 #define ANIM_BOJ_ZASAH_ROZKROK_SM 0xf2  // "boj zasah rozkrok sm.i3d"
 #define ANIM_BOJ_BOX_HLAVICKA 0xf3      // "boj box hlavicka.i3d"
 #define ANIM_BOJ_ZASAH_HLAVICKA 0xf4    // "boj zasah hlavicka.i3d"
+#define ANIM_KRADENI_AUTA01 0xf5        // "KradeniAuta01.i3d"
 #define ANIM_AUTO_RIDIC_STATIV 0xf6     // "AutoRidicStativ.i3d"
 #define ANIM_FORMULE_STATIV 0xf7        // "FormuleStativ.i3d"
 #define ANIM_AUTO_SPOL_STATIV 0xf8      // "AutoSpolStativ.i3d"

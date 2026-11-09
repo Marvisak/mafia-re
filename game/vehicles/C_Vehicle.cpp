@@ -167,6 +167,15 @@ const S_vector &C_Vehicle::GetHeadPos()
     return head_pos;
 }
 
+// The engine's revolutions a minute, 0 while it is off (PS2 name)
+// FUNCTION: GAME 0x4cd590
+float C_Vehicle::GetRotations()
+{
+    if (engine_on)
+        return rotations * 60.0f;
+    return 0.0f;
+}
+
 // FUNCTION: GAME 0x4cd5b0
 bool C_Vehicle::IsVehicleUnstable()
 {
@@ -291,5 +300,32 @@ void C_Vehicle::OpenWindow(int seat, bool open)
 bool C_Vehicle::IsWindowOpen(int seat)
 {
     StubLog("C_Vehicle::IsWindowOpen");
+    return false;
+}
+
+// STUB: GAME 0x4cb070
+void C_Vehicle::SetGear(int gear)
+{
+    StubLog("C_Vehicle::SetGear");
+}
+
+// STUB: GAME 0x4cb460
+bool C_Vehicle::SetClutch(float clutch)
+{
+    StubLog("C_Vehicle::SetClutch");
+    return false;
+}
+
+// STUB: GAME 0x4cb4d0
+bool C_Vehicle::SetSteer(float steer)
+{
+    StubLog("C_Vehicle::SetSteer");
+    return false;
+}
+
+// STUB: GAME 0x4cb710
+bool C_Vehicle::SetHandbrake(bool on)
+{
+    StubLog("C_Vehicle::SetHandbrake");
     return false;
 }

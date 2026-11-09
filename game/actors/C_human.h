@@ -88,6 +88,9 @@ public:
 #define PARTICLE_LANDING 0x4b
 // The sound table's sound of a car stolen (Movement's HUMAN_ACTION_STEAL; the name is ours)
 #define SOUND_CAR_STOLEN 0x87
+// The sound table's car_unlock, which loops at the player while he steals a car (C_player::Can_UseCar; the name
+// is ours)
+#define SOUND_CAR_UNLOCK 0x86
 #define HUMAN_PROPERTY_REACTIONS 6      // "Reactions"
 #define HUMAN_PROPERTY_SPEED 7          // "Speed", which the walks' speeds are multiplied by
 #define HUMAN_PROPERTY_AGGRESIVITY 8    // "Aggresivity"
@@ -114,6 +117,11 @@ public:
 #define VOICE_DEATH 0x5c
 #define VOICE_AGONY 0x5e
 #define VOICE_SWEAR 0xa1
+// The player's two lines when the engine he starts has no fuel (C_player::AI_drive; the name is a guess)
+#define VOICE_NO_FUEL 0x89
+// The first of the player's three remarks on a car he can't steal or hijack (C_player's Can_UseCar and
+// Do_AB_OwnerNULL; the name is a guess)
+#define VOICE_CANT_STEAL 0x84
 // The police's calls by the player's offences (human_notify_callback's NOTE_POLICE_SCREAM_1 to 3: 0x98 to 0x9a
 // for one, 0x9b to 0x9d for two, 0xa2, 0x9c and 0xa3 for three; the police's voices have the same file in 0xa2
 // as in 0x98) and NOTE_SCREAM_88's (the names are ours, by value)
@@ -654,6 +662,9 @@ public:
     void NewScream(uint id);
     void Do_FuckingBoxDrop();
     void Do_DeadBodyDrop();
+    // An object picked up (PS2 name and parameter, C_player::Do_AB_OwnerNULL passes its position): empty, the
+    // linker's folded empty function of the out-of-line kind (0x4ab130)
+    void PickObject(S_vector &pos);
     void ResetActions();
     // The death's position (PS2 names): RecompileDeathPos settles the body onto the ground through three static
     // helpers of C_human.cpp, ProcessDeathPos moves it there
@@ -717,7 +728,9 @@ public:
     C_car *locked_vehicle;              // 0xa8
     // 0xac (PS2 0x238), the seat in the car most likely, -1 for none (the name is a guess)
     int seat;
-    int unknown_b0;                     // 0xb0
+    // 0xb0, the car whose empty tank the player last complained about (C_player::AI_drive), cleared on the
+    // way into or out of a car (the name is ours)
+    C_car *no_fuel_car;
     // 0xb4, HUMAN_CAR_ACTION_*, what the human does once seated in the car, 0 for nothing (Use_Actor's c gives the
     // climb over): Update and Intern_UseCar add HUMAN_CAR_ACTION_DUE at the seat, AI does it on its next tick (it
     // tests car_action_time -= time, not its sign; the name is ours)
@@ -1222,7 +1235,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
 // folded group (the vectors of 8-byte elements)
 // TEMPLATE: GAME 0x4eaa00
-// ?insert@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXPAUS_instruction@C_program@@IABU34@@Z
+// ?insert@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@QAEXPAUS_vector2@@IABU3@@Z
 
 // The animations' file names PersonAnim and RecompileDeathPos build in a static buffer each: VC6's PDB names both
 // buff, so the markers are by name and pair with ours in address order (RecompileDeathPos's first)

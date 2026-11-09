@@ -48,14 +48,22 @@ struct S_timer
 // C_using_object's invalid items hold: those C_human::Do_FuckingBox and Do_DeadBody turn off while the player
 // carries something, and the dead body's two, which C_human::ChangeState gives its using objects (the names are
 // ours, after the labels the text database has for the same ids)
+#define USING_ACTION_OPEN_DOOR 0x7d0             // "Open door"
+#define USING_ACTION_CLOSE_DOOR 0x7d1            // "Close door"
+#define USING_ACTION_USE_SWITCH 0x7d2            // "Use switch"
 #define USING_ACTION_GET_IN_FRONT 0x7d3          // "Get in the front"
 #define USING_ACTION_GET_IN_BACK 0x7d4           // "Get in the back"
 #define USING_ACTION_BOARD_TRAIN 0x7d7           // "Board train"
+#define USING_ACTION_EXIT_TRAIN 0x7d8            // "Exit train"
 #define USING_ACTION_HIJACK_CAR 0x7d9            // "Hijack car"
 #define USING_ACTION_PICK_UP_BOX 0x7da           // "Pick up box"
+#define USING_ACTION_DROP_BOX 0x7db              // "Drop box"
 #define USING_ACTION_SEARCH_DEAD_BODY 0x7dc      // "Search dead body"
 #define USING_ACTION_MOVE_DEAD_BODY 0x7dd        // "Move dead body"
+#define USING_ACTION_TALK 0x7de                  // "Talk to the pedestrian"
 #define USING_ACTION_GET_IN_AS_DRIVER 0x7df      // "Get in the car as the driver"
+#define USING_ACTION_BOARD_TROLLEY 0x7e0         // "Board Trolley Car"
+#define USING_ACTION_EXIT_TROLLEY 0x7e1          // "Exit Trolley Car"
 
 // The objects the player can use (PS2 C_using_object, tools.cpp): only its two vectors are known, which the game's
 // inline constructor constructs (PS2's also clears its 0x18 and 0x1c). Its methods are in the PC's tools.cpp
@@ -91,12 +99,19 @@ public:
     void AddObject(S_using_object *obj);
     // Forgets the object, its frame and itself freed as ClearObjects' (from the last object)
     void DelObject(S_using_object *obj);
+    // The objects near pos, their items into items, the nearest first; an object of another sector than sector
+    // is left out (PS2 name and parameters; dir isn't read)
+    void FindNearObjects(const S_vector &pos, const S_vector &dir, std::vector<S_GameItem> &items,
+        I3D_frame *sector);
     void ClearObjects();
     void ClearInvalidItems();
     // The special actions (S_GameItem::ammo_loaded of a GAMEITEM_SPECIAL_ACTION) the player can't use, added and
     // taken out again (PS2 names)
     void AddInvalidItem(uint id);
     void DelInvalidItem(uint id);
+    // Whether a valid object in the frame's sector (or in none) is within reach of pos: 1.5 m up or down, and
+    // horizontally within its radius (PS2 name; dir isn't read)
+    bool IsAnyObjectNear(const S_vector &pos, const S_vector &dir, I3D_frame *sector);
 };
 
 // The compass of the game's HUD (PS2 C_compass, tools.cpp), the game's 0x26c, 0x14 bytes. Its destructor is declared: the
@@ -238,7 +253,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetText@GM_Component@@UAEPAEXZ
+// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

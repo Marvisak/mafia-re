@@ -207,7 +207,7 @@ void G_Camera::Reset()
     swing = false;
     swing_frame = NULL;
     push_pop.clear();
-    unknown_8c = 0.0f;
+    recoil = 0.0f;
     sniper_fov = 0.2f;
     params = cameraParams[0].values;
     free_look = false;
@@ -828,7 +828,7 @@ void G_Camera::Tick(uint time)
                     kl2 -= 2 * PI;
                 look = player->GetDir();
                 S_vector pos = player->GetPos() + S_vector(0.0f, EYE_HEIGHT - poklesVDrepu, 0.0f);
-                float amp = 0.0015f * (1.0 - poklesVDrepu * 0.5) * (1.0f + unknown_8c * 2.0f);
+                float amp = 0.0015f * (1.0 - poklesVDrepu * 0.5) * (1.0f + recoil * 2.0f);
                 look.x += look.z * amp * (float)sin(kl2);
                 look.z += look.x * amp * (float)sin(kl2);
                 look *= (float)sin(tilt * PI);
@@ -1103,7 +1103,7 @@ void G_Camera::WantPos(const S_vector &target, const S_vector &pos, const S_vect
             S_vector d = player->GetDir();
             // Direct initialization: with = S_vector(...) the second argument of swing_frame's SetDir1 goes out of line
             S_vector side(d.x, 1.0f, d.z);
-            camera->SetPos(pp + side * unknown_8c * 0.2f);
+            camera->SetPos(pp + side * recoil * 0.2f);
             float roll = swing_amount * (float)sin(naklon * PI);
             camera->SetDir1(dir, S_vector(0.0f, 1.0f, roll));
             camera->Update();

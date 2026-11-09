@@ -484,3 +484,9 @@ void C_traffic_generator::VyfunOdTeMasiny(C_car *car)
 {
     StubLog("C_traffic_generator::VyfunOdTeMasiny");
 }
+
+// STUB: GAME 0x44e870
+void C_traffic_generator::PlayerPromluvilNaTehoChuja(I3D_frame *frm)
+{
+    StubLog("C_traffic_generator::PlayerPromluvilNaTehoChuja");
+}

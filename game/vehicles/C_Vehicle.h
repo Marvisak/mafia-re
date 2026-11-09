@@ -213,9 +213,44 @@ public:
             return true;
         return false;
     }
+    // The engine's revolutions a minute, 0 while it is off (PS2 name)
+    float GetRotations();
     // PS2 names
     void SetBrake(float brake);
     void SetPower(float power, bool unknown);
+    // PS2 names (PS2's SetHandbrake takes two bools)
+    void SetGear(int gear);
+    bool SetClutch(float clutch);
+    bool SetSteer(float steer);
+    bool SetHandbrake(bool on);
+    // Which of the steering, the throttle, the brake and the clutch take the secondary binding's value (the
+    // name is ours: C_player::AI_drive's stores go through the vehicle's pointer, as an inline method's do)
+    void SetAnalogInputs(bool steer, bool power, bool brake, bool clutch)
+    {
+        analog_steer = steer;
+        analog_power = power;
+        analog_brake = brake;
+        analog_clutch = clutch;
+    }
+    // The tachometer's values (the names are ours): C_player's AI and AI_drive pass the gearing to TachometrSetGear
+    // from a stack slot and read the others through these, as inline functions' results: the highest revolutions a
+    // minute are computed before GetRotations' call and kept across it
+    bool GetAutoGearing() const
+    {
+        return auto_gearing;
+    }
+    float GetMaxRotations() const
+    {
+        return max_rotations * 60.0f;
+    }
+    float GetOdometer() const
+    {
+        return odometer;
+    }
+    float GetTankFuel() const
+    {
+        return tank_fuel;
+    }
     // An impulse pushing the vehicle at pos (PS2 name; the parameters' names are ours)
     void ExternalImpuls(const S_vector &impuls, const S_vector &pos, uint flags, const S_vector &unknown);
 
@@ -492,10 +527,17 @@ public:
     // 0x490 (car 0x500, PS2 0x229f), what C_human::Update copies from the camera's unknown_22 for the player's car
     bool unknown_490;
     uchar unknown_491[0x13];            // 0x491
-    // 0x4a4 (car 0x514, PS2's car 0x7bc): below 800 the HUD's INDF_SPEED_LIMITER light is on (C_human::SaveGameLoad
-    // after getting into the car)
-    float unknown_4a4;
-    uchar unknown_4a8[0x1c];            // 0x4a8
+    // 0x4a4 (car 0x514, PS2's car 0x7bc), SetSpeedLimit's: below 800 the HUD's INDF_SPEED_LIMITER light is on
+    // (C_human::SaveGameLoad after getting into the car; the name is ours)
+    float speed_limit;
+    // 0x4a8 to 0x4ab (car 0x518, PS2 0x2221), the steering's, the throttle's, the brake's and the clutch's value
+    // from the secondary binding, a joystick's axis most likely: C_player::AI_drive sets them, SetSteer and
+    // SetClutch read theirs (the names are guesses)
+    bool analog_steer;
+    bool analog_power;
+    bool analog_brake;
+    bool analog_clutch;
+    uchar unknown_4ac[0x18];            // 0x4ac
     int num_wheels;                    // 0x4c4 (car 0x534)
     uchar unknown_4c8[4];               // 0x4c8
     // 0x4cc (car 0x53c, PS2 0x2225), the gearing, automatic most likely while it is set (the name is a guess): the HUD's
@@ -505,7 +547,12 @@ public:
     uchar unknown_4cd[0x73];            // 0x4cd
     float unknown_540;                  // 0x540 (car 0x5b0)
     float unknown_544;                  // 0x544 (car 0x5b4)
-    uchar unknown_548[0x54];            // 0x548
+    // 0x548 (car 0x5b8, PS2 0x80c), the engine's revolutions a second most likely (the name is a guess): GetRotations
+    // gives 60 times it while the engine runs
+    float rotations;
+    uchar unknown_54c[0x10];            // 0x54c
+    int gear;                           // 0x55c (car 0x5cc, PS2's car 0x89c), TachometrSetGear's (the name is ours)
+    uchar unknown_560[0x3c];            // 0x560
     float speed;                        // 0x59c (car 0x60c), in m/s: velocity's magnitude (SetVelocity)
     uchar unknown_5a0[0x70];            // 0x5a0
     // 0x610 (car 0x680) and 0x628 (car 0x698), the steering's limit and angle most likely (the names are guesses):
@@ -545,9 +592,12 @@ public:
     S_matrix inv_model_matrix;          // 0xd28 (car 0xd98)
     uchar unknown_d68[0x1228];          // 0xd68
     S_vector velocity;                  // 0x1f90 (car 0x2000), speed's vector (SetVelocity)
-    uchar unknown_1f9c[4];              // 0x1f9c
+    // 0x1f9c (car 0x200c, PS2 0x21b8), the engine's highest revolutions a second most likely, the tachometer's full
+    // scale (the name is a guess)
+    float max_rotations;
     float tank_size;                    // 0x1fa0 (car 0x2010, PS2 0x21bc), SetFuel's upper bound
-    uchar unknown_1fa4[6];              // 0x1fa4
+    float odometer;                     // 0x1fa4 (car 0x2014, PS2 0x21c0), the tachometer's (the name is ours)
+    uchar unknown_1fa8[2];              // 0x1fa8
     bool special_dynamic_colls;         // 0x1faa (car 0x201a, PS2 0x224b), SetSpecialDynamicColls'
     bool dynamic_colls_on;              // 0x1fab (car 0x201b), SetDynamicCollsOn's first flag
     bool unknown_1fac;                  // 0x1fac (car 0x201c), its second
@@ -570,7 +620,7 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
@@ -579,7 +629,7 @@ public:
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
@@ -588,4 +638,4 @@ public:
 // ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z
+// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z

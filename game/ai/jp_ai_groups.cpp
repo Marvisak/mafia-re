@@ -350,6 +350,12 @@ void ai_follow_manager::Destroy()
     groups.clear();
 }
 
+// STUB: GAME 0x5332e0
+void ai_follow_manager::Event(uint event, C_actor *actor)
+{
+    StubLog("ai_follow_manager::Event");
+}
+
 // STUB: GAME 0x533530
 uint ai_follow_manager::GetSize()
 {

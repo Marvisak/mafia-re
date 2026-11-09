@@ -95,7 +95,7 @@ public:
 
 // What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
 // TEMPLATE: GAME 0x4a9940
-// ?size@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_cache_model_inbb@@V?$allocator@US_cache_model_inbb@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4a9970
 // ??A?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QAEAAUS_ELEMENT@C_sledovacka@@I@Z

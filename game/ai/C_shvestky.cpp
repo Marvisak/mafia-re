@@ -953,6 +953,12 @@ void C_shvestky::TickDoRiciActors(bool all)
         do_rici_actors.clear();
 }
 
+// STUB: GAME 0x49ede0
+void C_shvestky::ZlikvidujVsechnyNasraneVyhozeneCuraky()
+{
+    StubLog("C_shvestky::ZlikvidujVsechnyNasraneVyhozeneCuraky");
+}
+
 // STUB: GAME 0x49eee0
 void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
 {
@@ -988,6 +994,12 @@ void C_shvestky::CarSteal(C_human *human, bool a, bool b)
 void C_shvestky::NextNaSrackySoudruh(C_human *human)
 {
     StubLog("C_shvestky::NextNaSrackySoudruh");
+}
+
+// STUB: GAME 0x49d260
+void C_shvestky::CorujuPoldumMasinu(C_human *human, C_car *car)
+{
+    StubLog("C_shvestky::CorujuPoldumMasinu");
 }
 
 // STUB: GAME 0x49d030

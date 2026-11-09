@@ -10,6 +10,7 @@
 // menu and the main menu need to link.
 
 #include "ui/g_m_func.h"
+#include "actors/g_inventory.h"
 #include "ui/g_indicators.h"
 #include "ui/g_loadsave.h"
 #include "ui/g_m_comps.h"
@@ -902,6 +903,71 @@ int GM_GameFailed::OnClick(uint id)
         MenuCloseAll((uint)-1, GAMEFAILED_RESULT_RETRY);
         break;
     }
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e2a90
+GM_Inventory::GM_Inventory(G_Inventory *inventory, std::vector<S_GameItem> *dropped) : inventory(inventory),
+    dropped(dropped)
+{
+}
+
+// FUNCTION: GAME 0x5e2ac0
+const char *GM_Inventory::OnBeforeCreate()
+{
+    return inventory->in_car ?
+        // STRING: GAME 0x638320
+        "inventorycar" :
+        // STRING: GAME 0x638314
+        "inventory";
+}
+
+// STUB: GAME 0x5e2ae0
+int GM_Inventory::OnCreate()
+{
+    StubLog("GM_Inventory::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e2cc0
+int GM_Inventory::OnCloseChild(GM_Menu *child, uint a, uint b)
+{
+    StubLog("GM_Inventory::OnCloseChild");
+    return 0;
+}
+
+// STUB: GAME 0x5e2d30
+int GM_Inventory::OnKey(uchar key, uint u)
+{
+    StubLog("GM_Inventory::OnKey");
+    return GM_Menu::OnKey(key, u);
+}
+
+// STUB: GAME 0x5e2e70
+int GM_Inventory::OnClick(uint id)
+{
+    StubLog("GM_Inventory::OnClick %u", id);
+    return 0;
+}
+
+// STUB: GAME 0x5e2f20
+int GM_ItemPickUp::OnCreate()
+{
+    StubLog("GM_ItemPickUp::OnCreate");
+    return 0;
+}
+
+// STUB: GAME 0x5e32c0
+int GM_ItemPickUp::OnKey(uchar key, uint u)
+{
+    StubLog("GM_ItemPickUp::OnKey");
+    return GM_Menu::OnKey(key, u);
+}
+
+// STUB: GAME 0x5e3480
+int GM_ItemPickUp::OnClick(uint id)
+{
+    StubLog("GM_ItemPickUp::OnClick");
     return 0;
 }
 

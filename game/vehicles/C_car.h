@@ -2,6 +2,7 @@
 
 #include "actors/C_actor.h"
 #include "vehicles/C_Vehicle.h"
+#include "tools.h"
 
 struct S_SRFC;
 class C_human;
@@ -164,6 +165,8 @@ public:
     // Where the animation of getting into the seat starts, and its direction (PS2 name; the parameters' names are
     // ours): false where the seat has no such place
     bool GetPlacementFromTCK(int seat, int anim, S_vector &pos, S_vector &dir);
+    // The seat of the car's using object (PS2 name), -1 for one of no seat
+    int GetUSindex(const C_using_object::S_using_object *obj);
     void GetNavigationPoints(float unknown, S_vector &p1, S_vector &p2, S_vector &p3, S_vector &p4);
     // A point of the car in world space: one of the model's two points (0x2080, 0x208c) times the model matrix,
     // kept in 0x2098 or 0x20a4 (PS2 name and parameter; which point the parameter picks isn't known)
@@ -269,7 +272,10 @@ public:
     // sends and its PocetPolicejnichPlechovekVRici ("the number of police cans in the region") counts the cars with it;
     // a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik
     bool police_car;
-    uchar unknown_2105[3];              // 0x2105
+    // 0x2105 (PS2 0x2474), set by C_traffic_car (0x4b6d95), cleared at 0x41f429: C_player::Do_AB_OwnerNULL hijacks a
+    // car of the traffic with it set no more than a police car
+    bool unknown_2105;
+    uchar unknown_2106[2];              // 0x2106
     // 0x2108 (PS2 0x23d4), 2000 from C_human::Use_Actor's getting out, 2500 from _intern_ThrowMeFromCar's throw
     int unknown_2108;
     uchar unknown_210c;                 // 0x210c
@@ -296,7 +302,9 @@ public:
     uchar unknown_2171[7];              // 0x2171
     int show_energy;                    // 0x2178, CAR_SWITCHSHOWENERGY's (the name is ours)
     bool unknown_217c;                  // 0x217c (PS2 0x2464), CARLIGHT_MAIN clears it with the lights on, sets it off
-    uchar unknown_217d[0xf];            // 0x217d
+    // 0x217d (PS2 0x2460), PS2's SetTrafficCar's (0x41e9b0): a car of the traffic (the name is ours, after the setter)
+    bool traffic_car;
+    uchar unknown_217e[0xe];            // 0x217e
     // 0x218c (PS2 0x240c), the model's name, which the constructor clears and C_traffic_generator::PlayerInTaxi
     // compares with the taxis' (the name is ours)
     char model_name[32];

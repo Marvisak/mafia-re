@@ -112,6 +112,19 @@ bool C_pumper::SaveGameSave(void **buf)
     return C_actor::SaveGameSave(buf);
 }
 
+// STUB: GAME 0x480190
+void C_pumper::Start(C_car *car)
+{
+    StubLog("C_pumper::Start");
+}
+
+// STUB: GAME 0x4805d0
+int C_pumper::CanPump(C_car *car)
+{
+    StubLog("C_pumper::CanPump");
+    return 0;
+}
+
 // STUB: GAME 0x4813e0
 bool C_pumper::SaveGameLoad(void **buf)
 {

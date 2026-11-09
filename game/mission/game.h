@@ -66,6 +66,9 @@ enum E_shadow_type { SHADOW_TYPE_0 };
 // The bit of C_game::cheats with which the city's blocks are active farther from the camera (C_cache_base_block::Tick;
 // the name is ours): CUMDAL toggles it
 #define GAMEF_FAR_BLOCKS 0x200
+// The bit of C_game::cheats with which the player steals and hijacks any car, those the garage's profile can't steal
+// too (C_player's Can_UseCar and Do_AB_OwnerNULL; the name is ours): CORNUFSE toggles it
+#define GAMEF_STEAL_ALL 0x20
 
 // A shot in flight (PS2 S_shoot, PS2's 0x70 bytes; the members' names are ours), which C_game::NewShoot (0x5a84a0)
 // adds and TickShoot moves until it hits something or reaches the end of its range
@@ -731,6 +734,10 @@ public:
     // The sound played as it is set up, released once it ends (PS2 name, 0x5accb0): its number, which
     // Stop3DSound takes
     int Play3DSound(I3D_sound *sound);
+    // The player fired a shot (PS2 name, 0x5b0680)
+    void PFire_Fire();
+    // The player sounded the horn: the script's event of it fired (PS2 name, 0x5b06a0)
+    void PHorn_Horn();
     // The player fell into a death collision: the script's event of it fired (PS2 name, 0x5b06c0)
     void WFall_Player();
     // A shadow for the frame, type2 one of the shadow models (shadow_temp), type1 choosing the list (the cars' if not
@@ -987,7 +994,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_RoadBlock@C_game@@QAE@XZ

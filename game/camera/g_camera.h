@@ -161,7 +161,9 @@ public:
     // ours)
     std::vector<G_RaceCamera *> race_cameras;
     I3D_frame *look_to;                 // 0x88, the frame CAMERA_C_LOOK_TO looks at (PS2 SetLookTo's; the name is ours)
-    float unknown_8c;                   // 0x8c (PS2 0x9c)
+    // 0x8c (PS2 0x9c), the player's recoil (C_player::recoil, SetRecoil's): the view from his eyes shakes and sways
+    // more with it (the name is ours)
+    float recoil;
     // 0x90 (PS2 0xa0), the sniper camera's field of view, 0.2 after Reset (the name is ours, after PS2's SetSniperFov,
     // which stores it and gives it to the HUD's ParheliaSetFov in CAMERA_CP_SNIPER)
     float sniper_fov;
@@ -219,6 +221,12 @@ public:
     // Mode 0x15 at the position, looking at the frame (PS2 name; PS2's takes the position by reference)
     void SetLookTo(S_vector pos, I3D_frame *frm);
     void SetSniperMode(bool on);
+    // The player's recoil, which shakes the camera from his eyes (C_player's ShootDeAimed and AI; PC only, the name is
+    // ours)
+    void SetRecoil(float r)
+    {
+        recoil = r;
+    }
     // CAMERA_C_LOCK at the position, looking along the direction, unless it is the mode already (PS2 name; the
     // parameters' names are guesses)
     void LockAt(const S_vector &pos, const S_vector &dir);

@@ -4142,6 +4142,18 @@ void C_game::NewGrenade(int type, S_vector &pos, S_vector &dir, bool unknown, I3
     StubLog("C_game::NewGrenade");
 }
 
+// STUB: GAME 0x5b0680
+void C_game::PFire_Fire()
+{
+    StubLog("C_game::PFire_Fire");
+}
+
+// STUB: GAME 0x5b06a0
+void C_game::PHorn_Horn()
+{
+    StubLog("C_game::PHorn_Horn");
+}
+
 // STUB: GAME 0x5b06c0
 void C_game::WFall_Player()
 {

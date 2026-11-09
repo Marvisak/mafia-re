@@ -161,34 +161,25 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?FrmActBuff_GetModel@C_mission@@QAEPAVI3D_model@@PBD@Z
         /INCLUDE:?FrmActBuff_StoreActorSound@C_mission@@QAEXPAVC_actor@@HPAVI3D_sound@@@Z
         /INCLUDE:?FrmActBuff_GetActorSound@C_mission@@QAEPAVI3D_sound@@PAVC_actor@@H@Z)
-    # C_human.cpp's functions that nothing written calls yet (the player's and the AI's files, the script's commands
-    # not written yet)
+    # C_human.cpp's functions that nothing written calls yet (the AI's files, the script's commands not written yet)
     target_link_options(game PRIVATE
         /INCLUDE:?GetBlob@ai_blob_log@@QAEPAUai_blob@@I@Z
         /INCLUDE:?ThrowFromCarTruck@C_human@@QAEXUS_vector@@M@Z
-        /INCLUDE:?Go_Front@C_human@@QAEX_N@Z
-        /INCLUDE:?Go_Back@C_human@@QAEXXZ
-        /INCLUDE:?Go_Left@C_human@@QAEX_N@Z
-        /INCLUDE:?Go_Right@C_human@@QAEX_N@Z
-        /INCLUDE:?Go_FrontLeft@C_human@@QAEX_N@Z
-        /INCLUDE:?Go_FrontRight@C_human@@QAEX_N@Z
-        /INCLUDE:?Go_BackLeft@C_human@@QAEXXZ
-        /INCLUDE:?Go_BackRight@C_human@@QAEXXZ
-        /INCLUDE:?Do_Shoot@C_human@@QAE_N_NPAUS_vector@@@Z
-        /INCLUDE:?Do_Jump@C_human@@QAEXXZ
         /INCLUDE:?Do_ShockStart@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockDown@C_human@@QAEXH@Z
         /INCLUDE:?Do_ShockUp@C_human@@QAEXXZ
         /INCLUDE:?Do_ShockStumble@C_human@@QAEXXZ
-        /INCLUDE:?Do_ThrowCocotFromCar@C_human@@QAE_NPAVC_car@@H@Z
         /INCLUDE:?EineMeineKleineAutoInLuft@C_human@@QAEXPAVC_car@@@Z
-        /INCLUDE:?Can_Aimed@C_human@@QAE_NXZ
         /INCLUDE:?Do_CornerBreath@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Do_CornerView@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Do_CornerFire@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Do_CornerFireAimed@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Force_CanWorking@C_human@@QAEXXZ
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
+    # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage and the cheats' SetBoxer
+    # (C_game's, 0x5a8030)
+    target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z
+        /INCLUDE:?SetBoxer@C_player@@QAEX_N@Z)
     # The cartridges' SetShotgunShell, which only C_game::NewCartidge calls (C_cartridge.cpp)
     target_link_options(game PRIVATE /INCLUDE:?SetShotgunShell@C_cartridge@@QAEX_N@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
@@ -208,8 +199,6 @@ if (MSVC_VERSION EQUAL 1200)
     # g_loadsave.cpp's functions that nothing written calls yet: the inventory's, the car database's and the replay's
     # the menus and the races call, the saved games' list the load menu reads
     target_link_options(game PRIVATE
-        /INCLUDE:?CycleDown@G_Inventory@@QAE_NPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@@Z
-        /INCLUDE:?CycleUp@G_Inventory@@QAE_NPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@@Z
         /INCLUDE:?EnemyToList@G_Inventory@@QAEXPAV?$vector@PAUS_GameItem@@V?$allocator@PAUS_GameItem@@@std@@@std@@@Z
         /INCLUDE:?FreerideGetState@G_LoadSaveClass@@QAEIXZ
         /INCLUDE:?GetAmmoByID@G_Inventory@@QAEIIPAH@Z
@@ -219,7 +208,6 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?GetPlayersByCivilMask@G_CarDatabase@@QAEIIPAV?$vector@PADV?$allocator@PAD@std@@@std@@@Z
         /INCLUDE:?GetScreenShotIdx@G_LoadSaveClass@@QAEII@Z
         /INCLUDE:?GetShadowByModel@G_CarDatabase@@QAEPBDPBD@Z
-        /INCLUDE:?GetStealTime@G_CarDatabase@@QAEIPBD@Z
         /INCLUDE:?GetWreckageByModel@G_CarDatabase@@QAEPBDPBD@Z
         /INCLUDE:?HaveItems@G_Inventory@@QAEIPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@I@Z
         /INCLUDE:?IsEnabledForChampionship@G_CarDatabase@@QAE_NII@Z
@@ -233,16 +221,13 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?ReplayTick@G_LoadSaveClass@@QAEXAAH@Z
         /INCLUDE:?SaveGameEnumFiles@G_LoadSaveClass@@QAEPAV?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@XZ
         /INCLUDE:?SaveGameLoadHeader@G_LoadSaveClass@@QAEXIPAUG_SaveGame_FileHead@@PAUG_SaveGame_Info@@@Z)
-    # g_camera.cpp's functions that nothing written calls yet: the player's (C_player.cpp), the race cameras'
+    # g_camera.cpp's functions that nothing written calls yet: the race cameras'
     # (c_racecam.cpp), the racing's (racing.cpp) and the AI's (jp_ai_entity.cpp)
     target_link_options(game PRIVATE
-        /INCLUDE:?LookAround@G_Camera@@QAEXH@Z
-        /INCLUDE:?LookFromEyes@G_Camera@@QAE_NXZ
         /INCLUDE:?CumNaNe@G_Camera@@QAEXPAVC_human@@0@Z
         /INCLUDE:?AddRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
         /INCLUDE:?RemoveRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
-        /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ
-        /INCLUDE:?SetSniperFov@G_Camera@@QAEXM@Z)
+        /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

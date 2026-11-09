@@ -202,6 +202,11 @@ public:
     // The car the human gets out of stolen (PS2 name; the bools' meaning isn't known): C_human::Hit calls it with
     // false, false for the player hit while he steals a car
     void CarSteal(C_human *human, bool a, bool b);
+    // The human at a police car (PS2 name, Czech, roughly "he steals the police their car"): C_player::Can_UseCar
+    // calls it while the police are active, for a car with police_car set
+    void CorujuPoldumMasinu(C_human *human, C_car *car);
+    // Gets rid of all the angry drivers thrown out of their cars (PS2 name, Czech; the player's refuelling calls it)
+    void ZlikvidujVsechnyNasraneVyhozeneCuraky();
     // The human boxing (PS2 name): SHVF_BOXING set, boxing_time 5000 more
     void HumanBoxing(C_human *human);
     // What the police know of a human (PS2 names), the GET_PM_ commands': its status bits, its record's state, the

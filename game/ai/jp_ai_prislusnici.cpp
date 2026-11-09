@@ -99,6 +99,13 @@ bool ai_police_nastenka::PanoveHrajeteSiNaPoldy()
     return on_duty;
 }
 
+// STUB: GAME 0x53d4a0
+bool ai_police_nastenka::SemTrefenaLocklaKurva(C_actor *actor)
+{
+    StubLog("ai_police_nastenka::SemTrefenaLocklaKurva");
+    return true;
+}
+
 // FUNCTION: GAME 0x53d750
 void ai_police_nastenka::KonecSmeny()
 {

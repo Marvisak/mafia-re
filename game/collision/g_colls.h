@@ -35,6 +35,10 @@ struct tgcPanak2;
 #define COLF2_UNKNOWN_100000 0x100000
 #define COLF2_UNKNOWN_80000 0x80000
 #define COLF2_UNKNOWN_800000 0x800000
+// The second flags of the player's lines from the camera, the shot's and the aim's (C_player's AI_walk, AI_drive and
+// AI_car_fire; by value)
+#define COLF2_UNKNOWN_200000 0x200000
+#define COLF2_UNKNOWN_400000 0x400000
 
 // tDynamicCollObject::type (the name is ours, by value): a human's two spheres
 #define DYNCOLL_UNKNOWN_42 0x42

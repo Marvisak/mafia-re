@@ -107,6 +107,9 @@ public:
     // and whether they see him ("gentlemen, do you see the bastard or are you dumb")
     bool PanoveJdeteNekdoPoZmrdovi(C_actor *actor);
     bool PanoveViditeZmrdaNeboSteTupci(C_actor *actor);
+    // Whether the actor may be hit (PS2 name, "I'm here, hit by the fuck"; the player's Collision and Hit ask it with
+    // his flag set; the meaning is a guess)
+    bool SemTrefenaLocklaKurva(C_actor *actor);
     // The shift's end
     void KonecSmeny();
     // Stops the motorized units (PS2's name, Czech)

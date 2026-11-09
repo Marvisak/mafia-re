@@ -2,6 +2,13 @@
 
 #include "actors/C_actor.h"
 
+class C_car;
+
+// C_pumper::CanPump's results (the names are ours): 1 the car can be refuelled, 2 the attendant is busy (the action
+// button does nothing)
+#define PUMPER_CAN_PUMP 1
+#define PUMPER_BUSY 2
+
 // The petrol pump attendants (PS2 C_pumper, C_pumper.cpp), 0x2ac bytes (PS2's 0x2e0). Only the constructor so far,
 // which C_mission::CreateActor calls for ACTOR_PUMPER, and ScriptCanPump, which the script calls, as stubs.
 // VTABLE: GAME 0x624990
@@ -28,6 +35,10 @@ public:
     virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
         uint u, I3D_frame *frm);
 
+    // Whether the attendant can serve the car, PUMPER_* (PS2 name)
+    int CanPump(C_car *car);
+    // The attendant refuels the car (PS2 name)
+    void Start(C_car *car);
     // Whether the mission's attendant of the id can pump (PS2 name): its int the script's float register gets
     static int ScriptCanPump(uint id);
 

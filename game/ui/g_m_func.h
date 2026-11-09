@@ -129,6 +129,64 @@ public:
 };
 
 class G_Inventory;
+struct S_GameItem;
+
+// The inventory, "inventory" or, with an item in the car's place (G_Inventory::in_car), "inventorycar" (PC only, the
+// names are ours, after its menus), 0x38 bytes: the player's inventory and the vector the items the hand drops go into.
+// C_player's AI_walk, AI_drive and AI_car_fire run it on CTRL_INVENTORY.
+// VTABLE: GAME 0x627584
+class GM_Inventory : public GM_Menu
+{
+public:
+    GM_Inventory(G_Inventory *inventory, std::vector<S_GameItem> *dropped);
+
+    virtual const char *OnBeforeCreate();
+    virtual int OnCreate();
+    virtual int OnCloseChild(GM_Menu *child, uint, uint);
+    virtual int OnKey(uchar key, uint);
+    virtual int OnClick(uint id);
+
+    G_Inventory *inventory;             // 0x30, the player's (the names are ours)
+    std::vector<S_GameItem> *dropped;   // 0x34
+};
+
+// GM_ItemPickUp's items (the names are ours): the item list's ids from PICKUP_ITEM_FIRST, an item's index in the list it
+// is given added; an item with id PICKUP_TEXT is no item but a choice, its ammo_loaded the text's id
+#define PICKUP_ITEM_FIRST 0xa9
+#define PICKUP_ITEM_LAST 0x10d
+#define PICKUP_TEXT 1
+// The menu's result for the items taken, which are in picked then (C_player::Do_AB_OwnerNULL; the name is ours)
+#define PICKUP_TAKE 0xa8
+
+// The items' pick-up, "itempickup" (PS2 GM_ItemPickUp, g_m_func.cpp), 0x54 bytes: the player's inventory and the lists
+// of items to take; C_player::Do_AB_OwnerCar runs it with two choices at a petrol pump. The members' names are ours.
+// VTABLE: GAME 0x625920
+class GM_ItemPickUp : public GM_Menu
+{
+public:
+    GM_ItemPickUp(G_Inventory *inventory, std::vector<G_Inventory *> *inventories, std::vector<S_GameItem> *items,
+        std::vector<S_GameItem> *dropped, std::vector<S_GameItem> *picked) : inventory(inventory),
+        inventories(inventories), items(items), dropped(dropped), picked(picked) {}
+
+    // FUNCTION: GAME 0x594f90
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x636ec8
+        return "itempickup";
+    }
+    virtual int OnCreate();
+    virtual int OnKey(uchar key, uint);
+    virtual int OnClick(uint id);
+
+    G_Inventory *inventory;             // 0x30
+    // 0x34, the other inventories the items can come from, a dead body's (PS2's G_Inventory::ItemPickUp's last
+    // parameter)
+    std::vector<G_Inventory *> *inventories;
+    std::vector<S_GameItem> *items;     // 0x38, what the menu offers
+    std::vector<S_GameItem> *dropped;   // 0x3c, what the inventory couldn't keep, to drop
+    std::vector<S_GameItem> *picked;    // 0x40, the items taken (PICKUP_TAKE)
+    std::vector<G_Inventory *> unknown_44;  // 0x44
+};
 
 // The gun shop, "gunshop" (PS2 GM_GunShop, g_m_func.cpp), 0x43c bytes (PS2's 0x438): the player's inventory and the
 // shop's weapons, "Inventory (Drop)" and "Select (Pick Up)". The mission's script runs it (GUNSHOP_MENU). PS2's

@@ -41,6 +41,10 @@ struct tDynamicCollObject;
 // The tachometer's light at its top right: set with the player's car's speed limit (C_Vehicle::SetSpeedLimit, PS2's
 // name) when CTRL_SPEED_LIMITER turns it on (0x591f4a)
 #define INDF_SPEED_LIMITER 0x100
+// Set while the action button can do something: on foot an object to use is within the player's reach
+// (C_using_object::IsAnyObjectNear, C_player::AI_walk's), in a car it goes slower than 0.5 m/s out of a race
+// (C_player::AI); nothing draws it (the name is a guess)
+#define INDF_ACTION 0x200
 #define INDF_CUTSCENE 0x800             // set by C_recorder::RecLoadFull, cleared by C_recorder::Close
 #define INDF_THIEF 0x1000               // PS2's ThiefIndicatorSetValue's bar
 #define INDF_MAP 0x2000                 // the city map, where map_enabled

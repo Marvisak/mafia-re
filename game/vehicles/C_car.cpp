@@ -700,3 +700,10 @@ bool C_car::GetPlacementFromTCK(int a, int b, S_vector &pos, S_vector &dir)
     StubLog("C_car::GetPlacementFromTCK");
     return false;
 }
+
+// STUB: GAME 0x41c790
+int C_car::GetUSindex(const C_using_object::S_using_object *obj)
+{
+    StubLog("C_car::GetUSindex");
+    return -1;
+}

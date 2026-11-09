@@ -143,7 +143,7 @@ extern C_cache_base_block base_cache;
 // ?insert@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAEPAUS_cache_model_set@@PAU3@ABU3@@Z
 
 // TEMPLATE: GAME 0x403d50
-// ?_Destroy@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@IAEXPAUS_RoadBlock@C_game@@0@Z
+// ?_Destroy@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@IAEXPAUS_cache_model_set@@0@Z
 
 // TEMPLATE: GAME 0x403dc0
 // ?_Ucopy@?$vector@US_cache_model_inbb@@V?$allocator@US_cache_model_inbb@@@std@@@std@@IAEPAUS_cache_model_inbb@@PBU3@0PAU3@@Z

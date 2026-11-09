@@ -301,3 +301,9 @@ bool C_detector::Hit(int type, const S_vector &v1, const S_vector &v2, const S_v
 void C_detector::NetDirect(uint time)
 {
 }
+
+// STUB: GAME 0x433c60
+void C_detector::UseDetector()
+{
+    StubLog("C_detector::UseDetector");
+}

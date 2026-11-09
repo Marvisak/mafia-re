@@ -96,6 +96,8 @@ public:
     static void PlayerInTaxi(C_car *car);
     // The pedestrians walking to the car sent away (PS2 name, Czech: "blow off from that machine")
     static void VyfunOdTeMasiny(C_car *car);
+    // The player talks to the pedestrian of the frame (PS2 name, Czech: "the player spoke to that dude")
+    static void PlayerPromluvilNaTehoChuja(I3D_frame *frm);
     static void SetVisible(bool visible);
     static void ClearElements();
     static void FreeDynCollElements();
