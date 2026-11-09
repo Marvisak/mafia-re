@@ -240,7 +240,7 @@ public:
 // ??YC_str@@QAEAAV0@PBD@Z
 
 // FUNCTION: GAME 0x4033a0
-// ??1?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@QAE@XZ
+// ??1C_fstr@@QAE@XZ
 
 // The conversion's first copy is m_cache.cpp's, ToUpper's C_actor.cpp's (the model cache's Open)
 // FUNCTION: GAME 0x4033c0

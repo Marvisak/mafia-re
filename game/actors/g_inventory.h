@@ -183,7 +183,7 @@ public:
 // Its destructor's copy, which C_game::InventoryStackClear calls: the original kept the copy of the range at 0x53e4b0
 // (docs/game-files.md) of its folded group
 // SYNTHETIC: GAME 0x53ea20
-// ??1check_seg@@QAE@XZ
+// ??1G_Inventory@@QAE@XZ
 
 // The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
 // 0x438f00 of its folded group

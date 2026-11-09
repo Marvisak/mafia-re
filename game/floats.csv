@@ -67,6 +67,7 @@ address|type|size
 0x62377c|float|4
 0x623784|float|4
 0x623788|float|4
+0x623790|float|8
 0x6237b4|float|4
 0x6237b8|float|4
 0x6237bc|float|4
@@ -122,11 +123,16 @@ address|type|size
 0x624bf4|float|4
 0x624bf8|float|4
 0x624d34|float|4
+0x624d40|float|8
 0x624e04|float|4
 0x624e14|float|4
 0x624e18|float|4
 0x624e30|float|4
 0x624e48|float|4
+0x624e68|float|4
+0x624e6c|float|4
+0x624e70|float|4
+0x624e74|float|4
 0x624f10|float|8
 0x624f50|float|4
 0x624f5c|float|4

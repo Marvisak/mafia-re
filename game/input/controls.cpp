@@ -1,7 +1,6 @@
 // The player's controls (PC only, the name is ours; the file at 0x4efb40-0x4f1b4c, which starts with the class's
-// constructor, docs/game-files.md). Written so far: the constructor, the destructor, Close, SetMouseScale, Init,
-// ClearControls, GetValues, GetValue, SetControl, GetControl, SaveJoyStates, GetLastInput and GetControlName; Update is a
-// stub.
+// constructor, docs/game-files.md), written whole. Open: GetLastInput's registers (where flags and &last_input are
+// kept in the joysticks' loop, and two stack slots swapped).
 
 #include "input/controls.h"
 #include "ui/g_textdb.h"
@@ -10,7 +9,6 @@
 #include <string.h>
 
 #include "IGraph/IGraph.h"
-#include "stub.h"
 
 // FUNCTION: GAME 0x4efb40
 C_controls::C_controls()
@@ -238,13 +236,338 @@ bool C_controls::GetControl(S_control *binding, int index)
     return true;
 }
 
-// STUB: GAME 0x4f0620
-void C_controls::Update(bool update_input)
+// A POV's direction bits from its angle (the name is ours), Update's: a diagonal outside a small window around each
+// direction. It returns an int: as a uint the second test's mask comes out after the and, not before it.
+static inline int GetPOVDirection(float angle)
 {
-    StubLog("C_controls::Update");
+    int direction;
+    if (angle > 3.16f)
+    {
+        if (angle > 4.72f)
+            direction = CONTROL_POV_LEFT | CONTROL_POV_UP;
+        else if (angle < 4.69f)
+            direction = CONTROL_POV_DOWN | CONTROL_POV_LEFT;
+        else
+            direction = CONTROL_POV_LEFT;
+    }
+    else if (angle < 3.12f)
+    {
+        if (angle < 1.5f)
+        {
+            if (angle > .1f)
+                direction = CONTROL_POV_UP | CONTROL_POV_RIGHT;
+            else
+                direction = CONTROL_POV_UP;
+        }
+        else if (angle > 1.6f)
+            direction = CONTROL_POV_RIGHT | CONTROL_POV_DOWN;
+        else
+            direction = CONTROL_POV_RIGHT;
+    }
+    else
+        direction = CONTROL_POV_DOWN;
+    return direction;
 }
 
-// Between Update and SaveJoyStates the original has more of the bindings' functions
+// A control's press is reported once: a key's or a mouse button's mask bit is set while it is up and cleared once
+// every control bound to it has seen the press (the copies of the users' counts count them down). A joystick's press
+// is its GetStateChanges.
+// - The mouse's refs are copied before its mask is updated, then the keys': another order schedules the copies and the
+//   masks' stores elsewhere.
+// - The joystick's code goes through an int local, which gives the original's 32-bit signed compares (the member
+//   compares as a word) and the POV number's sar; the button's bit reads the member, through the local the first POV
+//   test's direction lands in edi.
+// FUNCTION: GAME 0x4f0620
+void C_controls::Update(bool update_input)
+{
+    int i;
+    for (i = joys.size(); i--;)
+    {
+        if (update_input)
+            joys[i].joy->Update(JOY_UPDATE_RESET);
+        joys[i].joy->GetState(&joys[i].state);
+        joys[i].joy->GetStateChanges(&joys[i].changes);
+    }
+    if (update_input)
+    {
+        igraph->ProcessWinMessages();
+        igraph->UpdateMouseData();
+        igraph->UpdateKeyboardData();
+    }
+    ulong keys_down = igraph->ReadKeys();
+    uint buttons = igraph->GetMouseButtons();
+    float mx = (float)igraph->Mouse_rx();
+    float my = (float)igraph->Mouse_ry();
+    float mz = (float)igraph->Mouse_rz();
+    uchar mrefs[4];
+    uchar krefs[MAX_CONTROL_KEYS];
+    memcpy(mrefs, mouse_refs, sizeof(mrefs));
+    mouse_mask &= buttons;
+    mouse_mask = ~mouse_mask;
+    mouse_mask ^= buttons;
+    memcpy(krefs, key_refs, sizeof(krefs));
+    key_mask &= keys_down;
+    key_mask = ~key_mask;
+    key_mask ^= keys_down;
+    // The mouse's moves, clamped to the scale, as -1..1
+    if (fabs(mx) > mouse_scale[MOUSE_AXIS_X])
+        mx = mx > 0.0f ? mouse_scale[MOUSE_AXIS_X] : -mouse_scale[MOUSE_AXIS_X];
+    mx /= mouse_scale[MOUSE_AXIS_X];
+    if (fabs(my) > mouse_scale[MOUSE_AXIS_Y])
+        my = my > 0.0f ? mouse_scale[MOUSE_AXIS_Y] : -mouse_scale[MOUSE_AXIS_Y];
+    my /= mouse_scale[MOUSE_AXIS_Y];
+    if (fabs(mz) > mouse_scale[MOUSE_AXIS_Z])
+        mz = mz > 0.0f ? mouse_scale[MOUSE_AXIS_Z] : -mouse_scale[MOUSE_AXIS_Z];
+    mz /= mouse_scale[MOUSE_AXIS_Z];
+    int button;
+    for (i = controls.size(); i--;)
+    {
+        switch (controls[i].device)
+        {
+        case CONTROL_KEY:
+            {
+                int k = 0;
+                while ((uchar)controls[i].code != keys[k] && k < MAX_CONTROL_KEYS)
+                    k++;
+                ulong bit = (ulong)1 << k;
+                if (keys_down & bit)
+                    values[i] = 1.0f;
+                else
+                    values[i] = 0.0f;
+                if ((keys_down & bit) && (key_mask & bit))
+                {
+                    if (--krefs[k] < 1)
+                        key_mask &= ~bit;
+                    pressed[i] = 1.0f;
+                }
+                else
+                    pressed[i] = 0.0f;
+            }
+            break;
+        case CONTROL_MOUSE:
+            values[i] = 0.0f;
+            switch (controls[i].code)
+            {
+            case MBUT_LEFT:
+            case MBUT_RIGHT:
+            case MBUT_MIDDLE:
+                {
+                    switch (controls[i].code)
+                    {
+                    case MBUT_LEFT:
+                        button = 0;
+                        break;
+                    case MBUT_RIGHT:
+                        button = 1;
+                        break;
+                    case MBUT_MIDDLE:
+                        button = 2;
+                        break;
+                    }
+                    uint bit = 1 << button;
+                    if (buttons & bit)
+                        values[i] = 1.0f;
+                    else
+                        values[i] = 0.0f;
+                    if ((buttons & bit) && (mouse_mask & bit))
+                    {
+                        if (--mrefs[button] < 1)
+                            mouse_mask &= ~bit;
+                        pressed[i] = 1.0f;
+                    }
+                    else
+                        pressed[i] = 0.0f;
+                }
+                break;
+            case CONTROL_MOUSE_X:
+                switch (controls[i].half)
+                {
+                case CONTROL_AXIS_POSITIVE:
+                    if (mx > 0.0f)
+                        values[i] = mx;
+                    break;
+                case CONTROL_AXIS_NEGATIVE:
+                    if (mx < 0.0f)
+                        values[i] = -mx;
+                    break;
+                default:
+                    values[i] = mx;
+                }
+                pressed[i] = values[i];
+                break;
+            case CONTROL_MOUSE_Y:
+                switch (controls[i].half)
+                {
+                case CONTROL_AXIS_POSITIVE:
+                    if (my > 0.0f)
+                        values[i] = my;
+                    break;
+                case CONTROL_AXIS_NEGATIVE:
+                    if (my < 0.0f)
+                        values[i] = -my;
+                    break;
+                default:
+                    values[i] = my;
+                }
+                pressed[i] = values[i];
+                break;
+            case CONTROL_MOUSE_Z:
+                switch (controls[i].half)
+                {
+                case CONTROL_AXIS_POSITIVE:
+                    if (mz > 0.0f)
+                        values[i] = mz;
+                    break;
+                case CONTROL_AXIS_NEGATIVE:
+                    if (mz < 0.0f)
+                        values[i] = -mz;
+                    break;
+                default:
+                    values[i] = mz;
+                }
+                pressed[i] = values[i];
+                break;
+            }
+            break;
+        case CONTROL_JOY:
+            values[i] = 0.0f;
+            pressed[i] = 0.0f;
+            if (joys.size() > controls[i].joy)
+            {
+                int code = controls[i].code;
+                if (code > 0xff && code < CONTROL_JOY_POV)
+                {
+                    // Only the first 32 buttons
+                    uint bit = 1 << (controls[i].code & 0xff);
+                    if (joys[controls[i].joy].state.buttons[0] & bit)
+                        values[i] = 1.0f;
+                    if (joys[controls[i].joy].changes.buttons[0] & bit)
+                        pressed[i] = 1.0f;
+                }
+                else if (code >= CONTROL_JOY_POV)
+                {
+                    int pov = (code >> 4) & 0xf;
+                    if (!joys[controls[i].joy].state.pov_centered[pov] &&
+                        GetPOVDirection(joys[controls[i].joy].state.pov[pov]) & controls[i].code & 0xf)
+                        values[i] = 1.0f;
+                    if (!joys[controls[i].joy].changes.pov_centered[pov] &&
+                        GetPOVDirection(joys[controls[i].joy].changes.pov[pov]) & controls[i].code & 0xf)
+                        pressed[i] = 1.0f;
+                }
+                else
+                {
+                    switch (controls[i].half)
+                    {
+                    case CONTROL_AXIS_POSITIVE:
+                        switch (code)
+                        {
+                        case JOY_X:
+                            if (joys[controls[i].joy].state.x > 0.0f)
+                                values[i] = joys[controls[i].joy].state.x;
+                            break;
+                        case JOY_Y:
+                            if (joys[controls[i].joy].state.y > 0.0f)
+                                values[i] = joys[controls[i].joy].state.y;
+                            break;
+                        case JOY_Z:
+                            if (joys[controls[i].joy].state.z > 0.0f)
+                                values[i] = joys[controls[i].joy].state.z;
+                            break;
+                        case JOY_RX:
+                            if (joys[controls[i].joy].state.rx > 0.0f)
+                                values[i] = joys[controls[i].joy].state.rx;
+                            break;
+                        case JOY_RY:
+                            if (joys[controls[i].joy].state.ry > 0.0f)
+                                values[i] = joys[controls[i].joy].state.ry;
+                            break;
+                        case JOY_RZ:
+                            if (joys[controls[i].joy].state.rz > 0.0f)
+                                values[i] = joys[controls[i].joy].state.rz;
+                            break;
+                        case JOY_SLIDER0:
+                            if (joys[controls[i].joy].state.slider[0] > 0.0f)
+                                values[i] = joys[controls[i].joy].state.slider[0];
+                            break;
+                        case JOY_SLIDER1:
+                            if (joys[controls[i].joy].state.slider[1] > 0.0f)
+                                values[i] = joys[controls[i].joy].state.slider[1];
+                            break;
+                        }
+                        break;
+                    case CONTROL_AXIS_NEGATIVE:
+                        switch (code)
+                        {
+                        case JOY_X:
+                            if (joys[controls[i].joy].state.x < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.x;
+                            break;
+                        case JOY_Y:
+                            if (joys[controls[i].joy].state.y < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.y;
+                            break;
+                        case JOY_Z:
+                            if (joys[controls[i].joy].state.z < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.z;
+                            break;
+                        case JOY_RX:
+                            if (joys[controls[i].joy].state.rx < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.rx;
+                            break;
+                        case JOY_RY:
+                            if (joys[controls[i].joy].state.ry < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.ry;
+                            break;
+                        case JOY_RZ:
+                            if (joys[controls[i].joy].state.rz < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.rz;
+                            break;
+                        case JOY_SLIDER0:
+                            if (joys[controls[i].joy].state.slider[0] < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.slider[0];
+                            break;
+                        case JOY_SLIDER1:
+                            if (joys[controls[i].joy].state.slider[1] < 0.0f)
+                                values[i] = -joys[controls[i].joy].state.slider[1];
+                            break;
+                        }
+                        break;
+                    default:
+                        switch (code)
+                        {
+                        case JOY_X:
+                            values[i] = joys[controls[i].joy].state.x;
+                            break;
+                        case JOY_Y:
+                            values[i] = joys[controls[i].joy].state.y;
+                            break;
+                        case JOY_Z:
+                            values[i] = joys[controls[i].joy].state.z;
+                            break;
+                        case JOY_RX:
+                            values[i] = joys[controls[i].joy].state.rx;
+                            break;
+                        case JOY_RY:
+                            values[i] = joys[controls[i].joy].state.ry;
+                            break;
+                        case JOY_RZ:
+                            values[i] = joys[controls[i].joy].state.rz;
+                            break;
+                        case JOY_SLIDER0:
+                            values[i] = joys[controls[i].joy].state.slider[0];
+                            break;
+                        case JOY_SLIDER1:
+                            values[i] = joys[controls[i].joy].state.slider[1];
+                            break;
+                        }
+                    }
+                    pressed[i] = values[i];
+                }
+            }
+            break;
+        }
+    }
+}
 
 // FUNCTION: GAME 0x4f1180
 void C_controls::SaveJoyStates()
@@ -466,7 +789,7 @@ S_control *C_controls::GetLastInput(uint flags, bool update)
                 {
                     if (mode & JOY_AXIS_RELATIVE)
                     {
-                        if (mode & JOY_AXIS_POSITIVE ? fabs(value) > .5f : fabs(value) > .3f)
+                        if (mode & JOY_AXIS_POSITIVE ? fabs(value) > .3f : fabs(value) > .5f)
                         {
                             last_input.device = CONTROL_JOY;
                             last_input.code = axis;
@@ -478,7 +801,7 @@ S_control *C_controls::GetLastInput(uint flags, bool update)
                             return &last_input;
                         }
                     }
-                    else if (mode & JOY_AXIS_POSITIVE ? fabs(value - start) > .7f : fabs(value - start) > .5f)
+                    else if (mode & JOY_AXIS_POSITIVE ? fabs(value - start) > .5f : fabs(value - start) > .7f)
                     {
                         last_input.device = CONTROL_JOY;
                         last_input.code = axis;

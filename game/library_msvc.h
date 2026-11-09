@@ -332,6 +332,9 @@
 // LIBRARY: GAME 0x61163d SYMBOL
 // _floor
 
+// LIBRARY: GAME 0x611710 SYMBOL
+// __allshl
+
 // LIBRARY: GAME 0x61172f SYMBOL
 // _wcslen
 

@@ -204,4 +204,4 @@ extern C_cache_base_block base_cache;
 // The S_vector2 arrays' constructor (ls3df/I3D/I3d_math.h), empty, which the blocks' implicit constructor passes to the
 // vector constructor iterator
 // LIBRARY: GAME 0x401c60
-// ??0I3D_bbox@@QAE@XZ
+// ??0S_vector2@@QAE@XZ

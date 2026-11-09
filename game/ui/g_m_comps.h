@@ -1967,7 +1967,7 @@ public:
 // ?AfterMove@GM_Component@@UAEXI@Z
 
 // FUNCTION: GAME 0x5d9260
-// ?IsOverActive@GM_Component@@UAE_NMM@Z
+// ?IsOverClientArea@GM_Component@@UAE_NMM@Z
 
 // FUNCTION: GAME 0x5d92c0
 // ?SetText@GM_Component@@UAEXPAE@Z
@@ -2010,7 +2010,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_Grid@@UAE_NXZ
+// ?CanBeParent@GM_Nahrada@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9a20
 // ?GetType@GM_WindowScroll@@UAEIXZ
@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_StaticTextNum@@UAE@XZ
+// ??1GM_Line@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2070,7 +2070,7 @@ public:
 // ?SetDword@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da3f0
-// ?Draw@GM_StaticTextNum@@UAEXI@Z
+// ?Draw@GM_StaticTextTime@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da560
 // ?GetType@GM_StaticTextTime@@UAEIXZ
@@ -2124,14 +2124,14 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
+// ?Mouse@GM_MenuItemMem@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5daf50
 // ?GetType@GM_MenuItemMem@@UAEIXZ
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_Button@@UAEIII@Z
+// ?Key@GM_MenuItemMem@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db0a0
 // ?GetType@GM_MenuItemNum@@UAEIXZ
@@ -2279,7 +2279,7 @@ public:
 
 // The original kept the copy of the yes or no selection ('bslb'), which draws the same, after its factory's Make
 // FUNCTION: GAME 0x5dd040
-// ?Draw@GM_ButtonSelect@@UAEXI@Z
+// ?Draw@GM_ButtonSelectBool@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dd0d0
 // ?Mouse@GM_ButtonSelectBool@@UAEIHHHII@Z
@@ -2311,15 +2311,15 @@ public:
 
 // The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_ListCars@@UAEIXZ
+// ?GetDword@GM_SliderInteger@@UAEIXZ
 
 // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
-// ?Draw@GM_Nahrada@@UAEXI@Z
+// ?Draw@GM_TextInput@@UAEXI@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_Nahrada@@UAEPAXI@Z
+// ??_EGM_ProgressBar@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0
