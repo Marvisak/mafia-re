@@ -211,6 +211,16 @@ struct S_vector {
     // Insanity3D's (the game's: defined in VE_BreakageGlass.cpp, its only user; declared
     // for LS3DF too, it changes 1.1's I3D_singlemesh::UpdateLodVertices)
     float DistanceToPlane(const S_vector &p, const S_vector &n) const;
+    // Insanity3D's: the distance from the line through p along dir, -1e16 where dir is null (the game's
+    // g_collision::LineInDynamics and LineInDynamicsInnerDyn)
+    float DistanceToLine(const S_vector &p, const S_vector &dir) const
+    {
+        float len_2 = dir.Square();
+        if (len_2 < MRG_ZERO)
+            return -1e+16f;
+        float u = dir.Dot(*this - p) / len_2;
+        return (p + dir * u - *this).Magnitude();
+    }
 #endif
 
     S_vector operator-() const

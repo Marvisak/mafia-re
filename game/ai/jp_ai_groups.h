@@ -252,13 +252,13 @@ public:
 // ?_Ucopy@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEPAUG_CameraDialog@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_i_show@C_game@@ABU23@@Z
+// ?_Construct@std@@YIXPAUai_fight_member@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -277,4 +277,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUtDynamicCollObject@@PAPAU2@00@Z
+// ?copy@std@@YIPAPAVC_actor@@PBQAV2@0PAPAV2@@Z

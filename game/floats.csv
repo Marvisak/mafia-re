@@ -65,6 +65,7 @@ address|type|size
 0x623744|float|4
 0x623770|float|4
 0x623774|float|4
+0x623778|float|4
 0x62377c|float|4
 0x623784|float|4
 0x623788|float|4

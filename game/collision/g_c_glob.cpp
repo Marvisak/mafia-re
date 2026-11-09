@@ -13,8 +13,8 @@
 g_collision gifCollision;
 
 // Set once LoadCollision has loaded a level, never cleared, read nowhere (PS2 name). Its bucket would put it before
-// gifCollision, where the original has it after, with 0x28 bytes between (zero-initialized, unless it is another
-// file's; open)
+// gifCollision, where the original has it right after (zero-initialized); ours has the engine header's zero vector
+// between (g_c_glob.h)
 // GLOBAL: GAME 0x648238
 bool LoadedLevel = false;
 

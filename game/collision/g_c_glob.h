@@ -64,8 +64,9 @@ struct g_volume_xtobb
     uint flags;                         // 0x0
     I3D_frame *frame;                   // 0x4
     I3D_bbox bbox;                      // 0x8, the box around it, which BoxInNonFace tests as the AABB's
-    // 0x20, the oriented box: its extents in its own space, its matrix and the matrix's inverse, as the OBB's (most
-    // likely; the names are a guess)
+    // 0x20, the oriented box, as the OBB's: its extents in its own space, which LineInNonface tests the line against
+    // through LineInAABox, its matrix, which turns the hit's normal back out, and the matrix's inverse, which moves the
+    // line into that space
     I3D_bbox extents;
     S_matrix matrix;                    // 0x38
     S_matrix inv_matrix;                // 0x78
@@ -93,7 +94,7 @@ struct g_volume_obb
     // 0x8, its extents in its own space, which BoxInNonFace tests the box's center against in that space, its height
     // from 0 (its y extents are left out, PS2's the same)
     I3D_bbox extents;
-    S_matrix matrix;                    // 0x20 (most likely: the inverse's)
+    S_matrix matrix;                    // 0x20, out of its own space: LineInNonface turns the hit's normal back by it
     S_matrix inv_matrix;                // 0x60, into its own space
 };
 
@@ -126,9 +127,10 @@ struct tCollisionLevel
     float cell_size_x, cell_size_z;     // 0x10
     int width, height;                  // 0x18, the cells in a row and the rows
     float dyn_cell_size;                // 0x20, the size of the moving objects' grid's cells
-    // 0x24, width + 1 floats, right after the header (0x68), most likely the columns' edges (the names are guesses)
+    // 0x24, width + 1 floats, right after the header (0x68): the columns' edges in x, which the line tests walking the
+    // grid (TestLineHStatic, _TestLineH) step from column to column by
     float *grid_x;
-    float *grid_z;                      // 0x28, height + 1 floats, the rows' edges most likely, and a dword
+    float *grid_z;                      // 0x28, height + 1 floats, the rows' edges in z the same way, and a dword
     tCollTreeLevel **cells;             // 0x2c, row by row (LoadCollision allocates it)
     uint num_trifaces;                  // 0x30
     g_volume_triface *trifaces;         // 0x34
@@ -191,6 +193,37 @@ struct tCBoxParam
     uchar unknown_5c[0x18];             // 0x5c
     uint flags;                         // 0x74, _TestDBox's flags: the moving objects' flags that BoxInDynamic leaves out
     uint flags2;                        // 0x78
+};
+
+// tCLineParam::walked (the names are ours): the directions the walk over the grid's cells has stepped in, so the
+// neighbours of the cell under test that were tested before it
+#define LINEWALK_POS_Z 1
+#define LINEWALK_POS_X 2
+#define LINEWALK_NEG_Z 4
+#define LINEWALK_NEG_X 8
+
+// What the line tests test the volumes against (PS2 tCLineParam, 0x5c bytes, the names ours): _TestLineV fills it in,
+// the tests of the cells, the volumes and the moving objects put the nearest hit into it
+struct tCLineParam
+{
+    S_vector from;                      // 0x0
+    S_vector dir;                       // 0xc
+    uchar unknown_18[4];                // 0x18
+    // 0x1c, the line's bounds in x and z, the lower ends, then the higher ones
+    float min_x, min_z;
+    float max_x, max_z;                 // 0x24
+    S_vector to;                        // 0x2c, from + dir
+    uint flags2;                        // 0x38, the volumes' flags the test leaves out, the second flags and VOLF_DISABLED
+    uint flags;                         // 0x3c, the moving objects' flags the test leaves out
+    float t;                            // 0x40, the nearest hit's place along dir, 1.0 for none
+    float dir_sq;                       // 0x44, dir's square
+    S_vector normal;                    // 0x48, the hit's normal
+    g_collision_header *hit;            // 0x54, the volume or the moving object hit, NULL for none
+    // 0x58, LINEWALK_*: _TestLineV sets LINEWALK_POS_X after each cell and LINEWALK_POS_Z after each row, the
+    // horizontal tests clear their inner walk's direction before each column or row and set it after each cell, and the
+    // outer one's after each column or row; nothing reads it (PS2 neither; the name is a guess)
+    uchar walked;
+    uchar unknown_59[3];
 };
 
 // Sets the faces' coherence from their normals once the level is loaded (PS2's, GrantCoherence__FP15tCollisionLevel)

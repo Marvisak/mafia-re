@@ -261,6 +261,11 @@ public:
 // SYNTHETIC: GAME 0x5a3c50
 // ??1GM_LoadProgress@@QAE@XZ
 
+// The out-of-line return of 0 the linker kept of a folded group, GM_LoadProgress::OnTick's and
+// GM_GarageSummary::OnClick's entry: by name, as which of the two copies our linker keeps changes with the link
+// SYNTHETIC: GAME 0x5e4d50
+// ?OnClick@GM_GarageSummary@@UAEHI@Z
+
 class C_car;
 struct S_garage_item;
 
@@ -334,7 +339,7 @@ public:
     }
     virtual int OnCreate();
     virtual int OnKey(uchar key, uint);
-    // 0, as PS2's: the vtable's entry is a folded copy of another file's (0x5e4d50, GM_LoadProgress::OnTick's marker)
+    // 0, as PS2's: the vtable's entry is a folded copy of another file's (0x5e4d50, whose by-name marker is above)
     virtual int OnClick(uint id);
 
     std::vector<uint> *added;           // 0x30, the cars' descriptors (the names are ours)

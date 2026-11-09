@@ -2010,7 +2010,7 @@ public:
 
 // GM_WindowClean's copy, which GM_Window's folded into
 // FUNCTION: GAME 0x5d9910
-// ?CanBeParent@GM_WindowScroll@@UAE_NXZ
+// ?CanBeParent@GM_Grid@@UAE_NXZ
 
 // FUNCTION: GAME 0x5d9a20
 // ?GetType@GM_WindowScroll@@UAEIXZ
@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_ComboBox@@UAE@XZ
+// ??1GM_MenuItemMem@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2058,7 +2058,7 @@ public:
 // ?GetType@GM_StaticTextMem@@UAEIXZ
 
 // FUNCTION: GAME 0x5da1f0
-// ?SetText@GM_MenuItemMem@@UAEXPAE@Z
+// ?SetText@GM_StaticTextMem@@UAEXPAE@Z
 
 // FUNCTION: GAME 0x5da220
 // ?Draw@GM_StaticTextMem@@UAEXI@Z
@@ -2070,7 +2070,7 @@ public:
 // ?SetDword@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da3f0
-// ?Draw@GM_StaticTextTime@@UAEXI@Z
+// ?Draw@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da560
 // ?GetType@GM_StaticTextTime@@UAEIXZ
@@ -2124,7 +2124,7 @@ public:
 // ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_RaceRoundItem@@UAEIHHHII@Z
+// ?Mouse@GM_Button@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5daf50
 // ?GetType@GM_MenuItemMem@@UAEIXZ
@@ -2215,7 +2215,7 @@ public:
 // ?Draw@GM_NetPlayer@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dc700
-// ?Mouse@GM_NetPlayer@@UAEIHHHII@Z
+// ?Mouse@GM_ButtonClean@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5dc850
 // ?GetType@GM_TextEdit@@UAEIXZ
@@ -2257,7 +2257,7 @@ public:
 // ?GetType@GM_ButtonSelect@@UAEIXZ
 
 // FUNCTION: GAME 0x5dce30
-// ?SetRangeDword@GM_SliderInteger@@UAEXII@Z
+// ?SetRangeDword@GM_ButtonSelect@@UAEXII@Z
 
 // FUNCTION: GAME 0x5dce50
 // ?Mouse@GM_ButtonSelect@@UAEIHHHII@Z
@@ -2307,19 +2307,19 @@ public:
 
 // The original kept another class's copy, the list's ('lstc', g_m_comps2.cpp), which sets its member at 0x40 too
 // FUNCTION: GAME 0x5df350
-// ?SetFloat@GM_ProgressBar@@UAEXM@Z
+// ?SetPointer@GM_ListCars@@UAEXPAX@Z
 
 // The original kept the list of cars' copy ('lstc', g_m_comps2.cpp), which returns its member at 0x48 too
 // FUNCTION: GAME 0x5df370
-// ?GetDword@GM_MenuItemNum@@UAEIXZ
+// ?GetDword@GM_ListCars@@UAEIXZ
 
 // The original kept the text input's copy ('tinp', g_m_comps2.cpp), the same code
 // FUNCTION: GAME 0x5df8f0
-// ?Draw@GM_TextInput@@UAEXI@Z
+// ?Draw@GM_Nahrada@@UAEXI@Z
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_GGM_ListBox@@UAEPAXI@Z
+// ??_EGM_Nahrada@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

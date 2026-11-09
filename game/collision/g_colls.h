@@ -15,6 +15,8 @@ struct S_vector;
 
 struct tCBoxParam;
 
+struct tCLineParam;
+
 struct tCollTreeLevel;
 
 struct tCollisionLevel;
@@ -36,7 +38,7 @@ struct tgcPanak2;
 #define COLF2_UNKNOWN_80000 0x80000
 #define COLF2_UNKNOWN_800000 0x800000
 // The second flags of the player's lines from the camera, the shot's and the aim's (C_player's AI_walk, AI_drive and
-// AI_car_fire; by value)
+// AI_car_fire; by value). TestLineHStatic leaves the volumes with 0x200000 out only half the time, at random.
 #define COLF2_UNKNOWN_200000 0x200000
 #define COLF2_UNKNOWN_400000 0x400000
 
@@ -47,8 +49,14 @@ struct tgcPanak2;
 #define DYNCOLL_UNKNOWN_40 0x40
 #define DYNCOLL_UNKNOWN_41 0x41
 #define DYNCOLL_UNKNOWN_44 0x44
+// An oriented box LineInVehicle tests from inside, in its own space (LineInAABoxInverted; the name is ours, by
+// value)
+#define DYNCOLL_UNKNOWN_45 0x45
 // The tracks' (C_game::CreateTrackEffect's, by value): the blood's, which the humans' steps through take blood from
 #define DYNCOLL_UNKNOWN_48 0x48
+// The scattered objects' (C_scatter's, the scatter their owner): LineInDynamicsInnerDyn passes a line's hit to
+// the owner's LineHit (by value)
+#define DYNCOLL_UNKNOWN_47 0x47
 // tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
 // one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
 // of a dead human only and leaves out the lower one while the human's lower_coll_off is set
@@ -139,8 +147,9 @@ struct S_dyn_grid
     tDynamicPolicko **cells;            // 0x18, row by row, NULL where a cell has no objects
 };
 
-// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2c8 bytes (the constructor's last
-// store). Only what main, the camera, the game and the script's commands use so far.
+// The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2f0 bytes (LoadedLevel, the next of
+// g_c_glob.cpp's globals, follows it; the constructor's last store is 0x2c4's). Only what main, the camera, the game,
+// the script's commands and the collisions' tests use so far.
 class g_collision
 {
 public:
@@ -177,8 +186,8 @@ public:
     int _TestLineH(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags,
         uint flags2);
     // A line from from along dir against the level's static collisions only (PS2 name and parameters, their names
-    // ours, as TestLineV's): nonzero for a hit
-    int TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags);
+    // ours, as TestLineV's): the volume hit, 0 for none. flags2 is _TestLineV's second flags; no moving objects
+    int TestLineHStatic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal, uint flags2);
     // The level's collisions of a frame into colls (PS2 name), and their number
     uint FindCollsByFrame(I3D_frame *frm, std::vector<g_collision_header *> &colls);
     // The level's static collisions within radius of pos whose material is from mat_min to mat_max, into colls (PS2
@@ -210,6 +219,16 @@ public:
     // TestLineV's
     int TestLineInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
         S_vector *pos, S_vector *normal, uint flags);
+    // The line tests' parts (PS2 names, the parameters' names ours), each true where it put a hit nearer than p's into
+    // p: the moving objects, the same for _TestLineVInnerDyn, an axis-aligned box and one from inside, a volume that
+    // isn't a face, a cell's volumes and a vehicle's collisions
+    bool LineInDynamics(tCLineParam &p);
+    bool LineInDynamicsInnerDyn(tCLineParam &p);
+    bool LineInAABox(const S_vector &min, const S_vector &max, tCLineParam &p);
+    bool LineInAABoxInverted(const S_vector &min, const S_vector &max, tCLineParam &p);
+    bool LineInNonface(g_volume_triface *vol, tCLineParam &p);
+    bool LineInTreeLevel(tCollTreeLevel *cell, tCLineParam &p);
+    bool LineInVehicle(std::vector<tDynamicCollObject *> *colls, tCLineParam &p);
     // The human's spheres moved (PS2 names): against the level and the moving objects, or against the collisions of a
     // vehicle the human is in (the truck's, the rail vehicle's wagon's); nonzero for a hit
     int TestPanak2(tgcPanak2 *p);
@@ -251,6 +270,12 @@ public:
     // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
     // otherwise (the name is ours)
     C_actor *step_actor;
+    uchar unknown_2c8[0x14];            // 0x2c8
+    // 0x2dc, the cell the last test tested, its column (0x2e0) and row (0x2e4), which _TestLineV, _TestLineVInnerDyn and
+    // a sphere test set as they go and nothing reads (the names are ours)
+    tCollTreeLevel *last_cell;
+    int last_x, last_z;
+    uchar unknown_2e8[8];               // 0x2e8
 };
 
 // The implicit destructor (the two vectors'), which the initializer's atexit helper jumps to, after the initializer

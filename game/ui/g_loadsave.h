@@ -736,13 +736,13 @@ struct S_garage_item
 // The saved games' vector's helpers, which SaveGameEnumFiles' inlined push_back and SaveGameCreate call: the
 // original's copies are folded ones in other files' ranges
 // TEMPLATE: GAME 0x5bc800
-// ?_Ucopy@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEPAUS_hydrant@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEPAUG_SaveGame_FileHead@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x4d2a70
-// ?_Ufill@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEXPAUS_hydrant@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@IAEXPAUS_sound_play@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x430470
-// ?insert@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@QAEXPAUG_SaveGame_FileHead@@IABU3@@Z
+// ?insert@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@QAEXPAUS_sound_play@C_game@@IABU34@@Z
 
 // The garage items' insert(P, x), which CarManager's push_backs call (their insert(P, n, x) is the folded copy at
 // 0x60f1f0, named after the controls')

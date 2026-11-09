@@ -1057,8 +1057,8 @@ int GM_LoadProgress::OnCreate()
     return 0;
 }
 
-// Returns 0, as PS2's: the vtable's entry is a folded copy of another file's, apart from the base's in-class one
-// FUNCTION: GAME 0x5e4d50 FOLDED
+// Returns 0, as PS2's: the vtable's entry is a folded copy of another file's, apart from the base's in-class one (its
+// by-name marker is in g_m_func.h)
 int GM_LoadProgress::OnTick(uint time)
 {
     return 0;
@@ -1156,8 +1156,8 @@ int GM_GarageSummary::OnKey(uchar key, uint u)
     return GM_Menu::OnKey(key, u);
 }
 
-// Out of line, without a marker: the original's entry is the copy the linker kept of a folded group (0x5e4d50, which
-// GM_LoadProgress::OnTick's marker names)
+// Out of line, without a marker: the original's entry is the copy the linker kept of a folded group (0x5e4d50, whose
+// by-name marker is in g_m_func.h)
 int GM_GarageSummary::OnClick(uint id)
 {
     return 0;
