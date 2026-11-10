@@ -737,6 +737,8 @@ public:
     void Init();
     // Frees the commands and the registers, at the mission's end (PS2 name)
     void Done();
+    // The source of prog copied, NULL for none (PS2 name): the detector's and the AI humans' Duplicate
+    void DuplicateProgramFrom(C_program *prog);
     // Splits a command's parameters at their commas into params, at most MAX_PARAMS, each without the spaces around it
     // (PS2 name)
     void ExtrudeParams(char *s, int &num, char **params);
@@ -828,7 +830,7 @@ public:
 // DecompileCommand's folded group: the empty ret 8 of the out-of-line kind (C_web_path::DebugFindPath's and
 // C_seagull's vfunc_38 too), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x46ca70
-// ?DebugFindPath@C_web_path@@UAEXGG@Z
+// ?DecompileCommand@C_program@@UAEXHPAD@Z
 
 // Loads one of the patch's script files, patch\a1.bin to a4.bin, into C_program::change_progs (PC only, the name is
 // ours)
@@ -848,7 +850,7 @@ void UnloadPatchFiles();
 // std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 
 // TEMPLATE: GAME 0x5bca00
-// ?_Construct@std@@YIXPAUai_seg_stat@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_driver_man@C_game@@ABU23@@Z
 
 // TEMPLATE: GAME 0x5f4af0
 // std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ufill

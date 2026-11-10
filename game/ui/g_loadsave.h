@@ -736,18 +736,18 @@ struct S_garage_item
 // The saved games' vector's helpers, which SaveGameEnumFiles' inlined push_back and SaveGameCreate call: the
 // original's copies are folded ones in other files' ranges
 // TEMPLATE: GAME 0x5bc800
-// ?_Ucopy@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEPAUS_hydrant@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEPAUG_SaveGame_FileHead@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x4d2a70
-// ?_Ufill@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEXPAUS_hydrant@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@IAEXPAUS_sound_play@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x430470
-// ?insert@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@QAEXPAUG_SaveGame_FileHead@@IABU3@@Z
+// ?insert@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@QAEXPAUS_sound_play@C_game@@IABU34@@Z
 
 // The garage items' insert(P, x), which CarManager's push_backs call (their insert(P, n, x) is the folded copy at
 // 0x60f1f0, named after the controls')
 // TEMPLATE: GAME 0x60efd0
-// ?insert@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@ABU3@@Z
+// ?insert@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QAEPAUS_vector@@PAU3@ABU3@@Z
 
 // ProfileGetList's code (mov eax, ecx; ret) is the cutscene's CutsceneTime's too, which the linker folds it with:
 // by name, as which copy our linker keeps changes with the link

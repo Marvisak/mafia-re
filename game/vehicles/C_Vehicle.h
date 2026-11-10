@@ -633,13 +633,13 @@ public:
 // ?insert@?$vector@US_VEH_MATERIAL@@V?$allocator@US_VEH_MATERIAL@@@std@@@std@@QAEXPAUS_VEH_MATERIAL@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42d800
-// ?insert@?$vector@US_npc_kill_event@C_game@@V?$allocator@US_npc_kill_event@C_game@@@std@@@std@@QAEXPAUS_npc_kill_event@C_game@@IABU34@@Z
+// ?insert@?$vector@US_TYRE@@V?$allocator@US_TYRE@@@std@@@std@@QAEXPAUS_TYRE@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42de10
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
 // ?size@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QBEIXZ
@@ -648,13 +648,13 @@ public:
 // ?_Ufill@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEXPAUS_shoot@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUG_MIIntroSubtitles@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
-// ?_Ucopy@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEPAUS_shoot@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_seagull@@V?$allocator@US_seagull@@@std@@@std@@IAEPAUS_seagull@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEPAUS_shadow_item@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@IAEPAUG_MIIntroSubtitles@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEXPAUS_shadow_item@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

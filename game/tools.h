@@ -344,7 +344,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
+// ?GetScene@C_mission@@QBEPAVI3D_scene@@XZ
 
 // The groups' push_back's insert(P, n, x), which AddGroup calls out of line
 // TEMPLATE: GAME 0x55fdc0

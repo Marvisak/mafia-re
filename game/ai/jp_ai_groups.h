@@ -255,10 +255,10 @@ public:
 // ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_i_show@C_game@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_i_show@C_game@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
@@ -277,4 +277,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUtDynamicCollObject@@PAPAU2@00@Z
+// ?copy@std@@YIPAPAVC_car@@PAPAV2@00@Z

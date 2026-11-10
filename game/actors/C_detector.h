@@ -6,19 +6,33 @@
 
 struct tDynamicCollObject;
 
+// A detector's saved game, after the actor's and the script's (the name is ours), 0xc bytes: SaveGameSave writes the
+// members in this order
+#pragma pack(push, 1)
+struct S_detector_savegame
+{
+    uchar version;                      // 0x0, DETECTOR_SAVEGAME_VERSION
+    int human_types;                    // 0x1
+    bool signal;                        // 0x5
+    bool wait_for_use;                  // 0x6
+    bool wait_for_hit;                  // 0x7
+    int action;                         // 0x8, the using object's special action, which SaveGameLoad's CreateUO takes
+};
+#pragma pack(pop)
+
+// The version of the detector's saved game, the only one SaveGameLoad takes (the name is ours)
+#define DETECTOR_SAVEGAME_VERSION 1
+
 // The script objects (PS2 C_detector, C_detector.cpp), an actor and its script: C_program is the second base (at 0x70,
-// PS2's 0x80, whose this adjustors PS2 names @128@), 0x128 bytes (PS2's 0x150). Only the constructor, the destructor,
-// Init and LoadData so far, which C_mission::CreateActor and OpenBin call for ACTOR_DETECTOR, GameInit and GameDone,
-// which C_game::Init and Done call, AI and Update, which C_actor::Tick calls, Process, the detector's script
-// commands, and the vtable's other functions from DuplicateFrom to SaveGameLoad as stubs.
+// PS2's 0x80, whose this adjustors PS2 names @128@), 0x128 bytes (PS2's 0x150): C_mission::CreateActor and OpenBin
+// make them for ACTOR_DETECTOR, Process runs the detector's script commands.
 // VTABLE: GAME 0x6239b0 C_actor
 // VTABLE: GAME 0x623a48 C_program
 class C_detector : public C_actor, public C_program
 {
 public:
     C_detector();
-    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
-    // linker's folded constant functions and those that only call the base's
+    // The vtable's other overrides (the slots' names are C_actor's)
     virtual void AI(uint time);
     virtual void Update(uint time);
     virtual void NetDirect(uint time);
@@ -52,9 +66,12 @@ public:
     // (DETECTOR_WAITFORHIT's); takes them back
     void CreateColls(bool dynamic);
     void EraseColls();
-    // What the player can use, DETECTOR_WAITFORUSE's (PS2 name; the parameters' meaning isn't known: the command's two
-    // integers, the second as whether it is 0)
-    void CreateUO(int unknown, bool unknown2);
+    // CreateColls' callbacks (PS2's S_hlp, the name of its local struct)
+    struct S_hlp;
+    // What the player can use, DETECTOR_WAITFORUSE's (PS2 name; the parameters' names are ours): a special action
+    // (USING_ACTION_*) at the frame, in the frame's sector where in_sector is set (the command's two integers, the
+    // second as whether it is 0)
+    void CreateUO(int action, bool in_sector);
     // The player uses the detector (PS2 name): its using object taken away, the script's waiting for it ended
     void UseDetector();
 
@@ -77,7 +94,8 @@ public:
     int human_types;
     // GameInit clears them (PS2 0x10c to 0x10f)
     bool signal;                        // 0xdc, DETECTOR_SETSIGNAL's (the name is ours)
-    bool unknown_dd;                    // 0xdd
+    // 0xdd, set by CreateUO, which waits for the player to use the detector, until UseDetector (the name is ours)
+    bool wait_for_use;
     // 0xde, set by DETECTOR_WAITFORHIT, which waits for a hit with collisions that don't move; DETECTOR_CREATEDYNCOLL
     // and ERASEDYNCOLL do nothing then (the name is ours, after the command)
     bool wait_for_hit;

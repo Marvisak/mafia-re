@@ -316,10 +316,10 @@ void ShowProgress(C_chunk *chunk);
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEPAPAVC_actor@@PAPAV3@0@Z
+// ?erase@?$vector@PAUS_shvestky@C_shvestky@@V?$allocator@PAUS_shvestky@C_shvestky@@@std@@@std@@QAEPAPAUS_shvestky@C_shvestky@@PAPAU34@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUS_invisible_actor@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
@@ -333,19 +333,19 @@ void ShowProgress(C_chunk *chunk);
 // What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
 // folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
 // TEMPLATE: GAME 0x404830
-// ?_Construct@std@@YIXPAUS_anim_model@C_mission@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_cache_model_one@@ABU2@@Z
 
 // What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEPAUS_Telephone@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEPAUS_garage_item@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@IAEXPAUS_Telephone@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
 // ?_Construct@std@@YIXPAUS_Telephone@C_game@@ABU23@@Z
@@ -366,7 +366,7 @@ void ShowProgress(C_chunk *chunk);
 // ??A?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAEAAPAVI3D_frame@@ABVC_str@@@Z
 
 // TEMPLATE: GAME 0x548040
-// ?insert@?$vector@US_car_snd@@V?$allocator@US_car_snd@@@std@@@std@@QAEPAUS_car_snd@@PAU3@ABU3@@Z
+// ?insert@?$vector@US_particle_in_use@C_effects@@V?$allocator@US_particle_in_use@C_effects@@@std@@@std@@QAEPAUS_particle_in_use@C_effects@@PAU34@ABU34@@Z
 
 // TEMPLATE: GAME 0x5481f0
 // ?insert@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE?AU?$pair@Viterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3282db0e2

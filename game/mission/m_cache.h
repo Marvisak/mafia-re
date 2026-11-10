@@ -161,7 +161,7 @@ extern C_cache_base_block base_cache;
 // ?_Ufill@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@IAEXPAUS_cache_model_set@@IABU3@@Z
 
 // TEMPLATE: GAME 0x403ee0
-// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x403f20
 // ?copy@std@@YIPAUS_cache_base_block@@PAU2@00@Z

@@ -7,8 +7,8 @@
 // DecodeParams with its helpers, ExtrudeParams to DecodeIf, and its names' tables), DecompileCommand, PS2's helpers in
 // PS2's order (the registers' getters and setters, NextCommand, LeaveCompactBlock, ClearAfterEnd, SetEvent, IsEventID,
 // InvalidateActorReg, FindActorLater), CallSubroutine and CallProcess, and Process, the interpreter (0x46d3b0-0x4799b9,
-// a switch of 396 commands, about 50 KB of code). Not written: DuplicateProgramFrom (0x4617d0, between Done and
-// ExtrudeParams), which the detector's and the AI humans' Duplicate call. Stubs: SaveSourceCode and the save functions.
+// a switch of 396 commands, about 50 KB of code), and DuplicateProgramFrom, which the detector's and the AI humans'
+// Duplicate call. Stubs: SaveSourceCode and the save functions.
 // Process is too large for VC6 to inline anything in it: every inline function it uses is called out of line, and
 // their copies are the file's end (0x47a070-0x47c31c), the precompiled headers' deferred items in header order.
 // Its cases are in the original's order (the bodies' order, one jump table). Open: the other commands' functions are
@@ -373,6 +373,22 @@ void C_program::Done()
         delete[] actor_regs;
     actor_regs = NULL;
     num_actor_regs = 0;
+}
+
+// The other script's source copied, SetSourceCode's code with prog's (PS2's the same)
+// FUNCTION: GAME 0x4617d0
+void C_program::DuplicateProgramFrom(C_program *prog)
+{
+    if (source)
+    {
+        delete[] source;
+        source = NULL;
+    }
+    if (prog && prog->source)
+    {
+        source = new char[strlen(prog->source) + 1];
+        strcpy(source, prog->source);
+    }
 }
 
 // The commas become the parameters' ends, and so do the spaces after them; a last parameter only if it isn't empty
