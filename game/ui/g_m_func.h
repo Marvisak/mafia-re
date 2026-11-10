@@ -59,6 +59,32 @@ public:
     char *title;                        // 0x34, the window's, NULL to keep the menu's
 };
 
+// What ExecuteMenu returns for the game's menu (the names are ours): its Exit Game (the quit question's Yes) and Resume
+// Game or Escape; and one GameLoopSingle updates the controls for, which no menu found returns (the name is a guess).
+// Its Load Game returns MAINMENU_LOAD_GAME.
+#define GAMEMENU_RESULT_EXIT 0x21
+#define GAMEMENU_RESULT_CONTROLS 0x22
+#define GAMEMENU_RESULT_RESUME 0x24
+
+// The game's menu, "gamemenu" (PS2 GM_GameMenu, g_m_func.cpp, which has OnCreate, OnCloseChild and OnTick of its own),
+// 0x30 bytes, which GameLoopSingle runs on Escape: Exit Game, Load Game, Options and Resume Game. Its constructor is the
+// compiler's, inlined.
+// VTABLE: GAME 0x625e58
+class GM_GameMenu : public GM_Menu
+{
+public:
+    // FUNCTION: GAME 0x5beaf0
+    virtual const char *OnBeforeCreate()
+    {
+        // STRING: GAME 0x63793c
+        return "gamemenu";
+    }
+    // Escape resumes the game
+    virtual int OnKey(uchar key, uint);
+    // Exit Game asks first, Load Game and Options open their menus, Resume Game closes it
+    virtual int OnClick(uint id);
+};
+
 // The question box's items, tables\menu\questionbox.mnu (the names are ours)
 #define QUESTIONBOX_WINDOW 0x82         // its text the title
 #define QUESTIONBOX_TEXT 0x83           // the question
@@ -264,7 +290,7 @@ public:
 // The out-of-line return of 0 the linker kept of a folded group, GM_LoadProgress::OnTick's and
 // GM_GarageSummary::OnClick's entry: by name, as which of the two copies our linker keeps changes with the link
 // SYNTHETIC: GAME 0x5e4d50
-// ?OnClick@GM_GarageSummary@@UAEHI@Z
+// ?OnTick@GM_LoadProgress@@UAEHI@Z
 
 class C_car;
 struct S_garage_item;

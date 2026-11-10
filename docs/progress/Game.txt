@@ -54,9 +54,9 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct C_program::S_instruction *, struct C_program::S_instruction const &)
+0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -128,8 +128,8 @@
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
 0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
-0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -885,7 +885,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(unsigned int *, unsigned int const &)
+0x00499050  100.00%   std::_Construct(class C_program **, class C_program *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -1084,6 +1084,8 @@
 0x004cda20  stub      C_Vehicle::OpenDoor
 0x004cdb10  stub      C_Vehicle::SetSpecialDynamicColls
 0x004cdcc0  stub      C_Vehicle::SetDynamicCollsOn
+0x004ce290  stub      C_Vehicle::AddProjectorLightsToSectors
+0x004ce3f0  stub      C_Vehicle::DeleteProjectorLightsFromSectors
 0x004ce560  100.00%   C_Vehicle::AddSectorForProjectorLights
 0x004ce760  100.00%   C_Vehicle::AddSectorForSounds
 0x004ce960  stub      C_Vehicle::CalmVehicle
@@ -1097,6 +1099,8 @@
 0x004df970  missing   $CRT_CPP_Initializer(111)
 0x004eaa00  100.00%   std::vector<S_vector2,std::allocator<S_vector2> >::insert
 0x004eac40  missing   $CRT_CPP_Initializer(112)
+0x004eb110  stub      C_Vehicle::AddSoundsToSectors
+0x004eb5e0  stub      C_Vehicle::DeleteSoundsFromSectors
 0x004ef0d0  100.00%   C_Vehicle::SetSoundVolume
 0x004ef0e0  100.00%   C_Vehicle::OpenSnd
 0x004ef480  100.00%   ISND_source::GetFileName
@@ -1248,13 +1252,13 @@
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
 0x00537090  100.00%   std::vector<S_semaphore,std::allocator<S_semaphore> >::_Ufill
 0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
-0x00537910  100.00%   std::_Construct(struct ai_fight_member *, struct ai_fight_member const &)
+0x00537910  100.00%   std::_Construct(struct C_game::S_i_show *, struct C_game::S_i_show const &)
 0x00537a50  99.49%    ai_group::operator=
 0x00537e10  100.00%   ai_fight_followship::operator=
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
+0x00538520  100.00%   std::copy(struct ai_group_member *, struct ai_group_member *, struct ai_group_member *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1398,7 +1402,7 @@
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
 0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
-0x005490d0  100.00%   std::_Construct(struct S_VEH_PARTICLE *, struct S_VEH_PARTICLE const &)
+0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1461,6 +1465,7 @@
 0x0055d430  100.00%   $CRT_CPP_Initializer(167)
 0x0055d460  100.00%   PlayLogo
 0x0055d770  100.00%   C_compass::Activate
+0x0055d810  100.00%   C_silver_screen::Tick
 0x0055d880  100.00%   C_fire::C_fire
 0x0055d8a0  stub      C_fire::~C_fire
 0x0055d8d0  stub      C_fire::Init
@@ -1511,7 +1516,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class C_actor *const *, class C_actor *const *, class C_actor **)
+0x00564750  100.00%   std::copy(class C_ParticleType **, class C_ParticleType **, class C_ParticleType **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -1838,9 +1843,11 @@
 0x00599240  stub      C_recorder::vfunc_13
 0x00599370  stub      C_recorder::HasActor2Only
 0x005993d0  stub      C_recorder::vfunc_11
+0x00599610  stub      C_recorder::Tick
 0x0059a240  stub      C_recorder::vfunc_24
 0x0059a3c0  stub      C_recorder::RecLoadFull
 0x0059ac30  stub      C_recorder::vfunc_26
+0x0059b130  stub      C_recorder::ScaleTime
 0x0059b210  stub      C_recorder::vfunc_40
 0x0059b2a0  stub      C_recorder::vfunc_41
 0x0059b430  stub      C_recorder::vfunc_42
@@ -1899,6 +1906,7 @@
 0x0059e180  stub      C_recorder::OpenShow
 0x0059e1e0  100.00%   C_recorder::SetShowStart
 0x0059e1f0  stub      C_recorder::TickShow
+0x0059e2a0  100.00%   C_recorder::Stop
 0x0059e2d0  100.00%   C_recorder::IsPlaying
 0x0059e6d0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ufill
 0x0059e7e0  stub      C_seagull::C_seagull
@@ -2120,7 +2128,7 @@
 0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct G_CameraPushPop *, struct G_CameraPushPop const &)
+0x005bca00  100.00%   std::_Construct(struct C_mission::S_frame_actor_buffer *, struct C_mission::S_frame_actor_buffer const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)
@@ -2131,23 +2139,26 @@
 0x005bcee0  50.00%    $CRT_CPP_Initializer(209)
 0x005bcef0  100.00%   $CRT_CPP_Initializer(210)
 0x005bcf20  50.00%    $CRT_CPP_Initializer(211)
-0x005bcf30  50.00%    $CRT_CPP_Initializer(212)
+0x005bcf30  100.00%   $CRT_CPP_Initializer(212)
 0x005bcf60  100.00%   C_I3D_model_cache::~C_I3D_model_cache
+0x005bd080  100.00%   C_I3D_model_cache::C_I3D_model_cache
 0x005bd0c0  100.00%   C_I3D_model_cache::`scalar deleting destructor'
 0x005bd0e0  50.00%    $CRT_CPP_Initializer(213)
-0x005bd0f0  50.00%    $CRT_CPP_Initializer(214)
-0x005bd120  77.67%    C_I3D_sound_cache::~C_I3D_sound_cache
+0x005bd0f0  100.00%   $CRT_CPP_Initializer(214)
+0x005bd120  78.82%    C_I3D_sound_cache::~C_I3D_sound_cache
+0x005bd230  100.00%   C_I3D_sound_cache::C_I3D_sound_cache
 0x005bd270  100.00%   C_I3D_sound_cache::`scalar deleting destructor'
 0x005bd290  50.00%    $CRT_CPP_Initializer(215)
-0x005bd2a0  50.00%    $CRT_CPP_Initializer(216)
-0x005bd2d0  77.67%    C_I3D_anim_cache::~C_I3D_anim_cache
+0x005bd2a0  100.00%   $CRT_CPP_Initializer(216)
+0x005bd2d0  78.82%    C_I3D_anim_cache::~C_I3D_anim_cache
+0x005bd3e0  100.00%   C_I3D_anim_cache::C_I3D_anim_cache
 0x005bd420  100.00%   C_I3D_anim_cache::`scalar deleting destructor'
 0x005bd440  50.00%    $CRT_CPP_Initializer(217)
 0x005bd450  100.00%   $CRT_CPP_Initializer(218)
 0x005bd480  50.00%    $CRT_CPP_Initializer(219)
 0x005bd490  100.00%   $CRT_CPP_Initializer(220)
-0x005bd4e0  missing   $CRT_CPP_Initializer(221)
-0x005bd4f0  missing   $CRT_CPP_Initializer(222)
+0x005bd4e0  50.00%    $CRT_CPP_Initializer(221)
+0x005bd4f0  100.00%   $CRT_CPP_Initializer(222)
 0x005bd540  missing   $CRT_CPP_Initializer(223)
 0x005bd550  missing   $CRT_CPP_Initializer(224)
 0x005bd560  missing   $CRT_CPP_Initializer(225)
@@ -2158,31 +2169,43 @@
 0x005bd5f0  100.00%   InitJoy
 0x005bd870  100.00%   CloseJoy
 0x005bd8d0  100.00%   cbScene
-0x005be750  stub      GameLoopSingle
+0x005bd910  100.00%   InternMissionInit
+0x005be750  100.00%   GameLoopSingle
+0x005beaf0  100.00%   GM_GameMenu::OnBeforeCreate
 0x005beb00  100.00%   GraphErrorHandler
 0x005bebd0  100.00%   RacingInMainMenu
 0x005bebe0  100.00%   main
 0x005bf510  100.00%   GM_Carcyclopedia::OnBeforeCreate
 0x005bf520  100.00%   S_settings::S_settings
-0x005bf5a0  97.66%    InitSystem
+0x005bf5a0  97.94%    InitSystem
 0x005bfec0  100.00%   InitErrorMessageBox
 0x005c0080  100.00%*  CloseSystem
-0x005c0290  66.85%    C_I3D_cache<I3D_model>::Create
+0x005c0290  96.59%    C_I3D_cache<I3D_model>::Create
 0x005c06a0  94.44%    C_I3D_cache<I3D_model>::DelDir
 0x005c08b0  100.00%   C_str::operator=(class C_str const &)
-0x005c0c40  66.85%    C_I3D_cache<I3D_sound>::Create
+0x005c08f0  100.00%   C_I3D_cache<I3D_animation_set>::NumDirs
+0x005c0910  100.00%   C_I3D_cache<I3D_animation_set>::GetDir
+0x005c0930  72.00%    C_I3D_cache<I3D_model>::MakeRelative
+0x005c0c30  100.00%   C_I3D_cache_base<I3D_model>::~C_I3D_cache_base<I3D_model>
+0x005c0c40  96.59%    C_I3D_cache<I3D_sound>::Create
 0x005c1050  100.00%   C_I3D_cache<I3D_animation_set>::Clear
-0x005c10e0  94.21%    C_I3D_cache<I3D_sound>::DelDir
+0x005c10e0  94.44%    C_I3D_cache<I3D_sound>::DelDir
+0x005c12f0  76.92%    C_I3D_cache<I3D_animation_set>::ClearDirs
+0x005c1360  74.12%    C_I3D_cache<I3D_sound>::MakeRelative
+0x005c1650  100.00%   C_I3D_cache_base<I3D_sound>::~C_I3D_cache_base<I3D_sound>
+0x005c1660  100.00%   C_I3D_cache<I3D_animation_set>::SetCacheSize
 0x005c1670  78.74%    C_I3D_cache<I3D_animation_set>::Open
 0x005c1aa0  94.44%    C_I3D_cache<I3D_animation_set>::DelDir
+0x005c1cb0  74.12%    C_I3D_cache<I3D_animation_set>::MakeRelative
+0x005c1fa0  100.00%   C_I3D_cache_base<I3D_animation_set>::~C_I3D_cache_base<I3D_animation_set>
 0x005c1fb0  100.00%   C_I3D_cache<I3D_model>::`scalar deleting destructor'
-0x005c1fd0  78.82%    C_I3D_cache<I3D_model>::~C_I3D_cache<I3D_model>
+0x005c1fd0  100.00%   C_I3D_cache<I3D_model>::~C_I3D_cache<I3D_model>
 0x005c20e0  100.00%   C_I3D_cache_base<I3D_model>::`scalar deleting destructor'
 0x005c2100  100.00%   C_I3D_cache<I3D_sound>::`scalar deleting destructor'
-0x005c2120  78.82%    C_I3D_cache<I3D_sound>::~C_I3D_cache<I3D_sound>
+0x005c2120  100.00%   C_I3D_cache<I3D_sound>::~C_I3D_cache<I3D_sound>
 0x005c2230  100.00%   C_I3D_cache_base<I3D_sound>::`scalar deleting destructor'
 0x005c2250  100.00%   C_I3D_cache<I3D_animation_set>::`scalar deleting destructor'
-0x005c2270  78.82%    C_I3D_cache<I3D_animation_set>::~C_I3D_cache<I3D_animation_set>
+0x005c2270  100.00%   C_I3D_cache<I3D_animation_set>::~C_I3D_cache<I3D_animation_set>
 0x005c2380  100.00%   C_I3D_cache_base<I3D_animation_set>::`scalar deleting destructor'
 0x005c23a0  100.00%   C_I3D_model_cache::Duplicate
 0x005c23d0  100.00%   C_I3D_model_cache::cbClearData
@@ -2190,6 +2213,8 @@
 0x005c23f0  100.00%   C_I3D_sound_cache::Duplicate
 0x005c2430  100.00%   C_I3D_sound_cache::CreateNew
 0x005c2440  100.00%   C_I3D_anim_cache::CreateNew
+0x005c2450  100.00%   std::vector<C_str,std::allocator<C_str> >::~vector<C_str,std::allocator<C_str> >
+0x005c24b0  100.00%   std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::~vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >
 0x005c2520  100.00%   C_animations_machine_de_luxe::S_track::`scalar deleting destructor'
 0x005c2540  100.00%   C_I3D_cache<I3D_model>::S_itm::operator=
 0x005c2580  missing   $CRT_CPP_Initializer(229)
@@ -2603,11 +2628,15 @@
 0x005e0670  100.00%   GM_MainMenu::OnBeforeCreate
 0x005e0690  100.00%   GM_MainMenu::OnCreate
 0x005e06e0  100.00%   GM_MainMenu::OnClick
-0x005e08e0  100.00%   GM_MainMenuExit::OnBeforeCreate
+0x005e08e0  100.00%   GM_GameMenuExit::OnBeforeCreate
 0x005e08f0  100.00%   GM_MainMenuExit::OnCreate
 0x005e0900  100.00%   GM_Options::OnBeforeCreate
 0x005e0910  100.00%   GM_FreeRide::OnBeforeCreate
 0x005e0920  100.00%   GM_LoadGame::OnBeforeCreate
+0x005e0930  100.00%   GM_GameMenuExit::OnClick
+0x005e0960  100.00%   GM_GameMenu::OnKey
+0x005e0980  100.00%   GM_GameMenu::OnClick
+0x005e0ab0  100.00%   GM_GameMenuExit::OnCreate
 0x005e0ad0  100.00%   GM_Options::OnClick
 0x005e0bb0  100.00%   GM_OptionsAudioVideo::OnBeforeCreate
 0x005e0bc0  100.00%   GM_OptionsAudioVideo::OnCreate
@@ -2879,6 +2908,7 @@
 0x00601520  93.87%    G_IndicatorsClass::ResolutionChanged
 0x006025f0  100.00%   SetRectVertices
 0x006026d0  100.00%   SetDiamondVertices
+0x006027b0  stub      G_IndicatorsClass::Tick
 0x006036d0  100.00%   G_IndicatorsClass::TextSize
 0x00603780  100.00%   G_IndicatorsClass::HledejZlom
 0x00603880  45.94%    G_IndicatorsClass::OutText
@@ -3136,14 +3166,15 @@
 0x00625ad8  100.00%   vtable C_recorder::`vftable'
 0x00625bb0  100.00%   vtable C_seagull::`vftable'
 0x00625c90  100.00%   vtable C_I3D_cache_base<I3D_model>::`vftable'
-0x00625cc0  61.54%    vtable C_I3D_cache<I3D_model>::`vftable'
-0x00625cf4  61.54%    vtable C_I3D_model_cache::`vftable'
+0x00625cc0  100.00%   vtable C_I3D_cache<I3D_model>::`vftable'
+0x00625cf4  100.00%   vtable C_I3D_model_cache::`vftable'
 0x00625d28  100.00%   vtable C_I3D_cache_base<I3D_sound>::`vftable'
-0x00625d58  61.54%    vtable C_I3D_cache<I3D_sound>::`vftable'
-0x00625d8c  61.54%    vtable C_I3D_sound_cache::`vftable'
+0x00625d58  100.00%   vtable C_I3D_cache<I3D_sound>::`vftable'
+0x00625d8c  100.00%   vtable C_I3D_sound_cache::`vftable'
 0x00625dc0  100.00%   vtable C_I3D_cache_base<I3D_animation_set>::`vftable'
-0x00625df0  61.54%    vtable C_I3D_cache<I3D_animation_set>::`vftable'
-0x00625e24  61.54%    vtable C_I3D_anim_cache::`vftable'
+0x00625df0  100.00%   vtable C_I3D_cache<I3D_animation_set>::`vftable'
+0x00625e24  100.00%   vtable C_I3D_anim_cache::`vftable'
+0x00625e58  100.00%   vtable GM_GameMenu::`vftable'
 0x00625e88  100.00%   vtable GM_Carcyclopedia::`vftable'
 0x00625eb8  100.00%   vtable GM_MainMenu::`vftable'
 0x00625f78  100.00%   vtable GM_Nahrada::`vftable'
@@ -3191,6 +3222,7 @@
 0x0062733c  100.00%   vtable GM_Options::`vftable'
 0x0062736c  100.00%   vtable GM_FreeRide::`vftable'
 0x0062739c  100.00%   vtable GM_LoadGame::`vftable'
+0x006273cc  100.00%   vtable GM_GameMenuExit::`vftable'
 0x006273fc  100.00%   vtable GM_OptionsControls::`vftable'
 0x0062742c  100.00%   vtable GM_OptionsAudioVideo::`vftable'
 0x00627524  100.00%   vtable GM_MessageBox::`vftable'

@@ -136,9 +136,17 @@
 #define EXITYESNO_YES 0x8a
 #define EXITYESNO_NO 0x8b
 
-// The text database's "press <ESC> to Abort" and "Quit Game?" (the names are ours)
+// The text database's "press <ESC> to Abort", "Quit Game?" and "Exit Game?" (the names are ours)
 #define TEXT_PRESS_ESC_TO_ABORT 0x2ce
 #define TEXT_QUIT_GAME 0x77
+#define TEXT_EXIT_GAME 0x95
+
+// The game's menu's items, tables\menu\gamemenu.mnu (the names are ours, after their texts)
+#define GAMEMENU_WINDOW 1               // "Game menu:"
+#define GAMEMENU_EXIT 0x66
+#define GAMEMENU_LOAD_GAME 0x67
+#define GAMEMENU_OPTIONS 0x6c
+#define GAMEMENU_RESUME 0x6f
 
 // The menus the main menu opens, which only its OnClick creates. Their inline functions are declared in the classes and
 // defined after OnClick, where the original has their copies: in the classes, their markers would come before the
@@ -243,6 +251,20 @@ public:
     virtual int OnChange(GM_Component *active, GM_Component *);
 
     uchar unknown_30[0x240];
+};
+
+// The game's quit question, "exityesno" as the main menu's (PS2 GM_GameMenuExit, g_m_func.cpp), 0x30 bytes, which the
+// game's menu's Exit Game opens. Its constructor is the compiler's, inlined.
+// VTABLE: GAME 0x6273cc
+class GM_GameMenuExit : public GM_Menu
+{
+public:
+    // The linker folded its copy with the main menu's question's (0x5e08e0)
+    virtual const char *OnBeforeCreate();
+    // The window's text, "Exit Game?"
+    virtual int OnCreate();
+    // Yes ends the game's menu with GAMEMENU_RESULT_EXIT, No closes the question
+    virtual int OnClick(uint id);
 };
 
 // The file's first function. The cases in the order of PS2's bodies: VC6's dec falls into the one written first.
@@ -389,9 +411,65 @@ inline const char *GM_LoadGame::OnBeforeCreate()
     return "loadgame";
 }
 
-// The original's code between the inline copies and this (0x5e0930-0x5e0ac1) is PS2's GM_GameMenu's, the game's menu
-// ("gamemenu", vtable 0x625e58, which main creates at 0x5be967), and its GM_GameMenuExit's (vtable 0x6273cc), in PS2's
-// order. PS2's options have a screen slide and the vibration besides Controls.
+// The game's menu (GameLoopSingle's, Main.cpp) and its quit question, in PS2's order: as the main menu's question, but
+// Yes ends the game's menu
+// FUNCTION: GAME 0x5e0930
+int GM_GameMenuExit::OnClick(uint id)
+{
+    switch (id)
+    {
+    case EXITYESNO_NO:
+        MenuClose((uint)-1);
+        break;
+    case EXITYESNO_YES:
+        MenuCloseAll((uint)-1, GAMEMENU_RESULT_EXIT);
+        break;
+    }
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e0960
+int GM_GameMenu::OnKey(uchar key, uint)
+{
+    if (key == DIK_ESCAPE)
+        MenuCloseAll((uint)-1, GAMEMENU_RESULT_RESUME);
+    return 0;
+}
+
+// FUNCTION: GAME 0x5e0980
+int GM_GameMenu::OnClick(uint id)
+{
+    switch (id)
+    {
+    case GAMEMENU_EXIT:
+        MenuOpen(new GM_GameMenuExit, id);
+        break;
+    case GAMEMENU_LOAD_GAME:
+        MenuOpen(new GM_LoadGame, id);
+        break;
+    case GAMEMENU_OPTIONS:
+        MenuOpen(new GM_Options, id);
+        break;
+    case GAMEMENU_RESUME:
+        MenuCloseAll((uint)-1, GAMEMENU_RESULT_RESUME);
+        break;
+    }
+    return 0;
+}
+
+inline const char *GM_GameMenuExit::OnBeforeCreate()
+{
+    return "exityesno";
+}
+
+// FUNCTION: GAME 0x5e0ab0
+inline int GM_GameMenuExit::OnCreate()
+{
+    SetTextID(EXITYESNO_WINDOW, TEXT_EXIT_GAME);
+    return 0;
+}
+
+// PS2's options have a screen slide and the vibration besides Controls.
 // FUNCTION: GAME 0x5e0ad0
 int GM_Options::OnClick(uint id)
 {

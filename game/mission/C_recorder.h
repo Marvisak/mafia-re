@@ -251,6 +251,12 @@ public:
     // Whether a cutscene is playing (the name is ours): while cutscene_play_ticks counts down, and in a state but
     // CUTSCENE_STATE_0 and CUTSCENE_STOPPED
     bool IsPlaying();
+    // GameLoopSingle's, every frame (the names are ours but Tick's): while the game is initialized the frame's time
+    // advances cur_time and, by the speed keys, scaled_time, and is scaled by the current key's speed; Tick plays the
+    // cutscene's tracks; Stop stops it, the next four frames rendered without being presented
+    void ScaleTime(uint &time);
+    void Tick(uint time);
+    void Stop();
     // Releases the animations of anims and empties it (the name is ours)
     void ReleaseAnims();
 

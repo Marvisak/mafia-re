@@ -65,6 +65,10 @@ struct tDynamicCollObject;
 #define ACTSTATE_INACTIVE 1
 #define ACTSTATE_NONE 2
 
+// C_actor::number's top bit: InternMissionInit sets it in the numbers of the actors it carries into the new
+// mission, whose own actors count from 1 (the name is ours)
+#define ACTOR_NUMBER_CARRIED 0x80000000
+
 // Hit's types (PS2's C_actor::Hit takes an E_hit_type; the names are ours, after their callers, by value where none
 // passes it): the script's HUMAN_SETPROPERTY hits a human whose energy runs out with HIT_IN_CAR or HIT_LANDING
 #define HIT_SHOT 0                      // C_game::TickShoot's
@@ -458,44 +462,44 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?OnClose@GM_Menu@@UAEHXZ
+// ?SaveGameGetSize@C_seagull@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_traffic_car@@UAEXI@Z
+// ?NetDirect@C_actor_shot@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnTick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
 
 // SYNTHETIC: GAME 0x4aa450
-// ?Collision@C_stone@@UAE_NPAVC_actor@@ABUS_vector@@11MPAVI3D_frame@@@Z
+// ?Collision@C_actor@@UAE_NPAV1@ABUS_vector@@11MPAVI3D_frame@@@Z
 
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
+// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameLoad@C_stone@@UAE_NPAPAX@Z
+// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveData@C_actor@@UAE_NPAVC_chunk@@@Z
+// ?PlaceAtTime@C_actor_shot@@UAE_NH@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_stone@@UAEHXZ
+// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?begin@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?GetRefCount@@YIHPBVI3D_frame@@@Z
 
 // FUNCTION: GAME 0x604d90
 // ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ

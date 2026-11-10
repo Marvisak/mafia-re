@@ -4,6 +4,7 @@
 #include "C_fstr.h"
 #include "stub.h"
 
+#include <direct.h>
 #include <vector>
 
 #include "I3D/I3D.h"
@@ -183,12 +184,11 @@ void C_I3D_cache<T>::DelDir(const char *dir)
     }
 }
 
-// The stubs: the linker folds the three caches' copies of each
-
+// The linker folds the three caches' copies of each, but MakeRelative's
 template<class T>
 void C_I3D_cache<T>::SetCacheSize(int size)
 {
-    StubLog("C_I3D_cache::SetCacheSize %d", size);
+    cache_size = size;
 }
 
 // Loads a file into the caller's object: a copy of the cached object of that name (the cached names are matched against
@@ -313,27 +313,48 @@ LS3D_RESULT C_I3D_cache<T>::Create(const char *name, T **obj, I3D_CACHE_CB_PROC 
 template<class T>
 void C_I3D_cache<T>::ClearDirs()
 {
-    StubLog("C_I3D_cache::ClearDirs");
+    dirs.clear();
 }
 
 template<class T>
 int C_I3D_cache<T>::NumDirs() const
 {
-    StubLog("C_I3D_cache::NumDirs");
-    return 0;
+    return dirs.size();
 }
 
 template<class T>
 const char *C_I3D_cache<T>::GetDir(int index) const
 {
-    StubLog("C_I3D_cache::GetDir %d", index);
-    return NULL;
+    return dirs[index];
 }
 
+// A full path made relative to the folders, in place: cut to the part after the current folder if it is under it, then
+// for the first of the folders it is under, the rest after that folder is copied over the name; false if it is in none
+// (the name unchanged). Both are matched as masks (C_str::Match).
+// Open: the original calls the found path's s[] out of line and inlines Release in the loop's and the end's
+// destructors, ours the other way round: it spends about 2 units of inline budget more between the first Match's
+// conversion (inlined, at the edge) and that s[] without one more pending inline call; nothing in this function's
+// spelling did that (a 3-statement dead-body probe before the first Match gives every later decision, the model copy
+// then 94%). The inlined Match also copies the mask's character from bl to al for the tests, with cp and cp1 in the other
+// registers (as in Open; see C_str::Match).
 template<class T>
 bool C_I3D_cache<T>::MakeRelative(char *name)
 {
-    StubLog("C_I3D_cache::MakeRelative %s", name);
+    char dir[MAX_PATH];
+    _getcwd(dir, MAX_PATH);
+    // STRING: GAME 0x637f58
+    C_fstr mask("%s\\*", dir);
+    C_str s(name);
+    if (s.Match(mask))
+        s = &s[(int)mask.Size() - 1];
+    for (uint i = 0; i < dirs.size(); i++) {
+        // STRING: GAME 0x6323b4
+        C_str d = dirs[i] + "*";
+        if (s.Match(d)) {
+            strcpy(name, &s[(int)dirs[i].Size()]);
+            return true;
+        }
+    }
     return false;
 }
 
@@ -407,23 +428,23 @@ extern C_I3D_anim_cache anim_cache;
 // The items' helpers, which CloseSystem's inlined Clear calls. The linker folded the three caches' copies of each; the
 // original kept the first file's (Main.cpp's for the assignment).
 // SYNTHETIC: GAME 0x5c2540
-// ??4S_itm@?$C_I3D_cache@VI3D_animation_set@@@@QAEAAU01@ABU01@@Z
+// ??4S_itm@?$C_I3D_cache@VI3D_sound@@@@QAEAAU01@ABU01@@Z
 
 // SYNTHETIC: GAME 0x410c30
 // ??1S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
-// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0@Z
+// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
 // ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU23@00@Z
 
 // The items' insert's helpers, C_actor.cpp's copies too: copy_backward and the copy constructor's _Construct
 // TEMPLATE: GAME 0x4092c0
-// ?copy_backward@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU23@00@Z
+// ?copy_backward@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x409320
-// ?_Construct@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@ABU23@@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -475,18 +496,18 @@ extern C_I3D_anim_cache anim_cache;
 
 // The loader's callback, the three caches' folded into one
 // TEMPLATE: GAME 0x410c50
-// ?LoadCallback@?$C_I3D_cache@VI3D_animation_set@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
+// ?LoadCallback@?$C_I3D_cache@VI3D_model@@@@CGXW4LS3D_CALLBACK_MESSAGE@@IIPAX@Z
 
 // The model cache's items' helpers that LoadParticles' inlined Open calls (vehicles/C_car.cpp), folded with the other
 // caches': the default constructor, size, erase of one item and push_back's insert(P, x)
 // SYNTHETIC: GAME 0x403730
-// ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
+// ??0S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_BRIDGE@C_sledovacka@@V?$allocator@US_BRIDGE@C_sledovacka@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_car_snd@@V?$allocator@US_car_snd@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
 // ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
@@ -506,7 +527,46 @@ extern C_I3D_anim_cache anim_cache;
 // ?Create@?$C_I3D_cache@VI3D_animation_set@@@@UAE?AW4LS3D_RESULT@@PBDPAPAVI3D_animation_set@@P6IX0PAX@Z2@Z
 
 // TEMPLATE: GAME 0x5c1050
-// ?Clear@?$C_I3D_cache@VI3D_model@@@@UAEXXZ
+// ?Clear@?$C_I3D_cache@VI3D_sound@@@@UAEXXZ
+
+// The folders' functions, the three caches' folded but MakeRelative's
+// TEMPLATE: GAME 0x5c08f0
+// ?NumDirs@?$C_I3D_cache@VI3D_model@@@@UBEHXZ
+
+// TEMPLATE: GAME 0x5c0910
+// ?GetDir@?$C_I3D_cache@VI3D_model@@@@UBEPBDH@Z
+
+// TEMPLATE: GAME 0x5c12f0
+// ?ClearDirs@?$C_I3D_cache@VI3D_model@@@@UAEXXZ
+
+// TEMPLATE: GAME 0x5c1660
+// ?SetCacheSize@?$C_I3D_cache@VI3D_model@@@@UAEXH@Z
+
+// TEMPLATE: GAME 0x5c0930
+// ?MakeRelative@?$C_I3D_cache@VI3D_model@@@@UAE_NPAD@Z
+
+// TEMPLATE: GAME 0x5c1360
+// ?MakeRelative@?$C_I3D_cache@VI3D_sound@@@@UAE_NPAD@Z
+
+// TEMPLATE: GAME 0x5c1cb0
+// ?MakeRelative@?$C_I3D_cache@VI3D_animation_set@@@@UAE_NPAD@Z
+
+// The abstract base's destructors, which the caches' destructors' unwinding calls
+// SYNTHETIC: GAME 0x5c0c30
+// ??1?$C_I3D_cache_base@VI3D_model@@@@UAE@XZ
+
+// SYNTHETIC: GAME 0x5c1650
+// ??1?$C_I3D_cache_base@VI3D_sound@@@@UAE@XZ
+
+// SYNTHETIC: GAME 0x5c1fa0
+// ??1?$C_I3D_cache_base@VI3D_animation_set@@@@UAE@XZ
+
+// And the vectors' destructors (the items', the three caches' folded)
+// TEMPLATE: GAME 0x5c2450
+// ??1?$vector@VC_str@@V?$allocator@VC_str@@@std@@@std@@QAE@XZ
+
+// TEMPLATE: GAME 0x5c24b0
+// ??1?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAE@XZ
 
 // The abstract base's vtables, which the caches' constructors store first, and its scalar deleting destructors
 // VTABLE: GAME 0x625c90
@@ -565,6 +625,16 @@ extern C_I3D_anim_cache anim_cache;
 
 // TEMPLATE: GAME 0x5c2270
 // ??1?$C_I3D_cache@VI3D_animation_set@@@@UAE@XZ
+
+// The caches' implicit constructors, which the globals' initializers call (Main.cpp)
+// SYNTHETIC: GAME 0x5bd080
+// ??0C_I3D_model_cache@@QAE@XZ
+
+// SYNTHETIC: GAME 0x5bd230
+// ??0C_I3D_sound_cache@@QAE@XZ
+
+// SYNTHETIC: GAME 0x5bd3e0
+// ??0C_I3D_anim_cache@@QAE@XZ
 
 // The caches' implicit destructors, which inline it
 // SYNTHETIC: GAME 0x5bcf60

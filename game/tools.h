@@ -139,6 +139,29 @@ public:
     void Activate(I3D_frame *frm);
 };
 
+// The cinema's bars (PS2 C_silver_screen, its Tick in tools.cpp; Main.cpp has the one object, PS2's silver_screen),
+// 0x24 bytes as PS2's: while moving, Tick slides amount towards 1 or 0 by direction, speed a second, stops at either
+// end and turns them off at 0. Nothing on the PC sets them moving: the constructor leaves them off, and only
+// GameLoopSingle and the racing menu tick them (the members' names are ours).
+class C_silver_screen
+{
+public:
+    bool active;                        // 0x0, ticked while set
+    bool moving;                        // 0x1
+    float speed;                        // 0x4, 1.0
+    float amount;                       // 0x8, 0 to 1
+    int direction;                      // 0xc, 1 or -1
+    float ratio;                        // 0x10, 1 / 1.85, the cinema's (most likely the picture's between the bars)
+    uchar unknown_14[0x10];             // 0x14
+
+    C_silver_screen() : active(false), speed(1.0f), amount(0.0f), ratio(1.0f / 1.85f) {}
+    ~C_silver_screen() {}
+
+    void Tick(uint time);
+};
+
+extern C_silver_screen silver_screen;
+
 // The sounds the humans hear (PS2 soundArena, tools.cpp), the game's 0x2b3c, 0x208 bytes; what it holds isn't known
 // yet
 class soundArena
@@ -272,7 +295,7 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetMode@G_Camera@@QBEIXZ
+// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

@@ -198,7 +198,10 @@ public:
 
     // The string against a mask: * matches the rest, ? any one character, the others ignore case. An empty string
     // matches only an empty mask. The name is ours. The switch gives the original's layout (the ? case after the
-    // others' test).
+    // others' test). The end tested through a local gives the caches' inlined copies (Create) the original's code; the
+    // out-of-line copy compiles alike either way. Open: in the inlined copies the original also tests a copy of the
+    // character in al, with cp and cp1 in the other registers (switch (c) gives that, but the out-of-line copy's
+    // registers then differ).
     // FUNCTION: GAME 0x4035d0
     bool Match(const C_str &mask) const
     {
@@ -206,7 +209,10 @@ public:
         if (!len || !len1)
             return len == len1;
         const char *cp = *this, *cp1 = mask;
-        while (*cp1) {
+        for (;;) {
+            char c = *cp1;
+            if (!c)
+                break;
             switch (*cp1) {
             case '*':
                 return true;
@@ -240,7 +246,7 @@ public:
 // ??YC_str@@QAEAAV0@PBD@Z
 
 // FUNCTION: GAME 0x4033a0
-// ??1?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@QAE@XZ
+// ??1C_str@@QAE@XZ
 
 // The conversion's first copy is m_cache.cpp's, ToUpper's C_actor.cpp's (the model cache's Open)
 // FUNCTION: GAME 0x4033c0

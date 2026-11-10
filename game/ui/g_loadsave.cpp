@@ -782,7 +782,7 @@ void G_LoadSaveClass::_SaveProc(G_Stream *stream, C_actor *actor, G_SaveGame_Act
 
 // The file: the head (savegame's, which it completes), the info, the game's head and record, the AI's groups' and
 // following's records, then the actors' heads and records, the cars and the trains first. full saves every actor
-// (C_actor::global_actors), else the game's unknown_140, nothing where it is empty. PS2's keeps the info in its head and
+// (C_actor::global_actors), else the game's carried_actors, nothing where it is empty. PS2's keeps the info in its head and
 // writes the number of actors before theirs.
 // FUNCTION: GAME 0x606ea0
 void G_LoadSaveClass::SaveGameSave(bool full)
@@ -853,9 +853,9 @@ void G_LoadSaveClass::SaveGameSave(bool full)
             stream.Write();
         }
         C_game *game = act_mission->game;
-        if (full || game->unknown_140.size())
+        if (full || game->carried_actors.size())
         {
-            std::vector<C_actor *> *actors = full ? &C_actor::global_actors : &game->unknown_140;
+            std::vector<C_actor *> *actors = full ? &C_actor::global_actors : &game->carried_actors;
             G_SaveGame_ActorHead head;
             C_actor **it;
             for (it = actors->begin(); it < actors->end(); it++)

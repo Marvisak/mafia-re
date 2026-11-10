@@ -238,6 +238,18 @@ void C_Vehicle::SetDynamicCollsOn(bool on, bool unknown)
     StubLog("C_Vehicle::SetDynamicCollsOn %d", on);
 }
 
+// STUB: GAME 0x4ce290
+void C_Vehicle::AddProjectorLightsToSectors()
+{
+    StubLog("C_Vehicle::AddProjectorLightsToSectors");
+}
+
+// STUB: GAME 0x4ce3f0
+void C_Vehicle::DeleteProjectorLightsFromSectors()
+{
+    StubLog("C_Vehicle::DeleteProjectorLightsFromSectors");
+}
+
 // Unless it is there already, searched from the last one, as PS2's
 // FUNCTION: GAME 0x4ce560
 void C_Vehicle::AddSectorForProjectorLights(I3D_sector *sector)

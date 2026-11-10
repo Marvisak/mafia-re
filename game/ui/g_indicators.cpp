@@ -3675,6 +3675,12 @@ inline void SetDiamondVertices(const S_vector2 &pos, const S_vector2 &size, floa
     verts[5] = verts[1];
 }
 
+// STUB: GAME 0x6027b0
+void G_IndicatorsClass::Tick(uint time)
+{
+    StubLog("G_IndicatorsClass::Tick %u", time);
+}
+
 // A text's width in the font, at its size (the characters' height): each character's width less what it overlaps the
 // next, a space's .3 of the size for a code the font has no character for; the last one's overlap counts
 // FUNCTION: GAME 0x6036d0

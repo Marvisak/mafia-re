@@ -110,6 +110,26 @@ void C_compass::Activate(I3D_frame *frm)
     frame = frm;
 }
 
+// PS2's (which divides by 1000): the parentheses keep the time first, where VC6 would start with the direction
+// FUNCTION: GAME 0x55d810
+void C_silver_screen::Tick(uint time)
+{
+    if (!moving)
+        return;
+    amount += ((time * .001f) * speed) * direction;
+    if (amount > 1.0f)
+    {
+        amount = 1.0f;
+        moving = false;
+    }
+    else if (amount < 0.0f)
+    {
+        amount = 0.0f;
+        active = false;
+        moving = false;
+    }
+}
+
 // FUNCTION: GAME 0x55d880
 C_fire::C_fire()
 {

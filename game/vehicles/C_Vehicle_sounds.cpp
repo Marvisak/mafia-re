@@ -1,12 +1,26 @@
 // The vehicles' sounds (PS2 C_Vehicle_sounds.cpp; the PC's file is the one at 0x4eac70-0x4efb3c, docs/game-files.md,
 // whose functions follow PS2's from InitSounds to SoundOff, then OpenSnd and SoundInit). Written so far: the sounds'
-// volume, which the profiles set, and OpenSnd, the class's virtual function.
+// volume, which the profiles set, and OpenSnd, the class's virtual function; stubs of the sectors' sounds, which
+// InternMissionInit calls.
 
 #include "vehicles/C_Vehicle.h"
 #include "I3D_cache.h"
+#include "stub.h"
 
 // GLOBAL: GAME 0x634b00
 float C_Vehicle::sound_volume = 1.0f;
+
+// STUB: GAME 0x4eb110
+void C_Vehicle::AddSoundsToSectors()
+{
+    StubLog("C_Vehicle::AddSoundsToSectors");
+}
+
+// STUB: GAME 0x4eb5e0
+void C_Vehicle::DeleteSoundsFromSectors()
+{
+    StubLog("C_Vehicle::DeleteSoundsFromSectors");
+}
 
 // After SoundOff (0x4eec80), before OpenSnd
 // FUNCTION: GAME 0x4ef0d0

@@ -281,7 +281,7 @@ bool C_game::Init()
     stacks_clear = true;
     death_fade_time = 7000;
     actor_lightness = false;
-    unknown_140.clear();
+    carried_actors.clear();
     AIManager.police.ZacatekSmeny();
     AIManager.groups.Init();
     AIManager.follow.Init();
@@ -1159,12 +1159,12 @@ bool C_game::Done()
     shvestky.GameDone();
     death_actors.clear();
     // The cars in the garage leave the game
-    for (i = 0; i < (int)unknown_140.size();)
+    for (i = 0; i < (int)carried_actors.size();)
     {
-        if (unknown_140[i]->type == ACTOR_CAR && mafiaLoadSave.IsCarIn((C_car *)unknown_140[i]))
+        if (carried_actors[i]->type == ACTOR_CAR && mafiaLoadSave.IsCarIn((C_car *)carried_actors[i]))
         {
-            unknown_140[i] = unknown_140.back();
-            unknown_140.erase(unknown_140.end() - 1);
+            carried_actors[i] = carried_actors.back();
+            carried_actors.erase(carried_actors.end() - 1);
             continue;
         }
         i++;
@@ -1402,14 +1402,14 @@ bool C_game::Done()
     }
     act_mission->RestoreSettings();
     C_Vehicle::v_sound_sector.clear();
-    for (i = unknown_140.size(); i--;)
+    for (i = carried_actors.size(); i--;)
     {
-        act_mission->FrmActBuff_RemoveActiveActor(unknown_140[i]);
-        if (unknown_140[i]->type == ACTOR_CAR)
-            unknown_140[i]->own_frame = false;
-        act_mission->DelActor(unknown_140[i]);
+        act_mission->FrmActBuff_RemoveActiveActor(carried_actors[i]);
+        if (carried_actors[i]->type == ACTOR_CAR)
+            carried_actors[i]->own_frame = false;
+        act_mission->DelActor(carried_actors[i]);
     }
-    unknown_140.clear();
+    carried_actors.clear();
     // The cars the player left in the garage
 restart:
     for (i = 0; i < (int)actors.size(); i++)

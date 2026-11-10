@@ -1,8 +1,10 @@
 // The game's start and its main loop: PS2's Main.cpp (main, InitSystem, CloseSystem, GameLoopSingle,
-// InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written so far: main, InitSystem,
-// InitErrorMessageBox, CloseSystem, SetWBuffer and cbScene, and the PC's InitJoy, CloseJoy and GraphErrorHandler;
-// GameLoopSingle is a stub.
-// Open: the engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
+// InternMissionInit, InitErrorMessageBox, MessageBoxGraph). In the original 0x5bce00-0x5c25ac. Written whole: the
+// globals in the order of their initializers, SetWBuffer, cbScene, InternMissionInit, GameLoopSingle, main, InitSystem,
+// InitErrorMessageBox and CloseSystem, the PC's InitJoy, CloseJoy, GraphErrorHandler and RacingInMainMenu, and the
+// caches' functions the original has here (game/I3D_cache.h).
+// Open: InitSystem's registers from the fatal store on and in the version check's failure, CloseSystem's ebx restore.
+// The engine's IGraph.h brings LS3DF's I3d_math.h, whose static zero vector gives this file a dynamic initializer
 // the original's files don't have (docs/game-files.md). The .bss names: PS2's isound, driver and the caches' don't give
 // the original's order (driver, isound, igraph, setting), so at least those had other names on the PC.
 
@@ -19,6 +21,7 @@
 #include "I3D_cache.h"
 #include "actors/C_actor.h"
 #include "actors/C_animations.h"
+#include "actors/C_player.h"
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
 #include "input/C_ff_manager.h"
@@ -27,6 +30,8 @@
 #include "ui/console.h"
 #include "g_lines.h"
 #include "tools.h"
+#include "mission/C_recorder.h"
+#include "mission/m_cache.h"
 
 #include <settings_registry.h>
 #include <process.h>
@@ -41,6 +46,10 @@
 #include "stub.h"
 #include "res/resource.h"
 
+// The constructed globals in the order of the original's dynamic initializers, from setting's (0x5bce00) to
+// ff_manager's (0x5bd580)
+// GLOBAL: GAME 0x647ee4
+S_settings setting;
 // GLOBAL: GAME 0x647df8
 C_mission main_mission;
 // GLOBAL: GAME 0x63788c
@@ -112,6 +121,19 @@ const char *dta_names[NUM_ARCHIVES] = {
     // STRING: GAME 0x6378c8
     "ab.dta",
 };
+// The original's three have dynamic initializers
+// GLOBAL: GAME 0x647dd0
+C_I3D_model_cache model_cache;
+// GLOBAL: GAME 0x647da8
+C_I3D_sound_cache sound_cache;
+// GLOBAL: GAME 0x647d80
+C_I3D_anim_cache anim_cache;
+// Constructed by its dynamic initializer (0x5bd450)
+// GLOBAL: GAME 0x647c30
+C_controls controls;
+// The joysticks InitJoy found (PS2's is a vector<C_Joy *>)
+// GLOBAL: GAME 0x647c1c
+std::vector<IJoy *> joy;
 // CHANGE_MISSION's (PS2 names). The two vectors' empty dynamic initializers are the original's two before
 // ff_manager's (0x5bd540, 0x5bd560).
 // GLOBAL: GAME 0x647ba0
@@ -120,6 +142,9 @@ char NewMission[32];
 bool ActiveNewMission;
 // GLOBAL: GAME 0x647b7c
 char NewMission_ENTRY[32];
+// PS2's, constructed by its dynamic initializer (0x5bd4e0)
+// GLOBAL: GAME 0x647bc0
+C_silver_screen silver_screen;
 // GLOBAL: GAME 0x647b70
 S_vector NewMission_POS;
 // GLOBAL: GAME 0x647b58
@@ -130,27 +155,12 @@ C_ff_manager ff_manager;
 // PS2's has 12 archives
 // GLOBAL: GAME 0x647be4
 C_rw_data *RW_data[NUM_ARCHIVES];
-// The joysticks InitJoy found (PS2's is a vector<C_Joy *>)
-// GLOBAL: GAME 0x647c1c
-std::vector<IJoy *> joy;
-// Constructed by its dynamic initializer (0x5bd450)
-// GLOBAL: GAME 0x647c30
-C_controls controls;
-// The original's three have dynamic initializers
-// GLOBAL: GAME 0x647d80
-C_I3D_anim_cache anim_cache;
-// GLOBAL: GAME 0x647da8
-C_I3D_sound_cache sound_cache;
-// GLOBAL: GAME 0x647dd0
-C_I3D_model_cache model_cache;
 // GLOBAL: GAME 0x647ed8
 I3D_driver *driver;
 // GLOBAL: GAME 0x647edc
 ISND_driver *isound;
 // GLOBAL: GAME 0x647ee0
 IGraph *igraph;
-// GLOBAL: GAME 0x647ee4
-S_settings setting;
 // The name is ours
 // GLOBAL: GAME 0x647f24
 IJoyBase *joy_base;
@@ -232,10 +242,372 @@ uint __stdcall cbScene(SCN_CALLBACK_MESSAGE message, uint param1, uint param2)
     return 0;
 }
 
-// STUB: GAME 0x5be750
+// The scripts' CHANGE_MISSION (PS2 name), which GameLoopSingle runs once a script asked for another mission: without
+// an entry (NewMission_ENTRY) the new mission just opens, its collisions load and its game starts. With one, the player
+// and the car carried in NewMissionActors leave the old mission's game, the player's inventory kept aside, and join
+// the new one's at NewMission_POS and NewMission_ROT relative to the entry's frame: the new mission's own player is
+// deleted, the carried car's frame gets an underscore after its name where the new mission has a frame of that name,
+// and the car keeps only the player in its seats and starts at NewMissionSpeed (km/h), the camera following it.
+// The game, the scene and the camera through their accessors: those inline calls still to come leave the inventory's
+// arrays' construction, its cycle's erase and the active actors' insert out of line, as the original has them, where
+// the members read directly let VC6 inline all three.
+// FUNCTION: GAME 0x5bd910
+void InternMissionInit()
+{
+    igraph->Clear(0, 1.0f, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    igraph->Present();
+    if (!strlen(NewMission_ENTRY))
+    {
+        act_mission->GetGame()->Done();
+        act_mission->Close();
+        act_mission->Open(NewMission, false, (uint)-1, true);
+        char name[128];
+        sprintf(name, "missions\\%s\\tree.klz", NewMission);
+        gifCollision.LoadCollision(name, true);
+        act_mission->GetGame()->Init();
+        return;
+    }
+
+    // The carried actors leave the old mission's game
+    if (NewMissionActors[0])
+    {
+        switch (NewMissionActors[0]->type)
+        {
+        case ACTOR_PLAYER:
+            ((C_human *)NewMissionActors[0])->DeactivateColls(false);
+            break;
+        case ACTOR_CAR:
+            ((C_car *)NewMissionActors[0])->DeleteProjectorLightsFromSectors();
+            ((C_car *)NewMissionActors[0])->DeleteSoundsFromSectors();
+            ((C_car *)NewMissionActors[0])->DeactivateCar(1);
+            ((C_car *)NewMissionActors[0])->EnableSounds(false);
+            break;
+        }
+        NewMissionActors[0]->frame->LinkTo(NULL, 0);
+    }
+
+    // The player's inventory, kept aside while the missions change (constructed as C_human's constructor does it: the
+    // arrays and Clear out of line)
+    G_Inventory inventory;
+    int i;
+    for (i = 0; i < 2; i++)
+    {
+        if (NewMissionActors[i] && NewMissionActors[i]->type == ACTOR_PLAYER)
+        {
+            inventory = ((C_human *)NewMissionActors[i])->inventory;
+            ((C_human *)NewMissionActors[i])->inventory.Clear();
+            ((C_human *)NewMissionActors[i])->ChangeWeaponModel();
+            break;
+        }
+    }
+
+    act_mission->GetGame()->Done();
+    act_mission->Close();
+    act_mission->Open(NewMission, false, (uint)-1, true);
+    char name[128];
+    sprintf(name, "missions\\%s\\tree.klz", NewMission);
+    gifCollision.LoadCollision(name, true);
+
+    // The new mission's own player goes, the search starting again after each (PS2's flag, which VC6 threads into the
+    // jump back)
+    std::vector<C_actor *> &actors = act_mission->GetActors();
+    bool found;
+    do
+    {
+        found = false;
+        for (i = actors.size(); i--;)
+        {
+            if (actors[i]->type == ACTOR_PLAYER)
+            {
+                I3D_frame *frm = actors[i]->frame;
+                act_mission->DelActor(actors[i]);
+                frm->LinkTo(NULL, 0);
+                frm->Release();
+                found = true;
+                break;
+            }
+        }
+    } while (found);
+    // A frame of the carried car's name in the new mission: the car's own gets an underscore after it (the name's copy
+    // isn't freed)
+    if (NewMissionActors[0] && NewMissionActors[0]->type == ACTOR_CAR && NewMissionActors[0]->frame)
+    {
+        for (i = actors.size(); i--;)
+        {
+            if (actors[i]->frame && !strcmp(actors[i]->frame->GetName(), NewMissionActors[0]->frame->GetName()))
+            {
+                char *new_name = new char[strlen(NewMissionActors[0]->frame->GetName()) + 2];
+                strcpy(new_name, NewMissionActors[0]->frame->GetName());
+                strcat(new_name, "_");
+                NewMissionActors[0]->frame->SetName(new_name);
+                break;
+            }
+        }
+    }
+    act_mission->GetGame()->Init();
+
+    for (i = 0; i < 2; i++)
+    {
+        if (NewMissionActors[i])
+        {
+            // The original pushes a temporary's address, PS2's too, so the argument is an rvalue, not the global (VC6
+            // keeps a cast to the same type an lvalue); through a reference to the vector, the temporary is stored
+            // after the mission's load, as the original's
+            std::vector<C_actor *> &carried = act_mission->GetGame()->carried_actors;
+            carried.push_back(&*NewMissionActors[i]);
+            if (NewMissionActors[i]->type != ACTOR_CAR)
+                NewMissionActors[i]->own_frame = true;
+            NewMissionActors[i]->saved_parent = NULL;
+        }
+    }
+    // The player gets the inventory back
+    for (i = 0; i < 2; i++)
+    {
+        if (NewMissionActors[i] && NewMissionActors[i]->type == ACTOR_PLAYER)
+        {
+            ((C_human *)NewMissionActors[i])->inventory = inventory;
+            ((C_human *)NewMissionActors[i])->ChangeWeaponModel();
+            if (!act_mission->GetGame()->player)
+                ((C_player *)NewMissionActors[i])->AddAlphaObject(((C_human *)NewMissionActors[i])->weapon_model);
+            break;
+        }
+    }
+
+    // At the entry
+    I3D_frame *entry = act_mission->GetScene()->primary_sector->FindChildFrame(NewMission_ENTRY, ENUMF_ALL);
+    std::vector<C_actor *> &active_actors = act_mission->GetGame()->active_actors;
+    if (NewMissionActors[0] && NewMissionActors[0]->frame)
+    {
+        NewMissionActors[0]->frame->LinkTo(act_mission->GetScene()->primary_sector, 0);
+        NewMissionActors[0]->frame->Update();
+        if (entry)
+        {
+            S_matrix m = entry->GetMatrix();
+            NewMission_POS *= m;
+            NewMissionActors[0]->frame->SetPos(NewMission_POS);
+            m(3).x = m(3).y = m(3).z = 0.0f;
+            NewMission_ROT[0] *= m;
+            NewMission_ROT[1] *= m;
+            NewMissionActors[0]->frame->SetDir1(NewMission_ROT[0], NewMission_ROT[1]);
+            NewMissionActors[0]->frame->Update();
+        }
+        mafiaIndicators.show_flags &= ~INDF_MAP;
+        if (NewMissionActors[0])
+        {
+            switch (NewMissionActors[0]->type)
+            {
+            case ACTOR_PLAYER:
+                {
+                    ((C_human *)NewMissionActors[0])->track_test = 0;
+                    // The placement from the frame through one load of the actor and of its frame, kept across
+                    // GetDir's calls (PS2 the same): the global written at each use is loaded again after the stores
+                    C_actor *player = NewMissionActors[0];
+                    player->pos = player->frame->GetPos();
+                    player->dir = player->frame->GetDir();
+                    mafiaIndicators.show_flags &= ~INDF_TACHOMETR;
+                    ((C_player *)NewMissionActors[0])->IndicatorSetAimed();
+                    ((C_player *)NewMissionActors[0])->LockControls(true);
+                    ((C_player *)NewMissionActors[0])->LockControls(false);
+                    ((C_human *)NewMissionActors[0])->anim_machine.Reset();
+                    ((C_human *)NewMissionActors[0])->ActivateColls(HUMAN_COLLS_ALL);
+                    // Each case's spare in a block of its own: they share the slot of GetDir's square, where an
+                    // address taken in the case's scope keeps them apart, and VC6 merges the two cases from GetAmmo
+                    {
+                        int spare;
+                        uint ammo = ((C_human *)NewMissionActors[0])->inventory.GetAmmo(&spare);
+                        mafiaIndicators.PlayerSetAmmo(ammo, spare);
+                    }
+                }
+                break;
+            case ACTOR_CAR:
+                {
+                    C_car *car = (C_car *)NewMissionActors[0];
+                    car->ResetCar();
+                    car->EnableSounds(true);
+                    // The seats keep only the player
+                    for (int seat = car->GetNumSeats(); seat--;)
+                    {
+                        if (car->GetOwner(seat) != NewMissionActors[1])
+                            car->SetOwner(NULL, seat, 0.0f);
+                    }
+                    if (!((C_human *)NewMissionActors[1])->seat)
+                        mafiaIndicators.show_flags |= INDF_RADAR | INDF_TACHOMETR;
+                    mafiaIndicators.show_flags &= ~INDF_CROSSHAIR;
+                    mafiaIndicators.RadarAddCar((C_car *)NewMissionActors[0], (uint)-1);
+                    car->AddProjectorLightsToSectors();
+                    car->AddSoundsToSectors();
+                    mafiaLoadSave.CarIsStolen((C_car *)NewMissionActors[0]);
+                    if (car->speed_limit < 800.0f)
+                        mafiaIndicators.show_flags |= INDF_SPEED_LIMITER;
+                    if (NewMissionActors[1])
+                    {
+                        ((C_player *)NewMissionActors[1])->IndicatorSetAimed();
+                        int spare;
+                        uint ammo = ((C_human *)NewMissionActors[1])->inventory.GetAmmo(&spare);
+                        mafiaIndicators.PlayerSetAmmo(ammo, spare);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    // Into the new mission's game
+    for (i = 0; i < 2; i++)
+    {
+        if (NewMissionActors[i])
+        {
+            NewMissionActors[i]->InternalPlacementReset();
+            act_mission->AddActor(NewMissionActors[i], false);
+            active_actors.push_back(NewMissionActors[i]);
+            C_human *human = (C_human *)NewMissionActors[i];
+            if (human->type == ACTOR_PLAYER)
+            {
+                // The HUD's health, never 0 while he lives
+                uint lives = (int)(human->properties[HUMAN_PROPERTY_ENERGY] /
+                    human->max_properties[HUMAN_PROPERTY_ENERGY] * 100.0f);
+                if (human->alive && lives < 1)
+                    lives = 1;
+                mafiaIndicators.PlayerSetLives(lives);
+                C_game *game = act_mission->GetGame();
+                game->player = game->camera_human = human;
+                game->GetCamera().SetPlayer(human);
+                human->blob_log.Clear();
+                human->loc.Init(human);
+            }
+            NewMissionActors[i]->number |= ACTOR_NUMBER_CARRIED;
+        }
+    }
+    act_mission->GetGame()->GetCamera().Reset();
+    act_mission->GetGame()->GetCamera().SetCamera(act_mission->GetScene()->GetActiveCamera());
+    for (i = 0; i < 2; i++)
+    {
+        if (NewMissionActors[i] && NewMissionActors[i]->type == ACTOR_PLAYER)
+            act_mission->GetGame()->GetCamera().SetPlayer((C_human *)NewMissionActors[i]);
+    }
+    // The car at its speed, or settled where it stands. The camera gets the global again, which VC6 loads into the
+    // car's register after the calls and takes from it where none came.
+    if (NewMissionActors[0] && NewMissionActors[0]->type == ACTOR_CAR)
+    {
+        C_car *car = (C_car *)NewMissionActors[0];
+        if (NewMissionSpeed > 0.0f)
+        {
+            car->Deactivate(0);
+            car->Reset(NewMissionSpeed * (1.0f / 3.6f), true);
+        }
+        else if (NewMissionSpeed == 0.0f)
+        {
+            car->Deactivate(0);
+            car->Reset(0.0f, true);
+            car->CalmVehicle(20);
+        }
+        act_mission->GetGame()->GetCamera().SetCar((C_car *)NewMissionActors[0]);
+    }
+    act_mission->GetGame()->GetCamera().mode_changed = true;
+    // Cleared as main clears them: the memset's zero register is its own
+    memset(NewMissionActors, 0, sizeof(NewMissionActors));
+}
+
+// The FPU's control word (PC only, the name is ours)
+static inline void SetFPUControl(ushort control)
+{
+    __asm fldcw control
+}
+
+// The game's loop (PS2's), which main runs after loading each mission, while the game is initialized: the windows'
+// messages and the input, the joysticks and the controls, the cheats' keys (a key a cheat took leaves the controls
+// without values and Escape unpressed), the cutscene's time and the mission's tick, the city's blocks, Escape's menu (in
+// the intro it skips the cutscene instead, as Space and Enter always do), the mission's end, the HUD, the frame, the
+// cinema bars and CHANGE_MISSION; each frame ends with the FPU in single precision, as Direct3D sets it.
+// The cheats' key and the cutscene's test reach the game through GetGame(): an inline call, which VC6 evaluates before
+// CheatKey's argument (the original keeps the game in edi across TranslateKey), where the member read directly comes
+// after it.
+// The loop's test goes through IsInitialized(), which has the first test reuse eax for the flag (cl read directly).
+// FUNCTION: GAME 0x5be750
 void GameLoopSingle()
 {
-    StubLog("GameLoopSingle");
+    igraph->NullTimer();
+    while (act_mission->game->IsInitialized())
+    {
+        igraph->ProcessWinMessages();
+        igraph->UpdateMouseData();
+        igraph->UpdateKeyboardData();
+        uchar key = igraph->ReadKey();
+        uint time = igraph->GetTimer(16, 83);
+        for (int i = joy.size(); i--;)
+            joy[i]->Update(JOY_UPDATE_RESET);
+        controls.Update(false);
+        uchar c = igraph->ReadKey();
+        if (c && act_mission->GetGame()->CheatKey(igraph->TranslateKey(c, igraph->GetShiftKeys(false) & 0xf)))
+        {
+            key = 0;
+            float *values, *pressed;
+            controls.GetValues(values, 0);
+            controls.GetValues(pressed, CONTROLS_PRESSED);
+            for (int j = controls.NumControls(); j--;)
+            {
+                values[j] = 0.0f;
+                pressed[j] = 0.0f;
+            }
+        }
+        if (act_mission->GetGame()->initialized)
+            cutscene.ScaleTime(time);
+        act_mission->Tick(time);
+        cutscene.Tick(time);
+        if (base_cache.open)
+            base_cache.Tick(time);
+        if (key == DIK_ESCAPE)
+        {
+            if (cutscene.IsPlaying() && _is_intro_)
+                cutscene.Stop();
+            else
+            {
+                act_mission->game->PauseAllSounds();
+                int choice = GM_Menu::ExecuteMenu(new GM_GameMenu, false, true);
+                act_mission->game->PlayAllSounds(choice != GAMEMENU_RESULT_EXIT);
+                if (choice == GAMEMENU_RESULT_CONTROLS)
+                    act_mission->game->UpdateControls();
+                else if (choice == GAMEMENU_RESULT_EXIT)
+                {
+                    if (cutscene.IsPlaying())
+                    {
+                        cutscene.Stop();
+                        cutscene.Close();
+                    }
+                    return;
+                }
+                else if (choice == MAINMENU_LOAD_GAME)
+                    mafiaLoadSave.SaveGameLoad();
+            }
+        }
+        else if (key == DIK_SPACE || key == DIK_RETURN)
+        {
+            if (cutscene.IsPlaying())
+                cutscene.Stop();
+        }
+        if (act_mission->game->mission_end)
+        {
+            if (act_mission->game->mission_end == 1)
+                return;
+            if (act_mission->game->mission_end == 3)
+            {
+                act_mission->ResetMissionNumbers();
+                mafiaLoadSave.SaveGameLoad();
+            }
+        }
+        mafiaIndicators.Tick(time);
+        act_mission->scene->Render();
+        if (act_mission->PresentFrame())
+            igraph->Present();
+        if (silver_screen.active)
+            silver_screen.Tick(time);
+        if (ActiveNewMission)
+        {
+            ActiveNewMission = false;
+            InternMissionInit();
+        }
+        SetFPUControl(0x3f);
+    }
 }
 
 // IGraph's error handler (PC only, the name is ours). Out of video memory, the game saves the settings without true

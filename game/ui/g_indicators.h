@@ -408,6 +408,8 @@ public:
     void BonusSetCount(int count);
     // Draws the HUD over the frame (PS2 name), which the scene's callback does after each frame
     void DrawAll();
+    // The HUD's time (PS2 name), which GameLoopSingle and the racing menu run every frame
+    void Tick(uint time);
     // PS2 names, what C_game's Init and Done call (PS2's GameDone takes a bool). GameInit loads the dials' textures for
     // the game's day or night, GameDone frees what the game used.
     void GameInit();

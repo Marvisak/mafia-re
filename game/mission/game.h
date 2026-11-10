@@ -442,7 +442,10 @@ public:
     std::vector<C_actor *> temporary_actors;  // 0x120 (PS2 0x180, its Temporary functions')
     // 0x130 (PS2 0x18c), the temporary actors being removed (RemoveTemporaryActor's; the name is ours)
     std::vector<C_actor *> removed_actors;
-    std::vector<C_actor *> unknown_140;  // 0x140 (PS2 0x198, a gif::vector)
+    // 0x140 (PS2 0x198, a gif::vector), the actors InternMissionInit carried over from the last mission (the name
+    // is ours): Done leaves out the cars in the garage and deletes the others from the mission, and a saved game
+    // that isn't full keeps them
+    std::vector<C_actor *> carried_actors;
     std::vector<S_lightness *> lightness;  // 0x150 (PS2 0x1a4), LightnessClear deletes them
     int lightness_next;                 // 0x160, the entry LightnessTick (0x5b57e0) checks next (the name is ours)
     bool actor_lightness;               // 0x164, ACTORLIGHTNESSON's (the name is ours)
@@ -1050,6 +1053,11 @@ public:
     {
         return &sledovacka;
     }
+    // GameLoopSingle's loop test (the name is ours)
+    bool IsInitialized() const
+    {
+        return initialized;
+    }
     // FUNCTION: GAME 0x47b560
     int GetGameTime() const
     {
@@ -1205,7 +1213,7 @@ public:
 // ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
 
 // TEMPLATE: GAME 0x5bbde0
-// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
+// ?erase@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@0@Z
 
 // TEMPLATE: GAME 0x5bbe30
 // ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
@@ -1214,7 +1222,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?insert@?$vector@US_stop_sounds@C_game@@V?$allocator@US_stop_sounds@C_game@@@std@@@std@@QAEXPAUS_stop_sounds@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z

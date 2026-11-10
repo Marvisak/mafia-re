@@ -109,6 +109,8 @@ public:
     // The controls' values, or with CONTROLS_PRESSED their values at the update each was pressed in (the name is ours):
     // the first one through values and the count, -1 while there are none
     int GetValues(float *&list, uint flags);
+    // The number of controls, the length of those lists (the name is ours)
+    int NumControls() const { return controls.size(); }
     // One control's value, or with CONTROLS_PRESSED its value at the update it was pressed in, 0 for an index outside the
     // table (the name is ours)
     float GetValue(int index, uint flags);
@@ -152,7 +154,7 @@ extern std::vector<IJoy *> joy;
 
 // The tables' helpers, which SetControl's inlined push_back calls
 // TEMPLATE: GAME 0x60f1f0
-// ?insert@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEXPAUS_Telephone@C_game@@IABU34@@Z
+// ?insert@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAEXPAPAVC_ParticleType@@IABQAV3@@Z
+// ?insert@?$vector@PAUS_GameItem@@V?$allocator@PAUS_GameItem@@@std@@@std@@QAEXPAPAUS_GameItem@@IABQAU3@@Z

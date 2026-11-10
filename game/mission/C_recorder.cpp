@@ -240,6 +240,12 @@ void C_recorder::vfunc_11()
     StubLog("C_recorder::vfunc_11");
 }
 
+// STUB: GAME 0x599610
+void C_recorder::Tick(uint time)
+{
+    StubLog("C_recorder::Tick %u", time);
+}
+
 // STUB: GAME 0x59a240
 void C_recorder::vfunc_24(C_actor *actor)
 {
@@ -256,6 +262,12 @@ void C_recorder::RecLoadFull(const char *name)
 void C_recorder::vfunc_26(const char *name)
 {
     StubLog("C_recorder::vfunc_26 %s", name);
+}
+
+// STUB: GAME 0x59b130
+void C_recorder::ScaleTime(uint &time)
+{
+    StubLog("C_recorder::ScaleTime %u", time);
 }
 
 // STUB: GAME 0x59b210
@@ -726,6 +738,15 @@ void C_recorder::SetShowStart(int unknown)
 void C_recorder::TickShow(int unknown)
 {
     StubLog("C_recorder::TickShow");
+}
+
+// FUNCTION: GAME 0x59e2a0
+void C_recorder::Stop()
+{
+    cutscene_play_ticks = 0;
+    SetState(CUTSCENE_STATE_0);
+    if (act_mission->skip_frames < 4)
+        act_mission->skip_frames = 4;
 }
 
 // FUNCTION: GAME 0x59e2d0
