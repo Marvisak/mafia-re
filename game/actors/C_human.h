@@ -439,7 +439,9 @@ struct tgcPanak2
     uint flags;                         // 0x40, TestSphereB's flags (COLF_*)
     S_vector pos_out;                   // 0x44, where the legs' sphere stops, for a hit
     S_vector normal;                    // 0x50, the surface's normal there
-    uchar unknown_5c[0x30];             // 0x5c
+    uchar unknown_5c[4];                // 0x5c
+    int hits[10];                       // 0x60, TestPanak2's: the collision hit after each pass, 0 for none yet
+    int last_pass;                      // 0x88, TestPanak2's: the index of its last pass
 };
 
 // The humans (PS2 C_human, C_human.cpp), the base of the player and of the AI's C_entity, 0xa9c bytes. Its file

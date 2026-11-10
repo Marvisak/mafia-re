@@ -91,6 +91,12 @@ void DabingReset()
     G_DabingMorphActive.clear();
 }
 
+// STUB: GAME 0x5f5210
+void DabingSetFrame(int chanel, I3D_frame *frame)
+{
+    StubLog("DabingSetFrame");
+}
+
 // STUB: GAME 0x5f53d0
 void DabingInvalidate(C_human *human)
 {
@@ -114,6 +120,12 @@ bool DabingIsSpeaking(int chanel)
 void DabingStop(int chanel)
 {
     StubLog("DabingStop");
+}
+
+// STUB: GAME 0x5f5d10
+void DabingUpdateFrames()
+{
+    StubLog("DabingUpdateFrames");
 }
 
 // The speaking channels: a channel's time runs on by the time passed, or by its sound's position while the sound plays
@@ -321,4 +333,16 @@ void DabingTick(uint time)
 void DabingPauseSounds(bool pause, bool unknown)
 {
     StubLog("DabingPauseSounds");
+}
+
+// STUB: GAME 0x5f6670
+void DabingCutscene(const S_cutscene_dabing *item)
+{
+    StubLog("DabingCutscene");
+}
+
+// STUB: GAME 0x5f6760
+void DabingCutsceneMorph(const S_cutscene_morph *item, uint time)
+{
+    StubLog("DabingCutsceneMorph");
 }

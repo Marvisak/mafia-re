@@ -13,6 +13,8 @@ class C_web_node;
 class I3D_frame;
 struct TLVERTEX;
 struct tDynamicCollObject;
+struct S_cutscene_subtitle;
+struct S_cutscene_subtitle;
 
 // The HUD's fonts (the name is ours)
 #define NUM_FONTS 4
@@ -37,6 +39,7 @@ struct tDynamicCollObject;
 #define INDF_PROGRESS 0x10              // the scripts' PM_SHOWPROGRESS (the police's too): a bar for progress, under
                                         // INDF_SYMBOL
 #define INDF_CROSSHAIR 0x20             // cleared while the camera is CAMERA_CP_SNIPER, where INDF_SNIPER is set
+#define INDF_SUBTITLES 0x40             // set by SubtitlesAdd, Tick counts the subtitles' times down while set
 #define INDF_COMPASS 0x80              // the arrow to compass_destination, and its mark on the radar
 // The tachometer's light at its top right: set with the player's car's speed limit (C_Vehicle::SetSpeedLimit, PS2's
 // name) when CTRL_SPEED_LIMITER turns it on (0x591f4a)
@@ -71,6 +74,9 @@ struct tDynamicCollObject;
 
 // The lines of the HUD's console (the name is ours; PS2's has 3)
 #define CONSOLE_LINES 5
+
+// The blood quads over the screen, AddBloodSplash's (the name is ours)
+#define MAX_CREW_QUADS 10
 
 // RaceSetStartFlag's flags that hide it (the names are ours): the countdown's step after its last light (0x5507c0
 // counts the flags 0 to 3 a second each and starts the race at 4), and none
@@ -133,6 +139,9 @@ struct G_RafickaValue
     S_vector2 tip_right;                // 0x1c
 };
 
+// G_MISubtitleStruct::alpha of a subtitle shown until the next one comes (the name is ours)
+#define SUBTITLE_FOREVER 0x7fffffff
+
 // A subtitle's line (PS2's name; the members' names are ours), 0x10 bytes, as the mission's help texts have them:
 // DrawAll writes the text up to end, unless hidden, the last one at the bottom
 struct G_MISubtitleStruct
@@ -155,15 +164,17 @@ struct G_MIIntroSubtitles
     float alpha_out;                    // 0x18
 };
 
-// One waiting to be shown (PS2's name; its members are unknown), 8 bytes
+// One waiting to be shown (PS2's name; the members' names are ours), 8 bytes: IntroSubtitlesAdd's, which Tick passes to
+// IntroSubtitlesAddIntern once its time has run out
 struct G_MIIntroSubtitlesWaiting
 {
-    uchar unknown_0[8];
+    uint id;                            // the text database's
+    uint time;                          // 0x4, in milliseconds
 };
 
-// The HUD (PS2 G_IndicatorsClass, g_indicators.cpp; mafiaIndicators is 0x4e38 bytes there). Only what main and the
-// profiles use so far; the textures' names are ours, after their files, and so are the other members' (PS2's offsets in
-// the comments where its functions show them). Its destructor is the implicit one, the copy after the global's
+// The HUD (PS2 G_IndicatorsClass, g_indicators.cpp; mafiaIndicators is 0x4e38 bytes there). The textures' names are
+// ours, after their files, and so are the other members' (PS2's offsets in the comments where its functions show
+// them). Its destructor is the implicit one, the copy after the global's
 // initializers (0x5f6a80), as PS2's is the implicit one at its file's end. Open: the next global after it
 // (fontTranstable) is 0x10 bytes past the flag at 0x46f4.
 class G_IndicatorsClass
@@ -220,7 +231,7 @@ public:
     // TimerSetInterval's: where the minute and the second hand are at the interval's end, as fractions of a turn
     float interval_minute;              // 0x4164 (PS2 0x4160)
     float interval_second;              // 0x4168
-    uchar unknown_416c[4];
+    uint timer_millisecond;             // 0x416c, the clock's milliseconds, which Tick carries into its seconds
     uint interval;                      // 0x4170, TimerSetInterval's, in milliseconds (PS2 0x416c)
     G_RafickaValue tachometr_speed;     // 0x4174, in km/h
     G_RafickaValue tachometr_revs;      // 0x4198
@@ -271,13 +282,23 @@ public:
     std::vector<G_MISubtitleStruct> mission_help;   // 0x43fc (PS2 0x4b44), MissionHelpClear's (0x5f99b0)
     std::vector<G_MIIntroSubtitles> intro_subtitles;    // 0x440c (PS2 0x4b50)
     std::vector<G_MIIntroSubtitlesWaiting> intro_subtitles_waiting; // 0x441c (PS2 0x4b5c)
-    uchar unknown_442c[0x28];
+    float crew_times[MAX_CREW_QUADS];   // 0x442c, each blood quad's, in seconds
     uint crew_quads;                    // 0x4454, the quads of _VtxCrew INDF_CREW draws
     float thief_indicator;              // 0x4458, PS2's ThiefIndicatorSetValue's, .5 from ResetValues (PS2 0x4b98)
     float refulling_indicator;          // 0x445c, PS2's RefullingIndicatorSetValue's (PS2 0x4b9c)
-    uchar unknown_4460[0x18];
+    // WideScreenSetOn's (the names are ours): the time left of the bars' running in or out and its length, in
+    // milliseconds, which Tick counts down, the bars' colour (Tick sets its alpha) and whether they run in
+    uint widescreen_time;               // 0x4460
+    uint widescreen_length;             // 0x4464
+    uint widescreen_color;              // 0x4468
+    bool widescreen_on;                 // 0x446c
+    uchar unknown_446d[3];
+    // FadeInOut's (PS2 0x4bb0 and 0x4bb4): the time left of the fade and its length, in milliseconds
+    uint fade_time;                     // 0x4470
+    uint fade_length;                   // 0x4474
     uint fade_color;                    // 0x4478, PS2's FadeInOut's (PS2 0x4bb8), with its alpha
-    uchar unknown_447c[4];
+    bool fade_in;                       // 0x447c, FadeInOut's in (PS2 0x4bbc)
+    uchar unknown_447d[3];
     // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0): INDF_FADE's texture
     ITexture *fade_texture;
     // The cutscenes' fade and picture over the scene, which their track's keys set (0x599d78): SetOverlayFade's and
@@ -363,6 +384,8 @@ public:
     void TachometrSetValues(float speed, float revs, float fuel, float odometer);
     // The thief indicator's bar, 0 to 1 (PS2 name; PS2's sets thief_indicator, the PC's is out of line)
     void ThiefIndicatorSetValue(float value);
+    // The refulling indicator's bar, 0 to 1 (PS2 name)
+    void RefullingIndicatorSetValue(float value);
     // The player's health, ammo and accuracy
     void PlayerSetLives(uint lives);
     void PlayerSetAmmo(uint ammo, uint spare);
@@ -373,15 +396,17 @@ public:
     // A blood stain on the screen at x, y of that size, in 800x600 (PC only, 0x5f9e10; the name is ours), which
     // C_human::Hit adds for each shot on the player
     void AddBloodSplash(float x, float y, float size);
-    // An intro's subtitle, the text of that id (PS2 names; the parameters' meaning isn't known)
-    void IntroSubtitlesAdd(uint a, uint b);
+    // The intro's subtitles (PS2 names): those of the ids from first to last, after their texts' times; one of the
+    // text database's that time overdue; one shown at once
+    void IntroSubtitlesAdd(uint first, uint last);
+    void IntroSubtitlesAddIntern(uint id, float time);
     void IntroSubtitlesAddSimple(uint id);
     // Forgets the intro's subtitles
     void IntroSubtitlesClear();
     // The mission's help, texts of the text database (PS2 names; the parameters' names are ours): forgets them,
     // adds one, and sets how long each shows, in milliseconds
     void MissionHelpClear();
-    void MissionHelpAdd(uint id);
+    uint MissionHelpAdd(uint id);
     void MissionHelpSetTime(uint time);
     // A line of the HUD's console in the colour (0xrrggbb), the text database's text of that id, if it has one (PS2
     // name)
@@ -418,11 +443,27 @@ public:
     void RadarClear();
     void RadarAddCar(C_car *car, uint color);
     void RadarRemoveCar(C_car *car);
+    // The radar's things (PS2 names)
+    void RadarAddObject(tDynamicCollObject *object, uint color);
+    void RadarRemoveObject(tDynamicCollObject *object);
     // The road's edges the radar draws, from a vector of web nodes; NULL for none (PS2 names)
     void RadarSetLeftEdge(std::vector<C_web_node *> *edge);
     void RadarSetRightEdge(std::vector<C_web_node *> *edge);
     // The race's start lights, RACE_START_DONE and RACE_START_NONE hiding them (PS2 name)
     void RaceSetStartFlag(uint flag);
+    // The race's texts (PS2 names): its time, its lap's and its best in milliseconds, the position and the lap, the
+    // flashing text
+    void RaceSetTime(uint time);
+    void RaceSetLapTime(uint time);
+    void RaceSetBestTime(uint time);
+    void RaceSetPosition(uint position, uint count);
+    void RaceSetLaps(uint lap, uint laps);
+    void RaceFlashText(const char *text, float alpha);
+    // A subtitle, the text database's text of that id for the time in milliseconds (PS2 name), the lines before
+    // cleared with clear
+    void SubtitlesAdd(uint id, uint time, bool clear);
+    // A subtitle of the cutscene's track (C_recorder::Tick's, the name is ours)
+    void SubtitlesAddCutscene(const S_cutscene_subtitle *item);
     void SubtitlesClear();
     // Empties the HUD's console
     void ConsoleClear();

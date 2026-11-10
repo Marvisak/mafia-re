@@ -3538,7 +3538,7 @@ void C_program::Process(uint time)
         // At the script's actor
         float *f = (float *)instructions[cur_command].params;
         S_vector pos = actor->GetFrame()->GetWorldPos();
-        act_mission->GetGame()->NewExplosion(actor, pos, f[0], f[1], true, false, true, 0x12);
+        act_mission->GetGame()->NewExplosion(actor, pos, f[0], f[1], true, false, true, SOUND_EXPLOSION);
     }
         break;
     case CMD_TIMEROFF:

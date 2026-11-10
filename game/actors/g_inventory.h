@@ -206,4 +206,4 @@ public:
 // The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
 // 0x438f00 of its folded group
 // TEMPLATE: GAME 0x438f00
-// ?insert@?$vector@US_i_show_fade@C_game@@V?$allocator@US_i_show_fade@C_game@@@std@@@std@@QAEXPAUS_i_show_fade@C_game@@IABU34@@Z
+// ?insert@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEXPAUS_GameItem@@IABU3@@Z

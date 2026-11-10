@@ -62,6 +62,9 @@ struct tgcPanak2;
 // of a dead human only and leaves out the lower one while the human's lower_coll_off is set
 #define DYNCOLLF_LOWER 0x1
 #define DYNCOLLF_UPPER 0x2
+// The seagulls' box's, with DYNCOLLF_UPPER (C_seagull::GameInit; by value)
+#define DYNCOLLF_UNKNOWN_4 0x4
+#define DYNCOLLF_UNKNOWN_40000 0x40000
 #define DYNCOLLF_UNKNOWN_100 0x100
 // A bottle's (C_bottle::GameInit)
 #define DYNCOLLF_UNKNOWN_400 0x400
@@ -126,6 +129,15 @@ struct g_collision_header
     I3D_frame *frame;                   // 0x4 (the name is ours)
     uchar unknown_8[0x3c];              // 0x8
     C_actor *owner;                     // 0x44 (the name is ours)
+};
+
+// A contact of the sliding sphere test (_TestSphereSlide, 0x20 bytes; PC only, the names are ours): the plane the
+// sphere slid along, where it touched it, and the collision touched where its flags have COLLHF_UNKNOWN_40, else NULL
+struct S_slide_contact
+{
+    uchar plane[0x10];                  // 0x0, an S_plane (bytes, as tDynamicCollObject's sphere)
+    uchar pos[0xc];                     // 0x10, an S_vector
+    g_collision_header *coll;           // 0x1c
 };
 
 // A cell of the grid of the moving objects' collisions (PS2 tDynamicPolicko, Czech "little field"): its place in the
@@ -233,6 +245,17 @@ public:
     // vehicle the human is in (the truck's, the rail vehicle's wagon's); nonzero for a hit
     int TestPanak2(tgcPanak2 *p);
     int TestPanak2InVehicle(std::vector<tDynamicCollObject *> *colls, tgcPanak2 *p);
+    // A sphere moved against the collisions of a vehicle, as _TestSphereB against the level (PS2 name; the
+    // parameters' names are ours)
+    int TestSphereInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
+        float radius, S_vector *pos, S_vector *normal, uint flags, uint flags2);
+    // A sphere slid along what it hits, up to ten passes of _TestSphereB, each plane it slid along kept in contacts
+    // (PC only, the names are ours): TestSphereSlide is the wrapper of _TestSphereSlide, without flags, and returns
+    // the contacts
+    int TestSphereSlide(const S_vector &from, const S_vector &dir, float radius, S_slide_contact **contacts,
+        uint *num);
+    int _TestSphereSlide(const S_vector &from, const S_vector &dir, float radius, S_vector *pos, S_vector *normal,
+        uint flags, uint flags2);
     // Puts a moving object into the collisions (PS2 name)
     void DynInsert(tDynamicCollObject *obj);
     // Takes a moving object out of the collisions (PS2 name)
@@ -252,7 +275,10 @@ public:
     void DynWipeOut();
     void DeleteCollsLevel();
 
-    uchar unknown_0[0x284];
+    // 0x0, the sliding sphere test's contacts (_TestSphereSlide, which TestSphereSlide returns), and their number
+    // (0x280)
+    S_slide_contact contacts[20];
+    uint num_contacts;
     tCollisionLevel *level;             // 0x284 (PS2 0x3e4; the name is ours)
     uint level_size;                    // 0x288, the bytes LoadCollision read into it (the name is ours)
     S_dyn_grid *dyn_grid;               // 0x28c (PS2 0x3ec; the names are ours, as the next two's)
@@ -266,7 +292,10 @@ public:
     tDynamicCollObject *next_coll_owner;
     tDynamicCollObject **next_coll_owners;
     uint num_next_coll_owners;
-    uchar unknown_2c0[4];               // 0x2c0
+    // 0x2c0, set while the sphere tests push the scattered objects they hit (SphereInDynamics passes a hit
+    // ACTOR_SCATTER object to C_scatter::LineHit): TestPanak2's legs' sphere (the name is ours)
+    bool push_scatter;
+    uchar unknown_2c1[3];
     // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
     // otherwise (the name is ours)
     C_actor *step_actor;
@@ -283,3 +312,7 @@ public:
 // ??1g_collision@@QAE@XZ
 
 extern g_collision gifCollision;
+
+// How far along its move the last sphere test hit (PS2 name; _TestSphereB and TestSphereInVehicle set it), below 0
+// where the sphere started inside what it hit
+extern float lastSphereDistance;

@@ -227,7 +227,6 @@ void G_LoadSaveClass::ProfileEnumRelease()
     profiles.clear();
 }
 
-// FUNCTION: GAME 0x605560
 std::vector<G_Profile_FileHead> *G_LoadSaveClass::ProfileGetList()
 {
     return &profiles;

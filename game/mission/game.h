@@ -110,6 +110,9 @@ struct S_shoot
 #define PARTICLE_EXPLOSION 7
 #define PARTICLE_SMALL_FIRE 0x16
 #define SOUND_FIRE 0x15
+// The sound table's sound of an explosion: the script's EXPLOSION and the seagulls' pass it to NewExplosion (the
+// name is ours)
+#define SOUND_EXPLOSION 0x12
 // C_game::track_textures' index of a bloody footprint, "2bfootprint.bmp", which C_human::cbCollTester gives the
 // steps of a human through blood (the name is ours, after the file)
 #define TRACK_TEXTURE_BFOOTPRINT 6
@@ -1184,7 +1187,7 @@ public:
 // ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
@@ -1194,7 +1197,7 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
+// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
@@ -1222,7 +1225,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_stop_sounds@C_game@@V?$allocator@US_stop_sounds@C_game@@@std@@@std@@QAEXPAUS_stop_sounds@C_game@@IABU34@@Z
+// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z

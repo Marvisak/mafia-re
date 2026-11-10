@@ -56,7 +56,7 @@
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
 0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
+0x00404830  100.00%   std::_Construct(struct C_program::S_instruction *, struct C_program::S_instruction const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -199,7 +199,7 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
+0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
@@ -885,7 +885,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(class C_program **, class C_program *const &)
+0x00499050  100.00%   std::_Construct(unsigned int *, unsigned int const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -1251,14 +1251,14 @@
 0x00536690  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::_Destroy
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
 0x00537090  100.00%   std::vector<S_semaphore,std::allocator<S_semaphore> >::_Ufill
-0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
-0x00537910  100.00%   std::_Construct(struct C_game::S_i_show *, struct C_game::S_i_show const &)
+0x00537130  100.00%   std::copy(struct C_game::S_i_show *, struct C_game::S_i_show *, struct C_game::S_i_show *)
+0x00537910  100.00%   std::_Construct(struct S_semaphore *, struct S_semaphore const &)
 0x00537a50  99.49%    ai_group::operator=
 0x00537e10  100.00%   ai_fight_followship::operator=
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct ai_group_member *, struct ai_group_member *, struct ai_group_member *)
+0x00538520  100.00%   std::copy(struct C_game::S_enemy_talk *, struct C_game::S_enemy_talk *, struct C_game::S_enemy_talk *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1401,8 +1401,8 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
-0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
+0x005490b0  100.00%   std::_Construct(struct C_game::S_Telephone *, struct C_game::S_Telephone const &)
+0x005490d0  100.00%   std::_Construct(struct S_VEH_PARTICLE *, struct S_VEH_PARTICLE const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1428,6 +1428,7 @@
 0x0054c5a0  stub      C_web_path::FindSelectedLine
 0x0054c620  stub      C_web_path::IncludeNode
 0x0054c8d0  stub      C_web_path::FlipOneWay
+0x0054c9a0  stub      C_web_path::GetNearNode
 0x0054cba0  stub      C_web_path::SortNodesByX
 0x0054cd20  100.00%   C_web_path::DeRiciConns
 0x0054d2f0  missing   $CRT_CPP_Initializer(151)
@@ -1516,7 +1517,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class C_ParticleType **, class C_ParticleType **, class C_ParticleType **)
+0x00564750  100.00%   std::copy(class I3D_frame *const *, class I3D_frame *const *, class I3D_frame **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -1828,52 +1829,63 @@
 0x005983e0  missing   $CRT_CPP_Initializer(196)
 0x005983f0  missing   $CRT_CPP_Initializer(197)
 0x00598410  100.00%   Ease
-0x005987f0  stub      C_recorder::vfunc_5
-0x00598970  stub      C_recorder::vfunc_6
+0x005984e0  98.54%    C_recorder::InterpolateCamera
+0x00598680  97.48%    C_recorder::InterpolateTarget
+0x005987f0  100.00%   C_recorder::CreateRecords
+0x00598970  100.00%   C_recorder::ResetRecords
 0x005989a0  100.00%   C_recorder::SetState
 0x00598b70  100.00%   C_recorder::GetState
-0x00598b80  stub      C_recorder::SetTime
+0x00598b80  100.00%   C_recorder::SetTime
 0x00598d90  100.00%   C_recorder::GetCurTime
 0x00598da0  100.00%   C_recorder::GetScaledTime
-0x00598db0  stub      C_recorder::AddActor
-0x00598fb0  stub      C_recorder::vfunc_7
+0x00598db0  100.00%   C_recorder::AddActor
+0x00598fb0  100.00%   C_recorder::AddPlayedActor
 0x00599010  100.00%   C_recorder::RemoveActor
 0x005990e0  100.00%   C_recorder::RemoveActors
-0x005991e0  stub      C_recorder::HasActor
-0x00599240  stub      C_recorder::vfunc_13
-0x00599370  stub      C_recorder::HasActor2Only
-0x005993d0  stub      C_recorder::vfunc_11
-0x00599610  stub      C_recorder::Tick
-0x0059a240  stub      C_recorder::vfunc_24
-0x0059a3c0  stub      C_recorder::RecLoadFull
-0x0059ac30  stub      C_recorder::vfunc_26
-0x0059b130  stub      C_recorder::ScaleTime
-0x0059b210  stub      C_recorder::vfunc_40
-0x0059b2a0  stub      C_recorder::vfunc_41
-0x0059b430  stub      C_recorder::vfunc_42
-0x0059b570  stub      C_recorder::vfunc_43
-0x0059b5b0  stub      C_recorder::vfunc_44
+0x005991e0  100.00%   C_recorder::HasActor
+0x00599240  100.00%   C_recorder::SetActorRecord
+0x00599370  100.00%   C_recorder::HasActor2Only
+0x005993d0  98.25%    C_recorder::GetActors
+0x00599610  97.24%    C_recorder::Tick
+0x0059a240  100.00%   C_recorder::RewindActor
+0x0059a2a0  100.00%   C_recorder::PlayActor
+0x0059a360  100.00%   C_recorder::ReplayActor
+0x0059a380  100.00%   C_recorder::RecordActor
+0x0059a3c0  78.71%    C_recorder::RecLoadFull
+0x0059ac30  95.77%    C_recorder::RecSaveFull
+0x0059b130  100.00%   C_recorder::ScaleTime
+0x0059b210  100.00%   C_recorder::GetSaveSize
+0x0059b2a0  100.00%   C_recorder::SaveBuffer
+0x0059b430  100.00%*  C_recorder::LoadBuffer
+0x0059b570  100.00%   C_recorder::SaveFile
+0x0059b5b0  100.00%   C_recorder::LoadFile
 0x0059b5f0  100.00%   C_cutscene_anim_names::C_cutscene_anim_names
-0x0059b7c0  stub      C_cutscene_anim_names::GetName
-0x0059b800  stub      C_cutscene_anim_names::GetValue
-0x0059b840  stub      C_cutscene_anim_names::SetValue
-0x0059b8c0  stub      C_cutscene_anim_names::LoadBuffer
-0x0059b940  stub      C_cutscene_anim_names::SaveBuffer
-0x0059b9a0  stub      C_cutscene_anim_names::LoadFile
-0x0059ba40  stub      C_cutscene_anim_names::SaveFile
-0x0059bab0  stub      C_cutscene_anim_names::LoadDta
+0x0059b610  100.00%   C_cutscene_anim_names::NewId
+0x0059b620  100.00%   C_cutscene_anim_names::AddItem
+0x0059b740  100.00%   C_cutscene_anim_names::FindId
+0x0059b7c0  100.00%   C_cutscene_anim_names::GetName
+0x0059b800  100.00%   C_cutscene_anim_names::GetValue
+0x0059b840  100.00%   C_cutscene_anim_names::SetValue
+0x0059b880  100.00%   C_cutscene_anim_names::GetNumItems
+0x0059b890  100.00%   C_cutscene_anim_names::Reset
+0x0059b8c0  100.00%   C_cutscene_anim_names::LoadBuffer
+0x0059b940  100.00%   C_cutscene_anim_names::SaveBuffer
+0x0059b9a0  100.00%   C_cutscene_anim_names::LoadFile
+0x0059ba40  100.00%   C_cutscene_anim_names::SaveFile
+0x0059bab0  100.00%   C_cutscene_anim_names::LoadDta
 0x0059bb50  100.00%   C_cutscene_anim_names::Clear
-0x0059bb70  stub      C_cutscene_anim_names::GetSaveSize
-0x0059bb90  stub      C_recorder::AddAnim
-0x0059bc20  stub      C_recorder::CreateAnim
-0x0059bd80  stub      C_recorder::GetAnimByIndex
-0x0059bdb0  stub      C_recorder::GetAnim
-0x0059bdf0  stub      C_recorder::LoadTCK
-0x0059c170  stub      C_recorder::vfunc_21
-0x0059c2f0  stub      C_recorder::vfunc_22
+0x0059bb70  100.00%   C_cutscene_anim_names::GetSaveSize
+0x0059bb90  100.00%   C_recorder::AddAnim
+0x0059bc20  100.00%   C_recorder::CreateAnim
+0x0059bd80  100.00%   C_recorder::GetAnimByIndex
+0x0059bdb0  100.00%   C_recorder::GetAnim
+0x0059bdf0  97.92%    C_recorder::LoadTCK
+0x0059c170  56.00%    C_recorder::HasTCK
+0x0059c2c0  100.00%   S_cutscene_tck::~S_cutscene_tck
+0x0059c2f0  100.00%   C_recorder::CreateAnims
 0x0059c4e0  100.00%   C_recorder::ReleaseAnims
 0x0059c550  100.00%   S_cutscene_anim::~S_cutscene_anim
-0x0059c580  stub      C_recorder::AddAnimName
+0x0059c580  100.00%   C_recorder::AddAnimName
 0x0059c5c0  100.00%   C_recorder::GetAnimName
 0x0059c5d0  100.00%   C_recorder::GetAnimValue
 0x0059c5e0  100.00%   C_recorder::SetAnimValue
@@ -1885,38 +1897,62 @@
 0x0059c640  100.00%   C_recorder::RecLoad
 0x0059c650  100.00%   C_recorder::DetachActor
 0x0059c660  100.00%   C_recorder::AttachActor
-0x0059c690  100.00%   C_recorder::vfunc_38
+0x0059c690  100.00%   C_recorder::RecUpdateActors
 0x0059c6a0  100.00%   C_recorder::Close
+0x0059c9c0  100.00%   C_recorder::SaveTracks
+0x0059ca90  100.00%   C_recorder::LoadTracks
+0x0059cbf0  100.00%   C_recorder::GetTracksSize
 0x0059cc20  50.00%    $CRT_CPP_Initializer(198)
-0x0059cc30  50.00%    $CRT_CPP_Initializer(199)
+0x0059cc30  100.00%   $CRT_CPP_Initializer(199)
+0x0059cc40  100.00%   C_recorder::C_recorder
+0x0059ce30  100.00%   C_cutscene_recording::~C_cutscene_recording
+0x0059ce80  100.00%   C_recorder::~C_recorder
+0x0059cf70  100.00%   C_cutscene_recording::C_cutscene_recording
+0x0059cff0  100.00%   C_cutscene_recording::HasData
+0x0059d000  100.00%   C_cutscene_recording::SetData
+0x0059d030  100.00%   C_cutscene_recording::FindActor(char const *, struct S_cutscene_actor **)
+0x0059d0e0  100.00%   C_cutscene_recording::FindActor(char const *, char const *, struct S_cutscene_actor **)
 0x0059d1f0  100.00%   C_cutscene_recording::RemoveActor
 0x0059d2c0  100.00%   C_cutscene_recording::Clear
-0x0059d350  100.00%   C_cutscene_recording::ReleaseUnknown0
-0x0059d3c0  stub      C_cutscene_recording::Unknown59d3c0
-0x0059d4d0  stub      C_cutscene_recording::RecClear
-0x0059d500  stub      C_cutscene_recording::RecAddActor
-0x0059dcd0  stub      C_cutscene_recording::RecLoad
-0x0059df40  stub      C_cutscene_recording::DetachActor
-0x0059dfb0  stub      C_cutscene_recording::AttachActor
-0x0059e020  stub      C_recorder::vfunc_45
+0x0059d350  100.00%   C_cutscene_recording::ReleaseData
+0x0059d3c0  100.00%   C_cutscene_recording::UpdateActors
+0x0059d4d0  100.00%   C_cutscene_recording::RecClear
+0x0059d500  100.00%   C_cutscene_recording::RecAddActor
+0x0059d740  100.00%   C_cutscene_recording::AddEntry
+0x0059da60  100.00%   C_cutscene_recording::AddActor
+0x0059dcd0  100.00%   C_cutscene_recording::RecLoad
+0x0059df40  100.00%   C_cutscene_recording::DetachActor
+0x0059dfb0  100.00%   C_cutscene_recording::AttachActor
+0x0059e020  100.00%   C_recorder::GetAnimEndTime
 0x0059e100  100.00%   C_recorder::vfunc_46
-0x0059e110  stub      C_recorder::vfunc_47
-0x0059e140  stub      C_recorder::vfunc_48
+0x0059e110  100.00%   C_recorder::SetOverlay
+0x0059e140  100.00%   C_recorder::Speak
 0x0059e170  100.00%   C_recorder::vfunc_49
-0x0059e180  stub      C_recorder::OpenShow
+0x0059e180  100.00%   C_recorder::OpenShow
 0x0059e1e0  100.00%   C_recorder::SetShowStart
-0x0059e1f0  stub      C_recorder::TickShow
+0x0059e1f0  100.00%   C_recorder::TickShow
 0x0059e2a0  100.00%   C_recorder::Stop
 0x0059e2d0  100.00%   C_recorder::IsPlaying
+0x0059e2f0  100.00%   std::vector<S_cutscene_placement,std::allocator<S_cutscene_placement> >::insert
+0x0059e5f0  100.00%   std::vector<S_cutscene_actor,std::allocator<S_cutscene_actor> >::_Ucopy
+0x0059e630  100.00%   std::vector<S_cutscene_actor,std::allocator<S_cutscene_actor> >::_Ufill
+0x0059e660  100.00%   std::vector<S_cutscene_rec_actor,std::allocator<S_cutscene_rec_actor> >::_Ucopy
+0x0059e6a0  100.00%   std::vector<S_cutscene_rec_actor,std::allocator<S_cutscene_rec_actor> >::_Ufill
 0x0059e6d0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ufill
-0x0059e7e0  stub      C_seagull::C_seagull
+0x0059e700  100.00%   std::vector<S_cutscene_placement,std::allocator<S_cutscene_placement> >::size
+0x0059e730  100.00%   std::vector<S_cutscene_placement,std::allocator<S_cutscene_placement> >::_Ucopy
+0x0059e770  100.00%   std::vector<S_cutscene_placement,std::allocator<S_cutscene_placement> >::_Ufill
+0x0059e7a0  100.00%   std::_Construct(struct S_cutscene_actor *, struct S_cutscene_actor const &)
+0x0059e7c0  100.00%   std::_Construct(struct S_cutscene_rec_actor *, struct S_cutscene_rec_actor const &)
+0x0059e7e0  100.00%   C_seagull::C_seagull
 0x0059e830  100.00%   C_seagull::`scalar deleting destructor'
-0x0059e850  stub      C_seagull::~C_seagull
-0x0059e890  stub      C_seagull::GameInit
-0x0059f6a0  stub      C_seagull::GameDone
-0x0059f710  stub      C_seagull::Collision
-0x0059f770  stub      C_seagull::Hit
-0x0059f920  stub      C_seagull::AI
+0x0059e850  100.00%   C_seagull::~C_seagull
+0x0059e890  73.79%    C_seagull::GameInit
+0x0059f6a0  100.00%   C_seagull::GameDone
+0x0059f710  100.00%   C_seagull::Collision
+0x0059f770  100.00%   C_seagull::Hit
+0x0059f920  97.05%    C_seagull::AI
+0x005a06b0  100.00%   S_vector::GetNormal
 0x005a0730  missing   $CRT_CPP_Initializer(200)
 0x005a0760  50.00%    $CRT_CPP_Initializer(201)
 0x005a0770  100.00%   $CRT_CPP_Initializer(202)
@@ -2125,10 +2161,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
+0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct C_mission::S_frame_actor_buffer *, struct C_mission::S_frame_actor_buffer const &)
+0x005bca00  100.00%   std::_Construct(struct G_CameraPushPop *, struct G_CameraPushPop const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)
@@ -2269,15 +2305,18 @@
 0x005ca5c0  stub      g_collision::FindCollsByFrame
 0x005caf80  missing   $CRT_CPP_Initializer(237)
 0x005d39a0  stub      g_collision::_TestSphereB
+0x005d4570  stub      g_collision::_TestSphereSlide
+0x005d5490  stub      g_collision::TestSphereInVehicle
 0x005d58d0  missing   $CRT_CPP_Initializer(238)
 0x005d5900  100.00%   g_collision::GameDone
 0x005d5910  100.00%   g_collision::TestLineV
 0x005d5920  100.00%   g_collision::TestLineVInnerDyn
 0x005d5930  100.00%   g_collision::TestLineH
 0x005d5940  100.00%   g_collision::TestSphereB
+0x005d5960  100.00%   g_collision::TestSphereSlide
 0x005d59b0  100.00%   g_collision::TestDBox
-0x005d59c0  stub      g_collision::TestPanak2
-0x005d6430  stub      g_collision::TestPanak2InVehicle
+0x005d59c0  47.56%    g_collision::TestPanak2
+0x005d6430  32.75%    g_collision::TestPanak2InVehicle
 0x005d6e20  missing   $CRT_CPP_Initializer(239)
 0x005d6e50  100.00%   AddLine
 0x005d6ee0  100.00%   DrawLines
@@ -2839,12 +2878,16 @@
 0x005f4ca0  100.00%   DabingGetFreeChanel
 0x005f4cd0  stub      DabingSetHuman
 0x005f5060  99.43%    DabingReset
+0x005f5210  stub      DabingSetFrame
 0x005f53d0  stub      DabingInvalidate
 0x005f5570  stub      DabingSpeak
 0x005f5c40  stub      DabingIsSpeaking
 0x005f5cc0  stub      DabingStop
+0x005f5d10  stub      DabingUpdateFrames
 0x005f5dd0  98.46%    DabingTick
 0x005f65e0  stub      DabingPauseSounds
+0x005f6670  stub      DabingCutscene
+0x005f6760  stub      DabingCutsceneMorph
 0x005f69f0  missing   $CRT_CPP_Initializer(356)
 0x005f6a20  missing   $CRT_CPP_Initializer(357)
 0x005f6a30  missing   $CRT_CPP_Initializer(358)
@@ -2876,39 +2919,51 @@
 0x005f8950  100.00%   G_IndicatorsClass::PlayerSetWingmanName
 0x005f8970  100.00%   G_IndicatorsClass::PlayerSetWingmanLives
 0x005f8990  100.00%   G_IndicatorsClass::SubtitlesClear
-0x005f9480  stub      G_IndicatorsClass::IntroSubtitlesAdd
-0x005f9690  stub      G_IndicatorsClass::IntroSubtitlesAddSimple
+0x005f89e0  89.62%    G_IndicatorsClass::SubtitlesAdd
+0x005f8d30  100.00%   G_IndicatorsClass::SubtitlesAddCutscene
+0x005f9040  100.00%   G_IndicatorsClass::IntroSubtitlesAddIntern
+0x005f9480  100.00%   G_IndicatorsClass::IntroSubtitlesAdd
+0x005f9690  100.00%   G_IndicatorsClass::IntroSubtitlesAddSimple
 0x005f9940  100.00%   G_IndicatorsClass::IntroSubtitlesClear
-0x005f99b0  stub      G_IndicatorsClass::MissionHelpClear
-0x005f9a00  stub      G_IndicatorsClass::MissionHelpAdd
-0x005f9ce0  stub      G_IndicatorsClass::MissionHelpSetTime
+0x005f99b0  100.00%   G_IndicatorsClass::MissionHelpClear
+0x005f9a00  100.00%   G_IndicatorsClass::MissionHelpAdd
+0x005f9ce0  100.00%   G_IndicatorsClass::MissionHelpSetTime
 0x005f9d10  100.00%   G_IndicatorsClass::MapEnable
 0x005f9d40  100.00%   G_IndicatorsClass::ConsoleClear
-0x005f9d50  stub      G_IndicatorsClass::ConsoleAddText
-0x005f9de0  stub      G_IndicatorsClass::ConsoleAddTextByID
-0x005f9e10  stub      G_IndicatorsClass::AddBloodSplash
+0x005f9d50  100.00%   G_IndicatorsClass::ConsoleAddText
+0x005f9de0  100.00%   G_IndicatorsClass::ConsoleAddTextByID
+0x005f9e10  67.83%    G_IndicatorsClass::AddBloodSplash
 0x005fa020  100.00%   G_IndicatorsClass::CompassSetDestination
-0x005fa030  stub      G_IndicatorsClass::ThiefIndicatorSetValue
+0x005fa030  100.00%   G_IndicatorsClass::ThiefIndicatorSetValue
+0x005fa040  100.00%   G_IndicatorsClass::RefullingIndicatorSetValue
 0x005fa050  100.00%   G_IndicatorsClass::WideScreenSetRatio
-0x005fa300  stub      G_IndicatorsClass::WideScreenSetOn
-0x005fa370  stub      G_IndicatorsClass::FadeInOut
-0x005fa3e0  stub      G_IndicatorsClass::FadeInOutGetState
+0x005fa300  96.30%    G_IndicatorsClass::WideScreenSetOn
+0x005fa370  100.00%   G_IndicatorsClass::FadeInOut
+0x005fa3e0  100.00%   G_IndicatorsClass::FadeInOutGetState
 0x005fa400  100.00%   G_IndicatorsClass::FadeInOutIsDark
 0x005fa410  100.00%   G_IndicatorsClass::SetOverlayFade
 0x005fa430  100.00%   G_IndicatorsClass::SetOverlayTexture
 0x005fa4a0  100.00%   G_IndicatorsClass::RadarClear
-0x005fa500  stub      G_IndicatorsClass::RadarSetPlayerCar
-0x005fa510  stub      G_IndicatorsClass::RadarAddCar
+0x005fa500  100.00%   G_IndicatorsClass::RadarSetPlayerCar
+0x005fa510  100.00%   G_IndicatorsClass::RadarAddCar
 0x005fa720  100.00%   G_IndicatorsClass::RadarRemoveCar
+0x005fa780  100.00%   G_IndicatorsClass::RadarAddObject
+0x005fa990  100.00%   G_IndicatorsClass::RadarRemoveObject
 0x005fa9f0  100.00%   G_IndicatorsClass::RadarSetLeftEdge
 0x005fabf0  100.00%   G_IndicatorsClass::RadarSetRightEdge
 0x005fadf0  100.00%   G_IndicatorsClass::RaceSetStartFlag
+0x005faea0  100.00%   G_IndicatorsClass::RaceSetTime
+0x005faee0  100.00%   G_IndicatorsClass::RaceSetLapTime
+0x005faf20  100.00%   G_IndicatorsClass::RaceSetBestTime
+0x005faf60  100.00%   G_IndicatorsClass::RaceSetPosition
+0x005faf90  100.00%   G_IndicatorsClass::RaceSetLaps
+0x005fafc0  100.00%   G_IndicatorsClass::RaceFlashText
 0x005fb010  100.00%   G_IndicatorsClass::BonusSetCount
 0x005fb060  49.53%    G_IndicatorsClass::DrawAll
 0x00601520  93.87%    G_IndicatorsClass::ResolutionChanged
 0x006025f0  100.00%   SetRectVertices
 0x006026d0  100.00%   SetDiamondVertices
-0x006027b0  stub      G_IndicatorsClass::Tick
+0x006027b0  94.21%    G_IndicatorsClass::Tick
 0x006036d0  100.00%   G_IndicatorsClass::TextSize
 0x00603780  100.00%   G_IndicatorsClass::HledejZlom
 0x00603880  45.94%    G_IndicatorsClass::OutText
@@ -2935,7 +2990,7 @@
 0x006051e0  100.00%   G_LoadSaveClass::AllDefault
 0x00605260  100.00%   G_LoadSaveClass::ProfileEnumFiles
 0x00605530  100.00%   G_LoadSaveClass::ProfileEnumRelease
-0x00605560  100.00%   G_LoadSaveClass::ProfileGetList
+0x00605560  100.00%   CutsceneTime
 0x00605570  100.00%   G_LoadSaveClass::ProfileSelect
 0x006055c0  100.00%   G_LoadSaveClass::ProfileCreate
 0x00605740  100.00%   G_LoadSaveClass::ProfileDelete
@@ -3088,7 +3143,7 @@
 0x0060eef0  100.00%   G_LoadSaveClass::FreerideSetupAfter
 0x0060ef50  100.00%   G_LoadSaveClass::~G_LoadSaveClass
 0x0060efa0  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::size
-0x0060efd0  100.00%   std::vector<S_garage_item,std::allocator<S_garage_item> >::insert
+0x0060efd0  100.00%   std::vector<S_vector,std::allocator<S_vector> >::insert
 0x0060f1f0  100.00%   std::vector<S_control,std::allocator<S_control> >::insert
 0x0060f520  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::_Ucopy
 0x0060f560  100.00%   std::vector<G_Profile_FileHead,std::allocator<G_Profile_FileHead> >::_Ufill

@@ -8,6 +8,8 @@ class I3D_sound;
 class I3D_frame;
 class I3D_visual;
 class C_human;
+struct S_cutscene_dabing;
+struct S_cutscene_morph;
 
 // The dubbing, the characters' speech (PS2 g_dabing.cpp, "dabing" Czech for dubbing). Only what C_game's Init, Done and
 // Tick and the scripts call so far.
@@ -85,6 +87,8 @@ void DabingDone();
 // type and range), and whether the channel still speaks
 int DabingGetFreeChanel();
 void DabingSetHuman(int chanel, C_human *human);
+// The speaker of a channel by its frame, C_recorder::Speak's (PC only, the name is ours)
+void DabingSetFrame(int chanel, I3D_frame *frame);
 // The channels forget a human (PS2 name), which C_game::InvalidateActor calls
 void DabingInvalidate(C_human *human);
 void DabingSpeak(int chanel, uint speech, bool subtitle, uint kind);
@@ -101,3 +105,10 @@ void DabingTick(uint time);
 // channels' data and sounds are freed (the data first, where DabingDone frees the sound first) and the channels
 // cleared, as DabingDone does (PC only, the name is ours; C_recorder::Close calls it)
 void DabingReset();
+// The cutscene's (C_recorder::Tick's, the names are ours): a speech of its dubbing track (a channel's speech, or the
+// channel's human or model taken from the scene's frame named in the item), a morph of its morphs track added to
+// G_DabingMorphActive (the face the scene's visual named in the item), and the channels' two frames at 0x20 and 0x24
+// updated where they are on
+void DabingCutscene(const S_cutscene_dabing *item);
+void DabingCutsceneMorph(const S_cutscene_morph *item, uint time);
+void DabingUpdateFrames();

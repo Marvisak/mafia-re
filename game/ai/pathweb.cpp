@@ -103,6 +103,14 @@ void C_web_path::FlipOneWay(uint, uint, bool)
     StubLog("C_web_path::FlipOneWay");
 }
 
+// The first node where there are any: C_seagull::GameInit, its only caller, doesn't test for -1
+// STUB: GAME 0x54c9a0
+int C_web_path::GetNearNode(const S_vector &pos, float radius, ushort flags)
+{
+    StubLog("C_web_path::GetNearNode");
+    return num_nodes ? 0 : -1;
+}
+
 // STUB: GAME 0x54cba0
 void C_web_path::SortNodesByX()
 {

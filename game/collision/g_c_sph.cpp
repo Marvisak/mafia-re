@@ -6,10 +6,29 @@
 
 #include "stub.h"
 
+// GLOBAL: GAME 0x648240
+float lastSphereDistance;
+
 // STUB: GAME 0x5d39a0
 int g_collision::_TestSphereB(const S_vector &from, const S_vector &dir, float radius, S_vector *pos,
     S_vector *normal, uint flags, uint flags2)
 {
     StubLog("g_collision::_TestSphereB");
     return false;
+}
+
+// STUB: GAME 0x5d4570
+int g_collision::_TestSphereSlide(const S_vector &from, const S_vector &dir, float radius, S_vector *pos,
+    S_vector *normal, uint flags, uint flags2)
+{
+    StubLog("g_collision::_TestSphereSlide");
+    return 0;
+}
+
+// STUB: GAME 0x5d5490
+int g_collision::TestSphereInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from,
+    const S_vector &dir, float radius, S_vector *pos, S_vector *normal, uint flags, uint flags2)
+{
+    StubLog("g_collision::TestSphereInVehicle");
+    return 0;
 }

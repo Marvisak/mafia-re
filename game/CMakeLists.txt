@@ -244,6 +244,21 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?AddRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
         /INCLUDE:?RemoveRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
         /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ)
+    # The collisions' TestSphereSlide, which only C_dyn_object::AI calls (g_colls.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?TestSphereSlide@g_collision@@QAEHABUS_vector@@0MPAPAUS_slide_contact@@PAI@Z)
+    # g_indicators.cpp's functions that nothing written calls yet: the dubbing's subtitles (DabingSpeak), the refuelling
+    # bar, the radar's objects and the races' setters (the scripts', the racing's)
+    target_link_options(game PRIVATE
+        /INCLUDE:?SubtitlesAdd@G_IndicatorsClass@@QAEXII_N@Z
+        /INCLUDE:?RefullingIndicatorSetValue@G_IndicatorsClass@@QAEXM@Z
+        /INCLUDE:?RadarAddObject@G_IndicatorsClass@@QAEXPAUtDynamicCollObject@@I@Z
+        /INCLUDE:?RadarRemoveObject@G_IndicatorsClass@@QAEXPAUtDynamicCollObject@@@Z
+        /INCLUDE:?RaceSetTime@G_IndicatorsClass@@QAEXI@Z
+        /INCLUDE:?RaceSetLapTime@G_IndicatorsClass@@QAEXI@Z
+        /INCLUDE:?RaceSetBestTime@G_IndicatorsClass@@QAEXI@Z
+        /INCLUDE:?RaceSetPosition@G_IndicatorsClass@@QAEXII@Z
+        /INCLUDE:?RaceSetLaps@G_IndicatorsClass@@QAEXII@Z
+        /INCLUDE:?RaceFlashText@G_IndicatorsClass@@QAEXPBDM@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

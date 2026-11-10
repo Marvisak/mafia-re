@@ -1,16 +1,15 @@
-// The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md). Written so far:
-// the constructor, ResetValues and the setters it calls, LoadFont, LanguageSelect, GetLanguage, Create, Destroy,
-// GameInit, GameDone, the clock's setters and TimerGetInterval, _SpocitejRafiku2, the player's panel's helpers, the
-// tachometer's and the player's setters, the clears C_game's Init and Done call (SubtitlesClear, IntroSubtitlesClear,
-// ConsoleClear, RadarClear), MapEnable, CompassSetDestination, WideScreenSetRatio, FadeInOutIsDark, SetOverlayFade,
-// SetOverlayTexture, RadarRemoveCar, the radar's edges, RaceSetStartFlag, BonusSetCount, DrawAll, ResolutionChanged
-// (with the dials' vertex helpers), TextSize, OutText, OutTextMultiLine, the menus' cursor, the camera's field of view
-// and ParheliaSetCenter; the rest of what main, the scene's callback, the profiles and the game call is stubs
-// (RadarAddCar, and the scripts' subtitles, console texts, wide screen and fades).
+// The HUD (PS2 g_indicators.cpp; the PC's file is the one at 0x5f6a20-0x604e5c, docs/game-files.md), written whole:
+// mafiaIndicators' initializers, the constructor, the loads and the setters in PS2's order (the subtitles, the intro's
+// and the cutscenes' subtitles, the mission's help, the console, the blood splashes, the wide screen, the fades, the
+// radar's cars and objects, the races' setters), DrawAll, ResolutionChanged with the dials' vertex helpers, Tick, the
+// texts' functions and the PC's own (the menus' cursor, the camera's field of view, ParheliaSetCenter). Open: DrawAll
+// and OutText, AddBloodSplash (the angle's sines and cosines on the FPU stack), SubtitlesAdd, Tick, ResolutionChanged
+// and TachometrSetValues (registers), and the .bss order (the header).
 
 #include "ui/g_indicators.h"
 #include "ai/pathweb.h"
 #include "collision/g_colls.h"
+#include "mission/C_recorder.h"
 #include "mission/Mission.h"
 #include "mission/game.h"
 #include "ui/g_loadsave.h"
@@ -76,6 +75,9 @@ ITexture *textureIcons;
 // GLOBAL: GAME 0x6bf970
 ITexture *textureBenzin;
 
+// WideScreenSetRatio's two quads (the name is ours)
+#define WIDESCREEN_VERTS 12
+
 // The dials' vertices, quads of six (PS2's names, whose sizes differ): the clock's dial and hands, the clock's interval,
 // the tachometer's dials and displays, its needles, three quads of the player's, and the black bars of
 // WideScreenSetRatio
@@ -90,7 +92,7 @@ TLVERTEX _VtxTachometrRafiky[18];
 // GLOBAL: GAME 0x6be890
 TLVERTEX _VtxPlayer[18];
 // GLOBAL: GAME 0x6be710
-TLVERTEX _VtxWideScreen[12];
+TLVERTEX _VtxWideScreen[WIDESCREEN_VERTS];
 
 // The blood over the screen, crew_quads of them (PS2's name)
 // GLOBAL: GAME 0x6bdf90
@@ -1073,16 +1075,193 @@ void G_IndicatorsClass::SubtitlesClear()
     subtitles.clear();
 }
 
-// STUB: GAME 0x5f9480
-void G_IndicatorsClass::IntroSubtitlesAdd(uint a, uint b)
+// A subtitle (PS2's name; PS2's does nothing): the text database's text of that id, if it has two characters or more,
+// split into lines the width of the HUD's screen, each shown for the time in milliseconds (at least two seconds,
+// two seconds and 40 ms a character for 0), the lines before cleared with clear
+// FUNCTION: GAME 0x5f89e0
+void G_IndicatorsClass::SubtitlesAdd(uint id, uint time, bool clear)
 {
-    StubLog("G_IndicatorsClass::IntroSubtitlesAdd");
+    float scale = igraph->Scrn_sy() / 600.0f;
+    char *text = textDatabase.GetTextOrNULL(id);
+    if (!text)
+        return;
+    int len = strlen(text);
+    if (len < 2)
+        return;
+    if (clear)
+        subtitles.clear();
+    if (!time)
+        time = len * 40 + 2000;
+    else if (time < 2000)
+        time = 2000;
+    float size = scale * 22.0f;
+    const char *end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    G_MISubtitleStruct s;
+    while (end && *end)
+    {
+        s.text = text;
+        s.end = end;
+        s.hidden = 0;
+        s.alpha = time ? time : SUBTITLE_FOREVER;
+        subtitles.push_back(s);
+        text = (char *)end + 1;
+        end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    }
+    s.text = text;
+    s.end = NULL;
+    s.hidden = 0;
+    s.alpha = time ? time : SUBTITLE_FOREVER;
+    subtitles.push_back(s);
+    show_flags |= INDF_SUBTITLES;
 }
 
-// STUB: GAME 0x5f9690
+// A subtitle of the cutscene's track (C_recorder::Tick's, the name is ours): its text split into lines as SubtitlesAdd
+// does, shown for its duration (for good with 0); a text id of 0 clears the subtitles
+// FUNCTION: GAME 0x5f8d30
+void G_IndicatorsClass::SubtitlesAddCutscene(const S_cutscene_subtitle *item)
+{
+    if (!item->text_id)
+    {
+        subtitles.clear();
+        return;
+    }
+    float scale = igraph->Scrn_sy() / 600.0f;
+    char *text = textDatabase.GetText(item->text_id);
+    float size = scale * 22.0f;
+    const char *end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    G_MISubtitleStruct s;
+    while (end && *end)
+    {
+        s.text = text;
+        s.end = end;
+        s.hidden = 0;
+        s.alpha = item->duration ? item->duration : SUBTITLE_FOREVER;
+        subtitles.push_back(s);
+        text = (char *)end + 1;
+        end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    }
+    s.text = text;
+    s.end = NULL;
+    s.hidden = 0;
+    s.alpha = item->duration ? item->duration : SUBTITLE_FOREVER;
+    subtitles.push_back(s);
+    show_flags |= INDF_SUBTITLES;
+}
+
+// An intro's subtitle (PS2's name), the text database's text of that id, time milliseconds after it was due (Tick
+// passes the waiting one's): "<duration>,<x>,<y>,<alignment>" (x and y in percent of 800x600, the alignment 'L', 'C'
+// or 'R'; each optional) and a line after each '~', 40 high where it starts with '^', 27 otherwise, each line below
+// the one before
+// FUNCTION: GAME 0x5f9040
+void G_IndicatorsClass::IntroSubtitlesAddIntern(uint id, float time)
+{
+    uint px = 0;
+    uint py = 0;
+    uint align = 0;
+    float duration = 0.0f;
+    char *text = textDatabase.GetTextOrNULL(id);
+    if (!text)
+        return;
+    char *line = strchr(text, '~');
+    char *p = strchr(text, ',');
+    if (p && p < line)
+    {
+        p++;
+        duration = atoi(p);
+        p = strchr(p, ',');
+        if (p && p < line)
+        {
+            p++;
+            px = atoi(p);
+            p = strchr(p, ',');
+            if (p && p < line)
+            {
+                p++;
+                py = atoi(p);
+                p = strchr(p, ',');
+                if (p && p < line)
+                    align = (uchar)p[1];
+            }
+        }
+    }
+    if (duration < time)
+        duration = time + .01;
+    float x = (px / 100.0f) * 800.0f;
+    float y = (py / 100.0f) * 600.0f;
+    while (line)
+    {
+        line++;
+        char *next = strchr(line, '~');
+        G_MIIntroSubtitles s;
+        if (*line == '^')
+        {
+            line++;
+            s.size = 40.0f;
+        }
+        else
+            s.size = 27.0f;
+        switch (align)
+        {
+        case 'R':
+        case 'r':
+            s.x = x - TextSize(line, s.size, 0, next);
+            break;
+        case 'C':
+        case 'c':
+            s.x = x - TextSize(line, s.size, 0, next) * .5f;
+            break;
+        default:
+            s.x = x;
+        }
+        s.text = line;
+        s.end = next;
+        s.y = y;
+        s.alpha_out = time;
+        s.alpha_out /= 1000.0f;
+        s.alpha_in = duration - time;
+        s.alpha_in /= 1000.0f;
+        intro_subtitles.push_back(s);
+        y += s.size;
+        line = next;
+    }
+}
+
+// The intro's subtitles of the ids from first to last (PS2's name), each text the time in milliseconds before its
+// subtitle shows: they wait in intro_subtitles_waiting, which Tick counts down
+// FUNCTION: GAME 0x5f9480
+void G_IndicatorsClass::IntroSubtitlesAdd(uint first, uint last)
+{
+    for (uint id = first; id <= last; id++)
+    {
+        char *text = textDatabase.GetTextOrNULL(id);
+        if (text)
+        {
+            G_MIIntroSubtitlesWaiting w;
+            w.id = id;
+            w.time = atoi(text);
+            intro_subtitles_waiting.push_back(w);
+        }
+    }
+}
+
+// The text of that id as an intro's subtitle at once (PS2's name), 25 high in the middle of the screen, for four
+// seconds
+// FUNCTION: GAME 0x5f9690
 void G_IndicatorsClass::IntroSubtitlesAddSimple(uint id)
 {
-    StubLog("G_IndicatorsClass::IntroSubtitlesAddSimple");
+    char *text = textDatabase.GetTextOrNULL(id);
+    if (text)
+    {
+        G_MIIntroSubtitles s;
+        s.size = 25.0f;
+        s.x = 400.0f - TextSize(text, s.size, 0, NULL) * .5f;
+        s.y = 300.0f - s.size * .5f;
+        s.text = text;
+        s.end = NULL;
+        s.alpha_out = 0.0f;
+        s.alpha_in = 4.0f;
+        intro_subtitles.push_back(s);
+    }
 }
 
 // FUNCTION: GAME 0x5f9940
@@ -1092,22 +1271,47 @@ void G_IndicatorsClass::IntroSubtitlesClear()
     intro_subtitles_waiting.clear();
 }
 
-// STUB: GAME 0x5f99b0
+// FUNCTION: GAME 0x5f99b0
 void G_IndicatorsClass::MissionHelpClear()
 {
-    StubLog("G_IndicatorsClass::MissionHelpClear");
+    mission_help.clear();
 }
 
-// STUB: GAME 0x5f9a00
-void G_IndicatorsClass::MissionHelpAdd(uint id)
+// A help text of the mission (PS2's name), the text database's text of that id split into lines the width of the HUD's
+// screen, shown for two and a half seconds and 40 ms a character; returns that time
+// FUNCTION: GAME 0x5f9a00
+uint G_IndicatorsClass::MissionHelpAdd(uint id)
 {
-    StubLog("G_IndicatorsClass::MissionHelpAdd");
+    float scale = igraph->Scrn_sy() / 600.0f;
+    char *text = textDatabase.GetText(id);
+    uint time = strlen(text) * 40 + 2500;
+    float size = scale * 22.0f;
+    const char *end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    G_MISubtitleStruct s;
+    while (end && *end)
+    {
+        s.text = text;
+        s.end = end;
+        s.hidden = 0;
+        s.alpha = time;
+        mission_help.push_back(s);
+        text = (char *)end + 1;
+        end = HledejZlom(text, hud_size.x * .9f, size, 0, NULL);
+    }
+    s.text = text;
+    s.end = NULL;
+    s.hidden = 0;
+    s.alpha = time;
+    mission_help.push_back(s);
+    show_flags |= INDF_MISSION_HELP;
+    return time;
 }
 
-// STUB: GAME 0x5f9ce0
+// FUNCTION: GAME 0x5f9ce0
 void G_IndicatorsClass::MissionHelpSetTime(uint time)
 {
-    StubLog("G_IndicatorsClass::MissionHelpSetTime");
+    for (G_MISubtitleStruct *p = mission_help.begin(); p < mission_help.end(); p++)
+        p->alpha = time;
 }
 
 // FUNCTION: GAME 0x5f9d10
@@ -1124,16 +1328,119 @@ void G_IndicatorsClass::ConsoleClear()
     console_count = 0;
 }
 
-// STUB: GAME 0x5f9de0
+// A line of the console (PS2's name), the oldest replaced once there are CONSOLE_LINES, shown for five seconds
+// FUNCTION: GAME 0x5f9d50
+void G_IndicatorsClass::ConsoleAddText(const char *text, uint color)
+{
+    if (!text)
+        return;
+    uint line;
+    if (console_count >= CONSOLE_LINES)
+    {
+        line = console_first;
+        console_first = (console_first + 1) % CONSOLE_LINES;
+    }
+    else
+    {
+        line = (console_first + console_count) % CONSOLE_LINES;
+        console_count++;
+    }
+    console_colors[line] = color & 0xffffff;
+    strncpy(console_texts[line], text, sizeof(console_texts[line]));
+    console_times[line] = 5.0f;
+}
+
+// FUNCTION: GAME 0x5f9de0
 void G_IndicatorsClass::ConsoleAddTextByID(uint id, uint color)
 {
-    StubLog("G_IndicatorsClass::ConsoleAddTextByID");
+    char *text = textDatabase.GetTextOrNULL(id);
+    if (text)
+        ConsoleAddText(text, color);
+}
+
+// A quad of 2blood.bmp centred at x, y (on 800x600), size wide, turned by a random angle, shown for five seconds
+// (PC only, the name is ours): only at the highest levels of blood, and MAX_CREW_QUADS at most. Open: the angle's sine
+// and cosine (the original keeps the angle in memory and the four products on the FPU stack, its frame a dword larger).
+// FUNCTION: GAME 0x5f9e10
+void G_IndicatorsClass::AddBloodSplash(float x, float y, float size)
+{
+    if (mafiaLoadSave.settings.blood_level < .9f)
+        return;
+    if (crew_quads >= MAX_CREW_QUADS)
+        return;
+    x *= screen_scale.x;
+    y *= screen_scale.y;
+    size *= screen_scale.x;
+    float angle = rand() * (2 * PI / RAND_MAX);
+    crew_times[crew_quads] = 5.0f;
+    int n = crew_quads * 6;
+    // the quad's two edges from its first corner
+    float bx = sin(angle);
+    float by = cos(angle);
+    float ax = by;
+    float ay = -bx;
+    bx *= size;
+    by *= size;
+    ax *= size;
+    ay *= size;
+    x -= (ax + bx) * .5f;
+    y -= (ay + by) * .5f;
+    TLVERTEX *vert;
+    vert = &_VtxCrew[n++];
+    vert->x = x;
+    vert->y = y;
+    vert->z = 0.0f;
+    vert->rhw = 1.0f;
+    vert->color = 0xffffffff;
+    vert->u = 0.0f;
+    vert->v = 0.0f;
+    vert = &_VtxCrew[n++];
+    vert->x = x + ax;
+    vert->y = y + ay;
+    vert->z = 0.0f;
+    vert->rhw = 1.0f;
+    vert->color = 0xffffffff;
+    vert->u = 1.0f;
+    vert->v = 0.0f;
+    vert = &_VtxCrew[n++];
+    vert->x = x + bx;
+    vert->y = y + by;
+    vert->z = 0.0f;
+    vert->rhw = 1.0f;
+    vert->color = 0xffffffff;
+    vert->u = 0.0f;
+    vert->v = 1.0f;
+    vert = &_VtxCrew[n++];
+    vert->x = x + (ax + bx);
+    vert->y = y + (ay + by);
+    vert->z = 0.0f;
+    vert->rhw = 1.0f;
+    vert->color = 0xffffffff;
+    vert->u = 1.0f;
+    vert->v = 1.0f;
+    _VtxCrew[n] = _VtxCrew[n - 2];
+    n++;
+    _VtxCrew[n] = _VtxCrew[n - 4];
+    show_flags |= INDF_CREW;
+    crew_quads++;
 }
 
 // FUNCTION: GAME 0x5fa020
 void G_IndicatorsClass::CompassSetDestination(I3D_frame *frm)
 {
     compass_destination = frm;
+}
+
+// FUNCTION: GAME 0x5fa030
+void G_IndicatorsClass::ThiefIndicatorSetValue(float value)
+{
+    thief_indicator = value;
+}
+
+// FUNCTION: GAME 0x5fa040
+void G_IndicatorsClass::RefullingIndicatorSetValue(float value)
+{
+    refulling_indicator = value;
 }
 
 // Two quads in the colour 0xaf0000ff over the whole width, a few pixels past the screen's edges: from the top to where
@@ -1210,22 +1517,51 @@ void G_IndicatorsClass::WideScreenSetRatio(float ratio)
     _VtxWideScreen[11] = _VtxWideScreen[7];
 }
 
-// STUB: GAME 0x5fa300
+// Tick runs the bars in over the time, or out (at once for 0)
+// FUNCTION: GAME 0x5fa300
 void G_IndicatorsClass::WideScreenSetOn(bool on, uint time)
 {
-    StubLog("G_IndicatorsClass::WideScreenSetOn");
+    widescreen_length = time;
+    widescreen_time = time;
+    widescreen_on = on;
+    widescreen_color = 0;
+    show_flags |= INDF_WIDESCREEN;
+    if (!widescreen_length)
+    {
+        if (on)
+        {
+            widescreen_color = 0xff000000;
+            for (int i = 0; i < WIDESCREEN_VERTS; i++)
+                _VtxWideScreen[i].color = widescreen_color;
+        }
+        else
+            show_flags &= ~INDF_WIDESCREEN;
+    }
 }
 
-// STUB: GAME 0x5fa370
+// Tick runs the fade over the time, at its end in leaving the colour opaque and out removing INDF_FADE
+// FUNCTION: GAME 0x5fa370
 void G_IndicatorsClass::FadeInOut(bool in, uint time, uint color)
 {
-    StubLog("G_IndicatorsClass::FadeInOut");
+    fade_length = time;
+    fade_time = time;
+    fade_in = in;
+    fade_color = color;
+    show_flags |= INDF_FADE;
+    if (!fade_length)
+    {
+        if (in)
+            fade_color |= 0xff000000;
+        else
+            show_flags &= ~INDF_FADE;
+    }
 }
 
-// STUB: GAME 0x5fa3e0
+// FUNCTION: GAME 0x5fa3e0
 bool G_IndicatorsClass::FadeInOutGetState()
 {
-    StubLog("G_IndicatorsClass::FadeInOutGetState");
+    if (fade_time && show_flags & INDF_FADE)
+        return false;
     return true;
 }
 
@@ -1265,10 +1601,30 @@ void G_IndicatorsClass::RadarClear()
     radar_items.clear();
 }
 
-// STUB: GAME 0x5fa510
+// FUNCTION: GAME 0x5fa500
+void G_IndicatorsClass::RadarSetPlayerCar(C_car *car)
+{
+    radar_player_car = car;
+}
+
+// A car on the radar in the colour (0xrrggbb), or the colour of a car there already (PS2's takes a colour's index)
+// FUNCTION: GAME 0x5fa510
 void G_IndicatorsClass::RadarAddCar(C_car *car, uint color)
 {
-    StubLog("G_IndicatorsClass::RadarAddCar");
+    if (!car)
+        return;
+    G_RadarCar rc;
+    rc.car = car;
+    rc.color = color | 0xff000000;
+    for (G_RadarCar *p = radar_cars.begin(); p < radar_cars.end(); p++)
+    {
+        if (p->car == car)
+        {
+            p->color = rc.color;
+            return;
+        }
+    }
+    radar_cars.push_back(rc);
 }
 
 // FUNCTION: GAME 0x5fa720
@@ -1279,6 +1635,39 @@ void G_IndicatorsClass::RadarRemoveCar(C_car *car)
         if (p->car == car)
         {
             radar_cars.erase(p);
+            return;
+        }
+    }
+}
+
+// A thing on the radar in the colour (0xrrggbb), or the colour of one there already (PS2's name)
+// FUNCTION: GAME 0x5fa780
+void G_IndicatorsClass::RadarAddObject(tDynamicCollObject *object, uint color)
+{
+    if (!object)
+        return;
+    G_RadarItem ri;
+    ri.object = object;
+    ri.color = color | 0xff000000;
+    for (G_RadarItem *p = radar_items.begin(); p < radar_items.end(); p++)
+    {
+        if (p->object == object)
+        {
+            p->color = ri.color;
+            return;
+        }
+    }
+    radar_items.push_back(ri);
+}
+
+// FUNCTION: GAME 0x5fa990
+void G_IndicatorsClass::RadarRemoveObject(tDynamicCollObject *object)
+{
+    for (G_RadarItem *p = radar_items.begin(); p < radar_items.end(); p++)
+    {
+        if (p->object == object)
+        {
+            radar_items.erase(p);
             return;
         }
     }
@@ -1407,6 +1796,51 @@ void G_IndicatorsClass::RaceSetStartFlag(uint flag)
         race_start_flag = flag;
         race_start_time = 1.0f;
     }
+}
+
+// The race's times (PS2 names), in milliseconds: minutes and seconds in the text database's formats
+// FUNCTION: GAME 0x5faea0
+void G_IndicatorsClass::RaceSetTime(uint time)
+{
+    uint seconds = time / 1000;
+    sprintf(race_time, textDatabase.GetText(0x2c8), seconds / 60, seconds % 60);
+}
+
+// FUNCTION: GAME 0x5faee0
+void G_IndicatorsClass::RaceSetLapTime(uint time)
+{
+    uint seconds = time / 1000;
+    sprintf(race_lap_time, textDatabase.GetText(0x2d0), seconds / 60, seconds % 60);
+}
+
+// FUNCTION: GAME 0x5faf20
+void G_IndicatorsClass::RaceSetBestTime(uint time)
+{
+    uint seconds = time / 1000;
+    sprintf(race_best_time, textDatabase.GetText(0x2c9), seconds / 60, seconds % 60);
+}
+
+// The race's position of the cars' count and its lap of the laps (PS2 names; PS2's takes lap 0 for 1)
+// FUNCTION: GAME 0x5faf60
+void G_IndicatorsClass::RaceSetPosition(uint position, uint count)
+{
+    sprintf(race_position, textDatabase.GetText(0x2ca), position, count);
+}
+
+// FUNCTION: GAME 0x5faf90
+void G_IndicatorsClass::RaceSetLaps(uint lap, uint laps)
+{
+    sprintf(race_laps, textDatabase.GetText(0x2cb), lap, laps);
+}
+
+// The race's flashing text at that alpha (PS2's name)
+// FUNCTION: GAME 0x5fafc0
+void G_IndicatorsClass::RaceFlashText(const char *text, float alpha)
+{
+    show_flags |= INDF_RACE_FLASH;
+    race_flash_alpha = alpha;
+    strncpy(race_flash_text, text, sizeof(race_flash_text));
+    race_flash_text[sizeof(race_flash_text) - 1] = 0;
 }
 
 // FUNCTION: GAME 0x5fb010
@@ -3675,10 +4109,361 @@ inline void SetDiamondVertices(const S_vector2 &pos, const S_vector2 &size, floa
     verts[5] = verts[1];
 }
 
-// STUB: GAME 0x6027b0
+// The clock's interval, a fan of _VtxTimerInterval's vertices around the hand's axis (PC only, the name is ours): from
+// where it ends (end, a fraction of a turn) back to the hand (value, in 60ths of a turn), every 30 degrees and at most
+// 13 of them, in red fading out from the end, then the hand's own point. The original's arcs call
+// S_vector2::operator+ out of line for that last point only, where the loop's and the centre's are inlined: a call
+// nested in an inline function, as Tick's two calls of this one give.
+static inline void SetIntervalVertices(const S_vector2 &center, const S_vector2 &radius, float end, float value)
+{
+    float start = value * (1.0f / 60);
+    if (end < start)
+        end += 1.0f;
+    start *= 2 * PI;
+    end *= 2 * PI;
+    _VtxTimerInterval[0].x = center.x;
+    _VtxTimerInterval[0].y = center.y;
+    _VtxTimerInterval[0].z = 0.0f;
+    _VtxTimerInterval[0].rhw = 1.0f;
+    _VtxTimerInterval[0].color = 0x4fff0000;
+    _VtxTimerInterval[0].u = 0.0f;
+    _VtxTimerInterval[0].v = 0.0f;
+    uint color = 0x8fff0000;
+    int n = 1;
+    while (end > start)
+    {
+        S_vector2 p = center + S_vector2(sin(end), -cos(end)) * radius;
+        TLVERTEX &v = _VtxTimerInterval[n];
+        v.x = p.x;
+        v.y = p.y;
+        v.z = 0.0f;
+        v.rhw = 1.0f;
+        v.color = color;
+        v.u = 0.0f;
+        v.v = 0.0f;
+        if (n > 13)
+            break;
+        if (color > 0x2a000000)
+            color -= 0x2a000000;
+        else
+            color = 0xff0000;
+        end -= DEGREES(30);
+        n++;
+    }
+    S_vector2 p;
+    p = center + S_vector2(sin(start), -cos(start)) * radius;
+    TLVERTEX &v = _VtxTimerInterval[n];
+    v.x = p.x;
+    v.y = p.y;
+    v.z = 0.0f;
+    v.rhw = 1.0f;
+    v.color = color;
+    v.u = 0.0f;
+    v.v = 0.0f;
+    n++;
+    _VtxTimerIntervalNumOfVertexes = n;
+}
+
+// The HUD's time: the time played, the city map's texture loaded once the map is enabled, the fuel light's blinking,
+// the clock (its interval counted down, C_game::Timer_TimeOut at its end; the hands moved where their values changed,
+// and the interval's arc, from the minute hand where it is over a minute, from the second hand otherwise, as a fan of
+// up to 15 vertices from the dial's centre, darker each 30 degrees), the tachometer's gear display sliding to its
+// gear, the panel's icon fading in while INDF_ACTION is set and out otherwise, the console's lines (the oldest gone
+// once its time has run out), the subtitles' and the mission's help texts' times (each gone once it has run out), the
+// blood quads (gone after their time, fading in their last second), the wide screen's bars and the fade, the race's
+// start lights and flash text, and the intro's subtitles, the waiting ones shown once their time has come. PS2's also
+// fades the radar's cars, a model's transparency and more.
+// FUNCTION: GAME 0x6027b0
 void G_IndicatorsClass::Tick(uint time)
 {
-    StubLog("G_IndicatorsClass::Tick %u", time);
+    play_time += time;
+    float dt = time * .001f;
+    if (map_enabled && !texture_map)
+        // STRING: GAME 0x639310
+        igraph->CreateITexture("0mapar.bmp", NULL, 0, &texture_map);
+    if (show_flags & INDF_TACHOMETR && fuel_low)
+    {
+        fuel_light_phase += dt;
+        if (fuel_light_phase > .5f)
+            fuel_light_phase -= .5f;
+    }
+    if (show_flags & INDF_TIMER)
+    {
+        if (interval > time)
+        {
+            interval -= time;
+            timer_millisecond += time;
+        }
+        else
+        {
+            if (interval)
+                act_mission->GetGame()->Timer_TimeOut();
+            timer_millisecond += interval;
+            interval = 0;
+        }
+        timer_second += timer_millisecond / 1000;
+        timer_millisecond %= 1000;
+        timer_minute += timer_second / 60;
+        timer_second %= 60;
+        timer_hour += timer_minute / 60;
+        timer_minute %= 60;
+        if ((float)timer_minute != timer_minutes.value)
+        {
+            timer_minutes.value = (float)timer_minute;
+            _SpocitejRafiku2(&timerDefMinutes, &timer_minutes, timer_pos, &_VtxTimerCifernik[12]);
+            if (interval > 60000)
+            {
+                S_vector2 center = S_vector2(timerDefMinutes.x, timerDefMinutes.y) * hud_scale + timer_pos;
+                S_vector2 radius = hud_scale * 34.0f;
+                SetIntervalVertices(center, radius, interval_minute, timer_minutes.value);
+            }
+        }
+        float hours = timer_minute * (1.0f / 60) + timer_hour;
+        if (hours != timer_hours.value)
+        {
+            timer_hours.value = hours;
+            _SpocitejRafiku2(&timerDefHours, &timer_hours, timer_pos, &_VtxTimerCifernik[6]);
+        }
+        if ((float)timer_second != timer_seconds.value)
+        {
+            timer_seconds.value = (float)timer_second;
+            _SpocitejRafiku2(&timerDefSeconds, &timer_seconds, timer_pos, &_VtxTimerCifernik[18]);
+            if (interval <= 60000)
+            {
+                S_vector2 center = S_vector2(timerDefSeconds.x, timerDefSeconds.y) * hud_scale + timer_pos;
+                S_vector2 radius = hud_scale * 10.0f;
+                SetIntervalVertices(center, radius, interval_second, timer_seconds.value);
+            }
+        }
+    }
+    if (gear_column != display_column)
+    {
+        if (gear_column > display_column)
+        {
+            display_column += time * .02f;
+            if (display_column > gear_column)
+                display_column = gear_column;
+        }
+        else
+        {
+            display_column -= time * .02f;
+            if (display_column < gear_column)
+                display_column = gear_column;
+        }
+        float v1 = (display_column + 114.0f - 2.0f) / 256.0f;
+        float v0 = (display_column + 91.0f) / 256.0f;
+        _VtxTachometrCiselnik[48].v = v0;
+        _VtxTachometrCiselnik[48].u = 252 / 256.0f;
+        _VtxTachometrCiselnik[48].color = 0x70ffffff;
+        _VtxTachometrCiselnik[49].v = v1;
+        _VtxTachometrCiselnik[49].u = 252 / 256.0f;
+        _VtxTachometrCiselnik[49].color = 0x70ffffff;
+        _VtxTachometrCiselnik[50].v = v0;
+        _VtxTachometrCiselnik[50].u = 208 / 256.0f;
+        _VtxTachometrCiselnik[50].color = 0x70ffffff;
+        _VtxTachometrCiselnik[51].v = v1;
+        _VtxTachometrCiselnik[51].u = 208 / 256.0f;
+        _VtxTachometrCiselnik[51].color = 0x70ffffff;
+        _VtxTachometrCiselnik[52].v = v0;
+        _VtxTachometrCiselnik[52].u = 208 / 256.0f;
+        _VtxTachometrCiselnik[52].color = 0x70ffffff;
+        _VtxTachometrCiselnik[53].v = v1;
+        _VtxTachometrCiselnik[53].u = 252 / 256.0f;
+        _VtxTachometrCiselnik[53].color = 0x70ffffff;
+    }
+    if (show_flags & INDF_ACTION)
+    {
+        panel_icon_alpha += time * 2;
+        if (panel_icon_alpha > 0xff)
+            panel_icon_alpha = 0xff;
+    }
+    else if (panel_icon_alpha)
+    {
+        if (time * 2 < panel_icon_alpha)
+            panel_icon_alpha -= time * 2;
+        else
+            panel_icon_alpha = 0;
+    }
+    if (console_count)
+    {
+        for (uint i = 0; i < console_count; i++)
+        {
+            float &t = console_times[(console_first + i) % CONSOLE_LINES];
+            float v = t - dt;
+            if (v < 0.0f)
+                v = 0.0f;
+            t = v;
+        }
+        if (console_times[console_first % CONSOLE_LINES] <= .001)
+        {
+            console_count--;
+            console_first = (console_first + 1) % CONSOLE_LINES;
+        }
+    }
+    if (show_flags & INDF_SUBTITLES && subtitles.size())
+    {
+        for (G_MISubtitleStruct *s = subtitles.begin(); s < subtitles.end(); s++)
+        {
+            if (s->hidden > time)
+                s->hidden -= time;
+            else
+                s->hidden = 0;
+            if (s->alpha < time)
+            {
+                subtitles.erase(s);
+                s--;
+            }
+            else
+                s->alpha -= time;
+        }
+    }
+    if (show_flags & INDF_MISSION_HELP && mission_help.size())
+    {
+        for (G_MISubtitleStruct *s = mission_help.begin(); s < mission_help.end(); s++)
+        {
+            if (s->hidden > time)
+                s->hidden -= time;
+            else
+                s->hidden = 0;
+            if (s->alpha < time)
+            {
+                mission_help.erase(s);
+                s--;
+            }
+            else
+                s->alpha -= time;
+        }
+    }
+    if (show_flags & INDF_CREW)
+    {
+        uint i;
+        for (i = 0; i < crew_quads; i++)
+        {
+            crew_times[i] -= dt;
+            if (crew_times[i] < 0.0f)
+            {
+                memmove(&crew_times[i], &crew_times[i + 1], (MAX_CREW_QUADS - 1 - i) * sizeof(float));
+                memmove(&_VtxCrew[i * 6], &_VtxCrew[(i + 1) * 6], (MAX_CREW_QUADS - 1 - i) * 6 * sizeof(TLVERTEX));
+                crew_quads--;
+                i--;
+            }
+        }
+        for (i = 0; i < crew_quads; i++)
+        {
+            uint alpha = (uint)(crew_times[i] * 255.0f);
+            if (alpha < 0xff)
+            {
+                for (int j = 0; j < 6; j++)
+                    _VtxCrew[i * 6 + j].color = alpha << 24 | 0xffffff;
+            }
+        }
+        if (!crew_quads)
+            show_flags &= ~INDF_CREW;
+    }
+    if (widescreen_time)
+    {
+        if (widescreen_time > time)
+        {
+            widescreen_time -= time;
+            float f = widescreen_length ? (float)widescreen_time / widescreen_length : 1.0f;
+            if (widescreen_on)
+                f = 1.0f - f;
+            widescreen_color &= 0xffffff;
+            widescreen_color |= (uint)(f * 255.0f) << 24;
+            for (int i = 0; i < WIDESCREEN_VERTS; i++)
+                _VtxWideScreen[i].color = widescreen_color;
+        }
+        else
+        {
+            widescreen_time = 0;
+            if (widescreen_on)
+            {
+                widescreen_color &= 0xffffff;
+                widescreen_color |= 0xff000000;
+                for (int i = 0; i < WIDESCREEN_VERTS; i++)
+                    _VtxWideScreen[i].color = widescreen_color;
+            }
+            else
+                show_flags &= ~INDF_WIDESCREEN;
+        }
+    }
+    if (show_flags & INDF_FADE)
+    {
+        if (fade_time > time)
+        {
+            fade_time -= time;
+            float f = fade_time && fade_length ? (float)fade_time / fade_length : 1.0f;
+            if (fade_in)
+                f = 1.0f - f;
+            fade_color &= 0xffffff;
+            fade_color |= (uint)(f * 255.0f) << 24;
+        }
+        else
+        {
+            fade_time = 0;
+            if (fade_in)
+            {
+                fade_color &= 0xffffff;
+                fade_color |= 0xff000000;
+            }
+            else
+                show_flags &= ~INDF_FADE;
+        }
+    }
+    if (show_flags & INDF_RACE_START)
+    {
+        if (race_start_time > 0.0f)
+        {
+            race_start_time -= dt * .6f;
+            if (race_start_time < 0.0f)
+            {
+                race_start_time = 0.0f;
+                race_start_flag = 0xff;
+            }
+        }
+        if (race_start_last_time > 0.0f)
+        {
+            race_start_last_time -= dt * .6f;
+            if (race_start_last_time < 0.0f)
+            {
+                race_start_last_time = 0.0f;
+                race_start_flag_last = 0xff;
+            }
+        }
+    }
+    if (show_flags & INDF_RACE_FLASH)
+    {
+        race_flash_alpha -= dt;
+        if (race_flash_alpha < 0.0f)
+            show_flags &= ~INDF_RACE_FLASH;
+    }
+    if (intro_subtitles_waiting.size())
+    {
+        for (G_MIIntroSubtitlesWaiting *w = intro_subtitles_waiting.begin(); w < intro_subtitles_waiting.end(); w++)
+        {
+            if (w->time > time)
+                w->time -= time;
+            else
+            {
+                IntroSubtitlesAddIntern(w->id, (float)(time - w->time));
+                intro_subtitles_waiting.erase(w);
+                w--;
+            }
+        }
+    }
+    if (intro_subtitles.size())
+    {
+        for (G_MIIntroSubtitles *s = intro_subtitles.begin(); s < intro_subtitles.end(); s++)
+        {
+            s->alpha_out += dt;
+            s->alpha_in -= dt;
+            if (s->alpha_in < 0.0f)
+            {
+                intro_subtitles.erase(s);
+                s--;
+            }
+        }
+    }
 }
 
 // A text's width in the font, at its size (the characters' height): each character's width less what it overlaps the
@@ -4119,29 +4904,5 @@ void G_IndicatorsClass::ParheliaSetCenter(bool center)
         if (cam)
             cam->SetAspectRatio((float)igraph->Scrn_sx() / igraph->Scrn_sy());
     }
-}
-
-// STUB: GAME 0x5f9e10
-void G_IndicatorsClass::AddBloodSplash(float x, float y, float size)
-{
-    StubLog("G_IndicatorsClass::AddBloodSplash");
-}
-
-// STUB: GAME 0x5fa500
-void G_IndicatorsClass::RadarSetPlayerCar(C_car *car)
-{
-    StubLog("G_IndicatorsClass::RadarSetPlayerCar");
-}
-
-// STUB: GAME 0x5fa030
-void G_IndicatorsClass::ThiefIndicatorSetValue(float value)
-{
-    StubLog("G_IndicatorsClass::ThiefIndicatorSetValue");
-}
-
-// STUB: GAME 0x5f9d50
-void G_IndicatorsClass::ConsoleAddText(const char *text, uint color)
-{
-    StubLog("G_IndicatorsClass::ConsoleAddText");
 }
 

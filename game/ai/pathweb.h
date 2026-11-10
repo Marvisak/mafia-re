@@ -16,6 +16,8 @@ class C_chunk;
 // names are ours, by value)
 #define WEBF_UNKNOWN_1000 0x1000
 #define WEBF_UNKNOWN_4000 0x4000
+// The nodes of the seagulls' rings: C_seagull::GameInit asks GetNearNode for one (the name is ours, by value)
+#define WEBF_UNKNOWN_8 0x8
 
 // A node's connection to another (8 bytes, the size the node's Resize allocates them by; the names are ours). Its
 // destructor is declared and empty: the node's delete[] destroys them through the empty function 0x404990.
@@ -104,6 +106,9 @@ public:
     void LoadNodes(C_chunk *chunk);
     // PS2 name (Czech, roughly "of the connections"), which C_game::Init calls
     void DeRiciConns();
+    // The node nearest pos with one of the flags (and without WEBF_UNKNOWN_4000), within radius where it is above 0;
+    // -1 for none (PS2 name; the parameters' names are ours), which C_seagull::GameInit calls
+    int GetNearNode(const S_vector &pos, float radius, ushort flags);
 
     // PS2's virtual functions in PS2's order, but for RecompileDistance, which isn't virtual on the PC (its vtable has
     // 14 entries, the parameters each one's ret takes)

@@ -339,7 +339,7 @@ public:
     }
 
     int act_flags;                      // 0x4, ACTF_* (the name is ours, after act_state)
-    // 0x8, what a cutscene keeps for the actor (C_recorder::vfunc_5's), 0 from the constructor's body (the name is ours,
+    // 0x8, what a cutscene keeps for the actor (C_recorder::CreateRecords'), 0 from the constructor's body (the name is ours,
     // after the type)
     C_cutscene_records *records;
     ushort ref;                         // 0xc, Release's references, 1 at first (the name is ours)
@@ -462,19 +462,19 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?SaveGameGetSize@C_seagull@@UAEHXZ
+// ?SaveGameGetSize@C_racecam@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_actor_shot@@UAEXI@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
+// ?OnTick@GM_Menu@@UAEHI@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
@@ -488,21 +488,21 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?PlaceAtTime@C_actor_shot@@UAE_NH@Z
+// ?SaveGameSave@C_racecam@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
+// ?SaveGameGetSize@C_bridge@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
 // FUNCTION: GAME 0x604d80
-// ?GetRefCount@@YIHPBVI3D_frame@@@Z
+// ?GetActFlags@C_actor@@QBEHXZ
 
 // FUNCTION: GAME 0x604d90
-// ?end@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@QAEPAUG_MIIntroSubtitles@@XZ
+// ?GetFrameActor@@YIPAPAVC_actor@@PAVI3D_frame@@@Z
 
 // A frame's actor (the names are ours): the frame's user data is the address of a pointer to it, allocated for it.
 // PS2 inlines both.
