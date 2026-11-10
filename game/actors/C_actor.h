@@ -21,6 +21,8 @@ struct tDynamicCollObject;
 #define ACTOR_CAR 4
 #define ACTOR_DETECTOR 5
 #define ACTOR_DOOR 6
+// A human (DabingCutscene takes it as one; the name is ours, by value: no class of C_mission::CreateActor's has it)
+#define ACTOR_UNKNOWN_7 7
 #define ACTOR_RAILWAY 8
 #define ACTOR_DYN_OBJECT 9
 #define ACTOR_BOTTLE 0xa
@@ -468,7 +470,7 @@ public:
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?Update@C_rail_generator@@UAEXI@Z
+// ?NetDirect@C_human@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z

@@ -2446,7 +2446,7 @@ void C_recorder::SetOverlay(float fade, uint color, const char *name, bool opaqu
 void C_recorder::Speak(int chanel, C_actor *actor, uint speech)
 {
     DabingStop(chanel);
-    DabingSetFrame(chanel, actor->frame);
+    DabingSetModel(chanel, (I3D_model *)actor->frame);
     DabingSpeak(chanel, speech, true, 3);
 }
 

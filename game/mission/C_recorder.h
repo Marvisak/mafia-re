@@ -343,7 +343,7 @@ struct S_cutscene_dabing
 {
     uint time;                          // 0x0
     int chanel;                         // 0x4
-    int speech;                         // 0x8, 1: the channel's human or model taken from the frame
+    uint speech;                        // 0x8, a speech or DABING_CUTSCENE_* (DabingCutscene)
     char frame_name[0x18];              // 0xc
 };
 
