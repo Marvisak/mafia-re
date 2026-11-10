@@ -157,7 +157,9 @@ public:
     // so the copy (C_effects.cpp's) sends both failures to the return false after it.
     // Open: the copy calls _Destroy out of line, which the original inlines with _Ufill and _Ucopy left out of line,
     // and no padding gives that mix. Under /YX the stack's insert(P, x), C_effects.cpp's copy in ours, inlines it and
-    // the original's (an earlier file's) doesn't: which deferred copy inlines it seems to depend on the object
+    // the original's (an earlier file's) doesn't: which deferred copy inlines it seems to depend on the object. So do
+    // the copy's registers: with CreateParticle's helper (0x4496e0) written, its in_use push_back or its part loop,
+    // either alone, moves them (ebx's value in edx and a slot); with neither the copy is the original's
     // FUNCTION: GAME 0x44b4d0
     bool RAscend(ushort &type)
     {
@@ -254,4 +256,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@VC_str@@V?$allocator@VC_str@@@std@@@std@@QBEIXZ
+// ?size@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QBEIXZ

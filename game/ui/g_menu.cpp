@@ -1,9 +1,9 @@
-// The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md). Written so far: what
+// The menus (PS2 g_menu.cpp; the PC's file is the one at 0x5e8d10-0x5ece6c, docs/game-files.md), written whole: what
 // ExecuteMenu runs (the constructor, the destructor and the resources, Create, CreateCompsByDef, Destroy, Draw, Tick
 // with MenuClose and the activation's searches), MenuOpen, MenuExchange, MenuCloseAll, SetCameraTargetID, TickCamera,
 // the wrappers by id the loading screen, the profiles' menus, the controls and the car encyclopedia call, ActivateByID,
 // the components' ForceUpdate, PridejComponentPod, and of the components what the classes written so far use (the
-// drawing functions but RectangleBB, the constructors, the children's insertion and SetTextID).
+// drawing functions, the constructors, the children's insertion and SetTextID).
 
 // The engine's math first: under /YX the copies of S_vector's inline functions then come due before TickCamera, as
 // the original's do. Compiled after it, the out-of-line constructor that SetCameraTargetID calls is unknown to VC6 when
@@ -24,7 +24,6 @@
 #include "IGraph/IGraph.h"
 #include "I3D/I3D.h"
 #include "rw_data.h"
-#include "stub.h"
 
 // Its initializer starts the file (0x5e8d10)
 // GLOBAL: GAME 0x6bd888
@@ -269,10 +268,143 @@ void RectangleProgress(float x, float y, float sx, float sy, uint color, float p
     igraph->DrawPrimitiveList(PT_TRIANGLESTRIP, 2, verts, LS3D_STREAM_TLVERTEX);
 }
 
-// STUB: GAME 0x5e91b0
+// Two line lists of four lines, the outer border's ends a pixel apart so that the corners don't overlap, then the inner
+// one's
+// FUNCTION: GAME 0x5e91b0
 void RectangleBB(float x, float y, float sx, float sy, uint style)
 {
-    StubLog("RectangleBB");
+    TLVERTEX verts[8];
+    uint top_left, bottom_right;
+    if (style & BEVEL_OUTER_SUNK) {
+        top_left = 0xaf000000;
+        bottom_right = 0x3fffffff;
+    } else {
+        bottom_right = 0xaf000000;
+        top_left = 0x3fffffff;
+    }
+    verts[0].x = x + 1.0f;
+    verts[0].y = y;
+    verts[0].z = .5f;
+    verts[0].rhw = 2.0f;
+    verts[0].color = top_left;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx;
+    verts[1].y = y;
+    verts[1].z = .5f;
+    verts[1].rhw = 2.0f;
+    verts[1].color = top_left;
+    verts[1].u = 0.0f;
+    verts[1].v = 0.0f;
+    verts[2].x = x;
+    verts[2].y = y;
+    verts[2].z = .5f;
+    verts[2].rhw = 2.0f;
+    verts[2].color = top_left;
+    verts[2].u = 0.0f;
+    verts[2].v = 0.0f;
+    verts[3].x = x;
+    verts[3].y = y + sy;
+    verts[3].z = .5f;
+    verts[3].rhw = 2.0f;
+    verts[3].color = top_left;
+    verts[3].u = 0.0f;
+    verts[3].v = 0.0f;
+    verts[4].x = x + sx;
+    verts[4].y = y + 1.0f;
+    verts[4].z = .5f;
+    verts[4].rhw = 2.0f;
+    verts[4].color = bottom_right;
+    verts[4].u = 0.0f;
+    verts[4].v = 0.0f;
+    verts[5].x = x + sx;
+    verts[5].y = y + sy;
+    verts[5].z = .5f;
+    verts[5].rhw = 2.0f;
+    verts[5].color = bottom_right;
+    verts[5].u = 0.0f;
+    verts[5].v = 0.0f;
+    verts[6].x = x + 1.0f;
+    verts[6].y = y + sy;
+    verts[6].z = .5f;
+    verts[6].rhw = 2.0f;
+    verts[6].color = bottom_right;
+    verts[6].u = 0.0f;
+    verts[6].v = 0.0f;
+    verts[7].x = x + sx + 1.0f;
+    verts[7].y = y + sy;
+    verts[7].z = .5f;
+    verts[7].rhw = 2.0f;
+    verts[7].color = bottom_right;
+    verts[7].u = 0.0f;
+    verts[7].v = 0.0f;
+    igraph->SetTexture(NULL);
+    igraph->DrawPrimitiveList(PT_LINELIST, 4, verts, LS3D_STREAM_TLVERTEX);
+    if (style & BEVEL_INNER_SUNK) {
+        top_left = 0xaf000000;
+        bottom_right = 0x3fffffff;
+    } else {
+        bottom_right = 0xaf000000;
+        top_left = 0x3fffffff;
+    }
+    verts[0].x = x + 2.0f;
+    verts[0].y = y + 1.0f;
+    verts[0].z = .5f;
+    verts[0].rhw = 2.0f;
+    verts[0].color = top_left;
+    verts[0].u = 0.0f;
+    verts[0].v = 0.0f;
+    verts[1].x = x + sx - 1.0f;
+    verts[1].y = y + 1.0f;
+    verts[1].z = .5f;
+    verts[1].rhw = 2.0f;
+    verts[1].color = top_left;
+    verts[1].u = 0.0f;
+    verts[1].v = 0.0f;
+    verts[2].x = x + 1.0f;
+    verts[2].y = y + 1.0f;
+    verts[2].z = .5f;
+    verts[2].rhw = 2.0f;
+    verts[2].color = top_left;
+    verts[2].u = 0.0f;
+    verts[2].v = 0.0f;
+    verts[3].x = x + 1.0f;
+    verts[3].y = y + sy - 1.0f;
+    verts[3].z = .5f;
+    verts[3].rhw = 2.0f;
+    verts[3].color = top_left;
+    verts[3].u = 0.0f;
+    verts[3].v = 0.0f;
+    verts[4].x = x + sx - 1.0f;
+    verts[4].y = y + 2.0f;
+    verts[4].z = .5f;
+    verts[4].rhw = 2.0f;
+    verts[4].color = bottom_right;
+    verts[4].u = 0.0f;
+    verts[4].v = 0.0f;
+    verts[5].x = x + sx - 1.0f;
+    verts[5].y = y + sy - 1.0f;
+    verts[5].z = .5f;
+    verts[5].rhw = 2.0f;
+    verts[5].color = bottom_right;
+    verts[5].u = 0.0f;
+    verts[5].v = 0.0f;
+    verts[6].x = x + 2.0f;
+    verts[6].y = y + sy - 1.0f;
+    verts[6].z = .5f;
+    verts[6].rhw = 2.0f;
+    verts[6].color = bottom_right;
+    verts[6].u = 0.0f;
+    verts[6].v = 0.0f;
+    verts[7].x = x + sx;
+    verts[7].y = y + sy - 1.0f;
+    verts[7].z = .5f;
+    verts[7].rhw = 2.0f;
+    verts[7].color = bottom_right;
+    verts[7].u = 0.0f;
+    verts[7].v = 0.0f;
+    igraph->SetTexture(NULL);
+    igraph->DrawPrimitiveList(PT_LINELIST, 4, verts, LS3D_STREAM_TLVERTEX);
 }
 
 // Each direction sets all three vertices, the base's first, as PS2's; another direction draws the vertices as they

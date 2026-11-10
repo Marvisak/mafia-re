@@ -195,7 +195,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction0@@YGXPAX0@Z
+// ?_CallMemberFunction1@@YGXPAX00@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -376,6 +376,15 @@
 
 // LIBRARY: GAME 0x611d52 SYMBOL
 // __exit
+
+// LIBRARY: GAME 0x611e16 SYMBOL
+// __getcwd
+
+// LIBRARY: GAME 0x611e29 SYMBOL
+// __getdcwd
+
+// LIBRARY: GAME 0x611efa SYMBOL
+// __validdrive
 
 // LIBRARY: GAME 0x611f31 SYMBOL
 // __snprintf

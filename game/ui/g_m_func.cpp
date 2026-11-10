@@ -376,7 +376,7 @@ int GM_MainMenu::OnClick(uint id)
     return 0;
 }
 
-// FUNCTION: GAME 0x5e08e0
+// Folded with GM_GameMenuExit's: its marker is in the header, by name
 inline const char *GM_MainMenuExit::OnBeforeCreate()
 {
     // STRING: GAME 0x6381e8

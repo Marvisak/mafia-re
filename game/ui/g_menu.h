@@ -55,10 +55,10 @@ void Rectangle(float x, float y, float sx, float sy, uint color);
 void RectangleFilled(float x, float y, float sx, float sy, uint color, ITexture *texture);
 void RectangleProgress(float x, float y, float sx, float sy, uint color, float part, ITexture *texture);
 void Triangle(float x, float y, float sx, float sy, uint direction, uint color);
-// A bevelled frame on the rectangle (PS2's, a global function of g_menu.cpp, 0x5e91b0, a stub there for
-// now): an outer border on its edges and an inner one a pixel inside, each a line list lit at the top left
-// (0x3fffffff, the bottom and right 0xaf000000), or the other way round where the style (BEVEL_*) sinks it. PS2's
-// RectangleBB__FffffUi; the PC's takes the style in ecx (/Gr) and pops the four floats (ret 0x10).
+// A bevelled frame on the rectangle (PS2's, a global function of g_menu.cpp, 0x5e91b0): an outer border on its edges
+// and an inner one a pixel inside, each a line list lit at the top left (0x3fffffff, the bottom and right 0xaf000000),
+// or the other way round where the style (BEVEL_*) sinks it. PS2's RectangleBB__FffffUi; the PC's takes the style in
+// ecx (/Gr) and pops the four floats (ret 0x10).
 void RectangleBB(float x, float y, float sx, float sy, uint style);
 // Sets IGraph's viewport, clipped to the screen, and turns the z-buffer off (PS2's, a global function of g_menu.cpp)
 void SetViewport(int x, int y, int sx, int sy);
@@ -342,7 +342,7 @@ public:
 // ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
 
 // SYNTHETIC: GAME 0x47a430
-// ?Mouse@GM_Component@@UAEIHHHII@Z
+// ?OnMouse@GM_Menu@@UAEHHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
 // ?OnKey@GM_ProfileSelect@@UAEHEI@Z

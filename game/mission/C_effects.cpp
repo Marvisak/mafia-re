@@ -1,11 +1,10 @@
 // The effects of tables\effects.tbl, PC only: the file at 0x448f00-0x44b4cc (docs/game-files.md), which starts with
 // the initializers of the emitters' free objects, then C_effects' constructor; the name is ours (the file sorts where
-// PS2's C_ParticleManager.cpp would, whose class has the functions C_game calls). Written so far: the free objects'
+// PS2's C_ParticleManager.cpp would, whose class has the functions C_game calls), written whole: the free objects'
 // vectors, the constructor, the destructor, Load and Clear, which C_mission's Init and UnInit run, and with Load the
 // effects' classes (C_effects.h), Mission_Start, Mission_Done, ClearEmitters and LoadStaticParticles, which C_game's
-// Init and Done run, CreateSParticle, which LoadStaticParticles runs, and ClientTick, which C_game::Tick calls;
-// CreateParticle, which the scripts call, DestroyParticle, and IsParticleAlive and PauseParticle, which C_game::Tick
-// calls, are stubs.
+// Init and Done run, CreateSParticle, which LoadStaticParticles runs, CreateParticle, which the scripts call,
+// DestroyParticle, and ClientTick, IsParticleAlive and PauseParticle, which C_game::Tick calls.
 
 #include "mission/C_effects.h"
 #include "mission/C_Particle.h"
@@ -17,7 +16,6 @@
 
 #include "I3D/I3D.h"
 #include "I3D_cache.h"
-#include "stub.h"
 
 // The effects.bin chunks (the names are ours): the file's, whose other type the messages call another version, and an
 // effect's at a frame
@@ -116,11 +114,103 @@ void C_effects::Load()
     chunk.Close();
 }
 
-// STUB: GAME 0x449690
+// FUNCTION: GAME 0x449690
 int C_effects::CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm)
 {
-    StubLog("C_effects::CreateParticle");
-    return -1;
+    if (effects.size() <= (uint)effect)
+        return -1;
+    return CreateParticle(effects[effect], pos, dir, unknown, frm);
+}
+
+// CreateSParticle's at a position and a direction: the emitter goes among those in use, under the next number. A part
+// whose unknown_94 is above 0 is left out where unknown is above 0 and another value. The early failures share one
+// return (an || in the original). Open: as CreateSParticle's (below), the S_vector copy, the inlined Open and the
+// registers.
+// FUNCTION: GAME 0x4496e0
+int C_effects::CreateParticle(C_effect *e, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm)
+{
+    if (!e || !e->parts.size() || !e->model.Size())
+        return -1;
+    I3D_model *mod = (I3D_model *)I3DGetDriver()->CreateFrame(FRAME_MODEL);
+    if (model_cache.Open(mod, &e->model[0], 0, NULL, NULL, NULL) < I3D_OK)
+    {
+        mod->Release();
+        return -1;
+    }
+    C_ParticleEmitter *emitter;
+    if (particle_emitters.size())
+    {
+        emitter = particle_emitters.back();
+        particle_emitters.pop_back();
+    }
+    else
+        emitter = new C_ParticleEmitter;
+    emitter->Init(frm, pos, dir, e->local_pos, e->local_dir, e->offset, e->unknown_28);
+    for (uint i = 0; i < e->parts.size(); i++)
+    {
+        C_effect_part *part = e->parts[i];
+        if (part->frame.Size() > 0)
+        {
+            if (unknown > 0 && part->unknown_94 > 0.0f && unknown != part->unknown_94)
+                continue;
+            I3D_frame *f = mod->FindChildFrame(&part->frame[0], ENUMF_VISUAL);
+            if (part->subparts.size() && f)
+            {
+                act_mission->GetScene()->AddFrame(f);
+                C_ParticleType *type;
+                if (particle_parts.size())
+                {
+                    type = particle_parts.back();
+                    particle_parts.pop_back();
+                }
+                else
+                    type = new C_ParticleType;
+                type->Init(frm, f, part->offset, part->offset_spread, part->burst, part->rate,
+                    part->rate_fall, (int)part->fall_delay, (int)part->repeats, (int)part->restart_delay);
+                type->flags = part->flags;
+                type->scale = part->scale;
+                type->scale_spread = part->scale_spread;
+                type->SetTransparency(part->transparency, part->transparency_spread);
+                type->blend = part->blend;
+                type->SetSpeed(part->speed, part->speed_spread);
+                type->dir = part->dir;
+                type->dir_spread = part->dir_spread;
+                for (uint j = 0; j < part->subparts.size(); j++)
+                {
+                    C_effect_subpart *sub = part->subparts[j];
+                    S_particle_subpart *subpart;
+                    if (particle_subparts.size())
+                    {
+                        subpart = particle_subparts.back();
+                        particle_subparts.pop_back();
+                    }
+                    else
+                        subpart = new S_particle_subpart;
+                    subpart->SetValues(sub->duration, sub->duration_range, sub->flags, sub->dir,
+                        sub->dir_spread, sub->rot_speed);
+                    subpart->scale = sub->scale;
+                    subpart->scale_range = sub->scale_range;
+                    subpart->SetTransparency(sub->transparency, sub->transparency_range);
+                    subpart->SetMotion(sub->speed_change, sub->speed_change_range, sub->gravity);
+                    type->subparts.push_back(subpart);
+                }
+                emitter->types.push_back(type);
+            }
+        }
+    }
+    if (!emitter->types.size())
+    {
+        mod->Release();
+        emitter->Reset();
+        particle_emitters.push_back(emitter);
+        return -1;
+    }
+    S_particle_in_use p;
+    p.emitter = emitter;
+    p.guid = ++last_guid;
+    in_use.push_back(p);
+    mod->Release();
+    return p.guid;
 }
 
 // The static emitters, then, once a mission has started, those in use: one whose Tick ends is reset and goes back to
@@ -145,23 +235,79 @@ void C_effects::ClientTick(int time)
     }
 }
 
-// STUB: GAME 0x44a240
+// A binary search of the emitters in use by their numbers, which grow: the CRT's bsearch over the indices (PS2's the
+// same)
+// FUNCTION: GAME 0x44a190
+C_effects::S_particle_in_use *C_effects::FindGuid(int guid, int &index)
+{
+    S_particle_in_use *base = in_use.begin();
+    int lo = 0;
+    int hi = in_use.size() - 1;
+    int num = hi + 1;
+    int half;
+    while (lo <= hi)
+    {
+        if (half = num / 2)
+        {
+            int mid = lo + (num & 1 ? half : half - 1);
+            S_particle_in_use *p = &base[mid];
+            if (p->guid == guid)
+            {
+                index = mid;
+                return p;
+            }
+            else if (p->guid > guid)
+            {
+                hi = mid - 1;
+                num = num & 1 ? half : half - 1;
+            }
+            else
+            {
+                lo = mid + 1;
+                num = half;
+            }
+        }
+        else if (num)
+        {
+            if (base[lo].guid != guid)
+                return NULL;
+            index = lo;
+            return &base[lo];
+        }
+        else
+            break;
+    }
+    return NULL;
+}
+
+// The emitter reset and back to the free ones (PS2's deletes it)
+// FUNCTION: GAME 0x44a240
 void C_effects::DestroyParticle(int particle)
 {
-    StubLog("C_effects::DestroyParticle");
+    int index;
+    S_particle_in_use *p = FindGuid(particle, index);
+    if (p)
+    {
+        p->emitter->Reset();
+        particle_emitters.push_back(p->emitter);
+        in_use.erase(in_use.begin() + index);
+    }
 }
 
-// STUB: GAME 0x44a2b0
+// FUNCTION: GAME 0x44a2b0
 bool C_effects::IsParticleAlive(int particle)
 {
-    StubLog("C_effects::IsParticleAlive");
-    return false;
+    int index;
+    return FindGuid(particle, index) != NULL;
 }
 
-// STUB: GAME 0x44a2d0
+// FUNCTION: GAME 0x44a2d0
 void C_effects::PauseParticle(int particle, bool emit)
 {
-    StubLog("C_effects::PauseParticle");
+    int index;
+    S_particle_in_use *p = FindGuid(particle, index);
+    if (p)
+        p->emitter->emitting = emit;
 }
 
 // FUNCTION: GAME 0x44a2f0
@@ -184,13 +330,13 @@ void C_effects::Clear()
 // part of the emitter for each of the effect's parts that has subparts and a frame in the model, which goes into the
 // scene. The emitter, its parts and their subparts are the free ones where there are any; an emitter without parts goes
 // back to them. The model is released either way: the cache keeps its own copy.
-// Open: the original compiled S_vector(float, float, float)'s copy before this function, after 0x4496e0 (not written,
-// which calls it out of line). Ours compiles it after this function, so VC6 doesn't know that the part's constructor's
-// calls of it can't throw: ours sets an EH state after the part's second vector, and its stores and the registers
-// around them differ. The inlined Open differs as its other copies do (I3D_cache.h): its match loop's body comes
-// after the folders' loop, and the folder's name is converted inline, which the original calls. The registers differ
-// throughout: the effect is in ebp (the original's edi), the effect's part and the emitter's part on the stack (the
-// original's ebp and ebx).
+// Open: the original compiled S_vector(float, float, float)'s copy before this function, after CreateParticle's helper
+// (0x4496e0), which calls it out of line as this one does. Ours compiles it after both, so VC6 doesn't know that the
+// part's constructor's calls of it can't throw: ours sets an EH state after the part's second vector, and its stores
+// and the registers around them differ (the helper the same). The inlined Open differs as its other copies do
+// (I3D_cache.h): its match loop's body comes after the folders' loop, and the folder's name is converted inline, which
+// the original calls. The registers differ throughout: the effect is in ebp (the original's edi), the effect's part and
+// the emitter's part on the stack (the original's ebp and ebx).
 // FUNCTION: GAME 0x44a3a0
 void C_effects::CreateSParticle(int effect, const S_matrix &m, I3D_frame *frm)
 {

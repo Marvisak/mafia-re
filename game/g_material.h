@@ -46,7 +46,9 @@ struct S_material_def
     int unknown_124;                    // 0x124, unknown_20
     int unknown_128;                    // 0x128, unknown_24
     int unknown_12c;                    // 0x12c, unknown_28
-    uchar unknown_130[0x40];
+    // 0x130, the sound of a grenade (a bottle) hitting it (C_sound_table's id, C_grenade::AI; the name is ours)
+    int grenade_sound;
+    uchar unknown_134[0x3c];
 };
 
 // A particle emitter of the cars (particles.def), 0xa4 bytes: the model whose first frame is its particles' visual, and

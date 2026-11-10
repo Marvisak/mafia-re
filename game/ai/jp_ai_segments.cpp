@@ -1,10 +1,9 @@
 // The AI's segments (PS2 jp_ai_segments.cpp; the PC's file is most likely the one at 0x53e4b0-0x53ef4c,
-// docs/game-files.md), in PS2's order. Written so far: the segment's accessors, AddSegment, Init, Clear and Load, which
-// C_game's Init and Done call (Load reads the mission's clusters.seg and adds each segment). Open: AddSegment's inline
-// decisions (its comment).
+// docs/game-files.md), in PS2's order, written whole: the segment's search and accessors, the clusters' GetSegment and
+// NumSegments, which C_human.cpp's ai_loc::Update calls, AddSegment, Init, Clear and Load, which C_game's Init and Done
+// call (Load reads the mission's clusters.seg and adds each segment). Open: AddSegment's inline decisions (its comment).
 
 #include "ai/jp_ai_segments.h"
-#include "stub.h"
 
 #include "mission/Mission.h"
 
@@ -12,6 +11,29 @@
 
 #include <stdio.h>
 #include <string.h>
+
+// FUNCTION: GAME 0x53e4b0
+bool check_seg::existIndex(uint value, uint lo, uint hi)
+{
+    if (unknown_c[lo] == value)
+        return true;
+    if (unknown_c[hi] == value)
+        return true;
+    if (lo == hi)
+        return false;
+    uint mid = (lo + hi) / 2;
+    if (value < unknown_c[mid]) {
+        if (!mid)
+            return false;
+        return existIndex(value, lo, mid - 1);
+    }
+    if (unknown_c[mid] < value) {
+        if (mid == hi)
+            return false;
+        return existIndex(value, mid + 1, hi);
+    }
+    return true;
+}
 
 // FUNCTION: GAME 0x53e510
 uint check_seg::NumSpecials()
@@ -31,6 +53,65 @@ void check_seg::GetSpecial(uint index, uint *type, void **data)
 {
     *type = (flags >> (index * 4 + 4)) & 0xf;
     *data = specials[index];
+}
+
+// FUNCTION: GAME 0x53e570
+bool check_seg::isInSpecial(S_vector &pos)
+{
+    for (uint i = 0; i < NumSpecials(); i++) {
+        uint type;
+        void *data;
+        GetSpecial(i, &type, &data);
+        switch (type) {
+        case CHECK_SEG_UNKNOWN_1:
+            if ((((check_seg_special_1 *)data)->pos - pos).Square()
+                <= ((check_seg_special_1 *)data)->radius * ((check_seg_special_1 *)data)->radius)
+                return true;
+            break;
+        case CHECK_SEG_UNKNOWN_2:
+            if ((((ai_seg_corner *)data)->pos - pos).Square()
+                <= ((ai_seg_corner *)data)->radius * ((ai_seg_corner *)data)->radius)
+                return true;
+            break;
+        case CHECK_SEG_UNKNOWN_4:
+            if ((((check_seg_special_4 *)data)->pos - pos).Square()
+                <= ((check_seg_special_4 *)data)->radius * ((check_seg_special_4 *)data)->radius)
+                return true;
+            break;
+        case CHECK_SEG_UNKNOWN_8:
+            if ((((check_seg_special_8 *)data)->pos - pos).Square()
+                <= ((check_seg_special_8 *)data)->radius * ((check_seg_special_8 *)data)->radius)
+                return true;
+            break;
+        }
+    }
+    return false;
+}
+
+// FUNCTION: GAME 0x53e660
+check_seg *check_seg_clusters::GetSegment(uint index)
+{
+    uint cluster = index / 4;
+    uint i = index % 4;
+    if (cluster >= num_clusters)
+        return NULL;
+    check_seg *seg = &clusters[cluster].segs[i];
+    if (!seg->flags)
+        return NULL;
+    return seg;
+}
+
+// FUNCTION: GAME 0x53e6a0
+uint check_seg_clusters::NumSegments()
+{
+    if (!num_clusters)
+        return 0;
+    uint num = (num_clusters - 1) * 4;
+    for (uint i = 0; i < 4; i++) {
+        if (clusters[num_clusters - 1].segs[i].flags)
+            num++;
+    }
+    return num;
 }
 
 // Copies the segment into the last cluster's first free slot, or into a new cluster, and takes its data: the segment
@@ -215,32 +296,4 @@ bool check_seg_clusters::Load()
     }
     dtaClose(file);
     return true;
-}
-
-// STUB: GAME 0x53e4b0
-bool check_seg::existIndex(uint value, uint lo, uint hi)
-{
-    StubLog("check_seg::existIndex");
-    return false;
-}
-
-// STUB: GAME 0x53e570
-bool check_seg::isInSpecial(S_vector &pos)
-{
-    StubLog("check_seg::isInSpecial");
-    return false;
-}
-
-// STUB: GAME 0x53e660
-check_seg *check_seg_clusters::GetSegment(uint index)
-{
-    StubLog("check_seg_clusters::GetSegment");
-    return NULL;
-}
-
-// STUB: GAME 0x53e6a0
-uint check_seg_clusters::NumSegments()
-{
-    StubLog("check_seg_clusters::NumSegments");
-    return 0;
 }

@@ -1,12 +1,14 @@
 // The grenades (PS2 C_grenade.cpp; the PC's file is the one at 0x445260-0x44584c, docs/game-files.md, between
 // C_ff_manager.cpp and C_irenka.cpp as the name sorts), in PS2's order: a bottle's physics that goes off once its fuse
-// has burnt down or at its first hit, exploding or setting a fire. Not written yet: AI, a stub.
+// has burnt down or at its first hit, exploding or setting a fire.
 
 #include "actors/C_grenade.h"
 
 #include "mission/Mission.h"
 #include "mission/game.h"
-#include "stub.h"
+#include "mission/C_effects.h"
+#include "g_material.h"
+#include "tools.h"
 
 // FUNCTION: GAME 0x445260
 C_grenade::C_grenade()
@@ -33,11 +35,62 @@ bool C_grenade::Init(I3D_frame *frm)
 
 // The bottle's step, with the hit material's sound near the camera (game sounds high), then the fuse: where its time
 // is up or at its first hit the grenade goes off, the explosion, the fire (and its particles), then out of the game
-// STUB: GAME 0x4452c0
+// FUNCTION: GAME 0x4452c0
 void C_grenade::AI(uint time)
 {
-    StubLog("C_grenade::AI");
     C_bottle::AI(time);
+    if (hit && hit_material < numOfMaterials) {
+        S_vector d = act_mission->scene->GetActiveCamera()->GetWorldPos() - pos;
+        if (act_mission->options.game_sounds >= OPTION_HIGH && d.x * d.x + d.y * d.y + d.z * d.z < 400.0f) {
+            I3D_sound *sound = (I3D_sound *)driver->CreateFrame(FRAME_SOUND);
+            if (sound) {
+                sound->SetPos(pos);
+                sound->Update();
+                if (sound_table.ConstructSound(sound, materialList[hit_material].grenade_sound))
+                    act_mission->game->Play3DSound(sound);
+                else
+                    sound->Release();
+            }
+        }
+    }
+    bool go_off = false;
+    if (timer) {
+        fuse_time -= time;
+        if (fuse_time < 0)
+            go_off = true;
+    }
+    if (impact)
+        go_off = bounces > 0;
+    if (fall_speed > 50.0f) {
+        act_mission->game->RemoveTemporaryActor(this);
+        return;
+    }
+    if (!go_off)
+        return;
+    if (explode) {
+        S_vector p = frame->GetWorldPos();
+        act_mission->game->NewExplosion(this, p, explosion_radius, explosion_power, true, false, true,
+            SOUND_EXPLOSION);
+    }
+    if (fire) {
+        S_vector p = frame->GetWorldPos();
+        if (act_mission->options.particles >= OPTION_HIGH) {
+            act_mission->game->NewSmallFires(p, 4);
+            act_mission->effects->CreateParticle(PARTICLE_GRENADE_FIRE, p, S_vector(0.0f, 0.0f, 1.0f), 0, NULL);
+        }
+        I3D_frame *frm = NULL;
+        if (hit_actor) {
+            frm = hit_actor->frame;
+            if (frm) {
+                S_matrix m = frm->GetMatrix();
+                m.Inverse(S_matrix(m));
+                p *= m;
+            }
+        }
+        act_mission->game->NewFire(p, frm, fire_time, fire_unknown1, fire_unknown2, true);
+    }
+    act_mission->game->InvalidateActor(this, false);
+    act_mission->game->RemoveTemporaryActor(this);
 }
 
 // The base's: the original's jumps there, folded with C_cartridge's

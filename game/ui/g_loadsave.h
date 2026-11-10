@@ -736,7 +736,7 @@ struct S_garage_item
 // The saved games' vector's helpers, which SaveGameEnumFiles' inlined push_back and SaveGameCreate call: the
 // original's copies are folded ones in other files' ranges
 // TEMPLATE: GAME 0x5bc800
-// ?_Ucopy@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@IAEPAUS_sound_play@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEPAUS_hydrant@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x4d2a70
 // ?_Ufill@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEXPAUS_hydrant@C_game@@IABU34@@Z
@@ -752,7 +752,7 @@ struct S_garage_item
 // ProfileGetList's code (mov eax, ecx; ret) is the cutscene's CutsceneTime's too, which the linker folds it with:
 // by name, as which copy our linker keeps changes with the link
 // SYNTHETIC: GAME 0x605560
-// ?ProfileGetList@G_LoadSaveClass@@QAEPAV?$vector@UG_Profile_FileHead@@V?$allocator@UG_Profile_FileHead@@@std@@@std@@XZ
+// ?CutsceneTime@@YIHH@Z
 
 // Set while the profile mustn't be saved: from the start until Init has loaded one, and when the player quit in the
 // profiles' menu (PS2's name)

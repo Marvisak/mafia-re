@@ -292,6 +292,11 @@ public:
 // SYNTHETIC: GAME 0x5e4d50
 // ?OnClick@GM_GarageSummary@@UAEHI@Z
 
+// The two quit questions' OnBeforeCreate, the same code ("exityesno"), folded into the first copy: by name, as which
+// of the two copies our linker keeps changes with the link
+// FUNCTION: GAME 0x5e08e0
+// ?OnBeforeCreate@GM_GameMenuExit@@UAEPBDXZ
+
 class C_car;
 struct S_garage_item;
 

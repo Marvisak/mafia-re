@@ -110,6 +110,8 @@ struct S_shoot
 #define PARTICLE_EXPLOSION 7
 #define PARTICLE_SMALL_FIRE 0x16
 #define SOUND_FIRE 0x15
+// The effects' particle of the fire a grenade sets, C_grenade::AI's (the name is ours)
+#define PARTICLE_GRENADE_FIRE 8
 // The sound table's sound of an explosion: the script's EXPLOSION and the seagulls' pass it to NewExplosion (the
 // name is ours)
 #define SOUND_EXPLOSION 0x12
@@ -1197,7 +1199,7 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
@@ -1216,7 +1218,7 @@ public:
 // ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
 
 // TEMPLATE: GAME 0x5bbde0
-// ?erase@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@0@Z
+// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bbe30
 // ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
@@ -1249,7 +1251,7 @@ public:
 // ?_Construct@std@@YIXPAUS_RoadBlock@C_game@@ABU23@@Z
 
 // TEMPLATE: GAME 0x5bc9e0
-// ?_Construct@std@@YIXPAUS_seagull@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_shoot@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x5bca20
 // ??4S_RoadBlock@C_game@@QAEAAU01@ABU01@@Z

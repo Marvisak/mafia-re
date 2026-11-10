@@ -27,7 +27,7 @@ struct S_grenade_savegame
 // The grenades, the Molotov cocktails and the cheat Magnum's shots (PS2 C_grenade, C_grenade.cpp), ACTOR_GRENADE, 0x160
 // bytes (PS2's 0x1c0): a bottle's physics, which C_game::NewGrenade creates and throws. AI sets it off once its fuse
 // has burnt down (timer) or it has hit something (impact): an explosion (explode) or a fire (fire) where it is, then it
-// leaves the game. Only the constructor is a stub so far, and AI.
+// leaves the game.
 // VTABLE: GAME 0x623d70
 class C_grenade : public C_bottle
 {

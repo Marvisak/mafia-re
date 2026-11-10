@@ -154,7 +154,7 @@ extern std::vector<IJoy *> joy;
 
 // The tables' helpers, which SetControl's inlined push_back calls
 // TEMPLATE: GAME 0x60f1f0
-// ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
+// ?insert@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@MV?$allocator@M@std@@@std@@QAEXPAMIABM@Z
+// ?insert@?$vector@PAVG_Inventory@@V?$allocator@PAVG_Inventory@@@std@@@std@@QAEXPAPAVG_Inventory@@IABQAV3@@Z

@@ -378,10 +378,14 @@ public:
     // An emitter of the effect at the position and the direction, at the frame (PS2's particle manager's; PS2 has the
     // frame fourth and two bools): its particle's number, which DestroyParticle takes, -1 for an effect not loaded
     int CreateParticle(int effect, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm);
+    // The same for the effect itself, which the other calls (the PC's; the overload is ours)
+    int CreateParticle(C_effect *e, const S_vector &pos, const S_vector &dir, int unknown, I3D_frame *frm);
     void DestroyParticle(int particle);
     // PS2's particle manager's names, which C_game::Tick calls: the emitters by the time passed, whether a particle's
     // emitter is still at work, and whether it makes new particles (the flag is C_ParticleEmitter::emitting's)
     void ClientTick(int time);
+    // The emitter in use of the number, and its index, NULL for none (PS2 name)
+    S_particle_in_use *FindGuid(int guid, int &index);
     bool IsParticleAlive(int particle);
     void PauseParticle(int particle, bool emit);
     // PS2's names: the emitters in use deleted, an effect started at a frame (with the matrix) for LoadStaticParticles
@@ -411,16 +415,16 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_console_line@@V?$allocator@US_console_line@@@std@@@std@@QAE@XZ
+// ??1?$vector@IV?$allocator@I@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAUS_particle_subpart@@V?$allocator@PAUS_particle_subpart@@@std@@@std@@QAEPAPAUS_particle_subpart@@PAPAU3@ABQAU3@@Z
+// ?insert@?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAEPAPAVC_effect_part@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@PAVC_effect_part@@V?$allocator@PAVC_effect_part@@@std@@@std@@QAE@ABV?$allocator@PAVC_effect_part@@@1@@Z
+// ??0?$vector@US_FLASH@@V?$allocator@US_FLASH@@@std@@@std@@QAE@ABV?$allocator@US_FLASH@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)
