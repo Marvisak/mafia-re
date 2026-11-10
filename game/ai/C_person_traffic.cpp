@@ -314,6 +314,12 @@ void C_traffic_generator::Explosion(S_vector &pos, float range, float power)
     StubLog("C_traffic_generator::Explosion");
 }
 
+// STUB: GAME 0x450780
+void C_traffic_generator::Fire(S_vector &pos, float range_2, float damage)
+{
+    StubLog("C_traffic_generator::Fire");
+}
+
 // The active pedestrians taken out of the game, from the last one
 // FUNCTION: GAME 0x450860
 void C_traffic_generator::FreeDynCollElements()

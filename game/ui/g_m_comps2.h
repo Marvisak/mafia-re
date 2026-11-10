@@ -1035,7 +1035,7 @@ public:
 
 // The combo box's too
 // FUNCTION: GAME 0x5deeb0
-// ?GetPointer@GM_ComboBox@@UAEPAXXZ
+// ?GetPointer@GM_ListBox@@UAEPAXXZ
 
 // FUNCTION: GAME 0x5deec0
 // ?Draw@GM_ListBox@@UAEXI@Z

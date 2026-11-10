@@ -3344,13 +3344,13 @@ void C_game::NewSmallFires(S_vector &pos, int count)
 // A fire at pos, in frm's space where frm isn't NULL (PS2 name): a C_fire (fires), its light for time ms, its track,
 // its sound and the pedestrians' panic
 // FUNCTION: GAME 0x5abe10
-void C_game::NewFire(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3)
+void C_game::NewFire(S_vector &pos, I3D_frame *frm, int time, float range, float damage, bool hurts)
 {
     S_vector p = pos;
     if (frm)
         p *= frm->GetMatrix();
     C_fire *fire = new C_fire;
-    fire->Init(pos, frm, time, unknown1, unknown2, unknown3);
+    fire->Init(pos, frm, time, range, damage, hurts);
     AddShootLight(p, 10.0f, time, SHOOTLIGHTF_FLICKER);
     fires.push_back(fire);
     CreateTrackEffect_Grenade(p);
@@ -5096,8 +5096,8 @@ void C_game::BoxPlacementRecompile()
         if (!covered && boxes[i]->on)
         {
             boxes[i]->using_object->pos = boxes[i]->frame->GetWorldPos();
-            boxes[i]->using_object->unknown_c = .5f;
-            boxes[i]->using_object->unknown_10 = 0;
+            boxes[i]->using_object->radius_2 = .5f;
+            boxes[i]->using_object->matrix = NULL;
             boxes[i]->using_object->flags = 0;
             boxes[i]->using_object->frame = boxes[i]->frame;
             boxes[i]->using_object->actor = NULL;
@@ -5152,8 +5152,8 @@ int C_game::BoxPlacementDestSetOU(bool on, I3D_frame *frm)
     if (j < 0)
         return -1;
     dest_object.pos = box_dests[j]->frame->GetWorldPos();
-    dest_object.unknown_c = 1.0f;
-    dest_object.unknown_10 = 0;
+    dest_object.radius_2 = 1.0f;
+    dest_object.matrix = NULL;
     dest_object.flags = 0;
     dest_object.frame = box_dests[j]->frame;
     dest_object.actor = NULL;
@@ -5180,8 +5180,8 @@ void C_game::BoxPlacementReposeDestPlayer()
     if (j < 0)
         return;
     dest_object.pos = box_dests[j]->frame->GetWorldPos();
-    dest_object.unknown_c = 1.0f;
-    dest_object.unknown_10 = 0;
+    dest_object.radius_2 = 1.0f;
+    dest_object.matrix = NULL;
     dest_object.flags = 0;
     dest_object.frame = box_dests[j]->frame;
     dest_object.actor = NULL;
@@ -6997,8 +6997,8 @@ void C_game::TickDeadHumanForTick(uint time)
         {
             ((C_human *)dead_humans[i])->using_objects[0].pos = back->GetWorldPos();
             ((C_human *)dead_humans[i])->using_objects[0].pos.y += .5f;
-            ((C_human *)dead_humans[i])->using_objects[0].unknown_c = .7f;
-            ((C_human *)dead_humans[i])->using_objects[0].unknown_10 = 0;
+            ((C_human *)dead_humans[i])->using_objects[0].radius_2 = .7f;
+            ((C_human *)dead_humans[i])->using_objects[0].matrix = NULL;
             ((C_human *)dead_humans[i])->using_objects[0].flags = 0;
             ((C_human *)dead_humans[i])->using_objects[0].frame = NULL;
             ((C_human *)dead_humans[i])->using_objects[0].actor = (C_human *)dead_humans[i];

@@ -73,6 +73,18 @@ public:
 
 // The entity's senses (PS2 ai_sensors), C_entity's 0xbb4, 0x2d4 bytes: Init clears its contacts, three arrays of eight,
 // and keeps its owner before the last twelve dwords
+// A sound an entity hears (PS2 ai_sound_contact), 0x20 bytes (soundArena::GetSounds' frame has them, and PS2's is too):
+// GetSounds' of one of its sounds (the members' names are ours, after soundArena's)
+struct ai_sound_contact
+{
+    S_vector pos;                       // 0x0
+    uint time;                          // 0xc, the game's time the sound was emitted at
+    uint id;                            // 0x10, its kind
+    C_actor *act;                       // 0x14, who made it
+    float level;                        // 0x18, how loud the entity hears it, up to 1
+    int unknown_1c;                     // 0x1c, which GetSounds doesn't set
+};
+
 class ai_sensors
 {
 public:
@@ -80,8 +92,11 @@ public:
     void *owner;                        // 0x2a0
     uchar unknown_2a4[0x30];            // 0x2a4
 
-    // PS2 name
+    // PS2 names
     void Init(void *owner);
+    // A sound heard, and one of an actor's no longer heard, which soundArena::GetSounds gives
+    void NewSoundCon(ai_sound_contact *con);
+    void CancelSoundCon(C_actor *act, uint id);
 };
 
 // A log of another character (PS2 ai_character_log), 0x54 bytes (PS2's too): only the times the fights' Tick reads so
@@ -210,6 +225,8 @@ public:
     // Whether one of the game's entities has one of five jobs aimed at this one, AIACTION_NORMALFIGHT among them (PS2
     // name), which ai_follow_manager::Update asks
     bool IsInDanger();
+    // How well the entity hears (PS2 name), which soundArena::GetSounds takes off the level a sound needs
+    float GetHearQuality();
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, after PS2's
     // types)

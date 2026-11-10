@@ -117,6 +117,9 @@ public:
     // The pedestrians within range of an explosion at pos hit (PS2 name; the parameters' names are ours), which
     // C_game::NewExplosion calls
     static void Explosion(S_vector &pos, float range, float power);
+    // The pedestrians within range of a fire at pos hurt (PS2 name; the parameters' names are ours), which C_fire::Tick
+    // calls with its range's square and damage
+    static void Fire(S_vector &pos, float range_2, float damage);
     // The pedestrians' panic at a shot or an explosion at pos (PS2 name), which C_game's NewShoot, NewExplosion and
     // NewFire call
     static void NewPanic(S_vector &pos);

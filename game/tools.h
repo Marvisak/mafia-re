@@ -65,9 +65,8 @@ struct S_timer
 #define USING_ACTION_BOARD_TROLLEY 0x7e0         // "Board Trolley Car"
 #define USING_ACTION_EXIT_TROLLEY 0x7e1          // "Exit Trolley Car"
 
-// The objects the player can use (PS2 C_using_object, tools.cpp): only its two vectors are known, which the game's
-// inline constructor constructs (PS2's also clears its 0x18 and 0x1c). Its methods are in the PC's tools.cpp
-// (0x55dd60, 0x55df10).
+// The objects the player can use (PS2 C_using_object, tools.cpp), the game's 0x29ec, which the game's inline
+// constructor constructs (PS2's also clears its 0x18 and 0x1c).
 class C_using_object
 {
 public:
@@ -78,24 +77,39 @@ public:
     struct S_using_object
     {
         S_vector pos;                   // 0x0, the frame's world position, 1 higher
-        float unknown_c;                // 0xc, 0.5 for a weapon
-        int unknown_10;                 // 0x10
+        // 0xc, the square of the horizontal distance within which the player reaches the object: 0.5 for a weapon
+        float radius_2;
+        // 0x10, the space pos is in, transformed by it where it isn't NULL (every user of the PC's sets NULL; the name
+        // is ours)
+        const S_matrix *matrix;
         uint flags;                     // 0x14, USINGF_*
         I3D_frame *frame;               // 0x18 (PS2 0x1c)
         C_actor *actor;                 // 0x1c, the dead human whose body it is, NULL for a weapon (the name is ours)
         I3D_frame *sector;              // 0x20, the frame's nearest FRAME_SECTOR parent
-        bool unknown_24;                // 0x24
+        // 0x24, set for CREATEWEAPONFROMFRAME's weapons, which SaveGameSave leaves out (the name is a guess)
+        bool scripted;
         S_GameItem item;                // 0x28, the item the player gets, whose using_object is the object itself
 
         // FUNCTION: GAME 0x47aef0
-        S_using_object() : unknown_10(0), frame(NULL), actor(NULL), sector(NULL), unknown_24(false) {}
+        S_using_object() : matrix(NULL), frame(NULL), actor(NULL), sector(NULL), scripted(false) {}
+    };
+
+    // A put down weapon in a saved game (the name is ours), 0x30 bytes: SaveGameSave's record of the objects' and the
+    // dropped weapons' (C_drop_in_weapon), from which SaveGameLoad makes the objects again
+    struct S_using_object_savegame
+    {
+        S_GameItem item;                // 0x0
+        S_vector pos;                   // 0x10, the frame's world position
+        S_quat rot;                     // 0x1c, its world rotation
+        float radius_2;                 // 0x2c
     };
 
     std::vector<S_using_object *> objects;  // 0x0 (PS2's first, destroyed last)
-    std::vector<uint> unknown_10;       // 0x10, 4-byte values (PS2's vector<unsigned int>)
+    // 0x10, the special actions the player can't use, AddInvalidItem's (PS2's vector<unsigned int>; the name is ours)
+    std::vector<uint> invalid_items;
 
     // PS2 names
-    // An object for the player to use
+    // An object for the player to use, once
     void AddObject(S_using_object *obj);
     // Forgets the object, its frame and itself freed as ClearObjects' (from the last object)
     void DelObject(S_using_object *obj);
@@ -106,9 +120,10 @@ public:
     void ClearObjects();
     void ClearInvalidItems();
     // The special actions (S_GameItem::ammo_loaded of a GAMEITEM_SPECIAL_ACTION) the player can't use, added and
-    // taken out again (PS2 names)
+    // taken out again, and whether one is (PS2 names)
     void AddInvalidItem(uint id);
     void DelInvalidItem(uint id);
+    bool IsInvalidItem(uint id);
     // Whether a valid object in the frame's sector (or in none) is within reach of pos: 1.5 m up or down, and
     // horizontally within its radius (PS2 name; dir isn't read)
     bool IsAnyObjectNear(const S_vector &pos, const S_vector &dir, I3D_frame *sector);
@@ -162,45 +177,73 @@ public:
 
 extern C_silver_screen silver_screen;
 
-// The sounds the humans hear (PS2 soundArena, tools.cpp), the game's 0x2b3c, 0x208 bytes; what it holds isn't known
-// yet
+class C_entity;
+
+// How many sounds soundArena keeps (the name is ours)
+#define NUM_ARENA_SOUNDS 16
+
+// The sounds the humans hear (PS2 soundArena, tools.cpp), the game's 0x2b3c, 0x208 bytes: the last 16 of them (the
+// members' names are ours), which an entity's GetSounds gives its senses
 class soundArena
 {
 public:
-    uchar unknown_0[0x200];             // 0x0
-    int unknown_200;                    // 0x200
-    int unknown_204;                    // 0x204
+    // A sound (the names are ours), 0x20 bytes (PS2's 0x30, the vector 16 bytes)
+    struct S_sound
+    {
+        S_vector pos;                   // 0x0
+        uint id;                        // 0xc, the caller's kind of sound, 0 for none
+        uint time;                      // 0x10, the game's time it was emitted at
+        float loudness;                 // 0x14, what it has at pos, falling to 0 at range
+        float range;                    // 0x18
+        C_actor *act;                   // 0x1c, who made it
+    };
+
+    S_sound sounds[NUM_ARENA_SOUNDS];   // 0x0
+    uint last;                          // 0x200, the sound written last; the next wraps round
+    uint next_clear;                    // 0x204, the game's time after which SoundEmit forgets the old sounds
 
     // Forgets every sound (PS2 name)
     void Init();
-    // A sound the humans hear at pos (PS2 name; the parameters' names are ours): human_notify_callback's steps
-    void SoundEmit(S_vector &pos, float range, float unknown, uint unknown2, C_actor *act);
+    // A sound of the actor's the humans hear at pos (PS2 name; the parameters' names are ours): human_notify_callback's
+    // steps. An actor's sound of the same id is moved there, otherwise it takes the place after the last; the sounds
+    // older than 2 s are forgotten every 2 s.
+    void SoundEmit(S_vector &pos, float range, float loudness, uint id, C_actor *act);
+    // The sounds the entity hears given to its senses, those it doesn't hear taken out of them (PS2 name)
+    void GetSounds(C_entity *ent);
     // Forgets an actor's sounds (PS2 name), which C_game::InvalidateActor calls
     void InvalidateActor(C_actor *act);
 };
 
+// The effects' particle and the sound table's sound of a fire, which C_fire::Init starts (the names are ours)
+#define PARTICLE_FIRE 0x15
+#define SOUND_FIRE_BURNING 0x14
+
 // A fire (PS2 C_fire, tools.cpp), 0x30 bytes (C_game::NewFire's new), which the game keeps (its 0x314) and deletes at
-// Done; only the constructor, the destructor, Init and Tick are known
+// Done. The members' names are ours.
 class C_fire
 {
 public:
     C_fire();
     ~C_fire();
-    // Starts the fire at pos on frm (PS2 name; the parameters' names are ours), which C_game::NewFire calls
-    void Init(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3);
+    // Starts the fire at at, in frm's space where frm isn't NULL, for time ms (PS2 name; the parameters' names are
+    // ours): its particle, and its sound if it burns for 2 s or longer. With hurt set it hurts the actors within
+    // range, by dmg at its start and less as it burns out, which C_game::NewFire calls.
+    void Init(S_vector &at, I3D_frame *frm, int time, float range, float dmg, bool hurt);
 
     // The fire by the time passed, which C_game::Tick calls (PS2 name): false when it has burnt out, and C_game::Tick
     // deletes it
     bool Tick(uint time);
 
-    uchar unknown_0[0xc];               // 0x0
-    // 0xc (PS2 0x10), the frame it burns on: C_game::InvalidateActor deletes the fires of an actor's frame (the
-    // name is ours)
+    S_vector pos;                       // 0x0
+    // 0xc (PS2 0x10), the frame it burns on: C_game::InvalidateActor deletes the fires of an actor's frame
     I3D_frame *frame;
-    uchar unknown_10[0xc];              // 0x10
-    int unknown_1c;                     // 0x1c, 0 from the constructor (PS2 0x20)
-    int unknown_20;                     // 0x20, 200 from the constructor (PS2 0x24)
-    uchar unknown_24[0xc];              // 0x24
+    int life;                           // 0x10, the time left (PS2 0x14)
+    float range_2;                      // 0x14, the square of the range it hurts within
+    float damage;                       // 0x18
+    S_timer timer;                      // 0x1c, when it hurts, every 450 to 550 ms (PS2 0x20)
+    I3D_sound *sound;                   // 0x24 (PS2 0x28)
+    bool hurts;                         // 0x28 (PS2 0x2c)
+    int particle;                       // 0x2c, the effects' particle, -1 without one
 };
 
 // A group of the sound table's sounds (PS2 S_sound_group), 0x24 bytes: the editor's, which the game skips in the file
@@ -222,7 +265,7 @@ extern std::vector<S_sound_group> sound_group;
 #define SOUNDPARAM_VOLUME 3
 
 // The game's sounds by number (PS2 C_sound_table, tools.cpp), from tables\sounds.dat, 0x1c bytes. The members' names
-// are ours. Only what InitSystem and CloseSystem use is written so far.
+// are ours. The virtual functions but the last two are the editor's.
 // VTABLE: GAME 0x625410
 class C_sound_table
 {
@@ -270,12 +313,18 @@ public:
 
     // PS2's virtual functions in PS2's order (the parameters each one's ret takes)
     virtual void SaveTables(const char *name);
+    // A group of the next group id
     virtual void AddGroup(const char *name);
+    // The group and its sounds; its place taken by the last group
     virtual void DelGroup(int index);
+    // A sound of the next sound id, cleared
     virtual void AddSound(const char *name, uint group);
     virtual void DelSound(uint id);
+    // A file's name, a copy of file_name, NULL for none
     virtual void SetFileName(S_sound_table *table, int index, const char *file_name);
+    // The files sorted by their chances, the lowest first
     virtual void OptimalizeTable(S_sound_table *table);
+    // The sound of an id, NULL without one
     virtual S_sound_table *GetTableFromIDX(uint id);
 
     // Its copy comes among the file's templates
@@ -295,7 +344,11 @@ extern C_sound_table sound_table;
 // GM_Component::GetText), whose copy the original kept from another file: named after the copy our linker keeps
 // (foldfix)
 // SYNTHETIC: GAME 0x5d92d0
-// ?GetSounds@C_sound_table@@UAEPAUS_sound_table@1@XZ
+// ?GetText@GM_Component@@UAEPAEXZ
+
+// The groups' push_back's insert(P, n, x), which AddGroup calls out of line
+// TEMPLATE: GAME 0x55fdc0
+// ?insert@?$vector@US_sound_group@@V?$allocator@US_sound_group@@@std@@@std@@QAEXPAUS_sound_group@@IABU3@@Z
 
 // The vectors' helpers, which LoadTables calls out of line: the sounds' clear's erase and push_back's insert(P, n, x)
 // TEMPLATE: GAME 0x55fd40

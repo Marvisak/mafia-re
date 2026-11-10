@@ -3122,8 +3122,8 @@ void C_human::ChangeState()
             {
                 using_objects[0].pos = back->GetWorldPos();
                 using_objects[0].pos.y += .5f;
-                using_objects[0].unknown_c = .7f;
-                using_objects[0].unknown_10 = 0;
+                using_objects[0].radius_2 = .7f;
+                using_objects[0].matrix = NULL;
                 using_objects[0].flags = 0;
                 using_objects[0].frame = NULL;
                 using_objects[0].actor = this;
@@ -3134,8 +3134,8 @@ void C_human::ChangeState()
                     act_mission->GetGame()->GetUsingObject().AddObject(&using_objects[0]);
                 using_objects[1].pos = back->GetWorldPos();
                 using_objects[1].pos.y += .5f;
-                using_objects[1].unknown_c = .7f;
-                using_objects[1].unknown_10 = 0;
+                using_objects[1].radius_2 = .7f;
+                using_objects[1].matrix = NULL;
                 using_objects[1].flags = 0;
                 using_objects[1].frame = NULL;
                 using_objects[1].actor = this;

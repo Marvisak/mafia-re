@@ -4096,12 +4096,12 @@ void C_program::Process(uint time)
         act_mission->GetScene()->SetFrameSector(weapon);
         C_using_object::S_using_object *obj = new C_using_object::S_using_object;
         obj->pos = weapon->GetWorldPos() + S_vector(0.0f, 1.0f, 0.0f);
-        obj->unknown_c = .5f;
-        obj->unknown_10 = 0;
+        obj->radius_2 = .5f;
+        obj->matrix = NULL;
         obj->flags = USINGF_DELETE | USINGF_FRAME;
         obj->frame = weapon;
         obj->actor = NULL;
-        obj->unknown_24 = true;
+        obj->scripted = true;
         // The sector the copy is in
         for (obj->sector = weapon->GetParent(); obj->sector; obj->sector = obj->sector->GetParent())
         {

@@ -3,11 +3,24 @@
 // constructor, which C_mission::CreateActor calls, the cutscene's block and wake, which C_game::EntityBlock calls,
 // what the script's commands call (the senses', the logs' and the jobs' functions, ForceScript, WeaponChoose,
 // AddUsingObject), what the AI's following and fights and the police call (Event, hasAction, LockSubstate,
-// IsInDanger) and ResetState, which C_mission::FrmActBuff_GetActor calls, are stubs.
+// IsInDanger), ResetState, which C_mission::FrmActBuff_GetActor calls, and the senses' sound contacts and the hearing,
+// which soundArena::GetSounds calls, are stubs.
 
 #include "ai/jp_ai_entity.h"
 
 #include "stub.h"
+
+// STUB: GAME 0x5057c0
+void ai_sensors::NewSoundCon(ai_sound_contact *con)
+{
+    StubLog("ai_sensors::NewSoundCon");
+}
+
+// STUB: GAME 0x5058c0
+void ai_sensors::CancelSoundCon(C_actor *act, uint id)
+{
+    StubLog("ai_sensors::CancelSoundCon");
+}
 
 // STUB: GAME 0x505d20
 void ai_sensors::Init(void *owner)
@@ -25,6 +38,13 @@ void ai_vis_logs::Init(void *owner)
 C_entity::C_entity()
 {
     StubLog("C_entity::C_entity");
+}
+
+// STUB: GAME 0x523c30
+float C_entity::GetHearQuality()
+{
+    StubLog("C_entity::GetHearQuality");
+    return 0.0f;
 }
 
 // STUB: GAME 0x523f80

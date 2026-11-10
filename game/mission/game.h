@@ -994,9 +994,9 @@ public:
     bool CheatKey(char key);
     // count small fires around pos (PS2 name), which the code at 0x4452bb calls
     void NewSmallFires(S_vector &pos, int count);
-    // A fire at pos in frm's space, burning time ms (PS2 name; the parameters' names are ours, time a guess), which
-    // the code at 0x431bdb (a crash object's) and 0x4452bb calls
-    void NewFire(S_vector &pos, I3D_frame *frm, int time, float unknown1, float unknown2, bool unknown3);
+    // A fire at pos in frm's space, burning time ms, that hurts within range by damage if hurts is set (C_fire; PS2
+    // name, the parameters' names are ours), which the code at 0x431bdb (a crash object's) and 0x4452bb calls
+    void NewFire(S_vector &pos, I3D_frame *frm, int time, float range, float damage, bool hurts);
     void ClearFrameFromFireHole(I3D_frame *frm);
     void DelFramePlacement(I3D_frame *frm);
     void Timer_TimeOut();
@@ -1184,10 +1184,10 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
@@ -1197,7 +1197,7 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
+// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
@@ -1216,7 +1216,7 @@ public:
 // ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
 
 // TEMPLATE: GAME 0x5bbde0
-// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
+// ?erase@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@0@Z
 
 // TEMPLATE: GAME 0x5bbe30
 // ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
@@ -1225,7 +1225,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_stop_sounds@C_game@@V?$allocator@US_stop_sounds@C_game@@@std@@@std@@QAEXPAUS_stop_sounds@C_game@@IABU34@@Z
+// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z

@@ -206,4 +206,9 @@ public:
 // The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
 // 0x438f00 of its folded group
 // TEMPLATE: GAME 0x438f00
-// ?insert@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEXPAUS_GameItem@@IABU3@@Z
+// ?insert@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEXPAUG_MISubtitleStruct@@IABU3@@Z
+
+// The items' erase, which C_using_object::FindNearObjects' clear calls: the original's copy is in jp_ai_entity.cpp's
+// range
+// TEMPLATE: GAME 0x505020
+// ?erase@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEPAUS_GameItem@@PAU3@0@Z

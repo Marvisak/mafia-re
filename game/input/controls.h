@@ -157,4 +157,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@QAEXPAPAUtDynamicPolicko@@IABQAU3@@Z
+// ?insert@?$vector@MV?$allocator@M@std@@@std@@QAEXPAMIABM@Z
