@@ -82,6 +82,7 @@ address|type|size
 0x623b0c|float|4
 0x623bb8|float|4
 0x623bec|float|4
+0x623bfc|float|4
 0x623c08|float|4
 0x623c0c|float|4
 0x623c10|float|4
@@ -107,6 +108,7 @@ address|type|size
 0x62488c|float|4
 0x624890|float|4
 0x624894|float|4
+0x624a28|float|4
 0x624a64|float|4
 0x624b08|float|4
 0x624b0c|float|4
@@ -116,6 +118,8 @@ address|type|size
 0x624b88|float|4
 0x624b98|float|4
 0x624b9c|float|4
+0x624bcc|float|4
+0x624bd0|float|4
 0x624bd4|float|4
 0x624bd8|float|4
 0x624bdc|float|4

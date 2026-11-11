@@ -31,6 +31,10 @@ struct S_TSRFC
 // C_car::unbreakable's value, which the scripts' CAR_UNBREAKABLE sets or clears (the name is ours; PS2's sets 0xc000)
 #define CARF_UNBREAKABLE 0x4000
 
+// C_car::axis's value the chases give the cars they take (C_sledovacka's AddCar functions; PS2's 0xc10; the
+// name is ours, by value)
+#define CARAXIS_UNKNOWN_C00 0xc00
+
 // The value the fights' Tick gives C_car::death_fade_time, 1332 ms of its 4000 (the name is ours)
 #define CAR_DEATH_FADE_START 0x534
 
@@ -267,7 +271,7 @@ public:
     uchar unknown_20f7;                 // 0x20f7
     int axis;                           // 0x20f8 (PS2 0x23c8), CAR_SETAXIS sets 1
     uint unbreakable;                   // 0x20fc (PS2 0x23cc), CARF_UNBREAKABLE or 0
-    uchar unknown_2100[4];              // 0x2100
+    float unknown_2100;                 // 0x2100, 1 again where the chases let the car go (C_sledovacka::RemoveCar)
     // 0x2104 (PS2 0x2473), a car in the police's service (the name is ours): PS2's C_shvestky sets it for the cars it
     // sends and its PocetPolicejnichPlechovekVRici ("the number of police cans in the region") counts the cars with it;
     // a car leaving the police's faces with it set runs C_traffic_car::ChlupatejVystrik

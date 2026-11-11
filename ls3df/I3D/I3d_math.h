@@ -46,6 +46,9 @@ struct S_vector2 {
     // The game's (C_shvestky::TestOverRed). Not declared for LS3DF: with S_vector::IsNull it changes 1.1's
     // I3D_lit_object::m_AddFGroups and I3D_singlemesh::UpdateLodVertices (equivalent, no longer identical)
     S_vector2 &operator+=(const S_vector2 &v);
+    // Where the line through p1 along d1 meets the line through p2 along d2, false (the vector unchanged) for parallel
+    // lines (the name is ours): the game's road code's, defined inline in game/ai/road_web.h
+    bool Intersection(const S_vector2 &p1, const S_vector2 &d1, const S_vector2 &p2, const S_vector2 &d2);
 #endif
     // Normalized unless null (the name is a guess)
     void Normalize();

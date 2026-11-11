@@ -387,6 +387,13 @@ public:
         if (wake_up)
             wake_up(callback_context);
     }
+    // The member at 0xc68, waking the vehicle up (the name is ours): the chases' SaveGameLoad sets -1
+    void SetUnknownC68(int value)
+    {
+        unknown_c68 = value;
+        if (wake_up)
+            wake_up(callback_context);
+    }
     // The indicators wake the vehicle up only when they go on
     // FUNCTION: GAME 0x47b280
     void SetIndicatorL(bool on)
@@ -497,7 +504,9 @@ public:
     }
 
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
-    uchar unknown_4[0xbc];              // 0x4
+    uchar unknown_4[0xb8];              // 0x4
+    bool unknown_bc;                    // 0xbc (car 0x12c), C_sledovacka::RemoveCar clears it
+    uchar unknown_bd[3];                // 0xbd
     int lock_count;                     // 0xc0 (PS2 0x51c), LockVehicle's count
     uchar unknown_c4[0x58];             // 0xc4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
@@ -600,7 +609,8 @@ public:
     // 0xc64 (car 0xcd4), the angle between the velocity and the car's direction most likely (the name is a guess):
     // below pi/2 the car goes forward
     float velocity_angle;
-    uchar unknown_c68[0xc];             // 0xc68
+    int unknown_c68;                    // 0xc68 (car 0xcd8, PS2 0xf94), -1 from the chases' SaveGameLoad
+    uchar unknown_c6c[8];               // 0xc6c
     const void *callback_context;       // 0xc74 (car 0xce4, PS2 0xf20), what the callbacks get
     uchar unknown_c78[0x28];            // 0xc78
     // 0xca0 (car 0xd10, PS2 0xf50), the seats (the name is ours; PS2's SetSeatMass reads its vector of S_SEAT there):
@@ -633,7 +643,7 @@ public:
 // ?insert@?$vector@US_VEH_MATERIAL@@V?$allocator@US_VEH_MATERIAL@@@std@@@std@@QAEXPAUS_VEH_MATERIAL@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42d800
-// ?insert@?$vector@US_npc_kill_event@C_game@@V?$allocator@US_npc_kill_event@C_game@@@std@@@std@@QAEXPAUS_npc_kill_event@C_game@@IABU34@@Z
+// ?insert@?$vector@US_TYRE@@V?$allocator@US_TYRE@@@std@@@std@@QAEXPAUS_TYRE@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42de10
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
@@ -645,10 +655,10 @@ public:
 // ?size@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2aa0
-// ?_Ufill@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEXPAUS_shoot@@IABU3@@Z
+// ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z

@@ -177,6 +177,12 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?Do_CornerFireAimed@C_human@@QAE_NW4E_corner_view@1@@Z
         /INCLUDE:?Force_CanWorking@C_human@@QAEXXZ
         /INCLUDE:?Turn_Turn@C_human@@QAEXXZ)
+    # C_sledovacka.cpp's functions that nothing written calls yet (the AI's files)
+    target_link_options(game PRIVATE /INCLUDE:?EnableChangeTables@C_sledovacka@@SIX_N@Z
+        /INCLUDE:?GetVoleMode@C_sledovacka@@QAEHPAVC_car@@@Z
+        /INCLUDE:?DevaaateeeZasNeznaCas@C_sledovacka@@QAEIPAVC_car@@@Z
+        /INCLUDE:?AddCarEscape@C_sledovacka@@QAE_NPAVC_car@@PAVC_actor@@ABUS_vector@@_NMMM@Z
+        /INCLUDE:?HoniMiHoNekdoZKanclu@C_sledovacka@@QAE_NPAVC_car@@@Z)
     # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
     target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests

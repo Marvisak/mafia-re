@@ -319,12 +319,12 @@ void ShowProgress(C_chunk *chunk);
 // ?erase@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEPAPAVC_actor@@PAPAV3@0@Z
 
 // TEMPLATE: GAME 0x538520
-// ?copy@std@@YIPAUS_invisible_actor@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
 
 // The actors' operator[], which the scripts' FINDACTOR calls out of line: folded with every vector of pointers', the
 // original kept the copy of C_sledovacka.cpp's range (named after the copy our linker keeps, foldfix)
 // TEMPLATE: GAME 0x4a9930
-// ??A?$vector@PAUS_ELEMENT@C_traffic_car@@V?$allocator@PAUS_ELEMENT@C_traffic_car@@@std@@@std@@QAEAAPAUS_ELEMENT@C_traffic_car@@I@Z
+// ??A?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@QAEAAPAVC_actor@@I@Z
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
@@ -339,16 +339,16 @@ void ShowProgress(C_chunk *chunk);
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEPAUS_con_register@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@IAEPAUS_actor_sound_buffer@C_mission@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEXPAUS_con_register@@IABU3@@Z
+// ?_Ufill@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@IAEXPAUS_actor_sound_buffer@C_mission@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
-// ?_Construct@std@@YIXPAUS_actor_sound_buffer@C_mission@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_vector@@ABU2@@Z
 
 // What OpenBin calls out of line, its inline budget spent: the frames' map's destructor, operator[] and insert, its
 // tree's functions and the pair's, and the frames' vector's push_back, this file's copies; the 8-byte elements'
@@ -357,7 +357,7 @@ void ShowProgress(C_chunk *chunk);
 // ??1?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE@XZ
 
 // TEMPLATE: GAME 0x546d30
-// ?push_back@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXABUS_instruction@C_program@@@Z
+// ?push_back@?$vector@US_anim_model@C_mission@@V?$allocator@US_anim_model@C_mission@@@std@@@std@@QAEXABUS_anim_model@C_mission@@@Z
 
 // TEMPLATE: GAME 0x546ef0
 // ?push_back@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@QAEXABQAVI3D_frame@@@Z
@@ -366,7 +366,7 @@ void ShowProgress(C_chunk *chunk);
 // ??A?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAEAAPAVI3D_frame@@ABVC_str@@@Z
 
 // TEMPLATE: GAME 0x548040
-// ?insert@?$vector@US_car_snd@@V?$allocator@US_car_snd@@@std@@@std@@QAEPAUS_car_snd@@PAU3@ABU3@@Z
+// ?insert@?$vector@US_particle_in_use@C_effects@@V?$allocator@US_particle_in_use@C_effects@@@std@@@std@@QAEPAUS_particle_in_use@C_effects@@PAU34@ABU34@@Z
 
 // TEMPLATE: GAME 0x5481f0
 // ?insert@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE?AU?$pair@Viterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3282db0e2

@@ -10,6 +10,23 @@ class C_chunk;
 
 // The cars' road network (PS2 C_roads, road_web.cpp), 0x24 bytes. Only what C_mission's Init and UnInit use so far.
 
+// The lanes of a road from a node through one of its connections (PS2's struct is 0x30 bytes; the names are ours),
+// 0x34 bytes: the chases' path nodes point at their road's (S_car_node::lanes)
+struct S_road_lanes
+{
+    uchar unknown_0[0xc];               // 0x0
+    bool unknown_c;                     // 0xc, which the chases' path nodes take (S_car_node::unknown_54)
+    uchar unknown_d[7];                 // 0xd
+    // 0x14, the lanes, from the road's middle out: a type (0 none most likely; the chases drive on 2 and 3, else on
+    // 1) and a width
+    struct S_lane
+    {
+        ushort unknown_0;               // 0x0
+        uchar type;                     // 0x2
+        float width;                    // 0x4
+    } lane[4];
+};
+
 // A node of the roads (PS2 S_road_node), 0xec bytes, the size SaveData counts them by
 struct S_road_node
 {
@@ -17,7 +34,12 @@ struct S_road_node
     // 0xc, whether the node has a semaphore: C_shvestky::TestOverRed tests the red light only at such a node (PS2's
     // tests 0x10 of its S_road_crossing_1, 0xe0 bytes; the name is a guess)
     bool semaphore;
-    uchar unknown_d[0xdf];              // 0xd
+    uchar unknown_d[3];                 // 0xd
+    float unknown_10;                   // 0x10, which the chases' path nodes take (S_car_node::unknown_48)
+    // 0x14, the node's connections: road nodes, or links with NEARNODE_FLAG, as C_roads::GetPos takes them, unused
+    // ones none of those (C_sledovacka::PreparePath's; the name is ours)
+    ushort conns[4];
+    S_road_lanes lanes[4];              // 0x1c, the road through each connection (the name is ours)
 };
 
 // What SaveData writes after the nodes, 0x18 bytes each (the name is ours). GetNearNode returns one of them, the nodes
@@ -25,7 +47,7 @@ struct S_road_node
 struct S_road_link
 {
     S_vector pos;                       // 0x0 (the name is ours)
-    uchar unknown_c[4];                 // 0xc
+    float unknown_c;                    // 0xc, which the chases' path nodes take (S_car_node::unknown_48)
     // 0x10, the link's two ends as indices for C_roads::GetPos, a node's or with NEARNODE_FLAG a link's
     // (C_shvestky::TestOverRed's; the names are ours)
     ushort end0;
@@ -34,6 +56,20 @@ struct S_road_link
     ushort node0;
     ushort node1;
 };
+
+// Where the line through p1 along d1 meets the line through p2 along d2 (S_vector2's, the game's; the name is ours),
+// false (the vector unchanged) for parallel lines. The copy the linker kept is the traffic's (0x4af150), which
+// C_trf_c.cpp calls out of line; C_sledovacka::RecompilePath inlines it.
+inline bool S_vector2::Intersection(const S_vector2 &p1, const S_vector2 &d1, const S_vector2 &p2, const S_vector2 &d2)
+{
+    float cross = d1.x * d2.y - d1.y * d2.x;
+    if (IsAbsMrgZero(cross))
+        return false;
+    float t = ((p1.y - p2.y) * d2.x - (p1.x - p2.x) * d2.y) / cross;
+    x = p1.x + d1.x * t;
+    y = p1.y + d1.y * t;
+    return true;
+}
 
 // GetNearNode's index without its flag, the top bit (the name is ours)
 #define NEARNODE_INDEX 0x7fff

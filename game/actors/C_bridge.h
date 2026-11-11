@@ -39,7 +39,11 @@ public:
     // the cheat PARNIK's (GAMEF_TITANIC)
     void SetTitanic(bool on);
 
-    uchar unknown_70[0xd4];             // 0x70
+    uchar unknown_70[0xc8];             // 0x70
+    // 0x138, a semaphore phase (0 to 9, phase_colors' index): the chases' path nodes before the bridge wait at it as
+    // at C_game's (C_sledovacka::RecompilePath; the name is a guess)
+    int phase;
+    uchar unknown_13c[8];               // 0x13c
     int unknown_144;                    // 0x144, 3 to 5 while a human's car can be on it most likely
     uchar unknown_148[0x4c];            // 0x148
 };

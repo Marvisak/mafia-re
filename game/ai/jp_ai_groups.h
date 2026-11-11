@@ -249,10 +249,10 @@ public:
 // The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
 // streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
 // TEMPLATE: GAME 0x537050
-// ?_Ucopy@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@IAEPAUai_fight_member@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEPAUG_CameraDialog@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEXPAUG_CameraDialog@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUS_stop_sounds@C_game@@PAU23@00@Z
@@ -268,7 +268,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy

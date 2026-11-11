@@ -8,7 +8,7 @@
 0x004011f0  100.00%   C_cache_base_block::Close
 0x004012e0  100.00%   C_cache_base_block::PrepareScene
 0x00401310  100.00%   C_cache_base_block::S_hlp::cbDupl
-0x004013f0  94.99%    C_cache_base_block::Open
+0x004013f0  95.42%    C_cache_base_block::Open
 0x00401c70  100.00%   S_cache_base_block::~S_cache_base_block
 0x00401ca0  99.67%    C_cache_base_block::OpenModel
 0x00402090  100.00%   S_cache_model_set::~S_cache_model_set
@@ -55,7 +55,7 @@
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
 0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
-0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
+0x00404810  100.00%   std::_Construct(struct C_sledovacka::S_ELEMENT *, struct C_sledovacka::S_ELEMENT const &)
 0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -421,7 +421,9 @@
 0x0043bcc0  stub      C_door::ChangeState
 0x0043bce0  100.00%   I3D_frame::SetRot
 0x0043bd60  missing   $CRT_CPP_Initializer(31)
+0x0043bd90  stub      C_driver::C_driver
 0x0043bee0  100.00%   C_driver::~C_driver
+0x0043c350  stub      C_driver::SetCar
 0x0043c4f0  stub      C_driver::Tick
 0x004431d0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::insert(struct S_car_node *, unsigned int, struct S_car_node const &)
 0x00443580  missing   $CRT_CPP_Initializer(32)
@@ -621,7 +623,7 @@
 0x00461420  100.00%   C_program::TryChangeProgramData
 0x00461530  100.00%   C_program::SetSourceCode
 0x00461580  100.00%   C_program::Init
-0x004616a0  99.18%    C_program::Done
+0x004616a0  100.00%   C_program::Done
 0x004617d0  100.00%   C_program::DuplicateProgramFrom
 0x00461830  100.00%   C_program::ExtrudeParams
 0x00461900  100.00%   C_program::DecodeOperand
@@ -644,7 +646,7 @@
 0x0046cc00  100.00%   C_program::LeaveCompactBlock
 0x0046ccb0  100.00%   C_program::CallProcess
 0x0046ccf0  100.00%   C_program::ClearAfterEnd
-0x0046cd90  98.81%    C_program::SetEvent
+0x0046cd90  100.00%   C_program::SetEvent
 0x0046ce70  100.00%   C_program::IsEventID
 0x0046cec0  100.00%   C_program::InvalidateActorReg
 0x0046cef0  stub      C_program::SaveGameGetSize
@@ -816,6 +818,8 @@
 0x0047bc00  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::size
 0x0047be20  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::size
 0x0047be40  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::insert
+0x0047c020  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::insert(unsigned short *, unsigned int, unsigned short const &)
+0x0047c2c0  100.00%   std::copy(unsigned short *, unsigned short *, unsigned short *)
 0x0047c2f0  missing   $CRT_CPP_Initializer(62)
 0x0047c320  50.00%    $CRT_CPP_Initializer(63)
 0x0047c330  100.00%   $CRT_CPP_Initializer(64)
@@ -891,7 +895,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(class IJoy **, class IJoy *const &)
+0x00499050  100.00%   std::_Construct(class I3D_frame **, class I3D_frame *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -946,21 +950,28 @@
 0x004a02a0  100.00%   C_roads::GetPos
 0x004a02f0  missing   $CRT_CPP_Initializer(81)
 0x004a0320  100.00%   C_sledovacka::C_sledovacka
+0x004a0350  100.00%   C_sledovacka::EnableChangeTables
 0x004a0360  100.00%   C_sledovacka::Init
 0x004a0660  100.00%   C_sledovacka::Done
-0x004a0760  stub      C_sledovacka::AddCarHunt
-0x004a1220  stub      C_sledovacka::AddCarMoveTo
-0x004a1c30  stub      C_sledovacka::RemoveCar
-0x004a1da0  stub      C_sledovacka::RecompilePath
-0x004a28c0  stub      C_sledovacka::PreparePath
-0x004a2a80  stub      C_sledovacka::TickDriver
-0x004a3e70  80.01%    C_sledovacka::Tick
-0x004a8670  stub      C_sledovacka::ActionStatus
-0x004a86d0  stub      C_sledovacka::SetActionStatus
-0x004a8790  stub      C_sledovacka::VypicujMiToyotu
-0x004a8940  stub      C_sledovacka::SaveGameGetSize
-0x004a8a50  stub      C_sledovacka::SaveGameSave
-0x004a8fa0  stub      C_sledovacka::SaveGameLoad
+0x004a0700  100.00%   C_sledovacka::HoniMiHoNekdoZKanclu
+0x004a0760  100.00%   C_sledovacka::AddCarHunt
+0x004a0af0  80.70%    C_sledovacka::AddCarEscape
+0x004a1220  96.82%    C_sledovacka::AddCarMoveTo
+0x004a1c30  100.00%   C_sledovacka::RemoveCar
+0x004a1da0  42.76%    C_sledovacka::RecompilePath
+0x004a28c0  100.00%*  C_sledovacka::PreparePath
+0x004a2a80  89.31%    C_sledovacka::TickDriver
+0x004a3e70  81.26%    C_sledovacka::Tick
+0x004a8670  100.00%   C_sledovacka::ActionStatus
+0x004a86d0  100.00%   C_sledovacka::SetActionStatus
+0x004a8730  100.00%   C_sledovacka::GetVoleMode
+0x004a8790  100.00%   C_sledovacka::VypicujMiToyotu
+0x004a88c0  100.00%   C_sledovacka::DevaaateeeZasNeznaCas
+0x004a8940  100.00%   C_sledovacka::SaveGameGetSize
+0x004a8a50  51.01%    C_sledovacka::SaveGameSave
+0x004a8fa0  71.72%    C_sledovacka::SaveGameLoad
+0x004a9750  96.23%    std::vector<unsigned short,std::allocator<unsigned short> >::insert(unsigned short *, unsigned short const &)
+0x004a98f0  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::erase(unsigned short *)
 0x004a9930  100.00%   std::vector<g_collision_header *,std::allocator<g_collision_header *> >::operator[]
 0x004a9940  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::size
 0x004a9970  100.00%   std::vector<C_sledovacka::S_ELEMENT,std::allocator<C_sledovacka::S_ELEMENT> >::operator[]
@@ -972,12 +983,14 @@
 0x004a9c10  100.00%   C_Vehicle::SetHorn
 0x004a9c20  100.00%   C_Vehicle::GetSiren
 0x004a9c30  100.00%   C_Vehicle::GetVelocityRef
-0x004a9c40  missing   Unknown FUNCTION
+0x004a9c40  100.00%   C_Vehicle::IsUnknown540
 0x004a9c70  missing   Unknown FUNCTION
 0x004a9c80  100.00%   C_Vehicle::GetUp
 0x004a9c90  100.00%   C_Vehicle::GetWheel
 0x004a9ca0  100.00%   C_traffic_car::GetElems
+0x004a9cb0  99.50%    std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::insert
 0x004a9ec0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::erase
+0x004a9f10  100.00%   std::vector<C_sledovacka::S_ELEMENT,std::allocator<C_sledovacka::S_ELEMENT> >::insert
 0x004aa250  100.00%   std::copy(struct S_car_node *, struct S_car_node *, struct S_car_node *)
 0x004aa280  missing   $CRT_CPP_Initializer(82)
 0x004aa2b0  100.00%   C_stone::C_stone
@@ -1268,7 +1281,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct C_game::S_invisible_actor *, struct C_game::S_invisible_actor *, struct C_game::S_invisible_actor *)
+0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1411,8 +1424,8 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
-0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
+0x005490b0  100.00%   std::_Construct(struct S_vector *, struct S_vector const &)
+0x005490d0  100.00%   std::_Construct(struct S_VEH_PARTICLE *, struct S_VEH_PARTICLE const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1982,7 +1995,7 @@
 0x005a3c60  63.56%    C_game::Done
 0x005a4d20  92.59%    C_game::DoneIntern
 0x005a5070  100.00%   C_game::ChangeActState
-0x005a51c0  82.57%    C_game::Tick
+0x005a51c0  82.62%    C_game::Tick
 0x005a6d60  100.00%   C_game::DoubleKiss
 0x005a77c0  100.00%   C_game::AddTemporaryActor
 0x005a79a0  100.00%   C_game::RemoveTemporaryActor
@@ -2116,7 +2129,7 @@
 0x005b7560  100.00%   C_game::AddHumanTalk
 0x005b7730  100.00%   C_game::DelHumanTalk
 0x005b77c0  100.00%   C_game::DeathHumanTalk
-0x005b7860  95.86%    C_game::CreateSignalMarkIDX
+0x005b7860  97.59%    C_game::CreateSignalMarkIDX
 0x005b7be0  52.68%    C_game::DestroyControlSignal
 0x005b7ed0  100.00%   C_game::EntityBlock
 0x005b7f70  100.00%   C_game::AddInvisibleActor
@@ -2174,7 +2187,7 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
+0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
 0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)

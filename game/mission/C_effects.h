@@ -415,16 +415,16 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAUS_cutscene_anim@@V?$allocator@PAUS_cutscene_anim@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_joy@@V?$allocator@US_joy@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@QAEPAPAUtDynamicPolicko@@PAPAU3@ABQAU3@@Z
+// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@Uai_anim_item@@V?$allocator@Uai_anim_item@@@std@@@std@@QAE@ABV?$allocator@Uai_anim_item@@@1@@Z
+// ??0?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@QAE@ABV?$allocator@PAVI3D_frame@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)
