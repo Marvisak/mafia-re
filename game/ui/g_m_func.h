@@ -172,6 +172,9 @@ public:
     virtual int OnKey(uchar key, uint);
     virtual int OnClick(uint id);
 
+    // The item's name into the component of that id, its second parameter unused (PC only, the name is ours)
+    void SetItem(uint id, uint, S_GameItem *item);
+
     G_Inventory *inventory;             // 0x30, the player's (the names are ours)
     std::vector<S_GameItem> *dropped;   // 0x34
 };
@@ -183,6 +186,8 @@ public:
 #define PICKUP_TEXT 1
 // The menu's result for the items taken, which are in picked then (C_player::Do_AB_OwnerNULL; the name is ours)
 #define PICKUP_TAKE 0xa8
+// Its result for Exit, Escape and the key 0, and where it has no items (the name is ours)
+#define PICKUP_EXIT 0xa7
 
 // The items' pick-up, "itempickup" (PS2 GM_ItemPickUp, g_m_func.cpp), 0x54 bytes: the player's inventory and the lists
 // of items to take; C_player::Do_AB_OwnerCar runs it with two choices at a petrol pump. The members' names are ours.
@@ -203,6 +208,9 @@ public:
     virtual int OnCreate();
     virtual int OnKey(uchar key, uint);
     virtual int OnClick(uint id);
+    // Takes the item of menu_items at idx: one of items into picked, also into dropped with drop (the inventory
+    // had no place for it), an inventory's out of the inventories (PS2's name, the parameters' are ours)
+    void PickUp(uint idx, bool drop);
 
     G_Inventory *inventory;             // 0x30
     // 0x34, the other inventories the items can come from, a dead body's (PS2's G_Inventory::ItemPickUp's last
@@ -211,7 +219,9 @@ public:
     std::vector<S_GameItem> *items;     // 0x38, what the menu offers
     std::vector<S_GameItem> *dropped;   // 0x3c, what the inventory couldn't keep, to drop
     std::vector<S_GameItem> *picked;    // 0x40, the items taken (PICKUP_TAKE)
-    std::vector<G_Inventory *> unknown_44;  // 0x44
+    // 0x44, the items the menu lists, the i-th the item ITEMPICKUP_LIST + i's: items' own, then those of each of
+    // inventories (G_Inventory::EnemyToList)
+    std::vector<S_GameItem *> menu_items;
 };
 
 // The gun shop, "gunshop" (PS2 GM_GunShop, g_m_func.cpp), 0x43c bytes (PS2's 0x438): the player's inventory and the
@@ -238,9 +248,21 @@ public:
     virtual int OnKey(uchar key, uint) { return 0; }
     virtual int OnClick(uint id);
 
-    G_Inventory *inventory;             // 0x30 (PS2 0x2c), the player's (the name is ours)
-    uchar unknown_34[0x408];
+    // The item's name into the component of that id, its second parameter unused (PC only, the name is ours)
+    void SetItem(uint id, uint, S_GameItem *item);
+    // The inventory's places and items into their components (PS2's name; PS2's does nothing)
+    void RefreshInventory();
+
+    G_Inventory *inventory;             // 0x30 (PS2 0x2c), the player's (the names are ours)
+    uchar unknown_34[4];                // 0x34 (PS2 0x30)
+    // 0x38 (PS2 0x34), the shop's weapons, OnCreate's: their ids in gameItemTable, in the list's order
+    uint weapons[0x100];
+    uint num_weapons;                   // 0x438 (PS2 0x434)
 };
+
+// What ExecuteMenu would return for the loading screen's Escape, "press <ESC> to Abort" (the name is ours): nothing runs
+// the screen through ExecuteMenu
+#define LOADPROGRESS_RESULT_ABORT 0x3a
 
 // The loading screen's progress bar (its menu's item 0x12c, a "pbar"; the name is ours)
 #define LOADPROGRESS_BAR 0x12c
@@ -290,15 +312,27 @@ public:
 // The out-of-line return of 0 the linker kept of a folded group, GM_LoadProgress::OnTick's and
 // GM_GarageSummary::OnClick's entry: by name, as which of the two copies our linker keeps changes with the link
 // SYNTHETIC: GAME 0x5e4d50
-// ?OnClick@GM_GarageSummary@@UAEHI@Z
+// ?OnTick@GM_LoadProgress@@UAEHI@Z
 
 // The two quit questions' OnBeforeCreate, the same code ("exityesno"), folded into the first copy: by name, as which
 // of the two copies our linker keeps changes with the link
 // FUNCTION: GAME 0x5e08e0
 // ?OnBeforeCreate@GM_GameMenuExit@@UAEPBDXZ
 
+// The message box's OnKey and OnClick, the same code as the simple message's (g_m_func.cpp), the original's copies the
+// message box's: by name, as which of the two copies our linker keeps changes with the link
+// FUNCTION: GAME 0x5e22d0
+// ?OnKey@GM_MessageBox@@UAEHEI@Z
+
+// FUNCTION: GAME 0x5e22f0
+// ?OnClick@GM_MessageBox@@UAEHI@Z
+
 class C_car;
 struct S_garage_item;
+
+// What ExecuteMenu returns for the garage's menu at a mission's end, a car's item clicked: GarageGameDone doesn't
+// read it (the name is ours)
+#define GARAGEENDOFMISSION_DONE 0x4f8
 
 // The garage's menu at a mission's end, "garageendofmission" (the name is ours, after the menu; PS2 has its garage menus
 // in g_m_garage.cpp), 0x3c bytes: G_LoadSaveClass::GarageGameDone runs it while it keeps more cars than the garage has

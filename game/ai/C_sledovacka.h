@@ -95,10 +95,10 @@ public:
 // What Init's inlined push_back calls out of line: the bridges' _Ucopy and _Ufill, folded with other vectors' of 8-byte
 // elements (the original kept g_indicators.cpp's copies)
 // TEMPLATE: GAME 0x604dd0
-// ?_Ucopy@?$vector@US_sound_light_sector@@V?$allocator@US_sound_light_sector@@@std@@@std@@IAEPAUS_sound_light_sector@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@IAEPAUS_cache_model_one@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604e00
-// ?_Ufill@?$vector@US_sound_light_sector@@V?$allocator@US_sound_light_sector@@@std@@@std@@IAEXPAUS_sound_light_sector@@IABU3@@Z
+// ?_Ufill@?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@IAEXPAUS_cache_model_one@@IABU3@@Z
 
 // What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
 // TEMPLATE: GAME 0x4a9940

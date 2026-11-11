@@ -186,6 +186,9 @@ public:
     void CreateCompsByDef(const char *name);
     // Deletes the menu with its components
     void Destroy();
+    // Removes the component of that id, its children first, from its parent's children and the menu's components,
+    // without deleting it (PS2's name and code)
+    void DeleteComponent(uint id);
     // The components' ForceUpdate, each takes its value again (PC only, the name is ours: a key's binding, after the
     // menu that set it closed)
     void ForceUpdate();
@@ -209,9 +212,14 @@ public:
     void MenuClose(uint code);
     // Closes the menu with the code and its parents with -1, and ends ExecuteMenu with the result (PS2's name)
     void MenuCloseAll(uint code, uint result);
+    // Centers the component of that id, if the menu has one, vertically in its parent, or on the screen without one
+    // (PS2's name; PS2's UtilCenterH, horizontally, the PC doesn't have)
+    void UtilCenterV(uint id);
     // Enables the component of that id, if the menu has one, with true (COMPF_ENABLED), and disables it with false:
     // PS2's name, and its code the same
     void SetDisabled(uint id, bool enabled);
+    // Whether the component of that id is enabled (COMPF_ENABLED), false where the menu has none (PS2's name)
+    bool GetDisabled(uint id);
     // Shows the component of that id, if the menu has one, with true (COMPF_VISIBLE), and hides it with false: PS2's
     // name, and its code the same
     void SetHidden(uint id, bool visible);
@@ -248,6 +256,8 @@ public:
     void ActivateByID(uint id);
     // Activates the component of that id, or else the next one that can be activated
     void ActivateByIDOrNext(uint id);
+    // Activates the component of that id, or else the previous one that can be activated (PS2's name)
+    void ActivateByIDOrPrev(uint id);
     // The menu's component of that id, NULL for none
     GM_Component *FindComponentByID(uint id);
     // Of the components that can be activated, the one with the highest id below id, or else the highest one
@@ -342,10 +352,10 @@ public:
 // ?OnCloseChild@GM_Menu@@UAEHPAV1@II@Z
 
 // SYNTHETIC: GAME 0x47a430
-// ?OnMouse@GM_Menu@@UAEHHHHII@Z
+// ?Mouse@GM_Component@@UAEIHHHII@Z
 
 // SYNTHETIC: GAME 0x605020
-// ?OnKey@GM_ProfileSelect@@UAEHEI@Z
+// ?OnKey@GM_MainMenu@@UAEHEI@Z
 
 // The engine's S_vector operators (I3d_math.h), which TickCamera calls out of line: the original kept the copies of the
 // files at 0x404ce0 (operator-) and 0x409390 (operator* and operator+), docs/game-files.md

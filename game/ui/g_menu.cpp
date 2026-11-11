@@ -838,6 +838,25 @@ void GM_Menu::ForceUpdate()
         (*it)->ForceUpdate();
 }
 
+// PS2's: the component isn't deleted, and each erase skips the element after it
+// FUNCTION: GAME 0x5ea700
+void GM_Menu::DeleteComponent(uint id)
+{
+    GM_Component *c = FindComponentByID(id);
+    if (!c)
+        return;
+    std::vector<GM_Component *>::iterator it;
+    for (it = c->children.begin(); it < c->children.end(); it++)
+        DeleteComponent((*it)->id);
+    if (c->parent)
+        for (it = c->parent->children.begin(); it < c->parent->children.end(); it++)
+            if (*it == c)
+                c->parent->children.erase(it);
+    for (it = components.begin(); it < components.end(); it++)
+        if (*it == c)
+            components.erase(it);
+}
+
 // PS2's draws the components only without the menu's flag 0x200000, and no cursor
 // FUNCTION: GAME 0x5ea7e0
 void GM_Menu::Draw(uint draw_flags)
@@ -1032,6 +1051,20 @@ void GM_Menu::MenuCloseAll(uint code, uint result)
     zz_globalReturnCode = result;
 }
 
+// The component of that id centered vertically in its parent, or on the screen (PS2's name; PS2 has UtilCenterH too)
+// FUNCTION: GAME 0x5eae80
+void GM_Menu::UtilCenterV(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component)
+    {
+        if (component->parent)
+            component->rel_y = (component->parent->sy - component->sy) * .5f;
+        else
+            component->rel_y = (igraph->Scrn_sy() - component->sy) * .5f;
+    }
+}
+
 // FUNCTION: GAME 0x5eaed0
 void GM_Menu::SetDisabled(uint id, bool enabled)
 {
@@ -1043,6 +1076,15 @@ void GM_Menu::SetDisabled(uint id, bool enabled)
     }
     else if (component)
         component->flags &= ~COMPF_ENABLED;
+}
+
+// FUNCTION: GAME 0x5eaf00
+bool GM_Menu::GetDisabled(uint id)
+{
+    GM_Component *component = FindComponentByID(id);
+    if (component && component->flags & COMPF_ENABLED)
+        return true;
+    return false;
 }
 
 // FUNCTION: GAME 0x5eaf20
@@ -1206,6 +1248,25 @@ void GM_Menu::ActivateByIDOrNext(uint id)
     }
     if (!active)
         active = FindComponentByIDNext(id);
+    if (active)
+        active->flags |= COMPF_ACTIVE;
+}
+
+// FUNCTION: GAME 0x5eb280
+void GM_Menu::ActivateByIDOrPrev(uint id)
+{
+    if (active)
+        active->flags &= ~COMPF_ACTIVE;
+    active = FindComponentByID(id);
+    if (active)
+    {
+        if (active->flags & COMPF_ENABLED && active->flags & COMPF_VISIBLE && active->flags & COMPF_ACTIVATABLE)
+            active->flags |= COMPF_ACTIVE;
+        else
+            active = NULL;
+    }
+    if (!active)
+        active = FindComponentByIDPrev(id);
     if (active)
         active->flags |= COMPF_ACTIVE;
 }

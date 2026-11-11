@@ -116,6 +116,9 @@ struct S_voice_def
 #define ITEMF_NOT_IN_HAND 0x100
 // The weapons whose reload (G_Inventory::Nabij) throws away what was left in them (the name is a guess)
 #define ITEMF_MAGAZINE 0x2000000
+// The items the gun shop doesn't sell (GM_GunShop::OnCreate): all but the bat, the revolvers, the Colt 1911, the
+// Thompson, the pump shotgun and the Springfield (the name is a guess)
+#define ITEMF_NOT_SOLD 0x800000
 
 // Weapons of gameItemTable (predmety.def), by their names there: the parts of their models C_human's weapon effects
 // move ("cylinder", "zaver1", "clip", "foregrip", "hlavne") follow them
@@ -148,6 +151,9 @@ struct S_voice_def
 // gameItemTable's first item, "Special Action (nesahat!!!)" ("don't touch"), which C_human::ChangeState puts on a dead
 // body's using objects, with the values 0x7dc and 0x7dd where a weapon has its ammunition (the name is ours)
 #define GAMEITEM_SPECIAL_ACTION 1
+
+// gameItemTable's first item that is one, after those two (the name is ours): the gun shop's list starts there
+#define GAMEITEM_FIRST 2
 
 // A step of what a weapon's fire does (the struct's and the members' names are ours): an item's list (S_item_def's
 // fire) and the hands' own, PS2's _fire_action_*_ lists, file statics of C_human.cpp; each list ends with

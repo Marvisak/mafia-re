@@ -311,7 +311,7 @@ float _get_delta_y_(S_vector &pos);
 float _get_delta_nodyn_y_(S_vector &pos);
 
 // SYNTHETIC: GAME 0x56f330
-// ??1ai_loc@@QAE@XZ
+// ??1ai_logs@@QAE@XZ
 
 // The saved game's data of a human, after C_actor's (C_human::SaveGameSave's and SaveGameLoad's), 0x17e bytes, packed:
 // the members the fields copy, in their order but for the properties, each field with its member's name (PS2's has the
@@ -1218,7 +1218,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
 // folded group (the vectors of 8-byte elements)
 // TEMPLATE: GAME 0x4eaa00
-// ?insert@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@QAEXPAUS_vector2@@IABU3@@Z
+// ?insert@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QAEXPAUS_instruction@C_program@@IABU34@@Z
 
 // The animations' file names PersonAnim and RecompileDeathPos build in a static buffer each: VC6's PDB names both
 // buff, so the markers are by name and pair with ours in address order (RecompileDeathPos's first)

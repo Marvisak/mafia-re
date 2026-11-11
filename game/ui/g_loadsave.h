@@ -265,8 +265,8 @@ struct S_freeride
 };
 
 // G_LoadSaveClass::freeride_enabled, how much of the free ride is open (the names are ours, after the texts of the
-// locations it opens): the small city only, then the city by day and night, then the countryside too; above that also
-// the main menu's Free Ride Extreme
+// locations it opens): the small city only, then the city and the countryside by night too (GM_FreeRideTrack), then by
+// day as well; above that also the main menu's Free Ride Extreme and the free ride menu's densities
 #define FREERIDE_SMALL_CITY 0
 #define FREERIDE_CITY 1
 #define FREERIDE_COUNTRYSIDE 2
@@ -739,7 +739,7 @@ struct S_garage_item
 // ?_Ucopy@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEPAUG_SaveGame_FileHead@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x4d2a70
-// ?_Ufill@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@IAEXPAUS_sound_play@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEXPAUS_hydrant@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x430470
 // ?insert@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@QAEXPAUS_sound_play@C_game@@IABU34@@Z
@@ -752,7 +752,7 @@ struct S_garage_item
 // ProfileGetList's code (mov eax, ecx; ret) is the cutscene's CutsceneTime's too, which the linker folds it with:
 // by name, as which copy our linker keeps changes with the link
 // SYNTHETIC: GAME 0x605560
-// ?CutsceneTime@@YIHH@Z
+// ?ProfileGetList@G_LoadSaveClass@@QAEPAV?$vector@UG_Profile_FileHead@@V?$allocator@UG_Profile_FileHead@@@std@@@std@@XZ
 
 // Set while the profile mustn't be saved: from the start until Init has loaded one, and when the player quit in the
 // profiles' menu (PS2's name)
