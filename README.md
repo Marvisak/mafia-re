@@ -64,7 +64,7 @@ the original binaries does: bring your own copy of version 1.2.
    - `msvc900_sp1`: Visual C++ 2008 SP1 with the Windows SDK 6.0A, which Steam's 2010 `setup.exe` was built with, from
      [Marvisak/msvc900_sp1](https://github.com/Marvisak/msvc900_sp1).
    - `dx8sdk`: the headers and libraries of the DirectX 8.0 SDK, which `setup.exe` was built with, from
-     [anominy/dx8sdk](https://github.com/anominy/dx8sdk).
+     [Marvisak/dx8sdk](https://github.com/Marvisak/dx8sdk).
    - `dx81sdk`: the headers and libraries of the DirectX 8.1 SDK, which Steam's 2010 `setup.exe`, `IJoy.dll` and
      `LS3DF.dll` were built with, from [Marvisak/dx81sdk](https://github.com/Marvisak/dx81sdk).
 2. Install the Python tools (they include Ninja):

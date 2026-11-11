@@ -8,7 +8,7 @@
 	shallow = true
 [submodule "3rdparty/dx8sdk"]
 	path = 3rdparty/dx8sdk
-	url = https://github.com/anominy/dx8sdk.git
+	url = https://github.com/Marvisak/dx8sdk.git
 	shallow = true
 [submodule "3rdparty/dx81sdk"]
 	path = 3rdparty/dx81sdk
