@@ -1,12 +1,10 @@
 # Mafia-RE
 
-Decompilation of *Mafia: The City of Lost Heaven* (Illusion Softworks, 2002) for PC, in every released version: the
-original 1.0, the official patches 1.1 and 1.2, and Steam's rebuild of the setup ([Versions](#versions)). Version 1.2,
-the last official patch and the version Steam ships, is the main target. The other versions are built from the same
-source, with their differences kept behind macros.
+A byte-exact decompilation of *Mafia: The City of Lost Heaven* (Illusion Softworks, 2002) for PC. When this source is
+built with the compilers and linkers the game was made with, it produces files identical to the original binaries.
 
-The goal is a byte-exact decompilation: source code that, built with the compilers and linkers the original binaries were
-built with, produces files identical to the originals of each version.
+The main target is version 1.2, the last official patch and the version Steam ships. Version 1.0, patch 1.1 and Steam's
+2010 rebuild of the setup are built from the same source, with their differences behind macros.
 
 ## Progress
 
@@ -14,81 +12,54 @@ built with, produces files identical to the originals of each version.
 <img src="docs/progress/LS3DF.1.1.svg" width="50%"><img src="docs/progress/rw_data.svg" width="50%">
 <img src="docs/progress/IJoy.svg" width="50%"><img src="docs/progress/setup.svg" width="50%">
 
-The cards count each binary's own functions, without the C runtime linked into it. *Implemented* is how many of them
-have source, *accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those, and the bar is the
-score summed over all of them. The function counts are exact but for `Game.exe`'s, an estimate until its code has been
-worked through.
-*LS3DF.dll (patch 1.1)* is the engine of the 1.1 patch, built from the same source with its differences behind
-`ENGINE_VERSION`.
+Each card counts the binary's own functions and leaves out the C runtime. *Implemented* is how many of them have source.
+*Accuracy* is [reccmp](https://github.com/isledecomp/reccmp)'s average score for those functions, and the bar adds up the
+scores of all of them. `Game.exe`'s total is an estimate. [`docs/progress/`](docs/progress) lists the score of every
+function.
 
-| Binary | Status |
+| Binary | State |
 | --- | --- |
-| `rw_data.dll` | Done. The Visual C++ 6.0 build is identical to the original, byte for byte. |
-| `setup.exe` | Fully decompiled. The Visual C++ 6.0 build is identical to the 1.2 setup, and with 1.0's differences behind `SETUP_1_0` to the 1.0 setup. The same source, with Steam's changes behind `SETUP_STEAM`, builds Steam's 2010 rebuild with Visual C++ 2008 SP1, identical to it too, and with each language's resources Steam's German, French, Italian and Spanish setups, identical as well, and its Russian one, identical when linked on Windows 2000 (on current Windows the order of its imports differs, as `IJoy.dll`'s does). Its Polish one, a week older than 1.2, is a target of its own with its differences behind `SETUP_DATE`, and identical too. So is its Czech one, a build of August 2002 without optimization, which keeps the source's shape: compiled the same way, the source gives its code, and the build is identical to it, linked on Windows 2000 like the Russian one. |
-| `LS3DF.dll` (engine) | Every source file is written: the 3D engine (frames and visuals, meshes, objects and lightmapped objects, models, animation, cameras, lights, particles, portals and sectors, shadows and projectors, collision, the scene loaders, the renderer, the driver with its vertex and index buffers, and the math), the graphics layer (the Direct3D device, textures, and video through Bink and DirectShow) and the sound driver. About nine in ten of its functions compile to the original instructions. The others differ mostly in register allocation and in what the compiler inlines, and until they match the file differs from the original too, its code shifted by their sizes. The libraries it links are in place: S3's texture compressor comes from the original's own objects, and the DirectX 8.1 SDK's DirectShow base classes build from the SDK's source to the original's bytes. |
-| `Game.exe` | Started. The build is in place: the C runtime is linked as in the original, and the resources are the original's. The code is written in the order the game runs, so that the rebuilt executable gets further with each step, each function in the source file the original's layout puts it in ([docs/game-files.md](docs/game-files.md)). The first step, through the start-up to the main menu, is under way: the entry point and `main`, the CD check, `InitSystem` and `CloseSystem` are written, with part of what they call (the mission, the caches of models, sounds and animations, the effects table, the console's font, the patch's script changes, the logo videos), and most of them compile to the original's instructions. A run of the rebuilt executable goes from the start to the main menu and closes down again; what it reaches that isn't written yet, such as the menu itself, is a stub that logs its name ([CONTRIBUTING.md](CONTRIBUTING.md#running-the-rebuilt-gameexe)). With about 5,000 functions it is the biggest task ahead. No unprotected copy of the 1.2 executable survives, so the reference it is compared with is rebuilt from the retail copies ([CONTRIBUTING.md](CONTRIBUTING.md)). |
-| `IJoy.dll` | Done. Every function compiles to the original instructions, and linked on Windows 2000 the build is identical to the original. On current Windows the order of the imports within each DLL differs, because the linker sorts them with the system's `msvcrt.dll`, whose sort has changed since. It is built with the original Visual C++ 6.0 release and the Processor Pack's code generator, as the original was. |
+| `rw_data.dll` | Done. The build is identical to the original. |
+| `IJoy.dll` | Done. Linked on Windows 2000, the build is identical to the original. On current Windows only the order of the imports differs, because the linker sorts them with the system's `msvcrt.dll`. |
+| `setup.exe` | Done. The builds are identical to the 1.2 setup, the 1.0 setup, Steam's 2010 rebuild and Steam's language versions. The Russian and Czech versions are identical when linked on Windows 2000. |
+| `LS3DF.dll` | Every source file is written, for 1.2 and for patch 1.1. Nearly all functions compile to the original's instructions. Most of the rest differ in register allocation or in what the compiler inlines. |
+| `Game.exe` | About half written, file by file ([docs/game-files.md](docs/game-files.md)). The rebuilt executable gets through the main menu, plays the intro cutscene and enters the game. No unprotected copy of the 1.2 executable survives, so the build is compared with a copy reconstructed from the retail files. |
 
 ## Versions
 
-Each version replaced only some of the binaries. A binary that a version didn't change is the previous version's file.
+| Version | What is a target |
+| --- | --- |
+| 1.2 (2003) | Every binary. |
+| Patch 1.1 (2003) | `LS3DF.dll`, with its differences behind `ENGINE_VERSION`. Its `Game.exe` survives only inside SafeDisc. |
+| 1.0 (2002) | `setup.exe`, with its differences behind `SETUP_DATE`. Its `Game.exe` and `LS3DF.dll` aren't started. |
+| Steam (2010) | `setup.exe`, with Steam's changes behind `SETUP_STEAM`, and the setups of Steam's language versions. |
 
-| Version | Built | Its own binaries | State |
-| --- | --- | --- | --- |
-| 1.0 | July–August 2002 | All of them | `setup.exe` is a target, built from the setup's source with its differences behind `SETUP_DATE`: its texts are in the code and the dialog instead of a string table, it has no W-buffer test, and it collects the antialiasing modes differently. The build is identical to it. Its `Game.exe` and `LS3DF.dll` aren't started yet. |
-| Patch 1.1 | November 2002 – March 2003 | `Game.exe`, `LS3DF.dll`, `setup.exe` | `LS3DF.dll` is a target, built from the engine's source with its differences behind `ENGINE_VERSION` (393 against 1.2's 395); about nine in ten of its functions are 1.2's. Its `setup.exe` is the target above: the 1.2 patch ships the same file. Its `Game.exe` survives only inside its SafeDisc protection, so it can't be compared yet. |
-| Patch 1.2 | June 2003 | `Game.exe`, `LS3DF.dll` | The main target, [above](#progress). |
-| Steam | April 2010 | `setup.exe` | A target, built from the setup's source with Steam's changes behind `SETUP_STEAM`. Its language versions ship their own `setup.exe`: German, French, Italian and Spanish are the 2010 rebuild with translated resources, the others older builds (Russian 1.2's code, Polish and Czech versions between 1.0 and 1.2). Steam's other binaries are 1.2's, some with small patches of their own. |
-
-Neither patch contains `rw_data.dll` or `IJoy.dll`, and both were built in July 2002, before 1.0's other binaries, so the
-targets above are most likely the same files in every version.
+`rw_data.dll` and `IJoy.dll` most likely didn't change between versions.
 
 ## Building
 
-You need Windows, Git, Python 3 and CMake 3.29 or newer. Building doesn't need the game, but comparing a build with
-the original binaries does: bring your own copy of version 1.2.
+You need Windows, Git, Python 3 and CMake 3.29 or newer. You don't need the game to build, but you do need your own
+copy of version 1.2 to compare a build with the original.
 
-1. Clone the repository with its submodules, keeping git from changing their line endings:
-   ```bash
-   git -c core.autocrlf=false clone --recurse-submodules https://github.com/Marvisak/mafia-re.git
-   ```
-   In a clone made without them, run `git -c core.autocrlf=false submodule update --init`. The submodules in
-   `3rdparty/` are the build tools the original binaries were made with:
-   - `msvc600_sp5_vcpp`: Visual C++ 6.0 with Service Pack 5 and the Processor Pack, from
-     [archaic-msvc](https://github.com/archaic-msvc/msvc600_sp5_vcpp).
-   - `msvc600`: the original Visual C++ 6.0 release, which builds `IJoy.dll` (with the Processor Pack's code
-     generator from `msvc600_sp5_vcpp`), also from
-     [archaic-msvc](https://github.com/archaic-msvc/msvc600).
-   - `msvc600_sp5`: Visual C++ 6.0 with Service Pack 5 but without the Processor Pack, whose code generator builds the
-     DirectShow base classes in `LS3DF.dll`, also from [archaic-msvc](https://github.com/archaic-msvc/msvc600_sp5).
-   - `msvc900_sp1`: Visual C++ 2008 SP1 with the Windows SDK 6.0A, which Steam's 2010 `setup.exe` was built with, from
-     [Marvisak/msvc900_sp1](https://github.com/Marvisak/msvc900_sp1).
-   - `dx8sdk`: the headers and libraries of the DirectX 8.0 SDK, which `setup.exe` was built with, from
-     [Marvisak/dx8sdk](https://github.com/Marvisak/dx8sdk).
-   - `dx81sdk`: the headers and libraries of the DirectX 8.1 SDK, which Steam's 2010 `setup.exe`, `IJoy.dll` and
-     `LS3DF.dll` were built with, from [Marvisak/dx81sdk](https://github.com/Marvisak/dx81sdk).
-2. Install the Python tools (they include Ninja):
-   ```bash
-   python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
-   ```
-3. Build with Visual C++ 6.0, the toolchain the game was built with. The output goes to `build/vc6`:
-   ```bash
-   cmake --preset vc6 && cmake --build --preset vc6
-   ```
-4. Optionally, build with an installed Visual Studio from an x86 developer prompt. The output goes to `build/msvc`, and
-   it works but doesn't match the original:
-   ```bash
-   cmake --preset msvc && cmake --build --preset msvc
-   ```
-   Add `-DSETUP_STEAM=ON` to the first command to build Steam's 2010 `setup.exe` instead of the 1.2 one.
-5. Optionally, build Steam's 2010 `setup.exe` with Visual C++ 2008 SP1, the toolchain it was built with. The output
-   goes to `build/vs2008`:
-   ```bash
-   cmake --preset vs2008 && cmake --build --preset vs2008
-   ```
+```bash
+git -c core.autocrlf=false clone --recurse-submodules https://github.com/Marvisak/mafia-re.git
+cd mafia-re
+python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
+cmake --preset vc6 && cmake --build --preset vc6        # Visual C++ 6.0, the byte-exact build, into build/vc6
+```
 
-[CONTRIBUTING.md](CONTRIBUTING.md) describes how to compare a build with the original binaries.
+Two other presets are optional:
+
+- `vs2008` builds Steam's 2010 `setup.exe` with Visual C++ 2008 SP1 into `build/vs2008`.
+- `msvc` builds everything with an installed Visual Studio into `build/msvc`. Run it from an x86 developer prompt. The
+  result works but doesn't match the original.
+
+The submodules in `3rdparty/` hold the original toolchains: Visual C++ 6.0 in three builds (from
+[archaic-msvc](https://github.com/archaic-msvc)), [Visual C++ 2008 SP1](https://github.com/Marvisak/msvc900_sp1), and
+the [DirectX 8.0](https://github.com/Marvisak/dx8sdk) and [8.1](https://github.com/Marvisak/dx81sdk) SDKs. In a clone
+made without the submodules, run `git -c core.autocrlf=false submodule update --init`.
 
 ## Contributing
 
-Any contributions are welcome, all information for contributors is in [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to compare a build with the originals, how to
+run the rebuilt `Game.exe`, and which conventions the code follows.
