@@ -38,7 +38,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 3 | `404ce0–40938c` | 0x46ac | `C_actor.cpp` | whole | PS2's file (`InitAnimIndex`): the actors' cutscene functions (PC only) first, the constructor `405d20` (vtable `623248`) |
 | 4 | `409390–40df6c` | 0x4bdc | `C_airplane.cpp` | part | constructor `409390` (vtable `623318`) first |
 | 5 | `40df70–411bdc` | 0x3c6c | `C_animations.cpp` | whole | `C_animations_machine_de_luxe`; the initializer of `tracks` first |
-| 6 | `411be0–41234c` | 0x76c | `C_chunk.cpp` (ours), then `C_blood.cpp` | whole, part | `C_chunk::OpenFile` (`411be0`), the chunks' one method that isn't inline, in a file without a marker; then PS2's C_blood.cpp from `C_blood::Tick` (`411e30`) |
+| 6 | `411be0–41234c` | 0x76c | `C_chunk.cpp` (ours), then `C_blood.cpp` | whole, whole | `C_chunk::OpenFile` (`411be0`), the chunks' one method that isn't inline, in a file without a marker; then PS2's C_blood.cpp from `C_blood::Tick` (`411e30`) |
 | 7 | `412350–413d8c` | 0x1a3c | `C_bottle.cpp` | whole | constructor `412350` (vtable `6233f0`) first |
 | 8 | `413d90–41bb4c` | 0x7dbc | `C_dyn_object.cpp` (ours) | stubs | a PC only actor (type 9): constructor `418930` (vtable `6234f8`) after the vector math it starts with |
 | 9 | `41bb50–42e23c` | 0x126ec | `C_car.cpp`? | part | the cars' tables (PS2's names) and `C_car`'s constructor `41bb80` (vtables `623618`, `6236b0`) |
@@ -49,7 +49,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 14 | `433fe0–43923c` | 0x525c | `C_dog.cpp` | part | constructor `434030` (vtable `623a70`) |
 | 15 | `439240–43bd8c` | 0x2b4c | `C_door.cpp` | part | constructor `439290` (vtable `623b20`) |
 | 16 | `43bd90–4435ac` | 0x781c | `C_driver.cpp` | part | the cars' AI driver: constructor `43bd90` first |
-| 17 | `4435b0–443a2c` | 0x47c | `C_drop_in_weapon.cpp` | part | the weapons put down: constructor `4435b0` first |
+| 17 | `4435b0–443a2c` | 0x47c | `C_drop_in_weapon.cpp` | whole | the weapons put down: constructor `4435b0` first |
 | 18 | `443a30–44442c` | 0x9fc |  |  |  |
 | 19 | `444430–44525c` | 0xe2c | `C_ff_manager.cpp`? | part | the force feedback, Main.cpp's `ff_manager`: constructor `444630` |
 | 20 | `445260–44584c` | 0x5ec | `C_grenade.cpp` | whole | constructor `445260` (vtable `623d70`) first |
@@ -62,8 +62,8 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 27 | `44c520–459e8c` | 0xd96c | `C_person_traffic.cpp` | part | the pedestrians' `C_traffic_generator`: constructor `44d410` (vtable `623fa0`) |
 | 28 | `459e90–460a1c` | 0x6b8c | `C_PhThings.cpp` | stubs | `C_PhThing`, the base of the public physics and of `C_box_new`: constructor `459e90` (vtable `624088`) first |
 | 29 | `460a20–460a4c` | 0x2c |  |  |  |
-| 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | part | the scripts: `change_progs`' initializer first, the constructor `460ad0` (vtable `624858`), the interpreter `Process` (`46d3b0`). `47a070–47c31c` are `Process`'s out-of-line copies of the inline functions it calls, in header order |
-| 31 | `47c320–47c53c` | 0x21c | `C_public_physics.cpp` | part | constructor `47c3a0` (vtable `6248f8`) |
+| 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | whole | the scripts: `change_progs`' initializer first, the constructor `460ad0` (vtable `624858`), the interpreter `Process` (`46d3b0`). `47a070–47c31c` are `Process`'s out-of-line copies of the inline functions it calls, in header order |
+| 31 | `47c320–47c53c` | 0x21c | `C_public_physics.cpp` | whole | the initializer of its temporary things first, the constructor `47c3a0` (vtable `6248f8`) |
 | 32 | `47c540–48192c` | 0x53ec | `C_pumper.cpp` | stubs | the petrol pump attendants: constructor `47c540` (vtable `624990`) first |
 | 33 | `481930–48268c` | 0xd5c |  |  |  |
 | 34 | `482690–4826bc` | 0x2c |  |  |  |
@@ -118,7 +118,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 83 | `56b180–58e34c` | 0x231cc | `C_human.cpp` | whole | `C_human`, the base of `C_player` and `C_entity`: constructor `56efd0` |
 | 84 | `58e350–58f15c` | 0xe0c | `C_scatter.cpp` (ours) | part | a PC only actor (type 0x1d): constructor `58e350` (vtable `6257d0`) first |
 | 85 | `58f160–5961fc` | 0x709c | `C_player.cpp` | whole | `C_player`: constructor `58f170` (vtable `625878`) |
-| 86 | `596200–59641c` | 0x21c | `c_racecam.cpp` | part | constructor `596200` (vtable `625950`) first |
+| 86 | `596200–59641c` | 0x21c | `c_racecam.cpp` | whole | constructor `596200` (vtable `625950`) first |
 | 87 | `596420–5983dc` | 0x1fbc | `C_rail_generator.cpp` | part | constructor `596620` (vtable `6259e8`) |
 | 88 | `5983e0–5a075c` | 0x837c | `C_recorder.cpp` (ours) | whole | the in-engine cutscenes (PC only; `C_recorder` in `LoadTCK`'s messages), then the seagulls (`C_seagull`, PC only) |
 | 89 | `5a0760–5bcc0c` | 0x1c4ac | `game.cpp`? | whole | `C_game` |

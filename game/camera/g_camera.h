@@ -25,7 +25,10 @@ struct G_CameraPushPop
 struct G_RaceCamera
 {
     I3D_frame *frame;                   // 0x0, the actor's frame
-    uchar unknown_4[0xc];               // 0x4
+    // C_racecam::Init's 70, 70 and 1, which nothing reads yet
+    float unknown_4;                    // 0x4
+    float unknown_8;                    // 0x8
+    float unknown_c;                    // 0xc
     // The camera shows the gates after gate_from up to gate_to (the names are ours)
     int gate_from;                      // 0x10
     int gate_to;                        // 0x14
@@ -271,7 +274,7 @@ public:
 // GetCar's folded group (mov eax, [ecx + 0xc]; ret, with GM_Component::GetTextID): named after the copy our linker
 // keeps (foldfix)
 // FUNCTION: GAME 0x47b4d0
-// ?GetTextID@GM_Component@@UAEIXZ
+// ?GetCar@G_Camera@@QBEPAVC_car@@XZ
 
 // The dialog's list's size, which DialogStart calls out of line: the original kept the copy of the range at 0x401030
 // (docs/game-files.md) of the folded group of the vectors of 0x14-byte elements, named after the copy our linker keeps

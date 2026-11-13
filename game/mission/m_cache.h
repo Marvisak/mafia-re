@@ -161,7 +161,7 @@ extern C_cache_base_block base_cache;
 // ?_Ufill@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@IAEXPAUS_cache_model_set@@IABU3@@Z
 
 // TEMPLATE: GAME 0x403ee0
-// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x403f20
 // ?copy@std@@YIPAUS_cache_base_block@@PAU2@00@Z
@@ -179,7 +179,7 @@ extern C_cache_base_block base_cache;
 // ?copy_backward@std@@YIPAUS_cache_model_set@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x4047c0
-// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0ABU23@@Z
+// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@0ABU23@@Z
 
 // TEMPLATE: GAME 0x404810
 // ?_Construct@std@@YIXPAUS_cache_model_inbb@@ABU2@@Z
@@ -204,4 +204,4 @@ extern C_cache_base_block base_cache;
 // The S_vector2 arrays' constructor (ls3df/I3D/I3d_math.h), empty, which the blocks' implicit constructor passes to the
 // vector constructor iterator
 // LIBRARY: GAME 0x401c60
-// ??0S_vector2@@QAE@XZ
+// ??0I3D_bbox@@QAE@XZ

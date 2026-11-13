@@ -295,7 +295,7 @@ bool C_game::Init()
         C_Vehicle::v_sound_sector.clear();
         S_hlp::cbEnumSectors(act_mission->GetScene()->primary_sector);
     }
-    C_public_physics::unknown_63d78c.clear();
+    C_public_physics::temporary_things.clear();
     strcpy(cheat_keys, "");
     cheats = 0;
     game_done = false;

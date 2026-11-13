@@ -1,14 +1,11 @@
 // The scripts (PS2 C_program.cpp; the PC's file is most likely the one at 0x460a50-0x47c31c, whose strings are the
-// script language's, docs/game-files.md, and which starts with the changes' initializer). Written so far: the
-// constructor, the destructor and LoadSourceCode, which C_mission::OpenBin and Close call, the patch's changes,
-// LoadPatchFile, the helper it reads their strings through, and UnloadPatchFiles, TryChangeProgramData with
-// EqualFinalPath, and SetSourceCode, which LoadSourceCode calls; Init and Done, which the mission's and the game's Init
-// and Done call, the compiler Init calls (Compile, DecodeInstruction with its table of the commands' names, and
-// DecodeParams with its helpers, ExtrudeParams to DecodeIf, and its names' tables), DecompileCommand, PS2's helpers in
-// PS2's order (the registers' getters and setters, NextCommand, LeaveCompactBlock, ClearAfterEnd, SetEvent, IsEventID,
-// InvalidateActorReg, FindActorLater), CallSubroutine and CallProcess, and Process, the interpreter (0x46d3b0-0x4799b9,
-// a switch of 396 commands, about 50 KB of code), and DuplicateProgramFrom, which the detector's and the AI humans'
-// Duplicate call. Stubs: SaveSourceCode and the save functions.
+// script language's, docs/game-files.md, and which starts with the changes' initializer), written whole: the
+// constructor and destructor, the source's chunk (SaveSourceCode, LoadSourceCode), the patch's changes (LoadPatchFile,
+// UnloadPatchFiles, TryChangeProgramData), Init and Done, the compiler (Compile, DecodeInstruction with its table of
+// the commands' names, DecodeParams with its helpers and its names' tables), PS2's helpers in PS2's order (the
+// registers, NextCommand, LeaveCompactBlock, ClearAfterEnd, SetEvent, IsEventID, InvalidateActorReg, the saved game's,
+// FindActorLater), CallSubroutine and CallProcess, Process, the interpreter (0x46d3b0-0x4799b9, a switch of 396
+// commands, about 50 KB of code), and DuplicateProgramFrom.
 // Process is too large for VC6 to inline anything in it: every inline function it uses is called out of line, and
 // their copies are the file's end (0x47a070-0x47c31c), the precompiled headers' deferred items in header order.
 // Its cases are in the original's order (the bodies' order, one jump table). Open: the other commands' functions are
@@ -101,10 +98,20 @@ C_program::~C_program()
         delete[] source;
 }
 
-// STUB: GAME 0x460ba0
+// LoadSourceCode's format: a byte, then the name and the source, each as its length and its bytes (PS2's the same)
+// FUNCTION: GAME 0x460ba0
 bool C_program::SaveSourceCode(C_chunk *chunk)
 {
-    StubLog("C_program::SaveSourceCode");
+    uchar unknown = 1;
+    chunk->Write(&unknown, sizeof(unknown));
+    int len = name ? strlen(name) : 0;
+    chunk->Write(&len, sizeof(len));
+    if (len)
+        chunk->Write(name, len);
+    len = source ? strlen(source) : 0;
+    chunk->Write(&len, sizeof(len));
+    if (len)
+        chunk->Write(source, len);
     return true;
 }
 
@@ -2834,24 +2841,174 @@ void C_program::InvalidateActorReg(C_actor *act)
     }
 }
 
-// STUB: GAME 0x46cef0
+// S_program_savegame::version (the name is ours)
+#define PROGRAM_SAVEGAME_VERSION 2
+
+// A script in a saved game (the name is ours), 0x27 bytes, packed: the state, then the gosub stack, the float
+// registers, the actor registers (C_actor::Actor_SaveGameSave's) and the frame registers' names, each a ushort length
+// with its end, 0 for none. PS2's is aligned (0x2c bytes, the gosub stack's size after ai_priority, an int version)
+// and rounds each part up to 4 bytes.
+#pragma pack(push, 1)
+struct S_program_savegame
+{
+    uchar version;                      // 0x0, PROGRAM_SAVEGAME_VERSION
+    int cur_command;                    // 0x1
+    uint command_time;                  // 0x5
+    uint event_command_time;            // 0x9
+    uint event_time;                    // 0xd
+    ushort num_gosub;                   // 0x11
+    int num_float_regs;                 // 0x13
+    int num_frame_regs;                 // 0x17
+    int num_actor_regs;                 // 0x1b
+    float ai_priority;                  // 0x1f
+    bool run_through;                   // 0x23
+    bool stop_at_return;                // 0x24
+    bool in_block;                      // 0x25
+    uchar block_mode;                   // 0x26
+};
+#pragma pack(pop)
+
+// FUNCTION: GAME 0x46cef0
 int C_program::SaveGameGetSize()
 {
-    StubLog("C_program::SaveGameGetSize");
-    return 0;
+    int size = sizeof(S_program_savegame);
+    size += gosub_stack.size() * sizeof(ushort);
+    size += num_float_regs * sizeof(float);
+    int i;
+    for (i = 0; i < num_actor_regs; i++)
+        size += C_actor::Actor_SaveGameGetSize(actor_regs[i]);
+    for (i = 0; i < num_frame_regs; i++)
+    {
+        size += sizeof(ushort);
+        if (frame_regs[i])
+            size += strlen(frame_regs[i]->GetName()) + 1;
+    }
+    return size;
 }
 
-// STUB: GAME 0x46cf70
+// FUNCTION: GAME 0x46cf70
 bool C_program::SaveGameSave(void **buf)
 {
-    StubLog("C_program::SaveGameSave");
+    S_program_savegame *s = (S_program_savegame *)*buf;
+    s->version = PROGRAM_SAVEGAME_VERSION;
+    s->cur_command = cur_command;
+    s->command_time = command_time;
+    s->event_command_time = event_command_time;
+    s->event_time = event_time;
+    s->num_gosub = gosub_stack.size();
+    s->num_float_regs = num_float_regs;
+    s->num_frame_regs = num_frame_regs;
+    s->num_actor_regs = num_actor_regs;
+    s->ai_priority = ai_priority;
+    s->run_through = run_through;
+    s->stop_at_return = stop_at_return;
+    s->in_block = in_block;
+    s->block_mode = block_mode;
+    *buf = (uchar *)*buf + sizeof(S_program_savegame);
+    if (gosub_stack.size())
+        memcpy(*buf, gosub_stack.begin(), gosub_stack.size() * sizeof(ushort));
+    *buf = (uchar *)*buf + gosub_stack.size() * sizeof(ushort);
+    if (num_float_regs)
+        memcpy(*buf, float_regs, num_float_regs * sizeof(float));
+    *buf = (uchar *)*buf + num_float_regs * sizeof(float);
+    int i;
+    for (i = 0; i < num_actor_regs; i++)
+        C_actor::Actor_SaveGameSave(buf, actor_regs[i]);
+    for (i = 0; i < num_frame_regs; i++)
+    {
+        if (frame_regs[i])
+        {
+            const char *name = frame_regs[i]->GetName();
+            ushort len = strlen(name) + 1;
+            *(ushort *)*buf = len;
+            *buf = (uchar *)*buf + sizeof(ushort);
+            memcpy(*buf, name, len);
+            *buf = (uchar *)*buf + len;
+        }
+        else
+        {
+            *(ushort *)*buf = 0;
+            *buf = (uchar *)*buf + sizeof(ushort);
+        }
+    }
     return true;
 }
 
-// STUB: GAME 0x46d100
+// The registers made anew from the record; a frame register by the scene's frame of its name. False for a record of
+// another version.
+// FUNCTION: GAME 0x46d100
 bool C_program::SaveGameLoad(void **buf)
 {
-    StubLog("C_program::SaveGameLoad");
+    gosub_stack.clear();
+    num_actor_regs = 0;
+    num_frame_regs = 0;
+    num_float_regs = 0;
+    if (float_regs)
+    {
+        delete[] float_regs;
+        float_regs = NULL;
+    }
+    if (frame_regs)
+    {
+        delete[] frame_regs;
+        frame_regs = NULL;
+    }
+    if (actor_regs)
+    {
+        delete[] actor_regs;
+        actor_regs = NULL;
+    }
+    S_program_savegame *s = (S_program_savegame *)*buf;
+    if (s->version != PROGRAM_SAVEGAME_VERSION)
+        return false;
+    cur_command = s->cur_command;
+    command_time = s->command_time;
+    event_command_time = s->event_command_time;
+    event_time = s->event_time;
+    num_float_regs = s->num_float_regs;
+    num_frame_regs = s->num_frame_regs;
+    num_actor_regs = s->num_actor_regs;
+    ai_priority = s->ai_priority;
+    run_through = s->run_through;
+    stop_at_return = s->stop_at_return;
+    in_block = s->in_block;
+    block_mode = s->block_mode;
+    *buf = (uchar *)*buf + sizeof(S_program_savegame);
+    if (s->num_gosub)
+    {
+        gosub_stack.resize(s->num_gosub);
+        memcpy(gosub_stack.begin(), *buf, s->num_gosub * sizeof(ushort));
+    }
+    *buf = (uchar *)*buf + s->num_gosub * sizeof(ushort);
+    if (num_float_regs)
+    {
+        float_regs = new float[num_float_regs];
+        memcpy(float_regs, *buf, num_float_regs * sizeof(float));
+    }
+    *buf = (uchar *)*buf + num_float_regs * sizeof(float);
+    int i;
+    if (num_actor_regs)
+    {
+        actor_regs = new C_actor *[num_actor_regs];
+        for (i = 0; i < num_actor_regs; i++)
+            actor_regs[i] = C_actor::Actor_SaveGameLoad(buf);
+    }
+    if (num_frame_regs)
+    {
+        frame_regs = new I3D_frame *[num_frame_regs];
+        for (i = 0; i < num_frame_regs; i++)
+        {
+            ushort len = *(ushort *)*buf;
+            *buf = (uchar *)*buf + sizeof(ushort);
+            if (len)
+            {
+                frame_regs[i] = act_mission->GetScene()->FindFrame((const char *)*buf, ENUMF_ALL);
+                *buf = (uchar *)*buf + len;
+            }
+            else
+                frame_regs[i] = NULL;
+        }
+    }
     return true;
 }
 

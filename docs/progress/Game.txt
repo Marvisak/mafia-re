@@ -54,9 +54,9 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct G_IndicatorsClass::G_RadarItem *, struct G_IndicatorsClass::G_RadarItem const &)
+0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -199,17 +199,18 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
+0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
 0x00411d40  100.00%   C_chunk::Close
-0x00411e30  stub      C_blood::Tick
+0x00411e30  99.10%    C_blood::Tick
+0x00411fb0  100.00%   C_blood::Init
 0x00412000  100.00%   C_blood_manager::~C_blood_manager
 0x00412020  100.00%   C_blood_manager::GameInit
 0x00412050  100.00%   C_blood_manager::GameDone
 0x004120a0  100.00%   C_blood_manager::Tick
-0x00412140  stub      C_blood_manager::AddBlood
+0x00412140  100.00%   C_blood_manager::AddBlood
 0x00412320  missing   $CRT_CPP_Initializer(14)
 0x00412350  100.00%   C_bottle::C_bottle
 0x00412390  100.00%   C_bottle::`scalar deleting destructor'
@@ -428,16 +429,16 @@
 0x0043c4f0  stub      C_driver::Tick
 0x004431d0  100.00%   std::vector<S_car_node,std::allocator<S_car_node> >::insert(struct S_car_node *, unsigned int, struct S_car_node const &)
 0x00443580  missing   $CRT_CPP_Initializer(32)
-0x004435b0  stub      C_drop_in_weapon::C_drop_in_weapon
+0x004435b0  100.00%   C_drop_in_weapon::C_drop_in_weapon
 0x00443620  100.00%   C_drop_in_weapon::`scalar deleting destructor'
 0x00443640  100.00%   C_drop_in_weapon::~C_drop_in_weapon
 0x00443650  100.00%   C_drop_in_weapon::AI
-0x00443660  stub      C_drop_in_weapon::Update
-0x004436c0  stub      C_drop_in_weapon::ChangeState
+0x00443660  100.00%   C_drop_in_weapon::Update
+0x004436c0  100.00%   C_drop_in_weapon::ChangeState
 0x00443850  100.00%   C_drop_in_weapon::Init
 0x00443860  100.00%   C_bottle::DuplicateFrom
-0x00443870  stub      C_drop_in_weapon::GameInit
-0x00443950  stub      C_drop_in_weapon::GameDone
+0x00443870  100.00%   C_drop_in_weapon::GameInit
+0x00443950  100.00%   C_drop_in_weapon::GameDone
 0x00443a00  missing   $CRT_CPP_Initializer(33)
 0x00443ff0  stub      C_dyn_object::PlayStep
 0x00444400  missing   $CRT_CPP_Initializer(34)
@@ -615,7 +616,7 @@
 0x00460ad0  100.00%   C_program::C_program
 0x00460b20  100.00%   C_program::`scalar deleting destructor'
 0x00460b40  100.00%   C_program::~C_program
-0x00460ba0  stub      C_program::SaveSourceCode
+0x00460ba0  100.00%   C_program::SaveSourceCode
 0x00460c90  100.00%   C_program::LoadSourceCode
 0x00460f20  100.00%   LoadPatchFile
 0x00461270  100.00%   ReadPatchString
@@ -650,9 +651,9 @@
 0x0046cd90  100.00%   C_program::SetEvent
 0x0046ce70  100.00%   C_program::IsEventID
 0x0046cec0  100.00%   C_program::InvalidateActorReg
-0x0046cef0  stub      C_program::SaveGameGetSize
-0x0046cf70  stub      C_program::SaveGameSave
-0x0046d100  stub      C_program::SaveGameLoad
+0x0046cef0  100.00%   C_program::SaveGameGetSize
+0x0046cf70  100.00%   C_program::SaveGameSave
+0x0046d100  100.00%   C_program::SaveGameLoad
 0x0046d380  100.00%   C_program::FindActorLater
 0x0046d3b0  73.91%    C_program::Process
 0x0047a070  100.00%   G_IndicatorsClass::SetFlags
@@ -824,13 +825,13 @@
 0x0047c2f0  missing   $CRT_CPP_Initializer(62)
 0x0047c320  50.00%    $CRT_CPP_Initializer(63)
 0x0047c330  100.00%   $CRT_CPP_Initializer(64)
-0x0047c3a0  stub      C_public_physics::C_public_physics
+0x0047c3a0  100.00%   C_public_physics::C_public_physics
 0x0047c3c0  100.00%   C_public_physics::`scalar deleting destructor'
 0x0047c3e0  100.00%   C_public_physics::~C_public_physics
-0x0047c3f0  stub      C_public_physics::GameInit
-0x0047c4d0  stub      C_public_physics::GameDone
-0x0047c4f0  stub      C_public_physics::Collision
-0x0047c500  stub      C_public_physics::Hit
+0x0047c3f0  100.00%   C_public_physics::GameInit
+0x0047c4d0  100.00%   C_public_physics::GameDone
+0x0047c4f0  100.00%   C_public_physics::Collision
+0x0047c500  100.00%   C_public_physics::Hit
 0x0047c510  missing   $CRT_CPP_Initializer(65)
 0x0047c540  stub      C_pumper::C_pumper
 0x0047c6e0  100.00%   C_pumper::`scalar deleting destructor'
@@ -896,7 +897,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(struct G_RaceCamera **, struct G_RaceCamera *const &)
+0x00499050  100.00%   std::_Construct(class I3D_frame **, class I3D_frame *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -1275,14 +1276,14 @@
 0x00536690  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::_Destroy
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
 0x00537090  100.00%   std::vector<S_semaphore,std::allocator<S_semaphore> >::_Ufill
-0x00537130  100.00%   std::copy(struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *)
-0x00537910  100.00%   std::_Construct(struct S_semaphore *, struct S_semaphore const &)
+0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
+0x00537910  100.00%   std::_Construct(struct ai_fight_member *, struct ai_fight_member const &)
 0x00537a50  99.49%    ai_group::operator=
 0x00537e10  100.00%   ai_fight_followship::operator=
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
+0x00538520  100.00%   std::copy(struct ai_group_member *, struct ai_group_member *, struct ai_group_member *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1425,7 +1426,7 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_game::S_Telephone *, struct C_game::S_Telephone const &)
+0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
 0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
@@ -1544,7 +1545,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class C_car **, class C_car **, class C_car **)
+0x00564750  100.00%   std::copy(class I3D_frame *const *, class I3D_frame *const *, class I3D_frame **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -1824,15 +1825,15 @@
 0x00596090  100.00%   C_player::SetBoxer
 0x005961b0  100.00%   C_player::FadeReset
 0x005961d0  missing   $CRT_CPP_Initializer(185)
-0x00596200  stub      C_racecam::C_racecam
+0x00596200  100.00%   C_racecam::C_racecam
 0x00596220  100.00%   C_racecam::`scalar deleting destructor'
 0x00596240  100.00%   C_racecam::~C_racecam
-0x00596250  stub      C_racecam::Init
-0x005962b0  stub      C_racecam::SaveData
-0x005962e0  stub      C_racecam::LoadData
-0x00596360  stub      C_racecam::DuplicateFrom
-0x00596380  stub      C_racecam::GameInit
-0x005963d0  stub      C_racecam::GameDone
+0x00596250  100.00%   C_racecam::Init
+0x005962b0  100.00%   C_racecam::SaveData
+0x005962e0  100.00%   C_racecam::LoadData
+0x00596360  100.00%   C_racecam::DuplicateFrom
+0x00596380  100.00%   C_racecam::GameInit
+0x005963d0  100.00%   C_racecam::GameDone
 0x005963f0  missing   $CRT_CPP_Initializer(186)
 0x00596420  missing   $CRT_CPP_Initializer(187)
 0x00596430  missing   $CRT_CPP_Initializer(188)
@@ -2188,10 +2189,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_driver_man *, struct C_game::S_driver_man *, struct C_game::S_driver_man *)
+0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
-0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct C_game::S_driver_man *, struct C_game::S_driver_man const &)
+0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
+0x005bca00  100.00%   std::_Construct(struct G_MISubtitleStruct *, struct G_MISubtitleStruct const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)
@@ -3049,7 +3050,7 @@
 0x006051e0  100.00%   G_LoadSaveClass::AllDefault
 0x00605260  100.00%   G_LoadSaveClass::ProfileEnumFiles
 0x00605530  100.00%   G_LoadSaveClass::ProfileEnumRelease
-0x00605560  100.00%   CutsceneTime
+0x00605560  100.00%   C_blood::C_blood
 0x00605570  100.00%   G_LoadSaveClass::ProfileSelect
 0x006055c0  100.00%   G_LoadSaveClass::ProfileCreate
 0x00605740  100.00%   G_LoadSaveClass::ProfileDelete

@@ -2,18 +2,18 @@
 
 #include "actors/C_PhThings.h"
 #include "actors/g_inventory.h"
+#include "tools.h"
 
 // A weapon put down, a physical thing the player can pick up (PS2 C_drop_in_weapon, C_drop_in_weapon.cpp), 0x3d4
-// bytes (PS2's 0x690). Only the constructor so far, which the script's UNLINKFROMHAND calls, as a stub. Its constructor
-// clears the items and the members between them, then sets the type to ACTOR_DROP_IN_WEAPON.
+// bytes (PS2's 0x690): the script's UNLINKFROMHAND's and CREATEWEAPONFROMFRAME's, C_human's dropped weapons and the
+// boxes the player puts down (GAMEITEM_NONE).
 // VTABLE: GAME 0x623c28
 class C_drop_in_weapon : public C_PhThing
 {
 public:
     C_drop_in_weapon();
     virtual ~C_drop_in_weapon();
-    // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the
-    // linker's folded constant functions and those that only call the base's
+    // The vtable's other overrides (the slots' names are C_actor's)
     // The base's: the original's jumps there
     // FUNCTION: GAME 0x443650 FOLDED
     virtual void AI(uint time)
@@ -53,8 +53,10 @@ public:
         return false;
     }
 
-    S_GameItem item;                    // 0x38c (PS2 0x640), the weapon (the name is ours)
-    uchar unknown_39c[0x38];            // 0x39c
+    // 0x38c (PS2 0x640), the weapon, or a box's GAMEITEM_NONE with its number in ammo_loaded (the name is ours)
+    S_GameItem item;
+    // 0x39c, a weapon's for the player while the actor is in the game, GameInit's (the name is ours)
+    C_using_object::S_using_object using_object;
 };
 
 // SYNTHETIC: GAME 0x443620

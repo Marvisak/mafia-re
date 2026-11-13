@@ -317,15 +317,15 @@ public:
 // The two quit questions' OnBeforeCreate, the same code ("exityesno"), folded into the first copy: by name, as which
 // of the two copies our linker keeps changes with the link
 // FUNCTION: GAME 0x5e08e0
-// ?OnBeforeCreate@GM_MainMenuExit@@UAEPBDXZ
+// ?OnBeforeCreate@GM_GameMenuExit@@UAEPBDXZ
 
 // The message box's OnKey and OnClick, the same code as the simple message's (g_m_func.cpp), the original's copies the
 // message box's: by name, as which of the two copies our linker keeps changes with the link
 // FUNCTION: GAME 0x5e22d0
-// ?OnKey@GM_MessageBox@@UAEHEI@Z
+// ?OnKey@GM_SimpleMessage@@UAEHEI@Z
 
 // FUNCTION: GAME 0x5e22f0
-// ?OnClick@GM_MessageBox@@UAEHI@Z
+// ?OnClick@GM_SimpleMessage@@UAEHI@Z
 
 class C_car;
 struct S_garage_item;
