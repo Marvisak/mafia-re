@@ -252,6 +252,9 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ)
     # The collisions' TestSphereSlide, which only C_dyn_object::AI calls (g_colls.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestSphereSlide@g_collision@@QAEHABUS_vector@@0MPAPAUS_slide_contact@@PAI@Z)
+    # The collisions' TestCurveCurve, which only C_racing calls (g_c_sph.cpp)
+    target_link_options(game PRIVATE
+        /INCLUDE:?TestCurveCurve@g_collision@@QAEMPBV?$vector@Ugcol_CurveSphereStruct@g_collision@@V?$allocator@Ugcol_CurveSphereStruct@g_collision@@@std@@@std@@M0M@Z)
     # g_indicators.cpp's functions that nothing written calls yet: the dubbing's subtitles (DabingSpeak), the refuelling
     # bar, the radar's objects and the races' setters (the scripts', the racing's)
     target_link_options(game PRIVATE

@@ -86,6 +86,12 @@
 // LIBRARY: GAME 0x60fcde SYMBOL
 // _ISndGetDriver
 
+// LIBRARY: GAME 0x60fce4
+// ?RotateByNormMatrix@S_vector@@QBG?AU1@ABUS_matrix@@@Z
+
+// LIBRARY: GAME 0x60fcea
+// ?GetUScale@S_matrix@@QBGMXZ
+
 // LIBRARY: GAME 0x60fcf0
 // ?SetDir@S_matrix@@QAGXABUS_vector@@@Z
 

@@ -10,6 +10,7 @@
 
 #include "vehicles/C_car.h"
 #include "vehicles/C_Vehicle.h"
+#include "collision/g_colls.h"
 #include "g_material.h"
 #include "I3D_cache.h"
 #include "mission/Mission.h"
@@ -588,6 +589,15 @@ void C_car::ChangeState()
 {
     StubLog("C_car::ChangeState");
     C_actor::ChangeState();
+}
+
+// g_collision's, which g_c_sph.cpp's TestCurveCurve calls
+// STUB: GAME 0x429c60
+float g_collision::TestSphereSphere(const S_vector &p0, const S_vector &d0, float r0, const S_vector &p1,
+    const S_vector &d1, float r1)
+{
+    StubLog("g_collision::TestSphereSphere");
+    return 0.0f;
 }
 
 // FUNCTION: GAME 0x429dd0

@@ -157,4 +157,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_control@@V?$allocator@US_control@@@std@@@std@@QAEXPAUS_control@@IABU3@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@QAEXPAPAVC_ParticleEmitter@@IABQAV3@@Z
+// ?insert@?$vector@PAUS_particle_subpart@@V?$allocator@PAUS_particle_subpart@@@std@@@std@@QAEXPAPAUS_particle_subpart@@IABQAU3@@Z

@@ -21,6 +21,8 @@ struct tCollTreeLevel;
 
 struct tCollisionLevel;
 
+struct tCSphereParam;
+
 struct tDynamicPolicko;
 
 struct g_volume_triface;
@@ -52,11 +54,24 @@ struct tgcPanak2;
 // An oriented box LineInVehicle tests from inside, in its own space (LineInAABoxInverted; the name is ours, by
 // value)
 #define DYNCOLL_UNKNOWN_45 0x45
+// An upright cylinder, which SphereInVehicle tests by its circle in x and z: its sphere's position the axis's place,
+// its radius cylinder_radius (the name is ours, after the level's VOLTYPE_CYLINDER, of the same value; the moving
+// objects' grid has its cylinders as type 0x43)
+#define DYNCOLL_CYLINDER 0x84
+// The types only SphereInDynamics tests (the names are ours, by value): an upright cylinder of cylinder_radius around the
+// sphere's position, which it tests by the move's horizontal part, and an oriented box as 0x40 whose inverse matrix
+// also scales the sphere's radius (GetUScale), the normal turned back by RotateByNormMatrix
+#define DYNCOLL_UNKNOWN_43 0x43
+#define DYNCOLL_UNKNOWN_46 0x46
 // The tracks' (C_game::CreateTrackEffect's, by value): the blood's, which the humans' steps through take blood from
 #define DYNCOLL_UNKNOWN_48 0x48
 // The scattered objects' (C_scatter's, the scatter their owner): LineInDynamicsInnerDyn passes a line's hit to
 // the owner's LineHit (by value)
 #define DYNCOLL_UNKNOWN_47 0x47
+// The bit every moving object's type has (0x40 to 0x48; not the vehicles' cylinder, 0x84), tested as a bit where
+// DYNCOLL_UNKNOWN_40 is the oriented box's whole type of the same value: TestSphereInVehicle asks the next test's
+// callback about a hit object with it (the name is ours)
+#define DYNCOLL_DYNAMIC 0x40
 // tDynamicCollObject::flags (the names are ours, by value where the meaning isn't known): a human's spheres, the lower
 // one (the legs) and the upper one; ActivateColls puts in a dead human's upper one, UpdateDynColl moves the upper one
 // of a dead human only and leaves out the lower one while the human's lower_coll_off is set
@@ -88,7 +103,9 @@ struct tDynamicCollObject
     // 0x10, the sphere around it, an I3D_bsphere (bytes, as the box): the detector's Update sets it, DynUpdate finds
     // the object's cell by its position (the name is ours); its radius is the float at 0xc
     uchar bsphere[0x10];
-    uchar unknown_20[4];
+    // 0x20, the radius of a DYNCOLL_UNKNOWN_43's upright cylinder, whose axis goes through the sphere's position
+    // (SphereInDynamics adds the moving sphere's radius to it; the name is ours)
+    float cylinder_radius;
     // 0x24, the box the radar draws, an I3D_bbox as PS2's: bytes here, as including the engine's math would give each
     // includer the engine header's statics, which the original's game files don't have
     uchar bbox[0x18];
@@ -159,6 +176,10 @@ struct S_dyn_grid
     tDynamicPolicko **cells;            // 0x18, row by row, NULL where a cell has no objects
 };
 
+// The callback the next test asks about a moving object it hit (PS2's type: the object and the sphere test's
+// tCSphereParam, returning a gcCallbackRet, an enum whose values the PC's callers don't show; the name is ours)
+typedef int (*gcCallback)(tDynamicCollObject *obj, tCSphereParam *p);
+
 // The collisions (PS2 g_collision; the file is a guess, PS2's g_colls.cpp), 0x2f0 bytes (LoadedLevel, the next of
 // g_c_glob.cpp's globals, follows it; the constructor's last store is 0x2c4's). Only what main, the camera, the game,
 // the script's commands and the collisions' tests use so far.
@@ -224,9 +245,9 @@ public:
     tDynamicCollObject *TestLineHDynamic(const S_vector &from, const S_vector &dir, S_vector *pos, S_vector *normal,
         uint flags);
     // The objects the next test leaves out, and the callback it asks (PS2 names; PS2's callback takes the object and the
-    // sphere test's tCSphereParam and returns a gcCallbackRet, ours is a void * until the tests show its values)
-    void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback);
-    void DynSetNextCollOwner(tDynamicCollObject *obj, void *callback);
+    // sphere test's tCSphereParam, gcCallback)
+    void DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, gcCallback callback);
+    void DynSetNextCollOwner(tDynamicCollObject *obj, gcCallback callback);
     // A line from from along dir against the collisions of a vehicle a human is in (PS2 name): the collision hit, as
     // TestLineV's
     int TestLineInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
@@ -249,6 +270,28 @@ public:
     // parameters' names are ours)
     int TestSphereInVehicle(std::vector<tDynamicCollObject *> *colls, const S_vector &from, const S_vector &dir,
         float radius, S_vector *pos, S_vector *normal, uint flags, uint flags2);
+    // The sphere tests' parts (PS2 names, the parameters' names ours), each true where it put a hit nearer than p's into
+    // p: the moving objects, an edge (which puts the code of an end the touched point lies past into vertex and fails, for
+    // the caller to test that end as a point), a face, an axis-aligned box, a volume that isn't a face, a cell's volumes
+    // and a vehicle's collisions
+    bool SphereInDynamics(tCSphereParam &p);
+    bool SphereInEdge(const S_vector &v0, const S_vector &v1, tCSphereParam &p, uint &vertex, uint vertex0,
+        uint vertex1);
+    bool SphereInFace(g_volume_triface *vol, tCSphereParam &p, int &unknown);
+    bool SphereInAABox(const S_vector &min, const S_vector &max, tCSphereParam &p);
+    bool SphereInNonface(g_volume_triface *vol, tCSphereParam &p);
+    bool SphereInTreeLevel(tCollTreeLevel *cell, tCSphereParam &p);
+    bool SphereInVehicle(std::vector<tDynamicCollObject *> *colls, tCSphereParam &p);
+    // A point of a curve the racing's cars drive along (PS2 g_collision::gcol_CurveSphereStruct, 0x10 bytes; g_c_glob.h)
+    struct gcol_CurveSphereStruct;
+    // When two curves of spheres first meet (PS2 names; the parameters' names are ours): C_racing's, from
+    // TestSphereSphere on each pair of their segments in time order; FLT_MAX for never, or where either curve has fewer
+    // than two points
+    float TestCurveCurve(const std::vector<gcol_CurveSphereStruct> *c0, float r0,
+        const std::vector<gcol_CurveSphereStruct> *c1, float r1);
+    // Two spheres moved (PS2 name; C_car.cpp's), which TestCurveCurve calls
+    float TestSphereSphere(const S_vector &p0, const S_vector &d0, float r0, const S_vector &p1, const S_vector &d1,
+        float r1);
     // A sphere slid along what it hits, up to ten passes of _TestSphereB, each plane it slid along kept in contacts
     // (PC only, the names are ours): TestSphereSlide is the wrapper of _TestSphereSlide, without flags, and returns
     // the contacts
@@ -288,7 +331,7 @@ public:
     std::vector<tDynamicPolicko *> dyn_queue;
     // 0x2b0, what DynSetNextCollOwner and DynSetNextCollOwnerMult set (the names are ours, after them): the callback,
     // the one object (0x2b4) that DynSetNextCollOwner points the list at, the list (0x2b8) and its count (0x2bc)
-    void *next_coll_callback;
+    gcCallback next_coll_callback;
     tDynamicCollObject *next_coll_owner;
     tDynamicCollObject **next_coll_owners;
     uint num_next_coll_owners;
@@ -299,7 +342,10 @@ public:
     // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
     // otherwise (the name is ours)
     C_actor *step_actor;
-    uchar unknown_2c8[0x14];            // 0x2c8
+    uchar unknown_2c8[8];               // 0x2c8
+    // 0x2d0, the place of TestSphereInVehicle's last hit, an S_vector (bytes, as tDynamicCollObject's sphere), which
+    // nothing reads (the name is ours)
+    uchar vehicle_hit_pos[0xc];
     // 0x2dc, the cell the last test tested, its column (0x2e0) and row (0x2e4), which _TestLineV, _TestLineVInnerDyn and
     // a sphere test set as they go and nothing reads (the names are ours)
     tCollTreeLevel *last_cell;

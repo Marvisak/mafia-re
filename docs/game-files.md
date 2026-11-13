@@ -128,7 +128,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 93 | `5c2840–5c503c` | 0x27fc | `g_c_glob.cpp` | whole | the first of PS2's five collision files, which are files 93 to 97 in PS2's order: `gifCollision`'s initializer first, `LoadCollision` |
 | 94 | `5c5040–5c9e6c` | 0x4e2c | `g_c_line.cpp` | whole | `g_collision`'s line tests |
 | 95 | `5c9e70–5cafac` | 0x113c | `g_c_linebs.cpp`? | stubs | by its place: `FindCollsByFrame` (`5ca5c0`) |
-| 96 | `5cafb0–5d58fc` | 0xa94c | `g_c_sph.cpp`? | stubs | `g_collision`'s sphere tests |
+| 96 | `5cafb0–5d58fc` | 0xa94c | `g_c_sph.cpp` | whole | PS2's file: `g_collision`'s sphere tests in PS2's order, `SphereInDynamics` first (PS2's `SphereInAACapsule` missing, the PC's sliding test after `_TestSphereB`) |
 | 97 | `5d5900–5d6e4c` | 0x154c | `g_colls.cpp` | whole | the tests' wrappers: PS2's g_colls.cpp has exactly this range's functions |
 | 98 | `5d6e50–5d6f7c` | 0x12c | `g_lines.cpp` (ours) | whole | the lines drawn over each frame (PC only) |
 | 99 | `5d6f80–5d767c` | 0x6fc | `C_ShotSkeleton.cpp` (ours) | whole | `C_ShotSkeleton`, the bones the shots test against (PS2's class) |

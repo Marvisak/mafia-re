@@ -17,6 +17,15 @@ class I3D_frame;
 // and a nonface only while off
 #define VOLF_DISABLED 0x20
 #define VOLF_NONFACE 0x80
+// A face whose vertices run the other way round its normal (PS2 builds its plane from them in the other order, the
+// PC's level stores it): SphereInFace's inside tests expect the other sign (the name is a guess)
+#define VOLF_REVERSED 0x100
+// A face's edges in SphereInFace (the names are ours): the first vertex to the second, the second to the third, the
+// third to the first, a bit each; a vertex goes by the bit of the edge opposite it (SphereInEdge's vertex codes)
+#define FACE_EDGE_01 1
+#define FACE_EDGE_12 2
+#define FACE_EDGE_20 4
+#define FACE_EDGES (FACE_EDGE_01 | FACE_EDGE_12 | FACE_EDGE_20)
 // The low byte of a face's flags: GrantCoherence's coherence code, from the axis nearest the face's normal and whether
 // its first edge (the first vertex to the second) runs along another axis (the names are ours, by what the codes
 // mean): a face facing x with the edge level (the same y at both ends) and one with it not, one facing y with the edge
@@ -224,6 +233,43 @@ struct tCLineParam
     // outer one's after each column or row; nothing reads it (PS2 neither; the name is a guess)
     uchar walked;
     uchar unknown_59[3];
+};
+
+// What the sphere tests test the volumes against (PS2 tCSphereParam, 0x88 bytes by SphereInDynamics's copies of it, the
+// names ours): _TestSphereB fills it in, the tests of the cells, the volumes and the moving objects put the nearest hit
+// into it
+struct tCSphereParam
+{
+    S_vector from;                      // 0x0
+    S_vector dir;                       // 0xc
+    float radius;                       // 0x18
+    // 0x1c, the move's bounds in x and z widened by the radius, the lower ends, then the higher ones
+    float min_x, min_z;
+    float max_x, max_z;                 // 0x24
+    S_vector to;                        // 0x2c, from + dir
+    S_vector dir_n;                     // 0x38, dir normalized
+    uint flags2;                        // 0x44, the volumes' flags the test leaves out, the second flags and VOLF_DISABLED
+    uint flags;                         // 0x48, the moving objects' flags the test leaves out
+    uchar unknown_4c[4];                // 0x4c
+    // 0x50, the square of the nearest hit's distance along the move, dir's square for none (lastSphereDistance)
+    float dist_sq;
+    // 0x54, the horizontal perpendicular of dir_n ((0, 1, 0) crossed with it, normalized; (1, 0, 0) for an upright
+    // move), and the d of the planes along the move through the sphere's two sides, the lower one first (0x60)
+    S_vector side;
+    float side_d_min, side_d_max;
+    S_vector pos;                       // 0x68, the nearest hit's place
+    S_vector normal;                    // 0x74, its normal, reversed into the caller's
+    g_collision_header *hit;            // 0x80, the volume or the moving object hit, NULL for none
+    bool unknown_84;                    // 0x84
+    uchar unknown_85[3];
+};
+
+// A point of a curve the racing's cars drive along (PS2 g_collision::gcol_CurveSphereStruct, 0x10 bytes, the names
+// ours): its place and its time
+struct g_collision::gcol_CurveSphereStruct
+{
+    S_vector pos;                       // 0x0
+    float t;                            // 0xc
 };
 
 // Sets the faces' coherence from their normals once the level is loaded (PS2's, GrantCoherence__FP15tCollisionLevel)

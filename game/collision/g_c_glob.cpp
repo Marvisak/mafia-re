@@ -438,7 +438,7 @@ void g_collision::DynUpdate(tDynamicCollObject *obj)
 
 // The one object the next test leaves out, or none, and the callback it asks
 // FUNCTION: GAME 0x5c3d10
-void g_collision::DynSetNextCollOwner(tDynamicCollObject *obj, void *callback)
+void g_collision::DynSetNextCollOwner(tDynamicCollObject *obj, gcCallback callback)
 {
     if (obj)
     {
@@ -453,7 +453,7 @@ void g_collision::DynSetNextCollOwner(tDynamicCollObject *obj, void *callback)
 
 // The objects the next test leaves out, num of them, and the callback it asks
 // FUNCTION: GAME 0x5c3d60
-void g_collision::DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, void *callback)
+void g_collision::DynSetNextCollOwnerMult(tDynamicCollObject **objs, uint num, gcCallback callback)
 {
     next_coll_owners = objs;
     if (objs)

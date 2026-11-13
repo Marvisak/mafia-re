@@ -273,4 +273,4 @@ public:
 // ?capacity@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x411b80
-// ?copy@std@@YIPAUS_vector@@PBU2@0PAU2@@Z
+// ?copy@std@@YIPAUS_find_actor@C_game@@PAU23@00@Z
