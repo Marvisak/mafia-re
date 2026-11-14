@@ -53,13 +53,25 @@ struct ai_group
     // 0x50 (PS2 0x40), GetCarFactor's: the one at a car's index in cars, 1 without one
     std::vector<float> car_factors;
 
+    // PS2 names: the entity joins with a role (the number of its own group becomes this one's) and leaves, tells the
+    // group's members of an actor it smells, and an attack on it is put among the group's events
+    void Add(C_entity *e, uint role);
+    void Del(C_entity *e);
+    void GetSniff(C_entity *e, C_actor *act);
+    void UnderAttack(C_entity *e, C_actor *attacker, float f);
     // The group's events by the game's time, which ai_groups::Tick calls (PS2 name)
     void ProcessEvents(uint time);
     // PS2 names, which the fights' Tick calls: how much the car counts for the group, and the group's car closest to
-    // the position that its members can use, NULL for none (the second vector and the flag what else it found)
+    // the position that its members can use, NULL for none (neither PC nor PS2 uses the other two parameters)
     float GetCarFactor(C_car *car);
     C_car *GetCarClosestAndUsable(S_vector *pos, S_vector *unknown, uint *unknown2);
+    // Whether the entity is a member that can receive events (not of role 2) or cast them (not of role 1) (PS2 names)
+    bool canReceive(C_entity *e);
+    bool canCast(C_entity *e);
 };
+
+// The length of a name in the groups' record, the members', attackers', cars' and free actors' (the name is ours)
+#define AIGROUPS_NAME_LEN 0x20
 
 class ai_groups
 {
@@ -75,17 +87,25 @@ public:
     // PS2 names
     void Init();
     void Destroy();
-    // The groups' frame, which C_game::Tick calls (PS2 name)
-    void Tick();
+    // A new group, the number of which it returns (PS2 name)
+    uint NewGroup();
     // The group of that number, NULL for none (PS2 name)
     ai_group *GetGroup(uint id);
-    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
-    void InvalidateActor(C_actor *act);
+    // The groups' frame, which C_game::Tick calls (PS2 name)
+    void Tick();
     // The saved game's record of the groups, its size and the record (PS2 names)
     uint GetSize();
     bool Save(void **buf);
     // The groups from a saved game's record (PS2 name; the result's type is a guess)
     bool Load(void **buf);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void InvalidateActor(C_actor *act);
+    // Whether the group of that number has cars (PS2 name), which the parties' SetCommander and CountFreeSeats ask
+    bool hasCarGroup(uint id);
+    // Copy count elements of size bytes between the record and memory, and move the record's pointer past them (PS2
+    // names)
+    void MemWrite(void **buf, void *src, uint count, uint size);
+    void MemRead(void **buf, void *dst, uint count, uint size);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours): its copy
     // inlines push_back's insert
@@ -133,16 +153,32 @@ public:
     // 0x10, a time in ms: Update's next look at the followers' jobs, cleared by Init and Destroy (the name is ours)
     uint check_time;
 
+    // A follower leaves his group, which goes with its last follower (PS2 name)
+    void DelFollower(C_actor *act);
+    // The follower (first) joins the leader's (second) group, a new one for a leader without; the third parameter is
+    // the place the car takes the group to (PS2 names)
+    void AddFollower(C_actor *follower, C_actor *leader);
+    void AddFollower(C_actor *follower, C_actor *leader, S_vector &pos);
+    // The following's frame, which C_game::Tick calls (PS2 name)
+    void Update();
     // PS2 names
     void Init();
     void Destroy();
-    // The following's frame, which C_game::Tick calls (PS2 name)
-    void Update();
+    // Whether the leader's car has the seats for all his followers (PS2 name, typo and all)
+    bool CanFolloshipFollow(C_actor *act);
+    // The seat of the follower in the leader's car, -1 for none (PS2 name)
+    int GetCarSeat(C_actor *follower, C_actor *leader);
+    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
+    void Invalidate(C_actor *act);
     // An actor's event for his followers (PS2 name; the player's Do_AB_OwnerCar gives 4 for a passenger's action
     // button)
     void Event(uint event, C_actor *actor);
-    // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
-    void Invalidate(C_actor *act);
+    // Whether the follower has to get into the leader's car (never) or out of it (PS2 names)
+    bool mustEnter(C_actor *act);
+    bool mustLeave(C_actor *act);
+    // ai_groups' copies, the elements' count and size the other way round (PS2 names)
+    void MemWrite(void **buf, void *src, uint size, uint count);
+    void MemRead(void **buf, void *dst, uint size, uint count);
     // The saved game's record of the following, its size and the record (PS2 names)
     uint GetSize();
     bool Save(void **buf);
@@ -204,11 +240,17 @@ struct ai_fight_followship
     C_human *target;                    // 0x40 (PS2 0x44)
     C_car *car;                         // 0x44 (PS2 0x48), the party's car, GROUP_DISBAND's
 
-    // PS2 names: the party's position, whether its car hunts the target, and a new party of the members that take the
-    // car (NULL for none), which Tick copies into the parties and deletes
+    // The commander chosen again (PS2 name): see the member's field; the members' same_group follow it
+    void SetCommander();
+    // How many seats of the car the party may take, 0 for none (PS2 name; the result's meaning is a guess), which
+    // TakeCar calls
+    uint CountFreeSeats(C_car *car);
+    // PS2 names: a new party of the members that take the car (NULL for none), which Tick copies into the parties and
+    // deletes, a member joining the party in a car, the party's position, and whether its car hunts the target
+    ai_fight_followship *TakeCar(C_car *car);
+    void AddCarMember(C_entity *e);
     void ComputePosition();
     bool mustCarHunt();
-    ai_fight_followship *TakeCar(C_car *car);
 };
 
 // PS2's has its parties only, as the PC's: AIManager's next member is PS2's sight manager too
@@ -222,12 +264,18 @@ public:
     void Destroy();
     // The fights' frame, which C_game::Tick calls (PS2 name)
     void Tick();
+    // The entity takes part in the fight with the actor (PS2 name), which DisbandCarParty calls for each of the members
+    void JoinParty(C_entity *e, C_actor *act);
     // The entity, or else the actor, leaves its party
     void LeaveParty(C_entity *e, C_actor *act);
-    // The party of the entity, or else of the actor, NULL for none; the third parameter receives a number of it
-    ai_fight_followship *GetParty(C_entity *e, C_actor *act, uint *unknown);
+    // A new party in the car on the target, which TakeCar fills (PS2 name)
+    ai_fight_followship *NewCarParty(C_car *car, C_actor *target);
     // The party in a car goes apart (PS2 name)
     void DisbandCarParty(ai_fight_followship *party, bool unknown);
+    // Puts off the next look at the parties on foot that hunt the actor (PS2 name)
+    void AdjustFormTime(C_actor *act);
+    // The party of the entity, or else of the actor, NULL for none; the third parameter receives its index
+    ai_fight_followship *GetParty(C_entity *e, C_actor *act, uint *index);
     // Forgets an actor (PS2 name), which C_game::InvalidateActor calls
     void Invalidate(C_actor *act);
 };
@@ -249,7 +297,7 @@ public:
 // The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
 // streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
 // TEMPLATE: GAME 0x537050
-// ?_Ucopy@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEPAUS_i_show@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEPAUG_CameraDialog@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
 // ?_Ufill@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEXPAUG_CameraDialog@@IABU3@@Z
@@ -258,13 +306,42 @@ public:
 // ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUai_fight_member@@ABU2@@Z
+// ?_Construct@std@@YIXPAUai_group_event@@ABU2@@Z
+
+// The groups' and the following groups' insert(P, n, x), which NewGroup's and AddFollower's push_backs call
+// TEMPLATE: GAME 0x5366c0
+// ?insert@?$vector@Uai_group@@V?$allocator@Uai_group@@@std@@@std@@QAEXPAUai_group@@IABU3@@Z
+
+// TEMPLATE: GAME 0x5369e0
+// ?insert@?$vector@Uai_follow_group@@V?$allocator@Uai_follow_group@@@std@@@std@@QAEXPAUai_follow_group@@IABU3@@Z
+
+// The parties' insert(P, n, x), which JoinParty's push_back calls
+// TEMPLATE: GAME 0x536d10
+// ?insert@?$vector@Uai_fight_followship@@V?$allocator@Uai_fight_followship@@@std@@@std@@QAEXPAUai_fight_followship@@IABU3@@Z
+
+// The elements' copy constructions the three inserts call
+// TEMPLATE: GAME 0x537650
+// ?_Construct@std@@YIXPAUai_group@@ABU2@@Z
+
+// TEMPLATE: GAME 0x537830
+// ?_Construct@std@@YIXPAUai_follow_group@@ABU2@@Z
+
+// TEMPLATE: GAME 0x537930
+// ?_Construct@std@@YIXPAUai_fight_followship@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x537a50
 // ??4ai_group@@QAEAAU0@ABU0@@Z
 
+// The following group's implicit operator=, which ai_follow_manager::Invalidate's erase calls
+// SYNTHETIC: GAME 0x537c70
+// ??4ai_follow_group@@QAEAAU0@ABU0@@Z
+
 // SYNTHETIC: GAME 0x537e10
 // ??4ai_fight_followship@@QAEAAU0@ABU0@@Z
+
+// The group's scalar deleting destructor, which ai_groups::InvalidateActor's erase calls
+// SYNTHETIC: GAME 0x538050
+// ??_Gai_group@@QAEPAXI@Z
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
@@ -273,8 +350,8 @@ public:
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
 // SYNTHETIC: GAME 0x538c30
-// ??1ai_fight_followship@@QAE@XZ
+// ??1ai_police_action@@QAE@XZ
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z
+// ?copy@std@@YIPAPAUS_particle_subpart@@PAPAU2@00@Z

@@ -59,6 +59,12 @@ void C_entity::Event(C_actor *act, uint id, void *data)
     StubLog("C_entity::Event");
 }
 
+// STUB: GAME 0x529c70
+void C_entity::UnlockSubstate(uint unknown)
+{
+    StubLog("C_entity::UnlockSubstate");
+}
+
 // STUB: GAME 0x524650
 void ai_action_manager::Clear(bool unknown)
 {
@@ -292,4 +298,11 @@ void C_entity::WeaponGetInfo()
 void C_entity::InvalidateActor(C_actor *act)
 {
     StubLog("C_entity::InvalidateActor");
+}
+
+// STUB: GAME 0x529da0
+bool C_entity::GetGroupPosition(C_actor *act, S_vector *pos)
+{
+    StubLog("C_entity::GetGroupPosition");
+    return false;
 }

@@ -183,6 +183,19 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?DevaaateeeZasNeznaCas@C_sledovacka@@QAEIPAVC_car@@@Z
         /INCLUDE:?AddCarEscape@C_sledovacka@@QAE_NPAVC_car@@PAVC_actor@@ABUS_vector@@_NMMM@Z
         /INCLUDE:?HoniMiHoNekdoZKanclu@C_sledovacka@@QAE_NPAVC_car@@@Z)
+    # jp_ai_groups.cpp's functions that nothing written calls yet (the AI's humans, the police, the traffic), with
+    # ai_group::canCast, which only UnderAttack calls
+    target_link_options(game PRIVATE /INCLUDE:?Add@ai_group@@QAEXPAVC_entity@@I@Z
+        /INCLUDE:?Del@ai_group@@QAEXPAVC_entity@@@Z
+        /INCLUDE:?GetSniff@ai_group@@QAEXPAVC_entity@@PAVC_actor@@@Z
+        /INCLUDE:?UnderAttack@ai_group@@QAEXPAVC_entity@@PAVC_actor@@M@Z
+        /INCLUDE:?NewGroup@ai_groups@@QAEIXZ
+        /INCLUDE:?AddFollower@ai_follow_manager@@QAEXPAVC_actor@@0@Z
+        /INCLUDE:?AddFollower@ai_follow_manager@@QAEXPAVC_actor@@0AAUS_vector@@@Z
+        /INCLUDE:?CanFolloshipFollow@ai_follow_manager@@QAE_NPAVC_actor@@@Z
+        /INCLUDE:?GetCarSeat@ai_follow_manager@@QAEHPAVC_actor@@0@Z
+        /INCLUDE:?mustEnter@ai_follow_manager@@QAE_NPAVC_actor@@@Z
+        /INCLUDE:?mustLeave@ai_follow_manager@@QAE_NPAVC_actor@@@Z)
     # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
     target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests

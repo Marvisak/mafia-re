@@ -86,7 +86,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 51 | `4f8030–4f848c` | 0x45c | `jp_ai_checkbuild.cpp`? |  | PS2's order |
 | 52 | `4f8490–5053fc` | 0xcf6c | `jp_ai_checkpoints.cpp`? | stubs | `ai_wayfind` and `ai_path` |
 | 53 | `505400–53038c` | 0x2af8c | `jp_ai_entity.cpp` | stubs | the AI's humans, `C_entity`: constructor `5071a0` (vtable `625090`) |
-| 54 | `530390–53857c` | 0x81ec | `jp_ai_groups.cpp`? | part | the AI's groups, following and fights |
+| 54 | `530390–53857c` | 0x81ec | `jp_ai_groups.cpp`? | whole | the AI's groups, following and fights, PS2's functions in PS2's order |
 | 55 | `538580–538c7c` | 0x6fc | `jp_ai_main.cpp`? | whole | only `AIManager`'s initializer, constructor and destructor |
 | 56 | `538c80–53e4ac` | 0x582c | `jp_ai_prislusnici.cpp`? | part | the police officers' board (`ai_police_nastenka`), in PS2's order |
 | 57 | `53e4b0–53ef4c` | 0xa9c | `jp_ai_segments.cpp`? | whole | the AI's segments (`check_seg`, `check_seg_clusters`), in PS2's order |

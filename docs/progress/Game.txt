@@ -54,9 +54,9 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
+0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
-0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -897,7 +897,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(class I3D_frame **, class I3D_frame *const &)
+0x00499050  100.00%   std::_Construct(struct tDynamicCollObject **, struct tDynamicCollObject *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -1231,6 +1231,8 @@
 0x005289b0  stub      C_entity::InvalidateSelf
 0x00529100  stub      C_entity::AddUsingObject
 0x005299d0  stub      C_entity::LockSubstate
+0x00529c70  stub      C_entity::UnlockSubstate
+0x00529da0  stub      C_entity::GetGroupPosition
 0x0052db20  stub      C_entity::SaveGameGetSize(void)
 0x0052db80  stub      C_entity::SaveGameSave(void **)
 0x0052dc40  stub      C_entity::SaveGameLoad(void **)
@@ -1242,48 +1244,79 @@
 0x005303a0  100.00%   C_entity::SaveGameGetSize(void)
 0x005303b0  100.00%   C_entity::SaveGameSave(void **)
 0x005303c0  100.00%   C_entity::SaveGameLoad(void **)
-0x00530920  stub      ai_group::ProcessEvents
-0x00530a70  stub      ai_group::GetCarFactor
-0x00530ad0  stub      ai_group::GetCarClosestAndUsable
+0x005303d0  100.00%   ai_group::Add
+0x00530460  100.00%   ai_group::Del
+0x005304c0  100.00%   ai_group::GetSniff
+0x005306c0  100.00%   ai_group::UnderAttack
+0x00530920  100.00%   ai_group::ProcessEvents
+0x00530a70  100.00%   ai_group::GetCarFactor
+0x00530ad0  68.94%    ai_group::GetCarClosestAndUsable
+0x00530e90  100.00%   ai_groups::NewGroup
 0x00531060  100.00%   ai_group::~ai_group
-0x005310d0  stub      ai_groups::GetGroup
+0x005310d0  100.00%   ai_groups::GetGroup
 0x00531130  100.00%   ai_groups::Init
 0x005311a0  100.00%   ai_groups::Destroy
 0x00531340  100.00%   ai_groups::Tick
-0x005314d0  stub      ai_groups::GetSize
-0x005315b0  stub      ai_groups::Save
-0x005318f0  stub      ai_groups::Load
-0x00531dc0  stub      ai_groups::InvalidateActor
+0x005314d0  100.00%   ai_groups::GetSize
+0x005315b0  100.00%   ai_groups::Save
+0x005318f0  100.00%   ai_groups::Load
+0x00531dc0  100.00%   ai_groups::InvalidateActor
+0x00532050  100.00%   ai_group::canReceive
+0x00532090  100.00%   ai_group::canCast
+0x005320d0  100.00%   ai_groups::hasCarGroup
+0x00532150  100.00%   ai_follow_manager::MemRead
+0x00532190  100.00%   ai_follow_manager::DelFollower
+0x00532320  100.00%   ai_follow_manager::AddFollower(class C_actor *, class C_actor *)
+0x00532430  67.42%    ai_follow_manager::AddFollower(class C_actor *, class C_actor *, struct S_vector &)
 0x005325a0  100.00%   ai_follow_manager::Update
 0x00532da0  100.00%   ai_follow_manager::Init
 0x00532e30  100.00%   ai_follow_manager::Destroy
-0x005331c0  stub      ai_follow_manager::Invalidate
-0x005332e0  stub      ai_follow_manager::Event
-0x00533530  stub      ai_follow_manager::GetSize
-0x005335a0  stub      ai_follow_manager::Save
-0x005337b0  stub      ai_follow_manager::Load
-0x00533c50  stub      ai_fight_manager::LeaveParty
-0x00534270  stub      ai_fight_followship::TakeCar
-0x00534810  stub      ai_fight_followship::ComputePosition
-0x00534980  stub      ai_fight_followship::mustCarHunt
-0x00534b20  stub      ai_fight_manager::DisbandCarParty
-0x00534db0  stub      ai_fight_manager::GetParty
+0x00532f30  100.00%   ai_follow_manager::CanFolloshipFollow
+0x00533070  100.00%   ai_follow_manager::GetCarSeat
+0x005331c0  100.00%   ai_follow_manager::Invalidate
+0x005332e0  100.00%   ai_follow_manager::Event
+0x00533440  100.00%   ai_follow_manager::mustEnter
+0x00533450  100.00%   ai_follow_manager::mustLeave
+0x005334f0  100.00%   ai_follow_manager::MemWrite
+0x00533530  100.00%   ai_follow_manager::GetSize
+0x005335a0  100.00%   ai_follow_manager::Save
+0x005337b0  100.00%   ai_follow_manager::Load
+0x005339f0  75.15%    ai_fight_manager::JoinParty
+0x00533c50  96.76%    ai_fight_manager::LeaveParty
+0x00533fc0  100.00%   ai_fight_followship::SetCommander
+0x005340d0  95.74%    ai_fight_followship::CountFreeSeats
+0x00534270  94.58%    ai_fight_followship::TakeCar
+0x005344a0  100.00%   ai_fight_manager::NewCarParty
+0x00534520  100.00%   ai_fight_followship::AddCarMember
+0x00534810  100.00%   ai_fight_followship::ComputePosition
+0x00534980  63.32%    ai_fight_followship::mustCarHunt
+0x00534b20  100.00%*  ai_fight_manager::DisbandCarParty
+0x00534d50  100.00%   ai_fight_manager::AdjustFormTime
+0x00534db0  100.00%   ai_fight_manager::GetParty
 0x00534ec0  100.00%   ai_fight_manager::Init
 0x00534f70  100.00%   ai_fight_manager::Destroy
-0x005350b0  92.49%    ai_fight_manager::Tick
-0x00536200  stub      ai_fight_manager::Invalidate
+0x005350b0  92.73%    ai_fight_manager::Tick
+0x00536200  100.00%   ai_fight_manager::Invalidate
 0x00536460  100.00%   std::vector<ai_group,std::allocator<ai_group> >::_Destroy
 0x00536690  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::_Destroy
+0x005366c0  100.00%   std::vector<ai_group,std::allocator<ai_group> >::insert
+0x005369e0  100.00%   std::vector<ai_follow_group,std::allocator<ai_follow_group> >::insert
+0x00536d10  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::insert
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
-0x00537090  100.00%   std::vector<S_semaphore,std::allocator<S_semaphore> >::_Ufill
+0x00537090  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ufill
 0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
-0x00537910  100.00%   std::_Construct(struct ai_fight_member *, struct ai_fight_member const &)
+0x00537650  99.42%    std::_Construct(struct ai_group *, struct ai_group const &)
+0x00537830  100.00%   std::_Construct(struct ai_follow_group *, struct ai_follow_group const &)
+0x00537910  100.00%   std::_Construct(struct ai_group_event *, struct ai_group_event const &)
+0x00537930  100.00%   std::_Construct(struct ai_fight_followship *, struct ai_fight_followship const &)
 0x00537a50  99.49%    ai_group::operator=
+0x00537c70  100.00%   ai_follow_group::operator=
 0x00537e10  100.00%   ai_fight_followship::operator=
+0x00538050  100.00%   ai_group::`scalar deleting destructor'
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct ai_group_member *, struct ai_group_member *, struct ai_group_member *)
+0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1545,7 +1578,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class I3D_frame *const *, class I3D_frame *const *, class I3D_frame **)
+0x00564750  100.00%   std::copy(struct S_particle_subpart **, struct S_particle_subpart **, struct S_particle_subpart **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2179,7 +2212,7 @@
 0x005bbe30  100.00%   std::vector<S_shoot,std::allocator<S_shoot> >::insert
 0x005bc050  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 0x005bc0a0  100.00%   std::vector<C_game::S_i_show,std::allocator<C_game::S_i_show> >::erase
-0x005bc0f0  100.00%   std::vector<C_game::S_stop_sounds,std::allocator<C_game::S_stop_sounds> >::insert
+0x005bc0f0  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::insert
 0x005bc3f0  100.00%   std::vector<C_game::S_RoadBlock,std::allocator<C_game::S_RoadBlock> >::insert
 0x005bc700  100.00%   std::vector<C_game::S_frame_placement,std::allocator<C_game::S_frame_placement> >::_Ucopy
 0x005bc740  100.00%   std::vector<C_game::S_box_placement_temp,std::allocator<C_game::S_box_placement_temp> >::_Ucopy
@@ -2189,10 +2222,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
+0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
-0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
-0x005bca00  100.00%   std::_Construct(struct G_MISubtitleStruct *, struct G_MISubtitleStruct const &)
+0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
+0x005bca00  100.00%   std::_Construct(struct C_game::S_driver_man *, struct C_game::S_driver_man const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)

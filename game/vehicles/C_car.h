@@ -37,6 +37,9 @@ struct S_TSRFC
 
 // The value the fights' Tick gives C_car::death_fade_time, 1332 ms of its 4000 (the name is ours)
 #define CAR_DEATH_FADE_START 0x534
+// Half of it: what a new party in the car sets (ai_fight_manager::NewCarParty) and DisbandCarParty takes off again;
+// ai_group::GetCarClosestAndUsable takes only a car under it (the name is ours)
+#define CAR_DEATH_FADE_PARTY 0x29a
 
 // A tuning level of the car (the name is ours): the vector's element, whose size the original's stride gives and
 // whose members are unknown

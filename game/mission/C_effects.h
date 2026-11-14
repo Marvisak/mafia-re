@@ -400,7 +400,7 @@ public:
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
 // SYNTHETIC: GAME 0x44beb0
-// ??1C_effect_subpart@@UAE@XZ
+// ??1C_effect_item@@UAE@XZ
 
 // SYNTHETIC: GAME 0x44bed0
 // C_effect_part::`scalar deleting destructor'
@@ -415,7 +415,7 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAE@XZ
+// ??1?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
@@ -424,7 +424,7 @@ public:
 // ?insert@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAE@ABV?$allocator@US_GameItem@@@1@@Z
+// ??0?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAE@ABV?$allocator@PAUg_collision_header@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

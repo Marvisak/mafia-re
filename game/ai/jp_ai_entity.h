@@ -221,12 +221,16 @@ public:
     // PS2 names: the fights' Tick locks a substate with its member's state and passes the target's ai_blob through
     // the event ENTITY_EVENT_SNIFF, which the entity deletes
     void LockSubstate(uint unknown, uint unknown2, float unknown3, uint unknown4, bool unknown5);
+    // Lets the substate go that LockSubstate locked (PS2 name; the number is the one the fights' states give)
+    void UnlockSubstate(uint unknown);
     void Event(C_actor *act, uint id, void *data);
     // Whether one of the game's entities has one of five jobs aimed at this one, AIACTION_NORMALFIGHT among them (PS2
     // name), which ai_follow_manager::Update asks
     bool IsInDanger();
     // How well the entity hears (PS2 name), which soundArena::GetSounds takes off the level a sound needs
     float GetHearQuality();
+    // Where the entity stands for the actor (PS2 name, 0x529da0): ai_group::GetSniff asks each member for it
+    bool GetGroupPosition(C_actor *act, S_vector *pos);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours, after PS2's
     // types)
@@ -290,7 +294,9 @@ public:
     // 0xf48 (PS2 0x1130), AISTATEF_*: ForceAI stores its third parameter there when it changes ai_state, and
     // ForceScript clears it with the state, PS2's and the PC's (the name is a guess)
     uint ai_state_flags;
-    uchar unknown_f4c[4];               // 0xf4c
+    // 0xf4c (PS2 0x1134), compared between a fighting party's commander and an entity joining or leaving it, and with
+    // 2 by ai_fight_followship::TakeCar
+    int unknown_f4c;
     uint ai_flags;                      // 0xf50 (PS2 0x1138), ENTITYF_* (the name is ours)
     uchar unknown_f54[0x210];           // 0xf54
     ai_action_manager action_manager;   // 0x1164 (PS2 0x1348)
