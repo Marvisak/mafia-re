@@ -177,10 +177,11 @@ void C_railway::RemoveInnerEntries()
     StubLog("C_railway::RemoveInnerEntries");
 }
 
-// STUB: GAME 0x497990
+// FUNCTION: GAME 0x497990
 void C_railway::Unlock()
 {
-    StubLog("C_railway::Unlock");
+    if ((uint)lock_count > 0)
+        --lock_count;
 }
 
 // STUB: GAME 0x4989a0
