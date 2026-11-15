@@ -9,6 +9,55 @@
 // GLOBAL: GAME 0x63d7ac
 bool C_railway::salina_v_kine;
 
+// STUB: GAME 0x4841a0
+void S_rail_human::SetAnim(uint animation)
+{
+    StubLog("S_rail_human::SetAnim");
+}
+
+// FUNCTION: GAME 0x484230
+void S_rail_human::Kill(C_railway *tram)
+{
+    if (passenger_flag == 22)
+        passenger_flag = old_passenger_flag;
+
+    switch (passenger_flag)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+        tram->Unlock();
+        // fall through
+    case 6:
+    case 7:
+    case 8:
+        new_animation_number = rnd(5) + 7;
+        break;
+    case 9:
+    case 21:
+        new_animation_number = rnd(2) + 12;
+        break;
+    case 19:
+        new_animation_number = rnd(2) + 23;
+        break;
+    default:
+        break;
+    }
+
+    passenger_flag = 17;
+    SetAnim(1);
+}
+
 // STUB: GAME 0x4865b0
 C_railway::C_railway()
 {

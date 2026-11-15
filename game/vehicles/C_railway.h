@@ -2,6 +2,40 @@
 
 #include "actors/C_actor.h"
 
+class C_animations_machine_de_luxe;
+struct tDynamicCollObject;
+class C_railway;
+
+// A rail vehicle's passenger (PS2 name; C_railway keeps them in its seats), 0x94 bytes. Written: Kill; SetAnim is a
+// stub the rest of the class calls.
+class S_rail_human
+{
+public:
+    int passenger_flag;                 // 0x00
+    I3D_frame *frame_model;             // 0x04
+    C_animations_machine_de_luxe *anim_container;  // 0x08
+    int should_keep_sitting;            // 0x0c
+    int animation_number;               // 0x10
+    int new_animation_number;           // 0x14
+    uint wagon_index;                   // 0x18
+    int seat_index;                     // 0x1c
+    int field_20;                       // 0x20
+    S_vector target_position;           // 0x24
+    S_vector look_target;               // 0x30
+    int fear_timer;                     // 0x3c
+    int max_fear_time;                  // 0x40
+    int old_passenger_flag;             // 0x44
+    int old_animation_number;           // 0x48
+    S_matrix inverse_global_matrix;     // 0x4c
+    int field_8C;                       // 0x8c
+    tDynamicCollObject *collision_data; // 0x90
+
+    // Takes the passenger out of the car, with a random animation (the name is ours); tram counts the passengers
+    void Kill(C_railway *tram);
+    // Sends the passenger's animation (PS2 name); the rest of the class calls it
+    void SetAnim(uint animation);
+};
+
 // The rail vehicles (PS2 C_railway, with doors, windows and seats; C_railway.cpp, or C_rail_traffic.cpp, whose seats
 // they use), 0x370 bytes (PS2's 0x390). The constructor, which C_mission::CreateActor calls for ACTOR_RAILWAY, is a
 // stub; written: DuplicateFrom, SaveGameGetSize and GetMaterialID.

@@ -283,6 +283,8 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?RaceFlashText@G_IndicatorsClass@@QAEXPBDM@Z)
     # The sound arena's GetSounds, which the entities' AI calls (tools.cpp)
     target_link_options(game PRIVATE /INCLUDE:?GetSounds@soundArena@@QAEXPAVC_entity@@@Z)
+    # S_rail_human::Kill, which only an unwritten C_railway function calls (C_railway.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?Kill@S_rail_human@@QAEXPAVC_railway@@@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)
