@@ -203,8 +203,8 @@ I3D_frame *C_railway::GetVagon(uint wagon)
     return NULL;
 }
 
-// STUB: GAME 0x497980
+// FUNCTION: GAME 0x497980
 void C_railway::Lock()
 {
-    StubLog("C_railway::Lock");
+    ++lock_count;
 }
