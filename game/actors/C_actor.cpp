@@ -1494,7 +1494,7 @@ bool C_actor::IsPossibleCollAll(S_vector pos, S_vector dir, float radius, S_vect
             C_game::S_RoadBlock &rb = game->road_blocks[i];
             if (!rb.active)
                 continue;
-            float t = PossibleCollSphere(40.0f, act_mission->roads->links[rb.node].pos, pos, dir, radius);
+            float t = PossibleCollSphere(40.0f, act_mission->roads->nodes[rb.node].pos, pos, dir, radius);
             if (t < best && t >= 0.0f)
             {
                 best = t;

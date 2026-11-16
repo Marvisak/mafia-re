@@ -1102,7 +1102,7 @@ void ai_loc::Update()
         C_web_node *n = &act_mission->web_path->nodes[node];
         for (uint i = 0; i < n->num_conns; i++) {
             C_web_node *o = &act_mission->web_path->nodes[n->GetConn(i)->node];
-            if (ai_path::isInConnection(n->GetPos(), o->GetPos(), pos, n->width * 0.01f, o->width * 0.01f)) {
+            if (ai_path::isInConnection(n->GetPos(), o->GetPos(), pos, (n->width & 0xffff) * 0.01f, (o->width & 0xffff) * 0.01f)) {
                 conn = i;
                 node2 = o - act_mission->web_path->nodes;
                 flags |= AILOC_CONN | AILOC_UPDATED;
@@ -3541,7 +3541,7 @@ void C_human::GameDone()
     {
         if (!act_mission->GetGame()->game_done && traffic->element)
         {
-            traffic->element->unknown_1a5 = false;
+            traffic->element->made_human = false;
             traffic->element->frame->SetPos(old_pos);
             traffic->element->frame->SetDir(old_dir, 0.0f);
             traffic->element->frame->Update();
@@ -6196,17 +6196,17 @@ bool C_human::DropOutItems(std::vector<S_GameItem> &items)
                     case GAMEITEM_CROWBAR:
                     case GAMEITEM_BOTTLE:
                     case GAMEITEM_SWORD:
-                        weapon->unknown_348 = 0xb;
+                        weapon->hit_sound = 0xb;
                         break;
                     case GAMEITEM_BASEBALL_BAT:
                     case GAMEITEM_BOARD:
-                        weapon->unknown_348 = 0xa;
+                        weapon->hit_sound = 0xa;
                         break;
                     case GAMEITEM_COLT_DETECTIVE:
                     case GAMEITEM_SW_MAGNUM:
                     case GAMEITEM_SW_MP:
                     case GAMEITEM_COLT_1911:
-                        weapon->unknown_348 = 9;
+                        weapon->hit_sound = 9;
                         break;
                     case GAMEITEM_MOLOTOV:
                     case GAMEITEM_THOMPSON:
@@ -6214,25 +6214,25 @@ bool C_human::DropOutItems(std::vector<S_GameItem> &items)
                     case GAMEITEM_SAWED_OFF:
                     case GAMEITEM_SPRINGFIELD:
                     case GAMEITEM_MOSIN_NAGANT:
-                        weapon->unknown_348 = 0xc;
+                        weapon->hit_sound = 0xc;
                         break;
                     case GAMEITEM_GRENADE:
-                        weapon->unknown_348 = 0;
+                        weapon->hit_sound = 0;
                         break;
                     case GAMEITEM_BUCKET:
-                        weapon->unknown_348 = 3;
+                        weapon->hit_sound = 3;
                         break;
                     case GAMEITEM_FLASHLIGHT:
-                        weapon->unknown_348 = 8;
+                        weapon->hit_sound = 8;
                         break;
                     default:
-                        weapon->unknown_348 = -1;
+                        weapon->hit_sound = -1;
                         break;
                     }
                     S_THING_BOX thing_box;
                     thing_box.weight = 10.0f;
                     thing_box.velocity = S_vector(dir.z, .2f, -dir.x);
-                    thing_box.unknown_10 = .45f;
+                    thing_box.friction = .45f;
                     weapon->InitBox(&thing_box);
                     weapon->item = items[i];
                     TruncateAmmo(weapon->item);
@@ -9255,7 +9255,7 @@ void C_human::Do_FuckingBoxDrop()
     {
         S_THING_BOX thing_box;
         thing_box.weight = 10.0f;
-        thing_box.unknown_10 = .45f;
+        thing_box.friction = .45f;
         thing_box.velocity = dir;
         weapon->InitBox(&thing_box);
         weapon->item.id = GAMEITEM_NONE;
@@ -9645,11 +9645,11 @@ void C_human::FreeHand()
         {
             S_THING_BOX thing_box;
             thing_box.weight = 5.0f;
-            thing_box.unknown_10 = .45f;
+            thing_box.friction = .45f;
             thing_box.velocity = S_vector(0.0f, -.1f, 0.0f);
             phys->InitBox(&thing_box);
             act_mission->GetGame()->AddTemporaryActor(phys);
-            phys->unknown_c0 = 0x80000;
+            phys->coll.flags = DYNCOLLF_UNKNOWN_80000;
         }
         else
         {
@@ -9712,14 +9712,14 @@ void C_human::StartWeaponEffect(int effect)
                         C_public_physics *phys = new C_public_physics;
                         if (phys->Init(vis)) {
                             S_THING_BOX thing_box;
-                            phys->unknown_348 = 8;
+                            phys->hit_sound = 8;
                             thing_box.weight = .5f;
-                            thing_box.unknown_10 = .45f;
+                            thing_box.friction = .45f;
                             thing_box.velocity = S_vector(0.0f, -1.0f, 0.0f);
                             phys->InitBox(&thing_box);
                             phys->unknown_6d = false;
                             act_mission->GetGame()->AddTemporaryActor(phys);
-                            phys->unknown_c0 = 0x80000;
+                            phys->coll.flags = DYNCOLLF_UNKNOWN_80000;
                             if (item)
                                 item->clip_out = 1;
                         } else

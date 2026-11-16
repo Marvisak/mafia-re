@@ -4220,7 +4220,7 @@ void C_program::Process(uint time)
         {
             S_THING_BOX box;
             box.weight = 10.0f;
-            box.unknown_10 = .45f;
+            box.friction = .45f;
             box.velocity = S_vector(0.0f, -.11f, 0.0f);
             drop->InitBox(&box);
             drop->item.id = (ushort)p[2];
@@ -5742,7 +5742,7 @@ void C_program::Process(uint time)
             {
                 S_THING_BOX box;
                 box.weight = Max(p->value4, 1.0f);
-                box.unknown_10 = .45f;
+                box.friction = .45f;
                 box.velocity = S_vector(0.0f, -p->value3, 0.0f);
                 phys->InitBox(&box);
                 act_mission->GetGame()->AddTemporaryActor(phys);

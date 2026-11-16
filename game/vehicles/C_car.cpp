@@ -395,6 +395,13 @@ void C_car::ResetCar()
     StubLog("C_car::ResetCar");
 }
 
+// STUB: GAME 0x4230e0
+C_car *C_car::ChcesMeSejmout(const S_vector &pos, float range)
+{
+    StubLog("C_car::ChcesMeSejmout");
+    return NULL;
+}
+
 // PS2's order: the frame's world matrix into the model matrix, that into the inverse, inverted from a copy
 // FUNCTION: GAME 0x4293e0
 const S_matrix &C_car::GetInvModelMatrix(bool update)

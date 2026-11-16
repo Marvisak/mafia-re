@@ -237,6 +237,11 @@ public:
     {
         return effects;
     }
+    // The roads (the name is ours): C_web_path::FindPath reads them through it, FindPath_FastByRoads at three sites
+    C_roads *GetRoads()
+    {
+        return roads;
+    }
     // The mission's number (GETMISSIONNUMBER, SETMISSIONNUMBER, PS2's the same): the setter writes next_mission_number,
     // the getter reads mission_number, which KeepMissionNumber copies it to (CHANGE_MISSION's; the name is ours)
     // FUNCTION: GAME 0x47ae70
@@ -328,27 +333,27 @@ void ShowProgress(C_chunk *chunk);
 
 // The folded copy of I3D_frame::GetScale and C_mission::GetOptions, named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x47aec0
-// ?GetScale@I3D_frame@@QBEABUS_vector@@XZ
+// ?GetOptions@C_mission@@QAEAAUS_mission_options@@XZ
 
 // What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
 // folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
 // TEMPLATE: GAME 0x404830
-// ?_Construct@std@@YIXPAUS_sound_light_sector@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_cache_model_one@@ABU2@@Z
 
 // What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@IAEPAUS_actor_sound_buffer@C_mission@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEPAUS_con_register@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_actor_sound_buffer@C_mission@@V?$allocator@US_actor_sound_buffer@C_mission@@@std@@@std@@IAEXPAUS_actor_sound_buffer@C_mission@@IABU34@@Z
+// ?_Ufill@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@IAEXPAUS_garage_item@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
-// ?size@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
-// ?_Construct@std@@YIXPAUS_actor_sound_buffer@C_mission@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_con_register@@ABU2@@Z
 
 // What OpenBin calls out of line, its inline budget spent: the frames' map's destructor, operator[] and insert, its
 // tree's functions and the pair's, and the frames' vector's push_back, this file's copies; the 8-byte elements'

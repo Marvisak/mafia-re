@@ -195,6 +195,7 @@ public:
     // The human's car ran over another human (PS2 name, 0x49d220): C_human::Collision calls it with the car's
     // driver, which counts S_shvestky::run_over
     void NextNaSrackySoudruh(C_human *human);
+    void DalJsemPochuzkariDoDrzky(C_human *human);
     // PS2 name: POLICEMANAGER_FORCEARREST's (the parameters' names are ours)
     void ForceArrest(C_human *human, bool a, bool b);
     // A traffic sign the human destroyed (PS2 name), C_game::DestroyControlSignal's: SHVF_SIGNAL_MARK set, and
@@ -237,7 +238,7 @@ public:
     bool FreeMyTempActor(C_actor *act);
     // More policemen for the human (PS2 name, Czech for "more guys to the party"): POLICE_SUPPORT's (the parameters'
     // names are ours)
-    void DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2);
+    bool DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2);
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b4e0

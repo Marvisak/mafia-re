@@ -198,6 +198,10 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?mustLeave@ai_follow_manager@@QAE_NPAVC_actor@@@Z)
     # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
     target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
+    # C_PhThings.cpp's functions that nothing written calls yet: FindActors (CreateCrashActors, C_crash_obj.cpp) and
+    # GetRVelMassJ (0x425189)
+    target_link_options(game PRIVATE /INCLUDE:?FindActors@C_PhThing@@QAEXXZ
+        /INCLUDE:?GetRVelMassJ@C_PhThing@@QAEXABUS_vector@@0PAU2@1PAM1@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
     # (g_c_glob.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)
@@ -283,6 +287,24 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?RaceFlashText@G_IndicatorsClass@@QAEXPBDM@Z)
     # The sound arena's GetSounds, which the entities' AI calls (tools.cpp)
     target_link_options(game PRIVATE /INCLUDE:?GetSounds@soundArena@@QAEXPAVC_entity@@@Z)
+    # pathweb.cpp's functions that nothing written calls yet (the AI's wayfinding, the wagons, the racing)
+    target_link_options(game PRIVATE /INCLUDE:?FindNodeID@C_web_path@@QAEHG@Z
+        /INCLUDE:?FindPath@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@G@Z
+        /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
+        /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
+        /INCLUDE:?FindPathCompFuncJIPO@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z)
+    # road_web.cpp's functions that nothing written calls yet (the traffic's paths, C_trf_c.cpp)
+    target_link_options(game PRIVATE
+        /INCLUDE:?NPC_FindPathFromNodeToCross@C_roads@@QAE_NGUS_vector@@PAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z
+        /INCLUDE:?NPC_FindPathToNextCross1@C_roads@@QAE_NGHPAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z)
+    # C_person_traffic.cpp's functions whose callers aren't written yet: C_traffic_car's AddFreePersonFromCar, the
+    # police's FizlosNamakatDoAkce (C_shvestky::VasekSelChlastatNaOslavu), the rail vehicles' NewPanic of a frame and
+    # RailwayInStation
+    target_link_options(game PRIVATE
+        /INCLUDE:?AddFreePersonFromCar@C_traffic_generator@@SIXPAVI3D_model@@PAVC_actor@@AAUS_vector@@2@Z
+        /INCLUDE:?FizlosNamakatDoAkce@C_traffic_generator@@SIXPAVC_human@@IAAV?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@_NM2@Z
+        /INCLUDE:?NewPanic@C_traffic_generator@@SIXPAVI3D_frame@@@Z
+        /INCLUDE:?RailwayInStation@C_traffic_generator@@SIXPAVC_railway@@AAV?$vector@Urentry@@V?$allocator@Urentry@@@std@@@std@@@Z)
     # S_rail_human::Kill, which only an unwritten C_railway function calls (C_railway.cpp)
     target_link_options(game PRIVATE /INCLUDE:?Kill@S_rail_human@@QAEXPAVC_railway@@@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.

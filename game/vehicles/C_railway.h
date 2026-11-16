@@ -6,6 +6,17 @@ class C_animations_machine_de_luxe;
 struct tDynamicCollObject;
 class C_railway;
 
+// An entry a rail vehicle at a station has, where a pedestrian boards (PS2 rentry, in the order the PC's fields have):
+// the wagon, from 1, 0 for the vehicle itself, the entry's number in it, its place and the direction out of it (the
+// names are ours), 0x20 bytes (PS2's 0x30)
+struct rentry
+{
+    uint wagon;
+    uint entry;
+    S_vector pos;
+    S_vector dir;
+};
+
 // A rail vehicle's passenger (PS2 name; C_railway keeps them in its seats), 0x94 bytes. Written: Kill; SetAnim is a
 // stub the rest of the class calls.
 class S_rail_human
@@ -43,6 +54,8 @@ public:
 class C_railway : public C_actor
 {
 public:
+    // Puts the model among the vehicle's passengers at the entry (PS2's parameters; false for none)
+    bool AddPerson(I3D_model *model, uint wagon, uint entry);
     C_railway();
     virtual ~C_railway();
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the

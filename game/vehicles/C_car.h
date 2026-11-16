@@ -134,6 +134,8 @@ public:
     bool SetActualLevel(int level);
     // The human in a seat (PS2 name), NULL for none
     C_human *GetOwner(int seat);
+    // PS2 name (Czech, "do you want to knock me down"): the car itself where it would run the point over, else NULL
+    C_car *ChcesMeSejmout(const S_vector &pos, float range);
     // The actor into a seat, NULL to empty it (PS2 name and parameters; the names are ours): false for a seat the car
     // hasn't
     bool SetOwner(C_actor *act, int seat, float unknown);

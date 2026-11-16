@@ -40,7 +40,9 @@ struct S_car_node
     uchar num_lanes;                    // 0x45, the count of pos (the name is ours)
     uchar num_type2;                    // 0x46, of those the lanes of type 2 (the name is ours)
     uchar unknown_47;                   // 0x47
-    float unknown_48;                   // 0x48
+    // 0x48, the speed to drive at, in m/s: the road's (S_road_crossing::speed), the chases' 1000 for none (the name is
+    // ours)
+    float speed;
     float unknown_4c;                   // 0x4c
     uchar unknown_50[4];                // 0x50
     bool unknown_54;                    // 0x54
@@ -52,7 +54,7 @@ struct S_car_node
     // 0x68, the semaphore phase the node waits at, one of C_game's two or a bridge's (C_sledovacka::Tick takes a car
     // stopped at a light other than green for waiting there; the name is ours)
     int *semaphore_phase;
-    // 0x6c, RecompilePath's: the positions are final (a link's, or a crossing's once moved; the name is ours)
+    // 0x6c, RecompilePath's: the positions are final (a road node's, or a crossing's once moved; the name is ours)
     bool fixed;
     uchar unknown_6d[3];                // 0x6d
 };

@@ -53,12 +53,12 @@ public:
         STATUS_NO_ENERGY = 4
     };
 
-    // A bridge of the mission and the road node it is at (PS2 C_sledovacka::S_BRIDGE, whose members are the same; the
+    // A bridge of the mission and the crossing it is at (PS2 C_sledovacka::S_BRIDGE, whose members are the same; the
     // names are ours), 8 bytes
     struct S_BRIDGE
     {
         C_actor *actor;                 // 0x0
-        ushort node;                    // 0x4, an index of C_roads::nodes
+        ushort node;                    // 0x4, an index of C_roads::crossings
     };
     // A car the chases drive (PS2 C_sledovacka::S_ELEMENT, 0x50 bytes), 0x44 bytes
     struct S_ELEMENT
@@ -151,14 +151,14 @@ public:
 // What Init's inlined push_back calls out of line: the bridges' _Ucopy and _Ufill, folded with other vectors' of 8-byte
 // elements (the original kept g_indicators.cpp's copies)
 // TEMPLATE: GAME 0x604dd0
-// ?_Ucopy@?$vector@UG_MIIntroSubtitlesWaiting@@V?$allocator@UG_MIIntroSubtitlesWaiting@@@std@@@std@@IAEPAUG_MIIntroSubtitlesWaiting@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@Uai_group_member@@V?$allocator@Uai_group_member@@@std@@@std@@IAEPAUai_group_member@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604e00
-// ?_Ufill@?$vector@UG_MIIntroSubtitlesWaiting@@V?$allocator@UG_MIIntroSubtitlesWaiting@@@std@@@std@@IAEXPAUG_MIIntroSubtitlesWaiting@@IABU3@@Z
+// ?_Ufill@?$vector@US_particle_in_use@C_effects@@V?$allocator@US_particle_in_use@C_effects@@@std@@@std@@IAEXPAUS_particle_in_use@C_effects@@IABU34@@Z
 
 // What Tick's second pass calls out of line, its inline budget spent: the elements' size and operator[]
 // TEMPLATE: GAME 0x4a9940
-// ?size@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_cache_model_inbb@@V?$allocator@US_cache_model_inbb@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4a9970
 // ??A?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QAEAAUS_ELEMENT@C_sledovacka@@I@Z
@@ -167,7 +167,7 @@ public:
 // and insert(P, n, x) (AddCarHunt's), and of the road nodes' vector its insert(P, x) (a push_back), insert(P, n, x), the
 // erase(P) of pop_back and the copy of erase's body (the last two another file's copies, which the linker kept)
 // TEMPLATE: GAME 0x4a9cb0
-// ?insert@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QAEPAUS_ELEMENT@C_sledovacka@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_cache_model_inbb@@V?$allocator@US_cache_model_inbb@@@std@@@std@@QAEPAUS_cache_model_inbb@@PAU3@ABU3@@Z
 
 // TEMPLATE: GAME 0x4a9f10
 // ?insert@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@QAEXPAUS_ELEMENT@C_sledovacka@@IABU34@@Z

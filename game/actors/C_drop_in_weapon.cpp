@@ -79,7 +79,7 @@ void C_drop_in_weapon::ChangeState()
 void C_drop_in_weapon::GameInit()
 {
     C_PhThing::GameInit();
-    unknown_c0 = 0x80000;
+    coll.flags = DYNCOLLF_UNKNOWN_80000;
     if (item.id > GAMEITEM_NONE)
     {
         using_object.pos = frame->GetWorldPos();

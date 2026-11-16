@@ -150,6 +150,13 @@ bool C_railway::Hit(int type, const S_vector &v1, const S_vector &v2, const S_ve
     return C_actor::Hit(type, v1, v2, v3, f, act, u, frm);
 }
 
+// STUB: GAME 0x4928e0
+bool C_railway::AddPerson(I3D_model *model, uint wagon, uint entry)
+{
+    StubLog("C_railway::AddPerson");
+    return false;
+}
+
 // FUNCTION: GAME 0x496e40
 int C_railway::SaveGameGetSize()
 {

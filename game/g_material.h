@@ -16,6 +16,8 @@
 #define MAT_DEATH 0x28                  // "DEATH COLLISION": the player's fall fails the game
 #define MAT_CRASH 0x29
 #define MAT_MASLOVKA 0x2b              // "Maslovka": a strike on it makes no debris (C_human::AI)
+// "Chodnik" (the sidewalk): the pedestrians wave at the player's taxi only on it (C_traffic_element::Tick)
+#define MAT_SIDEWALK 3
 
 // A material of the scene's surfaces (materials.def), 0x170 bytes. The cars take their part (C_car::LoadMaterials);
 // their meanings aren't known, C_car::LoadMaterials clamps them.

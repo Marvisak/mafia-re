@@ -55,8 +55,8 @@
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
 0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
-0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
+0x00404810  100.00%   std::_Construct(struct C_sledovacka::S_ELEMENT *, struct C_sledovacka::S_ELEMENT const &)
+0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -121,15 +121,15 @@
 0x00408c90  100.00%   C_str::C_rep::operator delete
 0x00408ca0  100.00%   C_str::ToUpper
 0x00408cc0  100.00%   C_fstr::C_fstr
-0x00408d90  64.03%    C_I3D_cache<I3D_sound>::Open
+0x00408d90  80.51%    C_I3D_cache<I3D_sound>::Open
 0x004091d0  100.00%   C_actor::Release
 0x004091f0  100.00%   C_actor::GetActorSpeed
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -139,6 +139,7 @@
 0x00409a40  stub      C_airplane::DuplicateFrom
 0x00409b00  stub      C_airplane::GameInit
 0x0040a800  stub      C_airplane::GameDone
+0x0040b9e0  100.00%   S_vector::operator*=(float const &)
 0x0040bc10  stub      C_airplane::AI
 0x0040bec0  stub      C_airplane::Update
 0x0040c610  stub      C_airplane::Start
@@ -282,6 +283,7 @@
 0x00422ad0  stub      C_car::DeactivateCar
 0x00422be0  stub      C_car::Reset
 0x00422ee0  stub      C_car::ResetCar
+0x004230e0  stub      C_car::ChcesMeSejmout
 0x00423540  stub      C_car::GetMaterialID
 0x00423600  stub      C_car::Hit
 0x004248e0  stub      C_car::IsPossibleColl
@@ -332,7 +334,7 @@
 0x0042f160  stub      C_car_ex::DCAddPerson
 0x0042f320  stub      C_car_ex::DCDelPerson
 0x0042f390  stub      C_car_ex::Update
-0x00430470  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::insert
+0x00430470  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::insert
 0x004307a0  missing   $CRT_CPP_Initializer(26)
 0x004307d0  100.00%   C_cartridge::C_cartridge
 0x00430800  100.00%   C_cartridge::`scalar deleting destructor'
@@ -550,63 +552,102 @@
 0x0044c640  100.00%   C_don_ocas::C_don_ocas
 0x0044c660  100.00%   C_don_ocas::`scalar deleting destructor'
 0x0044c680  100.00%   C_don_ocas::~C_don_ocas
-0x0044c690  stub      C_don_ocas::GameInit
-0x0044c6a0  stub      C_don_ocas::IsPossibleColl
-0x0044ca50  stub      C_don_ocas::Collision
-0x0044ccf0  stub      C_don_ocas::Hit
-0x0044d1c0  stub      C_don_ocas::GetBoundPoints2D
-0x0044d410  stub      C_traffic_generator::C_traffic_generator
+0x0044c690  100.00%   C_don_ocas::GameInit
+0x0044c6a0  53.08%    C_don_ocas::IsPossibleColl
+0x0044ca50  100.00%   C_don_ocas::Collision
+0x0044ccf0  92.81%    C_don_ocas::Hit
+0x0044d1c0  100.00%   C_don_ocas::GetBoundPoints2D
+0x0044d410  86.36%    C_traffic_generator::C_traffic_generator
 0x0044d480  100.00%   C_traffic_generator::`scalar deleting destructor'
-0x0044d4a0  stub      C_traffic_generator::~C_traffic_generator
-0x0044d510  stub      C_traffic_generator::DuplicateFrom
-0x0044d670  stub      C_traffic_generator::SaveData
-0x0044d820  stub      C_traffic_generator::LoadData
-0x0044de00  stub      C_traffic_generator::SaveGameGetSize
-0x0044de20  stub      C_traffic_generator::SaveGameSave
-0x0044e120  stub      C_traffic_generator::SaveGameLoad
-0x0044e500  stub      C_traffic_generator::GameInit
-0x0044e7f0  stub      C_traffic_generator::GameDone
-0x0044e870  stub      C_traffic_generator::PlayerPromluvilNaTehoChuja
-0x0044e890  stub      C_traffic_generator::PlayerHoMaVytaseneho
+0x0044d4a0  100.00%   C_traffic_generator::~C_traffic_generator
+0x0044d510  100.00%   C_traffic_generator::DuplicateFrom
+0x0044d670  100.00%   C_traffic_generator::SaveData
+0x0044d820  92.41%    C_traffic_generator::LoadData
+0x0044de00  100.00%   C_traffic_generator::SaveGameGetSize
+0x0044de20  100.00%   C_traffic_generator::SaveGameSave
+0x0044e120  88.77%    C_traffic_generator::SaveGameLoad
+0x0044e500  99.50%    C_traffic_generator::GameInit
+0x0044e7f0  97.50%    C_traffic_generator::GameDone
+0x0044e870  100.00%   C_traffic_generator::PlayerPromluvilNaTehoChuja
+0x0044e890  100.00%   C_traffic_generator::PlayerHoMaVytaseneho
 0x0044e960  100.00%   C_traffic_generator::SetVisible
-0x0044edb0  stub      C_traffic_generator::AI
+0x0044e9c0  75.14%    C_traffic_generator::IsPossibleCollElem
+0x0044ebe0  100.00%   C_traffic_generator::AddElement
+0x0044ed00  100.00%   C_traffic_generator::DelElement
+0x0044edb0  100.00%   C_traffic_generator::AI
 0x0044ef70  100.00%   C_traffic_generator::TickElements
 0x0044f090  100.00%   C_traffic_generator::IsCarHasOcas
 0x0044f0e0  75.58%    C_traffic_generator::TryGoToAssHole
 0x0044f740  100.00%   C_traffic_generator::PlayerInTaxi
-0x0044f7d0  stub      C_traffic_generator::GeneratePassengerForTaxi
+0x0044f7d0  100.00%   C_traffic_generator::GeneratePassengerForTaxi
 0x0044fcf0  100.00%   C_traffic_generator::EnableTaxiDriver
 0x0044fd10  100.00%   C_traffic_generator::ZrusVsechnyMavajici
 0x0044fd50  100.00%   C_traffic_generator::ClearElements
-0x00450450  stub      C_traffic_generator::Explosion
-0x00450780  stub      C_traffic_generator::Fire
+0x0044fde0  100.00%   C_traffic_generator::FizlosNamakatDoAkce
+0x00450450  98.31%    C_traffic_generator::Explosion
+0x00450780  100.00%   C_traffic_generator::Fire
+0x00450830  100.00%   C_traffic_generator::GetElemFromFrame
 0x00450860  100.00%   C_traffic_generator::FreeDynCollElements
-0x004509d0  stub      C_traffic_generator::NewPanic
-0x00450f00  stub      C_traffic_generator::AddFreePerson
-0x004512a0  stub      C_traffic_generator::VyfunOdTeMasiny
-0x00451860  stub      C_traffic_element::SetNewNode
-0x00452ca0  stub      C_traffic_element::EndMavaniNaTaxi
-0x00452cd0  stub      C_traffic_element::Tick
-0x00456fa0  stub      C_traffic_element::ActivateFree
-0x004587c0  stub      C_traffic_element::Deactivate
+0x004508a0  100.00%   C_traffic_generator::GetNearElementDist2
+0x00450920  100.00%   C_traffic_generator::IsNearElementBefore
+0x004509d0  100.00%   C_traffic_generator::NewPanic(struct S_vector &)
+0x00450a30  100.00%   C_traffic_generator::NewPanic(class I3D_frame *)
+0x00450a60  88.24%    C_traffic_generator::RailwayInStation
+0x00450f00  100.00%   C_traffic_generator::AddFreePerson
+0x00450f80  65.38%    C_traffic_generator::AddFreePersonFromCar
+0x004510b0  100.00%   C_traffic_generator::ElementNewScream
+0x004512a0  100.00%   C_traffic_generator::VyfunOdTeMasiny
+0x004513a0  100.00%   C_traffic_element::C_traffic_element
+0x00451400  74.96%    C_traffic_element::ObejdiTuPicovinu
+0x00451860  100.00%   C_traffic_element::SetNewNode
+0x00451ff0  91.88%    C_traffic_element::MavaNaTaxi
+0x00452ca0  100.00%   C_traffic_element::EndMavaniNaTaxi
+0x00452cd0  59.14%    C_traffic_element::Tick
+0x004564f0  94.53%    C_traffic_element::UpdateModel
+0x00456630  94.88%    C_traffic_element::SetModel
+0x00456a40  95.57%    C_traffic_element::CreateModel
+0x00456ea0  100.00%   C_traffic_element::SetAlpha
+0x00456ec0  100.00%   C_traffic_element::DestroyModel
+0x00456fa0  100.00%*  C_traffic_element::ActivateFree
+0x004577f0  71.73%    C_traffic_element::Activate
+0x004587c0  100.00%   C_traffic_element::Deactivate
+0x004588d0  83.23%    C_traffic_element::Hit
+0x00459450  100.00%   C_traffic_element::SetAnim
+0x00459650  100.00%   C_traffic_element::SetPanic
+0x004597b0  100.00%   C_traffic_element::SetMegaPanic
+0x00459850  100.00%   C_traffic_element::PlayerNaMneMluvi
+0x004598d0  100.00%   C_traffic_element::Karle_hoj
+0x00459a50  100.00%   C_traffic_element::DropUmbrella
+0x00459b90  100.00%   C_traffic_element::CreateMafianos
 0x00459e60  missing   $CRT_CPP_Initializer(57)
-0x00459e90  stub      C_PhThing::C_PhThing
+0x00459e90  100.00%   C_PhThing::C_PhThing
 0x00459f70  100.00%   C_PhThing::`scalar deleting destructor'
-0x00459f90  stub      C_PhThing::~C_PhThing
-0x00459fd0  stub      C_PhThing::Init
-0x0045a120  stub      C_PhThing::GameInit
-0x0045a630  stub      C_PhThing::GameDone
-0x0045a690  stub      C_PhThing::AI
-0x0045a7a0  stub      C_PhThing::Update
-0x0045adc0  stub      C_PhThing::ChangeState
-0x0045ee90  stub      C_PhThing::InitBox
-0x0045f520  stub      C_PhThing::Collision
-0x0045f760  stub      C_PhThing::Hit
-0x00460000  stub      C_PhThing::ExternalImpuls
-0x00460140  stub      C_PhThing::InvalidateActor
-0x004603b0  stub      C_PhThing::SaveGameGetSize
-0x004603c0  stub      C_PhThing::SaveGameSave
-0x004605a0  stub      C_PhThing::SaveGameLoad
+0x00459f90  100.00%   C_PhThing::~C_PhThing
+0x00459fd0  100.00%   C_PhThing::Init
+0x0045a120  94.26%    C_PhThing::GameInit
+0x0045a560  100.00%   C_PhThing::FindActors
+0x0045a630  100.00%   C_PhThing::GameDone
+0x0045a690  100.00%   C_PhThing::AI
+0x0045a7a0  99.09%    C_PhThing::Update
+0x0045adc0  100.00%   C_PhThing::ChangeState
+0x0045ade0  39.15%    C_PhThing::MoveWheel
+0x0045d1f0  100.00%   S_vector::operator-(void)
+0x0045d210  74.05%    C_PhThing::MoveBox
+0x0045ddb0  96.11%    C_PhThing::MoveCount
+0x0045e510  71.95%    C_PhThing::CollisionCount
+0x0045ed00  100.00%   S_vector::operator*=(struct S_vector const &)
+0x0045ed30  100.00%   C_PhThing::InitWheel
+0x0045ee90  96.08%    C_PhThing::InitBox
+0x0045f520  98.08%    C_PhThing::Collision
+0x0045f760  58.47%    C_PhThing::Hit
+0x0045fe90  100.00%   C_PhThing::GetRVelMassJ
+0x00460000  100.00%   C_PhThing::ExternalImpuls
+0x00460140  100.00%   C_PhThing::InvalidateActor
+0x004601f0  100.00%   C_PhThing::CollisionFilter
+0x00460220  100.00%   C_PhThing::UpdateImportantVariables
+0x004603b0  100.00%   C_PhThing::SaveGameGetSize
+0x004603c0  100.00%   C_PhThing::SaveGameSave
+0x004605a0  100.00%   C_PhThing::SaveGameLoad
 0x00460980  100.00%   I3D_frame::SetPos(struct S_vector const &)
 0x004609c0  100.00%   I3D_frame::SetDir1
 0x004609f0  missing   $CRT_CPP_Initializer(58)
@@ -655,7 +696,7 @@
 0x0046cf70  100.00%   C_program::SaveGameSave
 0x0046d100  100.00%   C_program::SaveGameLoad
 0x0046d380  100.00%   C_program::FindActorLater
-0x0046d3b0  73.91%    C_program::Process
+0x0046d3b0  73.92%    C_program::Process
 0x0047a070  100.00%   G_IndicatorsClass::SetFlags
 0x0047a080  100.00%   G_IndicatorsClass::AddFlags
 0x0047a0a0  100.00%   G_IndicatorsClass::RemoveFlags
@@ -879,6 +920,7 @@
 0x0048d530  stub      C_railway::Collision
 0x0048d890  stub      C_railway::IsPossibleColl
 0x00490b40  stub      C_railway::Hit
+0x004928e0  stub      C_railway::AddPerson
 0x00495100  stub      C_railway::AddOuterEntries
 0x00495160  stub      C_railway::AddInnerEntries
 0x004951c0  stub      C_railway::RemoveOuterEntries
@@ -897,7 +939,7 @@
 0x00498a80  stub      C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_sound_group *, struct S_sound_group *, struct S_sound_group *)
-0x00499050  100.00%   std::_Construct(struct tDynamicCollObject **, struct tDynamicCollObject *const &)
+0x00499050  100.00%   std::_Construct(class I3D_frame **, class I3D_frame *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -948,6 +990,7 @@
 0x0049f540  stub      C_shvestky::GlobalDelNasrany
 0x0049f850  stub      C_shvestky::DobreMiPokuril_MuzeJitDom
 0x0049f980  stub      C_shvestky::VasekSelChlastatNaOslavu
+0x004a0040  stub      C_shvestky::DalJsemPochuzkariDoDrzky
 0x004a0230  stub      C_shvestky::RenamePoliceCar
 0x004a02a0  100.00%   C_roads::GetPos
 0x004a02f0  missing   $CRT_CPP_Initializer(81)
@@ -1037,10 +1080,12 @@
 0x004b8010  stub      C_traffic_car::GameDone
 0x004b8480  stub      C_traffic_car::Corovacka
 0x004b8540  100.00%   C_traffic_car::GetParkingCars
+0x004b8550  stub      C_traffic_car::ChodDoRici
 0x004b9560  stub      C_traffic_car::ChlupatejVystrik
 0x004ba300  stub      C_traffic_car::SebraliMiKaaaruSvine
 0x004ba9c0  stub      C_traffic_car::IsPossibleColl
 0x004baad0  stub      C_traffic_car::Hit
+0x004bad30  stub      C_traffic_car::ChcesMeSejmout
 0x004bad80  stub      C_traffic_car::TakATedSiVasKupim_Vsecky
 0x004bbe90  stub      C_traffic_car::VypraskeeeKaaaru
 0x004bc150  100.00%   C_traffic_car::SaveGameGetSize
@@ -1335,6 +1380,7 @@
 0x00538c50  missing   $CRT_CPP_Initializer(139)
 0x00538df0  stub      ai_police_action::Tick
 0x0053ba50  100.00%   ai_police_nastenka::ZacatekSmeny
+0x0053bc50  stub      ai_police_nastenka::MamProVasAkciHosi
 0x0053c550  stub      ai_police_nastenka::AkceDokoncenaPlukovniku
 0x0053c890  100.00%   ai_police_nastenka::Tick
 0x0053c900  100.00%   ai_police_nastenka::PlukovnikuMasVChladkuPlajeraFrafera
@@ -1347,6 +1393,7 @@
 0x0053d3d0  stub      ai_police_nastenka::PanoveJdeteNekdoPoZmrdovi
 0x0053d480  100.00%   ai_police_nastenka::PanoveHrajeteSiNaPoldy
 0x0053d4a0  stub      ai_police_nastenka::SemTrefenaLocklaKurva
+0x0053d740  100.00%   ai_police_nastenka::TuMasZakaznika
 0x0053d750  100.00%   ai_police_nastenka::KonecSmeny
 0x0053d7b0  stub      ai_police_nastenka::ZastavMotorizovaneJednotky
 0x0053d8c0  100.00%   ai_animitem_manager::Clear
@@ -1427,14 +1474,14 @@
 0x00546d30  100.00%   std::vector<C_program::S_instruction,std::allocator<C_program::S_instruction> >::push_back
 0x00546ef0  missing   Unknown FUNCTION
 0x005470a0  100.00%   std::vector<S_vector,std::allocator<S_vector> >::size
-0x005470c0  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::size
-0x005470f0  100.00%   std::vector<S_road_link,std::allocator<S_road_link> >::clear
+0x005470c0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::size
+0x005470f0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::clear
 0x00547120  100.00%   C_mission::GetTShift
 0x00547130  100.00%   SetFrameActor
 0x00547170  100.00%   std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::operator[]
 0x00547220  100.00%   C_actor::SetFromMission
 0x00547230  100.00%   std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::clear
-0x005472a0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::erase
+0x005472a0  100.00%   std::vector<S_road_crossing,std::allocator<S_road_crossing> >::erase
 0x005472f0  100.00%   C_game::C_game
 0x005479c0  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >
 0x005479e0  100.00%   C_using_object::~C_using_object
@@ -1459,7 +1506,7 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
+0x005490b0  100.00%   std::_Construct(struct S_con_register *, struct S_con_register const &)
 0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
@@ -1474,21 +1521,38 @@
 0x00549f30  missing   $CRT_CPP_Initializer(149)
 0x00549f60  missing   $CRT_CPP_Initializer(150)
 0x00549f90  100.00%   C_web_node::~C_web_node
+0x00549fc0  60.99%    C_web_node::Resize
+0x0054a0a0  100.00%   C_web_node::AddConn
+0x0054a160  100.00%   C_web_node::DeleteConn
+0x0054a1a0  100.00%   C_web_node::FindConnIdx
 0x0054a1e0  100.00%   C_web_path::~C_web_path
-0x0054a3b0  stub      C_web_path::AddNode
-0x0054a410  stub      C_web_path::DeleteNode
-0x0054a550  stub      C_web_path::CreateConnect
-0x0054a790  stub      C_web_path::ControlNodeConn
-0x0054a8c0  stub      C_web_path::LoadNodes
-0x0054ab40  stub      C_web_path::SaveNodes
-0x0054ade0  stub      C_web_path::MergeNodes
-0x0054af10  stub      C_web_path::ReleaseSelect
-0x0054c5a0  stub      C_web_path::FindSelectedLine
-0x0054c620  stub      C_web_path::IncludeNode
-0x0054c8d0  stub      C_web_path::FlipOneWay
-0x0054c9a0  stub      C_web_path::GetNearNode
-0x0054cba0  stub      C_web_path::SortNodesByX
+0x0054a220  87.60%    C_web_path::Resize
+0x0054a3b0  100.00%   C_web_path::AddNode
+0x0054a410  100.00%   C_web_path::DeleteNode
+0x0054a550  100.00%   C_web_path::CreateConnect
+0x0054a6d0  100.00%   C_web_path::LegalConnect
+0x0054a790  100.00%   C_web_path::ControlNodeConn
+0x0054a8c0  100.00%   C_web_path::LoadNodes
+0x0054ab40  100.00%   C_web_path::MergeNodes
+0x0054ade0  100.00%*  C_web_path::RecompileDistance
+0x0054af10  100.00%   C_web_path::ReleaseSelect
+0x0054af60  100.00%   C_web_path::FindNodeID
+0x0054afa0  93.59%    C_web_path::FindPath_FastByRoads
+0x0054b540  77.98%    C_web_path::FindPath
+0x0054bb00  71.59%    C_web_path::FindPathCompFunc(unsigned int, unsigned int, class std::vector<unsigned int, class std::allocator<unsigned int>> *, float (__fastcall *)(unsigned short, unsigned short, unsigned char), unsigned short)
+0x0054c050  100.00%   C_web_path::FindPathCompFunc(unsigned int, int (__fastcall *)(unsigned short), class std::vector<unsigned int, class std::allocator<unsigned int>> *, float (__fastcall *)(unsigned short, unsigned short, unsigned char), unsigned short)
+0x0054c5a0  100.00%   C_web_path::FindSelectedLine
+0x0054c620  92.81%    C_web_path::IncludeNode
+0x0054c8d0  100.00%   C_web_path::FlipOneWay
+0x0054c9a0  100.00%   C_web_path::GetNearNode
+0x0054cba0  100.00%   C_web_path::SortNodesByX
+0x0054ccf0  100.00%   C_web_path::IsSorted
 0x0054cd20  100.00%   C_web_path::DeRiciConns
+0x0054cd70  100.00%   _STDVECTCOPY
+0x0054cf30  85.45%    nodeproc
+0x0054d240  100.00%   C_web_path::FindPathCompFuncJIPO
+0x0054d2b0  100.00%   C_web_connection::C_web_connection
+0x0054d2c0  100.00%   C_web_node::C_web_node
 0x0054d2f0  missing   $CRT_CPP_Initializer(151)
 0x00551830  stub      C_racing::C_racing
 0x00551a70  stub      C_racing::~C_racing
@@ -1501,13 +1565,27 @@
 0x00559ca0  missing   $CRT_CPP_Initializer(153)
 0x00559cd0  100.00%   C_roads::C_roads
 0x00559d00  100.00%   C_roads::~C_roads
-0x00559d40  stub      C_roads::SaveData
-0x00559e60  stub      C_roads::LoadData
-0x0055a210  stub      C_roads::MergeData
-0x0055a620  stub      C_roads::RecompileDistances
-0x0055b370  stub      C_roads::GetNearNode
-0x0055c4e0  stub      C_roads::FindPath
-0x0055c890  stub      C_roads::SortNodesByX
+0x00559d40  100.00%   C_roads::SaveData
+0x00559e60  98.46%    C_roads::LoadData
+0x0055a210  98.90%    C_roads::MergeData
+0x0055a620  56.16%    C_roads::RecompileDistances
+0x0055b370  100.00%   C_roads::GetNearNode
+0x0055b570  100.00%   C_roads::FindCrossing
+0x0055b5d0  100.00%   C_roads::NPC_FindCrossIdxToCross
+0x0055b710  100.00%   C_roads::NPC_FindPathFromNodeToCross
+0x0055bad0  100.00%   C_roads::NPC_FindPathToNextCross1
+0x0055bc10  100.00%   C_roads::FillPathFromNodeToCross
+0x0055bcd0  100.00%   C_roads::FindCrossingFromNode
+0x0055be10  100.00%   C_roads::FindNearCrossingFromNode
+0x0055bf60  100.00%   C_roads::FindPathBeweenCross
+0x0055c430  100.00%   `C_roads::FindPathBeweenCross'::`2'::S_pathfind::S_pathfind
+0x0055c440  100.00%   C_roads::FillPathFromCrossToCross
+0x0055c4e0  100.00%   C_roads::FindPath
+0x0055c890  85.96%    C_roads::SortNodesByX
+0x0055caa0  100.00%   C_roads::IsSorted
+0x0055cb00  100.00%   C_roads::DestroyAllOffPaths
+0x0055cb90  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::erase(unsigned short *, unsigned short *)
+0x0055cbc0  100.00%   std::vector<S_road_crossing,std::allocator<S_road_crossing> >::insert
 0x0055cf10  missing   $CRT_CPP_Initializer(154)
 0x0055cf40  missing   $CRT_CPP_Initializer(155)
 0x0055cf50  missing   $CRT_CPP_Initializer(156)
@@ -1578,7 +1656,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(struct S_particle_subpart **, struct S_particle_subpart **, struct S_particle_subpart **)
+0x00564750  100.00%   std::copy(class C_Particle **, class C_Particle **, class C_Particle **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -1611,17 +1689,17 @@
 0x005673f0  stub      C_actor_shot::GameDone
 0x00567430  stub      C_actor_shot::SetWeapon
 0x005674c0  missing   $CRT_CPP_Initializer(174)
-0x005674f0  stub      C_box_new::C_box_new
+0x005674f0  100.00%   C_box_new::C_box_new
 0x00567510  100.00%   C_box_new::`scalar deleting destructor'
 0x00567530  100.00%   C_box_new::~C_box_new
-0x00567540  stub      C_box_new::Init
-0x00567650  stub      C_box_new::GameInit
+0x00567540  100.00%   C_box_new::Init
+0x00567650  100.00%   C_box_new::GameInit
 0x00567720  100.00%   C_box_new::GameDone
-0x00567730  stub      C_box_new::LoadData
-0x00567ab0  stub      C_box_new::SaveData
-0x00567c20  stub      C_box_new::DuplicateFrom
-0x00567c80  stub      C_box_new::Collision
-0x00567ca0  stub      C_box_new::Hit
+0x00567730  100.00%   C_box_new::LoadData
+0x00567ab0  100.00%   C_box_new::SaveData
+0x00567c20  100.00%   C_box_new::DuplicateFrom
+0x00567c80  100.00%   C_box_new::Collision
+0x00567ca0  100.00%   C_box_new::Hit
 0x00567cc0  missing   $CRT_CPP_Initializer(175)
 0x00567cf0  missing   $CRT_CPP_Initializer(176)
 0x00567d00  missing   $CRT_CPP_Initializer(177)
@@ -1749,7 +1827,7 @@
 0x00584010  82.95%    C_human::Can_SpecialStroke
 0x00584480  100.00%   C_human::Do_Castrate
 0x00584550  100.00%   C_human::Do_HardHead
-0x00584620  62.89%    C_human::Shooting
+0x00584620  62.96%    C_human::Shooting
 0x00585b20  missing   Unknown FUNCTION
 0x00585b40  100.00%   C_human::Do_Reload
 0x00585c60  48.68%    C_human::Do_Holster
@@ -1981,7 +2059,7 @@
 0x0059d500  100.00%   C_cutscene_recording::RecAddActor
 0x0059d740  100.00%   C_cutscene_recording::AddEntry
 0x0059da60  100.00%   C_cutscene_recording::AddActor
-0x0059dcd0  100.00%*  C_cutscene_recording::RecLoad
+0x0059dcd0  100.00%   C_cutscene_recording::RecLoad
 0x0059df40  100.00%   C_cutscene_recording::DetachActor
 0x0059dfb0  100.00%   C_cutscene_recording::AttachActor
 0x0059e020  100.00%   C_recorder::GetAnimEndTime
@@ -2164,7 +2242,7 @@
 0x005b7560  100.00%   C_game::AddHumanTalk
 0x005b7730  100.00%   C_game::DelHumanTalk
 0x005b77c0  100.00%   C_game::DeathHumanTalk
-0x005b7860  97.59%    C_game::CreateSignalMarkIDX
+0x005b7860  97.93%    C_game::CreateSignalMarkIDX
 0x005b7be0  52.68%    C_game::DestroyControlSignal
 0x005b7ed0  100.00%   C_game::EntityBlock
 0x005b7f70  100.00%   C_game::AddInvisibleActor
@@ -2212,7 +2290,7 @@
 0x005bbe30  100.00%   std::vector<S_shoot,std::allocator<S_shoot> >::insert
 0x005bc050  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 0x005bc0a0  100.00%   std::vector<C_game::S_i_show,std::allocator<C_game::S_i_show> >::erase
-0x005bc0f0  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::insert
+0x005bc0f0  100.00%   std::vector<C_PhThing::S_SURR_ACT,std::allocator<C_PhThing::S_SURR_ACT> >::insert
 0x005bc3f0  100.00%   std::vector<C_game::S_RoadBlock,std::allocator<C_game::S_RoadBlock> >::insert
 0x005bc700  100.00%   std::vector<C_game::S_frame_placement,std::allocator<C_game::S_frame_placement> >::_Ucopy
 0x005bc740  100.00%   std::vector<C_game::S_box_placement_temp,std::allocator<C_game::S_box_placement_temp> >::_Ucopy
@@ -2222,10 +2300,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
+0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
-0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct C_game::S_driver_man *, struct C_game::S_driver_man const &)
+0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
+0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)

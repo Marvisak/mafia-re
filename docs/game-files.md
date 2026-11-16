@@ -59,8 +59,8 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 24 | `448570–448efc` | 0x98c | `C_ParticleEmitter.cpp`? | whole | the effects' emitters: the destructor `448570` first |
 | 25 | `448f00–44b4cc` | 0x25cc | `C_effects.cpp` (ours) | whole | the effects of `tables\effects.tbl` (PC only), where PS2's C_ParticleManager.cpp sorts: the initializers of the free lists first |
 | 26 | `44b4d0–44c51c` | 0x104c | `C_ParticleType.cpp` (ours) | whole | the emitters' parts (PC only), from `44c0d0`. `44b4d0–44c0cf` is file 25's: the copies of the precompiled headers' inline functions that `/YX` puts after a file's marker |
-| 27 | `44c520–459e8c` | 0xd96c | `C_person_traffic.cpp` | part | the pedestrians' `C_traffic_generator`: constructor `44d410` (vtable `623fa0`) |
-| 28 | `459e90–460a1c` | 0x6b8c | `C_PhThings.cpp` | stubs | `C_PhThing`, the base of the public physics and of `C_box_new`: constructor `459e90` (vtable `624088`) first |
+| 27 | `44c520–459e8c` | 0xd96c | `C_person_traffic.cpp` | whole | the pedestrians, in PS2's order: the vectors' initializers, `C_don_ocas` (constructor `44c640`, vtable `623ef8`), `C_traffic_generator` (constructor `44d410`, vtable `623fa0`), `C_traffic_element` (constructor `4513a0`); `S_vector::operator-=`'s copy after `Tick` |
+| 28 | `459e90–460a1c` | 0x6b8c | `C_PhThings.cpp` | whole | `C_PhThing`, the boxes' and wheels' physics, the base of the public physics, `C_box_new`, `C_crash_obj` and `C_drop_in_weapon`: constructor `459e90` (vtable `624088`) first. `45d1f0` and `45ed00` are `I3d_math.h`'s `S_vector` inlines after their first callers, `460980–4609ef` `I3D.h`'s `SetPos` and `SetDir1`, deferred by `/YX` |
 | 29 | `460a20–460a4c` | 0x2c |  |  |  |
 | 30 | `460a50–47c31c` | 0x1b8cc | `C_program.cpp`? | whole | the scripts: `change_progs`' initializer first, the constructor `460ad0` (vtable `624858`), the interpreter `Process` (`46d3b0`). `47a070–47c31c` are `Process`'s out-of-line copies of the inline functions it calls, in header order |
 | 31 | `47c320–47c53c` | 0x21c | `C_public_physics.cpp` | whole | the initializer of its temporary things first, the constructor `47c3a0` (vtable `6248f8`) |
@@ -99,10 +99,10 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 64 | `549f00–549f2c` | 0x2c |  |  |  |
 | 65 | `549f30–549f5c` | 0x2c |  |  |  |
 | 66 | `549f60–549f8c` | 0x2c |  |  |  |
-| 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | part | PS2's file, after Mission.cpp as here: `C_web_node`'s and `C_web_path`'s destructors first |
+| 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | whole | PS2's file, after Mission.cpp as here: the walking web (`C_web_node`, `C_web_path`, vtable `6251f8`) and its pathfinding (`FindPath`, `FindPathCompFunc`, `nodeproc`); the node's destructor first, the inline constructors' copies last |
 | 68 | `54d320–55997c` | 0xc65c | `racing.cpp`? | part | `C_racing`'s constructor `551830` and destructor `551a70` |
 | 69 | `559980–559ccc` | 0x34c |  |  |  |
-| 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | part | `C_roads` (vtable `625370`): the constructor first |
+| 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | whole | PS2's file, in PS2's order: `C_roads` (vtable `625370`), road.bin's crossings and nodes and the paths the traffic and the chases drive along them; the constructor first, `MergeData` (PC only) after `LoadData`, `FindPathBeweenCross`'s local `S_pathfind` constructor after it |
 | 71 | `55cf40–55cf9c` | 0x5c |  |  |  |
 | 72 | `55cfa0–56040c` | 0x346c | `tools.cpp` | whole | PS2's file: the direction tables, the logo videos, `C_fire`, `C_using_object`, `C_sound_table` and `soundArena` |
 | 73 | `560410–5605bc` | 0x1ac | `tshift.cpp` | whole | PS2's file, after tools.cpp as on PS2 |
@@ -111,7 +111,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 76 | `566160–5661ec` | 0x8c | `WinMain.cpp` (ours) | whole | only `WinMain` (`566160`) |
 | 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | whole | the start-up's Windows helpers: the CD check (`566440`), the drive search, then the caches' `AddDir` |
 | 78 | `566f40–5674ec` | 0x5ac | `C_actor_shot.cpp` | part | constructor `566f40` (vtable `625458`) first |
-| 79 | `5674f0–567cec` | 0x7fc | `C_box_new.cpp` | part | constructor `5674f0` (vtable `6254f0`, a `C_PhThing`) first |
+| 79 | `5674f0–567cec` | 0x7fc | `C_box_new.cpp` | whole | the scene's physical boxes and wheels: constructor `5674f0` (vtable `6254f0`, a `C_PhThing`) first |
 | 80 | `567cf0–56ad9c` | 0x30ac | `C_bridge.cpp` | stubs | constructor `567d10` (vtable `625588`) |
 | 81 | `56ada0–56adcc` | 0x2c |  |  |  |
 | 82 | `56add0–56b17c` | 0x3ac | `c_clock.cpp` | whole | `C_clock`: constructor `56add0` (vtable `625648`) first |

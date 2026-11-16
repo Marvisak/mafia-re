@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1C_ShotSkeleton@@QAE@XZ
+// ??1C_compass@@QAE@XZ
 
 #include <settings.h>
 
@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAUtDynamicCollObject@@ABQAU2@@Z
+// ?_Construct@std@@YIXPAPAVI3D_frame@@ABQAV2@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@0@Z
+// ?_Destroy@?$vector@US_frame_actor_buffer@C_mission@@V?$allocator@US_frame_actor_buffer@C_mission@@@std@@@std@@IAEXPAUS_frame_actor_buffer@C_mission@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAUS_using_object@C_using_object@@V?$allocator@PAUS_using_object@C_using_object@@@std@@@std@@IAEPAPAUS_using_object@C_using_object@@PBQAU34@0PAPAU34@@Z
+// ?_Ucopy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEPAPAVC_actor@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@IAEXPAPAUG_RaceCamera@@IABQAU3@@Z
+// ?_Ufill@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@IABQAV3@@Z
