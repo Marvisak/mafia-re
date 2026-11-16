@@ -297,6 +297,14 @@ if (MSVC_VERSION EQUAL 1200)
     target_link_options(game PRIVATE
         /INCLUDE:?NPC_FindPathFromNodeToCross@C_roads@@QAE_NGUS_vector@@PAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z
         /INCLUDE:?NPC_FindPathToNextCross1@C_roads@@QAE_NGHPAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z)
+    # C_person_traffic.cpp's functions whose callers aren't written yet: C_traffic_car's AddFreePersonFromCar, the
+    # police's FizlosNamakatDoAkce (C_shvestky::VasekSelChlastatNaOslavu), the rail vehicles' NewPanic of a frame and
+    # RailwayInStation
+    target_link_options(game PRIVATE
+        /INCLUDE:?AddFreePersonFromCar@C_traffic_generator@@SIXPAVI3D_model@@PAVC_actor@@AAUS_vector@@2@Z
+        /INCLUDE:?FizlosNamakatDoAkce@C_traffic_generator@@SIXPAVC_human@@IAAV?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@_NM2@Z
+        /INCLUDE:?NewPanic@C_traffic_generator@@SIXPAVI3D_frame@@@Z
+        /INCLUDE:?RailwayInStation@C_traffic_generator@@SIXPAVC_railway@@AAV?$vector@Urentry@@V?$allocator@Urentry@@@std@@@std@@@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

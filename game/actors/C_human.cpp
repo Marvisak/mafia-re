@@ -3541,7 +3541,7 @@ void C_human::GameDone()
     {
         if (!act_mission->GetGame()->game_done && traffic->element)
         {
-            traffic->element->unknown_1a5 = false;
+            traffic->element->made_human = false;
             traffic->element->frame->SetPos(old_pos);
             traffic->element->frame->SetDir(old_dir, 0.0f);
             traffic->element->frame->Update();

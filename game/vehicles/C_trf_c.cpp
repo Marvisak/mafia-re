@@ -32,6 +32,12 @@ std::vector<C_traffic_car::S_ELEMENT *> &C_traffic_car::GetParkingCars()
     return v_elems_parking;
 }
 
+// STUB: GAME 0x4b8550
+void C_traffic_car::ChodDoRici(I3D_model *model, C_car *car)
+{
+    StubLog("C_traffic_car::ChodDoRici");
+}
+
 // STUB: GAME 0x4aaa00
 void C_traffic_car::Scipni(bool hide)
 {
@@ -42,6 +48,13 @@ void C_traffic_car::Scipni(bool hide)
 void C_traffic_car::ChlupatejVystrik()
 {
     StubLog("C_traffic_car::ChlupatejVystrik");
+}
+
+// STUB: GAME 0x4bad30
+C_car *C_traffic_car::ChcesMeSejmout(const S_vector &pos)
+{
+    StubLog("C_traffic_car::ChcesMeSejmout");
+    return NULL;
 }
 
 // STUB: GAME 0x4bad80

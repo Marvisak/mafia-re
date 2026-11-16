@@ -68,6 +68,9 @@
 // LIBRARY: GAME 0x60fca8 SYMBOL
 // _dbgPrintf
 
+// LIBRARY: GAME 0x60fcae
+// ?IntersectionLine@S_plane@@QBG_NABU1@AAUS_vector@@1@Z
+
 // LIBRARY: GAME 0x60fcb4
 // ?Inverse@S_quat@@QBGXAAUS_vector@@AAM@Z
 
@@ -282,7 +285,7 @@
 // ___from_strstr_to_strchr
 
 // LIBRARY: GAME 0x610acc SYMBOL
-// __strupr
+// _strupr
 
 // LIBRARY: GAME 0x610b6a SYMBOL
 // _atol

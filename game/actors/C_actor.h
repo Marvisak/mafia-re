@@ -464,13 +464,13 @@ public:
 
 // GetProgram's folded group (0x409220, which c_clock's vtable shares), named after the copy our linker keeps (foldfix)
 // SYNTHETIC: GAME 0x409220
-// ?SaveGameGetSize@C_seagull@@UAEHXZ
+// ?SaveGameGetSize@C_clock@@UAEHXZ
 
 // The other base functions the linker folded with others of the same code, by name after the copies our linker keeps
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?NetDirect@C_seagull@@UAEXI@Z
+// ?AI@C_actor_shot@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
@@ -490,13 +490,13 @@ public:
 // ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveData@C_seagull@@UAE_NPAVC_chunk@@@Z
+// ?SaveGameSave@C_actor_shot@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?SaveGameLoad@C_seagull@@UAE_NPAPAX@Z
+// ?PlaceAtTime@C_actor_shot@@UAE_NH@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?vfunc_53@C_recorder@@UAEHXZ
+// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)
@@ -761,6 +761,16 @@ extern S_anim_info _anim_info_[];
 #define ANIM_USKOK_FRONT_LEFT 0x146     // "Uskok Front Left.I3D"
 #define ANIM_USKOK_BACK_RIGHT 0x148     // "Uskok Back Right.I3D"
 #define ANIM_USKOK_FRONT_RIGHT 0x149    // "Uskok Front Right.I3D"
+// The pedestrians' copies of the "x panika" animations (C_traffic_element's ducks: down, stay, up; the names are ours)
+#define ANIM_TRAFFIC_PANIKA_DREP_DOLU 0x14a     // "x panika drep dolu.i3d"
+#define ANIM_TRAFFIC_PANIKA_DREP_STATIV 0x14b   // "x panika drep stativ.i3d"
+#define ANIM_TRAFFIC_PANIKA_DREP_NAHORU 0x14c   // "x panika drep nahoru.i3d"
+#define ANIM_TRAFFIC_PANIKA_NA4_DOLU 0x14d      // "x panika na4 dolu.i3d"
+#define ANIM_TRAFFIC_PANIKA_NA4_STATIV 0x14e    // "x panika na4 stativ.i3d"
+#define ANIM_TRAFFIC_PANIKA_NA4_NAHORU 0x14f    // "x panika na4 nahoru.i3d"
+#define ANIM_TRAFFIC_PANIKA_LEH_DOLU 0x150      // "x panika leh dolu.i3d"
+#define ANIM_TRAFFIC_PANIKA_LEH_STATIV 0x151    // "x panika leh stativ.i3d"
+#define ANIM_TRAFFIC_PANIKA_LEH_NAHORU 0x152    // "x panika leh nahoru.i3d"
 
 // An id and its animation's place in _anim_info_ (the struct's name is ours)
 struct S_anim_index

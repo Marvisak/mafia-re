@@ -88,6 +88,8 @@ public:
     void AkceDokoncenaPlukovniku(ai_police_action *action);
     // The actions by the time passed, which C_game::Tick calls (PS2 name)
     void Tick(uint time);
+    // A customer for the police's taxi driver ("here's a customer for you"): customer is set
+    void TuMasZakaznika(C_entity *entity);
     // Whether unknown_24 is 0 ("colonel, you have the player in the cooler"), which CHANGE_MISSION asks
     bool PlukovnikuMasVChladkuPlajeraFrafera();
     // Whether an action after the actor has seen it lately ("gentlemen, do you have your eyes on the bastard or are you
@@ -110,6 +112,9 @@ public:
     // Whether the actor may be hit (PS2 name, "I'm here, hit by the fuck"; the player's Collision and Hit ask it with
     // his flag set; the meaning is a guess)
     bool SemTrefenaLocklaKurva(C_actor *actor);
+    // The police told of the pedestrians made policemen (FizlosNamakatDoAkce's; PS2's name and parameters, the
+    // names are ours)
+    void MamProVasAkciHosi(C_actor *actor, uint u, std::vector<C_actor *> &actors, bool b, void *p);
     // The shift's end
     void KonecSmeny();
     // Stops the motorized units (PS2's name, Czech)

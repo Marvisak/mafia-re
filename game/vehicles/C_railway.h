@@ -2,6 +2,17 @@
 
 #include "actors/C_actor.h"
 
+// An entry a rail vehicle at a station has, where a pedestrian boards (PS2 rentry, in the order the PC's fields have):
+// the wagon, from 1, 0 for the vehicle itself, the entry's number in it, its place and the direction out of it (the
+// names are ours), 0x20 bytes (PS2's 0x30)
+struct rentry
+{
+    uint wagon;
+    uint entry;
+    S_vector pos;
+    S_vector dir;
+};
+
 // The rail vehicles (PS2 C_railway, with doors, windows and seats; C_railway.cpp, or C_rail_traffic.cpp, whose seats
 // they use), 0x370 bytes (PS2's 0x390). The constructor, which C_mission::CreateActor calls for ACTOR_RAILWAY, is a
 // stub; written: DuplicateFrom, SaveGameGetSize and GetMaterialID.
@@ -9,6 +20,8 @@
 class C_railway : public C_actor
 {
 public:
+    // Puts the model among the vehicle's passengers at the entry (PS2's parameters; false for none)
+    bool AddPerson(I3D_model *model, uint wagon, uint entry);
     C_railway();
     virtual ~C_railway();
     // The vtable's other overrides (the slots' names are C_actor's): stubs that log and run the base's, but the

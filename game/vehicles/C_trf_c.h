@@ -36,6 +36,8 @@ public:
     virtual bool IsPossibleColl(C_actor *act, S_vector v1, S_vector v2, float f, float &dist, C_actor **coll);
     // A virtual function of its own (the original's last slot)
     virtual bool vfunc_38(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l);
+    // PS2 name: the car of the parking cars that would run the point over (this isn't read)
+    C_car *ChcesMeSejmout(const S_vector &pos);
 
     // PS2 name (Czech, roughly "so now I buy them all from you"; PS2's takes a bool)
     void TakATedSiVasKupim_Vsecky();
@@ -52,6 +54,9 @@ public:
     // The car the human gets into, the traffic's car he takes over (PS2 name, Czech slang: "they took my car, the
     // swine"; static, the car in ecx): NULL where he can't have it
     static C_car *SebraliMiKaaaruSvine(C_car *car);
+    // The model of a pedestrian walks to the car (PS2 name, Czech: "walk to the tail"; static, the model in ecx,
+    // the car in edx)
+    static void ChodDoRici(I3D_model *model, C_car *car);
 
     // A car of the traffic's lists (PS2 C_traffic_car::S_ELEMENT; the names are ours)
     struct S_ELEMENT

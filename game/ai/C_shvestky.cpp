@@ -966,9 +966,10 @@ void C_shvestky::ZlikvidujVsechnyNasraneVyhozeneCuraky()
 }
 
 // STUB: GAME 0x49eee0
-void C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
+bool C_shvestky::DalsiChalpiDoPartie(C_human *human, uint unknown, float unknown2)
 {
     StubLog("C_shvestky::DalsiChalpiDoPartie");
+    return false;
 }
 
 // STUB: GAME 0x49f540
@@ -988,6 +989,12 @@ void C_shvestky::VasekSelChlastatNaOslavu(C_human *human, const S_vector &pos, f
     bool unknown2)
 {
     StubLog("C_shvestky::VasekSelChlastatNaOslavu");
+}
+
+// STUB: GAME 0x4a0040
+void C_shvestky::DalJsemPochuzkariDoDrzky(C_human *human)
+{
+    StubLog("C_shvestky::DalJsemPochuzkariDoDrzky");
 }
 
 // STUB: GAME 0x49d0b0

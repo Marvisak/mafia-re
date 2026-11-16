@@ -42,6 +42,8 @@ class C_traffic_element;
 // are ours, by value)
 #define HUMAN_TYPE_UNKNOWN_40 0x40
 #define HUMAN_TYPE_UNKNOWN_80 0x80
+// The type CreateMafianos gives the pedestrian it makes a mafioso (the name is ours, by value)
+#define HUMAN_TYPE_UNKNOWN_10 0x10
 
 // C_human::human_flags's bits (the names are ours): PersonAnim starts every other walk animation with its f .5, the
 // bit marking the walk between (the name is a guess); an entity gets EVENT_HIT_FROM_PLAYER when the player hits it
@@ -88,6 +90,7 @@ class C_traffic_element;
 // C_human::voice_type's, S_voice_def::sounds' index (the names are ours): the constructor's, and the first of the
 // three male and of the three female voices _intern_ThrowMeFromCar gives a traffic's driver it makes an entity of
 #define HUMAN_VOICE_DEFAULT 0xc
+#define HUMAN_VOICE_POLICE 10           // the police's, 10 or 11 (FizlosNamakatDoAkce's; the name is ours)
 #define HUMAN_VOICE_TRAFFIC_MALE 0x1a
 #define HUMAN_VOICE_TRAFFIC_FEMALE 0x1d
 // NewScream's voices, gameVoices' entries from 2 (voices.def; the names are ours): a heavy hit in a leg, the hits'
@@ -311,7 +314,7 @@ float _get_delta_y_(S_vector &pos);
 float _get_delta_nodyn_y_(S_vector &pos);
 
 // SYNTHETIC: GAME 0x56f330
-// ??1ai_logs@@QAE@XZ
+// ??1ai_loc@@QAE@XZ
 
 // The saved game's data of a human, after C_actor's (C_human::SaveGameSave's and SaveGameLoad's), 0x17e bytes, packed:
 // the members the fields copy, in their order but for the properties, each field with its member's name (PS2's has the

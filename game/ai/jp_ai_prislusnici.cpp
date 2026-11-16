@@ -23,6 +23,12 @@ void ai_police_nastenka::ZacatekSmeny()
     Init();
 }
 
+// STUB: GAME 0x53bc50
+void ai_police_nastenka::MamProVasAkciHosi(C_actor *actor, uint u, std::vector<C_actor *> &actors, bool b, void *p)
+{
+    StubLog("ai_police_nastenka::MamProVasAkciHosi");
+}
+
 // STUB: GAME 0x53c550
 void ai_police_nastenka::AkceDokoncenaPlukovniku(ai_police_action *action)
 {
@@ -104,6 +110,12 @@ bool ai_police_nastenka::SemTrefenaLocklaKurva(C_actor *actor)
 {
     StubLog("ai_police_nastenka::SemTrefenaLocklaKurva");
     return true;
+}
+
+// FUNCTION: GAME 0x53d740
+void ai_police_nastenka::TuMasZakaznika(C_entity *entity)
+{
+    customer = entity;
 }
 
 // FUNCTION: GAME 0x53d750
