@@ -55,8 +55,8 @@
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
 0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
-0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
-0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
+0x00404810  100.00%   std::_Construct(struct C_sledovacka::S_ELEMENT *, struct C_sledovacka::S_ELEMENT const &)
+0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -199,7 +199,7 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
+0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
@@ -1316,7 +1316,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
+0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1459,8 +1459,8 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
-0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
+0x005490b0  100.00%   std::_Construct(struct S_vector *, struct S_vector const &)
+0x005490d0  100.00%   std::_Construct(struct G_MIIntroSubtitles *, struct G_MIIntroSubtitles const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1474,21 +1474,38 @@
 0x00549f30  missing   $CRT_CPP_Initializer(149)
 0x00549f60  missing   $CRT_CPP_Initializer(150)
 0x00549f90  100.00%   C_web_node::~C_web_node
+0x00549fc0  60.99%    C_web_node::Resize
+0x0054a0a0  100.00%   C_web_node::AddConn
+0x0054a160  100.00%   C_web_node::DeleteConn
+0x0054a1a0  100.00%   C_web_node::FindConnIdx
 0x0054a1e0  100.00%   C_web_path::~C_web_path
-0x0054a3b0  stub      C_web_path::AddNode
-0x0054a410  stub      C_web_path::DeleteNode
-0x0054a550  stub      C_web_path::CreateConnect
-0x0054a790  stub      C_web_path::ControlNodeConn
-0x0054a8c0  stub      C_web_path::LoadNodes
-0x0054ab40  stub      C_web_path::SaveNodes
-0x0054ade0  stub      C_web_path::MergeNodes
-0x0054af10  stub      C_web_path::ReleaseSelect
-0x0054c5a0  stub      C_web_path::FindSelectedLine
-0x0054c620  stub      C_web_path::IncludeNode
-0x0054c8d0  stub      C_web_path::FlipOneWay
-0x0054c9a0  stub      C_web_path::GetNearNode
-0x0054cba0  stub      C_web_path::SortNodesByX
+0x0054a220  87.60%    C_web_path::Resize
+0x0054a3b0  100.00%   C_web_path::AddNode
+0x0054a410  100.00%   C_web_path::DeleteNode
+0x0054a550  100.00%   C_web_path::CreateConnect
+0x0054a6d0  100.00%   C_web_path::LegalConnect
+0x0054a790  100.00%   C_web_path::ControlNodeConn
+0x0054a8c0  100.00%   C_web_path::LoadNodes
+0x0054ab40  100.00%   C_web_path::MergeNodes
+0x0054ade0  100.00%*  C_web_path::RecompileDistance
+0x0054af10  100.00%   C_web_path::ReleaseSelect
+0x0054af60  100.00%   C_web_path::FindNodeID
+0x0054afa0  93.59%    C_web_path::FindPath_FastByRoads
+0x0054b540  77.98%    C_web_path::FindPath
+0x0054bb00  71.59%    C_web_path::FindPathCompFunc(unsigned int, unsigned int, class std::vector<unsigned int, class std::allocator<unsigned int>> *, float (__fastcall *)(unsigned short, unsigned short, unsigned char), unsigned short)
+0x0054c050  100.00%   C_web_path::FindPathCompFunc(unsigned int, int (__fastcall *)(unsigned short), class std::vector<unsigned int, class std::allocator<unsigned int>> *, float (__fastcall *)(unsigned short, unsigned short, unsigned char), unsigned short)
+0x0054c5a0  100.00%   C_web_path::FindSelectedLine
+0x0054c620  92.81%    C_web_path::IncludeNode
+0x0054c8d0  100.00%   C_web_path::FlipOneWay
+0x0054c9a0  100.00%   C_web_path::GetNearNode
+0x0054cba0  100.00%   C_web_path::SortNodesByX
+0x0054ccf0  100.00%   C_web_path::IsSorted
 0x0054cd20  100.00%   C_web_path::DeRiciConns
+0x0054cd70  100.00%   _STDVECTCOPY
+0x0054cf30  85.45%    nodeproc
+0x0054d240  100.00%   C_web_path::FindPathCompFuncJIPO
+0x0054d2b0  100.00%   C_web_connection::C_web_connection
+0x0054d2c0  100.00%   C_web_node::C_web_node
 0x0054d2f0  missing   $CRT_CPP_Initializer(151)
 0x00551830  stub      C_racing::C_racing
 0x00551a70  stub      C_racing::~C_racing
@@ -1506,6 +1523,8 @@
 0x0055a210  stub      C_roads::MergeData
 0x0055a620  stub      C_roads::RecompileDistances
 0x0055b370  stub      C_roads::GetNearNode
+0x0055be10  stub      C_roads::FindNearCrossingFromNode
+0x0055bf60  stub      C_roads::FindPathBeweenCross
 0x0055c4e0  stub      C_roads::FindPath
 0x0055c890  stub      C_roads::SortNodesByX
 0x0055cf10  missing   $CRT_CPP_Initializer(154)
@@ -1578,7 +1597,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(struct S_particle_subpart **, struct S_particle_subpart **, struct S_particle_subpart **)
+0x00564750  100.00%   std::copy(float *, float *, float *)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2222,10 +2241,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
+0x005bc900  100.00%   std::copy(struct C_game::S_driver_man *, struct C_game::S_driver_man *, struct C_game::S_driver_man *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
-0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct C_game::S_driver_man *, struct C_game::S_driver_man const &)
+0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
+0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)

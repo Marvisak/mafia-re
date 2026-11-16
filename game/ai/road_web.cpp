@@ -47,6 +47,20 @@ ushort C_roads::GetNearNode(S_vector pos)
     return 0xffff;
 }
 
+// STUB: GAME 0x55be10
+ushort C_roads::FindNearCrossingFromNode(ushort node, int &dir, bool back)
+{
+    StubLog("C_roads::FindNearCrossingFromNode");
+    return 0xffff;
+}
+
+// STUB: GAME 0x55bf60
+bool C_roads::FindPathBeweenCross(ushort from, ushort to, std::vector<ushort> &path)
+{
+    StubLog("C_roads::FindPathBeweenCross");
+    return false;
+}
+
 // STUB: GAME 0x55c4e0
 bool C_roads::FindPath(ushort from, ushort to, std::vector<ushort> &path)
 {

@@ -99,7 +99,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 64 | `549f00–549f2c` | 0x2c |  |  |  |
 | 65 | `549f30–549f5c` | 0x2c |  |  |  |
 | 66 | `549f60–549f8c` | 0x2c |  |  |  |
-| 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | part | PS2's file, after Mission.cpp as here: `C_web_node`'s and `C_web_path`'s destructors first |
+| 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | whole | PS2's file, after Mission.cpp as here: the walking web (`C_web_node`, `C_web_path`, vtable `6251f8`) and its pathfinding (`FindPath`, `FindPathCompFunc`, `nodeproc`); the node's destructor first, the inline constructors' copies last |
 | 68 | `54d320–55997c` | 0xc65c | `racing.cpp`? | part | `C_racing`'s constructor `551830` and destructor `551a70` |
 | 69 | `559980–559ccc` | 0x34c |  |  |  |
 | 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | part | `C_roads` (vtable `625370`): the constructor first |

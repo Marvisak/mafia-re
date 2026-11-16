@@ -1102,7 +1102,7 @@ void ai_loc::Update()
         C_web_node *n = &act_mission->web_path->nodes[node];
         for (uint i = 0; i < n->num_conns; i++) {
             C_web_node *o = &act_mission->web_path->nodes[n->GetConn(i)->node];
-            if (ai_path::isInConnection(n->GetPos(), o->GetPos(), pos, n->width * 0.01f, o->width * 0.01f)) {
+            if (ai_path::isInConnection(n->GetPos(), o->GetPos(), pos, (n->width & 0xffff) * 0.01f, (o->width & 0xffff) * 0.01f)) {
                 conn = i;
                 node2 = o - act_mission->web_path->nodes;
                 flags |= AILOC_CONN | AILOC_UPDATED;

@@ -300,7 +300,7 @@ public:
 // ?_Ucopy@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEPAUG_CameraDialog@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEXPAUG_CameraDialog@@IABU3@@Z
+// ?_Ufill@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@IAEXPAUai_fight_member@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
@@ -345,7 +345,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
@@ -354,4 +354,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUS_particle_subpart@@PAPAU2@00@Z
+// ?copy@std@@YIPAMPAM00@Z

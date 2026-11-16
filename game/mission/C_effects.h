@@ -395,7 +395,7 @@ public:
 
 // The classes' scalar deleting destructors; the subparts' is folded with their base's
 // SYNTHETIC: GAME 0x44be90
-// ??_EC_effect_item@@UAEPAXI@Z
+// ??_EC_effect_subpart@@UAEPAXI@Z
 
 // The item's destructor, folded with the subparts' implicit one: which of the two copies our linker keeps changes with
 // the build
@@ -421,10 +421,10 @@ public:
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAVC_program@@V?$allocator@PAVC_program@@@std@@@std@@QAEPAPAVC_program@@PAPAV3@ABQAV3@@Z
+// ?insert@?$vector@PAVC_effect@@V?$allocator@PAVC_effect@@@std@@@std@@QAEPAPAVC_effect@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
-// ??0?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@QAE@ABV?$allocator@PAUg_collision_header@@@1@@Z
+// ??0?$vector@Uai_anim_item@@V?$allocator@Uai_anim_item@@@std@@@std@@QAE@ABV?$allocator@Uai_anim_item@@@1@@Z
 
 // The engine's S_vector(float, float, float) (I3d_math.h), which the subparts' constructor calls out of line where the
 // parts' Load inlines it: the original kept the copy of the range at 0x401030 (docs/game-files.md)

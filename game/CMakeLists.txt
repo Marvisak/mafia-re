@@ -283,6 +283,12 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?RaceFlashText@G_IndicatorsClass@@QAEXPBDM@Z)
     # The sound arena's GetSounds, which the entities' AI calls (tools.cpp)
     target_link_options(game PRIVATE /INCLUDE:?GetSounds@soundArena@@QAEXPAVC_entity@@@Z)
+    # pathweb.cpp's functions that nothing written calls yet (the AI's wayfinding, the wagons, the racing)
+    target_link_options(game PRIVATE /INCLUDE:?FindNodeID@C_web_path@@QAEHG@Z
+        /INCLUDE:?FindPath@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@G@Z
+        /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
+        /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
+        /INCLUDE:?FindPathCompFuncJIPO@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

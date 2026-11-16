@@ -105,6 +105,10 @@ public:
     ushort GetNearNode(S_vector pos);
     // The nodes from one node to another into path (PS2 name and parameters)
     bool FindPath(ushort from, ushort to, std::vector<ushort> &path);
+    // The crossing nearest to a node (PS2 name and parameters)
+    ushort FindNearCrossingFromNode(ushort node, int &dir, bool back);
+    // The crossings from one crossing to another (PS2 name, typo included)
+    bool FindPathBeweenCross(ushort from, ushort to, std::vector<ushort> &path);
     // A node's position, or a link's with NEARNODE_FLAG (the name is ours; the copy the linker kept is
     // C_shvestky.cpp's). Returned from each branch: a conditional expression selects the pointer in another register.
     // FUNCTION: GAME 0x4a02a0
