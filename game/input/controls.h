@@ -157,4 +157,4 @@ extern std::vector<IJoy *> joy;
 // ?insert@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEXPAUS_Telephone@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x448cc0
-// ?insert@?$vector@PAVI3D_light@@V?$allocator@PAVI3D_light@@@std@@@std@@QAEXPAPAVI3D_light@@IABQAV3@@Z
+// ?insert@?$vector@PAUS_cutscene_anim@@V?$allocator@PAUS_cutscene_anim@@@std@@@std@@QAEXPAPAUS_cutscene_anim@@IABQAU3@@Z

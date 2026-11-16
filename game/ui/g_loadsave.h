@@ -739,7 +739,7 @@ struct S_garage_item
 // ?_Ucopy@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEPAUG_SaveGame_FileHead@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x4d2a70
-// ?_Ufill@?$vector@US_hydrant@C_game@@V?$allocator@US_hydrant@C_game@@@std@@@std@@IAEXPAUS_hydrant@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEXPAUG_SaveGame_FileHead@@IABU3@@Z
 
 // TEMPLATE: GAME 0x430470
 // ?insert@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@QAEXPAUS_sound_play@C_game@@IABU34@@Z

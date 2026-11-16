@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_EditNum@@UAE@XZ
+// ??1GM_MenuItem@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2058,7 +2058,7 @@ public:
 // ?GetType@GM_StaticTextMem@@UAEIXZ
 
 // FUNCTION: GAME 0x5da1f0
-// ?SetText@GM_MenuItemMem@@UAEXPAE@Z
+// ?SetText@GM_StaticTextMem@@UAEXPAE@Z
 
 // FUNCTION: GAME 0x5da220
 // ?Draw@GM_StaticTextMem@@UAEXI@Z
@@ -2121,17 +2121,17 @@ public:
 // ?GetType@GM_MenuItem@@UAEIXZ
 
 // FUNCTION: GAME 0x5dadc0
-// ?Draw@GM_MenuItem@@UAEXI@Z
+// ?Draw@GM_MenuItemMem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
-// ?Mouse@GM_MenuItemMem@@UAEIHHHII@Z
+// ?Mouse@GM_MenuItem@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5daf50
 // ?GetType@GM_MenuItemMem@@UAEIXZ
 
 // The original kept another class's copy
 // FUNCTION: GAME 0x5daf60
-// ?Key@GM_MenuItem@@UAEIII@Z
+// ?Key@GM_Button@@UAEIII@Z
 
 // FUNCTION: GAME 0x5db0a0
 // ?GetType@GM_MenuItemNum@@UAEIXZ
@@ -2319,7 +2319,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_GGM_Grid@@UAEPAXI@Z
+// ??_EGM_ProgressBar@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

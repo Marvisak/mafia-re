@@ -26,10 +26,10 @@ bool C_box_new::Init(I3D_frame *frm)
         return false;
     is_box = true;
     radius = 1.0f;
-    unknown_394 = 1.0f;
+    width = 1.0f;
     weight = 10.0f;
-    unknown_39c = .5f;
-    unknown_3a0 = .01f;
+    friction = .5f;
+    rolling_friction = .01f;
     I3D_bvolume bvol = frame->GetHRBoundVolume();
     S_vector size = bvol.bbox.max - bvol.bbox.min;
     float volume = size.x * size.y * size.z;
@@ -49,7 +49,7 @@ void C_box_new::GameInit()
     if (is_box)
     {
         S_THING_BOX box;
-        box.unknown_10 = unknown_39c;
+        box.friction = friction;
         box.velocity.x = 0.0f;
         box.velocity.y = 0.0f;
         box.velocity.z = 0.0f;
@@ -59,14 +59,14 @@ void C_box_new::GameInit()
     else
     {
         S_THING_WHEEL wheel;
-        wheel.unknown_18 = unknown_39c;
+        wheel.friction = friction;
         wheel.weight = weight;
         wheel.radius = radius;
-        wheel.unknown_1c = unknown_3a0;
+        wheel.rolling_friction = rolling_friction;
         wheel.velocity.x = 0.0f;
         wheel.velocity.y = 0.0f;
         wheel.velocity.z = 0.0f;
-        wheel.unknown_4 = unknown_394;
+        wheel.width = width;
         InitWheel(&wheel);
     }
     C_PhThing::GameInit();
@@ -92,27 +92,27 @@ bool C_box_new::LoadData(C_chunk *chunk)
     case 0:
         chunk->Read(&is_box, sizeof(is_box));
         chunk->Read(&radius, sizeof(radius));
-        chunk->Read(&unknown_394, sizeof(unknown_394));
+        chunk->Read(&width, sizeof(width));
         chunk->Read(&weight, sizeof(weight));
-        chunk->Read(&unknown_39c, sizeof(unknown_39c));
-        chunk->Read(&unknown_3a0, sizeof(unknown_3a0));
+        chunk->Read(&friction, sizeof(friction));
+        chunk->Read(&rolling_friction, sizeof(rolling_friction));
         break;
     case 1:
         chunk->Read(&is_box, sizeof(is_box));
         chunk->Read(&radius, sizeof(radius));
-        chunk->Read(&unknown_394, sizeof(unknown_394));
+        chunk->Read(&width, sizeof(width));
         chunk->Read(&weight, sizeof(weight));
-        chunk->Read(&unknown_39c, sizeof(unknown_39c));
-        chunk->Read(&unknown_3a0, sizeof(unknown_3a0));
+        chunk->Read(&friction, sizeof(friction));
+        chunk->Read(&rolling_friction, sizeof(rolling_friction));
         chunk->Read(&hit_sound, sizeof(hit_sound));
         break;
     case BOX_NEW_DATA_VERSION:
         chunk->Read(&is_box, sizeof(is_box));
         chunk->Read(&radius, sizeof(radius));
-        chunk->Read(&unknown_394, sizeof(unknown_394));
+        chunk->Read(&width, sizeof(width));
         chunk->Read(&weight, sizeof(weight));
-        chunk->Read(&unknown_39c, sizeof(unknown_39c));
-        chunk->Read(&unknown_3a0, sizeof(unknown_3a0));
+        chunk->Read(&friction, sizeof(friction));
+        chunk->Read(&rolling_friction, sizeof(rolling_friction));
         chunk->Read(&hit_sound, sizeof(hit_sound));
         chunk->Read(&hit_sound_restart, sizeof(hit_sound_restart));
         chunk->Read(&material, sizeof(material));
@@ -132,10 +132,10 @@ bool C_box_new::SaveData(C_chunk *chunk)
     chunk->Write(&version, sizeof(version));
     chunk->Write(&is_box, sizeof(is_box));
     chunk->Write(&radius, sizeof(radius));
-    chunk->Write(&unknown_394, sizeof(unknown_394));
+    chunk->Write(&width, sizeof(width));
     chunk->Write(&weight, sizeof(weight));
-    chunk->Write(&unknown_39c, sizeof(unknown_39c));
-    chunk->Write(&unknown_3a0, sizeof(unknown_3a0));
+    chunk->Write(&friction, sizeof(friction));
+    chunk->Write(&rolling_friction, sizeof(rolling_friction));
     chunk->Write(&hit_sound, sizeof(hit_sound));
     chunk->Write(&hit_sound_restart, sizeof(hit_sound_restart));
     chunk->Write(&material, sizeof(material));
@@ -150,10 +150,10 @@ void C_box_new::DuplicateFrom(C_actor *act)
     C_box_new *box = (C_box_new *)act;
     is_box = box->is_box;
     radius = box->radius;
-    unknown_394 = box->unknown_394;
+    width = box->width;
     weight = box->weight;
-    unknown_39c = box->unknown_39c;
-    unknown_3a0 = box->unknown_3a0;
+    friction = box->friction;
+    rolling_friction = box->rolling_friction;
 }
 
 // FUNCTION: GAME 0x567c80

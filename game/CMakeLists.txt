@@ -198,6 +198,10 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?mustLeave@ai_follow_manager@@QAE_NPAVC_actor@@@Z)
     # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
     target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
+    # C_PhThings.cpp's functions that nothing written calls yet: FindActors (CreateCrashActors, C_crash_obj.cpp) and
+    # GetRVelMassJ (0x425189)
+    target_link_options(game PRIVATE /INCLUDE:?FindActors@C_PhThing@@QAEXXZ
+        /INCLUDE:?GetRVelMassJ@C_PhThing@@QAEXABUS_vector@@0PAU2@1PAM1@Z)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
     # (g_c_glob.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)

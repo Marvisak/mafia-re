@@ -6232,7 +6232,7 @@ bool C_human::DropOutItems(std::vector<S_GameItem> &items)
                     S_THING_BOX thing_box;
                     thing_box.weight = 10.0f;
                     thing_box.velocity = S_vector(dir.z, .2f, -dir.x);
-                    thing_box.unknown_10 = .45f;
+                    thing_box.friction = .45f;
                     weapon->InitBox(&thing_box);
                     weapon->item = items[i];
                     TruncateAmmo(weapon->item);
@@ -9255,7 +9255,7 @@ void C_human::Do_FuckingBoxDrop()
     {
         S_THING_BOX thing_box;
         thing_box.weight = 10.0f;
-        thing_box.unknown_10 = .45f;
+        thing_box.friction = .45f;
         thing_box.velocity = dir;
         weapon->InitBox(&thing_box);
         weapon->item.id = GAMEITEM_NONE;
@@ -9645,11 +9645,11 @@ void C_human::FreeHand()
         {
             S_THING_BOX thing_box;
             thing_box.weight = 5.0f;
-            thing_box.unknown_10 = .45f;
+            thing_box.friction = .45f;
             thing_box.velocity = S_vector(0.0f, -.1f, 0.0f);
             phys->InitBox(&thing_box);
             act_mission->GetGame()->AddTemporaryActor(phys);
-            phys->unknown_c0 = 0x80000;
+            phys->coll.flags = DYNCOLLF_UNKNOWN_80000;
         }
         else
         {
@@ -9714,12 +9714,12 @@ void C_human::StartWeaponEffect(int effect)
                             S_THING_BOX thing_box;
                             phys->hit_sound = 8;
                             thing_box.weight = .5f;
-                            thing_box.unknown_10 = .45f;
+                            thing_box.friction = .45f;
                             thing_box.velocity = S_vector(0.0f, -1.0f, 0.0f);
                             phys->InitBox(&thing_box);
                             phys->unknown_6d = false;
                             act_mission->GetGame()->AddTemporaryActor(phys);
-                            phys->unknown_c0 = 0x80000;
+                            phys->coll.flags = DYNCOLLF_UNKNOWN_80000;
                             if (item)
                                 item->clip_out = 1;
                         } else

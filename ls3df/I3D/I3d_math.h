@@ -214,6 +214,8 @@ struct S_vector {
     // Insanity3D's (the game's: defined in VE_BreakageGlass.cpp, its only user; declared
     // for LS3DF too, it changes 1.1's I3D_singlemesh::UpdateLodVertices)
     float DistanceToPlane(const S_vector &p, const S_vector &n) const;
+    // The signed distance to the plane (the game's: the wheels' MoveWheel)
+    float DistanceToPlane(const struct S_plane &pl) const;
     // Insanity3D's: the distance from the line through p along dir, -1e16 where dir is null (the game's
     // g_collision::LineInDynamics and LineInDynamicsInnerDyn)
     float DistanceToLine(const S_vector &p, const S_vector &dir) const
@@ -226,6 +228,8 @@ struct S_vector {
     }
 #endif
 
+    // The game's out-of-line copy follows C_PhThing::MoveWheel
+    // FUNCTION: GAME 0x45d1f0
     S_vector operator-() const
     {
         return S_vector(-x, -y, -z);
@@ -236,6 +240,7 @@ struct S_vector {
     // I3D_joint::GetJointMatrix.
     // FUNCTION: LS3DF 0x10056e60
     // FUNCTION: LS3DF11 0x10053420
+    // FUNCTION: GAME 0x40b9e0
     S_vector &operator*=(const float &f)
     {
         x *= f;
@@ -250,7 +255,8 @@ struct S_vector {
         return S_vector(x * v.x, y * v.y, z * v.z);
     }
 
-    // Insanity3D's, component by component
+    // Insanity3D's, component by component (the game's out-of-line copy follows C_PhThing::CollisionCount)
+    // FUNCTION: GAME 0x45ed00
     S_vector &operator*=(const S_vector &v)
     {
         x *= v.x;
@@ -436,6 +442,10 @@ struct S_plane {
 
     I3D_MATH_API bool __stdcall IntersectionLine(const S_plane &pl, S_vector &xpt, S_vector &xdir) const;
 #ifndef LS3DF_EXPORTS
+    // The game's: the plane from its normal's components and d, and the plane moved by a matrix (Insanity3D's
+    // operator*: the normal rotated, d from a point of the plane moved), which the wheels' MoveWheel inlines
+    S_plane(float x, float y, float z, float d1);
+    S_plane operator*(const S_matrix &m) const;
     // Where a line meets the plane (Insanity3D's name; the game's, defined in VE_BreakageGlass.cpp)
     bool Intersection(const S_vector &pos, const S_vector &dir, S_vector &ret) const;
 #endif
@@ -681,6 +691,21 @@ inline S_vector &S_vector::operator-=(const S_vector &v)
 
 // Insanity3D's: the occluders' UpdateShadow assigns its plane along the view through a temporary of it
 inline S_plane::S_plane(const S_vector &n, float d1) : normal(n), d(d1) {}
+
+#ifndef LS3DF_EXPORTS
+inline S_plane::S_plane(float x, float y, float z, float d1) : normal(x, y, z), d(d1) {}
+
+inline S_plane S_plane::operator*(const S_matrix &m) const
+{
+    S_vector n = normal.RotateByMatrix(m);
+    return S_plane(n, -((-normal * d) * m).Dot(n));
+}
+
+inline float S_vector::DistanceToPlane(const S_plane &pl) const
+{
+    return Dot(pl.normal) + pl.d;
+}
+#endif
 
 // Through the constructor VC6 inlines ComputePlane's calls as the area's UpdateV does; the three calls written at the
 // call site sum the normal's squares and scale it in another order, and ComputePlane called there in yet another.

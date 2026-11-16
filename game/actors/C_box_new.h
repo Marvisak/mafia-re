@@ -27,12 +27,12 @@ public:
     // The scene's data, the members in the order SaveData writes them, Init's defaults (the names are ours)
     bool is_box;                        // 0x38c, a box (InitBox), else a wheel (InitWheel)
     float radius;                       // 0x390, the wheel's, 1
-    float unknown_394;                  // 0x394, the wheel's unknown_4, 1
+    float width;                        // 0x394, the wheel's, 1
     // 0x398, the box's and the wheel's: 10, or 50 for each cubic metre of the frame's bound box where that lies
     // between .01 and 1000; LoadData keeps it within .01 and 100000
     float weight;
-    float unknown_39c;                  // 0x39c, the box's unknown_10 and the wheel's unknown_18, .5
-    float unknown_3a0;                  // 0x3a0, the wheel's unknown_1c, .01
+    float friction;                     // 0x39c, the box's and the wheel's, .5
+    float rolling_friction;             // 0x3a0, the wheel's, .01
     bool hit;                           // 0x3a4, set by Collision and Hit, cleared by GameInit (the name is ours)
 };
 

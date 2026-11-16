@@ -311,7 +311,7 @@ float _get_delta_y_(S_vector &pos);
 float _get_delta_nodyn_y_(S_vector &pos);
 
 // SYNTHETIC: GAME 0x56f330
-// ??1ai_loc@@QAE@XZ
+// ??1ai_logs@@QAE@XZ
 
 // The saved game's data of a human, after C_actor's (C_human::SaveGameSave's and SaveGameLoad's), 0x17e bytes, packed:
 // the members the fields copy, in their order but for the properties, each field with its member's name (PS2's has the

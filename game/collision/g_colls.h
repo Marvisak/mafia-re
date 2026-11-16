@@ -83,10 +83,14 @@ struct tgcPanak2;
 #define DYNCOLLF_UNKNOWN_100 0x100
 // A bottle's (C_bottle::GameInit)
 #define DYNCOLLF_UNKNOWN_400 0x400
+// A physical thing's (C_PhThing::GameInit)
+#define DYNCOLLF_UNKNOWN_800 0x800
 // A box's (C_game::BoxPlacementAdd)
 #define DYNCOLLF_UNKNOWN_1000 0x1000
 // The inter-city boxes' (C_game::InterCity_GameInit's)
 #define DYNCOLLF_UNKNOWN_4000 0x4000
+// The physical things C_human drops and C_drop_in_weapon's, set after their GameInit (by value)
+#define DYNCOLLF_UNKNOWN_80000 0x80000
 // The tracks' (C_game::CreateTrackEffect's, with DYNCOLLF_LOWER; by value)
 #define DYNCOLLF_UNKNOWN_200000 0x200000
 

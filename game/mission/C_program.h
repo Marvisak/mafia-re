@@ -850,7 +850,7 @@ void UnloadPatchFiles();
 // std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 
 // TEMPLATE: GAME 0x5bca00
-// ?_Construct@std@@YIXPAUS_driver_man@C_game@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_prog_change@C_program@@ABU23@@Z
 
 // TEMPLATE: GAME 0x5f4af0
 // std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ufill

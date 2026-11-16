@@ -1189,7 +1189,7 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
 // ??1S_cache_model_set@@QAE@XZ
@@ -1221,7 +1221,7 @@ public:
 // ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
 
 // TEMPLATE: GAME 0x5bbde0
-// ?erase@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@0@Z
+// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bbe30
 // ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
@@ -1230,7 +1230,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?insert@?$vector@US_SURR_ACT@C_PhThing@@V?$allocator@US_SURR_ACT@C_PhThing@@@std@@@std@@QAEXPAUS_SURR_ACT@C_PhThing@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z
