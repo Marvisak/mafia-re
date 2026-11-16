@@ -300,13 +300,13 @@ public:
 // ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@IAEXPAUai_group_event@@IABU3@@Z
+// ?_Ufill@?$vector@UG_CameraDialog@@V?$allocator@UG_CameraDialog@@@std@@@std@@IAEXPAUG_CameraDialog@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUS_i_show@C_game@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_i_show@C_game@@ABU23@@Z
 
 // The groups' and the following groups' insert(P, n, x), which NewGroup's and AddFollower's push_backs call
 // TEMPLATE: GAME 0x5366c0
@@ -345,7 +345,7 @@ public:
 
 // The parties' members' operator=, folded with the groups' events' (both elements 0x14 bytes)
 // TEMPLATE: GAME 0x538280
-// ??4?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@Uai_group_event@@V?$allocator@Uai_group_event@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The parties' destructor, folded with the police actions' (both a vector at 0x18): the original kept AIManager's
 // file's copy
@@ -354,4 +354,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAUg_collision_header@@PAPAU2@00@Z
+// ?copy@std@@YIPAHPAH00@Z

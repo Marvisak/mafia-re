@@ -1192,17 +1192,17 @@ public:
 // ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
-// std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::size
+// std::vector<S_road_node,std::allocator<S_road_node> >::size
 
 // TEMPLATE: GAME 0x5bc050
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
@@ -1221,7 +1221,7 @@ public:
 // ?push_back@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEXABUS_itm@?$C_I3D_cache@VI3D_model@@@@@Z
 
 // TEMPLATE: GAME 0x5bbde0
-// ?erase@?$vector@US_Telephone@C_game@@V?$allocator@US_Telephone@C_game@@@std@@@std@@QAEPAUS_Telephone@C_game@@PAU34@0@Z
+// ?erase@?$vector@US_garage_item@@V?$allocator@US_garage_item@@@std@@@std@@QAEPAUS_garage_item@@PAU3@0@Z
 
 // TEMPLATE: GAME 0x5bbe30
 // ?insert@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QAEPAUS_shoot@@PAU3@ABU3@@Z
@@ -1230,7 +1230,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_SURR_ACT@C_PhThing@@V?$allocator@US_SURR_ACT@C_PhThing@@@std@@@std@@QAEXPAUS_SURR_ACT@C_PhThing@@IABU34@@Z
+// ?insert@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEXPAUai_fight_member@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z

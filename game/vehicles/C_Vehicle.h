@@ -649,22 +649,22 @@ public:
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42e140
-// ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
-// ?size@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2aa0
 // ?_Ufill@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEXPAUS_SRFC@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUG_MIIntroSubtitles@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_tshift_elem@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@IAEPAUS_SRFC@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEPAUS_shadow_item@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@UG_MIIntroSubtitles@@V?$allocator@UG_MIIntroSubtitles@@@std@@@std@@IAEPAUG_MIIntroSubtitles@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
-// ?_Ufill@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEXPAUS_tshift_elem@@IABU3@@Z
+// ?_Ufill@?$vector@US_VEH_PARTICLE@@V?$allocator@US_VEH_PARTICLE@@@std@@@std@@IAEXPAUS_VEH_PARTICLE@@IABU3@@Z

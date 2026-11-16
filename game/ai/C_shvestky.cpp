@@ -388,7 +388,7 @@ void C_shvestky::Tick(uint time)
                 if (records[i]->car && records[i]->block_way && !records[i]->nevi)
                 {
                     S_vector d = records[i]->car->GetFrame()->GetWorldPos() -
-                        act_mission->roads->links[road_blocks[j].node].pos;
+                        act_mission->roads->nodes[road_blocks[j].node].pos;
                     float dist = d.Square();
                     if (!road_blocks[j].active && dist < 150.0f * 150.0f)
                         continue;
@@ -451,10 +451,10 @@ void C_shvestky::Tick(uint time)
 }
 
 // The police cars' drivers who run a red light (PS2 name; PS2 has it out of line, the PC's Tick inlines it): of the two
-// ends of the link a car is on, the one ahead of it, a semaphore's; a red light in the link's direction where the car,
-// within 15 of the line along the link, crossed the line across it 1.5 from the link's position towards that end
-// between its last position and this one. The lines come from the first end's position even after the swap, and p1
-// takes the link's position, as PS2's (the same slot in both builds).
+// neighbours of the road node a car is at, the one ahead of it, a semaphore's; a red light in the road's direction
+// where the car, within 15 of the line along the road, crossed the line across it 1.5 from the node's position towards
+// that end between its last position and this one. The lines come from the first end's position even after the swap,
+// and p1 takes the node's position, as PS2's (the same slot in both builds).
 inline void C_shvestky::TestOverRed()
 {
     for (int i = records.size(); i--;)
@@ -463,13 +463,13 @@ inline void C_shvestky::TestOverRed()
         {
             S_vector pos = records[i]->car->GetWorldPos();
             S_vector dir = records[i]->car->GetVelocity();
-            ushort link = act_mission->roads->GetNearNode(records[i]->car->GetFrame()->GetWorldPos());
-            if (link != NEARNODE_NONE && !dir.IsNull())
+            ushort node = act_mission->roads->GetNearNode(records[i]->car->GetFrame()->GetWorldPos());
+            if (node != NEARNODE_NONE && !dir.IsNull())
             {
                 dir.Normalize();
                 ushort ends[2];
-                ends[0] = act_mission->roads->links[link].end0;
-                ends[1] = act_mission->roads->links[link].end1;
+                ends[0] = act_mission->roads->nodes[node].conns[0];
+                ends[1] = act_mission->roads->nodes[node].conns[1];
                 if (ends[0] != NEARNODE_NONE && ends[1] != NEARNODE_NONE)
                 {
                     S_vector p0 = act_mission->roads->GetPos(ends[0]);
@@ -480,7 +480,7 @@ inline void C_shvestky::TestOverRed()
                         ends[0] = ends[1];
                         ends[1] = t;
                     }
-                    bool ok = !(ends[0] & NEARNODE_FLAG) && act_mission->roads->nodes[ends[0]].semaphore;
+                    bool ok = !(ends[0] & NEARNODE_FLAG) && act_mission->roads->crossings[ends[0]].semaphore;
                     if (ok)
                     {
                         for (int j = bridge_nodes.size(); j--;)
@@ -494,7 +494,7 @@ inline void C_shvestky::TestOverRed()
                     }
                     if (ok)
                     {
-                        p1 = act_mission->roads->links[link].pos;
+                        p1 = act_mission->roads->nodes[node].pos;
                         S_vector2 d(p0.x - p1.x, p0.z - p1.z);
                         S_vector2 n(d.y, -d.x);
                         S_vector2 line_pos(p1.x, p1.z);

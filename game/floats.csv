@@ -166,6 +166,8 @@ address|type|size
 0x6251a0|float|4
 0x625230|float|4
 0x625294|float|4
+0x625380|float|4
+0x625384|float|4
 0x625408|float|4
 0x62540c|float|4
 0x625440|float|4

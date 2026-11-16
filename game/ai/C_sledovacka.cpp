@@ -51,9 +51,9 @@ void C_sledovacka::EnableChangeTables(bool enable)
     change_tables = enable;
 }
 
-// The bridges from the mission's last actor, as PS2's: the road node nearer to the bridge of the two ends of the link
-// GetNearNode finds. The mission's roads and actors are locals, and the index is masked again where the node is taken,
-// as PS2's.
+// The bridges from the mission's last actor, as PS2's: the crossing nearer to the bridge of the two at the ends of the
+// road of the node GetNearNode finds. The mission's roads and actors are locals, and the index is masked again where
+// the node is taken, as PS2's.
 // FUNCTION: GAME 0x4a0360
 void C_sledovacka::Init()
 {
@@ -66,12 +66,12 @@ void C_sledovacka::Init()
             S_BRIDGE b;
             b.actor = actors[i];
             ushort n = roads->GetNearNode(actors[i]->GetWorldPos()) & NEARNODE_INDEX;
-            S_vector d0 = roads->nodes[roads->links[n].node0].pos - actors[i]->GetWorldPos();
-            S_vector d1 = roads->nodes[roads->links[n].node1].pos - actors[i]->GetWorldPos();
+            S_vector d0 = roads->crossings[roads->nodes[n].cross0].pos - actors[i]->GetWorldPos();
+            S_vector d1 = roads->crossings[roads->nodes[n].cross1].pos - actors[i]->GetWorldPos();
             if (d0.Square() < d1.Square())
-                b.node = roads->links[n & NEARNODE_INDEX].node0;
+                b.node = roads->nodes[n & NEARNODE_INDEX].cross0;
             else
-                b.node = roads->links[n & NEARNODE_INDEX].node1;
+                b.node = roads->nodes[n & NEARNODE_INDEX].cross1;
             bridges.push_back(b);
         }
     }
@@ -189,8 +189,9 @@ bool C_sledovacka::AddCarHunt(C_car *car, C_actor *target, uint flags, uint time
 // A car sent away from the target (the player or an entity) to pos along the roads (PS2 name; SLEDF_ESCAPE): false
 // for no car or no target, a car already chased with or a target of another type. Further than dist from the target
 // and faster than speed (in km/h) the car brakes where it drives away (Tick); its driver gets factor. The roads'
-// nodes from the car's link to the one nearest to pos (FindPath runs a second time, as PS2's), the other end of the
-// car's link first, the last link dropped where pos lies between it and the node before, then pos.
+// nodes from the road node nearest to the car to the one nearest to pos (FindPath runs a second time, as PS2's), the
+// car's node's other neighbour first, the last road node dropped where pos lies between it and the one before, then
+// pos.
 // FUNCTION: GAME 0x4a0af0
 bool C_sledovacka::AddCarEscape(C_car *car, C_actor *target, const S_vector &pos, bool unknown, float speed, float dist,
     float factor)
@@ -239,21 +240,21 @@ bool C_sledovacka::AddCarEscape(C_car *car, C_actor *target, const S_vector &pos
         else
             path.push_back(from);
         road_net->FindPath(from, to, path);
-        // The other end of the car's link first
-        ushort first = road_net->links[from & NEARNODE_INDEX].end0 == path[1] ?
-            road_net->links[from & NEARNODE_INDEX].end1 : road_net->links[from & NEARNODE_INDEX].end0;
+        // The car's road node's other neighbour first
+        ushort first = road_net->nodes[from & NEARNODE_INDEX].conns[0] == path[1] ?
+            road_net->nodes[from & NEARNODE_INDEX].conns[1] : road_net->nodes[from & NEARNODE_INDEX].conns[0];
         path.insert(path.begin(), first);
-        // The last link dropped where pos lies between it and the node before (a node or a link)
+        // The last road node dropped where pos lies between it and the one before (a crossing or a road node)
         if (path[path.size() - 2] & NEARNODE_FLAG)
         {
-            if ((pos - road_net->links[path[path.size() - 1] & NEARNODE_INDEX].pos)
-                .Dot(pos - road_net->links[path[path.size() - 2] & NEARNODE_INDEX].pos) < 0.0f)
+            if ((pos - road_net->nodes[path[path.size() - 1] & NEARNODE_INDEX].pos)
+                .Dot(pos - road_net->nodes[path[path.size() - 2] & NEARNODE_INDEX].pos) < 0.0f)
                 path.pop_back();
         }
         else
         {
-            if ((pos - road_net->links[path[path.size() - 1] & NEARNODE_INDEX].pos)
-                .Dot(pos - road_net->nodes[path[path.size() - 2]].pos) < 0.0f)
+            if ((pos - road_net->nodes[path[path.size() - 1] & NEARNODE_INDEX].pos)
+                .Dot(pos - road_net->crossings[path[path.size() - 2]].pos) < 0.0f)
                 path.pop_back();
         }
         e.driver->path.clear();
@@ -278,7 +279,7 @@ bool C_sledovacka::AddCarEscape(C_car *car, C_actor *target, const S_vector &pos
             e.driver->next_node = 0;
         }
         for (int k = e.driver->path.size(); k--;)
-            e.driver->path[k].unknown_48 = 1000.0f;
+            e.driver->path[k].speed = 1000.0f;
         // pos last
         S_car_node node;
         memset(&node, 0, sizeof(node));
@@ -286,7 +287,7 @@ bool C_sledovacka::AddCarEscape(C_car *car, C_actor *target, const S_vector &pos
         node.cur_lane = 0;
         node.num_lanes = 1;
         node.num_type2 = 1;
-        node.unknown_48 = 1000.0f;
+        node.speed = 1000.0f;
         node.unknown_4c = 1.5f;
         node.unknown_54 = true;
         node.distance[0] = (node.pos[0] - e.driver->path.back().pos[0]).Magnitude();
@@ -300,7 +301,7 @@ bool C_sledovacka::AddCarEscape(C_car *car, C_actor *target, const S_vector &pos
 
 // A car sent to pos, as PS2's: false for no car or a car already chased with. Direct, it drives straight there
 // (SLEDF_MOVE_DIRECT: a path of two nodes, its place and pos); else along the roads (SLEDF_MOVE_ROADS, with flags'
-// SLEDF_UNKNOWN_200000): the roads' nodes between the links nearest to the car and to pos, the first and the last
+// SLEDF_UNKNOWN_200000): the roads' nodes between the road nodes nearest to the car and to pos, the first and the last
 // dropped where the car or pos lies between them and the next, then the car's place before them and pos after.
 // FUNCTION: GAME 0x4a1220
 bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bool unknown, uint flags)
@@ -335,7 +336,7 @@ bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bo
         node.cur_lane = 0;
         node.num_lanes = 1;
         node.num_type2 = 1;
-        node.unknown_48 = 2.5f;
+        node.speed = 2.5f;
         node.unknown_4c = 2.0f;
         node.unknown_54 = true;
         e.driver->path.clear();
@@ -361,7 +362,7 @@ bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bo
         node.cur_lane = 0;
         node.num_lanes = 1;
         node.num_type2 = 1;
-        node.unknown_48 = 5.0f;
+        node.speed = 5.0f;
         node.unknown_4c = 1.5f;
         node.unknown_54 = true;
         std::vector<ushort> path;
@@ -369,31 +370,31 @@ bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bo
         {
             if (!road_net->FindPath(from, to, path))
                 return false;
-            // The first link dropped where the car lies between it and the next node, the last where pos does
+            // The first road node dropped where the car lies between it and the next one, the last where pos does
             if (path[1] & NEARNODE_FLAG)
             {
-                if ((node.pos[0] - road_net->links[path[0] & NEARNODE_INDEX].pos)
-                    .Dot(node.pos[0] - road_net->links[path[1] & NEARNODE_INDEX].pos) < 0.0f)
+                if ((node.pos[0] - road_net->nodes[path[0] & NEARNODE_INDEX].pos)
+                    .Dot(node.pos[0] - road_net->nodes[path[1] & NEARNODE_INDEX].pos) < 0.0f)
                     path.erase(path.begin());
             }
             else
             {
-                if ((node.pos[0] - road_net->links[path[0] & NEARNODE_INDEX].pos)
-                    .Dot(node.pos[0] - road_net->nodes[path[1]].pos) < 0.0f)
+                if ((node.pos[0] - road_net->nodes[path[0] & NEARNODE_INDEX].pos)
+                    .Dot(node.pos[0] - road_net->crossings[path[1]].pos) < 0.0f)
                     path.erase(path.begin());
             }
             if (path.size() > 1)
             {
                 if (path[path.size() - 2] & NEARNODE_FLAG)
                 {
-                    if ((pos - road_net->links[path[path.size() - 1] & NEARNODE_INDEX].pos)
-                        .Dot(pos - road_net->links[path[path.size() - 2] & NEARNODE_INDEX].pos) < 0.0f)
+                    if ((pos - road_net->nodes[path[path.size() - 1] & NEARNODE_INDEX].pos)
+                        .Dot(pos - road_net->nodes[path[path.size() - 2] & NEARNODE_INDEX].pos) < 0.0f)
                         path.pop_back();
                 }
                 else
                 {
-                    if ((pos - road_net->links[path[path.size() - 1] & NEARNODE_INDEX].pos)
-                        .Dot(pos - road_net->nodes[path[path.size() - 2]].pos) < 0.0f)
+                    if ((pos - road_net->nodes[path[path.size() - 1] & NEARNODE_INDEX].pos)
+                        .Dot(pos - road_net->crossings[path[path.size() - 2]].pos) < 0.0f)
                         path.pop_back();
                 }
             }
@@ -401,13 +402,13 @@ bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bo
             {
                 if (path[0] & NEARNODE_FLAG)
                 {
-                    if ((pos - node.pos[0]).Dot(pos - road_net->links[path[path.size() - 1] & NEARNODE_INDEX].pos) <
+                    if ((pos - node.pos[0]).Dot(pos - road_net->nodes[path[path.size() - 1] & NEARNODE_INDEX].pos) <
                         0.0f)
                         path.pop_back();
                 }
                 else
                 {
-                    if ((pos - node.pos[0]).Dot(pos - road_net->nodes[path[path.size() - 1]].pos) < 0.0f)
+                    if ((pos - node.pos[0]).Dot(pos - road_net->crossings[path[path.size() - 1]].pos) < 0.0f)
                         path.pop_back();
                 }
             }
@@ -439,7 +440,7 @@ bool C_sledovacka::AddCarMoveTo(C_car *car, const S_vector &pos, bool direct, bo
         node.cur_lane = 0;
         node.num_lanes = 1;
         node.num_type2 = 1;
-        node.unknown_48 = 5.0f;
+        node.speed = 5.0f;
         node.unknown_4c = 1.5f;
         node.unknown_54 = true;
         node.distance[0] = (node.pos[0] - e.driver->path.back().pos[0]).Magnitude();
@@ -487,7 +488,7 @@ void C_sledovacka::RemoveCar(C_car *car)
 static const int phase_colors[10] = {1, 1, 1, 1, 1, 4, 4, 4, 4, 2};
 
 // The lanes' positions of a path found on the roads (PS2 name), after PreparePath, as PS2's: each node's position from
-// its road node, its speed and its kind of node (2.5 on a link, 4.1 on a node) and its road's lanes (the positions
+// road index, its speed and its kind of node (2.5 on a road node, 4.1 at a crossing) and its road's lanes (the positions
 // of its lanes beside the line through its neighbours, half the first lane's width beside it where the road has no
 // lanes); a crossing's positions moved to where the lanes from the nodes before and after it meet; the semaphores'
 // phases of the nodes before a crossing with a semaphore (a bridge's own, or C_game's two by the road's direction);
@@ -500,9 +501,9 @@ bool C_sledovacka::RecompilePath(int index)
     for (i = 0; i < path.size(); i++)
     {
         if (path[i].road_node & NEARNODE_FLAG)
-            path[i].unknown_48 = road_net->links[path[i].road_node & NEARNODE_INDEX].unknown_c;
+            path[i].speed = road_net->nodes[path[i].road_node & NEARNODE_INDEX].speed;
         else
-            path[i].unknown_48 = road_net->nodes[path[i].road_node].unknown_10;
+            path[i].speed = road_net->crossings[path[i].road_node].speed;
         if (path[i].road_node & NEARNODE_FLAG)
             path[i].unknown_4c = 2.5f;
         else
@@ -649,7 +650,7 @@ bool C_sledovacka::RecompilePath(int index)
     // The semaphores: the node before a crossing that has one waits at its phase
     for (i = path.size(); i--;)
     {
-        if (!(path[i].road_node & NEARNODE_FLAG) && i > 0 && road_net->nodes[path[i].road_node].semaphore)
+        if (!(path[i].road_node & NEARNODE_FLAG) && i > 0 && road_net->crossings[path[i].road_node].semaphore)
         {
             int j;
             for (j = bridges.size(); j--;)
@@ -680,10 +681,10 @@ bool C_sledovacka::RecompilePath(int index)
     return true;
 }
 
-// Each node's road from the first one on (PS2 name), the road's lanes towards the next node: the first node's road
-// node found past the links at the path's start, then each node's lanes those of its road node towards the next one
-// (a link keeps the previous node's). False for a path of fewer than two nodes or where a road node doesn't lead to
-// the next one.
+// Each node's road from the first one on (PS2 name), the road's lanes towards the next node: the first node's
+// crossing found past the road nodes at the path's start, then each node's lanes those of its crossing's road towards
+// the next one (a road node keeps the previous node's). False for a path of fewer than two nodes or where a crossing
+// doesn't lead to the next one.
 // FUNCTION: GAME 0x4a28c0
 bool C_sledovacka::PreparePath(int index)
 {
@@ -694,22 +695,22 @@ bool C_sledovacka::PreparePath(int index)
     while (n & NEARNODE_FLAG)
     {
         ushort next;
-        if (road_net->links[n & NEARNODE_INDEX].end0 == prev)
-            next = road_net->links[n & NEARNODE_INDEX].end1;
+        if (road_net->nodes[n & NEARNODE_INDEX].conns[0] == prev)
+            next = road_net->nodes[n & NEARNODE_INDEX].conns[1];
         else
-            next = road_net->links[n & NEARNODE_INDEX].end0;
+            next = road_net->nodes[n & NEARNODE_INDEX].conns[0];
         prev = n;
         n = next;
     }
     int i;
     for (i = 0; i < 4; i++)
     {
-        if (road_net->nodes[n].conns[i] == prev)
+        if (road_net->crossings[n].conns[i] == prev)
             break;
     }
     if (i == 4)
         return false;
-    S_road_lanes *lanes = &road_net->nodes[n].lanes[i];
+    S_road_lanes *lanes = &road_net->crossings[n].lanes[i];
     for (uint j = 0; j < elements[index].driver->path.size(); j++)
     {
         if (elements[index].driver->path[j].road_node & NEARNODE_FLAG)
@@ -720,13 +721,13 @@ bool C_sledovacka::PreparePath(int index)
             int k;
             for (k = 0; k < 4; k++)
             {
-                if (road_net->nodes[elements[index].driver->path[j].road_node].conns[k] ==
+                if (road_net->crossings[elements[index].driver->path[j].road_node].conns[k] ==
                     elements[index].driver->path[j + 1].road_node)
                     break;
             }
             if (k == 4)
                 return false;
-            lanes = &road_net->nodes[elements[index].driver->path[j].road_node].lanes[k];
+            lanes = &road_net->crossings[elements[index].driver->path[j].road_node].lanes[k];
         }
     }
     return true;
@@ -860,7 +861,7 @@ void C_sledovacka::TickDriver(int index, uint time)
     node.cur_lane = 0;
     node.num_lanes = 1;
     node.num_type2 = 1;
-    node.unknown_48 = 1000.0f;
+    node.speed = 1000.0f;
     node.unknown_4c = 0.5f;
     node.unknown_54 = true;
     elements[index].driver->path.insert(elements[index].driver->path.begin() + n, node);
@@ -1002,14 +1003,14 @@ void C_sledovacka::Tick(uint time)
                         e.driver->next_node = 0;
                     }
                     for (int k = e.driver->path.size(); k--;)
-                        e.driver->path[k].unknown_48 = 1000.0f;
+                        e.driver->path[k].speed = 1000.0f;
                     S_car_node node;
                     memset(&node, 0, sizeof(node));
                     node.pos[0] = e.car->world_pos;
                     node.cur_lane = 0;
                     node.num_lanes = 1;
                     node.num_type2 = 1;
-                    node.unknown_48 = 1000.0f;
+                    node.speed = 1000.0f;
                     node.unknown_4c = 1.5f;
                     node.unknown_54 = true;
                     e.driver->path.insert(e.driver->path.begin(), node);
@@ -1018,7 +1019,7 @@ void C_sledovacka::Tick(uint time)
                         node.cur_lane = 0;
                         node.num_lanes = 1;
                         node.num_type2 = 1;
-                        node.unknown_48 = 10.0f;
+                        node.speed = 10.0f;
                         node.unknown_4c = 1.5f;
                         node.unknown_54 = true;
                         node.pos[0] = e.target_pos;
@@ -1061,7 +1062,7 @@ void C_sledovacka::Tick(uint time)
                         node.cur_lane = 0;
                         node.num_lanes = 1;
                         node.num_type2 = 1;
-                        node.unknown_48 = 1000.0f;
+                        node.speed = 1000.0f;
                         node.unknown_4c = 3.0f;
                         node.unknown_54 = true;
                         e.driver->path.clear();
@@ -1362,7 +1363,7 @@ void C_sledovacka::Tick(uint time)
                 node.cur_lane = 0;
                 node.num_lanes = 1;
                 node.num_type2 = 1;
-                node.unknown_48 = 1000.0f;
+                node.speed = 1000.0f;
                 node.unknown_4c = 2.0f;
                 node.unknown_54 = true;
                 e.driver->path.clear();
@@ -2324,22 +2325,22 @@ bool C_sledovacka::SaveGameLoad(void **buf)
         while (n & NEARNODE_FLAG)
         {
             ushort next;
-            if (road_net->links[n & NEARNODE_INDEX].end0 == prev)
-                next = road_net->links[n & NEARNODE_INDEX].end1;
+            if (road_net->nodes[n & NEARNODE_INDEX].conns[0] == prev)
+                next = road_net->nodes[n & NEARNODE_INDEX].conns[1];
             else
-                next = road_net->links[n & NEARNODE_INDEX].end0;
+                next = road_net->nodes[n & NEARNODE_INDEX].conns[0];
             prev = n;
             n = next;
         }
         int k;
         for (k = 0; k < 4; k++)
         {
-            if (road_net->nodes[n].conns[k] == prev)
+            if (road_net->crossings[n].conns[k] == prev)
                 break;
         }
         if (k == 4)
             continue;
-        S_road_lanes *lanes = &road_net->nodes[n].lanes[k];
+        S_road_lanes *lanes = &road_net->crossings[n].lanes[k];
         for (uint j = 0; j < elements[i].driver->path.size(); j++)
         {
             if (elements[i].driver->path[j].road_node & NEARNODE_FLAG || j == elements[i].driver->path.size() - 1)
@@ -2349,13 +2350,13 @@ bool C_sledovacka::SaveGameLoad(void **buf)
                 elements[i].driver->path[j].lanes = lanes;
                 for (k = 0; k < 4; k++)
                 {
-                    if (road_net->nodes[elements[i].driver->path[j].road_node].conns[k] ==
+                    if (road_net->crossings[elements[i].driver->path[j].road_node].conns[k] ==
                         elements[i].driver->path[j + 1].road_node)
                         break;
                 }
                 if (k == 4)
                     break;
-                lanes = &road_net->nodes[elements[i].driver->path[j].road_node].lanes[k];
+                lanes = &road_net->crossings[elements[i].driver->path[j].road_node].lanes[k];
             }
         }
     }

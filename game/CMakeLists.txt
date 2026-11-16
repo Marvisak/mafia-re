@@ -293,6 +293,10 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
         /INCLUDE:?FindPathCompFunc@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z
         /INCLUDE:?FindPathCompFuncJIPO@C_web_path@@QAE_NIP6IHG@ZPAV?$vector@IV?$allocator@I@std@@@std@@P6IMGGE@ZG@Z)
+    # road_web.cpp's functions that nothing written calls yet (the traffic's paths, C_trf_c.cpp)
+    target_link_options(game PRIVATE
+        /INCLUDE:?NPC_FindPathFromNodeToCross@C_roads@@QAE_NGUS_vector@@PAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z
+        /INCLUDE:?NPC_FindPathToNextCross1@C_roads@@QAE_NGHPAV?$vector@US_car_node@@V?$allocator@US_car_node@@@std@@@std@@@Z)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

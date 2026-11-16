@@ -2046,7 +2046,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_MenuItem@@UAE@XZ
+// ??1GM_EditNum@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2121,7 +2121,7 @@ public:
 // ?GetType@GM_MenuItem@@UAEIXZ
 
 // FUNCTION: GAME 0x5dadc0
-// ?Draw@GM_MenuItemMem@@UAEXI@Z
+// ?Draw@GM_MenuItem@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dae60
 // ?Mouse@GM_MenuItem@@UAEIHHHII@Z
@@ -2257,7 +2257,7 @@ public:
 // ?GetType@GM_ButtonSelect@@UAEIXZ
 
 // FUNCTION: GAME 0x5dce30
-// ?SetRangeDword@GM_SliderInteger@@UAEXII@Z
+// ?SetRangeDword@GM_ButtonSelect@@UAEXII@Z
 
 // FUNCTION: GAME 0x5dce50
 // ?Mouse@GM_ButtonSelect@@UAEIHHHII@Z
@@ -2319,7 +2319,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_EGM_ProgressBar@@UAEPAXI@Z
+// ??_EGM_ComboBox@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0

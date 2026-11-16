@@ -102,7 +102,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 67 | `549f90–54d31c` | 0x338c | `pathweb.cpp` | whole | PS2's file, after Mission.cpp as here: the walking web (`C_web_node`, `C_web_path`, vtable `6251f8`) and its pathfinding (`FindPath`, `FindPathCompFunc`, `nodeproc`); the node's destructor first, the inline constructors' copies last |
 | 68 | `54d320–55997c` | 0xc65c | `racing.cpp`? | part | `C_racing`'s constructor `551830` and destructor `551a70` |
 | 69 | `559980–559ccc` | 0x34c |  |  |  |
-| 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | part | `C_roads` (vtable `625370`): the constructor first |
+| 70 | `559cd0–55cf3c` | 0x326c | `road_web.cpp` | whole | PS2's file, in PS2's order: `C_roads` (vtable `625370`), road.bin's crossings and nodes and the paths the traffic and the chases drive along them; the constructor first, `MergeData` (PC only) after `LoadData`, `FindPathBeweenCross`'s local `S_pathfind` constructor after it |
 | 71 | `55cf40–55cf9c` | 0x5c |  |  |  |
 | 72 | `55cfa0–56040c` | 0x346c | `tools.cpp` | whole | PS2's file: the direction tables, the logo videos, `C_fire`, `C_using_object`, `C_sound_table` and `soundArena` |
 | 73 | `560410–5605bc` | 0x1ac | `tshift.cpp` | whole | PS2's file, after tools.cpp as on PS2 |

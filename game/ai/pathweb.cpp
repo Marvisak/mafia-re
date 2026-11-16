@@ -408,7 +408,7 @@ bool C_web_path::FindPath(uint from, uint to, std::vector<uint> *path, ushort fl
     if (!finding_by_roads) {
         S_vector a = nodes[from].GetPos(), b = nodes[to].GetPos();
         S_vector d = a - b;
-        if (d.x * d.x + d.y * d.y + d.z * d.z > 250000.0f && act_mission->GetRoads()->nodes.size()) {
+        if (d.x * d.x + d.y * d.y + d.z * d.z > 250000.0f && act_mission->GetRoads()->crossings.size()) {
             finding_by_roads = true;
             bool result = FindPath_FastByRoads(from, to, path, flags);
             finding_by_roads = false;

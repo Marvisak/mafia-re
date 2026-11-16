@@ -54,9 +54,9 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
-0x00404810  100.00%   std::_Construct(struct C_sledovacka::S_ELEMENT *, struct C_sledovacka::S_ELEMENT const &)
-0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
+0x00404830  100.00%   std::_Construct(struct ai_group_member *, struct ai_group_member const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
-0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -333,7 +333,7 @@
 0x0042f160  stub      C_car_ex::DCAddPerson
 0x0042f320  stub      C_car_ex::DCDelPerson
 0x0042f390  stub      C_car_ex::Update
-0x00430470  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::insert
+0x00430470  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::insert
 0x004307a0  missing   $CRT_CPP_Initializer(26)
 0x004307d0  100.00%   C_cartridge::C_cartridge
 0x00430800  100.00%   C_cartridge::`scalar deleting destructor'
@@ -1319,7 +1319,7 @@
 0x00537130  100.00%   std::copy(struct C_game::S_i_show *, struct C_game::S_i_show *, struct C_game::S_i_show *)
 0x00537650  99.42%    std::_Construct(struct ai_group *, struct ai_group const &)
 0x00537830  100.00%   std::_Construct(struct ai_follow_group *, struct ai_follow_group const &)
-0x00537910  100.00%   std::_Construct(struct S_semaphore *, struct S_semaphore const &)
+0x00537910  100.00%   std::_Construct(struct C_game::S_i_show *, struct C_game::S_i_show const &)
 0x00537930  100.00%   std::_Construct(struct ai_fight_followship *, struct ai_fight_followship const &)
 0x00537a50  99.49%    ai_group::operator=
 0x00537c70  100.00%   ai_follow_group::operator=
@@ -1328,7 +1328,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct C_game::S_enemy_talk *, struct C_game::S_enemy_talk *, struct C_game::S_enemy_talk *)
+0x00538520  100.00%   std::copy(struct C_actor::S_posscoll_frame *, struct C_actor::S_posscoll_frame *, struct C_actor::S_posscoll_frame *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1439,14 +1439,14 @@
 0x00546d30  100.00%   std::vector<C_program::S_instruction,std::allocator<C_program::S_instruction> >::push_back
 0x00546ef0  missing   Unknown FUNCTION
 0x005470a0  100.00%   std::vector<S_vector,std::allocator<S_vector> >::size
-0x005470c0  100.00%   std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::size
-0x005470f0  100.00%   std::vector<S_road_link,std::allocator<S_road_link> >::clear
+0x005470c0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::size
+0x005470f0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::clear
 0x00547120  100.00%   C_mission::GetTShift
 0x00547130  100.00%   SetFrameActor
 0x00547170  100.00%   std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::operator[]
 0x00547220  100.00%   C_actor::SetFromMission
 0x00547230  100.00%   std::vector<C_I3D_cache<I3D_animation_set>::S_itm,std::allocator<C_I3D_cache<I3D_animation_set>::S_itm> >::clear
-0x005472a0  100.00%   std::vector<S_road_node,std::allocator<S_road_node> >::erase
+0x005472a0  100.00%   std::vector<S_road_crossing,std::allocator<S_road_crossing> >::erase
 0x005472f0  100.00%   C_game::C_game
 0x005479c0  100.00%   std::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >::vector<S_cache_model_inbb,std::allocator<S_cache_model_inbb> >
 0x005479e0  100.00%   C_using_object::~C_using_object
@@ -1472,7 +1472,7 @@
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
 0x005490b0  100.00%   std::_Construct(struct C_game::S_Telephone *, struct C_game::S_Telephone const &)
-0x005490d0  100.00%   std::_Construct(struct G_MIIntroSubtitles *, struct G_MIIntroSubtitles const &)
+0x005490d0  100.00%   std::_Construct(struct S_tshift_elem *, struct S_tshift_elem const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1530,15 +1530,27 @@
 0x00559ca0  missing   $CRT_CPP_Initializer(153)
 0x00559cd0  100.00%   C_roads::C_roads
 0x00559d00  100.00%   C_roads::~C_roads
-0x00559d40  stub      C_roads::SaveData
-0x00559e60  stub      C_roads::LoadData
-0x0055a210  stub      C_roads::MergeData
-0x0055a620  stub      C_roads::RecompileDistances
-0x0055b370  stub      C_roads::GetNearNode
-0x0055be10  stub      C_roads::FindNearCrossingFromNode
-0x0055bf60  stub      C_roads::FindPathBeweenCross
-0x0055c4e0  stub      C_roads::FindPath
-0x0055c890  stub      C_roads::SortNodesByX
+0x00559d40  100.00%   C_roads::SaveData
+0x00559e60  98.46%    C_roads::LoadData
+0x0055a210  98.90%    C_roads::MergeData
+0x0055a620  56.16%    C_roads::RecompileDistances
+0x0055b370  100.00%   C_roads::GetNearNode
+0x0055b570  100.00%   C_roads::FindCrossing
+0x0055b5d0  100.00%   C_roads::NPC_FindCrossIdxToCross
+0x0055b710  100.00%   C_roads::NPC_FindPathFromNodeToCross
+0x0055bad0  100.00%   C_roads::NPC_FindPathToNextCross1
+0x0055bc10  100.00%   C_roads::FillPathFromNodeToCross
+0x0055bcd0  100.00%   C_roads::FindCrossingFromNode
+0x0055be10  100.00%   C_roads::FindNearCrossingFromNode
+0x0055bf60  100.00%   C_roads::FindPathBeweenCross
+0x0055c430  100.00%   `C_roads::FindPathBeweenCross'::`2'::S_pathfind::S_pathfind
+0x0055c440  100.00%   C_roads::FillPathFromCrossToCross
+0x0055c4e0  100.00%   C_roads::FindPath
+0x0055c890  85.96%    C_roads::SortNodesByX
+0x0055caa0  100.00%   C_roads::IsSorted
+0x0055cb00  100.00%   C_roads::DestroyAllOffPaths
+0x0055cb90  100.00%   std::vector<unsigned short,std::allocator<unsigned short> >::erase(unsigned short *, unsigned short *)
+0x0055cbc0  100.00%   std::vector<S_road_crossing,std::allocator<S_road_crossing> >::insert
 0x0055cf10  missing   $CRT_CPP_Initializer(154)
 0x0055cf40  missing   $CRT_CPP_Initializer(155)
 0x0055cf50  missing   $CRT_CPP_Initializer(156)
@@ -1609,7 +1621,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(struct g_collision_header **, struct g_collision_header **, struct g_collision_header **)
+0x00564750  100.00%   std::copy(int *, int *, int *)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2195,7 +2207,7 @@
 0x005b7560  100.00%   C_game::AddHumanTalk
 0x005b7730  100.00%   C_game::DelHumanTalk
 0x005b77c0  100.00%   C_game::DeathHumanTalk
-0x005b7860  97.59%    C_game::CreateSignalMarkIDX
+0x005b7860  97.93%    C_game::CreateSignalMarkIDX
 0x005b7be0  52.68%    C_game::DestroyControlSignal
 0x005b7ed0  100.00%   C_game::EntityBlock
 0x005b7f70  100.00%   C_game::AddInvisibleActor
@@ -2253,10 +2265,10 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
+0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
-0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)
+0x005bca00  100.00%   std::_Construct(struct ai_seg_stat *, struct ai_seg_stat const &)
 0x005bca20  100.00%   C_game::S_RoadBlock::operator=
 0x005bcbc0  missing   Unknown FUNCTION
 0x005bcbe0  missing   $CRT_CPP_Initializer(205)
