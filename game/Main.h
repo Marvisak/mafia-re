@@ -63,7 +63,7 @@ extern bool _is_intro_;
 // ?_Destroy@?$vector@US_frame_actor_buffer@C_mission@@V?$allocator@US_frame_actor_buffer@C_mission@@@std@@@std@@IAEXPAUS_frame_actor_buffer@C_mission@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEPAPAVC_actor@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@IAEPAPAUG_RaceCamera@@PBQAU3@0PAPAU3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEXPAPAVC_actor@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z

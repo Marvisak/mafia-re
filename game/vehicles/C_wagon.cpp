@@ -17,12 +17,11 @@ C_wagon::~C_wagon()
     StubLog("C_wagon::~C_wagon");
 }
 
-// The original's is C_door's, folded: it logs that name, so ours folds too
-// STUB: GAME 0x4393a0 FOLDED
+// The base's, its result converted again: the linker folded it with C_door's
+// FUNCTION: GAME 0x4393a0 FOLDED
 bool C_wagon::Init(I3D_frame *frm)
 {
-    StubLog("C_door::Init");
-    return C_actor::Init(frm);
+    return C_actor::Init(frm) ? true : false;
 }
 
 // The linker's folded empty function of the out-of-line kind (0x4ab130)

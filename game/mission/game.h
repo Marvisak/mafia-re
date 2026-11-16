@@ -1192,7 +1192,7 @@ public:
 // ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_cache_model_set@@QAE@XZ
+// ??1S_RoadBlock@C_game@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
@@ -1230,7 +1230,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_stop_sounds@C_game@@V?$allocator@US_stop_sounds@C_game@@@std@@@std@@QAEXPAUS_stop_sounds@C_game@@IABU34@@Z
+// ?insert@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEXPAUai_fight_member@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z
@@ -1254,7 +1254,7 @@ public:
 // ?_Construct@std@@YIXPAUS_RoadBlock@C_game@@ABU23@@Z
 
 // TEMPLATE: GAME 0x5bc9e0
-// ?_Construct@std@@YIXPAUS_seagull@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_shoot@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x5bca20
 // ??4S_RoadBlock@C_game@@QAEAAU01@ABU01@@Z

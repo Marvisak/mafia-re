@@ -47,7 +47,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 12 | `430ba0–43286c` | 0x1ccc | `C_crash_obj.cpp` | stubs | the pieces crashes break off: constructor `431b40` (vtable `623918`) after the helpers that create them |
 | 13 | `432870–433fdc` | 0x176c | `C_detector.cpp` | whole | constructor `432880`; vtables `6239b0` and `623a48` (a `C_program` as its second base) |
 | 14 | `433fe0–43923c` | 0x525c | `C_dog.cpp` | part | constructor `434030` (vtable `623a70`) |
-| 15 | `439240–43bd8c` | 0x2b4c | `C_door.cpp` | part | constructor `439290` (vtable `623b20`) |
+| 15 | `439240–43bd8c` | 0x2b4c | `C_door.cpp` | whole | constructor `439290` (vtable `623b20`), after `439240`, file 14's: a copy of the precompiled headers' inline functions that `/YX` puts after a file's marker. `43bce0` and `43bd30` are `I3D.h`'s `SetRot` and `GetHRBoundVolume(I3D_bvolume &)`, deferred by `/YX` |
 | 16 | `43bd90–4435ac` | 0x781c | `C_driver.cpp` | part | the cars' AI driver: constructor `43bd90` first |
 | 17 | `4435b0–443a2c` | 0x47c | `C_drop_in_weapon.cpp` | whole | the weapons put down: constructor `4435b0` first |
 | 18 | `443a30–44442c` | 0x9fc |  |  |  |

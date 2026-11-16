@@ -530,6 +530,16 @@ public:
     // The hierarchy's bound volume in the frame's space, updated first if it isn't (the name is a guess, after
     // GetHRBoundVolumeW; the game's garage reaches the private UpdateHRBoundVol through it). Defined at the file's end.
     const I3D_bvolume &GetHRBoundVolume();
+#ifndef LS3DF_EXPORTS
+    // The same copied out (the game's; the name is ours): the doors' AI and SaveGameLoad call it out of line
+    // FUNCTION: GAME 0x43bd30
+    void GetHRBoundVolume(I3D_bvolume &bvol)
+    {
+        if (!(m_FrmFlags & FRMFLAGS_HR_BOUND_VALID))
+            UpdateHRBoundVol();
+        bvol = m_HRBoundVol;
+    }
+#endif
 
     // The hierarchy's bound volume in world space, updated first if it isn't (the name is a guess, after the visuals'
     // GetWBoundVolume; the collision tests, free functions, reach the private UpdateHRBoundVolW through it)

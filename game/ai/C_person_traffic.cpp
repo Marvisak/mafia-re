@@ -289,12 +289,11 @@ C_traffic_generator::~C_traffic_generator()
     model_counts = NULL;
 }
 
-// The original's is C_door's, folded: it logs that name, so ours folds too
-// STUB: GAME 0x4393a0 FOLDED
+// The base's, its result converted again: the linker folded it with C_door's
+// FUNCTION: GAME 0x4393a0 FOLDED
 bool C_traffic_generator::Init(I3D_frame *frm)
 {
-    StubLog("C_door::Init");
-    return C_actor::Init(frm);
+    return C_actor::Init(frm) ? true : false;
 }
 
 // The base's, then the settings and a copy of the models' names and counts

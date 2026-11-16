@@ -557,7 +557,7 @@ bool C_game::Init()
     for (i = actors.size(); i--;)
     {
         if (actors[i]->GetType() == ACTOR_DOOR)
-            ((C_door *)actors[i])->ResetUnknown110();
+            ((C_door *)actors[i])->ResetLinks();
     }
 
     // The actors' GameInit, the loading bar moving from 0.1 to 0.7 over them, twenty times at most
