@@ -496,7 +496,7 @@ public:
 // ?SaveGameSave@C_scatter@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?vfunc_53@C_recorder@@UAEHXZ
+// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)

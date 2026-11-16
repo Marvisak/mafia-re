@@ -134,6 +134,7 @@ address|type|size
 0x624bf8|float|4
 0x624d34|float|4
 0x624d40|float|8
+0x624e00|float|4
 0x624e04|float|4
 0x624e14|float|4
 0x624e18|float|4

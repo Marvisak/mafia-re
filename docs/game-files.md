@@ -111,7 +111,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 76 | `566160–5661ec` | 0x8c | `WinMain.cpp` (ours) | whole | only `WinMain` (`566160`) |
 | 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | whole | the start-up's Windows helpers: the CD check (`566440`), the drive search, then the caches' `AddDir` |
 | 78 | `566f40–5674ec` | 0x5ac | `C_actor_shot.cpp` | part | constructor `566f40` (vtable `625458`) first |
-| 79 | `5674f0–567cec` | 0x7fc | `C_box_new.cpp` | part | constructor `5674f0` (vtable `6254f0`, a `C_PhThing`) first |
+| 79 | `5674f0–567cec` | 0x7fc | `C_box_new.cpp` | whole | the scene's physical boxes and wheels: constructor `5674f0` (vtable `6254f0`, a `C_PhThing`) first |
 | 80 | `567cf0–56ad9c` | 0x30ac | `C_bridge.cpp` | stubs | constructor `567d10` (vtable `625588`) |
 | 81 | `56ada0–56adcc` | 0x2c |  |  |  |
 | 82 | `56add0–56b17c` | 0x3ac | `c_clock.cpp` | whole | `C_clock`: constructor `56add0` (vtable `625648`) first |

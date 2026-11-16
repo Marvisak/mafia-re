@@ -6196,17 +6196,17 @@ bool C_human::DropOutItems(std::vector<S_GameItem> &items)
                     case GAMEITEM_CROWBAR:
                     case GAMEITEM_BOTTLE:
                     case GAMEITEM_SWORD:
-                        weapon->unknown_348 = 0xb;
+                        weapon->hit_sound = 0xb;
                         break;
                     case GAMEITEM_BASEBALL_BAT:
                     case GAMEITEM_BOARD:
-                        weapon->unknown_348 = 0xa;
+                        weapon->hit_sound = 0xa;
                         break;
                     case GAMEITEM_COLT_DETECTIVE:
                     case GAMEITEM_SW_MAGNUM:
                     case GAMEITEM_SW_MP:
                     case GAMEITEM_COLT_1911:
-                        weapon->unknown_348 = 9;
+                        weapon->hit_sound = 9;
                         break;
                     case GAMEITEM_MOLOTOV:
                     case GAMEITEM_THOMPSON:
@@ -6214,19 +6214,19 @@ bool C_human::DropOutItems(std::vector<S_GameItem> &items)
                     case GAMEITEM_SAWED_OFF:
                     case GAMEITEM_SPRINGFIELD:
                     case GAMEITEM_MOSIN_NAGANT:
-                        weapon->unknown_348 = 0xc;
+                        weapon->hit_sound = 0xc;
                         break;
                     case GAMEITEM_GRENADE:
-                        weapon->unknown_348 = 0;
+                        weapon->hit_sound = 0;
                         break;
                     case GAMEITEM_BUCKET:
-                        weapon->unknown_348 = 3;
+                        weapon->hit_sound = 3;
                         break;
                     case GAMEITEM_FLASHLIGHT:
-                        weapon->unknown_348 = 8;
+                        weapon->hit_sound = 8;
                         break;
                     default:
-                        weapon->unknown_348 = -1;
+                        weapon->hit_sound = -1;
                         break;
                     }
                     S_THING_BOX thing_box;
@@ -9712,7 +9712,7 @@ void C_human::StartWeaponEffect(int effect)
                         C_public_physics *phys = new C_public_physics;
                         if (phys->Init(vis)) {
                             S_THING_BOX thing_box;
-                            phys->unknown_348 = 8;
+                            phys->hit_sound = 8;
                             thing_box.weight = .5f;
                             thing_box.unknown_10 = .45f;
                             thing_box.velocity = S_vector(0.0f, -1.0f, 0.0f);

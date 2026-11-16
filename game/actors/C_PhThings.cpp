@@ -12,6 +12,12 @@ C_PhThing::C_PhThing()
     StubLog("C_PhThing::C_PhThing");
 }
 
+// STUB: GAME 0x45ed30
+void C_PhThing::InitWheel(S_THING_WHEEL *wheel)
+{
+    StubLog("C_PhThing::InitWheel");
+}
+
 // STUB: GAME 0x45ee90
 void C_PhThing::InitBox(S_THING_BOX *box)
 {

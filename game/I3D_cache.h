@@ -434,7 +434,7 @@ extern C_I3D_anim_cache anim_cache;
 // ??1S_itm@?$C_I3D_cache@VI3D_sound@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x409230
-// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0@Z
+// ?_Destroy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0@Z
 
 // TEMPLATE: GAME 0x409260
 // ?copy@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU23@00@Z
@@ -444,7 +444,7 @@ extern C_I3D_anim_cache anim_cache;
 // ?copy_backward@std@@YIPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU23@00@Z
 
 // TEMPLATE: GAME 0x409320
-// ?_Construct@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@ABU23@@Z
+// ?_Construct@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@ABU23@@Z
 
 // The items' erase, which C_mission::UnInit's inlined Clear calls out of line (CloseSystem's inlines it); the original
 // kept Mission.cpp's copy.
@@ -504,17 +504,17 @@ extern C_I3D_anim_cache anim_cache;
 // ??0S_itm@?$C_I3D_cache@VI3D_model@@@@QAE@XZ
 
 // TEMPLATE: GAME 0x47bbb0
-// ?size@?$vector@US_posscoll_frame@C_actor@@V?$allocator@US_posscoll_frame@C_actor@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_instruction@C_program@@V?$allocator@US_instruction@C_program@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x481890
-// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@@Z
+// ?erase@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PAU34@@Z
 
 // TEMPLATE: GAME 0x410e80
-// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PAU34@ABU34@@Z
+// ?insert@?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAEPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@PAU34@ABU34@@Z
 
 // The items' vector's _Ufill, which its insert calls; the original's first copy is C_animations.cpp's
 // TEMPLATE: GAME 0x4110f0
-// ?_Ufill@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@IABU34@@Z
+// ?_Ufill@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@IABU34@@Z
 
 // The caches' Create, each its own, and Clear, the three's folded
 // TEMPLATE: GAME 0x5c0290
@@ -566,7 +566,7 @@ extern C_I3D_anim_cache anim_cache;
 // ??1?$vector@VC_str@@V?$allocator@VC_str@@@std@@@std@@QAE@XZ
 
 // TEMPLATE: GAME 0x5c24b0
-// ??1?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_animation_set@@@@@std@@@std@@QAE@XZ
 
 // The abstract base's vtables, which the caches' constructors store first, and its scalar deleting destructors
 // VTABLE: GAME 0x625c90
