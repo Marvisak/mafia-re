@@ -65,7 +65,6 @@ public:
 
     // The fuse (the names are ours): AI counts fuse_time (ms) down while timer is set, and sets the grenade off below 0
     bool timer;                         // 0x138
-    uchar unknown_139[3];               // 0x139
     int fuse_time;                      // 0x13c
     // 0x140, it goes off at its first hit (the bottle's bounces above 0), which Collision and Hit count (the name is
     // ours)
@@ -73,18 +72,15 @@ public:
     // 0x141, it explodes (C_game::NewExplosion) where it goes off, with the radius and the power (NewGrenade's 15 and
     // 400; the names are ours, after NewExplosion's use of them)
     bool explode;
-    uchar unknown_142[2];               // 0x142
     float explosion_radius;             // 0x144
     float explosion_power;              // 0x148
     // 0x14c, it sets a fire (C_game::Unknown_5abe10, PS2's NewFire) where it goes off, with NewFire's time and its two
     // floats (NewGrenade's 5000, 2.5 and 50; the names are ours): SetFire's
     bool fire;
-    uchar unknown_14d[3];               // 0x14d
     int fire_time;                      // 0x150
     float fire_unknown1;                // 0x154
     float fire_unknown2;                // 0x158
     bool unknown_15c;                   // 0x15c, true from the constructor (PS2's 0x1b4 the same)
-    uchar unknown_15d[3];               // 0x15d
 };
 
 // SYNTHETIC: GAME 0x445290

@@ -18,7 +18,6 @@ struct S_car_node;
 struct S_road_lanes
 {
     ushort cross;                       // 0x0, the crossing at its other end, 0xffff for none (the name is ours)
-    uchar unknown_2[2];                 // 0x2
     float distance;                     // 0x4, the road's length to that crossing (the name is ours)
     // 0x8, the angle round the crossing from the road before to this one (RecompileDistances orders the roads by it;
     // the name is ours)
@@ -42,7 +41,6 @@ struct S_road_crossing
     // 0xc, whether the crossing has a semaphore: C_shvestky::TestOverRed tests the red light only at such a crossing
     // (PS2's tests 0x10 of its S_road_crossing; the name is a guess)
     bool semaphore;
-    uchar unknown_d[3];                 // 0xd
     // 0x10, the speed to drive at, in m/s, which the chases' path nodes take (S_car_node::speed): LoadData turns the
     // files' 16.666 (60 km/h) into 13.3 (the name is ours)
     float speed;

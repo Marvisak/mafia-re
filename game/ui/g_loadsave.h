@@ -359,7 +359,6 @@ public:
     // GarageGameDone then takes last_stolen into the garage, and with show_results runs GarageShowResultsProc
     bool show_results;                  // 0x1cc, GarageShowResults' (PS2's G_GarageClass 0x7c)
     bool add_last_stolen;               // 0x1cd, GarageAddLastStolen's (PS2's 0x7d)
-    uchar unknown_1ce[2];
     uint mission_name_id;               // 0x1d0, SetMissionNameID's, of the text database (the name is ours)
     // 0x1d4, set by SaveGameLoad, which runs the mission's script again from its save: SaveGameFromScript then skips
     // the first save and clears it, as does ProfileLoad (the name is ours)

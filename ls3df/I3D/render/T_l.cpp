@@ -45,7 +45,6 @@ struct S_temp_light {
     float range_delta;                  // 0x3c, its inverse if it's positive
     I3D_light *light;                   // 0x40
     float energy;                       // 0x44, how much the light matters: its color over its distance
-    uint unknown_48[2];
 };
 
 // The file's .bss isn't laid out yet: the original has TempLightList (PS2 name, bucket 286) after pTempLight (704),

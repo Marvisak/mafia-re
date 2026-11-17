@@ -2063,7 +2063,7 @@
 0x0059d500  100.00%   C_cutscene_recording::RecAddActor
 0x0059d740  100.00%   C_cutscene_recording::AddEntry
 0x0059da60  100.00%   C_cutscene_recording::AddActor
-0x0059dcd0  100.00%*  C_cutscene_recording::RecLoad
+0x0059dcd0  100.00%   C_cutscene_recording::RecLoad
 0x0059df40  100.00%   C_cutscene_recording::DetachActor
 0x0059dfb0  100.00%   C_cutscene_recording::AttachActor
 0x0059e020  100.00%   C_recorder::GetAnimEndTime

@@ -92,13 +92,11 @@ public:
         // ForceArrest's: ChceHoOpichatKazdyPoldaNaOkresku returns it ("every cop in the district wants him")
         bool alerted;
         bool nevi;                      // 0x51, NeviDoKterePiceVlezl's
-        uchar unknown_52[2];            // 0x52
         // 0x54 and 0x58, ZalozSpisATahniDoRiti_Haleluja's (Czech, rudely, "open a file and get lost, hallelujah"), the
         // police actions' once they end: CreateShvestkyTest makes nevi the human in another car than known_car, or on
         // foot without known_on_foot (the names are guesses)
         C_car *known_car;
         bool known_on_foot;
-        uchar unknown_59[3];            // 0x59
         // 0x5c, the more policemen the player's states 5 and 6 brought (1 or 2), DalsiChalpiDoPartie's
         int support_level;
         int rammed_car;                 // 0x60, StrcilJsemHoPoldumDoVyfuku's police car (a C_car *)
@@ -107,7 +105,6 @@ public:
         // car's driver), 6 make CarCollision's hit of a human SHVSTATE_KILL
         int run_over;
         bool hard_ram;                  // 0x6c, StrcilJsemHoPoldumDoVyfuku's ram above 9.7: SHVSTATE_ARREST, else 1
-        uchar unknown_6d[3];            // 0x6d
         // 0x70, the actors angry at the human (PS2's AddNasrany's and DelNasrany's), the dead ones (C_actor::dead) taken
         // out by Tick
         std::vector<C_actor *> nasrany;
@@ -135,7 +132,6 @@ public:
 
     // The names are ours
     bool active;                        // 0x0, SetActive's; PM_SHOWSYMBOL and its group do nothing while it is set
-    uchar unknown_1[3];
     S_timer records_timer;              // 0x4, Tick's period of the records
     // Two speeds, POLICEMANAGER_SETSPEED's (km/h made m/s): faster than the first is SHVF_SPEEDING (SHVSTATE_1),
     // faster than the second while speeding SHVSTATE_ARREST
@@ -150,7 +146,6 @@ public:
     // (980000 by default, "You've been arrested")
     uint arrest_text;
     bool unknown_38;                    // 0x38
-    uchar unknown_39[3];                // 0x39
     std::vector<S_shvestky *> records;  // 0x3c (PS2 0x40)
     std::vector<S_road_block_car> road_block_cars;  // 0x4c
     std::vector<S_road_block_iris> road_block_irises;  // 0x5c

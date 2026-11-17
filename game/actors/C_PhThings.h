@@ -142,7 +142,6 @@ public:
     // 0x76, false from the constructor, set by InitBox: center_offset is the box's centre in the frame's space (the
     // name is ours)
     bool has_center_offset;
-    uchar unknown_77;                   // 0x77
     S_vector center_offset;             // 0x78, the frame's space (the name is ours)
     S_vector center;                    // 0x84, center_offset in the world, or pos without one (the name is ours)
     // 0x90, where the thing has stayed within .2 of, and for how long (ms): over 4000 it is at rest (the names are
@@ -189,7 +188,6 @@ public:
     float rolling_friction;             // 0x264
     S_vector box_points[PHTHING_BOX_POINTS];    // 0x268, InitBox's, in the frame's space (the name is ours)
     ushort contact_mask;                // 0x310, MoveBox's: a bit for each of box_points that went in (the name is ours)
-    uchar unknown_312[2];               // 0x312
     // 0x314, a wheel's spring force from the last step's contact, 0 without one, the contact point in the world and
     // its distance from the surface (contact_reach for none; MoveBox's last point's) (the names are ours)
     float spring_force;

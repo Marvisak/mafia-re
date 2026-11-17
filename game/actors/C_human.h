@@ -175,7 +175,6 @@ struct S_anim_step
     int anim_id;                        // 0x4, HUMAN_STEP_ANIM's animation, as C_human::next_anim_id
     int wait;                           // 0x8, HUMAN_STEP_WAIT's time left in ms
     bool stance;                        // 0xc, PersonAnim's first bool: in the weapon's and the crouch's stance
-    uchar unknown_d[3];                 // 0xd
     int flags;                          // 0x10, HUMAN_STEPF_*
 };
 
@@ -730,7 +729,6 @@ public:
     bool aimed;
     // 0x1e6 (PS2 0x392), the side of the animations whose name has a '?': L while it is set, else R (the name is ours)
     bool anim_left;
-    uchar unknown_1e7;                  // 0x1e7
     // 0x1e8, the right hand's weapon's kind, S_item_def::kind (ChangeWeaponModel; the name is ours)
     int weapon_kind;
     // 0x1ec, the shot or strike held: Do_Shoot sets it on the press and clears it on the release (the name is ours)
@@ -738,7 +736,6 @@ public:
     // 0x1ed, the fire the animation's notes hold: NOTE_UNKNOWN_1A sets it with fire_held, NOTE_UNKNOWN_1B clears
     // both; Shooting shoots behind the human only while it is set (the name is ours)
     bool note_fire;
-    uchar unknown_1ee[2];               // 0x1ee
     // What the weapon's fire does (PS2 0x39c, 0x3a0 and 0x3a4; the names are ours): GameInit, Activate and
     // ResetWeaponEffects set _fire_action_ready_ and clear the step and its time
     const S_fire_action *fire_action;   // 0x1f0
@@ -754,7 +751,6 @@ public:
     // aimed and reloads again at each fire's end while a shell fits, and the left hand's target lets go of the
     // weapon meanwhile; a shot or a strike started ends it (the name is ours)
     bool loading_shells;
-    uchar unknown_1ff;                  // 0x1ff
     S_vector throw_dir;                 // 0x200, Do_ThrowGrenade's, the throw's direction (the name is ours)
     I3D_frame *cartridge_frame;         // 0x20c, where the weapon throws its cartridges out (NewCartidge's; the name is ours)
     // 0x210, ChangeWeaponModel's: Movement turns the car shots' animation by the angle from it to unknown_200 (the
@@ -767,12 +763,10 @@ public:
     // the name is ours)
     int throw_time;
     bool throw_swung;                   // 0x21c, a throw swung (Do_Shoot's thrown weapons; the name is ours)
-    uchar unknown_21d[3];               // 0x21d
     int strike_time;                    // 0x220, the time of the strike series' last strike (Do_Shoot; ours)
     // 0x224, the bat's backswing ("boj basb naprah HPT.i3d") started by Do_Shoot, which plays it once a strike is held
     // over 200 ms (the name is ours)
     bool backswing;
-    uchar unknown_225[3];               // 0x225
     // 0x228, the strike's place in its series, 0 to 3, -1 after the series ended, which AI's strike doubles the damage
     // at (the name is ours)
     int strike_index;
@@ -793,7 +787,6 @@ public:
     // 0x230, set while a weapon change runs: Do_ChangeWeapon does nothing while it is set, the animations' note
     // NOTE_CHANGE_WEAPON changes the model (the name is ours)
     bool changing_weapon;
-    uchar unknown_231[3];               // 0x231
     // 0x234, the strike animation's time left: SetFreeBoxingAnim sets its set's end time, Update counts it down (the
     // name is ours)
     int strike_anim_time;
@@ -812,7 +805,6 @@ public:
     // 0x2b0, the poses are still turning: PoseInterpolate clears it and sets it again while one is short of its
     // direction, Update calls it only while it is set, PoseNullRotate sets it (the name is ours)
     bool pose_moving;
-    uchar unknown_2b1[3];               // 0x2b1
     // The directions the poses turn to (pose_back1's, pose_back2's and pose_neck's), PoseInterpolate's: (0, 0, 1)
     // from PoseNullRotate (the names are ours)
     S_vector pose_back1_dir;            // 0x2b4
@@ -834,7 +826,6 @@ public:
     // 0x41c (PS2 0x598), the fall started in a jump (HUMAN_ACTION_JUMP): the landing hurts only above 18, else 8, and
     // less (the name is ours)
     bool jump_fall;
-    uchar unknown_41d[3];               // 0x41d
     // 0x420 (PS2 0xc0), the walk's velocity per second: MovementIntern moves by it, Update ramps it (the name is
     // ours)
     S_vector velocity;
@@ -858,7 +849,6 @@ public:
     // from GameInit, 1500 from Activate (the name is ours)
     int dead_time;
     bool killed_by_shot;                // 0x454 (PS2 0x5ac), set by Hit for a death by HIT_SHOT (the name is ours)
-    uchar unknown_455[3];               // 0x455
     // 0x458 (PS2 0x5b0), the agony's animation, 0 to 12 by 4, added to 0x93 for its first (PS2's HitAgony sets it), -1
     // for none: Hit plays its death on a hit in the agony (the name is ours)
     int agony_anim;
@@ -905,7 +895,6 @@ public:
     // reserve; the fire's end and whatever resets the weapon effects (ResetWeaponEffects) clear it (the name is
     // ours)
     bool reload_effects;
-    uchar unknown_582[2];               // 0x582
     // 0x584, the rail vehicle's wagon the human is in, from 1, 0 for the vehicle itself (the name is ours): Intern_UseRailway
     // links him to its frame and puts his collisions into its
     int wagon;
@@ -923,7 +912,6 @@ public:
     // plays or a dialog runs, set again after; PS2's C_player::GameInit sets it, and its Update starts one of three
     // at random when a timer runs out and it is set (the name is a guess)
     bool idle_anims;
-    uchar unknown_599[3];               // 0x599
     // The frames a strike hits with and their positions of the last tick, while striking is set: AI tests the line
     // each moved along against the collisions; human_notify_callback's NOTE_WEAPON_SOUND takes them and sets striking
     // (the names are ours)
@@ -931,7 +919,6 @@ public:
     I3D_frame *strike_frames[4];        // 0x5a0
     S_vector strike_pos[4];             // 0x5b0
     bool striking;                      // 0x5e0, cleared by the strike's first hit
-    uchar unknown_5e1[3];               // 0x5e1
     // The shots from a car's seat (Update, Movement's action_state 9; the names are ours): the stance in the seat,
     // HUMAN_CARSTANCE_*; the time left of its change, an animation Update ticks the frame through (250 ms after
     // getting in, the aiming's animation less 250 ms, HitInCar's death): Movement changes nothing while it isn't
@@ -959,13 +946,11 @@ public:
     // constructor, saved with the mission's data (the name is ours)
     int voice_type;
     bool shut_up;                       // 0x684 (PS2 0x6e8), HUMAN_SHUTUP's (the name is ours)
-    uchar unknown_685[3];               // 0x685
     // The human's own collisions, which its shots leave out (the names are ours)
     tDynamicCollObject **colls;         // 0x688 (PS2 0x6ec)
     I3D_frame **coll_frames;            // 0x68c (PS2 0x6f0), the frames the collisions follow (the name is ours)
     int num_colls;                      // 0x690 (PS2 0x6f4)
     bool colls_active;                  // 0x694 (PS2 0x6f8), ActivateColls sets it (the name is ours)
-    uchar unknown_695[3];               // 0x695
     // 0x698, the collisions the move's tests leave out besides colls: the AI's ghosts' (C_entity's ai_ghost at
     // 0x1268, PS2's ai_ghost_actor items: an actor, its collision, a time and a radius), which C_entity puts here
     // whenever the ghosts change (0x52f920); C_entity's GameInit and 0x507b50 empty it (the name is ours)
@@ -1001,7 +986,6 @@ public:
     short track_steps_max;              // 0x6ec
     short track_steps;                  // 0x6ee
     uchar track_texture;                // 0x6f0
-    uchar unknown_6f1[3];               // 0x6f1
     S_human_traffic *traffic;           // 0x6f4 (PS2 0x750), NULL for a human not made of a pedestrian (ours)
     // What the human carries (PS2 0x754, 0x758 and 0x75c, Do_FuckingBox's and Do_DeadBody's; the names are ours)
     I3D_frame *box;                     // 0x6f8
@@ -1015,11 +999,9 @@ public:
     // have, which Movement measures (the names are ours): the time since the last measure, the position there,
     // and the ratio, averaged with the last, 1 where he shouldn't have moved
     short move_time;                    // 0x70c
-    uchar unknown_70e[2];               // 0x70e
     S_vector move_pos;                  // 0x710
     float move_ratio;                   // 0x71c
     bool no_anim_hit;                   // 0x720 (PS2 0x770), SetNoAnimHit's (the name is ours)
-    uchar unknown_721[3];               // 0x721
     ai_loc loc;                         // 0x724 (PS2 0x780), which GameInit and Activate start (the name is ours)
     ai_blob_log blob_log;               // 0x758 (PS2 0x7c0), which GameInit and Activate clear (the name is ours)
     // 0x99c, the number (C_game::Play3DSound's) of the car stealing's sound, the sound table's car_unlock (0x86),
@@ -1029,7 +1011,6 @@ public:
     // 0x9a0, the scream areas the human is in, 1 for none, which GameInit and Activate set: NewScream says
     // nothing out of the camera's (C_game::camera_scream_areas; the name is ours)
     ushort scream_areas;
-    uchar unknown_9a2[2];               // 0x9a2
     // The time (GetTickCount's) and the scene's render number of the last hit that played an animation: a hit within
     // 200 ms of it or in the same frame plays none (PS2 0xad8 and 0xadc; the names are ours)
     uint last_hit_time;                 // 0x9a4
@@ -1052,7 +1033,6 @@ public:
     // 0xa36, the dead body's position is settled (RecompileDeathPos sets it; Update then plays ProcessDeathPos, else
     // calls RecompileDeathPos); GameInit and Activate clear it (the name is ours)
     bool death_pos_set;
-    uchar unknown_a37;                  // 0xa37
     // The dead body's move onto the ground, which ProcessDeathPos plays (the names are ours): the frame's position
     // RecompileDeathPos starts from, the move from there, and the time in it of its length in ms (-1 for none,
     // 1 where the death has no animation)
@@ -1083,7 +1063,6 @@ public:
     // (C_game::AddTemporaryActor): the police's 0x49ede0 frees such entities among do_rici_actors (the name is
     // ours)
     bool temp_driver;
-    uchar unknown_a7b;                  // 0xa7b
     // 0xa7c, the position the last pose was set to (PoseSetPoseNormal's, PoseSetPoseAimed's), which RecordKey
     // records (the name is ours)
     S_vector pose_pos;
@@ -1107,7 +1086,6 @@ public:
     bool cutscene_channel_0;
     // 0xa9a, the cutscene animation's .tck moves the frame (HUMAN_REC_ANIM_TCK with a .tck loaded; the name is ours)
     bool tck_on;
-    uchar unknown_a9b;                  // 0xa9b
 
     // The accessors whose copies are among those at the end of the file at 0x460a50 (the names are ours)
     // FUNCTION: GAME 0x47b7a0

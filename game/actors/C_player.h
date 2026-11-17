@@ -111,7 +111,6 @@ public:
     // 0xa9c, PRIMARY_*: the car's controls whose primary binding was pressed last, 0xffff (all) from GameInit
     // (the name is ours)
     ushort primary_controls;
-    uchar unknown_a9e[2];               // 0xa9e
     // The mouse's turn (AI_walk's; the names are ours): its last sideways move but 0, whose sign chooses the
     // turn animation (ANIM_LEFT1 or ANIM_RIGHT1), the seconds since it last moved sideways (past 0.12 s the turn
     // still to make is dropped), and the turn still to make, at most the profile's aiming_speed_x * 40 a second
@@ -158,7 +157,6 @@ public:
     int side_step_state;                // 0xae4
     uint side_step_time;                // 0xae8
     bool side_step_left;                // 0xaec
-    uchar unknown_aed[3];               // 0xaed
     // 0xaf0, the weapon ShowWeaponName showed the name of last, -1 from GameInit (the name is ours)
     int shown_weapon;
     // 0xaf4 (PS2 0xc74), set where the car the player gets into or steals was chosen in the item pick-up menu out of
@@ -169,7 +167,6 @@ public:
     // from the car): AI doesn't count aim_time down while it is set; cleared with the free look off (C_human's
     // SaveGameLoad, the car functions; the name is ours)
     bool car_free_look;
-    uchar unknown_af6[2];               // 0xaf6
     // 0xaf8, the sound the horn's control plays on foot (7b_zip.wav), AI_walk's, created at the first press;
     // C_human::SoundsChange turns it off, GameDone releases it (the name is ours)
     I3D_sound *horn_sound;

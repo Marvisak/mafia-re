@@ -292,13 +292,11 @@ public:
     uint widescreen_length;             // 0x4464
     uint widescreen_color;              // 0x4468
     bool widescreen_on;                 // 0x446c
-    uchar unknown_446d[3];
     // FadeInOut's (PS2 0x4bb0 and 0x4bb4): the time left of the fade and its length, in milliseconds
     uint fade_time;                     // 0x4470
     uint fade_length;                   // 0x4474
     uint fade_color;                    // 0x4478, PS2's FadeInOut's (PS2 0x4bb8), with its alpha
     bool fade_in;                       // 0x447c, FadeInOut's in (PS2 0x4bbc)
-    uchar unknown_447d[3];
     // 0x4480, cleared by ResetValues, as the three below (PS2 0x4bc0 to 0x4bd0): INDF_FADE's texture
     ITexture *fade_texture;
     // The cutscenes' fade and picture over the scene, which their track's keys set (0x599d78): SetOverlayFade's and
@@ -310,7 +308,6 @@ public:
     // 0x4494, false without a texture: the texture drawn as it is with the fade over it, otherwise in the fade's
     // colour
     bool overlay_opaque;
-    uchar unknown_4495[3];
     std::vector<G_RadarCar> radar_cars; // 0x4498 (PS2 0x4bd8)
     C_car *radar_player_car;            // 0x44a8, PS2's RadarSetPlayerCar's, cleared by ResetValues (PS2 0x4be4)
     std::vector<G_RadarItem> radar_items;   // 0x44ac (PS2 0x4be8)

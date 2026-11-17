@@ -232,7 +232,6 @@ struct tCLineParam
     // horizontal tests clear their inner walk's direction before each column or row and set it after each cell, and the
     // outer one's after each column or row; nothing reads it (PS2 neither; the name is a guess)
     uchar walked;
-    uchar unknown_59[3];
 };
 
 // What the sphere tests test the volumes against (PS2 tCSphereParam, 0x88 bytes by SphereInDynamics's copies of it, the
@@ -261,7 +260,6 @@ struct tCSphereParam
     S_vector normal;                    // 0x74, its normal, reversed into the caller's
     g_collision_header *hit;            // 0x80, the volume or the moving object hit, NULL for none
     bool unknown_84;                    // 0x84
-    uchar unknown_85[3];
 };
 
 // A point of a curve the racing's cars drive along (PS2 g_collision::gcol_CurveSphereStruct, 0x10 bytes, the names

@@ -74,7 +74,6 @@ public:
     // ACTSTATE_INACTIVE at rest and ACTSTATE_NONE for the fast fall, and clears moving where it isn't set (the name is a
     // guess)
     bool set_states;
-    uchar unknown_85[3];                // 0x85
     // 0x88, the share of the speed a bounce keeps, .4 from GameInit (the shotgun shells' .2; the name is ours)
     float bounce;
     // 0x8c, the normal of the surface AI's test hit last, null from GameInit: Collision and Hit move the bottle 0.01
@@ -93,12 +92,10 @@ public:
     // 0xfc, true from the constructor (the cartridges' and stones' clear it): GameInit fills coll and DynInserts it
     // only where it is set, Update moves it and GameDone DynErases it (the name is ours)
     bool use_coll;
-    uchar unknown_fd[3];                // 0xfd
     // AI's collision test of each step (the names are ours): the hits so far (the cartridges stop after 15), whether
     // the last test hit, and the material it hit
     int bounces;                        // 0x100
     bool hit;                           // 0x104
-    uchar unknown_105[3];               // 0x105
     // GameInit's copies of the start (the names are guesses): the position, the motion and the fall; nothing in the
     // bottles' files reads them
     S_vector start_pos;                 // 0x108
@@ -108,7 +105,6 @@ public:
     // 0x128, true from the constructor: AI clears it where the bottle stops and set_states isn't set (the name is a
     // guess)
     bool moving;
-    uchar unknown_129[3];               // 0x129
     int hit_material;                   // 0x12c, materialList's index
     // 0x130, the actor whose collision AI's test hit, where the collision has COLLHF_UNKNOWN_40, NULL otherwise (the
     // name is ours)
@@ -116,7 +112,6 @@ public:
     // 0x134, false from GameInit (the cartridges' sets it): AI's TestLineV takes every collision where it is set,
     // COLF_UNKNOWN_2 otherwise (the name is a guess)
     bool test_all;
-    uchar unknown_135[3];               // 0x135
 };
 
 // SYNTHETIC: GAME 0x412390

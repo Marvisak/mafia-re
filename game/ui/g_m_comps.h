@@ -1685,7 +1685,6 @@ public:
     }
 
     bool checked;                       // 0x40 (the name is ours)
-    uchar unknown_41[3];                // 0x41
 };
 
 // A selection (PS2's), 'bsel': the texts of a range of the text database's ids, its text the selected one, which a
@@ -1828,7 +1827,6 @@ public:
     // 0x40, the text database's ids of false and true (the names are ours)
     uint false_text, true_text;
     bool value;                         // 0x48 (the name is ours)
-    uchar unknown_49[3];                // 0x49
 };
 
 // A number edit (PS2's), 'edin': its value, 0 to 99 at first, printed as "%d" in an outlined box with a black block at

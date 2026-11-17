@@ -50,7 +50,6 @@ public:
 
     // 0x138, a shotgun's shell (cartridges_b's), which sounds as one and bounces less (the name is ours)
     bool shotgun_shell;
-    uchar unknown_139[3];               // 0x139
 
     // The cases' sounds, which C_game::Init creates and DoneIntern releases (PS2 name)
     static I3D_sound *sounds[3];

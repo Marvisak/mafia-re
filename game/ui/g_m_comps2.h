@@ -558,7 +558,6 @@ struct GM_ListBoxStruct
     uchar *text;
     uint unknown_4;                     // nothing here reads it
     bool selected;                      // 0x8, a click toggles it
-    uchar unknown_9[3];
 };
 
 // A list box's row, on the screen as it is (the name is ours)

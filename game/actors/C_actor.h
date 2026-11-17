@@ -353,7 +353,6 @@ public:
     // 0x20 (PS2 0x60), false from the constructor: Tick runs NetDirect instead of AI where it is set (the name is ours,
     // after NetDirect)
     bool net_direct;
-    uchar unknown_21[3];                // 0x21
     S_vector pos;                       // 0x24, the actor's position (the name is ours)
     S_vector dir;                       // 0x30, its direction (the name is ours)
     // The frame's placement when GameInit took the actor into the game, which GameDone puts back (the names are ours)
@@ -382,7 +381,6 @@ public:
     // 0x6c, false from Init; the destructor releases the frame where it is set (the name is ours)
     bool own_frame;
     bool unknown_6d;                    // 0x6d
-    uchar unknown_6e[2];                // 0x6e
 
     // The actors that exist: the constructor counts up, the destructor down, and C_mission::Open clears it (PS2 name)
     static int global_refs;

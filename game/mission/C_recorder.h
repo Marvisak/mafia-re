@@ -215,7 +215,6 @@ struct S_cutscene_tck
     std::vector<S_vector> positions;    // 0x20, the keys' (LoadTCK), as S_track's
     std::vector<S_vector> directions;   // 0x30, the keys' (LoadTCK), as S_track's
     bool has_directions;                // 0x40, as S_track's (C_human::GetRecordRot tests it)
-    uchar unknown_41[3];                // 0x41
 };
 
 // The implicit destructor, out of line after C_recorder::HasTCK (0x59c170), whose track's unwinding calls it
@@ -578,7 +577,6 @@ public:
     // 0xfc, the camera's placement where C_actor::PlaceAtTime placed a camera's actor (ACTOR_REC_CAMERA):
     // the actor's frame's world position and rotation (the names are ours)
     bool camera_placed;
-    uchar unknown_fd[3];                // 0xfd
     S_vector camera_pos;                // 0x100
     S_quat camera_rot;                  // 0x10c
     int cur_time;                       // 0x11c, SetTime's, which Tick plays the keys by
@@ -586,7 +584,6 @@ public:
     float time_speed;                   // 0x124, the current speed key's (a float), 1.0 without them
     bool unknown_128;                   // 0x128, cleared by SetState(CUTSCENE_STATE_0) and Tick, set by Close
     bool speed_keys_on;                 // 0x129, SetTime goes by the speed keys (each a time, its scaled_time, a speed)
-    uchar unknown_12a[2];               // 0x12a
 };
 
 // The head of the tracks in a buffer, C_recorder::SaveTracks' (the names are ours): the counts of their items

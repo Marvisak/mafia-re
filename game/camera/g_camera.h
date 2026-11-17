@@ -171,7 +171,6 @@ public:
     // which stores it and gives it to the HUD's ParheliaSetFov in CAMERA_CP_SNIPER)
     float sniper_fov;
     bool free_look;                     // 0x94 (PS2 0xa4), the car cameras' free look (the name is ours)
-    uchar unknown_95[3];                // 0x95
 
     G_Camera();
     ~G_Camera();

@@ -509,7 +509,6 @@ public:
     // Our names are guesses after the members' uses. The vtable is at 0x0 (car 0x70).
     uchar unknown_4[0xb8];              // 0x4
     bool unknown_bc;                    // 0xbc (car 0x12c), C_sledovacka::RemoveCar clears it
-    uchar unknown_bd[3];                // 0xbd
     int lock_count;                     // 0xc0 (PS2 0x51c), LockVehicle's count
     uchar unknown_c4[0x58];             // 0xc4
     uint lights;                        // 0x11c (car 0x18c, PS2 0x578), VLIGHT_*
@@ -595,7 +594,6 @@ public:
     // 0xc2c (car 0xc9c, PS2 0x2247), the engine runs (the name is ours): PS2's SetEngineOn sets it, SetPower,
     // MotorForce and the engine's sounds test it; the chases count the time a car with it stands
     bool engine_on;
-    uchar unknown_c2d[3];               // 0xc2d
     float tank_fuel;                    // 0xc30 (car 0xca0, PS2 0xf04), SetFuel's store
     uchar unknown_c34[4];               // 0xc34
     S_wheel **wheels;                   // 0xc38 (car 0xca8)
@@ -608,7 +606,6 @@ public:
     // SetEnterProtect1 and, on PS2, by SetOwner, SetSeatMass, ExternalImpuls, ExternalForce, the collisions and
     // CalmVehicle; PS2's Tick sets the vehicle's flags' 1 with it
     bool wake_request;
-    uchar unknown_c61[3];               // 0xc61
     // 0xc64 (car 0xcd4), the angle between the velocity and the car's direction most likely (the name is a guess):
     // below pi/2 the car goes forward
     float velocity_angle;

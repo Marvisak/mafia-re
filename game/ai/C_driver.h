@@ -39,7 +39,6 @@ struct S_car_node
     uchar cur_lane;                     // 0x44, an index of pos, the lane the car drives on (the name is ours)
     uchar num_lanes;                    // 0x45, the count of pos (the name is ours)
     uchar num_type2;                    // 0x46, of those the lanes of type 2 (the name is ours)
-    uchar unknown_47;                   // 0x47
     // 0x48, the speed to drive at, in m/s: the road's (S_road_crossing::speed), the chases' 1000 for none (the name is
     // ours)
     float speed;
@@ -48,7 +47,6 @@ struct S_car_node
     bool unknown_54;                    // 0x54
     uchar unknown_55[0xb];              // 0x55
     ushort road_node;                   // 0x60, a node of C_roads (the name is ours)
-    uchar unknown_62[2];                // 0x62
     // 0x64, the road's lanes from the last road node before it towards the next (PreparePath's; the name is ours)
     S_road_lanes *lanes;
     // 0x68, the semaphore phase the node waits at, one of C_game's two or a bridge's (C_sledovacka::Tick takes a car
@@ -56,7 +54,6 @@ struct S_car_node
     int *semaphore_phase;
     // 0x6c, RecompilePath's: the positions are final (a road node's, or a crossing's once moved; the name is ours)
     bool fixed;
-    uchar unknown_6d[3];                // 0x6d
 };
 
 class C_driver
@@ -82,7 +79,6 @@ public:
     ushort unknown_188;                 // 0x188
     ushort unknown_18a;                 // 0x18a
     ushort unknown_18c;                 // 0x18c
-    uchar unknown_18e[2];               // 0x18e
     int unknown_190;                    // 0x190
     int unknown_194;                    // 0x194
     uchar unknown_198[4];               // 0x198
@@ -108,13 +104,11 @@ public:
     int unknown_208;                    // 0x208
     uchar unknown_20c[8];               // 0x20c
     bool unknown_214;                   // 0x214
-    uchar unknown_215[3];               // 0x215
     float unknown_218;                  // 0x218
     uchar unknown_21c[4];               // 0x21c
     uint unknown_220;                   // 0x220, a time in ms
     uchar unknown_224[0x74];            // 0x224
     bool unknown_298;                   // 0x298
-    uchar unknown_299[3];               // 0x299
 
     // PS2's (a stub so far), which the chases' AddCarHunt, AddCarMoveTo and SaveGameLoad call through new
     C_driver();

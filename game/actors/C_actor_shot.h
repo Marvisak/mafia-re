@@ -60,7 +60,6 @@ public:
     bool firing;                        // 0x7c, Update does nothing without it (the name is a guess)
     uchar unknown_7d[7];                // 0x7d
     bool shoots;                        // 0x84, Update fires C_game::NewShoot (the name is a guess)
-    uchar unknown_85[3];                // 0x85
     // 0x88, the record's particle (CreateParticle's number), -1 from Init and for none (the name is ours)
     int particle;
 };

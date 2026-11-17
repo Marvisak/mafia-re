@@ -342,7 +342,6 @@ public:
     // 0x2c0, set while the sphere tests push the scattered objects they hit (SphereInDynamics passes a hit
     // ACTOR_SCATTER object to C_scatter::LineHit): TestPanak2's legs' sphere (the name is ours)
     bool push_scatter;
-    uchar unknown_2c1[3];
     // 0x2c4 (PS2 0x41c), the human whose step C_human::MovementIntern tests ahead of him with TestLineV, NULL
     // otherwise (the name is ours)
     C_actor *step_actor;

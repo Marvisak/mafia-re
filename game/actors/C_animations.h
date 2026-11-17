@@ -115,7 +115,6 @@ public:
     bool anim1_stop_blended;            // 0x10 (PS2 0xd0)
     bool anim1_once;                    // 0x11 (PS2 0xd1)
     bool stage_blending;                // 0x12 (PS2 0xd2), StageBlendingTick runs while it is set
-    uchar unknown_13;                   // 0x13
     // Slot 0's blend, slot 1's is 1 - blend, and its change per second, which StageBlendingTick adds up to 1 or down
     // to 0 (C_human::Movement sets it at the end by the speed's sign)
     float blend;                        // 0x14 (PS2 0xd4)
@@ -152,22 +151,18 @@ public:
     // time it starts fading out at (250 ms before its end, or half of a shorter one)
     bool ext_on;                        // 0xf4 (PS2 0x110), cleared by Reset
     bool ext_fading;                    // 0xf5
-    uchar unknown_f6[2];                // 0xf6
     float ext_blend;                    // 0xf8
     float ext_target;                   // 0xfc
     float ext_speed;                    // 0x100
     bool ext_once;                      // 0x104
-    uchar unknown_105[3];               // 0x105
     int ext_end;                        // 0x108
     bool unknown_10c;                   // 0x10c, cleared by SetExtendedAnim
-    uchar unknown_10d;                  // 0x10d
     // 0x10e (PS2 0x12a), 0xc while the reload's extended animation of the weapons of gun_anim 8 plays (C_human::AI),
     // 0xffff otherwise
     ushort unknown_10e;
     // 0x110 (PS2 0x12c), set by C_human::EineMeineKleineAutoInLuft and _intern_ForceDeath: the machine does nothing
     // while it is set (the name is a guess)
     bool disabled;
-    uchar unknown_111[3];               // 0x111
     // 0x114, what C_human::Update moves the track by, the collisions' part of the track's move (SetAnim clears it)
     S_vector track_offset;
     // The jump's landing (SetLandHeight's): the height added to the track's position as the animation of the slot
@@ -176,7 +171,6 @@ public:
     float land_height;                  // 0x120
     bool land_reverse;                  // 0x124
     uchar land_slot;                    // 0x125
-    uchar unknown_126[2];               // 0x126
 
     // A loaded track, 0x64 bytes (PS2's, 0x60 bytes, keeps its two lists as arrays; the names are ours), as its
     // implicit destructor and assignment show (0x40e470, 0x4116d0): the name's 32 bytes one by one, the two lists by

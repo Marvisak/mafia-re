@@ -368,7 +368,6 @@ public:
         tDynamicCollObject coll;        // 0x4
         bool in_collision;              // 0x4c, whether coll is among gifCollision's dynamic objects
         bool growing;                   // 0x4d, Tick scales the projector up to scale 1, then clears it
-        uchar unknown_4e[2];            // 0x4e
         float scale;                    // 0x50, of the size, 0.1 to 1 while growing
         // 0x54, the frame the track is on (CreateTrackEffect's frm, a shot's glass or crash collision's), whose tracks
         // ClearProjectorsForFrame turns off (the name is ours)
@@ -572,7 +571,6 @@ public:
     // 0x2e4c (PS2 0x1274), set by Init: the first push onto the stacks after it empties them all first (the name
     // is ours)
     bool stacks_clear;
-    uchar unknown_2e4d[3];
     // What InventoryStackPush, CharacterStackPush and FloatStackPush keep of the player between missions (PS2's
     // functions' names; the members' are ours): copies of inventories, a human's properties, floats
     std::vector<G_Inventory *> inventory_stack;  // 0x2e50 (PS2 0x1278)
@@ -629,7 +627,6 @@ public:
     int city_music;                     // 0x2fb8
     int city_music_old;                 // 0x2fbc
     bool city_music_paused;             // 0x2fc0
-    uchar unknown_2fc1[3];              // 0x2fc1
     // 0x2fc4, the film music's streams, IShow ids: GetFilmMusic's index, StreamDestroyAll's (the name is ours)
     std::vector<int> film_music_streams;
     // 0x2fd4, 7000 from Init: the time before the player's death fades to the menu (the name is ours)
@@ -639,7 +636,6 @@ public:
     // reads), and the time left until TickScreamAreas runs again (the names are ours)
     std::vector<S_scream_area> scream_areas;  // 0x3618
     ushort camera_scream_areas;         // 0x3628
-    uchar unknown_362a[2];
     int scream_areas_time;              // 0x362c
     // The scene's weather system's WS_PARAM_ON and WS_PARAM_COUNT when Init started, which Done sets again (the names are
     // ours)
@@ -659,7 +655,6 @@ public:
     // SetCameraRotRepair's (PS2 name): the camera's rotation, which Tick sets again in the seventh frame since Init
     // while the flag is set, and clears it (the names are ours)
     bool camera_rot_repair;             // 0x3644
-    uchar unknown_3645[3];              // 0x3645
     S_quat camera_rot;                  // 0x3648
     I3D_model *sheet;                   // 0x3658, 9sheet.i3d
     I3D_frame *unknown_365c;            // 0x365c
@@ -678,13 +673,11 @@ public:
     int car_sounds;                     // 0x3668
     int car_sounds_time;                // 0x366c
     bool car_sounds_short;              // 0x3670
-    uchar unknown_3671[3];              // 0x3671
     // 0x3674, spare buffers for the shadows' names, of at least SHADOW_NAME_SIZE bytes: DelFrameForShadow adds the name's,
     // AddFrameForShadow takes the last for a name that fits, Done deletes them (the names are ours)
 #define SHADOW_NAME_SIZE 32
     std::vector<char *> free_shadow_names;
     bool item_blur;                     // 0x3684, ItemBlurTick runs while it is set (the name is ours)
-    uchar unknown_3685[3];              // 0x3685
     std::vector<S_item_blur> item_blurs;  // 0x3688 (PS2 0x156c, its ItemBlur functions'; the name is ours)
     // The inter-city's collisions, frames and their arrays, which InterCity_GameInit creates with the city's base blocks
     // (the names and types are ours)

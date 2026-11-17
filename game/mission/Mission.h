@@ -150,7 +150,6 @@ public:
     // Set by Open, which mutes the sound while it loads: the first Tick with skip_frames below 1 sets the profile's
     // volume again and clears it (PC only, the name is ours)
     bool restore_volume;                // 0x7c
-    uchar unknown_7d[3];
     std::vector<S_t_transparent> t_transparent;  // 0x80 (PS2 0xcb0)
     S_mission_options options;          // 0x90 (PS2 0xcbc)
     std::vector<S_frame_actor_buffer> frame_actor_buffer;  // 0xac (PS2 0xcd8)

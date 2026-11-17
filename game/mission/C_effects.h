@@ -361,7 +361,6 @@ public:
     int last_guid;                      // 0x30, CreateParticle's last; -1 from the constructor, Mission_Start and Done
     // 0x34, set by Mission_Start: Mission_Done does nothing without it, and clears it (PS2's particle manager the same)
     bool started;
-    uchar unknown_35[3];                // 0x35
 
     C_effects();
     ~C_effects();

@@ -119,7 +119,6 @@ public:
     // 0x164, the frame is in the scene's omni sector, not in the primary sector, and SetState doesn't move it between
     // sectors
     bool in_omni_sector;
-    uchar unknown_165[3];               // 0x165
     S_vector normal;                    // 0x168, the door's horizontal axis across its leaf, in world space
     // 0x174, the point 0.4 beyond the end of the leaf, in the frame's space (GameInit's, GetBoundPoints2D's)
     S_vector leaf_end;

@@ -40,7 +40,6 @@ public:
 
     uchar unknown_221c[0x20];           // 0x221c
     bool unknown_223c;                  // 0x223c, CanUseTruck's
-    uchar unknown_223d[3];              // 0x223d
     // Where C_human::_intern_UseCarTruck places a human on the truck, in its frame (the names are ours)
     S_vector truck_pos;                 // 0x2240
     S_vector truck_dir;                 // 0x224c

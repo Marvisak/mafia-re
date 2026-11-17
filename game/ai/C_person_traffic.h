@@ -80,13 +80,11 @@ public:
 
     // 0x0 (PS2 0x180), set once the energy is gone (PS2's Tick), with the collision and the shadows taken
     bool dead;
-    uchar unknown_1[3];
     // 0x4 (PS2 0x184), the generator it belongs to (CreateModel's), NULL for a free pedestrian (AddFreePerson's),
     // which Deactivate deletes
     C_traffic_generator *generator;
     C_animations_machine_de_luxe *machine;  // 0x8 (PS2 0x188), its animations (AddElement's), which Deactivate stops
     bool active;                        // 0xc (PS2 0x18c)
-    uchar unknown_d[3];
     S_vector pos;                       // 0x10 (PS2 0x0)
     S_vector dir;                       // 0x1c (PS2 0x10), the direction it walks in
     S_vector velocity;                  // 0x28, cleared by every Tick
@@ -98,7 +96,6 @@ public:
     float max_dist;
     I3D_model *umbrella;                // 0x4c, Activate's in rain ("9dest.i3d"), dropped by DropUmbrella
     bool visible;                       // 0x50, the model was rendered: Tick doesn't take it out within 20 m then
-    uchar unknown_51[3];
     float dist;                         // 0x54 (PS2 0x1a4), the camera's squared distance in the horizontal plane
     int keep_alive;                     // 0x58, 2 from the activation, counted down by Tick (the name is a guess)
     int invisible_time;                 // 0x5c, the time the model hasn't been rendered, in ms
@@ -115,7 +112,6 @@ public:
     int num_way;                        // 0xb0 (PS2 0x1c4), way's points left, -1 for none
     // 0xb4 (PS2 0x1c8), the walk off the web goes back to node after its points (ObejdiTuPicovinu's)
     bool detour;
-    uchar unknown_b5[3];
     I3D_object *base;                   // 0xb8, the model's "base" object, a single mesh or morph (SetAlpha's)
     float alpha;                        // 0xbc, the model's transparency, 1 for a passenger (SetAlpha's argument)
     int alpha_dir;                      // 0xc0, 1 fading in, -1 fading out, 0 neither
@@ -125,48 +121,40 @@ public:
     S_matrix inv_matrix;                // 0x10c, the frame's world matrix inverted (coll's)
     int coll_wait;                      // 0x14c, a fall's count of SetAnim's calls, which puts coll in again at 1
     bool in_coll;                       // 0x150, coll is in the moving objects' grid
-    uchar unknown_151[3];
     // 0x154, the model's scale: the number after the third letter of its "back1" frame's six-letter property, in
     // hundredths
     float scale;
     // 0x158, the first three letters of the "back1" frame's property, 'A' 0: model_type[0] 1 for a woman, model_type[2]
     // the kind (1 and 3 the police's, 4 a mafioso's)
     uchar model_type[3];
-    uchar unknown_15b;
     float energy;                       // 0x15c, 60 to 80 from the activation, dead at 0
     int anim;                           // 0x160, the animation SetAnim started (an _anim_info_ index)
     int anim_next;                      // 0x164, the animation SetAnim starts
     int anim_after;                     // 0x168, the animation after anim_next (a fall's rise, a duck's stay)
     bool anim_once;                     // 0x16c, the animation is played once, for anim_time
     bool anim_after_once;               // 0x16d, anim_after's anim_once
-    uchar unknown_16e[2];
     int anim_time;                      // 0x170, the animation's length less 250 ms (SetAnim's), counted down
     S_vector anim_end;                  // 0x174, the animation's end point, turned by the model's rotation (SetAnim's)
     int ground_timer;                   // 0x180, Tick's time to its next ground test
     I3D_pose *neck;                     // 0x184, a pose CreateModel gives the model's "neck"
     I3D_frame *look_at;                 // 0x188, the "neck" frame the neck turns to (the player's, a pedestrian's)
     bool neck_reset;                    // 0x18c, the neck turning back
-    uchar unknown_18d[3];
     int wait_time;                      // 0x190, the time it waits
     bool line_walk;                     // 0x194, it walks along the line between the nodes
-    uchar unknown_195[3];
     int unknown_198;                    // 0x198
     bool running;                       // 0x19c, it runs (anim 5) rather than walks (anim 6): SetPanic's
     bool turning;                       // 0x19d, it turns in place at a crossing
     // 0x19e (PS2 0x21e), set once for a panic, with the place it runs to (PS2's SetPanic), cleared by Tick with the
     // panic
     bool fleeing;
-    uchar unknown_19f;
     int panic_time;                     // 0x1a0, the panic's time left, 20 to 25 s from SetPanic
     uchar mega_panic;                   // 0x1a4, SetMegaPanic's posture, 1 to 3, 0 for none
     // 0x1a5 (PS2 0x225), made a human (a policeman by FizlosNamakatDoAkce, a mafioso by CreateMafianos): the generator's
     // AI leaves it, C_human::GameDone clears it
     bool made_human;
-    uchar unknown_1a6[2];
     C_car *car;                         // 0x1a8 (PS2 0x228), the parked car it walks to
     C_car *hit_car;                     // 0x1ac (PS2 0x22c), the car that ran into it (Hit's)
     bool hit_wait;                      // 0x1b0, it lies after a hit
-    uchar unknown_1b1[3];
     int walk;                           // 0x1b4, the man's walk, 0 to 4 (SetAnim's)
     C_human *target_human;              // 0x1b8, the human it walks to (SetNewNode's DalsiChalpiDoPartie at the end)
     // 0x1bc, the player's "Talk to the pedestrian" (CreateModel's, USING_ACTION_TALK, the game's don_ocas its actor)
@@ -175,7 +163,6 @@ public:
     // for a free pedestrian
     ushort web_flags;
     uchar voice;                        // 0x1f6, its voice, ElementNewScream's first argument
-    uchar unknown_1f7;
     int greet_timer;                    // 0x1f8, Tick's time to its next Karle_hoj
     bool may_greet;                     // 0x1fc, Karle_hoj greets the player
     bool greeted;                       // 0x1fd, Karle_hoj has: PlayerNaMneMluvi answers with the other voices
@@ -328,11 +315,9 @@ public:
     // 0x70 (PS2 0x80), a generator without a range, 1 by the constructor (SaveData's first): C_game::SetActiveTrafficP
     // takes the nearest of them where the camera is in no other's range (the name is ours)
     bool no_range;
-    uchar unknown_71[3];
     float range;                        // 0x74 (PS2 0x84), 100 (the name is ours)
     // 0x78, the one C_game::SetActiveTrafficP chose (the name is ours): its AI activates the pedestrians
     bool active;
-    uchar unknown_79[3];
     C_traffic_element *elements;        // 0x7c (PS2 0x8c), its pedestrians, num_elements of them (GameInit's)
     int num_active;                     // 0x80, its pedestrians out: ActivateFree counts them up, Deactivate down
     int num_elements;                   // 0x84, the sum of model_counts

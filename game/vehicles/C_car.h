@@ -53,7 +53,6 @@ struct S_car_seat
 {
     S_vector pos;                       // 0x0, in the car's frame (C_human::Update seats the human there)
     bool occupied;                      // 0xc
-    uchar unknown_d[3];
     C_human *owner;                     // 0x10
     uchar unknown_14[0x8c];
 };
@@ -273,7 +272,6 @@ public:
     bool show_damage;                   // 0x20f1, SHOWCARDAMAGE's
     uchar unknown_20f2[4];              // 0x20f2
     bool must_steal;                    // 0x20f6 (PS2 0x2472), CAR_MUSTSTEAL's
-    uchar unknown_20f7;                 // 0x20f7
     int axis;                           // 0x20f8 (PS2 0x23c8), CAR_SETAXIS sets 1
     uint unbreakable;                   // 0x20fc (PS2 0x23cc), CARF_UNBREAKABLE or 0
     float unknown_2100;                 // 0x2100, 1 again where the chases let the car go (C_sledovacka::RemoveCar)
@@ -293,7 +291,6 @@ public:
     // 0x2119 (PS2 0x2479), set with the camera's CAMPF_HIDE_CAR, which turns the car's frame off (G_Camera::Begin),
     // cleared by G_Camera::End (the name is ours)
     bool hidden_by_camera;
-    uchar unknown_211a[2];
     uint color;                         // 0x211c, the model's variant, GetColor's (the name is ours)
     uchar unknown_2120[0x11];
     // 0x2131 (PS2 0x247a), set by C_human::HitInCar when the human in the driver's seat dies (the name is a guess)
@@ -334,7 +331,6 @@ public:
     // DAN_INTERNAL_1; C_game::Done removes such cars (PS2's C_game::VyhjebejTemporaryho, "throw the temporary one
     // out", clears it, CarExplosion sets it)
     bool temporary;
-    uchar unknown_220d[3];              // 0x220d
     // 0x2210 (PS2 0x23ac; the name is a guess), set to CAR_DEATH_FADE_START or 0 by the fights' Tick when its party's
     // hunt ends; in ms, which PS2's Update counts up with a flag of its (PS2 0x2480) set, to C_game::AddDeathHumanFade
     // at 4000
