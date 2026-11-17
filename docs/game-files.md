@@ -51,7 +51,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 16 | `43bd90–4435ac` | 0x781c | `C_driver.cpp` | part | the cars' AI driver: constructor `43bd90` first |
 | 17 | `4435b0–443a2c` | 0x47c | `C_drop_in_weapon.cpp` | whole | the weapons put down: constructor `4435b0` first |
 | 18 | `443a30–44442c` | 0x9fc |  |  |  |
-| 19 | `444430–44525c` | 0xe2c | `C_ff_manager.cpp`? | part | the force feedback, Main.cpp's `ff_manager`: constructor `444630` |
+| 19 | `444430–44525c` | 0xe2c | `C_ff_manager.cpp`? | whole | the force feedback: its effects' classes first (`S_effect`'s constructor `444440`, vtables `623d58`–`623d68`), then Main.cpp's `ff_manager` (constructor `444630`) |
 | 20 | `445260–44584c` | 0x5ec | `C_grenade.cpp` | whole | constructor `445260` (vtable `623d70`) first |
 | 21 | `445850–44602c` | 0x7dc | `C_irenka.cpp` | part | constructor `445850` (vtable `623e08`) first |
 | 22 | `446030–446f1c` | 0xeec | `C_movement.cpp`? |  | PS2's file in this place if the order holds: quaternions, the frames' world matrices and the humans' movement |

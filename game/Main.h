@@ -60,10 +60,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAUS_using_object@C_using_object@@ABQAU23@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_sound_group@@V?$allocator@US_sound_group@@@std@@@std@@IAEXPAUS_sound_group@@0@Z
+// ?_Destroy@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@IAEXPAPAVC_ParticleEmitter@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEPAPAVC_actor@@PBQAV3@0PAPAV3@@Z
+// ?_Ucopy@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEPAHPBH0PAH@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@IAEXPAPAUG_RaceCamera@@IABQAU3@@Z
+// ?_Ufill@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEXPAHIABH@Z

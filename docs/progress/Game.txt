@@ -54,7 +54,7 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct S_cache_model_inbb *, struct S_cache_model_inbb const &)
 0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -200,7 +200,7 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
+0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
@@ -445,20 +445,35 @@
 0x00443a00  missing   $CRT_CPP_Initializer(33)
 0x00443ff0  stub      C_dyn_object::PlayStep
 0x00444400  missing   $CRT_CPP_Initializer(34)
+0x00444430  100.00%   C_ff_manager::S_envelope::S_envelope
+0x00444440  100.00%   C_ff_manager::S_effect::S_effect
+0x00444490  100.00%   C_ff_manager::S_effect::Update
+0x004444d0  100.00%   C_ff_manager::S_effect::IsPlaying
+0x00444500  100.00%   C_ff_manager::S_effect::SetType
+0x00444530  100.00%   C_ff_manager::S_constant_effect::Update
+0x00444550  100.00%   C_ff_manager::S_ramp_effect::Update
+0x00444570  100.00%   C_ff_manager::S_periodic_effect::S_periodic_effect
+0x004445e0  100.00%   C_ff_manager::S_periodic_effect::Update
+0x00444610  100.00%   C_ff_manager::S_condition_effect::Update
 0x00444630  100.00%   C_ff_manager::C_ff_manager
 0x00444670  100.00%   C_ff_manager::~C_ff_manager
 0x004446a0  100.00%   C_ff_manager::Reset
 0x004446b0  100.00%   C_ff_manager::GameInit
 0x00444740  100.00%   C_ff_manager::GameDone
-0x00444810  stub      C_ff_manager::CreateEffect
-0x00444ae0  stub      C_ff_manager::SetConstantForce
-0x00444b20  stub      C_ff_manager::SetRampForce
-0x00444b60  stub      C_ff_manager::SetPeriodicForce
-0x00444c40  stub      C_ff_manager::SetGain
-0x00444c70  stub      C_ff_manager::SetDirection
-0x00444ca0  stub      C_ff_manager::SetDuration
-0x00444d20  stub      C_ff_manager::Start
-0x00444fb0  stub      C_ff_manager::DeleteEffect
+0x00444810  100.00%   C_ff_manager::CreateEffect
+0x00444a70  100.00%   C_ff_manager::GetEffect
+0x00444ae0  100.00%   C_ff_manager::SetConstantForce
+0x00444b20  100.00%   C_ff_manager::SetRampForce
+0x00444b60  100.00%   C_ff_manager::SetPeriodicForce
+0x00444bc0  100.00%   C_ff_manager::SetCondition
+0x00444c40  100.00%   C_ff_manager::SetGain
+0x00444c70  100.00%   C_ff_manager::SetDirection
+0x00444ca0  100.00%   C_ff_manager::SetDuration
+0x00444ce0  100.00%   C_ff_manager::IsWheel
+0x00444d20  100.00%   C_ff_manager::Start
+0x00444fb0  100.00%   C_ff_manager::DeleteEffect
+0x00445080  100.00%   C_ff_manager::Stop
+0x004450e0  100.00%   C_ff_manager::GetLowest
 0x004451a0  100.00%   C_ff_manager::GetWaiting
 0x004451e0  100.00%   C_ff_manager::Tick
 0x00445200  100.00%   C_ff_manager::StartWaiting
@@ -495,7 +510,7 @@
 0x00448680  100.00%   C_ParticleEmitter::Init
 0x00448710  100.00%   C_ParticleEmitter::CreateParticle
 0x00448960  100.00%   C_ParticleEmitter::Tick
-0x00448cc0  100.00%   std::vector<C_Particle *,std::allocator<C_Particle *> >::insert
+0x00448cc0  100.00%   std::vector<C_ff_manager::S_effect *,std::allocator<C_ff_manager::S_effect *> >::insert
 0x00448ed0  missing   $CRT_CPP_Initializer(40)
 0x00448f00  50.00%    $CRT_CPP_Initializer(41)
 0x00448f10  100.00%   $CRT_CPP_Initializer(42)
@@ -1351,7 +1366,7 @@
 0x00536d10  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::insert
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
 0x00537090  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ufill
-0x00537130  100.00%   std::copy(struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *, struct C_game::S_stop_sounds *)
+0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
 0x00537650  99.42%    std::_Construct(struct ai_group *, struct ai_group const &)
 0x00537830  100.00%   std::_Construct(struct ai_follow_group *, struct ai_follow_group const &)
 0x00537910  100.00%   std::_Construct(struct ai_group_event *, struct ai_group_event const &)
@@ -1363,7 +1378,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct C_game::S_invisible_actor *, struct C_game::S_invisible_actor *, struct C_game::S_invisible_actor *)
+0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1508,8 +1523,8 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct S_vector *, struct S_vector const &)
-0x005490d0  100.00%   std::_Construct(struct G_MIIntroSubtitles *, struct G_MIIntroSubtitles const &)
+0x005490b0  100.00%   std::_Construct(struct S_con_register *, struct S_con_register const &)
+0x005490d0  100.00%   std::_Construct(struct S_VEH_PARTICLE *, struct S_VEH_PARTICLE const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
 0x005498f0  100.00%   GM_Menu::OnKey
@@ -1658,7 +1673,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class C_Particle **, class C_Particle **, class C_Particle **)
+0x00564750  100.00%   std::copy(class C_actor **, class C_actor **, class C_actor **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2304,7 +2319,7 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
+0x005bc900  100.00%   std::copy(struct C_game::S_driver_man *, struct C_game::S_driver_man *, struct C_game::S_driver_man *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
 0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)
@@ -3356,6 +3371,11 @@
 0x00623a70  100.00%   vtable C_dog::`vftable'
 0x00623b20  100.00%   vtable C_door::`vftable'
 0x00623c28  100.00%   vtable C_drop_in_weapon::`vftable'
+0x00623d58  100.00%   vtable C_ff_manager::S_effect::`vftable'
+0x00623d5c  100.00%   vtable C_ff_manager::S_periodic_effect::`vftable'
+0x00623d60  100.00%   vtable C_ff_manager::S_condition_effect::`vftable'
+0x00623d64  100.00%   vtable C_ff_manager::S_ramp_effect::`vftable'
+0x00623d68  100.00%   vtable C_ff_manager::S_constant_effect::`vftable'
 0x00623d70  100.00%   vtable C_grenade::`vftable'
 0x00623e08  100.00%   vtable C_irenka::`vftable'
 0x00623ee8  100.00%   vtable C_effect::`vftable'

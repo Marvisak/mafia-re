@@ -287,6 +287,9 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?RaceFlashText@G_IndicatorsClass@@QAEXPBDM@Z)
     # The sound arena's GetSounds, which the entities' AI calls (tools.cpp)
     target_link_options(game PRIVATE /INCLUDE:?GetSounds@soundArena@@QAEXPAVC_entity@@@Z)
+    # The force feedback's SetCondition and IsWheel, which only the cars call (C_ff_manager.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?SetCondition@C_ff_manager@@QAEXHPBUS_joy_condition@@0@Z
+        /INCLUDE:?IsWheel@C_ff_manager@@QAE_NH@Z)
     # pathweb.cpp's functions that nothing written calls yet (the AI's wayfinding, the wagons, the racing)
     target_link_options(game PRIVATE /INCLUDE:?FindNodeID@C_web_path@@QAEHG@Z
         /INCLUDE:?FindPath@C_web_path@@QAE_NIIPAV?$vector@IV?$allocator@I@std@@@std@@G@Z
