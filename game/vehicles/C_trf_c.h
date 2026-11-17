@@ -54,6 +54,9 @@ public:
     // The car the human gets into, the traffic's car he takes over (PS2 name, Czech slang: "they took my car, the
     // swine"; static, the car in ecx): NULL where he can't have it
     static C_car *SebraliMiKaaaruSvine(C_car *car);
+    // The traffic's cars on the bridge (PS2 name; static, the bridge in ecx), which C_bridge::AI waits to leave it
+    // before it raises it
+    static int GetBridgeCarCount(C_actor *bridge);
     // The model of a pedestrian walks to the car (PS2 name, Czech: "walk to the tail"; static, the model in ecx,
     // the car in edx)
     static void ChodDoRici(I3D_model *model, C_car *car);

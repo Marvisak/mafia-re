@@ -64,7 +64,7 @@ public:
 // inlines it, calling the frames' assignment, this file's copy, which the linker folded with the other vectors of
 // pointers')
 // SYNTHETIC: GAME 0x560f20
-// ??0S_saved_code@C_program@@QAE@XZ
+// ??0S_DICE@@QAE@XZ
 
 // SYNTHETIC: GAME 0x562000
 // S_DICE::operator=

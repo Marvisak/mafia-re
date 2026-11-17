@@ -57,13 +57,13 @@ extern bool _is_intro_;
 // The joysticks' vector (Main.cpp's joy): its inlined push_back calls these helpers, which the linker folded with the
 // other vectors of pointers'; the original kept earlier files' copies
 // TEMPLATE: GAME 0x499050
-// ?_Construct@std@@YIXPAPAVI3D_frame@@ABQAV2@@Z
+// ?_Construct@std@@YIXPAPAUS_using_object@C_using_object@@ABQAU23@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@US_frame_actor_buffer@C_mission@@V?$allocator@US_frame_actor_buffer@C_mission@@@std@@@std@@IAEXPAUS_frame_actor_buffer@C_mission@@0@Z
+// ?_Destroy@?$vector@US_sound_group@@V?$allocator@US_sound_group@@@std@@@std@@IAEXPAUS_sound_group@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@IAEPAPAUG_RaceCamera@@PBQAU3@0PAPAU3@@Z
+// ?_Ucopy@?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@IAEPAPAVC_actor@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAVIJoy@@V?$allocator@PAVIJoy@@@std@@@std@@IAEXPAPAVIJoy@@IABQAV3@@Z
+// ?_Ufill@?$vector@PAUG_RaceCamera@@V?$allocator@PAUG_RaceCamera@@@std@@@std@@IAEXPAPAUG_RaceCamera@@IABQAU3@@Z

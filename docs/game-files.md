@@ -112,7 +112,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 77 | `5661f0–566f3c` | 0xd4c | `Winstuff.cpp`? | whole | the start-up's Windows helpers: the CD check (`566440`), the drive search, then the caches' `AddDir` |
 | 78 | `566f40–5674ec` | 0x5ac | `C_actor_shot.cpp` | part | constructor `566f40` (vtable `625458`) first |
 | 79 | `5674f0–567cec` | 0x7fc | `C_box_new.cpp` | whole | the scene's physical boxes and wheels: constructor `5674f0` (vtable `6254f0`, a `C_PhThing`) first |
-| 80 | `567cf0–56ad9c` | 0x30ac | `C_bridge.cpp` | stubs | constructor `567d10` (vtable `625588`) |
+| 80 | `567cf0–56ad9c` | 0x30ac | `C_bridge.cpp` | whole | PS2's file, in PS2's order: the drawbridges and the steamships they open for, constructor `567d10` (vtable `625588`); first `uzly`'s empty initializer, last the `S_BridgeCol` vector's `insert` and copy (`56aa10`, `56ad40`). Its `.bss` is in the reverse of PS2's definition order, as another file's precompiled header (`/Yu`) gives |
 | 81 | `56ada0–56adcc` | 0x2c |  |  |  |
 | 82 | `56add0–56b17c` | 0x3ac | `c_clock.cpp` | whole | `C_clock`: constructor `56add0` (vtable `625648`) first |
 | 83 | `56b180–58e34c` | 0x231cc | `C_human.cpp` | whole | `C_human`, the base of `C_player` and `C_entity`: constructor `56efd0` |

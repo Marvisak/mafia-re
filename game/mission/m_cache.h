@@ -143,7 +143,7 @@ extern C_cache_base_block base_cache;
 // ?insert@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAEPAUS_cache_model_set@@PAU3@ABU3@@Z
 
 // TEMPLATE: GAME 0x403d50
-// ?_Destroy@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@IAEXPAUS_RoadBlock@C_game@@0@Z
+// ?_Destroy@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@IAEXPAUS_cache_model_set@@0@Z
 
 // TEMPLATE: GAME 0x403dc0
 // ?_Ucopy@?$vector@US_ELEMENT@C_sledovacka@@V?$allocator@US_ELEMENT@C_sledovacka@@@std@@@std@@IAEPAUS_ELEMENT@C_sledovacka@@PBU34@0PAU34@@Z
@@ -161,7 +161,7 @@ extern C_cache_base_block base_cache;
 // ?_Ufill@?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@IAEXPAUS_cache_model_set@@IABU3@@Z
 
 // TEMPLATE: GAME 0x403ee0
-// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_sound@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_sound@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_itm@?$C_I3D_cache@VI3D_model@@@@V?$allocator@US_itm@?$C_I3D_cache@VI3D_model@@@@@std@@@std@@IAEPAUS_itm@?$C_I3D_cache@VI3D_model@@@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x403f20
 // ?copy@std@@YIPAUS_cache_base_block@@PAU2@00@Z
@@ -199,7 +199,7 @@ extern C_cache_base_block base_cache;
 // std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
 
 // TEMPLATE: GAME 0x5380e0
-// ??4?$vector@Uai_group_member@@V?$allocator@Uai_group_member@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The S_vector2 arrays' constructor (ls3df/I3D/I3d_math.h), empty, which the blocks' implicit constructor passes to the
 // vector constructor iterator

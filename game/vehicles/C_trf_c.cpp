@@ -209,3 +209,10 @@ C_car *C_traffic_car::SebraliMiKaaaruSvine(C_car *car)
     StubLog("C_traffic_car::SebraliMiKaaaruSvine");
     return NULL;
 }
+
+// STUB: GAME 0x4ba930
+int C_traffic_car::GetBridgeCarCount(C_actor *bridge)
+{
+    StubLog("C_traffic_car::GetBridgeCarCount");
+    return 0;
+}

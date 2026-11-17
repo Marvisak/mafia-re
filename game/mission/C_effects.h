@@ -415,13 +415,13 @@ public:
 // The destructor of a vector whose elements have none, which the linker folded for every such vector; the original
 // kept this file's copy. C_mission's destructor calls it out of line for its models.
 // TEMPLATE: GAME 0x44b220
-// ??1?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAE@XZ
+// ??1S_saved_code@C_program@@QAE@XZ
 
 // The pointer vectors' constructor, which the effect's constructor calls out of line, and push_back's insert(P, x),
 // which the readers call: folded with those of every other vector of pointers, whose later files' copies the original
 // kept
 // TEMPLATE: GAME 0x4824c0
-// ?insert@?$vector@PAUtDynamicPolicko@@V?$allocator@PAUtDynamicPolicko@@@std@@@std@@QAEPAPAUtDynamicPolicko@@PAPAU3@ABQAU3@@Z
+// ?insert@?$vector@PAVC_ParticleType@@V?$allocator@PAVC_ParticleType@@@std@@@std@@QAEPAPAVC_ParticleType@@PAPAV3@ABQAV3@@Z
 
 // TEMPLATE: GAME 0x5479c0
 // ??0?$vector@MV?$allocator@M@std@@@std@@QAE@ABV?$allocator@M@1@@Z

@@ -1221,7 +1221,7 @@ uint __stdcall human_notify_callback(I3D_frame *frm, LS3D_CALLBACK_MESSAGE messa
 // The points' insert, which GetBoundPoints2D's inlined push_backs call: the original kept the copy at 0x4eaa00 of its
 // folded group (the vectors of 8-byte elements)
 // TEMPLATE: GAME 0x4eaa00
-// ?insert@?$vector@Uai_group_member@@V?$allocator@Uai_group_member@@@std@@@std@@QAEXPAUai_group_member@@IABU3@@Z
+// ?insert@?$vector@US_vector2@@V?$allocator@US_vector2@@@std@@@std@@QAEXPAUS_vector2@@IABU3@@Z
 
 // The animations' file names PersonAnim and RecompileDeathPos build in a static buffer each: VC6's PDB names both
 // buff, so the markers are by name and pair with ours in address order (RecompileDeathPos's first)

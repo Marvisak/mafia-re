@@ -6268,7 +6268,8 @@ C_bridge *C_human::TozNaselJsemTenNejvyssiMost()
             {
                 C_bridge *bridge = (C_bridge *)act;
                 S_vector d = frame->GetWorldPos() - bridge->frame->GetWorldPos();
-                if (d.x * d.x + d.y * d.y + d.z * d.z < 10000.0f && bridge->unknown_144 >= 3 && bridge->unknown_144 <= 5)
+                if (d.x * d.x + d.y * d.y + d.z * d.z < 10000.0f && bridge->state >= BRIDGE_RAISING &&
+                    bridge->state <= BRIDGE_LOWERING)
                     return bridge;
             }
         }
