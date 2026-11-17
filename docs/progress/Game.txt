@@ -127,7 +127,7 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
@@ -200,7 +200,7 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
+0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
@@ -1366,7 +1366,7 @@
 0x00536d10  100.00%   std::vector<ai_fight_followship,std::allocator<ai_fight_followship> >::insert
 0x00537050  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ucopy
 0x00537090  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::_Ufill
-0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
+0x00537130  100.00%   std::copy(struct C_game::S_i_show *, struct C_game::S_i_show *, struct C_game::S_i_show *)
 0x00537650  99.42%    std::_Construct(struct ai_group *, struct ai_group const &)
 0x00537830  100.00%   std::_Construct(struct ai_follow_group *, struct ai_follow_group const &)
 0x00537910  100.00%   std::_Construct(struct ai_group_event *, struct ai_group_event const &)
@@ -1378,7 +1378,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
+0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1673,7 +1673,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class C_actor **, class C_actor **, class C_actor **)
+0x00564750  100.00%   std::copy(class C_Particle **, class C_Particle **, class C_Particle **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2078,7 +2078,7 @@
 0x0059d500  100.00%   C_cutscene_recording::RecAddActor
 0x0059d740  100.00%   C_cutscene_recording::AddEntry
 0x0059da60  100.00%   C_cutscene_recording::AddActor
-0x0059dcd0  100.00%   C_cutscene_recording::RecLoad
+0x0059dcd0  100.00%*  C_cutscene_recording::RecLoad
 0x0059df40  100.00%   C_cutscene_recording::DetachActor
 0x0059dfb0  100.00%   C_cutscene_recording::AttachActor
 0x0059e020  100.00%   C_recorder::GetAnimEndTime
@@ -2319,7 +2319,7 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct C_game::S_driver_man *, struct C_game::S_driver_man *, struct C_game::S_driver_man *)
+0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_seagull *, struct S_seagull const &)
 0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)
@@ -2459,8 +2459,12 @@
 0x005c97b0  100.00%   g_collision::LineInVehicle
 0x005c9b80  100.00%   g_collision::TestLineInVehicle
 0x005c9e40  missing   $CRT_CPP_Initializer(236)
-0x005ca410  stub      g_collision::FindStaticCollsInLocality
-0x005ca5c0  stub      g_collision::FindCollsByFrame
+0x005c9e70  86.04%    g_collision::LocalityInNonface
+0x005ca370  100.00%   S_vector::operator/
+0x005ca3a0  100.00%   g_collision::LocalityInTreeLevel
+0x005ca410  86.86%    g_collision::FindStaticCollsInLocality
+0x005ca5c0  100.00%   g_collision::FindCollsByFrame
+0x005ca790  66.72%    g_collision::FindDynamicCollsInLine
 0x005caf80  missing   $CRT_CPP_Initializer(237)
 0x005cafb0  100.00%   g_collision::SphereInDynamics
 0x005cbed0  100.00%   g_collision::SphereInEdge

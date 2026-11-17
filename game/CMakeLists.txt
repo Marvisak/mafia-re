@@ -146,21 +146,12 @@ if (MSVC_VERSION EQUAL 1200)
     # <string> asks for) and before LIBC, by the first object (__mem_dbg__.cpp), through ijoy.h's and rw_data.h's
     # #pragma comment(lib).
     target_link_libraries(game PRIVATE kernel32 user32 advapi32 winmm ls3df)
-    # Written functions whose callers aren't written yet, which /OPT:REF would drop: the scripts' InvalidateActorReg and
-    # FindActorLater (C_program.cpp), and the mission's AddTimeTransparentObject and four FrmActBuff functions
-    # (Mission.cpp)
-    # The animations' Init of a pedestrian and of a model (C_animations.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVC_traffic_element@@@Z
-        /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVI3D_model@@@Z)
-    # The base blocks' FindModel and DestroyFrame, which C_game::DestroyControlSignal calls (m_cache.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?FindModel@C_cache_base_block@@QAEPAVI3D_frame@@GG@Z
-        /INCLUDE:?DestroyFrame@C_cache_base_block@@QAE_NPAUS_cache_model_inbb@@@Z)
-    target_link_options(game PRIVATE /INCLUDE:?InvalidateActorReg@C_program@@QAEXPAVC_actor@@@Z
-        /INCLUDE:?FindActorLater@C_program@@QAEXHI@Z
-        /INCLUDE:?AddTimeTransparentObject@C_mission@@QAEXPAVI3D_object@@F@Z
-        /INCLUDE:?FrmActBuff_StoreModel@C_mission@@QAEXPAVI3D_model@@@Z
-        /INCLUDE:?FrmActBuff_GetModel@C_mission@@QAEPAVI3D_model@@PBD@Z
-        /INCLUDE:?FrmActBuff_StoreActorSound@C_mission@@QAEXPAVC_actor@@HPAVI3D_sound@@@Z
+    # Written functions whose callers aren't written yet, which /OPT:REF would drop; an entry goes once a written file
+    # calls its function (the link line is close to cmd.exe's limit). The mission's FrmActBuff functions of an actor's
+    # sound (Mission.cpp)
+    # The animations' Init of a model (C_animations.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?Init@C_animations_machine_de_luxe@@QAEXPAVI3D_model@@@Z)
+    target_link_options(game PRIVATE /INCLUDE:?FrmActBuff_StoreActorSound@C_mission@@QAEXPAVC_actor@@HPAVI3D_sound@@@Z
         /INCLUDE:?FrmActBuff_GetActorSound@C_mission@@QAEPAVI3D_sound@@PAVC_actor@@H@Z)
     # C_human.cpp's functions that nothing written calls yet (the AI's files, the script's commands not written yet)
     target_link_options(game PRIVATE
@@ -196,8 +187,6 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?GetCarSeat@ai_follow_manager@@QAEHPAVC_actor@@0@Z
         /INCLUDE:?mustEnter@ai_follow_manager@@QAE_NPAVC_actor@@@Z
         /INCLUDE:?mustLeave@ai_follow_manager@@QAE_NPAVC_actor@@@Z)
-    # C_player.cpp's functions that nothing written calls yet: the car's InvalidateCarDamage
-    target_link_options(game PRIVATE /INCLUDE:?InvalidateCarDamage@C_player@@QAEXPAVC_car@@@Z)
     # C_PhThings.cpp's functions that nothing written calls yet: FindActors (CreateCrashActors, C_crash_obj.cpp) and
     # GetRVelMassJ (0x425189)
     target_link_options(game PRIVATE /INCLUDE:?FindActors@C_PhThing@@QAEXXZ
@@ -205,47 +194,30 @@ if (MSVC_VERSION EQUAL 1200)
     # The collisions' TestDBox, which only a vehicle's code calls (g_colls.cpp), and with it _TestDBox and its tests
     # (g_c_glob.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestDBox@g_collision@@QAE_NABUI3D_bbox@@ABUS_matrix@@1ABUS_vector@@22II@Z)
-    # game.cpp's functions that nothing written calls yet (the racing's, the scripts', the effects', the vehicles'),
-    # with the functions only they call (C_bridge::SetTitanic, C_fire, DabingPauseSounds)
+    # game.cpp's functions that nothing written calls yet (the racing's, the scripts', the effects', the vehicles')
     target_link_options(game PRIVATE
         /INCLUDE:?SetHuman@C_game@@QAEXPAVC_actor@@@Z
-        /INCLUDE:?CheatKey@C_game@@QAE_ND@Z
-        /INCLUDE:?NewSmallFires@C_game@@QAEXAAUS_vector@@H@Z
-        /INCLUDE:?NewFire@C_game@@QAEXAAUS_vector@@PAVI3D_frame@@HMM_N@Z
         /INCLUDE:?ClearFrameFromFireHole@C_game@@QAEXPAVI3D_frame@@@Z
         /INCLUDE:?DelFramePlacement@C_game@@QAEXPAVI3D_frame@@@Z
-        /INCLUDE:?Timer_TimeOut@C_game@@QAEXXZ
-        /INCLUDE:?Do_NPCKillEvent@C_game@@QAEXPAD@Z
         /INCLUDE:?AddDriverMan@C_game@@QAEXPAVI3D_model@@PAVC_car@@H_N@Z
         /INCLUDE:?DelDriverMan@C_game@@QAEXPAVI3D_model@@@Z
         /INCLUDE:?DelSemaphore@C_game@@QAEXPAVI3D_frame@@@Z
         /INCLUDE:?DelTelephones@C_game@@QAEXPAVI3D_frame@@@Z
-        /INCLUDE:?PauseAllSounds@C_game@@QAEXXZ
-        /INCLUDE:?PlayAllSounds@C_game@@QAEX_N@Z
         /INCLUDE:?ScratchAdd@C_game@@QAEXPAVC_car@@PAVI3D_frame@@IABUS_vector@@2@Z
         /INCLUDE:?ScratchRecompile@C_game@@QAEXPAVC_car@@PAVI3D_frame@@@Z
         /INCLUDE:?ScratchGetFreeIdx@C_game@@QAEHPAVC_car@@PAVI3D_frame@@ABUS_vector@@@Z
         /INCLUDE:?AddHydrant@C_game@@QAEXPAVI3D_frame@@@Z)
-    # C_actor.cpp's functions that nothing written calls yet (Main.cpp's, the AI's, the animations'), and the records'
-    # walk (C_cutscene_records.cpp), which the recorder's saves call
-    target_link_options(game PRIVATE
-        /INCLUDE:?InternalPlacementReset@C_actor@@QAEXXZ
-        /INCLUDE:?IsPossibleCollAll@C_actor@@QAE_NUS_vector@@0MAAU2@PAPAV1@@Z
-        /INCLUDE:?AddFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@M@Z
-        /INCLUDE:?DelFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@@Z
-        /INCLUDE:?RotateDir@@YIXAAUS_vector@@M@Z
-        /INCLUDE:?GetRecordsSize@C_cutscene_records@@QAEHXZ)
+    # C_actor.cpp's functions that nothing written calls yet (the AI's)
+    target_link_options(game PRIVATE /INCLUDE:?IsPossibleCollAll@C_actor@@QAE_NUS_vector@@0MAAU2@PAPAV1@@Z
+        /INCLUDE:?AddFrameForPossibleColl@C_actor@@SIXPAVI3D_frame@@M@Z)
     # g_loadsave.cpp's functions that nothing written calls yet: the inventory's, the car database's and the replay's
-    # the menus and the races call, the saved games' list the load menu reads
+    # the menus and the races call
     target_link_options(game PRIVATE
-        /INCLUDE:?EnemyToList@G_Inventory@@QAEXPAV?$vector@PAUS_GameItem@@V?$allocator@PAUS_GameItem@@@std@@@std@@@Z
-        /INCLUDE:?FreerideGetState@G_LoadSaveClass@@QAEIXZ
         /INCLUDE:?GetAmmoByID@G_Inventory@@QAEIIPAH@Z
         /INCLUDE:?GetCarClass@G_CarDatabase@@QAEII@Z
         /INCLUDE:?GetCarsByClass@G_CarDatabase@@QAEIIPAV?$vector@IV?$allocator@I@std@@@std@@PAVG_EnabledCars@@@Z
         /INCLUDE:?GetCarsByManufacturer@G_CarDatabase@@QAEIIPAV?$vector@IV?$allocator@I@std@@@std@@PAVG_EnabledCars@@@Z
         /INCLUDE:?GetPlayersByCivilMask@G_CarDatabase@@QAEIIPAV?$vector@PADV?$allocator@PAD@std@@@std@@@Z
-        /INCLUDE:?GetScreenShotIdx@G_LoadSaveClass@@QAEII@Z
         /INCLUDE:?GetShadowByModel@G_CarDatabase@@QAEPBDPBD@Z
         /INCLUDE:?GetWreckageByModel@G_CarDatabase@@QAEPBDPBD@Z
         /INCLUDE:?HaveItems@G_Inventory@@QAEIPAV?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@I@Z
@@ -253,29 +225,24 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?IsEnabledForFreeride@G_CarDatabase@@QAE_NII@Z
         /INCLUDE:?IsEnabledForRace@G_CarDatabase@@QAE_NII@Z
         /INCLUDE:?RaceCarsAddWin@G_LoadSaveClass@@QAEXI@Z
-        /INCLUDE:?RaceCarsGetEnabled@G_LoadSaveClass@@QAEIXZ
-        /INCLUDE:?RemoveByPtr@G_Inventory@@QAEXPAUS_GameItem@@@Z
         /INCLUDE:?ReplayLoad@G_LoadSaveClass@@QAE_NI@Z
         /INCLUDE:?ReplaySet@G_LoadSaveClass@@QAEX_N0@Z
-        /INCLUDE:?ReplayTick@G_LoadSaveClass@@QAEXAAH@Z
-        /INCLUDE:?SaveGameEnumFiles@G_LoadSaveClass@@QAEPAV?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@XZ
-        /INCLUDE:?SaveGameLoadHeader@G_LoadSaveClass@@QAEXIPAUG_SaveGame_FileHead@@PAUG_SaveGame_Info@@@Z)
-    # g_camera.cpp's functions that nothing written calls yet: the race cameras'
-    # (c_racecam.cpp), the racing's (racing.cpp) and the AI's (jp_ai_entity.cpp)
+        /INCLUDE:?ReplayTick@G_LoadSaveClass@@QAEXAAH@Z)
+    # g_camera.cpp's functions that nothing written calls yet: the racing's (racing.cpp) and the AI's (jp_ai_entity.cpp)
     target_link_options(game PRIVATE
         /INCLUDE:?CumNaNe@G_Camera@@QAEXPAVC_human@@0@Z
-        /INCLUDE:?AddRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
-        /INCLUDE:?RemoveRaceCamera@G_Camera@@QAEXPAUG_RaceCamera@@@Z
         /INCLUDE:?InitRaceCameras@G_Camera@@QAEXXZ)
     # The collisions' TestSphereSlide, which only C_dyn_object::AI calls (g_colls.cpp)
     target_link_options(game PRIVATE /INCLUDE:?TestSphereSlide@g_collision@@QAEHABUS_vector@@0MPAPAUS_slide_contact@@PAI@Z)
+    # The collisions' FindDynamicCollsInLine, which only the AI's entities call (g_c_linebs.cpp)
+    target_link_options(game PRIVATE
+        /INCLUDE:?FindDynamicCollsInLine@g_collision@@QAEIABUS_vector@@0AAV?$vector@PAUg_collision_header@@V?$allocator@PAUg_collision_header@@@std@@@std@@I@Z)
     # The collisions' TestCurveCurve, which only C_racing calls (g_c_sph.cpp)
     target_link_options(game PRIVATE
         /INCLUDE:?TestCurveCurve@g_collision@@QAEMPBV?$vector@Ugcol_CurveSphereStruct@g_collision@@V?$allocator@Ugcol_CurveSphereStruct@g_collision@@@std@@@std@@M0M@Z)
-    # g_indicators.cpp's functions that nothing written calls yet: the dubbing's subtitles (DabingSpeak), the refuelling
-    # bar, the radar's objects and the races' setters (the scripts', the racing's)
+    # g_indicators.cpp's functions that nothing written calls yet: the refuelling bar, the radar's objects and the races'
+    # setters (the scripts', the racing's)
     target_link_options(game PRIVATE
-        /INCLUDE:?SubtitlesAdd@G_IndicatorsClass@@QAEXII_N@Z
         /INCLUDE:?RefullingIndicatorSetValue@G_IndicatorsClass@@QAEXM@Z
         /INCLUDE:?RadarAddObject@G_IndicatorsClass@@QAEXPAUtDynamicCollObject@@I@Z
         /INCLUDE:?RadarRemoveObject@G_IndicatorsClass@@QAEXPAUtDynamicCollObject@@@Z

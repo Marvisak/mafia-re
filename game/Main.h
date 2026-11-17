@@ -63,7 +63,7 @@ extern bool _is_intro_;
 // ?_Destroy@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@IAEXPAPAVC_ParticleEmitter@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEPAHPBH0PAH@Z
+// ?_Ucopy@?$vector@PAUS_effect@C_ff_manager@@V?$allocator@PAUS_effect@C_ff_manager@@@std@@@std@@IAEPAPAUS_effect@C_ff_manager@@PBQAU34@0PAPAU34@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@HV?$C_chunk_allocator@H@@@std@@IAEXPAHIABH@Z
+// ?_Ufill@?$vector@PAUS_effect@C_ff_manager@@V?$allocator@PAUS_effect@C_ff_manager@@@std@@@std@@IAEXPAPAUS_effect@C_ff_manager@@IABQAU34@@Z

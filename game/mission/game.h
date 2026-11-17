@@ -1195,7 +1195,7 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_driver_man@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of
@@ -1223,7 +1223,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@US_stop_sounds@C_game@@V?$allocator@US_stop_sounds@C_game@@@std@@@std@@QAEXPAUS_stop_sounds@C_game@@IABU34@@Z
+// ?insert@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEXPAUai_fight_member@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z

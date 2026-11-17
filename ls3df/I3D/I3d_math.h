@@ -270,6 +270,8 @@ struct S_vector {
     // The reciprocal is computed into the parameter: a local for it kept the divisor on the FPU stack in
     // ClipFacesPersp's tessellation step (fld 1.0; fdiv st(3)), where the original consumes it (fxch st(2);
     // fdivr [1.0]); the parameter also gives I3D_part_element::Tick's color step, and changes nothing else in the DLL.
+    // The game's out-of-line copy follows g_collision::LocalityInNonface
+    // FUNCTION: GAME 0x5ca370
     S_vector operator/(float f) const
     {
         f = 1.0f / f;

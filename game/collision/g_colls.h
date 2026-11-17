@@ -231,6 +231,16 @@ public:
     // name; the parameters' names are ours), which C_game::NewExplosion calls
     void FindStaticCollsInLocality(const S_vector &pos, float radius, uint mat_min, uint mat_max,
         std::vector<g_collision_header *> &colls);
+    // FindStaticCollsInLocality's parts (PS2 names and parameters, their names ours): a volume that isn't a face and a
+    // cell's volumes, min and max the bounds around pos, which neither reads
+    void LocalityInNonface(g_volume_triface *vol, const S_vector &pos, const S_vector &min, const S_vector &max,
+        float radius, std::vector<g_collision_header *> &colls);
+    void LocalityInTreeLevel(tCollTreeLevel *cell, const S_vector &pos, const S_vector &min, const S_vector &max,
+        float radius, uint mat_min, uint mat_max, std::vector<g_collision_header *> &colls);
+    // The moving objects a line from from along dir hits, but those with one of flags, into colls (PS2 name; the
+    // parameters' names are ours), and their number; the AI's entities call it
+    uint FindDynamicCollsInLine(const S_vector &from, const S_vector &dir, std::vector<g_collision_header *> &colls,
+        uint flags);
     // Loads a mission's collision tree (missions\<mission>\tree.klz, "kolize"), and with dyn the moving objects'
     // grid over it (the parameters' names are ours; PS2's returns nothing either)
     void LoadCollision(const char *name, bool dyn);

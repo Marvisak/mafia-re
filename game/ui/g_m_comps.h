@@ -2044,7 +2044,7 @@ public:
 // ?Key@GM_WindowScroll@@UAEIII@Z
 
 // FUNCTION: GAME 0x5d9f60
-// ??1GM_NetPlayer@@UAE@XZ
+// ??1GM_Button@@UAE@XZ
 
 // FUNCTION: GAME 0x5da080
 // ?GetType@GM_StaticText@@UAEIXZ
@@ -2056,7 +2056,7 @@ public:
 // ?GetType@GM_StaticTextMem@@UAEIXZ
 
 // FUNCTION: GAME 0x5da1f0
-// ?SetText@GM_StaticTextMem@@UAEXPAE@Z
+// ?SetText@GM_MenuItemMem@@UAEXPAE@Z
 
 // FUNCTION: GAME 0x5da220
 // ?Draw@GM_StaticTextMem@@UAEXI@Z
@@ -2068,7 +2068,7 @@ public:
 // ?SetDword@GM_StaticTextNum@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da3f0
-// ?Draw@GM_StaticTextNum@@UAEXI@Z
+// ?Draw@GM_StaticTextTime@@UAEXI@Z
 
 // FUNCTION: GAME 0x5da560
 // ?GetType@GM_StaticTextTime@@UAEIXZ
@@ -2213,7 +2213,7 @@ public:
 // ?Draw@GM_NetPlayer@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dc700
-// ?Mouse@GM_NetPlayer@@UAEIHHHII@Z
+// ?Mouse@GM_ButtonClean@@UAEIHHHII@Z
 
 // FUNCTION: GAME 0x5dc850
 // ?GetType@GM_TextEdit@@UAEIXZ
@@ -2277,7 +2277,7 @@ public:
 
 // The original kept the copy of the yes or no selection ('bslb'), which draws the same, after its factory's Make
 // FUNCTION: GAME 0x5dd040
-// ?Draw@GM_ButtonSelectBool@@UAEXI@Z
+// ?Draw@GM_ButtonSelect@@UAEXI@Z
 
 // FUNCTION: GAME 0x5dd0d0
 // ?Mouse@GM_ButtonSelectBool@@UAEIHHHII@Z
@@ -2317,7 +2317,7 @@ public:
 
 // In the last file of components (g_m_compsm.cpp)
 // SYNTHETIC: GAME 0x5e0580
-// ??_GGM_Vidc@@UAEPAXI@Z
+// ??_GGM_MenuItemNum@@UAEPAXI@Z
 
 // The factories' functions
 // TEMPLATE: GAME 0x5d90f0
