@@ -179,10 +179,10 @@ extern C_cache_base_block base_cache;
 // ?copy_backward@std@@YIPAUS_cache_model_set@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x4047c0
-// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_animation_set@@@@0ABU23@@Z
+// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0ABU23@@Z
 
 // TEMPLATE: GAME 0x404810
-// ?_Construct@std@@YIXPAUS_cache_model_inbb@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_ELEMENT@C_sledovacka@@ABU23@@Z
 
 // TEMPLATE: GAME 0x404840
 // ?_Construct@std@@YIXPAUS_cache_base_block@@ABU2@@Z

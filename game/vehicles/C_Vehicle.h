@@ -176,6 +176,9 @@ public:
 
     // Settles the vehicle at the game's start (PS2 name; PS2's on C_car takes three parameters)
     void CalmVehicle(uint time);
+    // A hit by a vehicle that stays on its rails: the place, the surface's normal and the vehicle's move (PS2 name;
+    // C_railway::Collide's)
+    void DoCollisionStatic(const S_vector &pos, const S_vector &normal, const S_vector &move);
     // The number of seats, as an int (the name is ours: the scripts' CAR_GETSEATCOUNT returns it,
     // G_LoadSaveClass::GarageGameDone's loop over the seats compares it signed, the scripts' CAR_SETDOOROPEN a door's
     // number)
@@ -643,7 +646,7 @@ public:
 // ?insert@?$vector@US_VEH_MATERIAL@@V?$allocator@US_VEH_MATERIAL@@@std@@@std@@QAEXPAUS_VEH_MATERIAL@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42d800
-// ?insert@?$vector@US_npc_kill_event@C_game@@V?$allocator@US_npc_kill_event@C_game@@@std@@@std@@QAEXPAUS_npc_kill_event@C_game@@IABU34@@Z
+// ?insert@?$vector@US_TYRE@@V?$allocator@US_TYRE@@@std@@@std@@QAEXPAUS_TYRE@@IABU3@@Z
 
 // TEMPLATE: GAME 0x42de10
 // ?insert@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QAEXPAUS_SRFC@@IABU3@@Z
@@ -652,19 +655,19 @@ public:
 // ?size@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2010
-// ?size@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@QBEIXZ
+// ?size@?$vector@US_SRFC@@V?$allocator@US_SRFC@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x4d2aa0
-// ?_Ufill@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEXPAUS_shoot@@IABU3@@Z
+// ?_Ufill@?$vector@US_seagull@@V?$allocator@US_seagull@@@std@@@std@@IAEXPAUS_seagull@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5490d0
-// ?_Construct@std@@YIXPAUS_VEH_PARTICLE@@ABU2@@Z
+// ?_Construct@std@@YIXPAUG_MIIntroSubtitles@@ABU2@@Z
 
 // TEMPLATE: GAME 0x5bc780
 // ?_Ucopy@?$vector@US_shoot@@V?$allocator@US_shoot@@@std@@@std@@IAEPAUS_shoot@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x5bc7c0
-// ?_Ucopy@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEPAUS_shadow_item@C_game@@PBU34@0PAU34@@Z
+// ?_Ucopy@?$vector@US_tshift_elem@@V?$allocator@US_tshift_elem@@@std@@@std@@IAEPAUS_tshift_elem@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x604da0
 // ?_Ufill@?$vector@US_shadow_item@C_game@@V?$allocator@US_shadow_item@C_game@@@std@@@std@@IAEXPAUS_shadow_item@C_game@@IABU34@@Z

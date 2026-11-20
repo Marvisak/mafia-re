@@ -43,6 +43,12 @@ struct S_semaphore
     int *phase;                         // 0x10, C_game's semaphore_phase_x or _z, by the semaphore's direction
 };
 
+// The semaphores' lights in each of their ten phases as numbers (C_shvestky.cpp's and C_railway.cpp's tables; the
+// names are ours)
+#define SEMAPHORE_RED 1
+#define SEMAPHORE_ORANGE 2
+#define SEMAPHORE_GREEN 4
+
 // The shadows' types, which AddFrameForShadow and DelFrameForShadow take (PS2's E_shadow_type, a global enum; the
 // enumerator's name is ours, by value): FRM_SETON passes 0
 enum E_shadow_type { SHADOW_TYPE_0 };
@@ -1182,10 +1188,10 @@ public:
 // The road blocks' destructors, which the constructor's unwinding and the destructor call: the original kept the copies
 // of the range at 0x401030 (docs/game-files.md) of their folded groups
 // TEMPLATE: GAME 0x4036f0
-// ??1?$vector@US_cache_model_set@@V?$allocator@US_cache_model_set@@@std@@@std@@QAE@XZ
+// ??1?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAE@XZ
 
 // SYNTHETIC: GAME 0x402090
-// ??1S_RoadBlock@C_game@@QAE@XZ
+// ??1S_cache_model_set@@QAE@XZ
 
 // The vectors' functions Tick calls out of line (folded groups: the names are those of the copies our linker keeps)
 // TEMPLATE: GAME 0x5470c0
@@ -1223,7 +1229,7 @@ public:
 // ?erase@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEPAUS_i_show@C_game@@PAU34@0@Z
 
 // TEMPLATE: GAME 0x5bc0f0
-// ?insert@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@QAEXPAUai_fight_member@@IABU3@@Z
+// ?insert@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@QAEXPAUS_i_show@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x5bc3f0
 // ?insert@?$vector@US_RoadBlock@C_game@@V?$allocator@US_RoadBlock@C_game@@@std@@@std@@QAEXPAUS_RoadBlock@C_game@@IABU34@@Z
@@ -1247,7 +1253,7 @@ public:
 // ?_Construct@std@@YIXPAUS_RoadBlock@C_game@@ABU23@@Z
 
 // TEMPLATE: GAME 0x5bc9e0
-// ?_Construct@std@@YIXPAUS_seagull@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_shoot@@ABU2@@Z
 
 // SYNTHETIC: GAME 0x5bca20
 // ??4S_RoadBlock@C_game@@QAEAAU01@ABU01@@Z

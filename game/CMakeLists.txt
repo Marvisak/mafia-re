@@ -275,8 +275,8 @@ if (MSVC_VERSION EQUAL 1200)
         /INCLUDE:?FizlosNamakatDoAkce@C_traffic_generator@@SIXPAVC_human@@IAAV?$vector@PAVC_actor@@V?$allocator@PAVC_actor@@@std@@@std@@_NM2@Z
         /INCLUDE:?NewPanic@C_traffic_generator@@SIXPAVI3D_frame@@@Z
         /INCLUDE:?RailwayInStation@C_traffic_generator@@SIXPAVC_railway@@AAV?$vector@Urentry@@V?$allocator@Urentry@@@std@@@std@@@Z)
-    # S_rail_human::Kill, which only an unwritten C_railway function calls (C_railway.cpp)
-    target_link_options(game PRIVATE /INCLUDE:?Kill@S_rail_human@@QAEXPAVC_railway@@@Z)
+    # The rail vehicles' isInStation and isInStop, which only C_entity calls (C_railway.cpp)
+    target_link_options(game PRIVATE /INCLUDE:?isInStation@C_railway@@QAE_NXZ /INCLUDE:?isInStop@C_railway@@QAE_NXZ)
     # No /DEBUG (the original has no debug directory), no relocations (an EXE's default), no checksum.
     # The original's link time (2003-06-30)
     postlink(game --timestamp 0x3f004aa7)

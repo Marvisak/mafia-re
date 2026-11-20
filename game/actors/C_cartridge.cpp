@@ -72,8 +72,8 @@ void C_cartridge::AI(uint time)
     }
 }
 
-// The base's: the original's jumps there
-// FUNCTION: GAME 0x430a60
+// The base's: the original's jumps there (folded with C_grenade's identical copy)
+// FUNCTION: GAME 0x430a60 FOLDED
 void C_cartridge::Update(uint time)
 {
     C_bottle::Update(time);

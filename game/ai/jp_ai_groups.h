@@ -300,10 +300,10 @@ public:
 // ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEXPAUS_semaphore@@IABU3@@Z
+// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
 
 // TEMPLATE: GAME 0x537130
-// ?copy@std@@YIPAUS_i_show@C_game@@PAU23@00@Z
+// ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x537910
 // ?_Construct@std@@YIXPAUai_group_event@@ABU2@@Z
@@ -354,4 +354,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVC_Particle@@PAPAV2@00@Z
+// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z

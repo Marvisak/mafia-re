@@ -201,14 +201,14 @@ public:
 // Its destructor's copy, which C_game::InventoryStackClear calls: the original kept the copy of the range at 0x53e4b0
 // (docs/game-files.md) of its folded group
 // SYNTHETIC: GAME 0x53ea20
-// ??1G_Inventory@@QAE@XZ
+// ??1check_seg@@QAE@XZ
 
 // The items' insert, which C_human's Do_WeaponDrop and the others' inlined push_backs call: the original kept the copy at
 // 0x438f00 of its folded group
 // TEMPLATE: GAME 0x438f00
-// ?insert@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEXPAUS_GameItem@@IABU3@@Z
+// ?insert@?$vector@UG_MISubtitleStruct@@V?$allocator@UG_MISubtitleStruct@@@std@@@std@@QAEXPAUG_MISubtitleStruct@@IABU3@@Z
 
 // The items' erase, which C_using_object::FindNearObjects' clear calls: the original's copy is in jp_ai_entity.cpp's
 // range
 // TEMPLATE: GAME 0x505020
-// ?erase@?$vector@US_GameItem@@V?$allocator@US_GameItem@@@std@@@std@@QAEPAUS_GameItem@@PAU3@0@Z
+// ?erase@?$vector@Ugcol_CurveSphereStruct@g_collision@@V?$allocator@Ugcol_CurveSphereStruct@g_collision@@@std@@@std@@QAEPAUgcol_CurveSphereStruct@g_collision@@PAU34@0@Z

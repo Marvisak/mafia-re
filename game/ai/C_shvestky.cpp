@@ -146,9 +146,6 @@ C_shvestky::S_shvestky::~S_shvestky()
 
 // The semaphores' lights in each of their ten phases as numbers, the table game.cpp has as bitfields (red for five,
 // green for four, then orange): TestOverRed's test of a red light (the name is ours)
-#define SEMAPHORE_RED 1
-#define SEMAPHORE_ORANGE 2
-#define SEMAPHORE_GREEN 4
 // GLOBAL: GAME 0x624b60
 static const int semaphore_colors[10] = {
     SEMAPHORE_RED, SEMAPHORE_RED, SEMAPHORE_RED, SEMAPHORE_RED, SEMAPHORE_RED,

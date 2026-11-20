@@ -320,7 +320,7 @@ void ShowProgress(C_chunk *chunk);
 // What Close's inlined clear of the scripts and of the animations' models calls: the scripts' erase (folded with every
 // vector of pointers', the original kept C_effects.cpp's copy) and the models' copy (folded too, an earlier file's)
 // TEMPLATE: GAME 0x44b270
-// ?erase@?$vector@PAVC_Particle@@V?$allocator@PAVC_Particle@@@std@@@std@@QAEPAPAVC_Particle@@PAPAV3@0@Z
+// ?erase@?$vector@PAUtDynamicCollObject@@V?$allocator@PAUtDynamicCollObject@@@std@@@std@@QAEPAPAUtDynamicCollObject@@PAPAU3@0@Z
 
 // TEMPLATE: GAME 0x538520
 // ?copy@std@@YIPAUS_anim_model@C_mission@@PAU23@00@Z
@@ -337,22 +337,22 @@ void ShowProgress(C_chunk *chunk);
 // What the animations' models' and the fades' inlined push_back call out of line: the 8-byte elements' _Construct,
 // folded with every other 8-byte type's (the original kept the copy of m_cache.cpp's range)
 // TEMPLATE: GAME 0x404830
-// ?_Construct@std@@YIXPAUS_cache_model_one@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_sound_light_sector@@ABU2@@Z
 
 // What the actor sounds' inlined push_back calls out of line, folded with the same functions of every other 12-byte
 // type: the elements' _Ucopy and _Ufill (the original kept the copies of C_animations.cpp's range), size and _Construct
 // (this file's copies)
 // TEMPLATE: GAME 0x411000
-// ?_Ucopy@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEPAUS_con_register@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEPAUS_vector@@PBU3@0PAU3@@Z
 
 // TEMPLATE: GAME 0x411040
-// ?_Ufill@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@IAEXPAUS_con_register@@IABU3@@Z
+// ?_Ufill@?$vector@US_vector@@V?$allocator@US_vector@@@std@@@std@@IAEXPAUS_vector@@IABU3@@Z
 
 // TEMPLATE: GAME 0x5470a0
 // ?size@?$vector@US_con_register@@V?$allocator@US_con_register@@@std@@@std@@QBEIXZ
 
 // TEMPLATE: GAME 0x5490b0
-// ?_Construct@std@@YIXPAUS_con_register@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_actor_sound_buffer@C_mission@@ABU23@@Z
 
 // What OpenBin calls out of line, its inline budget spent: the frames' map's destructor, operator[] and insert, its
 // tree's functions and the pair's, and the frames' vector's push_back, this file's copies; the 8-byte elements'
@@ -370,7 +370,7 @@ void ShowProgress(C_chunk *chunk);
 // ??A?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAEAAPAVI3D_frame@@ABVC_str@@@Z
 
 // TEMPLATE: GAME 0x548040
-// ?insert@?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@QAEPAUS_cache_model_one@@PAU3@ABU3@@Z
+// ?insert@?$vector@US_car_snd@@V?$allocator@US_car_snd@@@std@@@std@@QAEPAUS_car_snd@@PAU3@ABU3@@Z
 
 // TEMPLATE: GAME 0x5481f0
 // ?insert@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3D_frame@@@4@@std@@QAE?AU?$pair@Viterator@?$_Tree@VC_str@@U?$pair@$$CBVC_str@@PAVI3D_frame@@@std@@U_Kfn@?$map@VC_str@@PAVI3D_frame@@U?$less@VC_str@@@std@@V?$allocator@PAVI3282db0e2

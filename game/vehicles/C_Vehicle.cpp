@@ -161,6 +161,12 @@ void C_Vehicle::ExternalImpuls(const S_vector &impuls, const S_vector &pos, uint
     StubLog("C_Vehicle::ExternalImpuls");
 }
 
+// STUB: GAME 0x4cc140
+void C_Vehicle::DoCollisionStatic(const S_vector &pos, const S_vector &normal, const S_vector &move)
+{
+    StubLog("C_Vehicle::DoCollisionStatic", this, &pos, &normal, &move);
+}
+
 // FUNCTION: GAME 0x4cc620
 const S_vector &C_Vehicle::GetHeadPos()
 {

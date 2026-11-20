@@ -81,6 +81,8 @@ struct tgcPanak2;
 #define DYNCOLLF_UNKNOWN_4 0x4
 #define DYNCOLLF_UNKNOWN_40000 0x40000
 #define DYNCOLLF_UNKNOWN_100 0x100
+// The rail vehicles' and their passengers' (C_railway; the name is ours, by value)
+#define DYNCOLLF_UNKNOWN_2000 0x2000
 // A bottle's (C_bottle::GameInit)
 #define DYNCOLLF_UNKNOWN_400 0x400
 // A physical thing's (C_PhThing::GameInit)
@@ -303,6 +305,10 @@ public:
     // than two points
     float TestCurveCurve(const std::vector<gcol_CurveSphereStruct> *c0, float r0,
         const std::vector<gcol_CurveSphereStruct> *c1, float r1);
+    // A sphere moved against a curve of spheres: the earliest time they meet, 1000 for none (PC only, the name is
+    // ours; C_railway::PreduceMovement's, its copy among C_railway.cpp's functions)
+    float TestSphereCurve(const S_vector &pos, const S_vector &dir, float r0,
+        const std::vector<gcol_CurveSphereStruct> *curve, float r1);
     // Two spheres moved (PS2 name; C_car.cpp's), which TestCurveCurve calls
     float TestSphereSphere(const S_vector &p0, const S_vector &d0, float r0, const S_vector &p1, const S_vector &d1,
         float r1);

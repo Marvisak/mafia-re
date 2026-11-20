@@ -31,6 +31,10 @@ public:
     virtual bool Hit(int type, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f, C_actor *act,
         uint u, I3D_frame *frm);
 
+    // C_railway::Collide's, with the place of the hit: gives two vectors, a float and a matrix (the name and the
+    // parameters are placeholders)
+    void unknown_414150(const S_vector &pos, S_vector &v1, S_vector &v2, float &f, S_matrix &m);
+
     uchar unknown_70[0xc2c];            // 0x70
 };
 

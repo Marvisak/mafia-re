@@ -18,6 +18,12 @@ C_dyn_object::~C_dyn_object()
     StubLog("C_dyn_object::~C_dyn_object");
 }
 
+// STUB: GAME 0x414150
+void C_dyn_object::unknown_414150(const S_vector &pos, S_vector &v1, S_vector &v2, float &f, S_matrix &m)
+{
+    StubLog("C_dyn_object::unknown_414150", this, &pos, &v1, &v2, &f, &m);
+}
+
 // STUB: GAME 0x414aa0
 bool C_dyn_object::Collision(C_actor *act, const S_vector &v1, const S_vector &v2, const S_vector &v3, float f,
     I3D_frame *frm)

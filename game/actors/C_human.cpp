@@ -3351,7 +3351,6 @@ void C_human::GameInit()
     // STRING: GAME 0x636b70
     left_hand = frame->FindChildFrame("gun2", ENUMF_ALL);
     if (!right_hand)
-        // STRING: GAME 0x632740
         right_hand = frame->FindChildFrame("r_hand", ENUMF_ALL);
     if (!left_hand)
         // STRING: GAME 0x634488
@@ -6914,7 +6913,7 @@ void C_human::Use_Actor(C_actor *act, int how, int b, int c)
                 act_mission->game->DelFrameForShadow(frame, SHADOW_TYPE_0);
                 shadow = 0;
             }
-            if (rail->unknown_1d8) {
+            if (rail->metro) {
                 next_anim_id = ANIM_WALK1;
                 last_velocity = frame->GetDir();
                 last_velocity.Magnitude();
@@ -6938,7 +6937,7 @@ void C_human::Use_Actor(C_actor *act, int how, int b, int c)
             frame->SetPos(p);
             frame->SetDir(dir, 0.0f);
             frame->Update();
-            if (rail->unknown_1d8) {
+            if (rail->metro) {
                 next_anim_id = ANIM_WALK1;
                 last_velocity = frame->GetDir();
                 last_velocity.Magnitude();

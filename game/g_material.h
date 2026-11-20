@@ -11,6 +11,7 @@
 // materials.def's "Kovove konstrukce" (metal structures), "Sklo" and "CRASH COLLISION"): the airplanes'
 // (C_airplane::GetMaterialID's) and those the shots treat apart
 #define MAT_METAL_STRUCTURE 0x13
+#define MAT_PASSENGER 0x23              // a rail vehicle's passenger or driver hit (the name is ours)
 #define MAT_GLASS 0x18
 #define MAT_WATER_DEATH 0x1f            // "Voda Death": MovementIntern drowns the human
 #define MAT_DEATH 0x28                  // "DEATH COLLISION": the player's fall fails the game

@@ -474,18 +474,18 @@ public:
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
 
 // SYNTHETIC: GAME 0x409210
-// ?OnClick@GM_Menu@@UAEHI@Z
+// ?GetMaterialID@C_actor@@UAEHPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x407590
 // ?IsPossibleColl@C_actor@@UAE_NPAV1@US_vector@@1MAAMPAPAV1@@Z
 
 // SYNTHETIC: GAME 0x4aa450
-// ?Collision@C_actor@@UAE_NPAV1@ABUS_vector@@11MPAVI3D_frame@@@Z
+// ?Collision@C_stone@@UAE_NPAVC_actor@@ABUS_vector@@11MPAVI3D_frame@@@Z
 
 // The derived classes' constant overrides the linker folded the same way: Hit's return of false, returns of true (in
 // the class and out of line, one argument) and of 0 (out of line, none)
 // SYNTHETIC: GAME 0x4bd260
-// ?Hit@C_actor@@UAE_NHABUS_vector@@00MPAV1@IPAVI3D_frame@@@Z
+// ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
 // ?SaveGameSave@C_actor_shot@@UAE_NPAPAX@Z

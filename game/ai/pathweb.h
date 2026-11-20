@@ -34,6 +34,8 @@ class C_chunk;
 #define WEBF_UNKNOWN_2 0x2
 #define WEBF_UNKNOWN_4 0x4
 #define WEBF_UNKNOWN_10 0x10
+// A rail's node a semaphore's crossing lies by (C_railway::GameInit's; the name is ours, by value)
+#define WEBF_UNKNOWN_800 0x800
 
 // A node's connection to another (PS2 name), 8 bytes, the size the node's Resize allocates them by. Its destructor is
 // declared and empty: the node's delete[] destroys them through the empty function 0x404990.

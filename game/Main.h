@@ -8,7 +8,7 @@
 // The static's destructor helper, which those initializers register with atexit: empty, so the linker folded it with
 // the other empty functions of its kind, and the name our PDB keeps for the group changes with the build (foldfix)
 // SYNTHETIC: GAME 0x404990
-// ??1C_compass@@QAE@XZ
+// ??1C_web_connection@@QAE@XZ
 
 #include <settings.h>
 
@@ -60,10 +60,10 @@ extern bool _is_intro_;
 // ?_Construct@std@@YIXPAPAUS_using_object@C_using_object@@ABQAU23@@Z
 
 // TEMPLATE: GAME 0x4d2040
-// ?_Destroy@?$vector@PAVC_ParticleEmitter@@V?$allocator@PAVC_ParticleEmitter@@@std@@@std@@IAEXPAPAVC_ParticleEmitter@@0@Z
+// ?_Destroy@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@IAEXPAUai_fight_member@@0@Z
 
 // TEMPLATE: GAME 0x563cc0
-// ?_Ucopy@?$vector@PAUS_effect@C_ff_manager@@V?$allocator@PAUS_effect@C_ff_manager@@@std@@@std@@IAEPAPAUS_effect@C_ff_manager@@PBQAU34@0PAPAU34@@Z
+// ?_Ucopy@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@IAEPAPAVI3D_frame@@PBQAV3@0PAPAV3@@Z
 
 // TEMPLATE: GAME 0x59e6d0
-// ?_Ufill@?$vector@PAUS_effect@C_ff_manager@@V?$allocator@PAUS_effect@C_ff_manager@@@std@@@std@@IAEXPAPAUS_effect@C_ff_manager@@IABQAU34@@Z
+// ?_Ufill@?$vector@PAVI3D_frame@@V?$allocator@PAVI3D_frame@@@std@@@std@@IAEXPAPAVI3D_frame@@IABQAV3@@Z

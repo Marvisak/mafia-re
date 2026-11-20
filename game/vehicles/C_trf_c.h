@@ -68,6 +68,7 @@ public:
         I3D_frame *frame;               // 0x4
         uchar unknown_8[4];
         C_car *car;                     // 0xc
+        C_car *unknown_10;              // 0x10, a car the element drives instead of car, when set
     };
 
     // The parked cars (PS2 names), which C_traffic_generator::TryGoToAssHole sends pedestrians to

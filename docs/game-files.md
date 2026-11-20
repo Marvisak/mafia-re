@@ -67,7 +67,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 32 | `47c540–48192c` | 0x53ec | `C_pumper.cpp` | stubs | the petrol pump attendants: constructor `47c540` (vtable `624990`) first |
 | 33 | `481930–48268c` | 0xd5c |  |  |  |
 | 34 | `482690–4826bc` | 0x2c |  |  |  |
-| 35 | `4826c0–49908c` | 0x169cc | `C_railway.cpp`? | part | constructor `4865b0` (vtable `624a70`) after functions of its own; or PS2's C_rail_traffic.cpp |
+| 35 | `4826c0–49908c` | 0x169cc | `C_railway.cpp` | whole | the rail vehicles, in PS2's order (PS2's `__sinit_C_railway.cpp` constructs the statics): the seats (`S_RailSeats`), the passengers (`S_rail_human`) and their update, the statics' initializers, `C_railway` (constructor `4865b0`, vtable `624a70`), its entries, doors, windows and the dummies' callbacks; `g_collision::TestSphereCurve` (`497710`) among them |
 | 36 | `499090–499b3c` | 0xaac | `C_rmorf.cpp` | whole | `missions\%s\rmorf.bin`: the initializer of a global `C_rmorf` first |
 | 37 | `499b40–4a031c` | 0x67dc | `C_shvestky.cpp` | part | the police: constructor `499b40` first |
 | 38 | `4a0320–4aa2ac` | 0x9f8c | `C_sledovacka.cpp` | whole | the chases: constructor `4a0320` first |

@@ -359,7 +359,7 @@ extern C_sound_table sound_table;
 
 // And the groups' clear's copy: the original kept another file's copy of it, or of its folded group
 // TEMPLATE: GAME 0x499020
-// ?copy@std@@YIPAUS_sound_group@@PAU2@00@Z
+// ?copy@std@@YIPAUS_rail_light@@PAU2@00@Z
 
 // Plays one of the logo videos at the start until a key is pressed or it ends: the name without its extension, and the
 // video's size on an 800x600 screen, whose ratio sets its height. False if no file was found or none opened. PC only,
