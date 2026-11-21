@@ -1196,7 +1196,7 @@
 0x004bd210  100.00%   C_turnout::Start
 0x004bd260  100.00%   C_actor::Hit
 0x004bd270  100.00%   C_turnout::SetCollPos
-0x004bd390  82.69%    C_turnout::NodesOK
+0x004bd390  100.00%   C_turnout::NodesOK
 0x004bd420  100.00%   C_turnout::SaveGameGetSize
 0x004bd430  100.00%   C_turnout::SaveGameSave
 0x004bd470  100.00%   C_turnout::SaveGameLoad
