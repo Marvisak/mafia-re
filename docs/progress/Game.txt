@@ -54,9 +54,9 @@
 0x00404290  100.00%   std::copy_backward(struct S_cache_base_block *, struct S_cache_base_block *, struct S_cache_base_block *)
 0x00404440  100.00%   std::fill(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set const &)
 0x004045f0  100.00%   std::copy_backward(struct S_cache_model_set *, struct S_cache_model_set *, struct S_cache_model_set *)
-0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x004047c0  100.00%   std::fill(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00404810  100.00%   std::_Construct(struct C_sledovacka::S_ELEMENT *, struct C_sledovacka::S_ELEMENT const &)
-0x00404830  100.00%   std::_Construct(struct S_sound_light_sector *, struct S_sound_light_sector const &)
+0x00404830  100.00%   std::_Construct(struct S_cache_model_one *, struct S_cache_model_one const &)
 0x00404840  100.00%   std::_Construct(struct S_cache_base_block *, struct S_cache_base_block const &)
 0x00404990  100.00%   std::ctype<unsigned short>::id
 0x004049a0  100.00%   std::_Construct(struct S_cache_model_set *, struct S_cache_model_set const &)
@@ -127,9 +127,9 @@
 0x00409210  100.00%   C_actor::GetMaterialID
 0x00409220  100.00%   C_actor::GetProgram
 0x00409230  100.00%   std::vector<C_I3D_cache<I3D_model>::S_itm,std::allocator<C_I3D_cache<I3D_model>::S_itm> >::_Destroy
-0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm *)
+0x00409260  100.00%   std::copy(struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *, struct C_I3D_cache<class I3D_animation_set>::S_itm *)
 0x004092c0  100.00%   std::copy_backward(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm *)
-0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_model>::S_itm *, struct C_I3D_cache<class I3D_model>::S_itm const &)
+0x00409320  100.00%   std::_Construct(struct C_I3D_cache<class I3D_sound>::S_itm *, struct C_I3D_cache<class I3D_sound>::S_itm const &)
 0x00409360  missing   $CRT_CPP_Initializer(9)
 0x00409390  stub      C_airplane::C_airplane
 0x00409500  100.00%   C_airplane::`scalar deleting destructor'
@@ -200,7 +200,7 @@
 0x004116d0  100.00%   C_animations_machine_de_luxe::S_track::operator=
 0x00411900  100.00%   std::vector<S_vector,std::allocator<S_vector> >::operator=
 0x00411b60  100.00%   std::vector<S_vector,std::allocator<S_vector> >::capacity
-0x00411b80  100.00%   std::copy(struct C_game::S_find_actor *, struct C_game::S_find_actor *, struct C_game::S_find_actor *)
+0x00411b80  100.00%   std::copy(struct S_vector const *, struct S_vector const *, struct S_vector *)
 0x00411bb0  missing   $CRT_CPP_Initializer(13)
 0x00411be0  100.00%   C_chunk::OpenFile
 0x00411c50  100.00%   C_chunk::~C_chunk
@@ -957,18 +957,18 @@
 0x00486c30  100.00%   C_railway::CreateBackVector
 0x00486db0  66.54%    C_railway::CreateForwardVector
 0x00487120  63.42%    C_railway::IsSemaPoint
-0x00487510  34.72%    C_railway::MustStop
+0x00487510  35.21%    C_railway::MustStop
 0x004877a0  51.49%    C_railway::FindBackPos
 0x00487d30  100.00%*  C_railway::SpringProcess
 0x00488140  88.94%    C_railway::AI
 0x004894d0  88.01%    C_railway::Update
-0x0048a390  62.79%    C_railway::GameInit
+0x0048a390  62.86%    C_railway::GameInit
 0x0048cfa0  99.25%    C_railway::GameDone
 0x0048d530  56.45%    C_railway::Collision
 0x0048d890  65.46%    C_railway::IsPossibleColl
 0x0048dfd0  46.23%    C_railway::FillCurve
 0x0048e780  57.09%    C_railway::PreduceMovement
-0x0048f860  86.00%    C_railway::Place
+0x0048f860  86.15%    C_railway::Place
 0x00490140  71.31%    C_railway::Collide
 0x00490b40  61.06%    C_railway::Hit
 0x004914c0  38.87%    C_railway::GetSafeSpeed
@@ -1029,7 +1029,7 @@
 0x00498a80  100.00%   C_railway::GetActorSpeed
 0x00498f60  100.00%   std::vector<C_program::S_prog_change,std::allocator<C_program::S_prog_change> >::_Ucopy
 0x00499020  100.00%   std::copy(struct S_rail_light *, struct S_rail_light *, struct S_rail_light *)
-0x00499050  100.00%   std::_Construct(struct C_using_object::S_using_object **, struct C_using_object::S_using_object *const &)
+0x00499050  100.00%   std::_Construct(class C_web_node **, class C_web_node *const &)
 0x00499060  missing   $CRT_CPP_Initializer(77)
 0x00499090  50.00%    $CRT_CPP_Initializer(78)
 0x004990a0  100.00%   $CRT_CPP_Initializer(79)
@@ -1183,21 +1183,23 @@
 0x004bc160  stub      C_traffic_car::SaveGameSave
 0x004bc190  stub      C_traffic_car::SaveGameLoad
 0x004bc330  missing   $CRT_CPP_Initializer(96)
-0x004bc360  stub      C_turnout::C_turnout
+0x004bc360  100.00%   C_turnout::C_turnout
 0x004bc470  100.00%   C_turnout::`scalar deleting destructor'
 0x004bc490  100.00%   C_turnout::~C_turnout
-0x004bc4a0  stub      C_turnout::SaveData
-0x004bc600  stub      C_turnout::LoadData
-0x004bc830  stub      C_turnout::DuplicateFrom
-0x004bc8c0  stub      C_turnout::GameInit
-0x004bcd40  stub      C_turnout::GameDone
-0x004bce10  stub      C_turnout::AI
-0x004bcfe0  stub      C_turnout::Update
-0x004bd210  stub      C_turnout::Start
+0x004bc4a0  100.00%   C_turnout::SaveData
+0x004bc600  100.00%   C_turnout::LoadData
+0x004bc830  100.00%   C_turnout::DuplicateFrom
+0x004bc8c0  100.00%   C_turnout::GameInit
+0x004bcd40  100.00%   C_turnout::GameDone
+0x004bce10  100.00%   C_turnout::AI
+0x004bcfe0  100.00%   C_turnout::Update
+0x004bd210  100.00%   C_turnout::Start
 0x004bd260  100.00%   C_actor::Hit
+0x004bd270  100.00%   C_turnout::SetCollPos
+0x004bd390  82.69%    C_turnout::NodesOK
 0x004bd420  100.00%   C_turnout::SaveGameGetSize
-0x004bd430  stub      C_turnout::SaveGameSave
-0x004bd470  stub      C_turnout::SaveGameLoad
+0x004bd430  100.00%   C_turnout::SaveGameSave
+0x004bd470  100.00%   C_turnout::SaveGameLoad
 0x004bd620  missing   $CRT_CPP_Initializer(97)
 0x004bd650  missing   $CRT_CPP_Initializer(98)
 0x004bd660  missing   $CRT_CPP_Initializer(99)
@@ -1282,16 +1284,24 @@
 0x004f1ac0  100.00%   std::vector<S_joy,std::allocator<S_joy> >::_Ufill
 0x004f1b00  100.00%   std::_Construct(struct S_joy *, struct S_joy const &)
 0x004f1b20  missing   $CRT_CPP_Initializer(114)
-0x004f1b50  stub      C_wagon::C_wagon
+0x004f1b50  100.00%   C_wagon::C_wagon
 0x004f1c00  100.00%   C_wagon::`scalar deleting destructor'
-0x004f1c20  stub      C_wagon::~C_wagon
+0x004f1c20  100.00%   C_wagon::~C_wagon
 0x004f1ca0  100.00%   C_wagon::SaveGameGetSize
-0x004f1cf0  stub      C_wagon::SaveGameSave
-0x004f1eb0  stub      C_wagon::SaveGameLoad
-0x004f3520  stub      C_wagon::AI
-0x004f48f0  stub      C_wagon::Update
-0x004f4d70  stub      C_wagon::GameInit
-0x004f5bc0  stub      C_wagon::GameDone
+0x004f1cf0  94.67%    C_wagon::SaveGameSave
+0x004f1eb0  100.00%   C_wagon::SaveGameLoad
+0x004f22d0  100.00%   C_wagon::CreateBackVector
+0x004f24c0  97.71%    C_wagon::CreateForwardVector
+0x004f28c0  100.00%   C_railway::IsStopPoint
+0x004f28f0  100.00%   C_wagon::MustStop
+0x004f2b50  94.29%    C_wagon::FindBackPos
+0x004f3110  100.00%   C_wagon::SpringProcess
+0x004f3520  85.67%    C_wagon::AI
+0x004f48f0  68.35%    C_wagon::Update
+0x004f4d70  85.85%    C_wagon::GameInit
+0x004f5b30  100.00%   `C_wagon::GameInit'::`26'::S_hlp::cbEnumFrame
+0x004f5bc0  100.00%   C_wagon::GameDone
+0x004f5d10  100.00%*  C_wagon::RecompileNewPath
 0x004f5d90  missing   $CRT_CPP_Initializer(115)
 0x004f5dc0  50.00%    $CRT_CPP_Initializer(116)
 0x004f5dd0  100.00%   $CRT_CPP_Initializer(117)
@@ -1444,7 +1454,7 @@
 0x00537130  100.00%   std::copy(struct ai_group_event *, struct ai_group_event *, struct ai_group_event *)
 0x00537650  99.42%    std::_Construct(struct ai_group *, struct ai_group const &)
 0x00537830  100.00%   std::_Construct(struct ai_follow_group *, struct ai_follow_group const &)
-0x00537910  100.00%   std::_Construct(struct ai_group_event *, struct ai_group_event const &)
+0x00537910  100.00%   std::_Construct(struct S_semaphore *, struct S_semaphore const &)
 0x00537930  100.00%   std::_Construct(struct ai_fight_followship *, struct ai_fight_followship const &)
 0x00537a50  99.49%    ai_group::operator=
 0x00537c70  100.00%   ai_follow_group::operator=
@@ -1453,7 +1463,7 @@
 0x005380e0  100.00%   std::vector<S_cache_model_one,std::allocator<S_cache_model_one> >::operator=
 0x00538280  100.00%   std::vector<ai_fight_member,std::allocator<ai_fight_member> >::operator=
 0x005384e0  100.00%   std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
-0x00538520  100.00%   std::copy(struct C_mission::S_anim_model *, struct C_mission::S_anim_model *, struct C_mission::S_anim_model *)
+0x00538520  100.00%   std::copy(struct ai_group_member const *, struct ai_group_member const *, struct ai_group_member *)
 0x00538550  missing   $CRT_CPP_Initializer(136)
 0x00538580  50.00%    $CRT_CPP_Initializer(137)
 0x00538590  100.00%   $CRT_CPP_Initializer(138)
@@ -1598,7 +1608,7 @@
 0x00548fe0  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::_Buynode
 0x00549000  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Dec
 0x00549060  100.00%   std::_Tree<C_str,std::pair<C_str const ,I3D_frame *>,std::map<C_str,I3D_frame *,std::less<C_str>,std::allocator<I3D_frame *> >::_Kfn,std::less<C_str>,std::allocator<I3D_frame *> >::const_iterator::_Inc
-0x005490b0  100.00%   std::_Construct(struct C_mission::S_actor_sound_buffer *, struct C_mission::S_actor_sound_buffer const &)
+0x005490b0  100.00%   std::_Construct(struct S_garage_item *, struct S_garage_item const &)
 0x005490d0  100.00%   std::_Construct(struct G_MIIntroSubtitles *, struct G_MIIntroSubtitles const &)
 0x005490f0  100.00%   std::_Construct(struct std::pair<class C_str const, class I3D_frame *> *, struct std::pair<class C_str const, class I3D_frame *> const &)
 0x00549110  missing   $CRT_CPP_Initializer(144)
@@ -1748,7 +1758,7 @@
 0x00562170  stub      C_Break_plain_glass::BreakGlass
 0x00563b40  100.00%   std::vector<float,std::allocator<float> >::operator=
 0x00563cc0  100.00%   std::vector<int,C_chunk_allocator<int> >::_Ucopy
-0x00564750  100.00%   std::copy(class I3D_frame *const *, class I3D_frame *const *, class I3D_frame **)
+0x00564750  100.00%   std::copy(struct tDynamicPolicko **, struct tDynamicPolicko **, struct tDynamicPolicko **)
 0x00564860  missing   $CRT_CPP_Initializer(170)
 0x00564890  100.00%   C_Debris::Init
 0x00564920  100.00%   C_Debris::Done
@@ -2040,23 +2050,28 @@
 0x00596380  100.00%   C_racecam::GameInit
 0x005963d0  100.00%   C_racecam::GameDone
 0x005963f0  missing   $CRT_CPP_Initializer(186)
-0x00596420  missing   $CRT_CPP_Initializer(187)
-0x00596430  missing   $CRT_CPP_Initializer(188)
-0x005964a0  missing   $CRT_CPP_Initializer(189)
-0x005964b0  missing   $CRT_CPP_Initializer(190)
-0x00596520  missing   $CRT_CPP_Initializer(191)
-0x00596530  missing   $CRT_CPP_Initializer(192)
-0x005965a0  missing   $CRT_CPP_Initializer(193)
-0x005965b0  missing   $CRT_CPP_Initializer(194)
-0x00596620  stub      C_rail_generator::C_rail_generator
+0x00596420  50.00%    $CRT_CPP_Initializer(187)
+0x00596430  100.00%   $CRT_CPP_Initializer(188)
+0x005964a0  50.00%    $CRT_CPP_Initializer(189)
+0x005964b0  100.00%   $CRT_CPP_Initializer(190)
+0x00596520  50.00%    $CRT_CPP_Initializer(191)
+0x00596530  100.00%   $CRT_CPP_Initializer(192)
+0x005965a0  50.00%    $CRT_CPP_Initializer(193)
+0x005965b0  100.00%   $CRT_CPP_Initializer(194)
+0x00596620  100.00%   C_rail_generator::C_rail_generator
 0x00596660  100.00%   C_rail_generator::`scalar deleting destructor'
 0x00596680  100.00%   C_rail_generator::~C_rail_generator
 0x00596690  100.00%   C_rail_generator::Init
-0x005966a0  stub      C_rail_generator::SaveData
-0x00596710  stub      C_rail_generator::LoadData
-0x00596860  stub      C_rail_generator::GameInit
-0x00597a20  stub      C_rail_generator::GameDone
-0x00597bf0  stub      C_rail_generator::AI
+0x005966a0  100.00%   C_rail_generator::SaveData
+0x00596710  100.00%   C_rail_generator::LoadData
+0x00596860  70.36%    C_rail_generator::GameInit
+0x00597a20  100.00%   C_rail_generator::GameDone
+0x00597bf0  75.09%    C_rail_generator::AI
+0x00597ff0  100.00%   C_rail_generator::GetNearFreeTrackIDandNodeInRange
+0x00598150  100.00%   C_rail_generator::GetNextTrackNode
+0x005981c0  100.00%   C_rail_generator::GetPrevTrackNode
+0x00598230  100.00%   C_rail_generator::GetNodeOutOfRange
+0x00598320  100.00%   C_rail_generator::GetFreeTram
 0x00598390  100.00%   std::vector<C_str,std::allocator<C_str> >::size
 0x005983b0  missing   $CRT_CPP_Initializer(195)
 0x005983e0  missing   $CRT_CPP_Initializer(196)
@@ -2394,7 +2409,7 @@
 0x005bc840  100.00%   std::copy(struct C_game::S_frame_placement *, struct C_game::S_frame_placement *, struct C_game::S_frame_placement *)
 0x005bc870  100.00%   std::copy(struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *, struct C_game::S_box_placement_temp *)
 0x005bc8d0  100.00%   std::copy(struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *, struct C_game::S_npc_kill_event *)
-0x005bc900  100.00%   std::copy(struct S_GameItem *, struct S_GameItem *, struct S_GameItem *)
+0x005bc900  100.00%   std::copy(struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *, struct C_game::S_i_show_fade *)
 0x005bc940  100.00%   std::_Construct(struct C_game::S_RoadBlock *, struct C_game::S_RoadBlock const &)
 0x005bc9e0  100.00%   std::_Construct(struct S_shoot *, struct S_shoot const &)
 0x005bca00  100.00%   std::_Construct(struct C_program::S_prog_change *, struct C_program::S_prog_change const &)

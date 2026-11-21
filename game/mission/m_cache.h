@@ -179,7 +179,7 @@ extern C_cache_base_block base_cache;
 // ?copy_backward@std@@YIPAUS_cache_model_set@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x4047c0
-// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_model@@@@0ABU23@@Z
+// ?fill@std@@YIXPAUS_itm@?$C_I3D_cache@VI3D_sound@@@@0ABU23@@Z
 
 // TEMPLATE: GAME 0x404810
 // ?_Construct@std@@YIXPAUS_ELEMENT@C_sledovacka@@ABU23@@Z
@@ -199,7 +199,7 @@ extern C_cache_base_block base_cache;
 // std::vector<I3D_frame *,std::allocator<I3D_frame *> >::capacity
 
 // TEMPLATE: GAME 0x5380e0
-// ??4?$vector@Uai_group_member@@V?$allocator@Uai_group_member@@@std@@@std@@QAEAAV01@ABV01@@Z
+// ??4?$vector@US_cache_model_one@@V?$allocator@US_cache_model_one@@@std@@@std@@QAEAAV01@ABV01@@Z
 
 // The S_vector2 arrays' constructor (ls3df/I3D/I3d_math.h), empty, which the blocks' implicit constructor passes to the
 // vector constructor iterator

@@ -256,4 +256,4 @@ public:
 // ?insert@?$vector@HV?$C_chunk_allocator@H@@@std@@QAEXPAHIABH@Z
 
 // TEMPLATE: GAME 0x598390
-// ?size@?$vector@PAVC_car@@V?$allocator@PAVC_car@@@std@@@std@@QBEIXZ
+// ?size@?$vector@PAUS_using_object@C_using_object@@V?$allocator@PAUS_using_object@C_using_object@@@std@@@std@@QBEIXZ

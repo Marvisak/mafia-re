@@ -1201,7 +1201,7 @@ public:
 // std::vector<C_game::S_sound_play,std::allocator<C_game::S_sound_play> >::erase
 
 // TEMPLATE: GAME 0x5bc900
-// ?copy@std@@YIPAUS_GameItem@@PAU2@00@Z
+// ?copy@std@@YIPAUS_i_show_fade@C_game@@PAU23@00@Z
 
 // The templates and compiler-generated functions after the file's last function, in the original's order (folded
 // groups: the names are those of the copies our linker keeps). The original's 0x5bc8a0 is a std::copy no type of

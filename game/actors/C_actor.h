@@ -468,7 +468,7 @@ public:
 // (foldfix): DuplicateFrom's empty ret 4 of the out-of-line kind, GetActorSpeed, GetMaterialID's return of 0,
 // IsPossibleColl's and Collision's returns of false
 // SYNTHETIC: GAME 0x4ab130
-// ?AI@C_actor_shot@@UAEXI@Z
+// ?Update@C_rail_generator@@UAEXI@Z
 
 // SYNTHETIC: GAME 0x4091f0
 // ?GetActorSpeed@C_actor@@UAEXAAUS_vector@@@Z
@@ -488,13 +488,13 @@ public:
 // ?Hit@C_stone@@UAE_NHABUS_vector@@00MPAVC_actor@@IPAVI3D_frame@@@Z
 
 // SYNTHETIC: GAME 0x4aa440
-// ?SaveGameSave@C_actor_shot@@UAE_NPAPAX@Z
+// ?SaveGameLoad@C_bridge@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa490
-// ?PlaceAtTime@C_actor_shot@@UAE_NH@Z
+// ?SaveGameSave@C_racecam@@UAE_NPAPAX@Z
 
 // SYNTHETIC: GAME 0x4aa430
-// ?SaveGameGetSize@C_actor_shot@@UAEHXZ
+// ?SaveGameGetSize@C_stone@@UAEHXZ
 
 // GetActFlags's and GetFrameActor's copies, folded with g_indicators.cpp's vectors' begin and end: by name, after the
 // copy our linker keeps (foldfix)

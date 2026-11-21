@@ -297,16 +297,16 @@ public:
 // The helpers of the vectors of 0x14-byte elements, folded (the parties' members, the groups' events, the game's
 // streams, whose C_game::CreateIShow calls them, the semaphores): the copies the original kept are this file's
 // TEMPLATE: GAME 0x537050
-// ?_Ucopy@?$vector@US_semaphore@@V?$allocator@US_semaphore@@@std@@@std@@IAEPAUS_semaphore@@PBU3@0PAU3@@Z
+// ?_Ucopy@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEPAUS_i_show@C_game@@PBU34@0PAU34@@Z
 
 // TEMPLATE: GAME 0x537090
-// ?_Ufill@?$vector@US_i_show@C_game@@V?$allocator@US_i_show@C_game@@@std@@@std@@IAEXPAUS_i_show@C_game@@IABU34@@Z
+// ?_Ufill@?$vector@Uai_fight_member@@V?$allocator@Uai_fight_member@@@std@@@std@@IAEXPAUai_fight_member@@IABU3@@Z
 
 // TEMPLATE: GAME 0x537130
 // ?copy@std@@YIPAUai_group_event@@PAU2@00@Z
 
 // TEMPLATE: GAME 0x537910
-// ?_Construct@std@@YIXPAUai_group_event@@ABU2@@Z
+// ?_Construct@std@@YIXPAUS_semaphore@@ABU2@@Z
 
 // The groups' and the following groups' insert(P, n, x), which NewGroup's and AddFollower's push_backs call
 // TEMPLATE: GAME 0x5366c0
@@ -354,4 +354,4 @@ public:
 
 // A copy of 4-byte elements, folded with every other one: the original kept a later file's copy
 // TEMPLATE: GAME 0x564750
-// ?copy@std@@YIPAPAVI3D_frame@@PBQAV2@0PAPAV2@@Z
+// ?copy@std@@YIPAPAUtDynamicPolicko@@PAPAU2@00@Z

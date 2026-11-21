@@ -80,6 +80,9 @@
 // LIBRARY: GAME 0x60fcc0
 // ??XS_matrix@@QAGAAU0@ABU0@@Z
 
+// LIBRARY: GAME 0x60fcc6
+// ?UpdateHRBoundVolW@I3D_frame@@AAGXXZ
+
 // LIBRARY: GAME 0x60fccc SYMBOL
 // _GetIGraph
 
@@ -204,7 +207,7 @@
 // ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
 
 // LIBRARY: GAME 0x61030a
-// ?_CallMemberFunction1@@YGXPAX00@Z
+// ?_CallMemberFunction0@@YGXPAX0@Z
 
 // LIBRARY: GAME 0x610311
 // ?_CallMemberFunction2@@YGXPAX00H@Z
@@ -1128,7 +1131,7 @@
 // _RtlUnwind@16
 
 // LIBRARY: GAME 0x61d000 SYMBOL
-// __strnicmp
+// _strnicmp
 
 // LIBRARY: GAME 0x61d0b0 SYMBOL
 // __strcmpi

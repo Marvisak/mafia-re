@@ -741,7 +741,7 @@ struct S_garage_item
 // ?_Ufill@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@IAEXPAUG_SaveGame_FileHead@@IABU3@@Z
 
 // TEMPLATE: GAME 0x430470
-// ?insert@?$vector@US_sound_play@C_game@@V?$allocator@US_sound_play@C_game@@@std@@@std@@QAEXPAUS_sound_play@C_game@@IABU34@@Z
+// ?insert@?$vector@UG_SaveGame_FileHead@@V?$allocator@UG_SaveGame_FileHead@@@std@@@std@@QAEXPAUG_SaveGame_FileHead@@IABU3@@Z
 
 // The garage items' insert(P, x), which CarManager's push_backs call (their insert(P, n, x) is the folded copy at
 // 0x60f1f0, named after the controls')

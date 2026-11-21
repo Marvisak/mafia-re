@@ -73,13 +73,13 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 38 | `4a0320–4aa2ac` | 0x9f8c | `C_sledovacka.cpp` | whole | the chases: constructor `4a0320` first |
 | 39 | `4aa2b0–4aa48c` | 0x1dc | `C_stone.cpp` (ours) | whole | the stones (PC only, a `C_bottle`): constructor `4aa2b0` (vtable `624c00`) first |
 | 40 | `4aa490–4bc35c` | 0x11ecc | `C_trf_c.cpp` | part | the traffic's `C_traffic_car`: constructor `4aa7a0` (vtable `624c98`) after the initializers of six vectors |
-| 41 | `4bc360–4bd64c` | 0x12ec | `C_turnout.cpp` | part | constructor `4bc360` (vtable `624d58`) first |
+| 41 | `4bc360–4bd64c` | 0x12ec | `C_turnout.cpp` | whole | the rails' switches, in PS2's order: constructor `4bc360` (vtable `624d58`) first |
 | 42 | `4bd650–4d34ac` | 0x15e5c | `C_Vehicle.cpp`? | part | PS2's C_Vehicle.cpp tables (`v_tyre`, `v_materials`, `v_particle`), whose initializers come first |
 | 43 | `4d34b0–4df99c` | 0xc4ec |  |  |  |
 | 44 | `4df9a0–4eac6c` | 0xb2cc |  |  |  |
 | 45 | `4eac70–4efb3c` | 0x4ecc | `C_Vehicle_sounds.cpp` | part | `C_Vehicle`'s sounds, in PS2's order from `InitSounds` (`4eac70`) |
 | 46 | `4efb40–4f1b4c` | 0x200c | `controls.cpp` (ours) | whole | the player's controls, Main.cpp's `controls` (PC only): constructor `4efb40` first |
-| 47 | `4f1b50–4f5dbc` | 0x426c | `C_wagon.cpp` | part | constructor `4f1b50` (vtable `624e78`) first |
+| 47 | `4f1b50–4f5dbc` | 0x426c | `C_wagon.cpp` | whole | the elevated railway's scripted train, in PS2's order: constructor `4f1b50` (vtable `624e78`) first, then C_railway's twins (`IsStopPoint` folded with C_railway's), GameInit's local `S_hlp::cbEnumFrame` after GameInit |
 | 48 | `4f5dc0–4f6a2c` | 0xc6c | `console.cpp`? | whole | the console and its font (editfont.bmp, fnt_matrix.bin), PS2's functions in PS2's order |
 | 49 | `4f6a30–4f6a5c` | 0x2c |  |  |  |
 | 50 | `4f6a60–4f802c` | 0x15cc | `jp_ai_actor_history.cpp`? | stubs | `ai_logs`, whose PS2 functions fit its size |
@@ -119,7 +119,7 @@ blank nothing. *Evidence*: what identifies the file; *first* means the range sta
 | 84 | `58e350–58f15c` | 0xe0c | `C_scatter.cpp` (ours) | part | a PC only actor (type 0x1d): constructor `58e350` (vtable `6257d0`) first |
 | 85 | `58f160–5961fc` | 0x709c | `C_player.cpp` | whole | `C_player`: constructor `58f170` (vtable `625878`) |
 | 86 | `596200–59641c` | 0x21c | `c_racecam.cpp` | whole | constructor `596200` (vtable `625950`) first |
-| 87 | `596420–5983dc` | 0x1fbc | `C_rail_generator.cpp` | part | constructor `596620` (vtable `6259e8`) |
+| 87 | `596420–5983dc` | 0x1fbc | `C_rail_generator.cpp` | whole | the trams and trains, their tracks and passengers, in PS2's order: the four static vectors' initializers (`actor_persons`, `rail_tracks`, `actor_tram`, `actor_metro`) first, constructor `596620` (vtable `6259e8`) |
 | 88 | `5983e0–5a075c` | 0x837c | `C_recorder.cpp` (ours) | whole | the in-engine cutscenes (PC only; `C_recorder` in `LoadTCK`'s messages), then the seagulls (`C_seagull`, PC only) |
 | 89 | `5a0760–5bcc0c` | 0x1c4ac | `game.cpp`? | whole | `C_game` |
 | 90 | `5bcc10–5bcdfc` | 0x1ec | `Load_progress.cpp`? | whole | only `cbLoadScene` (`5bcc10`), a mission's loading screen |

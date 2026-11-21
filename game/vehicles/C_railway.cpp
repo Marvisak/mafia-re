@@ -1152,10 +1152,11 @@ static const int rail_semaphore_colors[10] = {
     SEMAPHORE_ORANGE,
 };
 
-// Whether the path node is a stop
+// Whether the path node is a stop: the linker folded it with C_wagon's identical copy
+// FUNCTION: GAME 0x4f28c0 FOLDED
 bool C_railway::IsStopPoint(uint index)
 {
-    return (act_mission->web_path->nodes[index].flags & WEBF_UNKNOWN_8) != 0;
+    return (act_mission->web_path->nodes[index].flags & WEBF_UNKNOWN_8) ? true : false;
 }
 
 // Whether the path node is a crossing's semaphore the vehicle faces at a red light: it takes the phase of the
@@ -2030,6 +2031,7 @@ void C_railway::GameInit()
         name = file;
     else
         name++;
+    // STRING: GAME 0x6348b4
     if (strcmp(name, "metro.i3d") == 0)
         metro = true;
     unknown_70.Zero();
@@ -2073,6 +2075,7 @@ void C_railway::GameInit()
                 wagon_frames[i]->SetDir(dir, 0.0f);
                 wagon_frames[i]->Update();
                 char buf[260];
+                // STRING: GAME 0x6348a8
                 sprintf(buf, "%s_vagon%i", ((I3D_frame *)vehicle)->GetName(), i);
                 wagon_frames[i]->SetName(buf);
                 I3D_frame *wf = wagon_frames[i];
