@@ -309,9 +309,12 @@ void C_turnout::SetCollPos()
 // FUNCTION: GAME 0x4bd390
 bool C_turnout::NodesOK(uint &node, uint &rail1_node, uint &rail2_node)
 {
-    node = act_mission->web_path->FindNodeID(node_id);
-    rail1_node = act_mission->web_path->FindNodeID(rail1_node_id);
-    rail2_node = act_mission->web_path->FindNodeID(rail2_node_id);
+    C_web_path *path = act_mission->web_path;
+    node = path->FindNodeID(node_id);
+    path = act_mission->web_path;
+    rail1_node = path->FindNodeID(rail1_node_id);
+    path = act_mission->web_path;
+    rail2_node = path->FindNodeID(rail2_node_id);
     bool ok = true;
     if (node == -1 || rail1_node == -1 || rail2_node == -1)
         ok = false;
